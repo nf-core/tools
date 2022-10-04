@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 # Constants for the nf-core/modules repo used throughout the module files
 NF_CORE_MODULES_NAME = "nf-core"
 NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
-NF_CORE_MODULES_DEFAULT_BRANCH = "restructure"
+NF_CORE_MODULES_DEFAULT_BRANCH = "master"
 
 
 class RemoteProgressbar(git.RemoteProgress):
@@ -223,7 +223,7 @@ class ModulesRepo(object):
         if branch is None:
             # Don't bother fetching default branch if we're using nf-core
             if self.remote_url == NF_CORE_MODULES_REMOTE:
-                self.branch = "restructure"
+                self.branch = "master"
             else:
                 self.branch = self.get_default_branch()
         else:

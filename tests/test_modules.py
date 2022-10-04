@@ -96,7 +96,7 @@ class TestModules(unittest.TestCase):
         """Initialise a modules repo object"""
         modrepo = nf_core.modules.ModulesRepo()
         assert modrepo.repo_path == "nf-core"
-        assert modrepo.branch == "restructure"
+        assert modrepo.branch == "master"
 
     ############################################
     # Test of the individual modules commands. #

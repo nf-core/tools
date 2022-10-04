@@ -6,15 +6,15 @@
             "modules": {
                 "nf-core": {
                     "custom/dumpsoftwareversions": {
-                        "branch": "restructure",
+                        "branch": "master",
                         "git_sha": "86e32684ce5b13ca8173a78cd2250131ca9b1c0f"
                     },
                     "fastqc": {
-                        "branch": "restructure",
+                        "branch": "master",
                         "git_sha": "86e32684ce5b13ca8173a78cd2250131ca9b1c0f"
                     },
                     "multiqc": {
-                        "branch": "restructure",
+                        "branch": "master",
                         "git_sha": "86e32684ce5b13ca8173a78cd2250131ca9b1c0f"
                     }
                 }
