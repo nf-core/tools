@@ -26,10 +26,11 @@
 - Schema: Remove `allOf` if no definition groups are left.
 - Use contextlib to temporarily change working directories ([#1819](https://github.com/nf-core/tools/pull/1819))
 - More helpful error messages if `nf-core download` can't parse a singularity image download
-- Modules: If something is wrong with the local repo cache, offer to delete it and try again ([#1850](https://github.com/nf-core/tools/issues/1850))
-- Restructure code to work with the directory restructuring in [modules](https://github.com/nf-core/modules/pull/2141) ([#1859](https://github.com/nf-core/tools/pull/1859))
 
 ### Modules
+
+- If something is wrong with the local repo cache, offer to delete it and try again ([#1850](https://github.com/nf-core/tools/issues/1850))
+- Restructure code to work with the directory restructuring in [modules](https://github.com/nf-core/modules/pull/2141) ([#1859](https://github.com/nf-core/tools/pull/1859))
 
 ## [v2.5.1 - Gold Otter Patch](https://github.com/nf-core/tools/releases/tag/2.5.1) - [2022-08-31]
 
