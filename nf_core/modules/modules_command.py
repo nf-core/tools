@@ -160,7 +160,7 @@ class ModuleCommand:
                     module_path = Path(directory).relative_to(Path(self.dir, "modules"))
                     parts = module_path.parts
                     # Check that there are modules installed directly under the 'modules' directory
-                    if len(parts) <= 3 and parts[0] != self.modules_repo.repo_path and parts[0] != "local":
+                    if parts[1] == "modules":
                         wrong_location_modules.append(module_path.parent)
             # If there are modules installed in the wrong location
             if len(wrong_location_modules) > 0:
@@ -172,8 +172,9 @@ class ModuleCommand:
                 )
                 # Move wrong modules to the right directory
                 for module in wrong_location_modules:
-                    correct_dir = Path("modules", self.modules_repo.repo_path, module)
-                    wrong_dir = Path("modules", module)
+                    modules_dir = Path("modules").resolve()
+                    correct_dir = Path(modules_dir, self.modules_repo.repo_path, Path(module.parts[2:]))
+                    wrong_dir = Path(modules_dir, module)
                     wrong_dir.rename(correct_dir)
                     log.info(f"Moved {wrong_dir} to {correct_dir}.")
                 # Regenerate modules.json file
