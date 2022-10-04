@@ -235,7 +235,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
         self.failed.append(("process_capitals", "Process name is not in capital letters", self.main_nf))
 
     # Check that process labels are correct
-    correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
+    correct_process_labels = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
     process_label = [l for l in lines if l.lstrip().startswith("label")]
     if len(process_label) > 0:
         try:

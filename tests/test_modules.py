@@ -33,7 +33,7 @@ def create_modules_repo_dummy(tmp_dir):
         fh.writelines(["repository_type: modules", "\n"])
 
     # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
-    module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_medium", False, False)
+    module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
     module_create.create()
 
     return root_dir
