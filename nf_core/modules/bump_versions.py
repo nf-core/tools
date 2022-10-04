@@ -55,6 +55,9 @@ class ModuleVersionBumper(ModuleCommand):
         self.ignored = []
         self.show_up_to_date = show_uptodate
 
+        # Check modules directory structure
+        self.check_modules_structure()
+
         # Verify that this is not a pipeline
         self.dir, repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
         if not repo_type == "modules":

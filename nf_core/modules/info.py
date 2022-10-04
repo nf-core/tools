@@ -72,6 +72,9 @@ class ModuleInfo(ModuleCommand):
                 pipeline_dir = None
 
         if self.repo_type == "pipeline":
+            # Check modules directory structure
+            self.check_modules_structure()
+            # Check modules.json up to date
             self.modules_json = ModulesJson(self.dir)
             self.modules_json.check_up_to_date()
         else:
