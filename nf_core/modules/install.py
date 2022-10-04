@@ -37,6 +37,9 @@ class ModuleInstall(ModuleCommand):
         if not self.has_valid_directory():
             return False
 
+        # Check modules directory structure
+        self.check_modules_structure()
+
         # Verify that 'modules.json' is consistent with the installed modules
         modules_json = ModulesJson(self.dir)
         modules_json.check_up_to_date()

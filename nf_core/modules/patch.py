@@ -33,6 +33,9 @@ class ModulePatch(ModuleCommand):
             raise UserWarning(f"Module '{Path('modules', module_dir, module)}' does not exist in the pipeline")
 
     def patch(self, module=None):
+        # Check modules directory structure
+        self.check_modules_structure()
+
         self.modules_json.check_up_to_date()
         self.param_check(module)
         modules = self.modules_json.get_all_modules()[self.modules_repo.remote_url]

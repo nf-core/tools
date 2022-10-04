@@ -22,6 +22,8 @@ class ModuleList(ModuleCommand):
         Get available module names from GitHub tree for repo
         and print as list to stdout
         """
+        # Check modules directory structure
+        self.check_modules_structure()
 
         # Initialise rich table
         table = rich.table.Table()

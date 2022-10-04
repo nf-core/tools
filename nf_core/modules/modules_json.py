@@ -104,7 +104,6 @@ class ModulesJson:
         """
         if repos is None:
             repos = {}
-
         # Check if there are any nf-core modules installed
         if (modules_dir / nf_core.modules.modules_repo.NF_CORE_MODULES_NAME).exists():
             repos[nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE] = {}
@@ -235,17 +234,22 @@ class ModulesJson:
                     correct_commit_sha = self.find_correct_commit_sha(module, temp_module_dir, modules_repo)
                 else:
                     correct_commit_sha = self.find_correct_commit_sha(module, module_path, modules_repo)
+                    if correct_commit_sha is None:
+                        # Check in the old path
+                        correct_commit_sha = self.find_correct_commit_sha(
+                            module, repo_path / "modules" / module, modules_repo
+                        )
                 if correct_commit_sha is None:
                     log.info(f"Was unable to find matching module files in the {modules_repo.branch} branch.")
-                    choices = [{"name": "No", "value": None}] + [
+                    choices = [{"name": "No", "value": False}] + [
                         {"name": branch, "value": branch} for branch in (available_branches - tried_branches)
                     ]
                     branch = questionary.select(
-                        "Was the modules installed from a different branch in the remote?",
+                        f"Was the module '{module}' installed from a different branch in the remote?\nSelect 'No' for a local module",
                         choices=choices,
                         style=nf_core.utils.nfcore_question_style,
                     ).unsafe_ask()
-                    if branch is None:
+                    if not branch:
                         action = questionary.select(
                             f"Module is untracked '{module}'. Please select what action to take",
                             choices=[
@@ -385,10 +389,11 @@ class ModulesJson:
             elif (
                 not isinstance(repo_url, str)
                 or repo_url == ""
+                or not repo_url.startswith("http")
                 or not isinstance(repo_entry["modules"], dict)
                 or repo_entry["modules"] == {}
             ):
-                log.warning(f"modules.json entry {repo_entry} has non-string or empty entries for git_url or modules")
+                log.debug(f"modules.json entry {repo_entry} has non-string or empty entries for git_url or modules.")
                 return False
         return True
 
@@ -509,11 +514,13 @@ class ModulesJson:
             repos, _ = self.get_pipeline_module_repositories(self.modules_dir, tracked_repos)
 
             modules_with_repos = (
-                (install_dir, str(dir.relative_to(install_dir)))
+                (
+                    nf_core.modules.module_utils.path_from_remote(repo_url),
+                    str(dir.relative_to(nf_core.modules.module_utils.path_from_remote(repo_url))),
+                )
                 for dir in missing_from_modules_json
-                for repo_url, repo_content in repos.items()
-                for install_dir, modules in repo_content["modules"].items()
-                if nf_core.utils.is_relative_to(dir, install_dir)
+                for repo_url in repos
+                if nf_core.utils.is_relative_to(dir, nf_core.modules.module_utils.path_from_remote(repo_url))
             )
 
             repos_with_modules = {}

@@ -88,6 +88,9 @@ class ModuleCreate(ModuleCommand):
         and matching Docker / Singularity images from BioContainers.
         """
 
+        # Check modules directory structure
+        self.check_modules_structure()
+
         # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
         try:
             self.directory, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.directory, self.repo_type)
