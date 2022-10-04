@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v2.6dev
+## [v2.6 - Tin Octopus](https://github.com/nf-core/tools/releases/tag/2.6) - [2022-10-04]
 
 ### Template
 
