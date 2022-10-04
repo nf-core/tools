@@ -398,9 +398,7 @@ def list(ctx):
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-@click.option("-u", "--url", help="Remote repository url to list from")
-@click.option("-b", "--branch", help="Remote repository branch to list")
-def remote(ctx, keywords, json, url, branch):
+def remote(ctx, keywords, json):
     """
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
@@ -408,8 +406,8 @@ def remote(ctx, keywords, json, url, branch):
         module_list = nf_core.modules.ModuleList(
             None,
             True,
-            ctx.obj["modules_repo_branch"] if url is None else url,
-            ctx.obj["modules_repo_branch"] if branch is None else branch,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
         stdout.print(module_list.list_modules(keywords, json))
