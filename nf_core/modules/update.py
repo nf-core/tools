@@ -82,6 +82,9 @@ class ModuleUpdate(ModuleCommand):
 
         self._parameter_checks()
 
+        # Check modules directory structure
+        self.check_modules_structure()
+
         # Verify that 'modules.json' is consistent with the installed modules
         self.modules_json.check_up_to_date()
 

@@ -148,7 +148,7 @@ class ModuleCommand:
         except FileNotFoundError:
             log.debug(f"No lint config file found: {config_fn}")
 
-    def check_modules_structure(self, hide_progress):
+    def check_modules_structure(self):
         """
         Check that the structure of the modules directory in a pipeline is the correct one:
             'modules/nf-core/TOOL/SUBTOOL
@@ -168,7 +168,7 @@ class ModuleCommand:
                 log.info(f"Removing '{self.modules_repo.local_repo_dir}'")
                 shutil.rmtree(self.modules_repo.local_repo_dir)
                 self.modules_repo.setup_local_repo(
-                    self.modules_repo.remote_url, self.modules_repo.branch, hide_progress
+                    self.modules_repo.remote_url, self.modules_repo.branch, self.hide_progress
                 )
                 # Move wrong modules to the right directory
                 for module in wrong_location_modules:

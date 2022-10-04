@@ -69,6 +69,8 @@ class ModulesTestYmlBuilder(ModuleCommand):
 
     def check_inputs(self):
         """Do more complex checks about supplied flags."""
+        # Check modules directory structure
+        self.check_modules_structure()
 
         # Get the tool name if not specified
         if self.module_name is None:
