@@ -161,7 +161,7 @@ class ModulesRepo(object):
                         rich.progress.BarColumn(bar_width=None),
                         "[bold yellow]{task.fields[state]}",
                         transient=True,
-                        disable=hide_progress,
+                        disable=hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
                     )
                     with pbar:
                         self.repo = git.Repo.clone_from(
@@ -186,7 +186,7 @@ class ModulesRepo(object):
                         rich.progress.BarColumn(bar_width=None),
                         "[bold yellow]{task.fields[state]}",
                         transient=True,
-                        disable=hide_progress,
+                        disable=hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
                     )
                     with pbar:
                         self.repo.remotes.origin.fetch(

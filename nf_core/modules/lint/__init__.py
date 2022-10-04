@@ -266,7 +266,7 @@ class ModuleLint(ModuleCommand):
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
             console=console,
-            disable=self.hide_progress,
+            disable=self.hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
         )
         with progress_bar:
             lint_progress = progress_bar.add_task(
