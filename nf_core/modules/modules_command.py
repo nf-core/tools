@@ -161,9 +161,10 @@ class ModuleCommand:
                     parts = module_path.parts
                     # Check that there are modules installed directly under the 'modules' directory
                     if parts[1] == "modules":
-                        wrong_location_modules.append(module_path.parent)
+                        wrong_location_modules.append(module_path)
             # If there are modules installed in the wrong location
             if len(wrong_location_modules) > 0:
+                log.info("The modules folder structure is outdated. Reinstalling modules.")
                 # Remove the local copy of the modules repository
                 log.info(f"Removing '{self.modules_repo.local_repo_dir}'")
                 shutil.rmtree(self.modules_repo.local_repo_dir)
@@ -173,9 +174,11 @@ class ModuleCommand:
                 # Move wrong modules to the right directory
                 for module in wrong_location_modules:
                     modules_dir = Path("modules").resolve()
-                    correct_dir = Path(modules_dir, self.modules_repo.repo_path, Path(module.parts[2:]))
+                    correct_dir = Path(modules_dir, self.modules_repo.repo_path, Path(*module.parts[2:]))
                     wrong_dir = Path(modules_dir, module)
-                    wrong_dir.rename(correct_dir)
+                    shutil.move(wrong_dir, correct_dir)
                     log.info(f"Moved {wrong_dir} to {correct_dir}.")
+                shutil.rmtree(Path(self.dir, "modules", self.modules_repo.repo_path, "modules"))
                 # Regenerate modules.json file
-                ModulesJson(self.dir).check_up_to_date()
+                modules_json = ModulesJson(self.dir)
+                modules_json.check_up_to_date()
