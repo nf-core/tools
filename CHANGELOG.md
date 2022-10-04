@@ -1,5 +1,15 @@
 # nf-core/tools: Changelog
 
+## v2.7dev
+
+### Template
+
+### Linting
+
+### General
+
+### Modules
+
 ## [v2.6 - Tin Octopus](https://github.com/nf-core/tools/releases/tag/2.6) - [2022-10-04]
 
 ### Template
