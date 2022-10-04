@@ -31,6 +31,7 @@
 
 - If something is wrong with the local repo cache, offer to delete it and try again ([#1850](https://github.com/nf-core/tools/issues/1850))
 - Restructure code to work with the directory restructuring in [modules](https://github.com/nf-core/modules/pull/2141) ([#1859](https://github.com/nf-core/tools/pull/1859))
+- Make `label: process_single` default when creating a new module
 
 ## [v2.5.1 - Gold Otter Patch](https://github.com/nf-core/tools/releases/tag/2.5.1) - [2022-08-31]
 
