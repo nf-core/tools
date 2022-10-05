@@ -12,6 +12,7 @@
 
 - Fix error in tagging GitPod docker images during releases
 - `nf-core sync` now supports the template YAML file using `-t/--template-yaml`.
+- Don't remove local copy of modules repo, only update it with fetch ([#1879](https://github.com/nf-core/tools/pull/1879))
 
 ### Modules
 
