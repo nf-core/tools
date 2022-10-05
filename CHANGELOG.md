@@ -8,6 +8,8 @@
 
 ### General
 
+- Fix error in tagging GitPod docker images during releases
+
 ### Modules
 
 ## [v2.6 - Tin Octopus](https://github.com/nf-core/tools/releases/tag/2.6) - [2022-10-04]
