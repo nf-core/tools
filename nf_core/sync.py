@@ -52,6 +52,7 @@ class PipelineSync(object):
         required_config_vars (list): List of nextflow variables required to make template pipeline
         gh_username (str): GitHub username
         gh_repo (str): GitHub repository name
+        template_yaml (str): Path to template.yml file for pipeline creation settings.
     """
 
     def __init__(
@@ -61,6 +62,7 @@ class PipelineSync(object):
         make_pr=False,
         gh_repo=None,
         gh_username=None,
+        template_yaml_path=None,
     ):
         """Initialise syncing object"""
 
@@ -76,6 +78,8 @@ class PipelineSync(object):
         self.gh_username = gh_username
         self.gh_repo = gh_repo
         self.pr_url = ""
+
+        self.template_yaml_path = template_yaml_path
 
         # Set up the API auth if supplied on the command line
         self.gh_api = nf_core.utils.gh_api
@@ -233,6 +237,7 @@ class PipelineSync(object):
             force=True,
             outdir=self.pipeline_dir,
             author=self.wf_config["manifest.author"].strip('"').strip("'"),
+            template_yaml_path=self.template_yaml_path,
             plain=True,
         ).init_pipeline()
 

@@ -11,6 +11,7 @@
 ### General
 
 - Fix error in tagging GitPod docker images during releases
+- `nf-core sync` now supports the template YAML file using `-t/--template-yaml`.
 
 ### Modules
 
