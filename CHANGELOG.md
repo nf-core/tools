@@ -4,6 +4,8 @@
 
 ### Template
 
+- Fix lint warnings for `samplesheet_check.nf` module
+
 ### Linting
 
 ### General
