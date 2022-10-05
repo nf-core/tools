@@ -80,6 +80,10 @@ class PipelineSync(object):
         self.pr_url = ""
 
         self.template_yaml_path = template_yaml_path
+        # Save contents of template.yml for using outside of git.
+        if self.template_yaml_path is not None:
+            with open(self.template_yaml_path, "r") as template_yaml:
+                self.template_yaml_cache = template_yaml.read()
 
         # Set up the API auth if supplied on the command line
         self.gh_api = nf_core.utils.gh_api
@@ -208,7 +212,7 @@ class PipelineSync(object):
         # Delete everything
         log.info("Deleting all files in 'TEMPLATE' branch")
         for the_file in os.listdir(self.pipeline_dir):
-            if the_file == ".git":
+            if the_file == ".git" or the_file == self.template_yaml_path:
                 continue
             file_path = os.path.join(self.pipeline_dir, the_file)
             log.debug(f"Deleting {file_path}")
@@ -229,17 +233,29 @@ class PipelineSync(object):
         # Only show error messages from pipeline creation
         logging.getLogger("nf_core.create").setLevel(logging.ERROR)
 
-        nf_core.create.PipelineCreate(
-            name=self.wf_config["manifest.name"].strip('"').strip("'"),
-            description=self.wf_config["manifest.description"].strip('"').strip("'"),
-            version=self.wf_config["manifest.version"].strip('"').strip("'"),
-            no_git=True,
-            force=True,
-            outdir=self.pipeline_dir,
-            author=self.wf_config["manifest.author"].strip('"').strip("'"),
-            template_yaml_path=self.template_yaml_path,
-            plain=True,
-        ).init_pipeline()
+        # Re-write the template yaml from cache which may have been updated
+        if self.template_yaml_path and self.template_yaml_cache:
+            with open(self.template_yaml_path, "w") as template_path:
+                template_path.write(self.template_yaml_cache)
+
+        try:
+            nf_core.create.PipelineCreate(
+                name=self.wf_config["manifest.name"].strip('"').strip("'"),
+                description=self.wf_config["manifest.description"].strip('"').strip("'"),
+                version=self.wf_config["manifest.version"].strip('"').strip("'"),
+                no_git=True,
+                force=True,
+                outdir=self.pipeline_dir,
+                author=self.wf_config["manifest.author"].strip('"').strip("'"),
+                template_yaml_path=self.template_yaml_path,
+                plain=True,
+            ).init_pipeline()
+        except Exception as err:
+            # If sync fails, remove template_yaml_path before raising error.
+            os.remove(self.template_yaml_path)
+            # Reset to where you were to prevent git getting messed up.
+            self.repo.git.reset("--hard")
+            raise SyncException(f"Failed to rebuild pipeline from template with error:\n{err}")
 
     def commit_template_changes(self):
         """If we have any changes with the new template files, make a git commit"""
