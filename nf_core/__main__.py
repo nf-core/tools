@@ -215,6 +215,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     "-x", "--compress", type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]), help="Archive compression type"
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
+@click.option("-t", "--tower", is_flag=True, default=False, help="Customize download for sequeralabs® Nextflow Tower")
 @click.option(
     "-c", "--container", type=click.Choice(["none", "singularity"]), help="Download software container images"
 )
@@ -223,7 +224,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     help="Don't / do copy images to the output directory and set 'singularity.cacheDir' in workflow",
 )
 @click.option("-p", "--parallel-downloads", type=int, default=4, help="Number of parallel image downloads")
-def download(pipeline, revision, outdir, compress, force, container, singularity_cache_only, parallel_downloads):
+def download(pipeline, revision, outdir, compress, force, tower, container, singularity_cache_only, parallel_downloads):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
 
@@ -233,7 +234,7 @@ def download(pipeline, revision, outdir, compress, force, container, singularity
     from nf_core.download import DownloadWorkflow
 
     dl = DownloadWorkflow(
-        pipeline, revision, outdir, compress, force, container, singularity_cache_only, parallel_downloads
+        pipeline, revision, outdir, compress, force, tower, container, singularity_cache_only, parallel_downloads
     )
     dl.download_workflow()
 
