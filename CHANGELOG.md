@@ -11,6 +11,7 @@
 ### General
 
 - Fix error in tagging GitPod docker images during releases
+- Don't remove local copy of modules repo, only update it with fetch ([#1879](https://github.com/nf-core/tools/pull/1879))
 
 ### Modules
 
