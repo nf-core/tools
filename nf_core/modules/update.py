@@ -613,6 +613,10 @@ class ModuleUpdate(ModuleCommand):
         patch_path = Path(self.dir / patch_relpath)
         module_relpath = Path("modules", repo_path, module)
 
+        # Check that paths in patch file are updated
+        print(patch_path, module)
+        self.check_patch_paths(patch_path, module)
+
         # Copy the installed files to a new temporary directory to save them for later use
         temp_dir = Path(tempfile.mkdtemp())
         temp_module_dir = temp_dir / module
