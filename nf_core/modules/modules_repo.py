@@ -138,6 +138,7 @@ class ModulesRepo(object):
 
         # Convenience variable
         self.modules_dir = os.path.join(self.local_repo_dir, "modules", self.repo_path)
+        self.subworkflows_dir = os.path.join(self.local_repo_dir, "subworkflows", self.repo_path)
 
         self.avail_module_names = None
 
@@ -429,6 +430,24 @@ class ModulesRepo(object):
             if "main.nf" in file_names
         ]
         return avail_module_names
+
+    def get_avail_subworkflows(self, checkout=True):
+        """
+        Gets the names of the subworkflows in the repository. They are detected by
+        checking which directories have a 'main.nf' file
+
+        Returns:
+            ([ str ]): The subworkflow names
+        """
+        if checkout:
+            self.checkout_branch()
+        # Module directories are characterized by having a 'main.nf' file
+        avail_subworkflow_names = [
+            os.path.relpath(dirpath, start=self.subworkflows_dir)
+            for dirpath, _, file_names in os.walk(self.subworkflows_dir)
+            if "main.nf" in file_names
+        ]
+        return avail_subworkflow_names
 
     def get_meta_yml(self, module_name):
         """

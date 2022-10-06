@@ -940,8 +940,8 @@ def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
     the required `test.yml` file based on the output files.
     """
     try:
-        meta_builder = nf_core.subworkflows.SubworkflowsTestYmlBuilder(
-            module_name=subworkflow,
+        meta_builder = nf_core.subworkflows.SubworkflowTestYmlBuilder(
+            subworkflow=subworkflow,
             run_tests=run_tests,
             test_yml_output_path=output,
             force_overwrite=force,
@@ -950,6 +950,7 @@ def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
         meta_builder.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
+        raise
         sys.exit(1)
 
 

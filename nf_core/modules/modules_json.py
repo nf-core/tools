@@ -834,4 +834,4 @@ class ModulesJson:
                     for dir, subworkflow in repo_entry["subworkflows"].items():
                         self.pipeline_subworkflows[repo] = [(dir, name) for name in subworkflow]
 
-        return self.pipeline_modules
+        return self.pipeline_subworkflows

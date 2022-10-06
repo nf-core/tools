@@ -33,7 +33,7 @@ from nf_core.modules.modules_repo import ModulesRepo
 log = logging.getLogger(__name__)
 
 
-class SubworkflowsTestYmlBuilder(object):
+class SubworkflowTestYmlBuilder(object):
     def __init__(
         self,
         subworkflow=None,
@@ -76,11 +76,9 @@ class SubworkflowsTestYmlBuilder(object):
         """Do more complex checks about supplied flags."""
         # Get the tool name if not specified
         if self.subworkflow is None:
-            installed_subworkflows = self.modules_json.get_installed_subworkflows().get(self.modules_repo.remote_url)
-            installed_subworkflows = [name for _, name in installed_subworkflows]
-            self.module_name = questionary.autocomplete(
+            self.subworkflow = questionary.autocomplete(
                 "Subworkflow name:",
-                choices=installed_subworkflows,
+                choices=self.modules_repo.get_avail_subworkflows(),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         self.subworkflow_dir = os.path.join("subworkflows", self.modules_repo.repo_path, self.subworkflow)
@@ -326,7 +324,7 @@ class SubworkflowsTestYmlBuilder(object):
         command_repeat = command + f" --outdir {tmp_dir_repeat} -work-dir {work_dir}"
         command += f" --outdir {tmp_dir} -work-dir {work_dir}"
 
-        log.info(f"Running '{self.module_name}' test with command:\n[violet]{command}")
+        log.info(f"Running '{self.subworkflow}' test with command:\n[violet]{command}")
         try:
             nfconfig_raw = subprocess.check_output(shlex.split(command))
             log.info("Repeating test ...")
