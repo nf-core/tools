@@ -172,7 +172,7 @@ class SubworkflowTestYmlBuilder(object):
                 ep_test["name"] = rich.prompt.Prompt.ask("[violet]Test name", default=default_val).strip()
 
         while ep_test["command"] == "":
-            default_val = f"nextflow run ./tests/subworkflows/{self.modules_repo.repo_path}/{self.subworkflow} -entry {entry_point}"
+            default_val = f"nextflow run ./tests/subworkflows/{self.modules_repo.repo_path}/{self.subworkflow} -entry {entry_point} -c ./tests/config/nextflow.config"
             if self.no_prompts:
                 ep_test["command"] = default_val
             else:
