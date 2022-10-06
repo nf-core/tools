@@ -10,14 +10,15 @@ import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 
-OLD_TRIMGALORE_SHA = "20d8250d9f39ddb05dfb437603aaf99b5c0b2b41"
+OLD_TRIMGALORE_SHA = "06348dffce2a732fc9e656bdc5c64c3e02d302cb"
+OLD_TRIMGALORE_BRANCH = "mimic-old-trimgalore"
 GITLAB_URL = "https://gitlab.com/nf-core/modules-test.git"
-GITLAB_REPO = "nf-core/modules-test"
-GITLAB_DEFAULT_BRANCH = "main"
+GITLAB_REPO = "nf-core"
+GITLAB_DEFAULT_BRANCH = "main-restructure"
 # Branch test stuff
-GITLAB_BRANCH_TEST_BRANCH = "branch-tester"
-GITLAB_BRANCH_TEST_OLD_SHA = "eb4bc244de7eaef8e8ff0d451e4ca2e4b2c29821"
-GITLAB_BRANCH_TEST_NEW_SHA = "e43448a2cc17d59e085c4d3f77489af5a4dcc26d"
+GITLAB_BRANCH_TEST_BRANCH = "branch-tester-restructure"
+GITLAB_BRANCH_TEST_OLD_SHA = "bce3f17980b8d1beae5e917cfd3c65c0c69e04b5"
+GITLAB_BRANCH_TEST_NEW_SHA = "2f5f180f6e705bb81d6e7742dc2f24bf4a0c721e"
 
 
 def with_temporary_folder(func):

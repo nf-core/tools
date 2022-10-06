@@ -1,6 +1,21 @@
 # nf-core/tools: Changelog
 
-## v2.6dev
+## v2.7dev
+
+### Template
+
+- Fix lint warnings for `samplesheet_check.nf` module
+
+### Linting
+
+### General
+
+- Fix error in tagging GitPod docker images during releases
+- Don't remove local copy of modules repo, only update it with fetch ([#1879](https://github.com/nf-core/tools/pull/1879))
+
+### Modules
+
+## [v2.6 - Tin Octopus](https://github.com/nf-core/tools/releases/tag/2.6) - [2022-10-04]
 
 ### Template
 
@@ -11,6 +26,8 @@
 - Update MultiQC module, update supplying MultiQC default and custom config and logo files to module
 - Add a 'recommend' methods description text to MultiQC to help pipeline users report pipeline usage in publications ([#1749](https://github.com/nf-core/tools/pull/1749))
 - Fix template spacing modified by JINJA ([#1830](https://github.com/nf-core/tools/pull/1830))
+- Fix MultiQC execution on template [#1855](https://github.com/nf-core/tools/pull/1855)
+- Don't skip including `base.config` when skipping nf-core/configs
 
 ### Linting
 
@@ -28,6 +45,10 @@
 - Add `nf-core subworkflows create` command
 
 ### Modules
+
+- If something is wrong with the local repo cache, offer to delete it and try again ([#1850](https://github.com/nf-core/tools/issues/1850))
+- Restructure code to work with the directory restructuring in [modules](https://github.com/nf-core/modules/pull/2141) ([#1859](https://github.com/nf-core/tools/pull/1859))
+- Make `label: process_single` default when creating a new module
 
 ## [v2.5.1 - Gold Otter Patch](https://github.com/nf-core/tools/releases/tag/2.5.1) - [2022-08-31]
 
