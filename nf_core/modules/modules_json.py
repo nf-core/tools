@@ -36,6 +36,7 @@ class ModulesJson:
         self.modules_dir = Path(self.dir, "modules")
         self.modules_json = None
         self.pipeline_modules = None
+        self.pipeline_subworkflows = None
 
     def create(self):
         """
@@ -815,3 +816,22 @@ class ModulesJson:
 
     def __repr__(self):
         return self.__str__()
+
+    def get_installed_subworkflows(self):
+        """
+        Retrieves all pipeline subworkflows that are reported in the modules.json
+
+        Returns:
+            (dict[str, [(str, str)]]): Dictionary indexed with the repo urls, with a
+                                list of tuples (module_dir, subworkflow) as values
+        """
+        if self.modules_json is None:
+            self.load()
+        if self.pipeline_subworkflows is None:
+            self.pipeline_subworkflows = {}
+            for repo, repo_entry in self.modules_json.get("repos", {}).items():
+                if "subworkflows" in repo_entry:
+                    for dir, subworkflow in repo_entry["subworkflows"].items():
+                        self.pipeline_subworkflows[repo] = [(dir, name) for name in subworkflow]
+
+        return self.pipeline_modules

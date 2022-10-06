@@ -924,6 +924,35 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
         sys.exit(1)
 
 
+# nf-core subworkflows create-test-yml
+@subworkflows.command("create-test-yml")
+@click.pass_context
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
+@click.option("-o", "--output", type=str, help="Path for output YAML file")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
+@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
+def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
+    """
+    Auto-generate a test.yml file for a new subworkflow.
+
+    Given the name of a module, runs the Nextflow test command and automatically generate
+    the required `test.yml` file based on the output files.
+    """
+    try:
+        meta_builder = nf_core.subworkflows.SubworkflowsTestYmlBuilder(
+            module_name=subworkflow,
+            run_tests=run_tests,
+            test_yml_output_path=output,
+            force_overwrite=force,
+            no_prompts=no_prompts,
+        )
+        meta_builder.run()
+    except (UserWarning, LookupError) as e:
+        log.critical(e)
+        sys.exit(1)
+
+
 # nf-core schema subcommands
 @nf_core_cli.group()
 def schema():
