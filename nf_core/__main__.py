@@ -20,6 +20,7 @@ import nf_core.lint
 import nf_core.list
 import nf_core.modules
 import nf_core.schema
+import nf_core.subworkflows
 import nf_core.sync
 import nf_core.utils
 
@@ -52,6 +53,12 @@ click.rich_click.COMMAND_GROUPS = {
         {
             "name": "Developing new modules",
             "commands": ["create", "create-test-yml", "lint", "bump-versions", "mulled", "test"],
+        },
+    ],
+    "nf-core subworkflows": [
+        {
+            "name": "Developing new subworkflows",
+            "commands": ["create"],
         },
     ],
 }
@@ -89,7 +96,7 @@ def run_nf_core():
         log.debug(f"Could not check latest version: {e}")
     stderr.print("\n")
 
-    # Lanch the click cli
+    # Launch the click cli
     nf_core_cli(auto_envvar_prefix="NFCORE")
 
 
@@ -381,6 +388,38 @@ def modules(ctx, git_remote, branch, no_pull):
     ctx.obj["modules_repo_url"] = git_remote
     ctx.obj["modules_repo_branch"] = branch
     ctx.obj["modules_repo_no_pull"] = no_pull
+
+
+# nf-core subworkflows click command
+@nf_core_cli.group()
+@click.option(
+    "-g",
+    "--git-remote",
+    type=str,
+    default=nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE,
+    help="Remote git repo to fetch files from",
+)
+@click.option("-b", "--branch", type=str, default=None, help="Branch of git repository hosting modules.")
+@click.option(
+    "-N",
+    "--no-pull",
+    is_flag=True,
+    default=False,
+    help="Do not pull in latest changes to local clone of modules repository.",
+)
+@click.pass_context
+def subworkflows(ctx, git_remote, branch, no_pull):
+    """
+    Commands to manage Nextflow DSL2 subworkflows (tool wrappers).
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
+    # Place the arguments in a context object
+    ctx.obj["subworkflows_repo_url"] = git_remote
+    ctx.obj["subworkflows_repo_branch"] = branch
+    ctx.obj["subworkflows_repo_no_pull"] = no_pull
 
 
 # nf-core modules list subcommands
@@ -852,6 +891,36 @@ def test_module(ctx, tool, no_prompts, pytest_args):
         meta_builder.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
+        sys.exit(1)
+
+
+# nf-core subworkflows create
+@subworkflows.command("create")
+@click.pass_context
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
+@click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username prefixed with '@'")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
+def create_subworkflow(ctx, subworkflow, dir, author, force):
+    """
+    Create a new subworkflow from the nf-core template.
+
+    If the specified directory is a pipeline, this function creates a file called
+    'subworkflows/local/<subworkflow_name>.nf'
+
+    If the specified directory is a clone of nf-core/modules, it creates or modifies files
+    in 'subworkflows/', 'tests/subworkflows' and 'tests/config/pytest_modules.yml'
+    """
+
+    # Run function
+    try:
+        subworkflow_create = nf_core.subworkflows.SubworkflowCreate(dir, subworkflow, author, force)
+        subworkflow_create.create()
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
+    except LookupError as e:
+        log.error(e)
         sys.exit(1)
 
 
