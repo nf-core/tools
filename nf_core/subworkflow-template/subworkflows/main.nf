@@ -2,7 +2,6 @@
 //               https://github.com/nf-core/modules/tree/master/subworkflows
 //               You can also ask for help via your pull request or on the #subworkflows channel on the nf-core Slack workspace:
 //               https://nf-co.re/join
-// TODO nf-core: A subworkflow SHOULD only import modules not other subworkflows
 // TODO nf-core: A subworkflow SHOULD import at least two modules
 
 include { SAMTOOLS_SORT      } from '../../../modules/nf-core/samtools/sort/main'
