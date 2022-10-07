@@ -181,18 +181,41 @@ class SubworkflowTestYmlBuilder(object):
         while len(ep_test["tags"]) == 0:
             tag_defaults = []
             tag_defaults.append("subworkflows/" + self.subworkflow)
+            tag_defaults += self.parse_module_tags()
             if self.no_prompts:
-                ep_test["tags"] = tag_defaults
+                ep_test["tags"] = sorted(tag_defaults)
             else:
                 while len(ep_test["tags"]) == 0:
                     prompt_tags = rich.prompt.Prompt.ask(
-                        "[violet]Test tags[/] (comma separated)", default=",".join(tag_defaults)
+                        "[violet]Test tags[/] (comma separated)", default=",".join(sorted(tag_defaults))
                     ).strip()
                     ep_test["tags"] = [t.strip() for t in prompt_tags.split(",")]
 
         ep_test["files"] = self.get_md5_sums(entry_point, ep_test["command"])
 
         return ep_test
+
+    def parse_module_tags(self):
+        """
+        Parse the subworkflow test main.nf file to retrieve all imported modules for adding tags.
+        """
+        tags = []
+        with open(Path(self.subworkflow_dir, "main.nf"), "r") as fh:
+            for line in fh:
+                regex = re.compile(
+                    r"include(?: *{ *)([a-zA-Z\_0-9]*)(?: *as *)?(?:[a-zA-Z\_0-9]*)?(?: *})(?: *from *)(?:'|\")(.*)(?:'|\")"
+                )
+                match = regex.match(line)
+                if match and len(match.groups()) == 2:
+                    name, link = match.groups()
+                    if link.startswith("../../../"):
+                        name_split = name.lower().split("_")
+                        tags.append("/".join(name_split))
+                        if len(name_split) > 1:
+                            tags.append(name_split[0])
+                    elif link.startswith("../"):
+                        tags.append("subworkflows/" + name.lower())
+        return list(set(tags))
 
     def check_if_empty_file(self, fname):
         """Check if the file is empty, or compressed empty"""
