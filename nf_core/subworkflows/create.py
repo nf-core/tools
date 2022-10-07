@@ -5,7 +5,6 @@ The SubworkflowCreate class handles generating of subworkflow templates
 
 from __future__ import print_function
 
-import glob
 import json
 import logging
 import os
@@ -13,7 +12,6 @@ import re
 import subprocess
 
 import jinja2
-import questionary
 import rich
 import yaml
 from packaging.version import parse as parse_version
