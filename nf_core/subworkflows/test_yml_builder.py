@@ -26,8 +26,6 @@ from rich.syntax import Syntax
 
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
-
-# from .modules_command import ModuleCommand
 from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)

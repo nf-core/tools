@@ -417,9 +417,9 @@ def subworkflows(ctx, git_remote, branch, no_pull):
     ctx.ensure_object(dict)
 
     # Place the arguments in a context object
-    ctx.obj["subworkflows_repo_url"] = git_remote
-    ctx.obj["subworkflows_repo_branch"] = branch
-    ctx.obj["subworkflows_repo_no_pull"] = no_pull
+    ctx.obj["modules_repo_url"] = git_remote
+    ctx.obj["modules_repo_branch"] = branch
+    ctx.obj["modules_repo_no_pull"] = no_pull
 
 
 # nf-core modules list subcommands
@@ -950,6 +950,47 @@ def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
         meta_builder.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
+        raise
+        sys.exit(1)
+
+
+# nf-core subworkflows install
+@subworkflows.command()
+@click.pass_context
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+@click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the subworkflow")
+@click.option(
+    "-f", "--force", is_flag=True, default=False, help="Force reinstallation of subworkflow if it already exists"
+)
+@click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install subworkflow at commit SHA")
+def install(ctx, subworkflow, dir, prompt, force, sha):
+    """
+    Install DSL2 subworkflow within a pipeline.
+
+    Fetches and installs subworkflow files from a remote repo e.g. nf-core/modules.
+    """
+    try:
+        subworkflow_install = nf_core.subworkflows.SubworkflowInstall(
+            dir,
+            force,
+            prompt,
+            sha,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        exit_status = subworkflow_install.install(subworkflow)
+        if not exit_status and all:
+            sys.exit(1)
+    except (UserWarning, LookupError) as e:
+        log.error(e)
         raise
         sys.exit(1)
 

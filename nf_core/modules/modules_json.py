@@ -588,6 +588,37 @@ class ModulesJson:
         if write_file:
             self.dump()
 
+    def update_subworkflow(self, modules_repo, subworkflow_name, subworkflow_version, write_file=True):
+        """
+        Updates the 'module.json' file with new subworkflow info
+
+        Args:
+            modules_repo (ModulesRepo): A ModulesRepo object configured for the new subworkflow
+            subworkflow_name (str): Name of new subworkflow
+            subworkflow_version (str): git SHA for the new subworkflow entry
+            write_file (bool): whether to write the updated modules.json to a file.
+        """
+        if self.modules_json is None:
+            self.load()
+        repo_name = modules_repo.repo_path
+        remote_url = modules_repo.remote_url
+        branch = modules_repo.branch
+        if remote_url not in self.modules_json["repos"]:
+            self.modules_json["repos"][remote_url] = {"subworkflows": {repo_name: {}}}
+        if "subworkflows" not in self.modules_json["repos"][remote_url]:
+            # It's the first subworkflow installed in the pipeline!
+            self.modules_json["repos"][remote_url]["subworkflows"] = {repo_name: {}}
+        repo_subworkflows_entry = self.modules_json["repos"][remote_url]["subworkflows"][repo_name]
+        if subworkflow_name not in repo_subworkflows_entry:
+            repo_subworkflows_entry[subworkflow_name] = {}
+        repo_subworkflows_entry[subworkflow_name]["git_sha"] = subworkflow_version
+        repo_subworkflows_entry[subworkflow_name]["branch"] = branch
+
+        # Sort the 'modules.json' repo entries
+        self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
+        if write_file:
+            self.dump()
+
     def remove_entry(self, module_name, repo_url, install_dir):
         """
         Removes an entry from the 'modules.json' file.
@@ -750,6 +781,29 @@ class ModulesJson:
             .get("modules", {})
             .get(install_dir, {})
             .get(module_name, {})
+            .get("git_sha", None)
+        )
+
+    def get_subworkflow_version(self, subworkflow_name, repo_url, install_dir):
+        """
+        Returns the version of a subworkflow
+
+        Args:
+            subworkflow_name (str): Name of the module
+            repo_url (str): URL of the repository
+            install_dir (str): Name of the directory where subworkflows are installed
+
+        Returns:
+            (str): The git SHA of the subworkflow if it exists, None otherwise
+        """
+        if self.modules_json is None:
+            self.load()
+        return (
+            self.modules_json.get("repos", {})
+            .get(repo_url, {})
+            .get("subworkflows", {})
+            .get(install_dir, {})
+            .get(subworkflow_name, {})
             .get("git_sha", None)
         )
 

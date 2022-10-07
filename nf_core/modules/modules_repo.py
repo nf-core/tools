@@ -290,6 +290,18 @@ class ModulesRepo(object):
         """
         return module_name in self.get_avail_modules(checkout=checkout)
 
+    def subworkflow_exists(self, subworkflow_name, checkout=True):
+        """
+        Check if a subworkflow exists in the branch of the repo
+
+        Args:
+            subworkflow_name (str): The name of the subworkflow
+
+        Returns:
+            (bool): Whether the subworkflow exists in this branch of the repository
+        """
+        return subworkflow_name in self.get_avail_subworkflows(checkout=checkout)
+
     def get_module_dir(self, module_name):
         """
         Returns the file path of a module directory in the repo.
@@ -301,6 +313,18 @@ class ModulesRepo(object):
             module_path (str): The path of the module in the local copy of the repository
         """
         return os.path.join(self.modules_dir, module_name)
+
+    def get_subworkflow_dir(self, subworkflow_name):
+        """
+        Returns the file path of a subworkflow directory in the repo.
+        Does not verify that the path exists.
+        Args:
+            subworkflow_name (str): The name of the subworkflow
+
+        Returns:
+            subworkflow_path (str): The path of the subworkflow in the local copy of the repository
+        """
+        return os.path.join(self.subworkflows_dir, subworkflow_name)
 
     def install_module(self, module_name, install_dir, commit):
         """
@@ -327,6 +351,36 @@ class ModulesRepo(object):
 
         # Copy the files from the repo to the install folder
         shutil.copytree(self.get_module_dir(module_name), Path(install_dir, module_name))
+
+        # Switch back to the tip of the branch
+        self.checkout_branch()
+        return True
+
+    def install_subworkflow(self, subworkflow_name, install_dir, commit):
+        """
+        Install the subworkflow files into a pipeline at the given commit
+
+        Args:
+            subworkflow_name (str): The name of the subworkflow
+            install_dir (str): The path where the subworkflow should be installed
+            commit (str): The git SHA for the version of the subworkflow to be installed
+
+        Returns:
+            (bool): Whether the operation was successful or not
+        """
+        # Check out the repository at the requested ref
+        try:
+            self.checkout(commit)
+        except git.GitCommandError:
+            return False
+
+        # Check if the subworkflow exists in the branch
+        if not self.subworkflow_exists(subworkflow_name, checkout=False):
+            log.error(f"The requested subworkflow does not exists in the branch '{self.branch}' of {self.remote_url}'")
+            return False
+
+        # Copy the files from the repo to the install folder
+        shutil.copytree(self.get_subworkflow_dir(subworkflow_name), Path(install_dir, subworkflow_name))
 
         # Switch back to the tip of the branch
         self.checkout_branch()
@@ -380,11 +434,39 @@ class ModulesRepo(object):
         commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
         return commits
 
+    def get_subworkflow_git_log(self, subworkflow_name, depth=None, since="2021-07-07T00:00:00Z"):
+        """
+        Fetches the commit history the of requested subworkflow since a given date. The default value is
+        not arbitrary - it is the last time the structure of the nf-core/subworkflow repository was had an
+        update breaking backwards compatibility.
+        Args:
+            subworkflow_name (str): Name of subworkflow
+            modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
+            per_page (int): Number of commits per page returned by API
+            page_nbr (int): Page number of the retrieved commits
+            since (str): Only show commits later than this timestamp.
+            Time should be given in ISO-8601 format: YYYY-MM-DDTHH:MM:SSZ.
+
+        Returns:
+            ( dict ): Iterator of commit SHAs and associated (truncated) message
+        """
+        self.checkout_branch()
+        subworkflow_path = os.path.join("subworkflows", self.repo_path, subworkflow_name)
+        commits = self.repo.iter_commits(max_count=depth, paths=subworkflow_path)
+        commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
+        return commits
+
     def get_latest_module_version(self, module_name):
         """
         Returns the latest commit in the repository
         """
         return list(self.get_module_git_log(module_name, depth=1))[0]["git_sha"]
+
+    def get_latest_subworkflow_version(self, module_name):
+        """
+        Returns the latest commit in the repository
+        """
+        return list(self.get_subworkflow_git_log(module_name, depth=1))[0]["git_sha"]
 
     def sha_exists_on_branch(self, sha):
         """
