@@ -954,7 +954,6 @@ def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
         meta_builder.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
-        raise
         sys.exit(1)
 
 

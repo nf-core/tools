@@ -745,12 +745,12 @@ def custom_yaml_dumper():
             """
             return self.represent_dict(data.items())
 
-        def increase_indent(self, flow=False, indentless=False):
+        def increase_indent(self, flow=False):
             """Indent YAML lists so that YAML validates with Prettier
 
             See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
             """
-            return super().increase_indent(flow=flow, indentless=indentless)
+            return super(CustomDumper, self).increase_indent(flow=flow, indentless=False)
 
         # HACK: insert blank lines between top-level objects
         # inspired by https://stackoverflow.com/a/44284819/3786245
