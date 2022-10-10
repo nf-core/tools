@@ -129,7 +129,7 @@ class SubworkflowCreate(object):
             try:
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "r") as fh:
                     pytest_modules_yml = yaml.safe_load(fh)
-                    pytest_modules_yml[self.subworkflow] = [
+                    pytest_modules_yml["subworkflows/" + self.subworkflow] = [
                         f"subworkflows/nf-core/{self.subworkflow}/**",
                         f"tests/subworkflows/nf-core/{self.subworkflow}/**",
                     ]
