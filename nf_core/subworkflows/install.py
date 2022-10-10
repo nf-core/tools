@@ -1,11 +1,14 @@
 import logging
 import os
+import re
 import shutil
+from pathlib import Path
 
 import questionary
 
 import nf_core.modules.module_utils
 import nf_core.utils
+from nf_core.modules.install import ModuleInstall
 from nf_core.modules.modules_json import ModulesJson
 
 # from .modules_command import ModuleCommand
@@ -96,17 +99,25 @@ class SubworkflowInstall(object):
 
         # Check that the subworkflow is not already installed
         if (current_version is not None and os.path.exists(subworkflow_dir)) and not self.force:
+            log.info("Subworkflow is already installed.")
+            print(f"Subworkflow {subworkflow} is already installed.")
 
-            log.error("Subworkflow is already installed.")
-            repo_flag = (
-                "" if self.modules_repo.repo_path == NF_CORE_MODULES_NAME else f"-g {self.modules_repo.remote_url} "
-            )
-            branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
+            self.force = questionary.confirm(
+                f"Subworkflow {subworkflow} is already installed.\nDo you want to force the reinstallation of this subworkflow and all it's imported modules?",
+                style=nf_core.utils.nfcore_question_style,
+                default=False,
+            ).unsafe_ask()
 
-            log.info(
-                f"To update '{subworkflow}' run 'nf-core subworkflow {repo_flag}{branch_flag}update {subworkflow}'. To force reinstallation use '--force'"
-            )
-            return False
+            if not self.force:
+                repo_flag = (
+                    "" if self.modules_repo.repo_path == NF_CORE_MODULES_NAME else f"-g {self.modules_repo.remote_url} "
+                )
+                branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
+
+                log.info(
+                    f"To update '{subworkflow}' run 'nf-core subworkflow {repo_flag}{branch_flag}update {subworkflow}'. To force reinstallation use '--force'"
+                )
+                return False
 
         if self.sha:
             version = self.sha
@@ -144,6 +155,14 @@ class SubworkflowInstall(object):
         # Download subworkflow files
         if not self.install_subworkflow_files(subworkflow, version, self.modules_repo, install_folder):
             return False
+
+        # Install included modules and subworkflows
+        modules_to_install, subworkflows_to_install = self.get_modules_subworkflows_to_install(subworkflow_dir)
+        for s_install in subworkflows_to_install:
+            self.install(s_install)
+        for m_install in modules_to_install:
+            module_install = ModuleInstall(self.dir, force=self.force, prompt=self.prompt)
+            module_install.install(m_install)
 
         # Print include statement
         subworkflow_name = subworkflow.upper()
@@ -190,3 +209,24 @@ class SubworkflowInstall(object):
             (bool): Whether the operation was successful of not
         """
         return modules_repo.install_subworkflow(subworkflow_name, install_dir, subworkflow_version)
+
+    def get_modules_subworkflows_to_install(self, subworkflow_dir):
+        """
+        Parse the subworkflow test main.nf file to retrieve all imported modules and subworkflows.
+        """
+        modules = []
+        subworkflows = []
+        with open(Path(subworkflow_dir, "main.nf"), "r") as fh:
+            for line in fh:
+                regex = re.compile(
+                    r"include(?: *{ *)([a-zA-Z\_0-9]*)(?: *as *)?(?:[a-zA-Z\_0-9]*)?(?: *})(?: *from *)(?:'|\")(.*)(?:'|\")"
+                )
+                match = regex.match(line)
+                if match and len(match.groups()) == 2:
+                    name, link = match.groups()
+                    if link.startswith("../../../"):
+                        name_split = name.lower().split("_")
+                        modules.append("/".join(name_split))
+                    elif link.startswith("../"):
+                        subworkflows.append(name.lower())
+        return modules, subworkflows
