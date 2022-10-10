@@ -38,5 +38,5 @@ jobs:
           docker tag nfcore/tools:latest nfcore/tools:${{ github.event.release.tag_name }}
           docker push nfcore/tools:${{ github.event.release.tag_name }}
           docker push nfcore/gitpod:latest
-          docker tag nfcore/gitpod:latest nfcore/tools:${{ github.event.release.tag_name }}
+          docker tag nfcore/gitpod:latest nfcore/gitpod:${{ github.event.release.tag_name }}
           docker push nfcore/gitpod:${{ github.event.release.tag_name }}

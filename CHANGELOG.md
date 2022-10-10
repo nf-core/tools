@@ -1,9 +1,25 @@
 # nf-core/tools: Changelog
 
+## v2.7dev
+
+### Template
+
+- Fix lint warnings for `samplesheet_check.nf` module
+
+### Linting
+
+### General
+
+- Fix error in tagging GitPod docker images during releases
+- Don't remove local copy of modules repo, only update it with fetch ([#1879](https://github.com/nf-core/tools/pull/1879))
+
+### Modules
+
 ## [v2.6 - Tin Octopus](https://github.com/nf-core/tools/releases/tag/2.6) - [2022-10-04]
 
 ### Template
 
+- Add template for subworkflows
 - Add `actions/upload-artifact` step to the awstest workflows, to expose the debug log file
 - Add `prettier` as a requirement to Gitpod Dockerimage
 - Bioconda incompatible conda channel setups now result in more informative error messages ([#1812](https://github.com/nf-core/tools/pull/1812))
@@ -26,6 +42,7 @@
 - Schema: Remove `allOf` if no definition groups are left.
 - Use contextlib to temporarily change working directories ([#1819](https://github.com/nf-core/tools/pull/1819))
 - More helpful error messages if `nf-core download` can't parse a singularity image download
+- Add `nf-core subworkflows create` command
 
 ### Modules
 
