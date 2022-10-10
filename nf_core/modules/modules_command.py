@@ -169,8 +169,7 @@ class ModuleCommand:
             if len(wrong_location_modules) > 0:
                 log.info("The modules folder structure is outdated. Reinstalling modules.")
                 # Remove the local copy of the modules repository
-                log.info(f"Removing '{self.modules_repo.local_repo_dir}'")
-                shutil.rmtree(self.modules_repo.local_repo_dir)
+                log.info(f"Updating '{self.modules_repo.local_repo_dir}'")
                 self.modules_repo.setup_local_repo(
                     self.modules_repo.remote_url, self.modules_repo.branch, self.hide_progress
                 )
