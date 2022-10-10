@@ -146,7 +146,7 @@ def nf_core_cli(verbose, log_file):
     default="release",
     help="How to sort listed pipelines",
 )
-@click.option("--json", is_flag=True, default=False, help="Print full output as JSON")
+@click.option("--json", is_flag=True, default=False, help="Print unfiltered list as JSON")
 @click.option("--show-archived", is_flag=True, default=False, help="Print archived workflows")
 def list(keywords, sort, json, show_archived):
     """

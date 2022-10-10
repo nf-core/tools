@@ -209,7 +209,7 @@ or number of GitHub stars (`-s stars`).
 
 ![`nf-core list -s stars`](docs/images/nf-core-list-stars.svg)
 
-To return results as JSON output for downstream use, use the `--json` flag.
+To return the complete list, without any filtering, as JSON output for downstream use, use the `--json` flag.
 
 Archived pipelines are not returned by default. To include them, use the `--show_archived` flag.
 
