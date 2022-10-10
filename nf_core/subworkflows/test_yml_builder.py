@@ -177,7 +177,7 @@ class SubworkflowTestYmlBuilder(object):
                 ep_test["command"] = rich.prompt.Prompt.ask("[violet]Test command", default=default_val).strip()
 
         while len(ep_test["tags"]) == 0:
-            tag_defaults = []
+            tag_defaults = ["subworkflows"]
             tag_defaults.append("subworkflows/" + self.subworkflow)
             tag_defaults += self.parse_module_tags()
             if self.no_prompts:

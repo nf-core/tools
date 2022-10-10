@@ -3,7 +3,8 @@
 - name: "{{ subworkflow_name }}"
   command: nextflow run ./tests/subworkflows/nf-core/{{ subworkflow_dir }} -entry test_{{ subworkflow_name }} -c ./tests/config/nextflow.config
   tags:
-    - "{{ subworkflow_name }}"
+    - "subworkflows"
+    - "subworkflows/{{ subworkflow_name }}"
   files:
     - path: "output/{{ subworkflow_name }}/test.bam"
       md5sum: e667c7caad0bc4b7ac383fd023c654fc
