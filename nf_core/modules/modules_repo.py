@@ -440,7 +440,7 @@ class ModulesRepo(object):
         commits_old = [
             {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_old
         ]
-        commits = commits_new + commits_old
+        commits = iter(commits_new + commits_old)
         return commits
 
     def get_subworkflow_git_log(self, subworkflow_name, depth=None, since="2021-07-07T00:00:00Z"):
