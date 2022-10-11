@@ -2,6 +2,7 @@
 """ Tests covering the sync command
 """
 
+import git
 import json
 import os
 import pytest
@@ -27,6 +28,8 @@ class TestModules(unittest.TestCase):
             "testing", "test pipeline", "tester", outdir=self.pipeline_dir, plain=True
         )
         self.create_obj.init_pipeline()
+        self.remote_path = os.path.join(self.tmp_dir, "remote_repo")
+        self.remote_repo = git.Repo.init(self.remote_path, bare=True)
 
     def tearDown(self):
         if os.path.exists(self.tmp_dir):
@@ -194,6 +197,29 @@ class TestModules(unittest.TestCase):
         assert psync.merge_branch in psync.repo.branches
         for branch_no in [2, 3]:
             assert f"{psync.original_merge_branch}-{branch_no}" in psync.repo.branches
+
+    def test_push_merge_branch(self):
+        """Try pushing merge branch"""
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.repo.create_remote("origin", self.remote_path)
+
+        psync.create_merge_base_branch()
+        psync.push_merge_branch()
+
+        assert psync.merge_branch in [b.name for b in self.remote_repo.branches]
+
+    def test_push_merge_branch_without_create_branch(self):
+        """Try pushing merge branch without creating first"""
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.repo.create_remote("origin", self.remote_path)
+
+        with pytest.raises(nf_core.sync.PullRequestException) as exc_info:
+            psync.push_merge_branch()
+        assert exc_info.value.args[0].startswith(f"Could not push branch '{psync.merge_branch}'")
 
     def mocked_requests_get(url, **kwargs):
         """Helper function to emulate POST requests responses from the web"""
