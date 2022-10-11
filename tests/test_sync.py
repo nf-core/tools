@@ -2,14 +2,15 @@
 """ Tests covering the sync command
 """
 
-import git
 import json
 import os
-import pytest
 import shutil
 import tempfile
 import unittest
 from unittest import mock
+
+import git
+import pytest
 
 import nf_core.create
 import nf_core.sync

@@ -5,10 +5,10 @@
 import json
 import logging
 import os
+import re
 import shutil
 
 import git
-import re
 import requests
 import requests_cache
 import rich
