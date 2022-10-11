@@ -171,6 +171,7 @@ class SubworkflowInstall(object):
         )
 
         # Update module.json with newly installed subworkflow
+        modules_json.load()
         modules_json.update_subworkflow(self.modules_repo, subworkflow, version)
         return True
 
