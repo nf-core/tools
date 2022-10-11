@@ -29,7 +29,7 @@ class ModuleInstall(ModuleCommand):
         self.prompt = prompt
         self.sha = sha
 
-    def install(self, module):
+    def install(self, module, silent=False):
         if self.repo_type == "modules":
             log.error("You cannot install a module in a clone of nf-core/modules")
             return False
@@ -86,17 +86,24 @@ class ModuleInstall(ModuleCommand):
 
         # Check that the module is not already installed
         if (current_version is not None and os.path.exists(module_dir)) and not self.force:
+            log.info("Module is already installed.")
 
-            log.error("Module is already installed.")
-            repo_flag = (
-                "" if self.modules_repo.repo_path == NF_CORE_MODULES_NAME else f"-g {self.modules_repo.remote_url} "
-            )
-            branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
+            self.force = questionary.confirm(
+                f"Module {module} is already installed. Do you want to force the reinstallation?",
+                style=nf_core.utils.nfcore_question_style,
+                default=False,
+            ).unsafe_ask()
 
-            log.info(
-                f"To update '{module}' run 'nf-core modules {repo_flag}{branch_flag}update {module}'. To force reinstallation use '--force'"
-            )
-            return False
+            if not self.force:
+                repo_flag = (
+                    "" if self.modules_repo.repo_path == NF_CORE_MODULES_NAME else f"-g {self.modules_repo.remote_url} "
+                )
+                branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
+
+                log.info(
+                    f"To update '{module}' run 'nf-core modules {repo_flag}{branch_flag}update {module}'. To force reinstallation use '--force'"
+                )
+                return False
 
         if self.sha:
             version = self.sha
@@ -135,10 +142,14 @@ class ModuleInstall(ModuleCommand):
         if not self.install_module_files(module, version, self.modules_repo, install_folder):
             return False
 
-        # Print include statement
-        module_name = "_".join(module.upper().split("/"))
-        log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(install_folder, module)}/main'")
+        if not silent:
+            # Print include statement
+            module_name = "_".join(module.upper().split("/"))
+            log.info(
+                f"Include statement: include {{ {module_name} }} from '.{os.path.join(install_folder, module)}/main'"
+            )
 
         # Update module.json with newly installed module
+        modules_json.load()
         modules_json.update(self.modules_repo, module, version)
         return True
