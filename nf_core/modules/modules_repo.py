@@ -381,6 +381,10 @@ class ModulesRepo(object):
 
         # Copy the files from the repo to the install folder
         shutil.copytree(self.get_subworkflow_dir(subworkflow_name), Path(install_dir, subworkflow_name))
+        if Path(install_dir, subworkflow_name, "nextflow.config").is_file():
+            log.info(
+                f"Subworkflow config include statement: includeConfig '{Path(install_dir, subworkflow_name, 'nextflow.config')}'"
+            )
 
         # Switch back to the tip of the branch
         self.checkout_branch()
