@@ -61,15 +61,13 @@ class TestSubworkflows(unittest.TestCase):
     # Test of the individual modules commands. #
     ############################################
 
-    # from .subworkflows.create import (
-    #     test_subworkflows_create_fail_exists,
-    #     test_subworkflows_create_nfcore_modules,
-    #     test_subworkflows_create_succeed,
-    # )
+    from .subworkflows.create import (
+        test_subworkflows_create_fail_exists,
+        test_subworkflows_create_nfcore_modules,
+        test_subworkflows_create_succeed,
+    )
 
     from .subworkflows.list import (
-        # test_subworkflows_install_gitlab_and_list_pipeline,
         test_subworkflows_install_and_list_pipeline,
         test_subworkflows_list_remote,
-        # test_subworkflows_list_remote_gitlab,
     )
