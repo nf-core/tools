@@ -2,11 +2,9 @@ import json
 import logging
 import os
 
-
 import rich
 
 import nf_core.modules.module_utils
-
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME, ModulesRepo
 
@@ -54,7 +52,9 @@ class SubworkflowList(object):
         if self.remote:
 
             # Filter the subworkflows by keywords
-            subworkflows = [swf for swf in self.modules_repo.get_avail_subworkflows() if all(k in swf for k in keywords)]
+            subworkflows = [
+                swf for swf in self.modules_repo.get_avail_subworkflows() if all(k in swf for k in keywords)
+            ]
 
             # Nothing found
             if len(subworkflows) == 0:
@@ -127,7 +127,9 @@ class SubworkflowList(object):
                             date = "[red]Not Available"
                             message = "[red]Not Available"
                     else:
-                        log.warning(f"Commit SHA for subworkflow '{install_dir}/{subworkflow}' is missing from 'modules.json'")
+                        log.warning(
+                            f"Commit SHA for subworkflow '{install_dir}/{subworkflow}' is missing from 'modules.json'"
+                        )
                         version_sha = "[red]Not Available"
                         date = "[red]Not Available"
                         message = "[red]Not Available"

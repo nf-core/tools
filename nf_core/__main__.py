@@ -956,6 +956,7 @@ def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
         log.critical(e)
         sys.exit(1)
 
+
 # nf-core subworkflows list subcommands
 @subworkflows.group()
 @click.pass_context
@@ -1017,6 +1018,7 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
+
 
 # nf-core subworkflows install
 @subworkflows.command()
