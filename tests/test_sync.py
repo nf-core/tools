@@ -353,6 +353,52 @@ class TestModules(unittest.TestCase):
                 else:
                     mock_close_open_pr.assert_any_call(pr)
 
+    @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
+    @mock.patch("nf_core.utils.gh_api.patch", side_effect=mocked_requests_patch)
+    def test_close_open_pr(self, mock_patch, mock_post):
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.gh_api.post = mock_post
+        psync.gh_api.patch = mock_patch
+        psync.gh_username = "bad_url"
+        psync.gh_repo = "bad_url/response"
+        os.environ["GITHUB_AUTH_TOKEN"] = "test"
+        pr = {
+            "state": "open",
+            "head": {"ref": "nf-core-template-merge-3"},
+            "base": {"ref": "master"},
+            "html_url": "pr_html_url",
+            "url": "url_to_update_pr",
+            "comments_url": "pr_comments_url",
+        }
+
+        assert psync.close_open_pr(pr)
+        assert mock_patch.called_once_with("url_to_update_pr")
+
+    @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
+    @mock.patch("nf_core.utils.gh_api.patch", side_effect=mocked_requests_patch)
+    def test_close_open_pr_fail(self, mock_patch, mock_post):
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.gh_api.post = mock_post
+        psync.gh_api.patch = mock_patch
+        psync.gh_username = "bad_url"
+        psync.gh_repo = "bad_url/response"
+        os.environ["GITHUB_AUTH_TOKEN"] = "test"
+        pr = {
+            "state": "open",
+            "head": {"ref": "nf-core-template-merge-3"},
+            "base": {"ref": "master"},
+            "html_url": "pr_html_url",
+            "url": "bad_url_to_update_pr",
+            "comments_url": "pr_comments_url",
+        }
+
+        assert not psync.close_open_pr(pr)
+        assert mock_patch.called_once_with("bad_url_to_update_pr")
+
     def test_reset_target_dir(self):
         """Try resetting target pipeline directory"""
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
