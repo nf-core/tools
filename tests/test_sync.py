@@ -39,11 +39,9 @@ class TestModules(unittest.TestCase):
     def test_inspect_sync_dir_notgit(self, tmp_dir):
         """Try syncing an empty directory"""
         psync = nf_core.sync.PipelineSync(tmp_dir)
-        try:
+        with pytest.raises(nf_core.sync.SyncException) as exc_info:
             psync.inspect_sync_dir()
-            raise UserWarning("Should have hit an exception")
-        except nf_core.sync.SyncException as e:
-            assert "does not appear to be a git repository" in e.args[0]
+        assert "does not appear to be a git repository" in exc_info.value.args[0]
 
     def test_inspect_sync_dir_dirty(self):
         """Try syncing a pipeline with uncommitted changes"""
@@ -53,40 +51,33 @@ class TestModules(unittest.TestCase):
         # Try to sync, check we halt with the right error
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         try:
-            psync.inspect_sync_dir()
-            raise UserWarning("Should have hit an exception")
-        except nf_core.sync.SyncException as e:
+            with pytest.raises(nf_core.sync.SyncException) as exc_info:
+                psync.inspect_sync_dir()
+            assert exc_info.value.args[0].startswith("Uncommitted changes found in pipeline directory!")
+        finally:
             os.remove(test_fn)
-            assert e.args[0].startswith("Uncommitted changes found in pipeline directory!")
-        except Exception as e:
-            os.remove(test_fn)
-            raise e
 
     def test_get_wf_config_no_branch(self):
         """Try getting a workflow config when the branch doesn't exist"""
         # Try to sync, check we halt with the right error
         psync = nf_core.sync.PipelineSync(self.pipeline_dir, from_branch="foo")
-        try:
+        with pytest.raises(nf_core.sync.SyncException) as exc_info:
             psync.inspect_sync_dir()
             psync.get_wf_config()
-            raise UserWarning("Should have hit an exception")
-        except nf_core.sync.SyncException as e:
-            assert e.args[0] == "Branch `foo` not found!"
+        assert exc_info.value.args[0] == "Branch `foo` not found!"
 
     def test_get_wf_config_missing_required_config(self):
         """Try getting a workflow config, then make it miss a required config option"""
         # Try to sync, check we halt with the right error
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.required_config_vars = ["fakethisdoesnotexist"]
-        try:
+        with pytest.raises(nf_core.sync.SyncException) as exc_info:
             psync.inspect_sync_dir()
             psync.get_wf_config()
-            raise UserWarning("Should have hit an exception")
-        except nf_core.sync.SyncException as e:
-            # Check that we did actually get some config back
-            assert psync.wf_config["params.validate_params"] == "true"
-            # Check that we raised because of the missing fake config var
-            assert e.args[0] == "Workflow config variable `fakethisdoesnotexist` not found!"
+        # Check that we did actually get some config back
+        assert psync.wf_config["params.validate_params"] == "true"
+        # Check that we raised because of the missing fake config var
+        assert exc_info.value.args[0] == "Workflow config variable `fakethisdoesnotexist` not found!"
 
     def test_checkout_template_branch(self):
         """Try checking out the TEMPLATE branch of the pipeline"""
@@ -169,11 +160,9 @@ class TestModules(unittest.TestCase):
         open(test_fn, "a").close()
         psync.commit_template_changes()
         # Try to push changes
-        try:
+        with pytest.raises(nf_core.sync.PullRequestException) as exc_info:
             psync.push_template_branch()
-            raise UserWarning("Should have hit an exception")
-        except nf_core.sync.PullRequestException as e:
-            assert e.args[0].startswith("Could not push TEMPLATE branch")
+        assert exc_info.value.args[0].startswith("Could not push TEMPLATE branch")
 
     def test_create_merge_base_branch(self):
         """Try creating a merge base branch"""
@@ -326,11 +315,11 @@ class TestModules(unittest.TestCase):
         psync.gh_username = "bad_url"
         psync.gh_repo = "bad_url/response"
         os.environ["GITHUB_AUTH_TOKEN"] = "test"
-        try:
+        with pytest.raises(nf_core.sync.PullRequestException) as exc_info:
             psync.make_pull_request()
-            raise UserWarning("Should have hit an exception")
-        except nf_core.sync.PullRequestException as e:
-            assert e.args[0].startswith("Something went badly wrong - GitHub API PR failed - got return code 404")
+        assert exc_info.value.args[0].startswith(
+            "Something went badly wrong - GitHub API PR failed - got return code 404"
+        )
 
     @mock.patch("nf_core.utils.gh_api.get", side_effect=mocked_requests_get)
     def test_close_open_template_merge_prs(self, mock_get):
