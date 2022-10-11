@@ -305,9 +305,9 @@ class SubworkflowTestYmlBuilder(object):
             for i in range(len(test_files)):
                 if test_files[i].get("md5sum") and not test_files[i].get("md5sum") == test_files_repeat[i]["md5sum"]:
                     test_files[i].pop("md5sum")
-                    test_files[i][
-                        "contains"
-                    ] = [" # TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead "]
+                    test_files[i]["contains"] = [
+                        " # TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead "
+                    ]
 
         if len(test_files) == 0:
             raise UserWarning(f"Could not find any test result files in '{results_dir}'")
