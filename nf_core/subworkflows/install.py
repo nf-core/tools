@@ -9,14 +9,14 @@ import nf_core.modules.module_utils
 import nf_core.utils
 from nf_core.modules.install import ModuleInstall
 from nf_core.modules.modules_json import ModulesJson
+from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
 
-# from .modules_command import ModuleCommand
-from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME, ModulesRepo
+from .subworkflow_command import SubworkflowCommand
 
 log = logging.getLogger(__name__)
 
 
-class SubworkflowInstall(object):
+class SubworkflowInstall(SubworkflowCommand):
     def __init__(
         self,
         pipeline_dir,
@@ -27,19 +27,10 @@ class SubworkflowInstall(object):
         branch=None,
         no_pull=False,
     ):
-        # super().__init__(pipeline_dir, remote_url, branch, no_pull)
-        self.dir = pipeline_dir
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha
-        self.modules_repo = ModulesRepo(remote_url, branch, no_pull)
-        try:
-            if self.dir:
-                self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
-            else:
-                self.repo_type = None
-        except LookupError as e:
-            raise UserWarning(e)
 
     def install(self, subworkflow, silent=False):
         if self.repo_type == "modules":
@@ -180,42 +171,6 @@ class SubworkflowInstall(object):
         modules_json.load()
         modules_json.update_subworkflow(self.modules_repo, subworkflow, version)
         return True
-
-    def has_valid_directory(self):
-        """Check that we were given a pipeline"""
-        if self.dir is None or not os.path.exists(self.dir):
-            log.error(f"Could not find pipeline: {self.dir}")
-            return False
-        main_nf = os.path.join(self.dir, "main.nf")
-        nf_config = os.path.join(self.dir, "nextflow.config")
-        if not os.path.exists(main_nf) and not os.path.exists(nf_config):
-            raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.dir}'")
-        return True
-
-    def clear_subworkflow_dir(self, subworkflow_name, subworkflow_dir):
-        """Removes all files in the subworkflow directory"""
-        try:
-            shutil.rmtree(subworkflow_dir)
-            log.debug(f"Successfully removed {subworkflow_name} subworkflow")
-            return True
-        except OSError as e:
-            log.error(f"Could not remove subworkflow: {e}")
-            return False
-
-    def install_subworkflow_files(self, subworkflow_name, subworkflow_version, modules_repo, install_dir):
-        """
-        Installs a subworkflow into the given directory
-
-        Args:
-            subworkflow_name (str): The name of the subworkflow
-            subworkflow_version (str): Git SHA for the version of the subworkflow to be installed
-            modules_repo (ModulesRepo): A correctly configured ModulesRepo object
-            install_dir (str): The path to where the subworkflow should be installed (should be the 'subworkflow/' dir of the pipeline)
-
-        Returns:
-            (bool): Whether the operation was successful of not
-        """
-        return modules_repo.install_subworkflow(subworkflow_name, install_dir, subworkflow_version)
 
     def get_modules_subworkflows_to_install(self, subworkflow_dir):
         """
