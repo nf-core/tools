@@ -237,9 +237,27 @@ class TestModules(unittest.TestCase):
             def json(self):
                 return self.data
 
-        url_template = "https://api.github.com/repos/{}/response/pulls?head=TEMPLATE&base=None"
-        if url == url_template.format("no_existing_pr"):
+        url_template = "https://api.github.com/repos/{}/response/"
+        if url == os.path.join(url_template.format("no_existing_pr"), "pulls?head=TEMPLATE&base=None"):
             response_data = []
+            return MockResponse(response_data, 200)
+        elif url == os.path.join(url_template.format("list_prs"), "pulls"):
+            response_data = [
+                {
+                    "state": "closed",
+                    "head": {"ref": "nf-core-template-merge-2"},
+                    "base": {"ref": "master"},
+                    "html_url": "pr_url",
+                }
+            ] + [
+                {
+                    "state": "open",
+                    "head": {"ref": f"nf-core-template-merge-{branch_no}"},
+                    "base": {"ref": "master"},
+                    "html_url": "pr_url",
+                }
+                for branch_no in range(3, 7)
+            ]
             return MockResponse(response_data, 200)
 
         return MockResponse({"html_url": url}, 404)
@@ -313,6 +331,27 @@ class TestModules(unittest.TestCase):
             raise UserWarning("Should have hit an exception")
         except nf_core.sync.PullRequestException as e:
             assert e.args[0].startswith("Something went badly wrong - GitHub API PR failed - got return code 404")
+
+    @mock.patch("nf_core.utils.gh_api.get", side_effect=mocked_requests_get)
+    def test_close_open_template_merge_prs(self, mock_get):
+        """Try closing all open prs"""
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.gh_api.get = mock_get
+        psync.gh_username = "list_prs"
+        psync.gh_repo = "list_prs/response"
+        os.environ["GITHUB_AUTH_TOKEN"] = "test"
+
+        with mock.patch("nf_core.sync.PipelineSync.close_open_pr") as mock_close_open_pr:
+            psync.close_open_template_merge_prs()
+
+            prs = mock_get(f"https://api.github.com/repos/{psync.gh_repo}/pulls").data
+            for pr in prs:
+                if pr["state"] != "open":
+                    continue
+                else:
+                    mock_close_open_pr.assert_any_call(pr)
 
     def test_reset_target_dir(self):
         """Try resetting target pipeline directory"""
