@@ -51,6 +51,9 @@ class TestSubworkflows(unittest.TestCase):
             "mypipeline", "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
 
+        # Set up install objects
+        self.swfs_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=True)
+
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
 
@@ -58,8 +61,15 @@ class TestSubworkflows(unittest.TestCase):
     # Test of the individual modules commands. #
     ############################################
 
-    from .subworkflows.create import (
-        test_subworkflows_create_fail_exists,
-        test_subworkflows_create_nfcore_modules,
-        test_subworkflows_create_succeed,
+    # from .subworkflows.create import (
+    #     test_subworkflows_create_fail_exists,
+    #     test_subworkflows_create_nfcore_modules,
+    #     test_subworkflows_create_succeed,
+    # )
+
+    from .subworkflows.list import (
+        # test_subworkflows_install_gitlab_and_list_pipeline,
+        test_subworkflows_install_and_list_pipeline,
+        test_subworkflows_list_remote,
+        # test_subworkflows_list_remote_gitlab,
     )
