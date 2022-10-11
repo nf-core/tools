@@ -381,6 +381,10 @@ class ModulesRepo(object):
 
         # Copy the files from the repo to the install folder
         shutil.copytree(self.get_subworkflow_dir(subworkflow_name), Path(install_dir, subworkflow_name))
+        if Path(install_dir, subworkflow_name, "nextflow.config").is_file():
+            log.info(
+                f"Subworkflow config include statement: includeConfig '{Path(install_dir, subworkflow_name, 'nextflow.config')}'"
+            )
 
         # Switch back to the tip of the branch
         self.checkout_branch()
@@ -430,8 +434,17 @@ class ModulesRepo(object):
         """
         self.checkout_branch()
         module_path = os.path.join("modules", self.repo_path, module_name)
-        commits = self.repo.iter_commits(max_count=depth, paths=module_path)
-        commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
+        commits_new = self.repo.iter_commits(max_count=depth, paths=module_path)
+        commits_new = [
+            {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_new
+        ]
+        # Grab commits also from previous modules structure
+        module_path = os.path.join("modules", module_name)
+        commits_old = self.repo.iter_commits(max_count=depth, paths=module_path)
+        commits_old = [
+            {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_old
+        ]
+        commits = iter(commits_new + commits_old)
         return commits
 
     def get_subworkflow_git_log(self, subworkflow_name, depth=None, since="2021-07-07T00:00:00Z"):
