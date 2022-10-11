@@ -196,11 +196,6 @@ conda update nf-core
 if you used pip:
 ```bash
 pip install --upgrade nf-core
-```
-or
-```bash
-pip install -U nf-core
-```
 Please refer to the respective documentation for further details to manage packages, as for example [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-pkgs.html#updating-packages) or [pip](https://packaging.python.org/en/latest/tutorials/installing-packages/#upgrading-packages).
 
 ## Listing pipelines
