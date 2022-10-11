@@ -29,7 +29,7 @@ class ModuleInstall(ModuleCommand):
         self.prompt = prompt
         self.sha = sha
 
-    def install(self, module):
+    def install(self, module, silent=False):
         if self.repo_type == "modules":
             log.error("You cannot install a module in a clone of nf-core/modules")
             return False
@@ -87,7 +87,6 @@ class ModuleInstall(ModuleCommand):
         # Check that the module is not already installed
         if (current_version is not None and os.path.exists(module_dir)) and not self.force:
             log.info("Module is already installed.")
-            print(f"Module {module} is already installed.")
 
             self.force = questionary.confirm(
                 f"Module {module} is already installed. Do you want to force the reinstallation?",
@@ -143,10 +142,14 @@ class ModuleInstall(ModuleCommand):
         if not self.install_module_files(module, version, self.modules_repo, install_folder):
             return False
 
-        # Print include statement
-        module_name = "_".join(module.upper().split("/"))
-        log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(install_folder, module)}/main'")
+        if not silent:
+            # Print include statement
+            module_name = "_".join(module.upper().split("/"))
+            log.info(
+                f"Include statement: include {{ {module_name} }} from '.{os.path.join(install_folder, module)}/main'"
+            )
 
         # Update module.json with newly installed module
+        modules_json.load()
         modules_json.update(self.modules_repo, module, version)
         return True
