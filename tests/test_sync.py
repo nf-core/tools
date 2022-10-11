@@ -92,6 +92,18 @@ class TestModules(unittest.TestCase):
         psync.get_wf_config()
         psync.checkout_template_branch()
 
+    def test_checkout_template_branch_no_template(self):
+        """Try checking out the TEMPLATE branch of the pipeline when it does not exist"""
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+
+        psync.repo.delete_head("TEMPLATE")
+
+        with pytest.raises(nf_core.sync.SyncException) as exc_info:
+            psync.checkout_template_branch()
+        assert exc_info.value.args[0] == "Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'"
+
     def test_delete_template_branch_files(self):
         """Confirm that we can delete all files in the TEMPLATE branch"""
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
