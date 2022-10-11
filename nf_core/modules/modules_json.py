@@ -34,6 +34,7 @@ class ModulesJson:
         """
         self.dir = pipeline_dir
         self.modules_dir = Path(self.dir, "modules")
+        self.subworkflows_dir = Path(self.dir, "subworkflows")
         self.modules_json = None
         self.pipeline_modules = None
         self.pipeline_subworkflows = None
@@ -340,40 +341,55 @@ class ModulesJson:
         # Add all modules from modules.json to missing_installation
         missing_installation = copy.deepcopy(self.modules_json["repos"])
         # Obtain the path of all installed modules
-        dirs = [
+        module_dirs = [
             Path(dir_name).relative_to(self.modules_dir)
             for dir_name, _, file_names in os.walk(self.modules_dir)
             if "main.nf" in file_names and not str(Path(dir_name).relative_to(self.modules_dir)).startswith("local")
         ]
+        untracked_dirs_modules, missing_installation = self.parse_dirs(module_dirs, missing_installation, "modules")
+
+        # Obtain the path of all installed subworkflows
+        subworkflow_dirs = [
+            Path(dir_name).relative_to(self.subworkflows_dir)
+            for dir_name, _, file_names in os.walk(self.subworkflows_dir)
+            if "main.nf" in file_names
+            and not str(Path(dir_name).relative_to(self.subworkflows_dir)).startswith("local")
+        ]
+        untracked_dirs_subworkflows, missing_installation = self.parse_dirs(
+            subworkflow_dirs, missing_installation, "subworkflows"
+        )
+
+        return untracked_dirs_modules, untracked_dirs_subworkflows, missing_installation
+
+    def parse_dirs(self, dirs, missing_installation, component_type):
         untracked_dirs = []
         for dir in dirs:
-            # Check if the modules directory exists in modules.json
+            # Check if the module/ssubworkflows directory exists in modules.json
             install_dir = dir.parts[0]
-            module = str(Path(*dir.parts[1:]))
-            module_in_file = False
+            component = str(Path(*dir.parts[1:]))
+            component_in_file = False
             git_url = None
             for repo in missing_installation:
-                for dir_name in missing_installation[repo]["modules"]:
-                    if module in missing_installation[repo]["modules"][dir_name]:
-                        module_in_file = True
+                for dir_name in missing_installation[repo][component_type]:
+                    if component in missing_installation[repo][component_type][dir_name]:
+                        component_in_file = True
                         git_url = repo
                         break
-            if not module_in_file:
-                # If it is not, add it to the list of missing modules
-                untracked_dirs.append(module)
+            if not component_in_file:
+                # If it is not, add it to the list of missing subworkflow
+                untracked_dirs.append(component)
             else:
-                # If it does, remove the module from missing_installation
+                # If it does, remove the subworkflow from missing_installation
                 module_repo = missing_installation[git_url]
                 # Check if the entry has a git sha and branch before removing
-                modules = module_repo["modules"][install_dir]
-                if "git_sha" not in modules[module] or "branch" not in modules[module]:
-                    self.determine_module_branches_and_shas(module, git_url, module_repo["base_path"], [module])
-                # Remove the module from modules without installation
-                module_repo["modules"][install_dir].pop(module)
-                if len(module_repo["modules"][install_dir]) == 0:
-                    # If no modules with missing installation left, remove the git_url from missing_installation
+                components_dict = module_repo[component_type][install_dir]
+                if "git_sha" not in components_dict[component] or "branch" not in components_dict[component]:
+                    self.determine_module_branches_and_shas(component, git_url, module_repo["base_path"], [component])
+                # Remove the subworkflow from subworkflows without installation
+                module_repo[component_type][install_dir].pop(component)
+                if len(module_repo[component_type][install_dir]) == 0:
+                    # If no subworkflows with missing installation left, remove the git_url from missing_installation
                     missing_installation.pop(git_url)
-
         return untracked_dirs, missing_installation
 
     def has_git_url_and_modules(self):
@@ -457,7 +473,11 @@ class ModulesJson:
             log.info("The 'modules.json' file is not up to date. Recreating the 'module.json' file.")
             self.create()
 
-        missing_from_modules_json, missing_installation = self.unsynced_modules()
+        (
+            modules_missing_from_modules_json,
+            subworkflows_missing_from_modules_json,
+            missing_installation,
+        ) = self.unsynced_modules()
 
         # If there are any modules left in 'modules.json' after all installed are removed,
         # we try to reinstall them
