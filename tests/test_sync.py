@@ -172,6 +172,29 @@ class TestModules(unittest.TestCase):
         except nf_core.sync.PullRequestException as e:
             assert e.args[0].startswith("Could not push TEMPLATE branch")
 
+    def test_create_merge_base_branch(self):
+        """Try creating a merge base branch"""
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+
+        psync.create_merge_base_branch()
+
+        assert psync.merge_branch in psync.repo.branches
+
+    def test_create_merge_base_branch_thrice(self):
+        """Try creating a merge base branch thrice"""
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+
+        for _ in range(3):
+            psync.create_merge_base_branch()
+
+        assert psync.merge_branch in psync.repo.branches
+        for branch_no in [2, 3]:
+            assert f"{psync.original_merge_branch}-{branch_no}" in psync.repo.branches
+
     def mocked_requests_get(url, **kwargs):
         """Helper function to emulate POST requests responses from the web"""
 

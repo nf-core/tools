@@ -8,6 +8,7 @@ import os
 import shutil
 
 import git
+import re
 import requests
 import requests_cache
 import rich
@@ -67,7 +68,8 @@ class PipelineSync(object):
         self.pipeline_dir = os.path.abspath(pipeline_dir)
         self.from_branch = from_branch
         self.original_branch = None
-        self.merge_branch = f"nf-core-template-merge-{nf_core.__version__}"
+        self.original_merge_branch = f"nf-core-template-merge-{nf_core.__version__}"
+        self.merge_branch = self.original_merge_branch
         self.made_changes = False
         self.make_pr = make_pr
         self.gh_pr_returned_data = {}
@@ -270,17 +272,18 @@ class PipelineSync(object):
         # Check if branch exists already
         branch_list = [b.name for b in self.repo.branches]
         if self.merge_branch in branch_list:
-            original_merge_branch = self.merge_branch
-            # Try to create new branch with number at the end
-            # If <branch_name>-2 already exists, increase the number until branch is new
-            branch_no = 2
-            self.merge_branch = f"{original_merge_branch}-{branch_no}"
-            while self.merge_branch in branch_list:
-                branch_no += 1
-                self.merge_branch = f"{original_merge_branch}-{branch_no}"
-            log.info(
-                f"Branch already existed: '{original_merge_branch}', creating branch '{self.merge_branch}' instead."
+            merge_branch_format = re.compile(rf"{self.original_merge_branch}-(\d+)")
+            max_branch = max(
+                [1]
+                + [
+                    int(merge_branch_format.match(branch).groups()[0])
+                    for branch in branch_list
+                    if merge_branch_format.match(branch)
+                ]
             )
+            new_branch = f"{self.original_merge_branch}-{max_branch+1}"
+            log.info(f"Branch already existed: '{self.merge_branch}', creating branch '{new_branch}' instead.")
+            self.merge_branch = new_branch
 
         # Create new branch and checkout
         log.info(f"Checking out merge base branch '{self.merge_branch}'")
