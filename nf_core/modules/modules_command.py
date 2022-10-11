@@ -12,8 +12,8 @@ class ModuleCommand(Components):
     Base class for the 'nf-core modules' commands
     """
 
-    def __init__(self, pipeline_dir, remote_url=None, branch=None, no_pull=False):
-        super().__init__("modules", pipeline_dir, remote_url, branch, no_pull)
+    def __init__(self, dir, remote_url=None, branch=None, no_pull=False):
+        super().__init__("modules", dir, remote_url, branch, no_pull)
 
     def get_local_modules(self):
         """
