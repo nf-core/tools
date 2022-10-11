@@ -169,6 +169,11 @@ class SubworkflowInstall(object):
         log.info(
             f"Include statement: include {{ {subworkflow_name} }} from '.{os.path.join(install_folder, subworkflow)}/main'"
         )
+        subworkflow_config = os.path.join(install_folder, subworkflow, "nextflow.config")
+        if os.path.isfile(subworkflow_config):
+            log.info(
+                f"Subworkflow config include statement: includeConfig '{subworkflow_config}'"
+            )
 
         # Update module.json with newly installed subworkflow
         modules_json.update_subworkflow(self.modules_repo, subworkflow, version)
