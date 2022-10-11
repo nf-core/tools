@@ -58,7 +58,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core subworkflows": [
         {
             "name": "For pipelines",
-            "commands": ["install"],
+            "commands": ["list", "install"],
         },
         {
             "name": "Developing new subworkflows",
@@ -956,6 +956,67 @@ def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
         log.critical(e)
         sys.exit(1)
 
+# nf-core subworkflows list subcommands
+@subworkflows.group()
+@click.pass_context
+def list(ctx):
+    """
+    List subworkflows in a local pipeline or remote repository.
+    """
+    pass
+
+
+# nf-core subworkflows list remote
+@list.command()
+@click.pass_context
+@click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
+@click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
+def remote(ctx, keywords, json):
+    """
+    List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
+    """
+    try:
+        subworkflows_list = nf_core.subworkflows.SubworkflowList(
+            None,
+            True,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        stdout.print(subworkflows_list.list_subworkflows(keywords, json))
+    except (UserWarning, LookupError) as e:
+        log.critical(e)
+        sys.exit(1)
+
+
+# nf-core subworkflows list local
+@list.command()
+@click.pass_context
+@click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
+@click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
+)
+def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
+    """
+    List subworkflows installed locally in a pipeline
+    """
+    try:
+        subworkflows_list = nf_core.subworkflows.SubworkflowList(
+            dir,
+            False,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        stdout.print(subworkflows_list.list_subworkflows(keywords, json))
+    except (UserWarning, LookupError) as e:
+        log.error(e)
+        sys.exit(1)
 
 # nf-core subworkflows install
 @subworkflows.command()
