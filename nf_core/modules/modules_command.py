@@ -1,16 +1,8 @@
 import logging
-import os
-import shutil
 from pathlib import Path
 
-import yaml
 from nf_core.components.components import Components
 
-import nf_core.modules.module_utils
-import nf_core.utils
-
-from .modules_json import ModulesJson
-from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
