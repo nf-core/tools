@@ -840,44 +840,43 @@ class ModulesJson:
 
         return self.pipeline_subworkflows
 
-
-def resolve_missing_installation(self, missing_installation, component_type):
-    missing_but_in_mod_json = [
-        f"'{component_type}/{install_dir}/{component}'"
-        for repo_url, contents in missing_installation.items()
-        for install_dir, dir_contents in contents[component_type].items()
-        for component in dir_contents
-    ]
-    log.info(
-        f"Reinstalling {component_type} found in 'modules.json' but missing from directory: {', '.join(missing_but_in_mod_json)}"
-    )
-
-    remove_from_mod_json = {}
-    for repo_url, contents in missing_installation.items():
-        for install_dir, component_entries in contents[component_type].items():
-            remove_from_mod_json[(repo_url, install_dir)] = self.reinstall_repo(
-                install_dir, repo_url, component_entries
-            )
-
-    # If the reinstall fails, we remove those entries in 'modules.json'
-    if sum(map(len, remove_from_mod_json.values())) > 0:
-        uninstallable_components = [
-            f"'{install_dir}/{component}'"
-            for (repo_url, install_dir), components in remove_from_mod_json.items()
-            for component in components
+    def resolve_missing_installation(self, missing_installation, component_type):
+        missing_but_in_mod_json = [
+            f"'{component_type}/{install_dir}/{component}'"
+            for repo_url, contents in missing_installation.items()
+            for install_dir, dir_contents in contents[component_type].items()
+            for component in dir_contents
         ]
-        if len(uninstallable_components) == 1:
-            log.info(f"Was unable to reinstall {uninstallable_components[0]}. Removing 'modules.json' entry")
-        else:
-            log.info(
-                f"Was unable to reinstall some modules. Removing 'modules.json' entries: {', '.join(uninstallable_components)}"
-            )
+        log.info(
+            f"Reinstalling {component_type} found in 'modules.json' but missing from directory: {', '.join(missing_but_in_mod_json)}"
+        )
 
-        for (repo_url, install_dir), component_entries in remove_from_mod_json.items():
-            for component in component_entries:
-                self.modules_json["repos"][repo_url][component_type][install_dir].pop(component)
-            if len(self.modules_json["repos"][repo_url][component_type][install_dir]) == 0:
-                self.modules_json["repos"].pop(repo_url)
+        remove_from_mod_json = {}
+        for repo_url, contents in missing_installation.items():
+            for install_dir, component_entries in contents[component_type].items():
+                remove_from_mod_json[(repo_url, install_dir)] = self.reinstall_repo(
+                    install_dir, repo_url, component_entries
+                )
+
+        # If the reinstall fails, we remove those entries in 'modules.json'
+        if sum(map(len, remove_from_mod_json.values())) > 0:
+            uninstallable_components = [
+                f"'{install_dir}/{component}'"
+                for (repo_url, install_dir), components in remove_from_mod_json.items()
+                for component in components
+            ]
+            if len(uninstallable_components) == 1:
+                log.info(f"Was unable to reinstall {uninstallable_components[0]}. Removing 'modules.json' entry")
+            else:
+                log.info(
+                    f"Was unable to reinstall some modules. Removing 'modules.json' entries: {', '.join(uninstallable_components)}"
+                )
+
+            for (repo_url, install_dir), component_entries in remove_from_mod_json.items():
+                for component in component_entries:
+                    self.modules_json["repos"][repo_url][component_type][install_dir].pop(component)
+                if len(self.modules_json["repos"][repo_url][component_type][install_dir]) == 0:
+                    self.modules_json["repos"].pop(repo_url)
 
     def resolve_missing_from_modules_json(self, missing_from_modules_json, component_type):
         format_missing = [f"'{dir}'" for dir in missing_from_modules_json]
