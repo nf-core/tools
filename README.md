@@ -233,7 +233,7 @@ Archived pipelines are not returned by default. To include them, use the `--show
 ## Launch a pipeline
 
 Some nextflow pipelines have a considerable number of command line flags that can be used.
-To help with this, you can use the `nf-core launch` command
+To help with this, you can use the `nf-core launch` command.
 You can choose between a web-based graphical interface or an interactive command-line wizard tool to enter the pipeline parameters for your run.
 Both interfaces show documentation alongside each parameter and validate your inputs.
 
