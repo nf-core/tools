@@ -17,6 +17,7 @@ A python package with helper tools for the nf-core community.
 ## Table of contents <!-- omit in toc -->
 
 - [`nf-core` tools installation](#installation)
+- [`nf-core` tools update](#update-tools)
 - [`nf-core list` - List available pipelines](#listing-pipelines)
 - [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
 - [`nf-core download` - Download pipeline for offline use](#downloading-pipelines-for-offline-use)
@@ -185,6 +186,22 @@ If you would prefer to skip this check, set the environment variable `NFCORE_NO_
 ```bash
 export NFCORE_NO_VERSION_CHECK=1
 ```
+
+### Update tools
+
+It is advisable to keep nf-core/tools updated to the most recent version. The command to update depends on the system used to install it, for example if you have installed it with conda you can use:
+```bash
+conda update nf-core
+```
+if you used pip:
+```bash
+pip install --upgrade nf-core
+```
+or
+```bash
+pip install -U nf-core
+```
+Please refer to the respective documentation for further details to manage packages, as for example [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-pkgs.html#updating-packages) or [pip](https://packaging.python.org/en/latest/tutorials/installing-packages/#upgrading-packages).
 
 ## Listing pipelines
 
