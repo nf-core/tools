@@ -142,7 +142,7 @@ class ModuleCreate(ModuleCommand):
 
         self.tool_name_underscore = self.tool_name.replace("/", "_")
 
-        # Check existance of directories early for fast-fail
+        # Check existence of directories early for fast-fail
         self.file_paths = self.get_module_dirs()
 
         # Try to find a bioconda package for 'tool'
@@ -239,14 +239,14 @@ class ModuleCreate(ModuleCommand):
                 "Where applicable all sample-specific information e.g. 'id', 'single_end', 'read_group' "
                 "MUST be provided as an input via a Groovy Map called 'meta'. "
                 "This information may [italic]not[/] be required in some instances, for example "
-                "[link=https://github.com/nf-core/modules/blob/master/modules/bwa/index/main.nf]indexing reference genome files[/link]."
+                "[link=https://github.com/nf-core/modules/blob/master/modules/nf-core/bwa/index/main.nf]indexing reference genome files[/link]."
             )
         while self.has_meta is None:
             self.has_meta = rich.prompt.Confirm.ask(
                 "[violet]Will the module require a meta map of sample information?", default=True
             )
 
-        # Create module template with cokiecutter
+        # Create module template with jinja
         self.render_template()
 
         if self.repo_type == "modules":
