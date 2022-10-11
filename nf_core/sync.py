@@ -423,4 +423,4 @@ class PipelineSync(object):
         try:
             self.repo.git.checkout(self.original_branch)
         except GitCommandError as e:
-            raise SyncException(f"Could not reset to original branch `{self.from_branch}`:\n{e}")
+            raise SyncException(f"Could not reset to original branch `{self.original_branch}`:\n{e}")

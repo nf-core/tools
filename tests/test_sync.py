@@ -4,6 +4,7 @@
 
 import json
 import os
+import pytest
 import shutil
 import tempfile
 import unittest
@@ -251,3 +252,27 @@ class TestModules(unittest.TestCase):
             raise UserWarning("Should have hit an exception")
         except nf_core.sync.PullRequestException as e:
             assert e.args[0].startswith("Something went badly wrong - GitHub API PR failed - got return code 404")
+
+    def test_reset_target_dir(self):
+        """Try resetting target pipeline directory"""
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+
+        psync.repo.git.checkout("dev")
+
+        psync.reset_target_dir()
+
+        assert psync.repo.heads[0].name == "TEMPLATE"
+
+    def test_reset_target_dir_fake_branch(self):
+        """Try resetting target pipeline directory but original branch does not exist"""
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+
+        psync.original_branch = "fake_branch"
+
+        with pytest.raises(nf_core.sync.SyncException) as exc_info:
+            psync.reset_target_dir()
+        assert exc_info.value.args[0].startswith("Could not reset to original branch `fake_branch`")
