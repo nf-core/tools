@@ -11,8 +11,8 @@ on:
 env:
   NXF_ANSI_LOG: false
 
-concurrency: 
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+concurrency:
+  group: "{% raw %}${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}{% endraw %}"
   cancel-in-progress: true
 
 jobs:
