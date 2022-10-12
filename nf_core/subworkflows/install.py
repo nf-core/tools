@@ -11,7 +11,7 @@ from nf_core.modules.install import ModuleInstall
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
 
-from .subworkflow_command import SubworkflowCommand
+from .subworkflows_command import SubworkflowCommand
 
 log = logging.getLogger(__name__)
 
