@@ -14,10 +14,10 @@ class SubworkflowCommand(Components):
     Base class for the 'nf-core subworkflows' commands
     """
 
-    def __init__(self, dir, remote_url=None, branch=None, no_pull=False):
+    def __init__(self, dir, remote_url=None, branch=None, no_pull=False, hide_progress=False):
         self.default_subworkflows_path = Path("subworkflows", "nf-core")
         self.default_subworkflows_tests_path = Path("tests", "subworkflows", "nf-core")
-        super().__init__("subworkflows", dir, remote_url, branch, no_pull)
+        super().__init__("subworkflows", dir, remote_url, branch, no_pull, hide_progress)
 
     def get_subworkflows_clone_subworkflows(self):
         """
