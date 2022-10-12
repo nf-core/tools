@@ -1,9 +1,10 @@
 import logging
 import os
-import nf_core.utils
 
 import questionary
 import rich.prompt
+
+import nf_core.utils
 
 log = logging.getLogger(__name__)
 

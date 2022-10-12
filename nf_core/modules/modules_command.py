@@ -3,7 +3,6 @@ from pathlib import Path
 
 from nf_core.components.components import Components
 
-
 log = logging.getLogger(__name__)
 
 

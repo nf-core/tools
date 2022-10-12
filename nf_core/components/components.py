@@ -5,10 +5,10 @@ from pathlib import Path
 
 import yaml
 
-from .components_utils import get_repo_type
-
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
+
+from .components_utils import get_repo_type
 
 log = logging.getLogger(__name__)
 
