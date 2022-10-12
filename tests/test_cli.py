@@ -79,3 +79,62 @@ class TestCli(unittest.TestCase):
             tuple(cmd[-2:]), params["sort"], "json" in params, "show-archived" in params
         )
         assert "pipeline test list" in result.output
+
+    @mock.patch("nf_core.launch.Launch")
+    def test_cli_launch(self, mock_launcher):
+        """Test nf-core pipeline is launched and cli parameters are passed on."""
+        mock_launcher.return_value.launch_pipeline.return_value = True
+
+        temp_params_in = tempfile.NamedTemporaryFile()
+        params = {
+            "revision": "abcdef",
+            "id": "idgui",
+            "command-only": None,
+            "params-out": "/path/params/out",
+            "params-in": temp_params_in.name,
+            "save-all": None,
+            "show-hidden": None,
+            "url": "builder_url",
+        }
+        cmd = ["launch"] + self.assemble_params(params) + ["pipeline_name"]
+        result = self.invoke_cli(cmd)
+
+        assert result.exit_code == 0
+
+        mock_launcher.assert_called_once_with(
+            cmd[-1],
+            params["revision"],
+            "command-only" in params,
+            params["params-in"],
+            params["params-out"],
+            "save-all" in params,
+            "show-hidden" in params,
+            params["url"],
+            params["id"],
+        )
+
+        mock_launcher.return_value.launch_pipeline.assert_called_once()
+
+    @mock.patch("nf_core.launch.Launch")
+    def test_cli_launch_no_params_in(self, mock_launcher):
+        """Test nf-core pipeline fails when params-in does not exist"""
+        mock_launcher.return_value.launch_pipeline.return_value = True
+
+        params = {
+            "params-in": "/fake/path",
+        }
+        cmd = ["launch"] + self.assemble_params(params) + ["pipeline_name"]
+        result = self.invoke_cli(cmd)
+
+        assert result.exit_code == 2
+        assert f"Invalid value for '-p' / '--params-in': Path '{params['params-in']}' does not exist." in result.output
+
+        mock_launcher.assert_not_called()
+
+    @mock.patch("nf_core.launch.Launch")
+    def test_cli_launch_fail(self, mock_launcher):
+        """Test nf-core pipeline fails with exit code 1 when pipeline fails."""
+        mock_launcher.return_value.launch_pipeline.return_value = False
+        cmd = ["launch", "pipeline_name"]
+        result = self.invoke_cli(cmd)
+        assert result.exit_code == 1
