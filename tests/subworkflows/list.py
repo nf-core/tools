@@ -12,7 +12,7 @@ def test_subworkflows_list_remote(self):
     console = Console(record=True)
     console.print(listed_swfs)
     output = console.export_text()
-    assert "bam_sort_samtools" in output
+    assert "bam_sort_stats_samtools" in output
 
 
 # def test_subworkflows_list_remote_gitlab(self):
@@ -23,26 +23,26 @@ def test_subworkflows_list_remote(self):
 #     console = Console(record=True)
 #     console.print(listed_swfs)
 #     output = console.export_text()
-#     assert "bam_sort_samtools" in output
+#     assert "bam_sort_stats_samtools" in output
 
 
 def test_subworkflows_install_and_list_pipeline(self):
     """Test listing locally installed subworkflows"""
-    self.swfs_install.install("align_bowtie2")
+    self.swfs_install.install("fastq_align_bowtie2")
     swfs_list = nf_core.subworkflows.SubworkflowList(self.pipeline_dir, remote=False)
     listed_swfs = swfs_list.list_subworkflows()
     console = Console(record=True)
     console.print(listed_swfs)
     output = console.export_text()
-    assert "align_bowtie2" in output
+    assert "fastq_align_bowtie2" in output
 
 
 # def test_subworkflows_install_gitlab_and_list_pipeline(self):
 #     """Test listing locally installed subworkflows"""
-#     self.swfs_install_gitlab.install("bam_sort_samtools")
+#     self.swfs_install_gitlab.install("bam_sort_stats_samtools")
 #     swfs_list = nf_core.subworkflows.SubworkflowList(self.pipeline_dir, remote=False)
 #     listed_swfs = swfs_list.list_subworkflows()
 #     console = Console(record=True)
 #     console.print(listed_swfs)
 #     output = console.export_text()
-#     assert "bam_sort_samtools" in output
+#     assert "bam_sort_stats_samtools" in output
