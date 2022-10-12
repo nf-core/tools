@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from nf_core.components.components import ComponentCommand
+from nf_core.components.components_command import ComponentCommand
 
 log = logging.getLogger(__name__)
 
@@ -20,3 +20,34 @@ class ModuleCommand(ComponentCommand):
         """
         local_module_dir = Path(self.dir, "modules", "local")
         return [str(path.relative_to(local_module_dir)) for path in local_module_dir.iterdir() if path.suffix == ".nf"]
+
+    def check_patch_paths(self, patch_path, module_name):
+        """
+        Check that paths in patch files are updated to the new modules path
+        """
+        if patch_path.exists():
+            log.info(f"Modules {module_name} contains a patch file.")
+            rewrite = False
+            with open(patch_path, "r") as fh:
+                lines = fh.readlines()
+                for index, line in enumerate(lines):
+                    # Check if there are old paths in the patch file and replace
+                    if f"modules/{self.modules_repo.repo_path}/modules/{module_name}/" in line:
+                        rewrite = True
+                        lines[index] = line.replace(
+                            f"modules/{self.modules_repo.repo_path}/modules/{module_name}/",
+                            f"modules/{self.modules_repo.repo_path}/{module_name}/",
+                        )
+            if rewrite:
+                log.info(f"Updating paths in {patch_path}")
+                with open(patch_path, "w") as fh:
+                    for line in lines:
+                        fh.write(line)
+                # Update path in modules.json if the file is in the correct format
+                modules_json = ModulesJson(self.dir)
+                modules_json.load()
+                if modules_json.has_git_url_and_modules():
+                    modules_json.modules_json["repos"][self.modules_repo.remote_url]["modules"][
+                        self.modules_repo.repo_path
+                    ][module_name]["patch"] = str(patch_path.relative_to(Path(self.dir).resolve()))
+                modules_json.dump()
