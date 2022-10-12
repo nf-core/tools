@@ -1197,7 +1197,8 @@ def bump_version(new_version, dir, nextflow):
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
-def sync(dir, from_branch, pull_request, github_repository, username):
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+def sync(dir, from_branch, pull_request, github_repository, username, template_yaml):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
@@ -1214,7 +1215,7 @@ def sync(dir, from_branch, pull_request, github_repository, username):
     nf_core.utils.is_pipeline_directory(dir)
 
     # Sync the given pipeline dir
-    sync_obj = nf_core.sync.PipelineSync(dir, from_branch, pull_request, github_repository, username)
+    sync_obj = nf_core.sync.PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml)
     try:
         sync_obj.sync()
     except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:
