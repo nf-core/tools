@@ -482,8 +482,14 @@ class ModulesJson:
         # If there are any modules/subworkflows left in 'modules.json' after all installed are removed,
         # we try to reinstall them
         if len(missing_installation) > 0:
-            resolve_missing_installation(self, missing_installation, "subworkflows")
-            resolve_missing_installation(self, missing_installation, "modules")
+            if "subworkflows" in [
+                c_type for _, repo_content in missing_installation.items() for c_type in repo_content.keys()
+            ]:
+                self.resolve_missing_installation(missing_installation, "subworkflows")
+            if "modules" in [
+                c_type for _, repo_content in missing_installation.items() for c_type in repo_content.keys()
+            ]:
+                self.resolve_missing_installation(missing_installation, "modules")
 
         # If some modules/subworkflows didn't have an entry in the 'modules.json' file
         # we try to determine the SHA from the commit log of the remote
