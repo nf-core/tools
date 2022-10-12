@@ -39,3 +39,14 @@ def test_cli_bad_subcommand():
     assert result.exit_code == 2
     # Checks that -v was considered valid
     assert "No such command" in result.output
+
+
+@mock.patch("nf_core.list.list_workflows", return_value="pipeline test list")
+def test_cli_list(mock_list_workflows):
+    """Test nf-core pipelines are listed and cli parameters are passed on."""
+    runner = CliRunner()
+    result = runner.invoke(
+        nf_core.__main__.nf_core_cli, ["list", "--sort", "name", "--json", "--show-archived", "kw1", "kw2"]
+    )
+    mock_list_workflows.assert_called_once_with(("kw1", "kw2"), "name", True, True)
+    assert "pipeline test list" in result.output
