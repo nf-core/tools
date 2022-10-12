@@ -78,6 +78,7 @@ class TestCli(unittest.TestCase):
         mock_list_workflows.assert_called_once_with(
             tuple(cmd[-2:]), params["sort"], "json" in params, "show-archived" in params
         )
+        assert result.exit_code == 0
         assert "pipeline test list" in result.output
 
     @mock.patch("nf_core.launch.Launch")
