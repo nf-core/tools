@@ -160,7 +160,7 @@ class ModulesJson:
 
                 repos[nrepo_remote]["modules"][nrepo_name] = {}
                 dirs_not_covered = self.dir_tree_uncovered(
-                    modules_dir, [Path(name) for name in repos[url][modules_dir] for url in repos]
+                    modules_dir, [Path(name) for url in repos for name in repos[url][modules_dir]]
                 )
         return repos, renamed_dirs
 
