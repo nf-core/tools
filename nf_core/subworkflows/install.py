@@ -52,12 +52,7 @@ class SubworkflowInstall(object):
 
         # Verify that 'modules.json' is consistent with the installed modules and subworkflows
         modules_json = ModulesJson(self.dir)
-        modules_json.check_up_to_date()  # TODO: check subworkflows also!!!!
-        if "subworkflows" not in modules_json.modules_json["repos"][self.modules_repo.remote_url]:
-            # It's the first subworkflow installed in the pipeline!
-            modules_json.modules_json["repos"][self.modules_repo.remote_url]["subworkflows"] = {
-                self.modules_repo.repo_path: {}
-            }
+        modules_json.check_up_to_date()
 
         if self.prompt and self.sha is not None:
             log.error("Cannot use '--sha' and '--prompt' at the same time!")
@@ -176,6 +171,9 @@ class SubworkflowInstall(object):
             log.info(
                 f"Include statement: include {{ {subworkflow_name} }} from '.{os.path.join(install_folder, subworkflow)}/main'"
             )
+            subworkflow_config = os.path.join(install_folder, subworkflow, "nextflow.config")
+            if os.path.isfile(subworkflow_config):
+                log.info(f"Subworkflow config include statement: includeConfig '{subworkflow_config}'")
 
         # Update module.json with newly installed subworkflow
         modules_json.load()

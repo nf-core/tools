@@ -39,6 +39,7 @@ class PipelineCreate(object):
         force (bool): Overwrites a given workflow directory with the same name. Defaults to False.
             May the force be with you.
         outdir (str): Path to the local output directory.
+        template_yaml (str): Path to template.yml file for pipeline creation settings.
     """
 
     def __init__(
