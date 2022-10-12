@@ -17,6 +17,7 @@ import re
 import shlex
 import subprocess
 import tempfile
+from pathlib import Path
 
 import questionary
 import rich
@@ -24,34 +25,36 @@ import yaml
 from rich.syntax import Syntax
 
 import nf_core.utils
-
-from .modules_command import ModuleCommand
-from .modules_repo import ModulesRepo
+from nf_core.modules.modules_json import ModulesJson
+from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
 
-class ModulesTestYmlBuilder(ModuleCommand):
+class SubworkflowTestYmlBuilder(object):
     def __init__(
         self,
-        module_name=None,
+        subworkflow=None,
         directory=".",
         run_tests=False,
         test_yml_output_path=None,
         force_overwrite=False,
         no_prompts=False,
     ):
-        super().__init__(directory)
-        self.module_name = module_name
+        # super().__init__(directory)
+        self.dir = directory
+        self.subworkflow = subworkflow
         self.run_tests = run_tests
         self.test_yml_output_path = test_yml_output_path
         self.force_overwrite = force_overwrite
         self.no_prompts = no_prompts
-        self.module_dir = None
-        self.module_test_main = None
+        self.subworkflow_dir = None
+        self.subworkflow_test_main = None
         self.entry_points = []
         self.tests = []
         self.errors = []
+        self.modules_repo = ModulesRepo()
+        self.modules_json = ModulesJson(self.dir)
 
     def run(self):
         """Run build steps"""
@@ -69,25 +72,23 @@ class ModulesTestYmlBuilder(ModuleCommand):
 
     def check_inputs(self):
         """Do more complex checks about supplied flags."""
-        # Check modules directory structure
-        self.check_modules_structure()
-
         # Get the tool name if not specified
-        if self.module_name is None:
-            modules_repo = ModulesRepo()
-            self.module_name = questionary.autocomplete(
-                "Tool name:",
-                choices=modules_repo.get_avail_modules(),
+        if self.subworkflow is None:
+            self.subworkflow = questionary.autocomplete(
+                "Subworkflow name:",
+                choices=self.modules_repo.get_avail_subworkflows(),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        self.module_dir = os.path.join(self.default_modules_path, *self.module_name.split("/"))
-        self.module_test_main = os.path.join(self.default_tests_path, *self.module_name.split("/"), "main.nf")
+        self.subworkflow_dir = os.path.join("subworkflows", self.modules_repo.repo_path, self.subworkflow)
+        self.subworkflow_test_main = os.path.join(
+            "tests", "subworkflows", self.modules_repo.repo_path, self.subworkflow, "main.nf"
+        )
 
         # First, sanity check that the module directory exists
-        if not os.path.isdir(self.module_dir):
-            raise UserWarning(f"Cannot find directory '{self.module_dir}'. Should be TOOL/SUBTOOL or TOOL")
-        if not os.path.exists(self.module_test_main):
-            raise UserWarning(f"Cannot find module test workflow '{self.module_test_main}'")
+        if not os.path.isdir(self.subworkflow_dir):
+            raise UserWarning(f"Cannot find directory '{self.subworkflow_dir}'.")
+        if not os.path.exists(self.subworkflow_test_main):
+            raise UserWarning(f"Cannot find module test workflow '{self.subworkflow_test_main}'")
 
         # Check that we're running tests if no prompts
         if not self.run_tests and self.no_prompts:
@@ -96,7 +97,7 @@ class ModulesTestYmlBuilder(ModuleCommand):
 
         # Get the output YAML file / check it does not already exist
         while self.test_yml_output_path is None:
-            default_val = f"tests/modules/nf-core/{self.module_name}/test.yml"
+            default_val = f"tests/subworkflows/{self.modules_repo.repo_path}/{self.subworkflow}/test.yml"
             if self.no_prompts:
                 self.test_yml_output_path = default_val
             else:
@@ -125,8 +126,8 @@ class ModulesTestYmlBuilder(ModuleCommand):
 
     def scrape_workflow_entry_points(self):
         """Find the test workflow entry points from main.nf"""
-        log.info(f"Looking for test workflow entry points: '{self.module_test_main}'")
-        with open(self.module_test_main, "r") as fh:
+        log.info(f"Looking for test workflow entry points: '{self.subworkflow_test_main}'")
+        with open(self.subworkflow_test_main, "r") as fh:
             for line in fh:
                 match = re.match(r"workflow\s+(\S+)\s+{", line)
                 if match:
@@ -162,40 +163,57 @@ class ModulesTestYmlBuilder(ModuleCommand):
         log.info(f"Building test meta for entry point '{entry_point}'")
 
         while ep_test["name"] == "":
-            default_val = f"{self.module_name.replace('/', ' ')} {entry_point}"
+            default_val = f"{self.subworkflow} {entry_point}"
             if self.no_prompts:
                 ep_test["name"] = default_val
             else:
                 ep_test["name"] = rich.prompt.Prompt.ask("[violet]Test name", default=default_val).strip()
 
         while ep_test["command"] == "":
-            # Don't think we need the last `-c` flag, but keeping to avoid having to update 100s modules.
-            # See https://github.com/nf-core/tools/issues/1562
-            default_val = f"nextflow run ./tests/modules/nf-core/{self.module_name} -entry {entry_point} -c ./tests/config/nextflow.config -c ./tests/modules/nf-core/{self.module_name}/nextflow.config"
+            default_val = f"nextflow run ./tests/subworkflows/{self.modules_repo.repo_path}/{self.subworkflow} -entry {entry_point} -c ./tests/config/nextflow.config"
             if self.no_prompts:
                 ep_test["command"] = default_val
             else:
                 ep_test["command"] = rich.prompt.Prompt.ask("[violet]Test command", default=default_val).strip()
 
         while len(ep_test["tags"]) == 0:
-            mod_name_parts = self.module_name.split("/")
-            tag_defaults = []
-            for idx in range(0, len(mod_name_parts)):
-                tag_defaults.append("/".join(mod_name_parts[: idx + 1]))
-            # Remove duplicates
-            tag_defaults = list(set(tag_defaults))
+            tag_defaults = ["subworkflows"]
+            tag_defaults.append("subworkflows/" + self.subworkflow)
+            tag_defaults += self.parse_module_tags()
             if self.no_prompts:
-                ep_test["tags"] = tag_defaults
+                ep_test["tags"] = sorted(tag_defaults)
             else:
                 while len(ep_test["tags"]) == 0:
                     prompt_tags = rich.prompt.Prompt.ask(
-                        "[violet]Test tags[/] (comma separated)", default=",".join(tag_defaults)
+                        "[violet]Test tags[/] (comma separated)", default=",".join(sorted(tag_defaults))
                     ).strip()
                     ep_test["tags"] = [t.strip() for t in prompt_tags.split(",")]
 
         ep_test["files"] = self.get_md5_sums(entry_point, ep_test["command"])
 
         return ep_test
+
+    def parse_module_tags(self):
+        """
+        Parse the subworkflow test main.nf file to retrieve all imported modules for adding tags.
+        """
+        tags = []
+        with open(Path(self.subworkflow_dir, "main.nf"), "r") as fh:
+            for line in fh:
+                regex = re.compile(
+                    r"include(?: *{ *)([a-zA-Z\_0-9]*)(?: *as *)?(?:[a-zA-Z\_0-9]*)?(?: *})(?: *from *)(?:'|\")(.*)(?:'|\")"
+                )
+                match = regex.match(line)
+                if match and len(match.groups()) == 2:
+                    name, link = match.groups()
+                    if link.startswith("../../../"):
+                        name_split = name.lower().split("_")
+                        tags.append("/".join(name_split))
+                        if len(name_split) > 1:
+                            tags.append(name_split[0])
+                    elif link.startswith("../"):
+                        tags.append("subworkflows/" + name.lower())
+        return list(set(tags))
 
     def check_if_empty_file(self, fname):
         """Check if the file is empty, or compressed empty"""
@@ -288,7 +306,7 @@ class ModulesTestYmlBuilder(ModuleCommand):
                 if test_files[i].get("md5sum") and not test_files[i].get("md5sum") == test_files_repeat[i]["md5sum"]:
                     test_files[i].pop("md5sum")
                     test_files[i]["contains"] = [
-                        "# TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead "
+                        " # TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead "
                     ]
 
         if len(test_files) == 0:
@@ -327,7 +345,7 @@ class ModulesTestYmlBuilder(ModuleCommand):
         command_repeat = command + f" --outdir {tmp_dir_repeat} -work-dir {work_dir}"
         command += f" --outdir {tmp_dir} -work-dir {work_dir}"
 
-        log.info(f"Running '{self.module_name}' test with command:\n[violet]{command}")
+        log.info(f"Running '{self.subworkflow}' test with command:\n[violet]{command}")
         try:
             nfconfig_raw = subprocess.check_output(shlex.split(command))
             log.info("Repeating test ...")
