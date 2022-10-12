@@ -176,7 +176,16 @@ class TestModules(unittest.TestCase):
         assert psync.merge_branch in psync.repo.branches
 
     def test_create_merge_base_branch_thrice(self):
-        """Try creating a merge base branch thrice"""
+        """Try creating a merge base branch thrice
+
+        This is needed because the first time this function is called, the
+        merge branch does not exist yet (it is only created at the end of the
+        create_merge_base_branch function) and the if-statement is ignored.
+        Also, the second time this function is called, the existing merge
+        branch only has the base format, i.e. without the -{branch_no} at the
+        end, so it is needed to call it a third time to make sure this is
+        picked up.
+        """
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
