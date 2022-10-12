@@ -190,11 +190,13 @@ export NFCORE_NO_VERSION_CHECK=1
 ### Update tools
 
 It is advisable to keep nf-core/tools updated to the most recent version. The command to update depends on the system used to install it, for example if you have installed it with conda you can use:
+
 ```bash
 conda update nf-core
 ```
 
 if you used pip:
+
 ```bash
 pip install --upgrade nf-core
 ```
