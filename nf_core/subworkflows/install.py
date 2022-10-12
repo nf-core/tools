@@ -42,7 +42,7 @@ class SubworkflowInstall(object):
         except LookupError as e:
             raise UserWarning(e)
 
-    def install(self, subworkflow):
+    def install(self, subworkflow, silent=False):
         if self.repo_type == "modules":
             log.error("You cannot install a subworkflow in a clone of nf-core/modules")
             return False
@@ -52,12 +52,7 @@ class SubworkflowInstall(object):
 
         # Verify that 'modules.json' is consistent with the installed modules and subworkflows
         modules_json = ModulesJson(self.dir)
-        modules_json.check_up_to_date()  # TODO: check subworkflows also!!!!
-        if "subworkflows" not in modules_json.modules_json["repos"][self.modules_repo.remote_url]:
-            # It's the first subworkflow installed in the pipeline!
-            modules_json.modules_json["repos"][self.modules_repo.remote_url]["subworkflows"] = {
-                self.modules_repo.repo_path: {}
-            }
+        modules_json.check_up_to_date()
 
         if self.prompt and self.sha is not None:
             log.error("Cannot use '--sha' and '--prompt' at the same time!")
@@ -100,7 +95,6 @@ class SubworkflowInstall(object):
         # Check that the subworkflow is not already installed
         if (current_version is not None and os.path.exists(subworkflow_dir)) and not self.force:
             log.info("Subworkflow is already installed.")
-            print(f"Subworkflow {subworkflow} is already installed.")
 
             self.force = questionary.confirm(
                 f"Subworkflow {subworkflow} is already installed.\nDo you want to force the reinstallation of this subworkflow and all it's imported modules?",
@@ -159,18 +153,27 @@ class SubworkflowInstall(object):
         # Install included modules and subworkflows
         modules_to_install, subworkflows_to_install = self.get_modules_subworkflows_to_install(subworkflow_dir)
         for s_install in subworkflows_to_install:
-            self.install(s_install)
+            self.install(s_install, silent=True)
         for m_install in modules_to_install:
-            module_install = ModuleInstall(self.dir, force=self.force, prompt=self.prompt)
-            module_install.install(m_install)
+            module_install = ModuleInstall(
+                self.dir,
+                force=self.force,
+                prompt=self.prompt,
+                sha=self.sha,
+                remote_url=self.modules_repo.remote_url,
+                branch=self.modules_repo.branch,
+            )
+            module_install.install(m_install, silent=True)
 
-        # Print include statement
-        subworkflow_name = subworkflow.upper()
-        log.info(
-            f"Include statement: include {{ {subworkflow_name} }} from '.{os.path.join(install_folder, subworkflow)}/main'"
-        )
+        if not silent:
+            # Print include statement
+            subworkflow_name = subworkflow.upper()
+            log.info(
+                f"Include statement: include {{ {subworkflow_name} }} from '.{os.path.join(install_folder, subworkflow)}/main'"
+            )
 
         # Update module.json with newly installed subworkflow
+        modules_json.load()
         modules_json.update_subworkflow(self.modules_repo, subworkflow, version)
         return True
 
