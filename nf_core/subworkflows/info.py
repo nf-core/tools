@@ -13,8 +13,8 @@ from rich.table import Table
 from rich.text import Text
 
 import nf_core.modules.module_utils
-from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.module_utils import get_repo_type
+from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE, ModulesRepo
 
 log = logging.getLogger(__name__)
