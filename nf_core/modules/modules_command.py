@@ -1,12 +1,12 @@
 import logging
 from pathlib import Path
 
-from nf_core.components.components import Component
+from nf_core.components.components import ComponentCommand
 
 log = logging.getLogger(__name__)
 
 
-class ModuleCommand(Component):
+class ModuleCommand(ComponentCommand):
     """
     Base class for the 'nf-core modules' commands
     """

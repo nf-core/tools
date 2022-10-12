@@ -13,7 +13,7 @@ from .components_utils import get_repo_type
 log = logging.getLogger(__name__)
 
 
-class Component:
+class ComponentCommand:
     """
     Base class for the 'nf-core modules' and 'nf-core subworkflows' commands
     """

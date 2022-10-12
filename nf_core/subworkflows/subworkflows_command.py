@@ -3,12 +3,12 @@ import os
 import shutil
 from pathlib import Path
 
-from nf_core.components.components import Component
+from nf_core.components.components import ComponentCommand
 
 log = logging.getLogger(__name__)
 
 
-class SubworkflowCommand(Component):
+class SubworkflowCommand(ComponentCommand):
     """
     Base class for the 'nf-core subworkflows' commands
     """
