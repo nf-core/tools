@@ -364,7 +364,7 @@ class ModulesJson:
     def parse_dirs(self, dirs, missing_installation, component_type):
         untracked_dirs = []
         for dir in dirs:
-            # Check if the module/ssubworkflows directory exists in modules.json
+            # Check if the module/subworkflows directory exists in modules.json
             install_dir = dir.parts[0]
             component = str(Path(*dir.parts[1:]))
             component_in_file = False
@@ -388,7 +388,7 @@ class ModulesJson:
                 # Remove the subworkflow from subworkflows without installation
                 module_repo[component_type][install_dir].pop(component)
                 if len(module_repo[component_type][install_dir]) == 0:
-                    # If no subworkflows with missing installation left, remove the git_url from missing_installation
+                    # If no modules/subworkflows with missing installation left, remove the git_url from missing_installation
                     missing_installation.pop(git_url)
         return untracked_dirs, missing_installation
 
@@ -482,8 +482,8 @@ class ModulesJson:
         # If there are any modules/subworkflows left in 'modules.json' after all installed are removed,
         # we try to reinstall them
         if len(missing_installation) > 0:
-            resolve_missing_installation(self, missing_installation, "modules")
             resolve_missing_installation(self, missing_installation, "subworkflows")
+            resolve_missing_installation(self, missing_installation, "modules")
 
         # If some modules/subworkflows didn't have an entry in the 'modules.json' file
         # we try to determine the SHA from the commit log of the remote
@@ -869,7 +869,7 @@ class ModulesJson:
                 log.info(f"Was unable to reinstall {uninstallable_components[0]}. Removing 'modules.json' entry")
             else:
                 log.info(
-                    f"Was unable to reinstall some modules. Removing 'modules.json' entries: {', '.join(uninstallable_components)}"
+                    f"Was unable to reinstall some {component_type}. Removing 'modules.json' entries: {', '.join(uninstallable_components)}"
                 )
 
             for (repo_url, install_dir), component_entries in remove_from_mod_json.items():
