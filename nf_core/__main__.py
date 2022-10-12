@@ -58,7 +58,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core subworkflows": [
         {
             "name": "For pipelines",
-            "commands": ["list", "install"],
+            "commands": ["list", "info", "install"],
         },
         {
             "name": "Developing new subworkflows",
@@ -1015,6 +1015,43 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
             ctx.obj["modules_repo_no_pull"],
         )
         stdout.print(subworkflows_list.list_subworkflows(keywords, json))
+    except (UserWarning, LookupError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
+# nf-core subworkflows info
+@subworkflows.command()
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
+)
+def info(ctx, tool, dir):
+    """
+    Show developer usage information about a given subworkflow.
+
+    Parses information from a subworkflow's [i]meta.yml[/] and renders help
+    on the command line. A handy equivalent to searching the
+    [link=https://nf-co.re/modules]nf-core website[/].
+
+    If run from a pipeline and a local copy of the subworkflow is found, the command
+    will print this usage info.
+    If not, usage from the remote subworkflows repo will be shown.
+    """
+    try:
+        subworkflow_info = nf_core.subworkflows.SubworkflowInfo(
+            dir,
+            tool,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        stdout.print(subworkflow_info.get_subworkflow_info())
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
