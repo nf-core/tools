@@ -65,6 +65,10 @@
 - Lint pyproject.toml file exists and content ([#1795](https://github.com/nf-core/tools/pull/1795))
 - Update GitHub PyPI package release action to v1 ([#1785](https://github.com/nf-core/tools/pull/1785))
 
+### Template
+
+- Update GitHub actions to use nodejs16 ([#1944](https://github.com/nf-core/tools/pull/1944))
+
 ## [v2.5 - Gold Otter](https://github.com/nf-core/tools/releases/tag/2.5) - [2022-08-30]
 
 ### Template
