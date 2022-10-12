@@ -176,11 +176,46 @@ class ModuleCommand:
                 # Move wrong modules to the right directory
                 for module in wrong_location_modules:
                     modules_dir = Path("modules").resolve()
-                    correct_dir = Path(modules_dir, self.modules_repo.repo_path, Path(*module.parts[2:]))
+                    module_name = str(Path(*module.parts[2:]))
+                    correct_dir = Path(modules_dir, self.modules_repo.repo_path, Path(module_name))
                     wrong_dir = Path(modules_dir, module)
                     shutil.move(wrong_dir, correct_dir)
                     log.info(f"Moved {wrong_dir} to {correct_dir}.")
+                    # Check if a path file exists
+                    patch_path = correct_dir / Path(module_name + ".diff")
+                    self.check_patch_paths(patch_path, module_name)
                 shutil.rmtree(Path(self.dir, "modules", self.modules_repo.repo_path, "modules"))
                 # Regenerate modules.json file
                 modules_json = ModulesJson(self.dir)
                 modules_json.check_up_to_date()
+
+    def check_patch_paths(self, patch_path, module_name):
+        """
+        Check that paths in patch files are updated to the new modules path
+        """
+        if patch_path.exists():
+            log.info(f"Modules {module_name} contains a patch file.")
+            rewrite = False
+            with open(patch_path, "r") as fh:
+                lines = fh.readlines()
+                for index, line in enumerate(lines):
+                    # Check if there are old paths in the patch file and replace
+                    if f"modules/{self.modules_repo.repo_path}/modules/{module_name}/" in line:
+                        rewrite = True
+                        lines[index] = line.replace(
+                            f"modules/{self.modules_repo.repo_path}/modules/{module_name}/",
+                            f"modules/{self.modules_repo.repo_path}/{module_name}/",
+                        )
+            if rewrite:
+                log.info(f"Updating paths in {patch_path}")
+                with open(patch_path, "w") as fh:
+                    for line in lines:
+                        fh.write(line)
+                # Update path in modules.json if the file is in the correct format
+                modules_json = ModulesJson(self.dir)
+                modules_json.load()
+                if modules_json.has_git_url_and_modules():
+                    modules_json.modules_json["repos"][self.modules_repo.remote_url]["modules"][
+                        self.modules_repo.repo_path
+                    ][module_name]["patch"] = str(patch_path.relative_to(Path(self.dir).resolve()))
+                modules_json.dump()

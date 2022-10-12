@@ -34,6 +34,7 @@ class ModulesJson:
         """
         self.dir = pipeline_dir
         self.modules_dir = Path(self.dir, "modules")
+        self.subworkflows_dir = Path(self.dir, "subworkflows")
         self.modules_json = None
         self.pipeline_modules = None
         self.pipeline_subworkflows = None
@@ -340,40 +341,55 @@ class ModulesJson:
         # Add all modules from modules.json to missing_installation
         missing_installation = copy.deepcopy(self.modules_json["repos"])
         # Obtain the path of all installed modules
-        dirs = [
+        module_dirs = [
             Path(dir_name).relative_to(self.modules_dir)
             for dir_name, _, file_names in os.walk(self.modules_dir)
             if "main.nf" in file_names and not str(Path(dir_name).relative_to(self.modules_dir)).startswith("local")
         ]
+        untracked_dirs_modules, missing_installation = self.parse_dirs(module_dirs, missing_installation, "modules")
+
+        # Obtain the path of all installed subworkflows
+        subworkflow_dirs = [
+            Path(dir_name).relative_to(self.subworkflows_dir)
+            for dir_name, _, file_names in os.walk(self.subworkflows_dir)
+            if "main.nf" in file_names
+            and not str(Path(dir_name).relative_to(self.subworkflows_dir)).startswith("local")
+        ]
+        untracked_dirs_subworkflows, missing_installation = self.parse_dirs(
+            subworkflow_dirs, missing_installation, "subworkflows"
+        )
+
+        return untracked_dirs_modules, untracked_dirs_subworkflows, missing_installation
+
+    def parse_dirs(self, dirs, missing_installation, component_type):
         untracked_dirs = []
         for dir in dirs:
-            # Check if the modules directory exists in modules.json
+            # Check if the module/subworkflows directory exists in modules.json
             install_dir = dir.parts[0]
-            module = str(Path(*dir.parts[1:]))
-            module_in_file = False
+            component = str(Path(*dir.parts[1:]))
+            component_in_file = False
             git_url = None
             for repo in missing_installation:
-                for dir_name in missing_installation[repo]["modules"]:
-                    if module in missing_installation[repo]["modules"][dir_name]:
-                        module_in_file = True
+                for dir_name in missing_installation[repo][component_type]:
+                    if component in missing_installation[repo][component_type][dir_name]:
+                        component_in_file = True
                         git_url = repo
                         break
-            if not module_in_file:
-                # If it is not, add it to the list of missing modules
-                untracked_dirs.append(module)
+            if not component_in_file:
+                # If it is not, add it to the list of missing subworkflow
+                untracked_dirs.append(component)
             else:
-                # If it does, remove the module from missing_installation
+                # If it does, remove the subworkflow from missing_installation
                 module_repo = missing_installation[git_url]
                 # Check if the entry has a git sha and branch before removing
-                modules = module_repo["modules"][install_dir]
-                if "git_sha" not in modules[module] or "branch" not in modules[module]:
-                    self.determine_module_branches_and_shas(module, git_url, module_repo["base_path"], [module])
-                # Remove the module from modules without installation
-                module_repo["modules"][install_dir].pop(module)
-                if len(module_repo["modules"][install_dir]) == 0:
-                    # If no modules with missing installation left, remove the git_url from missing_installation
+                components_dict = module_repo[component_type][install_dir]
+                if "git_sha" not in components_dict[component] or "branch" not in components_dict[component]:
+                    self.determine_module_branches_and_shas(component, git_url, module_repo["base_path"], [component])
+                # Remove the subworkflow from subworkflows without installation
+                module_repo[component_type][install_dir].pop(component)
+                if len(module_repo[component_type][install_dir]) == 0:
+                    # If no modules/subworkflows with missing installation left, remove the git_url from missing_installation
                     missing_installation.pop(git_url)
-
         return untracked_dirs, missing_installation
 
     def has_git_url_and_modules(self):
@@ -439,14 +455,14 @@ class ModulesJson:
 
     def check_up_to_date(self):
         """
-        Checks whether the modules installed in the directory
+        Checks whether the modules and subworkflows installed in the directory
         are consistent with the entries in the 'modules.json' file and vice versa.
 
-        If a module has an entry in the 'modules.json' file but is missing in the directory,
-        we first try to reinstall the module from the remote and if that fails we remove the entry
+        If a module/subworkflow has an entry in the 'modules.json' file but is missing in the directory,
+        we first try to reinstall the module/subworkflow from the remote and if that fails we remove the entry
         in 'modules.json'.
 
-        If a module is installed but the entry in 'modules.json' is missing we iterate through
+        If a module/subworkflow is installed but the entry in 'modules.json' is missing we iterate through
         the commit log in the remote to try to determine the SHA.
         """
         try:
@@ -457,90 +473,30 @@ class ModulesJson:
             log.info("The 'modules.json' file is not up to date. Recreating the 'module.json' file.")
             self.create()
 
-        missing_from_modules_json, missing_installation = self.unsynced_modules()
+        (
+            modules_missing_from_modules_json,
+            subworkflows_missing_from_modules_json,
+            missing_installation,
+        ) = self.unsynced_modules()
 
-        # If there are any modules left in 'modules.json' after all installed are removed,
+        # If there are any modules/subworkflows left in 'modules.json' after all installed are removed,
         # we try to reinstall them
         if len(missing_installation) > 0:
-            missing_but_in_mod_json = [
-                f"'modules/{install_dir}/{module}'"
-                for repo_url, contents in missing_installation.items()
-                for install_dir, dir_contents in contents["modules"].items()
-                for module in dir_contents
-            ]
-            log.info(
-                f"Reinstalling modules found in 'modules.json' but missing from directory: {', '.join(missing_but_in_mod_json)}"
-            )
+            if "subworkflows" in [
+                c_type for _, repo_content in missing_installation.items() for c_type in repo_content.keys()
+            ]:
+                self.resolve_missing_installation(missing_installation, "subworkflows")
+            if "modules" in [
+                c_type for _, repo_content in missing_installation.items() for c_type in repo_content.keys()
+            ]:
+                self.resolve_missing_installation(missing_installation, "modules")
 
-            remove_from_mod_json = {}
-            for repo_url, contents in missing_installation.items():
-                for install_dir, module_entries in contents["modules"].items():
-                    remove_from_mod_json[(repo_url, install_dir)] = self.reinstall_repo(
-                        install_dir, repo_url, module_entries
-                    )
-
-            # If the reinstall fails, we remove those entries in 'modules.json'
-            if sum(map(len, remove_from_mod_json.values())) > 0:
-                uninstallable_mods = [
-                    f"'{install_dir}/{module}'"
-                    for (repo_url, install_dir), modules in remove_from_mod_json.items()
-                    for module in modules
-                ]
-                if len(uninstallable_mods) == 1:
-                    log.info(f"Was unable to reinstall {uninstallable_mods[0]}. Removing 'modules.json' entry")
-                else:
-                    log.info(
-                        f"Was unable to reinstall some modules. Removing 'modules.json' entries: {', '.join(uninstallable_mods)}"
-                    )
-
-                for (repo_url, install_dir), module_entries in remove_from_mod_json.items():
-                    for module in module_entries:
-                        self.modules_json["repos"][repo_url]["modules"][install_dir].pop(module)
-                    if len(self.modules_json["repos"][repo_url]["modules"][install_dir]) == 0:
-                        self.modules_json["repos"].pop(repo_url)
-
-        # If some modules didn't have an entry in the 'modules.json' file
+        # If some modules/subworkflows didn't have an entry in the 'modules.json' file
         # we try to determine the SHA from the commit log of the remote
-        if len(missing_from_modules_json) > 0:
-            format_missing = [f"'{dir}'" for dir in missing_from_modules_json]
-            if len(format_missing) == 1:
-                log.info(f"Recomputing commit SHA for module {format_missing[0]} which was missing from 'modules.json'")
-            else:
-                log.info(
-                    f"Recomputing commit SHAs for modules which were missing from 'modules.json': {', '.join(format_missing)}"
-                )
-
-            # Get the remotes we are missing
-            tracked_repos = {repo_url: (repo_entry) for repo_url, repo_entry in self.modules_json["repos"].items()}
-            repos, _ = self.get_pipeline_module_repositories(self.modules_dir, tracked_repos)
-
-            modules_with_repos = (
-                (
-                    nf_core.modules.module_utils.path_from_remote(repo_url),
-                    str(dir.relative_to(nf_core.modules.module_utils.path_from_remote(repo_url))),
-                )
-                for dir in missing_from_modules_json
-                for repo_url in repos
-                if nf_core.utils.is_relative_to(dir, nf_core.modules.module_utils.path_from_remote(repo_url))
-            )
-
-            repos_with_modules = {}
-            for install_dir, module in modules_with_repos:
-                if install_dir not in repos_with_modules:
-                    repos_with_modules[install_dir] = []
-                repos_with_modules[install_dir].append(module)
-
-            for install_dir, modules in repos_with_modules.items():
-                remote_url = [url for url, content in repos.items() if install_dir in content][0]
-                repo_entry = self.determine_module_branches_and_shas(install_dir, remote_url, modules)
-                if remote_url in self.modules_json["repos"]:
-                    self.modules_json["repos"][remote_url]["modules"][install_dir].update(repo_entry)
-                else:
-                    self.modules_json["repos"][remote_url] = {
-                        "modules": {
-                            install_dir: repo_entry,
-                        }
-                    }
+        if len(modules_missing_from_modules_json) > 0:
+            self.resolve_missing_from_modules_json(modules_missing_from_modules_json, "modules")
+        if len(subworkflows_missing_from_modules_json) > 0:
+            self.resolve_missing_from_modules_json(subworkflows_missing_from_modules_json, "subworkflows")
 
         self.dump()
 
@@ -889,3 +845,84 @@ class ModulesJson:
                         self.pipeline_subworkflows[repo] = [(dir, name) for name in subworkflow]
 
         return self.pipeline_subworkflows
+
+    def resolve_missing_installation(self, missing_installation, component_type):
+        missing_but_in_mod_json = [
+            f"'{component_type}/{install_dir}/{component}'"
+            for repo_url, contents in missing_installation.items()
+            for install_dir, dir_contents in contents[component_type].items()
+            for component in dir_contents
+        ]
+        log.info(
+            f"Reinstalling {component_type} found in 'modules.json' but missing from directory: {', '.join(missing_but_in_mod_json)}"
+        )
+
+        remove_from_mod_json = {}
+        for repo_url, contents in missing_installation.items():
+            for install_dir, component_entries in contents[component_type].items():
+                remove_from_mod_json[(repo_url, install_dir)] = self.reinstall_repo(
+                    install_dir, repo_url, component_entries
+                )
+
+        # If the reinstall fails, we remove those entries in 'modules.json'
+        if sum(map(len, remove_from_mod_json.values())) > 0:
+            uninstallable_components = [
+                f"'{install_dir}/{component}'"
+                for (repo_url, install_dir), components in remove_from_mod_json.items()
+                for component in components
+            ]
+            if len(uninstallable_components) == 1:
+                log.info(f"Was unable to reinstall {uninstallable_components[0]}. Removing 'modules.json' entry")
+            else:
+                log.info(
+                    f"Was unable to reinstall some {component_type}. Removing 'modules.json' entries: {', '.join(uninstallable_components)}"
+                )
+
+            for (repo_url, install_dir), component_entries in remove_from_mod_json.items():
+                for component in component_entries:
+                    self.modules_json["repos"][repo_url][component_type][install_dir].pop(component)
+                if len(self.modules_json["repos"][repo_url][component_type][install_dir]) == 0:
+                    self.modules_json["repos"].pop(repo_url)
+
+    def resolve_missing_from_modules_json(self, missing_from_modules_json, component_type):
+        format_missing = [f"'{dir}'" for dir in missing_from_modules_json]
+        if len(format_missing) == 1:
+            log.info(
+                f"Recomputing commit SHA for {component_type[:-1]} {format_missing[0]} which was missing from 'modules.json'"
+            )
+        else:
+            log.info(
+                f"Recomputing commit SHAs for {component_type} which were missing from 'modules.json': {', '.join(format_missing)}"
+            )
+
+        # Get the remotes we are missing
+        tracked_repos = {repo_url: (repo_entry) for repo_url, repo_entry in self.modules_json["repos"].items()}
+        repos, _ = self.get_pipeline_module_repositories(self.modules_dir, tracked_repos)
+
+        components_with_repos = (
+            (
+                nf_core.modules.module_utils.path_from_remote(repo_url),
+                str(dir.relative_to(nf_core.modules.module_utils.path_from_remote(repo_url))),
+            )
+            for dir in missing_from_modules_json
+            for repo_url in repos
+            if nf_core.utils.is_relative_to(dir, nf_core.modules.module_utils.path_from_remote(repo_url))
+        )
+
+        repos_with_components = {}
+        for install_dir, component in components_with_repos:
+            if install_dir not in repos_with_components:
+                repos_with_components[install_dir] = []
+            repos_with_components[install_dir].append(component)
+
+        for install_dir, components in repos_with_components.items():
+            remote_url = [url for url, content in repos.items() if install_dir in content][0]
+            repo_entry = self.determine_module_branches_and_shas(install_dir, remote_url, components)
+            if remote_url in self.modules_json["repos"]:
+                self.modules_json["repos"][remote_url][component_type][install_dir].update(repo_entry)
+            else:
+                self.modules_json["repos"][remote_url] = {
+                    component_type: {
+                        install_dir: repo_entry,
+                    }
+                }

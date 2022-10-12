@@ -15,8 +15,11 @@
 - Don't remove local copy of modules repo, only update it with fetch ([#1881](https://github.com/nf-core/tools/pull/1881))
 - Add subworkflow commands create-test-yml, create and install ([#1897](https://github.com/nf-core/tools/pull/1897))
 - Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
+- `check_up_to_date()` function from `modules_json` also checks for subworkflows.
 
 ### Modules
+
+- Update patch file paths if the modules directory has the old structure ([#1878](https://github.com/nf-core/tools/pull/1878))
 
 ## [v2.6 - Tin Octopus](https://github.com/nf-core/tools/releases/tag/2.6) - [2022-10-04]
 
