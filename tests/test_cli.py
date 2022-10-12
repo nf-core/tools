@@ -15,6 +15,15 @@ def test_header(mock_cli):
     nf_core.__main__.run_nf_core()
 
 
+@mock.patch("nf_core.__main__.nf_core_cli")
+@mock.patch("nf_core.utils.check_if_outdated", return_value=(True, None, "dummy_version"))
+def test_header_outdated(mock_check_outdated, mock_nf_core_cli, capsys):
+    """Check cli notifies the user when nf_core is outdated"""
+    nf_core.__main__.run_nf_core()
+    captured = capsys.readouterr()
+    assert "There is a new version of nf-core/tools available! (dummy_version)" in captured.err
+
+
 def test_cli_help():
     """Test the main launch function with --help"""
     runner = CliRunner()
