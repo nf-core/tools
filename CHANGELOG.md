@@ -1,9 +1,33 @@
 # nf-core/tools: Changelog
 
+## v2.7dev
+
+### Template
+
+- Fix lint warnings for `samplesheet_check.nf` module
+
+### Linting
+
+### General
+
+- Fix error in tagging GitPod docker images during releases
+- `nf-core sync` now supports the template YAML file using `-t/--template-yaml`.
+- Fix bug when updating modules from old version in old folder structure
+- Don't remove local copy of modules repo, only update it with fetch ([#1881](https://github.com/nf-core/tools/pull/1881))
+- Add subworkflow commands create-test-yml, create and install ([#1897](https://github.com/nf-core/tools/pull/1897))
+- Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
+- Improve test coverage of sync.py
+- `check_up_to_date()` function from `modules_json` also checks for subworkflows.
+
+### Modules
+
+- Update patch file paths if the modules directory has the old structure ([#1878](https://github.com/nf-core/tools/pull/1878))
+
 ## [v2.6 - Tin Octopus](https://github.com/nf-core/tools/releases/tag/2.6) - [2022-10-04]
 
 ### Template
 
+- Add template for subworkflows
 - Add `actions/upload-artifact` step to the awstest workflows, to expose the debug log file
 - Add `prettier` as a requirement to Gitpod Dockerimage
 - Bioconda incompatible conda channel setups now result in more informative error messages ([#1812](https://github.com/nf-core/tools/pull/1812))
@@ -26,6 +50,7 @@
 - Schema: Remove `allOf` if no definition groups are left.
 - Use contextlib to temporarily change working directories ([#1819](https://github.com/nf-core/tools/pull/1819))
 - More helpful error messages if `nf-core download` can't parse a singularity image download
+- Add `nf-core subworkflows create` command
 
 ### Modules
 
@@ -39,6 +64,10 @@
 - Add isort options to pyproject.toml ([#1792](https://github.com/nf-core/tools/pull/1792))
 - Lint pyproject.toml file exists and content ([#1795](https://github.com/nf-core/tools/pull/1795))
 - Update GitHub PyPI package release action to v1 ([#1785](https://github.com/nf-core/tools/pull/1785))
+
+### Template
+
+- Update GitHub actions to use nodejs16 ([#1944](https://github.com/nf-core/tools/pull/1944))
 
 ## [v2.5 - Gold Otter](https://github.com/nf-core/tools/releases/tag/2.5) - [2022-08-30]
 
