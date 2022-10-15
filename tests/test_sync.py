@@ -7,6 +7,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import git
@@ -47,8 +48,8 @@ class TestModules(unittest.TestCase):
     def test_inspect_sync_dir_dirty(self):
         """Try syncing a pipeline with uncommitted changes"""
         # Add an empty file, uncommitted
-        test_fn = os.path.join(self.pipeline_dir, "uncommitted")
-        open(test_fn, "a").close()
+        test_fn = Path(self.pipeline_dir) / "uncommitted"
+        test_fn.touch()
         # Try to sync, check we halt with the right error
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         try:
@@ -140,8 +141,8 @@ class TestModules(unittest.TestCase):
         psync.get_wf_config()
         psync.checkout_template_branch()
         # Add an empty file, uncommitted
-        test_fn = os.path.join(self.pipeline_dir, "uncommitted")
-        open(test_fn, "a").close()
+        test_fn = Path(self.pipeline_dir) / "uncommitted"
+        test_fn.touch()
         # Check that we have uncommitted changes
         assert psync.repo.is_dirty(untracked_files=True) is True
         # Function returns True if no changes were made
@@ -157,8 +158,8 @@ class TestModules(unittest.TestCase):
         psync.get_wf_config()
         psync.checkout_template_branch()
         # Add an empty file and commit it
-        test_fn = os.path.join(self.pipeline_dir, "uncommitted")
-        open(test_fn, "a").close()
+        test_fn = Path(self.pipeline_dir) / "uncommitted"
+        test_fn.touch()
         psync.commit_template_changes()
         # Try to push changes
         with pytest.raises(nf_core.sync.PullRequestException) as exc_info:
