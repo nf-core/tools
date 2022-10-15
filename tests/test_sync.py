@@ -241,7 +241,7 @@ class TestModules(unittest.TestCase):
         if url == os.path.join(url_template.format("no_existing_pr"), "pulls?head=TEMPLATE&base=None"):
             response_data = []
             return MockResponse(response_data, 200)
-        elif url == os.path.join(url_template.format("list_prs"), "pulls"):
+        if url == os.path.join(url_template.format("list_prs"), "pulls"):
             response_data = [
                 {
                     "state": "closed",
@@ -350,8 +350,7 @@ class TestModules(unittest.TestCase):
             for pr in prs:
                 if pr["state"] != "open":
                     continue
-                else:
-                    mock_close_open_pr.assert_any_call(pr)
+                mock_close_open_pr.assert_any_call(pr)
 
     @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
     @mock.patch("nf_core.utils.gh_api.patch", side_effect=mocked_requests_patch)
