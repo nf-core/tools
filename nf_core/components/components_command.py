@@ -22,7 +22,7 @@ class ComponentCommand:
         """
         Initialise the ComponentClass object
         """
-        self.component_type = ""
+        self.component_type = component_type
         self.dir = dir
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
