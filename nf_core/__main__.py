@@ -20,6 +20,7 @@ import nf_core.lint
 import nf_core.list
 import nf_core.modules
 import nf_core.schema
+import nf_core.subworkflows
 import nf_core.sync
 import nf_core.utils
 
@@ -52,6 +53,16 @@ click.rich_click.COMMAND_GROUPS = {
         {
             "name": "Developing new modules",
             "commands": ["create", "create-test-yml", "lint", "bump-versions", "mulled", "test"],
+        },
+    ],
+    "nf-core subworkflows": [
+        {
+            "name": "For pipelines",
+            "commands": ["install"],
+        },
+        {
+            "name": "Developing new subworkflows",
+            "commands": ["create", "create-test-yml"],
         },
     ],
 }
@@ -89,7 +100,7 @@ def run_nf_core():
         log.debug(f"Could not check latest version: {e}")
     stderr.print("\n")
 
-    # Lanch the click cli
+    # Launch the click cli
     nf_core_cli(auto_envvar_prefix="NFCORE")
 
 
@@ -383,6 +394,38 @@ def modules(ctx, git_remote, branch, no_pull):
     ctx.obj["modules_repo_no_pull"] = no_pull
 
 
+# nf-core subworkflows click command
+@nf_core_cli.group()
+@click.option(
+    "-g",
+    "--git-remote",
+    type=str,
+    default=nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE,
+    help="Remote git repo to fetch files from",
+)
+@click.option("-b", "--branch", type=str, default=None, help="Branch of git repository hosting modules.")
+@click.option(
+    "-N",
+    "--no-pull",
+    is_flag=True,
+    default=False,
+    help="Do not pull in latest changes to local clone of modules repository.",
+)
+@click.pass_context
+def subworkflows(ctx, git_remote, branch, no_pull):
+    """
+    Commands to manage Nextflow DSL2 subworkflows (tool wrappers).
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
+    # Place the arguments in a context object
+    ctx.obj["modules_repo_url"] = git_remote
+    ctx.obj["modules_repo_branch"] = branch
+    ctx.obj["modules_repo_no_pull"] = no_pull
+
+
 # nf-core modules list subcommands
 @modules.group()
 @click.pass_context
@@ -661,7 +704,13 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
     the required `test.yml` file based on the output files.
     """
     try:
-        meta_builder = nf_core.modules.ModulesTestYmlBuilder(tool, run_tests, output, force, no_prompts)
+        meta_builder = nf_core.modules.ModulesTestYmlBuilder(
+            module_name=tool,
+            run_tests=run_tests,
+            test_yml_output_path=output,
+            force_overwrite=force,
+            no_prompts=no_prompts,
+        )
         meta_builder.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
@@ -846,6 +895,106 @@ def test_module(ctx, tool, no_prompts, pytest_args):
         meta_builder.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
+        sys.exit(1)
+
+
+# nf-core subworkflows create
+@subworkflows.command("create")
+@click.pass_context
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
+@click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username prefixed with '@'")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
+def create_subworkflow(ctx, subworkflow, dir, author, force):
+    """
+    Create a new subworkflow from the nf-core template.
+
+    If the specified directory is a pipeline, this function creates a file called
+    'subworkflows/local/<subworkflow_name>.nf'
+
+    If the specified directory is a clone of nf-core/modules, it creates or modifies files
+    in 'subworkflows/', 'tests/subworkflows' and 'tests/config/pytest_modules.yml'
+    """
+
+    # Run function
+    try:
+        subworkflow_create = nf_core.subworkflows.SubworkflowCreate(dir, subworkflow, author, force)
+        subworkflow_create.create()
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
+    except LookupError as e:
+        log.error(e)
+        sys.exit(1)
+
+
+# nf-core subworkflows create-test-yml
+@subworkflows.command("create-test-yml")
+@click.pass_context
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
+@click.option("-o", "--output", type=str, help="Path for output YAML file")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
+@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
+def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
+    """
+    Auto-generate a test.yml file for a new subworkflow.
+
+    Given the name of a module, runs the Nextflow test command and automatically generate
+    the required `test.yml` file based on the output files.
+    """
+    try:
+        meta_builder = nf_core.subworkflows.SubworkflowTestYmlBuilder(
+            subworkflow=subworkflow,
+            run_tests=run_tests,
+            test_yml_output_path=output,
+            force_overwrite=force,
+            no_prompts=no_prompts,
+        )
+        meta_builder.run()
+    except (UserWarning, LookupError) as e:
+        log.critical(e)
+        sys.exit(1)
+
+
+# nf-core subworkflows install
+@subworkflows.command()
+@click.pass_context
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+@click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the subworkflow")
+@click.option(
+    "-f", "--force", is_flag=True, default=False, help="Force reinstallation of subworkflow if it already exists"
+)
+@click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install subworkflow at commit SHA")
+def install(ctx, subworkflow, dir, prompt, force, sha):
+    """
+    Install DSL2 subworkflow within a pipeline.
+
+    Fetches and installs subworkflow files from a remote repo e.g. nf-core/modules.
+    """
+    try:
+        subworkflow_install = nf_core.subworkflows.SubworkflowInstall(
+            dir,
+            force,
+            prompt,
+            sha,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        exit_status = subworkflow_install.install(subworkflow)
+        if not exit_status and all:
+            sys.exit(1)
+    except (UserWarning, LookupError) as e:
+        log.error(e)
+        raise
         sys.exit(1)
 
 
@@ -1048,7 +1197,8 @@ def bump_version(new_version, dir, nextflow):
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
-def sync(dir, from_branch, pull_request, github_repository, username):
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+def sync(dir, from_branch, pull_request, github_repository, username, template_yaml):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
@@ -1065,7 +1215,7 @@ def sync(dir, from_branch, pull_request, github_repository, username):
     nf_core.utils.is_pipeline_directory(dir)
 
     # Sync the given pipeline dir
-    sync_obj = nf_core.sync.PipelineSync(dir, from_branch, pull_request, github_repository, username)
+    sync_obj = nf_core.sync.PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml)
     try:
         sync_obj.sync()
     except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:

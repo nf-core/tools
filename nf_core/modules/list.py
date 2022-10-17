@@ -3,6 +3,8 @@ import logging
 
 import rich
 
+import nf_core.modules.module_utils
+
 from .modules_command import ModuleCommand
 from .modules_json import ModulesJson
 from .modules_repo import ModulesRepo
@@ -20,6 +22,8 @@ class ModuleList(ModuleCommand):
         Get available module names from GitHub tree for repo
         and print as list to stdout
         """
+        # Check modules directory structure
+        self.check_modules_structure()
 
         # Initialise rich table
         table = rich.table.Table()
@@ -47,7 +51,7 @@ class ModuleList(ModuleCommand):
             # Nothing found
             if len(modules) == 0:
                 log.info(
-                    f"No available modules found in {self.modules_repo.fullname} ({self.modules_repo.branch})"
+                    f"No available modules found in {self.modules_repo.remote_url} ({self.modules_repo.branch})"
                     f"{pattern_msg(keywords)}"
                 )
                 return ""
@@ -57,6 +61,16 @@ class ModuleList(ModuleCommand):
 
         # We have a pipeline - list what's installed
         else:
+            # Check that we are in a pipeline directory
+            try:
+                _, repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+                if repo_type != "pipeline":
+                    raise UserWarning(
+                        "The command 'nf-core modules list local' must be run from a pipeline directory.",
+                    )
+            except UserWarning as e:
+                log.error(e)
+                return ""
             # Check whether pipelines is valid
             try:
                 self.has_valid_directory()
@@ -70,8 +84,8 @@ class ModuleList(ModuleCommand):
 
             # Filter by keywords
             repos_with_mods = {
-                repo_name: [mod for mod in modules if all(k in mod for k in keywords)]
-                for repo_name, modules in modules_json.get_all_modules().items()
+                repo_url: [mod for mod in modules if all(k in mod[1] for k in keywords)]
+                for repo_url, modules in modules_json.get_all_modules().items()
             }
 
             # Nothing found
@@ -87,18 +101,18 @@ class ModuleList(ModuleCommand):
             # Load 'modules.json'
             modules_json = modules_json.modules_json
 
-            for repo_name, modules in sorted(repos_with_mods.items()):
-                repo_entry = modules_json["repos"].get(repo_name, {})
-                for module in sorted(modules):
+            for repo_url, module_with_dir in sorted(repos_with_mods.items()):
+                repo_entry = modules_json["repos"].get(repo_url, {})
+                for install_dir, module in sorted(module_with_dir):
                     repo_modules = repo_entry.get("modules")
-                    module_entry = repo_modules.get(module)
+                    module_entry = repo_modules.get(install_dir).get(module)
 
                     if module_entry:
                         version_sha = module_entry["git_sha"]
                         try:
                             # pass repo_name to get info on modules even outside nf-core/modules
                             message, date = ModulesRepo(
-                                remote_url=repo_entry["git_url"],
+                                remote_url=repo_url,
                                 branch=module_entry["branch"],
                             ).get_commit_info(version_sha)
                         except LookupError as e:
@@ -106,18 +120,18 @@ class ModuleList(ModuleCommand):
                             date = "[red]Not Available"
                             message = "[red]Not Available"
                     else:
-                        log.warning(f"Commit SHA for module '{repo_name}/{module}' is missing from 'modules.json'")
+                        log.warning(f"Commit SHA for module '{install_dir}/{module}' is missing from 'modules.json'")
                         version_sha = "[red]Not Available"
                         date = "[red]Not Available"
                         message = "[red]Not Available"
-                    table.add_row(module, repo_name, version_sha, message, date)
+                    table.add_row(module, repo_url, version_sha, message, date)
 
         if print_json:
             return json.dumps(modules, sort_keys=True, indent=4)
 
         if self.remote:
             log.info(
-                f"Modules available from {self.modules_repo.fullname} ({self.modules_repo.branch})"
+                f"Modules available from {self.modules_repo.remote_url} ({self.modules_repo.branch})"
                 f"{pattern_msg(keywords)}:\n"
             )
         else:

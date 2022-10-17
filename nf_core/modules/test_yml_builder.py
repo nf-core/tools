@@ -25,20 +25,23 @@ from rich.syntax import Syntax
 
 import nf_core.utils
 
+from .modules_command import ModuleCommand
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
 
-class ModulesTestYmlBuilder(object):
+class ModulesTestYmlBuilder(ModuleCommand):
     def __init__(
         self,
         module_name=None,
+        directory=".",
         run_tests=False,
         test_yml_output_path=None,
         force_overwrite=False,
         no_prompts=False,
     ):
+        super().__init__(directory)
         self.module_name = module_name
         self.run_tests = run_tests
         self.test_yml_output_path = test_yml_output_path
@@ -66,6 +69,8 @@ class ModulesTestYmlBuilder(object):
 
     def check_inputs(self):
         """Do more complex checks about supplied flags."""
+        # Check modules directory structure
+        self.check_modules_structure()
 
         # Get the tool name if not specified
         if self.module_name is None:
@@ -75,8 +80,8 @@ class ModulesTestYmlBuilder(object):
                 choices=modules_repo.get_avail_modules(),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        self.module_dir = os.path.join("modules", *self.module_name.split("/"))
-        self.module_test_main = os.path.join("tests", "modules", *self.module_name.split("/"), "main.nf")
+        self.module_dir = os.path.join(self.default_modules_path, *self.module_name.split("/"))
+        self.module_test_main = os.path.join(self.default_tests_path, *self.module_name.split("/"), "main.nf")
 
         # First, sanity check that the module directory exists
         if not os.path.isdir(self.module_dir):
@@ -91,7 +96,7 @@ class ModulesTestYmlBuilder(object):
 
         # Get the output YAML file / check it does not already exist
         while self.test_yml_output_path is None:
-            default_val = f"tests/modules/{self.module_name}/test.yml"
+            default_val = f"tests/modules/nf-core/{self.module_name}/test.yml"
             if self.no_prompts:
                 self.test_yml_output_path = default_val
             else:
@@ -166,7 +171,7 @@ class ModulesTestYmlBuilder(object):
         while ep_test["command"] == "":
             # Don't think we need the last `-c` flag, but keeping to avoid having to update 100s modules.
             # See https://github.com/nf-core/tools/issues/1562
-            default_val = f"nextflow run ./tests/modules/{self.module_name} -entry {entry_point} -c ./tests/config/nextflow.config  -c ./tests/modules/{self.module_name}/nextflow.config"
+            default_val = f"nextflow run ./tests/modules/nf-core/{self.module_name} -entry {entry_point} -c ./tests/config/nextflow.config -c ./tests/modules/nf-core/{self.module_name}/nextflow.config"
             if self.no_prompts:
                 ep_test["command"] = default_val
             else:
@@ -282,9 +287,9 @@ class ModulesTestYmlBuilder(object):
             for i in range(len(test_files)):
                 if test_files[i].get("md5sum") and not test_files[i].get("md5sum") == test_files_repeat[i]["md5sum"]:
                     test_files[i].pop("md5sum")
-                    test_files[i][
-                        "contains"
-                    ] = "[ # TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead ]"
+                    test_files[i]["contains"] = [
+                        "# TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead "
+                    ]
 
         if len(test_files) == 0:
             raise UserWarning(f"Could not find any test result files in '{results_dir}'")

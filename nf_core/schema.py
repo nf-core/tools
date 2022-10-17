@@ -228,7 +228,7 @@ class PipelineSchema(object):
             schema_no_required = copy.deepcopy(self.schema)
             if "required" in schema_no_required:
                 schema_no_required.pop("required")
-            for group_key, group in schema_no_required["definitions"].items():
+            for group_key, group in schema_no_required.get("definitions", {}).items():
                 if "required" in group:
                     schema_no_required["definitions"][group_key].pop("required")
             jsonschema.validate(self.schema_defaults, schema_no_required)
@@ -247,7 +247,7 @@ class PipelineSchema(object):
             params_ignore = []
 
         # Go over group keys
-        for group_key, group in schema_no_required["definitions"].items():
+        for group_key, group in schema_no_required.get("definitions", {}).items():
             group_properties = group.get("properties")
             for param in group_properties:
                 if param in params_ignore:
@@ -343,7 +343,7 @@ class PipelineSchema(object):
             if "allOf" not in schema:
                 raise AssertionError("Schema has definitions, but no allOf key")
             in_allOf = False
-            for allOf in schema["allOf"]:
+            for allOf in schema.get("allOf", []):
                 if allOf["$ref"] == f"#/definitions/{d_key}":
                     in_allOf = True
             if not in_allOf:
@@ -361,7 +361,7 @@ class PipelineSchema(object):
             if "definitions" not in schema:
                 raise AssertionError("Schema has allOf, but no definitions")
             def_key = allOf["$ref"][14:]
-            if def_key not in schema["definitions"]:
+            if def_key not in schema.get("definitions", {}):
                 raise AssertionError(f"Subschema `{def_key}` found in `allOf` but not `definitions`")
 
         # Check that the schema describes at least one parameter
@@ -666,6 +666,14 @@ class PipelineSchema(object):
             allOf = {"$ref": f"#/definitions/{d_key}"}
             if allOf in self.schema.get("allOf", []):
                 self.schema["allOf"].remove(allOf)
+
+        # If we don't have anything left in "allOf", remove it
+        if self.schema.get("allOf") == []:
+            del self.schema["allOf"]
+
+        # If we don't have anything left in "definitions", remove it
+        if self.schema.get("definitions") == {}:
+            del self.schema["definitions"]
 
     def remove_schema_notfound_configs(self):
         """

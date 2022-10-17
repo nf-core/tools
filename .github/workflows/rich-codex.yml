@@ -24,8 +24,7 @@ jobs:
         uses: ewels/rich-codex@v1
         env:
           COLUMNS: 100
-          NFCORE_LINT_HIDE_PROGRESS: true
-          NFCORE_MODULES_LINT_HIDE_PROGRESS: true
+          HIDE_PROGRESS: "true"
         with:
           commit_changes: "true"
           clean_img_paths: docs/images/*.svg
