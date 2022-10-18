@@ -350,7 +350,6 @@ class TestModules(unittest.TestCase):
             for pr in prs:
                 if pr["state"] == "open":
                     mock_close_open_pr.assert_any_call(pr)
-                mock_close_open_pr.assert_any_call(pr)
 
     @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
     @mock.patch("nf_core.utils.gh_api.patch", side_effect=mocked_requests_patch)
