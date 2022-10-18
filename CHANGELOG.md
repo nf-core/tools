@@ -5,6 +5,7 @@
 ### Template
 
 - Fix lint warnings for `samplesheet_check.nf` module
+- Add codespaces template ([#1957](https://github.com/nf-core/tools/pull/1957))
 
 ### Linting
 
