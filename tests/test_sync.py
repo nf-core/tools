@@ -348,8 +348,8 @@ class TestModules(unittest.TestCase):
 
             prs = mock_get(f"https://api.github.com/repos/{psync.gh_repo}/pulls").data
             for pr in prs:
-                if pr["state"] != "open":
-                    continue
+                if pr["state"] == "open":
+                    mock_close_open_pr.assert_any_call(pr)
                 mock_close_open_pr.assert_any_call(pr)
 
     @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
