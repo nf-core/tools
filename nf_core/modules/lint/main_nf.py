@@ -77,31 +77,36 @@ def main_nf(module_lint_object, module, fix_version, progress_bar):
     # Perform section-specific linting
     state = "module"
     process_lines = []
+    container_lines = []
     script_lines = []
     shell_lines = []
     when_lines = []
     for l in lines:
         if re.search(r"^\s*process\s*\w*\s*{", l) and state == "module":
             state = "process"
-        if re.search(r"input\s*:", l) and state in ["process"]:
+        if re.search(r"^\s*conda\s*\(", l) and state in ["process"]:
+            state = "container"
+        if re.search(r"input\s*:", l) and state in ["container", "process"]:
             state = "input"
             continue
-        if re.search(r"output\s*:", l) and state in ["input", "process"]:
+        if re.search(r"output\s*:", l) and state in ["input", "container", "process"]:
             state = "output"
             continue
-        if re.search(r"when\s*:", l) and state in ["input", "output", "process"]:
+        if re.search(r"when\s*:", l) and state in ["input", "output", "container", "process"]:
             state = "when"
             continue
-        if re.search(r"script\s*:", l) and state in ["input", "output", "when", "process"]:
+        if re.search(r"script\s*:", l) and state in ["input", "output", "when", "container", "process"]:
             state = "script"
             continue
-        if re.search(r"shell\s*:", l) and state in ["input", "output", "when", "process"]:
+        if re.search(r"shell\s*:", l) and state in ["input", "output", "when", "container", "process"]:
             state = "shell"
             continue
 
         # Perform state-specific linting checks
         if state == "process" and not _is_empty(module, l):
             process_lines.append(l)
+        if state == "container" and not _is_empty(module, l):
+            container_lines.append(l)
         if state == "input" and not _is_empty(module, l):
             inputs.extend(_parse_input(module, l))
         if state == "output" and not _is_empty(module, l):
@@ -121,7 +126,10 @@ def main_nf(module_lint_object, module, fix_version, progress_bar):
         module.passed.append(("main_nf_script_outputs", "Process 'output' block found", module.main_nf))
 
     # Check the process definitions
-    if check_process_section(module, process_lines, fix_version, progress_bar):
+    check_process_section(module, process_lines)
+
+    # Check the container definitions
+    if check_container_section(module, container_lines, fix_version, progress_bar):
         module.passed.append(("main_nf_container", "Container versions match", module.main_nf))
     else:
         module.warned.append(("main_nf_container", "Container versions do not match", module.main_nf))
@@ -209,7 +217,7 @@ def check_when_section(self, lines):
     self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
 
 
-def check_process_section(self, lines, fix_version, progress_bar):
+def check_process_section(self, lines):
     """
     Lint the section of a module between the process definition
     and the 'input:' definition
@@ -221,11 +229,6 @@ def check_process_section(self, lines, fix_version, progress_bar):
         self.failed.append(("process_exist", "Process definition does not exist", self.main_nf))
         return
     self.passed.append(("process_exist", "Process definition exists", self.main_nf))
-
-    # Checks that build numbers of bioconda, singularity and docker container are matching
-    singularity_tag = "singularity"
-    docker_tag = "docker"
-    bioconda_packages = []
 
     # Process name should be all capital letters
     self.process_name = lines[0].split()[1]
@@ -255,6 +258,14 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
     else:
         self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
+
+
+def check_container_section(self, lines, fix_version, progress_bar):
+    # Checks that build numbers of bioconda, singularity and docker container are matching
+    singularity_tag = "singularity"
+    docker_tag = "docker"
+    bioconda_packages = []
+
     for l in lines:
         if _container_type(l) == "bioconda":
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
