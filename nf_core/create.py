@@ -541,7 +541,8 @@ class PipelineCreate(object):
             )
         # Initialise pipeline
         log.info("Initialising pipeline git repository")
-        repo = git.Repo.init(self.outdir, initial_branch=default_branch)
+        init_kwargs = {"initial_branch": default_branch} if default_branch is not None else {}
+        repo = git.Repo.init(self.outdir, **init_kwargs)
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
         # Add TEMPLATE branch to git repository
