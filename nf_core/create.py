@@ -49,6 +49,7 @@ class PipelineCreate(object):
         author,
         version="1.0dev",
         no_git=False,
+        default_branch=None,
         force=False,
         outdir=None,
         template_yaml_path=None,
@@ -82,6 +83,7 @@ class PipelineCreate(object):
         self.no_git = (
             no_git if self.template_params["github"] else True
         )  # Set to True if template was configured without github hosting
+        self.default_branch = default_branch
         self.force = force
         if outdir is None:
             outdir = os.path.join(os.getcwd(), self.template_params["name_noslash"])
@@ -525,19 +527,21 @@ class PipelineCreate(object):
         """
         # Check that the default branch is not dev
         try:
-            default_branch = git.config.GitConfigParser().get_value("init", "defaultBranch")
+            default_branch = self.default_branch or git.config.GitConfigParser().get_value("init", "defaultBranch")
         except configparser.Error:
             default_branch = None
             log.debug("Could not read init.defaultBranch")
-        if default_branch == "dev" or default_branch == "TEMPLATE":
+        if default_branch in ["dev", "TEMPLATE"]:
             raise UserWarning(
-                f"Your Git defaultBranch is set to '{default_branch}', which is incompatible with nf-core.\n"
-                "This can be modified with the command [white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
-                "Pipeline git repository is not initialised."
+                f"Your Git defaultBranch '{default_branch}' is incompatible with nf-core.\n"
+                "Set the default branch name with "
+                "[white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
+                # Or set the default_branch parameter in this class
+                "Pipeline git repository will not be initialised."
             )
         # Initialise pipeline
         log.info("Initialising pipeline git repository")
-        repo = git.Repo.init(self.outdir)
+        repo = git.Repo.init(self.outdir, initial_branch=default_branch)
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
         # Add TEMPLATE branch to git repository

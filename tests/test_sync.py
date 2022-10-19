@@ -26,12 +26,13 @@ class TestModules(unittest.TestCase):
         """Create a new pipeline to test"""
         self.tmp_dir = tempfile.mkdtemp()
         self.pipeline_dir = os.path.join(self.tmp_dir, "test_pipeline")
+        default_branch = "master"
         self.create_obj = nf_core.create.PipelineCreate(
-            "testing", "test pipeline", "tester", outdir=self.pipeline_dir, plain=True
+            "testing", "test pipeline", "tester", outdir=self.pipeline_dir, plain=True, default_branch=default_branch
         )
         self.create_obj.init_pipeline()
         self.remote_path = os.path.join(self.tmp_dir, "remote_repo")
-        self.remote_repo = git.Repo.init(self.remote_path, bare=True)
+        self.remote_repo = git.Repo.init(self.remote_path, bare=True, initial_branch=default_branch)
 
     def tearDown(self):
         if os.path.exists(self.tmp_dir):
