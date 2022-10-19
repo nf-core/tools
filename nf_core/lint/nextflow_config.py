@@ -132,6 +132,7 @@ def nextflow_config(self):
         ["params.input"],
         ["params.show_hidden_params"],
         ["params.schema_ignore_params"],
+        ["params.container_registry"],
     ]
     # Throw a warning if these are missing
     config_warn = [
