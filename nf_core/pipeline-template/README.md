@@ -81,7 +81,7 @@ Devcontainer specs:
 - [Dockerfile](.devcontainer/Dockerfile)
 
 # Getting started
-- Open the repo in [Codespaces](../../codespaces)
+- Open the repo in [Codespaces](https://github.com/{{ name }})/codespaces)
 - Tools installed
    - nf-core
    - nextflow
