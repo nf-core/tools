@@ -40,6 +40,8 @@ class PipelineCreate(object):
             May the force be with you.
         outdir (str): Path to the local output directory.
         template_yaml (str): Path to template.yml file for pipeline creation settings.
+        plain (bool): If true the Git repository will be initialized plain.
+        default_branch (str): Specifies the --initial-branch name.
     """
 
     def __init__(
@@ -53,6 +55,7 @@ class PipelineCreate(object):
         outdir=None,
         template_yaml_path=None,
         plain=False,
+        default_branch=None,
     ):
         self.template_params, skip_paths_keys = self.create_param_dict(
             name, description, author, version, template_yaml_path, plain
@@ -82,6 +85,7 @@ class PipelineCreate(object):
         self.no_git = (
             no_git if self.template_params["github"] else True
         )  # Set to True if template was configured without github hosting
+        self.default_branch = default_branch
         self.force = force
         if outdir is None:
             outdir = os.path.join(os.getcwd(), self.template_params["name_noslash"])
@@ -528,24 +532,27 @@ class PipelineCreate(object):
         Raises:
             UserWarning: if Git default branch is set to 'dev' or 'TEMPLATE'.
         """
-        # Check that the default branch is not dev
+        default_branch = self.default_branch
         try:
-            default_branch = git.config.GitConfigParser().get_value("init", "defaultBranch")
+            default_branch = default_branch or git.config.GitConfigParser().get_value("init", "defaultBranch")
         except configparser.Error:
-            default_branch = None
             log.debug("Could not read init.defaultBranch")
-        if default_branch == "dev" or default_branch == "TEMPLATE":
+        if default_branch in ["dev", "TEMPLATE"]:
             raise UserWarning(
-                f"Your Git defaultBranch is set to '{default_branch}', which is incompatible with nf-core.\n"
-                "This can be modified with the command [white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
-                "Pipeline git repository is not initialised."
+                f"Your Git defaultBranch '{default_branch}' is incompatible with nf-core.\n"
+                "'dev' and 'TEMPLATE' can not be used as default branch name.\n"
+                "Set the default branch name with "
+                "[white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
+                "Or set the default_branch parameter in this class.\n"
+                "Pipeline git repository will not be initialised."
             )
-        # Initialise pipeline
+
         log.info("Initialising pipeline git repository")
         repo = git.Repo.init(self.outdir)
+        if default_branch:
+            repo.active_branch.rename(default_branch)
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
-        # Add TEMPLATE branch to git repository
         repo.git.branch("TEMPLATE")
         repo.git.branch("dev")
         log.info(

@@ -19,6 +19,7 @@
 - Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
 - Improve test coverage of sync.py
 - `check_up_to_date()` function from `modules_json` also checks for subworkflows.
+- The default branch can now be specified when creating a new pipeline repo [#1959](https://github.com/nf-core/tools/pull/1959).
 
 ### Modules
 
