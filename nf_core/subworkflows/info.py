@@ -89,7 +89,7 @@ class SubworkflowInfo(object):
             self.modules_json.check_up_to_date()
         else:
             self.modules_json = None
-        self.module = self.init_mod_name(tool)
+        self.subworkflow = self.init_mod_name(tool)
 
     def init_mod_name(self, subworkflow):
         """
@@ -136,7 +136,7 @@ class SubworkflowInfo(object):
 
         # Could not find the meta
         if self.meta is False:
-            raise UserWarning(f"Could not find subworkflow '{self.module}'")
+            raise UserWarning(f"Could not find subworkflow '{self.subworkflow}'")
 
         return self.generate_subworkflow_info_help()
 
@@ -151,15 +151,15 @@ class SubworkflowInfo(object):
             # Try to find and load the meta.yml file
             repo_name = self.modules_repo.repo_path
             module_base_path = os.path.join(self.dir, "subworkflows")
-            # Check that we have any modules installed from this repo
-            modules = self.modules_json.get_installed_subworkflows().get(self.modules_repo.remote_url)
-            module_names = [module for _, module in modules]
-            if modules is None:
-                raise LookupError(f"No modules installed from {self.modules_repo.remote_url}")
+            # Check that we have any subworkflows installed from this repo
+            subworkflows = self.modules_json.get_installed_subworkflows().get(self.modules_repo.remote_url)
+            subworkflow_names = [subworkflow for _, subworkflow in subworkflows]
+            if subworkflows is None:
+                raise LookupError(f"No subworkflows installed from {self.modules_repo.remote_url}")
 
-            if self.module in module_names:
-                install_dir = [dir for dir, module in modules if module == self.module][0]
-                mod_dir = os.path.join(module_base_path, install_dir, self.module)
+            if self.subworkflow in subworkflow_names:
+                install_dir = [dir for dir, subworkflow in subworkflows if subworkflow == self.subworkflow][0]
+                mod_dir = os.path.join(module_base_path, install_dir, self.subworkflow)
                 meta_fn = os.path.join(mod_dir, "meta.yml")
                 if os.path.exists(meta_fn):
                     log.debug(f"Found local file: {meta_fn}")
@@ -167,18 +167,18 @@ class SubworkflowInfo(object):
                         self.local_path = mod_dir
                         return yaml.safe_load(fh)
 
-            log.debug(f"Subworkflow '{self.module}' meta.yml not found locally")
+            log.debug(f"Subworkflow '{self.subworkflow}' meta.yml not found locally")
         else:
             module_base_path = os.path.join(self.dir, "subworkflows", "nf-core")
-            if self.module in os.listdir(module_base_path):
-                mod_dir = os.path.join(module_base_path, self.module)
+            if self.subworkflow in os.listdir(module_base_path):
+                mod_dir = os.path.join(module_base_path, self.subworkflow)
                 meta_fn = os.path.join(mod_dir, "meta.yml")
                 if os.path.exists(meta_fn):
                     log.debug(f"Found local file: {meta_fn}")
                     with open(meta_fn, "r") as fh:
                         self.local_path = mod_dir
                         return yaml.safe_load(fh)
-            log.debug(f"Subworkflow '{self.module}' meta.yml not found locally")
+            log.debug(f"Subworkflow '{self.subworkflow}' meta.yml not found locally")
 
         return None
 
@@ -189,10 +189,10 @@ class SubworkflowInfo(object):
             dict or bool: Parsed meta.yml found, False otherwise
         """
         # Check if our requested module is there
-        if self.module not in self.modules_repo.get_avail_subworkflows():
+        if self.subworkflow not in self.modules_repo.get_avail_subworkflows():
             return False
 
-        file_contents = self.modules_repo.get_subworkflow_meta_yml(self.module)
+        file_contents = self.modules_repo.get_subworkflow_meta_yml(self.subworkflow)
         if file_contents is None:
             return False
         self.remote_location = self.modules_repo.remote_url
@@ -238,7 +238,7 @@ class SubworkflowInfo(object):
         renderables.append(
             Panel(
                 intro_text,
-                title=f"[bold]Subworkflow: [green]{self.module}\n",
+                title=f"[bold]Subworkflow: [green]{self.subworkflow}\n",
                 title_align="left",
             )
         )
@@ -281,47 +281,10 @@ class SubworkflowInfo(object):
             if self.remote_location != NF_CORE_MODULES_REMOTE:
                 cmd_base = f"nf-core subworkflows --git-remote {self.remote_location}"
             renderables.append(
-                Text.from_markup(f"\n :computer:  Installation command: [magenta]{cmd_base} install {self.module}\n")
+                Text.from_markup(f"\n :computer:  Installation command: [magenta]{cmd_base} install {self.subworkflow}\n")
             )
 
         return Group(*renderables)
-
-    # def check_modules_structure(self):
-    #     """
-    #     Check that the structure of the modules directory in a pipeline is the correct one:
-    #         modules/nf-core/TOOL/SUBTOOL
-
-    #     Prior to nf-core/tools release 2.6 the directory structure had an additional level of nesting:
-    #         modules/nf-core/modules/TOOL/SUBTOOL
-    #     """
-    #     if self.repo_type == "pipeline":
-    #         wrong_location_modules = []
-    #         for directory, _, files in os.walk(Path(self.dir, "modules")):
-    #             if "main.nf" in files:
-    #                 module_path = Path(directory).relative_to(Path(self.dir, "modules"))
-    #                 parts = module_path.parts
-    #                 # Check that there are modules installed directly under the 'modules' directory
-    #                 if parts[1] == "modules":
-    #                     wrong_location_modules.append(module_path)
-    #         # If there are modules installed in the wrong location
-    #         if len(wrong_location_modules) > 0:
-    #             log.info("The modules folder structure is outdated. Reinstalling modules.")
-    #             # Remove the local copy of the modules repository
-    #             log.info(f"Updating '{self.modules_repo.local_repo_dir}'")
-    #             self.modules_repo.setup_local_repo(
-    #                 self.modules_repo.remote_url, self.modules_repo.branch, self.hide_progress
-    #             )
-    #             # Move wrong modules to the right directory
-    #             for module in wrong_location_modules:
-    #                 modules_dir = Path("modules").resolve()
-    #                 correct_dir = Path(modules_dir, self.modules_repo.repo_path, Path(*module.parts[2:]))
-    #                 wrong_dir = Path(modules_dir, module)
-    #                 shutil.move(wrong_dir, correct_dir)
-    #                 log.info(f"Moved {wrong_dir} to {correct_dir}.")
-    #             shutil.rmtree(Path(self.dir, "modules", self.modules_repo.repo_path, "modules"))
-    #             # Regenerate modules.json file
-    #             modules_json = ModulesJson(self.dir)
-    #             modules_json.check_up_to_date()
 
     def get_subworkflows_clone_modules(self):
         """
