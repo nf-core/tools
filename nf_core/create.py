@@ -203,7 +203,7 @@ class PipelineCreate(object):
         return passed_value
 
     def prompt_wf_name(self):
-        wf_name = questionary.text("Name", style=nf_core.utils.nfcore_question_style).unsafe_ask()
+        wf_name = questionary.text("Workflow name", style=nf_core.utils.nfcore_question_style).unsafe_ask()
         while not re.match(r"^[a-z]+$", wf_name):
             log.error("[red]Invalid workflow name: must be lowercase without punctuation.")
             wf_name = questionary.text(
