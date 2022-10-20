@@ -73,7 +73,7 @@ class TestLaunch(unittest.TestCase):
         """Create a workflow, but delete the schema file, then try to load it"""
         test_pipeline_dir = os.path.join(tmp_path, "wf")
         create_obj = nf_core.create.PipelineCreate(
-            "test_pipeline", "", "", outdir=test_pipeline_dir, no_git=True, plain=True
+            "testpipeline", "", "", outdir=test_pipeline_dir, no_git=True, plain=True
         )
         create_obj.init_pipeline()
         os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
