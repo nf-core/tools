@@ -529,7 +529,7 @@ class PipelineCreate(object):
         """
         default_branch = self.default_branch
         try:
-            default_branch = git.config.GitConfigParser().get_value("init", "defaultBranch")
+            default_branch = default_branch or git.config.GitConfigParser().get_value("init", "defaultBranch")
         except configparser.Error:
             log.debug("Could not read init.defaultBranch")
         if default_branch in ["dev", "TEMPLATE"]:
