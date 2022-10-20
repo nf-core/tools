@@ -163,6 +163,11 @@ class PipelineCreate(object):
         param_dict["logo_dark"] = f"{param_dict['name_noslash']}_logo_dark.png"
         param_dict["version"] = version
 
+        # Check that the pipeline name matches the requirements
+        if not re.match(r"^[a-z]+$", param_dict["short_name"]):
+            log.error("[red]Invalid workflow name: must be lowercase without punctuation.")
+            sys.exit(1)
+
         return param_dict, skip_paths
 
     def customize_template(self, template_areas):
