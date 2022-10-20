@@ -535,6 +535,7 @@ class PipelineCreate(object):
         if default_branch in ["dev", "TEMPLATE"]:
             raise UserWarning(
                 f"Your Git defaultBranch '{default_branch}' is incompatible with nf-core.\n"
+                "'dev' and 'TEMPLATE' can not be used as default branch name.\n"
                 "Set the default branch name with "
                 "[white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
                 "Or set the default_branch parameter in this class.\n"
