@@ -40,6 +40,8 @@ class PipelineCreate(object):
             May the force be with you.
         outdir (str): Path to the local output directory.
         template_yaml (str): Path to template.yml file for pipeline creation settings.
+        plain (bool): If true the Git repository will be initialized plain.
+        default_branch (str): Specifies the --initial-branch name.
     """
 
     def __init__(
