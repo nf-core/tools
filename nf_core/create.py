@@ -527,10 +527,10 @@ class PipelineCreate(object):
         Raises:
             UserWarning: if Git default branch is set to 'dev' or 'TEMPLATE'.
         """
+        default_branch = self.default_branch
         try:
-            default_branch = self.default_branch or git.config.GitConfigParser().get_value("init", "defaultBranch")
+            default_branch = git.config.GitConfigParser().get_value("init", "defaultBranch")
         except configparser.Error:
-            default_branch = None
             log.debug("Could not read init.defaultBranch")
         if default_branch in ["dev", "TEMPLATE"]:
             raise UserWarning(
