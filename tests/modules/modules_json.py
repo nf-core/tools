@@ -34,10 +34,13 @@ def test_mod_json_update(self):
     mod_repo_obj = ModulesRepo()
     mod_json_obj.update(mod_repo_obj, "MODULE_NAME", "GIT_SHA", False)
     mod_json = mod_json_obj.get_modules_json()
-    assert "MODULE_NAME" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
-    assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["MODULE_NAME"]
-    assert "GIT_SHA" == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["MODULE_NAME"]["git_sha"]
-    assert NF_CORE_MODULES_DEFAULT_BRANCH == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["MODULE_NAME"]["branch"]
+    assert "MODULE_NAME" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]
+    assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]
+    assert "GIT_SHA" == mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["git_sha"]
+    assert (
+        NF_CORE_MODULES_DEFAULT_BRANCH
+        == mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["branch"]
+    )
 
 
 def test_mod_json_create(self):
@@ -59,9 +62,9 @@ def test_mod_json_create(self):
 
     mods = ["fastqc", "multiqc"]
     for mod in mods:
-        assert mod in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
-        assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"][mod]
-        assert "branch" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"][mod]
+        assert mod in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]
+        assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"][mod]
+        assert "branch" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"][mod]
 
 
 def modify_main_nf(path):
@@ -79,11 +82,11 @@ def test_mod_json_create_with_patch(self):
     mod_json_path = Path(self.pipeline_dir, "modules.json")
 
     # Modify the module
-    module_path = Path(self.pipeline_dir, "modules", "nf-core", "modules", "fastqc")
+    module_path = Path(self.pipeline_dir, "modules", "nf-core", "fastqc")
     modify_main_nf(module_path / "main.nf")
 
     # Try creating a patch file
-    patch_obj = ModulePatch(self.pipeline_dir)
+    patch_obj = ModulePatch(self.pipeline_dir, NF_CORE_MODULES_REMOTE, NF_CORE_MODULES_DEFAULT_BRANCH)
     patch_obj.patch("fastqc")
 
     # Remove the existing modules.json file
@@ -100,9 +103,9 @@ def test_mod_json_create_with_patch(self):
     mod_json = mod_json_obj.get_modules_json()
 
     # Check that fastqc is in the file
-    assert "fastqc" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
-    assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]
-    assert "branch" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]
+    assert "fastqc" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]
+    assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["fastqc"]
+    assert "branch" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["fastqc"]
 
     # Check that fastqc/main.nf maintains the changes
     with open(module_path / "main.nf", "r") as fh:
@@ -162,14 +165,14 @@ def test_mod_json_up_to_date_reinstall_fails(self):
     mod_json = mod_json_obj.get_modules_json()
 
     # Check that the module has been removed from the modules.json
-    assert "fastqc" not in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
+    assert "fastqc" not in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]
 
 
 def test_mod_json_repo_present(self):
     """Tests the repo_present function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
 
-    assert mod_json_obj.repo_present(NF_CORE_MODULES_NAME) is True
+    assert mod_json_obj.repo_present(NF_CORE_MODULES_REMOTE) is True
     assert mod_json_obj.repo_present("INVALID_REPO") is False
 
 
@@ -177,10 +180,10 @@ def test_mod_json_module_present(self):
     """Tests the module_present function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
 
-    assert mod_json_obj.module_present("fastqc", NF_CORE_MODULES_NAME) is True
-    assert mod_json_obj.module_present("INVALID_MODULE", NF_CORE_MODULES_NAME) is False
-    assert mod_json_obj.module_present("fastqc", "INVALID_REPO") is False
-    assert mod_json_obj.module_present("INVALID_MODULE", "INVALID_REPO") is False
+    assert mod_json_obj.module_present("fastqc", NF_CORE_MODULES_REMOTE, NF_CORE_MODULES_NAME) is True
+    assert mod_json_obj.module_present("INVALID_MODULE", NF_CORE_MODULES_REMOTE, NF_CORE_MODULES_NAME) is False
+    assert mod_json_obj.module_present("fastqc", "INVALID_REPO", "INVALID_DIR") is False
+    assert mod_json_obj.module_present("INVALID_MODULE", "INVALID_REPO", "INVALID_DIR") is False
 
 
 def test_mod_json_get_module_version(self):
@@ -188,17 +191,10 @@ def test_mod_json_get_module_version(self):
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
     assert (
-        mod_json_obj.get_module_version("fastqc", NF_CORE_MODULES_NAME)
-        == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]["git_sha"]
+        mod_json_obj.get_module_version("fastqc", NF_CORE_MODULES_REMOTE, NF_CORE_MODULES_NAME)
+        == mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["fastqc"]["git_sha"]
     )
-    assert mod_json_obj.get_module_version("INVALID_MODULE", NF_CORE_MODULES_NAME) is None
-
-
-def test_mod_json_get_git_url(self):
-    """Tests the get_git_url function"""
-    mod_json_obj = ModulesJson(self.pipeline_dir)
-    assert mod_json_obj.get_git_url(NF_CORE_MODULES_NAME) == NF_CORE_MODULES_REMOTE
-    assert mod_json_obj.get_git_url("INVALID_REPO") is None
+    assert mod_json_obj.get_module_version("INVALID_MODULE", NF_CORE_MODULES_REMOTE, NF_CORE_MODULES_NAME) is None
 
 
 def test_mod_json_dump(self):
@@ -222,9 +218,10 @@ def test_mod_json_dump(self):
 def test_mod_json_with_empty_modules_value(self):
     # Load module.json and remove the modules entry
     mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json_obj.create()  # Create modules.json explicitly to get correct module sha
     mod_json_orig = mod_json_obj.get_modules_json()
     mod_json = copy.deepcopy(mod_json_orig)
-    mod_json["repos"]["nf-core/modules"]["modules"] = ""
+    mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"] = ""
     # save the altered module.json and load it again to check if it will fix itself
     mod_json_obj.modules_json = mod_json
     mod_json_obj.dump()
@@ -237,9 +234,10 @@ def test_mod_json_with_empty_modules_value(self):
 def test_mod_json_with_missing_modules_entry(self):
     # Load module.json and remove the modules entry
     mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json_obj.create()  # Create modules.json explicitly to get correct module sha
     mod_json_orig = mod_json_obj.get_modules_json()
     mod_json = copy.deepcopy(mod_json_orig)
-    mod_json["repos"]["nf-core/modules"].pop("modules")
+    mod_json["repos"][NF_CORE_MODULES_REMOTE].pop("modules")
     # save the altered module.json and load it again to check if it will fix itself
     mod_json_obj.modules_json = mod_json
     mod_json_obj.dump()

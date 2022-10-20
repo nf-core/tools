@@ -76,6 +76,8 @@ class ModulesTest(ModuleCommand):
 
     def _check_inputs(self):
         """Do more complex checks about supplied flags."""
+        # Check modules directory structure
+        self.check_modules_structure()
 
         # Retrieving installed modules
         if self.repo_type == "modules":
@@ -83,7 +85,7 @@ class ModulesTest(ModuleCommand):
         else:
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
-            installed_modules = modules_json.get_all_modules().get(self.modules_repo.fullname)
+            installed_modules = modules_json.get_all_modules().get(self.modules_repo.remote_url)
 
         # Get the tool name if not specified
         if self.module_name is None:
@@ -108,18 +110,12 @@ class ModulesTest(ModuleCommand):
 
     def _validate_folder_structure(self):
         """Validate that the modules follow the correct folder structure to run the tests:
-        - modules/TOOL/SUBTOOL/
-        - tests/modules/TOOL/SUBTOOL/
+        - modules/nf-core/TOOL/SUBTOOL/
+        - tests/modules/nf-core/TOOL/SUBTOOL/
 
         """
-        basedir = "modules/nf-core"
-
-        if self.repo_type == "modules":
-            module_path = Path("modules") / self.module_name
-            test_path = Path("tests/modules") / self.module_name
-        else:
-            module_path = Path(f"{basedir}/modules") / self.module_name
-            test_path = Path(f"{basedir}/tests/modules") / self.module_name
+        module_path = Path(self.default_modules_path) / self.module_name
+        test_path = Path(self.default_tests_path) / self.module_name
 
         if not (self.dir / module_path).is_dir():
             raise UserWarning(

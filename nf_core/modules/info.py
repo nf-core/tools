@@ -72,6 +72,9 @@ class ModuleInfo(ModuleCommand):
                 pipeline_dir = None
 
         if self.repo_type == "pipeline":
+            # Check modules directory structure
+            self.check_modules_structure()
+            # Check modules.json up to date
             self.modules_json = ModulesJson(self.dir)
             self.modules_json.check_up_to_date()
         else:
@@ -93,7 +96,8 @@ class ModuleInfo(ModuleCommand):
                 if self.repo_type == "modules":
                     modules = self.get_modules_clone_modules()
                 else:
-                    modules = self.modules_json.get_all_modules().get(self.modules_repo.fullname)
+                    modules = self.modules_json.get_all_modules().get(self.modules_repo.remote_url)
+                    modules = [module if dir == "nf-core" else f"{dir}/{module}" for dir, module in modules]
                     if modules is None:
                         raise UserWarning(f"No modules installed from '{self.modules_repo.remote_url}'")
             else:
@@ -135,15 +139,17 @@ class ModuleInfo(ModuleCommand):
 
         if self.repo_type == "pipeline":
             # Try to find and load the meta.yml file
-            repo_name = self.modules_repo.fullname
-            module_base_path = os.path.join(self.dir, "modules", repo_name)
+            repo_name = self.modules_repo.repo_path
+            module_base_path = os.path.join(self.dir, "modules")
             # Check that we have any modules installed from this repo
-            modules = self.modules_json.get_all_modules().get(repo_name)
+            modules = self.modules_json.get_all_modules().get(self.modules_repo.remote_url)
+            module_names = [module for _, module in modules]
             if modules is None:
                 raise LookupError(f"No modules installed from {self.modules_repo.remote_url}")
 
-            if self.module in modules:
-                mod_dir = os.path.join(module_base_path, self.module)
+            if self.module in module_names:
+                install_dir = [dir for dir, module in modules if module == self.module][0]
+                mod_dir = os.path.join(module_base_path, install_dir, self.module)
                 meta_fn = os.path.join(mod_dir, "meta.yml")
                 if os.path.exists(meta_fn):
                     log.debug(f"Found local file: {meta_fn}")
@@ -153,7 +159,7 @@ class ModuleInfo(ModuleCommand):
 
             log.debug(f"Module '{self.module}' meta.yml not found locally")
         else:
-            module_base_path = os.path.join(self.dir, "modules")
+            module_base_path = os.path.join(self.dir, "modules", "nf-core")
             if self.module in os.listdir(module_base_path):
                 mod_dir = os.path.join(module_base_path, self.module)
                 meta_fn = os.path.join(mod_dir, "meta.yml")

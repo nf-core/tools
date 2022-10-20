@@ -26,6 +26,8 @@ class ModuleCommand:
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
         self.dir = dir
+        self.default_modules_path = Path("modules", "nf-core")
+        self.default_tests_path = Path("tests", "modules", "nf-core")
         try:
             if self.dir:
                 self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -38,7 +40,7 @@ class ModuleCommand:
         """
         Get the modules available in a clone of nf-core/modules
         """
-        module_base_path = Path(self.dir, "modules")
+        module_base_path = Path(self.dir, self.default_modules_path)
         return [
             str(Path(dir).relative_to(module_base_path))
             for dir, _, files in os.walk(module_base_path)
@@ -91,19 +93,19 @@ class ModuleCommand:
             log.error(f"Could not remove module: {e}")
             return False
 
-    def modules_from_repo(self, repo_name):
+    def modules_from_repo(self, install_dir):
         """
         Gets the modules installed from a certain repository
 
         Args:
-            repo_name (str): The name of the repository
+            install_dir (str): The name of the directory where modules are installed
 
         Returns:
             [str]: The names of the modules
         """
-        repo_dir = Path(self.dir, "modules", repo_name)
+        repo_dir = Path(self.dir, "modules", install_dir)
         if not repo_dir.exists():
-            raise LookupError(f"Nothing installed from {repo_name} in pipeline")
+            raise LookupError(f"Nothing installed from {install_dir} in pipeline")
 
         return [
             str(Path(dir_path).relative_to(repo_dir)) for dir_path, _, files in os.walk(repo_dir) if "main.nf" in files
@@ -115,7 +117,7 @@ class ModuleCommand:
 
         Args:
             module_name (str): The name of the module
-            module_versioN (str): Git SHA for the version of the module to be installed
+            module_version (str): Git SHA for the version of the module to be installed
             modules_repo (ModulesRepo): A correctly configured ModulesRepo object
             install_dir (str): The path to where the module should be installed (should be the 'modules/' dir of the pipeline)
 
@@ -145,3 +147,75 @@ class ModuleCommand:
                 self.lint_config = yaml.safe_load(fh)
         except FileNotFoundError:
             log.debug(f"No lint config file found: {config_fn}")
+
+    def check_modules_structure(self):
+        """
+        Check that the structure of the modules directory in a pipeline is the correct one:
+            modules/nf-core/TOOL/SUBTOOL
+
+        Prior to nf-core/tools release 2.6 the directory structure had an additional level of nesting:
+            modules/nf-core/modules/TOOL/SUBTOOL
+        """
+        if self.repo_type == "pipeline":
+            wrong_location_modules = []
+            for directory, _, files in os.walk(Path(self.dir, "modules")):
+                if "main.nf" in files:
+                    module_path = Path(directory).relative_to(Path(self.dir, "modules"))
+                    parts = module_path.parts
+                    # Check that there are modules installed directly under the 'modules' directory
+                    if parts[1] == "modules":
+                        wrong_location_modules.append(module_path)
+            # If there are modules installed in the wrong location
+            if len(wrong_location_modules) > 0:
+                log.info("The modules folder structure is outdated. Reinstalling modules.")
+                # Remove the local copy of the modules repository
+                log.info(f"Updating '{self.modules_repo.local_repo_dir}'")
+                self.modules_repo.setup_local_repo(
+                    self.modules_repo.remote_url, self.modules_repo.branch, self.hide_progress
+                )
+                # Move wrong modules to the right directory
+                for module in wrong_location_modules:
+                    modules_dir = Path("modules").resolve()
+                    module_name = str(Path(*module.parts[2:]))
+                    correct_dir = Path(modules_dir, self.modules_repo.repo_path, Path(module_name))
+                    wrong_dir = Path(modules_dir, module)
+                    shutil.move(wrong_dir, correct_dir)
+                    log.info(f"Moved {wrong_dir} to {correct_dir}.")
+                    # Check if a path file exists
+                    patch_path = correct_dir / Path(module_name + ".diff")
+                    self.check_patch_paths(patch_path, module_name)
+                shutil.rmtree(Path(self.dir, "modules", self.modules_repo.repo_path, "modules"))
+                # Regenerate modules.json file
+                modules_json = ModulesJson(self.dir)
+                modules_json.check_up_to_date()
+
+    def check_patch_paths(self, patch_path, module_name):
+        """
+        Check that paths in patch files are updated to the new modules path
+        """
+        if patch_path.exists():
+            log.info(f"Modules {module_name} contains a patch file.")
+            rewrite = False
+            with open(patch_path, "r") as fh:
+                lines = fh.readlines()
+                for index, line in enumerate(lines):
+                    # Check if there are old paths in the patch file and replace
+                    if f"modules/{self.modules_repo.repo_path}/modules/{module_name}/" in line:
+                        rewrite = True
+                        lines[index] = line.replace(
+                            f"modules/{self.modules_repo.repo_path}/modules/{module_name}/",
+                            f"modules/{self.modules_repo.repo_path}/{module_name}/",
+                        )
+            if rewrite:
+                log.info(f"Updating paths in {patch_path}")
+                with open(patch_path, "w") as fh:
+                    for line in lines:
+                        fh.write(line)
+                # Update path in modules.json if the file is in the correct format
+                modules_json = ModulesJson(self.dir)
+                modules_json.load()
+                if modules_json.has_git_url_and_modules():
+                    modules_json.modules_json["repos"][self.modules_repo.remote_url]["modules"][
+                        self.modules_repo.repo_path
+                    ][module_name]["patch"] = str(patch_path.relative_to(Path(self.dir).resolve()))
+                modules_json.dump()

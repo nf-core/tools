@@ -124,7 +124,7 @@ class ModulesDiffer:
     def write_diff_file(
         diff_path,
         module,
-        repo_name,
+        repo_path,
         from_dir,
         to_dir,
         current_version=None,
@@ -140,7 +140,7 @@ class ModulesDiffer:
         Args:
             diff_path (str | Path): The path to the file that should be appended
             module (str): The module name
-            repo_name (str): The name of the repo where the module resides
+            repo_path (str): The name of the repo where the module resides
             from_dir (str | Path): The directory containing the old module files
             to_dir (str | Path): The directory containing the new module files
             diffs (dict[str, (ModulesDiffer.DiffEnum, str)]): A dictionary containing
@@ -167,12 +167,12 @@ class ModulesDiffer:
         with open(diff_path, file_action) as fh:
             if current_version is not None and new_version is not None:
                 fh.write(
-                    f"Changes in module '{Path(repo_name, module)}' between"
+                    f"Changes in module '{Path(repo_path, module)}' between"
                     f" ({current_version}) and"
                     f" ({new_version})\n"
                 )
             else:
-                fh.write(f"Changes in module '{Path(repo_name, module)}'\n")
+                fh.write(f"Changes in module '{Path(repo_path, module)}'\n")
 
             for _, (diff_status, diff) in diffs.items():
                 if diff_status != ModulesDiffer.DiffEnum.UNCHANGED:
@@ -219,14 +219,14 @@ class ModulesDiffer:
 
     @staticmethod
     def print_diff(
-        module, repo_name, from_dir, to_dir, current_version=None, new_version=None, dsp_from_dir=None, dsp_to_dir=None
+        module, repo_path, from_dir, to_dir, current_version=None, new_version=None, dsp_from_dir=None, dsp_to_dir=None
     ):
         """
         Prints the diffs between two module versions to the terminal
 
         Args:
             module (str): The module name
-            repo_name (str): The name of the repo where the module resides
+            repo_path (str): The name of the repo where the module resides
             from_dir (str | Path): The directory containing the old module files
             to_dir (str | Path): The directory containing the new module files
             module_dir (str): The path to the current installation of the module
@@ -246,10 +246,10 @@ class ModulesDiffer:
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
         if current_version is not None and new_version is not None:
             log.info(
-                f"Changes in module '{Path(repo_name, module)}' between" f" ({current_version}) and" f" ({new_version})"
+                f"Changes in module '{Path(repo_path, module)}' between" f" ({current_version}) and" f" ({new_version})"
             )
         else:
-            log.info(f"Changes in module '{Path(repo_name, module)}'")
+            log.info(f"Changes in module '{Path(repo_path, module)}'")
 
         for file, (diff_status, diff) in diffs.items():
             if diff_status == ModulesDiffer.DiffEnum.UNCHANGED:
@@ -423,13 +423,13 @@ class ModulesDiffer:
         return patched_new_lines
 
     @staticmethod
-    def try_apply_patch(module, repo_name, patch_path, module_dir, reverse=False):
+    def try_apply_patch(module, repo_path, patch_path, module_dir, reverse=False):
         """
         Try applying a full patch file to a module
 
         Args:
             module (str): Name of the module
-            repo_name (str): Name of the repository where the module resides
+            repo_path (str): Name of the repository where the module resides
             patch_path (str): The absolute path to the patch file to be applied
             module_dir (Path): The directory containing the module
 
@@ -440,7 +440,7 @@ class ModulesDiffer:
         Raises:
             LookupError: If the patch application fails in a file
         """
-        module_relpath = Path("modules", repo_name, module)
+        module_relpath = Path("modules", repo_path, module)
         patches = ModulesDiffer.per_file_patch(patch_path)
         new_files = {}
         for file, patch in patches.items():

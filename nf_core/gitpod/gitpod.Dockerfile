@@ -31,6 +31,7 @@ RUN conda update -n base -c defaults conda && \
         mamba=0.24.0 \
         pip=22.1.2 \
         black=22.6.0 \
+        prettier=2.7.1 \
         -n base && \
     conda clean --all -f -y
 

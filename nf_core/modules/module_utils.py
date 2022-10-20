@@ -30,6 +30,35 @@ def path_from_remote(remote_url):
         path = path.path
         # Remove the intial '/'
         path = path[1:]
+        # Remove extension
+        path = os.path.splitext(path)[0]
+        # Remove repo name "modules"
+        path = os.path.split(path)[0]
+    else:
+        # Remove the initial `git@``
+        path = remote_url.split("@")
+        path = path[-1] if len(path) > 1 else path[0]
+        path = urllib.parse.urlparse(path)
+        path = path.path
+        # Remove extension
+        path = os.path.splitext(path)[0]
+        # Remove repo name "modules"
+        path = os.path.split(path)[0]
+    return path
+
+
+def repo_full_name_from_remote(remote_url):
+    """
+    Extracts the path from the remote URL
+    See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
+    """
+    # Check whether we have a https or ssh url
+    if remote_url.startswith("https"):
+        path = urllib.parse.urlparse(remote_url)
+        path = path.path
+        # Remove the intial '/'
+        path = path[1:]
+        # Remove extension
         path = os.path.splitext(path)[0]
     else:
         # Remove the initial `git@``
@@ -37,6 +66,7 @@ def path_from_remote(remote_url):
         path = path[-1] if len(path) > 1 else path[0]
         path = urllib.parse.urlparse(path)
         path = path.path
+        # Remove extension
         path = os.path.splitext(path)[0]
     return path
 
@@ -58,20 +88,16 @@ def get_installed_modules(dir, repo_type="modules"):
     local_modules = []
     nfcore_modules = []
     local_modules_dir = None
-    nfcore_modules_dir = os.path.join(dir, "modules", "nf-core", "modules")
+    nfcore_modules_dir = os.path.join(dir, "modules", "nf-core")
 
     # Get local modules
     if repo_type == "pipeline":
-        local_modules_dir = os.path.join(dir, "modules", "local", "process")
+        local_modules_dir = os.path.join(dir, "modules", "local")
 
         # Filter local modules
         if os.path.exists(local_modules_dir):
             local_modules = os.listdir(local_modules_dir)
             local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
-
-    # nf-core/modules
-    if repo_type == "modules":
-        nfcore_modules_dir = os.path.join(dir, "modules")
 
     # Get nf-core modules
     if os.path.exists(nfcore_modules_dir):
