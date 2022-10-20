@@ -270,12 +270,7 @@ def licences(pipeline, json):
 
 # nf-core create
 @nf_core_cli.command()
-@click.option(
-    "-n",
-    "--name",
-    type=str,
-    help="The name of your new pipeline",
-)
+@click.option("-n", "--name", type=str, help="The name of your new pipeline")
 @click.option("-d", "--description", type=str, help="A short description of your pipeline")
 @click.option("-a", "--author", type=str, help="Name of the main author(s)")
 @click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
@@ -284,7 +279,8 @@ def licences(pipeline, json):
 @click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 @click.option("--plain", is_flag=True, help="Use the standard nf-core template")
-def create(name, description, author, version, no_git, force, outdir, template_yaml, plain):
+@click.option("--default-branch", help="Set the default branch name of the Git repository")
+def create(name, description, author, version, no_git, force, outdir, template_yaml, plain, default_branch):
     """
     Create a new pipeline using the nf-core template.
 
@@ -293,7 +289,16 @@ def create(name, description, author, version, no_git, force, outdir, template_y
     """
     try:
         create_obj = nf_core.create.PipelineCreate(
-            name, description, author, version, no_git, force, outdir, template_yaml, plain
+            name=name,
+            description=description,
+            author=author,
+            version=version,
+            no_git=no_git,
+            force=force,
+            outdir=outdir,
+            template_yaml_path=template_yaml,
+            plain=plain,
+            default_branch=default_branch,
         )
         create_obj.init_pipeline()
     except UserWarning as e:
