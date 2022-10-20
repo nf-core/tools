@@ -527,7 +527,6 @@ class PipelineCreate(object):
         Raises:
             UserWarning: if Git default branch is set to 'dev' or 'TEMPLATE'.
         """
-        # Check that the default branch is not dev
         try:
             default_branch = self.default_branch or git.config.GitConfigParser().get_value("init", "defaultBranch")
         except configparser.Error:
@@ -538,17 +537,16 @@ class PipelineCreate(object):
                 f"Your Git defaultBranch '{default_branch}' is incompatible with nf-core.\n"
                 "Set the default branch name with "
                 "[white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
-                # Or set the default_branch parameter in this class
+                "Or set the default_branch parameter in this class.\n"
                 "Pipeline git repository will not be initialised."
             )
-        # Initialise pipeline
+
         log.info("Initialising pipeline git repository")
         repo = git.Repo.init(self.outdir)
         if default_branch:
             repo.active_branch.rename(default_branch)
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
-        # Add TEMPLATE branch to git repository
         repo.git.branch("TEMPLATE")
         repo.git.branch("dev")
         log.info(
