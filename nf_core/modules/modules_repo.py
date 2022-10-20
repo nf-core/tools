@@ -560,7 +560,7 @@ class ModulesRepo(object):
 
     def get_subworkflow_meta_yml(self, subworkflow_name):
         """
-        Returns the contents of the 'meta.yml' file of a module
+        Returns the contents of the 'meta.yml' file of a subworkflow
 
         Args:
             subworkflow_name (str): The name of the subworkflow

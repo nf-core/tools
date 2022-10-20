@@ -1023,7 +1023,7 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
 # nf-core subworkflows info
 @subworkflows.command()
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",

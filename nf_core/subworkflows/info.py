@@ -96,7 +96,7 @@ class SubworkflowInfo(object):
         Makes sure that we have a subworkflow name before proceeding.
 
         Args:
-            module: str: Subworkflow name to check
+            subworkflow: str: Subworkflow name to check
         """
         if subworkflow is None:
             self.local = questionary.confirm(
@@ -277,9 +277,9 @@ class SubworkflowInfo(object):
 
         # Installation command
         if self.remote_location:
-            cmd_base = "nf-core modules"
+            cmd_base = "nf-core subworkflows"
             if self.remote_location != NF_CORE_MODULES_REMOTE:
-                cmd_base = f"nf-core modules --git-remote {self.remote_location}"
+                cmd_base = f"nf-core subworkflows --git-remote {self.remote_location}"
             renderables.append(
                 Text.from_markup(f"\n :computer:  Installation command: [magenta]{cmd_base} install {self.module}\n")
             )

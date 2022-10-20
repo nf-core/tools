@@ -88,7 +88,7 @@ class SubworkflowList(object):
 
             # Verify that 'modules.json' is consistent with the installed modules
             modules_json = ModulesJson(self.dir)
-            modules_json.check_up_to_date()  # TODO: check subworkflows also!!!!
+            modules_json.check_up_to_date()
             # Filter by keywords
             repos_with_swfs = {
                 repo_url: [swf for swf in subworkflows if all(k in swf[1] for k in keywords)]
