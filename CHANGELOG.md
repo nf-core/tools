@@ -17,6 +17,7 @@
 - Don't remove local copy of modules repo, only update it with fetch ([#1881](https://github.com/nf-core/tools/pull/1881))
 - Add subworkflow commands create-test-yml, create and install ([#1897](https://github.com/nf-core/tools/pull/1897))
 - Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
+- Improve test coverage of sync.py
 - `check_up_to_date()` function from `modules_json` also checks for subworkflows.
 
 ### Modules
@@ -31,6 +32,7 @@
 - Add `actions/upload-artifact` step to the awstest workflows, to expose the debug log file
 - Add `prettier` as a requirement to Gitpod Dockerimage
 - Bioconda incompatible conda channel setups now result in more informative error messages ([#1812](https://github.com/nf-core/tools/pull/1812))
+- Improve template customisation documentation ([#1821](https://github.com/nf-core/tools/pull/1821))
 - Update MultiQC module, update supplying MultiQC default and custom config and logo files to module
 - Add a 'recommend' methods description text to MultiQC to help pipeline users report pipeline usage in publications ([#1749](https://github.com/nf-core/tools/pull/1749))
 - Fix template spacing modified by JINJA ([#1830](https://github.com/nf-core/tools/pull/1830))
@@ -64,6 +66,10 @@
 - Add isort options to pyproject.toml ([#1792](https://github.com/nf-core/tools/pull/1792))
 - Lint pyproject.toml file exists and content ([#1795](https://github.com/nf-core/tools/pull/1795))
 - Update GitHub PyPI package release action to v1 ([#1785](https://github.com/nf-core/tools/pull/1785))
+
+### Template
+
+- Update GitHub actions to use nodejs16 ([#1944](https://github.com/nf-core/tools/pull/1944))
 
 ## [v2.5 - Gold Otter](https://github.com/nf-core/tools/releases/tag/2.5) - [2022-08-30]
 
