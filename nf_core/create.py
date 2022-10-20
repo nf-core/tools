@@ -49,11 +49,11 @@ class PipelineCreate(object):
         author,
         version="1.0dev",
         no_git=False,
-        default_branch=None,
         force=False,
         outdir=None,
         template_yaml_path=None,
         plain=False,
+        default_branch=None,
     ):
         self.template_params, skip_paths_keys = self.create_param_dict(
             name, description, author, version, template_yaml_path, plain
