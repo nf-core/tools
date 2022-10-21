@@ -269,9 +269,11 @@ class PipelineCreate(object):
         template_files = list(pathlib.Path(template_dir).glob("**/*"))
         template_files += list(pathlib.Path(template_dir).glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
+        short_name = self.template_params["short_name"]
+        short_name_capitalized = f"{short_name[0].upper()}{short_name[1:]}"
         rename_files = {
-            "workflows/pipeline.nf": f"workflows/{self.template_params['short_name']}.nf",
-            "lib/WorkflowPipeline.groovy": f"lib/Workflow{self.template_params['short_name'][0].upper()}{self.template_params['short_name'][1:]}.groovy",
+            "workflows/pipeline.nf": f"workflows/{short_name}.nf",
+            "lib/WorkflowPipeline.groovy": f"lib/Workflow{short_name_capitalized}.groovy",
         }
 
         # Set the paths to skip according to customization
