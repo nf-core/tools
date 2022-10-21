@@ -85,12 +85,12 @@ class ModuleLint(ModuleCommand):
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
             all_pipeline_modules = modules_json.get_all_modules()
-            if self.modules_repo.fullname in all_pipeline_modules:
-                module_dir = Path(self.dir, "modules", self.modules_repo.fullname)
+            if self.modules_repo.remote_url in all_pipeline_modules:
+                module_dir = Path(self.dir, "modules", "nf-core")
                 self.all_remote_modules = [
-                    NFCoreModule(m, self.modules_repo.fullname, module_dir / m, self.repo_type, Path(self.dir))
-                    for m in all_pipeline_modules[self.modules_repo.fullname]
-                ]
+                    NFCoreModule(m[1], self.modules_repo.remote_url, module_dir / m[1], self.repo_type, Path(self.dir))
+                    for m in all_pipeline_modules[self.modules_repo.remote_url]
+                ]  # m = (module_dir, module_name)
                 if not self.all_remote_modules:
                     raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
                 local_module_dir = Path(self.dir, "modules", "local")
@@ -102,7 +102,7 @@ class ModuleLint(ModuleCommand):
             else:
                 raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
         else:
-            module_dir = Path(self.dir, "modules")
+            module_dir = Path(self.dir, self.default_modules_path)
             self.all_remote_modules = [
                 NFCoreModule(m, None, module_dir / m, self.repo_type, Path(self.dir))
                 for m in self.get_modules_clone_modules()
@@ -143,7 +143,7 @@ class ModuleLint(ModuleCommand):
         Lint all or one specific module
 
         First gets a list of all local modules (in modules/local/process) and all modules
-        installed from nf-core (in modules/nf-core/modules)
+        installed from nf-core (in modules/nf-core)
 
         For all nf-core modules, the correct file structure is assured and important
         file content is verified. If directory subject to linting is a clone of 'nf-core/modules',
@@ -265,7 +265,7 @@ class ModuleLint(ModuleCommand):
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
             console=console,
-            disable=self.hide_progress,
+            disable=self.hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
         )
         with progress_bar:
             lint_progress = progress_bar.add_task(

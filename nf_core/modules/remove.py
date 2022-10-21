@@ -21,20 +21,24 @@ class ModuleRemove(ModuleCommand):
             log.error("You cannot remove a module in a clone of nf-core/modules")
             return False
 
+        # Check modules directory structure
+        self.check_modules_structure()
+
         # Check whether pipeline is valid and with a modules.json file
         self.has_valid_directory()
         self.has_modules_file()
 
-        repo_name = self.modules_repo.fullname
+        repo_dir = self.modules_repo.fullname
+        repo_path = self.modules_repo.repo_path
         if module is None:
             module = questionary.autocomplete(
                 "Tool name:",
-                choices=self.modules_from_repo(repo_name),
+                choices=self.modules_from_repo(repo_dir),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
         # Get the module directory
-        module_dir = Path(self.dir, "modules", repo_name, module)
+        module_dir = Path(self.dir, "modules", repo_path, module)
 
         # Load the modules.json file
         modules_json = ModulesJson(self.dir)
@@ -44,15 +48,15 @@ class ModuleRemove(ModuleCommand):
         if not module_dir.exists():
             log.error(f"Module directory does not exist: '{module_dir}'")
 
-            if modules_json.module_present(module, repo_name):
+            if modules_json.module_present(module, self.modules_repo.remote_url, repo_path):
                 log.error(f"Found entry for '{module}' in 'modules.json'. Removing...")
-                modules_json.remove_entry(module, repo_name)
+                modules_json.remove_entry(module, self.modules_repo.remote_url, repo_path)
             return False
 
         log.info(f"Removing {module}")
 
         # Remove entry from modules.json
-        modules_json.remove_entry(module, repo_name)
+        modules_json.remove_entry(module, self.modules_repo.remote_url, repo_path)
 
         # Remove the module
         return self.clear_module_dir(module_name=module, module_dir=module_dir)

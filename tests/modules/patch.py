@@ -17,17 +17,19 @@ Uses a branch (patch-tester) in the GitLab nf-core/modules-test repo when
 testing if the update commands works correctly with patch files
 """
 
-ORG_SHA = "22c7c12dc21e2f633c00862c1291ceda0a3b7066"
-SUCCEED_SHA = "f7d3a3894f67db2e2f3f8c9ba76f8e33356be8e0"
-FAIL_SHA = "b4596169055700533865cefb7542108418f53100"
+ORG_SHA = "775fcd090fb776a0be695044f8ab1af8896c8452"
+CORRECT_SHA = "335cd32405568ca3b6d4c05ab1e8a98c21e18a4d"
+SUCCEED_SHA = "f1566140c752e9c68fffc189fbe8cb9ee942b3ca"
+FAIL_SHA = "1fc8b0f953d915d66ee40d28bc337ff0998d05bd"
 BISMARK_ALIGN = "bismark/align"
-REPO_NAME = "nf-core/modules-test"
-PATCH_BRANCH = "patch-tester"
+REPO_NAME = "nf-core"
+PATCH_BRANCH = "patch-tester-restructure"
+REPO_URL = "https://gitlab.com/nf-core/modules-test.git"
 
 
 def setup_patch(pipeline_dir, modify_module):
     install_obj = nf_core.modules.ModuleInstall(
-        pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL, branch=PATCH_BRANCH, sha=ORG_SHA
+        pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH, sha=ORG_SHA
     )
 
     # Install the module
@@ -47,8 +49,12 @@ def modify_main_nf(path):
     # -    tuple val(meta), path(reads)
     # -    path index
     # +    tuple val(meta), path(reads), path(index)
-    lines[10] = "    tuple val(meta), path(reads), path(index)\n"
-    lines.pop(11)
+    for line_index in range(len(lines)):
+        if lines[line_index] == "    tuple val(meta), path(reads)\n":
+            lines[line_index] = "    tuple val(meta), path(reads), path(index)\n"
+        elif lines[line_index] == "    path index\n":
+            to_pop = line_index
+    lines.pop(to_pop)
     with open(path, "w") as fh:
         fh.writelines(lines)
 
@@ -69,7 +75,7 @@ def test_create_patch_no_change(self):
 
     # Check the 'modules.json' contains no patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) is None
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) is None
 
 
 def test_create_patch_change(self):
@@ -88,7 +94,7 @@ def test_create_patch_change(self):
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
@@ -121,7 +127,7 @@ def test_create_patch_try_apply_successful(self):
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
@@ -138,14 +144,14 @@ def test_create_patch_try_apply_successful(self):
     assert update_obj.try_apply_patch(BISMARK_ALIGN, REPO_NAME, patch_relpath, module_path, module_install_dir) is True
 
     # Move the files from the temporary directory
-    update_obj.move_files_from_tmp_dir(BISMARK_ALIGN, module_path, install_dir, REPO_NAME, SUCCEED_SHA)
+    update_obj.move_files_from_tmp_dir(BISMARK_ALIGN, install_dir, REPO_NAME, SUCCEED_SHA)
 
     # Check that a patch file with the correct name has been created
     assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
@@ -187,7 +193,7 @@ def test_create_patch_try_apply_failed(self):
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
@@ -224,29 +230,34 @@ def test_create_patch_update_success(self):
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, GITLAB_URL, REPO_NAME) == Path(
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
+    with open(os.path.join(module_path, "main.nf"), "r") as fh:
+        print(fh.readlines())
     # Update the module
     update_obj = nf_core.modules.ModuleUpdate(
         self.pipeline_dir, sha=SUCCEED_SHA, show_diff=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH
     )
-    update_obj.update(BISMARK_ALIGN)
+    assert update_obj.update(BISMARK_ALIGN)
+    with open(os.path.join(module_path, "main.nf"), "r") as fh:
+        print(fh.readlines())
 
     # Check that a patch file with the correct name has been created
     assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, GITLAB_URL, REPO_NAME) == Path(
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
-    ), modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME)
+    ), modules_json_obj.get_patch_fn(BISMARK_ALIGN, GITLAB_URL, REPO_NAME)
 
     # Check that the correct lines are in the patch file
     with open(module_path / patch_fn, "r") as fh:
         patch_lines = fh.readlines()
     module_relpath = module_path.relative_to(self.pipeline_dir)
+    print(patch_lines)
     assert f"--- {module_relpath / 'main.nf'}\n" in patch_lines
     assert f"+++ {module_relpath / 'main.nf'}\n" in patch_lines
     assert "-    tuple val(meta), path(reads)\n" in patch_lines
@@ -280,7 +291,7 @@ def test_create_patch_update_fail(self):
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 

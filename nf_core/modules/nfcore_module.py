@@ -10,7 +10,7 @@ class NFCoreModule(object):
     Includes functionality for linting
     """
 
-    def __init__(self, module_name, repo_name, module_dir, repo_type, base_dir, nf_core_module=True):
+    def __init__(self, module_name, repo_url, module_dir, repo_type, base_dir, nf_core_module=True):
         """
         Initialize the object
 
@@ -24,7 +24,7 @@ class NFCoreModule(object):
                                    nf-core or local module
         """
         self.module_name = module_name
-        self.repo_name = repo_name
+        self.repo_url = repo_url
         self.module_dir = module_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
@@ -43,7 +43,8 @@ class NFCoreModule(object):
             self.main_nf = self.module_dir / "main.nf"
             self.meta_yml = self.module_dir / "meta.yml"
 
-            self.test_dir = Path(self.base_dir, "tests", "modules", self.module_name)
+            repo_dir = self.module_dir.parts[: self.module_dir.parts.index(self.module_name.split("/")[0])][-1]
+            self.test_dir = Path(self.base_dir, "tests", "modules", repo_dir, self.module_name)
             self.test_yml = self.test_dir / "test.yml"
             self.test_main_nf = self.test_dir / "main.nf"
 

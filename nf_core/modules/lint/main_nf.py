@@ -46,7 +46,7 @@ def main_nf(module_lint_object, module, fix_version, progress_bar):
     if module.is_patched:
         lines = ModulesDiffer.try_apply_patch(
             module.module_name,
-            module_lint_object.modules_repo.fullname,
+            module_lint_object.modules_repo.repo_path,
             module.patch_path,
             Path(module.module_dir).relative_to(module.base_dir),
             reverse=True,
@@ -235,7 +235,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
         self.failed.append(("process_capitals", "Process name is not in capital letters", self.main_nf))
 
     # Check that process labels are correct
-    correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
+    correct_process_labels = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
     process_label = [l for l in lines if l.lstrip().startswith("label")]
     if len(process_label) > 0:
         try:
