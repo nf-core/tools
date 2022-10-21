@@ -443,17 +443,14 @@ class ModulesRepo(object):
         commits = iter(commits_new + commits_old)
         return commits
 
-    def get_subworkflow_git_log(self, subworkflow_name, depth=None, since="2021-07-07T00:00:00Z"):
+    def get_subworkflow_git_log(self, subworkflow_name, depth=None):
         """
-        Fetches the commit history the of requested subworkflow since a given date. The default value is
-        not arbitrary - it is the last time the structure of the nf-core/subworkflow repository was had an
-        update breaking backwards compatibility.
+        Fetches the commit history the of requested subworkflow.
         Args:
             subworkflow_name (str): Name of subworkflow
             modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
             per_page (int): Number of commits per page returned by API
             page_nbr (int): Page number of the retrieved commits
-            since (str): Only show commits later than this timestamp.
             Time should be given in ISO-8601 format: YYYY-MM-DDTHH:MM:SSZ.
 
         Returns:
