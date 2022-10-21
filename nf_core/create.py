@@ -103,8 +103,8 @@ class PipelineCreate(object):
                     template_yaml = yaml.safe_load(f)
             else:
                 template_yaml = {}
-        except FileNotFoundError:
-            raise UserWarning(f"Template YAML file '{template_yaml_path}' not found.")
+        except FileNotFoundError as exc:
+            raise UserWarning(f"Template YAML file '{template_yaml_path}' not found.") from exc
 
         param_dict = {}
         # Get the necessary parameters either from the template or command line arguments
