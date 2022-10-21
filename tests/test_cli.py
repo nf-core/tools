@@ -142,3 +142,34 @@ class TestCli(unittest.TestCase):
         cmd = ["launch", "pipeline_name"]
         result = self.invoke_cli(cmd)
         assert result.exit_code == 1
+
+    @mock.patch("nf_core.download.DownloadWorkflow")
+    def test_cli_download(self, mock_dl):
+        """Test nf-core pipeline is downloaded and cli parameters are passed on."""
+        params = {
+            "revision": "abcdef",
+            "outdir": "/path/outdir",
+            "compress": "tar.gz",
+            "force": None,
+            "container": "singularity",
+            "singularity-cache-only": None,
+            "parallel-downloads": 2,
+        }
+
+        cmd = ["download"] + self.assemble_params(params) + ["pipeline_name"]
+        result = self.invoke_cli(cmd)
+
+        assert result.exit_code == 0
+
+        mock_dl.assert_called_once_with(
+            cmd[-1],
+            params["revision"],
+            params["outdir"],
+            params["compress"],
+            "force" in params,
+            params["container"],
+            "singularity-cache-only" in params,
+            params["parallel-downloads"],
+        )
+
+        mock_dl.return_value.download_workflow.assert_called_once()
