@@ -448,10 +448,7 @@ class ModulesRepo(object):
         Fetches the commit history the of requested subworkflow.
         Args:
             subworkflow_name (str): Name of subworkflow
-            modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
-            per_page (int): Number of commits per page returned by API
-            page_nbr (int): Page number of the retrieved commits
-            Time should be given in ISO-8601 format: YYYY-MM-DDTHH:MM:SSZ.
+            depth (int): Maximal number of commits
 
         Returns:
             ( dict ): Iterator of commit SHAs and associated (truncated) message
