@@ -19,7 +19,8 @@
 - Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
 - Improve test coverage of sync.py
 - `check_up_to_date()` function from `modules_json` also checks for subworkflows.
-- The default branch can now be specified when creating a new pipeline repo [#1959](https://github.com/nf-core/tools/pull/1959).
+- The default branch can now be specified when creating a new pipeline repo ([#1959](https://github.com/nf-core/tools/pull/1959))
+- Code maintenance ([#1818](https://github.com/nf-core/tools/pull/1818))
 
 ### Modules
 
@@ -37,7 +38,7 @@
 - Update MultiQC module, update supplying MultiQC default and custom config and logo files to module
 - Add a 'recommend' methods description text to MultiQC to help pipeline users report pipeline usage in publications ([#1749](https://github.com/nf-core/tools/pull/1749))
 - Fix template spacing modified by JINJA ([#1830](https://github.com/nf-core/tools/pull/1830))
-- Fix MultiQC execution on template [#1855](https://github.com/nf-core/tools/pull/1855)
+- Fix MultiQC execution on template ([#1855](https://github.com/nf-core/tools/pull/1855))
 - Don't skip including `base.config` when skipping nf-core/configs
 
 ### Linting
