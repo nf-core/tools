@@ -504,9 +504,9 @@ class PipelineCreate(object):
             log.debug(f"Fetching logo '{img_fn}' (attempt {attempt})")
             try:
                 # Try to fetch the logo from the website
-                r = requests.get(url, timeout=180)
-                if r.status_code != 200:
-                    raise UserWarning(f"Got status code {r.status_code}")
+                res = requests.get(url, timeout=180)
+                if res.status_code != 200:
+                    raise UserWarning(f"Got status code {res.status_code}")
                 # Check that the returned image looks right
 
             except (ConnectionError, UserWarning) as e:
@@ -517,7 +517,7 @@ class PipelineCreate(object):
 
             # Write the new logo to the file
             with open(img_fn, "wb") as fh:
-                fh.write(r.content)
+                fh.write(res.content)
             # Check that the file looks valid
             image_type = imghdr.what(img_fn)
             if image_type != "png":
