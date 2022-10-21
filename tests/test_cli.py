@@ -39,7 +39,8 @@ class TestCli(unittest.TestCase):
         """Assemble a dictionnary of parameters into a list of arguments for the cli
 
         Note:
-            if the value of a parameter is None, it will be considered a flag
+            if the value of a parameter is None, it will be considered a flag.
+            Booleans were not used to avoid conflicting with the click.BOOL type.
 
         Args:
             params (dict): dict of parameters to assemble"""
@@ -173,3 +174,67 @@ class TestCli(unittest.TestCase):
         )
 
         mock_dl.return_value.download_workflow.assert_called_once()
+
+    @mock.patch("nf_core.licences.WorkflowLicences")
+    def test_licences(self, mock_lic):
+        """Test nf-core pipeline licence is printed out and cli parameters are passed on."""
+        licence_text = "dummy licence text"
+        mock_lic.return_value.run_licences.return_value = licence_text
+
+        params = {
+            "json": None,
+        }
+
+        cmd = ["licences"] + self.assemble_params(params) + ["pipeline_name"]
+        result = self.invoke_cli(cmd)
+
+        assert result.exit_code == 0
+        assert licence_text in result.output
+
+        mock_lic.assert_called_once_with(cmd[-1])
+
+    @mock.patch("nf_core.licences.WorkflowLicences")
+    def test_licences_log_error(self, mock_lic):
+        """Test LookupError is logged"""
+        error_txt = "LookupError has been raised"
+        mock_lic.return_value.run_licences.side_effect = LookupError(error_txt)
+
+        cmd = ["licences", "pipeline_name"]
+        with self.assertLogs() as captured_logs:
+            result = self.invoke_cli(cmd)
+
+        assert result.exit_code == 1
+        assert error_txt in captured_logs.output[-1]
+        assert captured_logs.records[-1].levelname == "ERROR"
+
+    @mock.patch("nf_core.create.PipelineCreate")
+    def test_create(self, mock_create):
+        """Test nf-core pipeline is created and cli parameters are passed on."""
+        params = {
+            "name": "pipeline name",
+            "description": "pipeline description",
+            "author": "Kalle Anka",
+            "version": "1.2.3",
+            "no-git": None,
+            "force": None,
+            "outdir": "/path/outdir",
+            "template-yaml": "file.yaml",
+            "plain": None,
+        }
+
+        cmd = ["create"] + self.assemble_params(params)
+        result = self.invoke_cli(cmd)
+
+        assert result.exit_code == 0
+        mock_create.assert_called_once_with(
+            params["name"],
+            params["description"],
+            params["author"],
+            params["version"],
+            "no-git" in params,
+            "force" in params,
+            params["outdir"],
+            params["template-yaml"],
+            "plain" in params,
+        )
+        mock_create.return_value.init_pipeline.assert_called_once()
