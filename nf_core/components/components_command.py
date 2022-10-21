@@ -7,6 +7,7 @@ import yaml
 
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.path_utils import NFCorePaths
 
 from .components_utils import get_repo_type
 
@@ -18,16 +19,18 @@ class ComponentCommand:
     Base class for the 'nf-core modules' and 'nf-core subworkflows' commands
     """
 
-    def __init__(self, component_type, dir, remote_url=None, branch=None, no_pull=False, hide_progress=False):
+    def __init__(self, component_type, dir, org, remote_url=None, branch=None, no_pull=False, hide_progress=False):
         """
         Initialise the ComponentClass object
         """
-        self.component_type = ""
+        self.component_type = component_type
         self.dir = dir
+        self.org = org
+        self.paths = NFCorePaths(dir, org)
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
-        self.default_modules_path = Path("modules", "nf-core")
-        self.default_tests_path = Path("tests", "modules", "nf-core")
+        self.default_modules_path = self.paths.get_modules_path()
+        self.default_tests_path = self.paths.get_modules_tests_path()
         try:
             if self.dir:
                 self.dir, self.repo_type = get_repo_type(self.dir)
@@ -40,7 +43,7 @@ class ComponentCommand:
         """
         Get the modules repository available in a clone of nf-core/modules
         """
-        module_base_path = Path(self.dir, self.default_modules_path)
+        module_base_path = Path(self.default_modules_path)
         return [
             str(Path(dir).relative_to(module_base_path))
             for dir, _, files in os.walk(module_base_path)
@@ -54,15 +57,15 @@ class ComponentCommand:
         if self.dir is None or not os.path.exists(self.dir):
             log.error(f"Could not find pipeline: {self.dir}")
             return False
-        main_nf = os.path.join(self.dir, "main.nf")
-        nf_config = os.path.join(self.dir, "nextflow.config")
+        main_nf = self.paths.get_main_nf()
+        nf_config = self.paths.get_nf_config()
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
             raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.dir}'")
         return True
 
     def has_modules_file(self):
         """Checks whether a module.json file has been created and creates one if it is missing"""
-        modules_json_path = os.path.join(self.dir, "modules.json")
+        modules_json_path = self.paths.get_modules_json()
         if not os.path.exists(modules_json_path):
             log.info("Creating missing 'module.json' file.")
             ModulesJson(self.dir).create()
@@ -128,11 +131,11 @@ class ComponentCommand:
 
         Add parsed config to the `self.lint_config` class attribute.
         """
-        config_fn = os.path.join(self.dir, ".nf-core-lint.yml")
+        config_fn = self.paths.get_nf_core_config_yml()
 
         # Pick up the file if it's .yaml instead of .yml
         if not os.path.isfile(config_fn):
-            config_fn = os.path.join(self.dir, ".nf-core-lint.yaml")
+            config_fn = self.paths.get_nf_core_config_yaml()
 
         # Load the YAML
         try:

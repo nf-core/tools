@@ -55,8 +55,8 @@ class ModuleInfo(ModuleCommand):
         Take the parsed meta.yml and generate rich help
     """
 
-    def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+    def __init__(self, pipeline_dir, org, tool, remote_url, branch, no_pull):
+        super().__init__(pipeline_dir, org, remote_url, branch, no_pull)
         self.meta = None
         self.local_path = None
         self.remote_location = None
@@ -97,7 +97,7 @@ class ModuleInfo(ModuleCommand):
                     modules = self.get_modules_clone_modules()
                 else:
                     modules = self.modules_json.get_all_modules().get(self.modules_repo.remote_url)
-                    modules = [module if dir == "nf-core" else f"{dir}/{module}" for dir, module in modules]
+                    modules = [module if dir == self.org else f"{dir}/{module}" for dir, module in modules]
                     if modules is None:
                         raise UserWarning(f"No modules installed from '{self.modules_repo.remote_url}'")
             else:
@@ -159,7 +159,7 @@ class ModuleInfo(ModuleCommand):
 
             log.debug(f"Module '{self.module}' meta.yml not found locally")
         else:
-            module_base_path = os.path.join(self.dir, "modules", "nf-core")
+            module_base_path = os.path.join(self.dir, "modules", self.org)
             if self.module in os.listdir(module_base_path):
                 mod_dir = os.path.join(module_base_path, self.module)
                 meta_fn = os.path.join(mod_dir, "meta.yml")
@@ -269,7 +269,8 @@ class ModuleInfo(ModuleCommand):
         if self.remote_location:
             cmd_base = "nf-core modules"
             if self.remote_location != NF_CORE_MODULES_REMOTE:
-                cmd_base = f"nf-core modules --git-remote {self.remote_location}"
+                org_arg = " --org {self.org}" if self.org != "nf-core" else ""
+                cmd_base = f"nf-core modules --git-remote {self.remote_location}{org_arg}"
             renderables.append(
                 Text.from_markup(f"\n :computer:  Installation command: [magenta]{cmd_base} install {self.module}\n")
             )
