@@ -20,6 +20,7 @@
 - Improve test coverage of sync.py
 - `check_up_to_date()` function from `modules_json` also checks for subworkflows.
 - The default branch can now be specified when creating a new pipeline repo [#1959](https://github.com/nf-core/tools/pull/1959).
+- Add file `versions.yml` when generating `test.yml` with `nf-core modules create-test-yml` but don't check for md5sum [#1963](https://github.com/nf-core/tools/pull/1963)
 
 ### Modules
 
