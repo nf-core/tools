@@ -20,6 +20,7 @@
 - Improve test coverage of sync.py
 - `check_up_to_date()` function from `modules_json` also checks for subworkflows.
 - The default branch can now be specified when creating a new pipeline repo [#1959](https://github.com/nf-core/tools/pull/1959).
+- Only warn when checking that the pipeline directory contains a `main.nf` and a `nextflow.config` file if the pipeline is not an nf-core pipeline [#1964](https://github.com/nf-core/tools/pull/1964)
 
 ### Modules
 
