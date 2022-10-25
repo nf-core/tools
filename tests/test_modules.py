@@ -7,6 +7,9 @@ import shutil
 import tempfile
 import unittest
 
+import requests
+import requests_mock
+
 import nf_core.create
 import nf_core.modules
 
@@ -32,9 +35,26 @@ def create_modules_repo_dummy(tmp_dir):
     with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
         fh.writelines(["repository_type: modules", "\n"])
 
-    # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
-    module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
-    module_create.create()
+    # mock biocontainers response
+    with requests_mock.Mocker() as mock:
+        biocontainers_api_url = f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/bpipe/versions/bpipe-0.9.11"
+        anaconda_api_url = f"https://api.anaconda.org/package/bioconda/bpipe"
+        mock.register_uri("GET", biocontainers_api_url, text="to modify when the api works and I can know what to add")
+        anaconda_mock = {
+            "status_code": 200,
+            "latest_version": "0.9.11",
+            "summary": "",
+            "doc_url": "",
+            "dev_url": "",
+            "files": [{"version": "0.9.11"}],
+            "license": "",
+        }
+        biocontainers_mock = {"status_code": 200, "images": [{"image_type": "Docker", "image_name": ""}]}
+        mock.register_uri("GET", anaconda_api_url, json=anaconda_mock)
+        mock.register_uri("GET", biocontainers_api_url, json=biocontainers_mock)
+        # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
+        module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
+        module_create.create()
 
     return root_dir
 
