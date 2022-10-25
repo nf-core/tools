@@ -278,62 +278,41 @@ class ModulesRepo(object):
         """
         self.repo.git.checkout(commit)
 
-    def module_exists(self, module_name, checkout=True):
+    def component_exists(self, component_name, component_type, checkout=True):
         """
-        Check if a module exists in the branch of the repo
+        Check if a module/subworkflow exists in the branch of the repo
 
         Args:
-            module_name (str): The name of the module
+            component_name (str): The name of the module/subworkflow
 
         Returns:
-            (bool): Whether the module exists in this branch of the repository
+            (bool): Whether the module/subworkflow exists in this branch of the repository
         """
-        return module_name in self.get_avail_modules(checkout=checkout)
+        return component_name in self.get_avail_components(component_type, checkout=checkout)
 
-    def subworkflow_exists(self, subworkflow_name, checkout=True):
+    def get_component_dir(self, component_name, component_type):
         """
-        Check if a subworkflow exists in the branch of the repo
-
-        Args:
-            subworkflow_name (str): The name of the subworkflow
-
-        Returns:
-            (bool): Whether the subworkflow exists in this branch of the repository
-        """
-        return subworkflow_name in self.get_avail_subworkflows(checkout=checkout)
-
-    def get_module_dir(self, module_name):
-        """
-        Returns the file path of a module directory in the repo.
+        Returns the file path of a module/subworkflow directory in the repo.
         Does not verify that the path exists.
         Args:
-            module_name (str): The name of the module
+            component_name (str): The name of the module/subworkflow
 
         Returns:
-            module_path (str): The path of the module in the local copy of the repository
+            component_path (str): The path of the module/subworkflow in the local copy of the repository
         """
-        return os.path.join(self.modules_dir, module_name)
+        if component_type == "modules":
+            return os.path.join(self.modules_dir, component_name)
+        elif component_type == "subworkflows":
+            return os.path.join(self.subworkflows_dir, component_name)
 
-    def get_subworkflow_dir(self, subworkflow_name):
+    def install_component(self, component_name, install_dir, commit, component_type):
         """
-        Returns the file path of a subworkflow directory in the repo.
-        Does not verify that the path exists.
-        Args:
-            subworkflow_name (str): The name of the subworkflow
-
-        Returns:
-            subworkflow_path (str): The path of the subworkflow in the local copy of the repository
-        """
-        return os.path.join(self.subworkflows_dir, subworkflow_name)
-
-    def install_module(self, module_name, install_dir, commit):
-        """
-        Install the module files into a pipeline at the given commit
+        Install the module/subworkflow files into a pipeline at the given commit
 
         Args:
-            module_name (str): The name of the module
-            install_dir (str): The path where the module should be installed
-            commit (str): The git SHA for the version of the module to be installed
+            component_name (str): The name of the module/subworkflow
+            install_dir (str): The path where the module/subworkflow should be installed
+            commit (str): The git SHA for the version of the module/subworkflow to be installed
 
         Returns:
             (bool): Whether the operation was successful or not
@@ -344,43 +323,15 @@ class ModulesRepo(object):
         except git.GitCommandError:
             return False
 
-        # Check if the module exists in the branch
-        if not self.module_exists(module_name, checkout=False):
-            log.error(f"The requested module does not exists in the branch '{self.branch}' of {self.remote_url}'")
+        # Check if the module/subworkflow exists in the branch
+        if not self.component_exists(component_name, component_type, checkout=False):
+            log.error(
+                f"The requested {component_type[:-1]} does not exists in the branch '{self.branch}' of {self.remote_url}'"
+            )
             return False
 
         # Copy the files from the repo to the install folder
-        shutil.copytree(self.get_module_dir(module_name), Path(install_dir, module_name))
-
-        # Switch back to the tip of the branch
-        self.checkout_branch()
-        return True
-
-    def install_subworkflow(self, subworkflow_name, install_dir, commit):
-        """
-        Install the subworkflow files into a pipeline at the given commit
-
-        Args:
-            subworkflow_name (str): The name of the subworkflow
-            install_dir (str): The path where the subworkflow should be installed
-            commit (str): The git SHA for the version of the subworkflow to be installed
-
-        Returns:
-            (bool): Whether the operation was successful or not
-        """
-        # Check out the repository at the requested ref
-        try:
-            self.checkout(commit)
-        except git.GitCommandError:
-            return False
-
-        # Check if the subworkflow exists in the branch
-        if not self.subworkflow_exists(subworkflow_name, checkout=False):
-            log.error(f"The requested subworkflow does not exists in the branch '{self.branch}' of {self.remote_url}'")
-            return False
-
-        # Copy the files from the repo to the install folder
-        shutil.copytree(self.get_subworkflow_dir(subworkflow_name), Path(install_dir, subworkflow_name))
+        shutil.copytree(self.get_component_dir(component_name, component_type), Path(install_dir, component_name))
 
         # Switch back to the tip of the branch
         self.checkout_branch()
@@ -401,7 +352,7 @@ class ModulesRepo(object):
         else:
             self.checkout(commit)
         module_files = ["main.nf", "meta.yml"]
-        module_dir = self.get_module_dir(module_name)
+        module_dir = self.get_component_dir(module_name, "modules")
         files_identical = {file: True for file in module_files}
         for file in module_files:
             try:
@@ -504,41 +455,28 @@ class ModulesRepo(object):
                 return message, date
         raise LookupError(f"Commit '{sha}' not found in the '{self.remote_url}'")
 
-    def get_avail_modules(self, checkout=True):
+    def get_avail_components(self, component_type, checkout=True):
         """
-        Gets the names of the modules in the repository. They are detected by
+        Gets the names of the modules/subworkflows in the repository. They are detected by
         checking which directories have a 'main.nf' file
 
         Returns:
-            ([ str ]): The module names
+            ([ str ]): The module/subworkflow names
         """
         if checkout:
             self.checkout_branch()
-        # Module directories are characterized by having a 'main.nf' file
-        avail_module_names = [
-            os.path.relpath(dirpath, start=self.modules_dir)
-            for dirpath, _, file_names in os.walk(self.modules_dir)
+        # Get directory
+        if component_type == "modules":
+            directory = self.modules_dir
+        elif component_type == "subworkflows":
+            directory = self.subworkflows_dir
+        # Module/Subworkflow directories are characterized by having a 'main.nf' file
+        avail_component_names = [
+            os.path.relpath(dirpath, start=directory)
+            for dirpath, _, file_names in os.walk(directory)
             if "main.nf" in file_names
         ]
-        return avail_module_names
-
-    def get_avail_subworkflows(self, checkout=True):
-        """
-        Gets the names of the subworkflows in the repository. They are detected by
-        checking which directories have a 'main.nf' file
-
-        Returns:
-            ([ str ]): The subworkflow names
-        """
-        if checkout:
-            self.checkout_branch()
-        # Module directories are characterized by having a 'main.nf' file
-        avail_subworkflow_names = [
-            os.path.relpath(dirpath, start=self.subworkflows_dir)
-            for dirpath, _, file_names in os.walk(self.subworkflows_dir)
-            if "main.nf" in file_names
-        ]
-        return avail_subworkflow_names
+        return avail_component_names
 
     def get_meta_yml(self, module_name):
         """

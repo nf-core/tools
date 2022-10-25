@@ -57,17 +57,17 @@ class ModuleInstall(ModuleCommand):
         if module is None:
             module = questionary.autocomplete(
                 "Tool name:",
-                choices=self.modules_repo.get_avail_modules(),
+                choices=self.modules_repo.get_avail_components(self.component_type),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
         # Check that the supplied name is an available module
-        if module and module not in self.modules_repo.get_avail_modules():
+        if module and module not in self.modules_repo.get_avail_components(self.component_type):
             log.error(f"Module '{module}' not found in list of available modules.")
             log.info("Use the command 'nf-core modules list' to view available software")
             return False
 
-        if not self.modules_repo.module_exists(module):
+        if not self.modules_repo.component_exists(module, self.component_type):
             warn_msg = (
                 f"Module '{module}' not found in remote '{self.modules_repo.remote_url}' ({self.modules_repo.branch})"
             )

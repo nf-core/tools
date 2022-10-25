@@ -81,7 +81,7 @@ class ModulesTest(ModuleCommand):
 
         # Retrieving installed modules
         if self.repo_type == "modules":
-            installed_modules = self.get_modules_clone_modules()
+            installed_modules = self.get_components_clone_modules()
         else:
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()

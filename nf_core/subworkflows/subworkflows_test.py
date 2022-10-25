@@ -82,7 +82,7 @@ class SubworkflowsTest(SubworkflowCommand):
 
         # Retrieving installed modules
         if self.repo_type == "modules":
-            installed_subwf = self.get_subworkflows_clone_subworkflows()
+            installed_subwf = self.get_components_clone_modules()
         else:
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()

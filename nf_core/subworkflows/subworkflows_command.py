@@ -14,20 +14,7 @@ class SubworkflowCommand(ComponentCommand):
     """
 
     def __init__(self, dir, remote_url=None, branch=None, no_pull=False, hide_progress=False):
-        self.default_subworkflows_path = Path("subworkflows", "nf-core")
-        self.default_subworkflows_tests_path = Path("tests", "subworkflows", "nf-core")
         super().__init__("subworkflows", dir, remote_url, branch, no_pull, hide_progress)
-
-    def get_subworkflows_clone_subworkflows(self):
-        """
-        Get the subworkflows repository available in a clone of nf-core/subworkflows
-        """
-        subworkflow_base_path = Path(self.dir, self.default_subworkflows_path)
-        return [
-            str(Path(dir).relative_to(subworkflow_base_path))
-            for dir, _, files in os.walk(subworkflow_base_path)
-            if "main.nf" in files
-        ]
 
     def subworkflows_from_repo(self, install_dir):
         """

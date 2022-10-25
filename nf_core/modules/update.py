@@ -287,7 +287,7 @@ class ModuleUpdate(ModuleCommand):
             raise LookupError(f"Module '{module}' is not installed in pipeline and could therefore not be updated")
 
         # Check that the supplied name is an available module
-        if module and module not in self.modules_repo.get_avail_modules():
+        if module and module not in self.modules_repo.get_avail_components(self.component_type):
             raise LookupError(
                 f"Module '{module}' not found in list of available modules."
                 f"Use the command 'nf-core modules list remote' to view available software"
@@ -518,7 +518,7 @@ class ModuleUpdate(ModuleCommand):
         i = 0
         while i < len(modules_info):
             repo, module, sha = modules_info[i]
-            if not repo.module_exists(module):
+            if not repo.component_exists(module, self.component_type):
                 log.warning(f"Module '{module}' does not exist in '{repo.remote_url}'. Skipping...")
                 modules_info.pop(i)
             elif sha is not None and not repo.sha_exists_on_branch(sha):

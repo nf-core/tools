@@ -57,17 +57,17 @@ class SubworkflowInstall(SubworkflowCommand):
         if subworkflow is None:
             subworkflow = questionary.autocomplete(
                 "Subworkflow name:",
-                choices=self.modules_repo.get_avail_subworkflows(),
+                choices=self.modules_repo.get_avail_components(self.component_type),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
         # Check that the supplied name is an available subworkflow
-        if subworkflow and subworkflow not in self.modules_repo.get_avail_subworkflows():
+        if subworkflow and subworkflow not in self.modules_repo.get_avail_components(self.component_type):
             log.error(f"Subworkflow '{subworkflow}' not found in list of available subworkflows.")
             log.info("Use the command 'nf-core subworkflows list' to view available software")
             return False
 
-        if not self.modules_repo.subworkflow_exists(subworkflow):
+        if not self.modules_repo.component_exists(subworkflow, self.component_type):
             warn_msg = f"Subworkflow '{subworkflow}' not found in remote '{self.modules_repo.remote_url}' ({self.modules_repo.branch})"
             log.warning(warn_msg)
             return False

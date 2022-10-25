@@ -94,7 +94,7 @@ class ModuleInfo(ModuleCommand):
             ).unsafe_ask()
             if self.local:
                 if self.repo_type == "modules":
-                    modules = self.get_modules_clone_modules()
+                    modules = self.get_components_clone_modules()
                 else:
                     modules = self.modules_json.get_all_modules().get(self.modules_repo.remote_url)
                     modules = [module if dir == "nf-core" else f"{dir}/{module}" for dir, module in modules]

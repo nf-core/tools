@@ -105,7 +105,7 @@ class ModuleLint(ModuleCommand):
             module_dir = Path(self.dir, self.default_modules_path)
             self.all_remote_modules = [
                 NFCoreModule(m, None, module_dir / m, self.repo_type, Path(self.dir))
-                for m in self.get_modules_clone_modules()
+                for m in self.get_components_clone_modules()
             ]
             self.all_local_modules = []
             if not self.all_remote_modules:

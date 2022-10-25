@@ -46,7 +46,11 @@ class ModuleList(ModuleCommand):
         if self.remote:
 
             # Filter the modules by keywords
-            modules = [mod for mod in self.modules_repo.get_avail_modules() if all(k in mod for k in keywords)]
+            modules = [
+                mod
+                for mod in self.modules_repo.get_avail_components(self.component_type)
+                if all(k in mod for k in keywords)
+            ]
 
             # Nothing found
             if len(modules) == 0:

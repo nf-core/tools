@@ -27,11 +27,12 @@ from rich.syntax import Syntax
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
+from tools.nf_core.subworkflows.subworkflows_command import SubworkflowCommand
 
 log = logging.getLogger(__name__)
 
 
-class SubworkflowTestYmlBuilder(object):
+class SubworkflowTestYmlBuilder(SubworkflowCommand):
     def __init__(
         self,
         subworkflow=None,
@@ -76,7 +77,7 @@ class SubworkflowTestYmlBuilder(object):
         if self.subworkflow is None:
             self.subworkflow = questionary.autocomplete(
                 "Subworkflow name:",
-                choices=self.modules_repo.get_avail_subworkflows(),
+                choices=self.modules_repo.get_avail_components(self.component_type),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         self.subworkflow_dir = os.path.join("subworkflows", self.modules_repo.repo_path, self.subworkflow)

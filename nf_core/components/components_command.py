@@ -28,6 +28,8 @@ class ComponentCommand:
         self.hide_progress = hide_progress
         self.default_modules_path = Path("modules", "nf-core")
         self.default_tests_path = Path("tests", "modules", "nf-core")
+        self.default_subworkflows_path = Path("subworkflows", "nf-core")
+        self.default_subworkflows_tests_path = Path("tests", "subworkflows", "nf-core")
         try:
             if self.dir:
                 self.dir, self.repo_type = get_repo_type(self.dir)
@@ -45,14 +47,17 @@ class ComponentCommand:
             str(path.relative_to(local_component_dir)) for path in local_component_dir.iterdir() if path.suffix == ".nf"
         ]
 
-    def get_modules_clone_modules(self):
+    def get_components_clone_modules(self):
         """
-        Get the modules repository available in a clone of nf-core/modules
+        Get the modules/subworkflows repository available in a clone of nf-core/modules
         """
-        module_base_path = Path(self.dir, self.default_modules_path)
+        if self.component_type == "modules":
+            component_base_path = Path(self.dir, self.default_modules_path)
+        elif self.component_type == "subworkflows":
+            component_base_path = Path(self.dir, self.default_subworkflows_path)
         return [
-            str(Path(dir).relative_to(module_base_path))
-            for dir, _, files in os.walk(module_base_path)
+            str(Path(dir).relative_to(component_base_path))
+            for dir, _, files in os.walk(component_base_path)
             if "main.nf" in files
         ]
 
@@ -97,15 +102,15 @@ class ComponentCommand:
 
     def modules_from_repo(self, install_dir):
         """
-        Gets the modules installed from a certain repository
+        Gets the modules/subworkflows installed from a certain repository
 
         Args:
-            install_dir (str): The name of the directory where modules are installed
+            install_dir (str): The name of the directory where modules/subworkflows are installed
 
         Returns:
-            [str]: The names of the modules
+            [str]: The names of the modules/subworkflows
         """
-        repo_dir = Path(self.dir, "modules", install_dir)
+        repo_dir = Path(self.dir, self.component_type, install_dir)
         if not repo_dir.exists():
             raise LookupError(f"Nothing installed from {install_dir} in pipeline")
 
