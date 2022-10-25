@@ -232,9 +232,6 @@ class ModulesTestYmlBuilder(ModuleCommand):
         test_files = []
         for root, _, files in os.walk(results_dir, followlinks=True):
             for filename in files:
-                # Check that the file is not versions.yml
-                if filename == "versions.yml":
-                    continue
                 file_path = os.path.join(root, filename)
                 # add the key here so that it comes first in the dict
                 test_file = {"path": file_path}
@@ -245,8 +242,10 @@ class ModulesTestYmlBuilder(ModuleCommand):
                 # Add the md5 anyway, linting should fail later and can be manually removed if needed.
                 #  Originally we skipped this if empty, but then it's too easy to miss the warning.
                 #  Equally, if a file is legitimately empty we don't want to prevent this from working.
-                file_md5 = self._md5(file_path)
-                test_file["md5sum"] = file_md5
+                if filename != "versions.yml":
+                    # Only add md5sum if the file is not versions.yml
+                    file_md5 = self._md5(file_path)
+                    test_file["md5sum"] = file_md5
                 # Switch out the results directory path with the expected 'output' directory
                 test_file["path"] = file_path.replace(results_dir, "output")
                 test_files.append(test_file)

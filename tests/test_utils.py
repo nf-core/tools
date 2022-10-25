@@ -120,7 +120,7 @@ class TestUtils(unittest.TestCase):
         """Test listing pipeline files without `git-ls`"""
         # Create a test file in a temporary directory
         tmp_fn = os.path.join(tmpdir, "testfile")
-        open(tmp_fn, "a").close()
+        Path(tmp_fn).touch()
         pipeline_obj = nf_core.utils.Pipeline(tmpdir)
         pipeline_obj._list_files()
         assert tmp_fn in pipeline_obj.files

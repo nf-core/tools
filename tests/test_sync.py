@@ -7,6 +7,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import git
@@ -24,13 +25,15 @@ class TestModules(unittest.TestCase):
     def setUp(self):
         """Create a new pipeline to test"""
         self.tmp_dir = tempfile.mkdtemp()
-        self.pipeline_dir = os.path.join(self.tmp_dir, "test_pipeline")
+        self.pipeline_dir = os.path.join(self.tmp_dir, "testpipeline")
+        default_branch = "master"
         self.create_obj = nf_core.create.PipelineCreate(
-            "testing", "test pipeline", "tester", outdir=self.pipeline_dir, plain=True
+            "testing", "test pipeline", "tester", outdir=self.pipeline_dir, plain=True, default_branch=default_branch
         )
         self.create_obj.init_pipeline()
         self.remote_path = os.path.join(self.tmp_dir, "remote_repo")
         self.remote_repo = git.Repo.init(self.remote_path, bare=True)
+        self.remote_repo.active_branch.rename(default_branch)
 
     def tearDown(self):
         if os.path.exists(self.tmp_dir):
@@ -47,8 +50,8 @@ class TestModules(unittest.TestCase):
     def test_inspect_sync_dir_dirty(self):
         """Try syncing a pipeline with uncommitted changes"""
         # Add an empty file, uncommitted
-        test_fn = os.path.join(self.pipeline_dir, "uncommitted")
-        open(test_fn, "a").close()
+        test_fn = Path(self.pipeline_dir) / "uncommitted"
+        test_fn.touch()
         # Try to sync, check we halt with the right error
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         try:
@@ -140,8 +143,8 @@ class TestModules(unittest.TestCase):
         psync.get_wf_config()
         psync.checkout_template_branch()
         # Add an empty file, uncommitted
-        test_fn = os.path.join(self.pipeline_dir, "uncommitted")
-        open(test_fn, "a").close()
+        test_fn = Path(self.pipeline_dir) / "uncommitted"
+        test_fn.touch()
         # Check that we have uncommitted changes
         assert psync.repo.is_dirty(untracked_files=True) is True
         # Function returns True if no changes were made
@@ -157,8 +160,8 @@ class TestModules(unittest.TestCase):
         psync.get_wf_config()
         psync.checkout_template_branch()
         # Add an empty file and commit it
-        test_fn = os.path.join(self.pipeline_dir, "uncommitted")
-        open(test_fn, "a").close()
+        test_fn = Path(self.pipeline_dir) / "uncommitted"
+        test_fn.touch()
         psync.commit_template_changes()
         # Try to push changes
         with pytest.raises(nf_core.sync.PullRequestException) as exc_info:
@@ -240,7 +243,7 @@ class TestModules(unittest.TestCase):
         if url == os.path.join(url_template.format("no_existing_pr"), "pulls?head=TEMPLATE&base=None"):
             response_data = []
             return MockResponse(response_data, 200)
-        elif url == os.path.join(url_template.format("list_prs"), "pulls"):
+        if url == os.path.join(url_template.format("list_prs"), "pulls"):
             response_data = [
                 {
                     "state": "closed",
@@ -347,9 +350,7 @@ class TestModules(unittest.TestCase):
 
             prs = mock_get(f"https://api.github.com/repos/{psync.gh_repo}/pulls").data
             for pr in prs:
-                if pr["state"] != "open":
-                    continue
-                else:
+                if pr["state"] == "open":
                     mock_close_open_pr.assert_any_call(pr)
 
     @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)

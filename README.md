@@ -414,14 +414,14 @@ Note that if the required arguments for `nf-core create` are not given, it will 
 
 The `nf-core create` command comes with a number of options that allow you to customize the creation of a pipeline if you intend to not publish it as an
 nf-core pipeline. This can be done in two ways: by using interactive prompts, or by supplying a `template.yml` file using the `--template-yaml <file>` option.
-Both options allow you to specify a custom pipeline prefix, as well as selecting parts of the template to be excluded during pipeline creation.
+Both options allow you to specify a custom pipeline prefix to use instead of the common `nf-core`, as well as selecting parts of the template to be excluded during pipeline creation.
 The interactive prompts will guide you through the pipeline creation process. An example of a `template.yml` file is shown below.
 
 ```yaml
-name: cool-pipe
+name: coolpipe
 description: A cool pipeline
 author: me
-prefix: cool-pipes-company
+prefix: myorg
 skip:
   - github
   - ci
@@ -430,7 +430,13 @@ skip:
   - nf_core_configs
 ```
 
-This will create a pipeline called `cool-pipe` in the directory `cool-pipes-company-cool-pipe` with `me` as the author. It will exclude all files required for GitHub hosting of the pipeline, the GitHub CI from the pipeline, remove GitHub badges from the `README.md` file, remove pipeline options related to iGenomes and exclude `nf_core/configs` options.
+This will create a pipeline called `coolpipe` in the directory `myorg-coolpipe` (`<prefix>-<name>`) with `me` as the author. It will exclude all possible parts of the template:
+
+- `github`: removed all files required for GitHub hosting of the pipeline. Specifically, the `.github` folder and `.gitignore` file.
+- `ci`: removes the GitHub continuous integration tests from the pipeline. Specifically, the `.github/workflows/` folder.
+- `github_badges`: removes GitHub badges from the `README.md` file.
+- `igenomes`: removes pipeline options related to iGenomes. Including the `conf/igenomes.config` file and all references to it.
+- `nf_core_configs`: excludes `nf_core/configs` repository options, which make multiple config profiles for various institutional clusters available.
 
 To run the pipeline creation silently (i.e. without any prompts) with the nf-core template, you can use the `--plain` option.
 
