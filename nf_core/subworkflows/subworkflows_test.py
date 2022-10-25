@@ -77,9 +77,6 @@ class SubworkflowsTest(SubworkflowCommand):
 
     def _check_inputs(self):
         """Do more complex checks about supplied flags."""
-        # Check modules directory structure
-        self.check_modules_structure()
-
         # Retrieving installed modules
         if self.repo_type == "modules":
             installed_subwf = self.get_components_clone_modules()
