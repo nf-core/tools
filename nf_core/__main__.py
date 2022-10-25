@@ -253,12 +253,14 @@ def download(pipeline, revision, outdir, compress, force, container, singularity
 @click.option("--json", is_flag=True, default=False, help="Print output in JSON")
 def licences(pipeline, json):
     """
-    List software licences for a given workflow.
+    List software licences for a given workflow (deprecated).
 
     Checks the pipeline environment.yml file which lists all conda software packages.
     Each of these is queried against the anaconda.org API to find the licence.
     Package name, version and licence is printed to the command line.
     """
+    log.warning("`nf-core licences` does not support DSL2 pipelines and is being deprecated.")
+
     lic = nf_core.licences.WorkflowLicences(pipeline)
     lic.as_json = json
     try:
