@@ -12,6 +12,7 @@ from unittest import mock
 from click.testing import CliRunner
 
 import nf_core.__main__
+import nf_core.utils
 
 
 @mock.patch("nf_core.__main__.nf_core_cli")
@@ -132,7 +133,10 @@ class TestCli(unittest.TestCase):
         result = self.invoke_cli(cmd)
 
         assert result.exit_code == 2
-        assert f"Invalid value for '-p' / '--params-in': Path '{params['params-in']}' does not exist." in result.output
+        assert (
+            f"Invalid value for '-p' / '--params-in': Path '{params['params-in']}' does not exist."
+            in nf_core.utils.strip_ansi_codes(result.output)
+        )
 
         mock_launcher.assert_not_called()
 
@@ -289,7 +293,10 @@ class TestCli(unittest.TestCase):
         result = self.invoke_cli(cmd)
 
         assert result.exit_code == 2
-        assert f"Invalid value for '-d' / '--dir': Path '{params['dir']}' does not exist." in result.output
+        assert (
+            f"Invalid value for '-d' / '--dir': Path '{params['dir']}' does not exist."
+            in nf_core.utils.strip_ansi_codes(result.output)
+        )
 
     @mock.patch("nf_core.utils.is_pipeline_directory")
     def test_lint_dir_is_not_pipeline(self, mock_is_pipeline):
