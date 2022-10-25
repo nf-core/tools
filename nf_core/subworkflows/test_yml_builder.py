@@ -27,7 +27,7 @@ from rich.syntax import Syntax
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
-from tools.nf_core.subworkflows.subworkflows_command import SubworkflowCommand
+from nf_core.subworkflows.subworkflows_command import SubworkflowCommand
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class SubworkflowTestYmlBuilder(SubworkflowCommand):
         force_overwrite=False,
         no_prompts=False,
     ):
-        # super().__init__(directory)
+        super().__init__(directory)
         self.dir = directory
         self.subworkflow = subworkflow
         self.run_tests = run_tests

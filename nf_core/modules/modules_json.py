@@ -446,7 +446,7 @@ class ModulesJson:
                 log.error(e)
                 failed_to_install.extend(modules)
             for module, sha in modules:
-                if not modules_repo.install_module(module, self.modules_dir / install_dir, sha):
+                if not modules_repo.install_component(module, self.modules_dir / install_dir, sha, "modules"):
                     log.warning(
                         f"Could not install module '{Path(self.modules_dir, install_dir, module)}' - removing from modules.json"
                     )
