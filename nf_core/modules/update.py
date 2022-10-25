@@ -580,7 +580,7 @@ class ModuleUpdate(ModuleCommand):
         pipeline_path = os.path.join(self.dir, "modules", repo_path, module)
 
         log.debug(f"Removing old version of module '{module}'")
-        self.clear_module_dir(module, pipeline_path)
+        self.clear_component_dir(module, pipeline_path)
 
         os.makedirs(pipeline_path)
         for file in files:

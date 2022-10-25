@@ -123,7 +123,7 @@ class ModuleInstall(ModuleCommand):
 
         if self.force:
             log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{module}'")
-            self.clear_module_dir(module, module_dir)
+            self.clear_component_dir(module, module_dir)
             for repo_url, repo_content in modules_json.modules_json["repos"].items():
                 for dir, dir_modules in repo_content["modules"].items():
                     for name, _ in dir_modules.items():

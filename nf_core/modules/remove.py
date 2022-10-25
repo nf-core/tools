@@ -33,7 +33,7 @@ class ModuleRemove(ModuleCommand):
         if module is None:
             module = questionary.autocomplete(
                 "Tool name:",
-                choices=self.modules_from_repo(repo_dir),
+                choices=self.components_from_repo(repo_dir),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
@@ -59,4 +59,4 @@ class ModuleRemove(ModuleCommand):
         modules_json.remove_entry(module, self.modules_repo.remote_url, repo_path)
 
         # Remove the module
-        return self.clear_module_dir(module_name=module, module_dir=module_dir)
+        return self.clear_component_dir(module_name=module, module_dir=module_dir)

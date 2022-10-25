@@ -83,26 +83,27 @@ class ComponentCommand:
             log.info("Creating missing 'module.json' file.")
             ModulesJson(self.dir).create()
 
-    def clear_module_dir(self, module_name, module_dir):
-        """Removes all files in the module directory"""
+    def clear_component_dir(self, component_name, component_dir):
+        """Removes all files in the module/subworkflow directory"""
         try:
-            shutil.rmtree(module_dir)
-            # Try cleaning up empty parent if tool/subtool and tool/ is empty
-            if module_name.count("/") > 0:
-                parent_dir = os.path.dirname(module_dir)
-                try:
-                    os.rmdir(parent_dir)
-                except OSError:
-                    log.debug(f"Parent directory not empty: '{parent_dir}'")
-                else:
-                    log.debug(f"Deleted orphan tool directory: '{parent_dir}'")
-            log.debug(f"Successfully removed {module_name} module")
+            shutil.rmtree(component_dir)
+            if self.component_type == "modules":
+                # Try cleaning up empty parent if tool/subtool and tool/ is empty
+                if component_name.count("/") > 0:
+                    parent_dir = os.path.dirname(component_dir)
+                    try:
+                        os.rmdir(parent_dir)
+                    except OSError:
+                        log.debug(f"Parent directory not empty: '{parent_dir}'")
+                    else:
+                        log.debug(f"Deleted orphan tool directory: '{parent_dir}'")
+            log.debug(f"Successfully removed {component_name} {self.component_type[:-1]}")
             return True
         except OSError as e:
-            log.error(f"Could not remove module: {e}")
+            log.error(f"Could not remove {self.component_type[:-1]}: {e}")
             return False
 
-    def modules_from_repo(self, install_dir):
+    def components_from_repo(self, install_dir):
         """
         Gets the modules/subworkflows installed from a certain repository
 
