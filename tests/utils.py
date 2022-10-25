@@ -66,3 +66,22 @@ def set_wd(path: Path):
         yield
     finally:
         os.chdir(start_wd)
+
+
+def mock_api_calls(mock, module, version):
+    """Mock biocontainers and anaconda api calls for module"""
+    biocontainers_api_url = f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{module}/versions/{module}-{version}"
+    anaconda_api_url = f"https://api.anaconda.org/package/bioconda/{module}"
+    mock.register_uri("GET", biocontainers_api_url, text="to modify when the api works and I can know what to add")
+    anaconda_mock = {
+        "status_code": 200,
+        "latest_version": version,
+        "summary": "",
+        "doc_url": "",
+        "dev_url": "",
+        "files": [{"version": version}],
+        "license": "",
+    }
+    biocontainers_mock = {"status_code": 200, "images": [{"image_type": "Docker", "image_name": ""}]}
+    mock.register_uri("GET", anaconda_api_url, json=anaconda_mock)
+    mock.register_uri("GET", biocontainers_api_url, json=biocontainers_mock)
