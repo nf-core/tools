@@ -82,6 +82,6 @@ def mock_api_calls(mock, module, version):
         "files": [{"version": version}],
         "license": "",
     }
-    biocontainers_mock = {"status_code": 200, "images": [{"image_type": "Docker", "image_name": ""}]}
+    biocontainers_mock = {"status_code": 200, "images": [{"image_type": "Docker", "image_name": f"{module}-{version}"}]}
     mock.register_uri("GET", anaconda_api_url, json=anaconda_mock)
     mock.register_uri("GET", biocontainers_api_url, json=biocontainers_mock)
