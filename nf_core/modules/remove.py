@@ -59,4 +59,4 @@ class ModuleRemove(ModuleCommand):
         modules_json.remove_entry(module, self.modules_repo.remote_url, repo_path)
 
         # Remove the module
-        return self.clear_component_dir(module_name=module, module_dir=module_dir)
+        return self.clear_component_dir(module, module_dir)

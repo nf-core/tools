@@ -16,6 +16,8 @@ import nf_core.components.components_create
 import nf_core.utils
 from nf_core.modules.module_utils import get_repo_type
 
+from .subworkflows_command import SubworkflowCommand
+
 log = logging.getLogger(__name__)
 
 

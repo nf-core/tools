@@ -44,11 +44,16 @@ def collect_name_prompt(name, component_type):
     Collect module/subworkflow info via prompt if empty or invalid
     """
     # Collect module info via prompt if empty or invalid
+    subname = None
+    if component_type == "modules":
+        pattern = r"[^a-z\d/]"
+    elif component_type == "subworkflows":
+        pattern = r"[^a-z\d_/]"
     if name is None:
         name = ""
-    while name == "" or re.search(r"[^a-z\d/]", name) or name.count("/") > 0:
+    while name == "" or re.search(pattern, name) or name.count("/") > 0:
         # Check + auto-fix for invalid chacters
-        if re.search(r"[^a-z\d/]", name):
+        if re.search(pattern, name):
             if component_type == "modules":
                 log.warning("Tool/subtool name must be lower-case letters only, with no punctuation")
             elif component_type == "subworkflows":
@@ -93,8 +98,9 @@ def get_component_dirs(component_type, repo_type, directory, name, supername, su
         # Check whether component file already exists
         component_file = os.path.join(local_component_dir, f"{name}.nf")
         if os.path.exists(component_file) and not force_overwrite:
+            print(f"{component_type[:-1].title()} file exists already: '{component_file}'. Use '--force' to overwrite")
             raise UserWarning(
-                f"{component_type[:-1]} file exists already: '{component_file}'. Use '--force' to overwrite"
+                f"{component_type[:-1].title()} file exists already: '{component_file}'. Use '--force' to overwrite"
             )
 
         if component_type == "modules":
@@ -134,13 +140,13 @@ def get_component_dirs(component_type, repo_type, directory, name, supername, su
             if not subname and tool_glob:
                 raise UserWarning(f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{name}'")
 
-    # Set file paths
-    # For modules - can be tool/ or tool/subtool/ so can't do in template directory structure
-    file_paths[os.path.join(component_type, "main.nf")] = os.path.join(software_dir, "main.nf")
-    file_paths[os.path.join(component_type, "meta.yml")] = os.path.join(software_dir, "meta.yml")
-    file_paths[os.path.join("tests", "main.nf")] = os.path.join(test_dir, "main.nf")
-    file_paths[os.path.join("tests", "test.yml")] = os.path.join(test_dir, "test.yml")
-    file_paths[os.path.join("tests", "nextflow.config")] = os.path.join(test_dir, "nextflow.config")
+        # Set file paths
+        # For modules - can be tool/ or tool/subtool/ so can't do in template directory structure
+        file_paths[os.path.join(component_type, "main.nf")] = os.path.join(software_dir, "main.nf")
+        file_paths[os.path.join(component_type, "meta.yml")] = os.path.join(software_dir, "meta.yml")
+        file_paths[os.path.join("tests", "main.nf")] = os.path.join(test_dir, "main.nf")
+        file_paths[os.path.join("tests", "test.yml")] = os.path.join(test_dir, "test.yml")
+        file_paths[os.path.join("tests", "nextflow.config")] = os.path.join(test_dir, "nextflow.config")
 
     return file_paths
 
