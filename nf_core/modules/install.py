@@ -139,7 +139,7 @@ class ModuleInstall(ModuleCommand):
         log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.remote_url}")
 
         # Download module files
-        if not self.install_module_files(module, version, self.modules_repo, install_folder):
+        if not self.install_component_files(module, version, self.modules_repo, install_folder):
             return False
 
         if not silent:

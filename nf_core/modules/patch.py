@@ -86,7 +86,7 @@ class ModulePatch(ModuleCommand):
         # Create a temporary directory for storing the unchanged version of the module
         install_dir = tempfile.mkdtemp()
         module_install_dir = Path(install_dir, module)
-        if not self.install_module_files(module, module_version, self.modules_repo, install_dir):
+        if not self.install_component_files(module, module_version, self.modules_repo, install_dir):
             raise UserWarning(
                 f"Failed to install files of module '{module}' from remote ({self.modules_repo.remote_url})."
             )

@@ -71,7 +71,9 @@ class ComponentCommand:
         main_nf = os.path.join(self.dir, "main.nf")
         nf_config = os.path.join(self.dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
-            raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.dir}'")
+            if Path(self.dir).resolve().parts[-1].startswith("nf-core"):
+                raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.dir}'")
+            log.warning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.dir}'")
         return True
 
     def has_modules_file(self):
@@ -118,20 +120,20 @@ class ComponentCommand:
             str(Path(dir_path).relative_to(repo_dir)) for dir_path, _, files in os.walk(repo_dir) if "main.nf" in files
         ]
 
-    def install_module_files(self, module_name, module_version, modules_repo, install_dir):
+    def install_component_files(self, component_name, component_version, modules_repo, install_dir):
         """
-        Installs a module into the given directory
+        Installs a module/subworkflow into the given directory
 
         Args:
-            module_name (str): The name of the module
-            module_version (str): Git SHA for the version of the module to be installed
+            component_name (str): The name of the module/subworkflow
+            component_version (str): Git SHA for the version of the module/subworkflow to be installed
             modules_repo (ModulesRepo): A correctly configured ModulesRepo object
-            install_dir (str): The path to where the module should be installed (should be the 'modules/' dir of the pipeline)
+            install_dir (str): The path to where the module/subworkflow should be installed (should be the 'modules/' or 'subworkflows/' dir of the pipeline)
 
         Returns:
             (bool): Whether the operation was successful of not
         """
-        return modules_repo.install_module(module_name, install_dir, module_version)
+        return modules_repo.install_component(component_name, install_dir, component_version, self.component_type)
 
     def load_lint_config(self):
         """Parse a pipeline lint config file.

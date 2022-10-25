@@ -166,7 +166,7 @@ class ModuleUpdate(ModuleCommand):
                     continue
 
             # Download module files
-            if not self.install_module_files(module, version, modules_repo, install_tmp_dir):
+            if not self.install_component_files(module, version, modules_repo, install_tmp_dir):
                 exit_value = False
                 continue
 

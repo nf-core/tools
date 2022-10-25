@@ -101,7 +101,7 @@ class ModuleInfo(ModuleCommand):
                     if modules is None:
                         raise UserWarning(f"No modules installed from '{self.modules_repo.remote_url}'")
             else:
-                modules = self.modules_repo.get_avail_modules()
+                modules = self.modules_repo.get_avail_components(self.component_type)
             module = questionary.autocomplete(
                 "Please select a module", choices=modules, style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
@@ -179,7 +179,7 @@ class ModuleInfo(ModuleCommand):
             dict or bool: Parsed meta.yml found, False otherwise
         """
         # Check if our requested module is there
-        if self.module not in self.modules_repo.get_avail_modules():
+        if self.module not in self.modules_repo.get_avail_components(self.component_type):
             return False
 
         file_contents = self.modules_repo.get_meta_yml(self.module)
