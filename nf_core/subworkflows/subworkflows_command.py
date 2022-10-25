@@ -29,13 +29,6 @@ class SubworkflowCommand(ComponentCommand):
             if "main.nf" in files
         ]
 
-    def get_local_subworkflows(self):
-        """
-        Get the local subworkflows in a pipeline
-        """
-        local_subwf_dir = Path(self.dir, "subworkflows", "local")
-        return [str(path.relative_to(local_subwf_dir)) for path in local_subwf_dir.iterdir() if path.suffix == ".nf"]
-
     def subworkflows_from_repo(self, install_dir):
         """
         Gets the subworkflows installed from a certain repository

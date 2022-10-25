@@ -96,7 +96,7 @@ class ModuleLint(ModuleCommand):
                 local_module_dir = Path(self.dir, "modules", "local")
                 self.all_local_modules = [
                     NFCoreModule(m, None, local_module_dir / m, self.repo_type, Path(self.dir), nf_core_module=False)
-                    for m in self.get_local_modules()
+                    for m in self.get_local_components()
                 ]
 
             else:

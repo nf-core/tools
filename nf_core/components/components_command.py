@@ -36,6 +36,15 @@ class ComponentCommand:
         except LookupError as e:
             raise UserWarning(e)
 
+    def get_local_components(self):
+        """
+        Get the local modules/subworkflows in a pipeline
+        """
+        local_component_dir = Path(self.dir, self.component_type, "local")
+        return [
+            str(path.relative_to(local_component_dir)) for path in local_component_dir.iterdir() if path.suffix == ".nf"
+        ]
+
     def get_modules_clone_modules(self):
         """
         Get the modules repository available in a clone of nf-core/modules
