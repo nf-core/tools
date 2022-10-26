@@ -236,9 +236,10 @@ class PipelineCreate(object):
         if self.template_params["branded"]:
             log.info(
                 "[green bold]!!!!!! IMPORTANT !!!!!!\n\n"
-                + "[green not bold]If you are interested in adding your pipeline to the nf-core community,\n"
-                + "PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!\n\n"
-                + "[default]Please read: [link=https://nf-co.re/developers/adding_pipelines#join-the-community]https://nf-co.re/developers/adding_pipelines#join-the-community[/link]"
+                "[green not bold]If you are interested in adding your pipeline to the nf-core community,\n"
+                "PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!\n\n"
+                "[default]Please read: [link=https://nf-co.re/developers/adding_pipelines#join-the-community]"
+                "https://nf-co.re/developers/adding_pipelines#join-the-community[/link]"
             )
 
     def render_template(self):
