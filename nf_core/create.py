@@ -10,7 +10,6 @@ import pathlib
 import random
 import re
 import shutil
-import subprocess
 import sys
 import time
 
@@ -23,6 +22,7 @@ import yaml
 import nf_core
 import nf_core.schema
 import nf_core.utils
+from nf_core.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
@@ -354,15 +354,7 @@ class PipelineCreate(object):
         schema.get_wf_params()
         schema.remove_schema_notfound_configs()
         schema.save_schema(suppress_logging=True)
-
-        # The schema is not guaranteed to follow Prettier standards
-        # so we run prettier on the schema file
-        try:
-            subprocess.run(
-                ["prettier", "--write", schema_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False
-            )
-        except FileNotFoundError:
-            log.warning("Prettier not found. Please install it and run it on the pipeline to fix linting issues.")
+        run_prettier_on_file(schema_path)
 
     def remove_nf_core_in_bug_report_template(self):
         """
@@ -380,17 +372,7 @@ class PipelineCreate(object):
         with open(bug_report_path, "w") as fh:
             yaml.dump(contents, fh, default_flow_style=False, sort_keys=False)
 
-        # The dumped yaml file will not follow prettier formatting rules
-        # so we run prettier on the file
-        try:
-            subprocess.run(
-                ["prettier", "--write", bug_report_path],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-            )
-        except FileNotFoundError:
-            log.warning("Prettier not found. Please install it and run it on the pipeline to fix linting issues.")
+        run_prettier_on_file(bug_report_path)
 
     def fix_linting(self):
         """
@@ -458,19 +440,7 @@ class PipelineCreate(object):
         with open(os.path.join(self.outdir, ".nf-core.yml"), "w") as fh:
             yaml.dump(nf_core_yml, fh, default_flow_style=False, sort_keys=False)
 
-        # The dumped yaml file will not follow prettier formatting rules
-        # so we run prettier on the file
-        try:
-            subprocess.run(
-                ["prettier", "--write", os.path.join(self.outdir, ".nf-core.yml")],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-            )
-        except FileNotFoundError:
-            log.warning(
-                "Prettier is not installed. Please install it and run it on the pipeline to fix linting issues."
-            )
+        run_prettier_on_file(os.path.join(self.outdir, ".nf-core.yml"))
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
