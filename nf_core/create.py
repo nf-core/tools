@@ -6,12 +6,12 @@ import configparser
 import imghdr
 import logging
 import os
-import pathlib
 import random
 import re
 import shutil
 import sys
 import time
+from pathlib import Path
 
 import git
 import jinja2
@@ -89,7 +89,7 @@ class PipelineCreate(object):
         self.force = force
         if outdir is None:
             outdir = os.path.join(os.getcwd(), self.template_params["name_noslash"])
-        self.outdir = outdir
+        self.outdir = Path(outdir)
 
     def create_param_dict(self, name, description, author, version, template_yaml_path, plain):
         """Creates a dictionary of parameters for the new pipeline.
@@ -246,7 +246,7 @@ class PipelineCreate(object):
         log.info(f"Creating new nf-core pipeline: '{self.name}'")
 
         # Check if the output directory exists
-        if os.path.exists(self.outdir):
+        if self.outdir.exists():
             if self.force:
                 log.warning(f"Output directory '{self.outdir}' exists - continuing as --force specified")
             else:
@@ -265,8 +265,8 @@ class PipelineCreate(object):
         object_attrs["nf_core_version"] = nf_core.__version__
 
         # Can't use glob.glob() as need recursive hidden dotfiles - https://stackoverflow.com/a/58126417/713980
-        template_files = list(pathlib.Path(template_dir).glob("**/*"))
-        template_files += list(pathlib.Path(template_dir).glob("*"))
+        template_files = list(Path(template_dir).glob("**/*"))
+        template_files += list(Path(template_dir).glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
         rename_files = {
             "workflows/pipeline.nf": f"workflows/{self.template_params['short_name']}.nf",
@@ -291,9 +291,9 @@ class PipelineCreate(object):
 
                 # Set up vars and directories
                 template_fn = os.path.relpath(template_fn_path, template_dir)
-                output_path = os.path.join(self.outdir, template_fn)
+                output_path = self.outdir / template_fn
                 if template_fn in rename_files:
-                    output_path = os.path.join(self.outdir, rename_files[template_fn])
+                    output_path = self.outdir / rename_files[template_fn]
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
                 try:
@@ -345,7 +345,7 @@ class PipelineCreate(object):
         """
         Removes unused parameters from the nextflow schema.
         """
-        schema_path = os.path.join(self.outdir, "nextflow_schema.json")
+        schema_path = self.outdir / "nextflow_schema.json"
 
         schema = nf_core.schema.PipelineSchema()
         schema.schema_filename = schema_path
@@ -361,7 +361,7 @@ class PipelineCreate(object):
         Remove the field mentioning nf-core documentation
         in the github bug report template
         """
-        bug_report_path = os.path.join(self.outdir, ".github", "ISSUE_TEMPLATE", "bug_report.yml")
+        bug_report_path = self.outdir / ".github" / "ISSUE_TEMPLATE" / "bug_report.yml"
 
         with open(bug_report_path, "r") as fh:
             contents = yaml.load(fh, Loader=yaml.FullLoader)
@@ -437,7 +437,7 @@ class PipelineCreate(object):
         # Add the lint content to the preexisting nf-core config
         nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
         nf_core_yml["lint"] = lint_config
-        with open(os.path.join(self.outdir, ".nf-core.yml"), "w") as fh:
+        with open(self.outdir / ".nf-core.yml", "w") as fh:
             yaml.dump(nf_core_yml, fh, default_flow_style=False, sort_keys=False)
 
         run_prettier_on_file(os.path.join(self.outdir, ".nf-core.yml"))
@@ -448,11 +448,13 @@ class PipelineCreate(object):
         logo_url = f"https://nf-co.re/logo/{self.template_params['short_name']}?theme=light"
         log.debug(f"Fetching logo from {logo_url}")
 
-        email_logo_path = f"{self.outdir}/assets/{self.template_params['name_noslash']}_logo_light.png"
+        email_logo_path = self.outdir / "assets" / f"{self.template_params['name_noslash']}_logo_light.png"
         self.download_pipeline_logo(f"{logo_url}&w=400", email_logo_path)
         for theme in ["dark", "light"]:
             readme_logo_url = f"{logo_url}?w=600&theme={theme}"
-            readme_logo_path = f"{self.outdir}/docs/images/{self.template_params['name_noslash']}_logo_{theme}.png"
+            readme_logo_path = (
+                self.outdir / "docs" / "images" / f"{self.template_params['name_noslash']}_logo_{theme}.png"
+            )
             self.download_pipeline_logo(readme_logo_url, readme_logo_path)
 
     def download_pipeline_logo(self, url, img_fn):
