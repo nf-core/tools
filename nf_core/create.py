@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Creates a nf-core pipeline matching the current
 organization's specification based on a template.
 """

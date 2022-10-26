@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Synchronise a pipeline TEMPLATE branch with the template.
 """
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 The ModulesTest class runs the tests locally
 """

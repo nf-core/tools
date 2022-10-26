@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Lint the main.nf file of a module
 """

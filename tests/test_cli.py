@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ Tests covering the command-line code.
 
 Most tests check the cli arguments are passed along and that some action is

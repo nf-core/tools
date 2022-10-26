@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Verify that a module has a correct entry in the modules.json file
 """

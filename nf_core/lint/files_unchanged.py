@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import filecmp
 import logging
 import os

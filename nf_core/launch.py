@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ Launch a pipeline, interactively collecting params """
 
 from __future__ import print_function
