@@ -7,6 +7,7 @@ import nf_core.modules
 from tests.utils import mock_api_calls
 
 
+@pytest.mark.xfail
 def test_modules_create_succeed(self):
     """Succeed at creating the TrimGalore! module"""
     with requests_mock.Mocker() as mock:
@@ -16,6 +17,13 @@ def test_modules_create_succeed(self):
         )
         module_create.create()
     assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "trimgalore.nf"))
+
+    # Check that the template is not failing linting
+    module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
+    module_lint.lint(print_results=False, module="trimgalore", local=True)
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
 
 
 def test_modules_create_fail_exists(self):
