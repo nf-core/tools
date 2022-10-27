@@ -80,7 +80,7 @@ Devcontainer specs:
 - [DevContainer config](.devcontainer/devcontainer.json)
 - [Dockerfile](.devcontainer/Dockerfile)
 
-# Getting started
+# To get started:
 - Open the repo in [Codespaces](https://github.com/{{ name }})/codespaces)
 - Tools installed
    - nf-core
