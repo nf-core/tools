@@ -253,12 +253,13 @@ def download(pipeline, revision, outdir, compress, force, container, singularity
 @click.option("--json", is_flag=True, default=False, help="Print output in JSON")
 def licences(pipeline, json):
     """
-    List software licences for a given workflow.
+    List software licences for a given workflow (DSL1 only).
 
-    Checks the pipeline environment.yml file which lists all conda software packages.
+    Checks the pipeline environment.yml file which lists all conda software packages, which is not available for DSL2 workflows. Therefore, this command only supports DSL1 workflows (for now).
     Each of these is queried against the anaconda.org API to find the licence.
     Package name, version and licence is printed to the command line.
     """
+
     lic = nf_core.licences.WorkflowLicences(pipeline)
     lic.as_json = json
     try:
