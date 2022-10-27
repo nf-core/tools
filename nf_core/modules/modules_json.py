@@ -11,8 +11,8 @@ import git
 import questionary
 from git.exc import GitCommandError
 
-import nf_core.modules.module_utils
 import nf_core.modules.modules_repo
+import nf_core.modules.modules_utils
 import nf_core.utils
 
 from .modules_differ import ModulesDiffer
@@ -64,15 +64,15 @@ class ModulesJson:
                 [
                     str(
                         Path(module_name).relative_to(
-                            modules_dir / nf_core.modules.module_utils.path_from_remote(repo_url)
+                            modules_dir / nf_core.modules.modules_utils.path_from_remote(repo_url)
                         )
                     )
                     for module_name, _, file_names in os.walk(
-                        modules_dir / nf_core.modules.module_utils.path_from_remote(repo_url)
+                        modules_dir / nf_core.modules.modules_utils.path_from_remote(repo_url)
                     )
                     if "main.nf" in file_names
                 ],
-                nf_core.modules.module_utils.path_from_remote(repo_url),
+                nf_core.modules.modules_utils.path_from_remote(repo_url),
             )
             for repo_url in repos
         ]
@@ -113,7 +113,7 @@ class ModulesJson:
         renamed_dirs = {}
         # Check if there are any untracked repositories
         dirs_not_covered = self.dir_tree_uncovered(
-            modules_dir, [Path(nf_core.modules.module_utils.path_from_remote(url)) for url in repos]
+            modules_dir, [Path(nf_core.modules.modules_utils.path_from_remote(url)) for url in repos]
         )
         if len(dirs_not_covered) > 0:
             log.info("Found custom module repositories when creating 'modules.json'")
@@ -140,7 +140,7 @@ class ModulesJson:
                         ).unsafe_ask()
 
                 # Verify that there is a directory corresponding the remote
-                nrepo_name = nf_core.modules.module_utils.path_from_remote(nrepo_remote)
+                nrepo_name = nf_core.modules.modules_utils.path_from_remote(nrepo_remote)
                 if not (modules_dir / nrepo_name).exists():
                     log.info(
                         "The provided remote does not seem to correspond to a local directory. "
@@ -160,7 +160,7 @@ class ModulesJson:
 
                 repos[nrepo_remote]["modules"][nrepo_name] = {}
                 dirs_not_covered = self.dir_tree_uncovered(
-                    modules_dir, [Path(name) for name in repos[url][modules_dir] for url in repos]
+                    modules_dir, [Path(name) for url in repos for name in repos[url][modules_dir]]
                 )
         return repos, renamed_dirs
 
@@ -446,7 +446,7 @@ class ModulesJson:
                 log.error(e)
                 failed_to_install.extend(modules)
             for module, sha in modules:
-                if not modules_repo.install_module(module, self.modules_dir / install_dir, sha):
+                if not modules_repo.install_component(module, self.modules_dir / install_dir, sha, "modules"):
                     log.warning(
                         f"Could not install module '{Path(self.modules_dir, install_dir, module)}' - removing from modules.json"
                     )
@@ -901,12 +901,12 @@ class ModulesJson:
 
         components_with_repos = (
             (
-                nf_core.modules.module_utils.path_from_remote(repo_url),
-                str(dir.relative_to(nf_core.modules.module_utils.path_from_remote(repo_url))),
+                nf_core.modules.modules_utils.path_from_remote(repo_url),
+                str(dir.relative_to(nf_core.modules.modules_utils.path_from_remote(repo_url))),
             )
             for dir in missing_from_modules_json
             for repo_url in repos
-            if nf_core.utils.is_relative_to(dir, nf_core.modules.module_utils.path_from_remote(repo_url))
+            if nf_core.utils.is_relative_to(dir, nf_core.modules.modules_utils.path_from_remote(repo_url))
         )
 
         repos_with_components = {}

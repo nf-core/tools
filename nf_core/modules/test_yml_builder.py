@@ -77,7 +77,7 @@ class ModulesTestYmlBuilder(ModuleCommand):
             modules_repo = ModulesRepo()
             self.module_name = questionary.autocomplete(
                 "Tool name:",
-                choices=modules_repo.get_avail_modules(),
+                choices=modules_repo.get_avail_components(self.component_type),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         self.module_dir = os.path.join(self.default_modules_path, *self.module_name.split("/"))
