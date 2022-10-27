@@ -67,14 +67,13 @@ class ModuleLint(ModuleCommand):
     def __init__(
         self,
         dir,
-        org,
         fail_warned=False,
         remote_url=None,
         branch=None,
         no_pull=False,
         hide_progress=False,
     ):
-        super().__init__(dir=dir, org=org, remote_url=remote_url, branch=branch, no_pull=no_pull, hide_progress=False)
+        super().__init__(dir=dir, remote_url=remote_url, branch=branch, no_pull=no_pull, hide_progress=False)
 
         self.fail_warned = fail_warned
         self.passed = []
