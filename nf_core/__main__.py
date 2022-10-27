@@ -827,7 +827,7 @@ def bump_versions(ctx, tool, dir, all, show_all):
             ctx.obj["modules_repo_no_pull"],
         )
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
-    except nf_core.modules.module_utils.ModuleException as e:
+    except nf_core.modules.modules_utils.ModuleException as e:
         log.error(e)
         sys.exit(1)
     except (UserWarning, LookupError) as e:

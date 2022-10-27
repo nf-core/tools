@@ -13,9 +13,9 @@ from rich.text import Text
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 
-from .module_utils import get_repo_type
 from .modules_command import ModuleCommand
 from .modules_repo import NF_CORE_MODULES_REMOTE
+from .modules_utils import get_repo_type
 
 log = logging.getLogger(__name__)
 
@@ -94,14 +94,14 @@ class ModuleInfo(ModuleCommand):
             ).unsafe_ask()
             if self.local:
                 if self.repo_type == "modules":
-                    modules = self.get_modules_clone_modules()
+                    modules = self.get_components_clone_modules()
                 else:
                     modules = self.modules_json.get_all_modules().get(self.modules_repo.remote_url)
                     modules = [module if dir == self.org else f"{dir}/{module}" for dir, module in modules]
                     if modules is None:
                         raise UserWarning(f"No modules installed from '{self.modules_repo.remote_url}'")
             else:
-                modules = self.modules_repo.get_avail_modules()
+                modules = self.modules_repo.get_avail_components(self.component_type)
             module = questionary.autocomplete(
                 "Please select a module", choices=modules, style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
@@ -179,7 +179,7 @@ class ModuleInfo(ModuleCommand):
             dict or bool: Parsed meta.yml found, False otherwise
         """
         # Check if our requested module is there
-        if self.module not in self.modules_repo.get_avail_modules():
+        if self.module not in self.modules_repo.get_avail_components(self.component_type):
             return False
 
         file_contents = self.modules_repo.get_meta_yml(self.module)

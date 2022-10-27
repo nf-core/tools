@@ -3,7 +3,7 @@ import logging
 
 import rich
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 
 from .modules_command import ModuleCommand
 from .modules_json import ModulesJson
@@ -46,7 +46,11 @@ class ModuleList(ModuleCommand):
         if self.remote:
 
             # Filter the modules by keywords
-            modules = [mod for mod in self.modules_repo.get_avail_modules() if all(k in mod for k in keywords)]
+            modules = [
+                mod
+                for mod in self.modules_repo.get_avail_components(self.component_type)
+                if all(k in mod for k in keywords)
+            ]
 
             # Nothing found
             if len(modules) == 0:
@@ -63,7 +67,7 @@ class ModuleList(ModuleCommand):
         else:
             # Check that we are in a pipeline directory
             try:
-                _, repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+                _, repo_type = nf_core.modules.modules_utils.get_repo_type(self.dir)
                 if repo_type != "pipeline":
                     raise UserWarning(
                         "The command 'nf-core modules list local' must be run from a pipeline directory.",

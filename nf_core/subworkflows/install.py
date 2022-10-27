@@ -5,7 +5,7 @@ from pathlib import Path
 
 import questionary
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.modules.install import ModuleInstall
 from nf_core.modules.modules_json import ModulesJson
@@ -57,17 +57,17 @@ class SubworkflowInstall(SubworkflowCommand):
         if subworkflow is None:
             subworkflow = questionary.autocomplete(
                 "Subworkflow name:",
-                choices=self.modules_repo.get_avail_subworkflows(),
+                choices=self.modules_repo.get_avail_components(self.component_type),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
         # Check that the supplied name is an available subworkflow
-        if subworkflow and subworkflow not in self.modules_repo.get_avail_subworkflows():
+        if subworkflow and subworkflow not in self.modules_repo.get_avail_components(self.component_type):
             log.error(f"Subworkflow '{subworkflow}' not found in list of available subworkflows.")
             log.info("Use the command 'nf-core subworkflows list' to view available software")
             return False
 
-        if not self.modules_repo.subworkflow_exists(subworkflow):
+        if not self.modules_repo.component_exists(subworkflow, self.component_type):
             warn_msg = f"Subworkflow '{subworkflow}' not found in remote '{self.modules_repo.remote_url}' ({self.modules_repo.branch})"
             log.warning(warn_msg)
             return False
@@ -107,7 +107,7 @@ class SubworkflowInstall(SubworkflowCommand):
             version = self.sha
         elif self.prompt:
             try:
-                version = nf_core.modules.module_utils.prompt_module_version_sha(
+                version = nf_core.modules.modules_utils.prompt_module_version_sha(
                     subworkflow,
                     installed_sha=current_version,
                     modules_repo=self.modules_repo,
@@ -121,7 +121,7 @@ class SubworkflowInstall(SubworkflowCommand):
 
         if self.force:
             log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{subworkflow}'")
-            self.clear_subworkflow_dir(subworkflow, subworkflow_dir)
+            self.clear_component_dir(subworkflow, subworkflow_dir)
             for repo_url, repo_content in modules_json.modules_json["repos"].items():
                 for dir, dir_subworkflow in repo_content["subworkflows"].items():
                     for name, _ in dir_subworkflow.items():

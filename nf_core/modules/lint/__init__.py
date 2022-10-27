@@ -19,7 +19,7 @@ import rich
 from rich.markdown import Markdown
 from rich.table import Table
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.lint_utils import console
 from nf_core.modules.modules_command import ModuleCommand
@@ -97,7 +97,7 @@ class ModuleLint(ModuleCommand):
                 local_module_dir = Path(self.dir, "modules", "local")
                 self.all_local_modules = [
                     NFCoreModule(m, None, local_module_dir / m, self.repo_type, Path(self.dir), nf_core_module=False)
-                    for m in self.get_local_modules()
+                    for m in self.get_local_components()
                 ]
 
             else:
@@ -106,7 +106,7 @@ class ModuleLint(ModuleCommand):
             module_dir = Path(self.dir, self.default_modules_path)
             self.all_remote_modules = [
                 NFCoreModule(m, None, module_dir / m, self.repo_type, Path(self.dir))
-                for m in self.get_modules_clone_modules()
+                for m in self.get_components_clone_modules()
             ]
             self.all_local_modules = []
             if not self.all_remote_modules:

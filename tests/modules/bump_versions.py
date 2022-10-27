@@ -4,7 +4,7 @@ import re
 import pytest
 
 import nf_core.modules
-from nf_core.modules.module_utils import ModuleException
+from nf_core.modules.modules_utils import ModuleException
 
 
 def test_modules_bump_versions_single_module(self):

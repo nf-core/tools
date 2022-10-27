@@ -4,10 +4,10 @@ from .info import ModuleInfo
 from .install import ModuleInstall
 from .lint import ModuleLint
 from .list import ModuleList
-from .module_test import ModulesTest
-from .module_utils import ModuleException
 from .modules_json import ModulesJson
 from .modules_repo import ModulesRepo
+from .modules_test import ModulesTest
+from .modules_utils import ModuleException
 from .mulled import MulledImageNameGenerator
 from .patch import ModulePatch
 from .remove import ModuleRemove
