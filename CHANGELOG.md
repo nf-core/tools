@@ -9,6 +9,7 @@
 
 ### Linting
 
+- Make `nf-core schema lint` and `nf-core lint` consistently not requiring positional path arguments
 ### General
 
 - Fix error in tagging GitPod docker images during releases
