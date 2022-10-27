@@ -300,7 +300,9 @@ class ModulesJson:
         # Find the correct commit SHA for the local module files.
         # We iterate over the commit history for the module until we find
         # a revision that matches the file contents
-        commit_shas = (commit["git_sha"] for commit in modules_repo.get_module_git_log(module_name, depth=1000))
+        commit_shas = (
+            commit["git_sha"] for commit in modules_repo.get_component_git_log(module_name, "modules", depth=1000)
+        )
         for commit_sha in commit_shas:
             if all(modules_repo.module_files_identical(module_name, module_path, commit_sha).values()):
                 return commit_sha

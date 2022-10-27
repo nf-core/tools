@@ -201,7 +201,7 @@ def prompt_module_version_sha(module, modules_repo, installed_sha=None):
     git_sha = ""
     page_nbr = 1
 
-    all_commits = modules_repo.get_module_git_log(module)
+    all_commits = modules_repo.get_component_git_log(module, "modules")
     next_page_commits = [next(all_commits, None) for _ in range(10)]
     next_page_commits = [commit for commit in next_page_commits if commit is not None]
 
