@@ -14,4 +14,6 @@ class SubworkflowCommand(ComponentCommand):
     """
 
     def __init__(self, dir, remote_url=None, branch=None, no_pull=False, hide_progress=False):
-        super().__init__("subworkflows", dir, remote_url, branch, no_pull, hide_progress)
+        super().__init__(
+            "subworkflows", dir, remote_url=remote_url, branch=branch, no_pull=no_pull, hide_progress=hide_progress
+        )

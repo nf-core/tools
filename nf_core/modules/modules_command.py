@@ -15,7 +15,9 @@ class ModuleCommand(ComponentCommand):
     """
 
     def __init__(self, dir, remote_url=None, branch=None, no_pull=False, hide_progress=False):
-        super().__init__("modules", dir, remote_url, branch, no_pull, hide_progress)
+        super().__init__(
+            "modules", dir, remote_url=remote_url, branch=branch, no_pull=no_pull, hide_progress=hide_progress
+        )
 
     def check_patch_paths(self, patch_path, module_name):
         """
