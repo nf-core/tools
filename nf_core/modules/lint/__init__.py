@@ -163,6 +163,12 @@ class ModuleLint(ModuleCommand):
                                 the passed, warned and failed tests
         """
 
+        choices = []
+        if local == True:
+            choices = [m.module_name for m in self.all_local_modules]
+        else:
+            choices = [m.module_name for m in self.all_remote_modules] + [m.module_name for m in self.all_local_modules]
+
         # Prompt for module or all
         if module is None and not all_modules:
             questions = [
@@ -177,7 +183,7 @@ class ModuleLint(ModuleCommand):
                     "name": "tool_name",
                     "message": "Tool name:",
                     "when": lambda x: x["all_modules"] == "Named module",
-                    "choices": [m.module_name for m in self.all_remote_modules],
+                    "choices": choices,
                 },
             ]
             answers = questionary.unsafe_prompt(questions, style=nf_core.utils.nfcore_question_style)
@@ -188,9 +194,9 @@ class ModuleLint(ModuleCommand):
         if module:
             if all_modules:
                 raise ModuleLintException("You cannot specify a tool and request all tools to be linted.")
-            local_modules = []
+            local_modules = [m for m in self.all_local_modules if m.module_name == module]
             remote_modules = [m for m in self.all_remote_modules if m.module_name == module]
-            if len(remote_modules) == 0:
+            if len(remote_modules) == 0 and len(local_modules) == 0:
                 raise ModuleLintException(f"Could not find the specified module: '{module}'")
         else:
             local_modules = self.all_local_modules

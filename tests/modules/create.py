@@ -7,7 +7,6 @@ import nf_core.modules
 from tests.utils import mock_api_calls
 
 
-@pytest.mark.xfail
 def test_modules_create_succeed(self):
     """Succeed at creating the TrimGalore! module"""
     with requests_mock.Mocker() as mock:
