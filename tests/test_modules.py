@@ -152,7 +152,7 @@ class TestModules(unittest.TestCase):
         test_modules_list_remote,
         test_modules_list_remote_gitlab,
     )
-    from .modules.module_test import (
+    from .modules.modules_test import (
         test_modules_test_check_inputs,
         test_modules_test_no_installed_modules,
         test_modules_test_no_name_no_prompts,

@@ -3,7 +3,7 @@ import os
 
 import questionary
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 
@@ -109,7 +109,7 @@ class ModuleInstall(ModuleCommand):
             version = self.sha
         elif self.prompt:
             try:
-                version = nf_core.modules.module_utils.prompt_module_version_sha(
+                version = nf_core.modules.modules_utils.prompt_module_version_sha(
                     module,
                     installed_sha=current_version,
                     modules_repo=self.modules_repo,

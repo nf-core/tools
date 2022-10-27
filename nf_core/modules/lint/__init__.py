@@ -19,7 +19,7 @@ import rich
 from rich.markdown import Markdown
 from rich.table import Table
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.lint_utils import console
 from nf_core.modules.modules_command import ModuleCommand

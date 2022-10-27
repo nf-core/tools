@@ -15,7 +15,7 @@ from packaging.version import parse as parse_version
 
 import nf_core
 import nf_core.components.components_create
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
 
 from .modules_command import ModuleCommand
@@ -89,7 +89,7 @@ class ModuleCreate(ModuleCommand):
 
         # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
         try:
-            self.directory, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.directory, self.repo_type)
+            self.directory, self.repo_type = nf_core.modules.modules_utils.get_repo_type(self.directory, self.repo_type)
         except LookupError as e:
             raise UserWarning(e)
         log.info(f"Repository type: [blue]{self.repo_type}")
