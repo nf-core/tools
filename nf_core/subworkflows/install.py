@@ -5,7 +5,7 @@ from pathlib import Path
 
 import questionary
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.modules.install import ModuleInstall
 from nf_core.modules.modules_json import ModulesJson
@@ -107,7 +107,7 @@ class SubworkflowInstall(SubworkflowCommand):
             version = self.sha
         elif self.prompt:
             try:
-                version = nf_core.modules.module_utils.prompt_module_version_sha(
+                version = nf_core.modules.modules_utils.prompt_module_version_sha(
                     subworkflow,
                     installed_sha=current_version,
                     modules_repo=self.modules_repo,

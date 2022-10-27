@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 
 import nf_core
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.modules.modules_repo
 
 log = logging.getLogger(__name__)

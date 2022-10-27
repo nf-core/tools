@@ -13,7 +13,7 @@ import pytest
 import questionary
 import rich
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 

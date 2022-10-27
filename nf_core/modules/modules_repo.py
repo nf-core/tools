@@ -10,7 +10,7 @@ import rich
 import rich.progress
 from git.exc import GitCommandError, InvalidGitRepositoryError
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.modules.modules_json
 from nf_core.utils import NFCORE_DIR
 
@@ -127,8 +127,8 @@ class ModulesRepo(object):
 
         self.remote_url = remote_url
 
-        self.repo_path = nf_core.modules.module_utils.path_from_remote(self.remote_url)
-        self.fullname = nf_core.modules.module_utils.repo_full_name_from_remote(self.remote_url)
+        self.repo_path = nf_core.modules.modules_utils.path_from_remote(self.remote_url)
+        self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, hide_progress)
 
