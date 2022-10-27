@@ -63,11 +63,15 @@ class TestCli(unittest.TestCase):
         assert "Show the version and exit." in result.output
 
     def test_cli_bad_subcommand(self):
-        """Test the main launch function with verbose flag and an unrecognised argument"""
-        result = self.invoke_cli(["-v", "foo"])
+        """Test the main launch function with an unrecognised argument"""
+        result = self.invoke_cli(["foo"])
         assert result.exit_code == 2
+
+    def test_cli_verbose(self):
+        """Test the main launch function with verbose flag"""
+        result = self.invoke_cli(["-v"])
         # Checks that -v was considered valid
-        assert "No such command" in result.output
+        assert "No such option: -v" not in nf_core.utils.strip_ansi_codes(result.output)
 
     @mock.patch("nf_core.list.list_workflows", return_value="pipeline test list")
     def test_cli_list(self, mock_list_workflows):
