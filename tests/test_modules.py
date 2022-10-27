@@ -140,7 +140,7 @@ class TestModules(unittest.TestCase):
     from .modules.lint import (
         test_modules_lint_empty,
         test_modules_lint_gitlab_modules,
-        test_modules_lint_new_modules,
+        test_modules_lint_new_modules_repo,
         test_modules_lint_no_gitlab,
         test_modules_lint_patched_modules,
         test_modules_lint_trimgalore,

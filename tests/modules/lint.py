@@ -42,7 +42,7 @@ def test_modules_lint_empty(self):
         nf_core.modules.ModuleLint(dir=self.pipeline_dir)
 
 
-def test_modules_lint_new_modules(self):
+def test_modules_lint_new_modules_repo(self):
     """lint all modules in nf-core/modules repo clone"""
     module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
     module_lint.lint(print_results=True, all_modules=True)
