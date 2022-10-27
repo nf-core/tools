@@ -18,4 +18,16 @@ RUN if [ -f "/tmp/conda-tmp/environment.yml" ]; then umask 0002 && /opt/conda/bi
 
 RUN conda install -c bioconda nextflow
 RUN pip install nf-core
+RUN conda update -n base -c defaults conda && \
+    conda config --add channels defaults && \
+    conda config --add channels bioconda && \
+    conda config --add channels conda-forge && \
+    conda install \
+        pytest-workflow=1.6.0 \
+        mamba=0.24.0 \
+        pip=22.1.2 \
+        black=22.6.0 \
+        prettier=2.7.1 \
+        -n base && \
+    conda clean --all -f -y
 
