@@ -45,8 +45,14 @@ class TestCli(unittest.TestCase):
 
         Args:
             params (dict): dict of parameters to assemble"""
-        arg_list = [[f"--{key}"] + ([value] if value is not None else []) for key, value in params.items()]
-        return [item for arg in arg_list for item in arg]
+        arg_list = []
+        for key, value in params.items():
+            if value is not None:
+                arg_list += [f"--{key}", value]
+            else:
+                arg_list += [f"--{key}"]
+
+        return arg_list
 
     def invoke_cli(self, cmd):
         """Invoke the commandline interface using a list of parameters
