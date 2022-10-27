@@ -11,8 +11,8 @@ import git
 import questionary
 from git.exc import GitCommandError
 
-import nf_core.modules.modules_utils
 import nf_core.modules.modules_repo
+import nf_core.modules.modules_utils
 import nf_core.utils
 
 from .modules_differ import ModulesDiffer

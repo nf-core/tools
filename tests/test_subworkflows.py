@@ -67,7 +67,6 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_create_nfcore_modules,
         test_subworkflows_create_succeed,
     )
-
     from .subworkflows.subworkflows_test import (
         test_subworkflows_test_check_inputs,
         test_subworkflows_test_no_installed_subworkflows,

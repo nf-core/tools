@@ -10,8 +10,8 @@ import rich
 import rich.progress
 from git.exc import GitCommandError, InvalidGitRepositoryError
 
-import nf_core.modules.modules_utils
 import nf_core.modules.modules_json
+import nf_core.modules.modules_utils
 from nf_core.utils import NFCORE_DIR
 
 log = logging.getLogger(__name__)
