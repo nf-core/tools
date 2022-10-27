@@ -127,3 +127,16 @@ You can replicate this process locally with the following commands:
 nf-core create -n testpipeline -d "This pipeline is for testing"
 nf-core lint nf-core-testpipeline
 ```
+
+## Codespaces
+This repo includes a devcontainer configuration which will create a GitHub Codespace for Nextflow development!
+
+Devcontainer specs:
+- [DevContainer config](.devcontainer/devcontainer.json)
+- [Dockerfile](.devcontainer/Dockerfile)
+
+# To get started:
+- Open the repo in [Codespaces](https://github.com/{{ name }})/codespaces)
+- Tools installed
+   - nf-core
+   - nextflow

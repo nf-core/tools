@@ -73,19 +73,6 @@ The results obtained from the full-sized test can be viewed on the [nf-core webs
 
 {% if branded -%}
 
-## Codespaces
-This repo includes a devcontainer configuration which will create a GitHub Codespace for Nextflow development!
-
-Devcontainer specs:
-- [DevContainer config](.devcontainer/devcontainer.json)
-- [Dockerfile](.devcontainer/Dockerfile)
-
-# To get started:
-- Open the repo in [Codespaces](https://github.com/{{ name }})/codespaces)
-- Tools installed
-   - nf-core
-   - nextflow
-
 ## Documentation
 
 The {{ name }} pipeline comes with documentation about the pipeline [usage](https://nf-co.re/{{ short_name }}/usage), [parameters](https://nf-co.re/{{ short_name }}/parameters) and [output](https://nf-co.re/{{ short_name }}/output).
