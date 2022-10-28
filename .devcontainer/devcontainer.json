@@ -1,14 +1,8 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.245.2/containers/python-3-anaconda
 {
-	"name": "Anaconda (Python 3)",
-	"build": { 
-		"context": "..",
-		"dockerfile": "Dockerfile",
-		"args": {
-			"NODE_VERSION": "lts/*"
-		}
-	},
+    "name": "nfcore",
+    "image": "nfcore/gitpod:latest",
+	"postCreateCommand": "python -m pip install --upgrade -r ../requirements-dev.txt -e .",
+    "remoteUser": "gitpod",
 
 	// Configure tool-specific properties.
 	"customizations": {
@@ -31,26 +25,15 @@
 			"extensions": [
 				"ms-python.python",
 				"ms-python.vscode-pylance",
-				"nf-core.nf-core-extensionpack"
+				"nf-core.nf-core-extensionpack",
+				"codezombiech.gitignore",
+				"esbenp.prettier-vscode",
+				"EditorConfig.EditorConfig",
+				"Gruntfuggly.todo-tree",
+				"mechatroner.rainbow-csv",
+				"derwat.indent-rainbow",
+				"streetsidesoftware.code-spell-checker"
 			]
 		}
-	},
-
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "python --version",
-
-	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-	"remoteUser": "vscode",
-	"features": {
-		"docker-in-docker": "20.10",
-		"git": "os-provided",
-		"ghcr.io/devcontainers/features/conda:1": {},
-		"ghcr.io/devcontainers/features/docker-from-docker:1": {},
-		"ghcr.io/devcontainers/features/git:1": {}
 	}
 }
-
-
