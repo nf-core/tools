@@ -82,7 +82,7 @@ workflow {{ short_name|upper }} {
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
-        ch_versions.unique().collectFile(name: 'collated_versions.yml')
+        ch_versions.unique{ it.text }.collectFile(name: 'collated_versions.yml')
     )
 
     //
@@ -107,7 +107,6 @@ workflow {{ short_name|upper }} {
         ch_multiqc_logo.toList()
     )
     multiqc_report = MULTIQC.out.report.toList()
-    ch_versions    = ch_versions.mix(MULTIQC.out.versions)
 }
 
 /*
