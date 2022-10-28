@@ -7,6 +7,8 @@ import shutil
 import tempfile
 import unittest
 
+import requests_mock
+
 import nf_core.create
 import nf_core.modules
 
@@ -17,6 +19,7 @@ from .utils import (
     GITLAB_URL,
     OLD_TRIMGALORE_BRANCH,
     OLD_TRIMGALORE_SHA,
+    mock_api_calls,
 )
 
 
@@ -32,9 +35,12 @@ def create_modules_repo_dummy(tmp_dir):
     with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
         fh.writelines(["repository_type: modules", "\n"])
 
-    # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
-    module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
-    module_create.create()
+    # mock biocontainers and anaconda response
+    with requests_mock.Mocker() as mock:
+        mock_api_calls(mock, "bpipe", "0.9.11")
+        # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
+        module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
+        module_create.create()
 
     return root_dir
 
@@ -146,11 +152,6 @@ class TestModules(unittest.TestCase):
         test_modules_list_remote,
         test_modules_list_remote_gitlab,
     )
-    from .modules.module_test import (
-        test_modules_test_check_inputs,
-        test_modules_test_no_installed_modules,
-        test_modules_test_no_name_no_prompts,
-    )
     from .modules.modules_json import (
         test_get_modules_json,
         test_mod_json_create,
@@ -165,6 +166,11 @@ class TestModules(unittest.TestCase):
         test_mod_json_update,
         test_mod_json_with_empty_modules_value,
         test_mod_json_with_missing_modules_entry,
+    )
+    from .modules.modules_test import (
+        test_modules_test_check_inputs,
+        test_modules_test_no_installed_modules,
+        test_modules_test_no_name_no_prompts,
     )
     from .modules.patch import (
         test_create_patch_change,

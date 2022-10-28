@@ -22,7 +22,8 @@ def test_modules_install_nopipeline(self):
 @with_temporary_folder
 def test_modules_install_emptypipeline(self, tmpdir):
     """Test installing a module - empty dir given"""
-    self.mods_install.dir = tmpdir
+    os.mkdir(os.path.join(tmpdir, "nf-core-pipe"))
+    self.mods_install.dir = os.path.join(tmpdir, "nf-core-pipe")
     with pytest.raises(UserWarning) as excinfo:
         self.mods_install.install("foo")
     assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
