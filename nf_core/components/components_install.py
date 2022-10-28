@@ -8,7 +8,7 @@ import jinja2
 import questionary
 import rich
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
 
@@ -97,7 +97,7 @@ def get_version(component, component_type, sha, prompt, current_version, modules
         version = sha
     elif prompt:
         try:
-            version = nf_core.modules.module_utils.prompt_module_version_sha(
+            version = nf_core.modules.modules_utils.prompt_module_version_sha(
                 component,
                 installed_sha=current_version,
                 modules_repo=modules_repo,
