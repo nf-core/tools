@@ -30,7 +30,7 @@ RUN conda update -n base -c defaults conda && \
         pytest-workflow=1.6.0 \
         mamba=0.27.0 \
         pip=22.3 \
-        black=22.6.0 \
+        black=22.10.0 \
         prettier=2.7.1 \
         -n base && \
     conda clean --all -f -y
