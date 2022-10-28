@@ -6,7 +6,7 @@ from pathlib import Path
 
 import questionary
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.utils import plural_es, plural_s, plural_y
 
@@ -151,7 +151,7 @@ class ModuleUpdate(ModuleCommand):
             if sha is not None:
                 version = sha
             elif self.prompt:
-                version = nf_core.modules.module_utils.prompt_module_version_sha(
+                version = nf_core.modules.modules_utils.prompt_module_version_sha(
                     module, modules_repo=modules_repo, installed_sha=current_version
                 )
             else:

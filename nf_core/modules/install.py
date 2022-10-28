@@ -4,7 +4,7 @@ import os
 import questionary
 
 import nf_core.components.components_install
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 

@@ -66,7 +66,7 @@ class ComponentCommand:
         if self.repo_type == "modules":
             return True
         if self.dir is None or not os.path.exists(self.dir):
-            log.error(f"Could not find pipeline: {self.dir}")
+            log.error(f"Could not find directory: {self.dir}")
             return False
         main_nf = os.path.join(self.dir, "main.nf")
         nf_config = os.path.join(self.dir, "nextflow.config")

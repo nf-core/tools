@@ -13,9 +13,9 @@ from rich.text import Text
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 
-from .module_utils import get_repo_type
 from .modules_command import ModuleCommand
 from .modules_repo import NF_CORE_MODULES_REMOTE
+from .modules_utils import get_repo_type
 
 log = logging.getLogger(__name__)
 

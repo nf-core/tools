@@ -17,12 +17,14 @@
 - Don't remove local copy of modules repo, only update it with fetch ([#1881](https://github.com/nf-core/tools/pull/1881))
 - Add subworkflow commands create-test-yml, create and install ([#1897](https://github.com/nf-core/tools/pull/1897))
 - Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
-- Improve test coverage of sync.py
+- Improve test coverage of `sync.py` and `__main__.py` ([#1936](https://github.com/nf-core/tools/pull/1936), [#1965](https://github.com/nf-core/tools/pull/1965))
 - `check_up_to_date()` function from `modules_json` also checks for subworkflows.
 - The default branch can now be specified when creating a new pipeline repo [#1959](https://github.com/nf-core/tools/pull/1959).
 - Only warn when checking that the pipeline directory contains a `main.nf` and a `nextflow.config` file if the pipeline is not an nf-core pipeline [#1964](https://github.com/nf-core/tools/pull/1964)
 - Add file `versions.yml` when generating `test.yml` with `nf-core modules create-test-yml` but don't check for md5sum [#1963](https://github.com/nf-core/tools/pull/1963)
 - Mock biocontainers and anaconda api calls in modules and subworkflows tests [#1967](https://github.com/nf-core/tools/pull/1967)
+- Run tests with Python 3.11 ([#1970](https://github.com/nf-core/tools/pull/1970))
+- Bump promoted Python version from 3.7 to 3.8 ([#1971](https://github.com/nf-core/tools/pull/1971))
 
 ### Modules
 
@@ -363,7 +365,7 @@ Please note that there are many excellent integrations for Prettier available, f
 
 ### Modules
 
-- Fixed typo in `module_utils.py`.
+- Fixed typo in `modules_utils.py`.
 - Fixed failing lint test when process section was missing from module. Also added the local failing tests to the warned section of the output table. ([#1235](https://github.com/nf-core/tools/issues/1235))
 - Added `--diff` flag to `nf-core modules update` which shows the diff between the installed files and the versions
 - Update `nf-core modules create` help texts which were not changed with the introduction of the `--dir` flag

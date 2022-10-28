@@ -3,7 +3,7 @@ import logging
 
 import rich
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 
 from .modules_command import ModuleCommand
 from .modules_json import ModulesJson
@@ -67,7 +67,7 @@ class ModuleList(ModuleCommand):
         else:
             # Check that we are in a pipeline directory
             try:
-                _, repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+                _, repo_type = nf_core.modules.modules_utils.get_repo_type(self.dir)
                 if repo_type != "pipeline":
                     raise UserWarning(
                         "The command 'nf-core modules list local' must be run from a pipeline directory.",

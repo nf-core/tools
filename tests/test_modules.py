@@ -152,11 +152,6 @@ class TestModules(unittest.TestCase):
         test_modules_list_remote,
         test_modules_list_remote_gitlab,
     )
-    from .modules.module_test import (
-        test_modules_test_check_inputs,
-        test_modules_test_no_installed_modules,
-        test_modules_test_no_name_no_prompts,
-    )
     from .modules.modules_json import (
         test_get_modules_json,
         test_mod_json_create,
@@ -171,6 +166,11 @@ class TestModules(unittest.TestCase):
         test_mod_json_update,
         test_mod_json_with_empty_modules_value,
         test_mod_json_with_missing_modules_entry,
+    )
+    from .modules.modules_test import (
+        test_modules_test_check_inputs,
+        test_modules_test_no_installed_modules,
+        test_modules_test_no_name_no_prompts,
     )
     from .modules.patch import (
         test_create_patch_change,
