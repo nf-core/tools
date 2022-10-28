@@ -61,7 +61,14 @@ def main_nf(module_lint_object, module, fix_version, progress_bar):
             module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
             return
 
-    deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
+    deprecated_i = [
+        "initOptions",
+        "saveFiles",
+        "getSoftwareName",
+        "getProcessName",
+        "publishDir",
+        "container \"${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?",
+    ]
     lines_j = "\n".join(lines)
     for i in deprecated_i:
         if i in lines_j:
