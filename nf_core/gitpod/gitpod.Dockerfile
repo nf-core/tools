@@ -27,6 +27,7 @@ RUN conda update -n base -c defaults conda && \
     conda install \
         openjdk=11.0.15 \
         nextflow=22.10.0 \
+        nf-test=0.7.0 \
         pytest-workflow=1.6.0 \
         mamba=0.27.0 \
         pip=22.3 \
