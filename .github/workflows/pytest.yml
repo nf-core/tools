@@ -3,7 +3,11 @@ name: Python tests
 # Only run if we changed a Python file
 on:
   push:
+    branches:
+      - dev
   pull_request:
+  release:
+    types: [published]
 
 # Cancel if a newer run is started
 concurrency:
