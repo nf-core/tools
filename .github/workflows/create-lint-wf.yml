@@ -1,5 +1,11 @@
 name: Create a pipeline and run nf-core linting
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+  release:
+    types: [published]
 
 # Cancel if a newer run is started
 concurrency:
