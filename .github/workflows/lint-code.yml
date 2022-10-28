@@ -1,5 +1,11 @@
 name: Lint tools code formatting
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+  release:
+    types: [published]
 
 # Cancel if a newer run is started
 concurrency:

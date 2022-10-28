@@ -4,6 +4,8 @@ name: nf-core linting
 # that the code meets the nf-core guidelines. {%- raw %}
 on:
   push:
+    branches:
+      - dev
   pull_request:
   release:
     types: [published]
