@@ -25,7 +25,7 @@ RUN conda update -n base -c defaults conda && \
     conda config --add channels bioconda && \
     conda config --add channels conda-forge && \
     conda install \
-        openjdk=11.0.15 \
+        openjdk=17.0.3 \
         nextflow=22.10.0 \
         nf-test=0.7.0 \
         pytest-workflow=1.6.0 \
