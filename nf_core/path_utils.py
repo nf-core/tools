@@ -3,7 +3,7 @@ import os
 
 class NFCorePaths:
     def __init__(self, root_dir, org):
-        self.dir = root_dir
+        self.dir = root_dir or ""
         self.org = org
 
     def get_component_path(self, component):
