@@ -10,6 +10,7 @@ import rich
 
 import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components.components_utils import prompt_component_version_sha
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
 
 log = logging.getLogger(__name__)
@@ -97,8 +98,9 @@ def get_version(component, component_type, sha, prompt, current_version, modules
         version = sha
     elif prompt:
         try:
-            version = nf_core.modules.modules_utils.prompt_module_version_sha(
+            version = nf_core.modules.modules_utils.prompt_component_version_sha(
                 component,
+                component_type,
                 installed_sha=current_version,
                 modules_repo=modules_repo,
             )
