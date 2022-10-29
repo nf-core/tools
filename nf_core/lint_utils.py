@@ -39,9 +39,9 @@ def print_joint_summary(lint_obj, module_lint_obj):
 def print_fixes(lint_obj, module_lint_obj):
     """Prints available and applied fixes"""
 
-    fixe_flags = " ".join([f"--fix {file}" for file in lint_obj.could_fix])
+    fix_flags = " ".join([f"--fix {file}" for file in lint_obj.could_fix])
 
-    if fixe_flags:
+    if fix_flags:
         lint_dir = "" if lint_obj.wf_path == "." else f"--dir {lint_obj.wf_path}"
         console.print(
             "\nTip: Some of these linting errors can automatically be resolved with the following command:"
