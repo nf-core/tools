@@ -1,4 +1,5 @@
 import logging
+import shutil
 import subprocess
 
 import rich
@@ -53,7 +54,7 @@ def print_fixes(lint_obj, module_lint_obj):
 
 
 def run_prettier_on_file(file):
-    """Runs Prettier on a file if Prettier is installed.
+    """Run Prettier on a file.
 
     Args:
         file (Path | str): A file identifier as a string or pathlib.Path.
@@ -62,12 +63,43 @@ def run_prettier_on_file(file):
         If Prettier is not installed, a warning is logged.
     """
 
-    try:
-        subprocess.run(
-            ["prettier", "--write", file],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
+    _prettier_installed = not shutil.which("prettier") is None
+    _pre_commit_installed = not shutil.which("pre-commit") is None
+
+    if _prettier_installed:
+        _run_prettier_on_file(file)
+    elif _pre_commit_installed:
+        _run_pre_commit_prettier_on_file(file)
+    else:
+        log.warning(
+            "Neither Prettier nor the prettier pre-commit hook are available. At least one of them is required."
         )
-    except FileNotFoundError:
-        log.warning("Prettier is not installed. Please install it and run it on the pipeline to fix linting issues.")
+
+
+def _run_prettier_on_file(file):
+    """Run natively installed Prettier on a file."""
+
+    subprocess.run(
+        ["prettier", "--write", file],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+
+
+def _run_pre_commit_prettier_on_file(file):
+    """Runs pre-commit hook prettier on a file if pre-commit is installed.
+
+    Args:
+        file (Path | str): A file identifier as a string or pathlib.Path.
+
+    Warns:
+        If Prettier is not installed, a warning is logged.
+    """
+
+    subprocess.run(
+        ["pre-commit", "run", "prettier", file],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
