@@ -1,6 +1,7 @@
 import logging
 import shutil
 import subprocess
+from pathlib import Path
 
 import rich
 from rich.console import Console
@@ -97,8 +98,10 @@ def _run_pre_commit_prettier_on_file(file):
         If Prettier is not installed, a warning is logged.
     """
 
+    nf_core_pre_commit_config = Path(nf_core.__file__).parent.parent / ".pre-commit-config.yaml"
+
     subprocess.run(
-        ["pre-commit", "run", "prettier", file],
+        ["pre-commit", "run", f"--config {nf_core_pre_commit_config}", "prettier", f"--files {file}"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
