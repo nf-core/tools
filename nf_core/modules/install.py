@@ -3,7 +3,7 @@ import os
 
 import questionary
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 
@@ -57,17 +57,17 @@ class ModuleInstall(ModuleCommand):
         if module is None:
             module = questionary.autocomplete(
                 "Tool name:",
-                choices=self.modules_repo.get_avail_modules(),
+                choices=self.modules_repo.get_avail_components(self.component_type),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
         # Check that the supplied name is an available module
-        if module and module not in self.modules_repo.get_avail_modules():
+        if module and module not in self.modules_repo.get_avail_components(self.component_type):
             log.error(f"Module '{module}' not found in list of available modules.")
             log.info("Use the command 'nf-core modules list' to view available software")
             return False
 
-        if not self.modules_repo.module_exists(module):
+        if not self.modules_repo.component_exists(module, self.component_type):
             warn_msg = (
                 f"Module '{module}' not found in remote '{self.modules_repo.remote_url}' ({self.modules_repo.branch})"
             )
@@ -109,7 +109,7 @@ class ModuleInstall(ModuleCommand):
             version = self.sha
         elif self.prompt:
             try:
-                version = nf_core.modules.module_utils.prompt_module_version_sha(
+                version = nf_core.modules.modules_utils.prompt_module_version_sha(
                     module,
                     installed_sha=current_version,
                     modules_repo=self.modules_repo,
@@ -123,7 +123,7 @@ class ModuleInstall(ModuleCommand):
 
         if self.force:
             log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{module}'")
-            self.clear_module_dir(module, module_dir)
+            self.clear_component_dir(module, module_dir)
             for repo_url, repo_content in modules_json.modules_json["repos"].items():
                 for dir, dir_modules in repo_content["modules"].items():
                     for name, _ in dir_modules.items():
@@ -139,7 +139,7 @@ class ModuleInstall(ModuleCommand):
         log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.remote_url}")
 
         # Download module files
-        if not self.install_module_files(module, version, self.modules_repo, install_folder):
+        if not self.install_component_files(module, version, self.modules_repo, install_folder):
             return False
 
         if not silent:

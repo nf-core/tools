@@ -136,7 +136,7 @@ def test_create_patch_try_apply_successful(self):
     )
     # Install the new files
     install_dir = Path(tempfile.mkdtemp())
-    update_obj.install_module_files(BISMARK_ALIGN, SUCCEED_SHA, update_obj.modules_repo, install_dir)
+    update_obj.install_component_files(BISMARK_ALIGN, SUCCEED_SHA, update_obj.modules_repo, install_dir)
 
     # Try applying the patch
     module_install_dir = install_dir / BISMARK_ALIGN
@@ -202,7 +202,7 @@ def test_create_patch_try_apply_failed(self):
     )
     # Install the new files
     install_dir = Path(tempfile.mkdtemp())
-    update_obj.install_module_files(BISMARK_ALIGN, FAIL_SHA, update_obj.modules_repo, install_dir)
+    update_obj.install_component_files(BISMARK_ALIGN, FAIL_SHA, update_obj.modules_repo, install_dir)
 
     # Try applying the patch
     module_install_dir = install_dir / BISMARK_ALIGN
@@ -306,7 +306,7 @@ def test_create_patch_update_fail(self):
 
     # Check that the installed files have not been affected by the attempted patch
     temp_dir = Path(tempfile.mkdtemp())
-    nf_core.modules.modules_command.ModuleCommand(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH).install_module_files(
+    nf_core.modules.modules_command.ModuleCommand(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH).install_component_files(
         BISMARK_ALIGN, FAIL_SHA, update_obj.modules_repo, temp_dir
     )
 
