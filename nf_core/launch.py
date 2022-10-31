@@ -127,12 +127,13 @@ class Launch(object):
                 )
             else:
                 log.warning(f"Parameter output file already exists! {os.path.relpath(self.params_out)}")
-                if Confirm.ask("[yellow]Do you want to overwrite this file?"):
+            if Confirm.ask("[yellow]Do you want to overwrite this file?"):
+                if not (self.params_in and os.path.abspath(self.params_in) == os.path.abspath(self.params_out)):
                     os.remove(self.params_out)
                     log.info(f"Deleted {self.params_out}\n")
-                else:
-                    log.info("Exiting. Use --params-out to specify a custom filename.")
-                    return False
+            else:
+                log.info("Exiting. Use --params-out to specify a custom output filename.")
+                return False
 
         log.info(
             "NOTE: This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n"
