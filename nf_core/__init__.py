@@ -3,7 +3,6 @@
 
 Shouldn't do much, as everything is under subcommands.
 """
+from importlib.metadata import version
 
-import pkg_resources
-
-__version__ = pkg_resources.get_distribution("nf_core").version
+__version__ = version("nf_core")
