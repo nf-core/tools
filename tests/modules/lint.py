@@ -5,7 +5,7 @@ import pytest
 
 import nf_core.modules
 
-from ..utils import GITLAB_URL, set_wd
+from ..utils import GITLAB_URL, check_pr_merged, set_wd
 from .patch import BISMARK_ALIGN, CORRECT_SHA, PATCH_BRANCH, REPO_NAME, modify_main_nf
 
 
@@ -23,6 +23,11 @@ def setup_patch(pipeline_dir, modify_module):
         modify_main_nf(module_path / "main.nf")
 
 
+@pytest.mark.xfail(
+    not check_pr_merged("modules", 2291),
+    reason="Waiting for merge https://github.com/nf-core/modules/pull/2291",
+    strict=True,
+)
 def test_modules_lint_trimgalore(self):
     """Test linting the TrimGalore! module"""
     self.mods_install.install("trimgalore")
@@ -57,6 +62,11 @@ def test_modules_lint_no_gitlab(self):
         nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
 
 
+@pytest.mark.xfail(
+    not check_pr_merged("modules", 2291),
+    reason="Waiting for merge https://github.com/nf-core/modules/pull/2291",
+    strict=True,
+)
 def test_modules_lint_gitlab_modules(self):
     """Lint modules from a different remote"""
     self.mods_install_gitlab.install("fastqc")
@@ -68,6 +78,11 @@ def test_modules_lint_gitlab_modules(self):
     assert len(module_lint.warned) >= 0
 
 
+@pytest.mark.xfail(
+    not check_pr_merged("modules", 2291),
+    reason="Waiting for merge https://github.com/nf-core/modules/pull/2291",
+    strict=True,
+)
 def test_modules_lint_patched_modules(self):
     """
     Test creating a patch file and applying it to a new version of the the files

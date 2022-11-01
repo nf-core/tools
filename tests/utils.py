@@ -10,6 +10,8 @@ import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 
+import requests
+
 OLD_TRIMGALORE_SHA = "06348dffce2a732fc9e656bdc5c64c3e02d302cb"
 OLD_TRIMGALORE_BRANCH = "mimic-old-trimgalore"
 GITLAB_URL = "https://gitlab.com/nf-core/modules-test.git"
@@ -99,3 +101,18 @@ def mock_api_calls(mock, module, version):
 
     mock.register_uri("GET", anaconda_api_url, json=anaconda_mock)
     mock.register_uri("GET", biocontainers_api_url, json=biocontainers_mock)
+
+
+def check_pr_merged(repo, pr_number) -> bool:
+    """
+    Returns True if PR has been merged
+    Returns False if PR has NOT been merged
+    """
+    pr_endpoint = f"https://api.github.com/repos/nf-core/{repo}/pulls/{pr_number}"
+
+    response = requests.get(pr_endpoint)
+
+    if response.status_code == 200:
+        return response.json()["merged"] == "true"
+    else:
+        raise ValueError(f"Couldn't connect to GitHub API")
