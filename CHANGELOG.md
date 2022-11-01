@@ -6,6 +6,7 @@
 
 - Fix lint warnings for `samplesheet_check.nf` module
 - Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
+- Add initial CHM13 support ([1988](https://github.com/nf-core/tools/issues/1988))
 
 ### Linting
 
