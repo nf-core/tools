@@ -70,9 +70,8 @@ def set_wd(path: Path):
 
 def mock_api_calls(mock, module, version):
     """Mock biocontainers and anaconda api calls for module"""
-    biocontainers_api_url = f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{module}/versions/{module}-{version}"
+    biocontainers_api_url = f"https://quay.io/api/v1/repository/biocontainers/{module}/tag"
     anaconda_api_url = f"https://api.anaconda.org/package/bioconda/{module}"
-    mock.register_uri("GET", biocontainers_api_url, text="to modify when the api works and I can know what to add")
     anaconda_mock = {
         "status_code": 200,
         "latest_version": version,
@@ -82,6 +81,21 @@ def mock_api_calls(mock, module, version):
         "files": [{"version": version}],
         "license": "",
     }
-    biocontainers_mock = {"status_code": 200, "images": [{"image_type": "Docker", "image_name": f"{module}-{version}"}]}
+    biocontainers_mock = {
+        "tags": [
+            {
+                "name": version,
+                "reversion": False,
+                "start_ts": 1627050462,
+                "manifest_digest": "sha256:3c986513543ace0d0456d51f4a5e4c254065fa665b47f7ed2fe01ed23e406608",
+                "is_manifest_list": False,
+                "size": 343605278,
+                "last_modified": "Fri, 23 Jul 2021 14:27:42 -0000",
+            }
+        ],
+        "page": 1,
+        "has_additional": True,
+    }
+
     mock.register_uri("GET", anaconda_api_url, json=anaconda_mock)
     mock.register_uri("GET", biocontainers_api_url, json=biocontainers_mock)

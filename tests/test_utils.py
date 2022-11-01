@@ -11,10 +11,12 @@ from unittest import mock
 
 import pytest
 import requests
+import requests_mock
 
 import nf_core.create
 import nf_core.list
 import nf_core.utils
+from tests.utils import mock_api_calls
 
 from .utils import with_temporary_folder
 
@@ -212,4 +214,8 @@ def test_validate_file_md5():
 
 def test_get_biocontainer_tag():
     test_package = "trim-galore"
-    assert nf_core.utils.get_biocontainer_tag(test_package) == "0.6.7--hdfd78af_0"
+    test_version = "0.6.7"
+
+    with requests_mock.Mocker() as mock:
+        mock_api_calls(mock, test_package, test_version)
+        assert nf_core.utils.get_biocontainer_tag(test_package) == test_version
