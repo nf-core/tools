@@ -56,6 +56,7 @@ NFCORE_CACHE_DIR = os.path.join(
     "nfcore",
 )
 NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")), "nfcore")
+QUAY_REPOSITORY_API_ENDPOINT = "https://quay.io/api/v1/repository"
 
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
@@ -667,11 +668,11 @@ def pip_package(dep):
         raise ValueError(f"Could not find pip dependency using the PyPI API: `{dep}`")
 
 
-def get_biocontainer_tag(package, version):
+def get_biocontainer_tag(package):
     """
-    Given a bioconda package and version, looks for Docker and Singularity containers
-    using the biocontaineres API, e.g.:
-    https://api.biocontainers.pro/ga4gh/trs/v2/tools/{tool}/versions/{tool}-{version}
+    Given a bioconda package and version, looks for container tag
+    using the Quay API, e.g.:
+    https://quay.io/api/v1/repository/biocontainers/{package}
     Returns the most recent container versions by default.
     Args:
         package (str): A bioconda package name.
@@ -681,56 +682,22 @@ def get_biocontainer_tag(package, version):
         A ValueError, if the package name can not be found (404)
     """
 
-    biocontainers_api_url = f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{package}/versions/{package}-{version}"
-
-    def get_tag_date(tag_date):
-        """
-        Format a date given by the biocontainers API
-        Given format: '2021-03-25T08:53:00Z'
-        """
-        return datetime.datetime.strptime(tag_date, "%Y-%m-%dT%H:%M:%SZ")
+    quay_api_url = f"{QUAY_REPOSITORY_API_ENDPOINT}/biocontainers/{package}/tag"
 
     try:
-        response = requests.get(biocontainers_api_url)
+        response = requests.get(quay_api_url, params={"onlyActiveTags": True, "limit": 1})
     except requests.exceptions.ConnectionError:
-        raise LookupError("Could not connect to biocontainers.pro API")
+        raise LookupError("Could not connect to quay.io API")
     else:
         if response.status_code == 200:
             try:
-                images = response.json()["images"]
-                singularity_image = None
-                docker_image = None
-                all_docker = {}
-                all_singularity = {}
-                for img in images:
-                    # Get all Docker and Singularity images
-                    if img["image_type"] == "Docker":
-                        # Obtain version and build
-                        match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
-                        if match is not None:
-                            all_docker[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
-                    elif img["image_type"] == "Singularity":
-                        # Obtain version and build
-                        match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
-                        if match is not None:
-                            all_singularity[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
-                # Obtain common builds from Docker and Singularity images
-                common_keys = list(all_docker.keys() & all_singularity.keys())
-                current_date = None
-                for k in common_keys:
-                    # Get the most recent common image
-                    date = max(all_docker[k]["date"], all_docker[k]["date"])
-                    if docker_image is None or current_date < date:
-                        docker_image = all_docker[k]["image"]
-                        singularity_image = all_singularity[k]["image"]
-                        current_date = date
-                return docker_image["image_name"], singularity_image["image_name"]
+                return response.json()["tags"][0]["name"]
             except TypeError:
-                raise LookupError(f"Could not find docker or singularity container for {package}")
+                raise LookupError(f"Could not find container for {package}")
         elif response.status_code != 404:
-            raise LookupError(f"Unexpected response code `{response.status_code}` for {biocontainers_api_url}")
+            raise LookupError(f"Unexpected response code `{response.status_code}` for {quay_api_url}")
         elif response.status_code == 404:
-            raise ValueError(f"Could not find `{package}` on api.biocontainers.pro")
+            raise ValueError(f"Could not find `{package}` on quay.io/biocontainers")
 
 
 def custom_yaml_dumper():

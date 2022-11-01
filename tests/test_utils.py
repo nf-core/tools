@@ -208,3 +208,8 @@ def test_validate_file_md5():
         nf_core.utils.validate_file_md5(test_file, different_md5)
     with pytest.raises(ValueError):
         nf_core.utils.validate_file_md5(test_file, non_hex_string)
+
+
+def test_get_biocontainer_tag():
+    test_package = "trim-galore"
+    assert nf_core.utils.get_biocontainer_tag(test_package) == "0.6.7--hdfd78af_0"

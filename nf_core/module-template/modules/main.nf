@@ -24,7 +24,7 @@ process {{ tool_name_underscore|upper }} {
     //               For Conda, the build (i.e. "h9402c20_2") must be EXCLUDED to support installation on different operating systems.
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     conda (params.enable_conda ? "{{ bioconda if bioconda else 'YOUR-TOOL-HERE' }}" : null)
-    def container_image = "{{ docker_container if docker_container else 'YOUR-TOOL-HERE' }}"
+    def container_image = "{{ container if container else 'YOUR-TOOL-HERE' }}"
     container [ params.container_registry ?: 'quay.io/biocontainers' , container_image ].join('/')
 
     input:

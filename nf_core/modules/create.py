@@ -53,8 +53,7 @@ class ModuleCreate(ModuleCommand):
         self.tool_doc_url = ""
         self.tool_dev_url = ""
         self.bioconda = None
-        self.singularity_container = None
-        self.docker_container = None
+        self.container = None
         self.file_paths = {}
 
     def create(self):
@@ -81,7 +80,7 @@ class ModuleCreate(ModuleCommand):
         tests/config/pytest_modules.yml
 
         The function will attempt to automatically find a Bioconda package called <tool>
-        and matching Docker / Singularity images from BioContainers.
+        and matching container images from BioContainers.
         """
 
         # Check modules directory structure
@@ -210,17 +209,14 @@ class ModuleCreate(ModuleCommand):
         if self.bioconda:
             try:
                 if self.tool_conda_name:
-                    self.docker_container, self.singularity_container = nf_core.utils.get_biocontainer_tag(
-                        self.tool_conda_name, version
+                    self.container = (
+                        f"{self.tool_conda_name}:{nf_core.utils.get_biocontainer_tag(self.tool_conda_name)}"
                     )
                 else:
-                    self.docker_container, self.singularity_container = nf_core.utils.get_biocontainer_tag(
-                        self.tool, version
-                    )
-                log.info(f"Using Docker container: '{self.docker_container}'")
-                log.info(f"Using Singularity container: '{self.singularity_container}'")
+                    self.container = f"{self.tool}:{nf_core.utils.get_biocontainer_tag(self.tool)}"
+                log.info(f"Using container tag: '{self.container}'")
             except (ValueError, LookupError) as e:
-                log.info(f"Could not find a Docker/Singularity container ({e})")
+                log.info(f"Could not find a container ({e})")
 
     def _get_module_structure_components(self):
         process_label_defaults = ["process_single", "process_low", "process_medium", "process_high", "process_long"]

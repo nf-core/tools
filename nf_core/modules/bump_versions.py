@@ -41,9 +41,8 @@ class ModuleVersionBumper(ModuleCommand):
         Bump the container and conda version of single module or all modules
 
         Looks for a bioconda tool version in the `main.nf` file of the module and checks whether
-        are more recent version is available. If yes, then tries to get docker/singularity
-        container links and replace the bioconda version and the container links in the main.nf file
-        of the respective module.
+        are more recent version is available. If yes, then tries to get container links and replace
+        the bioconda version and the container links in the main.nf file of the respective module.
 
         Args:
             module: a specific module to update
@@ -165,20 +164,16 @@ class ModuleVersionBumper(ModuleCommand):
 
         if last_ver is not None and last_ver != bioconda_version:
             log.debug(f"Updating version for {module.module_name}")
-            # Get docker and singularity container links
+            # Get container tag
             try:
-                docker_img, singularity_img = nf_core.utils.get_biocontainer_tag(bioconda_tool_name, last_ver)
+                container_img = nf_core.utils.get_biocontainer_tag(bioconda_tool_name)
             except LookupError as e:
                 self.failed.append((f"Could not download container tags: {e}", module.module_name))
                 return False
 
             patterns = [
                 (bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'"),
-                (rf"quay.io/biocontainers/{bioconda_tool_name}:[^'\"\s]+", docker_img),
-                (
-                    rf"https://depot.galaxyproject.org/singularity/{bioconda_tool_name}:[^'\"\s]+",
-                    singularity_img,
-                ),
+                (rf"quay.io/biocontainers/{bioconda_tool_name}:[^'\"\s]+", container_img),
             ]
 
             with open(module.main_nf, "r") as fh:
