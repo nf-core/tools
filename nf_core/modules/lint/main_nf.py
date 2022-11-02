@@ -284,63 +284,8 @@ def check_container_section(self, lines, fix_version, progress_bar):
                 self.failed.append(("container_tag", "Unable to parse container tag", self.main_nf))
                 container_tag = None
 
-    # Check that all bioconda packages have build numbers
-    # Also check for newer versions
     for bp in bioconda_packages:
-        bp = bp.strip("'").strip('"')
-        # Check for correct version and newer versions
-        try:
-            bioconda_version = bp.split("=")[1]
-            # response = _bioconda_package(bp)
-            response = nf_core.utils.anaconda_package(bp)
-        except LookupError:
-            self.warned.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
-        except ValueError:
-            self.failed.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
-        else:
-            # Check that required version is available at all
-            if bioconda_version not in response.get("versions"):
-                self.failed.append(
-                    ("bioconda_version", f"Conda package had unknown version: `{bioconda_version}`", self.main_nf)
-                )
-                continue  # No need to test for latest version, continue linting
-            # Check version is latest available
-            last_ver = response.get("latest_version")
-            if last_ver is not None and last_ver != bioconda_version:
-                package, ver = bp.split("=", 1)
-                # If a new version is available and fix is True, update the version
-                if fix_version:
-                    try:
-                        fixed = _fix_module_version(self, bioconda_version, last_ver, container_tag, response)
-                    except FileNotFoundError as e:
-                        fixed = False
-                        log.debug(f"Unable to update package {package} due to error: {e}")
-                    else:
-                        if fixed:
-                            progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
-                            log.debug(f"Updating package {package} {ver} -> {last_ver}")
-                            self.passed.append(
-                                (
-                                    "bioconda_latest",
-                                    f"Conda package has been updated to the latest available: `{bp}`",
-                                    self.main_nf,
-                                )
-                            )
-                        else:
-                            progress_bar.print(
-                                f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
-                            )
-                            log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
-                            self.warned.append(
-                                ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
-                            )
-                # Add available update as a warning
-                else:
-                    self.warned.append(
-                        ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
-                    )
-            else:
-                self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
+        _check_bioconda_package(self, bp, fix_version, progress_bar, container_tag)
 
 
 def _parse_input(self, line_raw):
@@ -470,3 +415,64 @@ def _container_type(line):
         return "bioconda"
     if line.startswith("def container_image"):
         return "container_image"
+
+
+def _check_bioconda_package(self, bp, fix_version, progress_bar, container_tag):
+    """
+    Check that all bioconda packages have build numbers
+    Also check for newer versions
+    """
+    bp = bp.strip("'").strip('"')
+    # Check for correct version and newer versions
+    try:
+        bioconda_version = bp.split("=")[1]
+        # response = _bioconda_package(bp)
+        response = nf_core.utils.anaconda_package(bp)
+    except LookupError:
+        self.warned.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
+    except ValueError:
+        self.failed.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
+    else:
+        # Check that required version is available at all
+        if bioconda_version not in response.get("versions"):
+            self.failed.append(
+                ("bioconda_version", f"Conda package had unknown version: `{bioconda_version}`", self.main_nf)
+            )
+            return  # No need to test for latest version, continue linting
+        # Check version is latest available
+        last_ver = response.get("latest_version")
+        if last_ver is not None and last_ver != bioconda_version:
+            package, ver = bp.split("=", 1)
+            # If a new version is available and fix is True, update the version
+            if fix_version:
+                try:
+                    fixed = _fix_module_version(self, bioconda_version, last_ver, container_tag, response)
+                except FileNotFoundError as e:
+                    fixed = False
+                    log.debug(f"Unable to update package {package} due to error: {e}")
+                else:
+                    if fixed:
+                        progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
+                        log.debug(f"Updating package {package} {ver} -> {last_ver}")
+                        self.passed.append(
+                            (
+                                "bioconda_latest",
+                                f"Conda package has been updated to the latest available: `{bp}`",
+                                self.main_nf,
+                            )
+                        )
+                    else:
+                        progress_bar.print(
+                            f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
+                        )
+                        log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
+                        self.warned.append(
+                            ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                        )
+            # Add available update as a warning
+            else:
+                self.warned.append(
+                    ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                )
+        else:
+            self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))

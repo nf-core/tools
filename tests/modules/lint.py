@@ -102,3 +102,8 @@ def test_modules_lint_patched_modules(self):
     assert len(module_lint.failed) == 0
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
+
+pytest.mark.skip("TODO")
+def test_check_bioconda_package():
+    pass
+def test_check_bioconda_package(self):
