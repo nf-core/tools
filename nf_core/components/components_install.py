@@ -115,7 +115,7 @@ def get_version(component, component_type, sha, prompt, current_version, modules
 
 def clean_modules_json(component, component_type, modules_repo, modules_json):
     """
-    Remove installed version of module/subworkflow
+    Remove installed version of module/subworkflow from modules.json
     """
     for repo_url, repo_content in modules_json.modules_json["repos"].items():
         for dir, dir_components in repo_content[component_type].items():

@@ -156,7 +156,7 @@ class ModuleUpdate(ModuleCommand):
                     module, "modules", modules_repo=modules_repo, installed_sha=current_version
                 )
             else:
-                version = modules_repo.get_latest_component_version(module, "modules")
+                version = modules_repo.get_latest_component_version(module, self.component_type)
 
             if current_version is not None and not self.force:
                 if current_version == version:
