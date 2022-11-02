@@ -50,7 +50,7 @@ class ModulePatch(ModuleCommand):
         module_dir = [dir for dir, m in modules if m == module][0]
         module_fullname = str(Path("modules", module_dir, module))
 
-        # Verify that the module has an entry is the modules.json file
+        # Verify that the module has an entry in the modules.json file
         if not self.modules_json.module_present(module, self.modules_repo.remote_url, module_dir):
             raise UserWarning(
                 f"The '{module_fullname}' module does not have an entry in the 'modules.json' file. Cannot compute patch"
@@ -86,7 +86,7 @@ class ModulePatch(ModuleCommand):
         # Create a temporary directory for storing the unchanged version of the module
         install_dir = tempfile.mkdtemp()
         module_install_dir = Path(install_dir, module)
-        if not self.install_module_files(module, module_version, self.modules_repo, install_dir):
+        if not self.install_component_files(module, module_version, self.modules_repo, install_dir):
             raise UserWarning(
                 f"Failed to install files of module '{module}' from remote ({self.modules_repo.remote_url})."
             )

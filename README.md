@@ -17,6 +17,7 @@ A python package with helper tools for the nf-core community.
 ## Table of contents <!-- omit in toc -->
 
 - [`nf-core` tools installation](#installation)
+- [`nf-core` tools update](#update-tools)
 - [`nf-core list` - List available pipelines](#listing-pipelines)
 - [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
 - [`nf-core download` - Download pipeline for offline use](#downloading-pipelines-for-offline-use)
@@ -65,7 +66,7 @@ conda install nf-core
 Alternatively, you can create a new environment with both nf-core/tools and nextflow:
 
 ```bash
-conda create --name nf-core python=3.7 nf-core nextflow
+conda create --name nf-core python=3.8 nf-core nextflow
 conda activate nf-core
 ```
 
@@ -186,6 +187,22 @@ If you would prefer to skip this check, set the environment variable `NFCORE_NO_
 export NFCORE_NO_VERSION_CHECK=1
 ```
 
+### Update tools
+
+It is advisable to keep nf-core/tools updated to the most recent version. The command to update depends on the system used to install it, for example if you have installed it with conda you can use:
+
+```bash
+conda update nf-core
+```
+
+if you used pip:
+
+```bash
+pip install --upgrade nf-core
+```
+
+Please refer to the respective documentation for further details to manage packages, as for example [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-pkgs.html#updating-packages) or [pip](https://packaging.python.org/en/latest/tutorials/installing-packages/#upgrading-packages).
+
 ## Listing pipelines
 
 The command `nf-core list` shows all available nf-core pipelines along with their latest version, when that was published and how recently the pipeline code was pulled to your local system (if at all).
@@ -216,7 +233,7 @@ Archived pipelines are not returned by default. To include them, use the `--show
 ## Launch a pipeline
 
 Some nextflow pipelines have a considerable number of command line flags that can be used.
-To help with this, you can use the `nf-core launch` command
+To help with this, you can use the `nf-core launch` command.
 You can choose between a web-based graphical interface or an interactive command-line wizard tool to enter the pipeline parameters for your run.
 Both interfaces show documentation alongside each parameter and validate your inputs.
 
@@ -397,14 +414,14 @@ Note that if the required arguments for `nf-core create` are not given, it will 
 
 The `nf-core create` command comes with a number of options that allow you to customize the creation of a pipeline if you intend to not publish it as an
 nf-core pipeline. This can be done in two ways: by using interactive prompts, or by supplying a `template.yml` file using the `--template-yaml <file>` option.
-Both options allow you to specify a custom pipeline prefix, as well as selecting parts of the template to be excluded during pipeline creation.
+Both options allow you to specify a custom pipeline prefix to use instead of the common `nf-core`, as well as selecting parts of the template to be excluded during pipeline creation.
 The interactive prompts will guide you through the pipeline creation process. An example of a `template.yml` file is shown below.
 
 ```yaml
-name: cool-pipe
+name: coolpipe
 description: A cool pipeline
 author: me
-prefix: cool-pipes-company
+prefix: myorg
 skip:
   - github
   - ci
@@ -413,7 +430,13 @@ skip:
   - nf_core_configs
 ```
 
-This will create a pipeline called `cool-pipe` in the directory `cool-pipes-company-cool-pipe` with `me` as the author. It will exclude all files required for GitHub hosting of the pipeline, the GitHub CI from the pipeline, remove GitHub badges from the `README.md` file, remove pipeline options related to iGenomes and exclude `nf_core/configs` options.
+This will create a pipeline called `coolpipe` in the directory `myorg-coolpipe` (`<prefix>-<name>`) with `me` as the author. It will exclude all possible parts of the template:
+
+- `github`: removed all files required for GitHub hosting of the pipeline. Specifically, the `.github` folder and `.gitignore` file.
+- `ci`: removes the GitHub continuous integration tests from the pipeline. Specifically, the `.github/workflows/` folder.
+- `github_badges`: removes GitHub badges from the `README.md` file.
+- `igenomes`: removes pipeline options related to iGenomes. Including the `conf/igenomes.config` file and all references to it.
+- `nf_core_configs`: excludes `nf_core/configs` repository options, which make multiple config profiles for various institutional clusters available.
 
 To run the pipeline creation silently (i.e. without any prompts) with the nf-core template, you can use the `--plain` option.
 
@@ -501,7 +524,7 @@ To help developers working with pipeline schema, nf-core tools has three `schema
 Nextflow can take input parameters in a JSON or YAML file when running a pipeline using the `-params-file` option.
 This command validates such a file against the pipeline schema.
 
-`Usage is `nf-core schema validate <pipeline> <parameter file>`. eg with the pipeline downloaded [above](#download-pipeline), you can run:
+Usage is `nf-core schema validate <pipeline> <parameter file>`. eg with the pipeline downloaded [above](#download-pipeline), you can run:
 
 <!-- RICH-CODEX
 working_dir: tmp

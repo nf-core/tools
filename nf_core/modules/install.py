@@ -3,7 +3,7 @@ import os
 
 import questionary
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 
@@ -29,7 +29,7 @@ class ModuleInstall(ModuleCommand):
         self.prompt = prompt
         self.sha = sha
 
-    def install(self, module):
+    def install(self, module, silent=False):
         if self.repo_type == "modules":
             log.error("You cannot install a module in a clone of nf-core/modules")
             return False
@@ -57,17 +57,17 @@ class ModuleInstall(ModuleCommand):
         if module is None:
             module = questionary.autocomplete(
                 "Tool name:",
-                choices=self.modules_repo.get_avail_modules(),
+                choices=self.modules_repo.get_avail_components(self.component_type),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
         # Check that the supplied name is an available module
-        if module and module not in self.modules_repo.get_avail_modules():
+        if module and module not in self.modules_repo.get_avail_components(self.component_type):
             log.error(f"Module '{module}' not found in list of available modules.")
             log.info("Use the command 'nf-core modules list' to view available software")
             return False
 
-        if not self.modules_repo.module_exists(module):
+        if not self.modules_repo.component_exists(module, self.component_type):
             warn_msg = (
                 f"Module '{module}' not found in remote '{self.modules_repo.remote_url}' ({self.modules_repo.branch})"
             )
@@ -86,23 +86,30 @@ class ModuleInstall(ModuleCommand):
 
         # Check that the module is not already installed
         if (current_version is not None and os.path.exists(module_dir)) and not self.force:
+            log.info("Module is already installed.")
 
-            log.error("Module is already installed.")
-            repo_flag = (
-                "" if self.modules_repo.repo_path == NF_CORE_MODULES_NAME else f"-g {self.modules_repo.remote_url} "
-            )
-            branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
+            self.force = questionary.confirm(
+                f"Module {module} is already installed. Do you want to force the reinstallation?",
+                style=nf_core.utils.nfcore_question_style,
+                default=False,
+            ).unsafe_ask()
 
-            log.info(
-                f"To update '{module}' run 'nf-core modules {repo_flag}{branch_flag}update {module}'. To force reinstallation use '--force'"
-            )
-            return False
+            if not self.force:
+                repo_flag = (
+                    "" if self.modules_repo.repo_path == NF_CORE_MODULES_NAME else f"-g {self.modules_repo.remote_url} "
+                )
+                branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
+
+                log.info(
+                    f"To update '{module}' run 'nf-core modules {repo_flag}{branch_flag}update {module}'. To force reinstallation use '--force'"
+                )
+                return False
 
         if self.sha:
             version = self.sha
         elif self.prompt:
             try:
-                version = nf_core.modules.module_utils.prompt_module_version_sha(
+                version = nf_core.modules.modules_utils.prompt_module_version_sha(
                     module,
                     installed_sha=current_version,
                     modules_repo=self.modules_repo,
@@ -116,7 +123,7 @@ class ModuleInstall(ModuleCommand):
 
         if self.force:
             log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{module}'")
-            self.clear_module_dir(module, module_dir)
+            self.clear_component_dir(module, module_dir)
             for repo_url, repo_content in modules_json.modules_json["repos"].items():
                 for dir, dir_modules in repo_content["modules"].items():
                     for name, _ in dir_modules.items():
@@ -132,13 +139,17 @@ class ModuleInstall(ModuleCommand):
         log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.remote_url}")
 
         # Download module files
-        if not self.install_module_files(module, version, self.modules_repo, install_folder):
+        if not self.install_component_files(module, version, self.modules_repo, install_folder):
             return False
 
-        # Print include statement
-        module_name = "_".join(module.upper().split("/"))
-        log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(install_folder, module)}/main'")
+        if not silent:
+            # Print include statement
+            module_name = "_".join(module.upper().split("/"))
+            log.info(
+                f"Include statement: include {{ {module_name} }} from '.{os.path.join(install_folder, module)}/main'"
+            )
 
         # Update module.json with newly installed module
+        modules_json.load()
         modules_json.update(self.modules_repo, module, version)
         return True
