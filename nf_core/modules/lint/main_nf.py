@@ -136,10 +136,7 @@ def main_nf(module_lint_object, module, fix_version, progress_bar):
     check_process_section(module, process_lines)
 
     # Check the container definitions
-    if check_container_section(module, container_lines, fix_version, progress_bar):
-        module.passed.append(("main_nf_container", "Container versions match", module.main_nf))
-    else:
-        module.warned.append(("main_nf_container", "Container versions do not match", module.main_nf))
+    check_container_section(module, container_lines, fix_version, progress_bar)
 
     # Check the when statement
     check_when_section(module, when_lines)
@@ -355,8 +352,6 @@ def check_container_section(self, lines, fix_version, progress_bar):
                     )
             else:
                 self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
-
-    return docker_tag == singularity_tag
 
 
 def _parse_input(self, line_raw):
