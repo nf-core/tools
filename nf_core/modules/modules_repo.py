@@ -142,6 +142,26 @@ class ModulesRepo(object):
 
         self.avail_module_names = None
 
+    def verify_sha(self, prompt, sha):
+        """
+        Verify that 'sha' and 'prompt' arguments are not provided together.
+        Verify that the provided SHA exists in the repo.
+
+        Arguments:
+            prompt (bool):              prompt asking for SHA
+            sha (str):                  provided sha
+        """
+        if prompt and sha is not None:
+            log.error("Cannot use '--sha' and '--prompt' at the same time!")
+            return False
+
+        if sha:
+            if not self.sha_exists_on_branch(sha):
+                log.error(f"Commit SHA '{sha}' doesn't exist in '{self.remote_url}'")
+                return False
+
+        return True
+
     def setup_local_repo(self, remote, branch, hide_progress=True):
         """
         Sets up the local git repository. If the repository has been cloned previously, it

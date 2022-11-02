@@ -16,28 +16,6 @@ from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
 log = logging.getLogger(__name__)
 
 
-def verify_sha(modules_repo, prompt, sha):
-    """
-    Verify that 'sha' and 'prompt' arguments are not provided together.
-    Verify that the provided SHA exists in the repo.
-
-    Arguments:
-        modules_repo (ModulesRepo): ModulesRepo object
-        prompt (bool):              prompt asking for SHA
-        sha (str):                  provided sha
-    """
-    if prompt and sha is not None:
-        log.error("Cannot use '--sha' and '--prompt' at the same time!")
-        return False
-
-    if sha:
-        if not modules_repo.sha_exists_on_branch(sha):
-            log.error(f"Commit SHA '{sha}' doesn't exist in '{modules_repo.remote_url}'")
-            return False
-
-    return True
-
-
 def collect_and_verify_name(component_type, component, modules_repo):
     """
     Collect component name.

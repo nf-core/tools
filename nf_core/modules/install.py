@@ -46,7 +46,7 @@ class ModuleInstall(ModuleCommand):
         modules_json.check_up_to_date()
 
         # Verify SHA
-        if not nf_core.components.components_install.verify_sha(self.modules_repo, self.prompt, self.sha):
+        if not self.modules_repo.verify_sha(self.prompt, self.sha):
             return False
 
         # Check and verify module name
