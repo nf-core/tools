@@ -24,14 +24,7 @@
             "extensions": [
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                "nf-core.nf-core-extensionpack",
-                "codezombiech.gitignore",
-                "esbenp.prettier-vscode",
-                "EditorConfig.EditorConfig",
-                "Gruntfuggly.todo-tree",
-                "mechatroner.rainbow-csv",
-                "derwat.indent-rainbow",
-                "streetsidesoftware.code-spell-checker"
+                "nf-core.nf-core-extensionpack"
             ]
         }
     }
