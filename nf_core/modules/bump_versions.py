@@ -41,7 +41,7 @@ class ModuleVersionBumper(ModuleCommand):
         Bump the container and conda version of single module or all modules
 
         Looks for a bioconda tool version in the `main.nf` file of the module and checks whether
-        are more recent version is available. If yes, then tries to get container links and replace
+        a more recent version is available. If yes, then tries to get container links and replace
         the bioconda version and the container links in the main.nf file of the respective module.
 
         Args:
