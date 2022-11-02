@@ -5,6 +5,8 @@ import pytest
 
 import nf_core.modules
 
+import nf_core.modules.lint.main_nf
+
 from ..utils import GITLAB_URL, check_pr_merged, set_wd
 from .patch import BISMARK_ALIGN, CORRECT_SHA, PATCH_BRANCH, REPO_NAME, modify_main_nf
 
@@ -103,7 +105,16 @@ def test_modules_lint_patched_modules(self):
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
 
-pytest.mark.skip("TODO")
-def test_check_bioconda_package():
-    pass
+
 def test_check_bioconda_package(self):
+    bioconda_package = "bioconda::trim-galore=0.6.7"
+    fix_version = False
+    progress_bar = None
+    container_tag = "0.6.7"
+    nf_core.modules.lint.main_nf._check_bioconda_package(
+        self,
+        bioconda_package,
+        fix_version,
+        progress_bar,
+        container_tag,
+    )
