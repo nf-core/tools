@@ -6,8 +6,12 @@
 
 - Fix lint warnings for `samplesheet_check.nf` module
 - Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
+- Add `container_registry` parameter to support biocontainers on ECR ([#1991](https://github.com/nf-core/tools/pull/1991))
 
 ### Linting
+
+- Lint for `container_registry` ([#1991](https://github.com/nf-core/tools/pull/1991))
+- Lint for old container logic and warn ([#1991](https://github.com/nf-core/tools/pull/1991))
 
 ### General
 
@@ -29,6 +33,7 @@
 ### Modules
 
 - Update patch file paths if the modules directory has the old structure ([#1878](https://github.com/nf-core/tools/pull/1878))
+- Update module container logic to handle container registries ([#1991](https://github.com/nf-core/tools/pull/1991) & [modules #2291](https://github.com/nf-core/modules/pull/2291))
 
 ## [v2.6 - Tin Octopus](https://github.com/nf-core/tools/releases/tag/2.6) - [2022-10-04]
 
