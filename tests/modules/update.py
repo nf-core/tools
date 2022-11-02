@@ -56,7 +56,7 @@ def test_install_at_hash_and_update(self):
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
     # Get the up-to-date git_sha for the module from the ModulesRepo object
-    correct_git_sha = update_obj.modules_repo.get_latest_module_version("trimgalore")
+    correct_git_sha = update_obj.modules_repo.get_latest_component_version("trimgalore", "modules")
     current_git_sha = mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]["git_sha"]
     assert correct_git_sha == current_git_sha
 
@@ -96,7 +96,7 @@ def test_update_all(self):
     mod_json = mod_json_obj.get_modules_json()
     # Loop through all modules and check that they are updated (according to the modules.json file)
     for mod in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]:
-        correct_git_sha = list(update_obj.modules_repo.get_module_git_log(mod, depth=1))[0]["git_sha"]
+        correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
         current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
         assert correct_git_sha == current_git_sha
 
