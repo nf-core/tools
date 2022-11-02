@@ -26,6 +26,7 @@
 - Mock biocontainers and anaconda api calls in modules and subworkflows tests [#1967](https://github.com/nf-core/tools/pull/1967)
 - Run tests with Python 3.11 ([#1970](https://github.com/nf-core/tools/pull/1970))
 - Bump promoted Python version from 3.7 to 3.8 ([#1971](https://github.com/nf-core/tools/pull/1971))
+- Fix incorrect file deletion in `nf-core launch` when `--params_in` has the same name as `--params_out`
 
 ### Modules
 
