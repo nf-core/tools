@@ -266,34 +266,23 @@ def check_process_section(self, lines):
 
 def check_container_section(self, lines, fix_version, progress_bar):
     # Checks that build numbers of bioconda, singularity and docker container are matching
-    singularity_tag = "singularity"
-    docker_tag = "docker"
+    container_tag = ""
     bioconda_packages = []
 
     for l in lines:
         if _container_type(l) == "bioconda":
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
         l = l.strip(" '\"")
-        if _container_type(l) == "singularity":
-            # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
-            # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
-            match = re.search(r"(?:/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_.]+?)(?:\.img)?['\"]", l)
+        if _container_type(l) == "container_image":
+            # e.g. def container_image = "v1.2.0_cv1/biocontainers_v1.2.0_cv1.img" -> v1.2.0_cv1
+            # e.g. def container_image = "fastqc:0.11.9--0" -> 0.11.9--0
+            match = re.search(r"([A-Za-z\d\-_.]+?)(?:\.img)?['\"]", l)
             if match is not None:
-                singularity_tag = match.group(1)
-                self.passed.append(("singularity_tag", f"Found singularity tag: {singularity_tag}", self.main_nf))
+                container_tag = match.group(1)
+                self.passed.append(("container_tag", f"Found container tag: {container_tag}", self.main_nf))
             else:
-                self.failed.append(("singularity_tag", "Unable to parse singularity tag", self.main_nf))
-                singularity_tag = None
-        if _container_type(l) == "docker":
-            # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
-            # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
-            match = re.search(r"(?:[/])?(?::)?([A-Za-z\d\-_.]+)['\"]", l)
-            if match is not None:
-                docker_tag = match.group(1)
-                self.passed.append(("docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
-            else:
-                self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
-                docker_tag = None
+                self.failed.append(("container_tag", "Unable to parse container tag", self.main_nf))
+                container_tag = None
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
@@ -322,7 +311,7 @@ def check_container_section(self, lines, fix_version, progress_bar):
                 # If a new version is available and fix is True, update the version
                 if fix_version:
                     try:
-                        fixed = _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response)
+                        fixed = _fix_module_version(self, bioconda_version, last_ver, container_tag, response)
                     except FileNotFoundError as e:
                         fixed = False
                         log.debug(f"Unable to update package {package} due to error: {e}")
@@ -414,13 +403,13 @@ def _is_empty(self, line):
     return empty
 
 
-def _fix_module_version(self, current_version, latest_version, singularity_tag, response):
+def _fix_module_version(self, current_version, latest_version, container_tag, response):
     """Updates the module version
 
     Changes the bioconda current version by the latest version.
     Obtains the latest build from bioconda response
-    Checks that the new URLs for docker and singularity with the tag [version]--[build] are valid
-    Changes the docker and singularity URLs
+    Checks that the new URLs for container with the tag [version]--[build] are valid
+    Changes the container URLs
     """
     # Get latest build
     build = _get_build(response)
@@ -438,7 +427,7 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
         elif build_type == "singularity" or build_type == "docker":
             # Check that the new url is valid
             new_url = re.search(
-                "(?:['\"])(.+)(?:['\"])", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
+                "(?:['\"])(.+)(?:['\"])", re.sub(rf"{container_tag}", f"{latest_version}--{build}", line)
             ).group(1)
             try:
                 response_new_container = requests.get(
@@ -452,7 +441,7 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
                 return False
             if response_new_container.status_code != 200:
                 return False
-            new_lines.append(re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line))
+            new_lines.append(re.sub(rf"{container_tag}", f"{latest_version}--{build}", line))
         else:
             new_lines.append(line)
 
@@ -479,15 +468,5 @@ def _container_type(line):
     """Returns the container type of a build."""
     if re.search("bioconda::", line):
         return "bioconda"
-    if line.startswith("https://containers") or line.startswith("https://depot"):
-        # Look for a http download URL.
-        # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
-        url_regex = (
-            r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
-        )
-        url_match = re.search(url_regex, line, re.S)
-        if url_match:
-            return "singularity"
-        return None
-    if line.startswith("biocontainers/") or line.startswith("quay.io/"):
-        return "docker"
+    if line.startswith("def container_image"):
+        return "container_image"
