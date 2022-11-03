@@ -5,6 +5,7 @@
 ### Template
 
 - Fix lint warnings for `samplesheet_check.nf` module
+- Add codespaces template ([#1957](https://github.com/nf-core/tools/pull/1957))
 - Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
 
 ### Linting
