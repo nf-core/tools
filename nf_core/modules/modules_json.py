@@ -798,7 +798,7 @@ class ModulesJson:
         if self.modules_json is None:
             self.load()
         if self.pipeline_components is None:
-            self.pipeline_components = {component_type: {}}
+            self.pipeline_components = {}
             for repo, repo_entry in self.modules_json.get("repos", {}).items():
                 if component_type in repo_entry:
                     for dir, components in repo_entry[component_type].items():
