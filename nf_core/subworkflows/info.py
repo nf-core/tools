@@ -281,7 +281,9 @@ class SubworkflowInfo(object):
             if self.remote_location != NF_CORE_MODULES_REMOTE:
                 cmd_base = f"nf-core subworkflows --git-remote {self.remote_location}"
             renderables.append(
-                Text.from_markup(f"\n :computer:  Installation command: [magenta]{cmd_base} install {self.subworkflow}\n")
+                Text.from_markup(
+                    f"\n :computer:  Installation command: [magenta]{cmd_base} install {self.subworkflow}\n"
+                )
             )
 
         return Group(*renderables)
