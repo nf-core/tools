@@ -111,8 +111,9 @@ def test_check_bioconda_package(self):
     fix_version = False
     progress_bar = None
     container_tag = "0.6.7"
+    module_lint = nf_core.modules.lint.ModuleLint(self.pipeline_dir)
     nf_core.modules.lint.main_nf._check_bioconda_package(
-        self,
+        module_lint,
         bioconda_package,
         fix_version,
         progress_bar,

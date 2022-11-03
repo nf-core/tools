@@ -426,7 +426,6 @@ def _check_bioconda_package(self, bp, fix_version, progress_bar, container_tag):
     # Check for correct version and newer versions
     try:
         bioconda_version = bp.split("=")[1]
-        # response = _bioconda_package(bp)
         response = nf_core.utils.anaconda_package(bp)
     except LookupError:
         self.warned.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
