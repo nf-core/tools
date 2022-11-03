@@ -999,7 +999,7 @@ def install(ctx, subworkflow, dir, prompt, force, sha):
         sys.exit(1)
 
 
-# nf-core modules list subcommands
+# nf-core subworkflows list subcommands
 @subworkflows.group()
 @click.pass_context
 def list(ctx):
@@ -1009,14 +1009,14 @@ def list(ctx):
     pass
 
 
-# nf-core modules list remote
+# nf-core subworkflows list remote
 @list.command()
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
 def remote(ctx, keywords, json):
     """
-    List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
+    List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
     try:
         subworkflow_list = nf_core.subworkflows.SubworkflowList(
@@ -1033,7 +1033,7 @@ def remote(ctx, keywords, json):
         sys.exit(1)
 
 
-# nf-core modules list local
+# nf-core subworkflows list local
 @list.command()
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
