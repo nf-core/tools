@@ -6,8 +6,9 @@ from pathlib import Path
 
 import questionary
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components.components_utils import prompt_component_version_sha
 from nf_core.utils import plural_es, plural_s, plural_y
 
 from .modules_command import ModuleCommand
@@ -151,11 +152,11 @@ class ModuleUpdate(ModuleCommand):
             if sha is not None:
                 version = sha
             elif self.prompt:
-                version = nf_core.modules.module_utils.prompt_module_version_sha(
-                    module, modules_repo=modules_repo, installed_sha=current_version
+                version = nf_core.modules.modules_utils.prompt_component_version_sha(
+                    module, "modules", modules_repo=modules_repo, installed_sha=current_version
                 )
             else:
-                version = modules_repo.get_latest_module_version(module)
+                version = modules_repo.get_latest_component_version(module, self.component_type)
 
             if current_version is not None and not self.force:
                 if current_version == version:
@@ -166,7 +167,7 @@ class ModuleUpdate(ModuleCommand):
                     continue
 
             # Download module files
-            if not self.install_module_files(module, version, modules_repo, install_tmp_dir):
+            if not self.install_component_files(module, version, modules_repo, install_tmp_dir):
                 exit_value = False
                 continue
 
@@ -287,7 +288,7 @@ class ModuleUpdate(ModuleCommand):
             raise LookupError(f"Module '{module}' is not installed in pipeline and could therefore not be updated")
 
         # Check that the supplied name is an available module
-        if module and module not in self.modules_repo.get_avail_modules():
+        if module and module not in self.modules_repo.get_avail_components(self.component_type):
             raise LookupError(
                 f"Module '{module}' not found in list of available modules."
                 f"Use the command 'nf-core modules list remote' to view available software"
@@ -518,7 +519,7 @@ class ModuleUpdate(ModuleCommand):
         i = 0
         while i < len(modules_info):
             repo, module, sha = modules_info[i]
-            if not repo.module_exists(module):
+            if not repo.component_exists(module, self.component_type):
                 log.warning(f"Module '{module}' does not exist in '{repo.remote_url}'. Skipping...")
                 modules_info.pop(i)
             elif sha is not None and not repo.sha_exists_on_branch(sha):
@@ -580,7 +581,7 @@ class ModuleUpdate(ModuleCommand):
         pipeline_path = os.path.join(self.dir, "modules", repo_path, module)
 
         log.debug(f"Removing old version of module '{module}'")
-        self.clear_module_dir(module, pipeline_path)
+        self.clear_component_dir(module, pipeline_path)
 
         os.makedirs(pipeline_path)
         for file in files:

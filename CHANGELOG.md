@@ -5,6 +5,7 @@
 ### Template
 
 - Fix lint warnings for `samplesheet_check.nf` module
+- Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
 
 ### Linting
 
@@ -16,7 +17,15 @@
 - Don't remove local copy of modules repo, only update it with fetch ([#1881](https://github.com/nf-core/tools/pull/1881))
 - Add subworkflow commands create-test-yml, create and install ([#1897](https://github.com/nf-core/tools/pull/1897))
 - Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
+- Improve test coverage of `sync.py` and `__main__.py` ([#1936](https://github.com/nf-core/tools/pull/1936), [#1965](https://github.com/nf-core/tools/pull/1965))
 - `check_up_to_date()` function from `modules_json` also checks for subworkflows.
+- The default branch can now be specified when creating a new pipeline repo [#1959](https://github.com/nf-core/tools/pull/1959).
+- Only warn when checking that the pipeline directory contains a `main.nf` and a `nextflow.config` file if the pipeline is not an nf-core pipeline [#1964](https://github.com/nf-core/tools/pull/1964)
+- Add file `versions.yml` when generating `test.yml` with `nf-core modules create-test-yml` but don't check for md5sum [#1963](https://github.com/nf-core/tools/pull/1963)
+- Mock biocontainers and anaconda api calls in modules and subworkflows tests [#1967](https://github.com/nf-core/tools/pull/1967)
+- Run tests with Python 3.11 ([#1970](https://github.com/nf-core/tools/pull/1970))
+- Bump promoted Python version from 3.7 to 3.8 ([#1971](https://github.com/nf-core/tools/pull/1971))
+- Fix incorrect file deletion in `nf-core launch` when `--params_in` has the same name as `--params_out`
 
 ### Modules
 
@@ -30,6 +39,7 @@
 - Add `actions/upload-artifact` step to the awstest workflows, to expose the debug log file
 - Add `prettier` as a requirement to Gitpod Dockerimage
 - Bioconda incompatible conda channel setups now result in more informative error messages ([#1812](https://github.com/nf-core/tools/pull/1812))
+- Improve template customisation documentation ([#1821](https://github.com/nf-core/tools/pull/1821))
 - Update MultiQC module, update supplying MultiQC default and custom config and logo files to module
 - Add a 'recommend' methods description text to MultiQC to help pipeline users report pipeline usage in publications ([#1749](https://github.com/nf-core/tools/pull/1749))
 - Fix template spacing modified by JINJA ([#1830](https://github.com/nf-core/tools/pull/1830))
@@ -63,6 +73,10 @@
 - Add isort options to pyproject.toml ([#1792](https://github.com/nf-core/tools/pull/1792))
 - Lint pyproject.toml file exists and content ([#1795](https://github.com/nf-core/tools/pull/1795))
 - Update GitHub PyPI package release action to v1 ([#1785](https://github.com/nf-core/tools/pull/1785))
+
+### Template
+
+- Update GitHub actions to use nodejs16 ([#1944](https://github.com/nf-core/tools/pull/1944))
 
 ## [v2.5 - Gold Otter](https://github.com/nf-core/tools/releases/tag/2.5) - [2022-08-30]
 
@@ -352,7 +366,7 @@ Please note that there are many excellent integrations for Prettier available, f
 
 ### Modules
 
-- Fixed typo in `module_utils.py`.
+- Fixed typo in `modules_utils.py`.
 - Fixed failing lint test when process section was missing from module. Also added the local failing tests to the warned section of the output table. ([#1235](https://github.com/nf-core/tools/issues/1235))
 - Added `--diff` flag to `nf-core modules update` which shows the diff between the installed files and the versions
 - Update `nf-core modules create` help texts which were not changed with the introduction of the `--dir` flag

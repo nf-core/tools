@@ -1,5 +1,11 @@
 name: Lint tools code formatting
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+  release:
+    types: [published]
 
 # Cancel if a newer run is started
 concurrency:
@@ -10,7 +16,7 @@ jobs:
   EditorConfig:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: actions/setup-node@v2
 
@@ -24,7 +30,7 @@ jobs:
   Prettier:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: actions/setup-node@v2
 
@@ -37,7 +43,7 @@ jobs:
   PythonBlack:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Check code lints with Black
         uses: psf/black@stable
@@ -68,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source-code repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v2

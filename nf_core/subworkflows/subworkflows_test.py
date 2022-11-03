@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-The ModulesTest class runs the tests locally
+The SubworkflowsTest class runs the tests locally
 """
 
 import logging
@@ -13,15 +13,16 @@ import pytest
 import questionary
 import rich
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
-from nf_core.modules.modules_command import ModuleCommand
 from nf_core.modules.modules_json import ModulesJson
+
+from .subworkflows_command import SubworkflowCommand
 
 log = logging.getLogger(__name__)
 
 
-class ModulesTest(ModuleCommand):
+class SubworkflowsTest(SubworkflowCommand):
     """
     Class to run module pytests.
 
@@ -29,8 +30,8 @@ class ModulesTest(ModuleCommand):
 
     Attributes
     ----------
-    module_name : str
-        name of the tool to run tests for
+    subworkflow_name : str
+        name of the subworkflow to run tests for
     no_prompts : bool
         flat indicating if prompts are used
     pytest_args : tuple
@@ -41,7 +42,7 @@ class ModulesTest(ModuleCommand):
     run():
         Run test steps
     _check_inputs():
-        Check inputs. Ask for module_name if not provided and check that the directory exists
+        Check inputs. Ask for subworkflow_name if not provided and check that the directory exists
     _set_profile():
         Set software profile
     _run_pytests(self):
@@ -50,14 +51,14 @@ class ModulesTest(ModuleCommand):
 
     def __init__(
         self,
-        module_name=None,
+        subworkflow_name=None,
         no_prompts=False,
         pytest_args="",
         remote_url=None,
         branch=None,
         no_pull=False,
     ):
-        self.module_name = module_name
+        self.subworkflow_name = subworkflow_name
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
 
@@ -76,32 +77,29 @@ class ModulesTest(ModuleCommand):
 
     def _check_inputs(self):
         """Do more complex checks about supplied flags."""
-        # Check modules directory structure
-        self.check_modules_structure()
-
-        # Retrieving installed modules
+        # Retrieving installed subworkflows
         if self.repo_type == "modules":
-            installed_modules = self.get_modules_clone_modules()
+            installed_subwf = self.get_components_clone_modules()
         else:
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
-            installed_modules = modules_json.get_all_modules().get(self.modules_repo.remote_url)
+            installed_subwf = modules_json.get_installed_subworkflows().get(self.modules_repo.remote_url)
 
-        # Get the tool name if not specified
-        if self.module_name is None:
+        # Get the subworkflow name if not specified
+        if self.subworkflow_name is None:
             if self.no_prompts:
                 raise UserWarning(
-                    "Tool name not provided and prompts deactivated. Please provide the tool name as TOOL/SUBTOOL or TOOL."
+                    "Subworkflow name not provided and prompts deactivated. Please provide the Subworkflow name SUBWORKFLOW."
                 )
-            if not installed_modules:
+            if not installed_subwf:
                 raise UserWarning(
-                    f"No installed modules were found from '{self.modules_repo.remote_url}'.\n"
+                    f"No installed subworkflows were found from '{self.modules_repo.remote_url}'.\n"
                     f"Are you running the tests inside the nf-core/modules main directory?\n"
-                    f"Otherwise, make sure that the directory structure is modules/TOOL/SUBTOOL/ and tests/modules/TOOLS/SUBTOOL/"
+                    f"Otherwise, make sure that the directory structure is subworkflows/SUBWORKFLOW/ and tests/subworkflows/SUBWORKFLOW/"
                 )
-            self.module_name = questionary.autocomplete(
-                "Tool name:",
-                choices=installed_modules,
+            self.subworkflow_name = questionary.autocomplete(
+                "Subworkflow name:",
+                choices=installed_subwf,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
@@ -110,20 +108,20 @@ class ModulesTest(ModuleCommand):
 
     def _validate_folder_structure(self):
         """Validate that the modules follow the correct folder structure to run the tests:
-        - modules/nf-core/TOOL/SUBTOOL/
-        - tests/modules/nf-core/TOOL/SUBTOOL/
+        - subworkflows/nf-core/SUBWORKFLOW/
+        - tests/subworkflows/nf-core/SUBWORKFLOW/
 
         """
-        module_path = Path(self.default_modules_path) / self.module_name
-        test_path = Path(self.default_tests_path) / self.module_name
+        subworkflow_path = Path(self.default_subworkflows_path) / self.subworkflow_name
+        test_path = Path(self.default_subworkflows_tests_path) / self.subworkflow_name
 
-        if not (self.dir / module_path).is_dir():
+        if not (self.dir / subworkflow_path).is_dir():
             raise UserWarning(
-                f"Cannot find directory '{module_path}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?"
+                f"Cannot find directory '{subworkflow_path}'. Should be SUBWORKFLOW. Are you running the tests inside the nf-core/modules main directory?"
             )
         if not (self.dir / test_path).is_dir():
             raise UserWarning(
-                f"Cannot find directory '{test_path}'. Should be TOOL/SUBTOOL or TOOL. "
+                f"Cannot find directory '{test_path}'. Should be SUBWORKFLOW. "
                 "Are you running the tests inside the nf-core/modules main directory? "
                 "Do you have tests for the specified module?"
             )
@@ -167,15 +165,15 @@ class ModulesTest(ModuleCommand):
             )
 
     def _run_pytests(self):
-        """Given a module name, run tests."""
+        """Given a subworkflow name, run tests."""
         # Print nice divider line
         console = rich.console.Console()
-        console.rule(self.module_name, style="black")
+        console.rule(self.subworkflow_name, style="black")
 
         # Set pytest arguments
-        command_args = ["--tag", f"{self.module_name}", "--symlink", "--keep-workflow-wd", "--git-aware"]
+        command_args = ["--tag", f"{self.subworkflow_name}", "--symlink", "--keep-workflow-wd", "--git-aware"]
         command_args += self.pytest_args
 
         # Run pytest
-        log.info(f"Running pytest for module '{self.module_name}'")
+        log.info(f"Running pytest for module '{self.subworkflow_name}'")
         sys.exit(pytest.main(command_args))

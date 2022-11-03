@@ -1,4 +1,5 @@
 import logging
+import subprocess
 
 import rich
 from rich.console import Console
@@ -47,3 +48,24 @@ def print_fixes(lint_obj, module_lint_obj):
         console.print(
             "Automatic fixes applied. Please check with 'git diff' and revert any changes you do not want with 'git checkout <file>'."
         )
+
+
+def run_prettier_on_file(file):
+    """Runs Prettier on a file if Prettier is installed.
+
+    Args:
+        file (Path | str): A file identifier as a string or pathlib.Path.
+
+    Warns:
+        If Prettier is not installed, a warning is logged.
+    """
+
+    try:
+        subprocess.run(
+            ["prettier", "--write", file],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    except FileNotFoundError:
+        log.warning("Prettier is not installed. Please install it and run it on the pipeline to fix linting issues.")

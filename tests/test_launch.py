@@ -8,6 +8,8 @@ import tempfile
 import unittest
 from unittest import mock
 
+import pytest
+
 import nf_core.create
 import nf_core.launch
 
@@ -71,7 +73,7 @@ class TestLaunch(unittest.TestCase):
         """Create a workflow, but delete the schema file, then try to load it"""
         test_pipeline_dir = os.path.join(tmp_path, "wf")
         create_obj = nf_core.create.PipelineCreate(
-            "test_pipeline", "", "", outdir=test_pipeline_dir, no_git=True, plain=True
+            "testpipeline", "", "", outdir=test_pipeline_dir, no_git=True, plain=True
         )
         create_obj.init_pipeline()
         os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
@@ -135,11 +137,9 @@ class TestLaunch(unittest.TestCase):
         """Check the code that opens the web browser"""
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             self.launcher.launch_web_gui()
-            raise UserWarning("Should have hit an AssertionError")
-        except AssertionError as e:
-            assert e.args[0].startswith("Web launch response not recognised:")
+        assert exc_info.value.args[0].startswith("Web launch response not recognised:")
 
     @mock.patch(
         "nf_core.utils.poll_nfcore_web_api", side_effect=[{"api_url": "foo", "web_url": "bar", "status": "recieved"}]
@@ -155,20 +155,16 @@ class TestLaunch(unittest.TestCase):
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "error", "message": "foo"}])
     def test_get_web_launch_response_error(self, mock_poll_nfcore_web_api):
         """Test polling the website for a launch response - status error"""
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             self.launcher.get_web_launch_response()
-            raise UserWarning("Should have hit an AssertionError")
-        except AssertionError as e:
-            assert e.args[0] == "Got error from launch API (foo)"
+        assert exc_info.value.args[0] == "Got error from launch API (foo)"
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "foo"}])
     def test_get_web_launch_response_unexpected(self, mock_poll_nfcore_web_api):
         """Test polling the website for a launch response - status error"""
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             self.launcher.get_web_launch_response()
-            raise UserWarning("Should have hit an AssertionError")
-        except AssertionError as e:
-            assert e.args[0].startswith("Web launch GUI returned unexpected status (foo): ")
+        assert exc_info.value.args[0].startswith("Web launch GUI returned unexpected status (foo): ")
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "waiting_for_user"}])
     def test_get_web_launch_response_waiting(self, mock_poll_nfcore_web_api):
@@ -178,11 +174,9 @@ class TestLaunch(unittest.TestCase):
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "launch_params_complete"}])
     def test_get_web_launch_response_missing_keys(self, mock_poll_nfcore_web_api):
         """Test polling the website for a launch response - complete, but missing keys"""
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             self.launcher.get_web_launch_response()
-            raise UserWarning("Should have hit an AssertionError")
-        except AssertionError as e:
-            assert e.args[0] == "Missing return key from web API: 'nxf_flags'"
+        assert exc_info.value.args[0] == "Missing return key from web API: 'nxf_flags'"
 
     @mock.patch(
         "nf_core.utils.poll_nfcore_web_api",

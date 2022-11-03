@@ -7,11 +7,13 @@ import shutil
 import tempfile
 import unittest
 
+import requests_mock
+
 import nf_core.create
 import nf_core.modules
 import nf_core.subworkflows
 
-from .utils import GITLAB_URL
+from .utils import GITLAB_URL, mock_api_calls
 
 
 def create_modules_repo_dummy(tmp_dir):
@@ -29,9 +31,11 @@ def create_modules_repo_dummy(tmp_dir):
     with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
         fh.writelines(["repository_type: modules", "\n"])
 
-    # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
-    module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_medium", False, False)
-    module_create.create()
+    with requests_mock.Mocker() as mock:
+        mock_api_calls(mock, "bpipe", "0.9.11")
+        # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
+        module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_medium", False, False)
+        module_create.create()
 
     return root_dir
 
@@ -69,4 +73,9 @@ class TestSubworkflows(unittest.TestCase):
     from .subworkflows.list import (
         test_subworkflows_install_and_list_pipeline,
         test_subworkflows_list_remote,
+    )
+    from .subworkflows.subworkflows_test import (
+        test_subworkflows_test_check_inputs,
+        test_subworkflows_test_no_installed_subworkflows,
+        test_subworkflows_test_no_name_no_prompts,
     )

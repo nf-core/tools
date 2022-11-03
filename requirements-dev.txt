@@ -4,5 +4,6 @@ myst_parser
 pre-commit
 pytest-cov
 pytest-datafiles
+requests-mock
 Sphinx
-sphinx_rtd_theme
+sphinx-rtd-theme
