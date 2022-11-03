@@ -17,7 +17,7 @@
 - Don't remove local copy of modules repo, only update it with fetch ([#1881](https://github.com/nf-core/tools/pull/1881))
 - Add subworkflow commands create-test-yml, create and install ([#1897](https://github.com/nf-core/tools/pull/1897))
 - Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
-- Improve test coverage of sync.py
+- Improve test coverage of `sync.py` and `__main__.py` ([#1936](https://github.com/nf-core/tools/pull/1936), [#1965](https://github.com/nf-core/tools/pull/1965))
 - `check_up_to_date()` function from `modules_json` also checks for subworkflows.
 - The default branch can now be specified when creating a new pipeline repo [#1959](https://github.com/nf-core/tools/pull/1959).
 - Only warn when checking that the pipeline directory contains a `main.nf` and a `nextflow.config` file if the pipeline is not an nf-core pipeline [#1964](https://github.com/nf-core/tools/pull/1964)
@@ -25,6 +25,7 @@
 - Mock biocontainers and anaconda api calls in modules and subworkflows tests [#1967](https://github.com/nf-core/tools/pull/1967)
 - Run tests with Python 3.11 ([#1970](https://github.com/nf-core/tools/pull/1970))
 - Bump promoted Python version from 3.7 to 3.8 ([#1971](https://github.com/nf-core/tools/pull/1971))
+- Fix incorrect file deletion in `nf-core launch` when `--params_in` has the same name as `--params_out`
 
 ### Modules
 

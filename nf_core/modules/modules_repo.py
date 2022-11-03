@@ -142,6 +142,26 @@ class ModulesRepo(object):
 
         self.avail_module_names = None
 
+    def verify_sha(self, prompt, sha):
+        """
+        Verify that 'sha' and 'prompt' arguments are not provided together.
+        Verify that the provided SHA exists in the repo.
+
+        Arguments:
+            prompt (bool):              prompt asking for SHA
+            sha (str):                  provided sha
+        """
+        if prompt and sha is not None:
+            log.error("Cannot use '--sha' and '--prompt' at the same time!")
+            return False
+
+        if sha:
+            if not self.sha_exists_on_branch(sha):
+                log.error(f"Commit SHA '{sha}' doesn't exist in '{self.remote_url}'")
+                return False
+
+        return True
+
     def setup_local_repo(self, remote, branch, hide_progress=True):
         """
         Sets up the local git repository. If the repository has been cloned previously, it
@@ -363,70 +383,40 @@ class ModulesRepo(object):
         self.checkout_branch()
         return files_identical
 
-    def get_module_git_log(self, module_name, depth=None, since="2021-07-07T00:00:00Z"):
+    def get_component_git_log(self, component_name, component_type, depth=None):
         """
-        Fetches the commit history the of requested module since a given date. The default value is
+        Fetches the commit history the of requested module/subworkflow since a given date. The default value is
         not arbitrary - it is the last time the structure of the nf-core/modules repository was had an
         update breaking backwards compatibility.
         Args:
-            module_name (str): Name of module
+            component_name (str): Name of module/subworkflow
             modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
-            per_page (int): Number of commits per page returned by API
-            page_nbr (int): Page number of the retrieved commits
-            since (str): Only show commits later than this timestamp.
-            Time should be given in ISO-8601 format: YYYY-MM-DDTHH:MM:SSZ.
 
         Returns:
             ( dict ): Iterator of commit SHAs and associated (truncated) message
         """
         self.checkout_branch()
-        module_path = os.path.join("modules", self.repo_path, module_name)
-        commits_new = self.repo.iter_commits(max_count=depth, paths=module_path)
+        component_path = os.path.join(component_type, self.repo_path, component_name)
+        commits_new = self.repo.iter_commits(max_count=depth, paths=component_path)
         commits_new = [
             {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_new
         ]
-        # Grab commits also from previous modules structure
-        module_path = os.path.join("modules", module_name)
-        commits_old = self.repo.iter_commits(max_count=depth, paths=module_path)
-        commits_old = [
-            {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_old
-        ]
+        commits_old = []
+        if component_type == "modules":
+            # Grab commits also from previous modules structure
+            component_path = os.path.join("modules", component_name)
+            commits_old = self.repo.iter_commits(max_count=depth, paths=component_path)
+            commits_old = [
+                {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_old
+            ]
         commits = iter(commits_new + commits_old)
         return commits
 
-    def get_subworkflow_git_log(self, subworkflow_name, depth=None, since="2021-07-07T00:00:00Z"):
-        """
-        Fetches the commit history the of requested subworkflow since a given date. The default value is
-        not arbitrary - it is the last time the structure of the nf-core/subworkflow repository was had an
-        update breaking backwards compatibility.
-        Args:
-            subworkflow_name (str): Name of subworkflow
-            modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
-            per_page (int): Number of commits per page returned by API
-            page_nbr (int): Page number of the retrieved commits
-            since (str): Only show commits later than this timestamp.
-            Time should be given in ISO-8601 format: YYYY-MM-DDTHH:MM:SSZ.
-
-        Returns:
-            ( dict ): Iterator of commit SHAs and associated (truncated) message
-        """
-        self.checkout_branch()
-        subworkflow_path = os.path.join("subworkflows", self.repo_path, subworkflow_name)
-        commits = self.repo.iter_commits(max_count=depth, paths=subworkflow_path)
-        commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
-        return commits
-
-    def get_latest_module_version(self, module_name):
+    def get_latest_component_version(self, component_name, component_type):
         """
         Returns the latest commit in the repository
         """
-        return list(self.get_module_git_log(module_name, depth=1))[0]["git_sha"]
-
-    def get_latest_subworkflow_version(self, module_name):
-        """
-        Returns the latest commit in the repository
-        """
-        return list(self.get_subworkflow_git_log(module_name, depth=1))[0]["git_sha"]
+        return list(self.get_component_git_log(component_name, component_type, depth=1))[0]["git_sha"]
 
     def sha_exists_on_branch(self, sha):
         """

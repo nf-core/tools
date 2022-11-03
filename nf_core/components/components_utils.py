@@ -67,3 +67,49 @@ def get_repo_type(dir, repo_type=None, use_prompt=True):
 
     # It was set on the command line, return what we were given
     return [dir, repo_type]
+
+
+def prompt_component_version_sha(component_name, component_type, modules_repo, installed_sha=None):
+    """
+    Creates an interactive questionary prompt for selecting the module/subworkflow version
+    Args:
+        component_name (str): Module/subworkflow name,
+        component_type (str): "modules" or "subworkflows",
+        modules_repo (ModulesRepo): Modules repo the module/subworkflow originate in
+        installed_sha (str): Optional extra argument to highlight the current installed version
+
+    Returns:
+        git_sha (str): The selected version of the module/subworkflow
+    """
+    older_commits_choice = questionary.Choice(
+        title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
+    )
+    git_sha = ""
+    page_nbr = 1
+
+    all_commits = modules_repo.get_component_git_log(component_name, subworkflow)
+    next_page_commits = [next(all_commits, None) for _ in range(10)]
+    next_page_commits = [commit for commit in next_page_commits if commit is not None]
+
+    while git_sha == "":
+        commits = next_page_commits
+        next_page_commits = [next(all_commits, None) for _ in range(10)]
+        next_page_commits = [commit for commit in next_page_commits if commit is not None]
+        if all(commit is None for commit in next_page_commits):
+            next_page_commits = None
+
+        choices = []
+        for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
+            display_color = "fg:ansiblue" if sha != installed_sha else "fg:ansired"
+            message = f"{title} {sha}"
+            if installed_sha == sha:
+                message += " (installed version)"
+            commit_display = [(display_color, message), ("class:choice-default", "")]
+            choices.append(questionary.Choice(title=commit_display, value=sha))
+        if next_page_commits is not None:
+            choices += [older_commits_choice]
+        git_sha = questionary.select(
+            f"Select '{component_name}' commit:", choices=choices, style=nf_core.utils.nfcore_question_style
+        ).unsafe_ask()
+        page_nbr += 1
+    return git_sha
