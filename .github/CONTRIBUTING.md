@@ -128,18 +128,17 @@ nf-core create -n testpipeline -d "This pipeline is for testing"
 nf-core lint nf-core-testpipeline
 ```
 
-# To get started:
 
-- Open the repo in [Codespaces](https://github.com/{{ name }})/codespaces)
+## GitHub Codespaces
+
+This repo includes a devcontainer configuration which will create a GitHub Codespaces for Nextflow development! This is an online developer environment that runs in your browser, complete with VSCode and a terminal.
+
+To get started:
+
+- Open the repo in [Codespaces](https://github.com/nf-core/tools/codespaces)
 - Tools installed
   - nf-core
   - nextflow
-
-**Note:**
-
-## Codespaces
-
-This repo includes a devcontainer configuration which will create a GitHub Codespace for Nextflow development!
 
 Devcontainer specs:
 
