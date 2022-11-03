@@ -18,7 +18,7 @@ class ComponentList(ComponentCommand):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.remote = remote
 
-    def list_components(self, keywords=None, print_json=False):
+    def list_components(self, keywords=[], print_json=False):
         """
         Get available modules/subworkflows names from GitHub tree for repo
         and print as list to stdout
@@ -30,9 +30,6 @@ class ComponentList(ComponentCommand):
         table = rich.table.Table()
         table.add_column(f"{self.component_type[:-1].capitalize()} Name")
         components = []
-
-        if keywords is None:
-            keywords = []
 
         def pattern_msg(keywords):
             if len(keywords) == 0:
