@@ -1,16 +1,6 @@
-import json
 import logging
 
-import rich
-
-import nf_core.modules.modules_utils
-
-# from .modules_command import ModulesRepo
-from nf_core.modules.modules_repo import ModulesRepo
-
-from .subworkflows_command import SubworkflowCommand
 from nf_core.components.list import ComponentList
-
 
 log = logging.getLogger(__name__)
 

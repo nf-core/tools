@@ -454,7 +454,7 @@ def remote(ctx, keywords, json):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        stdout.print(module_list.list_modules(keywords, json))
+        stdout.print(module_list.list_components(keywords, json))
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
@@ -484,7 +484,7 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        stdout.print(module_list.list_modules(keywords, json))
+        stdout.print(module_list.list_components(keywords, json))
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)

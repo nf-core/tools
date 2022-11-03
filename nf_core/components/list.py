@@ -2,14 +2,13 @@ import json
 import logging
 
 import rich
-from nf_core.components.components_command import ComponentCommand
 
 import nf_core.modules.modules_utils
+from nf_core.components.components_command import ComponentCommand
+from nf_core.modules.modules_json import ModulesJson
 
 # from .modules_command import ModulesRepo
 from nf_core.modules.modules_repo import ModulesRepo
-
-from nf_core.modules.modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
 
@@ -86,10 +85,6 @@ class ComponentList(ComponentCommand):
             # Verify that 'modules.json' is consistent with the installed modules
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
-
-            import ipdb
-
-            ipdb.set_trace()
 
             # Filter by keywords
             repos_with_comps = {
