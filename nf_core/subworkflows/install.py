@@ -91,7 +91,7 @@ class SubworkflowInstall(SubworkflowCommand):
         log.debug(f"Installing subworkflow '{subworkflow}' at hash {version} from {self.modules_repo.remote_url}")
 
         # Download subworkflow files
-        if not self.install_subworkflow_files(subworkflow, version, self.modules_repo, install_folder):
+        if not self.install_component_files(subworkflow, version, self.modules_repo, install_folder):
             return False
 
         # Install included modules and subworkflows
