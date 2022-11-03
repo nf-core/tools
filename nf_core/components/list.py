@@ -66,6 +66,7 @@ class ComponentList(ComponentCommand):
         # We have a pipeline - list what's installed
         else:
             # Check that we are in a pipeline directory
+
             try:
                 _, repo_type = nf_core.modules.modules_utils.get_repo_type(self.dir)
                 if repo_type != "pipeline":
@@ -105,9 +106,9 @@ class ComponentList(ComponentCommand):
             # Load 'modules.json'
             modules_json = modules_json.modules_json
 
-            for repo_url, module_with_dir in sorted(repos_with_comps.items()):
+            for repo_url, component_with_dir in sorted(repos_with_comps.items()):
                 repo_entry = modules_json["repos"].get(repo_url, {})
-                for install_dir, component in sorted(module_with_dir):
+                for install_dir, component in sorted(component_with_dir):
                     repo_modules = repo_entry.get(self.component_type)
                     component_entry = repo_modules.get(install_dir).get(component)
 
@@ -130,7 +131,7 @@ class ComponentList(ComponentCommand):
                         version_sha = "[red]Not Available"
                         date = "[red]Not Available"
                         message = "[red]Not Available"
-                    table.add_row(self.component_type, repo_url, version_sha, message, date)
+                    table.add_row(component, repo_url, version_sha, message, date)
 
         if print_json:
             return json.dumps(components, sort_keys=True, indent=4)

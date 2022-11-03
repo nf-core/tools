@@ -381,6 +381,7 @@ class ModulesJson:
             if not component_in_file:
                 # If it is not, add it to the list of missing subworkflow
                 untracked_dirs.append(component)
+
             else:
                 # If it does, remove the subworkflow from missing_installation
                 module_repo = missing_installation[git_url]
@@ -393,9 +394,6 @@ class ModulesJson:
                 if len(module_repo[component_type][install_dir]) == 0:
                     # If no modules/subworkflows with missing installation left, remove the git_url from missing_installation
                     missing_installation.pop(git_url)
-            import ipdb
-
-            ipdb.set_trace()
 
         return untracked_dirs, missing_installation
 
@@ -800,11 +798,11 @@ class ModulesJson:
         if self.modules_json is None:
             self.load()
         if self.pipeline_components is None:
-            self.pipeline_components = {}
+            self.pipeline_components = {component_type: {}}
             for repo, repo_entry in self.modules_json.get("repos", {}).items():
-                if "modules" in repo_entry:
-                    for dir, modules in repo_entry[component_type].items():
-                        self.pipeline_components[component_type][repo] = [(dir, m) for m in modules]
+                if component_type in repo_entry:
+                    for dir, components in repo_entry[component_type].items():
+                        self.pipeline_components[repo] = [(dir, m) for m in components]
 
         return self.pipeline_components
 
@@ -913,10 +911,6 @@ class ModulesJson:
     def resolve_missing_from_modules_json(self, missing_from_modules_json, component_type):
         format_missing = [f"'{dir}'" for dir in missing_from_modules_json]
         if len(format_missing) == 1:
-            import ipdb
-
-            ipdb.set_trace()
-
             log.info(
                 f"Recomputing commit SHA for {component_type[:-1]} {format_missing[0]} which was missing from 'modules.json'"
             )
