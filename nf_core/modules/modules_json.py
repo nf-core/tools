@@ -784,6 +784,25 @@ class ModulesJson:
 
         return self.pipeline_modules
 
+    def get_all_components(self, component_type):
+        """
+        Retrieves all pipeline modules/subworkflows that are reported in the modules.json
+
+        Returns:
+            (dict[str, [(str, str)]]): Dictionary indexed with the repo urls, with a
+                                list of tuples (component_dir, components) as values
+        """
+        if self.modules_json is None:
+            self.load()
+        if self.pipeline_components is None:
+            self.pipeline_components = {}
+            for repo, repo_entry in self.modules_json.get("repos", {}).items():
+                if "modules" in repo_entry:
+                    for dir, modules in repo_entry[component_type].items():
+                        self.pipeline_components[repo] = [(dir, m) for m in modules]
+
+        return self.pipeline_modules
+
     def get_module_branch(self, module, repo_url, install_dir):
         """
         Gets the branch from which the module was installed
