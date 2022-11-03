@@ -135,8 +135,8 @@ nf-core lint nf-core-testpipeline
   - nf-core
   - nextflow
 
-
 **Note:**
+
 ## Codespaces
 
 This repo includes a devcontainer configuration which will create a GitHub Codespace for Nextflow development!
