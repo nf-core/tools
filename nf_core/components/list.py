@@ -18,7 +18,8 @@ class ComponentList(ComponentCommand):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.remote = remote
 
-    def list_components(self, keywords=[], print_json=False):
+    def list_components(self, keywords=None, print_json=False):
+        keywords = keywords or []
         """
         Get available modules/subworkflows names from GitHub tree for repo
         and print as list to stdout
