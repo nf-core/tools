@@ -12,8 +12,8 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-import nf_core.modules.module_utils
-from nf_core.modules.module_utils import get_repo_type
+import nf_core.modules.modules_utils
+from nf_core.modules.modules_utils import get_repo_type
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE, ModulesRepo
 
@@ -61,7 +61,7 @@ class SubworkflowInfo(object):
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull)
         try:
             if self.dir:
-                self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+                self.dir, self.repo_type = get_repo_type(self.dir)
             else:
                 self.repo_type = None
         except LookupError as e:

@@ -4,7 +4,7 @@ import os
 
 import rich
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME, ModulesRepo
 
@@ -19,7 +19,7 @@ class SubworkflowList(object):
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull)
         try:
             if self.dir:
-                self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+                self.dir, self.repo_type = nf_core.modules.modules_utils.get_repo_type(self.dir)
             else:
                 self.repo_type = None
         except LookupError as e:
@@ -71,7 +71,7 @@ class SubworkflowList(object):
         else:
             # Check that we are in a pipeline directory
             try:
-                _, repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+                _, repo_type = nf_core.modules.modules_utils.get_repo_type(self.dir)
                 if repo_type != "pipeline":
                     raise UserWarning(
                         "The command 'nf-core subworkflows list local' must be run from a pipeline directory.",
