@@ -803,9 +803,9 @@ class ModulesJson:
 
         return self.pipeline_modules
 
-    def get_module_branch(self, module, repo_url, install_dir):
+    def get_component_branch(self, component_type, component, repo_url, install_dir):
         """
-        Gets the branch from which the module was installed
+        Gets the branch from which the module/subworkflow was installed
 
         Returns:
             (str): The branch name
@@ -817,14 +817,14 @@ class ModulesJson:
         branch = (
             self.modules_json["repos"]
             .get(repo_url, {})
-            .get("modules", {})
+            .get(component_type, {})
             .get(install_dir, {})
-            .get(module, {})
+            .get(component, {})
             .get("branch")
         )
         if branch is None:
             raise LookupError(
-                f"Could not find branch information for module '{Path(install_dir, module)}'."
+                f"Could not find branch information for component '{Path(install_dir, component)}'."
                 f"Please remove the 'modules.json' and rerun the command to recreate it"
             )
         return branch
