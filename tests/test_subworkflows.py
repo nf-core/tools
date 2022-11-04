@@ -52,7 +52,7 @@ class TestSubworkflows(unittest.TestCase):
         ).init_pipeline()
 
         # Set up the nf-core/modules repo dummy
-        self.nfcore_modules = create_subworkflows_repo_dummy(self.tmp_dir)
+        self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
 
         # Set up install objects
         self.sw_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
