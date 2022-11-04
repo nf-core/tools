@@ -69,7 +69,13 @@ class SubworkflowInstall(SubworkflowCommand):
 
         # Check that the subworkflow is not already installed
         if not nf_core.components.components_install.check_component_installed(
-            self.component_type, subworkflow, current_version, subworkflow_dir, self.modules_repo, self.force
+            self.component_type,
+            subworkflow,
+            current_version,
+            subworkflow_dir,
+            self.modules_repo,
+            self.force,
+            self.prompt,
         ):
             return False
 
@@ -79,8 +85,10 @@ class SubworkflowInstall(SubworkflowCommand):
         if not version:
             return False
 
-        # Remove subworkflow if force is set
-        if self.force:
+        # Remove subworkflow if force is set and component is installed
+        if self.force and nf_core.components.components_install.check_component_installed(
+            self.component_type, subworkflow, current_version, subworkflow_dir, self.modules_repo, self.force
+        ):
             log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{subworkflow}'")
             self.clear_component_dir(subworkflow, subworkflow_dir)
             nf_core.components.components_install.clean_modules_json(
