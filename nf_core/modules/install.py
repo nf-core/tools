@@ -87,18 +87,19 @@ class ModuleInstall(ModuleCommand):
             return False
 
         # Remove module if force is set
+        install_track = None
         if self.force:
             log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{module}'")
             self.clear_component_dir(module, module_dir)
+            install_track = nf_core.components.components_install.clean_modules_json(
+                module, self.component_type, self.modules_repo, modules_json
+            )
 
         log.info(f"{'Rei' if self.force else 'I'}nstalling '{module}'")
         log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.remote_url}")
 
         # Download module files
         if not self.install_component_files(module, version, self.modules_repo, install_folder):
-            nf_core.components.components_install.clean_modules_json(
-                module, self.component_type, self.modules_repo, modules_json
-            )
             return False
 
         if not silent:
@@ -110,5 +111,5 @@ class ModuleInstall(ModuleCommand):
 
         # Update module.json with newly installed module
         modules_json.load()
-        modules_json.update(self.modules_repo, module, version, self.installed_by)
+        modules_json.update(self.modules_repo, module, version, self.installed_by, install_track)
         return True

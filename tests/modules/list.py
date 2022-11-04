@@ -19,7 +19,6 @@ def test_modules_list_remote_gitlab(self):
     """Test listing the modules in the remote gitlab repo"""
     mods_list = nf_core.modules.ModuleList(None, remote=True, remote_url=GITLAB_URL, branch=GITLAB_DEFAULT_BRANCH)
     listed_mods = mods_list.list_components()
-    print(f"listed modules are {listed_mods}")
     console = Console(record=True)
     console.print(listed_mods)
     output = console.export_text()

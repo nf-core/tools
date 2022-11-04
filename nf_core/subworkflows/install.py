@@ -93,6 +93,7 @@ class SubworkflowInstall(SubworkflowCommand):
             return False
 
         # Remove subworkflow if force is set and component is installed
+        install_track = None
         if self.force and nf_core.components.components_install.check_component_installed(
             self.component_type,
             subworkflow,
@@ -104,15 +105,15 @@ class SubworkflowInstall(SubworkflowCommand):
         ):
             log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{subworkflow}'")
             self.clear_component_dir(subworkflow, subworkflow_dir)
+            install_track = nf_core.components.components_install.clean_modules_json(
+                subworkflow, self.component_type, self.modules_repo, modules_json
+            )
 
         log.info(f"{'Rei' if self.force else 'I'}nstalling '{subworkflow}'")
         log.debug(f"Installing subworkflow '{subworkflow}' at hash {version} from {self.modules_repo.remote_url}")
 
         # Download subworkflow files
         if not self.install_component_files(subworkflow, version, self.modules_repo, install_folder):
-            nf_core.components.components_install.clean_modules_json(
-                subworkflow, self.component_type, self.modules_repo, modules_json
-            )
             return False
 
         # Install included modules and subworkflows
@@ -130,7 +131,7 @@ class SubworkflowInstall(SubworkflowCommand):
 
         # Update module.json with newly installed subworkflow
         modules_json.load()
-        modules_json.update_subworkflow(self.modules_repo, subworkflow, version, self.installed_by)
+        modules_json.update_subworkflow(self.modules_repo, subworkflow, version, self.installed_by, install_track)
         return True
 
     def get_modules_subworkflows_to_install(self, subworkflow_dir):

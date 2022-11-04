@@ -274,7 +274,11 @@ class ModulesJson:
                     found_sha = True
                     break
             if found_sha:
-                repo_entry[module] = {"branch": modules_repo.branch, "git_sha": correct_commit_sha}
+                repo_entry[module] = {
+                    "branch": modules_repo.branch,
+                    "git_sha": correct_commit_sha,
+                    "installed": "modules",
+                }
 
         # Clean up the modules we were unable to find the sha for
         for module in sb_local:
@@ -541,7 +545,7 @@ class ModulesJson:
         except FileNotFoundError:
             raise UserWarning("File 'modules.json' is missing")
 
-    def update(self, modules_repo, module_name, module_version, installed_by, write_file=True):
+    def update(self, modules_repo, module_name, module_version, installed_by, installed_by_log=None, write_file=True):
         """
         Updates the 'module.json' file with new module info
 
@@ -549,8 +553,12 @@ class ModulesJson:
             modules_repo (ModulesRepo): A ModulesRepo object configured for the new module
             module_name (str): Name of new module
             module_version (str): git SHA for the new module entry
+            installed_by_log (list): previous tracing of installed_by that needs to be added to 'modules.json'
             write_file (bool): whether to write the updated modules.json to a file.
         """
+        if installed_by_log is None:
+            installed_by_log = []
+
         if self.modules_json is None:
             self.load()
         repo_name = modules_repo.repo_path
@@ -568,13 +576,17 @@ class ModulesJson:
                 repo_modules_entry[module_name]["installed"].append(installed_by)
         except KeyError:
             repo_modules_entry[module_name]["installed"] = [installed_by]
+        finally:
+            repo_modules_entry[module_name]["installed"].extend(installed_by_log)
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
         if write_file:
             self.dump()
 
-    def update_subworkflow(self, modules_repo, subworkflow_name, subworkflow_version, installed_by, write_file=True):
+    def update_subworkflow(
+        self, modules_repo, subworkflow_name, subworkflow_version, installed_by, installed_by_log=None, write_file=True
+    ):
         """
         Updates the 'module.json' file with new subworkflow info
 
@@ -582,8 +594,12 @@ class ModulesJson:
             modules_repo (ModulesRepo): A ModulesRepo object configured for the new subworkflow
             subworkflow_name (str): Name of new subworkflow
             subworkflow_version (str): git SHA for the new subworkflow entry
+            installed_by_log (list): previous tracing of installed_by that needs to be added to 'modules.json'
             write_file (bool): whether to write the updated modules.json to a file.
         """
+        if installed_by_log is None:
+            installed_by_log = []
+
         if self.modules_json is None:
             self.load()
         repo_name = modules_repo.repo_path
@@ -604,6 +620,8 @@ class ModulesJson:
                 repo_subworkflows_entry[subworkflow_name]["installed"].append(installed_by)
         except KeyError:
             repo_subworkflows_entry[subworkflow_name]["installed"] = [installed_by]
+        finally:
+            repo_subworkflows_entry[subworkflow_name]["installed"].extend(installed_by_log)
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])

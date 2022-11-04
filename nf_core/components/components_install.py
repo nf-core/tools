@@ -93,11 +93,11 @@ def clean_modules_json(component, component_type, modules_repo, modules_json):
     """
     for repo_url, repo_content in modules_json.modules_json["repos"].items():
         for dir, dir_components in repo_content[component_type].items():
-            for name, _ in dir_components.items():
+            for name, component_values in dir_components.items():
                 if name == component and dir == modules_repo.repo_path:
                     repo_to_remove = repo_url
                     log.info(
                         f"Removing {component_type[:-1]} '{modules_repo.repo_path}/{component}' from repo '{repo_to_remove}' from modules.json"
                     )
                     modules_json.remove_entry(component_type, component, repo_to_remove, modules_repo.repo_path)
-                    return
+                    return component_values["installed"]
