@@ -1,4 +1,5 @@
 click
+filetype
 galaxy-tool-util
 GitPython
 jinja2
