@@ -21,11 +21,16 @@ class ModuleInstall(ModuleCommand):
         remote_url=None,
         branch=None,
         no_pull=False,
+        installed_by=False,
     ):
         super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha
+        if installed_by:
+            self.installed_by = installed_by
+        else:
+            self.installed_by = self.component_type
 
     def install(self, module, silent=False):
         if self.repo_type == "modules":
@@ -100,5 +105,5 @@ class ModuleInstall(ModuleCommand):
 
         # Update module.json with newly installed module
         modules_json.load()
-        modules_json.update(self.modules_repo, module, version)
+        modules_json.update(self.modules_repo, module, version, self.installed_by)
         return True

@@ -24,11 +24,16 @@ class SubworkflowInstall(SubworkflowCommand):
         remote_url=None,
         branch=None,
         no_pull=False,
+        installed_by=False,
     ):
         super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha
+        if installed_by:
+            self.installed_by = installed_by
+        else:
+            self.installed_by = self.component_type
 
     def install(self, subworkflow, silent=False):
         if self.repo_type == "modules":
@@ -106,7 +111,7 @@ class SubworkflowInstall(SubworkflowCommand):
 
         # Update module.json with newly installed subworkflow
         modules_json.load()
-        modules_json.update_subworkflow(self.modules_repo, subworkflow, version)
+        modules_json.update_subworkflow(self.modules_repo, subworkflow, version, self.installed_by)
         return True
 
     def get_modules_subworkflows_to_install(self, subworkflow_dir):
@@ -136,7 +141,10 @@ class SubworkflowInstall(SubworkflowCommand):
         """
         modules_to_install, subworkflows_to_install = self.get_modules_subworkflows_to_install(subworkflow_dir)
         for s_install in subworkflows_to_install:
+            original_installed = self.installed_by
+            self.installed_by = Path(subworkflow_dir).parts[-1]
             self.install(s_install, silent=True)
+            self.installed_by = original_installed
         for m_install in modules_to_install:
             module_install = ModuleInstall(
                 self.dir,
@@ -145,5 +153,6 @@ class SubworkflowInstall(SubworkflowCommand):
                 sha=self.sha,
                 remote_url=self.modules_repo.remote_url,
                 branch=self.modules_repo.branch,
+                installed_by=Path(subworkflow_dir).parts[-1],
             )
             module_install.install(m_install, silent=True)

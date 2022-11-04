@@ -223,10 +223,10 @@ class ModuleUpdate(ModuleCommand):
                 # Clear the module directory and move the installed files there
                 self.move_files_from_tmp_dir(module, install_tmp_dir, modules_repo.repo_path, version)
                 # Update modules.json with newly installed module
-                self.modules_json.update(modules_repo, module, version)
+                self.modules_json.update(modules_repo, module, version, self.component_type)
             else:
                 # Don't save to a file, just iteratively update the variable
-                self.modules_json.update(modules_repo, module, version, write_file=False)
+                self.modules_json.update(modules_repo, module, version, self.component_type, write_file=False)
 
         if self.save_diff_fn:
             # Write the modules.json diff to the file

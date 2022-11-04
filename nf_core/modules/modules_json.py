@@ -518,7 +518,7 @@ class ModulesJson:
         except FileNotFoundError:
             raise UserWarning("File 'modules.json' is missing")
 
-    def update(self, modules_repo, module_name, module_version, write_file=True):
+    def update(self, modules_repo, module_name, module_version, installed_by, write_file=True):
         """
         Updates the 'module.json' file with new module info
 
@@ -540,13 +540,17 @@ class ModulesJson:
             repo_modules_entry[module_name] = {}
         repo_modules_entry[module_name]["git_sha"] = module_version
         repo_modules_entry[module_name]["branch"] = branch
+        try:
+            repo_modules_entry[module_name]["installed"].add(installed_by)
+        except KeyError:
+            repo_modules_entry[module_name]["installed"] = set(installed_by)
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
         if write_file:
             self.dump()
 
-    def update_subworkflow(self, modules_repo, subworkflow_name, subworkflow_version, write_file=True):
+    def update_subworkflow(self, modules_repo, subworkflow_name, subworkflow_version, installed_by, write_file=True):
         """
         Updates the 'module.json' file with new subworkflow info
 
@@ -571,6 +575,10 @@ class ModulesJson:
             repo_subworkflows_entry[subworkflow_name] = {}
         repo_subworkflows_entry[subworkflow_name]["git_sha"] = subworkflow_version
         repo_subworkflows_entry[subworkflow_name]["branch"] = branch
+        try:
+            repo_subworkflows_entry[subworkflow_name]["installed"].add(installed_by)
+        except KeyError:
+            repo_subworkflows_entry[subworkflow_name]["installed"] = set(installed_by)
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
