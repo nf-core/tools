@@ -20,7 +20,7 @@ class ComponentCommand:
     """
 
     def __init__(
-        self, component_type, dir, org="nf-core", remote_url=None, branch=None, no_pull=False, hide_progress=False
+        self, component_type, dir, remote_url=None, branch=None, no_pull=False, hide_progress=False, org="nf-core"
     ):
         """
         Initialise the ComponentClass object
