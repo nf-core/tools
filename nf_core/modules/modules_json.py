@@ -373,25 +373,32 @@ class ModulesJson:
             component_in_file = False
             git_url = None
             for repo in missing_installation:
-                for dir_name in missing_installation[repo][component_type]:
-                    if component in missing_installation[repo][component_type][dir_name]:
-                        component_in_file = True
-                        git_url = repo
-                        break
+                if component_type in missing_installation[repo]:
+                    for dir_name in missing_installation[repo][component_type]:
+                        if component in missing_installation[repo][component_type][dir_name]:
+                            component_in_file = True
+                            git_url = repo
+                            break
             if not component_in_file:
-                # If it is not, add it to the list of missing subworkflow
+                # If it is not, add it to the list of missing components
                 untracked_dirs.append(component)
 
             else:
-                # If it does, remove the subworkflow from missing_installation
+                # If it does, remove the component from missing_installation
                 module_repo = missing_installation[git_url]
                 # Check if the entry has a git sha and branch before removing
                 components_dict = module_repo[component_type][install_dir]
                 if "git_sha" not in components_dict[component] or "branch" not in components_dict[component]:
                     self.determine_module_branches_and_shas(component, git_url, module_repo["base_path"], [component])
-                # Remove the subworkflow from subworkflows without installation
+                # Remove the component from components without installation
                 module_repo[component_type][install_dir].pop(component)
                 if len(module_repo[component_type][install_dir]) == 0:
+                    # If no modules/subworkflows with missing installation left, remove the install_dir from missing_installation
+                    missing_installation[git_url][component_type].pop(install_dir)
+                if len(module_repo[component_type]) == 0:
+                    # If no modules/subworkflows with missing installation left, remove the component_type from missing_installation
+                    missing_installation[git_url].pop(component_type)
+                if len(module_repo) == 0:
                     # If no modules/subworkflows with missing installation left, remove the git_url from missing_installation
                     missing_installation.pop(git_url)
 
