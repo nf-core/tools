@@ -24,7 +24,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
 
       - name: Install Prettier
         run: npm install -g prettier @prettier/plugin-php
@@ -39,11 +39,11 @@ jobs:
           options: "--color"
 
       - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
       - name: python-isort
-        uses: isort/isort-action@v0.1.0
+        uses: isort/isort-action@v1.0.0
         with:
           isortVersion: "latest"
           requirementsFiles: "requirements.txt requirements-dev.txt"
