@@ -42,6 +42,7 @@ class TestSubworkflows(unittest.TestCase):
     def setUp(self):
         """Create a new PipelineStructure and Launch objects"""
         self.tmp_dir = tempfile.mkdtemp()
+        self.component_type = "subworkflows"
 
         # Set up the pipeline structure
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -50,6 +51,12 @@ class TestSubworkflows(unittest.TestCase):
         nf_core.create.PipelineCreate(
             "mypipeline", "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
+
+        # Set up install objects
+        self.subworkflow_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
+        self.subworkflow_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
+            self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
+        )
 
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
@@ -68,6 +75,15 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_create_fail_exists,
         test_subworkflows_create_nfcore_modules,
         test_subworkflows_create_succeed,
+    )
+    from .subworkflows.install import (
+        test_subworkflow_install_nopipeline,
+        test_subworkflows_install_bam_sort_stats_samtools,
+        test_subworkflows_install_bam_sort_stats_samtools_twice,
+        test_subworkflows_install_different_branch_fail,
+        test_subworkflows_install_emptypipeline,
+        test_subworkflows_install_from_gitlab,
+        test_subworkflows_install_nosubworkflow,
     )
     from .subworkflows.list import (
         test_subworkflows_install_and_list_subworkflows,

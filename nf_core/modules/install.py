@@ -69,7 +69,7 @@ class ModuleInstall(ModuleCommand):
 
         # Check that the module is not already installed
         if not nf_core.components.components_install.check_component_installed(
-            self.component_type, module, current_version, module_dir, self.modules_repo, self.force
+            self.component_type, module, current_version, module_dir, self.modules_repo, self.force, self.prompt
         ):
             return False
 

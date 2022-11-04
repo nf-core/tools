@@ -17,9 +17,7 @@
 - Fix bug when updating modules from old version in old folder structure
 - Don't remove local copy of modules repo, only update it with fetch ([#1881](https://github.com/nf-core/tools/pull/1881))
 - Add subworkflow commands create-test-yml, create and install ([#1897](https://github.com/nf-core/tools/pull/1897))
-- Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
 - Improve test coverage of `sync.py` and `__main__.py` ([#1936](https://github.com/nf-core/tools/pull/1936), [#1965](https://github.com/nf-core/tools/pull/1965))
-- `check_up_to_date()` function from `modules_json` also checks for subworkflows.
 - The default branch can now be specified when creating a new pipeline repo [#1959](https://github.com/nf-core/tools/pull/1959).
 - Only warn when checking that the pipeline directory contains a `main.nf` and a `nextflow.config` file if the pipeline is not an nf-core pipeline [#1964](https://github.com/nf-core/tools/pull/1964)
 - Add file `versions.yml` when generating `test.yml` with `nf-core modules create-test-yml` but don't check for md5sum [#1963](https://github.com/nf-core/tools/pull/1963)
@@ -31,6 +29,12 @@
 ### Modules
 
 - Update patch file paths if the modules directory has the old structure ([#1878](https://github.com/nf-core/tools/pull/1878))
+
+### Subworkflows
+
+- Add tests for subworkflows install command ([#1996](https://github.com/nf-core/tools/pull/1996))
+- `check_up_to_date()` function from `modules_json` also checks for subworkflows.
+- Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
 
 ## [v2.6 - Tin Octopus](https://github.com/nf-core/tools/releases/tag/2.6) - [2022-10-04]
 
