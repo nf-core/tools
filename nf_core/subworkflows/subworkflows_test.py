@@ -15,14 +15,13 @@ import rich
 
 import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
-
-from .subworkflows_command import SubworkflowCommand
 
 log = logging.getLogger(__name__)
 
 
-class SubworkflowsTest(SubworkflowCommand):
+class SubworkflowsTest(ComponentCommand):
     """
     Class to run module pytests.
 
@@ -62,7 +61,7 @@ class SubworkflowsTest(SubworkflowCommand):
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
 
-        super().__init__(".", remote_url, branch, no_pull)
+        super().__init__("subworkflows", ".", remote_url, branch, no_pull)
 
     def run(self):
         """Run test steps"""

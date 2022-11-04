@@ -300,9 +300,9 @@ def test_create_patch_update_fail(self):
 
     # Check that the installed files have not been affected by the attempted patch
     temp_dir = Path(tempfile.mkdtemp())
-    nf_core.modules.modules_command.ModuleCommand(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH).install_component_files(
-        BISMARK_ALIGN, FAIL_SHA, update_obj.modules_repo, temp_dir
-    )
+    nf_core.modules.modules_command.ComponentCommand(
+        "modules", self.pipeline_dir, GITLAB_URL, PATCH_BRANCH
+    ).install_component_files(BISMARK_ALIGN, FAIL_SHA, update_obj.modules_repo, temp_dir)
 
     temp_module_dir = temp_dir / BISMARK_ALIGN
     for file in os.listdir(temp_module_dir):

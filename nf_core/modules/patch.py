@@ -7,17 +7,17 @@ from pathlib import Path
 import questionary
 
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 
-from .modules_command import ModuleCommand
 from .modules_differ import ModulesDiffer
 from .modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
 
 
-class ModulePatch(ModuleCommand):
+class ModulePatch(ComponentCommand):
     def __init__(self, dir, remote_url=None, branch=None, no_pull=False):
-        super().__init__(dir, remote_url, branch, no_pull)
+        super().__init__("modules", dir, remote_url, branch, no_pull)
 
         self.modules_json = ModulesJson(dir)
 

@@ -38,7 +38,7 @@ class ComponentsTest(ComponentCommand):
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
 
-        super().__init__(".", remote_url, branch, no_pull)
+        super().__init__("component_type", ".", remote_url, branch, no_pull)
 
     def run(self):
         """Run test steps"""

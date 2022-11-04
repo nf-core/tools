@@ -15,13 +15,13 @@ import rich
 
 import nf_core.modules.modules_utils
 import nf_core.utils
-from nf_core.modules.modules_command import ModuleCommand
+from nf_core.modules.modules_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
 
 
-class ModulesTest(ModuleCommand):
+class ModulesTest(ComponentCommand):
     """
     Class to run module pytests.
 
@@ -61,7 +61,7 @@ class ModulesTest(ModuleCommand):
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
 
-        super().__init__(".", remote_url, branch, no_pull)
+        super().__init__("modules", ".", remote_url, branch, no_pull)
 
     def run(self):
         """Run test steps"""
