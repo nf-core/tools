@@ -104,15 +104,15 @@ class SubworkflowInstall(SubworkflowCommand):
         ):
             log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{subworkflow}'")
             self.clear_component_dir(subworkflow, subworkflow_dir)
-            nf_core.components.components_install.clean_modules_json(
-                subworkflow, self.component_type, self.modules_repo, modules_json
-            )
 
         log.info(f"{'Rei' if self.force else 'I'}nstalling '{subworkflow}'")
         log.debug(f"Installing subworkflow '{subworkflow}' at hash {version} from {self.modules_repo.remote_url}")
 
         # Download subworkflow files
         if not self.install_component_files(subworkflow, version, self.modules_repo, install_folder):
+            nf_core.components.components_install.clean_modules_json(
+                subworkflow, self.component_type, self.modules_repo, modules_json
+            )
             return False
 
         # Install included modules and subworkflows

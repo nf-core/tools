@@ -597,12 +597,13 @@ class ModulesJson:
         if write_file:
             self.dump()
 
-    def remove_entry(self, module_name, repo_url, install_dir):
+    def remove_entry(self, component_type, name, repo_url, install_dir):
         """
         Removes an entry from the 'modules.json' file.
 
         Args:
-            module_name (str): Name of the module to be removed
+            component_type (Str): Type of component [modules, subworkflows]
+            name (str): Name of the module to be removed
             repo_url (str): URL of the repository containing the module
             install_dir (str): Name of the directory where modules are installed
         Returns:
@@ -612,15 +613,17 @@ class ModulesJson:
             return False
         if repo_url in self.modules_json.get("repos", {}):
             repo_entry = self.modules_json["repos"][repo_url]
-            if module_name in repo_entry["modules"].get(install_dir, {}):
-                repo_entry["modules"][install_dir].pop(module_name)
+            if name in repo_entry[component_type].get(install_dir, {}):
+                repo_entry[component_type][install_dir].pop(name)
             else:
-                log.warning(f"Module '{install_dir}/{module_name}' is missing from 'modules.json' file.")
+                log.warning(
+                    f"{component_type[:-1].title()} '{install_dir}/{name}' is missing from 'modules.json' file."
+                )
                 return False
-            if len(repo_entry["modules"][install_dir]) == 0:
+            if len(repo_entry[component_type][install_dir]) == 0:
                 self.modules_json["repos"].pop(repo_url)
         else:
-            log.warning(f"Module '{install_dir}/{module_name}' is missing from 'modules.json' file.")
+            log.warning(f"{component_type[:-1].title()} '{install_dir}/{name}' is missing from 'modules.json' file.")
             return False
 
         self.dump()
