@@ -41,7 +41,8 @@ def test_mod_json_update(self):
         NF_CORE_MODULES_DEFAULT_BRANCH
         == mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["branch"]
     )
-    assert "modules" == mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["installed"]
+    print(mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"])
+    assert "modules" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["installed"]
 
 
 def test_mod_json_create(self):

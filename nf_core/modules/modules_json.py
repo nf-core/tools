@@ -541,9 +541,10 @@ class ModulesJson:
         repo_modules_entry[module_name]["git_sha"] = module_version
         repo_modules_entry[module_name]["branch"] = branch
         try:
-            repo_modules_entry[module_name]["installed"].add(installed_by)
+            if installed_by not in repo_modules_entry[module_name]["installed"]:
+                repo_modules_entry[module_name]["installed"].append(installed_by)
         except KeyError:
-            repo_modules_entry[module_name]["installed"] = set(installed_by)
+            repo_modules_entry[module_name]["installed"] = [installed_by]
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
@@ -576,9 +577,10 @@ class ModulesJson:
         repo_subworkflows_entry[subworkflow_name]["git_sha"] = subworkflow_version
         repo_subworkflows_entry[subworkflow_name]["branch"] = branch
         try:
-            repo_subworkflows_entry[subworkflow_name]["installed"].add(installed_by)
+            if installed_by not in repo_subworkflows_entry[subworkflow_name]["installed"]:
+                repo_subworkflows_entry[subworkflow_name]["installed"].append(installed_by)
         except KeyError:
-            repo_subworkflows_entry[subworkflow_name]["installed"] = set(installed_by)
+            repo_subworkflows_entry[subworkflow_name]["installed"] = [installed_by]
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
