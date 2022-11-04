@@ -152,7 +152,7 @@ class ModuleUpdate(ModuleCommand):
             if sha is not None:
                 version = sha
             elif self.prompt:
-                version = nf_core.modules.modules_utils.prompt_component_version_sha(
+                version = prompt_component_version_sha(
                     module, "modules", modules_repo=modules_repo, installed_sha=current_version
                 )
             else:

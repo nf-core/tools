@@ -1,12 +1,7 @@
-import glob
-import json
 import logging
 import os
-import re
 
-import jinja2
 import questionary
-import rich
 
 import nf_core.modules.modules_utils
 import nf_core.utils
@@ -76,7 +71,7 @@ def get_version(component, component_type, sha, prompt, current_version, modules
         version = sha
     elif prompt:
         try:
-            version = nf_core.modules.modules_utils.prompt_component_version_sha(
+            version = prompt_component_version_sha(
                 component,
                 component_type,
                 installed_sha=current_version,

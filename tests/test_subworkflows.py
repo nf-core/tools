@@ -3,7 +3,6 @@
 """
 
 import os
-import shutil
 import tempfile
 import unittest
 
@@ -13,7 +12,7 @@ import nf_core.create
 import nf_core.modules
 import nf_core.subworkflows
 
-from .utils import GITLAB_URL, mock_api_calls
+from .utils import mock_api_calls
 
 
 def create_modules_repo_dummy(tmp_dir):

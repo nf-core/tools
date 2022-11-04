@@ -214,7 +214,7 @@ def test_update_with_config_no_updates(self):
 
 def test_update_different_branch_single_module(self):
     """Try updating a module in a specific branch"""
-    install_obj = nf_core.modules.ModuleInstall(
+    install_obj = ModuleInstall(
         self.pipeline_dir,
         prompt=False,
         force=False,

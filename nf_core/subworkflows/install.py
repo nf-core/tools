@@ -3,14 +3,11 @@ import os
 import re
 from pathlib import Path
 
-import questionary
-
 import nf_core.components.components_install
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.modules.install import ModuleInstall
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
 
 from .subworkflows_command import SubworkflowCommand
 
