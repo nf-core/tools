@@ -481,11 +481,23 @@ class ModuleUpdate(ModuleCommand):
                 for module_dir, module in modules:
                     try:
                         modules_info[repo_name][module_dir].append(
-                            (module, custom_sha, self.modules_json.get_component_branch(self.component_type, module, repo_name, module_dir))
+                            (
+                                module,
+                                custom_sha,
+                                self.modules_json.get_component_branch(
+                                    self.component_type, module, repo_name, module_dir
+                                ),
+                            )
                         )
                     except KeyError:
                         modules_info[repo_name][module_dir] = [
-                            (module, custom_sha, self.modules_json.get_component_branch(self.component_type, module, repo_name, module_dir))
+                            (
+                                module,
+                                custom_sha,
+                                self.modules_json.get_component_branch(
+                                    self.component_type, module, repo_name, module_dir
+                                ),
+                            )
                         ]
                 if self.sha is not None:
                     overridden_repos.append(repo_name)

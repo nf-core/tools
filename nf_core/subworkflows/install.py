@@ -69,7 +69,13 @@ class SubworkflowInstall(SubworkflowCommand):
 
         # Check that the subworkflow is not already installed
         if not nf_core.components.components_install.check_component_installed(
-            self.component_type, subworkflow, current_version, subworkflow_dir, self.modules_repo, self.force, self.prompt
+            self.component_type,
+            subworkflow,
+            current_version,
+            subworkflow_dir,
+            self.modules_repo,
+            self.force,
+            self.prompt,
         ):
             return False
 
