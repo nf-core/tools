@@ -25,9 +25,9 @@ import yaml
 from rich.syntax import Syntax
 
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
-from nf_core.subworkflows.subworkflows_command import ComponentCommand
 
 log = logging.getLogger(__name__)
 
