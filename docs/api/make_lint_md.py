@@ -21,7 +21,6 @@ def make_docs(docs_basedir, lint_tests, md_template):
         else:
             with open(fn, "w") as fh:
                 fh.write(md_template.format(test_name))
-                print(test_name)
 
     for fn in existing_docs:
         os.remove(fn)
