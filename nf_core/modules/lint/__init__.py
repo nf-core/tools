@@ -24,7 +24,6 @@ import nf_core.utils
 from nf_core.lint_utils import console
 from nf_core.modules.modules_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
 from nf_core.utils import plural_s as _s
 

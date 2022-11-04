@@ -156,7 +156,7 @@ class ModuleCreate(ComponentCommand):
                 pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
                     yaml.dump(pytest_modules_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 raise UserWarning("Could not open 'tests/config/pytest_modules.yml' file!")
 
         new_files = list(self.file_paths.values())

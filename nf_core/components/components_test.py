@@ -1,3 +1,6 @@
+from nf_core.components.components_command import ComponentCommand
+
+
 class ComponentsTest(ComponentCommand):
     """
     Class to run module pytests.
