@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
+import nf_core.components.components_command
 import nf_core.modules
-import nf_core.modules.modules_command
 
 from ..utils import GITLAB_URL
 
@@ -300,7 +300,7 @@ def test_create_patch_update_fail(self):
 
     # Check that the installed files have not been affected by the attempted patch
     temp_dir = Path(tempfile.mkdtemp())
-    nf_core.modules.modules_command.ComponentCommand(
+    nf_core.components.components_command.ComponentCommand(
         "modules", self.pipeline_dir, GITLAB_URL, PATCH_BRANCH
     ).install_component_files(BISMARK_ALIGN, FAIL_SHA, update_obj.modules_repo, temp_dir)
 
