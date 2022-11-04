@@ -73,6 +73,11 @@ class ModuleInstall(ModuleCommand):
         if not nf_core.components.components_install.check_component_installed(
             self.component_type, module, current_version, module_dir, self.modules_repo, self.force, self.prompt
         ):
+            log.debug(
+                f"Module is already installed and force is not set.\nAdding the new installation source {self.installed_by} for module {module} to 'modules.json' without installing the module."
+            )
+            modules_json.load()
+            modules_json.update(self.modules_repo, module, current_version, self.installed_by)
             return False
 
         version = nf_core.components.components_install.get_version(
