@@ -112,16 +112,16 @@ class SubworkflowsTest(SubworkflowCommand):
         - tests/subworkflows/nf-core/SUBWORKFLOW/
 
         """
-        subworkflow_path = Path(self.default_subworkflows_path) / self.subworkflow_name
-        test_path = Path(self.default_subworkflows_tests_path) / self.subworkflow_name
+        subworkflow_path = self.paths.get_subworkflows_path() / self.subworkflow_name
+        test_path = self.paths.get_subworkflows_tests_path() / self.subworkflow_name
 
-        if not (self.dir / subworkflow_path).is_dir():
+        if not subworkflow_path.is_dir():
             raise UserWarning(
-                f"Cannot find directory '{subworkflow_path}'. Should be SUBWORKFLOW. Are you running the tests inside the nf-core/modules main directory?"
+                f"Cannot find directory '{subworkflow_path.relative_to(self.paths.dir)}'. Should be SUBWORKFLOW. Are you running the tests inside the nf-core/modules main directory?"
             )
-        if not (self.dir / test_path).is_dir():
+        if not test_path.is_dir():
             raise UserWarning(
-                f"Cannot find directory '{test_path}'. Should be SUBWORKFLOW. "
+                f"Cannot find directory '{test_path.relative_to(self.paths.dir)}'. Should be SUBWORKFLOW. "
                 "Are you running the tests inside the nf-core/modules main directory? "
                 "Do you have tests for the specified module?"
             )

@@ -31,10 +31,6 @@ class ComponentCommand:
         self.paths = NFCorePaths(dir, org)
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
-        self.default_modules_path = self.paths.get_modules_path()
-        self.default_tests_path = self.paths.get_modules_tests_path()
-        self.default_subworkflows_path = self.paths.get_subworkflows_path()
-        self.default_subworkflows_tests_path = self.paths.get_subworkflows_tests_path()
 
         try:
             if self.dir:
@@ -57,10 +53,7 @@ class ComponentCommand:
         """
         Get the modules/subworkflows repository available in a clone of nf-core/modules
         """
-        if self.component_type == "modules":
-            component_base_path = Path(self.dir, self.default_modules_path)
-        elif self.component_type == "subworkflows":
-            component_base_path = Path(self.dir, self.default_subworkflows_path)
+        component_base_path = self.paths.get_component_path(self.component_type)
         return [
             str(Path(dir).relative_to(component_base_path))
             for dir, _, files in os.walk(component_base_path)

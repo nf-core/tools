@@ -114,16 +114,16 @@ class ModulesTest(ModuleCommand):
         - tests/modules/nf-core/TOOL/SUBTOOL/
 
         """
-        module_path = Path(self.default_modules_path) / self.module_name
-        test_path = Path(self.default_tests_path) / self.module_name
+        module_path = self.paths.get_modules_path() / self.module_name
+        test_path = self.paths.get_modules_tests_path() / self.module_name
 
-        if not (self.dir / module_path).is_dir():
+        if not module_path.is_dir():
             raise UserWarning(
-                f"Cannot find directory '{module_path}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?"
+                f"Cannot find directory '{module_path.relative_to(self.paths.dir)}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?"
             )
-        if not (self.dir / test_path).is_dir():
+        if not test_path.is_dir():
             raise UserWarning(
-                f"Cannot find directory '{test_path}'. Should be TOOL/SUBTOOL or TOOL. "
+                f"Cannot find directory '{test_path.relative_to(self.paths.dir)}'. Should be TOOL/SUBTOOL or TOOL. "
                 "Are you running the tests inside the nf-core/modules main directory? "
                 "Do you have tests for the specified module?"
             )

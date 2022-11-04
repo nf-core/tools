@@ -102,7 +102,7 @@ class ModuleLint(ModuleCommand):
             else:
                 raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
         else:
-            module_dir = Path(self.dir, self.default_modules_path)
+            module_dir = self.paths.get_modules_path()
             self.all_remote_modules = [
                 NFCoreModule(m, None, module_dir / m, self.repo_type, Path(self.dir))
                 for m in self.get_components_clone_modules()

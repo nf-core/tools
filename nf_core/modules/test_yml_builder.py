@@ -80,8 +80,14 @@ class ModulesTestYmlBuilder(ModuleCommand):
                 choices=modules_repo.get_avail_components(self.component_type),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        self.module_dir = os.path.join(self.default_modules_path, *self.module_name.split("/"))
-        self.module_test_main = os.path.join(self.default_tests_path, *self.module_name.split("/"), "main.nf")
+        self.module_dir = (
+            self.paths.get_modules_path().relative_to(self.paths.dir).joinpath(*self.module_name.split("/"))
+        )
+        self.module_test_main = (
+            self.paths.get_modules_tests_path()
+            .relative_to(self.paths.dir)
+            .joinpath(*self.module_name.split("/"), "main.nf")
+        )
 
         # First, sanity check that the module directory exists
         if not os.path.isdir(self.module_dir):
