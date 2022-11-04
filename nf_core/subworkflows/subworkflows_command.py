@@ -1,7 +1,4 @@
 import logging
-import os
-import shutil
-from pathlib import Path
 
 from nf_core.components.components_command import ComponentCommand
 
