@@ -48,7 +48,7 @@ jobs:
           version: ${{ matrix.NXF_VER }}
 
       # Install the Prettier linting tools
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
 
       - name: Install Prettier
         run: npm install -g prettier
