@@ -476,6 +476,9 @@ class ModulesJson:
 
         If a module/subworkflow is installed but the entry in 'modules.json' is missing we iterate through
         the commit log in the remote to try to determine the SHA.
+
+        Check that we have the "installed" value in 'modules.json', otherwise add it.
+        Assume that the modules/subworkflows were installed by and nf-core command (don't track installed by subworkflows).
         """
         try:
             self.load()
@@ -509,6 +512,16 @@ class ModulesJson:
             self.resolve_missing_from_modules_json(modules_missing_from_modules_json, "modules")
         if len(subworkflows_missing_from_modules_json) > 0:
             self.resolve_missing_from_modules_json(subworkflows_missing_from_modules_json, "subworkflows")
+
+        # If the "installed" value is not present for modules/subworkflows, add it.
+        for repo, repo_content in self.modules_json["repos"].items():
+            for component_type, dir_content in repo_content.items():
+                for install_dir, installed_components in dir_content.items():
+                    for component, component_features in installed_components.items():
+                        if "installed" not in component_features:
+                            self.modules_json["repos"][repo][component_type][install_dir][component]["installed"] = [
+                                component_type
+                            ]
 
         self.dump()
 
