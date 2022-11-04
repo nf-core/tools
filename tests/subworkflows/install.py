@@ -17,6 +17,7 @@ from ..utils import (
 def test_subworkflow_install_nopipeline(self):
     """Test installing a subworkflow - no pipeline given"""
     self.subworkflow_install.dir = None
+    self.subworkflow_install.dir = ""
     assert self.subworkflow_install.install("foo") is False
 
 
@@ -25,6 +26,7 @@ def test_subworkflows_install_emptypipeline(self, tmpdir):
     """Test installing a subworkflow - empty dir given"""
     os.mkdir(os.path.join(tmpdir, "nf-core-pipe"))
     self.subworkflow_install.dir = os.path.join(tmpdir, "nf-core-pipe")
+    self.subworkflow_install.paths.dir = os.path.join(tmpdir, "nf-core-pipe")
     with pytest.raises(UserWarning) as excinfo:
         self.subworkflow_install.install("foo")
     assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
