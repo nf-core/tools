@@ -12,8 +12,8 @@ log = logging.getLogger(__name__)
 
 
 class ModuleRemove(ComponentCommand):
-    def __init__(self):
-        super().__init__("modules")
+    def __init__(self, pipeline_dir):
+        super().__init__("modules", pipeline_dir)
 
     def remove(self, module):
         """
