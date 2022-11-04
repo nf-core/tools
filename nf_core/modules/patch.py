@@ -62,7 +62,9 @@ class ModulePatch(ModuleCommand):
                 f"The '{module_fullname}' module does not have a valid version in the 'modules.json' file. Cannot compute patch"
             )
         # Get the module branch and reset it in the ModulesRepo object
-        module_branch = self.modules_json.get_module_branch(module, self.modules_repo.remote_url, module_dir)
+        module_branch = self.modules_json.get_component_branch(
+            self.component_type, module, self.modules_repo.remote_url, module_dir
+        )
         if module_branch != self.modules_repo.branch:
             self.modules_repo.setup_branch(module_branch)
 

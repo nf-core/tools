@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ Tests covering the subworkflows commands
 """
 
@@ -12,7 +11,7 @@ import nf_core.create
 import nf_core.modules
 import nf_core.subworkflows
 
-from .utils import mock_api_calls
+from .utils import GITLAB_SUBWORKFLOWS_BRANCH, GITLAB_URL, mock_api_calls
 
 
 def create_modules_repo_dummy(tmp_dir):
@@ -31,10 +30,8 @@ def create_modules_repo_dummy(tmp_dir):
         fh.writelines(["repository_type: modules", "\n"])
 
     with requests_mock.Mocker() as mock:
-        mock_api_calls(mock, "bpipe", "0.9.11")
-        # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
-        module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_medium", False, False)
-        module_create.create()
+        subworkflow_create = nf_core.subworkflows.SubworkflowCreate(root_dir, "test_subworkflow", "@author", True)
+        subworkflow_create.create()
 
     return root_dir
 
@@ -45,6 +42,7 @@ class TestSubworkflows(unittest.TestCase):
     def setUp(self):
         """Create a new PipelineStructure and Launch objects"""
         self.tmp_dir = tempfile.mkdtemp()
+        self.component_type = "subworkflows"
 
         # Set up the pipeline structure
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -54,8 +52,20 @@ class TestSubworkflows(unittest.TestCase):
             "mypipeline", "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
 
+        # Set up install objects
+        self.subworkflow_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
+        self.subworkflow_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
+            self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
+        )
+
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
+
+        # Set up install objects
+        self.sw_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
+        self.sw_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
+            self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
+        )
 
     ############################################
     # Test of the individual modules commands. #
@@ -65,6 +75,21 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_create_fail_exists,
         test_subworkflows_create_nfcore_modules,
         test_subworkflows_create_succeed,
+    )
+    from .subworkflows.install import (
+        test_subworkflow_install_nopipeline,
+        test_subworkflows_install_bam_sort_stats_samtools,
+        test_subworkflows_install_bam_sort_stats_samtools_twice,
+        test_subworkflows_install_different_branch_fail,
+        test_subworkflows_install_emptypipeline,
+        test_subworkflows_install_from_gitlab,
+        test_subworkflows_install_nosubworkflow,
+    )
+    from .subworkflows.list import (
+        test_subworkflows_install_and_list_subworkflows,
+        test_subworkflows_install_gitlab_and_list_subworkflows,
+        test_subworkflows_list_remote,
+        test_subworkflows_list_remote_gitlab,
     )
     from .subworkflows.subworkflows_test import (
         test_subworkflows_test_check_inputs,

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ Tests covering the modules commands
 """
 
@@ -51,6 +50,7 @@ class TestModules(unittest.TestCase):
     def setUp(self):
         """Create a new PipelineSchema and Launch objects"""
         self.tmp_dir = tempfile.mkdtemp()
+        self.component_type = "modules"
 
         # Set up the schema
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
