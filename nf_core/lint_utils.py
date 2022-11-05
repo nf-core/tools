@@ -64,12 +64,9 @@ def run_prettier_on_file(file):
         If Prettier is not installed, a warning is logged.
     """
 
-    _prettier_installed = not shutil.which("prettier") is None
-    _pre_commit_installed = not shutil.which("pre-commit") is None
-
-    if _prettier_installed:
+    if shutil.which("prettier"):
         _run_prettier_on_file(file)
-    elif _pre_commit_installed:
+    elif shutil.which("pre-commit"):
         _run_pre_commit_prettier_on_file(file)
     else:
         log.warning(
