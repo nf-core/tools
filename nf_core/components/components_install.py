@@ -42,19 +42,20 @@ def collect_and_verify_name(component_type, component, modules_repo):
     return component
 
 
-def check_component_installed(component_type, component, current_version, component_dir, modules_repo, force):
+def check_component_installed(component_type, component, current_version, component_dir, modules_repo, force, prompt):
     """
     Check that the module/subworkflow is not already installed
     """
     if (current_version is not None and os.path.exists(component_dir)) and not force:
         log.info(f"{component_type[:-1].title()} is already installed.")
 
-        message = "?" if component_type == "modules" else " of this subworkflow and all it's imported modules?"
-        force = questionary.confirm(
-            f"{component_type[:-1].title()} {component} is already installed. \nDo you want to force the reinstallation{message}",
-            style=nf_core.utils.nfcore_question_style,
-            default=False,
-        ).unsafe_ask()
+        if prompt:
+            message = "?" if component_type == "modules" else " of this subworkflow and all it's imported modules?"
+            force = questionary.confirm(
+                f"{component_type[:-1].title()} {component} is already installed. \nDo you want to force the reinstallation{message}",
+                style=nf_core.utils.nfcore_question_style,
+                default=False,
+            ).unsafe_ask()
 
         if not force:
             repo_flag = "" if modules_repo.repo_path == NF_CORE_MODULES_NAME else f"-g {modules_repo.remote_url} "
