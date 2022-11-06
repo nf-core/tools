@@ -45,7 +45,7 @@ def print_fixes(lint_obj, module_lint_obj):
         lint_dir = "" if lint_obj.wf_path == "." else f"--dir {lint_obj.wf_path}"
         console.print(
             "\nTip: Some of these linting errors can automatically be resolved with the following command:"
-            f"\n\n[blue]    nf-core lint {lint_dir} {fixe_flags}\n"
+            f"\n\n[blue]    nf-core lint {lint_dir} {fix_flags}\n"
         )
     if len(lint_obj.fix):
         console.print(
