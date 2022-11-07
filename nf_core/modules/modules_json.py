@@ -42,7 +42,7 @@ class ModulesJson:
 
     def create(self):
         """
-        Creates the modules.json file from the modules installed in the pipeline directory
+        Creates the modules.json file from the modules and subworkflows installed in the pipeline directory
 
         Raises:
             UserWarning: If the creation fails
@@ -51,40 +51,34 @@ class ModulesJson:
         pipeline_name = pipeline_config.get("manifest.name", "")
         pipeline_url = pipeline_config.get("manifest.homePage", "")
         modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": {}}
-        modules_dir = Path(self.dir, "modules")
 
-        if not modules_dir.exists():
+        if not self.modules_dir.exists():
             raise UserWarning("Can't find a ./modules directory. Is this a DSL2 pipeline?")
 
-        repos, _ = self.get_pipeline_module_repositories(modules_dir)
+        # Get repositories
+        repos, _ = self.get_pipeline_module_repositories("modules", self.modules_dir)
+        repos, _ = self.get_pipeline_module_repositories("subworkflows", self.subworkflows_dir, repos)
 
-        # Get all module names in the repos
-        repo_module_names = [
-            (
-                repo_url,
-                [
-                    str(
-                        Path(module_name).relative_to(
-                            modules_dir / nf_core.modules.modules_utils.path_from_remote(repo_url)
-                        )
-                    )
-                    for module_name, _, file_names in os.walk(
-                        modules_dir / nf_core.modules.modules_utils.path_from_remote(repo_url)
-                    )
-                    if "main.nf" in file_names
-                ],
-                nf_core.modules.modules_utils.path_from_remote(repo_url),
-            )
-            for repo_url in repos
-        ]
+        # Get all module/subworkflow names in the repos
+        repo_module_names = self.get_component_names_from_repo(repos, self.modules_dir)
+        repo_subworkflow_names = self.get_component_names_from_repo(repos, self.subworkflows_dir)
 
+        # Add module/subworkflow info into modules_json
         for repo_url, module_names, install_dir in sorted(repo_module_names):
             modules_json["repos"][repo_url] = {}
             modules_json["repos"][repo_url]["modules"] = {}
             modules_json["repos"][repo_url]["modules"][install_dir] = {}
-            modules_json["repos"][repo_url]["modules"][install_dir] = self.determine_module_branches_and_shas(
-                install_dir, repo_url, module_names
+            modules_json["repos"][repo_url]["modules"][install_dir] = self.determine_branches_and_shas(
+                "modules", install_dir, repo_url, module_names
             )
+        for repo_url, subworkflow_names, install_dir in sorted(repo_subworkflow_names):
+            modules_json["repos"][repo_url] = {}
+            modules_json["repos"][repo_url]["subworkflows"] = {}
+            modules_json["repos"][repo_url]["subworkflows"][install_dir] = {}
+            modules_json["repos"][repo_url]["subworkflows"][install_dir] = self.determine_branches_and_shas(
+                "subworkflows", install_dir, repo_url, subworkflow_names
+            )
+
         # write the modules.json file and assign it to the object
         modules_json_path = Path(self.dir, "modules.json")
         with open(modules_json_path, "w") as fh:
@@ -92,13 +86,42 @@ class ModulesJson:
             fh.write("\n")
         self.modules_json = modules_json
 
-    def get_pipeline_module_repositories(self, modules_dir, repos=None):
+    def get_component_names_from_repo(self, repos, directory):
         """
-        Finds all module repositories in the modules directory.
-        Ignores the local modules.
+        Get component names from repositories in a pipeline.
 
         Args:
-            modules_dir (Path): base directory for the module files
+            repos (list): list of repository urls
+            directory (str): modules directory or subworkflows directory
+        """
+        names = [
+            (
+                repo_url,
+                [
+                    str(
+                        Path(component_name).relative_to(
+                            directory / nf_core.modules.modules_utils.path_from_remote(repo_url)
+                        )
+                    )
+                    for component_name, _, file_names in os.walk(
+                        directory / nf_core.modules.modules_utils.path_from_remote(repo_url)
+                    )
+                    if "main.nf" in file_names
+                ],
+                nf_core.modules.modules_utils.path_from_remote(repo_url),
+            )
+            for repo_url in repos
+        ]
+        return names
+
+    def get_pipeline_module_repositories(self, component_type, directory, repos=None):
+        """
+        Finds all module repositories in the modules and subworkflows directory.
+        Ignores the local modules/subworkflows.
+
+        Args:
+            component_type (str): modules or subworkflows
+            directory (Path): base directory for the module files
         Returns
             repos ([ (str, str, str) ]),
             renamed_dirs (dict[Path, Path]): List of tuples of repo name, repo
@@ -108,22 +131,23 @@ class ModulesJson:
         if repos is None:
             repos = {}
         # Check if there are any nf-core modules installed
-        if (modules_dir / nf_core.modules.modules_repo.NF_CORE_MODULES_NAME).exists():
+        if (directory / nf_core.modules.modules_repo.NF_CORE_MODULES_NAME).exists():
             repos[nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE] = {}
         # The function might rename some directories, keep track of them
         renamed_dirs = {}
         # Check if there are any untracked repositories
         dirs_not_covered = self.dir_tree_uncovered(
-            modules_dir, [Path(nf_core.modules.modules_utils.path_from_remote(url)) for url in repos]
+            directory, [Path(nf_core.modules.modules_utils.path_from_remote(url)) for url in repos]
         )
         if len(dirs_not_covered) > 0:
-            log.info("Found custom module repositories when creating 'modules.json'")
+            log.info(f"Found custom {component_type[:-1]} repositories when creating 'modules.json'")
             # Loop until all directories in the base directory are covered by a remote
             while len(dirs_not_covered) > 0:
                 log.info(
-                    "The following director{s} in the modules directory are untracked: '{l}'".format(
+                    "The following director{s} in the {t} directory are untracked: '{l}'".format(
                         s="ies" if len(dirs_not_covered) > 0 else "y",
-                        l="', '".join(str(dir.relative_to(modules_dir)) for dir in dirs_not_covered),
+                        t=component_type,
+                        l="', '".join(str(dir.relative_to(directory)) for dir in dirs_not_covered),
                     )
                 )
                 nrepo_remote = questionary.text(
@@ -142,7 +166,7 @@ class ModulesJson:
 
                 # Verify that there is a directory corresponding the remote
                 nrepo_name = nf_core.modules.modules_utils.path_from_remote(nrepo_remote)
-                if not (modules_dir / nrepo_name).exists():
+                if not (directory / nrepo_name).exists():
                     log.info(
                         "The provided remote does not seem to correspond to a local directory. "
                         "The directory structure should be the same as in the remote."
@@ -152,28 +176,28 @@ class ModulesJson:
                         style=nf_core.utils.nfcore_question_style,
                     ).unsafe_ask()
                     if dir_name:
-                        old_path = modules_dir / dir_name
-                        new_path = modules_dir / nrepo_name
+                        old_path = directory / dir_name
+                        new_path = directory / nrepo_name
                         old_path.rename(new_path)
                         renamed_dirs[old_path] = new_path
                     else:
                         continue
 
-                repos[nrepo_remote]["modules"][nrepo_name] = {}
+                repos[nrepo_remote][component_type][nrepo_name] = {}
                 dirs_not_covered = self.dir_tree_uncovered(
-                    modules_dir, [Path(name) for url in repos for name in repos[url][modules_dir]]
+                    directory, [Path(name) for url in repos for name in repos[url][directory]]
                 )
         return repos, renamed_dirs
 
-    def dir_tree_uncovered(self, modules_dir, repos):
+    def dir_tree_uncovered(self, directory, repos):
         """
-        Does a BFS of the modules directory to look for directories that
+        Does a BFS of the modules/subworkflos directory to look for directories that
         are not tracked by a remote. The 'repos' argument contains the
         directories that are currently covered by remote, and it and its
         subdirectories are therefore ignore.
 
         Args:
-            module_dir (Path): Base path of modules in pipeline
+            directory (Path): Base path of modules or subworkflows in pipeline
             repos ([ Path ]): List of repos that are covered by a remote
 
         Returns:
@@ -181,14 +205,14 @@ class ModulesJson:
         """
         # Initialise the FIFO queue. Note that we assume the directory to be correctly
         # configured, i.e. no files etc.
-        fifo = [subdir for subdir in modules_dir.iterdir() if subdir.stem != "local"]
+        fifo = [subdir for subdir in directory.iterdir() if subdir.stem != "local"]
         depth = 1
         dirs_not_covered = []
         while len(fifo) > 0:
             temp_queue = []
             repos_at_level = {Path(*repo.parts[:depth]): len(repo.parts) for repo in repos}
             for directory in fifo:
-                rel_dir = directory.relative_to(modules_dir)
+                rel_dir = directory.relative_to(directory)
                 if rel_dir in repos_at_level.keys():
                     # Go the next depth if this directory is not one of the repos
                     if depth < repos_at_level[rel_dir]:
@@ -200,61 +224,70 @@ class ModulesJson:
             depth += 1
         return dirs_not_covered
 
-    def determine_module_branches_and_shas(self, install_dir, remote_url, modules):
+    def determine_branches_and_shas(self, component_type, install_dir, remote_url, components):
         """
-        Determines what branch and commit sha each module in the pipeline belong to
+        Determines what branch and commit sha each module/subworkflow in the pipeline belong to
 
-        Assumes all modules are installed from the default branch. If it fails to find the
-        module in the default branch, it prompts the user with the available branches
+        Assumes all modules/subworkflows are installed from the default branch. If it fails to find the
+        module/subworkflow in the default branch, it prompts the user with the available branches
 
         Args:
-            install_dir (str): The name of the directory inside modules where modules are installed
+            install_dir (str): The name of the directory inside modules or subworkflows where components are installed
             remote_url (str): The url to the remote repository
-            modules ([str]): List of names of installed modules from the repository
+            components ([str]): List of names of installed modules/subworkflows from the repository
 
         Returns:
-            (dict[str, dict[str, str]]): The module.json entries for the modules
+            (dict[str, dict[str, str]]): The module.json entries for the modules/subworkflows
                                          from the repository
         """
         default_modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=remote_url)
-        repo_path = self.modules_dir / install_dir
+        if component_type == "modules":
+            repo_path = self.modules_dir / install_dir
+        elif component_type == "subworkflows":
+            repo_path = self.subworkflows_dir / install_dir
         # Get the branches present in the repository, as well as the default branch
         available_branches = nf_core.modules.modules_repo.ModulesRepo.get_remote_branches(remote_url)
         sb_local = []
-        dead_modules = []
+        dead_components = []
         repo_entry = {}
-        for module in sorted(modules):
+        for component in sorted(components):
             modules_repo = default_modules_repo
-            module_path = repo_path / module
+            component_path = repo_path / component
             correct_commit_sha = None
             tried_branches = {default_modules_repo.branch}
             found_sha = False
             while True:
-                # If the module is patched
-                patch_file = module_path / f"{module}.diff"
+                # If the module/subworkflow is patched
+                patch_file = component_path / f"{component}.diff"
                 if patch_file.is_file():
-                    temp_module_dir = self.try_apply_patch_reverse(module, install_dir, patch_file, module_path)
-                    correct_commit_sha = self.find_correct_commit_sha(module, temp_module_dir, modules_repo)
+                    temp_module_dir = self.try_apply_patch_reverse(component, install_dir, patch_file, component_path)
+                    correct_commit_sha = self.find_correct_commit_sha(
+                        component_type, component, temp_module_dir, modules_repo
+                    )
                 else:
-                    correct_commit_sha = self.find_correct_commit_sha(module, module_path, modules_repo)
+                    correct_commit_sha = self.find_correct_commit_sha(
+                        component_type, component, component_path, modules_repo
+                    )
                     if correct_commit_sha is None:
                         # Check in the old path
                         correct_commit_sha = self.find_correct_commit_sha(
-                            module, repo_path / "modules" / module, modules_repo
+                            component_type, component, repo_path / component_type / component, modules_repo
                         )
                 if correct_commit_sha is None:
-                    log.info(f"Was unable to find matching module files in the {modules_repo.branch} branch.")
+                    log.info(
+                        f"Was unable to find matching {component_type[:-1]} files in the {modules_repo.branch} branch."
+                    )
                     choices = [{"name": "No", "value": False}] + [
                         {"name": branch, "value": branch} for branch in (available_branches - tried_branches)
                     ]
                     branch = questionary.select(
-                        f"Was the module '{module}' installed from a different branch in the remote?\nSelect 'No' for a local module",
+                        f"Was the {component_type[:-1]} '{component}' installed from a different branch in the remote?\nSelect 'No' for a local {component_type[:-1]}",
                         choices=choices,
                         style=nf_core.utils.nfcore_question_style,
                     ).unsafe_ask()
                     if not branch:
                         action = questionary.select(
-                            f"Module is untracked '{module}'. Please select what action to take",
+                            f"{component_type[:-1].title()} is untracked '{component}'. Please select what action to take",
                             choices=[
                                 {"name": "Move the directory to 'local'", "value": 0},
                                 {"name": "Remove the files", "value": 1},
@@ -262,9 +295,9 @@ class ModulesJson:
                             style=nf_core.utils.nfcore_question_style,
                         ).unsafe_ask()
                         if action == 0:
-                            sb_local.append(module)
+                            sb_local.append(component)
                         else:
-                            dead_modules.append(module)
+                            dead_components.append(component)
                         break
                     # Create a new modules repo with the selected branch, and retry find the sha
                     modules_repo = nf_core.modules.modules_repo.ModulesRepo(
@@ -274,61 +307,67 @@ class ModulesJson:
                     found_sha = True
                     break
             if found_sha:
-                repo_entry[module] = {"branch": modules_repo.branch, "git_sha": correct_commit_sha}
+                repo_entry[component] = {"branch": modules_repo.branch, "git_sha": correct_commit_sha}
 
-        # Clean up the modules we were unable to find the sha for
-        for module in sb_local:
-            log.debug(f"Moving module '{Path(install_dir, module)}' to 'local' directory")
-            self.move_module_to_local(module, install_dir)
+        # Clean up the modules/subworkflows we were unable to find the sha for
+        for component in sb_local:
+            log.debug(f"Moving {component_type[:-1]} '{Path(install_dir, component)}' to 'local' directory")
+            self.move_module_to_local(component, install_dir)
 
-        for module in dead_modules:
-            log.debug(f"Removing module {Path(install_dir, module)}'")
-            shutil.rmtree(repo_path / module)
+        for component in dead_components:
+            log.debug(f"Removing {component_type[:-1]} {Path(install_dir, component)}'")
+            shutil.rmtree(repo_path / component)
 
         return repo_entry
 
-    def find_correct_commit_sha(self, module_name, module_path, modules_repo):
+    def find_correct_commit_sha(self, component_type, component_name, component_path, modules_repo):
         """
         Returns the SHA for the latest commit where the local files are identical to the remote files
         Args:
-            module_name (str): Name of module
-            module_path (str): Path to module in local repo
-            module_repo (str): Remote repo for module
+            component_type (str): modules or subworkflows
+            component_name (str): Name of module/subowrkflow
+            component_path (str): Path to module/subworkflow in local repo
+            modules_repo (str): Remote repo for module/subworkflow
         Returns:
             commit_sha (str): The latest commit SHA where local files are identical to remote files,
                               or None if no commit is found
         """
-        # Find the correct commit SHA for the local module files.
-        # We iterate over the commit history for the module until we find
+        # Find the correct commit SHA for the local module/subworkflow files.
+        # We iterate over the commit history for the module/subworkflow until we find
         # a revision that matches the file contents
         commit_shas = (
-            commit["git_sha"] for commit in modules_repo.get_component_git_log(module_name, "modules", depth=1000)
+            commit["git_sha"]
+            for commit in modules_repo.get_component_git_log(component_name, component_type, depth=1000)
         )
         for commit_sha in commit_shas:
-            if all(modules_repo.module_files_identical(module_name, module_path, commit_sha).values()):
+            if all(modules_repo.module_files_identical(component_name, component_path, commit_sha).values()):
                 return commit_sha
         return None
 
-    def move_module_to_local(self, module, repo_name):
+    def move_component_to_local(self, component_type, component, repo_name):
         """
-        Move a module to the 'local' directory
+        Move a module/subworkflow to the 'local' directory
 
         Args:
-            module (str): The name of the modules
+            component (str): The name of the module/subworkflow
             repo_name (str): The name of the repository the module resides in
         """
-        current_path = self.modules_dir / repo_name / module
-        local_modules_dir = self.modules_dir / "local"
-        if not local_modules_dir.exists():
-            local_modules_dir.mkdir()
+        if component_type == "modules":
+            directory = self.modules_dir
+        elif component_type == "subworkflows":
+            directory = self.subworkflows_dir
+        current_path = directory / repo_name / component
+        local_dir = directory / "local"
+        if not local_dir.exists():
+            local_dir.mkdir()
 
-        to_name = module
+        to_name = component
         # Check if there is already a subdirectory with the name
-        while (local_modules_dir / to_name).exists():
+        while (local_dir / to_name).exists():
             # Add a time suffix to the path to make it unique
             # (do it again and again if it didn't work out...)
             to_name += f"-{datetime.datetime.now().strftime('%y%m%d%H%M%S')}"
-        shutil.move(current_path, local_modules_dir / to_name)
+        shutil.move(current_path, local_dir / to_name)
 
     def unsynced_components(self):
         """
@@ -379,17 +418,18 @@ class ModulesJson:
                         git_url = repo
                         break
             if not component_in_file:
-                # If it is not, add it to the list of missing subworkflow
+                # If it is not, add it to the list of missing modules/subworkflows
                 untracked_dirs.append(component)
-
             else:
-                # If it does, remove the subworkflow from missing_installation
+                # If it does, remove the module/subworkflow from missing_installation
                 module_repo = missing_installation[git_url]
                 # Check if the entry has a git sha and branch before removing
                 components_dict = module_repo[component_type][install_dir]
                 if "git_sha" not in components_dict[component] or "branch" not in components_dict[component]:
-                    self.determine_module_branches_and_shas(component, git_url, module_repo["base_path"], [component])
-                # Remove the subworkflow from subworkflows without installation
+                    self.determine_branches_and_shas(
+                        component_type, component, git_url, module_repo["base_path"], [component]
+                    )
+                # Remove the module/subworkflow from modules/subworkflows without installation
                 module_repo[component_type][install_dir].pop(component)
                 if len(module_repo[component_type][install_dir]) == 0:
                     # If no modules/subworkflows with missing installation left, remove the git_url from missing_installation
@@ -921,7 +961,7 @@ class ModulesJson:
 
         # Get the remotes we are missing
         tracked_repos = {repo_url: (repo_entry) for repo_url, repo_entry in self.modules_json["repos"].items()}
-        repos, _ = self.get_pipeline_module_repositories(self.modules_dir, tracked_repos)
+        repos, _ = self.get_pipeline_module_repositories("modules", self.modules_dir, tracked_repos)
 
         components_with_repos = (
             (
@@ -941,7 +981,7 @@ class ModulesJson:
 
         for install_dir, components in repos_with_components.items():
             remote_url = [url for url, content in repos.items() if install_dir in content][0]
-            repo_entry = self.determine_module_branches_and_shas(install_dir, remote_url, components)
+            repo_entry = self.determine_branches_and_shas("component_type", install_dir, remote_url, components)
             if remote_url in self.modules_json["repos"]:
                 self.modules_json["repos"][remote_url][component_type][install_dir].update(repo_entry)
             else:
