@@ -1,0 +1,18 @@
+nextflow_pipeline {
+
+    name "default"
+    script "main.nf"
+
+    test("default test config") {
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+        }
+
+        then {
+            assert workflow.success
+        }
+    }
+
+}
