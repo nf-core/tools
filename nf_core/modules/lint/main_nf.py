@@ -11,7 +11,7 @@ from pathlib import Path
 import requests
 
 import nf_core
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 from nf_core.modules.modules_differ import ModulesDiffer
 
 log = logging.getLogger(__name__)

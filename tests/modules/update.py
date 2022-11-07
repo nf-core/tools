@@ -56,7 +56,7 @@ def test_install_at_hash_and_update(self):
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
     # Get the up-to-date git_sha for the module from the ModulesRepo object
-    correct_git_sha = update_obj.modules_repo.get_latest_module_version("trimgalore")
+    correct_git_sha = update_obj.modules_repo.get_latest_component_version("trimgalore", "modules")
     current_git_sha = mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]["git_sha"]
     assert correct_git_sha == current_git_sha
 
@@ -96,7 +96,7 @@ def test_update_all(self):
     mod_json = mod_json_obj.get_modules_json()
     # Loop through all modules and check that they are updated (according to the modules.json file)
     for mod in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]:
-        correct_git_sha = list(update_obj.modules_repo.get_module_git_log(mod, depth=1))[0]["git_sha"]
+        correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
         current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
         assert correct_git_sha == current_git_sha
 
@@ -231,7 +231,10 @@ def test_update_different_branch_single_module(self):
 
     # Verify that the branch entry was updated correctly
     modules_json = ModulesJson(self.pipeline_dir)
-    assert modules_json.get_module_branch("fastp", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_BRANCH
+    assert (
+        modules_json.get_component_branch(self.component_type, "fastp", GITLAB_URL, GITLAB_REPO)
+        == GITLAB_BRANCH_TEST_BRANCH
+    )
     assert modules_json.get_module_version("fastp", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_NEW_SHA
 
 
@@ -249,10 +252,16 @@ def test_update_different_branch_mixed_modules_main(self):
 
     modules_json = ModulesJson(self.pipeline_dir)
     # Verify that the branch entry was updated correctly
-    assert modules_json.get_module_branch("fastp", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_BRANCH
+    assert (
+        modules_json.get_component_branch(self.component_type, "fastp", GITLAB_URL, GITLAB_REPO)
+        == GITLAB_BRANCH_TEST_BRANCH
+    )
     assert modules_json.get_module_version("fastp", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_NEW_SHA
     # MultiQC is present in both branches but should've been updated using the 'main' branch
-    assert modules_json.get_module_branch("multiqc", GITLAB_URL, GITLAB_REPO) == GITLAB_DEFAULT_BRANCH
+    assert (
+        modules_json.get_component_branch(self.component_type, "multiqc", GITLAB_URL, GITLAB_REPO)
+        == GITLAB_DEFAULT_BRANCH
+    )
 
 
 def test_update_different_branch_mix_modules_branch_test(self):
@@ -272,7 +281,10 @@ def test_update_different_branch_mix_modules_branch_test(self):
     )
     assert update_obj.update()
 
-    assert modules_json.get_module_branch("multiqc", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_BRANCH
+    assert (
+        modules_json.get_component_branch(self.component_type, "multiqc", GITLAB_URL, GITLAB_REPO)
+        == GITLAB_BRANCH_TEST_BRANCH
+    )
     assert modules_json.get_module_version("multiqc", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_NEW_SHA
 
 

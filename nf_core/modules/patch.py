@@ -62,7 +62,9 @@ class ModulePatch(ModuleCommand):
                 f"The '{module_fullname}' module does not have a valid version in the 'modules.json' file. Cannot compute patch"
             )
         # Get the module branch and reset it in the ModulesRepo object
-        module_branch = self.modules_json.get_module_branch(module, self.modules_repo.remote_url, module_dir)
+        module_branch = self.modules_json.get_component_branch(
+            self.component_type, module, self.modules_repo.remote_url, module_dir
+        )
         if module_branch != self.modules_repo.branch:
             self.modules_repo.setup_branch(module_branch)
 
@@ -86,7 +88,7 @@ class ModulePatch(ModuleCommand):
         # Create a temporary directory for storing the unchanged version of the module
         install_dir = tempfile.mkdtemp()
         module_install_dir = Path(install_dir, module)
-        if not self.install_module_files(module, module_version, self.modules_repo, install_dir):
+        if not self.install_component_files(module, module_version, self.modules_repo, install_dir):
             raise UserWarning(
                 f"Failed to install files of module '{module}' from remote ({self.modules_repo.remote_url})."
             )

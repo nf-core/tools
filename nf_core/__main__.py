@@ -253,12 +253,13 @@ def download(pipeline, revision, outdir, compress, force, container, singularity
 @click.option("--json", is_flag=True, default=False, help="Print output in JSON")
 def licences(pipeline, json):
     """
-    List software licences for a given workflow.
+    List software licences for a given workflow (DSL1 only).
 
-    Checks the pipeline environment.yml file which lists all conda software packages.
+    Checks the pipeline environment.yml file which lists all conda software packages, which is not available for DSL2 workflows. Therefore, this command only supports DSL1 workflows (for now).
     Each of these is queried against the anaconda.org API to find the licence.
     Package name, version and licence is printed to the command line.
     """
+
     lic = nf_core.licences.WorkflowLicences(pipeline)
     lic.as_json = json
     try:
@@ -453,7 +454,7 @@ def remote(ctx, keywords, json):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        stdout.print(module_list.list_modules(keywords, json))
+        stdout.print(module_list.list_components(keywords, json))
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
@@ -483,7 +484,7 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        stdout.print(module_list.list_modules(keywords, json))
+        stdout.print(module_list.list_components(keywords, json))
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
@@ -827,7 +828,7 @@ def bump_versions(ctx, tool, dir, all, show_all):
             ctx.obj["modules_repo_no_pull"],
         )
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
-    except nf_core.modules.module_utils.ModuleException as e:
+    except nf_core.modules.modules_utils.ModuleException as e:
         log.error(e)
         sys.exit(1)
     except (UserWarning, LookupError) as e:
@@ -995,6 +996,70 @@ def install(ctx, subworkflow, dir, prompt, force, sha):
     except (UserWarning, LookupError) as e:
         log.error(e)
         raise
+        sys.exit(1)
+
+
+# nf-core subworkflows list subcommands
+@subworkflows.group()
+@click.pass_context
+def list(ctx):
+    """
+    List modules in a local pipeline or remote repository.
+    """
+    pass
+
+
+# nf-core subworkflows list remote
+@list.command()
+@click.pass_context
+@click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
+@click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
+def remote(ctx, keywords, json):
+    """
+    List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
+    """
+    try:
+        subworkflow_list = nf_core.subworkflows.SubworkflowList(
+            None,
+            True,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+
+        stdout.print(subworkflow_list.list_components(keywords, json))
+    except (UserWarning, LookupError) as e:
+        log.critical(e)
+        sys.exit(1)
+
+
+# nf-core subworkflows list local
+@list.command()
+@click.pass_context
+@click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
+@click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
+)
+def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
+    """
+    List subworkflows installed locally in a pipeline
+    """
+    try:
+        subworkflow_list = nf_core.subworkflows.SubworkflowList(
+            dir,
+            False,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        stdout.print(subworkflow_list.list_components(keywords, json))
+    except (UserWarning, LookupError) as e:
+        log.error(e)
         sys.exit(1)
 
 

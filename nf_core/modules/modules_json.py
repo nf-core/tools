@@ -11,8 +11,8 @@ import git
 import questionary
 from git.exc import GitCommandError
 
-import nf_core.modules.module_utils
 import nf_core.modules.modules_repo
+import nf_core.modules.modules_utils
 import nf_core.utils
 
 from .modules_differ import ModulesDiffer
@@ -38,6 +38,7 @@ class ModulesJson:
         self.modules_json = None
         self.pipeline_modules = None
         self.pipeline_subworkflows = None
+        self.pipeline_components = None
 
     def create(self):
         """
@@ -64,15 +65,15 @@ class ModulesJson:
                 [
                     str(
                         Path(module_name).relative_to(
-                            modules_dir / nf_core.modules.module_utils.path_from_remote(repo_url)
+                            modules_dir / nf_core.modules.modules_utils.path_from_remote(repo_url)
                         )
                     )
                     for module_name, _, file_names in os.walk(
-                        modules_dir / nf_core.modules.module_utils.path_from_remote(repo_url)
+                        modules_dir / nf_core.modules.modules_utils.path_from_remote(repo_url)
                     )
                     if "main.nf" in file_names
                 ],
-                nf_core.modules.module_utils.path_from_remote(repo_url),
+                nf_core.modules.modules_utils.path_from_remote(repo_url),
             )
             for repo_url in repos
         ]
@@ -113,7 +114,7 @@ class ModulesJson:
         renamed_dirs = {}
         # Check if there are any untracked repositories
         dirs_not_covered = self.dir_tree_uncovered(
-            modules_dir, [Path(nf_core.modules.module_utils.path_from_remote(url)) for url in repos]
+            modules_dir, [Path(nf_core.modules.modules_utils.path_from_remote(url)) for url in repos]
         )
         if len(dirs_not_covered) > 0:
             log.info("Found custom module repositories when creating 'modules.json'")
@@ -140,7 +141,7 @@ class ModulesJson:
                         ).unsafe_ask()
 
                 # Verify that there is a directory corresponding the remote
-                nrepo_name = nf_core.modules.module_utils.path_from_remote(nrepo_remote)
+                nrepo_name = nf_core.modules.modules_utils.path_from_remote(nrepo_remote)
                 if not (modules_dir / nrepo_name).exists():
                     log.info(
                         "The provided remote does not seem to correspond to a local directory. "
@@ -160,7 +161,7 @@ class ModulesJson:
 
                 repos[nrepo_remote]["modules"][nrepo_name] = {}
                 dirs_not_covered = self.dir_tree_uncovered(
-                    modules_dir, [Path(name) for name in repos[url][modules_dir] for url in repos]
+                    modules_dir, [Path(name) for url in repos for name in repos[url][modules_dir]]
                 )
         return repos, renamed_dirs
 
@@ -300,7 +301,9 @@ class ModulesJson:
         # Find the correct commit SHA for the local module files.
         # We iterate over the commit history for the module until we find
         # a revision that matches the file contents
-        commit_shas = (commit["git_sha"] for commit in modules_repo.get_module_git_log(module_name, depth=1000))
+        commit_shas = (
+            commit["git_sha"] for commit in modules_repo.get_component_git_log(module_name, "modules", depth=1000)
+        )
         for commit_sha in commit_shas:
             if all(modules_repo.module_files_identical(module_name, module_path, commit_sha).values()):
                 return commit_sha
@@ -327,15 +330,15 @@ class ModulesJson:
             to_name += f"-{datetime.datetime.now().strftime('%y%m%d%H%M%S')}"
         shutil.move(current_path, local_modules_dir / to_name)
 
-    def unsynced_modules(self):
+    def unsynced_components(self):
         """
-        Compute the difference between the modules in the directory and the
-        modules in the 'modules.json' file. This is done by looking at all
+        Compute the difference between the modules/subworkflows in the directory and the
+        modules/subworkflows in the 'modules.json' file. This is done by looking at all
         directories containing a 'main.nf' file
 
         Returns:
             (untrack_dirs ([ Path ]), missing_installation (dict)): Directories that are not tracked
-            by the modules.json file, and modules in the modules.json where
+            by the modules.json file, and modules/subworkflows in the modules.json where
             the installation directory is missing
         """
         # Add all modules from modules.json to missing_installation
@@ -378,6 +381,7 @@ class ModulesJson:
             if not component_in_file:
                 # If it is not, add it to the list of missing subworkflow
                 untracked_dirs.append(component)
+
             else:
                 # If it does, remove the subworkflow from missing_installation
                 module_repo = missing_installation[git_url]
@@ -390,6 +394,7 @@ class ModulesJson:
                 if len(module_repo[component_type][install_dir]) == 0:
                     # If no modules/subworkflows with missing installation left, remove the git_url from missing_installation
                     missing_installation.pop(git_url)
+
         return untracked_dirs, missing_installation
 
     def has_git_url_and_modules(self):
@@ -446,7 +451,7 @@ class ModulesJson:
                 log.error(e)
                 failed_to_install.extend(modules)
             for module, sha in modules:
-                if not modules_repo.install_module(module, self.modules_dir / install_dir, sha):
+                if not modules_repo.install_component(module, self.modules_dir / install_dir, sha, "modules"):
                     log.warning(
                         f"Could not install module '{Path(self.modules_dir, install_dir, module)}' - removing from modules.json"
                     )
@@ -477,7 +482,7 @@ class ModulesJson:
             modules_missing_from_modules_json,
             subworkflows_missing_from_modules_json,
             missing_installation,
-        ) = self.unsynced_modules()
+        ) = self.unsynced_components()
 
         # If there are any modules/subworkflows left in 'modules.json' after all installed are removed,
         # we try to reinstall them
@@ -782,9 +787,28 @@ class ModulesJson:
 
         return self.pipeline_modules
 
-    def get_module_branch(self, module, repo_url, install_dir):
+    def get_all_components(self, component_type):
         """
-        Gets the branch from which the module was installed
+        Retrieves all pipeline modules/subworkflows that are reported in the modules.json
+
+        Returns:
+            (dict[str, [(str, str)]]): Dictionary indexed with the repo urls, with a
+                                list of tuples (component_dir, components) as values
+        """
+        if self.modules_json is None:
+            self.load()
+        if self.pipeline_components is None:
+            self.pipeline_components = {}
+            for repo, repo_entry in self.modules_json.get("repos", {}).items():
+                if component_type in repo_entry:
+                    for dir, components in repo_entry[component_type].items():
+                        self.pipeline_components[repo] = [(dir, m) for m in components]
+
+        return self.pipeline_components
+
+    def get_component_branch(self, component_type, component, repo_url, install_dir):
+        """
+        Gets the branch from which the module/subworkflow was installed
 
         Returns:
             (str): The branch name
@@ -796,14 +820,14 @@ class ModulesJson:
         branch = (
             self.modules_json["repos"]
             .get(repo_url, {})
-            .get("modules", {})
+            .get(component_type, {})
             .get(install_dir, {})
-            .get(module, {})
+            .get(component, {})
             .get("branch")
         )
         if branch is None:
             raise LookupError(
-                f"Could not find branch information for module '{Path(install_dir, module)}'."
+                f"Could not find branch information for component '{Path(install_dir, component)}'."
                 f"Please remove the 'modules.json' and rerun the command to recreate it"
             )
         return branch
@@ -901,12 +925,12 @@ class ModulesJson:
 
         components_with_repos = (
             (
-                nf_core.modules.module_utils.path_from_remote(repo_url),
-                str(dir.relative_to(nf_core.modules.module_utils.path_from_remote(repo_url))),
+                nf_core.modules.modules_utils.path_from_remote(repo_url),
+                str(dir.relative_to(nf_core.modules.modules_utils.path_from_remote(repo_url))),
             )
             for dir in missing_from_modules_json
             for repo_url in repos
-            if nf_core.utils.is_relative_to(dir, nf_core.modules.module_utils.path_from_remote(repo_url))
+            if nf_core.utils.is_relative_to(dir, nf_core.modules.modules_utils.path_from_remote(repo_url))
         )
 
         repos_with_components = {}
