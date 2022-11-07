@@ -1,4 +1,19 @@
+import logging
+import os
+import sys
+from pathlib import Path
+from shutil import which
+
+import pytest
+import questionary
+import rich
+
+import nf_core.modules.modules_utils
+import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
+from nf_core.modules.modules_json import ModulesJson
+
+log = logging.getLogger(__name__)
 
 
 class ComponentsTest(ComponentCommand):
@@ -30,6 +45,7 @@ class ComponentsTest(ComponentCommand):
 
     def __init__(
         self,
+        component_type,
         module_name=None,
         no_prompts=False,
         pytest_args="",
@@ -37,11 +53,10 @@ class ComponentsTest(ComponentCommand):
         branch=None,
         no_pull=False,
     ):
+        super().__init__(component_type=component_type, dir=".", remote_url=remote_url, branch=branch, no_pull=no_pull)
         self.module_name = module_name
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
-
-        super().__init__("component_type", ".", remote_url, branch, no_pull)
 
     def run(self):
         """Run test steps"""
@@ -61,7 +76,7 @@ class ComponentsTest(ComponentCommand):
 
         # Retrieving installed modules
         if self.repo_type == "modules":
-            installed_modules = self.get_modules_clone_modules()
+            installed_modules = self.get_components_clone_modules()
         else:
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
