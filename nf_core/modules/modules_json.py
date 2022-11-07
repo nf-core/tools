@@ -307,7 +307,11 @@ class ModulesJson:
                     found_sha = True
                     break
             if found_sha:
-                repo_entry[component] = {"branch": modules_repo.branch, "git_sha": correct_commit_sha}
+                repo_entry[component] = {
+                    "branch": modules_repo.branch,
+                    "git_sha": correct_commit_sha,
+                    "installed": "modules",
+                }
 
         # Clean up the modules/subworkflows we were unable to find the sha for
         for component in sb_local:
@@ -412,16 +416,17 @@ class ModulesJson:
             component_in_file = False
             git_url = None
             for repo in missing_installation:
-                for dir_name in missing_installation[repo][component_type]:
-                    if component in missing_installation[repo][component_type][dir_name]:
-                        component_in_file = True
-                        git_url = repo
-                        break
+                if component_type in missing_installation[repo]:
+                    for dir_name in missing_installation[repo][component_type]:
+                        if component in missing_installation[repo][component_type][dir_name]:
+                            component_in_file = True
+                            git_url = repo
+                            break
             if not component_in_file:
-                # If it is not, add it to the list of missing modules/subworkflows
+                # If it is not, add it to the list of missing components
                 untracked_dirs.append(component)
             else:
-                # If it does, remove the module/subworkflow from missing_installation
+                # If it does, remove the component from missing_installation
                 module_repo = missing_installation[git_url]
                 # Check if the entry has a git sha and branch before removing
                 components_dict = module_repo[component_type][install_dir]
@@ -432,6 +437,12 @@ class ModulesJson:
                 # Remove the module/subworkflow from modules/subworkflows without installation
                 module_repo[component_type][install_dir].pop(component)
                 if len(module_repo[component_type][install_dir]) == 0:
+                    # If no modules/subworkflows with missing installation left, remove the install_dir from missing_installation
+                    missing_installation[git_url][component_type].pop(install_dir)
+                if len(module_repo[component_type]) == 0:
+                    # If no modules/subworkflows with missing installation left, remove the component_type from missing_installation
+                    missing_installation[git_url].pop(component_type)
+                if len(module_repo) == 0:
                     # If no modules/subworkflows with missing installation left, remove the git_url from missing_installation
                     missing_installation.pop(git_url)
 
@@ -509,6 +520,9 @@ class ModulesJson:
 
         If a module/subworkflow is installed but the entry in 'modules.json' is missing we iterate through
         the commit log in the remote to try to determine the SHA.
+
+        Check that we have the "installed" value in 'modules.json', otherwise add it.
+        Assume that the modules/subworkflows were installed by and nf-core command (don't track installed by subworkflows).
         """
         try:
             self.load()
@@ -543,6 +557,16 @@ class ModulesJson:
         if len(subworkflows_missing_from_modules_json) > 0:
             self.resolve_missing_from_modules_json(subworkflows_missing_from_modules_json, "subworkflows")
 
+        # If the "installed" value is not present for modules/subworkflows, add it.
+        for repo, repo_content in self.modules_json["repos"].items():
+            for component_type, dir_content in repo_content.items():
+                for install_dir, installed_components in dir_content.items():
+                    for component, component_features in installed_components.items():
+                        if "installed" not in component_features:
+                            self.modules_json["repos"][repo][component_type][install_dir][component]["installed"] = [
+                                component_type
+                            ]
+
         self.dump()
 
     def load(self):
@@ -561,7 +585,7 @@ class ModulesJson:
         except FileNotFoundError:
             raise UserWarning("File 'modules.json' is missing")
 
-    def update(self, modules_repo, module_name, module_version, write_file=True):
+    def update(self, modules_repo, module_name, module_version, installed_by, installed_by_log=None, write_file=True):
         """
         Updates the 'module.json' file with new module info
 
@@ -569,8 +593,12 @@ class ModulesJson:
             modules_repo (ModulesRepo): A ModulesRepo object configured for the new module
             module_name (str): Name of new module
             module_version (str): git SHA for the new module entry
+            installed_by_log (list): previous tracing of installed_by that needs to be added to 'modules.json'
             write_file (bool): whether to write the updated modules.json to a file.
         """
+        if installed_by_log is None:
+            installed_by_log = []
+
         if self.modules_json is None:
             self.load()
         repo_name = modules_repo.repo_path
@@ -583,13 +611,22 @@ class ModulesJson:
             repo_modules_entry[module_name] = {}
         repo_modules_entry[module_name]["git_sha"] = module_version
         repo_modules_entry[module_name]["branch"] = branch
+        try:
+            if installed_by not in repo_modules_entry[module_name]["installed"]:
+                repo_modules_entry[module_name]["installed"].append(installed_by)
+        except KeyError:
+            repo_modules_entry[module_name]["installed"] = [installed_by]
+        finally:
+            repo_modules_entry[module_name]["installed"].extend(installed_by_log)
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
         if write_file:
             self.dump()
 
-    def update_subworkflow(self, modules_repo, subworkflow_name, subworkflow_version, write_file=True):
+    def update_subworkflow(
+        self, modules_repo, subworkflow_name, subworkflow_version, installed_by, installed_by_log=None, write_file=True
+    ):
         """
         Updates the 'module.json' file with new subworkflow info
 
@@ -597,8 +634,12 @@ class ModulesJson:
             modules_repo (ModulesRepo): A ModulesRepo object configured for the new subworkflow
             subworkflow_name (str): Name of new subworkflow
             subworkflow_version (str): git SHA for the new subworkflow entry
+            installed_by_log (list): previous tracing of installed_by that needs to be added to 'modules.json'
             write_file (bool): whether to write the updated modules.json to a file.
         """
+        if installed_by_log is None:
+            installed_by_log = []
+
         if self.modules_json is None:
             self.load()
         repo_name = modules_repo.repo_path
@@ -614,18 +655,26 @@ class ModulesJson:
             repo_subworkflows_entry[subworkflow_name] = {}
         repo_subworkflows_entry[subworkflow_name]["git_sha"] = subworkflow_version
         repo_subworkflows_entry[subworkflow_name]["branch"] = branch
+        try:
+            if installed_by not in repo_subworkflows_entry[subworkflow_name]["installed"]:
+                repo_subworkflows_entry[subworkflow_name]["installed"].append(installed_by)
+        except KeyError:
+            repo_subworkflows_entry[subworkflow_name]["installed"] = [installed_by]
+        finally:
+            repo_subworkflows_entry[subworkflow_name]["installed"].extend(installed_by_log)
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
         if write_file:
             self.dump()
 
-    def remove_entry(self, module_name, repo_url, install_dir):
+    def remove_entry(self, component_type, name, repo_url, install_dir):
         """
         Removes an entry from the 'modules.json' file.
 
         Args:
-            module_name (str): Name of the module to be removed
+            component_type (Str): Type of component [modules, subworkflows]
+            name (str): Name of the module to be removed
             repo_url (str): URL of the repository containing the module
             install_dir (str): Name of the directory where modules are installed
         Returns:
@@ -635,15 +684,17 @@ class ModulesJson:
             return False
         if repo_url in self.modules_json.get("repos", {}):
             repo_entry = self.modules_json["repos"][repo_url]
-            if module_name in repo_entry["modules"].get(install_dir, {}):
-                repo_entry["modules"][install_dir].pop(module_name)
+            if name in repo_entry[component_type].get(install_dir, {}):
+                repo_entry[component_type][install_dir].pop(name)
             else:
-                log.warning(f"Module '{install_dir}/{module_name}' is missing from 'modules.json' file.")
+                log.warning(
+                    f"{component_type[:-1].title()} '{install_dir}/{name}' is missing from 'modules.json' file."
+                )
                 return False
-            if len(repo_entry["modules"][install_dir]) == 0:
+            if len(repo_entry[component_type][install_dir]) == 0:
                 self.modules_json["repos"].pop(repo_url)
         else:
-            log.warning(f"Module '{install_dir}/{module_name}' is missing from 'modules.json' file.")
+            log.warning(f"{component_type[:-1].title()} '{install_dir}/{name}' is missing from 'modules.json' file.")
             return False
 
         self.dump()

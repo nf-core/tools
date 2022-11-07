@@ -1,15 +1,12 @@
 import logging
 import os
 
-import questionary
-
 import nf_core.components.components_install
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 
 from .modules_command import ModuleCommand
-from .modules_repo import NF_CORE_MODULES_NAME
 
 log = logging.getLogger(__name__)
 
@@ -24,11 +21,16 @@ class ModuleInstall(ModuleCommand):
         remote_url=None,
         branch=None,
         no_pull=False,
+        installed_by=False,
     ):
         super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha
+        if installed_by:
+            self.installed_by = installed_by
+        else:
+            self.installed_by = self.component_type
 
     def install(self, module, silent=False):
         if self.repo_type == "modules":
@@ -71,6 +73,11 @@ class ModuleInstall(ModuleCommand):
         if not nf_core.components.components_install.check_component_installed(
             self.component_type, module, current_version, module_dir, self.modules_repo, self.force, self.prompt
         ):
+            log.debug(
+                f"Module is already installed and force is not set.\nAdding the new installation source {self.installed_by} for module {module} to 'modules.json' without installing the module."
+            )
+            modules_json.load()
+            modules_json.update(self.modules_repo, module, current_version, self.installed_by)
             return False
 
         version = nf_core.components.components_install.get_version(
@@ -80,10 +87,11 @@ class ModuleInstall(ModuleCommand):
             return False
 
         # Remove module if force is set
+        install_track = None
         if self.force:
             log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{module}'")
             self.clear_component_dir(module, module_dir)
-            nf_core.components.components_install.clean_modules_json(
+            install_track = nf_core.components.components_install.clean_modules_json(
                 module, self.component_type, self.modules_repo, modules_json
             )
 
@@ -103,5 +111,5 @@ class ModuleInstall(ModuleCommand):
 
         # Update module.json with newly installed module
         modules_json.load()
-        modules_json.update(self.modules_repo, module, version)
+        modules_json.update(self.modules_repo, module, version, self.installed_by, install_track)
         return True

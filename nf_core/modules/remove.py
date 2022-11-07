@@ -50,13 +50,13 @@ class ModuleRemove(ModuleCommand):
 
             if modules_json.module_present(module, self.modules_repo.remote_url, repo_path):
                 log.error(f"Found entry for '{module}' in 'modules.json'. Removing...")
-                modules_json.remove_entry(module, self.modules_repo.remote_url, repo_path)
+                modules_json.remove_entry(self.component_type, module, self.modules_repo.remote_url, repo_path)
             return False
 
         log.info(f"Removing {module}")
 
         # Remove entry from modules.json
-        modules_json.remove_entry(module, self.modules_repo.remote_url, repo_path)
+        modules_json.remove_entry(self.component_type, module, self.modules_repo.remote_url, repo_path)
 
         # Remove the module
         return self.clear_component_dir(module, module_dir)
