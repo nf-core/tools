@@ -10,6 +10,7 @@
 - Remove problematic sniffer code in samplesheet_check.py that could give false positive 'missing header' errors ([https://github.com/nf-core/tools/pull/2194]) [Contributed by @Midnighter, @jfy133]
 - Consistent syntax for branch checks in PRs ([#2202](https://github.com/nf-core/tools/issues/2202))
 - Fixed minor Jinja2 templating bug that caused the PR template to miss a newline
+- Add nf-test([#2007](https://github.com/nf-core/tools/pull/2007))
 
 ### Linting
 
