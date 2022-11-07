@@ -4,9 +4,8 @@ import os
 import nf_core.components.components_install
 import nf_core.modules.modules_utils
 import nf_core.utils
-from nf_core.modules.modules_json import ModulesJson
-
 from nf_core.components.components_command import ComponentCommand
+from nf_core.modules.modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
 
