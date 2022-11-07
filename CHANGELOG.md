@@ -37,7 +37,7 @@
 - Add tests for subworkflows install command ([#1996](https://github.com/nf-core/tools/pull/1996))
 - `check_up_to_date()` function from `modules_json` also checks for subworkflows.
 - Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
-- Function create() from modules_json.py adds also subworkflows to modules.json file ()
+- Function create() from modules_json.py adds also subworkflows to modules.json file ([#2005](https://github.com/nf-core/tools/pull/2005))
 
 ## [v2.6 - Tin Octopus](https://github.com/nf-core/tools/releases/tag/2.6) - [2022-10-04]
 
