@@ -1017,28 +1017,26 @@ class ModulesJson:
         repos, _ = self.get_pipeline_module_repositories(component_type, self.modules_dir, tracked_repos)
 
         # Get tuples of components that miss installation and their install directory
-        components_with_repos = (
-            (
-                nf_core.modules.modules_utils.path_from_remote(repo_url),
-                dir,
-            )
-            for dir in missing_from_modules_json
-            for repo_url in repos
-            if dir
-            in [
-                Path(x[0]).parts[-1]
-                for x in os.walk(
-                    Path(
-                        self.modules_dir if component_type == "modules" else self.subworkflows_dir,
+        def components_with_repos():
+            for dir in missing_from_modules_json:
+                for repo_url in repos:
+                    paths_in_directory = []
+                    repo_url_path = Path(
+                        self.modules_dir,
                         nf_core.modules.modules_utils.path_from_remote(repo_url),
                     )
-                )
-            ]
-        )
+                    for dir_name, _, _ in os.walk(repo_url_path):
+                        if component_type == "modules":
+                            if len(Path(dir).parts) > 1:  # The module name is TOOL/SUBTOOL
+                                paths_in_directory.append(str(Path(*Path(dir_name).parts[-2:])))
+                                pass
+                        paths_in_directory.append(Path(dir_name).parts[-1])
+                    if dir in paths_in_directory:
+                        yield (nf_core.modules.modules_utils.path_from_remote(repo_url), dir)
 
         # Add all components into a dictionary with install directories
         repos_with_components = {}
-        for install_dir, component in components_with_repos:
+        for install_dir, component in components_with_repos():
             if install_dir not in repos_with_components:
                 repos_with_components[install_dir] = []
             repos_with_components[install_dir].append(component)
