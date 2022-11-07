@@ -131,7 +131,9 @@ class ModulesJson:
         if repos is None:
             repos = {}
         # Check if there are any nf-core modules installed
-        if (directory / nf_core.modules.modules_repo.NF_CORE_MODULES_NAME).exists():
+        if (
+            directory / nf_core.modules.modules_repo.NF_CORE_MODULES_NAME
+        ).exists() and nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE not in repos.keys():
             repos[nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE] = {}
         # The function might rename some directories, keep track of them
         renamed_dirs = {}
@@ -189,7 +191,7 @@ class ModulesJson:
                 )
         return repos, renamed_dirs
 
-    def dir_tree_uncovered(self, directory, repos):
+    def dir_tree_uncovered(self, components_directory, repos):
         """
         Does a BFS of the modules/subworkflos directory to look for directories that
         are not tracked by a remote. The 'repos' argument contains the
@@ -197,7 +199,7 @@ class ModulesJson:
         subdirectories are therefore ignore.
 
         Args:
-            directory (Path): Base path of modules or subworkflows in pipeline
+            components_directory (Path): Base path of modules or subworkflows in pipeline
             repos ([ Path ]): List of repos that are covered by a remote
 
         Returns:
@@ -205,14 +207,14 @@ class ModulesJson:
         """
         # Initialise the FIFO queue. Note that we assume the directory to be correctly
         # configured, i.e. no files etc.
-        fifo = [subdir for subdir in directory.iterdir() if subdir.stem != "local"]
+        fifo = [subdir for subdir in components_directory.iterdir() if subdir.stem != "local"]
         depth = 1
         dirs_not_covered = []
         while len(fifo) > 0:
             temp_queue = []
             repos_at_level = {Path(*repo.parts[:depth]): len(repo.parts) for repo in repos}
             for directory in fifo:
-                rel_dir = directory.relative_to(directory)
+                rel_dir = directory.relative_to(components_directory)
                 if rel_dir in repos_at_level.keys():
                     # Go the next depth if this directory is not one of the repos
                     if depth < repos_at_level[rel_dir]:
@@ -1012,18 +1014,29 @@ class ModulesJson:
 
         # Get the remotes we are missing
         tracked_repos = {repo_url: (repo_entry) for repo_url, repo_entry in self.modules_json["repos"].items()}
-        repos, _ = self.get_pipeline_module_repositories("modules", self.modules_dir, tracked_repos)
+        repos, _ = self.get_pipeline_module_repositories(component_type, self.modules_dir, tracked_repos)
 
+        # Get tuples of components that miss installation and their install directory
         components_with_repos = (
             (
                 nf_core.modules.modules_utils.path_from_remote(repo_url),
-                str(dir.relative_to(nf_core.modules.modules_utils.path_from_remote(repo_url))),
+                dir,
             )
             for dir in missing_from_modules_json
             for repo_url in repos
-            if nf_core.utils.is_relative_to(dir, nf_core.modules.modules_utils.path_from_remote(repo_url))
+            if dir
+            in [
+                Path(x[0]).parts[-1]
+                for x in os.walk(
+                    Path(
+                        self.modules_dir if component_type == "modules" else self.subworkflows_dir,
+                        nf_core.modules.modules_utils.path_from_remote(repo_url),
+                    )
+                )
+            ]
         )
 
+        # Add all components into a dictionary with install directories
         repos_with_components = {}
         for install_dir, component in components_with_repos:
             if install_dir not in repos_with_components:
@@ -1031,8 +1044,13 @@ class ModulesJson:
             repos_with_components[install_dir].append(component)
 
         for install_dir, components in repos_with_components.items():
-            remote_url = [url for url, content in repos.items() if install_dir in content][0]
-            repo_entry = self.determine_branches_and_shas("component_type", install_dir, remote_url, components)
+            remote_url = [
+                url
+                for url, content in repos.items()
+                for comp_type, install_directories in content.items()
+                if install_dir in install_directories
+            ][0]
+            repo_entry = self.determine_branches_and_shas(component_type, install_dir, remote_url, components)
             if remote_url in self.modules_json["repos"]:
                 self.modules_json["repos"][remote_url][component_type][install_dir].update(repo_entry)
             else:
