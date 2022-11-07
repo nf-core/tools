@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   test:
-    name: Run pipeline with test data
+    name: Run nf-test with ${{ matrix.profile }}-${{ matrix.NXF_VER }}
     # Only run on push if this is the nf-core dev branch (merged PRs)
     if: "{% raw %}${{{% endraw %} github.event_name != 'push' || (github.event_name == 'push' && github.repository == '{{ name }}') {% raw %}}}{% endraw %}"
     runs-on: ubuntu-latest
@@ -26,6 +26,7 @@ jobs:
         NXF_VER:
           - "21.10.3"
           - "latest-everything"
+        profile: ["docker"]
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v3
@@ -35,9 +36,19 @@ jobs:
         with:
           version: "{% raw %}${{ matrix.NXF_VER }}{% endraw %}"
 
-      - name: Run pipeline with test data
+      - name: Install nf-test
+        run: |
+          wget -qO- https://code.askimed.com/install/nf-test | bash
+          sudo mv nf-test /usr/local/bin/
+
+      - name: Run nf-test
         # TODO nf-core: You can customise CI pipeline run tests as required
         # For example: adding multiple test runs with different parameters
         # Remember that you can parallelise this by using strategy.matrix
-        run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test,docker --outdir ./results
+        run: nf-test test --profile=${{ matrix.profile }} tests/pipeline/default/*.nf.test --junitxml=default.xml
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v3
+        if: always() # always run even if the previous step fails
+        with:
+          report_paths: "default.xml"
