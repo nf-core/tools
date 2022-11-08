@@ -1,4 +1,3 @@
-import json
 import os
 import tempfile
 from pathlib import Path
@@ -234,15 +233,11 @@ def test_create_patch_update_success(self):
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
-    with open(os.path.join(module_path, "main.nf"), "r") as fh:
-        print(fh.readlines())
     # Update the module
     update_obj = nf_core.modules.ModuleUpdate(
         self.pipeline_dir, sha=SUCCEED_SHA, show_diff=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH
     )
     assert update_obj.update(BISMARK_ALIGN)
-    with open(os.path.join(module_path, "main.nf"), "r") as fh:
-        print(fh.readlines())
 
     # Check that a patch file with the correct name has been created
     assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
@@ -257,7 +252,6 @@ def test_create_patch_update_success(self):
     with open(module_path / patch_fn, "r") as fh:
         patch_lines = fh.readlines()
     module_relpath = module_path.relative_to(self.pipeline_dir)
-    print(patch_lines)
     assert f"--- {module_relpath / 'main.nf'}\n" in patch_lines
     assert f"+++ {module_relpath / 'main.nf'}\n" in patch_lines
     assert "-    tuple val(meta), path(reads)\n" in patch_lines
