@@ -482,7 +482,7 @@ class ModulesJson:
         the commit log in the remote to try to determine the SHA.
 
         Check that we have the "installed_by" value in 'modules.json', otherwise add it.
-        Assume that the modules/subworkflows were installed by and nf-core command (don't track installed by subworkflows).
+        Assume that the modules/subworkflows were installed by an nf-core command (don't track installed by subworkflows).
         """
         try:
             self.load()
