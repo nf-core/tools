@@ -22,7 +22,7 @@ class ModulesTest(ComponentsTest):
     ):
         super().__init__(
             component_type="modules",
-            module_name=module_name,
+            component_name=module_name,
             no_prompts=no_prompts,
             pytest_args=pytest_args,
             remote_url=remote_url,
