@@ -6,8 +6,6 @@ import rich
 import nf_core.modules.modules_utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
-
-# from .modules_command import ModulesRepo
 from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)

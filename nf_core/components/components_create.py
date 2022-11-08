@@ -99,7 +99,6 @@ def get_component_dirs(component_type, repo_type, directory, name, supername, su
         # Check whether component file already exists
         component_file = os.path.join(local_component_dir, f"{name}.nf")
         if os.path.exists(component_file) and not force_overwrite:
-            print(f"{component_type[:-1].title()} file exists already: '{component_file}'. Use '--force' to overwrite")
             raise UserWarning(
                 f"{component_type[:-1].title()} file exists already: '{component_file}'. Use '--force' to overwrite"
             )

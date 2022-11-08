@@ -24,14 +24,14 @@ import yaml
 from rich.syntax import Syntax
 
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 
-from .modules_command import ModuleCommand
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
 
-class ModulesTestYmlBuilder(ModuleCommand):
+class ModulesTestYmlBuilder(ComponentCommand):
     def __init__(
         self,
         module_name=None,
@@ -41,7 +41,7 @@ class ModulesTestYmlBuilder(ModuleCommand):
         force_overwrite=False,
         no_prompts=False,
     ):
-        super().__init__(directory)
+        super().__init__("modules", directory)
         self.module_name = module_name
         self.run_tests = run_tests
         self.test_yml_output_path = test_yml_output_path

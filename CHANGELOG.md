@@ -25,6 +25,9 @@
 - Run tests with Python 3.11 ([#1970](https://github.com/nf-core/tools/pull/1970))
 - Bump promoted Python version from 3.7 to 3.8 ([#1971](https://github.com/nf-core/tools/pull/1971))
 - Fix incorrect file deletion in `nf-core launch` when `--params_in` has the same name as `--params_out`
+- Updated GitHub actions ([#1998](https://github.com/nf-core/tools/pull/1998), [#2001](https://github.com/nf-core/tools/pull/2001))
+- Track from where modules and subworkflows are installed ([#1999](https://github.com/nf-core/tools/pull/1999))
+- Substitute ModulesCommand and SubworkflowsCommand by ComponentsCommand ([#2000](https://github.com/nf-core/tools/pull/2000))
 
 ### Modules
 
@@ -35,6 +38,7 @@
 - Add tests for subworkflows install command ([#1996](https://github.com/nf-core/tools/pull/1996))
 - `check_up_to_date()` function from `modules_json` also checks for subworkflows.
 - Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
+- Function create() from modules_json.py adds also subworkflows to modules.json file ([#2005](https://github.com/nf-core/tools/pull/2005))
 
 ## [v2.6 - Tin Octopus](https://github.com/nf-core/tools/releases/tag/2.6) - [2022-10-04]
 

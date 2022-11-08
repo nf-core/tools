@@ -3,49 +3,12 @@
 The ModulesTest class runs the tests locally
 """
 
-import logging
-import os
-import sys
-from pathlib import Path
-from shutil import which
-
-import pytest
-import questionary
-import rich
-
-import nf_core.modules.modules_utils
-import nf_core.utils
-from nf_core.modules.modules_command import ModuleCommand
-from nf_core.modules.modules_json import ModulesJson
-
-log = logging.getLogger(__name__)
+from nf_core.components.components_test import ComponentsTest
 
 
-class ModulesTest(ModuleCommand):
+class ModulesTest(ComponentsTest):
     """
     Class to run module pytests.
-
-    ...
-
-    Attributes
-    ----------
-    module_name : str
-        name of the tool to run tests for
-    no_prompts : bool
-        flat indicating if prompts are used
-    pytest_args : tuple
-        additional arguments passed to pytest command
-
-    Methods
-    -------
-    run():
-        Run test steps
-    _check_inputs():
-        Check inputs. Ask for module_name if not provided and check that the directory exists
-    _set_profile():
-        Set software profile
-    _run_pytests(self):
-        Run pytest
     """
 
     def __init__(
@@ -57,6 +20,7 @@ class ModulesTest(ModuleCommand):
         branch=None,
         no_pull=False,
     ):
+<<<<<<< HEAD
         self.module_name = module_name
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
@@ -179,3 +143,14 @@ class ModulesTest(ModuleCommand):
         # Run pytest
         log.info(f"Running pytest for module '{self.module_name}'")
         sys.exit(pytest.main(command_args))
+=======
+        super().__init__(
+            component_type="modules",
+            component_name=module_name,
+            no_prompts=no_prompts,
+            pytest_args=pytest_args,
+            remote_url=remote_url,
+            branch=branch,
+            no_pull=no_pull,
+        )
+>>>>>>> dev
