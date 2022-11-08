@@ -60,6 +60,7 @@ def test_mod_json_create(self):
     # Get the contents of the file
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
+    print(mod_json)
 
     mods = ["fastqc", "multiqc"]
     for mod in mods:

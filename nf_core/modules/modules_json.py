@@ -57,7 +57,6 @@ class ModulesJson:
 
         # Get repositories
         repos, _ = self.get_pipeline_module_repositories("modules", self.modules_dir)
-        repos, _ = self.get_pipeline_module_repositories("subworkflows", self.subworkflows_dir, repos)
 
         # Get all module/subworkflow names in the repos
         repo_module_names = self.get_component_names_from_repo(repos, self.modules_dir)
@@ -72,7 +71,8 @@ class ModulesJson:
                 "modules", install_dir, repo_url, module_names
             )
         for repo_url, subworkflow_names, install_dir in sorted(repo_subworkflow_names):
-            modules_json["repos"][repo_url] = {}
+            if repo_url not in modules_json["repos"]:  # Don't overwrite the repo if it was already added by modules
+                modules_json["repos"][repo_url] = {}
             modules_json["repos"][repo_url]["subworkflows"] = {}
             modules_json["repos"][repo_url]["subworkflows"][install_dir] = {}
             modules_json["repos"][repo_url]["subworkflows"][install_dir] = self.determine_branches_and_shas(
