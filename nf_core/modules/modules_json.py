@@ -228,7 +228,7 @@ class ModulesJson:
 
     def determine_branches_and_shas(self, component_type, install_dir, remote_url, components):
         """
-        Determines what branch and commit sha each module/subworkflow in the pipeline belong to
+        Determines what branch and commit sha each module/subworkflow in the pipeline belongs to
 
         Assumes all modules/subworkflows are installed from the default branch. If it fails to find the
         module/subworkflow in the default branch, it prompts the user with the available branches
