@@ -4,14 +4,13 @@ import os
 import nf_core.components.components_install
 import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
-
-from .modules_command import ModuleCommand
 
 log = logging.getLogger(__name__)
 
 
-class ModuleInstall(ModuleCommand):
+class ModuleInstall(ComponentCommand):
     def __init__(
         self,
         pipeline_dir,
@@ -23,7 +22,7 @@ class ModuleInstall(ModuleCommand):
         no_pull=False,
         installed_by=False,
     ):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+        super().__init__("modules", pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha
