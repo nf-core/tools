@@ -13,7 +13,7 @@ class SubworkflowsTest(ComponentsTest):
 
     def __init__(
         self,
-        subworkflow_name=None,
+        component_name=None,
         no_prompts=False,
         pytest_args="",
         remote_url=None,
@@ -22,7 +22,7 @@ class SubworkflowsTest(ComponentsTest):
     ):
         super().__init__(
             component_type="subworkflows",
-            module_name=subworkflow_name,  # TODO: modify when components_test.py is refactored to work with subworkflows
+            module_name=component_name,
             no_prompts=no_prompts,
             pytest_args=pytest_args,
             remote_url=remote_url,
