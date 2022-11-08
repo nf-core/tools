@@ -48,7 +48,7 @@ jobs:
           version: ${{ matrix.NXF_VER }}
 
       # Install the Prettier linting tools
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
 
       - name: Install Prettier
         run: npm install -g prettier
@@ -121,7 +121,7 @@ jobs:
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: nf-core-log-file
           path: log.txt
