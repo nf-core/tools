@@ -312,7 +312,7 @@ class ModulesJson:
                 repo_entry[component] = {
                     "branch": modules_repo.branch,
                     "git_sha": correct_commit_sha,
-                    "installed": "modules",
+                    "installed_by": "modules",
                 }
 
         # Clean up the modules/subworkflows we were unable to find the sha for
@@ -523,8 +523,8 @@ class ModulesJson:
         If a module/subworkflow is installed but the entry in 'modules.json' is missing we iterate through
         the commit log in the remote to try to determine the SHA.
 
-        Check that we have the "installed" value in 'modules.json', otherwise add it.
-        Assume that the modules/subworkflows were installed by and nf-core command (don't track installed by subworkflows).
+        Check that we have the "installed_by" value in 'modules.json', otherwise add it.
+        Assume that the modules/subworkflows were installed by an nf-core command (don't track installed by subworkflows).
         """
         try:
             self.load()
@@ -559,13 +559,13 @@ class ModulesJson:
         if len(subworkflows_missing_from_modules_json) > 0:
             self.resolve_missing_from_modules_json(subworkflows_missing_from_modules_json, "subworkflows")
 
-        # If the "installed" value is not present for modules/subworkflows, add it.
+        # If the "installed_by" value is not present for modules/subworkflows, add it.
         for repo, repo_content in self.modules_json["repos"].items():
             for component_type, dir_content in repo_content.items():
                 for install_dir, installed_components in dir_content.items():
                     for component, component_features in installed_components.items():
-                        if "installed" not in component_features:
-                            self.modules_json["repos"][repo][component_type][install_dir][component]["installed"] = [
+                        if "installed_by" not in component_features:
+                            self.modules_json["repos"][repo][component_type][install_dir][component]["installed_by"] = [
                                 component_type
                             ]
 
@@ -614,12 +614,12 @@ class ModulesJson:
         repo_modules_entry[module_name]["git_sha"] = module_version
         repo_modules_entry[module_name]["branch"] = branch
         try:
-            if installed_by not in repo_modules_entry[module_name]["installed"]:
-                repo_modules_entry[module_name]["installed"].append(installed_by)
+            if installed_by not in repo_modules_entry[module_name]["installed_by"]:
+                repo_modules_entry[module_name]["installed_by"].append(installed_by)
         except KeyError:
-            repo_modules_entry[module_name]["installed"] = [installed_by]
+            repo_modules_entry[module_name]["installed_by"] = [installed_by]
         finally:
-            repo_modules_entry[module_name]["installed"].extend(installed_by_log)
+            repo_modules_entry[module_name]["installed_by"].extend(installed_by_log)
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
@@ -658,12 +658,12 @@ class ModulesJson:
         repo_subworkflows_entry[subworkflow_name]["git_sha"] = subworkflow_version
         repo_subworkflows_entry[subworkflow_name]["branch"] = branch
         try:
-            if installed_by not in repo_subworkflows_entry[subworkflow_name]["installed"]:
-                repo_subworkflows_entry[subworkflow_name]["installed"].append(installed_by)
+            if installed_by not in repo_subworkflows_entry[subworkflow_name]["installed_by"]:
+                repo_subworkflows_entry[subworkflow_name]["installed_by"].append(installed_by)
         except KeyError:
-            repo_subworkflows_entry[subworkflow_name]["installed"] = [installed_by]
+            repo_subworkflows_entry[subworkflow_name]["installed_by"] = [installed_by]
         finally:
-            repo_subworkflows_entry[subworkflow_name]["installed"].extend(installed_by_log)
+            repo_subworkflows_entry[subworkflow_name]["installed_by"].extend(installed_by_log)
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
