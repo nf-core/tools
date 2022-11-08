@@ -1,15 +1,14 @@
 nextflow_process {
-    name "samplesheet_check"
+
+    name "Test Process SAMPLESHEET_CHECK"
     script "modules/local/samplesheet_check.nf"
     process "SAMPLESHEET_CHECK"
 
     test("Should run without failure") {
         when {
-            process {
-                // TODO nf-core: Specify the paths to your test data on nf-core/test-datasets
-                """
-                input[0] = file('https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/samplesheet/samplesheet_test_illumina_amplicon.csv', checkIfExists: true)
-                """
+            params {
+                outdir = "tests/results"
+                outdir = "$outputDir"
             }
         }
 

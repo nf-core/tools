@@ -1,11 +1,12 @@
 nextflow_pipeline {
 
-    name "default"
+    name "Test Workflow main.nf"
     script "main.nf"
 
     test("default test config") {
         when {
             params {
+                outdir = "tests/results"
                 outdir = "$outputDir"
             }
         }
