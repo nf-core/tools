@@ -8,10 +8,10 @@ import questionary
 
 import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_utils import prompt_component_version_sha
 from nf_core.utils import plural_es, plural_s, plural_y
 
-from .modules_command import ModuleCommand
 from .modules_differ import ModulesDiffer
 from .modules_json import ModulesJson
 from .modules_repo import ModulesRepo
@@ -19,7 +19,7 @@ from .modules_repo import ModulesRepo
 log = logging.getLogger(__name__)
 
 
-class ModuleUpdate(ModuleCommand):
+class ModuleUpdate(ComponentCommand):
     def __init__(
         self,
         pipeline_dir,
@@ -33,7 +33,7 @@ class ModuleUpdate(ModuleCommand):
         branch=None,
         no_pull=False,
     ):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+        super().__init__("modules", pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha

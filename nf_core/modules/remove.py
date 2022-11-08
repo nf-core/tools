@@ -4,14 +4,17 @@ from pathlib import Path
 import questionary
 
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 
-from .modules_command import ModuleCommand
 from .modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
 
 
-class ModuleRemove(ModuleCommand):
+class ModuleRemove(ComponentCommand):
+    def __init__(self, pipeline_dir):
+        super().__init__("modules", pipeline_dir)
+
     def remove(self, module):
         """
         Remove an already installed module
