@@ -9,7 +9,7 @@ from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.path_utils import NFCorePaths
 
-from .components_utils import get_repo_type
+from .components_utils import get_repo_type, org_from_git
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +29,9 @@ class ComponentCommand:
         self.paths = NFCorePaths(dir, org)
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
+        self._configure_repo_and_paths()
 
+    def _configure_repo_and_paths(self):
         try:
             if self.dir:
                 self.dir, self.repo_type = get_repo_type(self.dir)
@@ -37,6 +39,8 @@ class ComponentCommand:
                 self.repo_type = None
         except LookupError as e:
             raise UserWarning(e)
+        if self.repo_type == "modules":
+            self.org = org_from_git()
 
     def get_local_components(self):
         """

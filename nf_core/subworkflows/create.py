@@ -14,27 +14,17 @@ import nf_core
 import nf_core.components.components_create
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.modules.modules_utils import get_repo_type
 
 log = logging.getLogger(__name__)
 
 
 class SubworkflowCreate(ComponentCommand):
-    def __init__(
-        self,
-        directory=".",
-        subworkflow="",
-        author=None,
-        force=False,
-        repo_type=None,
-    ):
+    def __init__(self, directory=".", subworkflow="", author=None, force=False):
         super().__init__("subworkflows", directory)
-        self.directory = directory
         self.subworkflow = subworkflow
         self.author = author
         self.force_overwrite = force
         self.file_paths = {}
-        self.repo_type = repo_type
 
     def create(self):
         """
@@ -60,13 +50,9 @@ class SubworkflowCreate(ComponentCommand):
         """
 
         # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
-        try:
-            self.directory, self.repo_type = get_repo_type(self.directory, self.repo_type)
-        except LookupError as e:
-            raise UserWarning(e)
         log.info(f"Repository type: [blue]{self.repo_type}")
-        if self.directory != ".":
-            log.info(f"Base directory: '{self.directory}'")
+        if self.dir != ".":
+            log.info(f"Base directory: '{self.dir}'")
 
         log.info(
             "[yellow]Press enter to use default values [cyan bold](shown in brackets)[/] [yellow]or type your own responses. "
@@ -86,7 +72,7 @@ class SubworkflowCreate(ComponentCommand):
         self.file_paths = nf_core.components.components_create.get_component_dirs(
             self.component_type,
             self.repo_type,
-            self.directory,
+            self.dir,
             self.subworkflow_name,
             None,
             None,
@@ -103,19 +89,19 @@ class SubworkflowCreate(ComponentCommand):
         if self.repo_type == "modules":
             # Add entry to pytest_modules.yml
             try:
-                with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "r") as fh:
+                with open(os.path.join(self.dir, "tests", "config", "pytest_modules.yml"), "r") as fh:
                     pytest_modules_yml = yaml.safe_load(fh)
                     pytest_modules_yml["subworkflows/" + self.subworkflow] = [
                         f"subworkflows/nf-core/{self.subworkflow}/**",
                         f"tests/subworkflows/nf-core/{self.subworkflow}/**",
                     ]
                 pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
-                with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
+                with open(os.path.join(self.dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
                     yaml.dump(pytest_modules_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
             except FileNotFoundError:
                 raise UserWarning("Could not open 'tests/config/pytest_modules.yml' file!")
 
         new_files = list(self.file_paths.values())
         if self.repo_type == "modules":
-            new_files.append(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"))
+            new_files.append(os.path.join(self.dir, "tests", "config", "pytest_modules.yml"))
         log.info("Created / edited following files:\n  " + "\n  ".join(new_files))

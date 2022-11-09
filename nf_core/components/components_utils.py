@@ -1,5 +1,7 @@
 import logging
 import os
+import subprocess
+import urllib
 
 import questionary
 import rich.prompt
@@ -9,7 +11,7 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-def get_repo_type(dir, repo_type=None, use_prompt=True):
+def get_repo_type(dir, use_prompt=True):
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
@@ -113,3 +115,41 @@ def prompt_component_version_sha(component_name, component_type, modules_repo, i
         ).unsafe_ask()
         page_nbr += 1
     return git_sha
+
+
+def org_from_git():
+    try:
+        g_url = subprocess.run(
+            ["git", "config", "--get", "remote.origin.url"], capture_output=True, check=True, text=True
+        )
+    except subprocess.CalledProcessError as e:
+        raise UserWarning(e)
+    return path_from_git_url(g_url.strip())
+
+
+def path_from_git_url(git_url):
+    """
+    Extracts the path from the remote URL
+    See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
+    """
+    # Check whether we have a https or ssh url
+    if git_url.startswith("https"):
+        path = urllib.parse.urlparse(git_url)
+        path = path.path
+        # Remove the intial '/'
+        path = path[1:]
+        # Remove extension
+        path = os.path.splitext(path)[0]
+        # Remove repo name "modules"
+        path = os.path.split(path)[0]
+    else:
+        # Remove the initial `git@``
+        path = git_url.split("@")
+        path = path[-1] if len(path) > 1 else path[0]
+        path = urllib.parse.urlparse(path)
+        path = path.path
+        # Remove extension
+        path = os.path.splitext(path)[0]
+        # Remove repo name "modules"
+        path = os.path.split(path)[0]
+    return path

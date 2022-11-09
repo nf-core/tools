@@ -15,7 +15,6 @@ from packaging.version import parse as parse_version
 
 import nf_core
 import nf_core.components.components_create
-import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 
@@ -33,10 +32,8 @@ class ModuleCreate(ComponentCommand):
         force=False,
         conda_name=None,
         conda_version=None,
-        repo_type=None,
     ):
         super().__init__("modules", directory)
-        self.directory = directory
         self.tool = tool
         self.author = author
         self.process_label = process_label
@@ -46,7 +43,6 @@ class ModuleCreate(ComponentCommand):
         self.tool_conda_name = conda_name
         self.tool_conda_version = conda_version
         self.tool_licence = None
-        self.repo_type = repo_type
         self.tool_licence = ""
         self.tool_description = ""
         self.tool_doc_url = ""
@@ -86,14 +82,9 @@ class ModuleCreate(ComponentCommand):
         # Check modules directory structure
         self.check_modules_structure()
 
-        # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
-        try:
-            self.directory, self.repo_type = nf_core.modules.modules_utils.get_repo_type(self.directory, self.repo_type)
-        except LookupError as e:
-            raise UserWarning(e)
         log.info(f"Repository type: [blue]{self.repo_type}")
-        if self.directory != ".":
-            log.info(f"Base directory: '{self.directory}'")
+        if self.dir != ".":
+            log.info(f"Base directory: '{self.dir}'")
 
         log.info(
             "[yellow]Press enter to use default values [cyan bold](shown in brackets)[/] [yellow]or type your own responses. "
@@ -119,7 +110,7 @@ class ModuleCreate(ComponentCommand):
         self.file_paths = nf_core.components.components_create.get_component_dirs(
             self.component_type,
             self.repo_type,
-            self.directory,
+            self.dir,
             self.tool_name,
             self.tool,
             self.subtool,
@@ -141,7 +132,7 @@ class ModuleCreate(ComponentCommand):
         if self.repo_type == "modules":
             # Add entry to pytest_modules.yml
             try:
-                with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "r") as fh:
+                with open(os.path.join(self.dir, "tests", "config", "pytest_modules.yml"), "r") as fh:
                     pytest_modules_yml = yaml.safe_load(fh)
                 if self.subtool:
                     pytest_modules_yml[self.tool_name] = [
@@ -154,14 +145,14 @@ class ModuleCreate(ComponentCommand):
                         f"tests/modules/nf-core/{self.tool}/**",
                     ]
                 pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
-                with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
+                with open(os.path.join(self.dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
                     yaml.dump(pytest_modules_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
             except FileNotFoundError:
                 raise UserWarning("Could not open 'tests/config/pytest_modules.yml' file!")
 
         new_files = list(self.file_paths.values())
         if self.repo_type == "modules":
-            new_files.append(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"))
+            new_files.append(os.path.join(self.dir, "tests", "config", "pytest_modules.yml"))
         log.info("Created / edited following files:\n  " + "\n  ".join(new_files))
 
     def _get_bioconda_tool(self):
