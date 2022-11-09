@@ -124,7 +124,7 @@ def org_from_git():
         )
     except subprocess.CalledProcessError as e:
         raise UserWarning(e)
-    return path_from_git_url(g_url.strip())
+    return path_from_git_url(g_url.stdout.strip())
 
 
 def path_from_git_url(git_url):

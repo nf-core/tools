@@ -365,7 +365,6 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
 
 # nf-core modules subcommands
 @nf_core_cli.group()
-@click.option("-o", "--org", type=str, default="nf-core", help="The organisation under which modules are stored")
 @click.option(
     "-g",
     "--git-remote",
@@ -382,7 +381,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
     help="Do not pull in latest changes to local clone of modules repository.",
 )
 @click.pass_context
-def modules(ctx, org, git_remote, branch, no_pull):
+def modules(ctx, git_remote, branch, no_pull):
     """
     Commands to manage Nextflow DSL2 modules (tool wrappers).
     """
@@ -391,7 +390,6 @@ def modules(ctx, org, git_remote, branch, no_pull):
     ctx.ensure_object(dict)
 
     # Place the arguments in a context object
-    ctx.obj["modules_repo_org"] = org
     ctx.obj["modules_repo_url"] = git_remote
     ctx.obj["modules_repo_branch"] = branch
     ctx.obj["modules_repo_no_pull"] = no_pull
@@ -399,7 +397,6 @@ def modules(ctx, org, git_remote, branch, no_pull):
 
 # nf-core subworkflows click command
 @nf_core_cli.group()
-@click.option("-o", "--org", type=str, default="nf-core", help="The organisation under which subworkflows are stored")
 @click.option(
     "-g",
     "--git-remote",
@@ -416,7 +413,7 @@ def modules(ctx, org, git_remote, branch, no_pull):
     help="Do not pull in latest changes to local clone of modules repository.",
 )
 @click.pass_context
-def subworkflows(ctx, org, git_remote, branch, no_pull):
+def subworkflows(ctx, git_remote, branch, no_pull):
     """
     Commands to manage Nextflow DSL2 subworkflows (tool wrappers).
     """
@@ -425,7 +422,6 @@ def subworkflows(ctx, org, git_remote, branch, no_pull):
     ctx.ensure_object(dict)
 
     # Place the arguments in a context object
-    ctx.obj["modules_repo_org"] = org
     ctx.obj["modules_repo_url"] = git_remote
     ctx.obj["modules_repo_branch"] = branch
     ctx.obj["modules_repo_no_pull"] = no_pull
@@ -454,7 +450,6 @@ def remote(ctx, keywords, json):
         module_list = nf_core.modules.ModuleList(
             None,
             True,
-            ctx.obj["modules_repo_org"],
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
@@ -485,7 +480,6 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
         module_list = nf_core.modules.ModuleList(
             dir,
             False,
-            ctx.obj["modules_repo_org"],
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
@@ -1028,7 +1022,6 @@ def remote(ctx, keywords, json):
         subworkflow_list = nf_core.subworkflows.SubworkflowList(
             None,
             True,
-            ctx.obj["modules_repo_org"],
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
@@ -1060,7 +1053,6 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
         subworkflow_list = nf_core.subworkflows.SubworkflowList(
             dir,
             False,
-            ctx.obj["modules_repo_org"],
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],

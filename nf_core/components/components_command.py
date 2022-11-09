@@ -19,14 +19,12 @@ class ComponentCommand:
     Base class for the 'nf-core modules' and 'nf-core subworkflows' commands
     """
 
-    def __init__(self, component_type, dir, org, remote_url=None, branch=None, no_pull=False, hide_progress=False):
+    def __init__(self, component_type, dir, remote_url=None, branch=None, no_pull=False, hide_progress=False):
         """
         Initialise the ComponentClass object
         """
         self.component_type = component_type
         self.dir = dir
-        self.org = org
-        self.paths = NFCorePaths(dir, org)
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
         self._configure_repo_and_paths()
@@ -41,6 +39,9 @@ class ComponentCommand:
             raise UserWarning(e)
         if self.repo_type == "modules":
             self.org = org_from_git()
+        else:
+            self.org = "nf-core"
+        self.paths = NFCorePaths(self.dir, self.org)
 
     def get_local_components(self):
         """

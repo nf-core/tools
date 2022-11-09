@@ -12,8 +12,8 @@ log = logging.getLogger(__name__)
 
 
 class ComponentList(ComponentCommand):
-    def __init__(self, component_type, pipeline_dir, org, remote=True, remote_url=None, branch=None, no_pull=False):
-        super().__init__(component_type, pipeline_dir, org, remote_url, branch, no_pull)
+    def __init__(self, component_type, pipeline_dir, remote=True, remote_url=None, branch=None, no_pull=False):
+        super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.remote = remote
 
     def list_components(self, keywords=None, print_json=False):
