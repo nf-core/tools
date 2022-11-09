@@ -61,11 +61,8 @@ class TestSubworkflows(unittest.TestCase):
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
 
-        # Set up install objects
-        self.sw_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
-        self.sw_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
-            self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
-        )
+        # Set up remove objects
+        self.subworkflow_remove = nf_core.subworkflows.SubworkflowsRemove(self.pipeline_dir)
 
     ############################################
     # Test of the individual modules commands. #
@@ -90,6 +87,11 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_install_gitlab_and_list_subworkflows,
         test_subworkflows_list_remote,
         test_subworkflows_list_remote_gitlab,
+    )
+    from .subworkflows.remove import (
+        test_subworkflows_remove_one_of_two_subworkflow,
+        test_subworkflows_remove_subworkflow,
+        test_subworkflows_remove_uninstalled_subworkflow,
     )
     from .subworkflows.subworkflows_test import (
         test_subworkflows_test_check_inputs,

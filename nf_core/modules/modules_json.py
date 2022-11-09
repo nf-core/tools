@@ -670,7 +670,7 @@ class ModulesJson:
         if write_file:
             self.dump()
 
-    def remove_entry(self, component_type, name, repo_url, install_dir):
+    def remove_entry(self, component_type, name, repo_url, install_dir, removed_by=None):
         """
         Removes an entry from the 'modules.json' file.
 
@@ -680,14 +680,26 @@ class ModulesJson:
             repo_url (str): URL of the repository containing the module
             install_dir (str): Name of the directory where modules are installed
         Returns:
-            (bool): True if the removal was successful, False otherwise
+            (bool): True if the entry has actually been removed from the modules.json, False otherwise
         """
+
+        if removed_by is None:
+            removed_by = component_type
         if not self.modules_json:
             return False
         if repo_url in self.modules_json.get("repos", {}):
             repo_entry = self.modules_json["repos"][repo_url]
             if name in repo_entry[component_type].get(install_dir, {}):
-                repo_entry[component_type][install_dir].pop(name)
+                if removed_by in repo_entry[component_type][install_dir][name]["installed_by"]:
+                    repo_entry[component_type][install_dir][name]["installed_by"].remove(removed_by)
+                    if len(repo_entry[component_type][install_dir][name]["installed_by"]) == 0:
+                        repo_entry[component_type][install_dir].pop(name)
+                        return True
+                else:
+                    log.error(
+                        f"Could not find 'installed_by' entry for '{removed_by}' in 'modules.json' file. Did you install it first?"
+                    )
+
             else:
                 log.warning(
                     f"{component_type[:-1].title()} '{install_dir}/{name}' is missing from 'modules.json' file."
@@ -700,7 +712,7 @@ class ModulesJson:
             return False
 
         self.dump()
-        return True
+        return False
 
     def add_patch_entry(self, module_name, repo_url, install_dir, patch_filename, write_file=True):
         """

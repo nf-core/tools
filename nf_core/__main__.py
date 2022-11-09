@@ -1063,6 +1063,34 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
         sys.exit(1)
 
 
+# nf-core subworkflows remove
+@subworkflows.command()
+@click.pass_context
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+def remove(ctx, dir, subworkflow):
+    """
+    Remove a subworkflow from a pipeline.
+    """
+    try:
+        module_remove = nf_core.subworkflows.SubworkflowRemove(
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        module_remove.remove(subworkflow)
+    except (UserWarning, LookupError) as e:
+        log.critical(e)
+        sys.exit(1)
+
+
 # nf-core schema subcommands
 @nf_core_cli.group()
 def schema():

@@ -99,5 +99,8 @@ def clean_modules_json(component, component_type, modules_repo, modules_json):
                     log.info(
                         f"Removing {component_type[:-1]} '{modules_repo.repo_path}/{component}' from repo '{repo_to_remove}' from modules.json"
                     )
-                    modules_json.remove_entry(component_type, component, repo_to_remove, modules_repo.repo_path)
+                    removed_by = component if component_type == "subworkflows" else None
+                    modules_json.remove_entry(
+                        component_type, component, repo_to_remove, modules_repo.repo_path, removed_by=removed_by
+                    )
                     return component_values["installed_by"]
