@@ -19,9 +19,7 @@ class ComponentCommand:
     Base class for the 'nf-core modules' and 'nf-core subworkflows' commands
     """
 
-    def __init__(
-        self, component_type, dir, remote_url=None, branch=None, no_pull=False, hide_progress=False, org="nf-core"
-    ):
+    def __init__(self, component_type, dir, org, remote_url=None, branch=None, no_pull=False, hide_progress=False):
         """
         Initialise the ComponentClass object
         """
