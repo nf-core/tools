@@ -89,7 +89,7 @@ def prompt_component_version_sha(component_name, component_type, modules_repo, i
     git_sha = ""
     page_nbr = 1
 
-    all_commits = modules_repo.get_component_git_log(component_name, subworkflow)
+    all_commits = modules_repo.get_component_git_log(component_name, component_type)
     next_page_commits = [next(all_commits, None) for _ in range(10)]
     next_page_commits = [commit for commit in next_page_commits if commit is not None]
 
