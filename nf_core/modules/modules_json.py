@@ -815,6 +815,29 @@ class ModulesJson:
             self.load()
         return copy.deepcopy(self.modules_json)
 
+    def get_component_version(self, component_type, component_name, repo_url, install_dir):
+        """
+        Returns the version of a module or subworkflow
+
+        Args:
+            component_name (str): Name of the module/subworkflow
+            repo_url (str): URL of the repository
+            install_dir (str): Name of the directory where modules/subworkflows are installed
+
+        Returns:
+            (str): The git SHA of the module/subworkflow if it exists, None otherwise
+        """
+        if self.modules_json is None:
+            self.load()
+        return (
+            self.modules_json.get("repos", {})
+            .get(repo_url, {})
+            .get(component_type, {})
+            .get(install_dir, {})
+            .get(component_name, {})
+            .get("git_sha", None)
+        )
+
     def get_module_version(self, module_name, repo_url, install_dir):
         """
         Returns the version of a module
