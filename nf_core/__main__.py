@@ -135,6 +135,7 @@ def nf_core_cli(verbose, log_file):
             level=logging.DEBUG if verbose else logging.INFO,
             console=rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors()),
             show_time=False,
+            show_path=verbose,  # True if verbose, false otherwise
             markup=True,
         )
     )
