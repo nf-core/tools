@@ -273,7 +273,6 @@ class TestCli(unittest.TestCase):
             "fail-warned": None,
             "markdown": "output_file.md",
             "json": "output_file.json",
-            "hide-progress": None,
         }
 
         cmd = ["lint"] + self.assemble_params(params)

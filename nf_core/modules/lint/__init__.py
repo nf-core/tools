@@ -72,7 +72,9 @@ class ModuleLint(ComponentCommand):
         no_pull=False,
         hide_progress=False,
     ):
-        super().__init__("modules", dir=dir, remote_url=remote_url, branch=branch, no_pull=no_pull, hide_progress=False)
+        super().__init__(
+            "modules", dir=dir, remote_url=remote_url, branch=branch, no_pull=no_pull, hide_progress=hide_progress
+        )
 
         self.fail_warned = fail_warned
         self.passed = []
