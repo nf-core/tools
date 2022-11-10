@@ -40,7 +40,7 @@ class ComponentUpdate(ComponentCommand):
         self.update_all = update_all
         self.show_diff = show_diff
         self.save_diff_fn = save_diff_fn
-        self.module = None
+        self.component = None
         self.update_config = None
         self.modules_json = ModulesJson(self.dir)
         self.branch = branch
@@ -55,11 +55,11 @@ class ComponentUpdate(ComponentCommand):
         if self.save_diff_fn and self.show_diff:
             raise UserWarning("Either `--preview` or `--save_diff` can be specified, not both.")
 
-        if self.update_all and self.module:
-            raise UserWarning("Either a module or the '--all' flag can be specified, not both.")
+        if self.update_all and self.component:
+            raise UserWarning(f"Either a {self.component_type[:-1]} or the '--all' flag can be specified, not both.")
 
         if self.repo_type == "modules":
-            raise UserWarning("Modules in clones of nf-core/modules can not be updated.")
+            raise UserWarning(f"{self.component_type.title()} in clones of nf-core/modules can not be updated.")
 
         if self.prompt and self.sha is not None:
             raise UserWarning("Cannot use '--sha' and '--prompt' at the same time.")
@@ -67,16 +67,19 @@ class ComponentUpdate(ComponentCommand):
         if not self.has_valid_directory():
             raise UserWarning("The command was not run in a valid pipeline directory.")
 
-    def update(self, module=None):
-        """Updates a specified module or all modules modules in a pipeline.
+    def update(self, component=None):
+        """Updates a specified module/subworkflow or all modules/subworkflows in a pipeline.
+
+        If updating a subworkflow: updates all modules used in that subworkflow.
+        If updating a module: updates all subworkflows that use the module.
 
         Args:
-            module (str): The name of the module to update.
+            component (str): The name of the module/subworkflow to update.
 
         Returns:
             bool: True if the update was successful, False otherwise.
         """
-        self.module = module
+        self.component = component
 
         tool_config = nf_core.utils.load_tools_config(self.dir)
         self.update_config = tool_config.get("update", {})
@@ -89,15 +92,15 @@ class ComponentUpdate(ComponentCommand):
         # Verify that 'modules.json' is consistent with the installed modules
         self.modules_json.check_up_to_date()
 
-        if not self.update_all and module is None:
-            choices = ["All modules", "Named module"]
+        if not self.update_all and component is None:
+            choices = [f"All {self.component_type}", f"Named {self.component_type[:-1]}"]
             self.update_all = (
                 questionary.select(
-                    "Update all modules or a single named module?",
+                    f"Update all {self.component_type} or a single named {self.component_type[:-1]}?",
                     choices=choices,
                     style=nf_core.utils.nfcore_question_style,
                 ).unsafe_ask()
-                == "All modules"
+                == f"All {self.component_type}"
             )
 
         # Verify that the provided SHA exists in the repo
@@ -105,8 +108,10 @@ class ComponentUpdate(ComponentCommand):
             log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.remote_url}'")
             return False
 
-        # Get the list of modules to update, and their version information
-        modules_info = self.get_all_modules_info() if self.update_all else [self.get_single_module_info(module)]
+        # Get the list of modules/subworkflows to update, and their version information
+        components_info = (
+            self.get_all_components_info() if self.update_all else [self.get_single_component_info(component)]
+        )
 
         # Save the current state of the modules.json
         old_modules_json = self.modules_json.get_modules_json()
@@ -129,56 +134,58 @@ class ComponentUpdate(ComponentCommand):
         if self.save_diff_fn:  # True or a string
             self.setup_diff_file()
 
-        # Loop through all modules to be updated
+        # Loop through all components to be updated
         # and do the requested action on them
         exit_value = True
         all_patches_successful = True
-        for modules_repo, module, sha, patch_relpath in modules_info:
-            module_fullname = str(Path("modules", modules_repo.repo_path, module))
+        for modules_repo, component, sha, patch_relpath in components_info:
+            component_fullname = str(Path(self.component_type, modules_repo.repo_path, component))
             # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
 
-            current_version = self.modules_json.get_module_version(
-                module, modules_repo.remote_url, modules_repo.repo_path
+            current_version = self.modules_json.get_component_version(
+                self.component_type, component, modules_repo.remote_url, modules_repo.repo_path
             )
 
             # Set the temporary installation folder
             install_tmp_dir = Path(tempfile.mkdtemp())
-            module_install_dir = install_tmp_dir / module
+            component_install_dir = install_tmp_dir / component
 
-            # Compute the module directory
-            module_dir = os.path.join(self.dir, "modules", modules_repo.repo_path, module)
+            # Compute the component directory
+            component_dir = os.path.join(self.dir, self.component_type, modules_repo.repo_path, component)
 
             if sha is not None:
                 version = sha
             elif self.prompt:
                 version = prompt_component_version_sha(
-                    module, "modules", modules_repo=modules_repo, installed_sha=current_version
+                    component, self.component_type, modules_repo=modules_repo, installed_sha=current_version
                 )
             else:
-                version = modules_repo.get_latest_component_version(module, self.component_type)
+                version = modules_repo.get_latest_component_version(component, self.component_type)
 
             if current_version is not None and not self.force:
                 if current_version == version:
                     if self.sha or self.prompt:
-                        log.info(f"'{module_fullname}' is already installed at {version}")
+                        log.info(f"'{component_fullname}' is already installed at {version}")
                     else:
-                        log.info(f"'{module_fullname}' is already up to date")
+                        log.info(f"'{component_fullname}' is already up to date")
                     continue
 
-            # Download module files
-            if not self.install_component_files(module, version, modules_repo, install_tmp_dir):
+            # Download component files
+            if not self.install_component_files(component, version, modules_repo, install_tmp_dir):
                 exit_value = False
                 continue
 
             if patch_relpath is not None:
                 patch_successful = self.try_apply_patch(
-                    module, modules_repo.repo_path, patch_relpath, module_dir, module_install_dir
+                    component, modules_repo.repo_path, patch_relpath, component_dir, component_install_dir
                 )
                 if patch_successful:
-                    log.info(f"Module '{module_fullname}' patched successfully")
+                    log.info(f"{self.component_type[:-1].title()} '{component_fullname}' patched successfully")
                 else:
-                    log.warning(f"Failed to patch module '{module_fullname}'. Will proceed with unpatched files.")
+                    log.warning(
+                        f"Failed to patch {self.component_type[:-1]} '{component_fullname}'. Will proceed with unpatched files."
+                    )
                 all_patches_successful &= patch_successful
 
             if dry_run:
@@ -187,46 +194,50 @@ class ComponentUpdate(ComponentCommand):
                         log.info("Current installation is compared against patched version in remote.")
                     else:
                         log.warning("Current installation is compared against unpatched version in remote.")
-                # Compute the diffs for the module
+                # Compute the diffs for the component
                 if self.save_diff_fn:
-                    log.info(f"Writing diff file for module '{module_fullname}' to '{self.save_diff_fn}'")
+                    log.info(
+                        f"Writing diff file for {self.component_type[:-1]} '{component_fullname}' to '{self.save_diff_fn}'"
+                    )
                     ModulesDiffer.write_diff_file(
                         self.save_diff_fn,
-                        module,
+                        component,
                         modules_repo.repo_path,
-                        module_dir,
-                        module_install_dir,
+                        component_dir,
+                        component_install_dir,
                         current_version,
                         version,
-                        dsp_from_dir=module_dir,
-                        dsp_to_dir=module_dir,
+                        dsp_from_dir=component_dir,
+                        dsp_to_dir=component_dir,
                     )
 
                 elif self.show_diff:
                     ModulesDiffer.print_diff(
-                        module,
-                        modules_repo.repo_path,
-                        module_dir,
-                        module_install_dir,
+                        component,
+                        components_repo.repo_path,
+                        component_dir,
+                        component_install_dir,
                         current_version,
                         version,
-                        dsp_from_dir=module_dir,
-                        dsp_to_dir=module_dir,
+                        dsp_from_dir=component_dir,
+                        dsp_to_dir=component_dir,
                     )
 
-                    # Ask the user if they want to install the module
+                    # Ask the user if they want to install the component
                     dry_run = not questionary.confirm(
-                        f"Update module '{module}'?", default=False, style=nf_core.utils.nfcore_question_style
+                        f"Update {self.component_type[:-1]} '{component}'?",
+                        default=False,
+                        style=nf_core.utils.nfcore_question_style,
                     ).unsafe_ask()
 
             if not dry_run:
-                # Clear the module directory and move the installed files there
-                self.move_files_from_tmp_dir(module, install_tmp_dir, modules_repo.repo_path, version)
-                # Update modules.json with newly installed module
-                self.modules_json.update(modules_repo, module, version, self.component_type)
+                # Clear the component directory and move the installed files there
+                self.move_files_from_tmp_dir(component, install_tmp_dir, modules_repo.repo_path, version)
+                # Update modules.json with newly installed component
+                self.modules_json.update(modules_repo, component, version, self.component_type)
             else:
                 # Don't save to a file, just iteratively update the variable
-                self.modules_json.update(modules_repo, module, version, self.component_type, write_file=False)
+                self.modules_json.update(modules_repo, component, version, self.component_type, write_file=False)
 
         if self.save_diff_fn:
             # Write the modules.json diff to the file
@@ -243,86 +254,92 @@ class ComponentUpdate(ComponentCommand):
                     f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
                 )
         elif not all_patches_successful:
-            log.info(f"Updates complete. Please apply failed patch{plural_es(modules_info)} manually")
+            log.info(f"Updates complete. Please apply failed patch{plural_es(components_info)} manually")
         else:
             log.info("Updates complete :sparkles:")
 
         return exit_value
 
-    def get_single_module_info(self, module):
-        """Collects the module repository, version and sha for a module.
+    def get_single_component_info(self, component):
+        """Collects the modules repository, version and sha for a component.
 
-        Information about the module version in the '.nf-core.yml' overrides
+        Information about the component version in the '.nf-core.yml' overrides
         the '--sha' option
 
         Args:
-            module_name (str): The name of the module to get info for.
+            component (str): The name of the module/subworkflow to get info for.
 
         Returns:
-            (ModulesRepo, str, str): The modules repo containing the module,
-            the module name, and the module version.
+            (ModulesRepo, str, str): The modules repo containing the component,
+            the component name, and the component version.
 
         Raises:
-            LookupError: If the module is not found either in the pipeline or the modules repo.
+            LookupError: If the component is not found either in the pipeline or the modules repo.
             UserWarning: If the '.nf-core.yml' entry is not valid.
         """
-        # Check if there are any modules installed from the repo
+        # Check if there are any modules/subworkflows installed from the repo
         repo_url = self.modules_repo.remote_url
-        modules = self.modules_json.get_all_modules().get(repo_url)
-        choices = [module if dir == "nf-core" else f"{dir}/{module}" for dir, module in modules]
-        if repo_url not in self.modules_json.get_all_modules():
-            raise LookupError(f"No modules installed from '{repo_url}'")
+        components = self.modules_json.get_all_components(self.component_type).get(repo_url)
+        choices = [component if dir == "nf-core" else f"{dir}/{component}" for dir, component in components]
+        if repo_url not in self.modules_json.get_all_components(self.component_type):
+            raise LookupError(f"No {self.component_type} installed from '{repo_url}'")
 
-        if module is None:
-            module = questionary.autocomplete(
-                "Tool name:",
+        if component is None:
+            component = questionary.autocomplete(
+                f"{self.component_type[:-1].title()} name:",
                 choices=choices,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
-        # Get module installation directory
-        install_dir = [dir for dir, m in modules if module == m][0]
+        # Get component installation directory
+        install_dir = [dir for dir, m in components if component == m][0]
 
-        # Check if module is installed before trying to update
-        if module not in choices:
-            raise LookupError(f"Module '{module}' is not installed in pipeline and could therefore not be updated")
-
-        # Check that the supplied name is an available module
-        if module and module not in self.modules_repo.get_avail_components(self.component_type):
+        # Check if component is installed before trying to update
+        if component not in choices:
             raise LookupError(
-                f"Module '{module}' not found in list of available modules."
-                f"Use the command 'nf-core modules list remote' to view available software"
+                f"{self.component_type[:-1].title()} '{component}' is not installed in pipeline and could therefore not be updated"
+            )
+
+        # Check that the supplied name is an available module/subworkflow
+        if component and component not in self.modules_repo.get_avail_components(self.component_type):
+            raise LookupError(
+                f"{self.component_type[:-1].title()} '{component}' not found in list of available {self.component_type}."
+                f"Use the command 'nf-core {self.component_type} list remote' to view available software"
             )
 
         sha = self.sha
-        if module in self.update_config.get(self.modules_repo.remote_url, {}).get(install_dir, {}):
-            # If the module to update is in .nf-core.yml config file
-            config_entry = self.update_config[self.modules_repo.remote_url][install_dir].get(module)
+        if component in self.update_config.get(self.modules_repo.remote_url, {}).get(install_dir, {}):
+            # If the component to update is in .nf-core.yml config file
+            config_entry = self.update_config[self.modules_repo.remote_url][install_dir].get(component)
             if config_entry is not None and config_entry is not True:
                 if config_entry is False:
-                    raise UserWarning("Module's update entry in '.nf-core.yml' is set to False")
+                    raise UserWarning(
+                        f"{self.component_type[:-1].title()}'s update entry in '.nf-core.yml' is set to False"
+                    )
                 if not isinstance(config_entry, str):
-                    raise UserWarning("Module's update entry in '.nf-core.yml' is of wrong type")
+                    raise UserWarning(
+                        f"{self.component_type[:-1].title()}'s update entry in '.nf-core.yml' is of wrong type"
+                    )
 
                 sha = config_entry
                 if self.sha is not None:
                     log.warning(
-                        f"Found entry in '.nf-core.yml' for module '{module}' "
+                        f"Found entry in '.nf-core.yml' for {self.component_type[:-1]} '{component}' "
                         "which will override version specified with '--sha'"
                     )
                 else:
-                    log.info(f"Found entry in '.nf-core.yml' for module '{module}'")
-                log.info(f"Updating module to ({sha})")
+                    log.info(f"Found entry in '.nf-core.yml' for {self.component_type[:-1]} '{component}'")
+                log.info(f"Updating component to ({sha})")
 
         # Check if the update branch is the same as the installation branch
         current_branch = self.modules_json.get_component_branch(
-            self.component_type, module, self.modules_repo.remote_url, install_dir
+            self.component_type, component, self.modules_repo.remote_url, install_dir
         )
         new_branch = self.modules_repo.branch
         if current_branch != new_branch:
             log.warning(
-                f"You are trying to update the '{Path(install_dir, module)}' module from "
-                f"the '{new_branch}' branch. This module was installed from the '{current_branch}'"
+                f"You are trying to update the '{Path(install_dir, component)}' {self.component_type[:-1]} from "
+                f"the '{new_branch}' branch. This {self.component_type[:-1]} was installed from the '{current_branch}'"
             )
             switch = questionary.confirm(f"Do you want to update using the '{current_branch}' instead?").unsafe_ask()
             if switch:
@@ -330,172 +347,173 @@ class ComponentUpdate(ComponentCommand):
                 self.modules_repo.setup_branch(current_branch)
 
         # If there is a patch file, get its filename
-        patch_fn = self.modules_json.get_patch_fn(module, self.modules_repo.remote_url, install_dir)
+        patch_fn = self.modules_json.get_patch_fn(component, self.modules_repo.remote_url, install_dir)
 
-        return (self.modules_repo, module, sha, patch_fn)
+        return (self.modules_repo, component, sha, patch_fn)
 
-    def get_all_modules_info(self, branch=None):
-        """Collects the module repository, version and sha for all modules.
+    def get_all_components_info(self, branch=None):
+        """Collects the modules repository, version and sha for all modules/subworkflows.
 
-        Information about the module version in the '.nf-core.yml' overrides the '--sha' option.
+        Information about the module/subworkflow version in the '.nf-core.yml' overrides the '--sha' option.
 
         Returns:
             [(ModulesRepo, str, str)]: A list of tuples containing a ModulesRepo object,
-            the module name, and the module version.
+            the component name, and the component version.
         """
         if branch is not None:
             use_branch = questionary.confirm(
-                "'--branch' was specified. Should this branch be used to update all modules?", default=False
+                f"'--branch' was specified. Should this branch be used to update all {self.component_type}?",
+                default=False,
             )
             if not use_branch:
                 branch = None
         skipped_repos = []
-        skipped_modules = []
+        skipped_components = []
         overridden_repos = []
-        overridden_modules = []
-        modules_info = {}
-        # Loop through all the modules in the pipeline
+        overridden_components = []
+        components_info = {}
+        # Loop through all the modules/subworkflows in the pipeline
         # and check if they have an entry in the '.nf-core.yml' file
-        for repo_name, modules in self.modules_json.get_all_modules().items():
+        for repo_name, components in self.modules_json.get_all_components(self.component_type).items():
             if repo_name not in self.update_config or self.update_config[repo_name] is True:
                 # There aren't restrictions for the repository in .nf-core.yml file
-                modules_info[repo_name] = {}
-                for module_dir, module in modules:
+                components_info[repo_name] = {}
+                for component_dir, component in components:
                     try:
-                        modules_info[repo_name][module_dir].append(
+                        components_info[repo_name][component_dir].append(
                             (
-                                module,
+                                component,
                                 self.sha,
                                 self.modules_json.get_component_branch(
-                                    self.component_type, module, repo_name, module_dir
+                                    self.component_type, component, repo_name, component_dir
                                 ),
                             )
                         )
                     except KeyError:
-                        modules_info[repo_name][module_dir] = [
+                        components_info[repo_name][component_dir] = [
                             (
-                                module,
+                                component,
                                 self.sha,
                                 self.modules_json.get_component_branch(
-                                    self.component_type, module, repo_name, module_dir
+                                    self.component_type, component, repo_name, component_dir
                                 ),
                             )
                         ]
             elif isinstance(self.update_config[repo_name], dict):
-                # If it is a dict, then there are entries for individual modules or module directories
-                for module_dir in set([dir for dir, _ in modules]):
-                    if isinstance(self.update_config[repo_name][module_dir], str):
+                # If it is a dict, then there are entries for individual components or component directories
+                for component_dir in set([dir for dir, _ in components]):
+                    if isinstance(self.update_config[repo_name][component_dir], str):
                         # If a string is given it is the commit SHA to which we should update to
-                        custom_sha = self.update_config[repo_name][module_dir]
-                        modules_info[repo_name] = {}
-                        for dir, module in modules:
-                            if module_dir == dir:
+                        custom_sha = self.update_config[repo_name][component_dir]
+                        components_info[repo_name] = {}
+                        for dir, component in components:
+                            if component_dir == dir:
                                 try:
-                                    modules_info[repo_name][module_dir].append(
+                                    components_info[repo_name][component_dir].append(
                                         (
-                                            module,
+                                            component,
                                             custom_sha,
                                             self.modules_json.get_component_branch(
-                                                self.component_type, module, repo_name, module_dir
+                                                self.component_type, component, repo_name, component_dir
                                             ),
                                         )
                                     )
                                 except KeyError:
-                                    modules_info[repo_name][module_dir] = [
+                                    components_info[repo_name][component_dir] = [
                                         (
-                                            module,
+                                            component,
                                             custom_sha,
                                             self.modules_json.get_component_branch(
-                                                self.component_type, module, repo_name, module_dir
+                                                self.component_type, component, repo_name, component_dir
                                             ),
                                         )
                                     ]
                         if self.sha is not None:
                             overridden_repos.append(repo_name)
-                    elif self.update_config[repo_name][module_dir] is False:
-                        for dir, module in modules:
-                            if dir == module_dir:
-                                skipped_modules.append(f"{module_dir}/{module}")
-                    elif isinstance(self.update_config[repo_name][module_dir], dict):
-                        # If it's a dict, there are entries for individual modules
-                        dir_config = self.update_config[repo_name][module_dir]
-                        modules_info[repo_name] = {}
-                        for module_dir, module in modules:
-                            if module not in dir_config or dir_config[module] is True:
+                    elif self.update_config[repo_name][component_dir] is False:
+                        for dir, component in components:
+                            if dir == component_dir:
+                                skipped_components.append(f"{component_dir}/{components}")
+                    elif isinstance(self.update_config[repo_name][component_dir], dict):
+                        # If it's a dict, there are entries for individual components
+                        dir_config = self.update_config[repo_name][component_dir]
+                        components_info[repo_name] = {}
+                        for component_dir, component in components:
+                            if component not in dir_config or dir_config[component] is True:
                                 try:
-                                    modules_info[repo_name][module_dir].append(
+                                    components_info[repo_name][component_dir].append(
                                         (
-                                            module,
+                                            component,
                                             self.sha,
                                             self.modules_json.get_component_branch(
-                                                self.component_type, module, repo_name, module_dir
+                                                self.component_type, component, repo_name, component_dir
                                             ),
                                         )
                                     )
                                 except KeyError:
-                                    modules_info[repo_name][module_dir] = [
+                                    components_info[repo_name][component_dir] = [
                                         (
-                                            module,
+                                            component,
                                             self.sha,
                                             self.modules_json.get_component_branch(
-                                                self.component_type, module, repo_name, module_dir
+                                                self.component_type, component, repo_name, component_dir
                                             ),
                                         )
                                     ]
-                            elif isinstance(dir_config[module], str):
+                            elif isinstance(dir_config[component], str):
                                 # If a string is given it is the commit SHA to which we should update to
-                                custom_sha = dir_config[module]
+                                custom_sha = dir_config[component]
                                 try:
-                                    modules_info[repo_name][module_dir].append(
+                                    components_info[repo_name][component_dir].append(
                                         (
-                                            module,
+                                            component,
                                             custom_sha,
                                             self.modules_json.get_component_branch(
-                                                self.component_type, module, repo_name, module_dir
+                                                self.component_type, component, repo_name, component_dir
                                             ),
                                         )
                                     )
                                 except KeyError:
-                                    modules_info[repo_name][module_dir] = [
+                                    components_info[repo_name][component_dir] = [
                                         (
-                                            module,
+                                            component,
                                             custom_sha,
                                             self.modules_json.get_component_branch(
-                                                self.component_type, module, repo_name, module_dir
+                                                self.component_type, component, repo_name, component_dir
                                             ),
                                         )
                                     ]
                                 if self.sha is not None:
-                                    overridden_modules.append(module)
-                            elif dir_config[module] is False:
-                                # Otherwise the entry must be 'False' and we should ignore the module
-                                skipped_modules.append(f"{module_dir}/{module}")
+                                    overridden_components.append(component)
+                            elif dir_config[component] is False:
+                                # Otherwise the entry must be 'False' and we should ignore the component
+                                skipped_components.append(f"{component_dir}/{component}")
                             else:
                                 raise UserWarning(
-                                    f"Module '{module}' in '{module_dir}' has an invalid entry in '.nf-core.yml'"
+                                    f"{self.component_type[:-1].title()} '{component}' in '{component_dir}' has an invalid entry in '.nf-core.yml'"
                                 )
             elif isinstance(self.update_config[repo_name], str):
                 # If a string is given it is the commit SHA to which we should update to
                 custom_sha = self.update_config[repo_name]
-                modules_info[repo_name] = {}
-                for module_dir, module in modules:
+                components_info[repo_name] = {}
+                for component_dir, component in components:
                     try:
-                        modules_info[repo_name][module_dir].append(
+                        components_info[repo_name][component_dir].append(
                             (
-                                module,
+                                component,
                                 custom_sha,
                                 self.modules_json.get_component_branch(
-                                    self.component_type, module, repo_name, module_dir
+                                    self.component_type, component, repo_name, component_dir
                                 ),
                             )
                         )
                     except KeyError:
-                        modules_info[repo_name][module_dir] = [
+                        components_info[repo_name][component_dir] = [
                             (
-                                module,
+                                component,
                                 custom_sha,
                                 self.modules_json.get_component_branch(
-                                    self.component_type, module, repo_name, module_dir
+                                    self.component_type, component, repo_name, component_dir
                                 ),
                             )
                         ]
@@ -508,73 +526,75 @@ class ComponentUpdate(ComponentCommand):
 
         if skipped_repos:
             skipped_str = "', '".join(skipped_repos)
-            log.info(f"Skipping modules in repositor{plural_y(skipped_repos)}: '{skipped_str}'")
+            log.info(f"Skipping {self.component_type} in repositor{plural_y(skipped_repos)}: '{skipped_str}'")
 
-        if skipped_modules:
-            skipped_str = "', '".join(skipped_modules)
-            log.info(f"Skipping module{plural_s(skipped_modules)}: '{skipped_str}'")
+        if skipped_components:
+            skipped_str = "', '".join(skipped_components)
+            log.info(f"Skipping {self.component_type[:-1]}{plural_s(skipped_components)}: '{skipped_str}'")
 
         if overridden_repos:
             overridden_str = "', '".join(overridden_repos)
             log.info(
-                f"Overriding '--sha' flag for modules in repositor{plural_y(overridden_repos)} "
+                f"Overriding '--sha' flag for {self.component_type} in repositor{plural_y(overridden_repos)} "
                 f"with '.nf-core.yml' entry: '{overridden_str}'"
             )
 
-        if overridden_modules:
-            overridden_str = "', '".join(overridden_modules)
+        if overridden_components:
+            overridden_str = "', '".join(overridden_components)
             log.info(
-                f"Overriding '--sha' flag for module{plural_s(overridden_modules)} with "
+                f"Overriding '--sha' flag for {self.component_type[:-1]}{plural_s(overridden_components)} with "
                 f"'.nf-core.yml' entry: '{overridden_str}'"
             )
-        # Loop through modules_info and create on ModulesRepo object per remote and branch
+        # Loop through components_info and create on ModulesRepo object per remote and branch
         repos_and_branches = {}
-        for repo_name, repo_content in modules_info.items():
-            for module_dir, mods in repo_content.items():
-                for mod, sha, mod_branch in mods:
+        for repo_name, repo_content in components_info.items():
+            for component_dir, comps in repo_content.items():
+                for comp, sha, comp_branch in comps:
                     if branch is not None:
-                        mod_branch = branch
-                    if (repo_name, mod_branch) not in repos_and_branches:
-                        repos_and_branches[(repo_name, mod_branch)] = []
-                    repos_and_branches[(repo_name, mod_branch)].append((mod, sha))
+                        comp_branch = branch
+                    if (repo_name, comp_branch) not in repos_and_branches:
+                        repos_and_branches[(repo_name, comp_branch)] = []
+                    repos_and_branches[(repo_name, comp_branch)].append((comp, sha))
 
         # Create ModulesRepo objects
-        repo_objs_mods = []
-        for (repo_url, branch), mods_shas in repos_and_branches.items():
+        repo_objs_comps = []
+        for (repo_url, branch), comps_shas in repos_and_branches.items():
             try:
                 modules_repo = ModulesRepo(remote_url=repo_url, branch=branch)
             except LookupError as e:
                 log.warning(e)
-                log.info(f"Skipping modules in '{repo_url}'")
+                log.info(f"Skipping {self.component_type} in '{repo_url}'")
             else:
-                repo_objs_mods.append((modules_repo, mods_shas))
+                repo_objs_comps.append((modules_repo, comps_shas))
 
         # Flatten the list
-        modules_info = [(repo, mod, sha) for repo, mods_shas in repo_objs_mods for mod, sha in mods_shas]
+        components_info = [(repo, comp, sha) for repo, comps_shas in repo_objs_comps for comp, sha in comps_shas]
 
-        # Verify that that all modules and shas exist in their respective ModulesRepo,
+        # Verify that that all components and shas exist in their respective ModulesRepo,
         # don't try to update those that don't
         i = 0
-        while i < len(modules_info):
-            repo, module, sha = modules_info[i]
-            if not repo.component_exists(module, self.component_type):
-                log.warning(f"Module '{module}' does not exist in '{repo.remote_url}'. Skipping...")
-                modules_info.pop(i)
+        while i < len(components_info):
+            repo, component, sha = components_info[i]
+            if not repo.component_exists(component, self.component_type):
+                log.warning(
+                    f"{self.component_type[:-1].title()} '{component}' does not exist in '{repo.remote_url}'. Skipping..."
+                )
+                components_info.pop(i)
             elif sha is not None and not repo.sha_exists_on_branch(sha):
                 log.warning(
-                    f"Git sha '{sha}' does not exists on the '{repo.branch}' of '{repo.remote_url}'. Skipping module '{module}'"
+                    f"Git sha '{sha}' does not exists on the '{repo.branch}' of '{repo.remote_url}'. Skipping {self.component_type[:-1]} '{component}'"
                 )
-                modules_info.pop(i)
+                components_info.pop(i)
             else:
                 i += 1
 
-        # Add patch filenames to the modules that have them
-        modules_info = [
-            (repo, mod, sha, self.modules_json.get_patch_fn(mod, repo.remote_url, repo.repo_path))
-            for repo, mod, sha in modules_info
+        # Add patch filenames to the components that have them
+        components_info = [
+            (repo, comp, sha, self.modules_json.get_patch_fn(comp, repo.remote_url, repo.repo_path))
+            for repo, comp, sha in components_info
         ]
 
-        return modules_info
+        return components_info
 
     def setup_diff_file(self):
         """Sets up the diff file.
