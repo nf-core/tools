@@ -331,6 +331,7 @@ def test_update_only_show_differences_when_patch(self, mock_prompt):
     for line_index in range(len(lines)):
         if lines[line_index] == "    label 'process_medium'\n":
             lines[line_index] = "    label 'process_low'\n"
+            break
     with open(main_path, "w") as fh:
         fh.writelines(lines)
     # Create a patch file
