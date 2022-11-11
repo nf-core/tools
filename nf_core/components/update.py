@@ -214,7 +214,7 @@ class ComponentUpdate(ComponentCommand):
                 elif self.show_diff:
                     ModulesDiffer.print_diff(
                         component,
-                        components_repo.repo_path,
+                        modules_repo.repo_path,
                         component_dir,
                         component_install_dir,
                         current_version,
@@ -234,10 +234,14 @@ class ComponentUpdate(ComponentCommand):
                 # Clear the component directory and move the installed files there
                 self.move_files_from_tmp_dir(component, install_tmp_dir, modules_repo.repo_path, version)
                 # Update modules.json with newly installed component
-                self.modules_json.update(modules_repo, component, version, self.component_type)
+                self.modules_json.update(self.component_type, modules_repo, component, version, self.component_type)
+                # Update linked components
+                self.update_linked_components(component, modules_repo.repo_path)
             else:
                 # Don't save to a file, just iteratively update the variable
-                self.modules_json.update(modules_repo, component, version, self.component_type, write_file=False)
+                self.modules_json.update(
+                    self.component_type, modules_repo, component, version, self.component_type, write_file=False
+                )
 
         if self.save_diff_fn:
             # Write the modules.json diff to the file
@@ -722,3 +726,56 @@ class ComponentUpdate(ComponentCommand):
         )
 
         return True
+
+    def get_modules_subworkflows_to_update(self, component, install_dir):
+        """Get all modules and subworkflows linked to the updated component."""
+        mods_json = self.modules_json.get_modules_json()
+        modules_to_update = []
+        subworkflows_to_update = []
+        installed_by = mods_json["repos"][self.modules_repo.remote_url][self.component_type][install_dir][component][
+            "installed_by"
+        ]
+
+        if self.component_type == "modules":
+            # All subworkflow names in the installed_by section of a module are subworkflows using this module
+            # We need to update them too
+            subworkflows_to_update = [subworkflow for subworkflow in installed_by if subworkflow != self.component_type]
+        elif self.component_type == "subworkflows":
+            for repo, repo_content in mods_json["repos"].items():
+                for component_type, dir_content in repo_content.items():
+                    for dir, components in dir_content.items():
+                        for comp, comp_content in components.items():
+                            # If the updated subworkflow name appears in the installed_by section of the checked component
+                            # The checked component is used by the updated subworkflow
+                            # We need to update it too
+                            if component in comp_content["installed_by"]:
+                                if component_type == "modules":
+                                    modules_to_update.append(comp)
+                                elif component_type == "subworkflows":
+                                    subworkflows_to_update.append(comp)
+
+        return modules_to_update, subworkflows_to_update
+
+    def update_linked_components(self, component, install_dir):
+        """
+        Update modules and subworkflows linked to the component being updated.
+        """
+        modules_to_update, subworkflows_to_update = self.get_modules_subworkflows_to_update(component, install_dir)
+        for s_update in subworkflows_to_update:
+            original_component_type = self._change_component_type("subworkflows")
+            self.update(s_update)
+            self._reset_component_type(original_component_type)
+        for m_update in modules_to_update:
+            original_component_type = self._change_component_type("modules")
+            self.update(m_update)
+            self._reset_component_type(original_component_type)
+
+    def _change_component_type(self, new_component_type):
+        original_component_type = self.component_type
+        self.component_type = new_component_type
+        self.modules_json.pipeline_components = None
+        return original_component_type
+
+    def _reset_component_type(self, original_component_type):
+        self.component_type = original_component_type
+        self.modules_json.pipeline_components = None

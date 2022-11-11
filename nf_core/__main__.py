@@ -1109,6 +1109,7 @@ def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff):
         if not exit_status and all:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
+        raise
         log.error(e)
         sys.exit(1)
 

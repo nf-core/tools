@@ -76,7 +76,7 @@ class ModuleInstall(ComponentCommand):
                 f"Module is already installed and force is not set.\nAdding the new installation source {self.installed_by} for module {module} to 'modules.json' without installing the module."
             )
             modules_json.load()
-            modules_json.update(self.modules_repo, module, current_version, self.installed_by)
+            modules_json.update(self.component_type, self.modules_repo, module, current_version, self.installed_by)
             return False
 
         version = nf_core.components.components_install.get_version(
@@ -110,5 +110,5 @@ class ModuleInstall(ComponentCommand):
 
         # Update module.json with newly installed module
         modules_json.load()
-        modules_json.update(self.modules_repo, module, version, self.installed_by, install_track)
+        modules_json.update(self.component_type, self.modules_repo, module, version, self.installed_by, install_track)
         return True
