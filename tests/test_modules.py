@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ Tests covering the modules commands
 """
 
@@ -51,6 +50,7 @@ class TestModules(unittest.TestCase):
     def setUp(self):
         """Create a new PipelineSchema and Launch objects"""
         self.tmp_dir = tempfile.mkdtemp()
+        self.component_type = "modules"
 
         # Set up the schema
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -71,10 +71,18 @@ class TestModules(unittest.TestCase):
             branch=OLD_TRIMGALORE_BRANCH,
         )
         self.mods_install_trimgalore = nf_core.modules.ModuleInstall(
-            self.pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH
+            self.pipeline_dir,
+            prompt=False,
+            force=True,
+            remote_url=GITLAB_URL,
+            branch=OLD_TRIMGALORE_BRANCH,
         )
         self.mods_install_gitlab = nf_core.modules.ModuleInstall(
-            self.pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL, branch=GITLAB_DEFAULT_BRANCH
+            self.pipeline_dir,
+            prompt=False,
+            force=True,
+            remote_url=GITLAB_URL,
+            branch=GITLAB_DEFAULT_BRANCH,
         )
         self.mods_install_gitlab_old = nf_core.modules.ModuleInstall(
             self.pipeline_dir,

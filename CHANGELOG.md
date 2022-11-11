@@ -5,20 +5,20 @@
 ### Template
 
 - Fix lint warnings for `samplesheet_check.nf` module
+- Add codespaces template ([#1957](https://github.com/nf-core/tools/pull/1957))
 - Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
 
 ### Linting
 
 ### General
 
+- Refactor CLI flag `--hide-progress` to be at the top-level group, like `--verbose` ([#2016](https://github.com/nf-core/tools/pull/2016))
 - Fix error in tagging GitPod docker images during releases
 - `nf-core sync` now supports the template YAML file using `-t/--template-yaml`.
 - Fix bug when updating modules from old version in old folder structure
 - Don't remove local copy of modules repo, only update it with fetch ([#1881](https://github.com/nf-core/tools/pull/1881))
 - Add subworkflow commands create-test-yml, create and install ([#1897](https://github.com/nf-core/tools/pull/1897))
-- Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
 - Improve test coverage of `sync.py` and `__main__.py` ([#1936](https://github.com/nf-core/tools/pull/1936), [#1965](https://github.com/nf-core/tools/pull/1965))
-- `check_up_to_date()` function from `modules_json` also checks for subworkflows.
 - The default branch can now be specified when creating a new pipeline repo [#1959](https://github.com/nf-core/tools/pull/1959).
 - Only warn when checking that the pipeline directory contains a `main.nf` and a `nextflow.config` file if the pipeline is not an nf-core pipeline [#1964](https://github.com/nf-core/tools/pull/1964)
 - Add file `versions.yml` when generating `test.yml` with `nf-core modules create-test-yml` but don't check for md5sum [#1963](https://github.com/nf-core/tools/pull/1963)
@@ -26,10 +26,21 @@
 - Run tests with Python 3.11 ([#1970](https://github.com/nf-core/tools/pull/1970))
 - Bump promoted Python version from 3.7 to 3.8 ([#1971](https://github.com/nf-core/tools/pull/1971))
 - Fix incorrect file deletion in `nf-core launch` when `--params_in` has the same name as `--params_out`
+- Updated GitHub actions ([#1998](https://github.com/nf-core/tools/pull/1998), [#2001](https://github.com/nf-core/tools/pull/2001))
+- Track from where modules and subworkflows are installed ([#1999](https://github.com/nf-core/tools/pull/1999))
+- Substitute ModulesCommand and SubworkflowsCommand by ComponentsCommand ([#2000](https://github.com/nf-core/tools/pull/2000))
+- Don't print source file + line number on logging messages (except when verbose) ([#2015](https://github.com/nf-core/tools/pull/2015))
 
 ### Modules
 
 - Update patch file paths if the modules directory has the old structure ([#1878](https://github.com/nf-core/tools/pull/1878))
+
+### Subworkflows
+
+- Add tests for subworkflows install command ([#1996](https://github.com/nf-core/tools/pull/1996))
+- `check_up_to_date()` function from `modules_json` also checks for subworkflows.
+- Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
+- Function create() from modules_json.py adds also subworkflows to modules.json file ([#2005](https://github.com/nf-core/tools/pull/2005))
 
 ## [v2.6 - Tin Octopus](https://github.com/nf-core/tools/releases/tag/2.6) - [2022-10-04]
 

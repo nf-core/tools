@@ -3,7 +3,6 @@
 organization's specification based on a template.
 """
 import configparser
-import imghdr
 import logging
 import os
 import random
@@ -13,6 +12,7 @@ import sys
 import time
 from pathlib import Path
 
+import filetype
 import git
 import jinja2
 import questionary
@@ -492,7 +492,7 @@ class PipelineCreate(object):
             with open(img_fn, "wb") as fh:
                 fh.write(r.content)
             # Check that the file looks valid
-            image_type = imghdr.what(img_fn)
+            image_type = filetype.guess(img_fn).extension
             if image_type != "png":
                 log.error(f"Logo from the website didn't look like an image: '{image_type}'")
                 continue

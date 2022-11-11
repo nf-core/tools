@@ -8,10 +8,10 @@ import questionary
 
 import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_utils import prompt_component_version_sha
 from nf_core.utils import plural_es, plural_s, plural_y
 
-from .modules_command import ModuleCommand
 from .modules_differ import ModulesDiffer
 from .modules_json import ModulesJson
 from .modules_repo import ModulesRepo
@@ -19,7 +19,7 @@ from .modules_repo import ModulesRepo
 log = logging.getLogger(__name__)
 
 
-class ModuleUpdate(ModuleCommand):
+class ModuleUpdate(ComponentCommand):
     def __init__(
         self,
         pipeline_dir,
@@ -33,7 +33,7 @@ class ModuleUpdate(ModuleCommand):
         branch=None,
         no_pull=False,
     ):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+        super().__init__("modules", pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha
@@ -152,7 +152,7 @@ class ModuleUpdate(ModuleCommand):
             if sha is not None:
                 version = sha
             elif self.prompt:
-                version = nf_core.modules.modules_utils.prompt_component_version_sha(
+                version = prompt_component_version_sha(
                     module, "modules", modules_repo=modules_repo, installed_sha=current_version
                 )
             else:
@@ -223,10 +223,10 @@ class ModuleUpdate(ModuleCommand):
                 # Clear the module directory and move the installed files there
                 self.move_files_from_tmp_dir(module, install_tmp_dir, modules_repo.repo_path, version)
                 # Update modules.json with newly installed module
-                self.modules_json.update(modules_repo, module, version)
+                self.modules_json.update(modules_repo, module, version, self.component_type)
             else:
                 # Don't save to a file, just iteratively update the variable
-                self.modules_json.update(modules_repo, module, version, write_file=False)
+                self.modules_json.update(modules_repo, module, version, self.component_type, write_file=False)
 
         if self.save_diff_fn:
             # Write the modules.json diff to the file
@@ -315,7 +315,9 @@ class ModuleUpdate(ModuleCommand):
                 log.info(f"Updating module to ({sha})")
 
         # Check if the update branch is the same as the installation branch
-        current_branch = self.modules_json.get_module_branch(module, self.modules_repo.remote_url, install_dir)
+        current_branch = self.modules_json.get_component_branch(
+            self.component_type, module, self.modules_repo.remote_url, install_dir
+        )
         new_branch = self.modules_repo.branch
         if current_branch != new_branch:
             log.warning(
@@ -361,11 +363,23 @@ class ModuleUpdate(ModuleCommand):
                 for module_dir, module in modules:
                     try:
                         modules_info[repo_name][module_dir].append(
-                            (module, self.sha, self.modules_json.get_module_branch(module, repo_name, module_dir))
+                            (
+                                module,
+                                self.sha,
+                                self.modules_json.get_component_branch(
+                                    self.component_type, module, repo_name, module_dir
+                                ),
+                            )
                         )
                     except KeyError:
                         modules_info[repo_name][module_dir] = [
-                            (module, self.sha, self.modules_json.get_module_branch(module, repo_name, module_dir))
+                            (
+                                module,
+                                self.sha,
+                                self.modules_json.get_component_branch(
+                                    self.component_type, module, repo_name, module_dir
+                                ),
+                            )
                         ]
             elif isinstance(self.update_config[repo_name], dict):
                 # If it is a dict, then there are entries for individual modules or module directories
@@ -381,7 +395,9 @@ class ModuleUpdate(ModuleCommand):
                                         (
                                             module,
                                             custom_sha,
-                                            self.modules_json.get_module_branch(module, repo_name, module_dir),
+                                            self.modules_json.get_component_branch(
+                                                self.component_type, module, repo_name, module_dir
+                                            ),
                                         )
                                     )
                                 except KeyError:
@@ -389,7 +405,9 @@ class ModuleUpdate(ModuleCommand):
                                         (
                                             module,
                                             custom_sha,
-                                            self.modules_json.get_module_branch(module, repo_name, module_dir),
+                                            self.modules_json.get_component_branch(
+                                                self.component_type, module, repo_name, module_dir
+                                            ),
                                         )
                                     ]
                         if self.sha is not None:
@@ -409,7 +427,9 @@ class ModuleUpdate(ModuleCommand):
                                         (
                                             module,
                                             self.sha,
-                                            self.modules_json.get_module_branch(module, repo_name, module_dir),
+                                            self.modules_json.get_component_branch(
+                                                self.component_type, module, repo_name, module_dir
+                                            ),
                                         )
                                     )
                                 except KeyError:
@@ -417,7 +437,9 @@ class ModuleUpdate(ModuleCommand):
                                         (
                                             module,
                                             self.sha,
-                                            self.modules_json.get_module_branch(module, repo_name, module_dir),
+                                            self.modules_json.get_component_branch(
+                                                self.component_type, module, repo_name, module_dir
+                                            ),
                                         )
                                     ]
                             elif isinstance(dir_config[module], str):
@@ -428,7 +450,9 @@ class ModuleUpdate(ModuleCommand):
                                         (
                                             module,
                                             custom_sha,
-                                            self.modules_json.get_module_branch(module, repo_name, module_dir),
+                                            self.modules_json.get_component_branch(
+                                                self.component_type, module, repo_name, module_dir
+                                            ),
                                         )
                                     )
                                 except KeyError:
@@ -436,7 +460,9 @@ class ModuleUpdate(ModuleCommand):
                                         (
                                             module,
                                             custom_sha,
-                                            self.modules_json.get_module_branch(module, repo_name, module_dir),
+                                            self.modules_json.get_component_branch(
+                                                self.component_type, module, repo_name, module_dir
+                                            ),
                                         )
                                     ]
                                 if self.sha is not None:
@@ -455,11 +481,23 @@ class ModuleUpdate(ModuleCommand):
                 for module_dir, module in modules:
                     try:
                         modules_info[repo_name][module_dir].append(
-                            (module, custom_sha, self.modules_json.get_module_branch(module, repo_name, module_dir))
+                            (
+                                module,
+                                custom_sha,
+                                self.modules_json.get_component_branch(
+                                    self.component_type, module, repo_name, module_dir
+                                ),
+                            )
                         )
                     except KeyError:
                         modules_info[repo_name][module_dir] = [
-                            (module, custom_sha, self.modules_json.get_module_branch(module, repo_name, module_dir))
+                            (
+                                module,
+                                custom_sha,
+                                self.modules_json.get_component_branch(
+                                    self.component_type, module, repo_name, module_dir
+                                ),
+                            )
                         ]
                 if self.sha is not None:
                     overridden_repos.append(repo_name)

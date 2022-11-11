@@ -3,21 +3,17 @@ import os
 import re
 from pathlib import Path
 
-import questionary
-
 import nf_core.components.components_install
 import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.install import ModuleInstall
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
-
-from .subworkflows_command import SubworkflowCommand
 
 log = logging.getLogger(__name__)
 
 
-class SubworkflowInstall(SubworkflowCommand):
+class SubworkflowInstall(ComponentCommand):
     def __init__(
         self,
         pipeline_dir,
@@ -27,11 +23,16 @@ class SubworkflowInstall(SubworkflowCommand):
         remote_url=None,
         branch=None,
         no_pull=False,
+        installed_by=False,
     ):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+        super().__init__("subworkflows", pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha
+        if installed_by:
+            self.installed_by = installed_by
+        else:
+            self.installed_by = self.component_type
 
     def install(self, subworkflow, silent=False):
         if self.repo_type == "modules":
@@ -69,8 +70,19 @@ class SubworkflowInstall(SubworkflowCommand):
 
         # Check that the subworkflow is not already installed
         if not nf_core.components.components_install.check_component_installed(
-            self.component_type, subworkflow, current_version, subworkflow_dir, self.modules_repo, self.force
+            self.component_type,
+            subworkflow,
+            current_version,
+            subworkflow_dir,
+            self.modules_repo,
+            self.force,
+            self.prompt,
         ):
+            log.debug(
+                f"Subworkflow is already installed and force is not set.\nAdding the new installation source {self.installed_by} for subworkflow {subworkflow} to 'modules.json' without installing the subworkflow."
+            )
+            modules_json.load()
+            modules_json.update(self.modules_repo, subworkflow, current_version, self.installed_by)
             return False
 
         version = nf_core.components.components_install.get_version(
@@ -79,11 +91,20 @@ class SubworkflowInstall(SubworkflowCommand):
         if not version:
             return False
 
-        # Remove subworkflow if force is set
-        if self.force:
+        # Remove subworkflow if force is set and component is installed
+        install_track = None
+        if self.force and nf_core.components.components_install.check_component_installed(
+            self.component_type,
+            subworkflow,
+            current_version,
+            subworkflow_dir,
+            self.modules_repo,
+            self.force,
+            self.prompt,
+        ):
             log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{subworkflow}'")
             self.clear_component_dir(subworkflow, subworkflow_dir)
-            nf_core.components.components_install.clean_modules_json(
+            install_track = nf_core.components.components_install.clean_modules_json(
                 subworkflow, self.component_type, self.modules_repo, modules_json
             )
 
@@ -91,7 +112,7 @@ class SubworkflowInstall(SubworkflowCommand):
         log.debug(f"Installing subworkflow '{subworkflow}' at hash {version} from {self.modules_repo.remote_url}")
 
         # Download subworkflow files
-        if not self.install_subworkflow_files(subworkflow, version, self.modules_repo, install_folder):
+        if not self.install_component_files(subworkflow, version, self.modules_repo, install_folder):
             return False
 
         # Install included modules and subworkflows
@@ -109,7 +130,7 @@ class SubworkflowInstall(SubworkflowCommand):
 
         # Update module.json with newly installed subworkflow
         modules_json.load()
-        modules_json.update_subworkflow(self.modules_repo, subworkflow, version)
+        modules_json.update_subworkflow(self.modules_repo, subworkflow, version, self.installed_by, install_track)
         return True
 
     def get_modules_subworkflows_to_install(self, subworkflow_dir):
@@ -139,7 +160,10 @@ class SubworkflowInstall(SubworkflowCommand):
         """
         modules_to_install, subworkflows_to_install = self.get_modules_subworkflows_to_install(subworkflow_dir)
         for s_install in subworkflows_to_install:
+            original_installed = self.installed_by
+            self.installed_by = Path(subworkflow_dir).parts[-1]
             self.install(s_install, silent=True)
+            self.installed_by = original_installed
         for m_install in modules_to_install:
             module_install = ModuleInstall(
                 self.dir,
@@ -148,5 +172,6 @@ class SubworkflowInstall(SubworkflowCommand):
                 sha=self.sha,
                 remote_url=self.modules_repo.remote_url,
                 branch=self.modules_repo.branch,
+                installed_by=Path(subworkflow_dir).parts[-1],
             )
             module_install.install(m_install, silent=True)

@@ -15,6 +15,7 @@ OLD_TRIMGALORE_BRANCH = "mimic-old-trimgalore"
 GITLAB_URL = "https://gitlab.com/nf-core/modules-test.git"
 GITLAB_REPO = "nf-core"
 GITLAB_DEFAULT_BRANCH = "main-restructure"
+GITLAB_SUBWORKFLOWS_BRANCH = "subworkflows"
 # Branch test stuff
 GITLAB_BRANCH_TEST_BRANCH = "branch-tester-restructure"
 GITLAB_BRANCH_TEST_OLD_SHA = "bce3f17980b8d1beae5e917cfd3c65c0c69e04b5"

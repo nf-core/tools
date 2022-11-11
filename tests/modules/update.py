@@ -214,7 +214,7 @@ def test_update_with_config_no_updates(self):
 
 def test_update_different_branch_single_module(self):
     """Try updating a module in a specific branch"""
-    install_obj = nf_core.modules.ModuleInstall(
+    install_obj = ModuleInstall(
         self.pipeline_dir,
         prompt=False,
         force=False,
@@ -231,7 +231,10 @@ def test_update_different_branch_single_module(self):
 
     # Verify that the branch entry was updated correctly
     modules_json = ModulesJson(self.pipeline_dir)
-    assert modules_json.get_module_branch("fastp", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_BRANCH
+    assert (
+        modules_json.get_component_branch(self.component_type, "fastp", GITLAB_URL, GITLAB_REPO)
+        == GITLAB_BRANCH_TEST_BRANCH
+    )
     assert modules_json.get_module_version("fastp", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_NEW_SHA
 
 
@@ -249,10 +252,16 @@ def test_update_different_branch_mixed_modules_main(self):
 
     modules_json = ModulesJson(self.pipeline_dir)
     # Verify that the branch entry was updated correctly
-    assert modules_json.get_module_branch("fastp", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_BRANCH
+    assert (
+        modules_json.get_component_branch(self.component_type, "fastp", GITLAB_URL, GITLAB_REPO)
+        == GITLAB_BRANCH_TEST_BRANCH
+    )
     assert modules_json.get_module_version("fastp", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_NEW_SHA
     # MultiQC is present in both branches but should've been updated using the 'main' branch
-    assert modules_json.get_module_branch("multiqc", GITLAB_URL, GITLAB_REPO) == GITLAB_DEFAULT_BRANCH
+    assert (
+        modules_json.get_component_branch(self.component_type, "multiqc", GITLAB_URL, GITLAB_REPO)
+        == GITLAB_DEFAULT_BRANCH
+    )
 
 
 def test_update_different_branch_mix_modules_branch_test(self):
@@ -272,7 +281,10 @@ def test_update_different_branch_mix_modules_branch_test(self):
     )
     assert update_obj.update()
 
-    assert modules_json.get_module_branch("multiqc", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_BRANCH
+    assert (
+        modules_json.get_component_branch(self.component_type, "multiqc", GITLAB_URL, GITLAB_REPO)
+        == GITLAB_BRANCH_TEST_BRANCH
+    )
     assert modules_json.get_module_version("multiqc", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_NEW_SHA
 
 

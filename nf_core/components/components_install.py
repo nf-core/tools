@@ -1,12 +1,7 @@
-import glob
-import json
 import logging
 import os
-import re
 
-import jinja2
 import questionary
-import rich
 
 import nf_core.modules.modules_utils
 import nf_core.utils
@@ -42,19 +37,20 @@ def collect_and_verify_name(component_type, component, modules_repo):
     return component
 
 
-def check_component_installed(component_type, component, current_version, component_dir, modules_repo, force):
+def check_component_installed(component_type, component, current_version, component_dir, modules_repo, force, prompt):
     """
     Check that the module/subworkflow is not already installed
     """
     if (current_version is not None and os.path.exists(component_dir)) and not force:
         log.info(f"{component_type[:-1].title()} is already installed.")
 
-        message = "?" if component_type == "modules" else " of this subworkflow and all it's imported modules?"
-        force = questionary.confirm(
-            f"{component_type[:-1].title()} {component} is already installed. \nDo you want to force the reinstallation{message}",
-            style=nf_core.utils.nfcore_question_style,
-            default=False,
-        ).unsafe_ask()
+        if prompt:
+            message = "?" if component_type == "modules" else " of this subworkflow and all it's imported modules?"
+            force = questionary.confirm(
+                f"{component_type[:-1].title()} {component} is already installed. \nDo you want to force the reinstallation{message}",
+                style=nf_core.utils.nfcore_question_style,
+                default=False,
+            ).unsafe_ask()
 
         if not force:
             repo_flag = "" if modules_repo.repo_path == NF_CORE_MODULES_NAME else f"-g {modules_repo.remote_url} "
@@ -76,7 +72,7 @@ def get_version(component, component_type, sha, prompt, current_version, modules
         version = sha
     elif prompt:
         try:
-            version = nf_core.modules.modules_utils.prompt_component_version_sha(
+            version = prompt_component_version_sha(
                 component,
                 component_type,
                 installed_sha=current_version,
@@ -97,11 +93,11 @@ def clean_modules_json(component, component_type, modules_repo, modules_json):
     """
     for repo_url, repo_content in modules_json.modules_json["repos"].items():
         for dir, dir_components in repo_content[component_type].items():
-            for name, _ in dir_components.items():
+            for name, component_values in dir_components.items():
                 if name == component and dir == modules_repo.repo_path:
                     repo_to_remove = repo_url
                     log.info(
                         f"Removing {component_type[:-1]} '{modules_repo.repo_path}/{component}' from repo '{repo_to_remove}' from modules.json"
                     )
-                    modules_json.remove_entry(component, repo_to_remove, modules_repo.repo_path)
-                    break
+                    modules_json.remove_entry(component_type, component, repo_to_remove, modules_repo.repo_path)
+                    return component_values["installed_by"]

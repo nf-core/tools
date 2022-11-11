@@ -9,19 +9,17 @@ import logging
 import os
 
 import yaml
-from packaging.version import parse as parse_version
 
 import nf_core
 import nf_core.components.components_create
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_utils import get_repo_type
-
-from .subworkflows_command import SubworkflowCommand
 
 log = logging.getLogger(__name__)
 
 
-class SubworkflowCreate(SubworkflowCommand):
+class SubworkflowCreate(ComponentCommand):
     def __init__(
         self,
         directory=".",
@@ -30,7 +28,7 @@ class SubworkflowCreate(SubworkflowCommand):
         force=False,
         repo_type=None,
     ):
-        super().__init__(directory)
+        super().__init__("subworkflows", directory)
         self.directory = directory
         self.subworkflow = subworkflow
         self.author = author
@@ -114,7 +112,7 @@ class SubworkflowCreate(SubworkflowCommand):
                 pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
                     yaml.dump(pytest_modules_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 raise UserWarning("Could not open 'tests/config/pytest_modules.yml' file!")
 
         new_files = list(self.file_paths.values())

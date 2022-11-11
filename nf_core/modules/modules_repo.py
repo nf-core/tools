@@ -401,6 +401,7 @@ class ModulesRepo(object):
         commits_new = [
             {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_new
         ]
+        commits_old = []
         if component_type == "modules":
             # Grab commits also from previous modules structure
             component_path = os.path.join("modules", component_name)
@@ -408,7 +409,7 @@ class ModulesRepo(object):
             commits_old = [
                 {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_old
             ]
-            commits = iter(commits_new + commits_old)
+        commits = iter(commits_new + commits_old)
         return commits
 
     def get_latest_component_version(self, component_name, component_type):
