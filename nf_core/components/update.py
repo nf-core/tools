@@ -808,23 +808,27 @@ class ComponentUpdate(ComponentCommand):
         for s_update in subworkflows_to_update:
             if s_update in updated:
                 continue
-            original_component_type = self._change_component_type("subworkflows")
+            original_component_type, original_update_all = self._change_component_type("subworkflows")
             self.update(s_update, silent=True, updated=updated, check_diff_exist=check_diff_exist)
-            self._reset_component_type(original_component_type)
+            self._reset_component_type(original_component_type, original_update_all)
 
         for m_update in modules_to_update:
             if m_update in updated:
                 continue
-            original_component_type = self._change_component_type("modules")
+            original_component_type, original_update_all = self._change_component_type("modules")
             self.update(m_update, silent=True, updated=updated, check_diff_exist=check_diff_exist)
-            self._reset_component_type(original_component_type)
+            self._reset_component_type(original_component_type, original_update_all)
 
     def _change_component_type(self, new_component_type):
         original_component_type = self.component_type
         self.component_type = new_component_type
         self.modules_json.pipeline_components = None
-        return original_component_type
+        # also reset update_all in case it's set
+        original_update_all = self.update_all
+        self.update_all = False
+        return original_component_type, original_update_all
 
-    def _reset_component_type(self, original_component_type):
+    def _reset_component_type(self, original_component_type, original_update_all):
         self.component_type = original_component_type
         self.modules_json.pipeline_components = None
+        self.update_all = original_update_all
