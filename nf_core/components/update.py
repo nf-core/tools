@@ -67,7 +67,7 @@ class ComponentUpdate(ComponentCommand):
         if not self.has_valid_directory():
             raise UserWarning("The command was not run in a valid pipeline directory.")
 
-    def update(self, component=None, silent=False, updated=None):
+    def update(self, component=None, silent=False, updated=None, check_diff_exist=True):
         """Updates a specified module/subworkflow or all modules/subworkflows in a pipeline.
 
         If updating a subworkflow: updates all modules used in that subworkflow.
@@ -134,7 +134,7 @@ class ComponentUpdate(ComponentCommand):
             self.save_diff_fn = diff_type == 2
 
         if self.save_diff_fn:  # True or a string
-            self.setup_diff_file()
+            self.setup_diff_file(check_diff_exist)
 
         # Loop through all components to be updated
         # and do the requested action on them
@@ -201,17 +201,41 @@ class ComponentUpdate(ComponentCommand):
                     log.info(
                         f"Writing diff file for {self.component_type[:-1]} '{component_fullname}' to '{self.save_diff_fn}'"
                     )
-                    ModulesDiffer.write_diff_file(
-                        self.save_diff_fn,
-                        component,
-                        modules_repo.repo_path,
-                        component_dir,
-                        component_install_dir,
-                        current_version,
-                        version,
-                        dsp_from_dir=component_dir,
-                        dsp_to_dir=component_dir,
-                    )
+                    try:
+                        ModulesDiffer.write_diff_file(
+                            self.save_diff_fn,
+                            component,
+                            modules_repo.repo_path,
+                            component_dir,
+                            component_install_dir,
+                            current_version,
+                            version,
+                            dsp_from_dir=component_dir,
+                            dsp_to_dir=component_dir,
+                        )
+                        updated.append(component)
+                    except UserWarning as e:
+                        if str(e) != "Module is unchanged":
+                            raise
+                        else:
+                            updated.append(component)
+                    recursive_update = True
+                    if not silent:
+                        log.warning(
+                            f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be added to the same diff file.\n"
+                            "It is advised to keep all your modules and subworkflows up to date.\n"
+                            "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date.\n"
+                        )
+                        recursive_update = questionary.confirm(
+                            "Would you like to continue adding all modules and subworkflows differences?",
+                            default=True,
+                            style=nf_core.utils.nfcore_question_style,
+                        ).unsafe_ask()
+                    if recursive_update:
+                        # Write all the differences of linked componenets to a diff file
+                        self.update_linked_components(
+                            component, modules_repo.repo_path, updated, check_diff_exist=False
+                        )
 
                 elif self.show_diff:
                     ModulesDiffer.print_diff(
@@ -240,10 +264,10 @@ class ComponentUpdate(ComponentCommand):
                 updated.append(component)
                 recursive_update = True
                 if not silent:
-                    log.info(
-                        f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be automatically updated."
-                        "It is advised to keep all your modules and subworkflows up to date."
-                        "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date."
+                    log.warning(
+                        f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be {'asked for update' if self.show_diff else 'automatically updated'}.\n"
+                        "It is advised to keep all your modules and subworkflows up to date.\n"
+                        "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date.\n"
                     )
                     recursive_update = questionary.confirm(
                         "Would you like to continue updating all modules and subworkflows?",
@@ -267,7 +291,7 @@ class ComponentUpdate(ComponentCommand):
                 self.modules_json.get_modules_json(),
                 Path(self.dir, "modules.json"),
             )
-            if exit_value:
+            if exit_value and not silent:
                 log.info(
                     f"[bold magenta italic] TIP! [/] If you are happy with the changes in '{self.save_diff_fn}', you "
                     "can apply them by running the command :point_right:"
@@ -616,7 +640,7 @@ class ComponentUpdate(ComponentCommand):
 
         return components_info
 
-    def setup_diff_file(self):
+    def setup_diff_file(self, check_diff_exist=True):
         """Sets up the diff file.
 
         If the save diff option was chosen interactively, the user is asked to supply a name for the diff file.
@@ -631,6 +655,10 @@ class ComponentUpdate(ComponentCommand):
 
         self.save_diff_fn = Path(self.save_diff_fn)
 
+        if not check_diff_exist:
+            # This guarantees that the file exists after calling the function
+            self.save_diff_fn.touch()
+            return
         # Check if filename already exists (questionary or cli)
         while self.save_diff_fn.exists():
             if questionary.confirm(f"'{self.save_diff_fn}' exists. Remove file?").unsafe_ask():
@@ -772,7 +800,7 @@ class ComponentUpdate(ComponentCommand):
 
         return modules_to_update, subworkflows_to_update
 
-    def update_linked_components(self, component, install_dir, updated=None):
+    def update_linked_components(self, component, install_dir, updated=None, check_diff_exist=True):
         """
         Update modules and subworkflows linked to the component being updated.
         """
@@ -781,14 +809,14 @@ class ComponentUpdate(ComponentCommand):
             if s_update in updated:
                 continue
             original_component_type = self._change_component_type("subworkflows")
-            self.update(s_update, silent=True, updated=updated)
+            self.update(s_update, silent=True, updated=updated, check_diff_exist=check_diff_exist)
             self._reset_component_type(original_component_type)
 
         for m_update in modules_to_update:
             if m_update in updated:
                 continue
             original_component_type = self._change_component_type("modules")
-            self.update(m_update, silent=True, updated=updated)
+            self.update(m_update, silent=True, updated=updated, check_diff_exist=check_diff_exist)
             self._reset_component_type(original_component_type)
 
     def _change_component_type(self, new_component_type):
