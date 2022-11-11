@@ -1056,6 +1056,63 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
         sys.exit(1)
 
 
+# nf-core subworkflows update
+@subworkflows.command()
+@click.pass_context
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+@click.option("-f", "--force", is_flag=True, default=False, help="Force update of subworkflow")
+@click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the subworkflow")
+@click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install subworkflow at commit SHA")
+@click.option("-a", "--all", is_flag=True, default=False, help="Update all subworkflow installed in pipeline")
+@click.option(
+    "-x/-y",
+    "--preview/--no-preview",
+    is_flag=True,
+    default=None,
+    help="Preview / no preview of changes before applying",
+)
+@click.option(
+    "-D",
+    "--save-diff",
+    type=str,
+    metavar="<filename>",
+    default=None,
+    help="Save diffs to a file instead of updating in place",
+)
+def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff):
+    """
+    Update DSL2 subworkflow within a pipeline.
+
+    Fetches and updates subworkflow files from a remote repo e.g. nf-core/modules.
+    """
+    try:
+        subworkflow_install = nf_core.subworkflows.SubworkflowUpdate(
+            dir,
+            force,
+            prompt,
+            sha,
+            all,
+            preview,
+            save_diff,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        exit_status = subworkflow_install.update(subworkflow)
+        if not exit_status and all:
+            sys.exit(1)
+    except (UserWarning, LookupError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
 # nf-core schema subcommands
 @nf_core_cli.group()
 def schema():
