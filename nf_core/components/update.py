@@ -263,7 +263,7 @@ class ComponentUpdate(ComponentCommand):
                 self.modules_json.update(self.component_type, modules_repo, component, version, self.component_type)
                 updated.append(component)
                 recursive_update = True
-                if not silent:
+                if not silent and not self.update_all:
                     log.warning(
                         f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be {'asked for update' if self.show_diff else 'automatically updated'}.\n"
                         "It is advised to keep all your modules and subworkflows up to date.\n"
