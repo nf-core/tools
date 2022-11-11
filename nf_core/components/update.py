@@ -625,100 +625,100 @@ class ComponentUpdate(ComponentCommand):
         # This guarantees that the file exists after calling the function
         self.save_diff_fn.touch()
 
-    def move_files_from_tmp_dir(self, module, install_folder, repo_path, new_version):
+    def move_files_from_tmp_dir(self, component, install_folder, repo_path, new_version):
         """Move the files from the temporary to the installation directory.
 
         Args:
-            module (str): The module name.
+            component (str): The module/subworkflow name.
             install_folder [str]: The path to the temporary installation directory.
-            repo_path (str): The name of the directory where modules are installed
-            new_version (str): The version of the module that was installed.
+            repo_path (str): The name of the directory where modules/subworkflows are installed
+            new_version (str): The version of the module/subworkflow that was installed.
         """
-        temp_module_dir = os.path.join(install_folder, module)
-        files = os.listdir(temp_module_dir)
-        pipeline_path = os.path.join(self.dir, "modules", repo_path, module)
+        temp_component_dir = os.path.join(install_folder, component)
+        files = os.listdir(temp_component_dir)
+        pipeline_path = os.path.join(self.dir, self.component_type, repo_path, component)
 
-        log.debug(f"Removing old version of module '{module}'")
-        self.clear_component_dir(module, pipeline_path)
+        log.debug(f"Removing old version of {self.component_type[:-1]} '{component}'")
+        self.clear_component_dir(component, pipeline_path)
 
         os.makedirs(pipeline_path)
         for file in files:
-            path = os.path.join(temp_module_dir, file)
+            path = os.path.join(temp_component_dir, file)
             if os.path.exists(path):
                 shutil.move(path, os.path.join(pipeline_path, file))
 
-        log.info(f"Updating '{repo_path}/{module}'")
-        log.debug(f"Updating module '{module}' to {new_version} from {repo_path}")
+        log.info(f"Updating '{repo_path}/{component}'")
+        log.debug(f"Updating {self.component_type[:-1]} '{component}' to {new_version} from {repo_path}")
 
-    def try_apply_patch(self, module, repo_path, patch_relpath, module_dir, module_install_dir):
+    def try_apply_patch(self, component, repo_path, patch_relpath, component_dir, component_install_dir):
         """
-        Try applying a patch file to the new module files
+        Try applying a patch file to the new module/subworkflow files
 
 
         Args:
-            module (str): The name of the module
-            repo_path (str): The name of the repository where the module resides
+            component (str): The name of the module/subworkflow
+            repo_path (str): The name of the repository where the module/subworkflow resides
             patch_relpath (Path | str): The path to patch file in the pipeline
-            module_dir (Path | str): The module directory in the pipeline
-            module_install_dir (Path | str): The directory where the new module
-                                             file have been installed
+            component_dir (Path | str): The module/subworkflow directory in the pipeline
+            component_install_dir (Path | str): The directory where the new component
+                                            file have been installed
 
         Returns:
             (bool): Whether the patch application was successful
         """
-        module_fullname = str(Path(repo_path, module))
-        log.info(f"Found patch for  module '{module_fullname}'. Trying to apply it to new files")
+        component_fullname = str(Path(repo_path, component))
+        log.info(f"Found patch for  {self.component_type[:-1]} '{component_fullname}'. Trying to apply it to new files")
 
         patch_path = Path(self.dir / patch_relpath)
-        module_relpath = Path("modules", repo_path, module)
+        component_relpath = Path(self.component_type, repo_path, component)
 
         # Check that paths in patch file are updated
-        self.check_patch_paths(patch_path, module)
+        self.check_patch_paths(patch_path, component)
 
         # Copy the installed files to a new temporary directory to save them for later use
         temp_dir = Path(tempfile.mkdtemp())
-        temp_module_dir = temp_dir / module
-        shutil.copytree(module_install_dir, temp_module_dir)
+        temp_component_dir = temp_dir / component
+        shutil.copytree(component_install_dir, temp_component_dir)
 
         try:
-            new_files = ModulesDiffer.try_apply_patch(module, repo_path, patch_path, temp_module_dir)
+            new_files = ModulesDiffer.try_apply_patch(component, repo_path, patch_path, temp_component_dir)
         except LookupError:
             # Patch failed. Save the patch file by moving to the install dir
-            shutil.move(patch_path, Path(module_install_dir, patch_path.relative_to(module_dir)))
+            shutil.move(patch_path, Path(component_install_dir, patch_path.relative_to(component_dir)))
             log.warning(
-                f"Failed to apply patch for module '{module_fullname}'. You will have to apply the patch manually"
+                f"Failed to apply patch for {self.component_type[:-1]} '{component_fullname}'. You will have to apply the patch manually"
             )
             return False
 
         # Write the patched files to a temporary directory
         log.debug("Writing patched files")
         for file, new_content in new_files.items():
-            fn = temp_module_dir / file
+            fn = temp_component_dir / file
             with open(fn, "w") as fh:
                 fh.writelines(new_content)
 
         # Create the new patch file
         log.debug("Regenerating patch file")
         ModulesDiffer.write_diff_file(
-            Path(temp_module_dir, patch_path.relative_to(module_dir)),
-            module,
+            Path(temp_component_dir, patch_path.relative_to(component_dir)),
+            component,
             repo_path,
-            module_install_dir,
-            temp_module_dir,
+            component_install_dir,
+            temp_component_dir,
             file_action="w",
             for_git=False,
-            dsp_from_dir=module_relpath,
-            dsp_to_dir=module_relpath,
+            dsp_from_dir=component_relpath,
+            dsp_to_dir=component_relpath,
         )
 
         # Move the patched files to the install dir
         log.debug("Overwriting installed files installed files  with patched files")
-        shutil.rmtree(module_install_dir)
-        shutil.copytree(temp_module_dir, module_install_dir)
+        shutil.rmtree(component_install_dir)
+        shutil.copytree(temp_component_dir, component_install_dir)
 
         # Add the patch file to the modules.json file
         self.modules_json.add_patch_entry(
-            module, self.modules_repo.remote_url, repo_path, patch_relpath, write_file=True
+            component, self.modules_repo.remote_url, repo_path, patch_relpath, write_file=True
         )
 
         return True
