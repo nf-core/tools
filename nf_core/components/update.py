@@ -67,7 +67,7 @@ class ComponentUpdate(ComponentCommand):
         if not self.has_valid_directory():
             raise UserWarning("The command was not run in a valid pipeline directory.")
 
-    def update(self, component=None):
+    def update(self, component=None, silent=False, updated=None):
         """Updates a specified module/subworkflow or all modules/subworkflows in a pipeline.
 
         If updating a subworkflow: updates all modules used in that subworkflow.
@@ -80,6 +80,8 @@ class ComponentUpdate(ComponentCommand):
             bool: True if the update was successful, False otherwise.
         """
         self.component = component
+        if updated is None:
+            updated = []
 
         tool_config = nf_core.utils.load_tools_config(self.dir)
         self.update_config = tool_config.get("update", {})
@@ -235,8 +237,22 @@ class ComponentUpdate(ComponentCommand):
                 self.move_files_from_tmp_dir(component, install_tmp_dir, modules_repo.repo_path, version)
                 # Update modules.json with newly installed component
                 self.modules_json.update(self.component_type, modules_repo, component, version, self.component_type)
-                # Update linked components
-                self.update_linked_components(component, modules_repo.repo_path)
+                updated.append(component)
+                recursive_update = True
+                if not silent:
+                    log.info(
+                        f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be automatically updated."
+                        "It is advised to keep all your modules and subworkflows up to date."
+                        "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date."
+                    )
+                    recursive_update = questionary.confirm(
+                        "Would you like to continue updating all modules and subworkflows?",
+                        default=True,
+                        style=nf_core.utils.nfcore_question_style,
+                    ).unsafe_ask()
+                if recursive_update:
+                    # Update linked components
+                    self.update_linked_components(component, modules_repo.repo_path, updated)
             else:
                 # Don't save to a file, just iteratively update the variable
                 self.modules_json.update(
@@ -257,9 +273,9 @@ class ComponentUpdate(ComponentCommand):
                     "can apply them by running the command :point_right:"
                     f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
                 )
-        elif not all_patches_successful:
+        elif not all_patches_successful and not silent:
             log.info(f"Updates complete. Please apply failed patch{plural_es(components_info)} manually")
-        else:
+        elif not silent:
             log.info("Updates complete :sparkles:")
 
         return exit_value
@@ -756,18 +772,23 @@ class ComponentUpdate(ComponentCommand):
 
         return modules_to_update, subworkflows_to_update
 
-    def update_linked_components(self, component, install_dir):
+    def update_linked_components(self, component, install_dir, updated=None):
         """
         Update modules and subworkflows linked to the component being updated.
         """
         modules_to_update, subworkflows_to_update = self.get_modules_subworkflows_to_update(component, install_dir)
         for s_update in subworkflows_to_update:
+            if s_update in updated:
+                continue
             original_component_type = self._change_component_type("subworkflows")
-            self.update(s_update)
+            self.update(s_update, silent=True, updated=updated)
             self._reset_component_type(original_component_type)
+
         for m_update in modules_to_update:
+            if m_update in updated:
+                continue
             original_component_type = self._change_component_type("modules")
-            self.update(m_update)
+            self.update(m_update, silent=True, updated=updated)
             self._reset_component_type(original_component_type)
 
     def _change_component_type(self, new_component_type):
