@@ -310,13 +310,12 @@ def test_update_only_show_differences(self, mock_prompt):
     for mod in ["custom/dumpsoftwareversions", "fastqc"]:
         correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
         current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
-        print(correct_git_sha, current_git_sha)
         assert correct_git_sha != current_git_sha
 
 
 # Mock questionary answer: do not update module, only show diffs
-@mock.patch("questionary.confirm", side_effect=False)
-def test_update_only_show_differences_when_patch(self):
+@mock.patch.object(questionary.Question, "unsafe_ask", return_value=False)
+def test_update_only_show_differences_when_patch(self, mock_prompt):
     """Try updating all modules showing differences when there's a patched module.
     Don't update some of them.
     Check that the sha in modules.json is not changed."""
@@ -326,28 +325,31 @@ def test_update_only_show_differences_when_patch(self):
     # Modify fastqc module, it will have a patch which will be applied during update
     # We modify fastqc because it's one of the modules that can be updated and there's another one before it (custom/dumpsoftwareversions)
     module_path = Path(self.pipeline_dir, "modules", "nf-core", "fastqc")
-    with open(module_path, "r") as fh:
+    main_path = Path(module_path, "main.nf")
+    with open(main_path, "r") as fh:
         lines = fh.readlines()
     for line_index in range(len(lines)):
         if lines[line_index] == "    label 'process_medium'\n":
             lines[line_index] = "    label 'process_low'\n"
-    with open(module_path, "w") as fh:
+    with open(main_path, "w") as fh:
         fh.writelines(lines)
     # Create a patch file
     patch_obj = ModulePatch(self.pipeline_dir)
     patch_obj.patch("fastqc")
-    patch_fn = "fastq.diff"
     # Check that a patch file with the correct name has been created
-    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
+    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", "fastqc.diff"}
 
     # Update all modules
     assert update_obj.update() is True
 
     mod_json = modules_json.get_modules_json()
     # Loop through all modules and check that they are NOT updated (according to the modules.json file)
-    for mod in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]:
+    # Modules that can be updated but shouldn't are custom/dumpsoftwareversions and fastqc
+    # Module multiqc is already up to date so don't check
+    for mod in ["custom/dumpsoftwareversions", "fastqc"]:
         correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
         current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
+        print(correct_git_sha, current_git_sha)
         assert correct_git_sha != current_git_sha
 
 
