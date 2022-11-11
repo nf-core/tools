@@ -25,7 +25,7 @@ def test_modules_test_no_name_no_prompts(self):
         meta_builder = nf_core.modules.ModulesTest(None, True, "")
         with pytest.raises(UserWarning) as excinfo:
             meta_builder._check_inputs()
-    assert "Tool name not provided and prompts deactivated." in str(excinfo.value)
+    assert "Module name not provided and prompts deactivated." in str(excinfo.value)
 
 
 def test_modules_test_no_installed_modules(self):
