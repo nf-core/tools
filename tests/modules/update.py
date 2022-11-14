@@ -301,6 +301,10 @@ def test_update_only_show_differences(self, mock_prompt):
     modules_json = ModulesJson(self.pipeline_dir)
     update_obj = ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=True)
 
+    tmpdir = tempfile.mkdtemp()
+    shutil.rmtree(tmpdir)
+    shutil.copytree(Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME), tmpdir)
+
     assert update_obj.update() is True
 
     mod_json = modules_json.get_modules_json()
@@ -311,6 +315,7 @@ def test_update_only_show_differences(self, mock_prompt):
         correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
         current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
         assert correct_git_sha != current_git_sha
+        assert cmp_module(Path(tmpdir, mod), Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, mod)) is True
 
 
 # Mock questionary answer: do not update module, only show diffs
