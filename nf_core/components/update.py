@@ -29,6 +29,7 @@ class ComponentUpdate(ComponentCommand):
         update_all=False,
         show_diff=None,
         save_diff_fn=None,
+        recursive=False,
         remote_url=None,
         branch=None,
         no_pull=False,
@@ -40,6 +41,7 @@ class ComponentUpdate(ComponentCommand):
         self.update_all = update_all
         self.show_diff = show_diff
         self.save_diff_fn = save_diff_fn
+        self.recursive = recursive
         self.component = None
         self.update_config = None
         self.modules_json = ModulesJson(self.dir)
@@ -226,11 +228,14 @@ class ComponentUpdate(ComponentCommand):
                             "It is advised to keep all your modules and subworkflows up to date.\n"
                             "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date.\n"
                         )
-                        recursive_update = questionary.confirm(
-                            "Would you like to continue adding all modules and subworkflows differences?",
-                            default=True,
-                            style=nf_core.utils.nfcore_question_style,
-                        ).unsafe_ask()
+                        if self.recursive:
+                            recursive_update = True
+                        else:
+                            recursive_update = questionary.confirm(
+                                "Would you like to continue adding all modules and subworkflows differences?",
+                                default=True,
+                                style=nf_core.utils.nfcore_question_style,
+                            ).unsafe_ask()
                     if recursive_update:
                         # Write all the differences of linked componenets to a diff file
                         self.update_linked_components(component, modules_repo, updated, check_diff_exist=False)
@@ -267,11 +272,14 @@ class ComponentUpdate(ComponentCommand):
                         "It is advised to keep all your modules and subworkflows up to date.\n"
                         "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date.\n"
                     )
-                    recursive_update = questionary.confirm(
-                        "Would you like to continue updating all modules and subworkflows?",
-                        default=True,
-                        style=nf_core.utils.nfcore_question_style,
-                    ).unsafe_ask()
+                    if self.recursive:
+                        recursive_update = True
+                    else:
+                        recursive_update = questionary.confirm(
+                            "Would you like to continue updating all modules and subworkflows?",
+                            default=True,
+                            style=nf_core.utils.nfcore_question_style,
+                        ).unsafe_ask()
                 if recursive_update:
                     # Update linked components
                     self.update_linked_components(component, modules_repo, updated)

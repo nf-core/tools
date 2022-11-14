@@ -554,7 +554,14 @@ def install(ctx, tool, dir, prompt, force, sha):
     default=None,
     help="Save diffs to a file instead of updating in place",
 )
-def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
+@click.option(
+    "-r",
+    "--recursive",
+    is_flat=True,
+    default=False,
+    help="Automatically update all linked modules and subworkflows without asking for confirmation",
+)
+def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, recursive):
     """
     Update DSL2 modules within a pipeline.
 
@@ -569,6 +576,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
             all,
             preview,
             save_diff,
+            recursive,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
@@ -1086,7 +1094,14 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     default=None,
     help="Save diffs to a file instead of updating in place",
 )
-def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff):
+@click.option(
+    "-r",
+    "--recursive",
+    is_flat=True,
+    default=False,
+    help="Automatically update all linked modules and subworkflows without asking for confirmation",
+)
+def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, recursive):
     """
     Update DSL2 subworkflow within a pipeline.
 
@@ -1101,6 +1116,7 @@ def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff):
             all,
             preview,
             save_diff,
+            recursive,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
@@ -1109,7 +1125,6 @@ def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff):
         if not exit_status and all:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
-        raise
         log.error(e)
         sys.exit(1)
 

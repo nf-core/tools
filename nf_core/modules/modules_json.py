@@ -459,6 +459,8 @@ class ModulesJson:
         """
         for repo_url, repo_entry in self.modules_json.get("repos", {}).items():
             if "modules" not in repo_entry:
+                if "subworkflows" in repo_entry:
+                    continue
                 log.warning(f"modules.json entry {repo_entry} does not have a modules entry")
                 return False
             elif (
