@@ -84,23 +84,31 @@ class ComponentCommand:
             ModulesJson(self.dir).create()
 
     def clear_component_dir(self, component_name, component_dir):
-        """Removes all files in the module/subworkflow directory"""
+        """
+        Removes all files in the module/subworkflow directory
+
+        Args:
+            component_name (str): The name of the module/subworkflow
+            component_dir (str): The path to the module/subworkflow in the module repository
+
+        """
+
         try:
             shutil.rmtree(component_dir)
-            if self.component_type == "modules":
-                # Try cleaning up empty parent if tool/subtool and tool/ is empty
-                if component_name.count("/") > 0:
-                    parent_dir = os.path.dirname(component_dir)
+            # remove all empty directories
+            for dir_path, dir_names, filenames in os.walk(self.dir, topdown=False):
+                if not dir_names and not filenames:
                     try:
-                        os.rmdir(parent_dir)
+                        os.rmdir(dir_path)
                     except OSError:
-                        log.debug(f"Parent directory not empty: '{parent_dir}'")
+                        pass
                     else:
-                        log.debug(f"Deleted orphan tool directory: '{parent_dir}'")
-            log.debug(f"Successfully removed {component_name} {self.component_type[:-1]}")
+                        log.debug(f"Deleted  directory: '{dir_path}'")
+
+            log.debug(f"Successfully removed {self.component_type[:-1]} {component_name}")
             return True
         except OSError as e:
-            log.error(f"Could not remove {self.component_type[:-1]}: {e}")
+            log.error(f"Could not remove {self.component_type[:-1]} {component_name}: {e}")
             return False
 
     def components_from_repo(self, install_dir):
