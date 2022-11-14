@@ -76,12 +76,19 @@ def run_prettier_on_file(file):
 def _run_prettier_on_file(file):
     """Run natively installed Prettier on a file."""
 
-    subprocess.run(
-        ["prettier", "--write", file],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
+    try:
+        subprocess.run(
+            ["prettier", "--write", file],
+            capture_output=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        if ": SyntaxError: " in e.stderr.decode():
+            raise ValueError(f"Can't format {file} because it has a synthax error.\n{e.stderr.decode()}") from e
+        raise ValueError(
+            "There was an error running the prettier pre-commit hook.\n"
+            f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
+        ) from e
 
 
 def _run_pre_commit_prettier_on_file(file):
@@ -95,10 +102,16 @@ def _run_pre_commit_prettier_on_file(file):
     """
 
     nf_core_pre_commit_config = Path(nf_core.__file__).parent.parent / ".pre-commit-config.yaml"
-
-    subprocess.run(
-        ["pre-commit", "run", f"--config {nf_core_pre_commit_config}", "prettier", f"--files {file}"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
+    try:
+        subprocess.run(
+            ["pre-commit", "run", "--config", nf_core_pre_commit_config, "prettier", "--files", file],
+            capture_output=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        if ": SyntaxError: " in e.stdout.decode():
+            raise ValueError(f"Can't format {file} because it has a synthax error.\n{e.stdout.decode()}") from e
+        raise ValueError(
+            "There was an error running the prettier pre-commit hook.\n"
+            f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
+        ) from e
