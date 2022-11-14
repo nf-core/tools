@@ -790,7 +790,6 @@ class ComponentUpdate(ComponentCommand):
             # All subworkflow names in the installed_by section of a module are subworkflows using this module
             # We need to update them too
             subworkflows_to_update = [subworkflow for subworkflow in installed_by if subworkflow != self.component_type]
-            print(subworkflows_to_update)
         elif self.component_type == "subworkflows":
             for repo, repo_content in mods_json["repos"].items():
                 for component_type, dir_content in repo_content.items():
