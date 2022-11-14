@@ -23,7 +23,6 @@ GITLAB_BRANCH_TEST_OLD_SHA = "bce3f17980b8d1beae5e917cfd3c65c0c69e04b5"
 GITLAB_BRANCH_TEST_NEW_SHA = "2f5f180f6e705bb81d6e7742dc2f24bf4a0c721e"
 
 
-
 def with_temporary_folder(func):
     """
     Call the decorated funtion under the tempfile.TemporaryDirectory
