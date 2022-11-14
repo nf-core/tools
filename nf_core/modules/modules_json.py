@@ -587,7 +587,16 @@ class ModulesJson:
         except FileNotFoundError:
             raise UserWarning("File 'modules.json' is missing")
 
-    def update(self, component_type, modules_repo, component_name, component_version, installed_by, installed_by_log=None, write_file=True):
+    def update(
+        self,
+        component_type,
+        modules_repo,
+        component_name,
+        component_version,
+        installed_by,
+        installed_by_log=None,
+        write_file=True,
+    ):
         """
         Updates the 'module.json' file with new module/subworkflow info
 
