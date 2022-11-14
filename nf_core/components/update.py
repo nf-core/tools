@@ -233,9 +233,7 @@ class ComponentUpdate(ComponentCommand):
                         ).unsafe_ask()
                     if recursive_update:
                         # Write all the differences of linked componenets to a diff file
-                        self.update_linked_components(
-                            component, modules_repo.repo_path, updated, check_diff_exist=False
-                        )
+                        self.update_linked_components(component, modules_repo, updated, check_diff_exist=False)
 
                 elif self.show_diff:
                     ModulesDiffer.print_diff(
@@ -276,7 +274,7 @@ class ComponentUpdate(ComponentCommand):
                     ).unsafe_ask()
                 if recursive_update:
                     # Update linked components
-                    self.update_linked_components(component, modules_repo.repo_path, updated)
+                    self.update_linked_components(component, modules_repo, updated)
             else:
                 # Don't save to a file, just iteratively update the variable
                 self.modules_json.update(
@@ -771,19 +769,20 @@ class ComponentUpdate(ComponentCommand):
 
         return True
 
-    def get_modules_subworkflows_to_update(self, component, install_dir):
+    def get_modules_subworkflows_to_update(self, component, modules_repo):
         """Get all modules and subworkflows linked to the updated component."""
         mods_json = self.modules_json.get_modules_json()
         modules_to_update = []
         subworkflows_to_update = []
-        installed_by = mods_json["repos"][self.modules_repo.remote_url][self.component_type][install_dir][component][
-            "installed_by"
-        ]
+        installed_by = mods_json["repos"][modules_repo.remote_url][self.component_type][modules_repo.repo_path][
+            component
+        ]["installed_by"]
 
         if self.component_type == "modules":
             # All subworkflow names in the installed_by section of a module are subworkflows using this module
             # We need to update them too
             subworkflows_to_update = [subworkflow for subworkflow in installed_by if subworkflow != self.component_type]
+            print(subworkflows_to_update)
         elif self.component_type == "subworkflows":
             for repo, repo_content in mods_json["repos"].items():
                 for component_type, dir_content in repo_content.items():
@@ -800,11 +799,11 @@ class ComponentUpdate(ComponentCommand):
 
         return modules_to_update, subworkflows_to_update
 
-    def update_linked_components(self, component, install_dir, updated=None, check_diff_exist=True):
+    def update_linked_components(self, component, modules_repo, updated=None, check_diff_exist=True):
         """
         Update modules and subworkflows linked to the component being updated.
         """
-        modules_to_update, subworkflows_to_update = self.get_modules_subworkflows_to_update(component, install_dir)
+        modules_to_update, subworkflows_to_update = self.get_modules_subworkflows_to_update(component, modules_repo)
         for s_update in subworkflows_to_update:
             if s_update in updated:
                 continue
