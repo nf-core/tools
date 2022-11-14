@@ -16,35 +16,35 @@ from ..utils import (
 
 def test_subworkflow_install_nopipeline(self):
     """Test installing a subworkflow - no pipeline given"""
-    self.subworkflow_install.dir = None
-    assert self.subworkflow_install.install("foo") is False
+    self.sw_install.dir = None
+    assert self.sw_install.install("foo") is False
 
 
 @with_temporary_folder
 def test_subworkflows_install_emptypipeline(self, tmpdir):
     """Test installing a subworkflow - empty dir given"""
     os.mkdir(os.path.join(tmpdir, "nf-core-pipe"))
-    self.subworkflow_install.dir = os.path.join(tmpdir, "nf-core-pipe")
+    self.sw_install.dir = os.path.join(tmpdir, "nf-core-pipe")
     with pytest.raises(UserWarning) as excinfo:
-        self.subworkflow_install.install("foo")
+        self.sw_install.install("foo")
     assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
 
 
 def test_subworkflows_install_nosubworkflow(self):
     """Test installing a subworkflow - unrecognised subworkflow given"""
-    assert self.subworkflow_install.install("foo") is False
+    assert self.sw_install.install("foo") is False
 
 
 def test_subworkflows_install_bam_sort_stats_samtools(self):
     """Test installing a subworkflow - bam_sort_stats_samtools"""
-    assert self.subworkflow_install.install("bam_sort_stats_samtools") is not False
-    subworkflow_path = os.path.join(self.subworkflow_install.dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
-    sub_subworkflow_path = os.path.join(self.subworkflow_install.dir, "subworkflows", "nf-core", "bam_stats_samtools")
-    samtools_index_path = os.path.join(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "index")
-    samtools_sort_path = os.path.join(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "sort")
-    samtools_stats_path = os.path.join(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "stats")
-    samtools_idxstats_path = os.path.join(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "idxstats")
-    samtools_flagstat_path = os.path.join(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "flagstat")
+    assert self.sw_install.install("bam_sort_stats_samtools") is not False
+    subworkflow_path = os.path.join(self.sw_install.dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
+    sub_subworkflow_path = os.path.join(self.sw_install.dir, "subworkflows", "nf-core", "bam_stats_samtools")
+    samtools_index_path = os.path.join(self.sw_install.dir, "modules", "nf-core", "samtools", "index")
+    samtools_sort_path = os.path.join(self.sw_install.dir, "modules", "nf-core", "samtools", "sort")
+    samtools_stats_path = os.path.join(self.sw_install.dir, "modules", "nf-core", "samtools", "stats")
+    samtools_idxstats_path = os.path.join(self.sw_install.dir, "modules", "nf-core", "samtools", "idxstats")
+    samtools_flagstat_path = os.path.join(self.sw_install.dir, "modules", "nf-core", "samtools", "flagstat")
     assert os.path.exists(subworkflow_path)
     assert os.path.exists(sub_subworkflow_path)
     assert os.path.exists(samtools_index_path)
@@ -56,13 +56,13 @@ def test_subworkflows_install_bam_sort_stats_samtools(self):
 
 def test_subworkflows_install_bam_sort_stats_samtools_twice(self):
     """Test installing a subworkflow - bam_sort_stats_samtools already there"""
-    self.subworkflow_install.install("bam_sort_stats_samtools")
-    assert self.subworkflow_install.install("bam_sort_stats_samtools") is False
+    self.sw_install.install("bam_sort_stats_samtools")
+    assert self.sw_install.install("bam_sort_stats_samtools") is False
 
 
 def test_subworkflows_install_from_gitlab(self):
     """Test installing a subworkflow from GitLab"""
-    assert self.subworkflow_install_gitlab.install("bam_stats_samtools") is True
+    assert self.sw_install_gitlab.install("bam_stats_samtools") is True
     # Verify that the branch entry was added correctly
     modules_json = ModulesJson(self.pipeline_dir)
     assert (

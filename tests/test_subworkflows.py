@@ -52,12 +52,6 @@ class TestSubworkflows(unittest.TestCase):
             "mypipeline", "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
 
-        # Set up install objects
-        self.subworkflow_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
-        self.subworkflow_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
-            self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
-        )
-
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
 
