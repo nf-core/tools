@@ -1042,11 +1042,27 @@ class ModulesJson:
                 if install_dir in install_directories
             ][0]
             repo_entry = self.determine_branches_and_shas(component_type, install_dir, remote_url, components)
-            if remote_url in self.modules_json["repos"]:
+            try:
                 self.modules_json["repos"][remote_url][component_type][install_dir].update(repo_entry)
-            else:
-                self.modules_json["repos"][remote_url] = {
-                    component_type: {
-                        install_dir: repo_entry,
-                    }
-                }
+            except KeyError:
+                try:
+                    self.modules_json["repos"][remote_url][component_type].update({install_dir: repo_entry})
+                except KeyError:
+                    try:
+                        self.modules_json["repos"][remote_url].update(
+                            {
+                                component_type: {
+                                    install_dir: repo_entry,
+                                }
+                            }
+                        )
+                    except KeyError:
+                        self.modules_json["repos"].update(
+                            {
+                                remote_url: {
+                                    component_type: {
+                                        install_dir: repo_entry,
+                                    }
+                                }
+                            }
+                        )

@@ -557,7 +557,7 @@ def install(ctx, tool, dir, prompt, force, sha):
 @click.option(
     "-r",
     "--recursive",
-    is_flat=True,
+    is_flag=True,
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
@@ -1097,7 +1097,7 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
 @click.option(
     "-r",
     "--recursive",
-    is_flat=True,
+    is_flag=True,
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
