@@ -357,7 +357,6 @@ def test_update_only_show_differences_when_patch(self, mock_prompt):
     for mod in ["custom/dumpsoftwareversions", "fastqc"]:
         correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
         current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
-        print(correct_git_sha, current_git_sha)
         assert correct_git_sha != current_git_sha
 
 

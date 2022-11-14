@@ -113,7 +113,6 @@ class ComponentUpdate(ComponentCommand):
             return False
 
         # Get the list of modules/subworkflows to update, and their version information
-        print(self.update_all)
         components_info = (
             self.get_all_components_info() if self.update_all else [self.get_single_component_info(component)]
         )
@@ -364,28 +363,32 @@ class ComponentUpdate(ComponentCommand):
             )
 
         sha = self.sha
-        if component in self.update_config.get(self.modules_repo.remote_url, {}).get(install_dir, {}):
+        config_entry = None
+        if isinstance(self.update_config.get(self.modules_repo.remote_url, {}), str):
+            # If the repo entry is a string, it's the sha to update to
+            config_entry = self.update_config.get(self.modules_repo.remote_url, {})
+        elif component in self.update_config.get(self.modules_repo.remote_url, {}).get(install_dir, {}):
             # If the component to update is in .nf-core.yml config file
             config_entry = self.update_config[self.modules_repo.remote_url][install_dir].get(component)
-            if config_entry is not None and config_entry is not True:
-                if config_entry is False:
-                    raise UserWarning(
-                        f"{self.component_type[:-1].title()}'s update entry in '.nf-core.yml' is set to False"
-                    )
-                if not isinstance(config_entry, str):
-                    raise UserWarning(
-                        f"{self.component_type[:-1].title()}'s update entry in '.nf-core.yml' is of wrong type"
-                    )
+        if config_entry is not None and config_entry is not True:
+            if config_entry is False:
+                raise UserWarning(
+                    f"{self.component_type[:-1].title()}'s update entry in '.nf-core.yml' is set to False"
+                )
+            if not isinstance(config_entry, str):
+                raise UserWarning(
+                    f"{self.component_type[:-1].title()}'s update entry in '.nf-core.yml' is of wrong type"
+                )
 
-                sha = config_entry
-                if self.sha is not None:
-                    log.warning(
-                        f"Found entry in '.nf-core.yml' for {self.component_type[:-1]} '{component}' "
-                        "which will override version specified with '--sha'"
-                    )
-                else:
-                    log.info(f"Found entry in '.nf-core.yml' for {self.component_type[:-1]} '{component}'")
-                log.info(f"Updating component to ({sha})")
+            sha = config_entry
+            if self.sha is not None:
+                log.warning(
+                    f"Found entry in '.nf-core.yml' for {self.component_type[:-1]} '{component}' "
+                    "which will override version specified with '--sha'"
+                )
+            else:
+                log.info(f"Found entry in '.nf-core.yml' for {self.component_type[:-1]} '{component}'")
+            log.info(f"Updating component to ({sha})")
 
         # Check if the update branch is the same as the installation branch
         current_branch = self.modules_json.get_component_branch(

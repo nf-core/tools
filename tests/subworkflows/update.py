@@ -34,7 +34,6 @@ def test_install_at_hash_and_update(self):
     assert self.sw_install_old.install("fastq_align_bowtie2")
     update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, recursive=True)
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
-    print(old_mod_json)
 
     # Copy the sw files and check that they are affected by the update
     tmpdir = tempfile.mkdtemp()
@@ -47,7 +46,6 @@ def test_install_at_hash_and_update(self):
 
     # Check that the modules.json is correctly updated
     mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
-    print(mod_json)
     # Get the up-to-date git_sha for the sw from the ModulesRepo object
     assert (
         old_mod_json["repos"][NF_CORE_MODULES_REMOTE]["subworkflows"][NF_CORE_MODULES_NAME]["fastq_align_bowtie2"][
@@ -92,7 +90,6 @@ def test_update_all(self):
     # We must reload the modules.json to get the updated version
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
-    print(mod_json)
     # Loop through all subworkflows and check that they are updated (according to the modules.json file)
     for sw in mod_json["repos"][NF_CORE_MODULES_REMOTE]["subworkflows"][NF_CORE_MODULES_NAME]:
         correct_git_sha = list(update_obj.modules_repo.get_component_git_log(sw, "subworkflows", depth=1))[0]["git_sha"]
