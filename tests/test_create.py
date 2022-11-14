@@ -4,6 +4,8 @@
 import os
 import unittest
 
+import git
+
 import nf_core.create
 
 from .utils import with_temporary_folder
@@ -16,6 +18,7 @@ class NfcoreCreateTest(unittest.TestCase):
         self.pipeline_description = "just for 4w3s0m3 tests"
         self.pipeline_author = "Chuck Norris"
         self.pipeline_version = "1.0.0"
+        self.default_branch = "default"
 
         self.pipeline = nf_core.create.PipelineCreate(
             name=self.pipeline_name,
@@ -26,6 +29,7 @@ class NfcoreCreateTest(unittest.TestCase):
             force=True,
             outdir=tmp_path,
             plain=True,
+            default_branch=self.default_branch,
         )
 
     def test_pipeline_creation(self):
@@ -37,3 +41,4 @@ class NfcoreCreateTest(unittest.TestCase):
     def test_pipeline_creation_initiation(self):
         self.pipeline.init_pipeline()
         assert os.path.isdir(os.path.join(self.pipeline.outdir, ".git"))
+        assert f" {self.default_branch}\n" in git.Repo.init(self.pipeline.outdir).git.branch()

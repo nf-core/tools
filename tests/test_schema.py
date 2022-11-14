@@ -31,7 +31,7 @@ class TestSchema(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         self.template_dir = os.path.join(self.tmp_dir, "wf")
         create_obj = nf_core.create.PipelineCreate(
-            "test_pipeline", "", "", outdir=self.template_dir, no_git=True, plain=True
+            "testpipeline", "", "", outdir=self.template_dir, no_git=True, plain=True
         )
         create_obj.init_pipeline()
 
@@ -179,11 +179,9 @@ class TestSchema(unittest.TestCase):
             "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"foo": {}}}},
             "allOf": [{"$ref": "#/definitions/groupOne"}, {"$ref": "#/definitions/groupTwo"}],
         }
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             self.schema_obj.validate_schema(self.schema_obj.schema)
-            raise UserWarning("Expected AssertionError")
-        except AssertionError as e:
-            assert e.args[0] == "Duplicate parameter found in schema `definitions`: `foo`"
+        assert exc_info.value.args[0] == "Duplicate parameter found in schema `definitions`: `foo`"
 
     def test_validate_schema_fail_missing_def(self):
         """
@@ -193,11 +191,9 @@ class TestSchema(unittest.TestCase):
             "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"bar": {}}}},
             "allOf": [{"$ref": "#/definitions/groupOne"}],
         }
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             self.schema_obj.validate_schema(self.schema_obj.schema)
-            raise UserWarning("Expected AssertionError")
-        except AssertionError as e:
-            assert e.args[0] == "Definition subschema `groupTwo` not included in schema `allOf`"
+        assert exc_info.value.args[0] == "Definition subschema `groupTwo` not included in schema `allOf`"
 
     def test_validate_schema_fail_unexpected_allof(self):
         """
@@ -211,11 +207,9 @@ class TestSchema(unittest.TestCase):
                 {"$ref": "#/definitions/groupThree"},
             ],
         }
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             self.schema_obj.validate_schema(self.schema_obj.schema)
-            raise UserWarning("Expected AssertionError")
-        except AssertionError as e:
-            assert e.args[0] == "Subschema `groupThree` found in `allOf` but not `definitions`"
+        assert exc_info.value.args[0] == "Subschema `groupThree` found in `allOf` but not `definitions`"
 
     def test_make_skeleton_schema(self):
         """Test making a new schema skeleton"""
@@ -383,20 +377,17 @@ class TestSchema(unittest.TestCase):
     def test_launch_web_builder_404(self, mock_post):
         """Mock launching the web builder"""
         self.schema_obj.web_schema_build_url = "invalid_url"
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             self.schema_obj.launch_web_builder()
-            raise UserWarning("Should have hit an AssertionError")
-        except AssertionError as e:
-            assert e.args[0] == "Could not access remote API results: invalid_url (HTML 404 Error)"
+        assert exc_info.value.args[0] == "Could not access remote API results: invalid_url (HTML 404 Error)"
 
     @mock.patch("requests.post", side_effect=mocked_requests_post)
     def test_launch_web_builder_invalid_status(self, mock_post):
         """Mock launching the web builder"""
         self.schema_obj.web_schema_build_url = "valid_url_error"
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             self.schema_obj.launch_web_builder()
-        except AssertionError as e:
-            assert e.args[0].startswith("Pipeline schema builder response not recognised")
+        assert exc_info.value.args[0].startswith("Pipeline schema builder response not recognised")
 
     @mock.patch("requests.post", side_effect=mocked_requests_post)
     @mock.patch("requests.get")
@@ -404,12 +395,10 @@ class TestSchema(unittest.TestCase):
     def test_launch_web_builder_success(self, mock_post, mock_get, mock_webbrowser):
         """Mock launching the web builder"""
         self.schema_obj.web_schema_build_url = "valid_url_success"
-        try:
+        # Assertion error comes from the get_web_builder_response() function
+        with pytest.raises(AssertionError) as exc_info:
             self.schema_obj.launch_web_builder()
-            raise UserWarning("Should have hit an AssertionError")
-        except AssertionError as e:
-            # Assertion error comes from get_web_builder_response() function
-            assert e.args[0].startswith("Could not access remote API results: https://nf-co.re")
+        assert exc_info.value.args[0].startswith("Could not access remote API results: https://nf-co.re")
 
     def mocked_requests_get(*args, **kwargs):
         """Helper function to emulate GET requests responses from the web"""
@@ -438,21 +427,17 @@ class TestSchema(unittest.TestCase):
     def test_get_web_builder_response_404(self, mock_post):
         """Mock launching the web builder"""
         self.schema_obj.web_schema_build_api_url = "invalid_url"
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             self.schema_obj.get_web_builder_response()
-            raise UserWarning("Should have hit an AssertionError")
-        except AssertionError as e:
-            assert e.args[0] == "Could not access remote API results: invalid_url (HTML 404 Error)"
+        assert exc_info.value.args[0] == "Could not access remote API results: invalid_url (HTML 404 Error)"
 
     @mock.patch("requests.get", side_effect=mocked_requests_get)
     def test_get_web_builder_response_error(self, mock_post):
         """Mock launching the web builder"""
         self.schema_obj.web_schema_build_api_url = "valid_url_error"
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             self.schema_obj.get_web_builder_response()
-            raise UserWarning("Should have hit an AssertionError")
-        except AssertionError as e:
-            assert e.args[0] == "Got error from schema builder: 'testing URL failure'"
+        assert exc_info.value.args[0] == "Got error from schema builder: 'testing URL failure'"
 
     @mock.patch("requests.get", side_effect=mocked_requests_get)
     def test_get_web_builder_response_waiting(self, mock_post):
@@ -464,10 +449,7 @@ class TestSchema(unittest.TestCase):
     def test_get_web_builder_response_saved(self, mock_post):
         """Mock launching the web builder"""
         self.schema_obj.web_schema_build_api_url = "valid_url_saved"
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             self.schema_obj.get_web_builder_response()
-            raise UserWarning("Should have hit an AssertionError")
-        except AssertionError as e:
-            # Check that this is the expected AssertionError, as there are several
-            assert e.args[0].startswith("Response from schema builder did not pass validation")
+        assert exc_info.value.args[0].startswith("Response from schema builder did not pass validation")
         assert self.schema_obj.schema == {"foo": "bar"}

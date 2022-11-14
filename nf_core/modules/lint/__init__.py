@@ -19,12 +19,11 @@ import rich
 from rich.markdown import Markdown
 from rich.table import Table
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.lint_utils import console
-from nf_core.modules.modules_command import ModuleCommand
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
 from nf_core.utils import plural_s as _s
 
@@ -48,7 +47,7 @@ class LintResult(object):
         self.module_name = mod.module_name
 
 
-class ModuleLint(ModuleCommand):
+class ModuleLint(ComponentCommand):
     """
     An object for linting modules either in a clone of the 'nf-core/modules'
     repository or in any nf-core pipeline directory
@@ -73,7 +72,9 @@ class ModuleLint(ModuleCommand):
         no_pull=False,
         hide_progress=False,
     ):
-        super().__init__(dir=dir, remote_url=remote_url, branch=branch, no_pull=no_pull, hide_progress=False)
+        super().__init__(
+            "modules", dir=dir, remote_url=remote_url, branch=branch, no_pull=no_pull, hide_progress=hide_progress
+        )
 
         self.fail_warned = fail_warned
         self.passed = []
@@ -96,7 +97,7 @@ class ModuleLint(ModuleCommand):
                 local_module_dir = Path(self.dir, "modules", "local")
                 self.all_local_modules = [
                     NFCoreModule(m, None, local_module_dir / m, self.repo_type, Path(self.dir), nf_core_module=False)
-                    for m in self.get_local_modules()
+                    for m in self.get_local_components()
                 ]
 
             else:
@@ -105,7 +106,7 @@ class ModuleLint(ModuleCommand):
             module_dir = Path(self.dir, self.default_modules_path)
             self.all_remote_modules = [
                 NFCoreModule(m, None, module_dir / m, self.repo_type, Path(self.dir))
-                for m in self.get_modules_clone_modules()
+                for m in self.get_components_clone_modules()
             ]
             self.all_local_modules = []
             if not self.all_remote_modules:

@@ -2,13 +2,17 @@ import filecmp
 import os
 import shutil
 import tempfile
+from pathlib import Path
+from unittest import mock
 
+import questionary
 import yaml
 
 import nf_core.utils
 from nf_core.modules.install import ModuleInstall
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
+from nf_core.modules.patch import ModulePatch
 from nf_core.modules.update import ModuleUpdate
 
 from ..utils import (
@@ -56,7 +60,7 @@ def test_install_at_hash_and_update(self):
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
     # Get the up-to-date git_sha for the module from the ModulesRepo object
-    correct_git_sha = update_obj.modules_repo.get_latest_module_version("trimgalore")
+    correct_git_sha = update_obj.modules_repo.get_latest_component_version("trimgalore", "modules")
     current_git_sha = mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]["git_sha"]
     assert correct_git_sha == current_git_sha
 
@@ -96,7 +100,7 @@ def test_update_all(self):
     mod_json = mod_json_obj.get_modules_json()
     # Loop through all modules and check that they are updated (according to the modules.json file)
     for mod in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]:
-        correct_git_sha = list(update_obj.modules_repo.get_module_git_log(mod, depth=1))[0]["git_sha"]
+        correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
         current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
         assert correct_git_sha == current_git_sha
 
@@ -214,7 +218,7 @@ def test_update_with_config_no_updates(self):
 
 def test_update_different_branch_single_module(self):
     """Try updating a module in a specific branch"""
-    install_obj = nf_core.modules.ModuleInstall(
+    install_obj = ModuleInstall(
         self.pipeline_dir,
         prompt=False,
         force=False,
@@ -231,7 +235,10 @@ def test_update_different_branch_single_module(self):
 
     # Verify that the branch entry was updated correctly
     modules_json = ModulesJson(self.pipeline_dir)
-    assert modules_json.get_module_branch("fastp", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_BRANCH
+    assert (
+        modules_json.get_component_branch(self.component_type, "fastp", GITLAB_URL, GITLAB_REPO)
+        == GITLAB_BRANCH_TEST_BRANCH
+    )
     assert modules_json.get_module_version("fastp", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_NEW_SHA
 
 
@@ -249,10 +256,16 @@ def test_update_different_branch_mixed_modules_main(self):
 
     modules_json = ModulesJson(self.pipeline_dir)
     # Verify that the branch entry was updated correctly
-    assert modules_json.get_module_branch("fastp", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_BRANCH
+    assert (
+        modules_json.get_component_branch(self.component_type, "fastp", GITLAB_URL, GITLAB_REPO)
+        == GITLAB_BRANCH_TEST_BRANCH
+    )
     assert modules_json.get_module_version("fastp", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_NEW_SHA
     # MultiQC is present in both branches but should've been updated using the 'main' branch
-    assert modules_json.get_module_branch("multiqc", GITLAB_URL, GITLAB_REPO) == GITLAB_DEFAULT_BRANCH
+    assert (
+        modules_json.get_component_branch(self.component_type, "multiqc", GITLAB_URL, GITLAB_REPO)
+        == GITLAB_DEFAULT_BRANCH
+    )
 
 
 def test_update_different_branch_mix_modules_branch_test(self):
@@ -272,8 +285,78 @@ def test_update_different_branch_mix_modules_branch_test(self):
     )
     assert update_obj.update()
 
-    assert modules_json.get_module_branch("multiqc", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_BRANCH
+    assert (
+        modules_json.get_component_branch(self.component_type, "multiqc", GITLAB_URL, GITLAB_REPO)
+        == GITLAB_BRANCH_TEST_BRANCH
+    )
     assert modules_json.get_module_version("multiqc", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_NEW_SHA
+
+
+# Mock questionary answer: do not update module, only show diffs
+@mock.patch.object(questionary.Question, "unsafe_ask", return_value=False)
+def test_update_only_show_differences(self, mock_prompt):
+    """Try updating all modules showing differences.
+    Don't update some of them.
+    Check that the sha in modules.json is not changed."""
+    modules_json = ModulesJson(self.pipeline_dir)
+    update_obj = ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=True)
+
+    tmpdir = tempfile.mkdtemp()
+    shutil.rmtree(tmpdir)
+    shutil.copytree(Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME), tmpdir)
+
+    assert update_obj.update() is True
+
+    mod_json = modules_json.get_modules_json()
+    # Loop through all modules and check that they are NOT updated (according to the modules.json file)
+    # Modules that can be updated but shouldn't are custom/dumpsoftwareversions and fastqc
+    # Module multiqc is already up to date so don't check
+    for mod in ["custom/dumpsoftwareversions", "fastqc"]:
+        correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
+        current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
+        assert correct_git_sha != current_git_sha
+        assert cmp_module(Path(tmpdir, mod), Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, mod)) is True
+
+
+# Mock questionary answer: do not update module, only show diffs
+@mock.patch.object(questionary.Question, "unsafe_ask", return_value=False)
+def test_update_only_show_differences_when_patch(self, mock_prompt):
+    """Try updating all modules showing differences when there's a patched module.
+    Don't update some of them.
+    Check that the sha in modules.json is not changed."""
+    modules_json = ModulesJson(self.pipeline_dir)
+    update_obj = ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=True)
+
+    # Modify fastqc module, it will have a patch which will be applied during update
+    # We modify fastqc because it's one of the modules that can be updated and there's another one before it (custom/dumpsoftwareversions)
+    module_path = Path(self.pipeline_dir, "modules", "nf-core", "fastqc")
+    main_path = Path(module_path, "main.nf")
+    with open(main_path, "r") as fh:
+        lines = fh.readlines()
+    for line_index in range(len(lines)):
+        if lines[line_index] == "    label 'process_medium'\n":
+            lines[line_index] = "    label 'process_low'\n"
+            break
+    with open(main_path, "w") as fh:
+        fh.writelines(lines)
+    # Create a patch file
+    patch_obj = ModulePatch(self.pipeline_dir)
+    patch_obj.patch("fastqc")
+    # Check that a patch file with the correct name has been created
+    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", "fastqc.diff"}
+
+    # Update all modules
+    assert update_obj.update() is True
+
+    mod_json = modules_json.get_modules_json()
+    # Loop through all modules and check that they are NOT updated (according to the modules.json file)
+    # Modules that can be updated but shouldn't are custom/dumpsoftwareversions and fastqc
+    # Module multiqc is already up to date so don't check
+    for mod in ["custom/dumpsoftwareversions", "fastqc"]:
+        correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
+        current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
+        print(correct_git_sha, current_git_sha)
+        assert correct_git_sha != current_git_sha
 
 
 def cmp_module(dir1, dir2):

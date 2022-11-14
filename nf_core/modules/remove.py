@@ -4,14 +4,17 @@ from pathlib import Path
 import questionary
 
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 
-from .modules_command import ModuleCommand
 from .modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
 
 
-class ModuleRemove(ModuleCommand):
+class ModuleRemove(ComponentCommand):
+    def __init__(self, pipeline_dir):
+        super().__init__("modules", pipeline_dir)
+
     def remove(self, module):
         """
         Remove an already installed module
@@ -33,7 +36,7 @@ class ModuleRemove(ModuleCommand):
         if module is None:
             module = questionary.autocomplete(
                 "Tool name:",
-                choices=self.modules_from_repo(repo_dir),
+                choices=self.components_from_repo(repo_dir),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
@@ -50,13 +53,13 @@ class ModuleRemove(ModuleCommand):
 
             if modules_json.module_present(module, self.modules_repo.remote_url, repo_path):
                 log.error(f"Found entry for '{module}' in 'modules.json'. Removing...")
-                modules_json.remove_entry(module, self.modules_repo.remote_url, repo_path)
+                modules_json.remove_entry(self.component_type, module, self.modules_repo.remote_url, repo_path)
             return False
 
         log.info(f"Removing {module}")
 
         # Remove entry from modules.json
-        modules_json.remove_entry(module, self.modules_repo.remote_url, repo_path)
+        modules_json.remove_entry(self.component_type, module, self.modules_repo.remote_url, repo_path)
 
         # Remove the module
-        return self.clear_module_dir(module_name=module, module_dir=module_dir)
+        return self.clear_component_dir(module, module_dir)

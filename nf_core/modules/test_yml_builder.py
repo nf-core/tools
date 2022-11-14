@@ -24,14 +24,14 @@ import yaml
 from rich.syntax import Syntax
 
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 
-from .modules_command import ModuleCommand
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
 
-class ModulesTestYmlBuilder(ModuleCommand):
+class ModulesTestYmlBuilder(ComponentCommand):
     def __init__(
         self,
         module_name=None,
@@ -41,7 +41,7 @@ class ModulesTestYmlBuilder(ModuleCommand):
         force_overwrite=False,
         no_prompts=False,
     ):
-        super().__init__(directory)
+        super().__init__("modules", directory)
         self.module_name = module_name
         self.run_tests = run_tests
         self.test_yml_output_path = test_yml_output_path
@@ -77,7 +77,7 @@ class ModulesTestYmlBuilder(ModuleCommand):
             modules_repo = ModulesRepo()
             self.module_name = questionary.autocomplete(
                 "Tool name:",
-                choices=modules_repo.get_avail_modules(),
+                choices=modules_repo.get_avail_components(self.component_type),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         self.module_dir = os.path.join(self.default_modules_path, *self.module_name.split("/"))
@@ -232,9 +232,6 @@ class ModulesTestYmlBuilder(ModuleCommand):
         test_files = []
         for root, _, files in os.walk(results_dir, followlinks=True):
             for filename in files:
-                # Check that the file is not versions.yml
-                if filename == "versions.yml":
-                    continue
                 file_path = os.path.join(root, filename)
                 # add the key here so that it comes first in the dict
                 test_file = {"path": file_path}
@@ -245,8 +242,10 @@ class ModulesTestYmlBuilder(ModuleCommand):
                 # Add the md5 anyway, linting should fail later and can be manually removed if needed.
                 #  Originally we skipped this if empty, but then it's too easy to miss the warning.
                 #  Equally, if a file is legitimately empty we don't want to prevent this from working.
-                file_md5 = self._md5(file_path)
-                test_file["md5sum"] = file_md5
+                if filename != "versions.yml":
+                    # Only add md5sum if the file is not versions.yml
+                    file_md5 = self._md5(file_path)
+                    test_file["md5sum"] = file_md5
                 # Switch out the results directory path with the expected 'output' directory
                 test_file["path"] = file_path.replace(results_dir, "output")
                 test_files.append(test_file)
@@ -287,9 +286,9 @@ class ModulesTestYmlBuilder(ModuleCommand):
             for i in range(len(test_files)):
                 if test_files[i].get("md5sum") and not test_files[i].get("md5sum") == test_files_repeat[i]["md5sum"]:
                     test_files[i].pop("md5sum")
-                    test_files[i][
-                        "contains"
-                    ] = "[ # TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead ]"
+                    test_files[i]["contains"] = [
+                        "# TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead "
+                    ]
 
         if len(test_files) == 0:
             raise UserWarning(f"Could not find any test result files in '{results_dir}'")

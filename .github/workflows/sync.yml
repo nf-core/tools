@@ -27,7 +27,7 @@ jobs:
           else
             curl -O https://nf-co.re/pipeline_names.json
           fi
-          echo "::set-output name=matrix::$(cat pipeline_names.json)"
+          echo "name=matrix::$(cat pipeline_names.json)" >> $GITHUB_OUTPUT
 
   sync:
     needs: get-pipelines
@@ -36,10 +36,10 @@ jobs:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: Check out nf-core/tools
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: Check out nf-core/${{ matrix.pipeline }}
         with:
           repository: nf-core/${{ matrix.pipeline }}
@@ -78,7 +78,7 @@ jobs:
 
       - name: Upload sync log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: sync_log_${{ matrix.pipeline }}
           path: sync_log_${{ matrix.pipeline }}.txt

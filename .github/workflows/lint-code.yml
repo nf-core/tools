@@ -1,5 +1,11 @@
 name: Lint tools code formatting
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+  release:
+    types: [published]
 
 # Cancel if a newer run is started
 concurrency:
@@ -10,9 +16,9 @@ jobs:
   EditorConfig:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
 
       - name: Install editorconfig-checker
         run: npm install -g editorconfig-checker
@@ -24,9 +30,9 @@ jobs:
   Prettier:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
 
       - name: Install Prettier
         run: npm install -g prettier
@@ -37,7 +43,7 @@ jobs:
   PythonBlack:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Check code lints with Black
         uses: psf/black@stable
@@ -68,14 +74,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source-code repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
       - name: python-isort
-        uses: isort/isort-action@v0.1.0
+        uses: isort/isort-action@v1.1.0
         with:
           isortVersion: "latest"
           requirementsFiles: "requirements.txt requirements-dev.txt"

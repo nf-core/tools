@@ -1,5 +1,11 @@
 name: Create a pipeline and run nf-core linting
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+  release:
+    types: [published]
 
 # Cancel if a newer run is started
 concurrency:
@@ -21,7 +27,7 @@ jobs:
           - "latest-everything"
     steps:
       # Get the repo code
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: Check out source-code repository
 
       # Set up nf-core/tools
@@ -42,7 +48,7 @@ jobs:
           version: ${{ matrix.NXF_VER }}
 
       # Install the Prettier linting tools
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
 
       - name: Install Prettier
         run: npm install -g prettier
@@ -80,7 +86,7 @@ jobs:
 
       # Run nf-core linting
       - name: nf-core lint
-        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --fail-warned
+        run: nf-core --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned
 
       # Run the other nf-core commands
       - name: nf-core list
@@ -96,7 +102,7 @@ jobs:
         run: nf-core --log-file log.txt bump-version --dir nf-core-testpipeline/ 1.1
 
       - name: nf-core lint in release mode
-        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
+        run: nf-core --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
 
       - name: nf-core modules install
         run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
@@ -115,7 +121,7 @@ jobs:
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: nf-core-log-file
           path: log.txt

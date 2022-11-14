@@ -11,16 +11,16 @@ from rich.table import Table
 from rich.text import Text
 
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
 
-from .module_utils import get_repo_type
-from .modules_command import ModuleCommand
 from .modules_repo import NF_CORE_MODULES_REMOTE
+from .modules_utils import get_repo_type
 
 log = logging.getLogger(__name__)
 
 
-class ModuleInfo(ModuleCommand):
+class ModuleInfo(ComponentCommand):
     """
     Class to print information of a module.
 
@@ -56,7 +56,7 @@ class ModuleInfo(ModuleCommand):
     """
 
     def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+        super().__init__("modules", pipeline_dir, remote_url, branch, no_pull)
         self.meta = None
         self.local_path = None
         self.remote_location = None
@@ -94,14 +94,14 @@ class ModuleInfo(ModuleCommand):
             ).unsafe_ask()
             if self.local:
                 if self.repo_type == "modules":
-                    modules = self.get_modules_clone_modules()
+                    modules = self.get_components_clone_modules()
                 else:
                     modules = self.modules_json.get_all_modules().get(self.modules_repo.remote_url)
                     modules = [module if dir == "nf-core" else f"{dir}/{module}" for dir, module in modules]
                     if modules is None:
                         raise UserWarning(f"No modules installed from '{self.modules_repo.remote_url}'")
             else:
-                modules = self.modules_repo.get_avail_modules()
+                modules = self.modules_repo.get_avail_components(self.component_type)
             module = questionary.autocomplete(
                 "Please select a module", choices=modules, style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
@@ -139,7 +139,6 @@ class ModuleInfo(ModuleCommand):
 
         if self.repo_type == "pipeline":
             # Try to find and load the meta.yml file
-            repo_name = self.modules_repo.repo_path
             module_base_path = os.path.join(self.dir, "modules")
             # Check that we have any modules installed from this repo
             modules = self.modules_json.get_all_modules().get(self.modules_repo.remote_url)
@@ -179,7 +178,7 @@ class ModuleInfo(ModuleCommand):
             dict or bool: Parsed meta.yml found, False otherwise
         """
         # Check if our requested module is there
-        if self.module not in self.modules_repo.get_avail_modules():
+        if self.module not in self.modules_repo.get_avail_components(self.component_type):
             return False
 
         file_contents = self.modules_repo.get_meta_yml(self.module)

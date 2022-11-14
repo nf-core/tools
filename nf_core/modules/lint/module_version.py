@@ -7,8 +7,8 @@ import logging
 from pathlib import Path
 
 import nf_core
-import nf_core.modules.module_utils
 import nf_core.modules.modules_repo
+import nf_core.modules.modules_utils
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ def module_version(module_lint_object, module):
     # Check whether a new version is available
     try:
         modules_repo = nf_core.modules.modules_repo.ModulesRepo()
-        module_git_log = modules_repo.get_module_git_log(module.module_name)
+        module_git_log = modules_repo.get_component_git_log(module.module_name, "modules")
         if version == next(module_git_log)["git_sha"]:
             module.passed.append(("module_version", "Module is the latest version", module.module_dir))
         else:

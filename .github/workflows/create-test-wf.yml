@@ -1,5 +1,11 @@
 name: Create a pipeline and test it
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+  release:
+    types: [published]
 
 # Cancel if a newer run is started
 concurrency:
@@ -20,7 +26,7 @@ jobs:
           - "21.10.3"
           - "latest-everything"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: Check out source-code repository
 
       - name: Set up Python 3.7
@@ -45,7 +51,7 @@ jobs:
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: nf-core-log-file
           path: log.txt

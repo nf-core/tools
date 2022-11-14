@@ -3,17 +3,16 @@
 organization's specification based on a template.
 """
 import configparser
-import imghdr
 import logging
 import os
-import pathlib
 import random
 import re
 import shutil
-import subprocess
 import sys
 import time
+from pathlib import Path
 
+import filetype
 import git
 import jinja2
 import questionary
@@ -23,6 +22,7 @@ import yaml
 import nf_core
 import nf_core.schema
 import nf_core.utils
+from nf_core.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
@@ -39,6 +39,9 @@ class PipelineCreate(object):
         force (bool): Overwrites a given workflow directory with the same name. Defaults to False.
             May the force be with you.
         outdir (str): Path to the local output directory.
+        template_yaml (str): Path to template.yml file for pipeline creation settings.
+        plain (bool): If true the Git repository will be initialized plain.
+        default_branch (str): Specifies the --initial-branch name.
     """
 
     def __init__(
@@ -52,6 +55,7 @@ class PipelineCreate(object):
         outdir=None,
         template_yaml_path=None,
         plain=False,
+        default_branch=None,
     ):
         self.template_params, skip_paths_keys = self.create_param_dict(
             name, description, author, version, template_yaml_path, plain
@@ -81,10 +85,11 @@ class PipelineCreate(object):
         self.no_git = (
             no_git if self.template_params["github"] else True
         )  # Set to True if template was configured without github hosting
+        self.default_branch = default_branch
         self.force = force
         if outdir is None:
             outdir = os.path.join(os.getcwd(), self.template_params["name_noslash"])
-        self.outdir = outdir
+        self.outdir = Path(outdir)
 
     def create_param_dict(self, name, description, author, version, template_yaml_path, plain):
         """Creates a dictionary of parameters for the new pipeline.
@@ -162,6 +167,11 @@ class PipelineCreate(object):
         param_dict["logo_dark"] = f"{param_dict['name_noslash']}_logo_dark.png"
         param_dict["version"] = version
 
+        # Check that the pipeline name matches the requirements
+        if not re.match(r"^[a-z]+$", param_dict["short_name"]):
+            log.error("[red]Invalid workflow name: must be lowercase without punctuation.")
+            sys.exit(1)
+
         return param_dict, skip_paths
 
     def customize_template(self, template_areas):
@@ -226,9 +236,10 @@ class PipelineCreate(object):
         if self.template_params["branded"]:
             log.info(
                 "[green bold]!!!!!! IMPORTANT !!!!!!\n\n"
-                + "[green not bold]If you are interested in adding your pipeline to the nf-core community,\n"
-                + "PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!\n\n"
-                + "[default]Please read: [link=https://nf-co.re/developers/adding_pipelines#join-the-community]https://nf-co.re/developers/adding_pipelines#join-the-community[/link]"
+                "[green not bold]If you are interested in adding your pipeline to the nf-core community,\n"
+                "PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!\n\n"
+                "[default]Please read: [link=https://nf-co.re/developers/adding_pipelines#join-the-community]"
+                "https://nf-co.re/developers/adding_pipelines#join-the-community[/link]"
             )
 
     def render_template(self):
@@ -236,7 +247,7 @@ class PipelineCreate(object):
         log.info(f"Creating new nf-core pipeline: '{self.name}'")
 
         # Check if the output directory exists
-        if os.path.exists(self.outdir):
+        if self.outdir.exists():
             if self.force:
                 log.warning(f"Output directory '{self.outdir}' exists - continuing as --force specified")
             else:
@@ -255,12 +266,13 @@ class PipelineCreate(object):
         object_attrs["nf_core_version"] = nf_core.__version__
 
         # Can't use glob.glob() as need recursive hidden dotfiles - https://stackoverflow.com/a/58126417/713980
-        template_files = list(pathlib.Path(template_dir).glob("**/*"))
-        template_files += list(pathlib.Path(template_dir).glob("*"))
+        template_files = list(Path(template_dir).glob("**/*"))
+        template_files += list(Path(template_dir).glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
+        short_name = self.template_params["short_name"]
         rename_files = {
-            "workflows/pipeline.nf": f"workflows/{self.template_params['short_name']}.nf",
-            "lib/WorkflowPipeline.groovy": f"lib/Workflow{self.template_params['short_name'][0].upper()}{self.template_params['short_name'][1:]}.groovy",
+            "workflows/pipeline.nf": f"workflows/{short_name}.nf",
+            "lib/WorkflowPipeline.groovy": f"lib/Workflow{short_name[0].upper()}{short_name[1:]}.groovy",
         }
 
         # Set the paths to skip according to customization
@@ -281,9 +293,9 @@ class PipelineCreate(object):
 
                 # Set up vars and directories
                 template_fn = os.path.relpath(template_fn_path, template_dir)
-                output_path = os.path.join(self.outdir, template_fn)
+                output_path = self.outdir / template_fn
                 if template_fn in rename_files:
-                    output_path = os.path.join(self.outdir, rename_files[template_fn])
+                    output_path = self.outdir / rename_files[template_fn]
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
                 try:
@@ -335,7 +347,7 @@ class PipelineCreate(object):
         """
         Removes unused parameters from the nextflow schema.
         """
-        schema_path = os.path.join(self.outdir, "nextflow_schema.json")
+        schema_path = self.outdir / "nextflow_schema.json"
 
         schema = nf_core.schema.PipelineSchema()
         schema.schema_filename = schema_path
@@ -344,22 +356,14 @@ class PipelineCreate(object):
         schema.get_wf_params()
         schema.remove_schema_notfound_configs()
         schema.save_schema(suppress_logging=True)
-
-        # The schema is not guaranteed to follow Prettier standards
-        # so we run prettier on the schema file
-        try:
-            subprocess.run(
-                ["prettier", "--write", schema_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False
-            )
-        except FileNotFoundError:
-            log.warning("Prettier not found. Please install it and run it on the pipeline to fix linting issues.")
+        run_prettier_on_file(schema_path)
 
     def remove_nf_core_in_bug_report_template(self):
         """
         Remove the field mentioning nf-core documentation
         in the github bug report template
         """
-        bug_report_path = os.path.join(self.outdir, ".github", "ISSUE_TEMPLATE", "bug_report.yml")
+        bug_report_path = self.outdir / ".github" / "ISSUE_TEMPLATE" / "bug_report.yml"
 
         with open(bug_report_path, "r") as fh:
             contents = yaml.load(fh, Loader=yaml.FullLoader)
@@ -370,17 +374,7 @@ class PipelineCreate(object):
         with open(bug_report_path, "w") as fh:
             yaml.dump(contents, fh, default_flow_style=False, sort_keys=False)
 
-        # The dumped yaml file will not follow prettier formatting rules
-        # so we run prettier on the file
-        try:
-            subprocess.run(
-                ["prettier", "--write", bug_report_path],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-            )
-        except FileNotFoundError:
-            log.warning("Prettier not found. Please install it and run it on the pipeline to fix linting issues.")
+        run_prettier_on_file(bug_report_path)
 
     def fix_linting(self):
         """
@@ -445,22 +439,10 @@ class PipelineCreate(object):
         # Add the lint content to the preexisting nf-core config
         nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
         nf_core_yml["lint"] = lint_config
-        with open(os.path.join(self.outdir, ".nf-core.yml"), "w") as fh:
+        with open(self.outdir / ".nf-core.yml", "w") as fh:
             yaml.dump(nf_core_yml, fh, default_flow_style=False, sort_keys=False)
 
-        # The dumped yaml file will not follow prettier formatting rules
-        # so we run prettier on the file
-        try:
-            subprocess.run(
-                ["prettier", "--write", os.path.join(self.outdir, ".nf-core.yml")],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-            )
-        except FileNotFoundError:
-            log.warning(
-                "Prettier is not installed. Please install it and run it on the pipeline to fix linting issues."
-            )
+        run_prettier_on_file(os.path.join(self.outdir, ".nf-core.yml"))
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
@@ -468,11 +450,13 @@ class PipelineCreate(object):
         logo_url = f"https://nf-co.re/logo/{self.template_params['short_name']}?theme=light"
         log.debug(f"Fetching logo from {logo_url}")
 
-        email_logo_path = f"{self.outdir}/assets/{self.template_params['name_noslash']}_logo_light.png"
+        email_logo_path = self.outdir / "assets" / f"{self.template_params['name_noslash']}_logo_light.png"
         self.download_pipeline_logo(f"{logo_url}&w=400", email_logo_path)
         for theme in ["dark", "light"]:
             readme_logo_url = f"{logo_url}?w=600&theme={theme}"
-            readme_logo_path = f"{self.outdir}/docs/images/{self.template_params['name_noslash']}_logo_{theme}.png"
+            readme_logo_path = (
+                self.outdir / "docs" / "images" / f"{self.template_params['name_noslash']}_logo_{theme}.png"
+            )
             self.download_pipeline_logo(readme_logo_url, readme_logo_path)
 
     def download_pipeline_logo(self, url, img_fn):
@@ -508,7 +492,7 @@ class PipelineCreate(object):
             with open(img_fn, "wb") as fh:
                 fh.write(r.content)
             # Check that the file looks valid
-            image_type = imghdr.what(img_fn)
+            image_type = filetype.guess(img_fn).extension
             if image_type != "png":
                 log.error(f"Logo from the website didn't look like an image: '{image_type}'")
                 continue
@@ -522,24 +506,27 @@ class PipelineCreate(object):
         Raises:
             UserWarning: if Git default branch is set to 'dev' or 'TEMPLATE'.
         """
-        # Check that the default branch is not dev
+        default_branch = self.default_branch
         try:
-            default_branch = git.config.GitConfigParser().get_value("init", "defaultBranch")
+            default_branch = default_branch or git.config.GitConfigParser().get_value("init", "defaultBranch")
         except configparser.Error:
-            default_branch = None
             log.debug("Could not read init.defaultBranch")
-        if default_branch == "dev" or default_branch == "TEMPLATE":
+        if default_branch in ["dev", "TEMPLATE"]:
             raise UserWarning(
-                f"Your Git defaultBranch is set to '{default_branch}', which is incompatible with nf-core.\n"
-                "This can be modified with the command [white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
-                "Pipeline git repository is not initialised."
+                f"Your Git defaultBranch '{default_branch}' is incompatible with nf-core.\n"
+                "'dev' and 'TEMPLATE' can not be used as default branch name.\n"
+                "Set the default branch name with "
+                "[white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
+                "Or set the default_branch parameter in this class.\n"
+                "Pipeline git repository will not be initialised."
             )
-        # Initialise pipeline
+
         log.info("Initialising pipeline git repository")
         repo = git.Repo.init(self.outdir)
+        if default_branch:
+            repo.active_branch.rename(default_branch)
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
-        # Add TEMPLATE branch to git repository
         repo.git.branch("TEMPLATE")
         repo.git.branch("dev")
         log.info(
