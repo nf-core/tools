@@ -182,7 +182,12 @@ class ComponentUpdate(ComponentCommand):
 
             if patch_relpath is not None:
                 patch_successful = self.try_apply_patch(
-                    component, modules_repo.repo_path, patch_relpath, component_dir, component_install_dir
+                    component,
+                    modules_repo.repo_path,
+                    patch_relpath,
+                    component_dir,
+                    component_install_dir,
+                    write_file=False,
                 )
                 if patch_successful:
                     log.info(f"{self.component_type[:-1].title()} '{component_fullname}' patched successfully")
@@ -704,7 +709,7 @@ class ComponentUpdate(ComponentCommand):
         log.info(f"Updating '{repo_path}/{component}'")
         log.debug(f"Updating {self.component_type[:-1]} '{component}' to {new_version} from {repo_path}")
 
-    def try_apply_patch(self, component, repo_path, patch_relpath, component_dir, component_install_dir):
+    def try_apply_patch(self, component, repo_path, patch_relpath, component_dir, component_install_dir, write_file=True):
         """
         Try applying a patch file to the new module/subworkflow files
 
@@ -772,7 +777,7 @@ class ComponentUpdate(ComponentCommand):
 
         # Add the patch file to the modules.json file
         self.modules_json.add_patch_entry(
-            component, self.modules_repo.remote_url, repo_path, patch_relpath, write_file=True
+            component, self.modules_repo.remote_url, repo_path, patch_relpath, write_file=write_file
         )
 
         return True
