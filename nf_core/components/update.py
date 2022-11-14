@@ -113,6 +113,7 @@ class ComponentUpdate(ComponentCommand):
             return False
 
         # Get the list of modules/subworkflows to update, and their version information
+        print(self.update_all)
         components_info = (
             self.get_all_components_info() if self.update_all else [self.get_single_component_info(component)]
         )
@@ -709,7 +710,9 @@ class ComponentUpdate(ComponentCommand):
         log.info(f"Updating '{repo_path}/{component}'")
         log.debug(f"Updating {self.component_type[:-1]} '{component}' to {new_version} from {repo_path}")
 
-    def try_apply_patch(self, component, repo_path, patch_relpath, component_dir, component_install_dir, write_file=True):
+    def try_apply_patch(
+        self, component, repo_path, patch_relpath, component_dir, component_install_dir, write_file=True
+    ):
         """
         Try applying a patch file to the new module/subworkflow files
 
