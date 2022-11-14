@@ -675,15 +675,16 @@ class ModulesJson:
         Removes an entry from the 'modules.json' file.
 
         Args:
-            component_type (Str): Type of component [modules, subworkflows]
-            name (str): Name of the module to be removed
-            repo_url (str): URL of the repository containing the module
-            install_dir (str): Name of the directory where modules are installed
+            component_type (str): Type of component [modules, subworkflows]
+            name (str): Name of the component to be removed
+            repo_url (str): URL of the repository containing the component
+            install_dir (str): Name of the directory where components are installed
+            removed_by (str): Name of the component that wants to remove the component
         Returns:
-            (bool): True if the entry has actually been removed from the modules.json, False otherwise
+            (bool): return True if the component was removed, False if it was not found or is still depended on
         """
 
-        if removed_by is None:
+        if removed_by is None or removed_by == name:
             removed_by = component_type
         if not self.modules_json:
             return False
@@ -693,25 +694,28 @@ class ModulesJson:
                 if removed_by in repo_entry[component_type][install_dir][name]["installed_by"]:
                     repo_entry[component_type][install_dir][name]["installed_by"].remove(removed_by)
                     if len(repo_entry[component_type][install_dir][name]["installed_by"]) == 0:
-                        repo_entry[component_type][install_dir].pop(name)
+                        self.modules_json["repos"][repo_url][component_type][install_dir].pop(name)
+                        self.dump()
+                        if len(repo_entry[component_type][install_dir]) == 0:
+
+                            self.modules_json["repos"][repo_url].pop(component_type)
                         return True
+                    self.dump()
+                    return False
                 else:
                     log.error(
                         f"Could not find 'installed_by' entry for '{removed_by}' in 'modules.json' file. Did you install it first?"
                     )
-
             else:
                 log.warning(
                     f"{component_type[:-1].title()} '{install_dir}/{name}' is missing from 'modules.json' file."
                 )
                 return False
-            if len(repo_entry[component_type][install_dir]) == 0:
-                self.modules_json["repos"].pop(repo_url)
+
         else:
             log.warning(f"{component_type[:-1].title()} '{install_dir}/{name}' is missing from 'modules.json' file.")
             return False
 
-        self.dump()
         return False
 
     def add_patch_entry(self, module_name, repo_url, install_dir, patch_filename, write_file=True):
@@ -910,6 +914,50 @@ class ModulesJson:
                         self.pipeline_components[repo] = [(dir, m) for m in components]
 
         return self.pipeline_components
+
+    def get_dependent_components(
+        self,
+        component_type,
+        name,
+        repo_url,
+        install_dir,
+        dependent_components,
+    ):
+        """
+        Retrieves all pipeline modules/subworkflows that are reported in the modules.json
+        as being installed by the given component
+
+        Args:
+            component_type (str): Type of component [modules, subworkflows]
+            name (str): Name of the component to find dependencies for
+            repo_url (str): URL of the repository containing the components
+            install_dir (str): Name of the directory where components are installed
+
+        Returns:
+            (dict[str: str,]): Dictionary indexed with the component names, with component_type as value
+        """
+
+        if self.modules_json is None:
+            self.load()
+        component_types = ["modules"] if component_type == "modules" else ["modules", "subworkflows"]
+        # Find all components that have an entry of install by of  a given component, recursively call this function for subworkflows
+        for type in component_types:
+            components = self.modules_json["repos"][repo_url][type][install_dir].items()
+            for component_name, component_entry in components:
+                if name in component_entry["installed_by"]:
+                    dependent_components[component_name] = type
+                    if type == "subworkflows":
+                        dependent_components.update(
+                            self.get_dependent_components(
+                                type,
+                                component_name,
+                                repo_url,
+                                install_dir,
+                                dependent_components,
+                            )
+                        )
+
+        return dependent_components
 
     def get_component_branch(self, component_type, component, repo_url, install_dir):
         """
