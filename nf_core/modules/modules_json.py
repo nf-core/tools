@@ -318,7 +318,7 @@ class ModulesJson:
         # Clean up the modules/subworkflows we were unable to find the sha for
         for component in sb_local:
             log.debug(f"Moving {component_type[:-1]} '{Path(install_dir, component)}' to 'local' directory")
-            self.move_module_to_local(component, install_dir)
+            self.move_component_to_local(component_type, component, install_dir)
 
         for component in dead_components:
             log.debug(f"Removing {component_type[:-1]} {Path(install_dir, component)}'")
