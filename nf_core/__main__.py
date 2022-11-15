@@ -58,7 +58,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core subworkflows": [
         {
             "name": "For pipelines",
-            "commands": ["install"],
+            "commands": ["install", "list", "remove"],
         },
         {
             "name": "Developing new subworkflows",
