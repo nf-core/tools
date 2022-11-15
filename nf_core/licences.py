@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Lists software licences for a given workflow."""
 
 from __future__ import print_function

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Code for linting modules in the nf-core/modules repository and
 in nf-core pipelines

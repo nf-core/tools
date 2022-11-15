@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 The SubworkflowCreate class handles generating of subworkflow templates
 """
