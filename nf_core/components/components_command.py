@@ -233,3 +233,30 @@ class ComponentCommand:
                         self.modules_repo.repo_path
                     ][module_name]["patch"] = str(patch_path.relative_to(Path(self.dir).resolve()))
                 modules_json.dump()
+
+    def check_if_in_include_stmts(self, component_path):
+        """
+        Checks for include statements in the main.nf file of the pipeline and a list of line numbers where the component is included
+        Args:
+            component_path (str): The path to the module/subworkflow
+
+        Returns:
+            (list): A list of dictionaries, with the workflow file and the line number where the component is included
+        """
+        include_stmts = []
+        if self.repo_type == "pipeline":
+            workflow_files = Path(self.dir, "workflows").glob("*.nf")
+            for workflow_file in workflow_files:
+                with open(workflow_file, "r") as fh:
+                    for line in fh.readlines():
+                        if f"'.{Path(component_path,'main')}'" in line:
+                            include_stmts.append(
+                                {
+                                    "file": workflow_file,
+                                    "line": line,
+                                }
+                            )
+            return include_stmts
+        else:
+            log.debug("Not a pipeline repository, skipping check for include statements")
+            return include_stmts

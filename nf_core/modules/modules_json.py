@@ -704,7 +704,8 @@ class ModulesJson:
                     return False
                 else:
                     log.error(
-                        f"Could not find 'installed_by' entry for '{removed_by}' in 'modules.json' file. Did you install it first?"
+                        f"{name} was installed by {repo_entry[component_type][install_dir][name]['installed_by']} and can't be removed individually."
+                        f"When you remove {repo_entry[component_type][install_dir][name]['installed_by']}, {name} will be removed as well."
                     )
             else:
                 log.warning(
