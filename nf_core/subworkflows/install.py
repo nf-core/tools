@@ -82,7 +82,7 @@ class SubworkflowInstall(ComponentCommand):
                 f"Subworkflow is already installed and force is not set.\nAdding the new installation source {self.installed_by} for subworkflow {subworkflow} to 'modules.json' without installing the subworkflow."
             )
             modules_json.load()
-            modules_json.update(self.modules_repo, subworkflow, current_version, self.installed_by)
+            modules_json.update_subworkflow(self.modules_repo, subworkflow, current_version, self.installed_by)
             return False
 
         version = nf_core.components.components_install.get_version(

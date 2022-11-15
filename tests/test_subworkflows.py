@@ -91,8 +91,8 @@ class TestSubworkflows(unittest.TestCase):
     from .subworkflows.remove import (
         test_subworkflows_remove_one_of_two_subworkflow,
         test_subworkflows_remove_subworkflow,
-        test_subworkflows_remove_uninstalled_subworkflow,
     )
+
     from .subworkflows.subworkflows_test import (
         test_subworkflows_test_check_inputs,
         test_subworkflows_test_no_installed_subworkflows,

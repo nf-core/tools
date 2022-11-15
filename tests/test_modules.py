@@ -160,6 +160,7 @@ class TestModules(unittest.TestCase):
         test_modules_list_remote,
         test_modules_list_remote_gitlab,
     )
+
     from .modules.modules_json import (
         test_get_modules_json,
         test_mod_json_create,
@@ -188,6 +189,7 @@ class TestModules(unittest.TestCase):
         test_create_patch_update_fail,
         test_create_patch_update_success,
     )
+
     from .modules.remove import (
         test_modules_remove_trimgalore,
         test_modules_remove_trimgalore_uninstalled,
