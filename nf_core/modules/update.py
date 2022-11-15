@@ -173,7 +173,7 @@ class ModuleUpdate(ComponentCommand):
 
             if patch_relpath is not None:
                 patch_successful = self.try_apply_patch(
-                    module, modules_repo.repo_path, patch_relpath, module_dir, module_install_dir
+                    module, modules_repo.repo_path, patch_relpath, module_dir, module_install_dir, write_file=False
                 )
                 if patch_successful:
                     log.info(f"Module '{module_fullname}' patched successfully")
@@ -630,7 +630,7 @@ class ModuleUpdate(ComponentCommand):
         log.info(f"Updating '{repo_path}/{module}'")
         log.debug(f"Updating module '{module}' to {new_version} from {repo_path}")
 
-    def try_apply_patch(self, module, repo_path, patch_relpath, module_dir, module_install_dir):
+    def try_apply_patch(self, module, repo_path, patch_relpath, module_dir, module_install_dir, write_file=True):
         """
         Try applying a patch file to the new module files
 
@@ -698,7 +698,7 @@ class ModuleUpdate(ComponentCommand):
 
         # Add the patch file to the modules.json file
         self.modules_json.add_patch_entry(
-            module, self.modules_repo.remote_url, repo_path, patch_relpath, write_file=True
+            module, self.modules_repo.remote_url, repo_path, patch_relpath, write_file=write_file
         )
 
         return True

@@ -34,6 +34,7 @@
 ### Modules
 
 - Update patch file paths if the modules directory has the old structure ([#1878](https://github.com/nf-core/tools/pull/1878))
+- Don't write to `modules.json` file when applying a patch file during `nf-core modules update`
 
 ### Subworkflows
 
