@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from nf_core.modules.modules_json import ModulesJson
 
 
