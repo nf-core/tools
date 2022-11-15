@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 The ModulesTestYmlBuilder class handles automatic generation of the modules test.yml file
 along with running the tests and creating md5 sums
@@ -25,14 +24,14 @@ import yaml
 from rich.syntax import Syntax
 
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
-from nf_core.subworkflows.subworkflows_command import SubworkflowCommand
 
 log = logging.getLogger(__name__)
 
 
-class SubworkflowTestYmlBuilder(SubworkflowCommand):
+class SubworkflowTestYmlBuilder(ComponentCommand):
     def __init__(
         self,
         subworkflow=None,
@@ -42,7 +41,7 @@ class SubworkflowTestYmlBuilder(SubworkflowCommand):
         force_overwrite=False,
         no_prompts=False,
     ):
-        super().__init__(directory)
+        super().__init__("subworkflows", directory)
         self.dir = directory
         self.subworkflow = subworkflow
         self.run_tests = run_tests

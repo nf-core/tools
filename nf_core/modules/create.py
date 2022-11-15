@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 The ModuleCreate class handles generating of module templates
 """
@@ -17,13 +16,12 @@ import nf_core
 import nf_core.components.components_create
 import nf_core.modules.modules_utils
 import nf_core.utils
-
-from .modules_command import ModuleCommand
+from nf_core.components.components_command import ComponentCommand
 
 log = logging.getLogger(__name__)
 
 
-class ModuleCreate(ModuleCommand):
+class ModuleCreate(ComponentCommand):
     def __init__(
         self,
         directory=".",
@@ -36,7 +34,7 @@ class ModuleCreate(ModuleCommand):
         conda_version=None,
         repo_type=None,
     ):
-        super().__init__(directory)
+        super().__init__("modules", directory)
         self.directory = directory
         self.tool = tool
         self.author = author
@@ -157,7 +155,7 @@ class ModuleCreate(ModuleCommand):
                 pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
                     yaml.dump(pytest_modules_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 raise UserWarning("Could not open 'tests/config/pytest_modules.yml' file!")
 
         new_files = list(self.file_paths.values())

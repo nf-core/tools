@@ -1,12 +1,7 @@
-import glob
-import json
 import logging
 import os
-import re
 
-import jinja2
 import questionary
-import rich
 
 import nf_core.modules.modules_utils
 import nf_core.utils
@@ -77,7 +72,7 @@ def get_version(component, component_type, sha, prompt, current_version, modules
         version = sha
     elif prompt:
         try:
-            version = nf_core.modules.modules_utils.prompt_component_version_sha(
+            version = prompt_component_version_sha(
                 component,
                 component_type,
                 installed_sha=current_version,
@@ -98,11 +93,11 @@ def clean_modules_json(component, component_type, modules_repo, modules_json):
     """
     for repo_url, repo_content in modules_json.modules_json["repos"].items():
         for dir, dir_components in repo_content[component_type].items():
-            for name, _ in dir_components.items():
+            for name, component_values in dir_components.items():
                 if name == component and dir == modules_repo.repo_path:
                     repo_to_remove = repo_url
                     log.info(
                         f"Removing {component_type[:-1]} '{modules_repo.repo_path}/{component}' from repo '{repo_to_remove}' from modules.json"
                     )
-                    modules_json.remove_entry(component, repo_to_remove, modules_repo.repo_path)
-                    break
+                    modules_json.remove_entry(component_type, component, repo_to_remove, modules_repo.repo_path)
+                    return component_values["installed_by"]

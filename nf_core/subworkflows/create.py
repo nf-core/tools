@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 The SubworkflowCreate class handles generating of subworkflow templates
 """
@@ -13,14 +12,13 @@ import yaml
 import nf_core
 import nf_core.components.components_create
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_utils import get_repo_type
-
-from .subworkflows_command import SubworkflowCommand
 
 log = logging.getLogger(__name__)
 
 
-class SubworkflowCreate(SubworkflowCommand):
+class SubworkflowCreate(ComponentCommand):
     def __init__(
         self,
         directory=".",
@@ -29,7 +27,7 @@ class SubworkflowCreate(SubworkflowCommand):
         force=False,
         repo_type=None,
     ):
-        super().__init__(directory)
+        super().__init__("subworkflows", directory)
         self.directory = directory
         self.subworkflow = subworkflow
         self.author = author

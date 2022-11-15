@@ -104,23 +104,13 @@ def run_nf_core():
     nf_core_cli(auto_envvar_prefix="NFCORE")
 
 
-# taken from https://github.com/pallets/click/issues/108#issuecomment-194465429
-_common_options = [
-    click.option("--hide-progress", is_flag=True, default=False, help="Don't show progress bars."),
-]
-
-
-def common_options(func):
-    for option in reversed(_common_options):
-        func = option(func)
-    return func
-
-
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(nf_core.__version__)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
+@click.option("--hide-progress", is_flag=True, default=False, help="Don't show progress bars.")
 @click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
-def nf_core_cli(verbose, log_file):
+@click.pass_context
+def nf_core_cli(ctx, verbose, hide_progress, log_file):
     """
     nf-core/tools provides a set of helper tools for use with nf-core Nextflow pipelines.
 
@@ -135,6 +125,7 @@ def nf_core_cli(verbose, log_file):
             level=logging.DEBUG if verbose else logging.INFO,
             console=rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors()),
             show_time=False,
+            show_path=verbose,  # True if verbose, false otherwise
             markup=True,
         )
     )
@@ -145,6 +136,11 @@ def nf_core_cli(verbose, log_file):
         log_fh.setLevel(logging.DEBUG)
         log_fh.setFormatter(logging.Formatter("[%(asctime)s] %(name)-20s [%(levelname)-7s]  %(message)s"))
         log.addHandler(log_fh)
+
+    ctx.obj = {
+        "verbose": verbose,
+        "hide_progress": hide_progress or verbose,  # Always hide progress bar with verbose logging
+    }
 
 
 # nf-core list
@@ -328,8 +324,8 @@ def create(name, description, author, version, no_git, force, outdir, template_y
 @click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
 @click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
-@common_options
-def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, hide_progress):
+@click.pass_context
+def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json):
     """
     Check pipeline code against nf-core guidelines.
 
@@ -351,7 +347,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
     # Run the lint tests!
     try:
         lint_obj, module_lint_obj = nf_core.lint.run_linting(
-            dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, hide_progress
+            dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, ctx.obj["hide_progress"]
         )
         if len(lint_obj.failed) + len(module_lint_obj.failed) > 0:
             sys.exit(1)
@@ -729,10 +725,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
 @click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
-@common_options
-def lint(
-    ctx, tool, dir, key, all, fail_warned, local, passed, fix_version, hide_progress
-):  # pylint: disable=redefined-outer-name
+def lint(ctx, tool, dir, key, all, fail_warned, local, passed, fix_version):  # pylint: disable=redefined-outer-name
     """
     Lint one or more modules in a directory.
 
@@ -749,13 +742,13 @@ def lint(
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            hide_progress,
+            ctx.obj["hide_progress"],
         )
         module_lint.lint(
             module=tool,
             key=key,
             all_modules=all,
-            hide_progress=hide_progress,
+            hide_progress=ctx.obj["hide_progress"],
             print_results=True,
             local=local,
             show_passed=passed,

@@ -71,10 +71,18 @@ class TestModules(unittest.TestCase):
             branch=OLD_TRIMGALORE_BRANCH,
         )
         self.mods_install_trimgalore = nf_core.modules.ModuleInstall(
-            self.pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH
+            self.pipeline_dir,
+            prompt=False,
+            force=True,
+            remote_url=GITLAB_URL,
+            branch=OLD_TRIMGALORE_BRANCH,
         )
         self.mods_install_gitlab = nf_core.modules.ModuleInstall(
-            self.pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL, branch=GITLAB_DEFAULT_BRANCH
+            self.pipeline_dir,
+            prompt=False,
+            force=True,
+            remote_url=GITLAB_URL,
+            branch=GITLAB_DEFAULT_BRANCH,
         )
         self.mods_install_gitlab_old = nf_core.modules.ModuleInstall(
             self.pipeline_dir,
@@ -192,6 +200,8 @@ class TestModules(unittest.TestCase):
         test_update_different_branch_mix_modules_branch_test,
         test_update_different_branch_mixed_modules_main,
         test_update_different_branch_single_module,
+        test_update_only_show_differences,
+        test_update_only_show_differences_when_patch,
         test_update_with_config_dont_update,
         test_update_with_config_fix_all,
         test_update_with_config_fixed_version,
