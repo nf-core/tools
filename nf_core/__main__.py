@@ -42,7 +42,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Commands for developers",
-            "commands": ["create", "lint", "modules", "schema", "bump-version", "sync"],
+            "commands": ["create", "lint", "modules", "subworkflows", "schema", "bump-version", "sync"],
         },
     ],
     "nf-core modules": [
@@ -58,7 +58,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core subworkflows": [
         {
             "name": "For pipelines",
-            "commands": ["install"],
+            "commands": ["list", "install"],
         },
         {
             "name": "Developing new subworkflows",
