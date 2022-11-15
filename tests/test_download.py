@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Tests for the download subcommand of nf-core tools
 """
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 The ModuleCreate class handles generating of module templates
 """

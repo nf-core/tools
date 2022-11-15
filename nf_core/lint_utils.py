@@ -34,19 +34,21 @@ def print_joint_summary(lint_obj, module_lint_obj):
     console.print(table)
 
 
-def print_fixes(lint_obj, module_lint_obj):
+def print_fixes(lint_obj):
     """Prints available and applied fixes"""
 
-    if len(lint_obj.could_fix):
-        fix_cmd = "nf-core lint {} --fix {}".format(
-            "" if lint_obj.wf_path == "." else f"--dir {lint_obj.wf_path}", " --fix ".join(lint_obj.could_fix)
-        )
+    if lint_obj.could_fix:
+        fix_flags = "".join([f" --fix {fix}" for fix in lint_obj.could_fix])
+        wf_dir = "" if lint_obj.wf_path == "." else f"--dir {lint_obj.wf_path}"
+        fix_cmd = f"nf-core lint {wf_dir} {fix_flags}"
         console.print(
-            f"\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n[blue]    {fix_cmd}\n"
+            "\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n"
+            f"[blue]    {fix_cmd}\n"
         )
     if len(lint_obj.fix):
         console.print(
-            "Automatic fixes applied. Please check with 'git diff' and revert any changes you do not want with 'git checkout <file>'."
+            "Automatic fixes applied. "
+            "Please check with 'git diff' and revert any changes you do not want with 'git checkout <file>'."
         )
 
 

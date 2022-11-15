@@ -12,6 +12,7 @@
 
 ### General
 
+- Refactor CLI flag `--hide-progress` to be at the top-level group, like `--verbose` ([#2016](https://github.com/nf-core/tools/pull/2016))
 - Fix error in tagging GitPod docker images during releases
 - `nf-core sync` now supports the template YAML file using `-t/--template-yaml`.
 - Fix bug when updating modules from old version in old folder structure
@@ -26,12 +27,15 @@
 - Bump promoted Python version from 3.7 to 3.8 ([#1971](https://github.com/nf-core/tools/pull/1971))
 - Fix incorrect file deletion in `nf-core launch` when `--params_in` has the same name as `--params_out`
 - Updated GitHub actions ([#1998](https://github.com/nf-core/tools/pull/1998), [#2001](https://github.com/nf-core/tools/pull/2001))
+- Code maintenance ([#1818](https://github.com/nf-core/tools/pull/1818))
 - Track from where modules and subworkflows are installed ([#1999](https://github.com/nf-core/tools/pull/1999))
 - Substitute ModulesCommand and SubworkflowsCommand by ComponentsCommand ([#2000](https://github.com/nf-core/tools/pull/2000))
+- Don't print source file + line number on logging messages (except when verbose) ([#2015](https://github.com/nf-core/tools/pull/2015))
 
 ### Modules
 
 - Update patch file paths if the modules directory has the old structure ([#1878](https://github.com/nf-core/tools/pull/1878))
+- Don't write to `modules.json` file when applying a patch file during `nf-core modules update`
 
 ### Subworkflows
 
@@ -52,7 +56,7 @@
 - Update MultiQC module, update supplying MultiQC default and custom config and logo files to module
 - Add a 'recommend' methods description text to MultiQC to help pipeline users report pipeline usage in publications ([#1749](https://github.com/nf-core/tools/pull/1749))
 - Fix template spacing modified by JINJA ([#1830](https://github.com/nf-core/tools/pull/1830))
-- Fix MultiQC execution on template [#1855](https://github.com/nf-core/tools/pull/1855)
+- Fix MultiQC execution on template ([#1855](https://github.com/nf-core/tools/pull/1855))
 - Don't skip including `base.config` when skipping nf-core/configs
 
 ### Linting
