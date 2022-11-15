@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Linting policy for nf-core pipeline projects.
 
 Tests Nextflow-based pipelines to check that they adhere to

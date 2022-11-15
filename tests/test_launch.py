@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ Tests covering the pipeline launch code.
 """
 

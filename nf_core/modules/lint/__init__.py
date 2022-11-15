@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Code for linting modules in the nf-core/modules repository and
 in nf-core pipelines
@@ -135,7 +134,6 @@ class ModuleLint(ComponentCommand):
         module=None,
         key=(),
         all_modules=False,
-        hide_progress=False,
         print_results=True,
         show_passed=False,
         local=False,
