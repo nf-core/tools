@@ -738,17 +738,16 @@ def lint(ctx, tool, dir, key, all, fail_warned, local, passed, fix_version):  # 
     try:
         module_lint = nf_core.modules.ModuleLint(
             dir,
-            fail_warned,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-            ctx.obj["hide_progress"],
+            fail_warned=fail_warned,
+            remote_url=ctx.obj["modules_repo_url"],
+            branch=ctx.obj["modules_repo_branch"],
+            no_pull=ctx.obj["modules_repo_no_pull"],
+            hide_progress=ctx.obj["hide_progress"],
         )
         module_lint.lint(
             module=tool,
             key=key,
             all_modules=all,
-            hide_progress=ctx.obj["hide_progress"],
             print_results=True,
             local=local,
             show_passed=passed,
