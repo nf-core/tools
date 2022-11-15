@@ -701,6 +701,7 @@ class ModulesJson:
                             self.modules_json["repos"][repo_url].pop(component_type)
                         return True
                     self.dump()
+                    # Don't remove component entry from modules.json
                     return False
                 else:
                     log.error(
