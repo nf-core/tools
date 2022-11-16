@@ -32,7 +32,7 @@ def test_install_and_update(self):
 def test_install_at_hash_and_update(self):
     """Installs an old version of a subworkflow in the pipeline and updates it"""
     assert self.sw_install_old.install("fastq_align_bowtie2")
-    update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, recursive=True)
+    update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, update_deps=True)
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Copy the sw files and check that they are affected by the update
@@ -61,7 +61,7 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
     """Installs an old version of a sw in the pipeline and updates it. Save differences to a file."""
     assert self.sw_install_old.install("fastq_align_bowtie2")
     patch_path = Path(self.pipeline_dir, "fastq_align_bowtie2.patch")
-    update_obj = SubworkflowUpdate(self.pipeline_dir, save_diff_fn=patch_path, recursive=True)
+    update_obj = SubworkflowUpdate(self.pipeline_dir, save_diff_fn=patch_path, update_deps=True)
 
     # Copy the sw files and check that they are affected by the update
     tmpdir = tempfile.mkdtemp()
@@ -231,7 +231,7 @@ def test_update_all_linked_components_from_subworkflow(self):
     shutil.copytree(modules_path, Path(tmpdir, "modules"))
 
     # Update fastq_align_bowtie2 and all modules and subworkflows used by that
-    update_obj = SubworkflowUpdate(self.pipeline_dir, recursive=True, show_diff=False)
+    update_obj = SubworkflowUpdate(self.pipeline_dir, update_deps=True, show_diff=False)
     assert update_obj.update("fastq_align_bowtie2") is True
 
     mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
@@ -276,7 +276,7 @@ def test_update_all_subworkflows_from_module(self):
     shutil.copytree(sw_path, Path(tmpdir, "fastq_align_bowtie2"))
 
     # Update bowtie2/align and all subworkflows using it
-    update_obj = ModuleUpdate(self.pipeline_dir, recursive=True, show_diff=False)
+    update_obj = ModuleUpdate(self.pipeline_dir, update_deps=True, show_diff=False)
     assert update_obj.update("bowtie2/align") is True
 
     mod_json = ModulesJson(self.pipeline_dir).get_modules_json()

@@ -29,7 +29,7 @@ class ComponentUpdate(ComponentCommand):
         update_all=False,
         show_diff=None,
         save_diff_fn=None,
-        recursive=False,
+        update_deps=False,
         remote_url=None,
         branch=None,
         no_pull=False,
@@ -41,7 +41,7 @@ class ComponentUpdate(ComponentCommand):
         self.update_all = update_all
         self.show_diff = show_diff
         self.save_diff_fn = save_diff_fn
-        self.recursive = recursive
+        self.update_deps = update - deps
         self.component = None
         self.update_config = None
         self.modules_json = ModulesJson(self.dir)
@@ -234,7 +234,7 @@ class ComponentUpdate(ComponentCommand):
                             "It is advised to keep all your modules and subworkflows up to date.\n"
                             "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date.\n"
                         )
-                        if self.recursive:
+                        if self.update - deps:
                             recursive_update = True
                         else:
                             recursive_update = questionary.confirm(
@@ -278,7 +278,7 @@ class ComponentUpdate(ComponentCommand):
                         "It is advised to keep all your modules and subworkflows up to date.\n"
                         "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date.\n"
                     )
-                    if self.recursive:
+                    if self.update - deps:
                         recursive_update = True
                     else:
                         recursive_update = questionary.confirm(

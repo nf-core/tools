@@ -555,13 +555,13 @@ def install(ctx, tool, dir, prompt, force, sha):
     help="Save diffs to a file instead of updating in place",
 )
 @click.option(
-    "-r",
-    "--recursive",
+    "-u",
+    "--update-deps",
     is_flag=True,
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
-def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, recursive):
+def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, update_deps):
     """
     Update DSL2 modules within a pipeline.
 
@@ -576,7 +576,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, recursiv
             all,
             preview,
             save_diff,
-            recursive,
+            update - deps,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
@@ -1095,13 +1095,13 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     help="Save diffs to a file instead of updating in place",
 )
 @click.option(
-    "-r",
-    "--recursive",
+    "-u",
+    "--update-deps",
     is_flag=True,
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
-def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, recursive):
+def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, update_deps):
     """
     Update DSL2 subworkflow within a pipeline.
 
@@ -1116,7 +1116,7 @@ def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, r
             all,
             preview,
             save_diff,
-            recursive,
+            update - deps,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
