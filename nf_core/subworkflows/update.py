@@ -1,7 +1,7 @@
 from nf_core.components.update import ComponentUpdate
 
 
-class ModuleUpdate(ComponentUpdate):
+class SubworkflowUpdate(ComponentUpdate):
     def __init__(
         self,
         pipeline_dir,
@@ -18,7 +18,7 @@ class ModuleUpdate(ComponentUpdate):
     ):
         super().__init__(
             pipeline_dir,
-            "modules",
+            "subworkflows",
             force,
             prompt,
             sha,

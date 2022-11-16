@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 The ModulesTestYmlBuilder class handles automatic generation of the modules test.yml file
 along with running the tests and creating md5 sums

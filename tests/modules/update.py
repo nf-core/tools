@@ -45,7 +45,9 @@ def test_install_and_update(self):
 def test_install_at_hash_and_update(self):
     """Installs an old version of a module in the pipeline and updates it"""
     assert self.mods_install_old.install("trimgalore")
-    update_obj = ModuleUpdate(self.pipeline_dir, show_diff=False, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH)
+    update_obj = ModuleUpdate(
+        self.pipeline_dir, show_diff=False, update_deps=True, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH
+    )
 
     # Copy the module files and check that they are affected by the update
     tmpdir = tempfile.mkdtemp()
@@ -229,7 +231,7 @@ def test_update_different_branch_single_module(self):
     assert install_obj.install("fastp")
 
     update_obj = ModuleUpdate(
-        self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH, show_diff=False
+        self.pipeline_dir, update_deps=True, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH, show_diff=False
     )
     update_obj.update("fastp")
 
@@ -355,7 +357,6 @@ def test_update_only_show_differences_when_patch(self, mock_prompt):
     for mod in ["custom/dumpsoftwareversions", "fastqc"]:
         correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
         current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
-        print(correct_git_sha, current_git_sha)
         assert correct_git_sha != current_git_sha
 
 

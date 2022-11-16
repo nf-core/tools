@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Some tests covering the linting code.
 """
 import fnmatch
