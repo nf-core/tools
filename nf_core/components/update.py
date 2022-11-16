@@ -61,7 +61,7 @@ class ComponentUpdate(ComponentCommand):
             raise UserWarning(f"Either a {self.component_type[:-1]} or the '--all' flag can be specified, not both.")
 
         if self.repo_type == "modules":
-            raise UserWarning(f"{self.component_type.title()} in clones of nf-core/modules can not be updated.")
+            raise UserWarning(f"{self.component_type.title()} can not be updated in clones of the nf-core/modules repository.")
 
         if self.prompt and self.sha is not None:
             raise UserWarning("Cannot use '--sha' and '--prompt' at the same time.")
@@ -79,7 +79,7 @@ class ComponentUpdate(ComponentCommand):
             component (str): The name of the module/subworkflow to update.
 
         Returns:
-            bool: True if the update was successful, False otherwise.
+            (bool): True if the update was successful, False otherwise.
         """
         self.component = component
         if updated is None:
@@ -222,7 +222,7 @@ class ComponentUpdate(ComponentCommand):
                         )
                         updated.append(component)
                     except UserWarning as e:
-                        if str(e) != "Module is unchanged":
+                        if str(e) != "{self.component_type[:-1].title()} is unchanged":
                             raise
                         else:
                             updated.append(component)
@@ -309,7 +309,7 @@ class ComponentUpdate(ComponentCommand):
                     f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
                 )
         elif not all_patches_successful and not silent:
-            log.info(f"Updates complete. Please apply failed patch{plural_es(components_info)} manually")
+            log.info(f"Updates complete. Please apply failed patch{plural_es(components_info)} manually.")
         elif not silent:
             log.info("Updates complete :sparkles:")
 
