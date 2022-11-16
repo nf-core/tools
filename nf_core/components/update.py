@@ -129,6 +129,7 @@ class ComponentUpdate(ComponentCommand):
                     {"name": "Preview diff in terminal, choose whether to update files", "value": 1},
                     {"name": "Just write diffs to a patch file", "value": 2},
                 ],
+                default={"name": "No previews, just update everything", "value": 0},
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
