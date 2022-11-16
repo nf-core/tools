@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Downloads a nf-core pipeline to the local file system."""
 
 from __future__ import print_function

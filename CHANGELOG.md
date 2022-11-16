@@ -27,6 +27,7 @@
 - Bump promoted Python version from 3.7 to 3.8 ([#1971](https://github.com/nf-core/tools/pull/1971))
 - Fix incorrect file deletion in `nf-core launch` when `--params_in` has the same name as `--params_out`
 - Updated GitHub actions ([#1998](https://github.com/nf-core/tools/pull/1998), [#2001](https://github.com/nf-core/tools/pull/2001))
+- Code maintenance ([#1818](https://github.com/nf-core/tools/pull/1818))
 - Track from where modules and subworkflows are installed ([#1999](https://github.com/nf-core/tools/pull/1999))
 - Substitute ModulesCommand and SubworkflowsCommand by ComponentsCommand ([#2000](https://github.com/nf-core/tools/pull/2000))
 - Don't print source file + line number on logging messages (except when verbose) ([#2015](https://github.com/nf-core/tools/pull/2015))
@@ -56,7 +57,7 @@
 - Update MultiQC module, update supplying MultiQC default and custom config and logo files to module
 - Add a 'recommend' methods description text to MultiQC to help pipeline users report pipeline usage in publications ([#1749](https://github.com/nf-core/tools/pull/1749))
 - Fix template spacing modified by JINJA ([#1830](https://github.com/nf-core/tools/pull/1830))
-- Fix MultiQC execution on template [#1855](https://github.com/nf-core/tools/pull/1855)
+- Fix MultiQC execution on template ([#1855](https://github.com/nf-core/tools/pull/1855))
 - Don't skip including `base.config` when skipping nf-core/configs
 
 ### Linting

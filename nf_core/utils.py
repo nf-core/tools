@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Common utility functions for the nf-core python package.
 """
@@ -339,7 +338,7 @@ def setup_requests_cachedir():
     return config
 
 
-def wait_cli_function(poll_func, poll_every=20):
+def wait_cli_function(poll_func, refresh_per_second=20):
     """
     Display a command-line spinner while calling a function repeatedly.
 
@@ -347,14 +346,14 @@ def wait_cli_function(poll_func, poll_every=20):
 
     Arguments:
        poll_func (function): Function to call
-       poll_every (int): How many tenths of a second to wait between function calls. Default: 20.
+       refresh_per_second (int): Refresh this many times per second. Default: 20.
 
     Returns:
        None. Just sits in an infite loop until the function returns True.
     """
     try:
         spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
-        with Live(spinner, refresh_per_second=20):
+        with Live(spinner, refresh_per_second=refresh_per_second):
             while True:
                 if poll_func():
                     break

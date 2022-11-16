@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Lint the main.nf file of a module
 """
@@ -100,18 +99,18 @@ def main_nf(module_lint_object, module, fix_version, progress_bar):
             continue
 
         # Perform state-specific linting checks
-        if state == "process" and not _is_empty(module, l):
+        if state == "process" and not _is_empty(l):
             process_lines.append(l)
-        if state == "input" and not _is_empty(module, l):
+        if state == "input" and not _is_empty(l):
             inputs.extend(_parse_input(module, l))
-        if state == "output" and not _is_empty(module, l):
+        if state == "output" and not _is_empty(l):
             outputs += _parse_output(module, l)
             outputs = list(set(outputs))  # remove duplicate 'meta's
-        if state == "when" and not _is_empty(module, l):
+        if state == "when" and not _is_empty(l):
             when_lines.append(l)
-        if state == "script" and not _is_empty(module, l):
+        if state == "script" and not _is_empty(l):
             script_lines.append(l)
-        if state == "shell" and not _is_empty(module, l):
+        if state == "shell" and not _is_empty(l):
             shell_lines.append(l)
 
     # Check that we have required sections
@@ -391,7 +390,7 @@ def _parse_output(self, line):
     return output
 
 
-def _is_empty(self, line):
+def _is_empty(line):
     """Check whether a line is empty or a comment"""
     empty = False
     if line.strip().startswith("//"):
@@ -422,7 +421,7 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
         build_type = _container_type(l)
         if build_type == "bioconda":
             new_lines.append(re.sub(rf"{current_version}", f"{latest_version}", line))
-        elif build_type == "singularity" or build_type == "docker":
+        elif build_type in ("singularity", "docker"):
             # Check that the new url is valid
             new_url = re.search(
                 "(?:['\"])(.+)(?:['\"])", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
@@ -432,7 +431,8 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
                     "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
                 )
                 log.debug(
-                    f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, status_code: {response_new_container.status_code}"
+                    f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, "
+                    f"status_code: {response_new_container.status_code}"
                 )
             except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
                 log.debug(f"Unable to connect to url '{new_url}' due to error: {e}")

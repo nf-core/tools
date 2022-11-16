@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-
-
 def pipeline_name_conventions(self):
     """Checks that the pipeline name adheres to nf-core conventions.
 
