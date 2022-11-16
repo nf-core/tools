@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import io
 import mimetypes
 import re
