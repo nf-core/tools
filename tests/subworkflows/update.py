@@ -16,7 +16,7 @@ from ..utils import OLD_SUBWORKFLOWS_SHA
 
 def test_install_and_update(self):
     """Installs a subworkflow in the pipeline and updates it (no change)"""
-    self.sw_install.install("bam_stats_samtools")
+    self.subworkflow_install.install("bam_stats_samtools")
     update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False)
 
     # Copy the sw files and check that they are unaffected by the update
@@ -31,7 +31,7 @@ def test_install_and_update(self):
 
 def test_install_at_hash_and_update(self):
     """Installs an old version of a subworkflow in the pipeline and updates it"""
-    assert self.sw_install_old.install("fastq_align_bowtie2")
+    assert self.subworkflow_install_old.install("fastq_align_bowtie2")
     update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, update_deps=True)
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
@@ -59,7 +59,7 @@ def test_install_at_hash_and_update(self):
 
 def test_install_at_hash_and_update_and_save_diff_to_file(self):
     """Installs an old version of a sw in the pipeline and updates it. Save differences to a file."""
-    assert self.sw_install_old.install("fastq_align_bowtie2")
+    assert self.subworkflow_install_old.install("fastq_align_bowtie2")
     patch_path = Path(self.pipeline_dir, "fastq_align_bowtie2.patch")
     update_obj = SubworkflowUpdate(self.pipeline_dir, save_diff_fn=patch_path, update_deps=True)
 
@@ -82,7 +82,7 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
 def test_update_all(self):
     """Updates all subworkflows present in the pipeline"""
     # Install subworkflows fastq_align_bowtie2, bam_sort_stats_samtools, bam_stats_samtools
-    self.sw_install.install("fastq_align_bowtie2")
+    self.subworkflow_install.install("fastq_align_bowtie2")
     # Update all subworkflows
     update_obj = SubworkflowUpdate(self.pipeline_dir, update_all=True, show_diff=False)
     assert update_obj.update() is True
@@ -100,7 +100,7 @@ def test_update_all(self):
 def test_update_with_config_fixed_version(self):
     """Try updating when there are entries in the .nf-core.yml"""
     # Install subworkflow at the latest version
-    assert self.sw_install.install("fastq_align_bowtie2")
+    assert self.subworkflow_install.install("fastq_align_bowtie2")
 
     # Fix the subworkflow version in the .nf-core.yml to an old version
     update_config = {NF_CORE_MODULES_REMOTE: {NF_CORE_MODULES_NAME: {"fastq_align_bowtie2": OLD_SUBWORKFLOWS_SHA}}}
@@ -131,7 +131,7 @@ def test_update_with_config_fixed_version(self):
 def test_update_with_config_dont_update(self):
     """Try updating when sw is to be ignored"""
     # Install an old version of fastq_align_bowtie2
-    self.sw_install_old.install("fastq_align_bowtie2")
+    self.subworkflow_install_old.install("fastq_align_bowtie2")
 
     # Set the fastq_align_bowtie2 field to no update in the .nf-core.yml
     update_config = {NF_CORE_MODULES_REMOTE: {NF_CORE_MODULES_NAME: {"fastq_align_bowtie2": False}}}
@@ -162,7 +162,7 @@ def test_update_with_config_dont_update(self):
 def test_update_with_config_fix_all(self):
     """Fix the version of all nf-core subworkflows"""
     # Install subworkflow at the latest version
-    assert self.sw_install.install("fastq_align_bowtie2")
+    assert self.subworkflow_install.install("fastq_align_bowtie2")
 
     # Fix the version of all nf-core subworkflows in the .nf-core.yml to an old version
     update_config = {NF_CORE_MODULES_REMOTE: OLD_SUBWORKFLOWS_SHA}
@@ -192,7 +192,7 @@ def test_update_with_config_fix_all(self):
 def test_update_with_config_no_updates(self):
     """Don't update any nf-core subworkflows"""
     # Install an old version of fastq_align_bowtie2
-    self.sw_install_old.install("fastq_align_bowtie2")
+    self.subworkflow_install_old.install("fastq_align_bowtie2")
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Set all repository updates to False
@@ -219,7 +219,7 @@ def test_update_with_config_no_updates(self):
 def test_update_all_linked_components_from_subworkflow(self):
     """Update a subworkflow and all modules and subworkflows used on it"""
     # Install an old version of fastq_align_bowtie2
-    self.sw_install_old.install("fastq_align_bowtie2")
+    self.subworkflow_install_old.install("fastq_align_bowtie2")
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Copy the sw files and check that they are affected by the update
@@ -266,7 +266,7 @@ def test_update_all_linked_components_from_subworkflow(self):
 def test_update_all_subworkflows_from_module(self):
     """Update a module and all subworkflows that use this module"""
     # Install an old version of fastq_align_bowtie2 and thus all modules used by it (bowtie2/align)
-    self.sw_install_old.install("fastq_align_bowtie2")
+    self.subworkflow_install_old.install("fastq_align_bowtie2")
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Copy the sw files and check that they are affected by the update

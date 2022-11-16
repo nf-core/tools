@@ -56,11 +56,11 @@ class TestSubworkflows(unittest.TestCase):
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
 
         # Set up install objects
-        self.sw_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
-        self.sw_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
+        self.subworkflow_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
+        self.subworkflow_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
             self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
         )
-        self.sw_install_old = nf_core.subworkflows.SubworkflowInstall(
+        self.subworkflow_install_old = nf_core.subworkflows.SubworkflowInstall(
             self.pipeline_dir,
             prompt=False,
             force=False,
