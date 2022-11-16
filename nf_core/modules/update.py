@@ -25,7 +25,7 @@ class ModuleUpdate(ComponentUpdate):
             update_all,
             show_diff,
             save_diff_fn,
-            update - deps,
+            update_deps,
             remote_url,
             branch,
             no_pull,

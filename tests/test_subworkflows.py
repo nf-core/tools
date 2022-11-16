@@ -11,12 +11,7 @@ import nf_core.create
 import nf_core.modules
 import nf_core.subworkflows
 
-from .utils import (
-    GITLAB_SUBWORKFLOWS_BRANCH,
-    GITLAB_URL,
-    OLD_SUBWORKFLOWS_SHA,
-    mock_api_calls,
-)
+from .utils import GITLAB_SUBWORKFLOWS_BRANCH, GITLAB_URL, OLD_SUBWORKFLOWS_SHA
 
 
 def create_modules_repo_dummy(tmp_dir):
