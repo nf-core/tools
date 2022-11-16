@@ -1,6 +1,5 @@
 import logging
 import os
-import shutil
 from pathlib import Path
 
 import questionary
@@ -12,6 +11,8 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 import nf_core.modules.modules_utils
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE, ModulesRepo
@@ -20,7 +21,7 @@ from nf_core.modules.modules_utils import get_repo_type
 log = logging.getLogger(__name__)
 
 
-class SubworkflowInfo(object):
+class SubworkflowInfo(ComponentCommand):
     """
     Class to print information of a subworkflow.
 
@@ -56,17 +57,7 @@ class SubworkflowInfo(object):
     """
 
     def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull):
-        # super().__init__(pipeline_dir, remote_url, branch, no_pull)
-        self.dir = pipeline_dir
-        self.modules_repo = ModulesRepo(remote_url, branch, no_pull)
-        try:
-            if self.dir:
-                self.dir, self.repo_type = get_repo_type(self.dir)
-            else:
-                self.repo_type = None
-        except LookupError as e:
-            raise UserWarning(e)
-
+        super().__init__("subworkflows", pipeline_dir, remote_url, branch, no_pull)
         self.meta = None
         self.local_path = None
         self.remote_location = None
@@ -111,7 +102,7 @@ class SubworkflowInfo(object):
                     if subworkflows is None:
                         raise UserWarning(f"No subworkflow installed from '{self.modules_repo.remote_url}'")
             else:
-                subworkflows = self.modules_repo.get_avail_subworkflows()
+                subworkflows = self.modules_repo.get_avail_components(self.component_type)
             subworkflow = questionary.autocomplete(
                 "Please select a subworkflow", choices=subworkflows, style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
@@ -149,7 +140,6 @@ class SubworkflowInfo(object):
 
         if self.repo_type == "pipeline":
             # Try to find and load the meta.yml file
-            repo_name = self.modules_repo.repo_path
             module_base_path = os.path.join(self.dir, "subworkflows")
             # Check that we have any subworkflows installed from this repo
             subworkflows = self.modules_json.get_installed_subworkflows().get(self.modules_repo.remote_url)
@@ -189,7 +179,7 @@ class SubworkflowInfo(object):
             dict or bool: Parsed meta.yml found, False otherwise
         """
         # Check if our requested module is there
-        if self.subworkflow not in self.modules_repo.get_avail_subworkflows():
+        if self.subworkflow not in self.modules_repo.get_avail_components(self.component_type):
             return False
 
         file_contents = self.modules_repo.get_subworkflow_meta_yml(self.subworkflow)
