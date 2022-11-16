@@ -228,7 +228,10 @@ class ComponentUpdate(ComponentCommand):
                         else:
                             updated.append(component)
                     recursive_update = True
-                    if not silent:
+                    modules_to_update, subworkflows_to_update = self.get_modules_subworkflows_to_update(
+                        component, modules_repo
+                    )
+                    if not silent and len(modules_to_update + subworkflows_to_update) > 0:
                         log.warning(
                             f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be added to the same diff file.\n"
                             "It is advised to keep all your modules and subworkflows up to date.\n"
@@ -242,9 +245,11 @@ class ComponentUpdate(ComponentCommand):
                                 default=True,
                                 style=nf_core.utils.nfcore_question_style,
                             ).unsafe_ask()
-                    if recursive_update:
+                    if recursive_update and len(modules_to_update + subworkflows_to_update) > 0:
                         # Write all the differences of linked componenets to a diff file
-                        self.update_linked_components(component, modules_repo, updated, check_diff_exist=False)
+                        self.update_linked_components(
+                            modules_to_update, subworkflows_to_update, updated, check_diff_exist=False
+                        )
 
                 elif self.show_diff:
                     ModulesDiffer.print_diff(
@@ -272,7 +277,10 @@ class ComponentUpdate(ComponentCommand):
                 self.modules_json.update(self.component_type, modules_repo, component, version, self.component_type)
                 updated.append(component)
                 recursive_update = True
-                if not silent and not self.update_all:
+                modules_to_update, subworkflows_to_update = self.get_modules_subworkflows_to_update(
+                    component, modules_repo
+                )
+                if not silent and not self.update_all and len(modules_to_update + subworkflows_to_update) > 0:
                     log.warning(
                         f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be {'asked for update' if self.show_diff else 'automatically updated'}.\n"
                         "It is advised to keep all your modules and subworkflows up to date.\n"
@@ -286,9 +294,9 @@ class ComponentUpdate(ComponentCommand):
                             default=True,
                             style=nf_core.utils.nfcore_question_style,
                         ).unsafe_ask()
-                if recursive_update:
+                if recursive_update and len(modules_to_update + subworkflows_to_update) > 0:
                     # Update linked components
-                    self.update_linked_components(component, modules_repo, updated)
+                    self.update_linked_components(modules_to_update, subworkflows_to_update, updated)
             else:
                 # Don't save to a file, just iteratively update the variable
                 self.modules_json.update(
@@ -818,11 +826,10 @@ class ComponentUpdate(ComponentCommand):
 
         return modules_to_update, subworkflows_to_update
 
-    def update_linked_components(self, component, modules_repo, updated=None, check_diff_exist=True):
+    def update_linked_components(self, modules_to_update, subworkflows_to_update, updated=None, check_diff_exist=True):
         """
         Update modules and subworkflows linked to the component being updated.
         """
-        modules_to_update, subworkflows_to_update = self.get_modules_subworkflows_to_update(component, modules_repo)
         for s_update in subworkflows_to_update:
             if s_update in updated:
                 continue
