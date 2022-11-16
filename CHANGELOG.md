@@ -31,6 +31,7 @@
 - Track from where modules and subworkflows are installed ([#1999](https://github.com/nf-core/tools/pull/1999))
 - Substitute ModulesCommand and SubworkflowsCommand by ComponentsCommand ([#2000](https://github.com/nf-core/tools/pull/2000))
 - Don't print source file + line number on logging messages (except when verbose) ([#2015](https://github.com/nf-core/tools/pull/2015))
+- Extended the chat notifications to Slack ([#1829](https://github.com/nf-core/tools/pull/1829))
 
 ### Modules
 
