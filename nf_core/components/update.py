@@ -61,7 +61,9 @@ class ComponentUpdate(ComponentCommand):
             raise UserWarning(f"Either a {self.component_type[:-1]} or the '--all' flag can be specified, not both.")
 
         if self.repo_type == "modules":
-            raise UserWarning(f"{self.component_type.title()} can not be updated in clones of the nf-core/modules repository.")
+            raise UserWarning(
+                f"{self.component_type.title()} can not be updated in clones of the nf-core/modules repository."
+            )
 
         if self.prompt and self.sha is not None:
             raise UserWarning("Cannot use '--sha' and '--prompt' at the same time.")
@@ -223,7 +225,7 @@ class ComponentUpdate(ComponentCommand):
                         )
                         updated.append(component)
                     except UserWarning as e:
-                        if str(e) != "{self.component_type[:-1].title()} is unchanged":
+                        if str(e) != "Module is unchanged":
                             raise
                         else:
                             updated.append(component)

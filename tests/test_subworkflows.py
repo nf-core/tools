@@ -67,9 +67,9 @@ class TestSubworkflows(unittest.TestCase):
             sha=OLD_SUBWORKFLOWS_SHA,
         )
 
-    ############################################
-    # Test of the individual modules commands. #
-    ############################################
+    ################################################
+    # Test of the individual subworkflow commands. #
+    ################################################
 
     from .subworkflows.create import (
         test_subworkflows_create_fail_exists,
