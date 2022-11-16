@@ -356,7 +356,10 @@ class ComponentUpdate(ComponentCommand):
             ).unsafe_ask()
 
         # Get component installation directory
-        install_dir = [dir for dir, m in components if component == m][0]
+        try:
+            install_dir = [dir for dir, m in components if component == m][0]
+        except IndexError:
+            raise UserWarning(f"{self.component_type[:-1].title()} '{component}' not found in 'modules.json'.")
 
         # Check if component is installed before trying to update
         if component not in choices:
