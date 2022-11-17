@@ -58,7 +58,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core subworkflows": [
         {
             "name": "For pipelines",
-            "commands": ["list", "install"],
+            "commands": ["list", "info", "install", "update"],
         },
         {
             "name": "Developing new subworkflows",
@@ -554,7 +554,14 @@ def install(ctx, tool, dir, prompt, force, sha):
     default=None,
     help="Save diffs to a file instead of updating in place",
 )
-def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
+@click.option(
+    "-u",
+    "--update-deps",
+    is_flag=True,
+    default=False,
+    help="Automatically update all linked modules and subworkflows without asking for confirmation",
+)
+def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, update_deps):
     """
     Update DSL2 modules within a pipeline.
 
@@ -569,6 +576,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
             all,
             preview,
             save_diff,
+            update_deps,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
@@ -950,6 +958,106 @@ def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
         sys.exit(1)
 
 
+# nf-core subworkflows list subcommands
+@subworkflows.group()
+@click.pass_context
+def list(ctx):
+    """
+    List subworkflows in a local pipeline or remote repository.
+    """
+    pass
+
+
+# nf-core subworkflows list remote
+@list.command()
+@click.pass_context
+@click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
+@click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
+def remote(ctx, keywords, json):
+    """
+    List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
+    """
+    try:
+        subworkflows_list = nf_core.subworkflows.SubworkflowList(
+            None,
+            True,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        stdout.print(subworkflows_list.list_subworkflows(keywords, json))
+    except (UserWarning, LookupError) as e:
+        log.critical(e)
+        sys.exit(1)
+
+
+# nf-core subworkflows list local
+@list.command()
+@click.pass_context
+@click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
+@click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
+)
+def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
+    """
+    List subworkflows installed locally in a pipeline
+    """
+    try:
+        subworkflows_list = nf_core.subworkflows.SubworkflowList(
+            dir,
+            False,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        stdout.print(subworkflows_list.list_subworkflows(keywords, json))
+    except (UserWarning, LookupError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
+# nf-core subworkflows info
+@subworkflows.command()
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="subworkflow name")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
+)
+def info(ctx, tool, dir):
+    """
+    Show developer usage information about a given subworkflow.
+
+    Parses information from a subworkflow's [i]meta.yml[/] and renders help
+    on the command line. A handy equivalent to searching the
+    [link=https://nf-co.re/modules]nf-core website[/].
+
+    If run from a pipeline and a local copy of the subworkflow is found, the command
+    will print this usage info.
+    If not, usage from the remote subworkflows repo will be shown.
+    """
+    try:
+        subworkflow_info = nf_core.subworkflows.SubworkflowInfo(
+            dir,
+            tool,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        stdout.print(subworkflow_info.get_subworkflow_info())
+    except (UserWarning, LookupError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
 # nf-core subworkflows install
 @subworkflows.command()
 @click.pass_context
@@ -1050,6 +1158,71 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
             ctx.obj["modules_repo_no_pull"],
         )
         stdout.print(subworkflow_list.list_components(keywords, json))
+    except (UserWarning, LookupError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
+# nf-core subworkflows update
+@subworkflows.command()
+@click.pass_context
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+@click.option("-f", "--force", is_flag=True, default=False, help="Force update of subworkflow")
+@click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the subworkflow")
+@click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install subworkflow at commit SHA")
+@click.option("-a", "--all", is_flag=True, default=False, help="Update all subworkflow installed in pipeline")
+@click.option(
+    "-x/-y",
+    "--preview/--no-preview",
+    is_flag=True,
+    default=None,
+    help="Preview / no preview of changes before applying",
+)
+@click.option(
+    "-D",
+    "--save-diff",
+    type=str,
+    metavar="<filename>",
+    default=None,
+    help="Save diffs to a file instead of updating in place",
+)
+@click.option(
+    "-u",
+    "--update-deps",
+    is_flag=True,
+    default=False,
+    help="Automatically update all linked modules and subworkflows without asking for confirmation",
+)
+def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, update_deps):
+    """
+    Update DSL2 subworkflow within a pipeline.
+
+    Fetches and updates subworkflow files from a remote repo e.g. nf-core/modules.
+    """
+    try:
+        subworkflow_install = nf_core.subworkflows.SubworkflowUpdate(
+            dir,
+            force,
+            prompt,
+            sha,
+            all,
+            preview,
+            save_diff,
+            update_deps,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        exit_status = subworkflow_install.update(subworkflow)
+        if not exit_status and all:
+            sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)

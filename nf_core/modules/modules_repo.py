@@ -485,3 +485,21 @@ class ModulesRepo(object):
         with open(path) as fh:
             contents = fh.read()
         return contents
+
+    def get_subworkflow_meta_yml(self, subworkflow_name):
+        """
+        Returns the contents of the 'meta.yml' file of a subworkflow
+
+        Args:
+            subworkflow_name (str): The name of the subworkflow
+
+        Returns:
+            (str): The contents of the file in text format
+        """
+        self.checkout_branch()
+        path = os.path.join(self.subworkflows_dir, subworkflow_name, "meta.yml")
+        if not os.path.exists(path):
+            return None
+        with open(path) as fh:
+            contents = fh.read()
+        return contents
