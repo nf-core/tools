@@ -49,50 +49,17 @@ def git_dir_with_json_syntax_error(temp_git_repo):
     return file
 
 
-@pytest.fixture
-def ensure_prettier_is_not_found(monkeypatch):
-    def dont_find_prettier(x):
-        if x == "pre-commit":
-            which_x = WHICH_PRE_COMMIT
-        elif x == "prettier":
-            which_x = None
-        else:
-            raise ValueError(f"This mock is only inteded to hide prettier form tests. {x}")
-        return which_x
-
-    monkeypatch.setattr("nf_core.lint_utils.shutil.which", dont_find_prettier)
-
-
-@pytest.mark.skipif(shutil.which("prettier") is None, reason="Can't test prettier if it is not available.")
 def test_run_prettier_on_formatted_file(formatted_json):
     nf_core.lint_utils.run_prettier_on_file(formatted_json)
     assert formatted_json.read_text() == JSON_FORMATTED
 
 
-def test_run_pre_commit_prettier_on_formatted_file(formatted_json, ensure_prettier_is_not_found):
-    nf_core.lint_utils.run_prettier_on_file(formatted_json)
-    assert formatted_json.read_text() == JSON_FORMATTED
-
-
-@pytest.mark.skipif(shutil.which("prettier") is None, reason="Can't test prettier if it is not available.")
 def test_run_prettier_on_malformed_file(malformed_json):
     nf_core.lint_utils.run_prettier_on_file(malformed_json)
     assert malformed_json.read_text() == JSON_FORMATTED
 
 
-def test_run_prettier_pre_commit_on_malformed_file(malformed_json, ensure_prettier_is_not_found):
-    nf_core.lint_utils.run_prettier_on_file(malformed_json)
-    assert malformed_json.read_text() == JSON_FORMATTED
-
-
-@pytest.mark.skipif(shutil.which("prettier") is None, reason="Can't test prettier if it is not available.")
 def test_run_prettier_on_synthax_error_file(synthax_error_json):
-    with pytest.raises(ValueError) as exc_info:
-        nf_core.lint_utils.run_prettier_on_file(synthax_error_json)
-    assert exc_info.value.args[0].startswith(f"Can't format {synthax_error_json} because it has a synthax error.")
-
-
-def test_run_prettier_pre_commit_on_synthax_error_file(synthax_error_json, ensure_prettier_is_not_found):
     with pytest.raises(ValueError) as exc_info:
         nf_core.lint_utils.run_prettier_on_file(synthax_error_json)
     assert exc_info.value.args[0].startswith(f"Can't format {synthax_error_json} because it has a synthax error.")

@@ -1,5 +1,4 @@
 import logging
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -55,45 +54,7 @@ def print_fixes(lint_obj):
 
 
 def run_prettier_on_file(file):
-    """Run Prettier on a file.
-
-    Args:
-        file (Path | str): A file identifier as a string or pathlib.Path.
-
-    Warns:
-        If Prettier is not installed, a warning is logged.
-    """
-
-    if shutil.which("prettier"):
-        _run_prettier_on_file(file)
-    elif shutil.which("pre-commit"):
-        _run_pre_commit_prettier_on_file(file)
-    else:
-        log.warning(
-            "Neither Prettier nor the prettier pre-commit hook are available. At least one of them is required."
-        )
-
-
-def _run_prettier_on_file(file):
-    """Run natively installed Prettier on a file."""
-
-    try:
-        subprocess.run(
-            ["prettier", "--write", file],
-            capture_output=True,
-            check=True,
-        )
-    except subprocess.CalledProcessError as e:
-        if ": SyntaxError: " in e.stderr.decode():
-            raise ValueError(f"Can't format {file} because it has a synthax error.\n{e.stderr.decode()}") from e
-        raise ValueError(
-            "There was an error running the prettier pre-commit hook.\n"
-            f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
-        ) from e
-
-
-def _run_pre_commit_prettier_on_file(file):
-    """Runs pre-commit hook prettier on a file if pre-commit is installed.
+    """Run the pre-commit hook prettier on a file.
 
     Args:
         file (Path | str): A file identifier as a string or pathlib.Path.
