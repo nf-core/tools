@@ -57,6 +57,7 @@ class TestSubworkflows(unittest.TestCase):
         self.subworkflow_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
             self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
         )
+        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
 
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
@@ -91,6 +92,7 @@ class TestSubworkflows(unittest.TestCase):
     from .subworkflows.remove import (
         test_subworkflows_remove_one_of_two_subworkflow,
         test_subworkflows_remove_subworkflow,
+        test_subworkflows_remove_subworkflow_keep_installed_module,
     )
     from .subworkflows.subworkflows_test import (
         test_subworkflows_test_check_inputs,

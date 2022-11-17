@@ -1,4 +1,5 @@
 import logging
+import mmap
 import os
 import shutil
 from pathlib import Path
@@ -243,19 +244,23 @@ class ComponentCommand:
         Returns:
             (list): A list of dictionaries, with the workflow file and the line number where the component is included
         """
-        include_stmts = []
+        include_stmts = {}
         if self.repo_type == "pipeline":
             workflow_files = Path(self.dir, "workflows").glob("*.nf")
             for workflow_file in workflow_files:
                 with open(workflow_file, "r") as fh:
-                    for line in fh.readlines():
-                        if f"'.{Path(component_path,'main')}'" in line:
-                            include_stmts.append(
-                                {
-                                    "file": workflow_file,
-                                    "line": line,
-                                }
-                            )
+                    # Check if component path is in the file using mmap
+                    with mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ) as s:
+                        if s.find(component_path.encode()) != -1:
+                            # If the component path is in the file, check for include statements
+                            for i, line in enumerate(fh):
+                                if line.startswith("include") and component_path in line:
+                                    if str(workflow_file) not in include_stmts:
+                                        include_stmts[str(workflow_file)] = []
+                                    include_stmts[str(workflow_file)].append(
+                                        {"line_number": i + 1, "line": line.rstrip()}
+                                    )
+
             return include_stmts
         else:
             log.debug("Not a pipeline repository, skipping check for include statements")

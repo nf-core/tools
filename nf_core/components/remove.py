@@ -2,6 +2,9 @@ import logging
 from pathlib import Path
 
 import questionary
+from rich.console import Console
+from rich.rule import Rule
+from rich.syntax import Syntax
 
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
@@ -73,6 +76,7 @@ class ComponentRemove(ComponentCommand):
         # remove all dependent components based on installed_by entry
         # Remove entry from modules.json
         removed = False
+        removed_components = []
         for component_name, component_type in dependent_components.items():
             removed_component = modules_json.remove_entry(
                 component_type,
@@ -81,9 +85,38 @@ class ComponentRemove(ComponentCommand):
                 repo_path,
                 removed_by=removed_by,
             )
-            removed_component_dir = Path(self.dir, component_type, repo_path, component_name)
-            # Remove the component files if the entry was removed from modules.json
+            removed_component_dir = Path(component_type, repo_path, component_name)
             if removed_component:
-                removed = True if self.clear_component_dir(component, removed_component_dir) or removed else False
+                if self.component_type == "subworkflows" and component_name != component:
+                    # check if one of the dependent module/subworkflow has been manually included in the pipeline
+                    include_stmts = self.check_if_in_include_stmts(str(removed_component_dir))
+                    if include_stmts:
+                        # print the include statements
+                        log.warn(
+                            f"The {component_type[:-1]} '{component_name}' is still included in the following workflow file{nf_core.utils.plural_s(include_stmts)}:"
+                        )
+                        console = Console()
+                        for file, stmts in include_stmts.items():
+                            console.print(Rule(f"{file}", style="white"))
+                            for stmt in stmts:
+                                console.print(
+                                    Syntax(
+                                        stmt["line"],
+                                        "groovy",
+                                        theme="ansi_dark",
+                                        line_numbers=True,
+                                        start_line=stmt["line_number"],
+                                        padding=(0, 0, 1, 1),
+                                    )
+                                )
 
+                # Remove the component files of all entries removed from modules.json
+                removed_components.append(component_name.replace("/", "_"))
+                removed = (
+                    True
+                    if self.clear_component_dir(component, Path(self.dir, removed_component_dir)) or removed
+                    else False
+                )
+        if removed_components:
+            log.info(f"Removed files for {', '.join(removed_components)}")
         return removed

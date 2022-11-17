@@ -93,6 +93,9 @@ class ModulesJson:
         Args:
             repos (list): list of repository urls
             directory (str): modules directory or subworkflows directory
+
+        Returns:
+            [(str),[(str),(str)]]: list of tuples with repository url, component names and install directory
         """
         names = [
             (
@@ -695,18 +698,12 @@ class ModulesJson:
                     repo_entry[component_type][install_dir][name]["installed_by"].remove(removed_by)
                     if len(repo_entry[component_type][install_dir][name]["installed_by"]) == 0:
                         self.modules_json["repos"][repo_url][component_type][install_dir].pop(name)
-                        self.dump()
                         if len(repo_entry[component_type][install_dir]) == 0:
-
                             self.modules_json["repos"][repo_url].pop(component_type)
+                        self.dump()
                         return True
                     self.dump()
                     return False
-                else:
-                    log.error(
-                        f"{name} was installed by {repo_entry[component_type][install_dir][name]['installed_by']} and can't be removed individually."
-                        f"When you remove {repo_entry[component_type][install_dir][name]['installed_by']}, {name} will be removed as well."
-                    )
             else:
                 log.warning(
                     f"{component_type[:-1].title()} '{install_dir}/{name}' is missing from 'modules.json' file."
