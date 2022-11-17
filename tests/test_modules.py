@@ -136,6 +136,7 @@ class TestModules(unittest.TestCase):
         test_modules_test_file_dict,
     )
     from .modules.info import (
+        test_modules_info_in_modules_repo,
         test_modules_info_local,
         test_modules_info_remote,
         test_modules_info_remote_gitlab,

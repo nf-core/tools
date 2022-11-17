@@ -117,8 +117,8 @@ class ComponentInfo(ComponentCommand):
                         )
             else:
                 components = self.modules_repo.get_avail_components(self.component_type)
-            module = questionary.autocomplete(
-                "Please select a {self.component_type[:-1]}",
+            component = questionary.autocomplete(
+                f"Please select a {self.component_type[:-1]}",
                 choices=components,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()

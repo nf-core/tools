@@ -47,3 +47,17 @@ def test_modules_info_local(self):
     assert "Module: trimgalore" in output
     assert "Inputs" in output
     assert "Outputs" in output
+
+
+def test_modules_info_in_modules_repo(self):
+    """Test getting info about a module in the modules repo"""
+    mods_info = nf_core.modules.ModuleInfo(self.nfcore_modules, "fastqc")
+    mods_info.local = True
+    mods_info_output = mods_info.get_component_info()
+    console = Console(record=True)
+    console.print(mods_info_output)
+    output = console.export_text()
+
+    assert "Module: fastqc" in output
+    assert "Inputs" in output
+    assert "Outputs" in output
