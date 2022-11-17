@@ -4,9 +4,10 @@ import shutil
 import tempfile
 from pathlib import Path
 
+import questionary
+
 import nf_core.modules.modules_utils
 import nf_core.utils
-import questionary
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_utils import prompt_component_version_sha
 from nf_core.modules.modules_differ import ModulesDiffer
