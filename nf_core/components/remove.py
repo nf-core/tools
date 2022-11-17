@@ -87,29 +87,51 @@ class ComponentRemove(ComponentCommand):
             )
             removed_component_dir = Path(component_type, repo_path, component_name)
             if removed_component:
-                if self.component_type == "subworkflows" and component_name != component:
-                    # check if one of the dependent module/subworkflow has been manually included in the pipeline
-                    include_stmts = self.check_if_in_include_stmts(str(removed_component_dir))
-                    if include_stmts:
-                        # print the include statements
-                        log.warn(
-                            f"The {component_type[:-1]} '{component_name}' is still included in the following workflow file{nf_core.utils.plural_s(include_stmts)}:"
-                        )
-                        console = Console()
-                        for file, stmts in include_stmts.items():
-                            console.print(Rule(f"{file}", style="white"))
-                            for stmt in stmts:
-                                console.print(
-                                    Syntax(
-                                        stmt["line"],
-                                        "groovy",
-                                        theme="ansi_dark",
-                                        line_numbers=True,
-                                        start_line=stmt["line_number"],
-                                        padding=(0, 0, 1, 1),
-                                    )
+                # check if one of the dependent module/subworkflow has been manually included in the pipeline
+                include_stmts = self.check_if_in_include_stmts(str(removed_component_dir))
+                if include_stmts:
+                    # print the include statements
+                    log.warn(
+                        f"The {component_type[:-1]} '{component_name}' is still included in the following workflow file{nf_core.utils.plural_s(include_stmts)}:"
+                    )
+                    console = Console()
+                    for file, stmts in include_stmts.items():
+                        console.print(Rule(f"{file}", style="white"))
+                        for stmt in stmts:
+                            console.print(
+                                Syntax(
+                                    stmt["line"],
+                                    "groovy",
+                                    theme="ansi_dark",
+                                    line_numbers=True,
+                                    start_line=stmt["line_number"],
+                                    padding=(0, 0, 1, 1),
                                 )
+                            )
+                    # ask the user if they still want to remove the component, install it otherwise
+                    if not questionary.confirm(
+                        f"Do you still want to remove the {component_type[:-1]} '{component_name}'?",
+                        style=nf_core.utils.nfcore_question_style,
+                    ).unsafe_ask():
 
+                        current_version = modules_json.get_component_version(
+                            self.component_type,
+                            component_name,
+                            self.modules_repo.remote_url,
+                            self.modules_repo.repo_path,
+                        )
+                        # install the component
+                        if not modules_json.update(
+                            self.component_type,
+                            self.modules_repo,
+                            component_name,
+                            current_version,
+                            self.component_type,
+                        ):
+                            log.warn(
+                                f"Could not install the {component_type[:-1]} '{component_name}', please install it manually with 'nf-core {component_type} install  {component_name}'."
+                            )
+                        continue
                 # Remove the component files of all entries removed from modules.json
                 removed_components.append(component_name.replace("/", "_"))
                 removed = (

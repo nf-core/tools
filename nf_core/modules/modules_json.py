@@ -665,15 +665,27 @@ class ModulesJson:
             repo_entry = self.modules_json["repos"][repo_url]
             if name in repo_entry[component_type].get(install_dir, {}):
                 if removed_by in repo_entry[component_type][install_dir][name]["installed_by"]:
-                    repo_entry[component_type][install_dir][name]["installed_by"].remove(removed_by)
+                    self.modules_json["repos"][repo_url][component_type][install_dir][name]["installed_by"].remove(
+                        removed_by
+                    )
+                    # clean up empty entries
                     if len(repo_entry[component_type][install_dir][name]["installed_by"]) == 0:
                         self.modules_json["repos"][repo_url][component_type][install_dir].pop(name)
                         if len(repo_entry[component_type][install_dir]) == 0:
                             self.modules_json["repos"][repo_url].pop(component_type)
+                        # write the updated modules.json file
                         self.dump()
                         return True
+                    # write the updated modules.json file
+                    if removed_by == component_type:
+                        log.info(
+                            f"Updated the 'installed_by' list of {name}, but it is still installed, because it is required by {repo_entry[component_type][install_dir][name]['installed_by']}."
+                        )
+                    else:
+                        log.info(
+                            f"Removed {removed_by} from the 'installed_by' list of {name}, but it was also installed by other modules/subworkflows."
+                        )
                     self.dump()
-                    # Don't remove component entry from modules.json
                     return False
             else:
                 log.warning(
