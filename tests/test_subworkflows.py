@@ -63,7 +63,7 @@ class TestSubworkflows(unittest.TestCase):
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
 
         # Set up remove objects
-        self.subworkflow_remove = nf_core.subworkflows.SubworkflowsRemove(self.pipeline_dir)
+        self.subworkflow_remove = nf_core.subworkflows.SubworkflowRemove(self.pipeline_dir)
 
     ############################################
     # Test of the individual modules commands. #

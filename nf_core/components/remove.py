@@ -57,7 +57,7 @@ class ComponentRemove(ComponentCommand):
 
         # Verify that the module/subworkflow is actually installed
         if not component_dir.exists():
-            log.error(f"Module directory does not exist: '{component_dir}'")
+            log.error(f"Installation directory '{component_dir}' does not exist.")
 
             if modules_json.module_present(component, self.modules_repo.remote_url, repo_path):
                 log.error(f"Found entry for '{component}' in 'modules.json'. Removing...")

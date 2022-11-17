@@ -703,6 +703,7 @@ class ModulesJson:
                         self.dump()
                         return True
                     self.dump()
+                    # Don't remove component entry from modules.json
                     return False
             else:
                 log.warning(
