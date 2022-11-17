@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ Code to deal with pipeline JSON Schema """
 
 from __future__ import print_function

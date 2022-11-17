@@ -321,7 +321,7 @@ class ModulesJson:
         # Clean up the modules/subworkflows we were unable to find the sha for
         for component in sb_local:
             log.debug(f"Moving {component_type[:-1]} '{Path(install_dir, component)}' to 'local' directory")
-            self.move_module_to_local(component, install_dir)
+            self.move_component_to_local(component_type, component, install_dir)
 
         for component in dead_components:
             log.debug(f"Removing {component_type[:-1]} {Path(install_dir, component)}'")
@@ -462,6 +462,8 @@ class ModulesJson:
         """
         for repo_url, repo_entry in self.modules_json.get("repos", {}).items():
             if "modules" not in repo_entry:
+                if "subworkflows" in repo_entry:
+                    continue
                 log.warning(f"modules.json entry {repo_entry} does not have a modules entry")
                 return False
             elif (
@@ -590,55 +592,24 @@ class ModulesJson:
         except FileNotFoundError:
             raise UserWarning("File 'modules.json' is missing")
 
-    def update(self, modules_repo, module_name, module_version, installed_by, installed_by_log=None, write_file=True):
-        """
-        Updates the 'module.json' file with new module info
-
-        Args:
-            modules_repo (ModulesRepo): A ModulesRepo object configured for the new module
-            module_name (str): Name of new module
-            module_version (str): git SHA for the new module entry
-            installed_by_log (list): previous tracing of installed_by that needs to be added to 'modules.json'
-            write_file (bool): whether to write the updated modules.json to a file.
-        """
-        if installed_by_log is None:
-            installed_by_log = []
-
-        if self.modules_json is None:
-            self.load()
-        repo_name = modules_repo.repo_path
-        remote_url = modules_repo.remote_url
-        branch = modules_repo.branch
-        if remote_url not in self.modules_json["repos"]:
-            self.modules_json["repos"][remote_url] = {"modules": {repo_name: {}}}
-        repo_modules_entry = self.modules_json["repos"][remote_url]["modules"][repo_name]
-        if module_name not in repo_modules_entry:
-            repo_modules_entry[module_name] = {}
-        repo_modules_entry[module_name]["git_sha"] = module_version
-        repo_modules_entry[module_name]["branch"] = branch
-        try:
-            if installed_by not in repo_modules_entry[module_name]["installed_by"]:
-                repo_modules_entry[module_name]["installed_by"].append(installed_by)
-        except KeyError:
-            repo_modules_entry[module_name]["installed_by"] = [installed_by]
-        finally:
-            repo_modules_entry[module_name]["installed_by"].extend(installed_by_log)
-
-        # Sort the 'modules.json' repo entries
-        self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
-        if write_file:
-            self.dump()
-
-    def update_subworkflow(
-        self, modules_repo, subworkflow_name, subworkflow_version, installed_by, installed_by_log=None, write_file=True
+    def update(
+        self,
+        component_type,
+        modules_repo,
+        component_name,
+        component_version,
+        installed_by,
+        installed_by_log=None,
+        write_file=True,
     ):
         """
-        Updates the 'module.json' file with new subworkflow info
+        Updates the 'module.json' file with new module/subworkflow info
 
         Args:
-            modules_repo (ModulesRepo): A ModulesRepo object configured for the new subworkflow
-            subworkflow_name (str): Name of new subworkflow
-            subworkflow_version (str): git SHA for the new subworkflow entry
+            component_type (str): modules or subworkflows
+            modules_repo (ModulesRepo): A ModulesRepo object configured for the new module/subworkflow
+            component_name (str): Name of new module/subworkflow
+            component_version (str): git SHA for the new module/subworkflow entry
             installed_by_log (list): previous tracing of installed_by that needs to be added to 'modules.json'
             write_file (bool): whether to write the updated modules.json to a file.
         """
@@ -651,22 +622,21 @@ class ModulesJson:
         remote_url = modules_repo.remote_url
         branch = modules_repo.branch
         if remote_url not in self.modules_json["repos"]:
-            self.modules_json["repos"][remote_url] = {"subworkflows": {repo_name: {}}}
-        if "subworkflows" not in self.modules_json["repos"][remote_url]:
-            # It's the first subworkflow installed in the pipeline!
-            self.modules_json["repos"][remote_url]["subworkflows"] = {repo_name: {}}
-        repo_subworkflows_entry = self.modules_json["repos"][remote_url]["subworkflows"][repo_name]
-        if subworkflow_name not in repo_subworkflows_entry:
-            repo_subworkflows_entry[subworkflow_name] = {}
-        repo_subworkflows_entry[subworkflow_name]["git_sha"] = subworkflow_version
-        repo_subworkflows_entry[subworkflow_name]["branch"] = branch
+            self.modules_json["repos"][remote_url] = {component_type: {repo_name: {}}}
+        if component_type not in self.modules_json["repos"][remote_url]:
+            self.modules_json["repos"][remote_url][component_type] = {repo_name: {}}
+        repo_component_entry = self.modules_json["repos"][remote_url][component_type][repo_name]
+        if component_name not in repo_component_entry:
+            repo_component_entry[component_name] = {}
+        repo_component_entry[component_name]["git_sha"] = component_version
+        repo_component_entry[component_name]["branch"] = branch
         try:
-            if installed_by not in repo_subworkflows_entry[subworkflow_name]["installed_by"]:
-                repo_subworkflows_entry[subworkflow_name]["installed_by"].append(installed_by)
+            if installed_by not in repo_component_entry[component_name]["installed_by"]:
+                repo_component_entry[component_name]["installed_by"].append(installed_by)
         except KeyError:
-            repo_subworkflows_entry[subworkflow_name]["installed_by"] = [installed_by]
+            repo_component_entry[component_name]["installed_by"] = [installed_by]
         finally:
-            repo_subworkflows_entry[subworkflow_name]["installed_by"].extend(installed_by_log)
+            repo_component_entry[component_name]["installed_by"].extend(installed_by_log)
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
@@ -829,6 +799,29 @@ class ModulesJson:
         if self.modules_json is None:
             self.load()
         return copy.deepcopy(self.modules_json)
+
+    def get_component_version(self, component_type, component_name, repo_url, install_dir):
+        """
+        Returns the version of a module or subworkflow
+
+        Args:
+            component_name (str): Name of the module/subworkflow
+            repo_url (str): URL of the repository
+            install_dir (str): Name of the directory where modules/subworkflows are installed
+
+        Returns:
+            (str): The git SHA of the module/subworkflow if it exists, None otherwise
+        """
+        if self.modules_json is None:
+            self.load()
+        return (
+            self.modules_json.get("repos", {})
+            .get(repo_url, {})
+            .get(component_type, {})
+            .get(install_dir, {})
+            .get(component_name, {})
+            .get("git_sha", None)
+        )
 
     def get_module_version(self, module_name, repo_url, install_dir):
         """
@@ -1108,11 +1101,27 @@ class ModulesJson:
                 if install_dir in install_directories
             ][0]
             repo_entry = self.determine_branches_and_shas(component_type, install_dir, remote_url, components)
-            if remote_url in self.modules_json["repos"]:
+            try:
                 self.modules_json["repos"][remote_url][component_type][install_dir].update(repo_entry)
-            else:
-                self.modules_json["repos"][remote_url] = {
-                    component_type: {
-                        install_dir: repo_entry,
-                    }
-                }
+            except KeyError:
+                try:
+                    self.modules_json["repos"][remote_url][component_type].update({install_dir: repo_entry})
+                except KeyError:
+                    try:
+                        self.modules_json["repos"][remote_url].update(
+                            {
+                                component_type: {
+                                    install_dir: repo_entry,
+                                }
+                            }
+                        )
+                    except KeyError:
+                        self.modules_json["repos"].update(
+                            {
+                                remote_url: {
+                                    component_type: {
+                                        install_dir: repo_entry,
+                                    }
+                                }
+                            }
+                        )

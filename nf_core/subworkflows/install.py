@@ -82,7 +82,7 @@ class SubworkflowInstall(ComponentCommand):
                 f"Subworkflow is already installed and force is not set.\nAdding the new installation source {self.installed_by} for subworkflow {subworkflow} to 'modules.json' without installing the subworkflow."
             )
             modules_json.load()
-            modules_json.update_subworkflow(self.modules_repo, subworkflow, current_version, self.installed_by)
+            modules_json.update(self.component_type, self.modules_repo, subworkflow, current_version, self.installed_by)
             return False
 
         version = nf_core.components.components_install.get_version(
@@ -115,6 +115,12 @@ class SubworkflowInstall(ComponentCommand):
         if not self.install_component_files(subworkflow, version, self.modules_repo, install_folder):
             return False
 
+        # Update module.json with newly installed subworkflow
+        modules_json.load()
+        modules_json.update(
+            self.component_type, self.modules_repo, subworkflow, version, self.installed_by, install_track
+        )
+
         # Install included modules and subworkflows
         self.install_included_components(subworkflow_dir)
 
@@ -128,9 +134,6 @@ class SubworkflowInstall(ComponentCommand):
             if os.path.isfile(subworkflow_config):
                 log.info(f"Subworkflow config include statement: includeConfig '{subworkflow_config}'")
 
-        # Update module.json with newly installed subworkflow
-        modules_json.load()
-        modules_json.update_subworkflow(self.modules_repo, subworkflow, version, self.installed_by, install_track)
         return True
 
     def get_modules_subworkflows_to_install(self, subworkflow_dir):

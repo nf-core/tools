@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 The ModulesTestYmlBuilder class handles automatic generation of the modules test.yml file
 along with running the tests and creating md5 sums
@@ -57,7 +56,8 @@ class ModulesTestYmlBuilder(ComponentCommand):
         """Run build steps"""
         if not self.no_prompts:
             log.info(
-                "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
+                "[yellow]Press enter to use default values "
+                "[cyan bold](shown in brackets) [yellow]or type your own responses"
             )
         self.check_inputs()
         self.scrape_workflow_entry_points()
@@ -171,7 +171,10 @@ class ModulesTestYmlBuilder(ComponentCommand):
         while ep_test["command"] == "":
             # Don't think we need the last `-c` flag, but keeping to avoid having to update 100s modules.
             # See https://github.com/nf-core/tools/issues/1562
-            default_val = f"nextflow run ./tests/modules/nf-core/{self.module_name} -entry {entry_point} -c ./tests/config/nextflow.config -c ./tests/modules/nf-core/{self.module_name}/nextflow.config"
+            default_val = (
+                f"nextflow run ./tests/modules/nf-core/{self.module_name} -entry {entry_point} "
+                f"-c ./tests/config/nextflow.config -c ./tests/modules/nf-core/{self.module_name}/nextflow.config"
+            )
             if self.no_prompts:
                 ep_test["command"] = default_val
             else:
@@ -193,7 +196,7 @@ class ModulesTestYmlBuilder(ComponentCommand):
                     ).strip()
                     ep_test["tags"] = [t.strip() for t in prompt_tags.split(",")]
 
-        ep_test["files"] = self.get_md5_sums(entry_point, ep_test["command"])
+        ep_test["files"] = self.get_md5_sums(ep_test["command"])
 
         return ep_test
 
@@ -254,7 +257,7 @@ class ModulesTestYmlBuilder(ComponentCommand):
 
         return test_files
 
-    def get_md5_sums(self, entry_point, command, results_dir=None, results_dir_repeat=None):
+    def get_md5_sums(self, command, results_dir=None, results_dir_repeat=None):
         """
         Recursively go through directories and subdirectories
         and generate tuples of (<file_path>, <md5sum>)
