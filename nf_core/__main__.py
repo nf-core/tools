@@ -797,7 +797,7 @@ def info(ctx, tool, dir):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        stdout.print(module_info.get_module_info())
+        stdout.print(module_info.get_component_info())
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
@@ -1047,7 +1047,7 @@ def info(ctx, tool, dir):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        stdout.print(subworkflow_info.get_subworkflow_info())
+        stdout.print(subworkflow_info.get_component_info())
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
