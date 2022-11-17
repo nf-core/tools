@@ -76,6 +76,12 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_create_nfcore_modules,
         test_subworkflows_create_succeed,
     )
+    from .subworkflows.info import (
+        test_subworkflows_info_in_modules_repo,
+        test_subworkflows_info_local,
+        test_subworkflows_info_remote,
+        test_subworkflows_info_remote_gitlab,
+    )
     from .subworkflows.install import (
         test_subworkflow_install_nopipeline,
         test_subworkflows_install_bam_sort_stats_samtools,
