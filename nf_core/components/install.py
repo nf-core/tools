@@ -3,16 +3,15 @@ import os
 import re
 from pathlib import Path
 
-import questionary
-from rich.console import Console
-from rich.syntax import Syntax
-
 import nf_core.modules.modules_utils
 import nf_core.utils
+import questionary
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_utils import prompt_component_version_sha
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
+from rich.console import Console
+from rich.syntax import Syntax
 
 log = logging.getLogger(__name__)
 
@@ -75,10 +74,10 @@ class ComponentInstall(ComponentCommand):
         component_dir = os.path.join(install_folder, component)
 
         # Check that the component is not already installed
-        component_installed = self.check_component_installed(
+        component_not_installed = self.check_component_installed(
             component, current_version, component_dir, self.modules_repo, self.force, self.prompt, silent
         )
-        if not component_installed:
+        if not component_not_installed:
             log.debug(
                 f"{self.component_type[:-1].title()} is already installed and force is not set.\nAdding the new installation source {self.installed_by} for {self.component_type[:-1]} {component} to 'modules.json' without installing the {self.component_type}."
             )
@@ -92,7 +91,7 @@ class ComponentInstall(ComponentCommand):
 
         # Remove component if force is set and component is installed
         install_track = None
-        if self.force and component_installed:
+        if self.force:
             log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{component}'")
             self.clear_component_dir(component, component_dir)
             install_track = self.clean_modules_json(component, self.modules_repo, modules_json)
@@ -131,7 +130,7 @@ class ComponentInstall(ComponentCommand):
             if self.component_type == "subworkflows":
                 subworkflow_config = os.path.join(install_folder, component, "nextflow.config")
                 if os.path.isfile(subworkflow_config):
-                    log.info(f"Add the following config statement to use this subworkflow:")
+                    log.info("Add the following config statement to use this subworkflow:")
                     Console().print(
                         Syntax(f"includeConfig '{subworkflow_config}'", "groovy", theme="ansi_dark", padding=1)
                     )
