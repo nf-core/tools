@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Linting policy for nf-core pipeline projects.
 
 Tests Nextflow-based pipelines to check that they adhere to
@@ -124,7 +123,7 @@ def run_linting(
     lint_obj._print_results(show_passed)
     module_lint_obj._print_results(show_passed)
     nf_core.lint_utils.print_joint_summary(lint_obj, module_lint_obj)
-    nf_core.lint_utils.print_fixes(lint_obj, module_lint_obj)
+    nf_core.lint_utils.print_fixes(lint_obj)
 
     # Save results to Markdown file
     if md_fn is not None:

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Some tests covering the bump_version code.
 """
 import os

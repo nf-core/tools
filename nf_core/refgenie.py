@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Update a nextflow.config file with refgenie genomes
 """

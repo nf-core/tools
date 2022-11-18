@@ -4,6 +4,8 @@ name: nf-core linting
 # that the code meets the nf-core guidelines. {%- raw %}
 on:
   push:
+    branches:
+      - dev
   pull_request:
   release:
     types: [published]
@@ -14,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
 
       - name: Install editorconfig-checker
         run: npm install -g editorconfig-checker
@@ -27,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
 
       - name: Install Prettier
         run: npm install -g prettier
@@ -97,7 +99,7 @@ jobs:
 
       - name: Upload linting log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: linting-logs
           path: |

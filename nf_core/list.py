@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Lists available nf-core pipelines and versions."""
 
 from __future__ import print_function

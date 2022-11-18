@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-"""
-The ModulesTest class runs the tests locally
-"""
-
 import logging
 import os
 import sys
@@ -13,23 +8,23 @@ import pytest
 import questionary
 import rich
 
-import nf_core.modules.module_utils
+import nf_core.modules.modules_utils
 import nf_core.utils
-from nf_core.modules.modules_command import ModuleCommand
+from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
 
 
-class ModulesTest(ModuleCommand):
+class ComponentsTest(ComponentCommand):
     """
-    Class to run module pytests.
+    Class to run module and subworkflow pytests.
 
     ...
 
     Attributes
     ----------
-    module_name : str
+    component_name : str
         name of the tool to run tests for
     no_prompts : bool
         flat indicating if prompts are used
@@ -41,7 +36,7 @@ class ModulesTest(ModuleCommand):
     run():
         Run test steps
     _check_inputs():
-        Check inputs. Ask for module_name if not provided and check that the directory exists
+        Check inputs. Ask for component_name if not provided and check that the directory exists
     _set_profile():
         Set software profile
     _run_pytests(self):
@@ -50,18 +45,18 @@ class ModulesTest(ModuleCommand):
 
     def __init__(
         self,
-        module_name=None,
+        component_type,
+        component_name=None,
         no_prompts=False,
         pytest_args="",
         remote_url=None,
         branch=None,
         no_pull=False,
     ):
-        self.module_name = module_name
+        super().__init__(component_type=component_type, dir=".", remote_url=remote_url, branch=branch, no_pull=no_pull)
+        self.component_name = component_name
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
-
-        super().__init__(".", remote_url, branch, no_pull)
 
     def run(self):
         """Run test steps"""
@@ -81,27 +76,34 @@ class ModulesTest(ModuleCommand):
 
         # Retrieving installed modules
         if self.repo_type == "modules":
-            installed_modules = self.get_modules_clone_modules()
+            installed_components = self.get_components_clone_modules()
         else:
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
-            installed_modules = modules_json.get_all_modules().get(self.modules_repo.remote_url)
+            if self.component_type == "modules":
+                installed_components = modules_json.get_all_modules().get(self.modules_repo.remote_url)
+            elif self.component_type == "subworkflows":
+                modules_json.get_installed_subworkflows().get(self.modules_repo.remote_url)
 
-        # Get the tool name if not specified
-        if self.module_name is None:
+        # Get the component name if not specified
+        if self.component_name is None:
             if self.no_prompts:
                 raise UserWarning(
-                    "Tool name not provided and prompts deactivated. Please provide the tool name as TOOL/SUBTOOL or TOOL."
+                    f"{self.component_type[:-1].title()} name not provided and prompts deactivated. Please provide the {self.component_type[:-1]} name{' as TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else ''}."
                 )
-            if not installed_modules:
+            if not installed_components:
+                if self.component_type == "modules":
+                    dir_structure_message = f"modules/{self.modules_repo.repo_path}/TOOL/SUBTOOL/ and tests/modules/{self.modules_repo.repo_path}/TOOLS/SUBTOOL/"
+                elif self.component_type == "subworkflows":
+                    dir_structure_message = f"subworkflows/{self.modules_repo.repo_path}/SUBWORKFLOW/ and tests/subworkflows/{self.modules_repo.repo_path}/SUBWORKFLOW/"
                 raise UserWarning(
-                    f"No installed modules were found from '{self.modules_repo.remote_url}'.\n"
-                    f"Are you running the tests inside the nf-core/modules main directory?\n"
-                    f"Otherwise, make sure that the directory structure is modules/TOOL/SUBTOOL/ and tests/modules/TOOLS/SUBTOOL/"
+                    f"No installed {self.component_type} were found from '{self.modules_repo.remote_url}'.\n"
+                    f"Are you running the tests inside the repository root directory?\n"
+                    f"Make sure that the directory structure is {dir_structure_message}"
                 )
-            self.module_name = questionary.autocomplete(
+            self.component_name = questionary.autocomplete(
                 "Tool name:",
-                choices=installed_modules,
+                choices=installed_components,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
@@ -112,19 +114,25 @@ class ModulesTest(ModuleCommand):
         """Validate that the modules follow the correct folder structure to run the tests:
         - modules/nf-core/TOOL/SUBTOOL/
         - tests/modules/nf-core/TOOL/SUBTOOL/
-
+        or
+        - subworkflows/nf-core/SUBWORKFLOW/
+        - tests/subworkflows/nf-core/SUBWORKFLOW/
         """
-        module_path = Path(self.default_modules_path) / self.module_name
-        test_path = Path(self.default_tests_path) / self.module_name
+        if self.component_type == "modules":
+            component_path = Path(self.default_modules_path) / self.component_name
+            test_path = Path(self.default_tests_path) / self.component_name
+        elif self.component_type == "subworkflows":
+            component_path = Path(self.default_subworkflows_path) / self.component_name
+            test_path = Path(self.default_subworkflows_tests_path) / self.component_name
 
-        if not (self.dir / module_path).is_dir():
+        if not (self.dir / component_path).is_dir():
             raise UserWarning(
-                f"Cannot find directory '{module_path}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?"
+                f"Cannot find directory '{component_path}'. Should be {'TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else 'SUBWORKFLOW'}. Are you running the tests inside the modules repository root directory?"
             )
         if not (self.dir / test_path).is_dir():
             raise UserWarning(
-                f"Cannot find directory '{test_path}'. Should be TOOL/SUBTOOL or TOOL. "
-                "Are you running the tests inside the nf-core/modules main directory? "
+                f"Cannot find directory '{test_path}'. Should be {'TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else 'SUBWORKFLOW'}. "
+                "Are you running the tests inside the modules repository root directory? "
                 "Do you have tests for the specified module?"
             )
 
@@ -167,15 +175,15 @@ class ModulesTest(ModuleCommand):
             )
 
     def _run_pytests(self):
-        """Given a module name, run tests."""
+        """Given a module/subworkflow name, run tests."""
         # Print nice divider line
         console = rich.console.Console()
-        console.rule(self.module_name, style="black")
+        console.rule(self.component_name, style="black")
 
         # Set pytest arguments
-        command_args = ["--tag", f"{self.module_name}", "--symlink", "--keep-workflow-wd", "--git-aware"]
+        command_args = ["--tag", f"{self.component_name}", "--symlink", "--keep-workflow-wd", "--git-aware"]
         command_args += self.pytest_args
 
         # Run pytest
-        log.info(f"Running pytest for module '{self.module_name}'")
+        log.info(f"Running pytest for {self.component_type[:-1]} '{self.component_name}'")
         sys.exit(pytest.main(command_args))
