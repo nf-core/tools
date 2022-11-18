@@ -10,6 +10,8 @@ from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_utils import prompt_component_version_sha
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
+from rich.console import Console
+from rich.syntax import Syntax
 
 log = logging.getLogger(__name__)
 
@@ -117,14 +119,22 @@ class ComponentInstall(ComponentCommand):
         if not silent:
             # Print include statement
             component_name = "_".join(component.upper().split("/"))
-            log.info(
-                f"Include statement: include {{ {component_name} }} from '.{os.path.join(install_folder, component)}/main'"
+            log.info(f"Use the following statement to include this {self.component_type[:-1]}:")
+            Console().print(
+                Syntax(
+                    f"include {{ {component_name} }} from '.{os.path.join(install_folder, component)}/main'",
+                    "groovy",
+                    theme="ansi_dark",
+                    padding=1,
+                )
             )
             if self.component_type == "subworkflows":
                 subworkflow_config = os.path.join(install_folder, component, "nextflow.config")
                 if os.path.isfile(subworkflow_config):
-                    log.info(f"Subworkflow config include statement: includeConfig '{subworkflow_config}'")
-
+                    log.info(f"Add the following config statement to use this subworkflow:")
+                    Console().print(
+                        Syntax(f"includeConfig '{subworkflow_config}'", "groovy", theme="ansi_dark", padding=1)
+                    )
         return True
 
     def get_modules_subworkflows_to_install(self, subworkflow_dir):
