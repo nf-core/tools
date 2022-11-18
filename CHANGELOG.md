@@ -5,7 +5,7 @@
 ### Template
 
 - Fix lint warnings for `samplesheet_check.nf` module
-- Add profile for running `docker` with the Apple M1 chips.
+- Add profile for running `docker` with the ARM chips (including Apple silicon).
 
 ### Linting
 
