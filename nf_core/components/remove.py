@@ -149,5 +149,7 @@ class ComponentRemove(ComponentCommand):
                 if component_name != component:
                     removed_components.append(component_name.replace("/", "_"))
         if removed_components:
-            log.info(f"Removed files for '{component}' and it's dependencies '{', '.join(removed_components)}'")
+            log.info(f"Removed files for '{component}' and it's dependencies '{', '.join(removed_components)}'.")
+        else:
+            log.info(f"Removed files for '{component}'.")
         return removed
