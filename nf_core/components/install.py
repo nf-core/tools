@@ -3,10 +3,9 @@ import os
 import re
 from pathlib import Path
 
-import questionary
-
 import nf_core.modules.modules_utils
 import nf_core.utils
+import questionary
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_utils import prompt_component_version_sha
 from nf_core.modules.modules_json import ModulesJson
@@ -77,7 +76,7 @@ class ComponentInstall(ComponentCommand):
         component_installed = self.check_component_installed(
             component, current_version, component_dir, self.modules_repo, self.force, self.prompt, silent
         )
-        if not component_installed:
+        if component_installed:
             log.debug(
                 f"{self.component_type[:-1].title()} is already installed and force is not set.\nAdding the new installation source {self.installed_by} for {self.component_type[:-1]} {component} to 'modules.json' without installing the {self.component_type}."
             )
@@ -197,7 +196,11 @@ class ComponentInstall(ComponentCommand):
 
     def check_component_installed(self, component, current_version, component_dir, modules_repo, force, prompt, silent):
         """
-        Check that the module/subworkflow is not already installed
+        Check that the module/subworkflow is not already installed.
+
+        Return:
+            False: if the component is not installed
+            True: if the component is installed
         """
         if (current_version is not None and os.path.exists(component_dir)) and not force:
             if not silent:
@@ -223,9 +226,9 @@ class ComponentInstall(ComponentCommand):
                     log.info(
                         f"To update '{component}' run 'nf-core {self.component_type} {repo_flag}{branch_flag}update {component}'. To force reinstallation use '--force'"
                     )
-                return False
+                return True
 
-        return True
+        return False
 
     def get_version(self, component, sha, prompt, current_version, modules_repo):
         """
