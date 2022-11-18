@@ -3,15 +3,16 @@ import os
 import re
 from pathlib import Path
 
+import questionary
+from rich.console import Console
+from rich.syntax import Syntax
+
 import nf_core.modules.modules_utils
 import nf_core.utils
-import questionary
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_utils import prompt_component_version_sha
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
-from rich.console import Console
-from rich.syntax import Syntax
 
 log = logging.getLogger(__name__)
 
