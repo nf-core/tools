@@ -248,7 +248,7 @@ class ComponentUpdate(ComponentCommand):
                                 style=nf_core.utils.nfcore_question_style,
                             ).unsafe_ask()
                     if recursive_update and len(modules_to_update + subworkflows_to_update) > 0:
-                        # Write all the differences of linked componenets to a diff file
+                        # Write all the differences of linked components to a diff file
                         self.update_linked_components(
                             modules_to_update, subworkflows_to_update, updated, check_diff_exist=False
                         )
