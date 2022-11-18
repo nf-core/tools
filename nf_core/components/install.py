@@ -45,8 +45,9 @@ class ComponentInstall(ComponentCommand):
         if not self.has_valid_directory():
             return False
 
-        # Check modules directory structure
-        self.check_modules_structure()
+        if self.component_type == "modules":
+            # Check modules directory structure
+            self.check_modules_structure()
 
         # Verify that 'modules.json' is consistent with the installed modules and subworkflows
         modules_json = ModulesJson(self.dir)
