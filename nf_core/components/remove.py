@@ -39,12 +39,11 @@ class ComponentRemove(ComponentCommand):
         self.has_valid_directory()
         self.has_modules_file()
 
-        repo_dir = self.modules_repo.fullname
         repo_path = self.modules_repo.repo_path
         if component is None:
             component = questionary.autocomplete(
                 f"{self.component_type[:-1]} name:",
-                choices=self.components_from_repo(repo_dir),
+                choices=self.components_from_repo(repo_path),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
