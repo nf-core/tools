@@ -10,6 +10,8 @@ import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
 
+from .install import ComponentInstall
+
 log = logging.getLogger(__name__)
 
 
@@ -34,7 +36,8 @@ class ComponentRemove(ComponentCommand):
             return False
 
         # Check modules directory structure
-        self.check_modules_structure()
+        if self.component_type == "modules":
+            self.check_modules_structure()
 
         # Check whether pipeline is valid and with a modules.json file
         self.has_valid_directory()
@@ -78,9 +81,6 @@ class ComponentRemove(ComponentCommand):
         removed = False
         removed_components = []
         for component_name, component_type in dependent_components.items():
-            current_version = modules_json.get_component_version(
-                component_type, component_name, self.modules_repo.remote_url, repo_path
-            )
             removed_component = modules_json.remove_entry(
                 component_type,
                 component_name,
@@ -126,13 +126,7 @@ class ComponentRemove(ComponentCommand):
                             style=nf_core.utils.nfcore_question_style,
                         ).unsafe_ask():
                             # add the component back to modules.json
-                            if not modules_json.update(
-                                self.component_type,
-                                self.modules_repo,
-                                component_name,
-                                current_version,
-                                self.component_type,
-                            ):
+                            if not ComponentInstall(self.dir, component_type, force=True).install(component_name):
                                 log.warn(
                                     f"Could not install the {component_type[:-1]} '{component_name}', please install it manually with 'nf-core {component_type} install  {component_name}'."
                                 )
