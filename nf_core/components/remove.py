@@ -143,14 +143,15 @@ class ComponentRemove(ComponentCommand):
                     if self.clear_component_dir(component, Path(self.dir, removed_component_dir)) or removed
                     else False
                 )
-                if removed:
-                    # remember removed dependencies
-                    if component_name != component:
-                        removed_components.append(component_name.replace("/", "_"))
-                    if removed_components:
-                        log.info(
-                            f"Removed files for '{component}' and it's dependencies '{', '.join(removed_components)}'."
-                        )
-                    else:
-                        log.info(f"Removed files for '{component}'.")
+
+            if removed:
+                # remember removed dependencies
+                if component_name != component:
+                    removed_components.append(component_name.replace("/", "_"))
+        if removed:
+            # remember removed dependencies
+            if removed_components:
+                log.info(f"Removed files for '{component}' and it's dependencies '{', '.join(removed_components)}'.")
+            else:
+                log.info(f"Removed files for '{component}'.")
         return removed
