@@ -33,6 +33,25 @@ class NfcoreTemplate {
     }
 
     //
+    // Generate version string
+    //
+    public static String version(workflow) {
+        String version_string = ""
+
+        if (workflow.manifest.version) {
+            def prefix_v = workflow.manifest.version[0] != 'v' ? 'v' : ''
+            version_string += "${prefix_v}${workflow.manifest.version}"
+        }
+
+        if (workflow.commitId) {
+            def git_shortsha = workflow.commitId.substring(0, 7)
+            version_string += "-g${git_shortsha}"
+        }
+
+        return version_string
+    }
+
+    //
     // Construct and send completion email
     //
     public static void email(workflow, params, summary_params, projectDir, log, multiqc_report=[]) {
@@ -61,7 +80,7 @@ class NfcoreTemplate {
         misc_fields['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp
 
         def email_fields = [:]
-        email_fields['version']      = workflow.manifest.version
+        email_fields['version']      = NfcoreTemplate.version(workflow)
         email_fields['runName']      = workflow.runName
         email_fields['success']      = workflow.success
         email_fields['dateComplete'] = workflow.complete
@@ -170,7 +189,7 @@ class NfcoreTemplate {
         misc_fields['nxf_timestamp']                        = workflow.nextflow.timestamp
 
         def msg_fields = [:]
-        msg_fields['version']      = workflow.manifest.version
+        msg_fields['version']      = NfcoreTemplate.version(workflow)
         msg_fields['runName']      = workflow.runName
         msg_fields['success']      = workflow.success
         msg_fields['dateComplete'] = workflow.complete
@@ -300,6 +319,7 @@ class NfcoreTemplate {
     //
     public static String logo(workflow, monochrome_logs) {
         Map colors = logColours(monochrome_logs)
+        String workflow_version = NfcoreTemplate.version(workflow)
         String.format(
             """\n
             ${dashedLine(monochrome_logs)}{% if branded %}
@@ -308,7 +328,7 @@ class NfcoreTemplate {
             ${colors.blue}  |\\ | |__  __ /  ` /  \\ |__) |__         ${colors.yellow}}  {${colors.reset}
             ${colors.blue}  | \\| |       \\__, \\__/ |  \\ |___     ${colors.green}\\`-._,-`-,${colors.reset}
                                                     ${colors.green}`._,._,\'${colors.reset}{% endif %}
-            ${colors.purple}  ${workflow.manifest.name} v${workflow.manifest.version}${colors.reset}
+            ${colors.purple}  ${workflow.manifest.name} ${workflow_version}${colors.reset}
             ${dashedLine(monochrome_logs)}
             """.stripIndent()
         )
