@@ -209,8 +209,8 @@ class ComponentInstall(ComponentCommand):
         Check that the module/subworkflow is not already installed.
 
         Return:
-            False: if the component is not installed
-            True: if the component is installed
+            True: if the component is not installed
+            False: if the component is installed
         """
         if (current_version is not None and os.path.exists(component_dir)) and not force:
             if not silent:
@@ -236,9 +236,9 @@ class ComponentInstall(ComponentCommand):
                     log.info(
                         f"To update '{component}' run 'nf-core {self.component_type} {repo_flag}{branch_flag}update {component}'. To force reinstallation use '--force'"
                     )
-                return True
+                return False
 
-        return False
+        return True
 
     def get_version(self, component, sha, prompt, current_version, modules_repo):
         """
