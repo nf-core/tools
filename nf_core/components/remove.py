@@ -2,8 +2,8 @@ import logging
 from pathlib import Path
 
 import questionary
-from rich.console import Console
-from rich.rule import Rule
+from rich.console import Console, Group
+from rich.panel import Panel
 from rich.syntax import Syntax
 
 import nf_core.utils
@@ -96,18 +96,26 @@ class ComponentRemove(ComponentCommand):
                     )
                     console = Console()
                     for file, stmts in include_stmts.items():
-                        console.print(Rule(f"{file}", style="white"))
+                        renderables = []
                         for stmt in stmts:
-                            console.print(
+                            renderables.append(
                                 Syntax(
                                     stmt["line"],
                                     "groovy",
                                     theme="ansi_dark",
                                     line_numbers=True,
                                     start_line=stmt["line_number"],
-                                    padding=(0, 0, 1, 1),
                                 )
                             )
+                        console.print(
+                            Panel(
+                                Group(*renderables),
+                                title=f"{file}",
+                                style="white",
+                                title_align="center",
+                                padding=1,
+                            )
+                        )
                     # ask the user if they still want to remove the component, install it otherwise
                     if not questionary.confirm(
                         f"Do you still want to remove the {component_type[:-1]} '{component_name}'?",
@@ -133,12 +141,14 @@ class ComponentRemove(ComponentCommand):
                             )
                         continue
                 # Remove the component files of all entries removed from modules.json
-                removed_components.append(component_name.replace("/", "_"))
                 removed = (
                     True
                     if self.clear_component_dir(component, Path(self.dir, removed_component_dir)) or removed
                     else False
                 )
+                # remember removed dependencies
+                if component_name != component:
+                    removed_components.append(component_name.replace("/", "_"))
         if removed_components:
-            log.info(f"Removed files for {', '.join(removed_components)}")
+            log.info(f"Removed files for '{component}' and it's dependencies '{', '.join(removed_components)}'")
         return removed
