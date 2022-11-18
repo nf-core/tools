@@ -612,6 +612,9 @@ class ModulesJson:
             component_version (str): git SHA for the new module/subworkflow entry
             installed_by_log (list): previous tracing of installed_by that needs to be added to 'modules.json'
             write_file (bool): whether to write the updated modules.json to a file.
+
+        Returns:
+            bool: True if the module/subworkflow was successfully added to the 'modules.json' file
         """
         if installed_by_log is None:
             installed_by_log = []
@@ -642,6 +645,7 @@ class ModulesJson:
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
         if write_file:
             self.dump()
+        return True
 
     def remove_entry(self, component_type, name, repo_url, install_dir, removed_by=None):
         """

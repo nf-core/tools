@@ -17,13 +17,14 @@ class ComponentRemove(ComponentCommand):
     def __init__(self, component_type, pipeline_dir):
         super().__init__(component_type, pipeline_dir)
 
-    def remove(self, component):
+    def remove(self, component, force=False):
         """
         Remove an already installed module/subworkflow
         This command only works for modules/subworkflows that are installed from 'nf-core/modules'
 
         Args:
             component (str): Name of the component to remove
+            force (bool): Force removal of component, even if there is still an include statement in a workflow file
 
         Returns:
             bool: True if any item has been removed, False if not
@@ -77,6 +78,9 @@ class ComponentRemove(ComponentCommand):
         removed = False
         removed_components = []
         for component_name, component_type in dependent_components.items():
+            current_version = modules_json.get_component_version(
+                component_type, component_name, self.modules_repo.remote_url, repo_path
+            )
             removed_component = modules_json.remove_entry(
                 component_type,
                 component_name,
@@ -115,41 +119,38 @@ class ComponentRemove(ComponentCommand):
                                 padding=1,
                             )
                         )
-                    # ask the user if they still want to remove the component, install it otherwise
-                    if not questionary.confirm(
-                        f"Do you still want to remove the {component_type[:-1]} '{component_name}'?",
-                        style=nf_core.utils.nfcore_question_style,
-                    ).unsafe_ask():
-
-                        current_version = modules_json.get_component_version(
-                            self.component_type,
-                            component_name,
-                            self.modules_repo.remote_url,
-                            self.modules_repo.repo_path,
-                        )
-                        # install the component
-                        if not modules_json.update(
-                            self.component_type,
-                            self.modules_repo,
-                            component_name,
-                            current_version,
-                            self.component_type,
-                        ):
-                            log.warn(
-                                f"Could not install the {component_type[:-1]} '{component_name}', please install it manually with 'nf-core {component_type} install  {component_name}'."
-                            )
-                        continue
+                    # ask the user if they still want to remove the component, add it back otherwise
+                    if not force:
+                        if not questionary.confirm(
+                            f"Do you still want to remove the {component_type[:-1]} '{component_name}'?",
+                            style=nf_core.utils.nfcore_question_style,
+                        ).unsafe_ask():
+                            # add the component back to modules.json
+                            if not modules_json.update(
+                                self.component_type,
+                                self.modules_repo,
+                                component_name,
+                                current_version,
+                                self.component_type,
+                            ):
+                                log.warn(
+                                    f"Could not install the {component_type[:-1]} '{component_name}', please install it manually with 'nf-core {component_type} install  {component_name}'."
+                                )
+                            continue
                 # Remove the component files of all entries removed from modules.json
                 removed = (
                     True
                     if self.clear_component_dir(component, Path(self.dir, removed_component_dir)) or removed
                     else False
                 )
-                # remember removed dependencies
-                if component_name != component:
-                    removed_components.append(component_name.replace("/", "_"))
-        if removed_components:
-            log.info(f"Removed files for '{component}' and it's dependencies '{', '.join(removed_components)}'.")
-        else:
-            log.info(f"Removed files for '{component}'.")
+                if removed:
+                    # remember removed dependencies
+                    if component_name != component:
+                        removed_components.append(component_name.replace("/", "_"))
+                    if removed_components:
+                        log.info(
+                            f"Removed files for '{component}' and it's dependencies '{', '.join(removed_components)}'."
+                        )
+                    else:
+                        log.info(f"Removed files for '{component}'.")
         return removed
