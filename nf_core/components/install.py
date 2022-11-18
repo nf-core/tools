@@ -46,8 +46,9 @@ class ComponentInstall(ComponentCommand):
         if not self.has_valid_directory():
             return False
 
-        # Check modules directory structure
-        self.check_modules_structure()
+        if self.component_type == "modules":
+            # Check modules directory structure
+            self.check_modules_structure()
 
         # Verify that 'modules.json' is consistent with the installed modules and subworkflows
         modules_json = ModulesJson(self.dir)
@@ -205,7 +206,11 @@ class ComponentInstall(ComponentCommand):
 
     def check_component_installed(self, component, current_version, component_dir, modules_repo, force, prompt, silent):
         """
-        Check that the module/subworkflow is not already installed
+        Check that the module/subworkflow is not already installed.
+
+        Return:
+            False: if the component is not installed
+            True: if the component is installed
         """
         if (current_version is not None and os.path.exists(component_dir)) and not force:
             if not silent:
@@ -231,9 +236,9 @@ class ComponentInstall(ComponentCommand):
                     log.info(
                         f"To update '{component}' run 'nf-core {self.component_type} {repo_flag}{branch_flag}update {component}'. To force reinstallation use '--force'"
                     )
-                return False
+                return True
 
-        return True
+        return False
 
     def get_version(self, component, sha, prompt, current_version, modules_repo):
         """
