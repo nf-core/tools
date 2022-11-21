@@ -7,6 +7,8 @@
 - Fix lint warnings for `samplesheet_check.nf` module
 - Add codespaces template ([#1957](https://github.com/nf-core/tools/pull/1957))
 - Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
+- `nextflow run <pipeline> --version` will now print the workflow version from the manifest and exit ([#1951](https://github.com/nf-core/tools/pull/1951))
+- Add profile for running `docker` with the ARM chips (including Apple silicon) ([#1942](https://github.com/nf-core/tools/pull/1942) and [#2034](https://github.com/nf-core/tools/pull/2034))
 
 ### Linting
 
@@ -31,6 +33,7 @@
 - Track from where modules and subworkflows are installed ([#1999](https://github.com/nf-core/tools/pull/1999))
 - Substitute ModulesCommand and SubworkflowsCommand by ComponentsCommand ([#2000](https://github.com/nf-core/tools/pull/2000))
 - Don't print source file + line number on logging messages (except when verbose) ([#2015](https://github.com/nf-core/tools/pull/2015))
+- Extended the chat notifications to Slack ([#1829](https://github.com/nf-core/tools/pull/1829))
 
 ### Modules
 
@@ -43,6 +46,7 @@
 - `check_up_to_date()` function from `modules_json` also checks for subworkflows.
 - Update subworkflows install so it installs also imported modules and subworkflows ([#1904](https://github.com/nf-core/tools/pull/1904))
 - Function create() from modules_json.py adds also subworkflows to modules.json file ([#2005](https://github.com/nf-core/tools/pull/2005))
+- Add `nf-core subworkflows update` command ([#2019](https://github.com/nf-core/tools/pull/2019))
 
 ## [v2.6 - Tin Octopus](https://github.com/nf-core/tools/releases/tag/2.6) - [2022-10-04]
 

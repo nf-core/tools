@@ -11,7 +11,7 @@ import nf_core.create
 import nf_core.modules
 import nf_core.subworkflows
 
-from .utils import GITLAB_SUBWORKFLOWS_BRANCH, GITLAB_URL, mock_api_calls
+from .utils import GITLAB_SUBWORKFLOWS_BRANCH, GITLAB_URL, OLD_SUBWORKFLOWS_SHA
 
 
 def create_modules_repo_dummy(tmp_dir):
@@ -52,29 +52,35 @@ class TestSubworkflows(unittest.TestCase):
             "mypipeline", "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
 
+        # Set up the nf-core/modules repo dummy
+        self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
+
         # Set up install objects
         self.subworkflow_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
         self.subworkflow_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
             self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
         )
-
-        # Set up the nf-core/modules repo dummy
-        self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
-
-        # Set up install objects
-        self.sw_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
-        self.sw_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
-            self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
+        self.subworkflow_install_old = nf_core.subworkflows.SubworkflowInstall(
+            self.pipeline_dir,
+            prompt=False,
+            force=False,
+            sha=OLD_SUBWORKFLOWS_SHA,
         )
 
-    ############################################
-    # Test of the individual modules commands. #
-    ############################################
+    ################################################
+    # Test of the individual subworkflow commands. #
+    ################################################
 
     from .subworkflows.create import (
         test_subworkflows_create_fail_exists,
         test_subworkflows_create_nfcore_modules,
         test_subworkflows_create_succeed,
+    )
+    from .subworkflows.info import (
+        test_subworkflows_info_in_modules_repo,
+        test_subworkflows_info_local,
+        test_subworkflows_info_remote,
+        test_subworkflows_info_remote_gitlab,
     )
     from .subworkflows.install import (
         test_subworkflow_install_nopipeline,
@@ -95,4 +101,16 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_test_check_inputs,
         test_subworkflows_test_no_installed_subworkflows,
         test_subworkflows_test_no_name_no_prompts,
+    )
+    from .subworkflows.update import (
+        test_install_and_update,
+        test_install_at_hash_and_update,
+        test_install_at_hash_and_update_and_save_diff_to_file,
+        test_update_all,
+        test_update_all_linked_components_from_subworkflow,
+        test_update_all_subworkflows_from_module,
+        test_update_with_config_dont_update,
+        test_update_with_config_fix_all,
+        test_update_with_config_fixed_version,
+        test_update_with_config_no_updates,
     )

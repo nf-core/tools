@@ -235,7 +235,12 @@ def test_create_patch_update_success(self):
 
     # Update the module
     update_obj = nf_core.modules.ModuleUpdate(
-        self.pipeline_dir, sha=SUCCEED_SHA, show_diff=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH
+        self.pipeline_dir,
+        sha=SUCCEED_SHA,
+        show_diff=False,
+        update_deps=True,
+        remote_url=GITLAB_URL,
+        branch=PATCH_BRANCH,
     )
     assert update_obj.update(BISMARK_ALIGN)
 
@@ -294,7 +299,7 @@ def test_create_patch_update_fail(self):
         patch_contents = fh.read()
 
     update_obj = nf_core.modules.ModuleUpdate(
-        self.pipeline_dir, sha=FAIL_SHA, show_diff=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH
+        self.pipeline_dir, sha=FAIL_SHA, show_diff=False, update_deps=True, remote_url=GITLAB_URL, branch=PATCH_BRANCH
     )
     update_obj.update(BISMARK_ALIGN)
 

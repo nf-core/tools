@@ -468,7 +468,7 @@ class ModulesRepo(object):
         ]
         return avail_component_names
 
-    def get_meta_yml(self, module_name):
+    def get_meta_yml(self, component_type, module_name):
         """
         Returns the contents of the 'meta.yml' file of a module
 
@@ -479,8 +479,13 @@ class ModulesRepo(object):
             (str): The contents of the file in text format
         """
         self.checkout_branch()
-        path = os.path.join(self.modules_dir, module_name, "meta.yml")
-        if not os.path.exists(path):
+        if component_type == "modules":
+            path = Path(self.modules_dir, module_name, "meta.yml")
+        elif component_type == "subworkflows":
+            path = Path(self.subworkflows_dir, module_name, "meta.yml")
+        else:
+            raise ValueError(f"Invalid component type: {component_type}")
+        if not path.exists():
             return None
         with open(path) as fh:
             contents = fh.read()
