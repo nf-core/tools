@@ -2,7 +2,6 @@ import filecmp
 import logging
 import os
 import shutil
-from importlib.resources import path
 from pathlib import Path
 
 import git
@@ -59,7 +58,7 @@ class RemoteProgressbar(git.RemoteProgress):
         )
 
 
-class ModulesRepo(object):
+class ModulesRepo:
     """
     An object to store details about the repository being used for modules.
 
