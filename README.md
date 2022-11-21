@@ -1101,6 +1101,7 @@ You can pass the subworkflow name as an optional argument to `nf-core subworkflo
 This command creates a new nf-core subworkflow from the nf-core subworkflow template.
 This ensures that your subworkflow follows the nf-core guidelines.
 The template contains extensive `TODO` messages to walk you through the changes you need to make to the template.
+See the [subworkflow documentation](https://nf-co.re/docs/contributing/subworkflows) for more details around creating a new subworkflow, including rules about nomenclature and a step-by-step guide.
 
 You can create a new subworkflow using `nf-core subworkflows create`.
 
