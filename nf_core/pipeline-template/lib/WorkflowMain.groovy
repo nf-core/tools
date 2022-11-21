@@ -63,7 +63,7 @@ class WorkflowMain {
             log.info "${workflow.manifest.name} ${workflow_version}"
             System.exit(0)
         }
-        
+
         // Print parameter summary log to screen
         log.info paramsSummaryLog(workflow, params, log)
 
