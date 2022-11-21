@@ -4,7 +4,7 @@ The NFCoreModule class holds information and utility functions for a single modu
 from pathlib import Path
 
 
-class NFCoreModule(object):
+class NFCoreModule:
     """
     A class to hold the information about a nf-core module
     Includes functionality for linting

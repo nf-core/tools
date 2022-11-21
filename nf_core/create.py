@@ -26,7 +26,7 @@ from nf_core.lint_utils import run_prettier_on_file
 log = logging.getLogger(__name__)
 
 
-class PipelineCreate(object):
+class PipelineCreate:
     """Creates a nf-core pipeline a la carte from the nf-core best-practice template.
 
     Args:
