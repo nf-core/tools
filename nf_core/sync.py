@@ -33,7 +33,7 @@ class PullRequestException(Exception):
     pass
 
 
-class PipelineSync(object):
+class PipelineSync:
     """Object to hold syncing information and results.
 
     Args:

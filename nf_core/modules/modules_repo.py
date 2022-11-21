@@ -59,7 +59,7 @@ class RemoteProgressbar(git.RemoteProgress):
         )
 
 
-class ModulesRepo(object):
+class ModulesRepo:
     """
     An object to store details about the repository being used for modules.
 
