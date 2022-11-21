@@ -8,8 +8,8 @@
 - Add codespaces template ([#1957](https://github.com/nf-core/tools/pull/1957))
 - Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
 - `nextflow run <pipeline> --version` will now print the workflow version from the manifest and exit ([#1951](https://github.com/nf-core/tools/pull/1951))
-- Add profile for running `docker` with the ARM chips (including Apple silicon).
-- Flip execution order of parameter summary printing and parameter validation to prevent 'hiding' of parameter errors
+- Add profile for running `docker` with the ARM chips (including Apple silicon) ([#1942](https://github.com/nf-core/tools/pull/1942) and [#2034](https://github.com/nf-core/tools/pull/2034))
+- Flip execution order of parameter summary printing and parameter validation to prevent 'hiding' of parameter errors.
 
 ### Linting
 
