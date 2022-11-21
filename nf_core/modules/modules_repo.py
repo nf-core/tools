@@ -2,7 +2,6 @@ import filecmp
 import logging
 import os
 import shutil
-from importlib.resources import path
 from pathlib import Path
 
 import git
