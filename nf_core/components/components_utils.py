@@ -67,8 +67,25 @@ def get_repo_type(dir, use_prompt=True):
     if not repo_type in ["pipeline", "modules"]:
         raise UserWarning(f"Invalid repository type: '{repo_type}'")
 
+    # Check for org if modules repo
+    org = None
+    if repo_type == "modules":
+        org = tools_config.get("org_path", None)
+        if org is None:
+            log.warning("Organisation path not defined in '.nf-core.yml' [key: org_path]")
+            repo_type = questionary.text(
+                "What is the organisation path under which modules are stored? e.g. nf-core",
+                default="nf-core",
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask()
+            log.info("To avoid this prompt in the future, add the 'repository_type' key to a root '.nf-core.yml' file.")
+            if rich.prompt.Confirm.ask("[bold][blue]?[/] Would you like me to add this config now?", default=True):
+                with open(os.path.join(dir, ".nf-core.yml"), "a+") as fh:
+                    fh.write(f"org_path: {org}\n")
+                    log.info("Config added to '.nf-core.yml'")
+
     # It was set on the command line, return what we were given
-    return [dir, repo_type]
+    return [dir, repo_type, org]
 
 
 def prompt_component_version_sha(component_name, component_type, modules_repo, installed_sha=None):

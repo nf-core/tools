@@ -32,15 +32,12 @@ class ComponentCommand:
     def _configure_repo_and_paths(self):
         try:
             if self.dir:
-                self.dir, self.repo_type = get_repo_type(self.dir)
+                self.dir, self.repo_type, self.org = get_repo_type(self.dir)
             else:
                 self.repo_type = None
+                self.org = None
         except LookupError as e:
             raise UserWarning(e)
-        if self.repo_type == "modules":
-            self.org = org_from_git()
-        else:
-            self.org = "nf-core"
         self.paths = NFCorePaths(self.dir, self.org)
 
     def get_local_components(self):
