@@ -146,6 +146,9 @@ class ComponentUpdate(ComponentCommand):
         exit_value = True
         all_patches_successful = True
         for modules_repo, component, sha, patch_relpath in components_info:
+            if component is None:
+                # The entry from .nf-core.yml is set to false, skip update of this component
+                continue
             component_fullname = str(Path(self.component_type, modules_repo.repo_path, component))
             # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
@@ -386,12 +389,13 @@ class ComponentUpdate(ComponentCommand):
             config_entry = self.update_config[self.modules_repo.remote_url][install_dir].get(component)
         if config_entry is not None and config_entry is not True:
             if config_entry is False:
-                raise UserWarning(
-                    f"{self.component_type[:-1].title()}'s update entry in '.nf-core.yml' is set to False"
+                log.warn(
+                    f"{self.component_type[:-1].title()}'s update entry in '.nf-core.yml' for '{component}' is set to False"
                 )
+                return (self.modules_repo, None, None, None)
             if not isinstance(config_entry, str):
                 raise UserWarning(
-                    f"{self.component_type[:-1].title()}'s update entry in '.nf-core.yml' is of wrong type"
+                    f"{self.component_type[:-1].title()}'s update entry in '.nf-core.yml' for '{component}' is of wrong type"
                 )
 
             sha = config_entry
