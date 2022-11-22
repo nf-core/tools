@@ -1017,7 +1017,7 @@ working_dir: tmp/nf-core-nextbigthing
 ### Install subworkflows in a pipeline
 
 You can install subworkflows from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core subworkflows install`.
-A subworkflow installed this way will be installed to the `./subworkflows/nf-core/modules` directory.
+A subworkflow installed this way will be installed to the `./subworkflows/nf-core` directory.
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
@@ -1055,6 +1055,7 @@ There are six additional flags that you can use with this command:
 - `--preview/--no-preview`: Show the diff between the installed files and the new version before installing.
 - `--save-diff <filename>`: Save diffs to a file instead of updating in place. The diffs can then be applied with `git apply <filename>`.
 - `--all`: Use this flag to run the command on all subworkflows in the pipeline.
+- `--update-deps`: Use this flag to automatically update all dependencies of a subworkflow.
 
 If you don't want to update certain subworkflows or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `bam_rseqc` subworkflow installed from `nf-core/modules` from being updated by adding the following to the `.nf-core.yml` file:
 
