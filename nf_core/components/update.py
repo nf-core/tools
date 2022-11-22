@@ -381,6 +381,19 @@ class ComponentUpdate(ComponentCommand):
 
         sha = self.sha
         config_entry = None
+        if any(
+            [
+                entry.count("/") == 1
+                and (entry.endswith("modules") or entry.endswith("subworkflows"))
+                and not (entry.endswith(".git") or entry.endswith(".git/"))
+                for entry in self.update_config.keys()
+            ]
+        ):
+            raise UserWarning(
+                "Your '.nf-core.yml' file format is outdated. "
+                "The format should be of the form:\n"
+                "update:\n  <repo_url>:\n    <component_install_directory>:\n      <component_name>:"
+            )
         if isinstance(self.update_config.get(self.modules_repo.remote_url, {}), str):
             # If the repo entry is a string, it's the sha to update to
             config_entry = self.update_config.get(self.modules_repo.remote_url, {})
