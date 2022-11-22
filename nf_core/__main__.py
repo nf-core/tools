@@ -638,6 +638,9 @@ def remove(ctx, dir, tool):
     try:
         module_remove = nf_core.modules.ModuleRemove(
             dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
         )
         module_remove.remove(tool)
     except (UserWarning, LookupError) as e:
@@ -1176,7 +1179,12 @@ def remove(ctx, dir, subworkflow):
     Remove a subworkflow from a pipeline.
     """
     try:
-        module_remove = nf_core.subworkflows.SubworkflowRemove(dir)
+        module_remove = nf_core.subworkflows.SubworkflowRemove(
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
         module_remove.remove(subworkflow)
     except (UserWarning, LookupError) as e:
         log.critical(e)
