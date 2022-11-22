@@ -35,7 +35,7 @@ class ModuleLintException(Exception):
     pass
 
 
-class LintResult(object):
+class LintResult:
     """An object to hold the results of a lint test"""
 
     def __init__(self, mod, lint_test, message, file_path):

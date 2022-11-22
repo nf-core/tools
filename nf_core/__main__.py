@@ -58,7 +58,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core subworkflows": [
         {
             "name": "For pipelines",
-            "commands": ["list", "info", "install", "update"],
+            "commands": ["info", "install", "list", "remove", "update"],
         },
         {
             "name": "Developing new subworkflows",
@@ -636,12 +636,7 @@ def remove(ctx, dir, tool):
     Remove a module from a pipeline.
     """
     try:
-        module_remove = nf_core.modules.ModuleRemove(
-            dir,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
+        module_remove = nf_core.modules.ModuleRemove(dir)
         module_remove.remove(tool)
     except (UserWarning, LookupError) as e:
         log.critical(e)
@@ -1160,6 +1155,29 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
         stdout.print(subworkflow_list.list_components(keywords, json))
     except (UserWarning, LookupError) as e:
         log.error(e)
+        sys.exit(1)
+
+
+# nf-core subworkflows remove
+@subworkflows.command()
+@click.pass_context
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+def remove(ctx, dir, subworkflow):
+    """
+    Remove a subworkflow from a pipeline.
+    """
+    try:
+        module_remove = nf_core.subworkflows.SubworkflowRemove(dir)
+        module_remove.remove(subworkflow)
+    except (UserWarning, LookupError) as e:
+        log.critical(e)
         sys.exit(1)
 
 

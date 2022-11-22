@@ -90,7 +90,7 @@ def rich_force_colors():
     return None
 
 
-class Pipeline(object):
+class Pipeline:
     """Object to hold information about a local pipeline.
 
     Args:

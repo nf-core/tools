@@ -35,9 +35,9 @@ def test_modules_lint_trimgalore(self):
 
 def test_modules_lint_empty(self):
     """Test linting a pipeline with no modules installed"""
-    self.mods_remove.remove("fastqc")
-    self.mods_remove.remove("multiqc")
-    self.mods_remove.remove("custom/dumpsoftwareversions")
+    self.mods_remove.remove("fastqc", force=True)
+    self.mods_remove.remove("multiqc", force=True)
+    self.mods_remove.remove("custom/dumpsoftwareversions", force=True)
     with pytest.raises(LookupError):
         nf_core.modules.ModuleLint(dir=self.pipeline_dir)
 

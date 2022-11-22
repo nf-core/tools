@@ -16,7 +16,7 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-class WorkflowLicences(object):
+class WorkflowLicences:
     """A nf-core workflow licenses collection.
 
     Tries to retrieve the license information from all dependencies
