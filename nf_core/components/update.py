@@ -353,7 +353,7 @@ class ComponentUpdate(ComponentCommand):
         if component is None:
             component = questionary.autocomplete(
                 f"{self.component_type[:-1].title()} name:",
-                choices=choices,
+                choices=choices.sort(),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
