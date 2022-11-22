@@ -636,7 +636,9 @@ def remove(ctx, dir, tool):
     Remove a module from a pipeline.
     """
     try:
-        module_remove = nf_core.modules.ModuleRemove(dir)
+        module_remove = nf_core.modules.ModuleRemove(
+            dir,
+        )
         module_remove.remove(tool)
     except (UserWarning, LookupError) as e:
         log.critical(e)

@@ -977,7 +977,7 @@ def determine_base_dir(directory="."):
 def get_first_available_path(directory, paths):
     for p in paths:
         if Path(directory, p).is_file():
-            return p
+            return Path(directory, p)
     return None
 
 

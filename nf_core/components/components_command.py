@@ -10,7 +10,7 @@ from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.path_utils import NFCorePaths
 
-from .components_utils import get_repo_type, org_from_git
+from .components_utils import get_repo_type
 
 log = logging.getLogger(__name__)
 
