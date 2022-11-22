@@ -781,30 +781,34 @@ If you don't want to update certain modules or want to update them to specific v
 
 ```yaml
 update:
-  nf-core/modules:
-    star/align: False
+  https://github.com/nf-core/modules.git:
+    nf-core:
+      star/align: False
 ```
 
 If you want this module to be updated only to a specific version (or downgraded), you could instead specifiy the version:
 
 ```yaml
 update:
-  nf-core/modules:
-    star/align: "e937c7950af70930d1f34bb961403d9d2aa81c7"
+  https://github.com/nf-core/modules.git:
+    nf-core:
+      star/align: "e937c7950af70930d1f34bb961403d9d2aa81c7"
 ```
 
 This also works at the repository level. For example, if you want to exclude all modules installed from `nf-core/modules` from being updated you could add:
 
 ```yaml
 update:
-  nf-core/modules: False
+  https://github.com/nf-core/modules.git:
+    nf-core: False
 ```
 
 or if you want all modules in `nf-core/modules` at a specific version:
 
 ```yaml
 update:
-  nf-core/modules: "e937c7950af70930d1f34bb961403d9d2aa81c7"
+  https://github.com/nf-core/modules.git:
+    nf-core: "e937c7950af70930d1f34bb961403d9d2aa81c7"
 ```
 
 Note that the module versions specified in the `.nf-core.yml` file has higher precedence than versions specified with the command line flags, thus aiding you in writing reproducible pipelines.
@@ -1056,30 +1060,34 @@ If you don't want to update certain subworkflows or want to update them to speci
 
 ```yaml
 update:
-  nf-core/modules:
-    bam_rseqc: False
+  https://github.com/nf-core/modules.git:
+    nf-core:
+      bam_rseqc: False
 ```
 
 If you want this subworkflow to be updated only to a specific version (or downgraded), you could instead specifiy the version:
 
 ```yaml
 update:
-  nf-core/modules:
-    bam_rseqc: "36a77f7c6decf2d1fb9f639ae982bc148d6828aa"
+  https://github.com/nf-core/modules.git:
+    nf-core:
+      bam_rseqc: "36a77f7c6decf2d1fb9f639ae982bc148d6828aa"
 ```
 
 This also works at the repository level. For example, if you want to exclude all modules and subworkflows installed from `nf-core/modules` from being updated you could add:
 
 ```yaml
 update:
-  nf-core/modules: False
+  https://github.com/nf-core/modules.git:
+    nf-core: False
 ```
 
 or if you want all subworkflows in `nf-core/modules` at a specific version:
 
 ```yaml
 update:
-  nf-core/modules: "e937c7950af70930d1f34bb961403d9d2aa81c7"
+  https://github.com/nf-core/modules.git:
+    nf-core: "e937c7950af70930d1f34bb961403d9d2aa81c7"
 ```
 
 Note that the subworkflow versions specified in the `.nf-core.yml` file has higher precedence than versions specified with the command line flags, thus aiding you in writing reproducible pipelines.
