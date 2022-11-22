@@ -87,7 +87,7 @@ class ComponentUpdate(ComponentCommand):
         if updated is None:
             updated = []
 
-        tool_config = nf_core.utils.load_tools_config(self.dir)
+        _, tool_config = nf_core.utils.load_tools_config(self.dir)
         self.update_config = tool_config.get("update", {})
 
         self._parameter_checks()

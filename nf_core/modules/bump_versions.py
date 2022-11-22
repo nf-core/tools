@@ -67,7 +67,7 @@ class ModuleVersionBumper(ComponentCommand):
         _, nfcore_modules = nf_core.modules.modules_utils.get_installed_modules(self.dir)
 
         # Load the .nf-core.yml config
-        self.tools_config = nf_core.utils.load_tools_config(self.dir)
+        _, self.tools_config = nf_core.utils.load_tools_config(self.dir)
 
         # Prompt for module or all
         if module is None and not all_modules:
