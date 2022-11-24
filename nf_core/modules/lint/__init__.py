@@ -89,7 +89,7 @@ class ModuleLint(ComponentCommand):
         if self.repo_type == "pipeline":
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
-            all_pipeline_modules = modules_json.get_all_modules()
+            all_pipeline_modules = modules_json.get_all_components(self.component_type)
             if self.modules_repo.remote_url in all_pipeline_modules:
                 module_dir = Path(self.dir, "modules", "nf-core")
                 self.all_remote_modules = [
