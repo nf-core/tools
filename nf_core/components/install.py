@@ -186,7 +186,7 @@ class ComponentInstall(ComponentCommand):
         if component is None:
             component = questionary.autocomplete(
                 f"{'Tool' if self.component_type == 'modules' else 'Subworkflow'} name:",
-                choices=modules_repo.get_avail_components(self.component_type).sort(),
+                choices=sorted(modules_repo.get_avail_components(self.component_type)),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
