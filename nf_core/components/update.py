@@ -230,9 +230,7 @@ class ComponentUpdate(ComponentCommand):
                         else:
                             updated.append(component)
                     recursive_update = True
-                    modules_to_update, subworkflows_to_update = self.get_modules_subworkflows_to_update(
-                        component, modules_repo
-                    )
+                    modules_to_update, subworkflows_to_update = self.get_components_to_update(component, modules_repo)
                     if not silent and len(modules_to_update + subworkflows_to_update) > 0:
                         log.warning(
                             f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be added to the same diff file.\n"
@@ -279,9 +277,7 @@ class ComponentUpdate(ComponentCommand):
                 self.modules_json.update(self.component_type, modules_repo, component, version, self.component_type)
                 updated.append(component)
                 recursive_update = True
-                modules_to_update, subworkflows_to_update = self.get_modules_subworkflows_to_update(
-                    component, modules_repo
-                )
+                modules_to_update, subworkflows_to_update = self.get_components_to_update(component, modules_repo)
                 if not silent and not self.update_all and len(modules_to_update + subworkflows_to_update) > 0:
                     log.warning(
                         f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be {'asked for update' if self.show_diff else 'automatically updated'}.\n"
@@ -802,8 +798,13 @@ class ComponentUpdate(ComponentCommand):
 
         return True
 
-    def get_modules_subworkflows_to_update(self, component, modules_repo):
-        """Get all modules and subworkflows linked to the updated component."""
+    def get_components_to_update(self, component, modules_repo):
+        """
+        Get all modules and subworkflows linked to the updated component.
+
+        Returns:
+            (list,list): A tuple of lists with the modules and subworkflows to update
+        """
         mods_json = self.modules_json.get_modules_json()
         modules_to_update = []
         subworkflows_to_update = []

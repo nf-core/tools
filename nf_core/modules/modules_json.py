@@ -14,6 +14,7 @@ from git.exc import GitCommandError
 import nf_core.modules.modules_repo
 import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components.components_utils import get_components_to_install
 
 from .modules_differ import ModulesDiffer
 
@@ -538,7 +539,10 @@ class ModulesJson:
         except UserWarning:
             log.info("The 'modules.json' file is not up to date. Recreating the 'module.json' file.")
             self.create()
-
+            subworkflows_dict = self.get_all_components("subworkflows")
+            for repo, subworkflows in subworkflows_dict.items():
+                for org, subworkflow in subworkflows:
+                    self.recreate_dependencies(repo, org, subworkflow)
         (
             modules_missing_from_modules_json,
             subworkflows_missing_from_modules_json,
@@ -573,7 +577,6 @@ class ModulesJson:
                             self.modules_json["repos"][repo][component_type][install_dir][component]["installed_by"] = [
                                 component_type
                             ]
-
         self.dump()
 
     def load(self):
@@ -1141,3 +1144,28 @@ class ModulesJson:
                                 }
                             }
                         )
+
+    def recreate_dependencies(self, repo, org, subworkflow):
+        """
+        Try to recreate the installed_by entries for subworkflows.
+        Remove self installation entry from dependencies, assuming that the modules.json has been freshly created,
+        i.e., no module or subworkflow has been installed by the user in the meantime
+        """
+
+        sw_path = Path(self.subworkflows_dir, org, subworkflow)
+        dep_mods, dep_subwfs = get_components_to_install(sw_path)
+
+        for dep_mod in dep_mods:
+            installed_by = self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"]
+            if installed_by == ["modules"]:
+                self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"] = []
+            if subworkflow not in installed_by:
+                self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"].append(subworkflow)
+
+        for dep_subwf in dep_subwfs:
+            installed_by = self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"]
+            if installed_by == ["subworkflows"]:
+                self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"] = []
+            if subworkflow not in installed_by:
+                self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"].append(subworkflow)
+            self.recreate_dependencies(repo, org, dep_subwf)

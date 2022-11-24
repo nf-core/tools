@@ -10,7 +10,10 @@ from rich.syntax import Syntax
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.components.components_utils import prompt_component_version_sha
+from nf_core.components.components_utils import (
+    get_components_to_install,
+    prompt_component_version_sha,
+)
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
 
@@ -138,32 +141,11 @@ class ComponentInstall(ComponentCommand):
                     )
         return True
 
-    def get_modules_subworkflows_to_install(self, subworkflow_dir):
-        """
-        Parse the subworkflow test main.nf file to retrieve all imported modules and subworkflows.
-        """
-        modules = []
-        subworkflows = []
-        with open(Path(subworkflow_dir, "main.nf"), "r") as fh:
-            for line in fh:
-                regex = re.compile(
-                    r"include(?: *{ *)([a-zA-Z\_0-9]*)(?: *as *)?(?:[a-zA-Z\_0-9]*)?(?: *})(?: *from *)(?:'|\")(.*)(?:'|\")"
-                )
-                match = regex.match(line)
-                if match and len(match.groups()) == 2:
-                    name, link = match.groups()
-                    if link.startswith("../../../"):
-                        name_split = name.lower().split("_")
-                        modules.append("/".join(name_split))
-                    elif link.startswith("../"):
-                        subworkflows.append(name.lower())
-        return modules, subworkflows
-
     def install_included_components(self, subworkflow_dir):
         """
         Install included modules and subworkflows
         """
-        modules_to_install, subworkflows_to_install = self.get_modules_subworkflows_to_install(subworkflow_dir)
+        modules_to_install, subworkflows_to_install = get_components_to_install(subworkflow_dir)
         for s_install in subworkflows_to_install:
             original_installed = self.installed_by
             self.installed_by = Path(subworkflow_dir).parts[-1]
@@ -186,7 +168,7 @@ class ComponentInstall(ComponentCommand):
         if component is None:
             component = questionary.autocomplete(
                 f"{'Tool' if self.component_type == 'modules' else 'Subworkflow'} name:",
-                choices=modules_repo.get_avail_components(self.component_type).sort(),
+                choices=modules_repo.get_avail_components(self.component_type),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
