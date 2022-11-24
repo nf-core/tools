@@ -19,7 +19,7 @@ class ComponentRemove(ComponentCommand):
     def __init__(self, component_type, pipeline_dir):
         super().__init__(component_type, pipeline_dir)
 
-    def remove(self, component, force=False):
+    def remove(self, component, removed_by=None, force=False):
         """
         Remove an already installed module/subworkflow
         This command only works for modules/subworkflows that are installed from 'nf-core/modules'
@@ -67,7 +67,7 @@ class ComponentRemove(ComponentCommand):
                 modules_json.remove_entry(self.component_type, component, self.modules_repo.remote_url, repo_path)
             return False
 
-        removed_by = None
+        # removed_by = None
         # dependent_components = {component: self.component_type}
         # if self.component_type == "subworkflows":
         #     removed_by = component
@@ -140,12 +140,12 @@ class ComponentRemove(ComponentCommand):
             if self.component_type == "subworkflows":
                 removed_by = component
                 dependent_components = modules_json.get_dependent_components(
-                    self.component_type, component, self.modules_repo.remote_url, repo_path, dependent_components
+                    self.component_type, component, self.modules_repo.remote_url, repo_path, {}
                 )
                 for component_name, component_type in dependent_components.items():
                     original_component_tyoe = self.component_type
                     self.component_type = component_type
-                    dependency_removed = self.remove(component_name)
+                    dependency_removed = self.remove(component_name, removed_by=removed_by)
                     self.component_type = original_component_tyoe
                     # remember removed dependencies
                     if dependency_removed:

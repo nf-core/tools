@@ -951,7 +951,12 @@ class ModulesJson:
         component_types = ["modules"] if component_type == "modules" else ["modules", "subworkflows"]
         # Find all components that have an entry of install by of  a given component, recursively call this function for subworkflows
         for type in component_types:
-            components = self.modules_json["repos"][repo_url][type][install_dir].items()
+            try:
+                components = self.modules_json["repos"][repo_url][type][install_dir].items()
+            except KeyError as e:
+                # This exception will raise when there are only modules installed
+                log.debug(f"Trying to retrieve all {type}. There aren't {type} installed. Failed with error {e}")
+                continue
             for component_name, component_entry in components:
                 if name in component_entry["installed_by"]:
                     dependent_components[component_name] = type
