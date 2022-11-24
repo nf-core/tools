@@ -677,6 +677,8 @@ class ModulesJson:
                         self.modules_json["repos"][repo_url][component_type][install_dir].pop(name)
                         if len(repo_entry[component_type][install_dir]) == 0:
                             self.modules_json["repos"][repo_url].pop(component_type)
+                            if len(repo_entry) == 0:
+                                self.modules_json["repos"].pop(repo_url)
                         # write the updated modules.json file
                         self.dump()
                         return True
