@@ -647,7 +647,8 @@ class ModulesJson:
         except KeyError:
             repo_component_entry[component_name]["installed_by"] = [installed_by]
         finally:
-            repo_component_entry[component_name]["installed_by"].extend(installed_by_log)
+            new_installed_by = repo_component_entry[component_name]["installed_by"] + installed_by_log
+            repo_component_entry[component_name]["installed_by"] = [*set(new_installed_by)]
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
