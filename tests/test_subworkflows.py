@@ -109,6 +109,7 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_list_remote_gitlab,
     )
     from .subworkflows.remove import (
+        test_subworkflows_remove_included_subworkflow,
         test_subworkflows_remove_one_of_two_subworkflow,
         test_subworkflows_remove_subworkflow,
         test_subworkflows_remove_subworkflow_keep_installed_module,
