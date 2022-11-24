@@ -885,25 +885,6 @@ class ModulesJson:
             .get("git_sha", None)
         )
 
-    def get_all_modules(self):
-        """
-        Retrieves all pipeline modules that are reported in the modules.json
-
-        Returns:
-            (dict[str, [(str, str)]]): Dictionary indexed with the repo urls, with a
-                                list of tuples (module_dir, module) as values
-        """
-        if self.modules_json is None:
-            self.load()
-        if self.pipeline_modules is None:
-            self.pipeline_modules = {}
-            for repo, repo_entry in self.modules_json.get("repos", {}).items():
-                if "modules" in repo_entry:
-                    for dir, modules in repo_entry["modules"].items():
-                        self.pipeline_modules[repo] = [(dir, m) for m in modules]
-
-        return self.pipeline_modules
-
     def get_all_components(self, component_type):
         """
         Retrieves all pipeline modules/subworkflows that are reported in the modules.json
@@ -1011,25 +992,6 @@ class ModulesJson:
 
     def __repr__(self):
         return self.__str__()
-
-    def get_installed_subworkflows(self):
-        """
-        Retrieves all pipeline subworkflows that are reported in the modules.json
-
-        Returns:
-            (dict[str, [(str, str)]]): Dictionary indexed with the repo urls, with a
-                                list of tuples (module_dir, subworkflow) as values
-        """
-        if self.modules_json is None:
-            self.load()
-        if self.pipeline_subworkflows is None:
-            self.pipeline_subworkflows = {}
-            for repo, repo_entry in self.modules_json.get("repos", {}).items():
-                if "subworkflows" in repo_entry:
-                    for dir, subworkflow in repo_entry["subworkflows"].items():
-                        self.pipeline_subworkflows[repo] = [(dir, name) for name in subworkflow]
-
-        return self.pipeline_subworkflows
 
     def resolve_missing_installation(self, missing_installation, component_type):
         missing_but_in_mod_json = [
