@@ -15,7 +15,6 @@ import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE
-from nf_core.modules.modules_utils import get_repo_type
 
 log = logging.getLogger(__name__)
 
@@ -70,15 +69,6 @@ class ComponentInfo(ComponentCommand):
         self.remote_location = None
         self.local = None
 
-        # Quietly check if this is a pipeline or not
-        if pipeline_dir:
-            try:
-                pipeline_dir, repo_type = get_repo_type(pipeline_dir, use_prompt=False)
-                log.debug(f"Found {repo_type} repo: {pipeline_dir}")
-            except UserWarning as e:
-                log.debug(f"Only showing remote info: {e}")
-                pipeline_dir = None
-
         if self.repo_type == "pipeline":
             # Check modules directory structure
             if self.component_type == "modules":
@@ -112,7 +102,8 @@ class ComponentInfo(ComponentCommand):
                         self.modules_repo.remote_url
                     )
                     components = [
-                        component if directory == self.modules_repo.repo_path else f"{directory}/{component}" for directory, component in components
+                        component if directory == self.modules_repo.repo_path else f"{directory}/{component}"
+                        for directory, component in components
                     ]
                     if components is None:
                         raise UserWarning(

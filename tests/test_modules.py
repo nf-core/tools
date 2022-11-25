@@ -32,7 +32,7 @@ def create_modules_repo_dummy(tmp_dir):
     with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
         fh.writelines(["test:", "\n  - modules/test/**", "\n  - tests/modules/test/**"])
     with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
-        fh.writelines(["repository_type: modules", "\n"])
+        fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
 
     # mock biocontainers and anaconda response
     with requests_mock.Mocker() as mock:
