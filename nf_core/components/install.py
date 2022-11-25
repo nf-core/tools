@@ -94,11 +94,11 @@ class ComponentInstall(ComponentCommand):
         # Remove component if force is set and component is installed
         install_track = None
         if self.force:
-            log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{component}'")
+            log.debug(f"Removing installed version of '{self.modules_repo.repo_path}/{component}'")
             self.clear_component_dir(component, component_dir)
             install_track = self.clean_modules_json(component, self.modules_repo, modules_json)
-
-        log.info(f"{'Rei' if self.force else 'I'}nstalling '{component}'")
+        if not silent:
+            log.info(f"{'Rei' if self.force else 'I'}nstalling '{component}'")
         log.debug(
             f"Installing {self.component_type} '{component}' at modules hash {version} from {self.modules_repo.remote_url}"
         )
@@ -275,7 +275,7 @@ class ComponentInstall(ComponentCommand):
                 for name, component_values in dir_components.items():
                     if name == component and dir == modules_repo.repo_path:
                         repo_to_remove = repo_url
-                        log.info(
+                        log.debug(
                             f"Removing {self.component_type[:-1]} '{modules_repo.repo_path}/{component}' from repo '{repo_to_remove}' from modules.json."
                         )
                         modules_json.remove_entry(
