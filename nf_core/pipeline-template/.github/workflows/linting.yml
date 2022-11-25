@@ -76,7 +76,7 @@ jobs:
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v1
 
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.7"
           architecture: "x64"
