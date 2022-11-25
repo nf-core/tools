@@ -11,9 +11,12 @@ import git
 import questionary
 from git.exc import GitCommandError
 
-import nf_core.modules.modules_repo
-import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.modules.modules_repo import (
+    NF_CORE_MODULES_NAME,
+    NF_CORE_MODULES_REMOTE,
+    ModulesRepo,
+)
 
 from .modules_differ import ModulesDiffer
 
@@ -105,24 +108,19 @@ class ModulesJson:
         Returns:
             [(str),[(str),(str)]]: list of tuples with repository url, component names and install directory
         """
-        names = [
-            (
+        names = []
+        for repo_url in repos:
+            modules_repo = ModulesRepo(repo_url)
+            components = (
                 repo_url,
                 [
-                    str(
-                        Path(component_name).relative_to(
-                            directory / nf_core.modules.modules_utils.path_from_remote(repo_url)
-                        )
-                    )
-                    for component_name, _, file_names in os.walk(
-                        directory / nf_core.modules.modules_utils.path_from_remote(repo_url)
-                    )
+                    str(Path(component_name).relative_to(directory / modules_repo.repo_path))
+                    for component_name, _, file_names in os.walk(directory / modules_repo.repo_path)
                     if "main.nf" in file_names
                 ],
-                nf_core.modules.modules_utils.path_from_remote(repo_url),
+                modules_repo.repo_path,
             )
-            for repo_url in repos
-        ]
+            names.append(components)
         return names
 
     def get_pipeline_module_repositories(self, component_type, directory, repos=None):
@@ -142,16 +140,12 @@ class ModulesJson:
         if repos is None:
             repos = {}
         # Check if there are any nf-core modules installed
-        if (
-            directory / nf_core.modules.modules_repo.NF_CORE_MODULES_NAME
-        ).exists() and nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE not in repos.keys():
-            repos[nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE] = {}
+        if (directory / NF_CORE_MODULES_NAME).exists() and NF_CORE_MODULES_REMOTE not in repos.keys():
+            repos[NF_CORE_MODULES_REMOTE] = {}
         # The function might rename some directories, keep track of them
         renamed_dirs = {}
         # Check if there are any untracked repositories
-        dirs_not_covered = self.dir_tree_uncovered(
-            directory, [Path(nf_core.modules.modules_utils.path_from_remote(url)) for url in repos]
-        )
+        dirs_not_covered = self.dir_tree_uncovered(directory, [ModulesRepo(url).repo_path for url in repos])
         if len(dirs_not_covered) > 0:
             log.info(f"Found custom {component_type[:-1]} repositories when creating 'modules.json'")
             # Loop until all directories in the base directory are covered by a remote
@@ -178,7 +172,7 @@ class ModulesJson:
                         ).unsafe_ask()
 
                 # Verify that there is a directory corresponding the remote
-                nrepo_name = nf_core.modules.modules_utils.path_from_remote(nrepo_remote)
+                nrepo_name = ModulesRepo(nrepo_remote).repo_path
                 if not (directory / nrepo_name).exists():
                     log.info(
                         "The provided remote does not seem to correspond to a local directory. "
@@ -1048,10 +1042,11 @@ class ModulesJson:
         def components_with_repos():
             for dir in missing_from_modules_json:
                 for repo_url in repos:
+                    modules_repo = ModulesRepo(repo_url)
                     paths_in_directory = []
                     repo_url_path = Path(
                         self.modules_dir,
-                        nf_core.modules.modules_utils.path_from_remote(repo_url),
+                        modules_repo.repo_path,
                     )
                     for dir_name, _, _ in os.walk(repo_url_path):
                         if component_type == "modules":
@@ -1060,7 +1055,7 @@ class ModulesJson:
                                 pass
                         paths_in_directory.append(Path(dir_name).parts[-1])
                     if dir in paths_in_directory:
-                        yield (nf_core.modules.modules_utils.path_from_remote(repo_url), dir)
+                        yield (modules_repo.repo_path, dir)
 
         # Add all components into a dictionary with install directories
         repos_with_components = {}
