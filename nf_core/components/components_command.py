@@ -30,6 +30,14 @@ class ComponentCommand:
         self._configure_repo_and_paths()
 
     def _configure_repo_and_paths(self, nf_dir_req=True):
+        """
+        Determine the repo type and set some default paths.
+        If this is a modules repo, determine the org_path too.
+
+        Args:
+            nf_dir_req (bool, optional): Whether this command requires being run in an nf-core repo;
+                either a modules or pipeline repo. Defaults to True.
+        """
         try:
             if self.dir:
                 self.dir, self.repo_type, self.org = get_repo_type(self.dir, use_prompt=nf_dir_req)

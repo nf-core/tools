@@ -81,6 +81,10 @@ class ComponentInfo(ComponentCommand):
         self.component = self.init_mod_name(component_name)
 
     def _configure_repo_and_paths(self, nf_dir_req=False):
+        """
+        Override the default with nf_dir_req set to False to allow
+        info to be run from anywhere and still return remote info
+        """
         return super()._configure_repo_and_paths(nf_dir_req)
 
     def init_mod_name(self, component):
