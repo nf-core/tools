@@ -156,7 +156,14 @@ class ComponentRemove(ComponentCommand):
             else:
                 log.info(f"Removed files for '{component}'.")
         else:
+            installed_by = modules_json.modules_json["repos"][self.modules_repo.remote_url][self.component_type][
+                repo_path
+            ][component]["installed_by"]
+            if installed_by == component_type:
+                log.error(
+                    f"Did not remove '{component}', because it was also manually installed. Only updated 'installed_by' in modules.json."
+                )
             log.info(
-                f"Could not remove {self.component_type[:-1]} '{component}'. It was installed by {modules_json.modules_json['repos'][self.modules_repo.remote_url][self.component_type][repo_path][component]['installed_by']}"
+                f"""Did not remove {self.component_type[:-1]} '{component}', because it was also installed by {', '.join(f"'{d}'" for d in installed_by)}."""
             )
         return removed
