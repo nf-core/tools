@@ -41,6 +41,14 @@ class ModulesJson:
         self.pipeline_subworkflows = None
         self.pipeline_components = None
 
+    def __str__(self):
+        if self.modules_json is None:
+            self.load()
+        return json.dumps(self.modules_json, indent=4)
+
+    def __repr__(self):
+        return self.__str__()
+
     def create(self):
         """
         Creates the modules.json file from the modules and subworkflows installed in the pipeline directory
@@ -651,7 +659,8 @@ class ModulesJson:
         except KeyError:
             repo_component_entry[component_name]["installed_by"] = [installed_by]
         finally:
-            repo_component_entry[component_name]["installed_by"].extend(installed_by_log)
+            new_installed_by = repo_component_entry[component_name]["installed_by"] + list(installed_by_log)
+            repo_component_entry[component_name]["installed_by"] = [*set(new_installed_by)]
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
@@ -689,13 +698,15 @@ class ModulesJson:
                         self.modules_json["repos"][repo_url][component_type][install_dir].pop(name)
                         if len(repo_entry[component_type][install_dir]) == 0:
                             self.modules_json["repos"][repo_url].pop(component_type)
+                            if len(repo_entry) == 0:
+                                self.modules_json["repos"].pop(repo_url)
                         # write the updated modules.json file
                         self.dump()
                         return True
                     # write the updated modules.json file
                     if removed_by == component_type:
                         log.info(
-                            f"Updated the 'installed_by' list of {name}, but it is still installed, because it is required by {repo_entry[component_type][install_dir][name]['installed_by']}."
+                            f"""Updated the 'installed_by' list for '{name}', but it is still installed, because it is required by {", ".join(f"'{d}'" for d in repo_entry[component_type][install_dir][name]['installed_by'])}."""
                         )
                     else:
                         log.info(
@@ -897,25 +908,6 @@ class ModulesJson:
             .get("git_sha", None)
         )
 
-    def get_all_modules(self):
-        """
-        Retrieves all pipeline modules that are reported in the modules.json
-
-        Returns:
-            (dict[str, [(str, str)]]): Dictionary indexed with the repo urls, with a
-                                list of tuples (module_dir, module) as values
-        """
-        if self.modules_json is None:
-            self.load()
-        if self.pipeline_modules is None:
-            self.pipeline_modules = {}
-            for repo, repo_entry in self.modules_json.get("repos", {}).items():
-                if "modules" in repo_entry:
-                    for dir, modules in repo_entry["modules"].items():
-                        self.pipeline_modules[repo] = [(dir, m) for m in modules]
-
-        return self.pipeline_modules
-
     def get_all_components(self, component_type):
         """
         Retrieves all pipeline modules/subworkflows that are reported in the modules.json
@@ -964,20 +956,15 @@ class ModulesJson:
         component_types = ["modules"] if component_type == "modules" else ["modules", "subworkflows"]
         # Find all components that have an entry of install by of  a given component, recursively call this function for subworkflows
         for type in component_types:
-            components = self.modules_json["repos"][repo_url][type][install_dir].items()
+            try:
+                components = self.modules_json["repos"][repo_url][type][install_dir].items()
+            except KeyError as e:
+                # This exception will raise when there are only modules installed
+                log.debug(f"Trying to retrieve all {type}. There aren't {type} installed. Failed with error {e}")
+                continue
             for component_name, component_entry in components:
                 if name in component_entry["installed_by"]:
                     dependent_components[component_name] = type
-                    if type == "subworkflows":
-                        dependent_components.update(
-                            self.get_dependent_components(
-                                type,
-                                component_name,
-                                repo_url,
-                                install_dir,
-                                dependent_components,
-                            )
-                        )
 
         return dependent_components
 
@@ -1017,33 +1004,6 @@ class ModulesJson:
         with open(modules_json_path, "w") as fh:
             json.dump(self.modules_json, fh, indent=4)
             fh.write("\n")
-
-    def __str__(self):
-        if self.modules_json is None:
-            self.load()
-        return json.dumps(self.modules_json, indent=4)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def get_installed_subworkflows(self):
-        """
-        Retrieves all pipeline subworkflows that are reported in the modules.json
-
-        Returns:
-            (dict[str, [(str, str)]]): Dictionary indexed with the repo urls, with a
-                                list of tuples (module_dir, subworkflow) as values
-        """
-        if self.modules_json is None:
-            self.load()
-        if self.pipeline_subworkflows is None:
-            self.pipeline_subworkflows = {}
-            for repo, repo_entry in self.modules_json.get("repos", {}).items():
-                if "subworkflows" in repo_entry:
-                    for dir, subworkflow in repo_entry["subworkflows"].items():
-                        self.pipeline_subworkflows[repo] = [(dir, name) for name in subworkflow]
-
-        return self.pipeline_subworkflows
 
     def resolve_missing_installation(self, missing_installation, component_type):
         missing_but_in_mod_json = [

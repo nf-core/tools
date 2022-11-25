@@ -7,3 +7,4 @@ pytest-datafiles
 requests-mock
 Sphinx
 sphinx-rtd-theme
+requests_mock

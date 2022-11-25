@@ -22,7 +22,7 @@ SUCCEED_SHA = "f1566140c752e9c68fffc189fbe8cb9ee942b3ca"
 FAIL_SHA = "1fc8b0f953d915d66ee40d28bc337ff0998d05bd"
 BISMARK_ALIGN = "bismark/align"
 REPO_NAME = "nf-core"
-PATCH_BRANCH = "patch-tester-restructure"
+PATCH_BRANCH = "patch-tester"
 REPO_URL = "https://gitlab.com/nf-core/modules-test.git"
 
 
