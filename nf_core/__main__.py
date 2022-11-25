@@ -1053,6 +1053,26 @@ def info(ctx, tool, dir):
         sys.exit(1)
 
 
+# nf-core subworkflows test
+@subworkflows.command("test")
+@click.pass_context
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
+@click.option("-a", "--pytest_args", type=str, required=False, multiple=True, help="Additional pytest arguments")
+def test_subworkflow(ctx, subworkflow, no_prompts, pytest_args):
+    """
+    Run subworkflow tests locally.
+
+    Given the name of a subworkflow, runs the Nextflow test command.
+    """
+    try:
+        meta_builder = nf_core.subworkflows.SubworkflowsTest(subworkflow, no_prompts, pytest_args)
+        meta_builder.run()
+    except (UserWarning, LookupError) as e:
+        log.critical(e)
+        sys.exit(1)
+
+
 # nf-core subworkflows install
 @subworkflows.command()
 @click.pass_context
