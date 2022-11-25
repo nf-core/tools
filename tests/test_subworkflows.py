@@ -2,6 +2,7 @@
 """
 
 import os
+import shutil
 import tempfile
 import unittest
 
@@ -66,6 +67,16 @@ class TestSubworkflows(unittest.TestCase):
             force=False,
             sha=OLD_SUBWORKFLOWS_SHA,
         )
+        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
+
+        # Set up remove objects
+        self.subworkflow_remove = nf_core.subworkflows.SubworkflowRemove(self.pipeline_dir)
+
+    def tearDown(self):
+        """Clean up temporary files and folders"""
+
+        if os.path.exists(self.tmp_dir):
+            shutil.rmtree(self.tmp_dir)
 
     ################################################
     # Test of the individual subworkflow commands. #
@@ -96,6 +107,11 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_install_gitlab_and_list_subworkflows,
         test_subworkflows_list_remote,
         test_subworkflows_list_remote_gitlab,
+    )
+    from .subworkflows.remove import (
+        test_subworkflows_remove_one_of_two_subworkflow,
+        test_subworkflows_remove_subworkflow,
+        test_subworkflows_remove_subworkflow_keep_installed_module,
     )
     from .subworkflows.subworkflows_test import (
         test_subworkflows_test_check_inputs,

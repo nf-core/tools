@@ -1,4 +1,5 @@
 import logging
+import mmap
 import os
 import shutil
 from pathlib import Path
@@ -84,23 +85,31 @@ class ComponentCommand:
             ModulesJson(self.dir).create()
 
     def clear_component_dir(self, component_name, component_dir):
-        """Removes all files in the module/subworkflow directory"""
+        """
+        Removes all files in the module/subworkflow directory
+
+        Args:
+            component_name (str): The name of the module/subworkflow
+            component_dir (str): The path to the module/subworkflow in the module repository
+
+        """
+
         try:
             shutil.rmtree(component_dir)
-            if self.component_type == "modules":
-                # Try cleaning up empty parent if tool/subtool and tool/ is empty
-                if component_name.count("/") > 0:
-                    parent_dir = os.path.dirname(component_dir)
+            # remove all empty directories
+            for dir_path, dir_names, filenames in os.walk(self.dir, topdown=False):
+                if not dir_names and not filenames:
                     try:
-                        os.rmdir(parent_dir)
+                        os.rmdir(dir_path)
                     except OSError:
-                        log.debug(f"Parent directory not empty: '{parent_dir}'")
+                        pass
                     else:
-                        log.debug(f"Deleted orphan tool directory: '{parent_dir}'")
-            log.debug(f"Successfully removed {component_name} {self.component_type[:-1]}")
+                        log.debug(f"Deleted  directory: '{dir_path}'")
+
+            log.debug(f"Successfully removed {self.component_type[:-1]} {component_name}")
             return True
         except OSError as e:
-            log.error(f"Could not remove {self.component_type[:-1]}: {e}")
+            log.error(f"Could not remove {self.component_type[:-1]} {component_name}: {e}")
             return False
 
     def components_from_repo(self, install_dir):
@@ -225,3 +234,34 @@ class ComponentCommand:
                         self.modules_repo.repo_path
                     ][module_name]["patch"] = str(patch_path.relative_to(Path(self.dir).resolve()))
                 modules_json.dump()
+
+    def check_if_in_include_stmts(self, component_path):
+        """
+        Checks for include statements in the main.nf file of the pipeline and a list of line numbers where the component is included
+        Args:
+            component_path (str): The path to the module/subworkflow
+
+        Returns:
+            (list): A list of dictionaries, with the workflow file and the line number where the component is included
+        """
+        include_stmts = {}
+        if self.repo_type == "pipeline":
+            workflow_files = Path(self.dir, "workflows").glob("*.nf")
+            for workflow_file in workflow_files:
+                with open(workflow_file, "r") as fh:
+                    # Check if component path is in the file using mmap
+                    with mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ) as s:
+                        if s.find(component_path.encode()) != -1:
+                            # If the component path is in the file, check for include statements
+                            for i, line in enumerate(fh):
+                                if line.startswith("include") and component_path in line:
+                                    if str(workflow_file) not in include_stmts:
+                                        include_stmts[str(workflow_file)] = []
+                                    include_stmts[str(workflow_file)].append(
+                                        {"line_number": i + 1, "line": line.rstrip()}
+                                    )
+
+            return include_stmts
+        else:
+            log.debug("Not a pipeline repository, skipping check for include statements")
+            return include_stmts
