@@ -10,7 +10,7 @@ from pathlib import Path
 
 OLD_TRIMGALORE_SHA = "06348dffce2a732fc9e656bdc5c64c3e02d302cb"
 OLD_TRIMGALORE_BRANCH = "mimic-old-trimgalore"
-GITLAB_URL = "https://gitlab.com/awgymer/modules-test.git"
+GITLAB_URL = "https://gitlab.com/nf-core/modules-test.git"
 GITLAB_REPO = "nf-core"
 GITLAB_DEFAULT_BRANCH = "main"
 GITLAB_SUBWORKFLOWS_BRANCH = "subworkflows"
