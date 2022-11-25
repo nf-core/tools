@@ -960,16 +960,6 @@ class ModulesJson:
             for component_name, component_entry in components:
                 if name in component_entry["installed_by"]:
                     dependent_components[component_name] = type
-                    # if type == "subworkflows":
-                    #    dependent_components.update(
-                    #        self.get_dependent_components(
-                    #            type,
-                    #            component_name,
-                    #            repo_url,
-                    #            install_dir,
-                    #            dependent_components,
-                    #        )
-                    #    )
 
         return dependent_components
 
