@@ -56,7 +56,8 @@ class ComponentInstall(ComponentCommand):
 
         # Verify that 'modules.json' is consistent with the installed modules and subworkflows
         modules_json = ModulesJson(self.dir)
-        modules_json.check_up_to_date()
+        if not silent:
+            modules_json.check_up_to_date()
 
         # Verify SHA
         if not self.modules_repo.verify_sha(self.prompt, self.sha):

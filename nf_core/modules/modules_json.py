@@ -577,10 +577,14 @@ class ModulesJson:
                             ]
 
         # Recreate "installed_by" entry
+        original_pipeline_components = self.pipeline_components
+        self.pipeline_components = None
         subworkflows_dict = self.get_all_components("subworkflows")
-        for repo, subworkflows in subworkflows_dict.items():
-            for org, subworkflow in subworkflows:
-                self.recreate_dependencies(repo, org, subworkflow)
+        if subworkflows_dict:
+            for repo, subworkflows in subworkflows_dict.items():
+                for org, subworkflow in subworkflows:
+                    self.recreate_dependencies(repo, org, subworkflow)
+        self.pipeline_components = original_pipeline_components
 
         self.dump()
 
@@ -928,6 +932,8 @@ class ModulesJson:
                 if component_type in repo_entry:
                     for dir, components in repo_entry[component_type].items():
                         self.pipeline_components[repo] = [(dir, m) for m in components]
+        if self.pipeline_components == {}:
+            self.pipeline_components = None
 
         return self.pipeline_components
 
@@ -1161,7 +1167,14 @@ class ModulesJson:
         dep_mods, dep_subwfs = get_components_to_install(sw_path)
 
         for dep_mod in dep_mods:
-            installed_by = self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"]
+            try:
+                installed_by = self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"]
+            except KeyError:
+                log.warning(
+                    f"Module '{dep_mod}' is a dependency of '{subworkflow}'\n"
+                    f"You can install it with the command 'nf-core modules install {dep_mod}'"
+                )
+                continue
             if installed_by == ["modules"]:
                 self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"] = []
             if subworkflow not in installed_by:
