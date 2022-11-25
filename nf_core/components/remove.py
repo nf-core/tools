@@ -67,15 +67,6 @@ class ComponentRemove(ComponentCommand):
                 modules_json.remove_entry(self.component_type, component, self.modules_repo.remote_url, repo_path)
             return False
 
-        # removed_by = None
-        # dependent_components = {component: self.component_type}
-        # if self.component_type == "subworkflows":
-        #     removed_by = component
-        #     dependent_components.update(
-        #         modules_json.get_dependent_components(
-        #             self.component_type, component, self.modules_repo.remote_url, repo_path, dependent_components
-        #         )
-        #     )
         # remove all dependent components based on installed_by entry
         # Remove entry from modules.json
         removed = False
