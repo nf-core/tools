@@ -40,6 +40,14 @@ class ModulesJson:
         self.pipeline_subworkflows = None
         self.pipeline_components = None
 
+    def __str__(self):
+        if self.modules_json is None:
+            self.load()
+        return json.dumps(self.modules_json, indent=4)
+
+    def __repr__(self):
+        return self.__str__()
+
     def create(self):
         """
         Creates the modules.json file from the modules and subworkflows installed in the pipeline directory
@@ -984,14 +992,6 @@ class ModulesJson:
         with open(modules_json_path, "w") as fh:
             json.dump(self.modules_json, fh, indent=4)
             fh.write("\n")
-
-    def __str__(self):
-        if self.modules_json is None:
-            self.load()
-        return json.dumps(self.modules_json, indent=4)
-
-    def __repr__(self):
-        return self.__str__()
 
     def resolve_missing_installation(self, missing_installation, component_type):
         missing_but_in_mod_json = [

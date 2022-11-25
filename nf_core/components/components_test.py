@@ -80,12 +80,9 @@ class ComponentsTest(ComponentCommand):
         else:
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
-            if self.component_type == "modules":
-                installed_components = modules_json.get_all_components(self.component_type).get(
-                    self.modules_repo.remote_url
-                )
-            elif self.component_type == "subworkflows":
-                modules_json.get_all_components(self.component_type).get(self.modules_repo.remote_url)
+            installed_components = modules_json.get_all_components(self.component_type).get(
+                self.modules_repo.remote_url
+            )
 
         # Get the component name if not specified
         if self.component_name is None:
