@@ -346,7 +346,7 @@ class ComponentUpdate(ComponentCommand):
         # Check if there are any modules/subworkflows installed from the repo
         repo_url = self.modules_repo.remote_url
         components = self.modules_json.get_all_components(self.component_type).get(repo_url)
-        choices = [component if dir == "nf-core" else f"{dir}/{component}" for dir, component in components]
+        choices = [component if directory == self.modules_repo.repo_path else f"{directory}/{component}" for directory, component in components]
         if repo_url not in self.modules_json.get_all_components(self.component_type):
             raise LookupError(f"No {self.component_type} installed from '{repo_url}'")
 

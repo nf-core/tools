@@ -90,6 +90,9 @@ class ComponentInfo(ComponentCommand):
             self.modules_json = None
         self.component = self.init_mod_name(component_name)
 
+    def _configure_repo_and_paths(self, nf_dir_req=False):
+        return super()._configure_repo_and_paths(nf_dir_req)
+
     def init_mod_name(self, component):
         """
         Makes sure that we have a module/subworkflow name before proceeding.
@@ -109,7 +112,7 @@ class ComponentInfo(ComponentCommand):
                         self.modules_repo.remote_url
                     )
                     components = [
-                        component if dir == "nf-core" else f"{dir}/{component}" for dir, component in components
+                        component if directory == self.modules_repo.repo_path else f"{directory}/{component}" for directory, component in components
                     ]
                     if components is None:
                         raise UserWarning(
@@ -178,7 +181,7 @@ class ComponentInfo(ComponentCommand):
 
             log.debug(f"{self.component_type[:-1].title()} '{self.component}' meta.yml not found locally")
         else:
-            component_base_path = Path(self.dir, self.component_type, "nf-core")
+            component_base_path = Path(self.dir, self.component_type, self.org)
             if self.component in os.listdir(component_base_path):
                 comp_dir = Path(component_base_path, self.component)
                 meta_fn = Path(comp_dir, "meta.yml")

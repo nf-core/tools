@@ -119,6 +119,7 @@ class ModuleCreate(ComponentCommand):
             self.component_type,
             self.repo_type,
             self.directory,
+            self.org,
             self.tool_name,
             self.tool,
             self.subtool,

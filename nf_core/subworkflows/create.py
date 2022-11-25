@@ -86,6 +86,7 @@ class SubworkflowCreate(ComponentCommand):
             self.component_type,
             self.repo_type,
             self.directory,
+            self.org,
             self.subworkflow_name,
             None,
             None,

@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 
 import questionary
 import rich.prompt
@@ -9,38 +10,25 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-def get_repo_type(dir, repo_type=None, use_prompt=True):
+def get_repo_type(directory, use_prompt=True):
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
     """
     # Verify that the pipeline dir exists
-    if dir is None or not os.path.exists(dir):
-        raise UserWarning(f"Could not find directory: {dir}")
+    if directory is None or not Path(directory).is_dir():
+        raise UserWarning(f"Could not find directory: {directory}")
 
     # Try to find the root directory
-    base_dir = os.path.abspath(dir)
-    config_path_yml = os.path.join(base_dir, ".nf-core.yml")
-    config_path_yaml = os.path.join(base_dir, ".nf-core.yaml")
-    while (
-        not os.path.exists(config_path_yml)
-        and not os.path.exists(config_path_yaml)
-        and base_dir != os.path.dirname(base_dir)
-    ):
-        base_dir = os.path.dirname(base_dir)
-        config_path_yml = os.path.join(base_dir, ".nf-core.yml")
-        config_path_yaml = os.path.join(base_dir, ".nf-core.yaml")
-        # Reset dir if we found the config file (will be an absolute path)
-        if os.path.exists(config_path_yml) or os.path.exists(config_path_yaml):
-            dir = base_dir
+    base_dir = nf_core.utils.determine_base_dir(directory)
 
     # Figure out the repository type from the .nf-core.yml config file if we can
-    tools_config = nf_core.utils.load_tools_config(dir)
+    config_fn, tools_config = nf_core.utils.load_tools_config(base_dir)
     repo_type = tools_config.get("repository_type", None)
 
     # If not set, prompt the user
     if not repo_type and use_prompt:
-        log.warning("Can't find a '.nf-core.yml' file that defines 'repository_type'")
+        log.warning("'repository_type' not defined in %s", config_fn.name)
         repo_type = questionary.select(
             "Is this repository an nf-core pipeline or a fork of nf-core/modules?",
             choices=[
@@ -51,11 +39,11 @@ def get_repo_type(dir, repo_type=None, use_prompt=True):
         ).unsafe_ask()
 
         # Save the choice in the config file
-        log.info("To avoid this prompt in the future, add the 'repository_type' key to a root '.nf-core.yml' file.")
+        log.info(f"To avoid this prompt in the future, add the 'repository_type' key to your {config_fn.name} file.")
         if rich.prompt.Confirm.ask("[bold][blue]?[/] Would you like me to add this config now?", default=True):
-            with open(os.path.join(dir, ".nf-core.yml"), "a+") as fh:
+            with open(config_fn, "a+") as fh:
                 fh.write(f"repository_type: {repo_type}\n")
-                log.info("Config added to '.nf-core.yml'")
+                log.info("Config added to '%s'", config_fn.name)
 
     # Not set and not allowed to ask
     elif not repo_type:
@@ -65,8 +53,30 @@ def get_repo_type(dir, repo_type=None, use_prompt=True):
     if not repo_type in ["pipeline", "modules"]:
         raise UserWarning(f"Invalid repository type: '{repo_type}'")
 
+    # Check for org if modules repo
+    org = None
+    if repo_type == "pipeline":
+        org = ""
+    elif repo_type == "modules":
+        org = tools_config.get("org_path", None)
+        if org is None:
+            log.warning("Organisation path not defined in %s [key: org_path]", config_fn.name)
+            org = questionary.text(
+                "What is the organisation path under which modules are stored?",
+                default="nf-core",
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask()
+            log.info("To avoid this prompt in the future, add the 'org_path' key to a root '%s' file.", config_fn.name)
+            if rich.prompt.Confirm.ask("[bold][blue]?[/] Would you like me to add this config now?", default=True):
+                with open(os.path.join(dir, ".nf-core.yml"), "a+") as fh:
+                    fh.write(f"org_path: {org}\n")
+                    log.info("Config added to '%s'", config_fn.name)
+
+        if not org:
+            raise UserWarning("Organisation path could not be established")
+
     # It was set on the command line, return what we were given
-    return [dir, repo_type]
+    return [base_dir, repo_type, org]
 
 
 def prompt_component_version_sha(component_name, component_type, modules_repo, installed_sha=None):
