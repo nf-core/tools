@@ -647,7 +647,8 @@ class ModulesJson:
         except KeyError:
             repo_component_entry[component_name]["installed_by"] = [installed_by]
         finally:
-            repo_component_entry[component_name]["installed_by"].extend(installed_by_log)
+            new_installed_by = repo_component_entry[component_name]["installed_by"] + list(installed_by_log)
+            repo_component_entry[component_name]["installed_by"] = [*set(new_installed_by)]
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
@@ -693,7 +694,7 @@ class ModulesJson:
                     # write the updated modules.json file
                     if removed_by == component_type:
                         log.info(
-                            f"Updated the 'installed_by' list of {name}, but it is still installed, because it is required by {repo_entry[component_type][install_dir][name]['installed_by']}."
+                            f"""Updated the 'installed_by' list for '{name}', but it is still installed, because it is required by {", ".join(f"'{d}'" for d in repo_entry[component_type][install_dir][name]['installed_by'])}."""
                         )
                     else:
                         log.info(
@@ -941,20 +942,15 @@ class ModulesJson:
         component_types = ["modules"] if component_type == "modules" else ["modules", "subworkflows"]
         # Find all components that have an entry of install by of  a given component, recursively call this function for subworkflows
         for type in component_types:
-            components = self.modules_json["repos"][repo_url][type][install_dir].items()
+            try:
+                components = self.modules_json["repos"][repo_url][type][install_dir].items()
+            except KeyError as e:
+                # This exception will raise when there are only modules installed
+                log.debug(f"Trying to retrieve all {type}. There aren't {type} installed. Failed with error {e}")
+                continue
             for component_name, component_entry in components:
                 if name in component_entry["installed_by"]:
                     dependent_components[component_name] = type
-                    if type == "subworkflows":
-                        dependent_components.update(
-                            self.get_dependent_components(
-                                type,
-                                component_name,
-                                repo_url,
-                                install_dir,
-                                dependent_components,
-                            )
-                        )
 
         return dependent_components
 

@@ -77,3 +77,22 @@ def test_subworkflows_remove_one_of_two_subworkflow(self):
     assert Path.exists(samtools_index_path) is False
     assert Path.exists(samtools_stats_path) is True
     self.subworkflow_remove.remove("bam_stats_samtools")
+
+
+def test_subworkflows_remove_included_subworkflow(self):
+    """Test removing subworkflow which is installed by another subworkflow and all it's dependencies."""
+    self.subworkflow_install.install("bam_sort_stats_samtools")
+    subworkflow_path = Path(self.subworkflow_install.dir, "subworkflows", "nf-core")
+    bam_sort_stats_samtools_path = Path(subworkflow_path, "bam_sort_stats_samtools")
+    bam_stats_samtools_path = Path(subworkflow_path, "bam_stats_samtools")
+    samtools_index_path = Path(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "index")
+    samtools_stats_path = Path(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "stats")
+
+    assert self.subworkflow_remove.remove("bam_stats_samtools") is False
+
+    assert Path.exists(subworkflow_path) is True
+    assert Path.exists(bam_sort_stats_samtools_path) is True
+    assert Path.exists(bam_stats_samtools_path) is True
+    assert Path.exists(samtools_index_path) is True
+    assert Path.exists(samtools_stats_path) is True
+    self.subworkflow_remove.remove("bam_sort_stats_samtools")
