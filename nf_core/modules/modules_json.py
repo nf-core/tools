@@ -537,12 +537,10 @@ class ModulesJson:
             if not self.has_git_url_and_modules():
                 raise UserWarning
         except UserWarning:
-            log.info("The 'modules.json' file is not up to date. Recreating the 'module.json' file.")
+            log.info("The 'modules.json' file is not up to date. Recreating the 'modules.json' file.")
             self.create()
-            subworkflows_dict = self.get_all_components("subworkflows")
-            for repo, subworkflows in subworkflows_dict.items():
-                for org, subworkflow in subworkflows:
-                    self.recreate_dependencies(repo, org, subworkflow)
+
+        # Get unsynced components
         (
             modules_missing_from_modules_json,
             subworkflows_missing_from_modules_json,
@@ -577,6 +575,13 @@ class ModulesJson:
                             self.modules_json["repos"][repo][component_type][install_dir][component]["installed_by"] = [
                                 component_type
                             ]
+
+        # Recreate "installed_by" entry
+        subworkflows_dict = self.get_all_components("subworkflows")
+        for repo, subworkflows in subworkflows_dict.items():
+            for org, subworkflow in subworkflows:
+                self.recreate_dependencies(repo, org, subworkflow)
+
         self.dump()
 
     def load(self):
