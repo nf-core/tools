@@ -1167,14 +1167,7 @@ class ModulesJson:
         dep_mods, dep_subwfs = get_components_to_install(sw_path)
 
         for dep_mod in dep_mods:
-            try:
-                installed_by = self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"]
-            except KeyError:
-                log.warning(
-                    f"Module '{dep_mod}' is a dependency of '{subworkflow}'\n"
-                    f"You can install it with the command 'nf-core modules install {dep_mod}'"
-                )
-                continue
+            installed_by = self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"]
             if installed_by == ["modules"]:
                 self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"] = []
             if subworkflow not in installed_by:
