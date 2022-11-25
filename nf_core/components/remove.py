@@ -16,8 +16,8 @@ log = logging.getLogger(__name__)
 
 
 class ComponentRemove(ComponentCommand):
-    def __init__(self, component_type, pipeline_dir):
-        super().__init__(component_type, pipeline_dir)
+    def __init__(self, component_type, pipeline_dir, remote_url=None, branch=None, no_pull=False):
+        super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
 
     def remove(self, component, removed_by=None, force=False):
         """

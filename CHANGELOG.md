@@ -13,6 +13,8 @@
 
 ### Linting
 
+- Don't lint pipeline name if `manifest.name` in `.nf-core.yml` ([#2035](https://github.com/nf-core/tools/pull/2035))
+
 ### General
 
 - Refactor CLI flag `--hide-progress` to be at the top-level group, like `--verbose` ([#2016](https://github.com/nf-core/tools/pull/2016))
