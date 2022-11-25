@@ -214,8 +214,11 @@ class ComponentInstall(ComponentCommand):
             False: if the component is installed
         """
         if (current_version is not None and os.path.exists(component_dir)) and not force:
+            # make sure included components are also installed
+            if self.component_type == "subworkflows":
+                self.install_included_components(component_dir)
             if not silent:
-                log.info(f"{self.component_type[:-1].title()} is already installed.")
+                log.info(f"{self.component_type[:-1].title()} '{component}' is already installed.")
 
             if prompt:
                 message = (
@@ -235,7 +238,7 @@ class ComponentInstall(ComponentCommand):
                     branch_flag = "" if modules_repo.branch == "master" else f"-b {modules_repo.branch} "
 
                     log.info(
-                        f"To update '{component}' run 'nf-core {self.component_type} {repo_flag}{branch_flag}update {component}'. To force reinstallation use '--force'"
+                        f"To update '{component}' run 'nf-core {self.component_type} {repo_flag}{branch_flag}update {component}'. To force reinstallation use '--force'."
                     )
                 return False
 
@@ -273,7 +276,7 @@ class ComponentInstall(ComponentCommand):
                     if name == component and dir == modules_repo.repo_path:
                         repo_to_remove = repo_url
                         log.info(
-                            f"Removing {self.component_type[:-1]} '{modules_repo.repo_path}/{component}' from repo '{repo_to_remove}' from modules.json"
+                            f"Removing {self.component_type[:-1]} '{modules_repo.repo_path}/{component}' from repo '{repo_to_remove}' from modules.json."
                         )
                         modules_json.remove_entry(
                             self.component_type, component, repo_to_remove, modules_repo.repo_path
