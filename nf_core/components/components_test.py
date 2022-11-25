@@ -80,10 +80,9 @@ class ComponentsTest(ComponentCommand):
         else:
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
-            if self.component_type == "modules":
-                installed_components = modules_json.get_all_modules().get(self.modules_repo.remote_url)
-            elif self.component_type == "subworkflows":
-                modules_json.get_installed_subworkflows().get(self.modules_repo.remote_url)
+            installed_components = modules_json.get_all_components(self.component_type).get(
+                self.modules_repo.remote_url
+            )
 
         # Get the component name if not specified
         if self.component_name is None:
@@ -102,7 +101,7 @@ class ComponentsTest(ComponentCommand):
                     f"Make sure that the directory structure is {dir_structure_message}"
                 )
             self.component_name = questionary.autocomplete(
-                "Tool name:",
+                f"{self.component_type[:-1]} name:",
                 choices=installed_components,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
