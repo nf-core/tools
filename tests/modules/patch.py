@@ -23,7 +23,7 @@ FAIL_SHA = "1fc8b0f953d915d66ee40d28bc337ff0998d05bd"
 BISMARK_ALIGN = "bismark/align"
 REPO_NAME = "nf-core"
 PATCH_BRANCH = "patch-tester-restructure"
-REPO_URL = "https://gitlab.com/nf-core/modules-test.git"
+REPO_URL = "https://gitlab.com/awgymer/modules-test.git"
 
 
 def setup_patch(pipeline_dir, modify_module):
