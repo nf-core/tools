@@ -35,7 +35,7 @@ class ComponentCommand:
                 self.dir, self.repo_type, self.org = get_repo_type(self.dir, use_prompt=nf_dir_req)
             else:
                 self.repo_type = None
-                self.org = None
+                self.org = ""
         except UserWarning:
             if nf_dir_req:
                 raise

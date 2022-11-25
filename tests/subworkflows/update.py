@@ -104,9 +104,9 @@ def test_update_with_config_fixed_version(self):
 
     # Fix the subworkflow version in the .nf-core.yml to an old version
     update_config = {NF_CORE_MODULES_REMOTE: {NF_CORE_MODULES_NAME: {"fastq_align_bowtie2": OLD_SUBWORKFLOWS_SHA}}}
-    tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+    config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(Path(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(Path(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all subworkflows in the pipeline
@@ -135,9 +135,9 @@ def test_update_with_config_dont_update(self):
 
     # Set the fastq_align_bowtie2 field to no update in the .nf-core.yml
     update_config = {NF_CORE_MODULES_REMOTE: {NF_CORE_MODULES_NAME: {"fastq_align_bowtie2": False}}}
-    tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+    config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(Path(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(Path(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
@@ -166,9 +166,9 @@ def test_update_with_config_fix_all(self):
 
     # Fix the version of all nf-core subworkflows in the .nf-core.yml to an old version
     update_config = {NF_CORE_MODULES_REMOTE: OLD_SUBWORKFLOWS_SHA}
-    tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+    config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(Path(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(Path(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all subworkflows in the pipeline
@@ -197,9 +197,9 @@ def test_update_with_config_no_updates(self):
 
     # Set all repository updates to False
     update_config = {NF_CORE_MODULES_REMOTE: False}
-    tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+    config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(Path(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(Path(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all subworkflows in the pipeline

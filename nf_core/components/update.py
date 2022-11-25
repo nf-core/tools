@@ -87,7 +87,7 @@ class ComponentUpdate(ComponentCommand):
         if updated is None:
             updated = []
 
-        tool_config = nf_core.utils.load_tools_config(self.dir)
+        _, tool_config = nf_core.utils.load_tools_config(self.dir)
         self.update_config = tool_config.get("update", {})
 
         self._parameter_checks()
@@ -346,7 +346,10 @@ class ComponentUpdate(ComponentCommand):
         # Check if there are any modules/subworkflows installed from the repo
         repo_url = self.modules_repo.remote_url
         components = self.modules_json.get_all_components(self.component_type).get(repo_url)
-        choices = [component if directory == self.modules_repo.repo_path else f"{directory}/{component}" for directory, component in components]
+        choices = [
+            component if directory == self.modules_repo.repo_path else f"{directory}/{component}"
+            for directory, component in components
+        ]
         if repo_url not in self.modules_json.get_all_components(self.component_type):
             raise LookupError(f"No {self.component_type} installed from '{repo_url}'")
 
