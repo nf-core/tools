@@ -38,35 +38,6 @@ def actions_ci(self):
       .. note:: These ``matrix`` variables run the test workflow twice, varying the ``nxf_ver`` variable each time.
                 This is used in the ``nextflow run`` commands to test the pipeline with both the latest available version
                 of the pipeline (``''``) and the stated minimum required version.
-
-    * The `Docker` container for the pipeline must use the correct pipeline version number:
-
-        * Development pipelines:
-
-          .. code-block:: bash
-
-             docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev
-
-        * Released pipelines:
-
-          .. code-block:: bash
-
-             docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<pipeline-version>
-
-        * Complete example for a released pipeline called *nf-core/example* with version number ``1.0.0``:
-
-          .. code-block:: yaml
-             :emphasize-lines: 3,8,9
-
-             - name: Build new docker image
-               if: env.GIT_DIFF
-               run: docker build --no-cache . -t nfcore/example:1.0.0
-
-             - name: Pull docker image
-               if: ${{ !env.GIT_DIFF }}
-               run: |
-                 docker pull nfcore/example:dev
-                 docker tag nfcore/example:dev nfcore/example:1.0.0
     """
     passed = []
     failed = []
@@ -100,44 +71,6 @@ def actions_ci(self):
         failed.append("'.github/workflows/ci.yml' is not triggered on expected events")
     else:
         passed.append("'.github/workflows/ci.yml' is triggered on expected events")
-
-    # Check that we're pulling the right docker image and tagging it properly
-    if self.nf_config.get("process.container", ""):
-        docker_notag = re.sub(r":(?:[\.\d]+|dev)$", "", self.nf_config.get("process.container", "").strip("\"'"))
-        docker_withtag = self.nf_config.get("process.container", "").strip("\"'")
-
-        # docker build
-        docker_build_cmd = f"docker build --no-cache . -t {docker_withtag}"
-        try:
-            steps = ciwf["jobs"]["test"]["steps"]
-            if not any(docker_build_cmd in step["run"] for step in steps if "run" in step.keys()):
-                raise AssertionError()
-        except (AssertionError, KeyError, TypeError):
-            failed.append(f"CI is not building the correct docker image. Should be: `{docker_build_cmd}`")
-        else:
-            passed.append(f"CI is building the correct docker image: `{docker_build_cmd}`")
-
-        # docker pull
-        docker_pull_cmd = f"docker pull {docker_notag}:dev"
-        try:
-            steps = ciwf["jobs"]["test"]["steps"]
-            if not any(docker_pull_cmd in step["run"] for step in steps if "run" in step.keys()):
-                raise AssertionError()
-        except (AssertionError, KeyError, TypeError):
-            failed.append(f"CI is not pulling the correct docker image. Should be: `{docker_pull_cmd}`")
-        else:
-            passed.append(f"CI is pulling the correct docker image: {docker_pull_cmd}")
-
-        # docker tag
-        docker_tag_cmd = f"docker tag {docker_notag}:dev {docker_withtag}"
-        try:
-            steps = ciwf["jobs"]["test"]["steps"]
-            if not any(docker_tag_cmd in step["run"] for step in steps if "run" in step.keys()):
-                raise AssertionError()
-        except (AssertionError, KeyError, TypeError):
-            failed.append(f"CI is not tagging docker image correctly. Should be: `{docker_tag_cmd}`")
-        else:
-            passed.append(f"CI is tagging docker image correctly: {docker_tag_cmd}")
 
     # Check that we are testing the minimum nextflow version
     try:
