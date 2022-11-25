@@ -126,7 +126,9 @@ class ComponentRemove(ComponentCommand):
                         style=nf_core.utils.nfcore_question_style,
                     ).unsafe_ask():
                         # add the component back to modules.json
-                        if not ComponentInstall(self.dir, self.component_type, force=True).install(component):
+                        if not ComponentInstall(self.dir, self.component_type, force=True).install(
+                            component, silent=True
+                        ):
                             log.warn(
                                 f"Could not install the {self.component_type[:-1]} '{component}', please install it manually with 'nf-core {component_type} install  {component}'."
                             )
@@ -159,7 +161,7 @@ class ComponentRemove(ComponentCommand):
             installed_by = modules_json.modules_json["repos"][self.modules_repo.remote_url][self.component_type][
                 repo_path
             ][component]["installed_by"]
-            if installed_by == component_type:
+            if installed_by == self.component_type:
                 log.error(
                     f"Did not remove '{component}', because it was also manually installed. Only updated 'installed_by' in modules.json."
                 )
