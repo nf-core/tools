@@ -145,7 +145,7 @@ class ModulesJson:
         # The function might rename some directories, keep track of them
         renamed_dirs = {}
         # Check if there are any untracked repositories
-        dirs_not_covered = self.dir_tree_uncovered(directory, [ModulesRepo(url).repo_path for url in repos])
+        dirs_not_covered = self.dir_tree_uncovered(directory, [Path(ModulesRepo(url).repo_path) for url in repos])
         if len(dirs_not_covered) > 0:
             log.info(f"Found custom {component_type[:-1]} repositories when creating 'modules.json'")
             # Loop until all directories in the base directory are covered by a remote
@@ -190,10 +190,15 @@ class ModulesJson:
                     else:
                         continue
 
+                if nrepo_remote not in repos:
+                    repos[nrepo_remote] = {}
+                if component_type not in repos[nrepo_remote]:
+                    repos[nrepo_remote][component_type] = {}
                 repos[nrepo_remote][component_type][nrepo_name] = {}
                 dirs_not_covered = self.dir_tree_uncovered(
-                    directory, [Path(name) for url in repos for name in repos[url][directory]]
+                    directory, [Path(name) for url in repos for name in repos[url][component_type]]
                 )
+
         return repos, renamed_dirs
 
     def dir_tree_uncovered(self, components_directory, repos):
@@ -247,13 +252,13 @@ class ModulesJson:
             (dict[str, dict[str, str]]): The module.json entries for the modules/subworkflows
                                          from the repository
         """
-        default_modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=remote_url)
+        default_modules_repo = ModulesRepo(remote_url=remote_url)
         if component_type == "modules":
             repo_path = self.modules_dir / install_dir
         elif component_type == "subworkflows":
             repo_path = self.subworkflows_dir / install_dir
         # Get the branches present in the repository, as well as the default branch
-        available_branches = nf_core.modules.modules_repo.ModulesRepo.get_remote_branches(remote_url)
+        available_branches = ModulesRepo.get_remote_branches(remote_url)
         sb_local = []
         dead_components = []
         repo_entry = {}
@@ -307,9 +312,7 @@ class ModulesJson:
                             dead_components.append(component)
                         break
                     # Create a new modules repo with the selected branch, and retry find the sha
-                    modules_repo = nf_core.modules.modules_repo.ModulesRepo(
-                        remote_url=remote_url, branch=branch, no_pull=True, hide_progress=True
-                    )
+                    modules_repo = ModulesRepo(remote_url=remote_url, branch=branch, no_pull=True, hide_progress=True)
                 else:
                     found_sha = True
                     break
@@ -506,7 +509,7 @@ class ModulesJson:
 
         for branch, modules in branches_and_mods.items():
             try:
-                modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=remote_url, branch=branch)
+                modules_repo = ModulesRepo(remote_url=remote_url, branch=branch)
             except LookupError as e:
                 log.error(e)
                 failed_to_install.extend(modules)
