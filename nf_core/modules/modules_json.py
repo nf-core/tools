@@ -477,7 +477,12 @@ class ModulesJson:
             elif (
                 not isinstance(repo_url, str)
                 or repo_url == ""
-                or not repo_url.startswith("http")
+                or not (
+                    repo_url.startswith("http")
+                    or repo_url.startswith("ftp")
+                    or repo_url.startswith("ssh")
+                    or repo_url.startswith("git")
+                )
                 or not isinstance(repo_entry["modules"], dict)
                 or repo_entry["modules"] == {}
             ):
