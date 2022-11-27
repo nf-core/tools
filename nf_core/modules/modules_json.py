@@ -323,7 +323,7 @@ class ModulesJson:
                 repo_entry[component] = {
                     "branch": modules_repo.branch,
                     "git_sha": correct_commit_sha,
-                    "installed_by": "modules",
+                    "installed_by": ["modules"],
                 }
 
         # Clean up the modules/subworkflows we were unable to find the sha for
