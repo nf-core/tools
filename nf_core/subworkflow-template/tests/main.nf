@@ -2,7 +2,7 @@
 
 nextflow.enable.dsl = 2
 
-include { {{ subworkflow_name|upper }} } from '../../../../subworkflows/nf-core/{{ subworkflow_dir }}/main.nf'
+include { {{ subworkflow_name|upper }} } from '../../../../subworkflows/{{ org }}/{{ subworkflow_dir }}/main.nf'
 
 workflow test_{{ subworkflow_name }} {
     {% if has_meta %}
