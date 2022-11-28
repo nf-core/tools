@@ -299,6 +299,7 @@ Please note that there are many excellent integrations for Prettier available, f
 - Add `--publish_dir_mode` back into the pipeline template ([nf-core/rnaseq#752](https://github.com/nf-core/rnaseq/issues/752#issuecomment-1039451607))
 - Add optional loading of of pipeline-specific institutional configs to `nextflow.config`
 - Make `--outdir` a mandatory parameter ([nf-core/tools#1415](https://github.com/nf-core/tools/issues/1415))
+- Add description between double quotes to avoid errors with apostrophes in a description ([]())
 
 ### General
 
