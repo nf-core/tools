@@ -185,7 +185,6 @@ class TestLint(unittest.TestCase):
         test_actions_awstest_pass,
     )
     from .lint.actions_ci import (
-        test_actions_ci_fail_wrong_docker_ver,
         test_actions_ci_fail_wrong_nf,
         test_actions_ci_fail_wrong_trigger,
         test_actions_ci_pass,
