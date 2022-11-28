@@ -91,7 +91,7 @@ class ModuleLint(ComponentCommand):
             modules_json.check_up_to_date()
             all_pipeline_modules = modules_json.get_all_components(self.component_type)
             if all_pipeline_modules is not None and self.modules_repo.remote_url in all_pipeline_modules:
-                module_dir = Path(self.dir, "modules", "nf-core")
+                module_dir = Path(self.dir, "modules", self.modules_repo.repo_path)
                 self.all_remote_modules = [
                     NFCoreModule(m[1], self.modules_repo.remote_url, module_dir / m[1], self.repo_type, Path(self.dir))
                     for m in all_pipeline_modules[self.modules_repo.remote_url]

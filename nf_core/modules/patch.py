@@ -41,7 +41,10 @@ class ModulePatch(ComponentCommand):
         modules = self.modules_json.get_all_components(self.component_type)[self.modules_repo.remote_url]
 
         if module is None:
-            choices = [module if dir == "nf-core" else f"{dir}/{module}" for dir, module in modules]
+            choices = [
+                module if directory == self.modules_repo.repo_path else f"{directory}/{module}"
+                for directory, module in modules
+            ]
             module = questionary.autocomplete(
                 "Tool:",
                 choices,
