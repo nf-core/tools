@@ -127,14 +127,14 @@ class ComponentInstall(ComponentCommand):
             log.info(f"Use the following statement to include this {self.component_type[:-1]}:")
             Console().print(
                 Syntax(
-                    f"include {{ {component_name} }} from '.{os.path.join(install_folder, component)}/main'",
+                    f"include {{ {component_name} }} from '../{Path(install_folder, component).relative_to(self.dir)}/main'",
                     "groovy",
                     theme="ansi_dark",
                     padding=1,
                 )
             )
             if self.component_type == "subworkflows":
-                subworkflow_config = os.path.join(install_folder, component, "nextflow.config")
+                subworkflow_config = Path(install_folder, component, "nextflow.config").relative_to(self.dir)
                 if os.path.isfile(subworkflow_config):
                     log.info("Add the following config statement to use this subworkflow:")
                     Console().print(
