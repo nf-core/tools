@@ -14,7 +14,6 @@ from packaging.version import parse as parse_version
 
 import nf_core
 import nf_core.components.components_create
-import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 
@@ -32,7 +31,6 @@ class ModuleCreate(ComponentCommand):
         force=False,
         conda_name=None,
         conda_version=None,
-        repo_type=None,
     ):
         super().__init__("modules", directory)
         self.directory = directory
@@ -45,7 +43,6 @@ class ModuleCreate(ComponentCommand):
         self.tool_conda_name = conda_name
         self.tool_conda_version = conda_version
         self.tool_licence = None
-        self.repo_type = repo_type
         self.tool_licence = ""
         self.tool_description = ""
         self.tool_doc_url = ""
@@ -85,11 +82,6 @@ class ModuleCreate(ComponentCommand):
         # Check modules directory structure
         self.check_modules_structure()
 
-        # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
-        try:
-            self.directory, self.repo_type = nf_core.modules.modules_utils.get_repo_type(self.directory, self.repo_type)
-        except LookupError as e:
-            raise UserWarning(e)
         log.info(f"Repository type: [blue]{self.repo_type}")
         if self.directory != ".":
             log.info(f"Base directory: '{self.directory}'")
@@ -119,6 +111,7 @@ class ModuleCreate(ComponentCommand):
             self.component_type,
             self.repo_type,
             self.directory,
+            self.org,
             self.tool_name,
             self.tool,
             self.subtool,
@@ -144,13 +137,13 @@ class ModuleCreate(ComponentCommand):
                     pytest_modules_yml = yaml.safe_load(fh)
                 if self.subtool:
                     pytest_modules_yml[self.tool_name] = [
-                        f"modules/nf-core/{self.tool}/{self.subtool}/**",
-                        f"tests/modules/nf-core/{self.tool}/{self.subtool}/**",
+                        f"modules/{self.org}/{self.tool}/{self.subtool}/**",
+                        f"tests/modules/{self.org}/{self.tool}/{self.subtool}/**",
                     ]
                 else:
                     pytest_modules_yml[self.tool_name] = [
-                        f"modules/nf-core/{self.tool}/**",
-                        f"tests/modules/nf-core/{self.tool}/**",
+                        f"modules/{self.org}/{self.tool}/**",
+                        f"tests/modules/{self.org}/{self.tool}/**",
                     ]
                 pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:

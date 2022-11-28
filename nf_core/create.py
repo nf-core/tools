@@ -442,12 +442,12 @@ class PipelineCreate:
             lint_config["readme"] = ["nextflow_badge"]
 
         # Add the lint content to the preexisting nf-core config
-        nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
+        config_fn, nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
         nf_core_yml["lint"] = lint_config
-        with open(self.outdir / ".nf-core.yml", "w") as fh:
+        with open(self.outdir / config_fn, "w") as fh:
             yaml.dump(nf_core_yml, fh, default_flow_style=False, sort_keys=False)
 
-        run_prettier_on_file(os.path.join(self.outdir, ".nf-core.yml"))
+        run_prettier_on_file(os.path.join(self.outdir, config_fn))
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
