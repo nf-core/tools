@@ -87,7 +87,7 @@ class ComponentUpdate(ComponentCommand):
         if updated is None:
             updated = []
 
-        tool_config = nf_core.utils.load_tools_config(self.dir)
+        _, tool_config = nf_core.utils.load_tools_config(self.dir)
         self.update_config = tool_config.get("update", {})
 
         self._parameter_checks()
@@ -348,7 +348,10 @@ class ComponentUpdate(ComponentCommand):
         components = self.modules_json.get_all_components(self.component_type).get(repo_url)
         if components is None:
             raise LookupError(f"No {self.component_type} installed from '{repo_url}'")
-        choices = [component if dir == "nf-core" else f"{dir}/{component}" for dir, component in components]
+
+        choices = [
+            component if directory == "nf-core" else f"{directory}/{component}" for directory, component in components
+        ]
 
         if component is None:
             component = questionary.autocomplete(

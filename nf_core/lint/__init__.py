@@ -246,7 +246,7 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         Add parsed config to the `self.lint_config` class attribute.
         """
-        tools_config = nf_core.utils.load_tools_config(self.wf_path)
+        _, tools_config = nf_core.utils.load_tools_config(self.wf_path)
         self.lint_config = tools_config.get("lint", {})
 
         # Check if we have any keys that don't match lint test names

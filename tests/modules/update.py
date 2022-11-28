@@ -114,9 +114,9 @@ def test_update_with_config_fixed_version(self):
 
     # Fix the trimgalore version in the .nf-core.yml to an old version
     update_config = {GITLAB_URL: {GITLAB_REPO: {"trimgalore": OLD_TRIMGALORE_SHA}}}
-    tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+    config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(os.path.join(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(os.path.join(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
@@ -139,9 +139,9 @@ def test_update_with_config_dont_update(self):
 
     # Set the trimgalore field to no update in the .nf-core.yml
     update_config = {GITLAB_URL: {GITLAB_REPO: {"trimgalore": False}}}
-    tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+    config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(os.path.join(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(os.path.join(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
@@ -168,9 +168,9 @@ def test_update_with_config_fix_all(self):
 
     # Fix the version of all nf-core modules in the .nf-core.yml to an old version
     update_config = {GITLAB_URL: OLD_TRIMGALORE_SHA}
-    tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+    config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(os.path.join(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(os.path.join(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
@@ -192,9 +192,9 @@ def test_update_with_config_no_updates(self):
 
     # Fix the version of all nf-core modules in the .nf-core.yml to an old version
     update_config = {GITLAB_URL: False}
-    tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+    config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(os.path.join(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(os.path.join(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline

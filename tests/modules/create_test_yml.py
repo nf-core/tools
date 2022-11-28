@@ -53,7 +53,7 @@ def test_modules_create_test_yml_check_inputs(self):
     """Test the check_inputs() function - raise UserWarning because test.yml exists"""
     cwd = os.getcwd()
     os.chdir(self.nfcore_modules)
-    meta_builder = nf_core.modules.ModulesTestYmlBuilder("bpipe/test", self.pipeline_dir, False, "./", False, True)
+    meta_builder = nf_core.modules.ModulesTestYmlBuilder("bpipe/test", ".", False, "./", False, True)
     meta_builder.module_test_main = os.path.join(self.nfcore_modules, "tests", "modules", "bpipe", "test", "main.nf")
     with pytest.raises(UserWarning) as excinfo:
         meta_builder.check_inputs()

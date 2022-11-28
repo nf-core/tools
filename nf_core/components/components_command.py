@@ -9,7 +9,7 @@ import yaml
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
 
-from .components_utils import get_repo_type
+from .components_utils import get_repo_info
 
 log = logging.getLogger(__name__)
 
@@ -27,17 +27,31 @@ class ComponentCommand:
         self.dir = dir
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
-        self.default_modules_path = Path("modules", "nf-core")
-        self.default_tests_path = Path("tests", "modules", "nf-core")
-        self.default_subworkflows_path = Path("subworkflows", "nf-core")
-        self.default_subworkflows_tests_path = Path("tests", "subworkflows", "nf-core")
+        self._configure_repo_and_paths()
+
+    def _configure_repo_and_paths(self, nf_dir_req=True):
+        """
+        Determine the repo type and set some default paths.
+        If this is a modules repo, determine the org_path too.
+
+        Args:
+            nf_dir_req (bool, optional): Whether this command requires being run in the nf-core modules repo or a nf-core pipeline repository. Defaults to True.
+        """
         try:
             if self.dir:
-                self.dir, self.repo_type = get_repo_type(self.dir)
+                self.dir, self.repo_type, self.org = get_repo_info(self.dir, use_prompt=nf_dir_req)
             else:
                 self.repo_type = None
-        except LookupError as e:
-            raise UserWarning(e)
+                self.org = ""
+        except UserWarning:
+            if nf_dir_req:
+                raise
+            self.repo_type = None
+            self.org = ""
+        self.default_modules_path = Path("modules", self.org)
+        self.default_tests_path = Path("tests", "modules", self.org)
+        self.default_subworkflows_path = Path("subworkflows", self.org)
+        self.default_subworkflows_tests_path = Path("tests", "subworkflows", self.org)
 
     def get_local_components(self):
         """

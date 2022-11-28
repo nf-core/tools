@@ -13,7 +13,6 @@ import nf_core
 import nf_core.components.components_create
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.modules.modules_utils import get_repo_type
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +24,6 @@ class SubworkflowCreate(ComponentCommand):
         subworkflow="",
         author=None,
         force=False,
-        repo_type=None,
     ):
         super().__init__("subworkflows", directory)
         self.directory = directory
@@ -33,7 +31,6 @@ class SubworkflowCreate(ComponentCommand):
         self.author = author
         self.force_overwrite = force
         self.file_paths = {}
-        self.repo_type = repo_type
 
     def create(self):
         """
@@ -59,10 +56,6 @@ class SubworkflowCreate(ComponentCommand):
         """
 
         # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
-        try:
-            self.directory, self.repo_type = get_repo_type(self.directory, self.repo_type)
-        except LookupError as e:
-            raise UserWarning(e)
         log.info(f"Repository type: [blue]{self.repo_type}")
         if self.directory != ".":
             log.info(f"Base directory: '{self.directory}'")
@@ -86,6 +79,7 @@ class SubworkflowCreate(ComponentCommand):
             self.component_type,
             self.repo_type,
             self.directory,
+            self.org,
             self.subworkflow_name,
             None,
             None,
@@ -105,8 +99,8 @@ class SubworkflowCreate(ComponentCommand):
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "r") as fh:
                     pytest_modules_yml = yaml.safe_load(fh)
                     pytest_modules_yml["subworkflows/" + self.subworkflow] = [
-                        f"subworkflows/nf-core/{self.subworkflow}/**",
-                        f"tests/subworkflows/nf-core/{self.subworkflow}/**",
+                        f"subworkflows/{self.org}/{self.subworkflow}/**",
+                        f"tests/subworkflows/{self.org}/{self.subworkflow}/**",
                     ]
                 pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:

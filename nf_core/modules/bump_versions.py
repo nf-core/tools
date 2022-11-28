@@ -58,8 +58,7 @@ class ModuleVersionBumper(ComponentCommand):
         self.check_modules_structure()
 
         # Verify that this is not a pipeline
-        self.dir, repo_type = nf_core.modules.modules_utils.get_repo_type(self.dir)
-        if not repo_type == "modules":
+        if not self.repo_type == "modules":
             raise nf_core.modules.modules_utils.ModuleException(
                 "This command only works on the nf-core/modules repository, not on pipelines!"
             )
@@ -68,7 +67,7 @@ class ModuleVersionBumper(ComponentCommand):
         _, nfcore_modules = nf_core.modules.modules_utils.get_installed_modules(self.dir)
 
         # Load the .nf-core.yml config
-        self.tools_config = nf_core.utils.load_tools_config(self.dir)
+        _, self.tools_config = nf_core.utils.load_tools_config(self.dir)
 
         # Prompt for module or all
         if module is None and not all_modules:
