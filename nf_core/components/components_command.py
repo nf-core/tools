@@ -47,6 +47,8 @@ class ComponentCommand:
         except UserWarning:
             if nf_dir_req:
                 raise
+            self.repo_type = None
+            self.org = ""
         self.default_modules_path = Path("modules", self.org)
         self.default_tests_path = Path("tests", "modules", self.org)
         self.default_subworkflows_path = Path("subworkflows", self.org)
