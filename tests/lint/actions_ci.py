@@ -26,19 +26,6 @@ def test_actions_ci_fail_wrong_nf(self):
     assert results["failed"] == ["Minimum pipeline NF version '1.2.3' is not tested in '.github/workflows/ci.yml'"]
 
 
-def test_actions_ci_fail_wrong_docker_ver(self):
-    """Lint test: actions_actions_ci - FAIL - wrong pipeline version used for docker commands"""
-
-    self.lint_obj._load()
-    self.lint_obj.nf_config["process.container"] = "'nfcore/tools:0.4'"
-    results = self.lint_obj.actions_ci()
-    assert results["failed"] == [
-        "CI is not building the correct docker image. Should be: `docker build --no-cache . -t nfcore/tools:0.4`",
-        "CI is not pulling the correct docker image. Should be: `docker pull nfcore/tools:dev`",
-        "CI is not tagging docker image correctly. Should be: `docker tag nfcore/tools:dev nfcore/tools:0.4`",
-    ]
-
-
 def test_actions_ci_fail_wrong_trigger(self):
     """Lint test: actions_actions_ci - FAIL - workflow triggered incorrectly, NF ver not checked at all"""
 

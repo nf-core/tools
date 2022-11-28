@@ -14,6 +14,7 @@
 ### Linting
 
 - Don't lint pipeline name if `manifest.name` in `.nf-core.yml` ([#2035](https://github.com/nf-core/tools/pull/2035))
+- Don't check for `docker pull` commands in `actions_ci` lint test (leftover from DSL1)
 
 ### General
 
@@ -37,6 +38,7 @@
 - Substitute ModulesCommand and SubworkflowsCommand by ComponentsCommand ([#2000](https://github.com/nf-core/tools/pull/2000))
 - Don't print source file + line number on logging messages (except when verbose) ([#2015](https://github.com/nf-core/tools/pull/2015))
 - Extended the chat notifications to Slack ([#1829](https://github.com/nf-core/tools/pull/1829))
+- Allow other remote URLs not starting with `http` ([#2061](https://github.com/nf-core/tools/pull/2061))
 
 ### Modules
 
@@ -298,6 +300,7 @@ Please note that there are many excellent integrations for Prettier available, f
 - Add `--publish_dir_mode` back into the pipeline template ([nf-core/rnaseq#752](https://github.com/nf-core/rnaseq/issues/752#issuecomment-1039451607))
 - Add optional loading of of pipeline-specific institutional configs to `nextflow.config`
 - Make `--outdir` a mandatory parameter ([nf-core/tools#1415](https://github.com/nf-core/tools/issues/1415))
+- Add description between double quotes to avoid errors with apostrophes in a description ([#2066](https://github.com/nf-core/tools/pull/2066))
 
 ### General
 

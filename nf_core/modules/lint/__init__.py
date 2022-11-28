@@ -88,9 +88,6 @@ class ModuleLint(ComponentCommand):
 
         if self.repo_type == "pipeline":
             modules_json = ModulesJson(self.dir)
-            import ipdb
-
-            ipdb.set_trace()
             modules_json.check_up_to_date()
             self.all_remote_modules = []
             for repo_url, components in modules_json.get_all_components(self.component_type).items():
