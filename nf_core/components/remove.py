@@ -149,7 +149,7 @@ class ComponentRemove(ComponentCommand):
                     original_component_type = self.component_type
                     self.component_type = component_type
                     dependency_removed = self.remove(
-                        component_name, removed_by=removed_by, removed_components=all_removed
+                        component_name, removed_by=removed_by, removed_components=removed_components
                     )
                     self.component_type = original_component_type
                     # remember removed dependencies
