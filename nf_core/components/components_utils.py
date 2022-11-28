@@ -44,7 +44,7 @@ def get_repo_type(directory, use_prompt=True):
         if rich.prompt.Confirm.ask("[bold][blue]?[/] Would you like me to add this config now?", default=True):
             with open(config_fn, "a+") as fh:
                 fh.write(f"repository_type: {repo_type}\n")
-                log.info("Config added to '%s'", config_fn.name)
+                log.info(f"Config added to '{config_fn.name}'")
 
     # Not set and not allowed to ask
     elif not repo_type:
