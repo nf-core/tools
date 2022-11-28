@@ -19,13 +19,16 @@ class ComponentRemove(ComponentCommand):
     def __init__(self, component_type, pipeline_dir, remote_url=None, branch=None, no_pull=False):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
 
-    def remove(self, component, removed_by=None, all_removed=None, force=False):
+    def remove(self, component, removed_by=None, removed_components=None, force=False):
         """
         Remove an already installed module/subworkflow
         This command only works for modules/subworkflows that are installed from 'nf-core/modules'
 
         Args:
             component (str): Name of the component to remove
+            removed_by (str): Name of the component that is removing the current component
+                (a subworkflow name if the component is a dependency or "modules" or "subworkflows" if it is not a dependency)
+            removed_components (list[str]): list of components that have been removed during a recursive remove of subworkflows
             force (bool): Force removal of component, even if there is still an include statement in a workflow file
 
         Returns:
@@ -51,8 +54,8 @@ class ComponentRemove(ComponentCommand):
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
-        if all_removed is None:
-            all_removed = []
+        if removed_components is None:
+            removed_components = []
 
         # Get the module/subworkflow directory
         component_dir = Path(self.dir, self.component_type, repo_path, component)
@@ -126,13 +129,13 @@ class ComponentRemove(ComponentCommand):
                             log.warning(
                                 f"Could not install the {self.component_type[:-1]} '{component}', please install it manually with 'nf-core {component_type} install  {component}'."
                             )
-                        all_removed.append(component)
+                        removed_components.append(component)
                         return removed
             # Remove the component files of all entries removed from modules.json
             removed = (
                 True if self.clear_component_dir(component, Path(self.dir, removed_component_dir)) or removed else False
             )
-            all_removed.append(component)
+            removed_components.append(component)
 
         if removed:
             if self.component_type == "subworkflows":
@@ -141,11 +144,13 @@ class ComponentRemove(ComponentCommand):
                     self.component_type, component, self.modules_repo.remote_url, repo_path, {}
                 )
                 for component_name, component_type in dependent_components.items():
-                    if component_name in all_removed:
+                    if component_name in removed_components:
                         continue
                     original_component_type = self.component_type
                     self.component_type = component_type
-                    dependency_removed = self.remove(component_name, removed_by=removed_by, all_removed=all_removed)
+                    dependency_removed = self.remove(
+                        component_name, removed_by=removed_by, removed_components=all_removed
+                    )
                     self.component_type = original_component_type
                     # remember removed dependencies
                     if dependency_removed:
