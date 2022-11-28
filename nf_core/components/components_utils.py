@@ -11,7 +11,7 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-def get_repo_type(directory, use_prompt=True):
+def get_repo_info(directory, use_prompt=True):
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules

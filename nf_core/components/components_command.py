@@ -9,7 +9,7 @@ import yaml
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
 
-from .components_utils import get_repo_type
+from .components_utils import get_repo_info
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class ComponentCommand:
         """
         try:
             if self.dir:
-                self.dir, self.repo_type, self.org = get_repo_type(self.dir, use_prompt=nf_dir_req)
+                self.dir, self.repo_type, self.org = get_repo_info(self.dir, use_prompt=nf_dir_req)
             else:
                 self.repo_type = None
                 self.org = ""
