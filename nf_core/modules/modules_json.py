@@ -696,15 +696,6 @@ class ModulesJson:
                         # write the updated modules.json file
                         self.dump()
                         return True
-                    # write the updated modules.json file
-                    if removed_by == component_type:
-                        log.info(
-                            f"""Updated the 'installed_by' list for '{name}', but it is still installed, because it is required by {", ".join(f"'{d}'" for d in repo_entry[component_type][install_dir][name]['installed_by'])}."""
-                        )
-                    else:
-                        log.info(
-                            f"Removed {removed_by} from the 'installed_by' list of {name}, but it was also installed by other modules/subworkflows."
-                        )
                     self.dump()
                     return False
             else:
