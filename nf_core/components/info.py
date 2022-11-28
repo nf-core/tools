@@ -15,7 +15,6 @@ import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE
-from nf_core.modules.modules_utils import get_repo_type
 
 log = logging.getLogger(__name__)
 
@@ -70,15 +69,6 @@ class ComponentInfo(ComponentCommand):
         self.remote_location = None
         self.local = None
 
-        # Quietly check if this is a pipeline or not
-        if pipeline_dir:
-            try:
-                pipeline_dir, repo_type = get_repo_type(pipeline_dir, use_prompt=False)
-                log.debug(f"Found {repo_type} repo: {pipeline_dir}")
-            except UserWarning as e:
-                log.debug(f"Only showing remote info: {e}")
-                pipeline_dir = None
-
         if self.repo_type == "pipeline":
             # Check modules directory structure
             if self.component_type == "modules":
@@ -89,6 +79,13 @@ class ComponentInfo(ComponentCommand):
         else:
             self.modules_json = None
         self.component = self.init_mod_name(component_name)
+
+    def _configure_repo_and_paths(self, nf_dir_req=False):
+        """
+        Override the default with nf_dir_req set to False to allow
+        info to be run from anywhere and still return remote info
+        """
+        return super()._configure_repo_and_paths(nf_dir_req)
 
     def init_mod_name(self, component):
         """
@@ -109,7 +106,8 @@ class ComponentInfo(ComponentCommand):
                         self.modules_repo.remote_url
                     )
                     components = [
-                        component if dir == "nf-core" else f"{dir}/{component}" for dir, component in components
+                        component if directory == self.modules_repo.repo_path else f"{directory}/{component}"
+                        for directory, component in components
                     ]
                     if components is None:
                         raise UserWarning(
@@ -178,7 +176,7 @@ class ComponentInfo(ComponentCommand):
 
             log.debug(f"{self.component_type[:-1].title()} '{self.component}' meta.yml not found locally")
         else:
-            component_base_path = Path(self.dir, self.component_type, "nf-core")
+            component_base_path = Path(self.dir, self.component_type, self.org)
             if self.component in os.listdir(component_base_path):
                 comp_dir = Path(component_base_path, self.component)
                 meta_fn = Path(comp_dir, "meta.yml")

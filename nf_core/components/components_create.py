@@ -88,7 +88,7 @@ def collect_name_prompt(name, component_type):
         return name
 
 
-def get_component_dirs(component_type, repo_type, directory, name, supername, subname, new_dir, force_overwrite):
+def get_component_dirs(component_type, repo_type, directory, org, name, supername, subname, new_dir, force_overwrite):
     """Given a directory and a tool/subtool or subworkflow, set the file paths and check if they already exist
 
     Returns dict: keys are relative paths to template files, vals are target paths.
@@ -117,8 +117,8 @@ def get_component_dirs(component_type, repo_type, directory, name, supername, su
         file_paths[os.path.join(component_type, "main.nf")] = component_file
 
     if repo_type == "modules":
-        software_dir = os.path.join(directory, component_type, "nf-core", new_dir)
-        test_dir = os.path.join(directory, "tests", component_type, "nf-core", new_dir)
+        software_dir = os.path.join(directory, component_type, org, new_dir)
+        test_dir = os.path.join(directory, "tests", component_type, org, new_dir)
 
         # Check if module/subworkflow directories exist already
         if os.path.exists(software_dir) and not force_overwrite:
@@ -128,15 +128,15 @@ def get_component_dirs(component_type, repo_type, directory, name, supername, su
 
         if component_type == "modules":
             # If a subtool, check if there is a module called the base tool name already
-            parent_tool_main_nf = os.path.join(directory, component_type, "nf-core", supername, "main.nf")
-            parent_tool_test_nf = os.path.join(directory, component_type, "nf-core", supername, "main.nf")
+            parent_tool_main_nf = os.path.join(directory, component_type, org, supername, "main.nf")
+            parent_tool_test_nf = os.path.join(directory, component_type, org, supername, "main.nf")
             if subname and os.path.exists(parent_tool_main_nf):
                 raise UserWarning(f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{name}'")
             if subname and os.path.exists(parent_tool_test_nf):
                 raise UserWarning(f"Module '{parent_tool_test_nf}' exists already, cannot make subtool '{name}'")
 
             # If no subtool, check that there isn't already a tool/subtool
-            tool_glob = glob.glob(f"{os.path.join(directory, component_type, 'nf-core', supername)}/*/main.nf")
+            tool_glob = glob.glob(f"{os.path.join(directory, component_type, org, supername)}/*/main.nf")
             if not subname and tool_glob:
                 raise UserWarning(f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{name}'")
 
