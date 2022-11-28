@@ -62,7 +62,7 @@ def get_repo_type(directory, use_prompt=True):
         if org is None:
             log.warning("Organisation path not defined in %s [key: org_path]", config_fn.name)
             org = questionary.text(
-                "What is the organisation path under which modules are stored?",
+                "What is the organisation path under which modules and subworkflows are stored?",
                 default="nf-core",
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
