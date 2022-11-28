@@ -96,7 +96,8 @@ class ComponentUpdate(ComponentCommand):
         self.check_modules_structure()
 
         # Verify that 'modules.json' is consistent with the installed modules
-        self.modules_json.check_up_to_date()
+        if not silent:
+            self.modules_json.check_up_to_date()
 
         if not self.update_all and component is None:
             choices = [f"All {self.component_type}", f"Named {self.component_type[:-1]}"]
@@ -233,9 +234,7 @@ class ComponentUpdate(ComponentCommand):
                         else:
                             updated.append(component)
                     recursive_update = True
-                    modules_to_update, subworkflows_to_update = self.get_modules_subworkflows_to_update(
-                        component, modules_repo
-                    )
+                    modules_to_update, subworkflows_to_update = self.get_components_to_update(component, modules_repo)
                     if not silent and len(modules_to_update + subworkflows_to_update) > 0:
                         log.warning(
                             f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be added to the same diff file.\n"
@@ -282,9 +281,7 @@ class ComponentUpdate(ComponentCommand):
                 self.modules_json.update(self.component_type, modules_repo, component, version, self.component_type)
                 updated.append(component)
                 recursive_update = True
-                modules_to_update, subworkflows_to_update = self.get_modules_subworkflows_to_update(
-                    component, modules_repo
-                )
+                modules_to_update, subworkflows_to_update = self.get_components_to_update(component, modules_repo)
                 if not silent and not self.update_all and len(modules_to_update + subworkflows_to_update) > 0:
                     log.warning(
                         f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be {'asked for update' if self.show_diff else 'automatically updated'}.\n"
@@ -349,14 +346,14 @@ class ComponentUpdate(ComponentCommand):
         # Check if there are any modules/subworkflows installed from the repo
         repo_url = self.modules_repo.remote_url
         components = self.modules_json.get_all_components(self.component_type).get(repo_url)
-        choices = [component if dir == "nf-core" else f"{dir}/{component}" for dir, component in components]
-        if repo_url not in self.modules_json.get_all_components(self.component_type):
+        if components is None:
             raise LookupError(f"No {self.component_type} installed from '{repo_url}'")
+        choices = [component if dir == "nf-core" else f"{dir}/{component}" for dir, component in components]
 
         if component is None:
             component = questionary.autocomplete(
                 f"{self.component_type[:-1].title()} name:",
-                choices=choices.sort(),
+                choices=sorted(choices),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
@@ -819,8 +816,13 @@ class ComponentUpdate(ComponentCommand):
 
         return True
 
-    def get_modules_subworkflows_to_update(self, component, modules_repo):
-        """Get all modules and subworkflows linked to the updated component."""
+    def get_components_to_update(self, component, modules_repo):
+        """
+        Get all modules and subworkflows linked to the updated component.
+
+        Returns:
+            (list,list): A tuple of lists with the modules and subworkflows to update
+        """
         mods_json = self.modules_json.get_modules_json()
         modules_to_update = []
         subworkflows_to_update = []

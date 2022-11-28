@@ -1,5 +1,7 @@
 import logging
 import os
+import re
+from pathlib import Path
 
 import questionary
 import rich.prompt
@@ -113,3 +115,25 @@ def prompt_component_version_sha(component_name, component_type, modules_repo, i
         ).unsafe_ask()
         page_nbr += 1
     return git_sha
+
+
+def get_components_to_install(subworkflow_dir):
+    """
+    Parse the subworkflow test main.nf file to retrieve all imported modules and subworkflows.
+    """
+    modules = []
+    subworkflows = []
+    with open(Path(subworkflow_dir, "main.nf"), "r") as fh:
+        for line in fh:
+            regex = re.compile(
+                r"include(?: *{ *)([a-zA-Z\_0-9]*)(?: *as *)?(?:[a-zA-Z\_0-9]*)?(?: *})(?: *from *)(?:'|\")(.*)(?:'|\")"
+            )
+            match = regex.match(line)
+            if match and len(match.groups()) == 2:
+                name, link = match.groups()
+                if link.startswith("../../../"):
+                    name_split = name.lower().split("_")
+                    modules.append("/".join(name_split))
+                elif link.startswith("../"):
+                    subworkflows.append(name.lower())
+    return modules, subworkflows
