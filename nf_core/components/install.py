@@ -127,7 +127,7 @@ class ComponentInstall(ComponentCommand):
             log.info(f"Use the following statement to include this {self.component_type[:-1]}:")
             Console().print(
                 Syntax(
-                    f"include {{ {component_name} }} from '.{os.path.join(install_folder, component)}/main'",
+                    f"include {{ {component_name} }} from '../{Path(install_folder, component).relative_to(self.dir)}/main'",
                     "groovy",
                     theme="ansi_dark",
                     padding=1,
