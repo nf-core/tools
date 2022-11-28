@@ -35,8 +35,7 @@ class ComponentCommand:
         If this is a modules repo, determine the org_path too.
 
         Args:
-            nf_dir_req (bool, optional): Whether this command requires being run in an nf-core repo;
-                either a modules or pipeline repo. Defaults to True.
+            nf_dir_req (bool, optional): Whether this command requires being run in the nf-core modules repo or a nf-core pipeline repository. Defaults to True.
         """
         try:
             if self.dir:

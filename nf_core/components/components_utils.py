@@ -71,7 +71,7 @@ def get_repo_type(directory, use_prompt=True):
             if rich.prompt.Confirm.ask("[bold][blue]?[/] Would you like me to add this config now?", default=True):
                 with open(os.path.join(dir, ".nf-core.yml"), "a+") as fh:
                     fh.write(f"org_path: {org}\n")
-                    log.info("Config added to '%s'", config_fn.name)
+                    log.info(f"Config added to '{config_fn.name}'")
 
         if not org:
             raise UserWarning("Organisation path could not be established")
