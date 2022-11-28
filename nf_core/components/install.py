@@ -134,7 +134,7 @@ class ComponentInstall(ComponentCommand):
                 )
             )
             if self.component_type == "subworkflows":
-                subworkflow_config = os.path.join(install_folder, component, "nextflow.config")
+                subworkflow_config = Path(install_folder, component, "nextflow.config").relative_to(self.dir)
                 if os.path.isfile(subworkflow_config):
                     log.info("Add the following config statement to use this subworkflow:")
                     Console().print(
