@@ -101,6 +101,7 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_install_emptypipeline,
         test_subworkflows_install_from_gitlab,
         test_subworkflows_install_nosubworkflow,
+        test_subworkflows_install_tracking,
         test_subworkflows_install_tracking_added_already_installed,
         test_subworkflows_install_tracking_added_super_subworkflow,
     )
