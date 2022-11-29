@@ -892,19 +892,23 @@ class ComponentUpdate(ComponentCommand):
             # If a new module/subworkflow is included in the subworklfow and wasn't included before
             for module in included_modules:
                 if module not in modules_to_update:
+                    log.info(f"Installing new included module '{module}'")
                     install_module_object = ComponentInstall(self.dir, "modules", installed_by=component)
                     install_module_object.install(module, silent=True)
             for subworkflow in included_subworkflows:
                 if subworkflow not in subworkflows_to_update:
+                    log.info(f"Installing new included subworkflow '{subworkflow}'")
                     install_subworkflow_object = ComponentInstall(self.dir, "subworkflows", installed_by=component)
                     install_subworkflow_object.install(subworkflow, silent=True)
             # If a module/subworkflow has been removed from the subworkflow
             for module in modules_to_update:
                 if module not in included_modules:
+                    log.info(f"Removing module '{module}' which is not included anymore")
                     remove_module_object = ComponentRemove("modules", self.dir)
                     remove_module_object.remove(module, removed_by=component)
             for subworkflow in subworkflows_to_update:
                 if subworkflow not in included_subworkflows:
+                    log.info(f"Removing subworkflow '{subworkflow}' which is not included anymore")
                     remove_subworkflow_object = ComponentRemove("subworkflows", self.dir)
                     remove_subworkflow_object.remove(subworkflow, removed_by=component)
 
