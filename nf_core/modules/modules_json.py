@@ -13,6 +13,7 @@ from git.exc import GitCommandError
 
 import nf_core.utils
 from nf_core.components.components_utils import get_components_to_install
+from nf_core.lint_utils import run_prettier_on_file
 from nf_core.modules.modules_repo import (
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
@@ -997,6 +998,7 @@ class ModulesJson:
         with open(modules_json_path, "w") as fh:
             json.dump(self.modules_json, fh, indent=4)
             fh.write("\n")
+        run_prettier_on_file(modules_json_path)
 
     def resolve_missing_installation(self, missing_installation, component_type):
         missing_but_in_mod_json = [
