@@ -927,8 +927,6 @@ class ModulesJson:
                 if component_type in repo_entry:
                     for dir, components in repo_entry[component_type].items():
                         self.pipeline_components[repo] = [(dir, m) for m in components]
-        if self.pipeline_components == {}:
-            self.pipeline_components = None
 
         return self.pipeline_components
 
