@@ -40,6 +40,7 @@ class ModulesJson:
         self.dir = pipeline_dir
         self.modules_dir = Path(self.dir, "modules")
         self.subworkflows_dir = Path(self.dir, "subworkflows")
+        self.modules_json_path = Path(self.dir, "modules.json")
         self.modules_json = None
         self.pipeline_modules = None
         self.pipeline_subworkflows = None
@@ -93,8 +94,7 @@ class ModulesJson:
             )
 
         # write the modules.json file and assign it to the object
-        modules_json_path = Path(self.dir, "modules.json")
-        with open(modules_json_path, "w") as fh:
+        with open(self.modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
             fh.write("\n")
         self.modules_json = modules_json
@@ -608,9 +608,8 @@ class ModulesJson:
         Raises:
             UserWarning: If the modules.json file is not found
         """
-        modules_json_path = os.path.join(self.dir, "modules.json")
         try:
-            with open(modules_json_path, "r") as fh:
+            with open(self.modules_json_path, "r") as fh:
                 self.modules_json = json.load(fh)
         except FileNotFoundError:
             raise UserWarning("File 'modules.json' is missing")
@@ -994,11 +993,10 @@ class ModulesJson:
         """
         # Sort the modules.json
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
-        modules_json_path = os.path.join(self.dir, "modules.json")
-        with open(modules_json_path, "w") as fh:
+        with open(self.modules_json_path, "w") as fh:
             json.dump(self.modules_json, fh, indent=4)
             fh.write("\n")
-        run_prettier_on_file(modules_json_path)
+        run_prettier_on_file(self.modules_json_path)
 
     def resolve_missing_installation(self, missing_installation, component_type):
         missing_but_in_mod_json = [
