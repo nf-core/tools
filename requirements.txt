@@ -6,6 +6,7 @@ jinja2
 jsonschema>=3.0
 markdown>=3.3
 packaging
+pre-commit
 prompt_toolkit>=3.0.3
 pytest>=7.0.0
 pytest-workflow>=1.6.0
