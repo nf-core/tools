@@ -79,27 +79,6 @@ rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
 
 
 def run_nf_core():
-    # Print nf-core header
-    stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
-    stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
-    stderr.print(r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
-    stderr.print(r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,", highlight=False)
-    stderr.print("[green]                                          `._,._,'\n", highlight=False)
-    stderr.print(
-        f"[grey39]    nf-core/tools version {nf_core.__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
-        highlight=False,
-    )
-    try:
-        is_outdated, _, remote_vers = nf_core.utils.check_if_outdated()
-        if is_outdated:
-            stderr.print(
-                f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
-                highlight=False,
-            )
-    except Exception as e:
-        log.debug(f"Could not check latest version: {e}")
-    stderr.print("\n")
-
     # Launch the click cli
     nf_core_cli(auto_envvar_prefix="NFCORE")
 
@@ -107,15 +86,37 @@ def run_nf_core():
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(nf_core.__version__)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
+@click.option("--no-header", is_flag=True, default=False, help="Don't print the header.")
 @click.option("--hide-progress", is_flag=True, default=False, help="Don't show progress bars.")
 @click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
 @click.pass_context
-def nf_core_cli(ctx, verbose, hide_progress, log_file):
+def nf_core_cli(ctx, verbose, no_header, hide_progress, log_file):
     """
     nf-core/tools provides a set of helper tools for use with nf-core Nextflow pipelines.
 
     It is designed for both end-users running pipelines and also developers creating new pipelines.
     """
+    if not no_header:
+        # Print nf-core header
+        stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
+        stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
+        stderr.print(r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
+        stderr.print(r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,", highlight=False)
+        stderr.print("[green]                                          `._,._,'\n", highlight=False)
+        stderr.print(
+            f"[grey39]    nf-core/tools version {nf_core.__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
+            highlight=False,
+        )
+        try:
+            is_outdated, _, remote_vers = nf_core.utils.check_if_outdated()
+            if is_outdated:
+                stderr.print(
+                    f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
+                    highlight=False,
+                )
+        except Exception as e:
+            log.debug(f"Could not check latest version: {e}")
+        stderr.print("\n")
     # Set the base logger to output DEBUG
     log.setLevel(logging.DEBUG)
 

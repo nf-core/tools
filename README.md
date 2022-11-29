@@ -214,6 +214,10 @@ pip install --upgrade nf-core
 
 Please refer to the respective documentation for further details to manage packages, as for example [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-pkgs.html#updating-packages) or [pip](https://packaging.python.org/en/latest/tutorials/installing-packages/#upgrading-packages).
 
+### Activate shell completions for nf-core/tools
+
+Auto-completion for the `nf-core` command is available for bash and zsh. To activate it, you have to download the completion scripts (`.nf-core-complete.bash` or `.nf-core-complete.zsh`) and source it in your shell configuration file (`.bashrc` or `.zshrc`).
+
 ## Listing pipelines
 
 The command `nf-core list` shows all available nf-core pipelines along with their latest version, when that was published and how recently the pipeline code was pulled to your local system (if at all).
