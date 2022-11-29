@@ -94,10 +94,8 @@ class ModulesJson:
             )
 
         # write the modules.json file and assign it to the object
-        with open(self.modules_json_path, "w") as fh:
-            json.dump(modules_json, fh, indent=4)
-            fh.write("\n")
         self.modules_json = modules_json
+        self.dump()
 
     def get_component_names_from_repo(self, repos, directory):
         """
