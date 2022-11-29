@@ -79,24 +79,8 @@ rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
 
 
 def run_nf_core():
-    # Launch the click cli
-    nf_core_cli(auto_envvar_prefix="NFCORE")
-
-
-@click.group(context_settings=dict(help_option_names=["-h", "--help"]))
-@click.version_option(nf_core.__version__)
-@click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
-@click.option("--no-header", is_flag=True, default=False, help="Don't print the header.")
-@click.option("--hide-progress", is_flag=True, default=False, help="Don't show progress bars.")
-@click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
-@click.pass_context
-def nf_core_cli(ctx, verbose, no_header, hide_progress, log_file):
-    """
-    nf-core/tools provides a set of helper tools for use with nf-core Nextflow pipelines.
-
-    It is designed for both end-users running pipelines and also developers creating new pipelines.
-    """
-    if not no_header:
+    # print nf-core header if environment variable is not set
+    if os.environ.get("_NF_CORE_COMPLETE") is None:
         # Print nf-core header
         stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
         stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
@@ -117,6 +101,22 @@ def nf_core_cli(ctx, verbose, no_header, hide_progress, log_file):
         except Exception as e:
             log.debug(f"Could not check latest version: {e}")
         stderr.print("\n")
+    # Launch the click cli
+    nf_core_cli(auto_envvar_prefix="NFCORE")
+
+
+@click.group(context_settings=dict(help_option_names=["-h", "--help"]))
+@click.version_option(nf_core.__version__)
+@click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
+@click.option("--hide-progress", is_flag=True, default=False, help="Don't show progress bars.")
+@click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
+@click.pass_context
+def nf_core_cli(ctx, verbose, hide_progress, log_file):
+    """
+    nf-core/tools provides a set of helper tools for use with nf-core Nextflow pipelines.
+
+    It is designed for both end-users running pipelines and also developers creating new pipelines.
+    """
     # Set the base logger to output DEBUG
     log.setLevel(logging.DEBUG)
 
