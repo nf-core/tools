@@ -355,7 +355,10 @@ class ModulesJson:
             for commit in modules_repo.get_component_git_log(component_name, component_type, depth=1000)
         )
         for commit_sha in commit_shas:
-            if all(modules_repo.module_files_identical(component_name, component_path, commit_sha).values()):
+            module_dir = modules_repo.get_component_dir(component_name, component_type)
+            if all(
+                modules_repo.module_files_identical(module_dir, component_name, component_path, commit_sha).values()
+            ):
                 return commit_sha
         return None
 
@@ -977,7 +980,7 @@ class ModulesJson:
         Returns:
             (str): The branch name
         Raises:
-            LookupError: If their is no branch entry in the `modules.json`
+            LookupError: If there is no branch entry in the `modules.json`
         """
         if self.modules_json is None:
             self.load()
