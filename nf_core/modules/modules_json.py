@@ -656,7 +656,7 @@ class ModulesJson:
         repo_component_entry[component_name]["git_sha"] = component_version
         repo_component_entry[component_name]["branch"] = branch
         try:
-            if installed_by not in repo_component_entry[component_name]["installed_by"]:
+            if installed_by not in repo_component_entry[component_name]["installed_by"] and installed_by is not None:
                 repo_component_entry[component_name]["installed_by"].append(installed_by)
         except KeyError:
             repo_component_entry[component_name]["installed_by"] = [installed_by]

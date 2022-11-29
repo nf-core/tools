@@ -9,7 +9,12 @@ import questionary
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.components.components_utils import prompt_component_version_sha
+from nf_core.components.components_utils import (
+    get_components_to_install,
+    prompt_component_version_sha,
+)
+from nf_core.components.install import ComponentInstall
+from nf_core.components.remove import ComponentRemove
 from nf_core.modules.modules_differ import ModulesDiffer
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
@@ -254,6 +259,7 @@ class ComponentUpdate(ComponentCommand):
                         self.update_linked_components(
                             modules_to_update, subworkflows_to_update, updated, check_diff_exist=False
                         )
+                        self.manage_changes_in_linked_components(component, modules_to_update, subworkflows_to_update)
 
                 elif self.show_diff:
                     ModulesDiffer.print_diff(
@@ -278,7 +284,7 @@ class ComponentUpdate(ComponentCommand):
                 # Clear the component directory and move the installed files there
                 self.move_files_from_tmp_dir(component, install_tmp_dir, modules_repo.repo_path, version)
                 # Update modules.json with newly installed component
-                self.modules_json.update(self.component_type, modules_repo, component, version, self.component_type)
+                self.modules_json.update(self.component_type, modules_repo, component, version, installed_by=None)
                 updated.append(component)
                 recursive_update = True
                 modules_to_update, subworkflows_to_update = self.get_components_to_update(component, modules_repo)
@@ -299,10 +305,17 @@ class ComponentUpdate(ComponentCommand):
                 if recursive_update and len(modules_to_update + subworkflows_to_update) > 0:
                     # Update linked components
                     self.update_linked_components(modules_to_update, subworkflows_to_update, updated)
+                    self.manage_changes_in_linked_components(component, modules_to_update, subworkflows_to_update)
             else:
                 # Don't save to a file, just iteratively update the variable
                 self.modules_json.update(
-                    self.component_type, modules_repo, component, version, self.component_type, write_file=False
+                    self.component_type,
+                    modules_repo,
+                    component,
+                    version,
+                    self.component_type,
+                    installed_by=None,
+                    write_file=False,
                 )
 
         if self.save_diff_fn:
@@ -870,6 +883,30 @@ class ComponentUpdate(ComponentCommand):
             original_component_type, original_update_all = self._change_component_type("modules")
             self.update(m_update, silent=True, updated=updated, check_diff_exist=check_diff_exist)
             self._reset_component_type(original_component_type, original_update_all)
+
+    def manage_changes_in_linked_components(self, component, modules_to_update, subworkflows_to_update):
+        """Check for linked components added or removed in the new subworkflow version"""
+        if self.component_type == "subworkflows":
+            subworkflow_directory = Path(self.dir, self.component_type, self.modules_repo.repo_path, component)
+            included_modules, included_subworkflows = get_components_to_install(subworkflow_directory)
+            # If a new module/subworkflow is included in the subworklfow and wasn't included before
+            for module in included_modules:
+                if module not in modules_to_update:
+                    install_module_object = ComponentInstall(self.dir, "modules", installed_by=component)
+                    install_module_object.install(module, silent=True)
+            for subworkflow in included_subworkflows:
+                if subworkflow not in subworkflows_to_update:
+                    install_subworkflow_object = ComponentInstall(self.dir, "subworkflows", installed_by=component)
+                    install_subworkflow_object.install(subworkflow, silent=True)
+            # If a module/subworkflow has been removed from the subworkflow
+            for module in modules_to_update:
+                if module not in included_modules:
+                    remove_module_object = ComponentRemove("modules", self.dir)
+                    remove_module_object.remove(module, removed_by=component)
+            for subworkflow in subworkflows_to_update:
+                if subworkflow not in included_subworkflows:
+                    remove_subworkflow_object = ComponentRemove("subworkflows", self.dir)
+                    remove_subworkflow_object.remove(subworkflow, removed_by=component)
 
     def _change_component_type(self, new_component_type):
         original_component_type = self.component_type
