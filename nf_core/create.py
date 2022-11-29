@@ -38,7 +38,7 @@ class PipelineCreate:
         force (bool): Overwrites a given workflow directory with the same name. Defaults to False.
             May the force be with you.
         outdir (str): Path to the local output directory.
-        template_yaml (str): Path to template.yml file for pipeline creation settings.
+        template_yaml_path (str): Path to template.yml file for pipeline creation settings.
         plain (bool): If true the Git repository will be initialized plain.
         default_branch (str): Specifies the --initial-branch name.
     """
