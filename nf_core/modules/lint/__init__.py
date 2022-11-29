@@ -106,7 +106,7 @@ class ModuleLint(ComponentCommand):
                 if local_module_dir.exists():
                     self.all_local_modules = [
                         NFCoreModule(
-                            m, None, Path(local_module_dir, m), self.repo_type, Path(self.dir), nf_core_module=False
+                            m, None, Path(local_module_dir, m), self.repo_type, Path(self.dir), remote_module=False
                         )
                         for m in self.get_local_components()
                     ]

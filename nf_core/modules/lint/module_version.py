@@ -23,9 +23,7 @@ def module_version(module_lint_object, module):
 
     modules_json_path = Path(module_lint_object.dir, "modules.json")
     # Verify that a git_sha exists in the `modules.json` file for this module
-    version = module_lint_object.modules_json.get_module_version(
-        module.module_name, module.repo_url, module.module_dir.parent.name
-    )
+    version = module_lint_object.modules_json.get_module_version(module.module_name, module.repo_url, module.org)
     if version is None:
         module.failed.append(("git_sha", "No git_sha entry in `modules.json`", modules_json_path))
         return
@@ -36,7 +34,7 @@ def module_version(module_lint_object, module):
     # Check whether a new version is available
     try:
         module.branch = module_lint_object.modules_json.get_component_branch(
-            "modules", module.module_name, module.repo_url, module.module_dir.parent.name
+            "modules", module.module_name, module.repo_url, module.org
         )
         modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=module.repo_url, branch=module.branch)
 

@@ -41,7 +41,7 @@ def module_changes(module_lint_object, module):
     else:
         tempdir = module.module_dir
     module.branch = module_lint_object.modules_json.get_component_branch(
-        "modules", module.module_name, module.repo_url, module.module_dir.parent.name
+        "modules", module.module_name, module.repo_url, module.org
     )
     modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=module.repo_url, branch=module.branch)
 
