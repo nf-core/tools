@@ -101,15 +101,17 @@ class ModuleLint(ComponentCommand):
                             Path(self.dir),
                         )
                     )
-                local_module_dir = Path(self.dir, "modules", "local")
-                self.all_local_modules = []
-                if local_module_dir.exists():
-                    self.all_local_modules = [
-                        NFCoreModule(
-                            m, None, Path(local_module_dir, m), self.repo_type, Path(self.dir), remote_module=False
-                        )
-                        for m in self.get_local_components()
-                    ]
+            if not self.all_remote_modules:
+                raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
+            local_module_dir = Path(self.dir, "modules", "local")
+            self.all_local_modules = []
+            if local_module_dir.exists():
+                self.all_local_modules = [
+                    NFCoreModule(
+                        m, None, Path(local_module_dir, m), self.repo_type, Path(self.dir), remote_module=False
+                    )
+                    for m in self.get_local_components()
+                ]
         else:
             module_dir = Path(self.dir, self.default_modules_path)
             self.all_remote_modules = [

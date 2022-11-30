@@ -53,6 +53,9 @@ def test_modules_lint_new_modules(self):
 
 def test_modules_lint_no_gitlab(self):
     """Test linting a pipeline with no modules installed"""
+    self.mods_remove_gitlab.remove("fastqc", force=True)
+    self.mods_remove_gitlab.remove("multiqc", force=True)
+    self.mods_remove_gitlab.remove("custom/dumpsoftwareversions", force=True)
     with pytest.raises(LookupError):
         nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
 
