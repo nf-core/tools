@@ -1,5 +1,6 @@
 import logging
 import subprocess
+from pathlib import Path
 
 import rich
 from rich.console import Console
@@ -53,7 +54,7 @@ def print_fixes(lint_obj):
 
 
 def run_prettier_on_file(file):
-    """Runs Prettier on a file if Prettier is installed.
+    """Run the pre-commit hook prettier on a file.
 
     Args:
         file (Path | str): A file identifier as a string or pathlib.Path.
@@ -62,12 +63,17 @@ def run_prettier_on_file(file):
         If Prettier is not installed, a warning is logged.
     """
 
+    nf_core_pre_commit_config = Path(nf_core.__file__).parent.parent / ".pre-commit-config.yaml"
     try:
         subprocess.run(
-            ["prettier", "--write", file],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
+            ["pre-commit", "run", "--config", nf_core_pre_commit_config, "prettier", "--files", file],
+            capture_output=True,
+            check=True,
         )
-    except FileNotFoundError:
-        log.warning("Prettier is not installed. Please install it and run it on the pipeline to fix linting issues.")
+    except subprocess.CalledProcessError as e:
+        if ": SyntaxError: " in e.stdout.decode():
+            raise ValueError(f"Can't format {file} because it has a synthax error.\n{e.stdout.decode()}") from e
+        raise ValueError(
+            "There was an error running the prettier pre-commit hook.\n"
+            f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
+        ) from e

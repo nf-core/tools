@@ -4,12 +4,14 @@
 
 ### Template
 
+- Ignore files in `bin/` directory when running prettier.
 - Fix lint warnings for `samplesheet_check.nf` module
 - Add codespaces template ([#1957](https://github.com/nf-core/tools/pull/1957))
 - Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
 - `nextflow run <pipeline> --version` will now print the workflow version from the manifest and exit ([#1951](https://github.com/nf-core/tools/pull/1951))
 - Add profile for running `docker` with the ARM chips (including Apple silicon) ([#1942](https://github.com/nf-core/tools/pull/1942) and [#2034](https://github.com/nf-core/tools/pull/2034))
 - Flip execution order of parameter summary printing and parameter validation to prevent 'hiding' of parameter errors.
+- Remove `CITATION.cff` file from pipeline template, to avoid that pipeline Zenodo entries reference the nf-core publication instead of the pipeline.
 
 ### Linting
 
@@ -30,15 +32,17 @@
 - Add file `versions.yml` when generating `test.yml` with `nf-core modules create-test-yml` but don't check for md5sum [#1963](https://github.com/nf-core/tools/pull/1963)
 - Mock biocontainers and anaconda api calls in modules and subworkflows tests [#1967](https://github.com/nf-core/tools/pull/1967)
 - Run tests with Python 3.11 ([#1970](https://github.com/nf-core/tools/pull/1970))
+- Run test with a realistic version of git ([#2043](https://github.com/nf-core/tools/pull/2043))
 - Bump promoted Python version from 3.7 to 3.8 ([#1971](https://github.com/nf-core/tools/pull/1971))
 - Fix incorrect file deletion in `nf-core launch` when `--params_in` has the same name as `--params_out`
 - Updated GitHub actions ([#1998](https://github.com/nf-core/tools/pull/1998), [#2001](https://github.com/nf-core/tools/pull/2001))
-- Code maintenance ([#1818](https://github.com/nf-core/tools/pull/1818), [#2032](https://github.com/nf-core/tools/pull/2032))
+- Code maintenance ([#1818](https://github.com/nf-core/tools/pull/1818), [#2032](https://github.com/nf-core/tools/pull/2032), [#2073](https://github.com/nf-core/tools/pull/2073))
 - Track from where modules and subworkflows are installed ([#1999](https://github.com/nf-core/tools/pull/1999))
 - Substitute ModulesCommand and SubworkflowsCommand by ComponentsCommand ([#2000](https://github.com/nf-core/tools/pull/2000))
 - Don't print source file + line number on logging messages (except when verbose) ([#2015](https://github.com/nf-core/tools/pull/2015))
 - Extended the chat notifications to Slack ([#1829](https://github.com/nf-core/tools/pull/1829))
 - Allow other remote URLs not starting with `http` ([#2061](https://github.com/nf-core/tools/pull/2061))
+- Prevent installation with unsupported Python versions ([#2075](https://github.com/nf-core/tools/pull/2075))
 
 ### Modules
 

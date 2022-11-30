@@ -38,7 +38,7 @@ class PipelineCreate:
         force (bool): Overwrites a given workflow directory with the same name. Defaults to False.
             May the force be with you.
         outdir (str): Path to the local output directory.
-        template_yaml (str): Path to template.yml file for pipeline creation settings.
+        template_yaml_path (str): Path to template.yml file for pipeline creation settings.
         plain (bool): If true the Git repository will be initialized plain.
         default_branch (str): Specifies the --initial-branch name.
     """
@@ -528,10 +528,10 @@ class PipelineCreate:
 
         log.info("Initialising pipeline git repository")
         repo = git.Repo.init(self.outdir)
-        if default_branch:
-            repo.active_branch.rename(default_branch)
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
+        if default_branch:
+            repo.active_branch.rename(default_branch)
         repo.git.branch("TEMPLATE")
         repo.git.branch("dev")
         log.info(
