@@ -369,7 +369,7 @@ class ModulesTestYmlBuilder(ComponentCommand):
         try:
             log.info(f"Writing to '{self.test_yml_output_path}'")
             with open(self.test_yml_output_path, "w") as fh:
-                yaml.dump(self.tests, fh)
+                yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
             run_prettier_on_file(self.test_yml_output_path)
         except FileNotFoundError as e:
             raise UserWarning(f"Could not create test.yml file: '{e}'")
