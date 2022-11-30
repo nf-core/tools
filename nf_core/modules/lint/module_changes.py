@@ -45,7 +45,7 @@ def module_changes(module_lint_object, module):
     )
     modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=module.repo_url, branch=module.branch)
 
-    for f, same in modules_repo.module_files_identical(module.module_dir, tempdir, module.git_sha).items():
+    for f, same in modules_repo.module_files_identical(module.module_name, tempdir, module.git_sha).items():
         if same:
             module.passed.append(
                 (

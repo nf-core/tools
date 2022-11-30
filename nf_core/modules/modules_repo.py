@@ -361,7 +361,7 @@ class ModulesRepo:
         self.checkout_branch()
         return True
 
-    def module_files_identical(self, module_dir, base_path, commit):
+    def module_files_identical(self, module_name, base_path, commit):
         """
         Checks whether the module files in a pipeline are identical to the ones in the remote
         Args:
@@ -377,6 +377,7 @@ class ModulesRepo:
             self.checkout(commit)
         module_files = ["main.nf", "meta.yml"]
         files_identical = {file: True for file in module_files}
+        module_dir = self.get_component_dir(module_name, "modules")
         for file in module_files:
             try:
                 files_identical[file] = filecmp.cmp(os.path.join(module_dir, file), os.path.join(base_path, file))
