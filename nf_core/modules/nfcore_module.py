@@ -36,7 +36,6 @@ class NFCoreModule:
         self.has_meta = False
         self.git_sha = None
         self.is_patched = False
-        self.is_patched = None
 
         if remote_module:
             # Initialize the important files
