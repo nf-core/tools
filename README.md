@@ -227,6 +227,7 @@ After a restart of the shell session you should have auto-completion for the `nf
 
 > **NB:** The added line will run the command `nf-core`. You must therefore have the nf-core/tools installed globally.
 > You can also wrap it inside `if type nf-core > /dev/null; then ` \<YOUR EVAL CODE LINE\> `fi` for bash and zsh or `if command -v nf-core &> /dev/null eval (env _NF_CORE_COMPLETE=fish_source nf-core) end` for fish. You need to then source the config in your environment for the completions to be activated.
+
 ## Listing pipelines
 
 The command `nf-core list` shows all available nf-core pipelines along with their latest version, when that was published and how recently the pipeline code was pulled to your local system (if at all).
