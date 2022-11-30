@@ -64,7 +64,7 @@ class ModulesJson:
         pipeline_config = nf_core.utils.fetch_wf_config(self.dir)
         pipeline_name = pipeline_config.get("manifest.name", "")
         pipeline_url = pipeline_config.get("manifest.homePage", "")
-        modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": {}}
+        new_modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": {}}
 
         if not self.modules_dir.exists():
             raise UserWarning("Can't find a ./modules directory. Is this a DSL2 pipeline?")
@@ -76,25 +76,25 @@ class ModulesJson:
         repo_module_names = self.get_component_names_from_repo(repos, self.modules_dir)
         repo_subworkflow_names = self.get_component_names_from_repo(repos, self.subworkflows_dir)
 
-        # Add module/subworkflow info into modules_json
+        # Add module/subworkflow info
         for repo_url, module_names, install_dir in sorted(repo_module_names):
-            modules_json["repos"][repo_url] = {}
-            modules_json["repos"][repo_url]["modules"] = {}
-            modules_json["repos"][repo_url]["modules"][install_dir] = {}
-            modules_json["repos"][repo_url]["modules"][install_dir] = self.determine_branches_and_shas(
+            new_modules_json["repos"][repo_url] = {}
+            new_modules_json["repos"][repo_url]["modules"] = {}
+            new_modules_json["repos"][repo_url]["modules"][install_dir] = {}
+            new_modules_json["repos"][repo_url]["modules"][install_dir] = self.determine_branches_and_shas(
                 "modules", install_dir, repo_url, module_names
             )
         for repo_url, subworkflow_names, install_dir in sorted(repo_subworkflow_names):
-            if repo_url not in modules_json["repos"]:  # Don't overwrite the repo if it was already added by modules
-                modules_json["repos"][repo_url] = {}
-            modules_json["repos"][repo_url]["subworkflows"] = {}
-            modules_json["repos"][repo_url]["subworkflows"][install_dir] = {}
-            modules_json["repos"][repo_url]["subworkflows"][install_dir] = self.determine_branches_and_shas(
+            if repo_url not in new_modules_json["repos"]:  # Don't overwrite the repo if it was already added by modules
+                new_modules_json["repos"][repo_url] = {}
+            new_modules_json["repos"][repo_url]["subworkflows"] = {}
+            new_modules_json["repos"][repo_url]["subworkflows"][install_dir] = {}
+            new_modules_json["repos"][repo_url]["subworkflows"][install_dir] = self.determine_branches_and_shas(
                 "subworkflows", install_dir, repo_url, subworkflow_names
             )
 
         # write the modules.json file and assign it to the object
-        self.modules_json = modules_json
+        self.modules_json = new_modules_json
         self.dump()
 
     def get_component_names_from_repo(self, repos, directory):
