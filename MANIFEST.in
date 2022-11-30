@@ -4,3 +4,4 @@ graft nf_core/module-template
 graft nf_core/pipeline-template
 graft nf_core/subworkflow-template
 include requirements.txt
+include .pre-commit-config.yaml
