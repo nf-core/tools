@@ -313,7 +313,6 @@ class ComponentUpdate(ComponentCommand):
                     modules_repo,
                     component,
                     version,
-                    self.component_type,
                     installed_by=None,
                     write_file=False,
                 )
