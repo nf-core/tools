@@ -960,6 +960,30 @@ class ModulesJson:
 
         return dependent_components
 
+    def get_installed_by_entries(self, component_type, name):
+        """
+        Retrieves all entries of installed_by for a given component
+
+        Args:
+            component_type (str): Type of component [modules, subworkflows]
+            name (str): Name of the component to find dependencies for
+
+        Returns:
+            (list): The list of installed_by entries
+
+        """
+        if self.modules_json is None:
+            self.load()
+        installed_by_entries = {}
+        for repo_url, repo_entry in self.modules_json.get("repos", {}).items():
+            if component_type in repo_entry:
+                for install_dir, components in repo_entry[component_type].items():
+                    if name in components:
+                        installed_by_entries = components[name]["installed_by"]
+                        break
+
+        return installed_by_entries
+
     def get_component_branch(self, component_type, component, repo_url, install_dir):
         """
         Gets the branch from which the module/subworkflow was installed
