@@ -356,9 +356,7 @@ class ModulesJson:
         )
         for commit_sha in commit_shas:
             module_dir = modules_repo.get_component_dir(component_name, component_type)
-            if all(
-                modules_repo.module_files_identical(module_dir, component_name, component_path, commit_sha).values()
-            ):
+            if all(modules_repo.module_files_identical(module_dir, component_path, commit_sha).values()):
                 return commit_sha
         return None
 
@@ -929,8 +927,6 @@ class ModulesJson:
                 if component_type in repo_entry:
                     for dir, components in repo_entry[component_type].items():
                         self.pipeline_components[repo] = [(dir, m) for m in components]
-        if self.pipeline_components == {}:
-            self.pipeline_components = None
 
         return self.pipeline_components
 
