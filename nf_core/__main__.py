@@ -739,7 +739,9 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
     help="Sort lint output by module or test name. Default: test",
 )
 @click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
-def lint(ctx, tool, dir, key, all, fail_warned, local, passed, sort_by, fix_version):  # pylint: disable=redefined-outer-name
+def lint(
+    ctx, tool, dir, key, all, fail_warned, local, passed, sort_by, fix_version
+):  # pylint: disable=redefined-outer-name
     """
     Lint one or more modules in a directory.
 
