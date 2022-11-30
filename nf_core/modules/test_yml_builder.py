@@ -25,6 +25,7 @@ from rich.syntax import Syntax
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 
+from ..lint_utils import run_prettier_on_file
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
@@ -368,6 +369,7 @@ class ModulesTestYmlBuilder(ComponentCommand):
         try:
             log.info(f"Writing to '{self.test_yml_output_path}'")
             with open(self.test_yml_output_path, "w") as fh:
-                yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
+                yaml.dump(self.tests, fh)
+            run_prettier_on_file(self.test_yml_output_path)
         except FileNotFoundError as e:
             raise UserWarning(f"Could not create test.yml file: '{e}'")
