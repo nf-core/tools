@@ -73,7 +73,7 @@ def run_prettier_on_file(file):
     except subprocess.CalledProcessError as e:
         if ": SyntaxError: " in e.stdout.decode():
             raise ValueError(f"Can't format {file} because it has a synthax error.\n{e.stdout.decode()}") from e
-        raise ValueError(
+        log.warning(
             "There was an error running the prettier pre-commit hook.\n"
             f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
-        ) from e
+        )
