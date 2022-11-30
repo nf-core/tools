@@ -34,7 +34,7 @@
 - Bump promoted Python version from 3.7 to 3.8 ([#1971](https://github.com/nf-core/tools/pull/1971))
 - Fix incorrect file deletion in `nf-core launch` when `--params_in` has the same name as `--params_out`
 - Updated GitHub actions ([#1998](https://github.com/nf-core/tools/pull/1998), [#2001](https://github.com/nf-core/tools/pull/2001))
-- Code maintenance ([#1818](https://github.com/nf-core/tools/pull/1818), [#2032](https://github.com/nf-core/tools/pull/2032))
+- Code maintenance ([#1818](https://github.com/nf-core/tools/pull/1818), [#2032](https://github.com/nf-core/tools/pull/2032), [#2073](https://github.com/nf-core/tools/pull/2073))
 - Track from where modules and subworkflows are installed ([#1999](https://github.com/nf-core/tools/pull/1999))
 - Substitute ModulesCommand and SubworkflowsCommand by ComponentsCommand ([#2000](https://github.com/nf-core/tools/pull/2000))
 - Don't print source file + line number on logging messages (except when verbose) ([#2015](https://github.com/nf-core/tools/pull/2015))
