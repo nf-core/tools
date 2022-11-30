@@ -19,6 +19,7 @@
 
 ### General
 
+- Use pre-commit run prettier if prettier is not available ([#1983](https://github.com/nf-core/tools/pull/1983)) and initialize pre-commit in gitpod and codespaces.
 - Refactor CLI flag `--hide-progress` to be at the top-level group, like `--verbose` ([#2016](https://github.com/nf-core/tools/pull/2016))
 - Fix error in tagging GitPod docker images during releases
 - `nf-core sync` now supports the template YAML file using `-t/--template-yaml`.
