@@ -141,6 +141,7 @@ class ModuleLint(ComponentCommand):
         all_modules=False,
         print_results=True,
         show_passed=False,
+        sort_by="test",
         local=False,
         fix_version=False,
     ):
@@ -225,7 +226,7 @@ class ModuleLint(ComponentCommand):
             self.lint_modules(remote_modules, local=False, fix_version=fix_version)
 
         if print_results:
-            self._print_results(show_passed=show_passed)
+            self._print_results(show_passed=show_passed, sort_by=sort_by)
             self.print_summary()
 
     def set_up_pipeline_files(self):
@@ -327,7 +328,7 @@ class ModuleLint(ComponentCommand):
 
             self.failed += [LintResult(mod, *m) for m in mod.failed]
 
-    def _print_results(self, show_passed=False):
+    def _print_results(self, show_passed=False, sort_by="test"):
         """Print linting results to the command line.
 
         Uses the ``rich`` library to print a set of formatted tables to the command line
@@ -336,10 +337,14 @@ class ModuleLint(ComponentCommand):
 
         log.debug("Printing final results")
 
+        sort_order = ["lint_test", "module_name", "message"]
+        if sort_by == "module":
+            sort_order = ["module_name", "lint_test", "message"]
+
         # Sort the results
-        self.passed.sort(key=operator.attrgetter("message", "module_name"))
-        self.warned.sort(key=operator.attrgetter("message", "module_name"))
-        self.failed.sort(key=operator.attrgetter("message", "module_name"))
+        self.passed.sort(key=operator.attrgetter(*sort_order))
+        self.warned.sort(key=operator.attrgetter(*sort_order))
+        self.failed.sort(key=operator.attrgetter(*sort_order))
 
         # Find maximum module name length
         max_mod_name_len = 40

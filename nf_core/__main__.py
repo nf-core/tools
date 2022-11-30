@@ -732,8 +732,14 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
+@click.option(
+    "--sort-by",
+    type=click.Choice(["module", "test"]),
+    default="test",
+    help="Sort lint output by module or test name. Default: test",
+)
 @click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
-def lint(ctx, tool, dir, key, all, fail_warned, local, passed, fix_version):  # pylint: disable=redefined-outer-name
+def lint(ctx, tool, dir, key, all, fail_warned, local, passed, sort_by, fix_version):  # pylint: disable=redefined-outer-name
     """
     Lint one or more modules in a directory.
 
@@ -759,6 +765,7 @@ def lint(ctx, tool, dir, key, all, fail_warned, local, passed, fix_version):  # 
             print_results=True,
             local=local,
             show_passed=passed,
+            sort_by=sort_by,
             fix_version=fix_version,
         )
         if len(module_lint.failed) > 0:
