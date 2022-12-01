@@ -296,6 +296,33 @@ def test_update_all_subworkflows_from_module(self):
     )
 
 
+def test_update_change_of_included_modules(self):
+    """Update a subworkflow which has a module change in the new version."""
+    # Install an old version of vcf_annotate_ensemblvep with tabix/bgziptabix and without tabix/tabix
+    self.subworkflow_install_module_change.install("vcf_annotate_ensemblvep")
+    old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
+
+    # Check that tabix/bgziptabix is there
+    assert "tabix/bgziptabix" in old_mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
+    assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/bgziptabix").is_dir()
+    # Check that tabix/tabix is not there
+    assert "tabix/tabix" not in old_mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
+    assert not Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/tabix").is_dir()
+
+    # Update vcf_annotate_ensemblvep without tabix/bgziptabix and with tabix/tabix
+    update_obj = SubworkflowUpdate(self.pipeline_dir, update_deps=True, show_diff=False)
+    assert update_obj.update("vcf_annotate_ensemblvep") is True
+
+    mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
+
+    # Check that tabix/bgziptabix is not there
+    assert "tabix/bgziptabix" not in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
+    assert not Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/bgziptabix").is_dir()
+    # Check that tabix/tabix is there
+    assert "tabix/tabix" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
+    assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/tabix").is_dir()
+
+
 def cmp_component(dir1, dir2):
     """Compare two versions of the same component"""
     files = ["main.nf", "meta.yml"]
