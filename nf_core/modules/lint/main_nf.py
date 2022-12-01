@@ -255,6 +255,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
     else:
         self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
     for i, l in enumerate(lines):
+        url = None
         if _container_type(l) == "bioconda":
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
         l = l.strip(" '\"")
@@ -268,6 +269,12 @@ def check_process_section(self, lines, fix_version, progress_bar):
             else:
                 self.failed.append(("singularity_tag", "Unable to parse singularity tag", self.main_nf))
                 singularity_tag = None
+            url_regex = (
+                r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+            )
+            url_match = re.search(url_regex, l, re.S)
+            if url_match:
+                url = url_match.group(0)
         if _container_type(l) == "docker":
             # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
             # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
@@ -278,12 +285,31 @@ def check_process_section(self, lines, fix_version, progress_bar):
             else:
                 self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
+            url_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
+            url_match = re.search(url_regex, l, re.S)
+            if url_match:
+                url = url_match.group(0)
+        # lint double quotes
         if l.startswith("container"):
             container_section = l + lines[i + 1] + lines[i + 2]
             if container_section.count('"') > 2:
                 self.failed.append(
                     ("container_links", "Too many double quotes found when specifying containers", self.main_nf)
                 )
+        # Try to connect to container URLs
+        if url is None:
+            continue
+        try:
+            response = requests.get("https://" + url if not url.startswith("https://") else url, stream=True)
+            log.debug(
+                f"Connected to URL: {'https://' + url if not url.startswith('https://') else url}, "
+                f"status_code: {response.status_code}"
+            )
+        except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
+            log.debug(f"Unable to connect to url '{url}' due to error: {e}")
+            self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
+        if response.status_code != 200:
+            self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
