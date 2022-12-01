@@ -324,8 +324,15 @@ def create(name, description, author, version, no_git, force, outdir, template_y
 @click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
 @click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
+@click.option(
+    "--sort-by",
+    type=click.Choice(["module", "test"]),
+    default="test",
+    help="Sort lint output by module or test name.",
+    show_default=True,
+)
 @click.pass_context
-def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json):
+def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, sort_by):
     """
     Check pipeline code against nf-core guidelines.
 
@@ -347,7 +354,17 @@ def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, ma
     # Run the lint tests!
     try:
         lint_obj, module_lint_obj = nf_core.lint.run_linting(
-            dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, ctx.obj["hide_progress"]
+            dir,
+            release,
+            fix,
+            key,
+            show_passed,
+            fail_ignored,
+            fail_warned,
+            sort_by,
+            markdown,
+            json,
+            ctx.obj["hide_progress"],
         )
         if len(lint_obj.failed) + len(module_lint_obj.failed) > 0:
             sys.exit(1)
@@ -736,7 +753,8 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
     "--sort-by",
     type=click.Choice(["module", "test"]),
     default="test",
-    help="Sort lint output by module or test name. Default: test",
+    help="Sort lint output by module or test name.",
+    show_default=True,
 )
 @click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
 def lint(

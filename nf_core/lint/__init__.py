@@ -37,6 +37,7 @@ def run_linting(
     show_passed=False,
     fail_ignored=False,
     fail_warned=False,
+    sort_by="test",
     md_fn=None,
     json_fn=None,
     hide_progress=False,
@@ -121,7 +122,7 @@ def run_linting(
 
     # Print the results
     lint_obj._print_results(show_passed)
-    module_lint_obj._print_results(show_passed)
+    module_lint_obj._print_results(show_passed, sort_by=sort_by)
     nf_core.lint_utils.print_joint_summary(lint_obj, module_lint_obj)
     nf_core.lint_utils.print_fixes(lint_obj)
 
