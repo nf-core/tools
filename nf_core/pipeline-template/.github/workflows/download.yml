@@ -2,10 +2,14 @@ name: nf-core download
 # This workflow is triggered on pushes to the dev branch, PRs and on release published events.
 # It runs the `nf-core download` command to ensure that the pipeline can be downloaded.
 on:
-  push:
+  pull_request:
     branches:
       - dev
-  pull_request:
+      - master
+
+concurrency:
+  group: "{% raw %}${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}{% endraw %}"
+  cancel-in-progress: true
 
 jobs:
   download:
@@ -27,4 +31,4 @@ jobs:
       - name: Download the pipeline
         env:
           NXF_SINGULARITY_CACHEDIR: ./
-        run: nf-core download {{ name }} -r dev -c singularity --singularity-cache-copy -x tar.bz2 --force {%- endraw %}
+        run: nf-core download {{ name }} -r dev -c singularity --singularity-cache-copy -x tar.bz2 --force
