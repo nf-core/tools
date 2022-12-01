@@ -261,7 +261,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
         if _container_type(l) == "singularity":
             # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
             # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
-            match = re.search(r"(?:/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_.]+?)(?:\.img)?['\"]", l)
+            match = re.search(r"(?:/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_.]+?)(?:\.img)?'", l)
             if match is not None:
                 singularity_tag = match.group(1)
                 self.passed.append(("singularity_tag", f"Found singularity tag: {singularity_tag}", self.main_nf))
@@ -271,7 +271,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
         if _container_type(l) == "docker":
             # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
             # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
-            match = re.search(r"(?:[/])?(?::)?([A-Za-z\d\-_.]+)['\"]", l)
+            match = re.search(r"(?:[/])?(?::)?([A-Za-z\d\-_.]+)'", l)
             if match is not None:
                 docker_tag = match.group(1)
                 self.passed.append(("docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
