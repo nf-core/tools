@@ -254,7 +254,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
     else:
         self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
-    for l in lines:
+    for i, l in enumerate(lines):
         if _container_type(l) == "bioconda":
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
         l = l.strip(" '\"")
@@ -278,6 +278,12 @@ def check_process_section(self, lines, fix_version, progress_bar):
             else:
                 self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
+        if l.startswith("container"):
+            container_section = l + lines[i + 1] + lines[i + 2]
+            if container_section.count('"') > 2:
+                self.failed.append(
+                    ("container_links", "Too many double quotes found when specifying containers", self.main_nf)
+                )
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
