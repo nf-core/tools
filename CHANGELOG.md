@@ -43,6 +43,7 @@
 - Extended the chat notifications to Slack ([#1829](https://github.com/nf-core/tools/pull/1829))
 - Allow other remote URLs not starting with `http` ([#2061](https://github.com/nf-core/tools/pull/2061))
 - Prevent installation with unsupported Python versions ([#2075](https://github.com/nf-core/tools/pull/2075))
+- Automatically format `test.yml` content with Prettier ([#2078](https://github.com/nf-core/tools/pull/2078))
 
 ### Modules
 
