@@ -32,7 +32,9 @@ class TestModules(unittest.TestCase):
         self.create_obj.init_pipeline()
         self.remote_path = os.path.join(self.tmp_dir, "remote_repo")
         self.remote_repo = git.Repo.init(self.remote_path, bare=True)
-        self.remote_repo.active_branch.rename(default_branch)
+
+        if self.remote_repo.active_branch.name != "master":
+            self.remote_repo.active_branch.rename(default_branch)
 
     def tearDown(self):
         if os.path.exists(self.tmp_dir):
