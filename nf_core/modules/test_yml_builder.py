@@ -362,6 +362,7 @@ class ModulesTestYmlBuilder(ComponentCommand):
         with tempfile.NamedTemporaryFile(mode="w+") as fh:
             yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
             run_prettier_on_file(fh.name)
+            fh.seek(0)
             prettified_yml = fh.read()
 
         if self.test_yml_output_path == "-":
