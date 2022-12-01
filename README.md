@@ -225,8 +225,10 @@ fish | ~/.config/fish/completions/nf-core.fish | `eval (env _NF_CORE_COMPLETE=fi
 
 After a restart of the shell session you should have auto-completion for the `nf-core` command and all its sub-commands and options.
 
-> **NB:** The added line will run the command `nf-core`. You must therefore have the nf-core/tools installed globally.
+> **NB:** The added line will run the command `nf-core` (which will also slow down startup time of your shell). You should therefore either have the nf-core/tools installed globally.
 > You can also wrap it inside `if type nf-core > /dev/null; then ` \<YOUR EVAL CODE LINE\> `fi` for bash and zsh or `if command -v nf-core &> /dev/null eval (env _NF_CORE_COMPLETE=fish_source nf-core) end` for fish. You need to then source the config in your environment for the completions to be activated.
+
+> **NB:** If you see the error `command not found compdef` , be sure that your config file contains the line `autoload -Uz compinit && compinit` before the eval line.
 
 ## Listing pipelines
 
