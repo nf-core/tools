@@ -286,6 +286,7 @@ class TestCli(unittest.TestCase):
             "show-passed" in params,
             "fail-ignored" in params,
             "fail-warned" in params,
+            "test",
             params["markdown"],
             params["json"],
             "hide-progress" in params,
