@@ -6,8 +6,6 @@ on:
     branches:
       - dev
   pull_request:
-  release:
-    types: [published]
 
 jobs:
   download:
@@ -29,4 +27,4 @@ jobs:
       - name: Download the pipeline
         env:
           NXF_SINGULARITY_CACHEDIR: ./
-        run: nf-core download {{name}} -r dev -c singularity --singularity-cache-copy -x tar.bz2 --force {%- endraw %}
+        run: nf-core download {{ name }} -r dev -c singularity --singularity-cache-copy -x tar.bz2 --force {%- endraw %}
