@@ -39,9 +39,13 @@ class ModulesTestYmlBuilder(ComponentCommand):
         test_yml_output_path=None,
         force_overwrite=False,
         no_prompts=False,
+        remote_url=None,
+        branch=None,
     ):
-        super().__init__("modules", directory)
+        super().__init__("modules", directory, remote_url, branch)
         self.module_name = module_name
+        self.remote_url = remote_url
+        self.branch = branch
         self.run_tests = run_tests
         self.test_yml_output_path = test_yml_output_path
         self.force_overwrite = force_overwrite
@@ -74,7 +78,7 @@ class ModulesTestYmlBuilder(ComponentCommand):
 
         # Get the tool name if not specified
         if self.module_name is None:
-            modules_repo = ModulesRepo()
+            modules_repo = ModulesRepo(remote_url=self.remote_url, branch=self.branch)
             self.module_name = questionary.autocomplete(
                 "Tool name:",
                 choices=modules_repo.get_avail_components(self.component_type),
