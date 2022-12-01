@@ -67,6 +67,12 @@ class TestSubworkflows(unittest.TestCase):
             force=False,
             sha=OLD_SUBWORKFLOWS_SHA,
         )
+        self.subworkflow_install_module_change = nf_core.subworkflows.SubworkflowInstall(
+            self.pipeline_dir,
+            prompt=False,
+            force=False,
+            sha="8c343b3c8a0925949783dc547666007c245c235b",
+        )
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
 
         # Set up remove objects
@@ -126,6 +132,7 @@ class TestSubworkflows(unittest.TestCase):
         test_update_all,
         test_update_all_linked_components_from_subworkflow,
         test_update_all_subworkflows_from_module,
+        test_update_change_of_included_modules,
         test_update_with_config_dont_update,
         test_update_with_config_fix_all,
         test_update_with_config_fixed_version,
