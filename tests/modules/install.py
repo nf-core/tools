@@ -71,3 +71,15 @@ def test_modules_install_different_branch_succeed(self):
         modules_json.get_component_branch(self.component_type, "fastp", GITLAB_URL, GITLAB_REPO)
         == GITLAB_BRANCH_TEST_BRANCH
     )
+
+
+def test_modules_install_tracking(self):
+    """Test installing a module and finding 'modules' in the installed_by section of modules.json"""
+    self.mods_install.install("trimgalore")
+
+    # Verify that the installed_by entry was added correctly
+    modules_json = ModulesJson(self.pipeline_dir)
+    mod_json = modules_json.get_modules_json()
+    assert mod_json["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"]["trimgalore"][
+        "installed_by"
+    ] == ["modules"]
