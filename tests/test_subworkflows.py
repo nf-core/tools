@@ -28,7 +28,7 @@ def create_modules_repo_dummy(tmp_dir):
     with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
         fh.writelines(["test:", "\n  - modules/test/**", "\n  - tests/modules/test/**"])
     with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
-        fh.writelines(["repository_type: modules", "\n"])
+        fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
 
     with requests_mock.Mocker() as mock:
         subworkflow_create = nf_core.subworkflows.SubworkflowCreate(root_dir, "test_subworkflow", "@author", True)
@@ -66,6 +66,12 @@ class TestSubworkflows(unittest.TestCase):
             prompt=False,
             force=False,
             sha=OLD_SUBWORKFLOWS_SHA,
+        )
+        self.subworkflow_install_module_change = nf_core.subworkflows.SubworkflowInstall(
+            self.pipeline_dir,
+            prompt=False,
+            force=False,
+            sha="8c343b3c8a0925949783dc547666007c245c235b",
         )
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
 
@@ -129,6 +135,7 @@ class TestSubworkflows(unittest.TestCase):
         test_update_all,
         test_update_all_linked_components_from_subworkflow,
         test_update_all_subworkflows_from_module,
+        test_update_change_of_included_modules,
         test_update_with_config_dont_update,
         test_update_with_config_fix_all,
         test_update_with_config_fixed_version,

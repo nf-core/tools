@@ -15,6 +15,7 @@ import shlex
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 import git
 import prompt_toolkit
@@ -923,7 +924,11 @@ def get_repo_releases_branches(pipeline, wfs):
     return pipeline, wf_releases, wf_branches
 
 
-def load_tools_config(dir="."):
+CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
+DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
+
+
+def load_tools_config(directory="."):
     """
     Parse the nf-core.yml configuration file
 
@@ -935,32 +940,45 @@ def load_tools_config(dir="."):
     Returns the loaded config dict or False, if the file couldn't be loaded
     """
     tools_config = {}
-    config_fn = os.path.join(dir, ".nf-core.yml")
 
-    # Check if old config file is used
-    old_config_fn_yml = os.path.join(dir, ".nf-core-lint.yml")
-    old_config_fn_yaml = os.path.join(dir, ".nf-core-lint.yaml")
+    config_fn = get_first_available_path(directory, CONFIG_PATHS)
 
-    if os.path.isfile(old_config_fn_yml) or os.path.isfile(old_config_fn_yaml):
-        log.error(
-            "Deprecated `nf-core-lint.yml` file found! The file will not be loaded. Please rename the file to `.nf-core.yml`."
-        )
-        return {}
+    if config_fn is None:
+        depr_path = get_first_available_path(directory, DEPRECATED_CONFIG_PATHS)
+        if depr_path:
+            log.error(
+                f"Deprecated `{depr_path.name}` file found! The file will not be loaded. "
+                f"Please rename the file to `{CONFIG_PATHS[0]}`."
+            )
+        else:
+            log.debug(f"No tools config file found: {CONFIG_PATHS[0]}")
+        return Path(directory, CONFIG_PATHS[0]), {}
 
-    if not os.path.isfile(config_fn):
-        config_fn = os.path.join(dir, ".nf-core.yaml")
+    with open(config_fn, "r") as fh:
+        tools_config = yaml.safe_load(fh)
 
-    # Load the YAML
-    try:
-        with open(config_fn, "r") as fh:
-            tools_config = yaml.safe_load(fh)
-    except FileNotFoundError:
-        log.debug(f"No tools config file found: {config_fn}")
-        return {}
-    if tools_config is None:
-        # If the file is empty
-        return {}
-    return tools_config
+    # If the file is empty
+    tools_config = tools_config or {}
+
+    log.debug("Using config file: %s", config_fn)
+    return config_fn, tools_config
+
+
+def determine_base_dir(directory="."):
+    base_dir = start_dir = Path(directory).absolute()
+    while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
+        base_dir = base_dir.parent
+        config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
+        if config_fn:
+            break
+    return directory if base_dir == start_dir else base_dir
+
+
+def get_first_available_path(directory, paths):
+    for p in paths:
+        if Path(directory, p).is_file():
+            return Path(directory, p)
+    return None
 
 
 def sort_dictionary(d):

@@ -38,7 +38,7 @@ class PipelineCreate:
         force (bool): Overwrites a given workflow directory with the same name. Defaults to False.
             May the force be with you.
         outdir (str): Path to the local output directory.
-        template_yaml (str): Path to template.yml file for pipeline creation settings.
+        template_yaml_path (str): Path to template.yml file for pipeline creation settings.
         plain (bool): If true the Git repository will be initialized plain.
         default_branch (str): Specifies the --initial-branch name.
     """
@@ -442,12 +442,12 @@ class PipelineCreate:
             lint_config["readme"] = ["nextflow_badge"]
 
         # Add the lint content to the preexisting nf-core config
-        nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
+        config_fn, nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
         nf_core_yml["lint"] = lint_config
-        with open(self.outdir / ".nf-core.yml", "w") as fh:
+        with open(self.outdir / config_fn, "w") as fh:
             yaml.dump(nf_core_yml, fh, default_flow_style=False, sort_keys=False)
 
-        run_prettier_on_file(os.path.join(self.outdir, ".nf-core.yml"))
+        run_prettier_on_file(os.path.join(self.outdir, config_fn))
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
@@ -528,10 +528,10 @@ class PipelineCreate:
 
         log.info("Initialising pipeline git repository")
         repo = git.Repo.init(self.outdir)
-        if default_branch:
-            repo.active_branch.rename(default_branch)
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
+        if default_branch:
+            repo.active_branch.rename(default_branch)
         repo.git.branch("TEMPLATE")
         repo.git.branch("dev")
         log.info(

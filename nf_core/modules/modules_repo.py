@@ -11,7 +11,7 @@ from git.exc import GitCommandError, InvalidGitRepositoryError
 
 import nf_core.modules.modules_json
 import nf_core.modules.modules_utils
-from nf_core.utils import NFCORE_DIR
+from nf_core.utils import NFCORE_DIR, load_tools_config
 
 log = logging.getLogger(__name__)
 
@@ -126,10 +126,15 @@ class ModulesRepo:
 
         self.remote_url = remote_url
 
-        self.repo_path = nf_core.modules.modules_utils.path_from_remote(self.remote_url)
         self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, hide_progress)
+
+        config_fn, repo_config = load_tools_config(self.local_repo_dir)
+        try:
+            self.repo_path = repo_config["org_path"]
+        except KeyError:
+            raise UserWarning(f"'org_path' key not present in {config_fn.name}")
 
         # Verify that the repo seems to be correctly configured
         if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
@@ -371,8 +376,8 @@ class ModulesRepo:
         else:
             self.checkout(commit)
         module_files = ["main.nf", "meta.yml"]
-        module_dir = self.get_component_dir(module_name, "modules")
         files_identical = {file: True for file in module_files}
+        module_dir = self.get_component_dir(module_name, "modules")
         for file in module_files:
             try:
                 files_identical[file] = filecmp.cmp(os.path.join(module_dir, file), os.path.join(base_path, file))

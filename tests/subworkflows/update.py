@@ -104,9 +104,9 @@ def test_update_with_config_fixed_version(self):
 
     # Fix the subworkflow version in the .nf-core.yml to an old version
     update_config = {NF_CORE_MODULES_REMOTE: {NF_CORE_MODULES_NAME: {"fastq_align_bowtie2": OLD_SUBWORKFLOWS_SHA}}}
-    tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+    config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(Path(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(Path(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all subworkflows in the pipeline
@@ -135,9 +135,9 @@ def test_update_with_config_dont_update(self):
 
     # Set the fastq_align_bowtie2 field to no update in the .nf-core.yml
     update_config = {NF_CORE_MODULES_REMOTE: {NF_CORE_MODULES_NAME: {"fastq_align_bowtie2": False}}}
-    tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+    config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(Path(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(Path(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
@@ -166,9 +166,9 @@ def test_update_with_config_fix_all(self):
 
     # Fix the version of all nf-core subworkflows in the .nf-core.yml to an old version
     update_config = {NF_CORE_MODULES_REMOTE: OLD_SUBWORKFLOWS_SHA}
-    tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+    config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(Path(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(Path(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all subworkflows in the pipeline
@@ -197,9 +197,9 @@ def test_update_with_config_no_updates(self):
 
     # Set all repository updates to False
     update_config = {NF_CORE_MODULES_REMOTE: False}
-    tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
+    config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(Path(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(Path(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all subworkflows in the pipeline
@@ -294,6 +294,33 @@ def test_update_all_subworkflows_from_module(self):
         old_mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]["bowtie2/align"]["git_sha"]
         != mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]["bowtie2/align"]["git_sha"]
     )
+
+
+def test_update_change_of_included_modules(self):
+    """Update a subworkflow which has a module change in the new version."""
+    # Install an old version of vcf_annotate_ensemblvep with tabix/bgziptabix and without tabix/tabix
+    self.subworkflow_install_module_change.install("vcf_annotate_ensemblvep")
+    old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
+
+    # Check that tabix/bgziptabix is there
+    assert "tabix/bgziptabix" in old_mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
+    assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/bgziptabix").is_dir()
+    # Check that tabix/tabix is not there
+    assert "tabix/tabix" not in old_mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
+    assert not Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/tabix").is_dir()
+
+    # Update vcf_annotate_ensemblvep without tabix/bgziptabix and with tabix/tabix
+    update_obj = SubworkflowUpdate(self.pipeline_dir, update_deps=True, show_diff=False)
+    assert update_obj.update("vcf_annotate_ensemblvep") is True
+
+    mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
+
+    # Check that tabix/bgziptabix is not there
+    assert "tabix/bgziptabix" not in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
+    assert not Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/bgziptabix").is_dir()
+    # Check that tabix/tabix is there
+    assert "tabix/tabix" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
+    assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/tabix").is_dir()
 
 
 def cmp_component(dir1, dir2):
