@@ -917,8 +917,6 @@ class ModulesJson:
                 if component_type in repo_entry:
                     for dir, components in repo_entry[component_type].items():
                         self.pipeline_components[repo] = [(dir, m) for m in components]
-        if self.pipeline_components == {}:
-            self.pipeline_components = None
 
         return self.pipeline_components
 
@@ -961,6 +959,30 @@ class ModulesJson:
 
         return dependent_components
 
+    def get_installed_by_entries(self, component_type, name):
+        """
+        Retrieves all entries of installed_by for a given component
+
+        Args:
+            component_type (str): Type of component [modules, subworkflows]
+            name (str): Name of the component to find dependencies for
+
+        Returns:
+            (list): The list of installed_by entries
+
+        """
+        if self.modules_json is None:
+            self.load()
+        installed_by_entries = {}
+        for repo_url, repo_entry in self.modules_json.get("repos", {}).items():
+            if component_type in repo_entry:
+                for install_dir, components in repo_entry[component_type].items():
+                    if name in components:
+                        installed_by_entries = components[name]["installed_by"]
+                        break
+
+        return installed_by_entries
+
     def get_component_branch(self, component_type, component, repo_url, install_dir):
         """
         Gets the branch from which the module/subworkflow was installed
@@ -968,7 +990,7 @@ class ModulesJson:
         Returns:
             (str): The branch name
         Raises:
-            LookupError: If their is no branch entry in the `modules.json`
+            LookupError: If there is no branch entry in the `modules.json`
         """
         if self.modules_json is None:
             self.load()
