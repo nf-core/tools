@@ -103,13 +103,13 @@ class ComponentInfo(ComponentCommand):
                     components = self.get_components_clone_modules()
                 else:
                     components = self.modules_json.get_all_components(self.component_type).get(
-                        self.modules_repo.remote_url
+                        self.modules_repo.remote_url, {}
                     )
                     components = [
                         component if directory == self.modules_repo.repo_path else f"{directory}/{component}"
                         for directory, component in components
                     ]
-                    if components is None:
+                    if not components:
                         raise UserWarning(
                             f"No {self.component_type[:-1]} installed from '{self.modules_repo.remote_url}'"
                         )
