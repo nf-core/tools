@@ -76,3 +76,67 @@ def test_subworkflows_install_different_branch_fail(self):
     install_obj = SubworkflowInstall(self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH)
     # The bam_stats_samtools subworkflow does not exists in the branch-test branch
     assert install_obj.install("bam_stats_samtools") is False
+
+
+def test_subworkflows_install_tracking(self):
+    """Test installing a subworkflow and finding the correct entries in installed_by section of modules.json"""
+    self.subworkflow_install.install("bam_sort_stats_samtools")
+
+    # Verify that the installed_by entry was added correctly
+    modules_json = ModulesJson(self.pipeline_dir)
+    mod_json = modules_json.get_modules_json()
+    assert mod_json["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"]["nf-core"][
+        "bam_sort_stats_samtools"
+    ]["installed_by"] == ["subworkflows"]
+    assert mod_json["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"]["nf-core"]["bam_stats_samtools"][
+        "installed_by"
+    ] == ["bam_sort_stats_samtools"]
+    assert mod_json["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"]["samtools/stats"][
+        "installed_by"
+    ] == ["bam_stats_samtools"]
+    assert mod_json["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"]["samtools/sort"][
+        "installed_by"
+    ] == ["bam_sort_stats_samtools"]
+
+    # Clean directory
+    self.subworkflow_remove.remove("bam_sort_stats_samtools")
+
+
+def test_subworkflows_install_tracking_added_already_installed(self):
+    """Test installing a subworkflow and finding the correct entries in installed_by section of modules.json"""
+    self.subworkflow_install.install("bam_sort_stats_samtools")
+    self.subworkflow_install.install("bam_stats_samtools")
+
+    # Verify that the installed_by entry was added correctly
+    modules_json = ModulesJson(self.pipeline_dir)
+    mod_json = modules_json.get_modules_json()
+    assert mod_json["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"]["nf-core"][
+        "bam_sort_stats_samtools"
+    ]["installed_by"] == ["subworkflows"]
+    assert sorted(
+        mod_json["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"]["nf-core"]["bam_stats_samtools"][
+            "installed_by"
+        ]
+    ) == sorted(["bam_sort_stats_samtools", "subworkflows"])
+
+    # Clean directory
+    self.subworkflow_remove.remove("bam_sort_stats_samtools")
+    self.subworkflow_remove.remove("bam_stats_samtools")
+
+
+def test_subworkflows_install_tracking_added_super_subworkflow(self):
+    """Test installing a subworkflow and finding the correct entries in installed_by section of modules.json"""
+    self.subworkflow_install.install("bam_stats_samtools")
+    self.subworkflow_install.install("bam_sort_stats_samtools")
+
+    # Verify that the installed_by entry was added correctly
+    modules_json = ModulesJson(self.pipeline_dir)
+    mod_json = modules_json.get_modules_json()
+    assert mod_json["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"]["nf-core"][
+        "bam_sort_stats_samtools"
+    ]["installed_by"] == ["subworkflows"]
+    assert sorted(
+        mod_json["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"]["nf-core"]["bam_stats_samtools"][
+            "installed_by"
+        ]
+    ) == sorted(["subworkflows", "bam_sort_stats_samtools"])

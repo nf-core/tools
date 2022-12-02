@@ -53,6 +53,9 @@ def test_modules_lint_new_modules(self):
 
 def test_modules_lint_no_gitlab(self):
     """Test linting a pipeline with no modules installed"""
+    self.mods_remove.remove("fastqc", force=True)
+    self.mods_remove.remove("multiqc", force=True)
+    self.mods_remove.remove("custom/dumpsoftwareversions", force=True)
     with pytest.raises(LookupError):
         nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
 
@@ -60,6 +63,17 @@ def test_modules_lint_no_gitlab(self):
 def test_modules_lint_gitlab_modules(self):
     """Lint modules from a different remote"""
     self.mods_install_gitlab.install("fastqc")
+    self.mods_install_gitlab.install("multiqc")
+    module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
+    module_lint.lint(print_results=False, all_modules=True)
+    assert len(module_lint.failed) == 0
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+
+
+def test_modules_lint_multiple_remotes(self):
+    """Lint modules from a different remote"""
+    self.mods_install.install("fastqc")
     self.mods_install_gitlab.install("multiqc")
     module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
     module_lint.lint(print_results=False, all_modules=True)
@@ -81,8 +95,13 @@ def test_modules_lint_patched_modules(self):
     # change temporarily working directory to the pipeline directory
     # to avoid error from try_apply_patch() during linting
     with set_wd(self.pipeline_dir):
-        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL, branch=PATCH_BRANCH)
-        module_lint.lint(print_results=False, all_modules=True)
+        module_lint = nf_core.modules.ModuleLint(
+            dir=self.pipeline_dir, remote_url=GITLAB_URL, branch=PATCH_BRANCH, hide_progress=True
+        )
+        module_lint.lint(
+            print_results=False,
+            all_modules=True,
+        )
 
     assert len(module_lint.failed) == 0
     assert len(module_lint.passed) > 0
