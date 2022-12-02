@@ -40,10 +40,14 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
         test_yml_output_path=None,
         force_overwrite=False,
         no_prompts=False,
+        remote_url=None,
+        branch=None,
     ):
         super().__init__("subworkflows", directory)
         self.dir = directory
         self.subworkflow = subworkflow
+        self.remote_url = remote_url
+        self.branch = branch
         self.run_tests = run_tests
         self.test_yml_output_path = test_yml_output_path
         self.force_overwrite = force_overwrite
@@ -53,7 +57,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
         self.entry_points = []
         self.tests = []
         self.errors = []
-        self.modules_repo = ModulesRepo()
+        self.modules_repo = ModulesRepo(remote_url=self.remote_url, branch=self.branch)
         self.modules_json = ModulesJson(self.dir)
 
     def run(self):
@@ -76,7 +80,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
         if self.subworkflow is None:
             self.subworkflow = questionary.autocomplete(
                 "Subworkflow name:",
-                choices=self.modules_repo.get_avail_components(self.component_type),
+                choices=self.components_from_repo(self.component_type),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         self.subworkflow_dir = os.path.join("subworkflows", self.modules_repo.repo_path, self.subworkflow)

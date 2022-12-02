@@ -78,10 +78,9 @@ class ModulesTestYmlBuilder(ComponentCommand):
 
         # Get the tool name if not specified
         if self.module_name is None:
-            modules_repo = ModulesRepo(remote_url=self.remote_url, branch=self.branch)
             self.module_name = questionary.autocomplete(
                 "Tool name:",
-                choices=modules_repo.get_avail_components(self.component_type),
+                choices=self.components_from_repo(self.component_type),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         self.module_dir = os.path.join(self.default_modules_path, *self.module_name.split("/"))
