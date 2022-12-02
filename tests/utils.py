@@ -74,7 +74,6 @@ def mock_api_calls(mock, module, version):
         f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{module}/versions/{module}-{version.split('--')[0]}"
     )
     anaconda_api_url = f"https://api.anaconda.org/package/bioconda/{module}"
-    mock.register_uri("GET", biocontainers_api_url, text="to modify when the api works and I can know what to add")
     anaconda_mock = {
         "status_code": 200,
         "latest_version": version.split("--")[0],

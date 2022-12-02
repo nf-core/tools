@@ -296,6 +296,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
             response = requests.head(
                 "https://" + urlunparse(url) if not url.scheme == "https" else urlunparse(url),
                 stream=True,
+                allow_redirects=True,
             )
             log.debug(
                 f"Connected to URL: {'https://' + urlunparse(url) if not url.scheme == 'https' else urlunparse(url)}, "
