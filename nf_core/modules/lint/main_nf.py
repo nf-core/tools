@@ -293,7 +293,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
         if url is None:
             continue
         try:
-            response = requests.get(
+            response = requests.head(
                 "https://" + urlunparse(url) if not url.scheme == "https" else urlunparse(url),
                 stream=True,
             )
