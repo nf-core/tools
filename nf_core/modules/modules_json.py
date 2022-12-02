@@ -546,6 +546,16 @@ class ModulesJson:
             self.load()
             if not self.has_git_url_and_modules():
                 raise UserWarning
+            # check that all "installed_by" entries are lists and not strings
+            # [these strings come from an older dev version, so this check can probably be removed in a future release]
+            for _, repo_entry in self.modules_json.get("repos", {}).items():
+                for component_type in ["modules", "subworkflows"]:
+                    if component_type in repo_entry:
+                        for install_dir, install_dir_entry in repo_entry[component_type].items():
+                            for _, component in install_dir_entry.items():
+                                if "installed_by" in component and isinstance(component["installed_by"], str):
+                                    log.debug(f"Updating {component} in modules.json")
+                                    component["installed_by"] = [component["installed_by"]]
         except UserWarning:
             log.info("The 'modules.json' file is not up to date. Recreating the 'modules.json' file.")
             self.create()

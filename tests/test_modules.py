@@ -152,6 +152,7 @@ class TestModules(unittest.TestCase):
         test_modules_install_from_gitlab,
         test_modules_install_nomodule,
         test_modules_install_nopipeline,
+        test_modules_install_tracking,
         test_modules_install_trimgalore,
         test_modules_install_trimgalore_twice,
     )
