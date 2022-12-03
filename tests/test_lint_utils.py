@@ -1,4 +1,7 @@
 import shutil
+import tempfile
+import unittest
+from pathlib import Path
 
 import git
 import pytest
@@ -59,7 +62,18 @@ def test_run_prettier_on_malformed_file(malformed_json):
     assert malformed_json.read_text() == JSON_FORMATTED
 
 
-def test_run_prettier_on_synthax_error_file(synthax_error_json):
-    with pytest.raises(ValueError) as exc_info:
-        nf_core.lint_utils.run_prettier_on_file(synthax_error_json)
-    assert exc_info.value.args[0].startswith(f"Can't format {synthax_error_json} because it has a synthax error.")
+class TestPrettierLogging(unittest.TestCase):
+    def test_run_prettier_on_synthax_error_file(self):
+        with tempfile.TemporaryDirectory() as tmp_git_dir:
+            repo = git.Repo.init(tmp_git_dir)
+            file = Path(tmp_git_dir) / "synthax-error.json"
+            with open(file, "w", encoding="utf-8") as f:
+                f.write(JSON_WITH_SYNTAX_ERROR)
+            repo.git.add(file)
+            with self.assertLogs(level="CRITICAL") as mocked_critical:
+                nf_core.lint_utils.run_prettier_on_file(file)
+            expected_error_message = (
+                "synthax-error.json: SyntaxError: Unexpected token (1:10)\n"
+                "[error] > 1 | {'a':1, 1}\n[error]     |          ^\n"
+            )
+            assert expected_error_message in mocked_critical.output[0]
