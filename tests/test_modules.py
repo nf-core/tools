@@ -36,7 +36,7 @@ def create_modules_repo_dummy(tmp_dir):
 
     # mock biocontainers and anaconda response
     with requests_mock.Mocker() as mock:
-        mock_api_calls(mock, "bpipe", "0.9.11")
+        mock_api_calls(mock, "bpipe", "0.9.11--hdfd78af_0")
         # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
         module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
         module_create.create()
@@ -152,12 +152,14 @@ class TestModules(unittest.TestCase):
         test_modules_install_from_gitlab,
         test_modules_install_nomodule,
         test_modules_install_nopipeline,
+        test_modules_install_tracking,
         test_modules_install_trimgalore,
         test_modules_install_trimgalore_twice,
     )
     from .modules.lint import (
         test_modules_lint_empty,
         test_modules_lint_gitlab_modules,
+        test_modules_lint_multiple_remotes,
         test_modules_lint_new_modules,
         test_modules_lint_no_gitlab,
         test_modules_lint_patched_modules,

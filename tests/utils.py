@@ -70,18 +70,33 @@ def set_wd(path: Path):
 
 def mock_api_calls(mock, module, version):
     """Mock biocontainers and anaconda api calls for module"""
-    biocontainers_api_url = f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{module}/versions/{module}-{version}"
+    biocontainers_api_url = (
+        f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{module}/versions/{module}-{version.split('--')[0]}"
+    )
     anaconda_api_url = f"https://api.anaconda.org/package/bioconda/{module}"
-    mock.register_uri("GET", biocontainers_api_url, text="to modify when the api works and I can know what to add")
     anaconda_mock = {
         "status_code": 200,
-        "latest_version": version,
+        "latest_version": version.split("--")[0],
         "summary": "",
         "doc_url": "",
         "dev_url": "",
-        "files": [{"version": version}],
+        "files": [{"version": version.split("--")[0]}],
         "license": "",
     }
-    biocontainers_mock = {"status_code": 200, "images": [{"image_type": "Docker", "image_name": f"{module}-{version}"}]}
+    biocontainers_mock = {
+        "status_code": 200,
+        "images": [
+            {
+                "image_type": "Singularity",
+                "image_name": f"https://depot.galaxyproject.org/singularity/{module}:{version}",
+                "updated": "2021-09-04T00:00:00Z",
+            },
+            {
+                "image_type": "Docker",
+                "image_name": f"quay.io/biocontainers/{module}:{version}",
+                "updated": "2021-09-04T00:00:00Z",
+            },
+        ],
+    }
     mock.register_uri("GET", anaconda_api_url, json=anaconda_mock)
     mock.register_uri("GET", biocontainers_api_url, json=biocontainers_mock)

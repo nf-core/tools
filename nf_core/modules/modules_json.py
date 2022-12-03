@@ -545,6 +545,16 @@ class ModulesJson:
             self.load()
             if not self.has_git_url_and_modules():
                 raise UserWarning
+            # check that all "installed_by" entries are lists and not strings
+            # [these strings come from an older dev version, so this check can probably be removed in a future release]
+            for _, repo_entry in self.modules_json.get("repos", {}).items():
+                for component_type in ["modules", "subworkflows"]:
+                    if component_type in repo_entry:
+                        for install_dir, install_dir_entry in repo_entry[component_type].items():
+                            for _, component in install_dir_entry.items():
+                                if "installed_by" in component and isinstance(component["installed_by"], str):
+                                    log.debug(f"Updating {component} in modules.json")
+                                    component["installed_by"] = [component["installed_by"]]
         except UserWarning:
             log.info("The 'modules.json' file is not up to date. Recreating the 'modules.json' file.")
             self.create()
@@ -654,7 +664,7 @@ class ModulesJson:
         repo_component_entry[component_name]["git_sha"] = component_version
         repo_component_entry[component_name]["branch"] = branch
         try:
-            if installed_by not in repo_component_entry[component_name]["installed_by"]:
+            if installed_by not in repo_component_entry[component_name]["installed_by"] and installed_by is not None:
                 repo_component_entry[component_name]["installed_by"].append(installed_by)
         except KeyError:
             repo_component_entry[component_name]["installed_by"] = [installed_by]
@@ -915,8 +925,6 @@ class ModulesJson:
                 if component_type in repo_entry:
                     for dir, components in repo_entry[component_type].items():
                         self.pipeline_components[repo] = [(dir, m) for m in components]
-        if self.pipeline_components == {}:
-            self.pipeline_components = None
 
         return self.pipeline_components
 
@@ -959,6 +967,30 @@ class ModulesJson:
 
         return dependent_components
 
+    def get_installed_by_entries(self, component_type, name):
+        """
+        Retrieves all entries of installed_by for a given component
+
+        Args:
+            component_type (str): Type of component [modules, subworkflows]
+            name (str): Name of the component to find dependencies for
+
+        Returns:
+            (list): The list of installed_by entries
+
+        """
+        if self.modules_json is None:
+            self.load()
+        installed_by_entries = {}
+        for repo_url, repo_entry in self.modules_json.get("repos", {}).items():
+            if component_type in repo_entry:
+                for install_dir, components in repo_entry[component_type].items():
+                    if name in components:
+                        installed_by_entries = components[name]["installed_by"]
+                        break
+
+        return installed_by_entries
+
     def get_component_branch(self, component_type, component, repo_url, install_dir):
         """
         Gets the branch from which the module/subworkflow was installed
@@ -966,7 +998,7 @@ class ModulesJson:
         Returns:
             (str): The branch name
         Raises:
-            LookupError: If their is no branch entry in the `modules.json`
+            LookupError: If there is no branch entry in the `modules.json`
         """
         if self.modules_json is None:
             self.load()

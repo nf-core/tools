@@ -161,10 +161,8 @@ class ComponentRemove(ComponentCommand):
             else:
                 log.info(f"Removed files for '{component}'.")
         else:
-            installed_by = modules_json.modules_json["repos"][self.modules_repo.remote_url][self.component_type][
-                repo_path
-            ][component]["installed_by"]
-            if installed_by == self.component_type:
+            installed_by = modules_json.get_installed_by_entries(self.component_type, component)
+            if installed_by == [self.component_type]:
                 log.error(
                     f"Did not remove '{component}', because it was also manually installed. Only updated 'installed_by' entry in modules.json."
                 )
