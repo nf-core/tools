@@ -73,6 +73,7 @@ class DownloadWorkflow:
         pipeline (str): A nf-core pipeline name.
         revision (str): The workflow revision to download, like `1.0`. Defaults to None.
         singularity (bool): Flag, if the Singularity container should be downloaded as well. Defaults to False.
+        tower (bool): Flag, to customize the download for Nextflow Tower (convert to git bare repo). Defaults to False.
         outdir (str): Path to the local download directory. Defaults to None.
     """
 
@@ -83,6 +84,7 @@ class DownloadWorkflow:
         outdir=None,
         compress_type=None,
         force=False,
+        tower=False,
         container=None,
         singularity_cache_only=False,
         parallel_downloads=4,
@@ -93,6 +95,7 @@ class DownloadWorkflow:
         self.output_filename = None
         self.compress_type = compress_type
         self.force = force
+        self.tower = tower
         self.container = container
         self.singularity_cache_only = singularity_cache_only
         self.parallel_downloads = parallel_downloads
