@@ -376,8 +376,8 @@ class ModulesRepo:
         else:
             self.checkout(commit)
         module_files = ["main.nf", "meta.yml"]
-        module_dir = self.get_component_dir(module_name, "modules")
         files_identical = {file: True for file in module_files}
+        module_dir = self.get_component_dir(module_name, "modules")
         for file in module_files:
             try:
                 files_identical[file] = filecmp.cmp(os.path.join(module_dir, file), os.path.join(base_path, file))

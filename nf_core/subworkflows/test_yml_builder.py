@@ -28,6 +28,8 @@ from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
 
+from ..lint_utils import run_prettier_on_file
+
 log = logging.getLogger(__name__)
 
 
@@ -378,16 +380,19 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
         """
         Generate the test yml file.
         """
+        with tempfile.NamedTemporaryFile(mode="w+") as fh:
+            yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
+            run_prettier_on_file(fh.name)
+            fh.seek(0)
+            prettified_yml = fh.read()
 
         if self.test_yml_output_path == "-":
             console = rich.console.Console()
-            yaml_str = yaml.dump(self.tests, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
-            console.print("\n", Syntax(yaml_str, "yaml"), "\n")
-            return
-
-        try:
-            log.info(f"Writing to '{self.test_yml_output_path}'")
-            with open(self.test_yml_output_path, "w") as fh:
-                yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
-        except FileNotFoundError as e:
-            raise UserWarning(f"Could not create test.yml file: '{e}'")
+            console.print("\n", Syntax(prettified_yml, "yaml"), "\n")
+        else:
+            try:
+                log.info(f"Writing to '{self.test_yml_output_path}'")
+                with open(self.test_yml_output_path, "w") as fh:
+                    fh.write(prettified_yml)
+            except FileNotFoundError as e:
+                raise UserWarning(f"Could not create test.yml file: '{e}'")

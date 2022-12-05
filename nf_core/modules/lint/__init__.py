@@ -89,23 +89,29 @@ class ModuleLint(ComponentCommand):
         if self.repo_type == "pipeline":
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
-            all_pipeline_modules = modules_json.get_all_components(self.component_type)
-            if all_pipeline_modules is not None and self.modules_repo.remote_url in all_pipeline_modules:
-                module_dir = Path(self.dir, "modules", self.modules_repo.repo_path)
-                self.all_remote_modules = [
-                    NFCoreModule(m[1], self.modules_repo.remote_url, module_dir / m[1], self.repo_type, Path(self.dir))
-                    for m in all_pipeline_modules[self.modules_repo.remote_url]
-                ]  # m = (module_dir, module_name)
-                if not self.all_remote_modules:
-                    raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
-                local_module_dir = Path(self.dir, "modules", "local")
+            self.all_remote_modules = []
+            for repo_url, components in modules_json.get_all_components(self.component_type).items():
+                for org, comp in components:
+                    self.all_remote_modules.append(
+                        NFCoreModule(
+                            comp,
+                            repo_url,
+                            Path(self.dir, self.component_type, org, comp),
+                            self.repo_type,
+                            Path(self.dir),
+                        )
+                    )
+            if not self.all_remote_modules:
+                raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
+            local_module_dir = Path(self.dir, "modules", "local")
+            self.all_local_modules = []
+            if local_module_dir.exists():
                 self.all_local_modules = [
-                    NFCoreModule(m, None, local_module_dir / m, self.repo_type, Path(self.dir), nf_core_module=False)
+                    NFCoreModule(
+                        m, None, Path(local_module_dir, m), self.repo_type, Path(self.dir), remote_module=False
+                    )
                     for m in self.get_local_components()
                 ]
-
-            else:
-                raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
         else:
             module_dir = Path(self.dir, self.default_modules_path)
             self.all_remote_modules = [
@@ -141,6 +147,7 @@ class ModuleLint(ComponentCommand):
         all_modules=False,
         print_results=True,
         show_passed=False,
+        sort_by="test",
         local=False,
         fix_version=False,
     ):
@@ -225,7 +232,7 @@ class ModuleLint(ComponentCommand):
             self.lint_modules(remote_modules, local=False, fix_version=fix_version)
 
         if print_results:
-            self._print_results(show_passed=show_passed)
+            self._print_results(show_passed=show_passed, sort_by=sort_by)
             self.print_summary()
 
     def set_up_pipeline_files(self):
@@ -327,7 +334,7 @@ class ModuleLint(ComponentCommand):
 
             self.failed += [LintResult(mod, *m) for m in mod.failed]
 
-    def _print_results(self, show_passed=False):
+    def _print_results(self, show_passed=False, sort_by="test"):
         """Print linting results to the command line.
 
         Uses the ``rich`` library to print a set of formatted tables to the command line
@@ -336,10 +343,14 @@ class ModuleLint(ComponentCommand):
 
         log.debug("Printing final results")
 
+        sort_order = ["lint_test", "module_name", "message"]
+        if sort_by == "module":
+            sort_order = ["module_name", "lint_test", "message"]
+
         # Sort the results
-        self.passed.sort(key=operator.attrgetter("message", "module_name"))
-        self.warned.sort(key=operator.attrgetter("message", "module_name"))
-        self.failed.sort(key=operator.attrgetter("message", "module_name"))
+        self.passed.sort(key=operator.attrgetter(*sort_order))
+        self.warned.sort(key=operator.attrgetter(*sort_order))
+        self.failed.sort(key=operator.attrgetter(*sort_order))
 
         # Find maximum module name length
         max_mod_name_len = 40
