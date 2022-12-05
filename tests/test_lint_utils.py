@@ -39,7 +39,7 @@ def git_dir_with_json_malformed(temp_git_repo):
     return file
 
 
-@pytest.fixture(name="synthax_error_json")
+@pytest.fixture(name="syntax_error_json")
 def git_dir_with_json_syntax_error(temp_git_repo):
     tmp_git_dir, repo = temp_git_repo
     file = tmp_git_dir / "synthax-error.json"
