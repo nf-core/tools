@@ -16,6 +16,7 @@
 
 - Don't lint pipeline name if `manifest.name` in `.nf-core.yml` ([#2035](https://github.com/nf-core/tools/pull/2035))
 - Don't check for `docker pull` commands in `actions_ci` lint test (leftover from DSL1)
+- Add `--sort-by` option to linting which allows ordering module lint warnings/errors by either test name or module name
 
 ### General
 
