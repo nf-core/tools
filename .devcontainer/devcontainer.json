@@ -1,7 +1,7 @@
 {
     "name": "nfcore",
     "image": "nfcore/gitpod:latest",
-    "postCreateCommand": "python -m pip install --upgrade -r ../requirements-dev.txt -e ../",
+    "postCreateCommand": "python -m pip install --upgrade -r ../requirements-dev.txt -e ../ && pre-commit install --install-hooks",
     "remoteUser": "gitpod",
 
     // Configure tool-specific properties.

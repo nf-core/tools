@@ -79,27 +79,28 @@ rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
 
 
 def run_nf_core():
-    # Print nf-core header
-    stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
-    stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
-    stderr.print(r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
-    stderr.print(r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,", highlight=False)
-    stderr.print("[green]                                          `._,._,'\n", highlight=False)
-    stderr.print(
-        f"[grey39]    nf-core/tools version {nf_core.__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
-        highlight=False,
-    )
-    try:
-        is_outdated, _, remote_vers = nf_core.utils.check_if_outdated()
-        if is_outdated:
-            stderr.print(
-                f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
-                highlight=False,
-            )
-    except Exception as e:
-        log.debug(f"Could not check latest version: {e}")
-    stderr.print("\n")
-
+    # print nf-core header if environment variable is not set
+    if os.environ.get("_NF_CORE_COMPLETE") is None:
+        # Print nf-core header
+        stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
+        stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
+        stderr.print(r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
+        stderr.print(r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,", highlight=False)
+        stderr.print("[green]                                          `._,._,'\n", highlight=False)
+        stderr.print(
+            f"[grey39]    nf-core/tools version {nf_core.__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
+            highlight=False,
+        )
+        try:
+            is_outdated, _, remote_vers = nf_core.utils.check_if_outdated()
+            if is_outdated:
+                stderr.print(
+                    f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
+                    highlight=False,
+                )
+        except Exception as e:
+            log.debug(f"Could not check latest version: {e}")
+        stderr.print("\n")
     # Launch the click cli
     nf_core_cli(auto_envvar_prefix="NFCORE")
 

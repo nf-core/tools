@@ -4,6 +4,7 @@
 
 ### Template
 
+- Ignore files in `bin/` directory when running prettier.
 - Fix lint warnings for `samplesheet_check.nf` module
 - Add codespaces template ([#1957](https://github.com/nf-core/tools/pull/1957))
 - Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
@@ -20,6 +21,7 @@
 
 ### General
 
+- Use pre-commit run prettier if prettier is not available ([#1983](https://github.com/nf-core/tools/pull/1983)) and initialize pre-commit in gitpod and codespaces.
 - Refactor CLI flag `--hide-progress` to be at the top-level group, like `--verbose` ([#2016](https://github.com/nf-core/tools/pull/2016))
 - Fix error in tagging GitPod docker images during releases
 - `nf-core sync` now supports the template YAML file using `-t/--template-yaml`.
@@ -32,15 +34,18 @@
 - Add file `versions.yml` when generating `test.yml` with `nf-core modules create-test-yml` but don't check for md5sum [#1963](https://github.com/nf-core/tools/pull/1963)
 - Mock biocontainers and anaconda api calls in modules and subworkflows tests [#1967](https://github.com/nf-core/tools/pull/1967)
 - Run tests with Python 3.11 ([#1970](https://github.com/nf-core/tools/pull/1970))
+- Run test with a realistic version of git ([#2043](https://github.com/nf-core/tools/pull/2043))
 - Bump promoted Python version from 3.7 to 3.8 ([#1971](https://github.com/nf-core/tools/pull/1971))
 - Fix incorrect file deletion in `nf-core launch` when `--params_in` has the same name as `--params_out`
 - Updated GitHub actions ([#1998](https://github.com/nf-core/tools/pull/1998), [#2001](https://github.com/nf-core/tools/pull/2001))
-- Code maintenance ([#1818](https://github.com/nf-core/tools/pull/1818), [#2032](https://github.com/nf-core/tools/pull/2032))
+- Code maintenance ([#1818](https://github.com/nf-core/tools/pull/1818), [#2032](https://github.com/nf-core/tools/pull/2032), [#2073](https://github.com/nf-core/tools/pull/2073))
 - Track from where modules and subworkflows are installed ([#1999](https://github.com/nf-core/tools/pull/1999))
 - Substitute ModulesCommand and SubworkflowsCommand by ComponentsCommand ([#2000](https://github.com/nf-core/tools/pull/2000))
 - Don't print source file + line number on logging messages (except when verbose) ([#2015](https://github.com/nf-core/tools/pull/2015))
 - Extended the chat notifications to Slack ([#1829](https://github.com/nf-core/tools/pull/1829))
 - Allow other remote URLs not starting with `http` ([#2061](https://github.com/nf-core/tools/pull/2061))
+- Prevent installation with unsupported Python versions ([#2075](https://github.com/nf-core/tools/pull/2075))
+- Automatically format `test.yml` content with Prettier ([#2078](https://github.com/nf-core/tools/pull/2078))
 
 ### Modules
 
