@@ -39,7 +39,7 @@ def git_dir_with_json_malformed(temp_git_repo):
     return file
 
 
-@pytest.fixture(name="synthax_error_json")
+@pytest.fixture(name="syntax_error_json")
 def git_dir_with_json_syntax_error(temp_git_repo):
     tmp_git_dir, repo = temp_git_repo
     file = tmp_git_dir / "synthax-error.json"
@@ -59,7 +59,7 @@ def test_run_prettier_on_malformed_file(malformed_json):
     assert malformed_json.read_text() == JSON_FORMATTED
 
 
-def test_run_prettier_on_synthax_error_file(synthax_error_json):
-    with pytest.raises(ValueError) as exc_info:
-        nf_core.lint_utils.run_prettier_on_file(synthax_error_json)
-    assert exc_info.value.args[0].startswith(f"Can't format {synthax_error_json} because it has a synthax error.")
+def test_run_prettier_on_syntax_error_file(syntax_error_json, caplog):
+    nf_core.lint_utils.run_prettier_on_file(syntax_error_json)
+    expected_critical_log = "SyntaxError: Unexpected token (1:10)"
+    assert expected_critical_log in caplog.text
