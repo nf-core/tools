@@ -59,7 +59,7 @@ def test_run_prettier_on_malformed_file(malformed_json):
     assert malformed_json.read_text() == JSON_FORMATTED
 
 
-def test_run_prettier_on_synthax_error_file(synthax_error_json, caplog):
+def test_run_prettier_on_syntax_error_file(syntax_error_json, caplog):
     nf_core.lint_utils.run_prettier_on_file(synthax_error_json)
     expected_critical_log = "SyntaxError: Unexpected token (1:10)"
     assert expected_critical_log in caplog.text
