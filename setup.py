@@ -38,6 +38,7 @@ setup(
     python_requires=">=3.7, <4",
     install_requires=required,
     packages=find_packages(exclude=("docs")),
+    package_data={"": ["../.pre-commit-config.yaml"]},
     include_package_data=True,
     zip_safe=False,
 )
