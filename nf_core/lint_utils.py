@@ -73,6 +73,10 @@ def run_prettier_on_file(file):
     except subprocess.CalledProcessError as e:
         if ": SyntaxError: " in e.stdout.decode():
             log.critical(f"Can't format {file} because it has a syntax error.\n{e.stdout.decode()}")
+        if "files were modified by this hook" in e.stdout.decode():
+            log.info(
+                f"The following files were modified by prettier:\n {e.stdout.decode().lstrip('- files were modified by this hook')}"
+            )
         else:
             log.warning(
                 "There was an error running the prettier pre-commit hook.\n"
