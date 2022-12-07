@@ -362,7 +362,8 @@ class ComponentUpdate(ComponentCommand):
             raise LookupError(f"No {self.component_type} installed from '{repo_url}'")
 
         choices = [
-            component if directory == "nf-core" else f"{directory}/{component}" for directory, component in components
+            component if directory == self.modules_repo.repo_path else f"{directory}/{component}"
+            for directory, component in components
         ]
 
         if component is None:
