@@ -63,7 +63,7 @@ def run_prettier_on_file(file):
         If Prettier is not installed, a warning is logged.
     """
 
-    nf_core_pre_commit_config = Path(nf_core.__file__).parent.parent / ".pre-commit-config.yaml"
+    nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
     try:
         subprocess.run(
             ["pre-commit", "run", "--config", nf_core_pre_commit_config, "prettier", "--files", file],
