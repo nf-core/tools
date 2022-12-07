@@ -12,6 +12,7 @@
 - Add profile for running `docker` with the ARM chips (including Apple silicon) ([#1942](https://github.com/nf-core/tools/pull/1942) and [#2034](https://github.com/nf-core/tools/pull/2034))
 - Flip execution order of parameter summary printing and parameter validation to prevent 'hiding' of parameter errors.
 - Remove `CITATION.cff` file from pipeline template, to avoid that pipeline Zenodo entries reference the nf-core publication instead of the pipeline.
+- Change colour of 'pipeline completed successfully, but some processes failed' from red to yellow.
 
 ### Linting
 
