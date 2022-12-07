@@ -63,7 +63,7 @@ def run_prettier_on_file(file):
         If Prettier is not installed, a warning is logged.
     """
 
-    nf_core_pre_commit_config = Path(nf_core.__file__).parent.parent / ".pre-commit-config.yaml"
+    nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
     try:
         subprocess.run(
             ["pre-commit", "run", "--config", nf_core_pre_commit_config, "prettier", "--files", file],
@@ -73,7 +73,11 @@ def run_prettier_on_file(file):
     except subprocess.CalledProcessError as e:
         if ": SyntaxError: " in e.stdout.decode():
             log.critical(f"Can't format {file} because it has a syntax error.\n{e.stdout.decode()}")
-        else:
+        elif "files were modified by this hook" in e.stdout.decode():
+            all_lines = [line for line in e.stdout.decode().split("\n")]
+            files = "\n".join(all_lines[3:])
+            log.debug(f"The following files were modified by prettier:\n {files}")
+        elif e.stderr.decode():
             log.warning(
                 "There was an error running the prettier pre-commit hook.\n"
                 f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
