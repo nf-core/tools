@@ -1,0 +1,12 @@
+## TODO nf-core: Please run the following command to build this file:
+#                nf-core subworkflows create-test-yml {{ subworkflow_name_underscore }}
+- name: "{{ subworkflow_name }}"
+  command: nextflow run ./tests/subworkflows/{{ org }}/{{ subworkflow_dir }} -entry test_{{ subworkflow_name }} -c ./tests/config/nextflow.config
+  tags:
+    - "subworkflows"
+    - "subworkflows/{{ subworkflow_name }}"
+  files:
+    - path: "output/{{ subworkflow_name }}/test.bam"
+      md5sum: e667c7caad0bc4b7ac383fd023c654fc
+    - path: output/{{ subworkflow_name }}/versions.yml
+      md5sum: a01fe51bc4c6a3a6226fbf77b2c7cf3b

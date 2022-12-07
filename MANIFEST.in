@@ -2,4 +2,6 @@ include LICENSE
 include README.md
 graft nf_core/module-template
 graft nf_core/pipeline-template
+graft nf_core/subworkflow-template
 include requirements.txt
+include nf_core/.pre-commit-prettier-config.yaml

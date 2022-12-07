@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import logging
 
 from nf_core.lint.pipeline_todos import pipeline_todos
@@ -6,7 +5,7 @@ from nf_core.lint.pipeline_todos import pipeline_todos
 log = logging.getLogger(__name__)
 
 
-def module_todos(module_lint_object, module):
+def module_todos(_, module):
     """
     Look for TODO statements in the module files
 

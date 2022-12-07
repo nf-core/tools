@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import nf_core.schema
 
 

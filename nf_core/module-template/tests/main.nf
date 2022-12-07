@@ -2,7 +2,7 @@
 
 nextflow.enable.dsl = 2
 
-include { {{ tool_name_underscore|upper }} } from '../../../../{{ "../" if subtool else "" }}modules/nf-core/{{ tool_dir }}/main.nf'
+include { {{ tool_name_underscore|upper }} } from '../../../../{{ "../" if subtool else "" }}modules/{{ org }}/{{ tool_dir }}/main.nf'
 
 workflow test_{{ tool_name_underscore }} {
     {% if has_meta %}

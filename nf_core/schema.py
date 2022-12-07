@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ Code to deal with pipeline JSON Schema """
 
 from __future__ import print_function
@@ -21,7 +20,7 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-class PipelineSchema(object):
+class PipelineSchema:
     """Class to generate a schema object with
     functions to handle pipeline JSON Schema"""
 

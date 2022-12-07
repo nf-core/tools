@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import logging
 import os
 import re
@@ -143,7 +141,6 @@ def nextflow_config(self):
     ]
     # Old depreciated vars - fail if present
     config_fail_ifdefined = [
-        "params.version",
         "params.nf_required_version",
         "params.container",
         "params.singleEnd",

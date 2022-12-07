@@ -1,10 +1,11 @@
 import os
+from pathlib import Path
 
 import pytest
 
 import nf_core.modules
 
-from ..utils import with_temporary_folder
+from ..utils import GITLAB_DEFAULT_BRANCH, GITLAB_URL, with_temporary_folder
 
 
 @with_temporary_folder
@@ -20,7 +21,7 @@ def test_modules_custom_yml_dumper(self, out_dir):
 
 @with_temporary_folder
 def test_modules_test_file_dict(self, test_file_dir):
-    """Creat dict of test files and create md5 sums"""
+    """Create dict of test files and create md5 sums"""
     meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", self.pipeline_dir, False, "./", False, True)
     with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
         fh.write("this line is just for testing")
@@ -35,9 +36,7 @@ def test_modules_create_test_yml_get_md5(self, test_file_dir):
     meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", self.pipeline_dir, False, "./", False, True)
     with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
         fh.write("this line is just for testing")
-    test_files = meta_builder.get_md5_sums(
-        entry_point="dummy", command="dummy", results_dir=test_file_dir, results_dir_repeat=test_file_dir
-    )
+    test_files = meta_builder.get_md5_sums(command="dummy", results_dir=test_file_dir, results_dir_repeat=test_file_dir)
     assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
 
 
@@ -55,7 +54,7 @@ def test_modules_create_test_yml_check_inputs(self):
     """Test the check_inputs() function - raise UserWarning because test.yml exists"""
     cwd = os.getcwd()
     os.chdir(self.nfcore_modules)
-    meta_builder = nf_core.modules.ModulesTestYmlBuilder("bpipe/test", self.pipeline_dir, False, "./", False, True)
+    meta_builder = nf_core.modules.ModulesTestYmlBuilder("bpipe/test", ".", False, "./", False, True)
     meta_builder.module_test_main = os.path.join(self.nfcore_modules, "tests", "modules", "bpipe", "test", "main.nf")
     with pytest.raises(UserWarning) as excinfo:
         meta_builder.check_inputs()
