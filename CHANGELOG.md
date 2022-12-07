@@ -6,7 +6,7 @@ Another big release with lots of new features and bug fixes. Thanks to all contr
 
 **Highlights**
 
-- New `nf-core subworkflows` subcommand for creating, testing, updating and finding subworkflows, see the [documentation](https://nf-co.re/tools/#subworkflows) for more information.
+- New `nf-core subworkflows` subcommand for creating, removing, testing, updating and finding subworkflows, see the [documentation](https://nf-co.re/tools/#subworkflows) for more information.
 - Every pipeline has now it's own GitHub codespace template, which can be used to develop the pipeline directly in the browser.
 - Improved handling of modules and subworkflows from other repos than nf-core/modules.
 - Pre-commit is now installed as a dependency, which allows us, besides other things, to run prettier on the fly even if it is not manually installed.
