@@ -733,6 +733,8 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
             test_yml_output_path=output,
             force_overwrite=force,
             no_prompts=no_prompts,
+            remote_url=ctx.obj["modules_repo_url"],
+            branch=ctx.obj["modules_repo_branch"],
         )
         meta_builder.run()
     except (UserWarning, LookupError) as e:
@@ -979,6 +981,8 @@ def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
             test_yml_output_path=output,
             force_overwrite=force,
             no_prompts=no_prompts,
+            remote_url=ctx.obj["modules_repo_url"],
+            branch=ctx.obj["modules_repo_branch"],
         )
         meta_builder.run()
     except (UserWarning, LookupError) as e:
