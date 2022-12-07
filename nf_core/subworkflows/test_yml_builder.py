@@ -82,7 +82,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
         if self.subworkflow is None:
             self.subworkflow = questionary.autocomplete(
                 "Subworkflow name:",
-                choices=self.components_from_repo(self.component_type),
+                choices=self.components_from_repo(self.org),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         self.subworkflow_dir = os.path.join("subworkflows", self.modules_repo.repo_path, self.subworkflow)
