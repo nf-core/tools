@@ -705,6 +705,14 @@ nf-core modules --git-remote git@gitlab.com:nf-core/modules-test.git install fas
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
+The directory where modules are installed will be prompted or obtained from `org_path` in the `.nf-core.yml` file if available. If your modules are located at `modules/my-folder/TOOL/SUBTOOL` your `.nf-core.yml` should have:
+
+```yaml
+org_path: my-folder
+```
+
+Please avoid installing the same tools from two different remotes, as this can lead to further errors.
+
 The modules commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example
 due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will
 still need to clone repositories that have previously not been used.
@@ -983,6 +991,14 @@ nf-core subworkflows --git-remote git@gitlab.com:nf-core/modules-test.git --bran
 ```
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/modules` for the `nf-core subworkflows` commands to work properly.
+
+The directory where subworkflows are installed will be prompted or obtained from `org_path` in the `.nf-core.yml` file if available. If your subworkflows are located at `subworkflows/my-folder/SUBWORKFLOW_NAME` your `.nf-core.yml` file should have:
+
+```yaml
+org_path: my-folder
+```
+
+Please avoid installing the same tools from two different remotes, as this can lead to further errors.
 
 The subworkflows commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will still need to clone repositories that have previously not been used.
 
