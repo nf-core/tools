@@ -27,7 +27,7 @@ jobs:
           else
             curl -O https://nf-co.re/pipeline_names.json
           fi
-          echo "name=matrix::$(cat pipeline_names.json)" >> $GITHUB_OUTPUT
+          echo "matrix=$(cat pipeline_names.json)" >> $GITHUB_OUTPUT
 
   sync:
     needs: get-pipelines
