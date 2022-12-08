@@ -1,5 +1,9 @@
 # nf-core/tools: Changelog
 
+## [v2.7.1 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.1) - [2022-12-08]
+
+- Patch release to fix pipeline sync ([#2110](https://github.com/nf-core/tools/pull/2110))
+
 ## [v2.7 - Mercury Eagle](https://github.com/nf-core/tools/releases/tag/2.7) - [2022-12-07]
 
 Another big release with lots of new features and bug fixes. Thanks to all contributors!
