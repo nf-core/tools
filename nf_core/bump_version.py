@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Bumps the version number in all appropriate files for
 a nf-core pipeline.
 """

@@ -1,4 +1,6 @@
 import logging
+import subprocess
+from pathlib import Path
 
 import rich
 from rich.console import Console
@@ -33,17 +35,50 @@ def print_joint_summary(lint_obj, module_lint_obj):
     console.print(table)
 
 
-def print_fixes(lint_obj, module_lint_obj):
+def print_fixes(lint_obj):
     """Prints available and applied fixes"""
 
-    if len(lint_obj.could_fix):
-        fix_cmd = "nf-core lint {} --fix {}".format(
-            "" if lint_obj.wf_path == "." else f"--dir {lint_obj.wf_path}", " --fix ".join(lint_obj.could_fix)
-        )
+    if lint_obj.could_fix:
+        fix_flags = "".join([f" --fix {fix}" for fix in lint_obj.could_fix])
+        wf_dir = "" if lint_obj.wf_path == "." else f"--dir {lint_obj.wf_path}"
+        fix_cmd = f"nf-core lint {wf_dir} {fix_flags}"
         console.print(
-            f"\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n[blue]    {fix_cmd}\n"
+            "\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n"
+            f"[blue]    {fix_cmd}\n"
         )
     if len(lint_obj.fix):
         console.print(
-            "Automatic fixes applied. Please check with 'git diff' and revert any changes you do not want with 'git checkout <file>'."
+            "Automatic fixes applied. "
+            "Please check with 'git diff' and revert any changes you do not want with 'git checkout <file>'."
         )
+
+
+def run_prettier_on_file(file):
+    """Run the pre-commit hook prettier on a file.
+
+    Args:
+        file (Path | str): A file identifier as a string or pathlib.Path.
+
+    Warns:
+        If Prettier is not installed, a warning is logged.
+    """
+
+    nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
+    try:
+        subprocess.run(
+            ["pre-commit", "run", "--config", nf_core_pre_commit_config, "prettier", "--files", file],
+            capture_output=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        if ": SyntaxError: " in e.stdout.decode():
+            log.critical(f"Can't format {file} because it has a syntax error.\n{e.stdout.decode()}")
+        elif "files were modified by this hook" in e.stdout.decode():
+            all_lines = [line for line in e.stdout.decode().split("\n")]
+            files = "\n".join(all_lines[3:])
+            log.debug(f"The following files were modified by prettier:\n {files}")
+        elif e.stderr.decode():
+            log.warning(
+                "There was an error running the prettier pre-commit hook.\n"
+                f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
+            )

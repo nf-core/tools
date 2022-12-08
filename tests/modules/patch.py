@@ -1,12 +1,11 @@
-import json
 import os
 import tempfile
 from pathlib import Path
 
 import pytest
 
+import nf_core.components.components_command
 import nf_core.modules
-import nf_core.modules.modules_command
 
 from ..utils import GITLAB_URL
 
@@ -23,7 +22,7 @@ SUCCEED_SHA = "f1566140c752e9c68fffc189fbe8cb9ee942b3ca"
 FAIL_SHA = "1fc8b0f953d915d66ee40d28bc337ff0998d05bd"
 BISMARK_ALIGN = "bismark/align"
 REPO_NAME = "nf-core"
-PATCH_BRANCH = "patch-tester-restructure"
+PATCH_BRANCH = "patch-tester"
 REPO_URL = "https://gitlab.com/nf-core/modules-test.git"
 
 
@@ -136,7 +135,7 @@ def test_create_patch_try_apply_successful(self):
     )
     # Install the new files
     install_dir = Path(tempfile.mkdtemp())
-    update_obj.install_module_files(BISMARK_ALIGN, SUCCEED_SHA, update_obj.modules_repo, install_dir)
+    update_obj.install_component_files(BISMARK_ALIGN, SUCCEED_SHA, update_obj.modules_repo, install_dir)
 
     # Try applying the patch
     module_install_dir = install_dir / BISMARK_ALIGN
@@ -202,7 +201,7 @@ def test_create_patch_try_apply_failed(self):
     )
     # Install the new files
     install_dir = Path(tempfile.mkdtemp())
-    update_obj.install_module_files(BISMARK_ALIGN, FAIL_SHA, update_obj.modules_repo, install_dir)
+    update_obj.install_component_files(BISMARK_ALIGN, FAIL_SHA, update_obj.modules_repo, install_dir)
 
     # Try applying the patch
     module_install_dir = install_dir / BISMARK_ALIGN
@@ -234,15 +233,16 @@ def test_create_patch_update_success(self):
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
-    with open(os.path.join(module_path, "main.nf"), "r") as fh:
-        print(fh.readlines())
     # Update the module
     update_obj = nf_core.modules.ModuleUpdate(
-        self.pipeline_dir, sha=SUCCEED_SHA, show_diff=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH
+        self.pipeline_dir,
+        sha=SUCCEED_SHA,
+        show_diff=False,
+        update_deps=True,
+        remote_url=GITLAB_URL,
+        branch=PATCH_BRANCH,
     )
     assert update_obj.update(BISMARK_ALIGN)
-    with open(os.path.join(module_path, "main.nf"), "r") as fh:
-        print(fh.readlines())
 
     # Check that a patch file with the correct name has been created
     assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
@@ -257,7 +257,6 @@ def test_create_patch_update_success(self):
     with open(module_path / patch_fn, "r") as fh:
         patch_lines = fh.readlines()
     module_relpath = module_path.relative_to(self.pipeline_dir)
-    print(patch_lines)
     assert f"--- {module_relpath / 'main.nf'}\n" in patch_lines
     assert f"+++ {module_relpath / 'main.nf'}\n" in patch_lines
     assert "-    tuple val(meta), path(reads)\n" in patch_lines
@@ -300,15 +299,15 @@ def test_create_patch_update_fail(self):
         patch_contents = fh.read()
 
     update_obj = nf_core.modules.ModuleUpdate(
-        self.pipeline_dir, sha=FAIL_SHA, show_diff=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH
+        self.pipeline_dir, sha=FAIL_SHA, show_diff=False, update_deps=True, remote_url=GITLAB_URL, branch=PATCH_BRANCH
     )
     update_obj.update(BISMARK_ALIGN)
 
     # Check that the installed files have not been affected by the attempted patch
     temp_dir = Path(tempfile.mkdtemp())
-    nf_core.modules.modules_command.ModuleCommand(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH).install_module_files(
-        BISMARK_ALIGN, FAIL_SHA, update_obj.modules_repo, temp_dir
-    )
+    nf_core.components.components_command.ComponentCommand(
+        "modules", self.pipeline_dir, GITLAB_URL, PATCH_BRANCH
+    ).install_component_files(BISMARK_ALIGN, FAIL_SHA, update_obj.modules_repo, temp_dir)
 
     temp_module_dir = temp_dir / BISMARK_ALIGN
     for file in os.listdir(temp_module_dir):

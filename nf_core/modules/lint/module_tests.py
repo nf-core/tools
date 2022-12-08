@@ -9,7 +9,7 @@ import yaml
 log = logging.getLogger(__name__)
 
 
-def module_tests(module_lint_object, module):
+def module_tests(_, module):
     """
     Lint the tests of a module in ``nf-core/modules``
 
