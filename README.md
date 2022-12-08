@@ -705,7 +705,7 @@ nf-core modules --git-remote git@gitlab.com:nf-core/modules-test.git install fas
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
-The directory where modules are installed will be prompted or obtained from `org_path` in the `.nf-core.yml` file if available. If your modules are located at `modules/my-folder/TOOL/SUBTOOL` your `nf-core.yml should have:
+The directory where modules are installed will be prompted or obtained from `org_path` in the `.nf-core.yml` file if available. If your modules are located at `modules/my-folder/TOOL/SUBTOOL` your `nf-core.yml` should have:
 
 ```yaml
 org_path: my-folder
@@ -992,7 +992,7 @@ nf-core subworkflows --git-remote git@gitlab.com:nf-core/modules-test.git --bran
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/modules` for the `nf-core subworkflows` commands to work properly.
 
-The directory where subworkflows are installed will be prompted or obtained from the `.nf-core.yml` file if available. To add a directory name to your `.nf-core.yml` file, if your subworkflows are located at `subworkflows/my-folder/SUBWORKFLOW_NAME` you can add:
+The directory where subworkflows are installed will be prompted or obtained from `org_path` in the `.nf-core.yml` file if available. If your subworkflows are located at `subworkflows/my-folder/SUBWORKFLOW_NAME` your `.nf-core.yml` file should have:
 
 ```yaml
 org_path: my-folder
