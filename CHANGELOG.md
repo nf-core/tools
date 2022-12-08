@@ -1,5 +1,17 @@
 # nf-core/tools: Changelog
 
+# v2.8dev
+
+### Template
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### General
+
 ## [v2.7.1 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.1) - [2022-12-08]
 
 - Patch release to fix pipeline sync ([#2110](https://github.com/nf-core/tools/pull/2110))
