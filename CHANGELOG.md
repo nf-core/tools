@@ -4,6 +4,8 @@
 
 ### Template
 
+- Fix the syntax of github_output in GitHub actions ([#2114](https://github.com/nf-core/tools/pull/2114))
+
 ### Linting
 
 ### Modules
