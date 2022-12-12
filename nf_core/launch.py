@@ -17,6 +17,7 @@ from rich.prompt import Confirm
 
 import nf_core.schema
 import nf_core.utils
+from nf_core.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
@@ -703,6 +704,7 @@ class Launch:
                 with open(self.params_out, "w") as fp:
                     json.dump(self.schema_obj.input_params, fp, indent=4)
                     fp.write("\n")
+                run_prettier_on_file(self.params_out)
                 self.nextflow_cmd += f' -params-file "{os.path.relpath(self.params_out)}"'
 
             # Call nextflow with a list of command line flags

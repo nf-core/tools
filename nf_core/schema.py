@@ -16,6 +16,7 @@ from rich.prompt import Confirm
 
 import nf_core.list
 import nf_core.utils
+from nf_core.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
@@ -173,6 +174,7 @@ class PipelineSchema:
         with open(self.schema_filename, "w") as fh:
             json.dump(self.schema, fh, indent=4)
             fh.write("\n")
+        run_prettier_on_file(self.schema_filename)
 
     def load_input_params(self, params_path):
         """Load a given a path to a parameters file (JSON/YAML)
