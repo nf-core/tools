@@ -8,6 +8,8 @@
 
 ### Linting
 
+- Allow specifying containers in less than three lines ([#2121](https://github.com/nf-core/tools/pull/2121))
+
 ### Modules
 
 ### Subworkflows

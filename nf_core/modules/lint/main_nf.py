@@ -271,6 +271,15 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.failed.append(("singularity_tag", "Unable to parse singularity tag", self.main_nf))
                 singularity_tag = None
             url = urlparse(l.split("'")[0])
+            # lint double quotes
+            if l.count('"') > 2:
+                self.failed.append(
+                    (
+                        "container_links",
+                        "Too many double quotes found when specifying singularity container",
+                        self.main_nf,
+                    )
+                )
         if _container_type(l) == "docker":
             # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
             # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
@@ -282,13 +291,26 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
             url = urlparse(l.split("'")[0])
+            # lint double quotes
+            if l.count('"') > 2:
+                self.failed.append(
+                    ("container_links", "Too many double quotes found when specifying docker container", self.main_nf)
+                )
         # lint double quotes
         if l.startswith("container"):
-            container_section = l + lines[i + 1] + lines[i + 2]
-            if container_section.count('"') > 2:
+            if l.count('"') > 2:
                 self.failed.append(
                     ("container_links", "Too many double quotes found when specifying containers", self.main_nf)
                 )
+        # lint more than one container in the same line
+        if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or "quay.io/" in l):
+            self.warned.append(
+                (
+                    "container_links",
+                    "Docker and Singularity containers specified in the same line. Only first one checked.",
+                    self.main_nf,
+                )
+            )
         # Try to connect to container URLs
         if url is None:
             continue
