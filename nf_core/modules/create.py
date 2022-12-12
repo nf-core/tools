@@ -123,7 +123,7 @@ class ModuleCreate(ComponentCommand):
         self._get_bioconda_tool()
 
         # Prompt for GitHub username
-        nf_core.components.components_create.get_username(self.author)
+        self.author = nf_core.components.components_create.get_username(self.author)
 
         self._get_module_structure_components()
 

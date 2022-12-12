@@ -88,7 +88,7 @@ class SubworkflowCreate(ComponentCommand):
         )
 
         # Prompt for GitHub username
-        nf_core.components.components_create.get_username(self.author)
+        self.author = nf_core.components.components_create.get_username(self.author)
 
         # Create subworkflow template with jinja2
         nf_core.components.components_create.render_template(self.component_type, vars(self), self.file_paths)
