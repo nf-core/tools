@@ -302,6 +302,15 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.failed.append(
                     ("container_links", "Too many double quotes found when specifying containers", self.main_nf)
                 )
+        # lint more than one container in the same line
+        if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or "quay.io/" in l):
+            self.warned.append(
+                (
+                    "container_links",
+                    "Docker and Singularity containers specified in the same line. Only first one checked.",
+                    self.main_nf,
+                )
+            )
         # Try to connect to container URLs
         if url is None:
             continue
