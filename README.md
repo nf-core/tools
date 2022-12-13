@@ -220,9 +220,9 @@ Auto-completion for the `nf-core` command is available for bash, zsh and fish. T
 
 | shell | shell config file                       | command                                            |
 | ----- | --------------------------------------- | -------------------------------------------------- |
-| bash  | ~/.bashrc                               | `eval "$(_NF_CORE_COMPLETE=bash_source nf-core)"`  |
-| Zsh   | ~/.zshrc                                | `eval "$(_NF_CORE_COMPLETE=zsh_source nf-core)"`   |
-| fish  | ~/.config/fish/completions/nf-core.fish | `eval (env _NF_CORE_COMPLETE=fish_source nf-core)` |
+| bash  | `~/.bashrc`                               | `eval "$(_NF_CORE_COMPLETE=bash_source nf-core)"`  |
+| Zsh   | `~/.zshrc`                                | `eval "$(_NF_CORE_COMPLETE=zsh_source nf-core)"`   |
+| fish  | `~/.config/fish/completions/nf-core.fish` | `eval (env _NF_CORE_COMPLETE=fish_source nf-core)` |
 
 After a restart of the shell session you should have auto-completion for the `nf-core` command and all its sub-commands and options.
 
