@@ -173,7 +173,6 @@ class PipelineSchema:
             log.info(f"Writing schema with {num_params} params: '{self.schema_filename}'")
         with open(self.schema_filename, "w") as fh:
             json.dump(self.schema, fh, indent=4)
-            fh.write("\n")
         run_prettier_on_file(self.schema_filename)
 
     def load_input_params(self, params_path):

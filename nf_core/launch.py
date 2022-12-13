@@ -703,7 +703,6 @@ class Launch:
             if self.use_params_file:
                 with open(self.params_out, "w") as fp:
                     json.dump(self.schema_obj.input_params, fp, indent=4)
-                    fp.write("\n")
                 run_prettier_on_file(self.params_out)
                 self.nextflow_cmd += f' -params-file "{os.path.relpath(self.params_out)}"'
 
