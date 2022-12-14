@@ -17,6 +17,8 @@
 
 ### General
 
+- Only check that a pipeline name doesn't contain dashes if the name is provided by prompt of `--name`. Don't check if a template file is used. ([#2123](https://github.com/nf-core/tools/pull/2123))
+
 ## [v2.7.1 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.1) - [2022-12-08]
 
 - Patch release to fix pipeline sync ([#2110](https://github.com/nf-core/tools/pull/2110))

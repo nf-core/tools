@@ -252,8 +252,9 @@ class PipelineSync:
                 plain=True,
             ).init_pipeline()
         except Exception as err:
-            # If sync fails, remove template_yaml_path before raising error.
-            os.remove(self.template_yaml_path)
+            if self.template_yaml_path:
+                # If sync fails, remove template_yaml_path before raising error.
+                os.remove(self.template_yaml_path)
             # Reset to where you were to prevent git getting messed up.
             self.repo.git.reset("--hard")
             raise SyncException(f"Failed to rebuild pipeline from template with error:\n{err}")
