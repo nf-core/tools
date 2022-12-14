@@ -16,7 +16,7 @@ from rich.prompt import Confirm
 
 import nf_core.list
 import nf_core.utils
-from nf_core.lint_utils import run_prettier_on_file
+from nf_core.lint_utils import dump_json_with_prettier
 
 log = logging.getLogger(__name__)
 
@@ -171,9 +171,7 @@ class PipelineSchema:
         num_params += sum(len(d.get("properties", {})) for d in self.schema.get("definitions", {}).values())
         if not suppress_logging:
             log.info(f"Writing schema with {num_params} params: '{self.schema_filename}'")
-        with open(self.schema_filename, "w") as fh:
-            json.dump(self.schema, fh, indent=4)
-        run_prettier_on_file(self.schema_filename)
+        dump_json_with_prettier(self.schema_filename, self.schema)
 
     def load_input_params(self, params_path):
         """Load a given a path to a parameters file (JSON/YAML)
