@@ -9,6 +9,7 @@
 ### Linting
 
 - Allow specifying containers in less than three lines ([#2121](https://github.com/nf-core/tools/pull/2121))
+- Run prettier after dumping a json schema file ([#2124](https://github.com/nf-core/tools/pull/2124))
 
 ### Modules
 
