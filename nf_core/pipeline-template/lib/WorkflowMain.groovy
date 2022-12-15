@@ -75,11 +75,6 @@ class WorkflowMain {
         // Check that a -profile or Nextflow config has been provided to run the pipeline
         NfcoreTemplate.checkConfigProvided(workflow, log)
 
-        // Check that conda channels are set-up correctly
-        if (params.enable_conda) {
-            Utils.checkCondaChannels(log)
-        }
-
         // Check AWS batch settings
         NfcoreTemplate.awsBatch(workflow, params)
 
