@@ -303,6 +303,12 @@ def test_update_only_show_differences(self, mock_prompt):
     modules_json = ModulesJson(self.pipeline_dir)
     update_obj = ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=True)
 
+    # Update modules to a fixed old SHA
+    update_old = ModuleUpdate(
+        self.pipeline_dir, update_all=True, show_diff=False, sha="5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+    )
+    update_old.update()
+
     tmpdir = tempfile.mkdtemp()
     shutil.rmtree(tmpdir)
     shutil.copytree(Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME), tmpdir)
