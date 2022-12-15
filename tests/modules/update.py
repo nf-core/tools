@@ -329,6 +329,12 @@ def test_update_only_show_differences_when_patch(self, mock_prompt):
     modules_json = ModulesJson(self.pipeline_dir)
     update_obj = ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=True)
 
+    # Update modules to a fixed old SHA
+    update_old = ModuleUpdate(
+        self.pipeline_dir, update_all=True, show_diff=False, sha="5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+    )
+    update_old.update()
+
     # Modify fastqc module, it will have a patch which will be applied during update
     # We modify fastqc because it's one of the modules that can be updated and there's another one before it (custom/dumpsoftwareversions)
     module_path = Path(self.pipeline_dir, "modules", "nf-core", "fastqc")
