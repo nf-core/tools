@@ -105,10 +105,7 @@ class PipelineSchema:
     def load_schema(self):
         """Load a pipeline schema from a file"""
         with open(self.schema_filename, "r") as fh:
-            try:
-                self.schema = json.load(fh)
-            except json.JSONDecodeError as e:
-                raise UserWarning(f"Unable to load JSON file '{self.schema_filename}' due to error {e}")
+            self.schema = json.load(fh)
         self.schema_defaults = {}
         self.schema_params = []
         log.debug(f"JSON file loaded: {self.schema_filename}")
