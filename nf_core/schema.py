@@ -105,7 +105,10 @@ class PipelineSchema:
     def load_schema(self):
         """Load a pipeline schema from a file"""
         with open(self.schema_filename, "r") as fh:
-            self.schema = json.load(fh)
+            try:
+                self.schema = json.load(fh)
+            except json.JSONDecodeError as e:
+                raise UserWarning(f"Unable to load JSON file '{self.schema_filename}' due to error {e}")
         self.schema_defaults = {}
         self.schema_params = []
         log.debug(f"JSON file loaded: {self.schema_filename}")
@@ -182,7 +185,10 @@ class PipelineSchema:
         # First, try to load as JSON
         try:
             with open(params_path, "r") as fh:
-                params = json.load(fh)
+                try:
+                    params = json.load(fh)
+                except json.JSONDecodeError as e:
+                    raise UserWarning(f"Unable to load JSON file '{params_path}' due to error {e}")
                 self.input_params.update(params)
             log.debug(f"Loaded JSON input params: {params_path}")
         except Exception as json_e:

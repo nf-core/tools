@@ -618,7 +618,11 @@ class ModulesJson:
         """
         try:
             with open(self.modules_json_path, "r") as fh:
-                self.modules_json = json.load(fh)
+                try:
+                    self.modules_json = json.load(fh)
+                except json.JSONDecodeError as e:
+                    raise UserWarning(f"Unable to load JSON file '{self.modules_json_path}' due to error {e}")
+
         except FileNotFoundError:
             raise UserWarning("File 'modules.json' is missing")
 
