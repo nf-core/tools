@@ -5,6 +5,7 @@
 ### Template
 
 - Fix the syntax of github_output in GitHub actions ([#2114](https://github.com/nf-core/tools/pull/2114))
+- Fix a bug introduced in 2.7 that made pipelines hang ([#2132](https://github.com/nf-core/tools/issues/2132))
 
 ### Linting
 
