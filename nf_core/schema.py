@@ -182,7 +182,10 @@ class PipelineSchema:
         # First, try to load as JSON
         try:
             with open(params_path, "r") as fh:
-                params = json.load(fh)
+                try:
+                    params = json.load(fh)
+                except json.JSONDecodeError as e:
+                    raise UserWarning(f"Unable to load JSON file '{params_path}' due to error {e}")
                 self.input_params.update(params)
             log.debug(f"Loaded JSON input params: {params_path}")
         except Exception as json_e:
