@@ -1,3 +1,4 @@
+import json
 import logging
 import subprocess
 from pathlib import Path
@@ -82,3 +83,14 @@ def run_prettier_on_file(file):
                 "There was an error running the prettier pre-commit hook.\n"
                 f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
             )
+
+
+def dump_json_with_prettier(file_name, file_content):
+    """Dump a JSON file and run prettier on it.
+    Args:
+        file_name (Path | str): A file identifier as a string or pathlib.Path.
+        file_content (dict): Content to dump into the JSON file
+    """
+    with open(file_name, "w") as fh:
+        json.dump(file_content, fh, indent=4)
+    run_prettier_on_file(file_name)

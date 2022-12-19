@@ -166,16 +166,17 @@ class PipelineCreate:
         param_dict["logo_dark"] = f"{param_dict['name_noslash']}_logo_dark.png"
         param_dict["version"] = version
 
-        config_yml = nf_core.utils.load_tools_config()
+        _, config_yml = nf_core.utils.load_tools_config()
         if (
             "lint" in config_yml
             and "nextflow_config" in config_yml["lint"]
             and "manifest.name" in config_yml["lint"]["nextflow_config"]
         ):
             return param_dict, skip_paths
-        # Check that the pipeline name matches the requirements
-        if not re.match(r"^[a-z]+$", param_dict["short_name"]):
-            raise UserWarning("[red]Invalid workflow name: must be lowercase without punctuation.")
+        if param_dict["prefix"] == "nf-core":
+            # Check that the pipeline name matches the requirements
+            if not re.match(r"^[a-z]+$", param_dict["short_name"]):
+                raise UserWarning("[red]Invalid workflow name: must be lowercase without punctuation.")
 
         return param_dict, skip_paths
 

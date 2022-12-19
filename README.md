@@ -217,11 +217,12 @@ Please refer to the respective documentation for further details to manage packa
 ### Activate shell completions for nf-core/tools
 
 Auto-completion for the `nf-core` command is available for bash, zsh and fish. To activate it, add the following lines to the respective shell config files.
-shell | shell config file | command
---- | --- | ---
-bash | ~/.bashrc | `eval "$(_NF_CORE_COMPLETE=bash_source nf-core)"`
-Zsh | ~/.zshrc | `eval "$(_NF_CORE_COMPLETE=zsh_source nf-core)"`
-fish | ~/.config/fish/completions/nf-core.fish | `eval (env _NF_CORE_COMPLETE=fish_source nf-core)`
+
+| shell | shell config file                         | command                                            |
+| ----- | ----------------------------------------- | -------------------------------------------------- |
+| bash  | `~/.bashrc`                               | `eval "$(_NF_CORE_COMPLETE=bash_source nf-core)"`  |
+| zsh   | `~/.zshrc`                                | `eval "$(_NF_CORE_COMPLETE=zsh_source nf-core)"`   |
+| fish  | `~/.config/fish/completions/nf-core.fish` | `eval (env _NF_CORE_COMPLETE=fish_source nf-core)` |
 
 After a restart of the shell session you should have auto-completion for the `nf-core` command and all its sub-commands and options.
 

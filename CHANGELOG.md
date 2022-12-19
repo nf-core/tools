@@ -1,5 +1,23 @@
 # nf-core/tools: Changelog
 
+## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
+
+### Template
+
+- Fix the syntax of github_output in GitHub actions ([#2114](https://github.com/nf-core/tools/pull/2114))
+- Fix a bug introduced in 2.7 that made pipelines hang ([#2132](https://github.com/nf-core/tools/issues/2132))
+
+### Linting
+
+- Allow specifying containers in less than three lines ([#2121](https://github.com/nf-core/tools/pull/2121))
+- Run prettier after dumping a json schema file ([#2124](https://github.com/nf-core/tools/pull/2124))
+
+### General
+
+- Only check that a pipeline name doesn't contain dashes if the name is provided by prompt of `--name`. Don't check if a template file is used. ([#2123](https://github.com/nf-core/tools/pull/2123))
+- Deprecate `--enable_conda` parameter. Use `conda.enable` instead ([#2131](https://github.com/nf-core/tools/pull/2131))
+- Handle `json.load()` exceptions ([#2134](https://github.com/nf-core/tools/pull/2134))
+
 ## [v2.7.1 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.1) - [2022-12-08]
 
 - Patch release to fix pipeline sync ([#2110](https://github.com/nf-core/tools/pull/2110))

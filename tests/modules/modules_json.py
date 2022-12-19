@@ -18,7 +18,10 @@ def test_get_modules_json(self):
     """Checks that the get_modules_json function returns the correct result"""
     mod_json_path = os.path.join(self.pipeline_dir, "modules.json")
     with open(mod_json_path, "r") as fh:
-        mod_json_sb = json.load(fh)
+        try:
+            mod_json_sb = json.load(fh)
+        except json.JSONDecodeError as e:
+            raise UserWarning(f"Unable to load JSON file '{mod_json_path}' due to error {e}")
 
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
@@ -212,7 +215,10 @@ def test_mod_json_dump(self):
 
     # Check that the dump function writes the correct content
     with open(mod_json_path, "r") as f:
-        mod_json_new = json.load(f)
+        try:
+            mod_json_new = json.load(f)
+        except json.JSONDecodeError as e:
+            raise UserWarning(f"Unable to load JSON file '{mod_json_path}' due to error {e}")
     assert mod_json == mod_json_new
 
 

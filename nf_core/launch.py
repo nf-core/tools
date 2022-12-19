@@ -17,6 +17,7 @@ from rich.prompt import Confirm
 
 import nf_core.schema
 import nf_core.utils
+from nf_core.lint_utils import dump_json_with_prettier
 
 log = logging.getLogger(__name__)
 
@@ -700,9 +701,7 @@ class Launch:
 
             # Write the user selection to a file and run nextflow with that
             if self.use_params_file:
-                with open(self.params_out, "w") as fp:
-                    json.dump(self.schema_obj.input_params, fp, indent=4)
-                    fp.write("\n")
+                dump_json_with_prettier(self.params_out, self.schema_obj.input_params)
                 self.nextflow_cmd += f' -params-file "{os.path.relpath(self.params_out)}"'
 
             # Call nextflow with a list of command line flags
