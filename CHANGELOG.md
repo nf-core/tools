@@ -1,5 +1,17 @@
 # nf-core/tools: Changelog
 
+# v2.8dev
+
+### Template
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### General
+
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 
 ### Template
