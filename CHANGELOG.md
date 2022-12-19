@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-# v2.8dev
+## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 
 ### Template
 
@@ -11,10 +11,6 @@
 
 - Allow specifying containers in less than three lines ([#2121](https://github.com/nf-core/tools/pull/2121))
 - Run prettier after dumping a json schema file ([#2124](https://github.com/nf-core/tools/pull/2124))
-
-### Modules
-
-### Subworkflows
 
 ### General
 
