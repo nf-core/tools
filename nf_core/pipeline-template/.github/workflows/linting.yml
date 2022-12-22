@@ -115,33 +115,30 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.7"
+          python-version: "3.8"
           architecture: "x64"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install refgenie
+          python -m pip install --upgrade --force-reinstall git+https://github.com/refgenie/refgenconf.git@dev
 
-      - name: Check refgenie genomes.config file
+      - name: Populate genomes.config file
         env:
           GITHUB_COMMENTS_URL: ${{ github.event.pull_request.comments_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PR_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: refgenie populater --file ${GITHUB_WORKSPACE}/conf/genomes.config.tpl > ${GITHUB_WORKSPACE}/conf/genomes.config
 
-      - uses: technote-space/get-diff-action@v6
+      - name: Verify genomes.config file not changed
+        uses: tj-actions/verify-changed-files@v13
+        id: verify-file-not-changed
         with:
-          FILES: |
-            ${GITHUB_WORKSPACE}/conf/genomes.config
+          files: ${GITHUB_WORKSPACE}/conf/genomes.config
 
-      - name: Save PR number
-        if: ${{ always() }}
-        run: echo ${{ github.event.pull_request.number }} > PR_number.txt
-
-      - name: Check genomes.conf
-        # if there are differences in the genomes.conf file
-        if: env.GIT_DIFF
+      - name: Post PR comment if genomes.config changed
+        if: steps.verify-file-not-changed.outputs.files_changed == 'true'
         uses: mshick/add-pr-comment@v1
         with:
           message: |
@@ -158,3 +155,10 @@ jobs:
             Thanks again for your contribution!
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           allow-repeats: false
+
+      - name: Fail if genomes.config changed
+        if: steps.verify-file-not-changed.outputs.files_changed == 'true'
+        uses: actions/github-script@v3
+        with:
+          script: |
+            core.setFailed('File genomes.config changed manually')
