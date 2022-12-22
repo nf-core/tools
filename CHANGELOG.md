@@ -11,6 +11,7 @@
 ### Subworkflows
 
 ### General
+
 - Expose the default branch setting for pipeline creation in the CLI [#1961](https://github.com/nf-core/tools/pull/1961).
 
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
