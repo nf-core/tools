@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 The ModulesTestYmlBuilder class handles automatic generation of the modules test.yml file
 along with running the tests and creating md5 sums
@@ -24,14 +23,15 @@ import yaml
 from rich.syntax import Syntax
 
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 
-from .modules_command import ModuleCommand
+from ..lint_utils import run_prettier_on_file
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
 
-class ModulesTestYmlBuilder(ModuleCommand):
+class ModulesTestYmlBuilder(ComponentCommand):
     def __init__(
         self,
         module_name=None,
@@ -40,9 +40,13 @@ class ModulesTestYmlBuilder(ModuleCommand):
         test_yml_output_path=None,
         force_overwrite=False,
         no_prompts=False,
+        remote_url=None,
+        branch=None,
     ):
-        super().__init__(directory)
+        super().__init__("modules", directory, remote_url, branch)
         self.module_name = module_name
+        self.remote_url = remote_url
+        self.branch = branch
         self.run_tests = run_tests
         self.test_yml_output_path = test_yml_output_path
         self.force_overwrite = force_overwrite
@@ -57,7 +61,8 @@ class ModulesTestYmlBuilder(ModuleCommand):
         """Run build steps"""
         if not self.no_prompts:
             log.info(
-                "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
+                "[yellow]Press enter to use default values "
+                "[cyan bold](shown in brackets) [yellow]or type your own responses"
             )
         self.check_inputs()
         self.scrape_workflow_entry_points()
@@ -74,10 +79,9 @@ class ModulesTestYmlBuilder(ModuleCommand):
 
         # Get the tool name if not specified
         if self.module_name is None:
-            modules_repo = ModulesRepo()
             self.module_name = questionary.autocomplete(
                 "Tool name:",
-                choices=modules_repo.get_avail_modules(),
+                choices=self.components_from_repo(self.org),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         self.module_dir = os.path.join(self.default_modules_path, *self.module_name.split("/"))
@@ -96,7 +100,7 @@ class ModulesTestYmlBuilder(ModuleCommand):
 
         # Get the output YAML file / check it does not already exist
         while self.test_yml_output_path is None:
-            default_val = f"tests/modules/nf-core/{self.module_name}/test.yml"
+            default_val = f"tests/modules/{self.org}/{self.module_name}/test.yml"
             if self.no_prompts:
                 self.test_yml_output_path = default_val
             else:
@@ -171,7 +175,10 @@ class ModulesTestYmlBuilder(ModuleCommand):
         while ep_test["command"] == "":
             # Don't think we need the last `-c` flag, but keeping to avoid having to update 100s modules.
             # See https://github.com/nf-core/tools/issues/1562
-            default_val = f"nextflow run ./tests/modules/nf-core/{self.module_name} -entry {entry_point} -c ./tests/config/nextflow.config -c ./tests/modules/nf-core/{self.module_name}/nextflow.config"
+            default_val = (
+                f"nextflow run ./tests/modules/{self.org}/{self.module_name} -entry {entry_point} "
+                f"-c ./tests/config/nextflow.config -c ./tests/modules/{self.org}/{self.module_name}/nextflow.config"
+            )
             if self.no_prompts:
                 ep_test["command"] = default_val
             else:
@@ -193,7 +200,7 @@ class ModulesTestYmlBuilder(ModuleCommand):
                     ).strip()
                     ep_test["tags"] = [t.strip() for t in prompt_tags.split(",")]
 
-        ep_test["files"] = self.get_md5_sums(entry_point, ep_test["command"])
+        ep_test["files"] = self.get_md5_sums(ep_test["command"])
 
         return ep_test
 
@@ -232,9 +239,6 @@ class ModulesTestYmlBuilder(ModuleCommand):
         test_files = []
         for root, _, files in os.walk(results_dir, followlinks=True):
             for filename in files:
-                # Check that the file is not versions.yml
-                if filename == "versions.yml":
-                    continue
                 file_path = os.path.join(root, filename)
                 # add the key here so that it comes first in the dict
                 test_file = {"path": file_path}
@@ -245,8 +249,10 @@ class ModulesTestYmlBuilder(ModuleCommand):
                 # Add the md5 anyway, linting should fail later and can be manually removed if needed.
                 #  Originally we skipped this if empty, but then it's too easy to miss the warning.
                 #  Equally, if a file is legitimately empty we don't want to prevent this from working.
-                file_md5 = self._md5(file_path)
-                test_file["md5sum"] = file_md5
+                if filename != "versions.yml":
+                    # Only add md5sum if the file is not versions.yml
+                    file_md5 = self._md5(file_path)
+                    test_file["md5sum"] = file_md5
                 # Switch out the results directory path with the expected 'output' directory
                 test_file["path"] = file_path.replace(results_dir, "output")
                 test_files.append(test_file)
@@ -255,7 +261,7 @@ class ModulesTestYmlBuilder(ModuleCommand):
 
         return test_files
 
-    def get_md5_sums(self, entry_point, command, results_dir=None, results_dir_repeat=None):
+    def get_md5_sums(self, command, results_dir=None, results_dir_repeat=None):
         """
         Recursively go through directories and subdirectories
         and generate tuples of (<file_path>, <md5sum>)
@@ -356,16 +362,19 @@ class ModulesTestYmlBuilder(ModuleCommand):
         """
         Generate the test yml file.
         """
+        with tempfile.NamedTemporaryFile(mode="w+") as fh:
+            yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
+            run_prettier_on_file(fh.name)
+            fh.seek(0)
+            prettified_yml = fh.read()
 
         if self.test_yml_output_path == "-":
             console = rich.console.Console()
-            yaml_str = yaml.dump(self.tests, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
-            console.print("\n", Syntax(yaml_str, "yaml"), "\n")
-            return
-
-        try:
-            log.info(f"Writing to '{self.test_yml_output_path}'")
-            with open(self.test_yml_output_path, "w") as fh:
-                yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
-        except FileNotFoundError as e:
-            raise UserWarning(f"Could not create test.yml file: '{e}'")
+            console.print("\n", Syntax(prettified_yml, "yaml"), "\n")
+        else:
+            try:
+                log.info(f"Writing to '{self.test_yml_output_path}'")
+                with open(self.test_yml_output_path, "w") as fh:
+                    fh.write(prettified_yml)
+            except FileNotFoundError as e:
+                raise UserWarning(f"Could not create test.yml file: '{e}'")

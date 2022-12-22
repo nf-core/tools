@@ -18,7 +18,10 @@ def test_get_modules_json(self):
     """Checks that the get_modules_json function returns the correct result"""
     mod_json_path = os.path.join(self.pipeline_dir, "modules.json")
     with open(mod_json_path, "r") as fh:
-        mod_json_sb = json.load(fh)
+        try:
+            mod_json_sb = json.load(fh)
+        except json.JSONDecodeError as e:
+            raise UserWarning(f"Unable to load JSON file '{mod_json_path}' due to error {e}")
 
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
@@ -32,7 +35,7 @@ def test_mod_json_update(self):
     mod_json_obj = ModulesJson(self.pipeline_dir)
     # Update the modules.json file
     mod_repo_obj = ModulesRepo()
-    mod_json_obj.update(mod_repo_obj, "MODULE_NAME", "GIT_SHA", False)
+    mod_json_obj.update("modules", mod_repo_obj, "MODULE_NAME", "GIT_SHA", "modules", write_file=False)
     mod_json = mod_json_obj.get_modules_json()
     assert "MODULE_NAME" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]
     assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]
@@ -41,6 +44,7 @@ def test_mod_json_update(self):
         NF_CORE_MODULES_DEFAULT_BRANCH
         == mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["branch"]
     )
+    assert "modules" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["MODULE_NAME"]["installed_by"]
 
 
 def test_mod_json_create(self):
@@ -154,7 +158,7 @@ def test_mod_json_up_to_date_reinstall_fails(self):
     mod_json_obj = ModulesJson(self.pipeline_dir)
 
     # Update the fastqc module entry to an invalid git_sha
-    mod_json_obj.update(ModulesRepo(), "fastqc", "INVALID_GIT_SHA", True)
+    mod_json_obj.update("modules", ModulesRepo(), "fastqc", "INVALID_GIT_SHA", "modules", write_file=True)
 
     # Remove the fastqc module
     fastqc_path = os.path.join(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "fastqc")
@@ -211,7 +215,10 @@ def test_mod_json_dump(self):
 
     # Check that the dump function writes the correct content
     with open(mod_json_path, "r") as f:
-        mod_json_new = json.load(f)
+        try:
+            mod_json_new = json.load(f)
+        except json.JSONDecodeError as e:
+            raise UserWarning(f"Unable to load JSON file '{mod_json_path}' due to error {e}")
     assert mod_json == mod_json_new
 
 

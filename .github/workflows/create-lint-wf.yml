@@ -1,5 +1,11 @@
 name: Create a pipeline and run nf-core linting
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+  release:
+    types: [published]
 
 # Cancel if a newer run is started
 concurrency:
@@ -17,7 +23,7 @@ jobs:
     strategy:
       matrix:
         NXF_VER:
-          - "21.10.3"
+          - "22.10.1"
           - "latest-everything"
     steps:
       # Get the repo code
@@ -26,7 +32,7 @@ jobs:
 
       # Set up nf-core/tools
       - name: Set up Python 3.8
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
 
@@ -42,7 +48,7 @@ jobs:
           version: ${{ matrix.NXF_VER }}
 
       # Install the Prettier linting tools
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
 
       - name: Install Prettier
         run: npm install -g prettier
@@ -80,7 +86,7 @@ jobs:
 
       # Run nf-core linting
       - name: nf-core lint
-        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --fail-warned
+        run: nf-core --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned
 
       # Run the other nf-core commands
       - name: nf-core list
@@ -96,13 +102,13 @@ jobs:
         run: nf-core --log-file log.txt bump-version --dir nf-core-testpipeline/ 1.1
 
       - name: nf-core lint in release mode
-        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
+        run: nf-core --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
 
       - name: nf-core modules install
         run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
 
       - name: nf-core modules install gitlab
-        run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git --branch main-restructure install fastqc --force --dir nf-core-testpipeline/
+        run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git --branch main install fastqc --force --dir nf-core-testpipeline/
 
       - name: nf-core modules list local
         run: nf-core --log-file log.txt modules list local --dir nf-core-testpipeline/
@@ -115,7 +121,7 @@ jobs:
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: nf-core-log-file
           path: log.txt

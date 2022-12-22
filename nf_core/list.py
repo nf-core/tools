@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Lists available nf-core pipelines and versions."""
 
 from __future__ import print_function
@@ -74,7 +73,7 @@ def get_local_wf(workflow, revision=None):
     return local_wf.local_path
 
 
-class Workflows(object):
+class Workflows:
     """Workflow container class.
 
     Is used to collect local and remote nf-core pipelines. Pipelines
@@ -273,7 +272,7 @@ class Workflows(object):
         )
 
 
-class RemoteWorkflow(object):
+class RemoteWorkflow:
     """A information container for a remote workflow.
 
     Args:
@@ -309,7 +308,7 @@ class RemoteWorkflow(object):
             )
 
 
-class LocalWorkflow(object):
+class LocalWorkflow:
     """Class to handle local workflows pulled by nextflow"""
 
     def __init__(self, name):

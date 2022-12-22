@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Downloads a nf-core pipeline to the local file system."""
 
 from __future__ import print_function
@@ -65,7 +64,7 @@ class DownloadProgress(rich.progress.Progress):
             yield self.make_tasks_table([task])
 
 
-class DownloadWorkflow(object):
+class DownloadWorkflow:
     """Downloads a nf-core workflow from GitHub to the local file system.
 
     Can also download its Singularity container image if required.

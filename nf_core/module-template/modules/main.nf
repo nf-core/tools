@@ -23,7 +23,7 @@ process {{ tool_name_underscore|upper }} {
     //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
     //               For Conda, the build (i.e. "h9402c20_2") must be EXCLUDED to support installation on different operating systems.
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
-    conda (params.enable_conda ? "{{ bioconda if bioconda else 'YOUR-TOOL-HERE' }}" : null)
+    conda "{{ bioconda if bioconda else 'YOUR-TOOL-HERE' }}"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         '{{ singularity_container if singularity_container else 'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE' }}':
         '{{ docker_container if docker_container else 'quay.io/biocontainers/YOUR-TOOL-HERE' }}' }"

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ Launch a pipeline, interactively collecting params """
 
 from __future__ import print_function
@@ -18,11 +17,12 @@ from rich.prompt import Confirm
 
 import nf_core.schema
 import nf_core.utils
+from nf_core.lint_utils import dump_json_with_prettier
 
 log = logging.getLogger(__name__)
 
 
-class Launch(object):
+class Launch:
     """Class to hold config option to launch a pipeline"""
 
     def __init__(
@@ -120,12 +120,19 @@ class Launch(object):
 
         # Check if the output file exists already
         if os.path.exists(self.params_out):
-            log.warning(f"Parameter output file already exists! {os.path.relpath(self.params_out)}")
-            if Confirm.ask("[yellow]Do you want to overwrite this file?"):
-                os.remove(self.params_out)
-                log.info(f"Deleted {self.params_out}\n")
+            # if params_in has the same name as params_out, don't ask to overwrite
+            if self.params_in and os.path.abspath(self.params_in) == os.path.abspath(self.params_out):
+                log.warning(
+                    f"The parameter input file has the same name as the output file! {os.path.relpath(self.params_out)} will be overwritten."
+                )
             else:
-                log.info("Exiting. Use --params-out to specify a custom filename.")
+                log.warning(f"Parameter output file already exists! {os.path.relpath(self.params_out)}")
+            if Confirm.ask("[yellow]Do you want to overwrite this file?"):
+                if not (self.params_in and os.path.abspath(self.params_in) == os.path.abspath(self.params_out)):
+                    os.remove(self.params_out)
+                    log.info(f"Deleted {self.params_out}\n")
+            else:
+                log.info("Exiting. Use --params-out to specify a custom output filename.")
                 return False
 
         log.info(
@@ -694,9 +701,7 @@ class Launch(object):
 
             # Write the user selection to a file and run nextflow with that
             if self.use_params_file:
-                with open(self.params_out, "w") as fp:
-                    json.dump(self.schema_obj.input_params, fp, indent=4)
-                    fp.write("\n")
+                dump_json_with_prettier(self.params_out, self.schema_obj.input_params)
                 self.nextflow_cmd += f' -params-file "{os.path.relpath(self.params_out)}"'
 
             # Call nextflow with a list of command line flags
@@ -716,6 +721,6 @@ class Launch(object):
         """Launch nextflow if required"""
         log.info(f"[bold underline]Nextflow command:[/]\n[magenta]{self.nextflow_cmd}\n\n")
 
-        if Confirm.ask("Do you want to run this command now? "):
+        if Confirm.ask("Do you want to run this command now? ", default=True):
             log.info("Launching workflow! :rocket:")
             subprocess.call(self.nextflow_cmd, shell=True)

@@ -5,6 +5,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
+import nf_core.modules.modules_repo
 from nf_core.modules.modules_differ import ModulesDiffer
 
 
@@ -39,10 +40,12 @@ def module_changes(module_lint_object, module):
             return
     else:
         tempdir = module.module_dir
+    module.branch = module_lint_object.modules_json.get_component_branch(
+        "modules", module.module_name, module.repo_url, module.org
+    )
+    modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=module.repo_url, branch=module.branch)
 
-    for f, same in module_lint_object.modules_repo.module_files_identical(
-        module.module_name, tempdir, module.git_sha
-    ).items():
+    for f, same in modules_repo.module_files_identical(module.module_name, tempdir, module.git_sha).items():
         if same:
             module.passed.append(
                 (

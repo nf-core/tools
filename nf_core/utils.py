@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Common utility functions for the nf-core python package.
 """
@@ -16,6 +15,7 @@ import shlex
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 import git
 import prompt_toolkit
@@ -90,7 +90,7 @@ def rich_force_colors():
     return None
 
 
-class Pipeline(object):
+class Pipeline:
     """Object to hold information about a local pipeline.
 
     Args:
@@ -248,7 +248,10 @@ def fetch_wf_config(wf_path, cache_config=True):
         if os.path.isfile(cache_path):
             log.debug(f"Found a config cache, loading: {cache_path}")
             with open(cache_path, "r") as fh:
-                config = json.load(fh)
+                try:
+                    config = json.load(fh)
+                except json.JSONDecodeError as e:
+                    raise UserWarning(f"Unable to load JSON file '{cache_path}' due to error {e}")
             return config
     log.debug("No config cache found")
 
@@ -339,7 +342,7 @@ def setup_requests_cachedir():
     return config
 
 
-def wait_cli_function(poll_func, poll_every=20):
+def wait_cli_function(poll_func, refresh_per_second=20):
     """
     Display a command-line spinner while calling a function repeatedly.
 
@@ -347,14 +350,14 @@ def wait_cli_function(poll_func, poll_every=20):
 
     Arguments:
        poll_func (function): Function to call
-       poll_every (int): How many tenths of a second to wait between function calls. Default: 20.
+       refresh_per_second (int): Refresh this many times per second. Default: 20.
 
     Returns:
        None. Just sits in an infite loop until the function returns True.
     """
     try:
         spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
-        with Live(spinner, refresh_per_second=20):
+        with Live(spinner, refresh_per_second=refresh_per_second):
             while True:
                 if poll_func():
                     break
@@ -924,7 +927,11 @@ def get_repo_releases_branches(pipeline, wfs):
     return pipeline, wf_releases, wf_branches
 
 
-def load_tools_config(dir="."):
+CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
+DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
+
+
+def load_tools_config(directory="."):
     """
     Parse the nf-core.yml configuration file
 
@@ -936,32 +943,45 @@ def load_tools_config(dir="."):
     Returns the loaded config dict or False, if the file couldn't be loaded
     """
     tools_config = {}
-    config_fn = os.path.join(dir, ".nf-core.yml")
 
-    # Check if old config file is used
-    old_config_fn_yml = os.path.join(dir, ".nf-core-lint.yml")
-    old_config_fn_yaml = os.path.join(dir, ".nf-core-lint.yaml")
+    config_fn = get_first_available_path(directory, CONFIG_PATHS)
 
-    if os.path.isfile(old_config_fn_yml) or os.path.isfile(old_config_fn_yaml):
-        log.error(
-            "Deprecated `nf-core-lint.yml` file found! The file will not be loaded. Please rename the file to `.nf-core.yml`."
-        )
-        return {}
+    if config_fn is None:
+        depr_path = get_first_available_path(directory, DEPRECATED_CONFIG_PATHS)
+        if depr_path:
+            log.error(
+                f"Deprecated `{depr_path.name}` file found! The file will not be loaded. "
+                f"Please rename the file to `{CONFIG_PATHS[0]}`."
+            )
+        else:
+            log.debug(f"No tools config file found: {CONFIG_PATHS[0]}")
+        return Path(directory, CONFIG_PATHS[0]), {}
 
-    if not os.path.isfile(config_fn):
-        config_fn = os.path.join(dir, ".nf-core.yaml")
+    with open(config_fn, "r") as fh:
+        tools_config = yaml.safe_load(fh)
 
-    # Load the YAML
-    try:
-        with open(config_fn, "r") as fh:
-            tools_config = yaml.safe_load(fh)
-    except FileNotFoundError:
-        log.debug(f"No tools config file found: {config_fn}")
-        return {}
-    if tools_config is None:
-        # If the file is empty
-        return {}
-    return tools_config
+    # If the file is empty
+    tools_config = tools_config or {}
+
+    log.debug("Using config file: %s", config_fn)
+    return config_fn, tools_config
+
+
+def determine_base_dir(directory="."):
+    base_dir = start_dir = Path(directory).absolute()
+    while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
+        base_dir = base_dir.parent
+        config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
+        if config_fn:
+            break
+    return directory if base_dir == start_dir else base_dir
+
+
+def get_first_available_path(directory, paths):
+    for p in paths:
+        if Path(directory, p).is_file():
+            return Path(directory, p)
+    return None
 
 
 def sort_dictionary(d):

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Some tests covering the linting code.
 """
 import fnmatch
@@ -135,7 +134,10 @@ class TestLint(unittest.TestCase):
 
         # Load created JSON file and check its contents
         with open(json_fn, "r") as fh:
-            saved_json = json.load(fh)
+            try:
+                saved_json = json.load(fh)
+            except json.JSONDecodeError as e:
+                raise UserWarning(f"Unable to load JSON file '{json_fn}' due to error {e}")
         assert saved_json["num_tests_pass"] > 0
         assert saved_json["num_tests_warned"] > 0
         assert saved_json["num_tests_ignored"] == 0
@@ -186,7 +188,6 @@ class TestLint(unittest.TestCase):
         test_actions_awstest_pass,
     )
     from .lint.actions_ci import (
-        test_actions_ci_fail_wrong_docker_ver,
         test_actions_ci_fail_wrong_nf,
         test_actions_ci_fail_wrong_trigger,
         test_actions_ci_pass,

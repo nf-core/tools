@@ -2,7 +2,7 @@
 
 from setuptools import find_packages, setup
 
-version = "2.7dev"
+version = "2.8dev"
 
 with open("README.md") as f:
     readme = f.read()
@@ -35,6 +35,7 @@ setup(
         "console_scripts": ["nf-core=nf_core.__main__:run_nf_core"],
         "refgenie.hooks.post_update": ["nf-core-refgenie=nf_core.refgenie:update_config"],
     },
+    python_requires=">=3.7, <4",
     install_requires=required,
     packages=find_packages(exclude=("docs")),
     include_package_data=True,
