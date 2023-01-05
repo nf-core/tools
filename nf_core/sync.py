@@ -212,8 +212,11 @@ class PipelineSync:
         """
         # Delete everything
         log.info("Deleting all files in 'TEMPLATE' branch")
-        for the_file in os.listdir(self.pipeline_dir):
-            if the_file == ".git" or the_file == self.template_yaml_path:
+        all_files = os.listdir(self.pipeline_dir)
+        ignored = self.repo.ignored(all_files)
+        keep = [*ignored, *self.repo.untracked_files, ".git", self.template_yaml_path]
+        for the_file in all_files:
+            if the_file in keep:
                 continue
             file_path = os.path.join(self.pipeline_dir, the_file)
             log.debug(f"Deleting {file_path}")
