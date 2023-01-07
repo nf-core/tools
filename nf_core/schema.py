@@ -495,9 +495,11 @@ class PipelineSchema:
                     if column == "parameter":
                         out += f"| `{p_key}` "
                     elif column == "description":
-                        out += f"| {param.get('description', '')} "
+                        desc = param.get("description", "").replace("\n", "<br>")
+                        out += f"| {desc} "
                         if param.get("help_text", "") != "":
-                            out += f"<details><summary>Help</summary><small>{param['help_text']}</small></details>"
+                            help_txt = param["help_text"].replace("\n", "<br>")
+                            out += f"<details><summary>Help</summary><small>{help_txt}</small></details>"
                     elif column == "type":
                         out += f"| `{param.get('type', '')}` "
                     else:
