@@ -344,6 +344,8 @@ You can run the pipeline by simply providing the directory path for the `workflo
 nextflow run /path/to/download/nf-core-rnaseq-dev/workflow/ --input mydata.csv --outdir results  # usual parameters here
 ```
 
+Note that you want to use the downloaded singularity images, you will still need to use `-profile singularity` or have it enabled in your config file.
+
 ### Downloaded nf-core configs
 
 The pipeline files are automatically updated (`params.custom_config_base` is set to `../configs`), so that the local copy of institutional configs are available when running the pipeline.
