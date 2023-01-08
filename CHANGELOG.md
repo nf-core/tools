@@ -1,11 +1,24 @@
 # nf-core/tools: Changelog
 
+# v2.8dev
+
+### Template
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### General
+
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 
 ### Template
 
 - Fix the syntax of github_output in GitHub actions ([#2114](https://github.com/nf-core/tools/pull/2114))
 - Fix a bug introduced in 2.7 that made pipelines hang ([#2132](https://github.com/nf-core/tools/issues/2132))
+- Explicitly disable `conda` when a container profile ([#2140](https://github.com/nf-core/tools/pull/2140))
 
 ### Linting
 
