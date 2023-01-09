@@ -1448,6 +1448,7 @@ def docs(schema_path, output, format, force, columns):
     schema_obj.load_schema()
     schema_obj.print_documentation(output, format, force, columns.split(","))
 
+
 # nf-core bump-version
 @nf_core_cli.command("bump-version")
 @click.argument("new_version", required=True, metavar="<new version>")
