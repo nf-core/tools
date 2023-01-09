@@ -6,17 +6,20 @@ import copy
 import json
 import logging
 import os
+import tempfile
 import webbrowser
 
 import jinja2
 import jsonschema
 import markdown
+import rich.console
 import yaml
 from rich.prompt import Confirm
+from rich.syntax import Syntax
 
 import nf_core.list
 import nf_core.utils
-from nf_core.lint_utils import dump_json_with_prettier
+from nf_core.lint_utils import dump_json_with_prettier, run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
@@ -464,13 +467,21 @@ class PipelineSchema:
         if format == "html":
             output = self.markdown_to_html(output)
 
-        # Print to file
-        if output_fn:
+        with tempfile.NamedTemporaryFile(mode="w+") as fh:
+            fh.write(output)
+            run_prettier_on_file(fh.name)
+            fh.seek(0)
+            prettified_docs = fh.read()
+
+        if not output_fn:
+            console = rich.console.Console()
+            console.print("\n", Syntax(prettified_docs, format), "\n")
+        else:
             if os.path.exists(output_fn) and not force:
                 log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")
                 return
-            with open(output_fn, "w") as file:
-                file.write(output)
+            with open(output_fn, "w") as fh:
+                fh.write(prettified_docs)
                 log.info(f"Documentation written to '{output_fn}'")
 
         # Return as a string

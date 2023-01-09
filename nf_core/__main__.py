@@ -1446,10 +1446,7 @@ def docs(schema_path, output, format, force, columns):
     # Assume we're in a pipeline dir root if schema path not set
     schema_obj.get_schema_path(schema_path)
     schema_obj.load_schema()
-    docs = schema_obj.print_documentation(output, format, force, columns.split(","))
-    if not output:
-        stdout.print(docs)
-
+    schema_obj.print_documentation(output, format, force, columns.split(","))
 
 # nf-core bump-version
 @nf_core_cli.command("bump-version")
