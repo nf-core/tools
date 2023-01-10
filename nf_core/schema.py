@@ -495,6 +495,7 @@ class PipelineSchema:
         out += f"{self.schema['description']}\n"
         # Grouped parameters
         for definition in self.schema.get("definitions", {}).values():
+            required = definition.get("required", [])
             out += f"\n## {definition.get('title', {})}\n\n"
             out += f"{definition.get('description', '')}\n\n"
             out += "".join([f"| {column.title()} " for column in columns])
@@ -513,12 +514,15 @@ class PipelineSchema:
                             out += f"<details><summary>Help</summary><small>{help_txt}</small></details>"
                     elif column == "type":
                         out += f"| `{param.get('type', '')}` "
+                    elif column == "required":
+                        out += f"| {p_key in required or ''} "
                     else:
                         out += f"| {param.get(column, '')} "
                 out += "|\n"
 
         # Top-level ungrouped parameters
         if len(self.schema.get("properties", {})) > 0:
+            required = self.schema.get("required", [])
             out += "\n## Other parameters\n\n"
             out += "".join([f"| {column.title()} " for column in columns])
             out += "|\n"
