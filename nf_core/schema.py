@@ -498,8 +498,8 @@ class PipelineSchema:
             out += f"\n## {definition.get('title', {})}\n\n"
             out += f"{definition.get('description', '')}\n\n"
             required = definition.get("required", [])
-            properties = definition.get("properties", {}).items()
-            param_table = self.markdown_param_table_content(properties, required, columns)
+            properties = definition.get("properties", {})
+            param_table = self.markdown_param_table(properties, required, columns)
             out += param_table
 
         # Top-level ungrouped parameters
@@ -507,12 +507,12 @@ class PipelineSchema:
             out += "\n## Other parameters\n\n"
             required = self.schema.get("required", [])
             properties = self.schema.get("properties", {})
-            param_table = self.markdown_param_table_content(properties, required, columns)
+            param_table = self.markdown_param_table(properties, required, columns)
             out += param_table
 
         return out
 
-    def markdown_param_table(properties, required, columns):
+    def markdown_param_table(self, properties, required, columns):
         """Creates a markdown table for params from jsonschema properties section
 
         Args:
