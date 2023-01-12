@@ -124,12 +124,18 @@ jobs:
           pip install refgenie
           python -m pip install --upgrade --force-reinstall git+https://github.com/refgenie/refgenconf.git@dev
 
+      - name: Init refgenie
+        run: |
+          refgenie init -c ${GITHUB_WORKSPACE}/../../genome_config.yaml
+          sed -i s/refgenomes.databio.org/igenomes.databio.org/ ${GITHUB_WORKSPACE}/../../genome_config.yaml
+
       - name: Populate genomes.config file
         env:
           GITHUB_COMMENTS_URL: ${{ github.event.pull_request.comments_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PR_COMMIT: ${{ github.event.pull_request.head.sha }}
-        run: refgenie populater --file ${GITHUB_WORKSPACE}/conf/genomes.config.tpl > ${GITHUB_WORKSPACE}/conf/genomes.config
+          REFGENIE: /home/runner/work/genome_config.yaml
+        run: refgenie populater --file ${GITHUB_WORKSPACE}/conf/genomes.config.tpl
 
       - name: Verify genomes.config file not changed
         uses: tj-actions/verify-changed-files@v13
