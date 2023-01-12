@@ -135,7 +135,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PR_COMMIT: ${{ github.event.pull_request.head.sha }}
           REFGENIE: /home/runner/work/genome_config.yaml
-        run: refgenie populater --file ${GITHUB_WORKSPACE}/conf/genomes.config.tpl
+        run: refgenie populater --file ${GITHUB_WORKSPACE}/conf/genomes.config.tpl > ${GITHUB_WORKSPACE}/conf/genomes.config
 
       - name: Verify genomes.config file not changed
         uses: tj-actions/verify-changed-files@v13
