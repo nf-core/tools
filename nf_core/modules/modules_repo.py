@@ -192,7 +192,7 @@ class ModulesRepo:
                         self.repo = git.Repo.clone_from(
                             remote,
                             self.local_repo_dir,
-                            filter=["tree:0"],
+                            filter=["tree:0"],  # don't clone the whole history, might influence other git commands
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
                         )
                     ModulesRepo.update_local_repo_status(self.fullname, True)
