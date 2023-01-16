@@ -12,6 +12,8 @@
 
 ### General
 
+- Replace full clone with treeless clone of the modules repository for speed gains ([#2162](https://github.com/nf-core/tools/pull/2162)).
+
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 
 ### Template
