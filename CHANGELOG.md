@@ -4,6 +4,8 @@
 
 ### Template
 
+- Turn on automatic clean up of intermediate files in `work/` on successful pipeline completion in full-test config ([#2163](https://github.com/nf-core/tools/pull/2163))
+
 ### Linting
 
 ### Modules
