@@ -8,6 +8,8 @@ import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 
+import responses
+
 OLD_TRIMGALORE_SHA = "06348dffce2a732fc9e656bdc5c64c3e02d302cb"
 OLD_TRIMGALORE_BRANCH = "mimic-old-trimgalore"
 GITLAB_URL = "https://gitlab.com/nf-core/modules-test.git"
@@ -68,14 +70,13 @@ def set_wd(path: Path):
         os.chdir(start_wd)
 
 
-def mock_api_calls(mock, module, version):
+def mock_api_calls(rsps: responses.RequestsMock, module, version):
     """Mock biocontainers and anaconda api calls for module"""
     biocontainers_api_url = (
         f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{module}/versions/{module}-{version.split('--')[0]}"
     )
     anaconda_api_url = f"https://api.anaconda.org/package/bioconda/{module}"
     anaconda_mock = {
-        "status_code": 200,
         "latest_version": version.split("--")[0],
         "summary": "",
         "doc_url": "",
@@ -84,7 +85,6 @@ def mock_api_calls(mock, module, version):
         "license": "",
     }
     biocontainers_mock = {
-        "status_code": 200,
         "images": [
             {
                 "image_type": "Singularity",
@@ -98,5 +98,5 @@ def mock_api_calls(mock, module, version):
             },
         ],
     }
-    mock.register_uri("GET", anaconda_api_url, json=anaconda_mock)
-    mock.register_uri("GET", biocontainers_api_url, json=biocontainers_mock)
+    rsps.get(anaconda_api_url, json=anaconda_mock, status=200)
+    rsps.get(biocontainers_api_url, json=biocontainers_mock, status=200)

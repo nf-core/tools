@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import unittest
 
-import requests_mock
+import responses
 
 import nf_core.create
 import nf_core.modules
@@ -35,8 +35,8 @@ def create_modules_repo_dummy(tmp_dir):
         fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
 
     # mock biocontainers and anaconda response
-    with requests_mock.Mocker() as mock:
-        mock_api_calls(mock, "bpipe", "0.9.11--hdfd78af_0")
+    with responses.RequestsMock() as rsps:
+        mock_api_calls(rsps, "bpipe", "0.9.11--hdfd78af_0")
         # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
         module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
         module_create.create()

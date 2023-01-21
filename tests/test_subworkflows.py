@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import unittest
 
-import requests_mock
+import responses
 
 import nf_core.create
 import nf_core.modules
@@ -30,7 +30,8 @@ def create_modules_repo_dummy(tmp_dir):
     with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
         fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
 
-    with requests_mock.Mocker() as mock:
+    # FIXME This mock isn't used
+    with responses.RequestsMock() as rsps:
         subworkflow_create = nf_core.subworkflows.SubworkflowCreate(root_dir, "test_subworkflow", "@author", True)
         subworkflow_create.create()
 
