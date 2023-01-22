@@ -70,11 +70,8 @@ def set_wd(path: Path):
         os.chdir(start_wd)
 
 
-def mock_api_calls(rsps: responses.RequestsMock, module, version):
-    """Mock biocontainers and anaconda api calls for module"""
-    biocontainers_api_url = (
-        f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{module}/versions/{module}-{version.split('--')[0]}"
-    )
+def mock_anaconda_api_calls(rsps: responses.RequestsMock, module, version):
+    """Mock anaconda api calls for module"""
     anaconda_api_url = f"https://api.anaconda.org/package/bioconda/{module}"
     anaconda_mock = {
         "latest_version": version.split("--")[0],
@@ -84,6 +81,14 @@ def mock_api_calls(rsps: responses.RequestsMock, module, version):
         "files": [{"version": version.split("--")[0]}],
         "license": "",
     }
+    rsps.get(anaconda_api_url, json=anaconda_mock, status=200)
+
+
+def mock_biocontainers_api_calls(rsps: responses.RequestsMock, module, version):
+    """Mock biocontainers api calls for module"""
+    biocontainers_api_url = (
+        f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{module}/versions/{module}-{version.split('--')[0]}"
+    )
     biocontainers_mock = {
         "images": [
             {
@@ -98,5 +103,4 @@ def mock_api_calls(rsps: responses.RequestsMock, module, version):
             },
         ],
     }
-    rsps.get(anaconda_api_url, json=anaconda_mock, status=200)
     rsps.get(biocontainers_api_url, json=biocontainers_mock, status=200)
