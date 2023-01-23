@@ -4,6 +4,8 @@
 
 ### Template
 
+- Turn on automatic clean up of intermediate files in `work/` on successful pipeline completion in full-test config ([#2163](https://github.com/nf-core/tools/pull/2163))
+
 ### Linting
 
 ### Modules
@@ -18,6 +20,7 @@
 
 - Fix the syntax of github_output in GitHub actions ([#2114](https://github.com/nf-core/tools/pull/2114))
 - Fix a bug introduced in 2.7 that made pipelines hang ([#2132](https://github.com/nf-core/tools/issues/2132))
+- Explicitly disable `conda` when a container profile ([#2140](https://github.com/nf-core/tools/pull/2140))
 
 ### Linting
 
