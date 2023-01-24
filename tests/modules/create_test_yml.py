@@ -1,10 +1,11 @@
 import os
+from pathlib import Path
 
 import pytest
 
 import nf_core.modules
 
-from ..utils import with_temporary_folder
+from ..utils import GITLAB_DEFAULT_BRANCH, GITLAB_URL, with_temporary_folder
 
 
 @with_temporary_folder
@@ -20,7 +21,7 @@ def test_modules_custom_yml_dumper(self, out_dir):
 
 @with_temporary_folder
 def test_modules_test_file_dict(self, test_file_dir):
-    """Creat dict of test files and create md5 sums"""
+    """Create dict of test files and create md5 sums"""
     meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", self.pipeline_dir, False, "./", False, True)
     with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
         fh.write("this line is just for testing")

@@ -13,7 +13,7 @@ from git.exc import GitCommandError
 
 import nf_core.utils
 from nf_core.components.components_utils import get_components_to_install
-from nf_core.lint_utils import run_prettier_on_file
+from nf_core.lint_utils import dump_json_with_prettier
 from nf_core.modules.modules_repo import (
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
@@ -618,7 +618,11 @@ class ModulesJson:
         """
         try:
             with open(self.modules_json_path, "r") as fh:
-                self.modules_json = json.load(fh)
+                try:
+                    self.modules_json = json.load(fh)
+                except json.JSONDecodeError as e:
+                    raise UserWarning(f"Unable to load JSON file '{self.modules_json_path}' due to error {e}")
+
         except FileNotFoundError:
             raise UserWarning("File 'modules.json' is missing")
 
@@ -1023,10 +1027,7 @@ class ModulesJson:
         """
         # Sort the modules.json
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
-        with open(self.modules_json_path, "w") as fh:
-            json.dump(self.modules_json, fh, indent=4)
-            fh.write("\n")
-        run_prettier_on_file(self.modules_json_path)
+        dump_json_with_prettier(self.modules_json_path, self.modules_json)
 
     def resolve_missing_installation(self, missing_installation, component_type):
         missing_but_in_mod_json = [

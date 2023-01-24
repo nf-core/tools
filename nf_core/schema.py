@@ -6,16 +6,20 @@ import copy
 import json
 import logging
 import os
+import tempfile
 import webbrowser
 
 import jinja2
 import jsonschema
 import markdown
+import rich.console
 import yaml
 from rich.prompt import Confirm
+from rich.syntax import Syntax
 
 import nf_core.list
 import nf_core.utils
+from nf_core.lint_utils import dump_json_with_prettier, run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
@@ -170,9 +174,7 @@ class PipelineSchema:
         num_params += sum(len(d.get("properties", {})) for d in self.schema.get("definitions", {}).values())
         if not suppress_logging:
             log.info(f"Writing schema with {num_params} params: '{self.schema_filename}'")
-        with open(self.schema_filename, "w") as fh:
-            json.dump(self.schema, fh, indent=4)
-            fh.write("\n")
+        dump_json_with_prettier(self.schema_filename, self.schema)
 
     def load_input_params(self, params_path):
         """Load a given a path to a parameters file (JSON/YAML)
@@ -183,7 +185,10 @@ class PipelineSchema:
         # First, try to load as JSON
         try:
             with open(params_path, "r") as fh:
-                params = json.load(fh)
+                try:
+                    params = json.load(fh)
+                except json.JSONDecodeError as e:
+                    raise UserWarning(f"Unable to load JSON file '{params_path}' due to error {e}")
                 self.input_params.update(params)
             log.debug(f"Loaded JSON input params: {params_path}")
         except Exception as json_e:
@@ -462,13 +467,21 @@ class PipelineSchema:
         if format == "html":
             output = self.markdown_to_html(output)
 
-        # Print to file
-        if output_fn:
+        with tempfile.NamedTemporaryFile(mode="w+") as fh:
+            fh.write(output)
+            run_prettier_on_file(fh.name)
+            fh.seek(0)
+            prettified_docs = fh.read()
+
+        if not output_fn:
+            console = rich.console.Console()
+            console.print("\n", Syntax(prettified_docs, format), "\n")
+        else:
             if os.path.exists(output_fn) and not force:
                 log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")
                 return
-            with open(output_fn, "w") as file:
-                file.write(output)
+            with open(output_fn, "w") as fh:
+                fh.write(prettified_docs)
                 log.info(f"Documentation written to '{output_fn}'")
 
         # Return as a string
@@ -493,9 +506,11 @@ class PipelineSchema:
                     if column == "parameter":
                         out += f"| `{p_key}` "
                     elif column == "description":
-                        out += f"| {param.get('description', '')} "
+                        desc = param.get("description", "").replace("\n", "<br>")
+                        out += f"| {desc} "
                         if param.get("help_text", "") != "":
-                            out += f"<details><summary>Help</summary><small>{param['help_text']}</small></details>"
+                            help_txt = param["help_text"].replace("\n", "<br>")
+                            out += f"<details><summary>Help</summary><small>{help_txt}</small></details>"
                     elif column == "type":
                         out += f"| `{param.get('type', '')}` "
                     else:

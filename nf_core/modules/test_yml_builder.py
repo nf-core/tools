@@ -40,9 +40,13 @@ class ModulesTestYmlBuilder(ComponentCommand):
         test_yml_output_path=None,
         force_overwrite=False,
         no_prompts=False,
+        remote_url=None,
+        branch=None,
     ):
-        super().__init__("modules", directory)
+        super().__init__("modules", directory, remote_url, branch)
         self.module_name = module_name
+        self.remote_url = remote_url
+        self.branch = branch
         self.run_tests = run_tests
         self.test_yml_output_path = test_yml_output_path
         self.force_overwrite = force_overwrite
@@ -75,10 +79,9 @@ class ModulesTestYmlBuilder(ComponentCommand):
 
         # Get the tool name if not specified
         if self.module_name is None:
-            modules_repo = ModulesRepo()
             self.module_name = questionary.autocomplete(
                 "Tool name:",
-                choices=modules_repo.get_avail_components(self.component_type),
+                choices=self.components_from_repo(self.org),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         self.module_dir = os.path.join(self.default_modules_path, *self.module_name.split("/"))
@@ -97,7 +100,7 @@ class ModulesTestYmlBuilder(ComponentCommand):
 
         # Get the output YAML file / check it does not already exist
         while self.test_yml_output_path is None:
-            default_val = f"tests/modules/nf-core/{self.module_name}/test.yml"
+            default_val = f"tests/modules/{self.org}/{self.module_name}/test.yml"
             if self.no_prompts:
                 self.test_yml_output_path = default_val
             else:
@@ -173,8 +176,8 @@ class ModulesTestYmlBuilder(ComponentCommand):
             # Don't think we need the last `-c` flag, but keeping to avoid having to update 100s modules.
             # See https://github.com/nf-core/tools/issues/1562
             default_val = (
-                f"nextflow run ./tests/modules/nf-core/{self.module_name} -entry {entry_point} "
-                f"-c ./tests/config/nextflow.config -c ./tests/modules/nf-core/{self.module_name}/nextflow.config"
+                f"nextflow run ./tests/modules/{self.org}/{self.module_name} -entry {entry_point} "
+                f"-c ./tests/config/nextflow.config -c ./tests/modules/{self.org}/{self.module_name}/nextflow.config"
             )
             if self.no_prompts:
                 ep_test["command"] = default_val

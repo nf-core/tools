@@ -217,11 +217,12 @@ Please refer to the respective documentation for further details to manage packa
 ### Activate shell completions for nf-core/tools
 
 Auto-completion for the `nf-core` command is available for bash, zsh and fish. To activate it, add the following lines to the respective shell config files.
-shell | shell config file | command
---- | --- | ---
-bash | ~/.bashrc | `eval "$(_NF_CORE_COMPLETE=bash_source nf-core)"`
-Zsh | ~/.zshrc | `eval "$(_NF_CORE_COMPLETE=zsh_source nf-core)"`
-fish | ~/.config/fish/completions/nf-core.fish | `eval (env _NF_CORE_COMPLETE=fish_source nf-core)`
+
+| shell | shell config file                         | command                                            |
+| ----- | ----------------------------------------- | -------------------------------------------------- |
+| bash  | `~/.bashrc`                               | `eval "$(_NF_CORE_COMPLETE=bash_source nf-core)"`  |
+| zsh   | `~/.zshrc`                                | `eval "$(_NF_CORE_COMPLETE=zsh_source nf-core)"`   |
+| fish  | `~/.config/fish/completions/nf-core.fish` | `eval (env _NF_CORE_COMPLETE=fish_source nf-core)` |
 
 After a restart of the shell session you should have auto-completion for the `nf-core` command and all its sub-commands and options.
 
@@ -342,6 +343,8 @@ You can run the pipeline by simply providing the directory path for the `workflo
 ```bash
 nextflow run /path/to/download/nf-core-rnaseq-dev/workflow/ --input mydata.csv --outdir results  # usual parameters here
 ```
+
+> Note that if you downloaded singularity images, you will need to use `-profile singularity` or have it enabled in your config file.
 
 ### Downloaded nf-core configs
 
@@ -705,6 +708,14 @@ nf-core modules --git-remote git@gitlab.com:nf-core/modules-test.git install fas
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
+The directory where modules are installed will be prompted or obtained from `org_path` in the `.nf-core.yml` file if available. If your modules are located at `modules/my-folder/TOOL/SUBTOOL` your `.nf-core.yml` should have:
+
+```yaml
+org_path: my-folder
+```
+
+Please avoid installing the same tools from two different remotes, as this can lead to further errors.
+
 The modules commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example
 due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will
 still need to clone repositories that have previously not been used.
@@ -983,6 +994,14 @@ nf-core subworkflows --git-remote git@gitlab.com:nf-core/modules-test.git --bran
 ```
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/modules` for the `nf-core subworkflows` commands to work properly.
+
+The directory where subworkflows are installed will be prompted or obtained from `org_path` in the `.nf-core.yml` file if available. If your subworkflows are located at `subworkflows/my-folder/SUBWORKFLOW_NAME` your `.nf-core.yml` file should have:
+
+```yaml
+org_path: my-folder
+```
+
+Please avoid installing the same tools from two different remotes, as this can lead to further errors.
 
 The subworkflows commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will still need to clone repositories that have previously not been used.
 

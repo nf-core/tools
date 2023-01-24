@@ -248,7 +248,10 @@ def fetch_wf_config(wf_path, cache_config=True):
         if os.path.isfile(cache_path):
             log.debug(f"Found a config cache, loading: {cache_path}")
             with open(cache_path, "r") as fh:
-                config = json.load(fh)
+                try:
+                    config = json.load(fh)
+                except json.JSONDecodeError as e:
+                    raise UserWarning(f"Unable to load JSON file '{cache_path}' due to error {e}")
             return config
     log.debug("No config cache found")
 

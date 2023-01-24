@@ -173,3 +173,5 @@ def get_username(author):
             f"[violet]GitHub Username:[/]{' (@author)' if author_default is None else ''}",
             default=author_default,
         )
+
+    return author
