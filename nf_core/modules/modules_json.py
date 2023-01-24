@@ -494,7 +494,7 @@ class ModulesJson:
         Args:
             install_dir (str): The name of directory where modules are installed
             remote_url (str): The git url of the remote repository
-            modules ([ dict[str, dict[str, str]] ]): Module entries with
+            module_entries ([ dict[str, dict[str, str]] ]): Module entries with
             branch and git sha info
 
         Returns:
