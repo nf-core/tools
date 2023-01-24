@@ -419,10 +419,10 @@ class ModulesJson:
 
     def parse_dirs(self, dirs, missing_installation, component_type):
         untracked_dirs = []
-        for dir in dirs:
+        for dir_ in dirs:
             # Check if the module/subworkflows directory exists in modules.json
-            install_dir = dir.parts[0]
-            component = str(Path(*dir.parts[1:]))
+            install_dir = dir_.parts[0]
+            component = str(Path(*dir_.parts[1:]))
             component_in_file = False
             git_url = None
             for repo in missing_installation:
