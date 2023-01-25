@@ -5,6 +5,7 @@
 ### Template
 
 - Turn on automatic clean up of intermediate files in `work/` on successful pipeline completion in full-test config ([#2163](https://github.com/nf-core/tools/pull/2163))
+- Added `[skip ci]` to nf-core linting bot to stop executing entire pipeline CI tests for file formatting changes
 
 ### Linting
 
