@@ -80,7 +80,7 @@ If you wish to repeatedly use the same parameters for multiple runs, rather than
 Pipeline settings can be provided in a `yaml` or `json` file via `-params-file <file>`.
 
 > ⚠️ Do not use `-c <file>` to specify parameters as this will result in errors. Custom config files must only be used for [tuning process resource specifications](https://nf-co.re/docs/usage/configuration#tuning-workflow-resources) and other infrastructural tweaks.
-The above pipeline run specified with a params file in yaml format:
+> The above pipeline run specified with a params file in yaml format:
 
 ```bash
 nextflow run {{ name }} -profile docker -params-file params.yaml
@@ -96,7 +96,7 @@ input: 'data'
 <...>
 ```
 
-You can also generate such `YAML`/`JSON` files via [nf-core/launch](https://nf-co.re/launch). 
+You can also generate such `YAML`/`JSON` files via [nf-core/launch](https://nf-co.re/launch).
 
 ### Updating the pipeline
 
