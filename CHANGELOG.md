@@ -5,7 +5,7 @@
 ### Template
 
 - Turn on automatic clean up of intermediate files in `work/` on successful pipeline completion in full-test config ([#2163](https://github.com/nf-core/tools/pull/2163))
-- Make jobs automatically resubmit for a much wider range of exit codes (now `130..145`)
+- Make jobs automatically resubmit for a much wider range of exit codes (now `104` and `130..145`)
 
 ### Linting
 
