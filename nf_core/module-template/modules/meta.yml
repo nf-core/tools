@@ -1,11 +1,15 @@
 name: "{{ tool_name_underscore }}"
+#{% if not_minimal -%}
 ## TODO nf-core: Add a description of the module and list keywords
+#{%- endif %}
 description: write your description here
 keywords:
   - sort
 tools:
   - "{{ tool }}":
+      #{% if not_minimal -%}
       ## TODO nf-core: Add a description and other details for the software below
+      #{%- endif %}
       description: "{{ tool_description }}"
       homepage: "{{ tool_doc_url }}"
       documentation: "{{ tool_doc_url }}"
@@ -13,7 +17,9 @@ tools:
       doi: ""
       licence: "{{ tool_licence }}"
 
+#{% if not_minimal -%}
 ## TODO nf-core: Add a description of all of the variables used as input
+#{%- endif %}
 input:
   #{% if has_meta %} Only when we have meta
   - meta:
@@ -22,13 +28,17 @@ input:
         Groovy Map containing sample information
         e.g. [ id:'test', single_end:false ]
   #{% endif %}
+  #{% if not_minimal -%}
   ## TODO nf-core: Delete / customise this example input
-  - bam:
-      type: file
-      description: BAM/CRAM/SAM file
-      pattern: "*.{bam,cram,sam}"
+  #{%- endif %}
+  - #{{ 'bam:' if not_minimal else "input:" }}
+    type: file
+    description: #{{ 'Sorted BAM/CRAM/SAM file' if not_minimal else "" }}
+    pattern: #{{ '"*.{bam,cram,sam}"' if not_minimal else "" }}
 
+#{% if not_minimal -%}
 ## TODO nf-core: Add a description of all of the variables used as output
+#{%- endif %}
 output:
   #{% if has_meta -%} Only when we have meta
   - meta:
@@ -41,11 +51,13 @@ output:
       type: file
       description: File containing software versions
       pattern: "versions.yml"
+  #{% if not_minimal -%}
   ## TODO nf-core: Delete / customise this example output
-  - bam:
-      type: file
-      description: Sorted BAM/CRAM/SAM file
-      pattern: "*.{bam,cram,sam}"
+  #{%- endif %}
+  - #{{ 'bam:' if not_minimal else "output:" }}
+    type: file
+    description: #{{ 'Sorted BAM/CRAM/SAM file' if not_minimal else "" }}
+    pattern: #{{ '"*.{bam,cram,sam}"' if not_minimal else "" }}
 
 authors:
   - "{{ author }}"
