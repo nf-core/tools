@@ -18,7 +18,6 @@ import yaml
 from packaging.version import parse as parse_version
 
 import nf_core
-import nf_core.components.components_create
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 
@@ -37,6 +36,7 @@ class ComponentCreate(ComponentCommand):
         force=False,
         conda_name=None,
         conda_version=None,
+        minimal=False,
     ):
         super().__init__(component_type, directory)
         self.directory = directory
@@ -57,6 +57,7 @@ class ComponentCreate(ComponentCommand):
         self.singularity_container = None
         self.docker_container = None
         self.file_paths = {}
+        self.not_minimal = not minimal
 
     def create(self):
         """
@@ -118,7 +119,7 @@ class ComponentCreate(ComponentCommand):
         )
 
         # Collect component info via prompt if empty or invalid
-        self.component, self.subtool = self._collect_name_prompt()
+        self._collect_name_prompt()
 
         # Determine the component name
         self.component_name = self.component
@@ -182,7 +183,7 @@ class ComponentCreate(ComponentCommand):
                 if self.tool_conda_name:
                     anaconda_response = nf_core.utils.anaconda_package(self.tool_conda_name, ["bioconda"])
                 else:
-                    anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
+                    anaconda_response = nf_core.utils.anaconda_package(self.component, ["bioconda"])
 
                 if not self.tool_conda_version:
                     version = anaconda_response.get("latest_version")
@@ -198,12 +199,12 @@ class ComponentCreate(ComponentCommand):
                 if self.tool_conda_name:
                     self.bioconda = "bioconda::" + self.tool_conda_name + "=" + version
                 else:
-                    self.bioconda = "bioconda::" + self.tool + "=" + version
+                    self.bioconda = "bioconda::" + self.component + "=" + version
                 log.info(f"Using Bioconda package: '{self.bioconda}'")
                 break
             except (ValueError, LookupError) as e:
                 log.warning(
-                    f"Could not find Conda dependency using the Anaconda API: '{self.tool_conda_name if self.tool_conda_name else self.tool}'"
+                    f"Could not find Conda dependency using the Anaconda API: '{self.tool_conda_name if self.tool_conda_name else self.component}'"
                 )
                 if rich.prompt.Confirm.ask("[violet]Do you want to enter a different Bioconda package name?"):
                     self.tool_conda_name = rich.prompt.Prompt.ask("[violet]Name of Bioconda package").strip()
@@ -223,7 +224,7 @@ class ComponentCreate(ComponentCommand):
                     )
                 else:
                     self.docker_container, self.singularity_container = nf_core.utils.get_biocontainer_tag(
-                        self.tool, version
+                        self.component, version
                     )
                 log.info(f"Using Docker container: '{self.docker_container}'")
                 log.info(f"Using Singularity container: '{self.singularity_container}'")
@@ -290,7 +291,7 @@ class ComponentCreate(ComponentCommand):
         Collect module/subworkflow info via prompt if empty or invalid
         """
         # Collect module info via prompt if empty or invalid
-        subname = None
+        self.subtool = None
         if self.component_type == "modules":
             pattern = r"[^a-z\d/]"
         elif self.component_type == "subworkflows":
@@ -316,9 +317,9 @@ class ComponentCreate(ComponentCommand):
                     log.warning("Tool/subtool can have maximum one '/' character")
                     self.component = ""
                 elif self.component.count("/") == 1:
-                    self.component, subname = self.component.split("/")
+                    self.component, self.subtool = self.component.split("/")
                 else:
-                    subname = None  # Reset edge case: entered '/subtool' as name and gone round loop again
+                    self.subtool = None  # Reset edge case: entered '/subtool' as name and gone round loop again
 
             # Prompt for new entry if we reset
             if self.component == "":
@@ -326,11 +327,6 @@ class ComponentCreate(ComponentCommand):
                     self.component = rich.prompt.Prompt.ask("[violet]Name of tool/subtool").strip()
                 elif self.component_type == "subworkflows":
                     self.component = rich.prompt.Prompt.ask("[violet]Name of subworkflow").strip()
-
-        if self.component_type == "modules":
-            return self.component, subname
-        elif self.component_type == "subworkflows":
-            return self.component
 
     def _get_component_dirs(self):
         """Given a directory and a tool/subtool or subworkflow, set the file paths and check if they already exist

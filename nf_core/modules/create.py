@@ -16,7 +16,17 @@ class ModuleCreate(ComponentCreate):
         force=False,
         conda_name=None,
         conda_version=None,
+        minimal=False,
     ):
         super().__init__(
-            "modules", pipeline_dir, component, author, process_label, has_meta, force, conda_name, conda_version
+            "modules",
+            pipeline_dir,
+            component,
+            author,
+            process_label,
+            has_meta,
+            force,
+            conda_name,
+            conda_version,
+            minimal,
         )

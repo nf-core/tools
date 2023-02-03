@@ -40,14 +40,18 @@ process {{ tool_name_underscore|upper }} {
     //               https://github.com/nf-core/modules/blob/master/modules/nf-core/bwa/index/main.nf
     // TODO nf-core: Where applicable please provide/convert compressed files as input/output
     //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
+    {{ 'tuple val(meta), path(bam)' if has_meta else 'path bam' }}
+    {%- else %}
+    {{ 'tuple val(meta), path(input)' if has_meta else 'path input' }}
     {%- endif %}
-    {{ {'tuple val(meta), path(bam)' if not_minimal else 'tuple val(meta), path(input)'} if has_meta else {'path bam' if not_minimal else 'path input'} }}
 
     output:
     {% if not_minimal -%}
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
+    {{ 'tuple val(meta), path("*.bam")' if has_meta else 'path "*.bam"' }}, emit: bam
+    {%- else %}
+    {{ 'tuple val(meta), path("*")' if has_meta else 'path "*"' }}, emit: output
     {%- endif %}
-    {{ {'tuple val(meta), path("*.bam")' if not_minimal else 'tuple val(meta), path("*")'} if has_meta else {'path "*.bam"' if not_minimal else 'path "*"'} }}, emit: {bam if not_minimal else output}
     {% if not_minimal -%}
     // TODO nf-core: List additional required output channels/values here
     {%- endif %}

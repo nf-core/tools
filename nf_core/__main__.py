@@ -678,7 +678,8 @@ def remove(ctx, dir, tool):
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
 @click.option("-c", "--conda-name", type=str, default=None, help="Name of the conda package to use")
 @click.option("-p", "--conda-package-version", type=str, default=None, help="Version of conda package to use")
-def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_name, conda_package_version):
+@click.option("-i", "--minimal", is_flag=True, default=False, help="Create a minimal version of the template")
+def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_name, conda_package_version, minimal):
     """
     Create a new DSL2 module from the nf-core template.
 
@@ -700,7 +701,7 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
     # Run function
     try:
         module_create = nf_core.modules.ModuleCreate(
-            dir, tool, author, label, has_meta, force, conda_name, conda_package_version
+            dir, tool, author, label, has_meta, force, conda_name, conda_package_version, minimal
         )
         module_create.create()
     except UserWarning as e:
@@ -936,7 +937,8 @@ def test_module(ctx, tool, no_prompts, pytest_args):
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
 @click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username prefixed with '@'")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
-def create_subworkflow(ctx, subworkflow, dir, author, force):
+@click.option("-i", "--minimap", is_flag=True, default=False, help="Create a minimal version of the template")
+def create_subworkflow(ctx, subworkflow, dir, author, force, minimal):
     """
     Create a new subworkflow from the nf-core template.
 
@@ -949,7 +951,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
 
     # Run function
     try:
-        subworkflow_create = nf_core.subworkflows.SubworkflowCreate(dir, subworkflow, author, force)
+        subworkflow_create = nf_core.subworkflows.SubworkflowCreate(dir, subworkflow, author, force, minimal)
         subworkflow_create.create()
     except UserWarning as e:
         log.critical(e)
