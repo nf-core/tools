@@ -16,7 +16,7 @@ class ModuleCreate(ComponentCreate):
         force=False,
         conda_name=None,
         conda_version=None,
-        minimal=False,
+        empty_template=False,
     ):
         super().__init__(
             "modules",
@@ -28,5 +28,5 @@ class ModuleCreate(ComponentCreate):
             force,
             conda_name,
             conda_version,
-            minimal,
+            empty_template,
         )

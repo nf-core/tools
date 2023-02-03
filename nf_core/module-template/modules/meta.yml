@@ -1,5 +1,5 @@
 name: "{{ component_name_underscore }}"
-{% if not_minimal -%}
+{% if not_empty_template -%}
 ## TODO nf-core: Add a description of the module and list keywords
 {%- endif -%}
 description: write your description here
@@ -7,7 +7,7 @@ keywords:
   - sort
 tools:
   - "{{ component }}":
-      {% if not_minimal -%}
+      {% if not_empty_template -%}
       ## TODO nf-core: Add a description and other details for the software below
       {% endif -%}
       description: "{{ tool_description }}"
@@ -17,7 +17,7 @@ tools:
       doi: ""
       licence: "{{ tool_licence }}"
 
-{% if not_minimal -%}
+{% if not_empty_template -%}
 ## TODO nf-core: Add a description of all of the variables used as input
 {% endif -%}
 input:
@@ -28,15 +28,15 @@ input:
         Groovy Map containing sample information
         e.g. [ id:'test', single_end:false ]
   {% endif %}
-  {% if not_minimal -%}
+  {% if not_empty_template -%}
   ## TODO nf-core: Delete / customise this example input
   {%- endif %}
-  - {{ 'bam:' if not_minimal else "input:" }}
+  - {{ 'bam:' if not_empty_template else "input:" }}
     type: file
-    description: {{ 'Sorted BAM/CRAM/SAM file' if not_minimal else "" }}
-    pattern: {{ '"*.{bam,cram,sam}"' if not_minimal else "" }}
+    description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
+    pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
 
-{% if not_minimal -%}
+{% if not_empty_template -%}
 ## TODO nf-core: Add a description of all of the variables used as output
 {% endif -%}
 output:
@@ -51,13 +51,13 @@ output:
       type: file
       description: File containing software versions
       pattern: "versions.yml"
-  {% if not_minimal -%}
+  {% if not_empty_template -%}
   ## TODO nf-core: Delete / customise this example output
   {%- endif %}
-  - {{ 'bam:' if not_minimal else "output:" }}
+  - {{ 'bam:' if not_empty_template else "output:" }}
     type: file
-    description: {{ 'Sorted BAM/CRAM/SAM file' if not_minimal else "" }}
-    pattern: {{ '"*.{bam,cram,sam}"' if not_minimal else "" }}
+    description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
+    pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
 
 authors:
   - "{{ author }}"

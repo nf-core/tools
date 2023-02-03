@@ -36,7 +36,7 @@ class ComponentCreate(ComponentCommand):
         force=False,
         conda_name=None,
         conda_version=None,
-        minimal=False,
+        empty_template=False,
     ):
         super().__init__(component_type, directory)
         self.directory = directory
@@ -57,7 +57,7 @@ class ComponentCreate(ComponentCommand):
         self.singularity_container = None
         self.docker_container = None
         self.file_paths = {}
-        self.not_minimal = not minimal
+        self.not_empty_template = not empty_template
 
     def create(self):
         """

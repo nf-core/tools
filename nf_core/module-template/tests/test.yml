@@ -1,4 +1,4 @@
-{%- if not_minimal -%}
+{%- if not_empty_template -%}
 ## TODO nf-core: Please run the following command to build this file:
 #                nf-core modules create-test-yml {{ tool }}{%- if subtool %}/{{ subtool }}{%- endif %}
 {% endif -%}
@@ -8,7 +8,7 @@
     - "{{ component }}{% if subtool -%}"
     - "{{ component }}/{{ subtool }}{%- endif %}"
   files:
-    {% if not_minimal -%}
+    {% if not_empty_template -%}
     - path: "output/{{ component }}/test.bam"
       md5sum: e667c7caad0bc4b7ac383fd023c654fc
     - path: "output/{{ component }}/versions.yml"

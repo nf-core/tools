@@ -11,6 +11,8 @@
 
 ### Modules
 
+- Add an `--empty-template` option to create a module without TODO statements or examples ([#2175](https://github.com/nf-core/tools/pull/2175))
+
 ### Subworkflows
 
 ### General
