@@ -1,4 +1,4 @@
-{% if not_minimal -%}
+{%- if not_minimal -%}
 // TODO nf-core: If in doubt look at other nf-core/modules to see how we are doing things! :)
 //               https://github.com/nf-core/modules/tree/master/modules/nf-core/
 //               You can also ask for help via your pull request or on the #modules channel on the nf-core Slack workspace:
@@ -15,7 +15,7 @@
 //                 bwa mem | samtools view -B -T ref.fasta
 // TODO nf-core: Optional inputs are not currently supported by Nextflow. However, using an empty
 //               list (`[]`) instead of a file can be used to work around this issue.
-{%- endif %}
+{%- endif -%}
 
 process {{ component_name_underscore|upper }} {
     tag {{ '"$meta.id"' if has_meta else "'$bam'" }}
