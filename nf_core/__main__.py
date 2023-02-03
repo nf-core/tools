@@ -683,7 +683,7 @@ def remove(ctx, dir, tool):
     "--empty-template",
     is_flag=True,
     default=False,
-    help="Create a version of the template without TODOs or examples",
+    help="Create a module from the template without TODOs or examples",
 )
 def create_module(
     ctx, tool, dir, author, label, meta, no_meta, force, conda_name, conda_package_version, empty_template
