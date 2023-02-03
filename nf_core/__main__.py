@@ -937,8 +937,7 @@ def test_module(ctx, tool, no_prompts, pytest_args):
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
 @click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username prefixed with '@'")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
-@click.option("-i", "--minimap", is_flag=True, default=False, help="Create a minimal version of the template")
-def create_subworkflow(ctx, subworkflow, dir, author, force, minimal):
+def create_subworkflow(ctx, subworkflow, dir, author, force):
     """
     Create a new subworkflow from the nf-core template.
 
@@ -951,7 +950,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force, minimal):
 
     # Run function
     try:
-        subworkflow_create = nf_core.subworkflows.SubworkflowCreate(dir, subworkflow, author, force, minimal)
+        subworkflow_create = nf_core.subworkflows.SubworkflowCreate(dir, subworkflow, author, force)
         subworkflow_create.create()
     except UserWarning as e:
         log.critical(e)

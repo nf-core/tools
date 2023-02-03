@@ -141,7 +141,8 @@ class ComponentCreate(ComponentCommand):
         # Prompt for GitHub username
         self._get_username()
 
-        self._get_module_structure_components()
+        if self.component_type == "modules":
+            self._get_module_structure_components()
 
         # Create component template with jinja2
         self._render_template()

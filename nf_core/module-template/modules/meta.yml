@@ -6,10 +6,10 @@ description: write your description here
 keywords:
   - sort
 tools:
-  - "{{ tool }}":
+  - "{{ component }}":
       {% if not_minimal -%}
       ## TODO nf-core: Add a description and other details for the software below
-      {%- endif -%}
+      {% endif -%}
       description: "{{ tool_description }}"
       homepage: "{{ tool_doc_url }}"
       documentation: "{{ tool_doc_url }}"
@@ -19,7 +19,7 @@ tools:
 
 {% if not_minimal -%}
 ## TODO nf-core: Add a description of all of the variables used as input
-{%- endif -%}
+{% endif -%}
 input:
   #{% if has_meta %} Only when we have meta
   - meta:
@@ -38,7 +38,7 @@ input:
 
 {% if not_minimal -%}
 ## TODO nf-core: Add a description of all of the variables used as output
-{%- endif -%}
+{% endif -%}
 output:
   #{% if has_meta -%} Only when we have meta
   - meta:
