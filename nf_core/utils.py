@@ -872,7 +872,6 @@ def get_repo_releases_branches(pipeline, wfs):
     # Repo is a nf-core pipeline
     for wf in wfs.remote_workflows:
         if wf.full_name == pipeline or wf.name == pipeline:
-
             # Set to full name just in case it didn't have the nf-core/ prefix
             pipeline = wf.full_name
 
@@ -883,7 +882,6 @@ def get_repo_releases_branches(pipeline, wfs):
     # Arbitrary GitHub repo
     else:
         if pipeline.count("/") == 1:
-
             # Looks like a GitHub address - try working with this repo
             log.debug(
                 f"Pipeline '{pipeline}' not in nf-core, but looks like a GitHub address - fetching releases from API"

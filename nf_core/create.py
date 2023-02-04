@@ -283,7 +283,6 @@ class PipelineCreate:
 
         # Set the paths to skip according to customization
         for template_fn_path_obj in template_files:
-
             template_fn_path = str(template_fn_path_obj)
 
             # Skip files that are in the self.skip_paths list
