@@ -24,7 +24,6 @@ def template_strings(self):
     # Loop through files, searching for string
     num_matches = 0
     for fn in self.files:
-
         # Skip binary files
         binary_ftypes = ["image", "application/java-archive"]
         (ftype, encoding) = mimetypes.guess_type(fn)

@@ -6,6 +6,7 @@
 
 - Turn on automatic clean up of intermediate files in `work/` on successful pipeline completion in full-test config ([#2163](https://github.com/nf-core/tools/pull/2163)) [Contributed by @jfy133]
 - Add documentation to `usage.md` on how to use `params.yml` files, based on nf-core/ampliseq text ([#2173](https://github.com/nf-core/tools/pull/2173/)) [Contributed by @jfy133, @d4straub]
+- Make jobs automatically resubmit for a much wider range of exit codes (now `104` and `130..145`)
 
 ### Linting
 
