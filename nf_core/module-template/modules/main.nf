@@ -1,3 +1,4 @@
+{%- if not_empty_template -%}
 // TODO nf-core: If in doubt look at other nf-core/modules to see how we are doing things! :)
 //               https://github.com/nf-core/modules/tree/master/modules/nf-core/
 //               You can also ask for help via your pull request or on the #modules channel on the nf-core Slack workspace:
@@ -14,21 +15,25 @@
 //                 bwa mem | samtools view -B -T ref.fasta
 // TODO nf-core: Optional inputs are not currently supported by Nextflow. However, using an empty
 //               list (`[]`) instead of a file can be used to work around this issue.
+{%- endif %}
 
-process {{ tool_name_underscore|upper }} {
+process {{ component_name_underscore|upper }} {
     tag {{ '"$meta.id"' if has_meta else "'$bam'" }}
     label '{{ process_label }}'
 
+    {% if not_empty_template -%}
     // TODO nf-core: List required Conda package(s).
     //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
     //               For Conda, the build (i.e. "h9402c20_2") must be EXCLUDED to support installation on different operating systems.
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
+    {% endif -%}
     conda "{{ bioconda if bioconda else 'YOUR-TOOL-HERE' }}"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         '{{ singularity_container if singularity_container else 'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE' }}':
         '{{ docker_container if docker_container else 'quay.io/biocontainers/YOUR-TOOL-HERE' }}' }"
 
     input:
+    {% if not_empty_template -%}
     // TODO nf-core: Where applicable all sample-specific information e.g. "id", "single_end", "read_group"
     //               MUST be provided as an input via a Groovy Map called "meta".
     //               This information may not be required in some instances e.g. indexing reference genome files:
@@ -36,11 +41,20 @@ process {{ tool_name_underscore|upper }} {
     // TODO nf-core: Where applicable please provide/convert compressed files as input/output
     //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
     {{ 'tuple val(meta), path(bam)' if has_meta else 'path bam' }}
+    {%- else -%}
+    {{ 'tuple val(meta), path(input)' if has_meta else 'path input' }}
+    {%- endif %}
 
     output:
+    {% if not_empty_template -%}
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
     {{ 'tuple val(meta), path("*.bam")' if has_meta else 'path "*.bam"' }}, emit: bam
+    {%- else -%}
+    {{ 'tuple val(meta), path("*")' if has_meta else 'path "*"' }}, emit: output
+    {%- endif %}
+    {% if not_empty_template -%}
     // TODO nf-core: List additional required output channels/values here
+    {%- endif %}
     path "versions.yml"           , emit: versions
 
     when:
@@ -51,6 +65,7 @@ process {{ tool_name_underscore|upper }} {
     {% if has_meta -%}
     def prefix = task.ext.prefix ?: "${meta.id}"
     {%- endif %}
+    {% if not_empty_template -%}
     // TODO nf-core: Where possible, a command MUST be provided to obtain the version number of the software e.g. 1.10
     //               If the software is unable to output a version number on the command-line then it can be manually specified
     //               e.g. https://github.com/nf-core/modules/blob/master/modules/nf-core/homer/annotatepeaks/main.nf
@@ -60,7 +75,9 @@ process {{ tool_name_underscore|upper }} {
     //               using the Nextflow "task" variable e.g. "--threads $task.cpus"
     // TODO nf-core: Please replace the example samtools command below with your module's command
     // TODO nf-core: Please indent the command appropriately (4 spaces!!) to help with readability ;)
+    {%- endif %}
     """
+    {% if not_empty_template -%}
     samtools \\
         sort \\
         $args \\
@@ -70,6 +87,7 @@ process {{ tool_name_underscore|upper }} {
         -T $prefix \\
         {%- endif %}
         $bam
+    {%- endif %}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

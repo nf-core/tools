@@ -1,11 +1,30 @@
 # nf-core/tools: Changelog
 
+# v2.8dev
+
+### Template
+
+- Turn on automatic clean up of intermediate files in `work/` on successful pipeline completion in full-test config ([#2163](https://github.com/nf-core/tools/pull/2163)) [Contributed by @jfy133]
+- Add documentation to `usage.md` on how to use `params.yml` files, based on nf-core/ampliseq text ([#2173](https://github.com/nf-core/tools/pull/2173/)) [Contributed by @jfy133, @d4straub]
+- Make jobs automatically resubmit for a much wider range of exit codes (now `104` and `130..145`)
+
+### Linting
+
+### Modules
+
+- Add an `--empty-template` option to create a module without TODO statements or examples ([#2175](https://github.com/nf-core/tools/pull/2175))
+
+### Subworkflows
+
+### General
+
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 
 ### Template
 
 - Fix the syntax of github_output in GitHub actions ([#2114](https://github.com/nf-core/tools/pull/2114))
 - Fix a bug introduced in 2.7 that made pipelines hang ([#2132](https://github.com/nf-core/tools/issues/2132))
+- Explicitly disable `conda` when a container profile ([#2140](https://github.com/nf-core/tools/pull/2140))
 
 ### Linting
 
