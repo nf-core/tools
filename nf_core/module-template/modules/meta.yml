@@ -1,7 +1,7 @@
 name: "{{ component_name_underscore }}"
 {% if not_empty_template -%}
 ## TODO nf-core: Add a description of the module and list keywords
-{%- endif -%}
+{% endif -%}
 description: write your description here
 keywords:
   - sort
