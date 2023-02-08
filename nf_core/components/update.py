@@ -386,7 +386,7 @@ class ComponentUpdate(ComponentCommand):
             )
 
         # Check that the supplied name is an available module/subworkflow
-        if component and component not in self.modules_repo.get_avail_components(self.component_type):
+        if component and component not in self.modules_repo.get_avail_components(self.component_type, commit=self.sha):
             raise LookupError(
                 f"{self.component_type[:-1].title()} '{component}' not found in list of available {self.component_type}."
                 f"Use the command 'nf-core {self.component_type} list remote' to view available software"
@@ -879,8 +879,17 @@ class ComponentUpdate(ComponentCommand):
             if m_update in updated:
                 continue
             original_component_type, original_update_all = self._change_component_type("modules")
-            self.update(m_update, silent=True, updated=updated, check_diff_exist=check_diff_exist)
-            self._reset_component_type(original_component_type, original_update_all)
+            try:
+                self.update(m_update, silent=True, updated=updated, check_diff_exist=check_diff_exist)
+            except LookupError as e:
+                # If the module to be updated is not available, check if there has been a name change
+                if "not found in list of available" in str(e):
+                    # Skip update, we check for name changes with manage_changes_in_linked_components in line #261
+                    pass
+                else:
+                    raise
+            finally:
+                self._reset_component_type(original_component_type, original_update_all)
 
     def manage_changes_in_linked_components(self, component, modules_to_update, subworkflows_to_update):
         """Check for linked components added or removed in the new subworkflow version"""
