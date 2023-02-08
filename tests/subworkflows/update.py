@@ -322,6 +322,10 @@ def test_update_change_of_included_modules(self):
     # Check that tabix/tabix is there
     assert "tabix/tabix" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
     assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/tabix").is_dir()
+    # Check that ensemblevep is not there but instead we have ensemblevep/vep (due to a file re-naming)
+    assert "ensemblvep" not in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
+    assert "ensemblvep/vep" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
+    assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "ensemblvep/vep").is_dir()
 
 
 def cmp_component(dir1, dir2):

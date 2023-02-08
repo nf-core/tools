@@ -896,17 +896,6 @@ class ComponentUpdate(ComponentCommand):
         if self.component_type == "subworkflows":
             subworkflow_directory = Path(self.dir, self.component_type, self.modules_repo.repo_path, component)
             included_modules, included_subworkflows = get_components_to_install(subworkflow_directory)
-            # If a new module/subworkflow is included in the subworklfow and wasn't included before
-            for module in included_modules:
-                if module not in modules_to_update:
-                    log.info(f"Installing newly included module '{module}' for '{component}'")
-                    install_module_object = ComponentInstall(self.dir, "modules", installed_by=component)
-                    install_module_object.install(module, silent=True)
-            for subworkflow in included_subworkflows:
-                if subworkflow not in subworkflows_to_update:
-                    log.info(f"Installing newly included subworkflow '{subworkflow}' for '{component}'")
-                    install_subworkflow_object = ComponentInstall(self.dir, "subworkflows", installed_by=component)
-                    install_subworkflow_object.install(subworkflow, silent=True)
             # If a module/subworkflow has been removed from the subworkflow
             for module in modules_to_update:
                 if module not in included_modules:
@@ -918,6 +907,17 @@ class ComponentUpdate(ComponentCommand):
                     log.info(f"Removing subworkflow '{subworkflow}' which is not included in '{component}' anymore.")
                     remove_subworkflow_object = ComponentRemove("subworkflows", self.dir)
                     remove_subworkflow_object.remove(subworkflow, removed_by=component)
+            # If a new module/subworkflow is included in the subworklfow and wasn't included before
+            for module in included_modules:
+                if module not in modules_to_update:
+                    log.info(f"Installing newly included module '{module}' for '{component}'")
+                    install_module_object = ComponentInstall(self.dir, "modules", installed_by=component)
+                    install_module_object.install(module, silent=True)
+            for subworkflow in included_subworkflows:
+                if subworkflow not in subworkflows_to_update:
+                    log.info(f"Installing newly included subworkflow '{subworkflow}' for '{component}'")
+                    install_subworkflow_object = ComponentInstall(self.dir, "subworkflows", installed_by=component)
+                    install_subworkflow_object.install(subworkflow, silent=True)
 
     def _change_component_type(self, new_component_type):
         original_component_type = self.component_type
