@@ -132,12 +132,13 @@ class ComponentInfo(ComponentCommand):
         else:
             if self.repo_type == "pipeline":
                 # check if the module is locally installed
-                self.local_path = self.modules_json.get_all_components(self.component_type).get(
+                local_paths = self.modules_json.get_all_components(self.component_type).get(
                     self.modules_repo.remote_url, {}
                 )
-                for directory, comp in self.local_path:
+                for directory, comp in local_paths:
                     if comp == component:
-                        self.local_path = Path(self.component_type, directory, component)
+                        component_base_path = Path(self.dir, self.component_type)
+                        self.local_path = Path(component_base_path, directory, self.component)
                         break
                 if self.local_path:
                     self.local = True
