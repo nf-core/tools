@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 from pathlib import Path
 
 import questionary
@@ -74,10 +73,10 @@ class ComponentInstall(ComponentCommand):
         )
 
         # Set the install folder based on the repository name
-        install_folder = os.path.join(self.dir, self.component_type, self.modules_repo.repo_path)
+        install_folder = Path(self.dir, self.component_type, self.modules_repo.repo_path)
 
         # Compute the component directory
-        component_dir = os.path.join(install_folder, component)
+        component_dir = Path(install_folder, component)
 
         # Check that the component is not already installed
         component_not_installed = self.check_component_installed(
