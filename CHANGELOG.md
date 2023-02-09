@@ -17,6 +17,7 @@
 ### Subworkflows
 
 - Fixing problem when a module included in a subworkflow had a name change from TOOL to TOOL/SUBTOOL ([#2177](https://github.com/nf-core/tools/pull/2177))
+- Fix `nf-core subworkflows test` not running subworkflow tests ([#2181](https://github.com/nf-core/tools/pull/2181))
 
 ### General
 
