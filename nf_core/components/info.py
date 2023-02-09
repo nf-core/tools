@@ -138,7 +138,7 @@ class ComponentInfo(ComponentCommand):
                 for directory, comp in local_paths:
                     if comp == component:
                         component_base_path = Path(self.dir, self.component_type)
-                        self.local_path = Path(component_base_path, directory, self.component)
+                        self.local_path = Path(component_base_path, directory, component)
                         break
                 if self.local_path:
                     self.local = True
