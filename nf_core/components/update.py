@@ -884,7 +884,7 @@ class ComponentUpdate(ComponentCommand):
             except LookupError as e:
                 # If the module to be updated is not available, check if there has been a name change
                 if "not found in list of available" in str(e):
-                    # Skip update, we check for name changes with manage_changes_in_linked_components in line #261
+                    # Skip update, we check for name changes with manage_changes_in_linked_components
                     pass
                 else:
                     raise
