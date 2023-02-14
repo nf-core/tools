@@ -6,17 +6,22 @@
 
 - Turn on automatic clean up of intermediate files in `work/` on successful pipeline completion in full-test config ([#2163](https://github.com/nf-core/tools/pull/2163)) [Contributed by @jfy133]
 - Add documentation to `usage.md` on how to use `params.yml` files, based on nf-core/ampliseq text ([#2173](https://github.com/nf-core/tools/pull/2173/)) [Contributed by @jfy133, @d4straub]
-- Make jobs automatically resubmit for a much wider range of exit codes (now `104` and `130..145`)
+- Make jobs automatically resubmit for a much wider range of exit codes (now `104` and `130..145`) ([#2170](https://github.com/nf-core/tools/pull/2170))
 
 ### Linting
 
 ### Modules
 
-- Add an `--empty-template` option to create a module without TODO statements or examples ([#2175](https://github.com/nf-core/tools/pull/2175))
+- Add an `--empty-template` option to create a module without TODO statements or examples ([#2175](https://github.com/nf-core/tools/pull/2175) & [#2177](https://github.com/nf-core/tools/pull/2177))
 
 ### Subworkflows
 
+- Fixing problem when a module included in a subworkflow had a name change from TOOL to TOOL/SUBTOOL ([#2177](https://github.com/nf-core/tools/pull/2177))
+- Fix `nf-core subworkflows test` not running subworkflow tests ([#2181](https://github.com/nf-core/tools/pull/2181))
+
 ### General
+
+- `nf-core modules/subworkflows info` now prints the include statement for the module/subworkflow ([#2182](https://github.com/nf-core/tools/pull/2182)).
 
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 

@@ -8,6 +8,7 @@ import yaml
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
+from nf_core.modules.remove import ModuleRemove
 from nf_core.modules.update import ModuleUpdate
 from nf_core.subworkflows.update import SubworkflowUpdate
 
@@ -321,6 +322,10 @@ def test_update_change_of_included_modules(self):
     # Check that tabix/tabix is there
     assert "tabix/tabix" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
     assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "tabix/tabix").is_dir()
+    # Check that ensemblevep is not there but instead we have ensemblevep/vep (due to a file re-naming)
+    assert "ensemblvep" not in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
+    assert "ensemblvep/vep" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
+    assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "ensemblvep/vep").is_dir()
 
 
 def cmp_component(dir1, dir2):
