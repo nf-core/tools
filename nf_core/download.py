@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import concurrent.futures
+from git import Repo
 import io
 import logging
 import os
@@ -23,6 +24,7 @@ import rich.progress
 import nf_core
 import nf_core.list
 import nf_core.utils
+from nf_core.modules import ModulesRepo  # to create subclass WorkflowRepo
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
@@ -137,12 +139,14 @@ class DownloadWorkflow:
         # Set an output filename now that we have the outdir
         if self.tower:
             self.output_filename = f"{self.outdir}.git"
-            summary_log.append(f"Output file (Tower enabled): '{self.output_filename}'")
+            summary_log.append(f"Output file: '{self.output_filename}'")
         elif self.compress_type is not None:
             self.output_filename = f"{self.outdir}.{self.compress_type}"
             summary_log.append(f"Output file: '{self.output_filename}'")
         else:
             summary_log.append(f"Output directory: '{self.outdir}'")
+
+        summary_log.append(f"Enabled for seqeralabs® Nextflow Tower: '{self.tower}'")
 
         # Check that the outdir doesn't already exist
         if os.path.exists(self.outdir):
@@ -170,6 +174,7 @@ class DownloadWorkflow:
             self.download_workflow_tower()
 
     def download_workflow_classic(self):
+        """Downloads a nf-core workflow from GitHub to the local file system in a self-contained manner."""
         # Download the pipeline files
         log.info("Downloading workflow files from GitHub")
         self.download_wf_files()
@@ -199,9 +204,10 @@ class DownloadWorkflow:
             self.compress_download()
 
     def download_workflow_tower(self):
-        # Create a bare-cloned git repository of the workflow that includes the configs
+        """Create a bare-cloned git repository of the workflow that includes the configurations, such it can be launched with `tw launch` as file:/ pipeline"""
         log.info("Cloning workflow files from GitHub")
-        self.clone_wf_files()
+
+        self.workflow_repo = WorkflowRepo(remote_url=f"git@github.com:{self.pipeline}.git", branch=self.revision)
 
         # Download the centralised configs
         log.info("Downloading centralised configs from GitHub")
@@ -816,5 +822,32 @@ class DownloadWorkflow:
         log.debug(f"Deleting uncompressed files: '{self.outdir}'")
         shutil.rmtree(self.outdir)
 
-        # Caclualte md5sum for output file
+        # Calculate md5sum for output file
         log.info(f"MD5 checksum for '{self.output_filename}': [blue]{nf_core.utils.file_md5(self.output_filename)}[/]")
+
+
+class WorkflowRepo(ModulesRepo):
+    """
+    An object to store details about a locally cached workflow repository.
+
+    Important Attributes:
+        fullname: The full name of the repository, ``nf-core/{self.pipelinename}``.
+        local_repo_dir (str): The local directory, where the workflow is cloned into. Defaults to ``$HOME/.cache/nf-core/nf-core/{self.pipeline}``.
+
+    """
+
+    def __init__(self, remote_url=None, branch=None, no_pull=False, hide_progress=False, in_cache=True):
+        """
+        Initializes the object and clones the workflows git repository if it is not already present
+
+        Args:
+            remote_url (str, optional): The URL of the remote repository. Defaults to None.
+            branch (str, optional): The branch to clone. Defaults to None.
+            no_pull (bool, optional): Whether to skip the pull step. Defaults to False.
+            hide_progress (bool, optional): Whether to hide the progress bar. Defaults to False.
+            in_cache (bool, optional): Whether to clone the repository from the cache. Defaults to False.
+        """
+        self.remote_url = remote_url
+        self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
+
+        self.setup_local_repo(remote_url, branch, hide_progress, in_cache=in_cache)
