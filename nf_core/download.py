@@ -135,7 +135,10 @@ class DownloadWorkflow:
             summary_log.append(f"Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {os.environ['NXF_SINGULARITY_CACHEDIR']}")
 
         # Set an output filename now that we have the outdir
-        if self.compress_type is not None:
+        if self.tower:
+            self.output_filename = f"{self.outdir}.git"
+            summary_log.append(f"Output file (Tower enabled): '{self.output_filename}'")
+        elif self.compress_type is not None:
             self.output_filename = f"{self.outdir}.{self.compress_type}"
             summary_log.append(f"Output file: '{self.output_filename}'")
         else:
@@ -160,6 +163,13 @@ class DownloadWorkflow:
         # Summary log
         log.info("Saving '{}'\n {}".format(self.pipeline, "\n ".join(summary_log)))
 
+        # Actually download the workflow
+        if not self.tower:
+            self.download_workflow_classic()
+        else:
+            self.download_workflow_tower()
+
+    def download_workflow_classic(self):
         # Download the pipeline files
         log.info("Downloading workflow files from GitHub")
         self.download_wf_files()
@@ -187,6 +197,15 @@ class DownloadWorkflow:
         if self.compress_type is not None:
             log.info("Compressing download..")
             self.compress_download()
+
+    def download_workflow_tower(self):
+        # Create a bare-cloned git repository of the workflow that includes the configs
+        log.info("Cloning workflow files from GitHub")
+        self.clone_wf_files()
+
+        # Download the centralised configs
+        log.info("Downloading centralised configs from GitHub")
+        self.download_configs()
 
     def prompt_pipeline_name(self):
         """Prompt for the pipeline name if not set with a flag"""
