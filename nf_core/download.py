@@ -205,13 +205,13 @@ class DownloadWorkflow:
 
     def download_workflow_tower(self):
         """Create a bare-cloned git repository of the workflow that includes the configurations, such it can be launched with `tw launch` as file:/ pipeline"""
-        log.info("Cloning workflow files from GitHub")
 
+        log.info("Collecting workflow from GitHub")
         self.workflow_repo = WorkflowRepo(remote_url=f"git@github.com:{self.pipeline}.git", branch=self.revision)
+        import pbb
 
-        # Download the centralised configs
+        pdb.set_trace()
         log.info("Downloading centralised configs from GitHub")
-        self.download_configs()
 
     def prompt_pipeline_name(self):
         """Prompt for the pipeline name if not set with a flag"""
@@ -851,3 +851,14 @@ class WorkflowRepo(ModulesRepo):
         self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, hide_progress, in_cache=in_cache)
+
+    @property
+    def active_branch(self):
+        """
+        In ModuleRepo.setup_local_repo(), self.repo.active_branch.tracking_branch() is called in line 227.
+        For a WorkflowRepo, this raises a TypeError ``HEAD is a detached symbolic reference as it points to {commit hash}``
+
+        This property shadows the call and seemed the cleanest solution to prevent excessive code duplication.
+        Otherwise, I would have needed to define a setup_local_repo() method for the WorkflowRepo class.
+        """
+        pass  # TODO
