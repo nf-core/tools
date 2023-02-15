@@ -166,7 +166,7 @@ class ModulesRepo:
 
         return True
 
-    def setup_local_repo(self, remote, branch, hide_progress=True, cache_only=False):
+    def setup_local_repo(self, remote, branch, hide_progress=True, in_cache=False):
         """
         Sets up the local git repository. If the repository has been cloned previously, it
         returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
@@ -177,7 +177,7 @@ class ModulesRepo:
             branch (str): name of branch to use
         Sets self.repo
         """
-        self.local_repo_dir = os.path.join(NFCORE_DIR if not cache_only else NFCORE_CACHE_DIR, self.fullname)
+        self.local_repo_dir = os.path.join(NFCORE_DIR if not in_cache else NFCORE_CACHE_DIR, self.fullname)
         try:
             if not os.path.exists(self.local_repo_dir):
                 try:

@@ -215,7 +215,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     "-x", "--compress", type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]), help="Archive compression type"
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
-@click.option("-t", "--tower", is_flag=True, default=False, help="Customize download for sequeralabs® Nextflow Tower")
+@click.option("-t", "--tower", is_flag=True, default=False, help="Customize download for seqeralabs® Nextflow Tower")
 @click.option(
     "-c", "--container", type=click.Choice(["none", "singularity"]), help="Download software container images"
 )
