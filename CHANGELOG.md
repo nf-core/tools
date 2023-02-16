@@ -7,6 +7,7 @@
 - Turn on automatic clean up of intermediate files in `work/` on successful pipeline completion in full-test config ([#2163](https://github.com/nf-core/tools/pull/2163)) [Contributed by @jfy133]
 - Add documentation to `usage.md` on how to use `params.yml` files, based on nf-core/ampliseq text ([#2173](https://github.com/nf-core/tools/pull/2173/)) [Contributed by @jfy133, @d4straub]
 - Make jobs automatically resubmit for a much wider range of exit codes (now `104` and `130..145`) ([#2170](https://github.com/nf-core/tools/pull/2170))
+- Add a stale GHA wich stale + close issues and stale PRs with specific labels ([#2183](https://github.com/nf-core/tools/pull/2183))
 
 ### Linting
 
@@ -22,6 +23,7 @@
 ### General
 
 - `nf-core modules/subworkflows info` now prints the include statement for the module/subworkflow ([#2182](https://github.com/nf-core/tools/pull/2182)).
+- Add a stale GHA wich stale + close issues and stale PRs with specific labels ([#2183](https://github.com/nf-core/tools/pull/2183))
 
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 
