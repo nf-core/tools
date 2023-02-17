@@ -16,7 +16,21 @@ markers = [
 testpaths = ["tests"]
 norecursedirs = [ ".*", "build", "dist", "*.egg", "data", "__pycache__", ".github", "nf_core", "docs"]
 
-[tool.isort]
-profile = "black"
-known_first_party = ["nf_core"]
-multi_line_output = 3
+[tool.ruff]
+select = [
+    # Pyflakes
+    "F401",
+    "F841",
+    # Pycodestyle
+    "E501",
+    # isort
+    "I001"
+]
+line-length = 120
+target-version = "py37"
+
+[tool.ruff.isort]
+known-first-party = ["nf_core"]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["E402"]

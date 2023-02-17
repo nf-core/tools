@@ -3,11 +3,9 @@ repos:
     rev: 23.1.0
     hooks:
       - id: black
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+        language_version: python3.9
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: "v0.0.239"
     hooks:
-      - id: isort
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v2.7.1"
-    hooks:
-      - id: prettier
+      - id: ruff
+        args: [--fix]

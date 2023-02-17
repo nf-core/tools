@@ -26,12 +26,6 @@ jobs:
 
       - uses: actions/setup-node@v3
 
-      - name: Install Prettier
-        run: npm install -g prettier @prettier/plugin-php
-
-      - name: Run 'prettier --write'
-        run: prettier --write ${GITHUB_WORKSPACE}
-
       - name: Run Black
         uses: psf/black@stable
         with:
@@ -42,11 +36,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.8
-      - name: python-isort
-        uses: isort/isort-action@v1.0.0
-        with:
-          isortVersion: "latest"
-          requirementsFiles: "requirements.txt requirements-dev.txt"
+      - name: Install Ruff
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+      - name: Run Ruff
+        run: ruff check --fix .
 
       - name: Commit & push changes
         run: |
