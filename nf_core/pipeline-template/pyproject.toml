@@ -7,10 +7,10 @@ target_version = ["py37", "py38", "py39", "py310"]
 [tool.ruff]
 select = [
     # Pyflakes
-    "F401",
-    "F841",
+    "F401", # imported but unused
+    "F841", # Local variable is assigned to but never used
     # Pycodestyle
-    "E501",
+    "E501", # Line too long
     # isort
     "I001"
 ]
