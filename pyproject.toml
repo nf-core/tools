@@ -21,8 +21,6 @@ select = [
     # Pyflakes
     "F401", # imported but unused
     "F841", # Local variable is assigned to but never used
-    # Pycodestyle
-    "E501", # Line too long
     # isort
     "I001"
 ]
