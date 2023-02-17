@@ -26,7 +26,6 @@ import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 
 from ..lint_utils import run_prettier_on_file
-from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
@@ -294,7 +293,8 @@ class ModulesTestYmlBuilder(ComponentCommand):
                 if test_files[i].get("md5sum") and not test_files[i].get("md5sum") == test_files_repeat[i]["md5sum"]:
                     test_files[i].pop("md5sum")
                     test_files[i]["contains"] = [
-                        "# TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead "
+                        "# TODO nf-core: file md5sum was variable, please replace this text with a "
+                        + "string found in the file instead "
                     ]
 
         if len(test_files) == 0:

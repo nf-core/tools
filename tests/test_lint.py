@@ -55,7 +55,7 @@ class TestLint(unittest.TestCase):
 
         We don't really check any of this code as it's just a series of function calls
         and we're testing each of those individually. This is mostly to check for syntax errors."""
-        lint_obj = nf_core.lint.run_linting(self.test_pipeline_dir, False)
+        nf_core.lint.run_linting(self.test_pipeline_dir, False)
 
     def test_init_PipelineLint(self):
         """Simply create a PipelineLint object.

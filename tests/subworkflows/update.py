@@ -8,7 +8,6 @@ import yaml
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
-from nf_core.modules.remove import ModuleRemove
 from nf_core.modules.update import ModuleUpdate
 from nf_core.subworkflows.update import SubworkflowUpdate
 

@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from rich.console import Console
-
 from nf_core.modules.modules_json import ModulesJson
 
 
@@ -18,7 +16,7 @@ def test_subworkflows_remove_subworkflow(self):
     bam_sort_stats_samtools_path = Path(subworkflow_path, "bam_sort_stats_samtools")
     bam_stats_samtools_path = Path(subworkflow_path, "bam_stats_samtools")
     samtools_index_path = Path(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "index")
-    mod_json_obj = ModulesJson(self.pipeline_dir)
+    ModulesJson(self.pipeline_dir)
     mod_json_before = ModulesJson(self.pipeline_dir).get_modules_json()
     assert self.subworkflow_remove.remove("bam_sort_stats_samtools")
     mod_json_after = ModulesJson(self.pipeline_dir).get_modules_json()
@@ -33,7 +31,8 @@ def test_subworkflows_remove_subworkflow(self):
 
 
 def test_subworkflows_remove_subworkflow_keep_installed_module(self):
-    """Test removing subworkflow and all it's dependencies after installing it, except for a separately installed module"""
+    """Test removing subworkflow and all it's dependencies after installing it,
+    except for a separately installed module"""
     self.subworkflow_install.install("bam_sort_stats_samtools")
     self.mods_install.install("samtools/index")
 

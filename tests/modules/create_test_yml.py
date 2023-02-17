@@ -1,11 +1,10 @@
 import os
-from pathlib import Path
 
 import pytest
 
 import nf_core.modules
 
-from ..utils import GITLAB_DEFAULT_BRANCH, GITLAB_URL, with_temporary_folder
+from ..utils import with_temporary_folder
 
 
 @with_temporary_folder

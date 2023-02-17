@@ -1,5 +1,4 @@
 """Test the 'modules test' command which runs module pytests."""
-import os
 import shutil
 from pathlib import Path
 
