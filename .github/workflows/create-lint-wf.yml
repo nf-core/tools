@@ -47,7 +47,7 @@ jobs:
         with:
           version: ${{ matrix.NXF_VER }}
 
-      # Install the Ruff linting tools
+      # Install the Prettier & Ruff linting tools
       - uses: actions/setup-node@v3
 
       - name: Install Prettier
@@ -78,11 +78,11 @@ jobs:
       - name: Run Prettier --check
         run: prettier --check nf-core-testpipeline
 
-      - name: Run Ruff
-        run: ruff .
-
       - name: Run ECLint check
         run: editorconfig-checker -exclude README.md $(find nf-core-testpipeline/.* -type f | grep -v '.git\|.py\|md\|json\|yml\|yaml\|html\|css\|work\|.nextflow\|build\|nf_core.egg-info\|log.txt\|Makefile')
+
+      - name: Run Ruff
+        run: ruff .
 
       # Update modules to the latest version
       - name: nf-core modules update
