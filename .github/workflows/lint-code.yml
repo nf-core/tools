@@ -27,6 +27,19 @@ jobs:
       - name: Run ECLint check
         run: editorconfig-checker -exclude README.md $(git ls-files | grep -v 'test\|.py\|md\|json\|yml\|yaml\|html\|css\|Makefile')
 
+  Prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+
+      - name: Install Prettier
+        run: npm install -g prettier
+
+      - name: Run Prettier --check
+        run: prettier --check ${GITHUB_WORKSPACE}
+
   PythonBlack:
     runs-on: ubuntu-latest
     steps:

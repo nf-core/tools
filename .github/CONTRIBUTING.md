@@ -73,7 +73,7 @@ any code does not adhere to isort formatting.
 
 ### pre-commit hooks
 
-This repository comes with [pre-commit](https://pre-commit.com/) hooks for black and Ruff. pre-commit automatically runs checks before a commit is committed into the git history. If all checks pass, the commit is made, if files are changed by the pre-commit hooks, the user is informed and has to stage the changes and attempt the commit again.
+This repository comes with [pre-commit](https://pre-commit.com/) hooks for black, ruff and Prettier. pre-commit automatically runs checks before a commit is committed into the git history. If all checks pass, the commit is made, if files are changed by the pre-commit hooks, the user is informed and has to stage the changes and attempt the commit again.
 
 You can use the pre-commit hooks if you like, but you don't have to. The CI on Github will run the same checks as the tools installed with pre-commit. If the pre-commit checks pass, then the same checks in the CI will pass, too.
 

@@ -31,8 +31,7 @@ def test_subworkflows_remove_subworkflow(self):
 
 
 def test_subworkflows_remove_subworkflow_keep_installed_module(self):
-    """Test removing subworkflow and all it's dependencies after installing it,
-    except for a separately installed module"""
+    """Test removing subworkflow and all it's dependencies after installing it, except for a separately installed module"""
     self.subworkflow_install.install("bam_sort_stats_samtools")
     self.mods_install.install("samtools/index")
 

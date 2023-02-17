@@ -26,6 +26,12 @@ jobs:
 
       - uses: actions/setup-node@v3
 
+      - name: Install Prettier
+        run: npm install -g prettier @prettier/plugin-php
+
+      - name: Run 'prettier --write'
+        run: prettier --write ${GITHUB_WORKSPACE}
+
       - name: Run Black
         uses: psf/black@stable
         with:
