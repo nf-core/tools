@@ -9,7 +9,7 @@ import rich
 import rich.progress
 from git.exc import GitCommandError
 
-from nf_core.utils import  load_tools_config
+from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
 

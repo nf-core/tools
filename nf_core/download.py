@@ -3,7 +3,8 @@
 from __future__ import print_function
 
 import concurrent.futures
-from git import Repo
+import git
+from git.exc import GitCommandError, InvalidGitRepositoryError
 import io
 import logging
 import os
@@ -24,7 +25,8 @@ import rich.progress
 import nf_core
 import nf_core.list
 import nf_core.utils
-from nf_core.synced_repo import SyncedRepo  # to create subclass WorkflowRepo
+from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR
+from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
@@ -127,7 +129,8 @@ class DownloadWorkflow:
             self.prompt_container_download()
             self.prompt_use_singularity_cachedir()
             self.prompt_singularity_cachedir_only()
-            self.prompt_compression_type()
+            if not self.tower:
+                self.prompt_compression_type()
         except AssertionError as e:
             log.critical(e)
             sys.exit(1)
@@ -207,10 +210,10 @@ class DownloadWorkflow:
         """Create a bare-cloned git repository of the workflow that includes the configurations, such it can be launched with `tw launch` as file:/ pipeline"""
 
         log.info("Collecting workflow from GitHub")
-        self.workflow_repo = WorkflowRepo(remote_url=f"git@github.com:{self.pipeline}.git", branch=self.revision)
-        import pbb
+        self.workflow_repo = WorkflowRepo(
+            remote_url=f"git@github.com:{self.pipeline}.git", revision=self.revision, commit=self.wf_sha
+        )
 
-        pdb.set_trace()
         log.info("Downloading centralised configs from GitHub")
 
     def prompt_pipeline_name(self):
@@ -625,12 +628,12 @@ class DownloadWorkflow:
         """Check Singularity cache for image, copy to destination folder if found.
 
         Args:
-            container (str): A pipeline's container name. Can be direct download URL
-                             or a Docker Hub repository ID.
+            container (str):    A pipeline's container name. Can be direct download URL
+                                or a Docker Hub repository ID.
 
         Returns:
-            results (bool, str): Returns True if we have the image in the target location.
-                                 Returns a download path if not.
+            results (bool, str):    Returns True if we have the image in the target location.
+                                    Returns a download path if not.
         """
 
         # Generate file paths
@@ -836,18 +839,86 @@ class WorkflowRepo(SyncedRepo):
 
     """
 
-    def __init__(self, remote_url=None, branch=None, no_pull=False, hide_progress=False, in_cache=True):
+    def __init__(self, remote_url, revision, commit, no_pull=False, hide_progress=False, in_cache=True):
         """
         Initializes the object and clones the workflows git repository if it is not already present
 
         Args:
-            remote_url (str, optional): The URL of the remote repository. Defaults to None.
-            branch (str, optional): The branch to clone. Defaults to None.
+            remote_url (str): The URL of the remote repository. Defaults to None.
+            commit (str): The commit to clone. Defaults to None.
             no_pull (bool, optional): Whether to skip the pull step. Defaults to False.
             hide_progress (bool, optional): Whether to hide the progress bar. Defaults to False.
             in_cache (bool, optional): Whether to clone the repository from the cache. Defaults to False.
         """
         self.remote_url = remote_url
+        self.revision = revision
+        self.commit = commit
         self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
-        self.setup_local_repo(remote_url, branch, hide_progress, in_cache=in_cache)
+        self.setup_local_repo(remote_url, revision, commit, hide_progress, in_cache=in_cache)
+
+    def setup_local_repo(self, remote, revision, commit, hide_progress=True, in_cache=True):
+        """
+        Sets up the local git repository. If the repository has been cloned previously, it
+        returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
+        the provided remote URL and returns a git.Repo of the new clone.
+
+        Args:
+            remote (str): git url of remote
+            branch (str): name of branch to use
+            hide_progress (bool, optional): Whether to hide the progress bar. Defaults to False.
+            in_cache (bool, optional): Whether to clone the repository from the cache. Defaults to False.
+        Sets self.repo
+        """
+
+        self.local_repo_dir = os.path.join(NFCORE_DIR if not in_cache else NFCORE_CACHE_DIR, self.fullname)
+        try:
+            if not os.path.exists(self.local_repo_dir):
+                try:
+                    pbar = rich.progress.Progress(
+                        "[bold blue]{task.description}",
+                        rich.progress.BarColumn(bar_width=None),
+                        "[bold yellow]{task.fields[state]}",
+                        transient=True,
+                        disable=hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
+                    )
+                    with pbar:
+                        self.repo = git.Repo.clone_from(
+                            remote,
+                            self.local_repo_dir,
+                            progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
+                        )
+                    super().update_local_repo_status(self.fullname, True)
+                except GitCommandError:
+                    raise LookupError(f"Failed to clone from the remote: `{remote}`")
+            else:
+                self.repo = git.Repo(self.local_repo_dir)
+
+                if super().no_pull_global:
+                    super().update_local_repo_status(self.fullname, True)
+                # If the repo is already cloned, fetch the latest changes from the remote
+                if not super().local_repo_synced(self.fullname):
+                    pbar = rich.progress.Progress(
+                        "[bold blue]{task.description}",
+                        rich.progress.BarColumn(bar_width=None),
+                        "[bold yellow]{task.fields[state]}",
+                        transient=True,
+                        disable=hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
+                    )
+                    with pbar:
+                        self.repo.remotes.origin.fetch(
+                            progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
+                        )
+                    super().update_local_repo_status(self.fullname, True)
+
+        except (GitCommandError, InvalidGitRepositoryError) as e:
+            log.error(f"[red]Could not set up local cache of modules repository:[/]\n{e}\n")
+            if rich.prompt.Confirm.ask(f"[violet]Delete local cache '{self.local_repo_dir}' and try again?"):
+                log.info(f"Removing '{self.local_repo_dir}'")
+                shutil.rmtree(self.local_repo_dir)
+                self.setup_local_repo(remote, revision, commit, hide_progress)
+            else:
+                raise LookupError("Exiting due to error with local modules git repo")
+
+        finally:
+            self.repo.git.checkout(commit)
