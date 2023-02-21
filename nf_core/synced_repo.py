@@ -7,9 +7,9 @@ from pathlib import Path
 import git
 import rich
 import rich.progress
-from git.exc import GitCommandError, InvalidGitRepositoryError
+from git.exc import GitCommandError
 
-from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR, load_tools_config
+from nf_core.utils import  load_tools_config
 
 log = logging.getLogger(__name__)
 
@@ -156,77 +156,6 @@ class SyncedRepo:
                 return False
 
         return True
-
-    def setup_local_repo(self, remote, branch, hide_progress=True, in_cache=False):
-        """
-        Sets up the local git repository. If the repository has been cloned previously, it
-        returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
-        the provided remote URL and returns a git.Repo of the new clone.
-
-        Args:
-            remote (str): git url of remote
-            branch (str): name of branch to use
-        Sets self.repo
-        """
-        self.local_repo_dir = os.path.join(NFCORE_DIR if not in_cache else NFCORE_CACHE_DIR, self.fullname)
-        try:
-            if not os.path.exists(self.local_repo_dir):
-                try:
-                    pbar = rich.progress.Progress(
-                        "[bold blue]{task.description}",
-                        rich.progress.BarColumn(bar_width=None),
-                        "[bold yellow]{task.fields[state]}",
-                        transient=True,
-                        disable=hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
-                    )
-                    with pbar:
-                        self.repo = git.Repo.clone_from(
-                            remote,
-                            self.local_repo_dir,
-                            progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
-                        )
-                    SyncedRepo.update_local_repo_status(self.fullname, True)
-                except GitCommandError:
-                    raise LookupError(f"Failed to clone from the remote: `{remote}`")
-                # Verify that the requested branch exists by checking it out
-                self.setup_branch(branch)
-            else:
-                self.repo = git.Repo(self.local_repo_dir)
-
-                if SyncedRepo.no_pull_global:
-                    SyncedRepo.update_local_repo_status(self.fullname, True)
-                # If the repo is already cloned, fetch the latest changes from the remote
-                if not SyncedRepo.local_repo_synced(self.fullname):
-                    pbar = rich.progress.Progress(
-                        "[bold blue]{task.description}",
-                        rich.progress.BarColumn(bar_width=None),
-                        "[bold yellow]{task.fields[state]}",
-                        transient=True,
-                        disable=hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
-                    )
-                    with pbar:
-                        self.repo.remotes.origin.fetch(
-                            progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
-                        )
-                    SyncedRepo.update_local_repo_status(self.fullname, True)
-
-                # Before verifying the branch, fetch the changes
-                # Verify that the requested branch exists by checking it out
-                self.setup_branch(branch)
-
-                # Now merge the changes
-                tracking_branch = self.repo.active_branch.tracking_branch()
-                if tracking_branch is None:
-                    raise LookupError(f"There is no remote tracking branch '{self.branch}' in '{self.remote_url}'")
-                self.repo.git.merge(tracking_branch.name)
-        except (GitCommandError, InvalidGitRepositoryError) as e:
-            log.error(f"[red]Could not set up local cache of modules repository:[/]\n{e}\n")
-            if rich.prompt.Confirm.ask(f"[violet]Delete local cache '{self.local_repo_dir}' and try again?"):
-                log.info(f"Removing '{self.local_repo_dir}'")
-                shutil.rmtree(self.local_repo_dir)
-                self.setup_local_repo(remote, branch, hide_progress)
-            else:
-                raise LookupError("Exiting due to error with local modules git repo")
 
     def setup_branch(self, branch):
         """
