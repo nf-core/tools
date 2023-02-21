@@ -9,8 +9,6 @@ import rich
 import rich.progress
 from git.exc import GitCommandError, InvalidGitRepositoryError
 
-import nf_core.modules.modules_json
-import nf_core.modules.modules_utils
 from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR, load_tools_config
 
 log = logging.getLogger(__name__)
@@ -58,16 +56,9 @@ class RemoteProgressbar(git.RemoteProgress):
         )
 
 
-class ModulesRepo:
+class SyncedRepo:
     """
-    An object to store details about the repository being used for modules.
-
-    Used by the `nf-core modules` top-level command with -r and -b flags,
-    so that this can be used in the same way by all sub-commands.
-
-    We keep track of the pull-status of the different installed repos in
-    the static variable local_repo_status. This is so we don't need to
-    pull a remote several times in one command.
+    An object to store details about a locally cached code repository.
     """
 
     local_repo_statuses = {}
@@ -78,14 +69,14 @@ class ModulesRepo:
         """
         Checks whether a local repo has been cloned/pull in the current session
         """
-        return ModulesRepo.local_repo_statuses.get(repo_name, False)
+        return SyncedRepo.local_repo_statuses.get(repo_name, False)
 
     @staticmethod
     def update_local_repo_status(repo_name, up_to_date):
         """
         Updates the clone/pull status of a local repo
         """
-        ModulesRepo.local_repo_statuses[repo_name] = up_to_date
+        SyncedRepo.local_repo_statuses[repo_name] = up_to_date
 
     @staticmethod
     def get_remote_branches(remote_url):
@@ -118,7 +109,7 @@ class ModulesRepo:
         """
 
         # This allows us to set this one time and then keep track of the user's choice
-        ModulesRepo.no_pull_global |= no_pull
+        SyncedRepo.no_pull_global |= no_pull
 
         # Check if the remote seems to be well formed
         if remote_url is None:
@@ -194,7 +185,7 @@ class ModulesRepo:
                             self.local_repo_dir,
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
                         )
-                    ModulesRepo.update_local_repo_status(self.fullname, True)
+                    SyncedRepo.update_local_repo_status(self.fullname, True)
                 except GitCommandError:
                     raise LookupError(f"Failed to clone from the remote: `{remote}`")
                 # Verify that the requested branch exists by checking it out
@@ -202,10 +193,10 @@ class ModulesRepo:
             else:
                 self.repo = git.Repo(self.local_repo_dir)
 
-                if ModulesRepo.no_pull_global:
-                    ModulesRepo.update_local_repo_status(self.fullname, True)
+                if SyncedRepo.no_pull_global:
+                    SyncedRepo.update_local_repo_status(self.fullname, True)
                 # If the repo is already cloned, fetch the latest changes from the remote
-                if not ModulesRepo.local_repo_synced(self.fullname):
+                if not SyncedRepo.local_repo_synced(self.fullname):
                     pbar = rich.progress.Progress(
                         "[bold blue]{task.description}",
                         rich.progress.BarColumn(bar_width=None),
@@ -217,7 +208,7 @@ class ModulesRepo:
                         self.repo.remotes.origin.fetch(
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
                         )
-                    ModulesRepo.update_local_repo_status(self.fullname, True)
+                    SyncedRepo.update_local_repo_status(self.fullname, True)
 
                 # Before verifying the branch, fetch the changes
                 # Verify that the requested branch exists by checking it out
@@ -394,7 +385,7 @@ class ModulesRepo:
         update breaking backwards compatibility.
         Args:
             component_name (str): Name of module/subworkflow
-            modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
+            modules_repo (SyncedRepo): A SyncedRepo object configured for the repository in question
 
         Returns:
             ( dict ): Iterator of commit SHAs and associated (truncated) message

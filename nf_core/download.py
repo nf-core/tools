@@ -24,7 +24,7 @@ import rich.progress
 import nf_core
 import nf_core.list
 import nf_core.utils
-from nf_core.modules import ModulesRepo  # to create subclass WorkflowRepo
+from nf_core.synced_repo import SyncedRepo  # to create subclass WorkflowRepo
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
@@ -826,7 +826,7 @@ class DownloadWorkflow:
         log.info(f"MD5 checksum for '{self.output_filename}': [blue]{nf_core.utils.file_md5(self.output_filename)}[/]")
 
 
-class WorkflowRepo(ModulesRepo):
+class WorkflowRepo(SyncedRepo):
     """
     An object to store details about a locally cached workflow repository.
 
@@ -851,14 +851,3 @@ class WorkflowRepo(ModulesRepo):
         self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, hide_progress, in_cache=in_cache)
-
-    @property
-    def active_branch(self):
-        """
-        In ModuleRepo.setup_local_repo(), self.repo.active_branch.tracking_branch() is called in line 227.
-        For a WorkflowRepo, this raises a TypeError ``HEAD is a detached symbolic reference as it points to {commit hash}``
-
-        This property shadows the call and seemed the cleanest solution to prevent excessive code duplication.
-        Otherwise, I would have needed to define a setup_local_repo() method for the WorkflowRepo class.
-        """
-        pass  # TODO
