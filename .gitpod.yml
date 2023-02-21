@@ -17,3 +17,4 @@ vscode:
     # - nextflow.nextflow                    # Nextflow syntax highlighting
     - oderwat.indent-rainbow # Highlight indentation level
     - streetsidesoftware.code-spell-checker # Spelling checker for source code
+    - charliermarsh.vscode-ruff # Code linter Ruff (v0.0.239)
