@@ -2,6 +2,19 @@ FROM gitpod/workspace-base
 
 USER root
 
+# Install util tools.
+RUN apt-get update --quiet && \
+    apt-get install --quiet --yes \
+    apt-transport-https \
+    apt-utils \
+    sudo \
+    git \
+    less \
+    wget \
+    curl \
+    tree \
+    graphviz
+
 # Install Conda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
     bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
@@ -18,23 +31,20 @@ RUN chown -R gitpod:gitpod /opt/conda /usr/src/nf_core
 
 # Change user to gitpod
 USER gitpod
-
 # Install nextflow, nf-core, Mamba, and pytest-workflow
-RUN conda update -n base -c defaults conda && \
-    conda config --add channels defaults && \
+RUN conda config --add channels defaults && \
     conda config --add channels bioconda && \
     conda config --add channels conda-forge && \
-    conda install \
-        openjdk=17.0.3 \
-        nextflow=22.10.1 \
-        nf-test=0.7.1-0 \
-        pytest-workflow=1.6.0 \
-        mamba=0.27.0 \
-        pip=22.3 \
-        black=22.10.0 \
-        prettier=2.7.1 \
-        -n base && \
-    conda clean --all -f -y
+    conda config --set channel_priority strict && \
+    conda install --quiet --yes --name base mamba && \
+    mamba install --quiet --yes --name base \
+    nextflow \
+    nf-core \
+    nf-test \
+    black \
+    prettier \
+    pytest-workflow && \
+    mamba clean --all -f -y
 
 # Install nf-core
 RUN python -m pip install .
