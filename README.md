@@ -1047,6 +1047,8 @@ This shows documentation about the subworkflow on the command line, similar to w
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows info bam_rseqc`](docs/images/nf-core-subworkflows-info.svg)
