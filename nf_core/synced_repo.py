@@ -22,7 +22,7 @@ NF_CORE_MODULES_DEFAULT_BRANCH = "master"
 class RemoteProgressbar(git.RemoteProgress):
     """
     An object to create a progressbar for when doing an operation with the remote.
-    Note that an initialized rich Progress (progress bar) object must be past
+    Note that an initialized rich Progress (progress bar) object must be passed
     during initialization.
     """
 
