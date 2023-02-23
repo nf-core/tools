@@ -52,7 +52,6 @@ def files_exist(self):
         docs/README.md
         docs/usage.md
         lib/nfcore_external_java_deps.jar
-        lib/NfcoreSchema.groovy
         lib/NfcoreTemplate.groovy
         lib/Utils.groovy
         lib/WorkflowMain.groovy

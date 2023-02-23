@@ -40,7 +40,6 @@ def files_unchanged(self):
         docs/images/nf-core-PIPELINE_logo_dark.png
         docs/README.md'
         lib/nfcore_external_java_deps.jar
-        lib/NfcoreSchema.groovy
         lib/NfcoreTemplate.groovy
         ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
 
