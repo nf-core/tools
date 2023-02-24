@@ -823,12 +823,13 @@ def prompt_remote_pipeline_name(wfs):
     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
 
 
-def prompt_pipeline_release_branch(wf_releases, wf_branches):
+def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
     """Prompt for pipeline release / branch
 
     Args:
         wf_releases (array): Array of repo releases as returned by the GitHub API
         wf_branches (array): Array of repo branches, as returned by the GitHub API
+        multiple (bool): Allow selection of multiple releases & branches (for Tower)
 
     Returns:
         choice (str): Selected release / branch name
@@ -850,7 +851,12 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches):
     if len(choices) == 0:
         return False
 
-    return questionary.select("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask()
+    if multiple:
+        return questionary.checkbox(
+            "Select release / branch:", choices=choices, style=nfcore_question_style
+        ).unsafe_ask()
+    else:
+        return questionary.select("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask()
 
 
 def get_repo_releases_branches(pipeline, wfs):

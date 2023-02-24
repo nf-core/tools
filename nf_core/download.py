@@ -75,7 +75,7 @@ class DownloadWorkflow:
 
     Args:
         pipeline (str): A nf-core pipeline name.
-        revision (str): The workflow revision to download, like `1.0`. Defaults to None.
+        revision (List[str]): The workflow revision to download, like `1.0`. Defaults to None.
         singularity (bool): Flag, if the Singularity container should be downloaded as well. Defaults to False.
         tower (bool): Flag, to customize the download for Nextflow Tower (convert to git bare repo). Defaults to False.
         outdir (str): Path to the local download directory. Defaults to None.
@@ -94,20 +94,19 @@ class DownloadWorkflow:
         parallel_downloads=4,
     ):
         self.pipeline = pipeline
-        self.revision = revision
+        self.revision = [].extend(revision) if revision else []
         self.outdir = outdir
         self.output_filename = None
         self.compress_type = compress_type
         self.force = force
         self.tower = tower
-        self.include_config
         self.container = container
         self.singularity_cache_only = singularity_cache_only
         self.parallel_downloads = parallel_downloads
 
         self.wf_revisions = {}
         self.wf_branches = {}
-        self.wf_sha = None
+        self.wf_sha = {}
         self.wf_download_url = None
         self.nf_config = {}
         self.containers = []
@@ -136,7 +135,7 @@ class DownloadWorkflow:
             log.critical(e)
             sys.exit(1)
 
-        summary_log = [f"Pipeline revision: '{self.revision}'", f"Pull containers: '{self.container}'"]
+        summary_log = [f"Pipeline revision: '{','.join(self.revision)}'", f"Pull containers: '{self.container}'"]
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
             summary_log.append(f"Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {os.environ['NXF_SINGULARITY_CACHEDIR']}")
 
@@ -213,11 +212,10 @@ class DownloadWorkflow:
         log.info("Collecting workflow from GitHub")
 
         self.workflow_repo = WorkflowRepo(
-            remote_url=f"git@github.com:{self.pipeline}.git", revision=self.revision, commit=self.wf_sha
+            remote_url=f"git@github.com:{self.pipeline}.git",
+            revision=self.revision[0] if self.revision else None,
+            commit=list(self.wf_sha.values())[0] if bool(self.wf_sha) else "",
         )
-        import pdb
-
-        pdb.set_trace()
         log.info("Downloading centralised configs from GitHub")
 
     def prompt_pipeline_name(self):
@@ -230,39 +228,44 @@ class DownloadWorkflow:
     def prompt_revision(self):
         """Prompt for pipeline revision / branch"""
         # Prompt user for revision tag if '--revision' was not set
-        if self.revision is None:
-            self.revision = nf_core.utils.prompt_pipeline_release_branch(self.wf_revisions, self.wf_branches)
+        # If --tower is specified, allow to select multiple revisions
+
+        if not bool(self.revision):
+            self.revision.extend(
+                nf_core.utils.prompt_pipeline_release_branch(self.wf_revisions, self.wf_branches, multiple=self.tower)
+            )
 
     def get_revision_hash(self):
         """Find specified revision / branch hash"""
 
-        # Branch
-        if self.revision in self.wf_branches.keys():
-            self.wf_sha = self.wf_branches[self.revision]
+        for revision in self.revision:  # revision is a list of strings, but may be of length 1
+            # Branch
+            if revision in self.wf_branches.keys():
+                self.wf_sha[revision].append(self.wf_branches[revision])
 
-        # Revision
-        else:
-            for r in self.wf_revisions:
-                if r["tag_name"] == self.revision:
-                    self.wf_sha = r["tag_sha"]
-                    break
-
-            # Can't find the revisions or branch - throw an error
+            # Revision
             else:
-                log.info(
-                    "Available {} revisions: '{}'".format(
-                        self.pipeline, "', '".join([r["tag_name"] for r in self.wf_revisions])
+                for r in self.wf_revisions:
+                    if r["tag_name"] == revision:
+                        self.wf_sha[revision].append(r["tag_sha"])
+                        break
+
+                # Can't find the revisions or branch - throw an error
+                else:
+                    log.info(
+                        "Available {} revisions: '{}'".format(
+                            self.pipeline, "', '".join([r["tag_name"] for r in self.wf_revisions])
+                        )
                     )
-                )
-                log.info("Available {} branches: '{}'".format(self.pipeline, "', '".join(self.wf_branches.keys())))
-                raise AssertionError(f"Not able to find revision / branch '{self.revision}' for {self.pipeline}")
+                    log.info("Available {} branches: '{}'".format(self.pipeline, "', '".join(self.wf_branches.keys())))
+                    raise AssertionError(f"Not able to find revision / branch '{revision}' for {self.pipeline}")
 
         # Set the outdir
         if not self.outdir:
-            self.outdir = f"{self.pipeline.replace('/', '-').lower()}-{self.revision}"
+            self.outdir = f"{self.pipeline.replace('/', '-').lower()}-{self.revision[0] if self.revision else ''}"
 
         # Set the download URL and return
-        self.wf_download_url = f"https://github.com/{self.pipeline}/archive/{self.wf_sha}.zip"
+        self.wf_download_url = f"https://github.com/{self.pipeline}/archive/{list(self.wf_sha.values())[0] if bool(self.wf_sha) else ''}.zip"
 
     def prompt_container_download(self):
         """Prompt whether to download container images or not"""
@@ -378,12 +381,6 @@ class DownloadWorkflow:
         if self.compress_type == "none":
             self.compress_type = None
 
-    def prompt_config_inclusion(self):
-        """Prompt for inclusion of institutional configurations"""
-        self.include_configs = questionary.confirm(
-            "Include the institutional configuration files into the download?"
-        ).ask()
-
     def download_wf_files(self):
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
         log.debug(f"Downloading {self.wf_download_url}")
@@ -394,7 +391,7 @@ class DownloadWorkflow:
             zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
-        gh_name = f"{self.pipeline}-{self.wf_sha}".split("/")[-1]
+        gh_name = f"{self.pipeline}-{list(self.wf_sha.values())[0] if bool(self.wf_sha) else ''}".split("/")[-1]
         os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, "workflow"))
 
         # Make downloaded files executable
@@ -795,7 +792,7 @@ class DownloadWorkflow:
         if lines:
             # something went wrong with the container retrieval
             if any("FATAL: " in line for line in lines):
-                log.info("Singularity container retrieval fialed with the following error:")
+                log.info("Singularity container retrieval failed with the following error:")
                 log.info("".join(lines))
                 raise FileNotFoundError(f'The container "{container}" is unavailable.\n{"".join(lines)}')
 
@@ -855,14 +852,15 @@ class WorkflowRepo(SyncedRepo):
 
         Args:
             remote_url (str): The URL of the remote repository. Defaults to None.
+            self.revision (list): The revision to use. A list of strings.
             commit (str): The commit to clone. Defaults to None.
             no_pull (bool, optional): Whether to skip the pull step. Defaults to False.
             hide_progress (bool, optional): Whether to hide the progress bar. Defaults to False.
             in_cache (bool, optional): Whether to clone the repository from the cache. Defaults to False.
         """
         self.remote_url = remote_url
-        self.revision = revision
-        self.commit = commit
+        self.revision = [].extend(revision) if revision else []
+        self.commit = [].extend(commit) if commit else []
         self.hide_progress = hide_progress
         self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
