@@ -241,13 +241,13 @@ class DownloadWorkflow:
         for revision in self.revision:  # revision is a list of strings, but may be of length 1
             # Branch
             if revision in self.wf_branches.keys():
-                self.wf_sha[revision].append(self.wf_branches[revision])
+                self.wf_sha = {**self.wf_sha, revision: self.wf_branches[revision]}
 
             # Revision
             else:
                 for r in self.wf_revisions:
                     if r["tag_name"] == revision:
-                        self.wf_sha[revision].append(r["tag_sha"])
+                        self.wf_sha = {**self.wf_sha, revision: r["tag_sha"]}
                         break
 
                 # Can't find the revisions or branch - throw an error
@@ -262,10 +262,13 @@ class DownloadWorkflow:
 
         # Set the outdir
         if not self.outdir:
-            self.outdir = f"{self.pipeline.replace('/', '-').lower()}-{self.revision[0] if self.revision else ''}"
+            self.outdir = (
+                f"{self.pipeline.replace('/', '-').lower()}-{'_'.join(self.revision) if self.revision else ''}"
+            )
 
-        # Set the download URL and return
-        self.wf_download_url = f"https://github.com/{self.pipeline}/archive/{list(self.wf_sha.values())[0] if bool(self.wf_sha) else ''}.zip"
+        if not self.tower and bool(self.wf_sha):
+            # Set the download URL and return - only applicable for classic downloads
+            self.wf_download_url = f"https://github.com/{self.pipeline}/archive/{list(self.wf_sha.values())[0]}.zip"
 
     def prompt_container_download(self):
         """Prompt whether to download container images or not"""
