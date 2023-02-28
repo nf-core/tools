@@ -100,6 +100,7 @@ class DownloadWorkflow:
         self.compress_type = compress_type
         self.force = force
         self.tower = tower
+        self.include_configs = True
         self.container = container
         self.singularity_cache_only = singularity_cache_only
         self.parallel_downloads = parallel_downloads
@@ -126,6 +127,9 @@ class DownloadWorkflow:
             )
             self.prompt_revision()
             self.get_revision_hash()
+            # inclusion of configs is unsuitable for multi-revision repositories.
+            if len(self.revision) == 1:
+                self.prompt_config_inclusion()
             self.prompt_container_download()
             self.prompt_use_singularity_cachedir()
             self.prompt_singularity_cachedir_only()
@@ -148,6 +152,10 @@ class DownloadWorkflow:
             summary_log.append(f"Output file: '{self.output_filename}'")
         else:
             summary_log.append(f"Output directory: '{self.outdir}'")
+
+        if len(self.revision) == 1:
+            # Only show entry, if option was prompted.
+            summary_log.append(f"Include default institutional configuration: '{self.include_configs}'")
 
         summary_log.append(f"Enabled for seqeralabs® Nextflow Tower: '{self.tower}'")
 
@@ -183,14 +191,15 @@ class DownloadWorkflow:
         self.download_wf_files()
 
         # Download the centralised configs
-        log.info("Downloading centralised configs from GitHub")
-        self.download_configs()
-        try:
-            self.wf_use_local_configs()
-        except FileNotFoundError as e:
-            log.error("Error editing pipeline config file to use local configs!")
-            log.critical(e)
-            sys.exit(1)
+        if self.include_configs:
+            log.info("Downloading centralised configs from GitHub")
+            self.download_configs()
+            try:
+                self.wf_use_local_configs()
+            except FileNotFoundError as e:
+                log.error("Error editing pipeline config file to use local configs!")
+                log.critical(e)
+                sys.exit(1)
 
         # Download the singularity images
         if self.container == "singularity":
@@ -213,10 +222,12 @@ class DownloadWorkflow:
 
         self.workflow_repo = WorkflowRepo(
             remote_url=f"git@github.com:{self.pipeline}.git",
-            revision=self.revision[0] if self.revision else None,
-            commit=list(self.wf_sha.values())[0] if bool(self.wf_sha) else "",
+            revision=self.revision if self.revision else None,
+            commit=self.wf_sha.values if bool(self.wf_sha) else None,
         )
-        log.info("Downloading centralised configs from GitHub")
+
+        if self.include_configs:
+            log.info("Downloading centralised configs from GitHub")
 
     def prompt_pipeline_name(self):
         """Prompt for the pipeline name if not set with a flag"""
@@ -231,9 +242,12 @@ class DownloadWorkflow:
         # If --tower is specified, allow to select multiple revisions
 
         if not bool(self.revision):
-            self.revision.extend(
-                nf_core.utils.prompt_pipeline_release_branch(self.wf_revisions, self.wf_branches, multiple=self.tower)
+            temp = nf_core.utils.prompt_pipeline_release_branch(
+                self.wf_revisions, self.wf_branches, multiple=self.tower
             )
+
+        # have to make sure that self.revision is a list of strings, regardless if temp is str or list of strings.
+        self.revision.append(temp) if isinstance(temp, str) else self.revision.extend(temp)
 
     def get_revision_hash(self):
         """Find specified revision / branch hash"""
@@ -269,6 +283,13 @@ class DownloadWorkflow:
         if not self.tower and bool(self.wf_sha):
             # Set the download URL and return - only applicable for classic downloads
             self.wf_download_url = f"https://github.com/{self.pipeline}/archive/{list(self.wf_sha.values())[0]}.zip"
+
+    def prompt_config_inclusion(self):
+        """Prompt for inclusion of institutional configurations"""
+        self.include_configs = questionary.confirm(
+            "Include the nf-core's default institutional configuration files into the download?",
+            style=nf_core.utils.nfcore_question_style,
+        ).ask()
 
     def prompt_container_download(self):
         """Prompt whether to download container images or not"""
@@ -855,12 +876,16 @@ class WorkflowRepo(SyncedRepo):
 
         Args:
             remote_url (str): The URL of the remote repository. Defaults to None.
-            self.revision (list): The revision to use. A list of strings.
-            commit (str): The commit to clone. Defaults to None.
+            self.revision (list of str): The revision to use. A list of strings.
+            commit (dict of str): The commit to clone. Defaults to None.
             no_pull (bool, optional): Whether to skip the pull step. Defaults to False.
             hide_progress (bool, optional): Whether to hide the progress bar. Defaults to False.
             in_cache (bool, optional): Whether to clone the repository from the cache. Defaults to False.
         """
+        import pdb
+
+        pdb.set_trace()
+
         self.remote_url = remote_url
         self.revision = [].extend(revision) if revision else []
         self.commit = [].extend(commit) if commit else []
