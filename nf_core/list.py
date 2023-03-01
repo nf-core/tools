@@ -328,7 +328,6 @@ class LocalWorkflow:
         """Get full details about a local cached workflow"""
 
         if self.local_path is None:
-
             # Try to guess the local cache directory
             if len(os.environ.get("NXF_ASSETS", "")) > 0:
                 nf_wfdir = os.path.join(os.environ.get("NXF_ASSETS"), self.full_name)

@@ -1,12 +1,18 @@
+{%- if not_empty_template -%}
 ## TODO nf-core: Please run the following command to build this file:
 #                nf-core modules create-test-yml {{ tool }}{%- if subtool %}/{{ subtool }}{%- endif %}
-- name: "{{ tool }}{{ ' '+subtool if subtool else '' }}"
-  command: nextflow run ./tests/modules/{{ org }}/{{ tool_dir }} -entry test_{{ tool_name_underscore }} -c ./tests/config/nextflow.config -c ./tests/modules/{{ org }}/{{ tool_dir }}/nextflow.config
+{% endif -%}
+- name: "{{ component }}{{ ' '+subtool if subtool else '' }}"
+  command: nextflow run ./tests/modules/{{ org }}/{{ component_dir }} -entry test_{{ component_name_underscore }} -c ./tests/config/nextflow.config -c ./tests/modules/{{ org }}/{{ component_dir }}/nextflow.config
   tags:
-    - "{{ tool }}{% if subtool -%}"
-    - "{{ tool }}/{{ subtool }}{%- endif %}"
+    - "{{ component }}{% if subtool -%}"
+    - "{{ component }}/{{ subtool }}{%- endif %}"
   files:
-    - path: "output/{{ tool }}/test.bam"
+    {% if not_empty_template -%}
+    - path: "output/{{ component }}/test.bam"
       md5sum: e667c7caad0bc4b7ac383fd023c654fc
-    - path: "output/{{ tool }}/versions.yml"
+    - path: "output/{{ component }}/versions.yml"
       md5sum: a01fe51bc4c6a3a6226fbf77b2c7cf3b
+    {% else -%}
+    - path: ""
+    {%- endif %}

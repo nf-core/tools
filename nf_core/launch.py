@@ -17,6 +17,7 @@ from rich.prompt import Confirm
 
 import nf_core.schema
 import nf_core.utils
+from nf_core.lint_utils import dump_json_with_prettier
 
 log = logging.getLogger(__name__)
 
@@ -97,7 +98,6 @@ class Launch:
         self.cli_launch = True
 
     def launch_pipeline(self):
-
         # Prompt for pipeline if not supplied and no web launch ID
         if self.pipeline is None and self.web_id is None:
             launch_type = questionary.select(
@@ -460,7 +460,6 @@ class Launch:
         answers = {}
         error_msgs = []
         while not while_break:
-
             if len(error_msgs) == 0:
                 self.print_param_header(group_id, group_obj, True)
 
@@ -697,12 +696,9 @@ class Launch:
 
         # Pipeline parameters
         if len(self.schema_obj.input_params) > 0:
-
             # Write the user selection to a file and run nextflow with that
             if self.use_params_file:
-                with open(self.params_out, "w") as fp:
-                    json.dump(self.schema_obj.input_params, fp, indent=4)
-                    fp.write("\n")
+                dump_json_with_prettier(self.params_out, self.schema_obj.input_params)
                 self.nextflow_cmd += f' -params-file "{os.path.relpath(self.params_out)}"'
 
             # Call nextflow with a list of command line flags

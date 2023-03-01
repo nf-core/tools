@@ -248,7 +248,10 @@ def fetch_wf_config(wf_path, cache_config=True):
         if os.path.isfile(cache_path):
             log.debug(f"Found a config cache, loading: {cache_path}")
             with open(cache_path, "r") as fh:
-                config = json.load(fh)
+                try:
+                    config = json.load(fh)
+                except json.JSONDecodeError as e:
+                    raise UserWarning(f"Unable to load JSON file '{cache_path}' due to error {e}")
             return config
     log.debug("No config cache found")
 
@@ -869,7 +872,6 @@ def get_repo_releases_branches(pipeline, wfs):
     # Repo is a nf-core pipeline
     for wf in wfs.remote_workflows:
         if wf.full_name == pipeline or wf.name == pipeline:
-
             # Set to full name just in case it didn't have the nf-core/ prefix
             pipeline = wf.full_name
 
@@ -880,7 +882,6 @@ def get_repo_releases_branches(pipeline, wfs):
     # Arbitrary GitHub repo
     else:
         if pipeline.count("/") == 1:
-
             # Looks like a GitHub address - try working with this repo
             log.debug(
                 f"Pipeline '{pipeline}' not in nf-core, but looks like a GitHub address - fetching releases from API"

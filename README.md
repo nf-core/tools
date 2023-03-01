@@ -217,11 +217,12 @@ Please refer to the respective documentation for further details to manage packa
 ### Activate shell completions for nf-core/tools
 
 Auto-completion for the `nf-core` command is available for bash, zsh and fish. To activate it, add the following lines to the respective shell config files.
-shell | shell config file | command
---- | --- | ---
-bash | ~/.bashrc | `eval "$(_NF_CORE_COMPLETE=bash_source nf-core)"`
-Zsh | ~/.zshrc | `eval "$(_NF_CORE_COMPLETE=zsh_source nf-core)"`
-fish | ~/.config/fish/completions/nf-core.fish | `eval (env _NF_CORE_COMPLETE=fish_source nf-core)`
+
+| shell | shell config file                         | command                                            |
+| ----- | ----------------------------------------- | -------------------------------------------------- |
+| bash  | `~/.bashrc`                               | `eval "$(_NF_CORE_COMPLETE=bash_source nf-core)"`  |
+| zsh   | `~/.zshrc`                                | `eval "$(_NF_CORE_COMPLETE=zsh_source nf-core)"`   |
+| fish  | `~/.config/fish/completions/nf-core.fish` | `eval (env _NF_CORE_COMPLETE=fish_source nf-core)` |
 
 After a restart of the shell session you should have auto-completion for the `nf-core` command and all its sub-commands and options.
 
@@ -342,6 +343,8 @@ You can run the pipeline by simply providing the directory path for the `workflo
 ```bash
 nextflow run /path/to/download/nf-core-rnaseq-dev/workflow/ --input mydata.csv --outdir results  # usual parameters here
 ```
+
+> Note that if you downloaded singularity images, you will need to use `-profile singularity` or have it enabled in your config file.
 
 ### Downloaded nf-core configs
 
@@ -705,6 +708,14 @@ nf-core modules --git-remote git@gitlab.com:nf-core/modules-test.git install fas
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
+The directory where modules are installed will be prompted or obtained from `org_path` in the `.nf-core.yml` file if available. If your modules are located at `modules/my-folder/TOOL/SUBTOOL` your `.nf-core.yml` should have:
+
+```yaml
+org_path: my-folder
+```
+
+Please avoid installing the same tools from two different remotes, as this can lead to further errors.
+
 The modules commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example
 due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will
 still need to clone repositories that have previously not been used.
@@ -984,6 +995,14 @@ nf-core subworkflows --git-remote git@gitlab.com:nf-core/modules-test.git --bran
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/modules` for the `nf-core subworkflows` commands to work properly.
 
+The directory where subworkflows are installed will be prompted or obtained from `org_path` in the `.nf-core.yml` file if available. If your subworkflows are located at `subworkflows/my-folder/SUBWORKFLOW_NAME` your `.nf-core.yml` file should have:
+
+```yaml
+org_path: my-folder
+```
+
+Please avoid installing the same tools from two different remotes, as this can lead to further errors.
+
 The subworkflows commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will still need to clone repositories that have previously not been used.
 
 ### Private remote repositories
@@ -1013,6 +1032,8 @@ To list subworkflows installed in a local pipeline directory you can use `nf-cor
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 head: 25
 -->
 
@@ -1026,6 +1047,8 @@ This shows documentation about the subworkflow on the command line, similar to w
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows info bam_rseqc`](docs/images/nf-core-subworkflows-info.svg)
@@ -1037,6 +1060,8 @@ A subworkflow installed this way will be installed to the `./subworkflows/nf-cor
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows install bam_rseqc`](docs/images/nf-core-subworkflows-install.svg)
@@ -1056,6 +1081,8 @@ You can update subworkflows installed from a remote repository in your pipeline 
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows update --all --no-preview`](docs/images/nf-core-subworkflows-update.svg)
@@ -1115,6 +1142,8 @@ To delete a subworkflow from your pipeline, run `nf-core subworkflows remove`.
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows remove bam_rseqc`](docs/images/nf-core-subworkflows-remove.svg)
@@ -1143,10 +1172,10 @@ The `nf-core subworkflows create` command will prompt you with the relevant ques
 <!-- RICH-CODEX
 working_dir: tmp
 before_command: git clone https://github.com/nf-core/modules.git && cd modules
-fake_command: nf-core subworkflows create bam_stats_samtools --author @nf-core-bot  --label process_low --meta --force
+fake_command: nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force
 -->
 
-![`cd modules && nf-core subworkflows create bam_stats_samtools --author @nf-core-bot  --label process_low --meta --force`](docs/images/nf-core-subworkflows-create.svg)
+![`cd modules && nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force`](docs/images/nf-core-subworkflows-create.svg)
 
 ### Create a subworkflow test config file
 
@@ -1158,6 +1187,8 @@ After you have written a minimal Nextflow script to test your subworkflow in `/t
 working_dir: tmp/subworkflows
 extra_env:
   PROFILE: 'conda'
+before_command: >
+  echo "repository_type: modules" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows create-test-yml bam_stats_samtools --no-prompts --force`](docs/images/nf-core-subworkflows-create-test.svg)
@@ -1173,6 +1204,8 @@ working_dir: tmp/subworkflows
 timeout: 30
 extra_env:
   PROFILE: 'conda'
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows test bam_rseqc --no-prompts`](docs/images/nf-core-subworkflows-test.svg)

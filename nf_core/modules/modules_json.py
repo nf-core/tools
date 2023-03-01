@@ -13,6 +13,7 @@ from git.exc import GitCommandError
 
 import nf_core.utils
 from nf_core.components.components_utils import get_components_to_install
+from nf_core.lint_utils import dump_json_with_prettier
 from nf_core.modules.modules_repo import (
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
@@ -39,6 +40,7 @@ class ModulesJson:
         self.dir = pipeline_dir
         self.modules_dir = Path(self.dir, "modules")
         self.subworkflows_dir = Path(self.dir, "subworkflows")
+        self.modules_json_path = Path(self.dir, "modules.json")
         self.modules_json = None
         self.pipeline_modules = None
         self.pipeline_subworkflows = None
@@ -62,7 +64,7 @@ class ModulesJson:
         pipeline_config = nf_core.utils.fetch_wf_config(self.dir)
         pipeline_name = pipeline_config.get("manifest.name", "")
         pipeline_url = pipeline_config.get("manifest.homePage", "")
-        modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": {}}
+        new_modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": {}}
 
         if not self.modules_dir.exists():
             raise UserWarning("Can't find a ./modules directory. Is this a DSL2 pipeline?")
@@ -74,29 +76,26 @@ class ModulesJson:
         repo_module_names = self.get_component_names_from_repo(repos, self.modules_dir)
         repo_subworkflow_names = self.get_component_names_from_repo(repos, self.subworkflows_dir)
 
-        # Add module/subworkflow info into modules_json
+        # Add module/subworkflow info
         for repo_url, module_names, install_dir in sorted(repo_module_names):
-            modules_json["repos"][repo_url] = {}
-            modules_json["repos"][repo_url]["modules"] = {}
-            modules_json["repos"][repo_url]["modules"][install_dir] = {}
-            modules_json["repos"][repo_url]["modules"][install_dir] = self.determine_branches_and_shas(
+            new_modules_json["repos"][repo_url] = {}
+            new_modules_json["repos"][repo_url]["modules"] = {}
+            new_modules_json["repos"][repo_url]["modules"][install_dir] = {}
+            new_modules_json["repos"][repo_url]["modules"][install_dir] = self.determine_branches_and_shas(
                 "modules", install_dir, repo_url, module_names
             )
         for repo_url, subworkflow_names, install_dir in sorted(repo_subworkflow_names):
-            if repo_url not in modules_json["repos"]:  # Don't overwrite the repo if it was already added by modules
-                modules_json["repos"][repo_url] = {}
-            modules_json["repos"][repo_url]["subworkflows"] = {}
-            modules_json["repos"][repo_url]["subworkflows"][install_dir] = {}
-            modules_json["repos"][repo_url]["subworkflows"][install_dir] = self.determine_branches_and_shas(
+            if repo_url not in new_modules_json["repos"]:  # Don't overwrite the repo if it was already added by modules
+                new_modules_json["repos"][repo_url] = {}
+            new_modules_json["repos"][repo_url]["subworkflows"] = {}
+            new_modules_json["repos"][repo_url]["subworkflows"][install_dir] = {}
+            new_modules_json["repos"][repo_url]["subworkflows"][install_dir] = self.determine_branches_and_shas(
                 "subworkflows", install_dir, repo_url, subworkflow_names
             )
 
         # write the modules.json file and assign it to the object
-        modules_json_path = Path(self.dir, "modules.json")
-        with open(modules_json_path, "w") as fh:
-            json.dump(modules_json, fh, indent=4)
-            fh.write("\n")
-        self.modules_json = modules_json
+        self.modules_json = new_modules_json
+        self.dump()
 
     def get_component_names_from_repo(self, repos, directory):
         """
@@ -420,10 +419,10 @@ class ModulesJson:
 
     def parse_dirs(self, dirs, missing_installation, component_type):
         untracked_dirs = []
-        for dir in dirs:
+        for dir_ in dirs:
             # Check if the module/subworkflows directory exists in modules.json
-            install_dir = dir.parts[0]
-            component = str(Path(*dir.parts[1:]))
+            install_dir = dir_.parts[0]
+            component = str(Path(*dir_.parts[1:]))
             component_in_file = False
             git_url = None
             for repo in missing_installation:
@@ -495,7 +494,7 @@ class ModulesJson:
         Args:
             install_dir (str): The name of directory where modules are installed
             remote_url (str): The git url of the remote repository
-            modules ([ dict[str, dict[str, str]] ]): Module entries with
+            module_entries ([ dict[str, dict[str, str]] ]): Module entries with
             branch and git sha info
 
         Returns:
@@ -617,10 +616,13 @@ class ModulesJson:
         Raises:
             UserWarning: If the modules.json file is not found
         """
-        modules_json_path = os.path.join(self.dir, "modules.json")
         try:
-            with open(modules_json_path, "r") as fh:
-                self.modules_json = json.load(fh)
+            with open(self.modules_json_path, "r") as fh:
+                try:
+                    self.modules_json = json.load(fh)
+                except json.JSONDecodeError as e:
+                    raise UserWarning(f"Unable to load JSON file '{self.modules_json_path}' due to error {e}")
+
         except FileNotFoundError:
             raise UserWarning("File 'modules.json' is missing")
 
@@ -1025,10 +1027,7 @@ class ModulesJson:
         """
         # Sort the modules.json
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
-        modules_json_path = os.path.join(self.dir, "modules.json")
-        with open(modules_json_path, "w") as fh:
-            json.dump(self.modules_json, fh, indent=4)
-            fh.write("\n")
+        dump_json_with_prettier(self.modules_json_path, self.modules_json)
 
     def resolve_missing_installation(self, missing_installation, component_type):
         missing_but_in_mod_json = [
