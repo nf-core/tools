@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import concurrent.futures
+from datetime import datetime
 import git
 from git.exc import GitCommandError, InvalidGitRepositoryError
 import io
@@ -139,7 +140,10 @@ class DownloadWorkflow:
             log.critical(e)
             sys.exit(1)
 
-        summary_log = [f"Pipeline revision: '{','.join(self.revision)}'", f"Pull containers: '{self.container}'"]
+        summary_log = [
+            f"Pipeline revision: '{','.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
+            f"Pull containers: '{self.container}'",
+        ]
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
             summary_log.append(f"Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {os.environ['NXF_SINGULARITY_CACHEDIR']}")
 
@@ -242,12 +246,29 @@ class DownloadWorkflow:
         # If --tower is specified, allow to select multiple revisions
 
         if not bool(self.revision):
-            temp = nf_core.utils.prompt_pipeline_release_branch(
+            (choice, tag_set) = nf_core.utils.prompt_pipeline_release_branch(
                 self.wf_revisions, self.wf_branches, multiple=self.tower
             )
 
-        # have to make sure that self.revision is a list of strings, regardless if temp is str or list of strings.
-        self.revision.append(temp) if isinstance(temp, str) else self.revision.extend(temp)
+            # The checkbox() prompt unfortunately does not support passing a Validator,
+            # so a user who keeps pressing Enter will bump through the selection
+
+            # bool(choice), bool(tag_set):
+            #############################
+            # True,  True:  A choice was made and revisions were available.
+            # False, True:  No selection was made, but revisions were available -> defaults to all available.
+            # False, False: No selection was made because no revisions were available -> raise AssertionError.
+            # True,  False: Congratulations, you found a bug! That combo shouldn't happen.
+
+            if bool(choice):
+                # have to make sure that self.revision is a list of strings, regardless if temp is str or list of strings.
+                self.revision.append(choice) if isinstance(choice, str) else self.revision.extend(choice)
+            else:
+                if bool(tag_set):
+                    self.revision = tag_set
+                    log.info("No particular revision was selected, all available will be downloaded.")
+                else:
+                    raise AssertionError(f"No revisions of {self.pipeline} available for download.")
 
     def get_revision_hash(self):
         """Find specified revision / branch hash"""
@@ -276,9 +297,7 @@ class DownloadWorkflow:
 
         # Set the outdir
         if not self.outdir:
-            self.outdir = (
-                f"{self.pipeline.replace('/', '-').lower()}-{'_'.join(self.revision) if self.revision else ''}"
-            )
+            self.outdir = f"{self.pipeline.replace('/', '-').lower()}_{datetime.now().strftime('%Y-%m-%d_%H-%M')}"
 
         if not self.tower and bool(self.wf_sha):
             # Set the download URL and return - only applicable for classic downloads
@@ -876,8 +895,8 @@ class WorkflowRepo(SyncedRepo):
 
         Args:
             remote_url (str): The URL of the remote repository. Defaults to None.
-            self.revision (list of str): The revision to use. A list of strings.
-            commit (dict of str): The commit to clone. Defaults to None.
+            self.revision (list of str): The revisions to include. A list of strings.
+            commits (dict of str): The checksums to linked with the revisions.
             no_pull (bool, optional): Whether to skip the pull step. Defaults to False.
             hide_progress (bool, optional): Whether to hide the progress bar. Defaults to False.
             in_cache (bool, optional): Whether to clone the repository from the cache. Defaults to False.
