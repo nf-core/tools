@@ -834,29 +834,37 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
     Returns:
         choice (str): Selected release / branch name
     """
-    # Prompt user for release tag
+    # Prompt user for release tag, tag_set will contain all available.
     choices = []
+    tag_set = []
 
     # Releases
     if len(wf_releases) > 0:
         for tag in map(lambda release: release.get("tag_name"), wf_releases):
             tag_display = [("fg:ansiblue", f"{tag}  "), ("class:choice-default", "[release]")]
             choices.append(questionary.Choice(title=tag_display, value=tag))
+            tag_set.append(tag)
 
     # Branches
     for branch in wf_branches.keys():
         branch_display = [("fg:ansiyellow", f"{branch}  "), ("class:choice-default", "[branch]")]
         choices.append(questionary.Choice(title=branch_display, value=branch))
+        tag_set.append(branch)
 
     if len(choices) == 0:
         return False
 
     if multiple:
-        return questionary.checkbox(
-            "Select release / branch:", choices=choices, style=nfcore_question_style
-        ).unsafe_ask()
+        return (
+            questionary.checkbox("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask(),
+            tag_set,
+        )
+
     else:
-        return questionary.select("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask()
+        return (
+            questionary.select("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask(),
+            tag_set,
+        )
 
 
 def get_repo_releases_branches(pipeline, wfs):
