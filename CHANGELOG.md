@@ -74,7 +74,8 @@ Another big release with lots of new features and bug fixes. Thanks to all contr
 
 - Fix lint warnings for `samplesheet_check.nf` module ([#1875](https://github.com/nf-core/tools/pull/1875)).
 - Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
-- Remove `CITATION.cff` file from pipeline template, to avoid that pipeline Zenodo entries reference the nf-core publication instead of the pipeline ([#2059](https://github.com/nf-core/tools/pull/2059)).
+- Remove `CITATION.cff` file from pipeline template, to avoid that pipeline Zenodo entries reference the nf-core publication instead of the pipeline ([#2059](https://github.com/nf-core/tools/pull/2059)).- Add initial CHM13 support ([1988](https://github.com/nf-core/tools/issues/1988))
+- Add initial CHM13 support ([1988](https://github.com/nf-core/tools/issues/1988))
 
 ### Linting
 
