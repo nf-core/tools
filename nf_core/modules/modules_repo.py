@@ -2,7 +2,6 @@ import filecmp
 import logging
 import os
 import shutil
-from importlib.resources import path
 from pathlib import Path
 
 import git
@@ -12,7 +11,7 @@ from git.exc import GitCommandError, InvalidGitRepositoryError
 
 import nf_core.modules.modules_json
 import nf_core.modules.modules_utils
-from nf_core.utils import NFCORE_DIR
+from nf_core.utils import NFCORE_DIR, load_tools_config
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +58,7 @@ class RemoteProgressbar(git.RemoteProgress):
         )
 
 
-class ModulesRepo(object):
+class ModulesRepo:
     """
     An object to store details about the repository being used for modules.
 
@@ -127,10 +126,15 @@ class ModulesRepo(object):
 
         self.remote_url = remote_url
 
-        self.repo_path = nf_core.modules.modules_utils.path_from_remote(self.remote_url)
         self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, hide_progress)
+
+        config_fn, repo_config = load_tools_config(self.local_repo_dir)
+        try:
+            self.repo_path = repo_config["org_path"]
+        except KeyError:
+            raise UserWarning(f"'org_path' key not present in {config_fn.name}")
 
         # Verify that the repo seems to be correctly configured
         if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
@@ -141,6 +145,26 @@ class ModulesRepo(object):
         self.subworkflows_dir = os.path.join(self.local_repo_dir, "subworkflows", self.repo_path)
 
         self.avail_module_names = None
+
+    def verify_sha(self, prompt, sha):
+        """
+        Verify that 'sha' and 'prompt' arguments are not provided together.
+        Verify that the provided SHA exists in the repo.
+
+        Arguments:
+            prompt (bool):              prompt asking for SHA
+            sha (str):                  provided sha
+        """
+        if prompt and sha is not None:
+            log.error("Cannot use '--sha' and '--prompt' at the same time!")
+            return False
+
+        if sha:
+            if not self.sha_exists_on_branch(sha):
+                log.error(f"Commit SHA '{sha}' doesn't exist in '{self.remote_url}'")
+                return False
+
+        return True
 
     def setup_local_repo(self, remote, branch, hide_progress=True):
         """
@@ -278,7 +302,7 @@ class ModulesRepo(object):
         """
         self.repo.git.checkout(commit)
 
-    def component_exists(self, component_name, component_type, checkout=True):
+    def component_exists(self, component_name, component_type, checkout=True, commit=None):
         """
         Check if a module/subworkflow exists in the branch of the repo
 
@@ -288,7 +312,7 @@ class ModulesRepo(object):
         Returns:
             (bool): Whether the module/subworkflow exists in this branch of the repository
         """
-        return component_name in self.get_avail_components(component_type, checkout=checkout)
+        return component_name in self.get_avail_components(component_type, checkout=checkout, commit=commit)
 
     def get_component_dir(self, component_name, component_type):
         """
@@ -352,8 +376,8 @@ class ModulesRepo(object):
         else:
             self.checkout(commit)
         module_files = ["main.nf", "meta.yml"]
-        module_dir = self.get_component_dir(module_name, "modules")
         files_identical = {file: True for file in module_files}
+        module_dir = self.get_component_dir(module_name, "modules")
         for file in module_files:
             try:
                 files_identical[file] = filecmp.cmp(os.path.join(module_dir, file), os.path.join(base_path, file))
@@ -363,70 +387,40 @@ class ModulesRepo(object):
         self.checkout_branch()
         return files_identical
 
-    def get_module_git_log(self, module_name, depth=None, since="2021-07-07T00:00:00Z"):
+    def get_component_git_log(self, component_name, component_type, depth=None):
         """
-        Fetches the commit history the of requested module since a given date. The default value is
+        Fetches the commit history the of requested module/subworkflow since a given date. The default value is
         not arbitrary - it is the last time the structure of the nf-core/modules repository was had an
         update breaking backwards compatibility.
         Args:
-            module_name (str): Name of module
+            component_name (str): Name of module/subworkflow
             modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
-            per_page (int): Number of commits per page returned by API
-            page_nbr (int): Page number of the retrieved commits
-            since (str): Only show commits later than this timestamp.
-            Time should be given in ISO-8601 format: YYYY-MM-DDTHH:MM:SSZ.
 
         Returns:
             ( dict ): Iterator of commit SHAs and associated (truncated) message
         """
         self.checkout_branch()
-        module_path = os.path.join("modules", self.repo_path, module_name)
-        commits_new = self.repo.iter_commits(max_count=depth, paths=module_path)
+        component_path = os.path.join(component_type, self.repo_path, component_name)
+        commits_new = self.repo.iter_commits(max_count=depth, paths=component_path)
         commits_new = [
             {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_new
         ]
-        # Grab commits also from previous modules structure
-        module_path = os.path.join("modules", module_name)
-        commits_old = self.repo.iter_commits(max_count=depth, paths=module_path)
-        commits_old = [
-            {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_old
-        ]
+        commits_old = []
+        if component_type == "modules":
+            # Grab commits also from previous modules structure
+            component_path = os.path.join("modules", component_name)
+            commits_old = self.repo.iter_commits(max_count=depth, paths=component_path)
+            commits_old = [
+                {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_old
+            ]
         commits = iter(commits_new + commits_old)
         return commits
 
-    def get_subworkflow_git_log(self, subworkflow_name, depth=None, since="2021-07-07T00:00:00Z"):
-        """
-        Fetches the commit history the of requested subworkflow since a given date. The default value is
-        not arbitrary - it is the last time the structure of the nf-core/subworkflow repository was had an
-        update breaking backwards compatibility.
-        Args:
-            subworkflow_name (str): Name of subworkflow
-            modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
-            per_page (int): Number of commits per page returned by API
-            page_nbr (int): Page number of the retrieved commits
-            since (str): Only show commits later than this timestamp.
-            Time should be given in ISO-8601 format: YYYY-MM-DDTHH:MM:SSZ.
-
-        Returns:
-            ( dict ): Iterator of commit SHAs and associated (truncated) message
-        """
-        self.checkout_branch()
-        subworkflow_path = os.path.join("subworkflows", self.repo_path, subworkflow_name)
-        commits = self.repo.iter_commits(max_count=depth, paths=subworkflow_path)
-        commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
-        return commits
-
-    def get_latest_module_version(self, module_name):
+    def get_latest_component_version(self, component_name, component_type):
         """
         Returns the latest commit in the repository
         """
-        return list(self.get_module_git_log(module_name, depth=1))[0]["git_sha"]
-
-    def get_latest_subworkflow_version(self, module_name):
-        """
-        Returns the latest commit in the repository
-        """
-        return list(self.get_subworkflow_git_log(module_name, depth=1))[0]["git_sha"]
+        return list(self.get_component_git_log(component_name, component_type, depth=1))[0]["git_sha"]
 
     def sha_exists_on_branch(self, sha):
         """
@@ -455,7 +449,7 @@ class ModulesRepo(object):
                 return message, date
         raise LookupError(f"Commit '{sha}' not found in the '{self.remote_url}'")
 
-    def get_avail_components(self, component_type, checkout=True):
+    def get_avail_components(self, component_type, checkout=True, commit=None):
         """
         Gets the names of the modules/subworkflows in the repository. They are detected by
         checking which directories have a 'main.nf' file
@@ -465,6 +459,8 @@ class ModulesRepo(object):
         """
         if checkout:
             self.checkout_branch()
+        if commit is not None:
+            self.checkout(commit)
         # Get directory
         if component_type == "modules":
             directory = self.modules_dir
@@ -478,7 +474,7 @@ class ModulesRepo(object):
         ]
         return avail_component_names
 
-    def get_meta_yml(self, module_name):
+    def get_meta_yml(self, component_type, module_name):
         """
         Returns the contents of the 'meta.yml' file of a module
 
@@ -489,8 +485,13 @@ class ModulesRepo(object):
             (str): The contents of the file in text format
         """
         self.checkout_branch()
-        path = os.path.join(self.modules_dir, module_name, "meta.yml")
-        if not os.path.exists(path):
+        if component_type == "modules":
+            path = Path(self.modules_dir, module_name, "meta.yml")
+        elif component_type == "subworkflows":
+            path = Path(self.subworkflows_dir, module_name, "meta.yml")
+        else:
+            raise ValueError(f"Invalid component type: {component_type}")
+        if not path.exists():
             return None
         with open(path) as fh:
             contents = fh.read()

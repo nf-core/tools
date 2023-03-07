@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Some tests covering the pipeline creation sub command.
 """
 import os

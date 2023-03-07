@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ Tests covering the command-line code.
 
 Most tests check the cli arguments are passed along and that some action is
@@ -273,7 +272,6 @@ class TestCli(unittest.TestCase):
             "fail-warned": None,
             "markdown": "output_file.md",
             "json": "output_file.json",
-            "hide-progress": None,
         }
 
         cmd = ["lint"] + self.assemble_params(params)
@@ -288,6 +286,7 @@ class TestCli(unittest.TestCase):
             "show-passed" in params,
             "fail-ignored" in params,
             "fail-warned" in params,
+            "test",
             params["markdown"],
             params["json"],
             "hide-progress" in params,

@@ -1,9 +1,9 @@
 black
 isort
 myst_parser
-pre-commit
 pytest-cov
 pytest-datafiles
 requests-mock
 Sphinx
 sphinx-rtd-theme
+requests_mock

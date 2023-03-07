@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Code for linting modules in the nf-core/modules repository and
 in nf-core pipelines
@@ -21,10 +20,9 @@ from rich.table import Table
 
 import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.lint_utils import console
-from nf_core.modules.modules_command import ModuleCommand
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
 from nf_core.utils import plural_s as _s
 
@@ -37,7 +35,7 @@ class ModuleLintException(Exception):
     pass
 
 
-class LintResult(object):
+class LintResult:
     """An object to hold the results of a lint test"""
 
     def __init__(self, mod, lint_test, message, file_path):
@@ -48,7 +46,7 @@ class LintResult(object):
         self.module_name = mod.module_name
 
 
-class ModuleLint(ModuleCommand):
+class ModuleLint(ComponentCommand):
     """
     An object for linting modules either in a clone of the 'nf-core/modules'
     repository or in any nf-core pipeline directory
@@ -73,7 +71,14 @@ class ModuleLint(ModuleCommand):
         no_pull=False,
         hide_progress=False,
     ):
-        super().__init__(dir=dir, remote_url=remote_url, branch=branch, no_pull=no_pull, hide_progress=False)
+        super().__init__(
+            "modules",
+            dir=dir,
+            remote_url=remote_url,
+            branch=branch,
+            no_pull=no_pull,
+            hide_progress=hide_progress,
+        )
 
         self.fail_warned = fail_warned
         self.passed = []
@@ -84,23 +89,29 @@ class ModuleLint(ModuleCommand):
         if self.repo_type == "pipeline":
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
-            all_pipeline_modules = modules_json.get_all_modules()
-            if self.modules_repo.remote_url in all_pipeline_modules:
-                module_dir = Path(self.dir, "modules", "nf-core")
-                self.all_remote_modules = [
-                    NFCoreModule(m[1], self.modules_repo.remote_url, module_dir / m[1], self.repo_type, Path(self.dir))
-                    for m in all_pipeline_modules[self.modules_repo.remote_url]
-                ]  # m = (module_dir, module_name)
-                if not self.all_remote_modules:
-                    raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
-                local_module_dir = Path(self.dir, "modules", "local")
+            self.all_remote_modules = []
+            for repo_url, components in modules_json.get_all_components(self.component_type).items():
+                for org, comp in components:
+                    self.all_remote_modules.append(
+                        NFCoreModule(
+                            comp,
+                            repo_url,
+                            Path(self.dir, self.component_type, org, comp),
+                            self.repo_type,
+                            Path(self.dir),
+                        )
+                    )
+            if not self.all_remote_modules:
+                raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
+            local_module_dir = Path(self.dir, "modules", "local")
+            self.all_local_modules = []
+            if local_module_dir.exists():
                 self.all_local_modules = [
-                    NFCoreModule(m, None, local_module_dir / m, self.repo_type, Path(self.dir), nf_core_module=False)
+                    NFCoreModule(
+                        m, None, Path(local_module_dir, m), self.repo_type, Path(self.dir), remote_module=False
+                    )
                     for m in self.get_local_components()
                 ]
-
-            else:
-                raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
         else:
             module_dir = Path(self.dir, self.default_modules_path)
             self.all_remote_modules = [
@@ -134,9 +145,9 @@ class ModuleLint(ModuleCommand):
         module=None,
         key=(),
         all_modules=False,
-        hide_progress=False,
         print_results=True,
         show_passed=False,
+        sort_by="test",
         local=False,
         fix_version=False,
     ):
@@ -221,7 +232,7 @@ class ModuleLint(ModuleCommand):
             self.lint_modules(remote_modules, local=False, fix_version=fix_version)
 
         if print_results:
-            self._print_results(show_passed=show_passed)
+            self._print_results(show_passed=show_passed, sort_by=sort_by)
             self.print_summary()
 
     def set_up_pipeline_files(self):
@@ -323,7 +334,7 @@ class ModuleLint(ModuleCommand):
 
             self.failed += [LintResult(mod, *m) for m in mod.failed]
 
-    def _print_results(self, show_passed=False):
+    def _print_results(self, show_passed=False, sort_by="test"):
         """Print linting results to the command line.
 
         Uses the ``rich`` library to print a set of formatted tables to the command line
@@ -332,10 +343,14 @@ class ModuleLint(ModuleCommand):
 
         log.debug("Printing final results")
 
+        sort_order = ["lint_test", "module_name", "message"]
+        if sort_by == "module":
+            sort_order = ["module_name", "lint_test", "message"]
+
         # Sort the results
-        self.passed.sort(key=operator.attrgetter("message", "module_name"))
-        self.warned.sort(key=operator.attrgetter("message", "module_name"))
-        self.failed.sort(key=operator.attrgetter("message", "module_name"))
+        self.passed.sort(key=operator.attrgetter(*sort_order))
+        self.warned.sort(key=operator.attrgetter(*sort_order))
+        self.failed.sort(key=operator.attrgetter(*sort_order))
 
         # Find maximum module name length
         max_mod_name_len = 40

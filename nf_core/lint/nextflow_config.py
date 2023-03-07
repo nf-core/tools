@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import logging
 import os
 import re
@@ -143,12 +141,12 @@ def nextflow_config(self):
     ]
     # Old depreciated vars - fail if present
     config_fail_ifdefined = [
-        "params.version",
         "params.nf_required_version",
         "params.container",
         "params.singleEnd",
         "params.igenomesIgnore",
         "params.name",
+        "params.enable_conda",
     ]
 
     # Remove field that should be ignored according to the linting config

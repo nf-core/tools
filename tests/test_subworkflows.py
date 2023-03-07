@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ Tests covering the subworkflows commands
 """
 
@@ -13,7 +12,7 @@ import nf_core.create
 import nf_core.modules
 import nf_core.subworkflows
 
-from .utils import GITLAB_URL, mock_api_calls
+from .utils import GITLAB_SUBWORKFLOWS_BRANCH, GITLAB_URL, OLD_SUBWORKFLOWS_SHA
 
 
 def create_modules_repo_dummy(tmp_dir):
@@ -29,13 +28,11 @@ def create_modules_repo_dummy(tmp_dir):
     with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
         fh.writelines(["test:", "\n  - modules/test/**", "\n  - tests/modules/test/**"])
     with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
-        fh.writelines(["repository_type: modules", "\n"])
+        fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
 
     with requests_mock.Mocker() as mock:
-        mock_api_calls(mock, "bpipe", "0.9.11")
-        # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
-        module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_medium", False, False)
-        module_create.create()
+        subworkflow_create = nf_core.subworkflows.SubworkflowCreate(root_dir, "test_subworkflow", "@author", True)
+        subworkflow_create.create()
 
     return root_dir
 
@@ -46,6 +43,7 @@ class TestSubworkflows(unittest.TestCase):
     def setUp(self):
         """Create a new PipelineStructure and Launch objects"""
         self.tmp_dir = tempfile.mkdtemp()
+        self.component_type = "subworkflows"
 
         # Set up the pipeline structure
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -58,17 +56,88 @@ class TestSubworkflows(unittest.TestCase):
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
 
-    ############################################
-    # Test of the individual modules commands. #
-    ############################################
+        # Set up install objects
+        self.subworkflow_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
+        self.subworkflow_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
+            self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
+        )
+        self.subworkflow_install_old = nf_core.subworkflows.SubworkflowInstall(
+            self.pipeline_dir,
+            prompt=False,
+            force=False,
+            sha=OLD_SUBWORKFLOWS_SHA,
+        )
+        self.subworkflow_install_module_change = nf_core.subworkflows.SubworkflowInstall(
+            self.pipeline_dir,
+            prompt=False,
+            force=False,
+            sha="8c343b3c8a0925949783dc547666007c245c235b",
+        )
+        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
+
+        # Set up remove objects
+        self.subworkflow_remove = nf_core.subworkflows.SubworkflowRemove(self.pipeline_dir)
+
+    def tearDown(self):
+        """Clean up temporary files and folders"""
+
+        if os.path.exists(self.tmp_dir):
+            shutil.rmtree(self.tmp_dir)
+
+    ################################################
+    # Test of the individual subworkflow commands. #
+    ################################################
 
     from .subworkflows.create import (
         test_subworkflows_create_fail_exists,
         test_subworkflows_create_nfcore_modules,
         test_subworkflows_create_succeed,
     )
+    from .subworkflows.info import (
+        test_subworkflows_info_in_modules_repo,
+        test_subworkflows_info_local,
+        test_subworkflows_info_remote,
+        test_subworkflows_info_remote_gitlab,
+    )
+    from .subworkflows.install import (
+        test_subworkflow_install_nopipeline,
+        test_subworkflows_install_bam_sort_stats_samtools,
+        test_subworkflows_install_bam_sort_stats_samtools_twice,
+        test_subworkflows_install_different_branch_fail,
+        test_subworkflows_install_emptypipeline,
+        test_subworkflows_install_from_gitlab,
+        test_subworkflows_install_nosubworkflow,
+        test_subworkflows_install_tracking,
+        test_subworkflows_install_tracking_added_already_installed,
+        test_subworkflows_install_tracking_added_super_subworkflow,
+    )
+    from .subworkflows.list import (
+        test_subworkflows_install_and_list_subworkflows,
+        test_subworkflows_install_gitlab_and_list_subworkflows,
+        test_subworkflows_list_remote,
+        test_subworkflows_list_remote_gitlab,
+    )
+    from .subworkflows.remove import (
+        test_subworkflows_remove_included_subworkflow,
+        test_subworkflows_remove_one_of_two_subworkflow,
+        test_subworkflows_remove_subworkflow,
+        test_subworkflows_remove_subworkflow_keep_installed_module,
+    )
     from .subworkflows.subworkflows_test import (
         test_subworkflows_test_check_inputs,
         test_subworkflows_test_no_installed_subworkflows,
         test_subworkflows_test_no_name_no_prompts,
+    )
+    from .subworkflows.update import (
+        test_install_and_update,
+        test_install_at_hash_and_update,
+        test_install_at_hash_and_update_and_save_diff_to_file,
+        test_update_all,
+        test_update_all_linked_components_from_subworkflow,
+        test_update_all_subworkflows_from_module,
+        test_update_change_of_included_modules,
+        test_update_with_config_dont_update,
+        test_update_with_config_fix_all,
+        test_update_with_config_fixed_version,
+        test_update_with_config_no_updates,
     )

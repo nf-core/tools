@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Bumps the version number in all appropriate files for
 a nf-core pipeline.
 """
@@ -134,12 +133,10 @@ def update_file_version(filename, pipeline_obj, patterns):
 
     replacements = []
     for pattern in patterns:
-
         found_match = False
 
         newcontent = []
         for line in content.splitlines():
-
             # Match the pattern
             matches_pattern = re.findall(rf"^.*{pattern[0]}.*$", line)
             if matches_pattern:

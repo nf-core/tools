@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Linting policy for nf-core pipeline projects.
 
 Tests Nextflow-based pipelines to check that they adhere to
@@ -38,6 +37,7 @@ def run_linting(
     show_passed=False,
     fail_ignored=False,
     fail_warned=False,
+    sort_by="test",
     md_fn=None,
     json_fn=None,
     hide_progress=False,
@@ -122,9 +122,9 @@ def run_linting(
 
     # Print the results
     lint_obj._print_results(show_passed)
-    module_lint_obj._print_results(show_passed)
+    module_lint_obj._print_results(show_passed, sort_by=sort_by)
     nf_core.lint_utils.print_joint_summary(lint_obj, module_lint_obj)
-    nf_core.lint_utils.print_fixes(lint_obj, module_lint_obj)
+    nf_core.lint_utils.print_fixes(lint_obj)
 
     # Save results to Markdown file
     if md_fn is not None:
@@ -247,7 +247,7 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         Add parsed config to the `self.lint_config` class attribute.
         """
-        tools_config = nf_core.utils.load_tools_config(self.wf_path)
+        _, tools_config = nf_core.utils.load_tools_config(self.wf_path)
         self.lint_config = tools_config.get("lint", {})
 
         # Check if we have any keys that don't match lint test names
@@ -434,7 +434,6 @@ class PipelineLint(nf_core.utils.Pipeline):
             )
 
     def _print_summary(self):
-
         # Summary table
         summary_colour = "red" if len(self.failed) > 0 else "green"
         table = Table(box=rich.box.ROUNDED, style=summary_colour)

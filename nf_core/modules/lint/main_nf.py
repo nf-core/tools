@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Lint the main.nf file of a module
 """
@@ -7,6 +6,7 @@ import logging
 import re
 import sqlite3
 from pathlib import Path
+from urllib.parse import urlparse, urlunparse
 
 import requests
 
@@ -100,18 +100,18 @@ def main_nf(module_lint_object, module, fix_version, progress_bar):
             continue
 
         # Perform state-specific linting checks
-        if state == "process" and not _is_empty(module, l):
+        if state == "process" and not _is_empty(l):
             process_lines.append(l)
-        if state == "input" and not _is_empty(module, l):
+        if state == "input" and not _is_empty(l):
             inputs.extend(_parse_input(module, l))
-        if state == "output" and not _is_empty(module, l):
+        if state == "output" and not _is_empty(l):
             outputs += _parse_output(module, l)
             outputs = list(set(outputs))  # remove duplicate 'meta's
-        if state == "when" and not _is_empty(module, l):
+        if state == "when" and not _is_empty(l):
             when_lines.append(l)
-        if state == "script" and not _is_empty(module, l):
+        if state == "script" and not _is_empty(l):
             script_lines.append(l)
-        if state == "shell" and not _is_empty(module, l):
+        if state == "shell" and not _is_empty(l):
             shell_lines.append(l)
 
     # Check that we have required sections
@@ -255,30 +255,81 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
     else:
         self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
-    for l in lines:
+    for i, l in enumerate(lines):
+        url = None
         if _container_type(l) == "bioconda":
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
         l = l.strip(" '\"")
         if _container_type(l) == "singularity":
             # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
             # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
-            match = re.search(r"(?:/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_.]+?)(?:\.img)?['\"]", l)
+            match = re.search(r"(?:/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_.]+?)(?:\.img)?'", l)
             if match is not None:
                 singularity_tag = match.group(1)
                 self.passed.append(("singularity_tag", f"Found singularity tag: {singularity_tag}", self.main_nf))
             else:
                 self.failed.append(("singularity_tag", "Unable to parse singularity tag", self.main_nf))
                 singularity_tag = None
+            url = urlparse(l.split("'")[0])
+            # lint double quotes
+            if l.count('"') > 2:
+                self.failed.append(
+                    (
+                        "container_links",
+                        "Too many double quotes found when specifying singularity container",
+                        self.main_nf,
+                    )
+                )
         if _container_type(l) == "docker":
             # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
             # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
-            match = re.search(r"(?:[/])?(?::)?([A-Za-z\d\-_.]+)['\"]", l)
+            match = re.search(r"(?:[/])?(?::)?([A-Za-z\d\-_.]+)'", l)
             if match is not None:
                 docker_tag = match.group(1)
                 self.passed.append(("docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
             else:
                 self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
+            url = urlparse(l.split("'")[0])
+            # lint double quotes
+            if l.count('"') > 2:
+                self.failed.append(
+                    ("container_links", "Too many double quotes found when specifying docker container", self.main_nf)
+                )
+        # lint double quotes
+        if l.startswith("container"):
+            if l.count('"') > 2:
+                self.failed.append(
+                    ("container_links", "Too many double quotes found when specifying containers", self.main_nf)
+                )
+        # lint more than one container in the same line
+        if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or "quay.io/" in l):
+            self.warned.append(
+                (
+                    "container_links",
+                    "Docker and Singularity containers specified in the same line. Only first one checked.",
+                    self.main_nf,
+                )
+            )
+        # Try to connect to container URLs
+        if url is None:
+            continue
+        try:
+            response = requests.head(
+                "https://" + urlunparse(url) if not url.scheme == "https" else urlunparse(url),
+                stream=True,
+                allow_redirects=True,
+            )
+            log.debug(
+                f"Connected to URL: {'https://' + urlunparse(url) if not url.scheme == 'https' else urlunparse(url)}, "
+                f"status_code: {response.status_code}"
+            )
+        except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
+            log.debug(f"Unable to connect to url '{urlunparse(url)}' due to error: {e}")
+            self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
+            continue
+        if response.status_code != 200:
+            self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
@@ -391,7 +442,7 @@ def _parse_output(self, line):
     return output
 
 
-def _is_empty(self, line):
+def _is_empty(line):
     """Check whether a line is empty or a comment"""
     empty = False
     if line.strip().startswith("//"):
@@ -422,7 +473,7 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
         build_type = _container_type(l)
         if build_type == "bioconda":
             new_lines.append(re.sub(rf"{current_version}", f"{latest_version}", line))
-        elif build_type == "singularity" or build_type == "docker":
+        elif build_type in ("singularity", "docker"):
             # Check that the new url is valid
             new_url = re.search(
                 "(?:['\"])(.+)(?:['\"])", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
@@ -432,7 +483,8 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
                     "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
                 )
                 log.debug(
-                    f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, status_code: {response_new_container.status_code}"
+                    f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, "
+                    f"status_code: {response_new_container.status_code}"
                 )
             except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
                 log.debug(f"Unable to connect to url '{new_url}' due to error: {e}")

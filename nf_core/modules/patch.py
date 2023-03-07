@@ -7,17 +7,17 @@ from pathlib import Path
 import questionary
 
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 
-from .modules_command import ModuleCommand
 from .modules_differ import ModulesDiffer
 from .modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
 
 
-class ModulePatch(ModuleCommand):
+class ModulePatch(ComponentCommand):
     def __init__(self, dir, remote_url=None, branch=None, no_pull=False):
-        super().__init__(dir, remote_url, branch, no_pull)
+        super().__init__("modules", dir, remote_url, branch, no_pull)
 
         self.modules_json = ModulesJson(dir)
 
@@ -25,7 +25,7 @@ class ModulePatch(ModuleCommand):
         if not self.has_valid_directory():
             raise UserWarning()
 
-        modules = self.modules_json.get_all_modules()[self.modules_repo.remote_url]
+        modules = self.modules_json.get_all_components(self.component_type)[self.modules_repo.remote_url]
         module_names = [module for _, module in modules]
 
         if module is not None and module not in module_names:
@@ -38,10 +38,13 @@ class ModulePatch(ModuleCommand):
 
         self.modules_json.check_up_to_date()
         self.param_check(module)
-        modules = self.modules_json.get_all_modules()[self.modules_repo.remote_url]
+        modules = self.modules_json.get_all_components(self.component_type)[self.modules_repo.remote_url]
 
         if module is None:
-            choices = [module if dir == "nf-core" else f"{dir}/{module}" for dir, module in modules]
+            choices = [
+                module if directory == self.modules_repo.repo_path else f"{directory}/{module}"
+                for directory, module in modules
+            ]
             module = questionary.autocomplete(
                 "Tool:",
                 choices,
@@ -62,7 +65,9 @@ class ModulePatch(ModuleCommand):
                 f"The '{module_fullname}' module does not have a valid version in the 'modules.json' file. Cannot compute patch"
             )
         # Get the module branch and reset it in the ModulesRepo object
-        module_branch = self.modules_json.get_module_branch(module, self.modules_repo.remote_url, module_dir)
+        module_branch = self.modules_json.get_component_branch(
+            self.component_type, module, self.modules_repo.remote_url, module_dir
+        )
         if module_branch != self.modules_repo.branch:
             self.modules_repo.setup_branch(module_branch)
 

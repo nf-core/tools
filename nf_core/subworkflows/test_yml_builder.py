@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 The ModulesTestYmlBuilder class handles automatic generation of the modules test.yml file
 along with running the tests and creating md5 sums
@@ -25,14 +24,16 @@ import yaml
 from rich.syntax import Syntax
 
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
-from nf_core.subworkflows.subworkflows_command import SubworkflowCommand
+
+from ..lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
 
-class SubworkflowTestYmlBuilder(SubworkflowCommand):
+class SubworkflowTestYmlBuilder(ComponentCommand):
     def __init__(
         self,
         subworkflow=None,
@@ -41,10 +42,14 @@ class SubworkflowTestYmlBuilder(SubworkflowCommand):
         test_yml_output_path=None,
         force_overwrite=False,
         no_prompts=False,
+        remote_url=None,
+        branch=None,
     ):
-        super().__init__(directory)
+        super().__init__("subworkflows", directory)
         self.dir = directory
         self.subworkflow = subworkflow
+        self.remote_url = remote_url
+        self.branch = branch
         self.run_tests = run_tests
         self.test_yml_output_path = test_yml_output_path
         self.force_overwrite = force_overwrite
@@ -54,7 +59,7 @@ class SubworkflowTestYmlBuilder(SubworkflowCommand):
         self.entry_points = []
         self.tests = []
         self.errors = []
-        self.modules_repo = ModulesRepo()
+        self.modules_repo = ModulesRepo(remote_url=self.remote_url, branch=self.branch)
         self.modules_json = ModulesJson(self.dir)
 
     def run(self):
@@ -77,7 +82,7 @@ class SubworkflowTestYmlBuilder(SubworkflowCommand):
         if self.subworkflow is None:
             self.subworkflow = questionary.autocomplete(
                 "Subworkflow name:",
-                choices=self.modules_repo.get_avail_components(self.component_type),
+                choices=self.components_from_repo(self.org),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         self.subworkflow_dir = os.path.join("subworkflows", self.modules_repo.repo_path, self.subworkflow)
@@ -375,16 +380,19 @@ class SubworkflowTestYmlBuilder(SubworkflowCommand):
         """
         Generate the test yml file.
         """
+        with tempfile.NamedTemporaryFile(mode="w+") as fh:
+            yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
+            run_prettier_on_file(fh.name)
+            fh.seek(0)
+            prettified_yml = fh.read()
 
         if self.test_yml_output_path == "-":
             console = rich.console.Console()
-            yaml_str = yaml.dump(self.tests, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
-            console.print("\n", Syntax(yaml_str, "yaml"), "\n")
-            return
-
-        try:
-            log.info(f"Writing to '{self.test_yml_output_path}'")
-            with open(self.test_yml_output_path, "w") as fh:
-                yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
-        except FileNotFoundError as e:
-            raise UserWarning(f"Could not create test.yml file: '{e}'")
+            console.print("\n", Syntax(prettified_yml, "yaml"), "\n")
+        else:
+            try:
+                log.info(f"Writing to '{self.test_yml_output_path}'")
+                with open(self.test_yml_output_path, "w") as fh:
+                    fh.write(prettified_yml)
+            except FileNotFoundError as e:
+                raise UserWarning(f"Could not create test.yml file: '{e}'")

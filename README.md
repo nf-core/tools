@@ -44,6 +44,17 @@ A python package with helper tools for the nf-core community.
   - [`modules bump-versions` - Bump software versions of modules](#bump-bioconda-and-container-versions-of-modules-in)
   - [`modules mulled` - Generate the name for a multi-tool container image](#generate-the-name-for-a-multi-tool-container-image)
 
+- [`nf-core subworkflows` - commands for dealing with subworkflows](#subworkflows)
+  - [`subworkflows list` - List available subworkflows](#list-subworkflows)
+    - [`subworkflows list remote` - List remote subworkflows](#list-remote-subworkflows)
+    - [`subworkflows list local` - List installed subworkflows](#list-installed-subworkflows)
+  - [`subworkflows info` - Show information about a subworkflow](#show-information-about-a-subworkflow)
+  - [`subworkflows install` - Install subworkflows in a pipeline](#install-subworkflows-in-a-pipeline)
+  - [`subworkflows update` - Update subworkflows in a pipeline](#update-subworkflows-in-a-pipeline)
+  - [`subworkflows remove` - Remove a subworkflow from a pipeline](#remove-a-subworkflow-from-a-pipeline)
+  - [`subworkflows create` - Create a subworkflow from the template](#create-a-new-subworkflow)
+  - [`subworkflows create-test-yml` - Create the `test.yml` file for a subworkflow](#create-a-subworkflow-test-config-file)
+  - [`subworkflows test` - Run the tests for a subworkflow](#run-the-tests-for-a-subworkflow-using-pytest)
 - [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
@@ -203,6 +214,23 @@ pip install --upgrade nf-core
 
 Please refer to the respective documentation for further details to manage packages, as for example [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-pkgs.html#updating-packages) or [pip](https://packaging.python.org/en/latest/tutorials/installing-packages/#upgrading-packages).
 
+### Activate shell completions for nf-core/tools
+
+Auto-completion for the `nf-core` command is available for bash, zsh and fish. To activate it, add the following lines to the respective shell config files.
+
+| shell | shell config file                         | command                                            |
+| ----- | ----------------------------------------- | -------------------------------------------------- |
+| bash  | `~/.bashrc`                               | `eval "$(_NF_CORE_COMPLETE=bash_source nf-core)"`  |
+| zsh   | `~/.zshrc`                                | `eval "$(_NF_CORE_COMPLETE=zsh_source nf-core)"`   |
+| fish  | `~/.config/fish/completions/nf-core.fish` | `eval (env _NF_CORE_COMPLETE=fish_source nf-core)` |
+
+After a restart of the shell session you should have auto-completion for the `nf-core` command and all its sub-commands and options.
+
+> **NB:** The added line will run the command `nf-core` (which will also slow down startup time of your shell). You should therefore either have the nf-core/tools installed globally.
+> You can also wrap it inside `if type nf-core > /dev/null; then ` \<YOUR EVAL CODE LINE\> `fi` for bash and zsh or `if command -v nf-core &> /dev/null eval (env _NF_CORE_COMPLETE=fish_source nf-core) end` for fish. You need to then source the config in your environment for the completions to be activated.
+
+> **NB:** If you see the error `command not found compdef` , be sure that your config file contains the line `autoload -Uz compinit && compinit` before the eval line.
+
 ## Listing pipelines
 
 The command `nf-core list` shows all available nf-core pipelines along with their latest version, when that was published and how recently the pipeline code was pulled to your local system (if at all).
@@ -315,6 +343,8 @@ You can run the pipeline by simply providing the directory path for the `workflo
 ```bash
 nextflow run /path/to/download/nf-core-rnaseq-dev/workflow/ --input mydata.csv --outdir results  # usual parameters here
 ```
+
+> Note that if you downloaded singularity images, you will need to use `-profile singularity` or have it enabled in your config file.
 
 ### Downloaded nf-core configs
 
@@ -516,6 +546,7 @@ To help developers working with pipeline schema, nf-core tools has three `schema
 
 - `nf-core schema validate`
 - `nf-core schema build`
+- `nf-core schema docs`
 - `nf-core schema lint`
 
 ### Validate pipeline parameters
@@ -561,6 +592,31 @@ There are four flags that you can use with this command:
 - `--no-prompts`: Make changes without prompting for confirmation each time. Does not launch web tool.
 - `--web-only`: Skips comparison of the schema against the pipeline parameters and only launches the web tool.
 - `--url <web_address>`: Supply a custom URL for the online tool. Useful when testing locally.
+
+### Display the documentation for a pipeline schema
+
+To get an impression about the current pipeline schema you can display the content of the `nextflow_schema.json` with `nf-core schema docs <pipeline-schema>`. This will print the content of your schema in Markdown format to the standard output.
+
+There are four flags that you can use with this command:
+
+- `--output <filename>`: Output filename. Defaults to standard out.
+- `--format [markdown|html]`: Format to output docs in.
+- `--force`: Overwrite existing files
+- `--columns <columns_list>`: CSV list of columns to include in the parameter tables
+
+### Add new parameters to the pipeline schema
+
+If you want to add a parameter to the schema, you first have to add the parameter and its default value to the `nextflow.config` file with the `params` scope. Afterwards, you run the command `nf-core schema build` to add the parameters to your schema and open the graphical interface to easily modify the schema.
+
+The graphical interface is oganzised in groups and within the groups the single parameters are stored. For a better overview you can collapse all groups with the `Collapse groups` button, then your new parameters will be the only remaining one at the bottom of the page. Now you can either create a new group with the `Add group` button or drag and drop the paramters in an existing group. Therefor the group has to be expanded. The group title will be displayed, if you run your pipeline with the `--help` flag and its description apears on the parameter page of your pipeline.
+
+Now you can start to change the parameter itself. The description is a short explanation about the parameter, that apears if you run your pipeline with the `--help` flag. By clicking on the dictionary icon you can add a longer explanation for the parameter page of your pipeline. If you want to specify some conditions for your parameter, like the file extension, you can use the nut icon to open the settings. This menu depends on the `type` you assigned to your parameter. For intergers you can define a min and max value, and for strings the file extension can be specified.
+
+After you filled your schema, click on the `Finished` button in the top rigth corner, this will automatically update your `nextflow_schema.json`. If this is not working you can copy the schema from the graphical interface and paste it in your `nextflow_schema.json` file.
+
+### Update existing pipeline schema
+
+Important for the update of a pipeline schema is, that if you want to change the default value of a parameter, you should change it in the `nextflow.config` file, since the value in the config file overwrites the value in the pipeline schema. To change any other parameter use `nf-core schema build --web-only` to open the graphical interface without rebuilding the pipeline schema. Now, you can change your parameters as mentioned above but keep in mind that changing the parameter datatype is depending on the default value you specified in the `nextflow.config` file.
 
 ### Linting a pipeline schema
 
@@ -651,6 +707,14 @@ nf-core modules --git-remote git@gitlab.com:nf-core/modules-test.git install fas
 ```
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
+
+The directory where modules are installed will be prompted or obtained from `org_path` in the `.nf-core.yml` file if available. If your modules are located at `modules/my-folder/TOOL/SUBTOOL` your `.nf-core.yml` should have:
+
+```yaml
+org_path: my-folder
+```
+
+Please avoid installing the same tools from two different remotes, as this can lead to further errors.
 
 The modules commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example
 due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will
@@ -744,30 +808,34 @@ If you don't want to update certain modules or want to update them to specific v
 
 ```yaml
 update:
-  nf-core/modules:
-    star/align: False
+  https://github.com/nf-core/modules.git:
+    nf-core:
+      star/align: False
 ```
 
 If you want this module to be updated only to a specific version (or downgraded), you could instead specifiy the version:
 
 ```yaml
 update:
-  nf-core/modules:
-    star/align: "e937c7950af70930d1f34bb961403d9d2aa81c7"
+  https://github.com/nf-core/modules.git:
+    nf-core:
+      star/align: "e937c7950af70930d1f34bb961403d9d2aa81c7"
 ```
 
 This also works at the repository level. For example, if you want to exclude all modules installed from `nf-core/modules` from being updated you could add:
 
 ```yaml
 update:
-  nf-core/modules: False
+  https://github.com/nf-core/modules.git:
+    nf-core: False
 ```
 
 or if you want all modules in `nf-core/modules` at a specific version:
 
 ```yaml
 update:
-  nf-core/modules: "e937c7950af70930d1f34bb961403d9d2aa81c7"
+  https://github.com/nf-core/modules.git:
+    nf-core: "e937c7950af70930d1f34bb961403d9d2aa81c7"
 ```
 
 Note that the module versions specified in the `.nf-core.yml` file has higher precedence than versions specified with the command line flags, thus aiding you in writing reproducible pipelines.
@@ -831,7 +899,7 @@ fake_command: nf-core modules create fastqc --author @nf-core-bot  --label proce
 
 All modules on [nf-core/modules](https://github.com/nf-core/modules) have a strict requirement of being unit tested using minimal test data.
 To help developers build new modules, the `nf-core modules create-test-yml` command automates the creation of the yaml file required to document the output file `md5sum` and other information generated by the testing.
-After you have written a minimal Nextflow script to test your module `modules/tests/software/<tool>/<subtool>/main.nf`, this command will run the tests for you and create the `modules/tests/software/<tool>/<subtool>/test.yml` file.
+After you have written a minimal Nextflow script to test your module `tests/modules/<tool>/<subtool>/main.nf`, this command will run the tests for you and create the `tests/modules/<tool>/<subtool>/test.yml` file.
 
 <!-- RICH-CODEX
 working_dir: tmp/modules
@@ -856,7 +924,7 @@ before_command: sed 's/1.13a/1.10/g' modules/multiqc/main.nf > modules/multiqc/m
 
 ### Run the tests for a module using pytest
 
-To run unit tests of a module that you have installed or the test created by the command [`nf-core mdoules create-test-yml`](#create-a-module-test-config-file), you can use `nf-core modules test` command. This command runs the tests specified in `modules/tests/software/<tool>/<subtool>/test.yml` file using [pytest](https://pytest-workflow.readthedocs.io/en/stable/).
+To run unit tests of a module that you have installed or the test created by the command [`nf-core modules create-test-yml`](#create-a-module-test-config-file), you can use `nf-core modules test` command. This command runs the tests specified in `modules/tests/software/<tool>/<subtool>/test.yml` file using [pytest](https://pytest-workflow.readthedocs.io/en/stable/).
 
 You can specify the module name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
 
@@ -903,6 +971,244 @@ after_command: cd ../../ && rm -rf tmp
 -->
 
 ![`nf-core modules mulled pysam==0.16.0.1 biopython==1.78`](docs/images/nf-core-modules-mulled.svg)
+
+## Subworkflows
+
+After the launch of nf-core modules, we can provide now also nf-core subworkflows to fully utilize the power of DSL2 modularization.
+Subworkflows are chains of multiple module definitions that can be imported into any pipeline.
+This allows multiple pipelines to use the same code for a the same tasks, and gives a greater degree of reusability and unit testing.
+
+To allow us to test modules and subworkflows together we put the nf-core DSL2 subworkflows into the `subworkflows` directory of the modules repository is at <https://github.com/nf-core/modules>.
+
+### Custom remote subworkflows
+
+The subworkflows supercommand released in nf-core/tools version 2.7 comes with two flags for specifying a custom remote repository:
+
+- `--git-remote <git remote url>`: Specify the repository from which the subworkflows should be fetched as a git URL. Defaults to the github repository of `nf-core/modules`.
+- `--branch <branch name>`: Specify the branch from which the subworkflows should be fetched. Defaults to the default branch of your repository.
+
+For example, if you want to install the `bam_stats_samtools` subworkflow from the repository `nf-core/modules-test` hosted at `gitlab.com` in the branch `subworkflows`, you can use the following command:
+
+```bash
+nf-core subworkflows --git-remote git@gitlab.com:nf-core/modules-test.git --branch subworkflows install bam_stats_samtools
+```
+
+Note that a custom remote must follow a similar directory structure to that of `nf-core/modules` for the `nf-core subworkflows` commands to work properly.
+
+The directory where subworkflows are installed will be prompted or obtained from `org_path` in the `.nf-core.yml` file if available. If your subworkflows are located at `subworkflows/my-folder/SUBWORKFLOW_NAME` your `.nf-core.yml` file should have:
+
+```yaml
+org_path: my-folder
+```
+
+Please avoid installing the same tools from two different remotes, as this can lead to further errors.
+
+The subworkflows commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will still need to clone repositories that have previously not been used.
+
+### Private remote repositories
+
+You can use the subworkflows command with private remote repositories. Make sure that your local `git` is correctly configured with your private remote
+and then specify the remote the same way you would do with a public remote repository.
+
+### List subworkflows
+
+The `nf-core subworkflows list` command provides the subcommands `remote` and `local` for listing subworkflows installed in a remote repository and in the local pipeline respectively. Both subcommands allow to use a pattern for filtering the subworkflows by keywords eg: `nf-core subworkflows list <subworkflow_name> <keyword>`.
+
+#### List remote subworkflows
+
+To list all subworkflows available on [nf-core/modules](https://github.com/nf-core/modules), you can use
+`nf-core subworkflows list remote`, which will print all available subworkflows to the terminal.
+
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+head: 25
+-->
+
+![`nf-core subworkflows list remote`](docs/images/nf-core-subworkflows-list-remote.svg)
+
+#### List installed subworkflows
+
+To list subworkflows installed in a local pipeline directory you can use `nf-core subworkflows list local`. This will list the subworkflows install in the current working directory by default. If you want to specify another directory, use the `--dir <pipeline_dir>` flag.
+
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
+head: 25
+-->
+
+![`nf-core subworkflows list local`](docs/images/nf-core-subworkflows-list-local.svg)
+
+## Show information about a subworkflow
+
+For quick help about how a subworkflow works, use `nf-core subworkflows info <subworkflow_name>`.
+This shows documentation about the subworkflow on the command line, similar to what's available on the
+[nf-core website](https://nf-co.re/subworkflows).
+
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
+-->
+
+![`nf-core subworkflows info bam_rseqc`](docs/images/nf-core-subworkflows-info.svg)
+
+### Install subworkflows in a pipeline
+
+You can install subworkflows from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core subworkflows install`.
+A subworkflow installed this way will be installed to the `./subworkflows/nf-core` directory.
+
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
+-->
+
+![`nf-core subworkflows install bam_rseqc`](docs/images/nf-core-subworkflows-install.svg)
+
+You can pass the subworkflow name as an optional argument to `nf-core subworkflows install` like above or select it from a list of available subworkflows by only running `nf-core subworkflows install`.
+
+There are four additional flags that you can use when installing a subworkflow:
+
+- `--dir`: Pipeline directory, the default is the current working directory.
+- `--force`: Overwrite a previously installed version of the subworkflow.
+- `--prompt`: Select the subworkflow version using a cli prompt.
+- `--sha <commit_sha>`: Install the subworkflow at a specific commit.
+
+### Update subworkflows in a pipeline
+
+You can update subworkflows installed from a remote repository in your pipeline using `nf-core subworkflows update`.
+
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
+-->
+
+![`nf-core subworkflows update --all --no-preview`](docs/images/nf-core-subworkflows-update.svg)
+
+You can pass the subworkflow name as an optional argument to `nf-core subworkflows update` like above or select it from the list of available subworkflows by only running `nf-core subworkflows update`.
+
+There are six additional flags that you can use with this command:
+
+- `--dir`: Pipeline directory, the default is the current working directory.
+- `--force`: Reinstall subworkflow even if it appears to be up to date
+- `--prompt`: Select the subworkflow version using a cli prompt.
+- `--sha <commit_sha>`: Install the subworkflow at a specific commit from the `nf-core/modules` repository.
+- `--preview/--no-preview`: Show the diff between the installed files and the new version before installing.
+- `--save-diff <filename>`: Save diffs to a file instead of updating in place. The diffs can then be applied with `git apply <filename>`.
+- `--all`: Use this flag to run the command on all subworkflows in the pipeline.
+- `--update-deps`: Use this flag to automatically update all dependencies of a subworkflow.
+
+If you don't want to update certain subworkflows or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `bam_rseqc` subworkflow installed from `nf-core/modules` from being updated by adding the following to the `.nf-core.yml` file:
+
+```yaml
+update:
+  https://github.com/nf-core/modules.git:
+    nf-core:
+      bam_rseqc: False
+```
+
+If you want this subworkflow to be updated only to a specific version (or downgraded), you could instead specifiy the version:
+
+```yaml
+update:
+  https://github.com/nf-core/modules.git:
+    nf-core:
+      bam_rseqc: "36a77f7c6decf2d1fb9f639ae982bc148d6828aa"
+```
+
+This also works at the repository level. For example, if you want to exclude all modules and subworkflows installed from `nf-core/modules` from being updated you could add:
+
+```yaml
+update:
+  https://github.com/nf-core/modules.git:
+    nf-core: False
+```
+
+or if you want all subworkflows in `nf-core/modules` at a specific version:
+
+```yaml
+update:
+  https://github.com/nf-core/modules.git:
+    nf-core: "e937c7950af70930d1f34bb961403d9d2aa81c7"
+```
+
+Note that the subworkflow versions specified in the `.nf-core.yml` file has higher precedence than versions specified with the command line flags, thus aiding you in writing reproducible pipelines.
+
+### Remove a subworkflow from a pipeline
+
+To delete a subworkflow from your pipeline, run `nf-core subworkflows remove`.
+
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
+-->
+
+![`nf-core subworkflows remove bam_rseqc`](docs/images/nf-core-subworkflows-remove.svg)
+
+You can pass the subworkflow name as an optional argument to `nf-core subworkflows remove` like above or select it from the list of available subworkflows by only running `nf-core subworkflows remove`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
+
+### Create a new subworkflow
+
+This command creates a new nf-core subworkflow from the nf-core subworkflow template.
+This ensures that your subworkflow follows the nf-core guidelines.
+The template contains extensive `TODO` messages to walk you through the changes you need to make to the template.
+See the [subworkflow documentation](https://nf-co.re/docs/contributing/subworkflows) for more details around creating a new subworkflow, including rules about nomenclature and a step-by-step guide.
+
+You can create a new subworkflow using `nf-core subworkflows create`.
+
+This command can be used both when writing a subworkflow for the shared [nf-core/modules](https://github.com/nf-core/modules) repository,
+and also when creating local subworkflows for a pipeline.
+
+Which type of repository you are working in is detected by the `repository_type` flag in a `.nf-core.yml` file in the root directory,
+set to either `pipeline` or `modules`.
+The command will automatically look through parent directories for this file to set the root path, so that you can run the command in a subdirectory.
+It will start in the current working directory, or whatever is specified with `--dir <directory>`.
+
+The `nf-core subworkflows create` command will prompt you with the relevant questions in order to create all of the necessary subworkflow files.
+
+<!-- RICH-CODEX
+working_dir: tmp
+before_command: git clone https://github.com/nf-core/modules.git && cd modules
+fake_command: nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force
+-->
+
+![`cd modules && nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force`](docs/images/nf-core-subworkflows-create.svg)
+
+### Create a subworkflow test config file
+
+All subworkflows on [nf-core/modules](https://github.com/nf-core/modules) have a strict requirement of being unit tested using minimal test data.
+To help developers build new subworkflows, the `nf-core subworkflows create-test-yml` command automates the creation of the yaml file required to document the output file `md5sum` and other information generated by the testing.
+After you have written a minimal Nextflow script to test your subworkflow in `/tests/subworkflow/<subworkflow_name>/main.nf`, this command will run the tests for you and create the `/tests/subworkflow/<tool>/<subtool>/test.yml` file.
+
+<!-- RICH-CODEX
+working_dir: tmp/subworkflows
+extra_env:
+  PROFILE: 'conda'
+before_command: >
+  echo "repository_type: modules" >> .nf-core.yml
+-->
+
+![`nf-core subworkflows create-test-yml bam_stats_samtools --no-prompts --force`](docs/images/nf-core-subworkflows-create-test.svg)
+
+### Run the tests for a subworkflow using pytest
+
+To run unit tests of a subworkflow that you have installed or the test created by the command [`nf-core subworkflow create-test-yml`](#create-a-subworkflow-test-config-file), you can use `nf-core subworkflows test` command. This command runs the tests specified in `tests/subworkflows/<subworkflow_name>/test.yml` file using [pytest](https://pytest-workflow.readthedocs.io/en/stable/).
+
+You can specify the subworkflow name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
+
+<!-- RICH-CODEX
+working_dir: tmp/subworkflows
+timeout: 30
+extra_env:
+  PROFILE: 'conda'
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
+-->
+
+![`nf-core subworkflows test bam_rseqc --no-prompts`](docs/images/nf-core-subworkflows-test.svg)
 
 ## Citation
 

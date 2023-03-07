@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import os
 import re
 
@@ -42,7 +40,7 @@ def readme(self):
 
     if "nextflow_badge" not in ignore_configs:
         # Check that there is a readme badge showing the minimum required version of Nextflow
-        # [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.10.3-23aa62.svg)](https://www.nextflow.io/)
+        # [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A522.10.1-23aa62.svg)](https://www.nextflow.io/)
         # and that it has the correct version
         nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/nextflow%20DSL2-!?(?:%E2%89%A5|%3E%3D)([\d\.]+)-23aa62\.svg\)\]\(https://www\.nextflow\.io/\)"
         match = re.search(nf_badge_re, content)
@@ -65,7 +63,7 @@ def readme(self):
             warned.append("README did not have a Nextflow minimum version badge.")
 
     # Check that the minimum version mentioned in the quick start section is consistent
-    # Looking for: "1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=21.10.3`)"
+    # Looking for: "1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=22.10.1`)"
     nf_version_re = r"1\.\s*Install\s*\[`Nextflow`\]\(https://www.nextflow.io/docs/latest/getstarted.html#installation\)\s*\(`>=(\d*\.\d*\.\d*)`\)"
     match = re.search(nf_version_re, content)
     if match:

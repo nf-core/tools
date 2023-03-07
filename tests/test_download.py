@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Tests for the download subcommand of nf-core tools
 """
 
@@ -19,7 +18,6 @@ from .utils import with_temporary_file, with_temporary_folder
 
 
 class DownloadTest(unittest.TestCase):
-
     #
     # Tests for 'get_release_hash'
     #

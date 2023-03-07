@@ -18,17 +18,16 @@ from rich.table import Table
 
 import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components.components_command import ComponentCommand
 from nf_core.utils import plural_s as _s
 from nf_core.utils import rich_force_colors
-
-from .modules_command import ModuleCommand
 
 log = logging.getLogger(__name__)
 
 
-class ModuleVersionBumper(ModuleCommand):
+class ModuleVersionBumper(ComponentCommand):
     def __init__(self, pipeline_dir, remote_url=None, branch=None, no_pull=False):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+        super().__init__("modules", pipeline_dir, remote_url, branch, no_pull)
 
         self.up_to_date = None
         self.updated = None
@@ -59,8 +58,7 @@ class ModuleVersionBumper(ModuleCommand):
         self.check_modules_structure()
 
         # Verify that this is not a pipeline
-        self.dir, repo_type = nf_core.modules.modules_utils.get_repo_type(self.dir)
-        if not repo_type == "modules":
+        if not self.repo_type == "modules":
             raise nf_core.modules.modules_utils.ModuleException(
                 "This command only works on the nf-core/modules repository, not on pipelines!"
             )
@@ -69,7 +67,7 @@ class ModuleVersionBumper(ModuleCommand):
         _, nfcore_modules = nf_core.modules.modules_utils.get_installed_modules(self.dir)
 
         # Load the .nf-core.yml config
-        self.tools_config = nf_core.utils.load_tools_config(self.dir)
+        _, self.tools_config = nf_core.utils.load_tools_config(self.dir)
 
         # Prompt for module or all
         if module is None and not all_modules:
@@ -189,7 +187,6 @@ class ModuleVersionBumper(ModuleCommand):
                 found_match = False
                 newcontent = []
                 for line in content.splitlines():
-
                     # Match the pattern
                     matches_pattern = re.findall(rf"^.*{pattern[0]}.*$", line)
                     if matches_pattern:

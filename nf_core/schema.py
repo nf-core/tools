@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ Code to deal with pipeline JSON Schema """
 
 from __future__ import print_function
@@ -7,21 +6,25 @@ import copy
 import json
 import logging
 import os
+import tempfile
 import webbrowser
 
 import jinja2
 import jsonschema
 import markdown
+import rich.console
 import yaml
 from rich.prompt import Confirm
+from rich.syntax import Syntax
 
 import nf_core.list
 import nf_core.utils
+from nf_core.lint_utils import dump_json_with_prettier, run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
 
-class PipelineSchema(object):
+class PipelineSchema:
     """Class to generate a schema object with
     functions to handle pipeline JSON Schema"""
 
@@ -171,9 +174,7 @@ class PipelineSchema(object):
         num_params += sum(len(d.get("properties", {})) for d in self.schema.get("definitions", {}).values())
         if not suppress_logging:
             log.info(f"Writing schema with {num_params} params: '{self.schema_filename}'")
-        with open(self.schema_filename, "w") as fh:
-            json.dump(self.schema, fh, indent=4)
-            fh.write("\n")
+        dump_json_with_prettier(self.schema_filename, self.schema)
 
     def load_input_params(self, params_path):
         """Load a given a path to a parameters file (JSON/YAML)
@@ -184,7 +185,10 @@ class PipelineSchema(object):
         # First, try to load as JSON
         try:
             with open(params_path, "r") as fh:
-                params = json.load(fh)
+                try:
+                    params = json.load(fh)
+                except json.JSONDecodeError as e:
+                    raise UserWarning(f"Unable to load JSON file '{params_path}' due to error {e}")
                 self.input_params.update(params)
             log.debug(f"Loaded JSON input params: {params_path}")
         except Exception as json_e:
@@ -463,13 +467,21 @@ class PipelineSchema(object):
         if format == "html":
             output = self.markdown_to_html(output)
 
-        # Print to file
-        if output_fn:
+        with tempfile.NamedTemporaryFile(mode="w+") as fh:
+            fh.write(output)
+            run_prettier_on_file(fh.name)
+            fh.seek(0)
+            prettified_docs = fh.read()
+
+        if not output_fn:
+            console = rich.console.Console()
+            console.print("\n", Syntax(prettified_docs, format), "\n")
+        else:
             if os.path.exists(output_fn) and not force:
                 log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")
                 return
-            with open(output_fn, "w") as file:
-                file.write(output)
+            with open(output_fn, "w") as fh:
+                fh.write(prettified_docs)
                 log.info(f"Documentation written to '{output_fn}'")
 
         # Return as a string
@@ -485,46 +497,55 @@ class PipelineSchema(object):
         for definition in self.schema.get("definitions", {}).values():
             out += f"\n## {definition.get('title', {})}\n\n"
             out += f"{definition.get('description', '')}\n\n"
-            out += "".join([f"| {column.title()} " for column in columns])
-            out += "|\n"
-            out += "".join(["|-----------" for columns in columns])
-            out += "|\n"
-            for p_key, param in definition.get("properties", {}).items():
-                for column in columns:
-                    if column == "parameter":
-                        out += f"| `{p_key}` "
-                    elif column == "description":
-                        out += f"| {param.get('description', '')} "
-                        if param.get("help_text", "") != "":
-                            out += f"<details><summary>Help</summary><small>{param['help_text']}</small></details>"
-                    elif column == "type":
-                        out += f"| `{param.get('type', '')}` "
-                    else:
-                        out += f"| {param.get(column, '')} "
-                out += "|\n"
+            required = definition.get("required", [])
+            properties = definition.get("properties", {})
+            param_table = self.markdown_param_table(properties, required, columns)
+            out += param_table
 
         # Top-level ungrouped parameters
         if len(self.schema.get("properties", {})) > 0:
             out += "\n## Other parameters\n\n"
-            out += "".join([f"| {column.title()} " for column in columns])
-            out += "|\n"
-            out += "".join(["|-----------" for columns in columns])
-            out += "|\n"
+            required = self.schema.get("required", [])
+            properties = self.schema.get("properties", {})
+            param_table = self.markdown_param_table(properties, required, columns)
+            out += param_table
 
-            for p_key, param in self.schema.get("properties", {}).items():
-                for column in columns:
-                    if column == "parameter":
-                        out += f"| `{p_key}` "
-                    elif column == "description":
-                        out += f"| {param.get('description', '')} "
-                        if param.get("help_text", "") != "":
-                            out += f"<details><summary>Help</summary><small>{param['help_text']}</small></details>"
-                    elif column == "type":
-                        out += f"| `{param.get('type', '')}` "
-                    else:
-                        out += f"| {param.get(column, '')} "
-                out += "|\n"
+        return out
 
+    def markdown_param_table(self, properties, required, columns):
+        """Creates a markdown table for params from jsonschema properties section
+
+        Args:
+            properties (dict): A jsonschema properties dictionary
+            required (list): A list of the required fields.
+                Should come from the same level of the jsonschema as properties
+            columns (list): A list of columns to write
+
+        Returns:
+            str: A string with the markdown table
+        """
+        out = ""
+        out += "".join([f"| {column.title()} " for column in columns])
+        out += "|\n"
+        out += "".join(["|-----------" for _ in columns])
+        out += "|\n"
+        for p_key, param in properties.items():
+            for column in columns:
+                if column == "parameter":
+                    out += f"| `{p_key}` "
+                elif column == "description":
+                    desc = param.get("description", "").replace("\n", "<br>")
+                    out += f"| {desc} "
+                    if param.get("help_text", "") != "":
+                        help_txt = param["help_text"].replace("\n", "<br>")
+                        out += f"<details><summary>Help</summary><small>{help_txt}</small></details>"
+                elif column == "type":
+                    out += f"| `{param.get('type', '')}` "
+                elif column == "required":
+                    out += f"| {p_key in required or ''} "
+                else:
+                    out += f"| {param.get(column, '')} "
+            out += "|\n"
         return out
 
     def markdown_to_html(self, markdown_str):
