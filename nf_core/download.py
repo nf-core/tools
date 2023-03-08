@@ -95,7 +95,12 @@ class DownloadWorkflow:
         parallel_downloads=4,
     ):
         self.pipeline = pipeline
-        self.revision = [].extend(revision) if revision else []
+        if isinstance(revision, str):
+            self.revision = [revision]
+        elif isinstance(revision, tuple):
+            self.revision = [*revision]
+        else:
+            self.revision = []
         self.outdir = outdir
         self.output_filename = None
         self.compress_type = compress_type
