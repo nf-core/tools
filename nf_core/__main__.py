@@ -209,7 +209,12 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 # nf-core download
 @nf_core_cli.command()
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
-@click.option("-r", "--revision", type=str, help="Pipeline release")
+@click.option(
+    "-r",
+    "--revision",
+    multiple=True,
+    help="Pipeline release to download. Multiple invocations are possible.",
+)
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
     "-x", "--compress", type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]), help="Archive compression type"
