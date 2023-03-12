@@ -1,6 +1,5 @@
 click
 filetype
-galaxy-tool-util
 GitPython
 jinja2
 jsonschema>=3.0
