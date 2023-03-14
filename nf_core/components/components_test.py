@@ -180,7 +180,10 @@ class ComponentsTest(ComponentCommand):
         console.rule(self.component_name, style="black")
 
         # Set pytest arguments
-        command_args = ["--tag", f"{self.component_name}", "--symlink", "--keep-workflow-wd", "--git-aware"]
+        tag = self.component_name
+        if self.component_type == "subworkflows":
+            tag = "subworkflows/" + tag
+        command_args = ["--tag", f"{tag}", "--symlink", "--keep-workflow-wd", "--git-aware"]
         command_args += self.pytest_args
 
         # Run pytest

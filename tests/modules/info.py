@@ -38,7 +38,6 @@ def test_modules_info_local(self):
     """Test getting info about a locally installed module"""
     self.mods_install.install("trimgalore")
     mods_info = nf_core.modules.ModuleInfo(self.pipeline_dir, "trimgalore")
-    mods_info.local = True
     mods_info_output = mods_info.get_component_info()
     console = Console(record=True)
     console.print(mods_info_output)
@@ -47,6 +46,7 @@ def test_modules_info_local(self):
     assert "Module: trimgalore" in output
     assert "Inputs" in output
     assert "Outputs" in output
+    assert "Location" in output
 
 
 def test_modules_info_in_modules_repo(self):

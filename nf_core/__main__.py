@@ -678,7 +678,16 @@ def remove(ctx, dir, tool):
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
 @click.option("-c", "--conda-name", type=str, default=None, help="Name of the conda package to use")
 @click.option("-p", "--conda-package-version", type=str, default=None, help="Version of conda package to use")
-def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_name, conda_package_version):
+@click.option(
+    "-i",
+    "--empty-template",
+    is_flag=True,
+    default=False,
+    help="Create a module from the template without TODOs or examples",
+)
+def create_module(
+    ctx, tool, dir, author, label, meta, no_meta, force, conda_name, conda_package_version, empty_template
+):
     """
     Create a new DSL2 module from the nf-core template.
 
@@ -700,7 +709,7 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
     # Run function
     try:
         module_create = nf_core.modules.ModuleCreate(
-            dir, tool, author, label, has_meta, force, conda_name, conda_package_version
+            dir, tool, author, label, has_meta, force, conda_name, conda_package_version, empty_template
         )
         module_create.create()
     except UserWarning as e:
@@ -1446,8 +1455,7 @@ def docs(schema_path, output, format, force, columns):
     # Assume we're in a pipeline dir root if schema path not set
     schema_obj.get_schema_path(schema_path)
     schema_obj.load_schema()
-    if not output:
-        stdout.print(schema_obj.print_documentation(output, format, force, columns.split(",")))
+    schema_obj.print_documentation(output, format, force, columns.split(","))
 
 
 # nf-core bump-version
