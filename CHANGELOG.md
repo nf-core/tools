@@ -8,6 +8,7 @@
 - Add documentation to `usage.md` on how to use `params.yml` files, based on nf-core/ampliseq text ([#2173](https://github.com/nf-core/tools/pull/2173/)) [Contributed by @jfy133, @d4straub]
 - Make jobs automatically resubmit for a much wider range of exit codes (now `104` and `130..145`) ([#2170](https://github.com/nf-core/tools/pull/2170))
 - Remove problematic sniffer code in samplesheet_check.py that could give false positive 'missing header' errors ([https://github.com/nf-core/tools/pull/2194]) [Contributed by @Midnighter, @jfy133]
+- Consistent syntax for branch checks in PRs ([#2202](https://github.com/nf-core/tools/issues/2202))
 
 ### Linting
 
