@@ -7,6 +7,9 @@
 - Turn on automatic clean up of intermediate files in `work/` on successful pipeline completion in full-test config ([#2163](https://github.com/nf-core/tools/pull/2163)) [Contributed by @jfy133]
 - Add documentation to `usage.md` on how to use `params.yml` files, based on nf-core/ampliseq text ([#2173](https://github.com/nf-core/tools/pull/2173/)) [Contributed by @jfy133, @d4straub]
 - Make jobs automatically resubmit for a much wider range of exit codes (now `104` and `130..145`) ([#2170](https://github.com/nf-core/tools/pull/2170))
+- Remove problematic sniffer code in samplesheet_check.py that could give false positive 'missing header' errors ([https://github.com/nf-core/tools/pull/2194]) [Contributed by @Midnighter, @jfy133]
+- Consistent syntax for branch checks in PRs ([#2202](https://github.com/nf-core/tools/issues/2202))
+- Fixed minor Jinja2 templating bug that caused the PR template to miss a newline
 
 ### Linting
 
@@ -73,7 +76,8 @@ Another big release with lots of new features and bug fixes. Thanks to all contr
 
 - Fix lint warnings for `samplesheet_check.nf` module ([#1875](https://github.com/nf-core/tools/pull/1875)).
 - Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
-- Remove `CITATION.cff` file from pipeline template, to avoid that pipeline Zenodo entries reference the nf-core publication instead of the pipeline ([#2059](https://github.com/nf-core/tools/pull/2059)).
+- Remove `CITATION.cff` file from pipeline template, to avoid that pipeline Zenodo entries reference the nf-core publication instead of the pipeline ([#2059](https://github.com/nf-core/tools/pull/2059)).- Add initial CHM13 support ([1988](https://github.com/nf-core/tools/issues/1988))
+- Add initial CHM13 support ([1988](https://github.com/nf-core/tools/issues/1988))
 
 ### Linting
 
