@@ -261,11 +261,23 @@ def check_process_section(self, lines, fix_version, progress_bar):
         if _container_type(l) == "bioconda":
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
         if _container_type(l) == "bioconda" or _container_type(l) == "conda":
-            match = re.search(r"params\.enable_conda",l)
+            match = re.search(r"params\.enable_conda", l)
             if match is None:
-                self.passed.append(("deprecated_enable_conda", f"Found deprecated parameter 'params.enable_conda' in the conda definition", self.main_nf))
+                self.passed.append(
+                    (
+                        "deprecated_enable_conda",
+                        f"Found deprecated parameter 'params.enable_conda' in the conda definition",
+                        self.main_nf,
+                    )
+                )
             else:
-                self.failed.append(("deprecated_enable_conda", f"Deprecated parameter 'params.enable_conda' correctly not found in the conda definition", self.main_nf))
+                self.failed.append(
+                    (
+                        "deprecated_enable_conda",
+                        f"Deprecated parameter 'params.enable_conda' correctly not found in the conda definition",
+                        self.main_nf,
+                    )
+                )
         if _container_type(l) == "singularity":
             # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
             # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
