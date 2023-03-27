@@ -38,3 +38,22 @@ def test_subworkflows_test_file_dict(self, test_file_dir):
     test_files = meta_builder.create_test_file_dict(test_file_dir)
     assert len(test_files) == 1
     assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
+
+
+@with_temporary_folder
+def test_subworkflows_create_test_yml_get_md5(self, test_file_dir):
+    """Get md5 sums from a dummy output"""
+    meta_builder = nf_core.subworkflows.SubworkflowTestYmlBuilder(
+        subworkflow="test/tool",
+        directory=self.pipeline_dir,
+        test_yml_output_path="./",
+        no_prompts=True,
+    )
+    with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
+        fh.write("this line is just for testing")
+    test_files = meta_builder.get_md5_sums(
+        command="dummy",
+        results_dir=test_file_dir,
+        results_dir_repeat=test_file_dir,
+    )
+    assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
