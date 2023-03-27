@@ -93,6 +93,9 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_create_nfcore_modules,
         test_subworkflows_create_succeed,
     )
+    from .subworkflows.create_test_yml import (
+        test_subworkflows_custom_yml_dumper,
+    )
     from .subworkflows.info import (
         test_subworkflows_info_in_modules_repo,
         test_subworkflows_info_local,
