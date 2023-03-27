@@ -30,10 +30,9 @@ def create_modules_repo_dummy(tmp_dir):
     with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
         fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
 
-    # FIXME This mock isn't used
-    with responses.RequestsMock() as rsps:
-        subworkflow_create = nf_core.subworkflows.SubworkflowCreate(root_dir, "test_subworkflow", "@author", True)
-        subworkflow_create.create()
+    # TODO Add a mock here
+    subworkflow_create = nf_core.subworkflows.SubworkflowCreate(root_dir, "test_subworkflow", "@author", True)
+    subworkflow_create.create()
 
     return root_dir
 
