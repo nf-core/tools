@@ -6,6 +6,7 @@ import shutil
 import tempfile
 import unittest
 
+import requests_cache
 import responses
 
 import nf_core.create
@@ -18,6 +19,8 @@ from .utils import (
     GITLAB_URL,
     OLD_TRIMGALORE_BRANCH,
     OLD_TRIMGALORE_SHA,
+    mock_anaconda_api_calls,
+    mock_biocontainers_api_calls,
 )
 
 
@@ -33,10 +36,14 @@ def create_modules_repo_dummy(tmp_dir):
     with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
         fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
 
-    # FIXME Should use mock?
-    # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
-    module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
-    module_create.create()
+    # mock biocontainers and anaconda response
+    with responses.RequestsMock() as rsps:
+        mock_anaconda_api_calls(rsps, "bpipe", "0.9.11--hdfd78af_0")
+        mock_biocontainers_api_calls(rsps, "bpipe", "0.9.11--hdfd78af_0")
+        # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
+        module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
+        with requests_cache.disabled():
+            module_create.create()
 
     return root_dir
 
