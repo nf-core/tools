@@ -26,7 +26,7 @@ def system_exit(self):
         try:
             with file.open() as fh:
                 for i, l in enumerate(fh.readlines(), start=1):
-                    if "System.exit" in l:
+                    if "System.exit" in l and not "System.exit(0)" in l:
                         warned.append(f"`System.exit` in {file.name}: _{l.strip()}_  [line {i}]")
         except FileNotFoundError:
             log.debug(f"Could not open file {file.name} in system_exit lint test")
