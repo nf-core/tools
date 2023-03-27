@@ -5,6 +5,13 @@ log = logging.getLogger(__name__)
 
 
 def system_exit(self):
+    """Check for System.exit calls in groovy/nextflow code
+
+    Calls to System.exit(1) should be replaced by throwing errors
+
+    This lint test looks for all calls to `System.exit`
+    in any file with the `.nf` or `.groovy` extension
+    """
     passed = []
     warned = []
 
@@ -16,10 +23,14 @@ def system_exit(self):
     to_check = nf_files + groovy_files
 
     for file in to_check:
-        with file.open() as fh:
-            for l in fh.readlines():
-                if "System.exit" in l:
-                    warned.append(f"`System.exit` in {file.name}: _{l.strip()}_")
+        try:
+            with file.open() as fh:
+                for i, l in enumerate(fh.readlines(), start=1):
+                    if "System.exit" in l:
+                        warned.append(f"`System.exit` in {file.name}: _{l.strip()}_  [line {i}]")
+        except FileNotFoundError:
+            log.debug(f"Could not open file {file.name} in system_exit lint test")
+
     if len(warned) == 0:
         passed.append("No `System.exit` calls found")
 
