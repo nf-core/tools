@@ -3,6 +3,7 @@
 import os
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import git
 
@@ -80,3 +81,27 @@ class NfcoreCreateTest(unittest.TestCase):
         assert os.path.exists(pipeline_template)
         with open(pipeline_template) as fh:
             assert fh.read() == PIPELINE_TEMPLATE_YML.read_text()
+
+    @mock.patch.object(nf_core.create.PipelineCreate, "customize_template")
+    @mock.patch.object(nf_core.create.questionary, "confirm")
+    @with_temporary_folder
+    def test_pipeline_creation_initiation_customize_template(self, mock_questionary, mock_customize, tmp_path):
+        mock_questionary.unsafe_ask.return_value = True
+        mock_customize.return_value = {"prefix": "testprefix"}
+        pipeline = nf_core.create.PipelineCreate(
+            name=self.pipeline_name,
+            description=self.pipeline_description,
+            author=self.pipeline_author,
+            version=self.pipeline_version,
+            no_git=False,
+            force=True,
+            outdir=tmp_path,
+            default_branch=self.default_branch,
+        )
+        pipeline.init_pipeline()
+        assert os.path.isdir(os.path.join(pipeline.outdir, ".git"))
+        assert f" {self.default_branch}\n" in git.Repo.init(pipeline.outdir).git.branch()
+
+        # Check pipeline yml has been dumped and matches input
+        pipeline_template = os.path.join(pipeline.outdir, "pipeline_template.yml")
+        assert os.path.exists(pipeline_template)
