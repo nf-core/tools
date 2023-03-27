@@ -105,3 +105,5 @@ class NfcoreCreateTest(unittest.TestCase):
         # Check pipeline yml has been dumped and matches input
         pipeline_template = os.path.join(pipeline.outdir, "pipeline_template.yml")
         assert os.path.exists(pipeline_template)
+        with open(pipeline_template) as fh:
+            assert fh.read() == PIPELINE_TEMPLATE_YML.read_text()
