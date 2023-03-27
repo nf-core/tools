@@ -95,6 +95,7 @@ class TestSubworkflows(unittest.TestCase):
     )
     from .subworkflows.create_test_yml import (
         test_subworkflows_custom_yml_dumper,
+        test_subworkflows_test_file_dict,
     )
     from .subworkflows.info import (
         test_subworkflows_info_in_modules_repo,

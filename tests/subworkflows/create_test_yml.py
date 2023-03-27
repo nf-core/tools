@@ -22,3 +22,19 @@ def test_subworkflows_custom_yml_dumper(self, out_dir):
     meta_builder.tests = [{"testname": "myname"}]
     meta_builder.print_test_yml()
     assert os.path.isfile(yml_output_path)
+
+
+@with_temporary_folder
+def test_subworkflows_test_file_dict(self, test_file_dir):
+    """Create dict of test files and create md5 sums"""
+    meta_builder = nf_core.subworkflows.SubworkflowTestYmlBuilder(
+        subworkflow="test/tool",
+        directory=self.pipeline_dir,
+        test_yml_output_path="./",
+        no_prompts=True,
+    )
+    with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
+        fh.write("this line is just for testing")
+    test_files = meta_builder.create_test_file_dict(test_file_dir)
+    assert len(test_files) == 1
+    assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
