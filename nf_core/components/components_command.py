@@ -3,7 +3,7 @@ import mmap
 import os
 import shutil
 from pathlib import Path
-from typing import List, Tuple, Dict, Union
+from typing import Dict, List, Tuple, Union
 
 import yaml
 
