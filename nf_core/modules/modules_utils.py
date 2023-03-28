@@ -2,6 +2,7 @@ import logging
 import os
 import urllib
 from pathlib import Path
+from typing import List, Optional, Tuple
 
 from .nfcore_module import NFCoreModule
 
@@ -14,12 +15,13 @@ class ModuleException(Exception):
     pass
 
 
-def repo_full_name_from_remote(remote_url):
+def repo_full_name_from_remote(remote_url: str) -> str:
     """
     Extracts the path from the remote URL
     See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
     """
     # Check whether we have a https or ssh url
+    path: str
     if remote_url.startswith("https"):
         path = urllib.parse.urlparse(remote_url)
         path = path.path
@@ -38,7 +40,7 @@ def repo_full_name_from_remote(remote_url):
     return path
 
 
-def get_installed_modules(dir, repo_type="modules"):
+def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], List[str]]:
     """
     Make a list of all modules installed in this repository
 
@@ -52,9 +54,9 @@ def get_installed_modules(dir, repo_type="modules"):
     returns (local_modules, nfcore_modules)
     """
     # initialize lists
-    local_modules = []
-    nfcore_modules = []
-    local_modules_dir = None
+    local_modules: List[str] = []
+    nfcore_modules: List[str] = []
+    local_modules_dir: Optional[str] = None
     nfcore_modules_dir = os.path.join(dir, "modules", "nf-core")
 
     # Get local modules
