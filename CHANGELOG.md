@@ -31,7 +31,7 @@
 
 ### Bug fixes, maintenance and tests
 
--  Add tests for `nf-core subworkflows create-test-yml` ([#2219](https://github.com/nf-core/tools/pull/2219))
+- Add tests for `nf-core subworkflows create-test-yml` ([#2219](https://github.com/nf-core/tools/pull/2219))
 
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 
