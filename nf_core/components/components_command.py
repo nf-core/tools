@@ -3,7 +3,7 @@ import mmap
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Optional
 
 import yaml
 
@@ -21,18 +21,24 @@ class ComponentCommand:
     """
 
     def __init__(
-        self, component_type, dir: str, remote_url=None, branch=None, no_pull=False, hide_progress=False
+        self,
+        component_type: str,
+        dir: str,
+        remote_url: str = None,
+        branch: str = None,
+        no_pull: bool = False,
+        hide_progress: bool = False,
     ) -> None:
         """
         Initialise the ComponentClass object
         """
         self.component_type = component_type
         self.dir = dir
-        self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
+        self.modules_repo: ModulesRepo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
         self._configure_repo_and_paths()
 
-    def _configure_repo_and_paths(self, nf_dir_req: bool = True) -> None:
+    def _configure_repo_and_paths(self, nf_dir_req: Optional[bool] = True) -> None:
         """
         Determine the repo type and set some default paths.
         If this is a modules repo, determine the org_path too.
@@ -41,6 +47,7 @@ class ComponentCommand:
             nf_dir_req (bool, optional): Whether this command requires being run in the nf-core modules repo or a nf-core pipeline repository. Defaults to True.
         """
         self.dir: Union[str, Path]
+        self.repo_type: Optional[str]
         try:
             if self.dir:
                 self.dir, self.repo_type, self.org = get_repo_info(self.dir, use_prompt=nf_dir_req)
@@ -61,7 +68,7 @@ class ComponentCommand:
         """
         Get the local modules/subworkflows in a pipeline
         """
-        local_component_dir = Path(self.dir, self.component_type, "local")
+        local_component_dir: Path = Path(self.dir, self.component_type, "local")
         return [
             str(path.relative_to(local_component_dir)) for path in local_component_dir.iterdir() if path.suffix == ".nf"
         ]
@@ -70,6 +77,7 @@ class ComponentCommand:
         """
         Get the modules/subworkflows repository available in a clone of nf-core/modules
         """
+        component_base_path: Path
         if self.component_type == "modules":
             component_base_path = Path(self.dir, self.default_modules_path)
         elif self.component_type == "subworkflows":
@@ -87,8 +95,8 @@ class ComponentCommand:
         if self.dir is None or not os.path.exists(self.dir):
             log.error(f"Could not find directory: {self.dir}")
             return False
-        main_nf: str = os.path.join(self.dir, "main.nf")
-        nf_config: str = os.path.join(self.dir, "nextflow.config")
+        main_nf = os.path.join(self.dir, "main.nf")
+        nf_config = os.path.join(self.dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
             if Path(self.dir).resolve().parts[-1].startswith("nf-core"):
                 raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.dir}'")
