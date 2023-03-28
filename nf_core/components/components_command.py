@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 
+import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
 
@@ -162,24 +163,13 @@ class ComponentCommand:
     def load_lint_config(self):
         """Parse a pipeline lint config file.
 
-        Look for a file called either `.nf-core-lint.yml` or
-        `.nf-core-lint.yaml` in the pipeline root directory and parse it.
-        (`.yml` takes precedence).
+        Load the '.nf-core.yml'  config file and extract
+        the lint config from it
 
         Add parsed config to the `self.lint_config` class attribute.
         """
-        config_fn = os.path.join(self.dir, ".nf-core-lint.yml")
-
-        # Pick up the file if it's .yaml instead of .yml
-        if not os.path.isfile(config_fn):
-            config_fn = os.path.join(self.dir, ".nf-core-lint.yaml")
-
-        # Load the YAML
-        try:
-            with open(config_fn, "r") as fh:
-                self.lint_config = yaml.safe_load(fh)
-        except FileNotFoundError:
-            log.debug(f"No lint config file found: {config_fn}")
+        _, tools_config = nf_core.utils.load_tools_config(self.dir)
+        self.lint_config = tools_config.get("lint", {})
 
     def check_modules_structure(self):
         """
