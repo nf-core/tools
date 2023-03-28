@@ -265,7 +265,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.passed.append(
                     (
                         "deprecated_enable_conda",
-                        f"Found deprecated parameter 'params.enable_conda' in the conda definition",
+                        f"Deprecated parameter 'params.enable_conda' correctly not found in the conda definition",
                         self.main_nf,
                     )
                 )
@@ -273,7 +273,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.failed.append(
                     (
                         "deprecated_enable_conda",
-                        f"Deprecated parameter 'params.enable_conda' correctly not found in the conda definition",
+                        f"Found deprecated parameter 'params.enable_conda' in the conda definition",
                         self.main_nf,
                     )
                 )
