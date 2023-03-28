@@ -18,7 +18,7 @@ class ComponentList(ComponentCommand):
         self.remote = remote
 
     def list_components(self, keywords: Optional[List[str]] = None, print_json=False) -> rich.table.Table:
-        keywords = keywords or []  # TODO double check if keywords is a list of strings
+        keywords = keywords or []
         """
         Get available modules/subworkflows names from GitHub tree for repo
         and print as list to stdout
@@ -27,7 +27,7 @@ class ComponentList(ComponentCommand):
         # self.check_component_structure(self.component_type)
 
         # Initialise rich table
-        table: rich.table.Table = rich.table.Table()  # TODO type the table
+        table: rich.table.Table = rich.table.Table() 
         table.add_column(f"{self.component_type[:-1].capitalize()} Name")
         components: List[str] = []
 
