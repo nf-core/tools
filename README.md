@@ -608,7 +608,18 @@ If you want to add a parameter to the schema, you first have to add the paramete
 
 The graphical interface is oganzised in groups and within the groups the single parameters are stored. For a better overview you can collapse all groups with the `Collapse groups` button, then your new parameters will be the only remaining one at the bottom of the page. Now you can either create a new group with the `Add group` button or drag and drop the paramters in an existing group. Therefor the group has to be expanded. The group title will be displayed, if you run your pipeline with the `--help` flag and its description apears on the parameter page of your pipeline.
 
-Now you can start to change the parameter itself. The description is a short explanation about the parameter, that apears if you run your pipeline with the `--help` flag. By clicking on the dictionary icon you can add a longer explanation for the parameter page of your pipeline. If you want to specify some conditions for your parameter, like the file extension, you can use the nut icon to open the settings. This menu depends on the `type` you assigned to your parameter. For intergers you can define a min and max value, and for strings the file extension can be specified.
+Now you can start to change the parameter itself. The `ID` of a new parameter should be defined in small lettersm without whitespaces. The description is a short free text explanation about the parameter, that apears if you run your pipeline with the `--help` flag. By clicking on the dictionary icon you can add a longer explanation for the parameter page of your pipeline. Usually, they contain a small paragraph about the parameter settings or a used datasource, like databases or references. If you want to specify some conditions for your parameter, like the file extension, you can use the nut icon to open the settings. This menu depends on the `type` you assigned to your parameter. For intergers you can define a min and max value, and for strings the file extension can be specified.
+
+The `type` field is one of the most important points in your pipeline schema, since it define the datatype of your input and how it will be interpreted. This allows extensive testing before even starting the pipeline. 
+
+The basic datatypes for a pipeline schema are:
+
+- `string`
+- `number`
+- `integer`
+- `boolean`
+
+For the `string` type you have three different options in the settings (nut icon). First, `enumerated values`, which allow you to specify a list of specific input values. The list has to be sepearated with a pipe. The `pattern` and `format` setting  can depend on each other. The `format` has to be a directory path, a file path or a path in general. Dependent on  the `format`, it could be importent to specify the `pattern` setting. Especially for `file paths`, to specify the file extension can save you a lot of effort. For the `number` and `integer` type you have the same setting options. Similar to string you have `enumerated values` and additionally you can specify a  `min` and `max` value. For the `boolean` type you have no further settings and usually the default value is `false`, which allows you to switch it to `true` by adding the flag to the command. This parameter type is often used to skip specific sections of a pipeline.
 
 After you filled your schema, click on the `Finished` button in the top rigth corner, this will automatically update your `nextflow_schema.json`. If this is not working you can copy the schema from the graphical interface and paste it in your `nextflow_schema.json` file.
 
