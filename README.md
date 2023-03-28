@@ -344,6 +344,8 @@ You can run the pipeline by simply providing the directory path for the `workflo
 nextflow run /path/to/download/nf-core-rnaseq-dev/workflow/ --input mydata.csv --outdir results  # usual parameters here
 ```
 
+> Note that if you downloaded singularity images, you will need to use `-profile singularity` or have it enabled in your config file.
+
 ### Downloaded nf-core configs
 
 The pipeline files are automatically updated (`params.custom_config_base` is set to `../configs`), so that the local copy of institutional configs are available when running the pipeline.
@@ -1041,6 +1043,8 @@ To list subworkflows installed in a local pipeline directory you can use `nf-cor
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 head: 25
 -->
 
@@ -1054,6 +1058,8 @@ This shows documentation about the subworkflow on the command line, similar to w
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows info bam_rseqc`](docs/images/nf-core-subworkflows-info.svg)
@@ -1065,6 +1071,8 @@ A subworkflow installed this way will be installed to the `./subworkflows/nf-cor
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows install bam_rseqc`](docs/images/nf-core-subworkflows-install.svg)
@@ -1084,6 +1092,8 @@ You can update subworkflows installed from a remote repository in your pipeline 
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows update --all --no-preview`](docs/images/nf-core-subworkflows-update.svg)
@@ -1143,6 +1153,8 @@ To delete a subworkflow from your pipeline, run `nf-core subworkflows remove`.
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows remove bam_rseqc`](docs/images/nf-core-subworkflows-remove.svg)
@@ -1171,10 +1183,10 @@ The `nf-core subworkflows create` command will prompt you with the relevant ques
 <!-- RICH-CODEX
 working_dir: tmp
 before_command: git clone https://github.com/nf-core/modules.git && cd modules
-fake_command: nf-core subworkflows create bam_stats_samtools --author @nf-core-bot  --label process_low --meta --force
+fake_command: nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force
 -->
 
-![`cd modules && nf-core subworkflows create bam_stats_samtools --author @nf-core-bot  --label process_low --meta --force`](docs/images/nf-core-subworkflows-create.svg)
+![`cd modules && nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force`](docs/images/nf-core-subworkflows-create.svg)
 
 ### Create a subworkflow test config file
 
@@ -1186,6 +1198,8 @@ After you have written a minimal Nextflow script to test your subworkflow in `/t
 working_dir: tmp/subworkflows
 extra_env:
   PROFILE: 'conda'
+before_command: >
+  echo "repository_type: modules" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows create-test-yml bam_stats_samtools --no-prompts --force`](docs/images/nf-core-subworkflows-create-test.svg)
@@ -1201,6 +1215,8 @@ working_dir: tmp/subworkflows
 timeout: 30
 extra_env:
   PROFILE: 'conda'
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows test bam_rseqc --no-prompts`](docs/images/nf-core-subworkflows-test.svg)

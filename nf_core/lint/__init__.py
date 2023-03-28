@@ -434,7 +434,6 @@ class PipelineLint(nf_core.utils.Pipeline):
             )
 
     def _print_summary(self):
-
         # Summary table
         summary_colour = "red" if len(self.failed) > 0 else "green"
         table = Table(box=rich.box.ROUNDED, style=summary_colour)
