@@ -3,6 +3,7 @@ import mmap
 import os
 import shutil
 from pathlib import Path
+from typing import List, Tuple, Dict, Union
 
 import yaml
 
@@ -19,7 +20,9 @@ class ComponentCommand:
     Base class for the 'nf-core modules' and 'nf-core subworkflows' commands
     """
 
-    def __init__(self, component_type, dir, remote_url=None, branch=None, no_pull=False, hide_progress=False):
+    def __init__(
+        self, component_type, dir: str, remote_url=None, branch=None, no_pull=False, hide_progress=False
+    ) -> None:
         """
         Initialise the ComponentClass object
         """
@@ -29,7 +32,7 @@ class ComponentCommand:
         self.hide_progress = hide_progress
         self._configure_repo_and_paths()
 
-    def _configure_repo_and_paths(self, nf_dir_req=True):
+    def _configure_repo_and_paths(self, nf_dir_req: bool = True) -> None:
         """
         Determine the repo type and set some default paths.
         If this is a modules repo, determine the org_path too.
@@ -37,6 +40,7 @@ class ComponentCommand:
         Args:
             nf_dir_req (bool, optional): Whether this command requires being run in the nf-core modules repo or a nf-core pipeline repository. Defaults to True.
         """
+        self.dir: Union[str, Path]
         try:
             if self.dir:
                 self.dir, self.repo_type, self.org = get_repo_info(self.dir, use_prompt=nf_dir_req)
@@ -48,12 +52,12 @@ class ComponentCommand:
                 raise
             self.repo_type = None
             self.org = ""
-        self.default_modules_path = Path("modules", self.org)
-        self.default_tests_path = Path("tests", "modules", self.org)
-        self.default_subworkflows_path = Path("subworkflows", self.org)
-        self.default_subworkflows_tests_path = Path("tests", "subworkflows", self.org)
+        self.default_modules_path: Path = Path("modules", self.org)
+        self.default_tests_path: Path = Path("tests", "modules", self.org)
+        self.default_subworkflows_path: Path = Path("subworkflows", self.org)
+        self.default_subworkflows_tests_path: Path = Path("tests", "subworkflows", self.org)
 
-    def get_local_components(self):
+    def get_local_components(self) -> List[str]:
         """
         Get the local modules/subworkflows in a pipeline
         """
@@ -62,7 +66,7 @@ class ComponentCommand:
             str(path.relative_to(local_component_dir)) for path in local_component_dir.iterdir() if path.suffix == ".nf"
         ]
 
-    def get_components_clone_modules(self):
+    def get_components_clone_modules(self) -> List[str]:
         """
         Get the modules/subworkflows repository available in a clone of nf-core/modules
         """
@@ -76,29 +80,29 @@ class ComponentCommand:
             if "main.nf" in files
         ]
 
-    def has_valid_directory(self):
+    def has_valid_directory(self) -> bool:
         """Check that we were given a pipeline or clone of nf-core/modules"""
         if self.repo_type == "modules":
             return True
         if self.dir is None or not os.path.exists(self.dir):
             log.error(f"Could not find directory: {self.dir}")
             return False
-        main_nf = os.path.join(self.dir, "main.nf")
-        nf_config = os.path.join(self.dir, "nextflow.config")
+        main_nf: str = os.path.join(self.dir, "main.nf")
+        nf_config: str = os.path.join(self.dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
             if Path(self.dir).resolve().parts[-1].startswith("nf-core"):
                 raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.dir}'")
             log.warning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.dir}'")
         return True
 
-    def has_modules_file(self):
+    def has_modules_file(self) -> None:
         """Checks whether a module.json file has been created and creates one if it is missing"""
         modules_json_path = os.path.join(self.dir, "modules.json")
         if not os.path.exists(modules_json_path):
             log.info("Creating missing 'module.json' file.")
             ModulesJson(self.dir).create()
 
-    def clear_component_dir(self, component_name, component_dir):
+    def clear_component_dir(self, component_name: str, component_dir: str) -> bool:
         """
         Removes all files in the module/subworkflow directory
 
@@ -126,7 +130,7 @@ class ComponentCommand:
             log.error(f"Could not remove {self.component_type[:-1]} {component_name}: {e}")
             return False
 
-    def components_from_repo(self, install_dir):
+    def components_from_repo(self, install_dir: str) -> List[str]:
         """
         Gets the modules/subworkflows installed from a certain repository
 
@@ -136,7 +140,7 @@ class ComponentCommand:
         Returns:
             [str]: The names of the modules/subworkflows
         """
-        repo_dir = Path(self.dir, self.component_type, install_dir)
+        repo_dir: Path = Path(self.dir, self.component_type, install_dir)
         if not repo_dir.exists():
             raise LookupError(f"Nothing installed from {install_dir} in pipeline")
 
@@ -144,7 +148,9 @@ class ComponentCommand:
             str(Path(dir_path).relative_to(repo_dir)) for dir_path, _, files in os.walk(repo_dir) if "main.nf" in files
         ]
 
-    def install_component_files(self, component_name, component_version, modules_repo, install_dir):
+    def install_component_files(
+        self, component_name: str, component_version: str, modules_repo: ModulesRepo, install_dir: str
+    ) -> bool:
         """
         Installs a module/subworkflow into the given directory
 
@@ -159,7 +165,7 @@ class ComponentCommand:
         """
         return modules_repo.install_component(component_name, install_dir, component_version, self.component_type)
 
-    def load_lint_config(self):
+    def load_lint_config(self) -> None:
         """Parse a pipeline lint config file.
 
         Look for a file called either `.nf-core-lint.yml` or
@@ -181,7 +187,7 @@ class ComponentCommand:
         except FileNotFoundError:
             log.debug(f"No lint config file found: {config_fn}")
 
-    def check_modules_structure(self):
+    def check_modules_structure(self) -> None:
         """
         Check that the structure of the modules directory in a pipeline is the correct one:
             modules/nf-core/TOOL/SUBTOOL
@@ -190,11 +196,11 @@ class ComponentCommand:
             modules/nf-core/modules/TOOL/SUBTOOL
         """
         if self.repo_type == "pipeline":
-            wrong_location_modules = []
+            wrong_location_modules: List[Path] = []
             for directory, _, files in os.walk(Path(self.dir, "modules")):
                 if "main.nf" in files:
-                    module_path = Path(directory).relative_to(Path(self.dir, "modules"))
-                    parts = module_path.parts
+                    module_path: Path = Path(directory).relative_to(Path(self.dir, "modules"))
+                    parts: Tuple[str, ...] = module_path.parts
                     # Check that there are modules installed directly under the 'modules' directory
                     if parts[1] == "modules":
                         wrong_location_modules.append(module_path)
@@ -208,17 +214,17 @@ class ComponentCommand:
                 )
                 # Move wrong modules to the right directory
                 for module in wrong_location_modules:
-                    modules_dir = Path("modules").resolve()
-                    correct_dir = Path(modules_dir, self.modules_repo.repo_path, Path(*module.parts[2:]))
-                    wrong_dir = Path(modules_dir, module)
+                    modules_dir: Path = Path("modules").resolve()
+                    correct_dir: Path = Path(modules_dir, self.modules_repo.repo_path, Path(*module.parts[2:]))
+                    wrong_dir: Path = Path(modules_dir, module)
                     shutil.move(wrong_dir, correct_dir)
                     log.info(f"Moved {wrong_dir} to {correct_dir}.")
                 shutil.rmtree(Path(self.dir, "modules", self.modules_repo.repo_path, "modules"))
                 # Regenerate modules.json file
-                modules_json = ModulesJson(self.dir)
+                modules_json: ModulesJson = ModulesJson(self.dir)
                 modules_json.check_up_to_date()
 
-    def check_patch_paths(self, patch_path, module_name):
+    def check_patch_paths(self, patch_path: Path, module_name: str) -> None:
         """
         Check that paths in patch files are updated to the new modules path
         """
@@ -241,7 +247,7 @@ class ComponentCommand:
                     for line in lines:
                         fh.write(line)
                 # Update path in modules.json if the file is in the correct format
-                modules_json = ModulesJson(self.dir)
+                modules_json: ModulesJson = ModulesJson(self.dir)
                 modules_json.load()
                 if modules_json.has_git_url_and_modules():
                     modules_json.modules_json["repos"][self.modules_repo.remote_url]["modules"][
@@ -249,7 +255,7 @@ class ComponentCommand:
                     ][module_name]["patch"] = str(patch_path.relative_to(Path(self.dir).resolve()))
                 modules_json.dump()
 
-    def check_if_in_include_stmts(self, component_path):
+    def check_if_in_include_stmts(self, component_path: str) -> Dict[str, List[Dict[str, Union[int, str]]]]:
         """
         Checks for include statements in the main.nf file of the pipeline and a list of line numbers where the component is included
         Args:
@@ -258,9 +264,9 @@ class ComponentCommand:
         Returns:
             (list): A list of dictionaries, with the workflow file and the line number where the component is included
         """
-        include_stmts = {}
+        include_stmts: Dict[str, List[Dict[str, Union[int, str]]]] = {}
         if self.repo_type == "pipeline":
-            workflow_files = Path(self.dir, "workflows").glob("*.nf")
+            workflow_files: Path = Path(self.dir, "workflows").glob("*.nf")
             for workflow_file in workflow_files:
                 with open(workflow_file, "r") as fh:
                     # Check if component path is in the file using mmap
