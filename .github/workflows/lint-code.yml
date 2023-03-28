@@ -85,3 +85,19 @@ jobs:
         with:
           isortVersion: "latest"
           requirementsFiles: "requirements.txt requirements-dev.txt"
+
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install mypy
+        run: pip install mypy
+      - name: Run mypy
+        uses: sasanquaneuf/mypy-github-action@releases/v1
+        with:
+          checkName: 'mypy'
