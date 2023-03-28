@@ -25,6 +25,8 @@
 ### General
 
 - `nf-core modules/subworkflows info` now prints the include statement for the module/subworkflow ([#2182](https://github.com/nf-core/tools/pull/2182)).
+- Add the Nextflow version to Gitpod container matching the minimal Nextflow version for nf-core (according to `nextflow.config`) ([#2196](https://github.com/nf-core/tools/pull/2196))
+- Use `nfcore/gitpod:dev` container in the dev branch ([#2196](https://github.com/nf-core/tools/pull/2196))
 
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 
@@ -44,6 +46,7 @@
 - Only check that a pipeline name doesn't contain dashes if the name is provided by prompt of `--name`. Don't check if a template file is used. ([#2123](https://github.com/nf-core/tools/pull/2123))
 - Deprecate `--enable_conda` parameter. Use `conda.enable` instead ([#2131](https://github.com/nf-core/tools/pull/2131))
 - Handle `json.load()` exceptions ([#2134](https://github.com/nf-core/tools/pull/2134))
+- Deprecate Python 3.7 support because it reaches EOL ([#2210](https://github.com/nf-core/tools/pull/2210))
 
 ## [v2.7.1 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.1) - [2022-12-08]
 
