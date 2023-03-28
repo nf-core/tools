@@ -133,8 +133,8 @@ class DownloadWorkflow:
             )
             self.prompt_revision()
             self.get_revision_hash()
-            # inclusion of configs is unsuitable for multi-revision repositories.
-            if len(self.revision) == 1:
+            # inclusion of configs is unnecessary for Tower.
+            if not self.tower:
                 self.prompt_config_inclusion()
             self.prompt_container_download()
             self.prompt_use_singularity_cachedir()
@@ -146,7 +146,7 @@ class DownloadWorkflow:
             sys.exit(1)
 
         summary_log = [
-            f"Pipeline revision: '{','.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
+            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
             f"Pull containers: '{self.container}'",
         ]
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
@@ -186,12 +186,6 @@ class DownloadWorkflow:
 
         # Summary log
         log.info("Saving '{}'\n {}".format(self.pipeline, "\n ".join(summary_log)))
-
-        # Actually download the workflow
-        if not self.tower:
-            self.download_workflow_classic()
-        else:
-            self.download_workflow_tower()
 
     def download_workflow_classic(self):
         """Downloads a nf-core workflow from GitHub to the local file system in a self-contained manner."""
@@ -256,7 +250,7 @@ class DownloadWorkflow:
             )
 
             # The checkbox() prompt unfortunately does not support passing a Validator,
-            # so a user who keeps pressing Enter will bump through the selection
+            # so a user who keeps pressing Enter will bump through the selection without choice.
 
             # bool(choice), bool(tag_set):
             #############################
@@ -266,7 +260,7 @@ class DownloadWorkflow:
             # True,  False: Congratulations, you found a bug! That combo shouldn't happen.
 
             if bool(choice):
-                # have to make sure that self.revision is a list of strings, regardless if temp is str or list of strings.
+                # have to make sure that self.revision is a list of strings, regardless if choice is str or list of strings.
                 self.revision.append(choice) if isinstance(choice, str) else self.revision.extend(choice)
             else:
                 if bool(tag_set):
@@ -302,7 +296,10 @@ class DownloadWorkflow:
 
         # Set the outdir
         if not self.outdir:
-            self.outdir = f"{self.pipeline.replace('/', '-').lower()}_{datetime.now().strftime('%Y-%m-%d_%H-%M')}"
+            if len(self.wf_sha) > 1:
+                self.outdir = f"{self.pipeline.replace('/', '-').lower()}_{datetime.now().strftime('%Y-%m-%d_%H-%M')}"
+            else:
+                self.outdir = f"{self.pipeline.replace('/', '-').lower()}_{self.revision[0]}"
 
         if not self.tower and bool(self.wf_sha):
             # Set the download URL and return - only applicable for classic downloads
