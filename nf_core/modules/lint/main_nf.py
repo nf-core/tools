@@ -258,9 +258,8 @@ def check_process_section(self, lines, fix_version, progress_bar):
     for i, l in enumerate(lines):
         url = None
         l = l.strip(" '\"")
-        if _container_type(l) == "bioconda":
+        if _container_type(l) == "conda":
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
-        if _container_type(l) == "bioconda" or _container_type(l) == "conda":
             match = re.search(r"params\.enable_conda", l)
             if match is None:
                 self.passed.append(
@@ -534,8 +533,6 @@ def _get_build(response):
 
 def _container_type(line):
     """Returns the container type of a build."""
-    if re.search("bioconda::", line):
-        return "bioconda"
     if line.startswith("conda"):
         return "conda"
     if line.startswith("https://containers") or line.startswith("https://depot"):
