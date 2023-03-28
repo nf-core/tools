@@ -1,9 +1,8 @@
 import json
 import logging
+from typing import Dict, List, Optional, Tuple, Union
 
 import rich
-
-from typing import Dict, List, Tuple, Optional, Union
 
 from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
@@ -27,7 +26,7 @@ class ComponentList(ComponentCommand):
         # self.check_component_structure(self.component_type)
 
         # Initialise rich table
-        table: rich.table.Table = rich.table.Table() 
+        table: rich.table.Table = rich.table.Table()
         table.add_column(f"{self.component_type[:-1].capitalize()} Name")
         components: List[str] = []
 
@@ -103,7 +102,6 @@ class ComponentList(ComponentCommand):
             modules_json = modules_json.modules_json
 
             for repo_url, component_with_dir in sorted(repos_with_comps.items()):
-
                 repo_entry: Dict[str, Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]]
                 repo_entry = modules_json["repos"].get(repo_url, {})
                 for install_dir, component in sorted(component_with_dir):
