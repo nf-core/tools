@@ -98,6 +98,7 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_test_file_dict,
         test_subworkflows_create_test_yml_get_md5,
         test_subworkflows_create_test_yml_entry_points,
+        test_subworkflows_create_test_yml_check_inputs,
     )
     from .subworkflows.info import (
         test_subworkflows_info_in_modules_repo,

@@ -73,3 +73,23 @@ def test_subworkflows_create_test_yml_entry_points(self):
     )
     meta_builder.scrape_workflow_entry_points()
     assert meta_builder.entry_points[0] == f"test_{subworkflow}"
+
+
+def test_subworkflows_create_test_yml_check_inputs(self):
+    """Test the check_inputs() function - raise UserWarning because test.yml exists"""
+    cwd = os.getcwd()
+    os.chdir(self.nfcore_modules)
+    subworkflow = "test_subworkflow"
+    meta_builder = nf_core.subworkflows.SubworkflowTestYmlBuilder(
+        subworkflow=f"{subworkflow}",
+        directory=self.pipeline_dir,
+        test_yml_output_path="./",
+        no_prompts=True,
+    )
+    meta_builder.subworkflow_test_main = os.path.join(
+        self.nfcore_modules, "tests", "subworkflows", "nf-core", subworkflow, "main.nf"
+    )
+    with pytest.raises(UserWarning) as excinfo:
+        meta_builder.check_inputs()
+    os.chdir(cwd)
+    assert "Test YAML file already exists!" in str(excinfo.value)
