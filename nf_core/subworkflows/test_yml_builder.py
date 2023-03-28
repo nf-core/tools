@@ -139,7 +139,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
                 if match:
                     self.entry_points.append(match.group(1))
         if len(self.entry_points) == 0:
-            raise UserWarning("No workflow entry points found in 'self.module_test_main'")
+            raise UserWarning(f"No workflow entry points found in '{self.subworkflow_test_main}'")
 
     def build_all_tests(self):
         """
