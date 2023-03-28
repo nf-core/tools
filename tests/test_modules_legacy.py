@@ -38,7 +38,9 @@ def create_modules_repo_dummy(tmp_dir):
     with requests_mock.Mocker() as mock:
         mock_api_calls(mock, "bpipe", "0.9.11--hdfd78af_0")
         # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
-        module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
+        module_create = nf_core.test_modules.ModuleCreate(
+            root_dir, "bpipe/test", "@author", "process_single", False, False
+        )
         module_create.create()
 
     return root_dir
@@ -60,9 +62,9 @@ class TestModules(unittest.TestCase):
             "mypipeline", "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
         # Set up install objects
-        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
-        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True)
-        self.mods_install_old = nf_core.modules.ModuleInstall(
+        self.mods_install = nf_core.test_modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
+        self.mods_install_alt = nf_core.test_modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True)
+        self.mods_install_old = nf_core.test_modules.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
             force=False,
@@ -70,21 +72,21 @@ class TestModules(unittest.TestCase):
             remote_url=GITLAB_URL,
             branch=OLD_TRIMGALORE_BRANCH,
         )
-        self.mods_install_trimgalore = nf_core.modules.ModuleInstall(
+        self.mods_install_trimgalore = nf_core.test_modules.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
             force=True,
             remote_url=GITLAB_URL,
             branch=OLD_TRIMGALORE_BRANCH,
         )
-        self.mods_install_gitlab = nf_core.modules.ModuleInstall(
+        self.mods_install_gitlab = nf_core.test_modules.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
             force=True,
             remote_url=GITLAB_URL,
             branch=GITLAB_DEFAULT_BRANCH,
         )
-        self.mods_install_gitlab_old = nf_core.modules.ModuleInstall(
+        self.mods_install_gitlab_old = nf_core.test_modules.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
             force=True,
@@ -94,8 +96,8 @@ class TestModules(unittest.TestCase):
         )
 
         # Set up remove objects
-        self.mods_remove = nf_core.modules.ModuleRemove(self.pipeline_dir)
-        self.mods_remove_gitlab = nf_core.modules.ModuleRemove(
+        self.mods_remove = nf_core.test_modules.ModuleRemove(self.pipeline_dir)
+        self.mods_remove_gitlab = nf_core.test_modules.ModuleRemove(
             self.pipeline_dir,
             remote_url=GITLAB_URL,
             branch=GITLAB_DEFAULT_BRANCH,
@@ -112,7 +114,7 @@ class TestModules(unittest.TestCase):
 
     def test_modulesrepo_class(self):
         """Initialise a modules repo object"""
-        modrepo = nf_core.modules.ModulesRepo()
+        modrepo = nf_core.test_modules.ModulesRepo()
         assert modrepo.repo_path == "nf-core"
         assert modrepo.branch == "master"
 
@@ -120,32 +122,32 @@ class TestModules(unittest.TestCase):
     # Test of the individual modules commands. #
     ############################################
 
-    from .modules.bump_versions import (
+    from .test_modules.bump_versions import (
         test_modules_bump_versions_all_modules,
         test_modules_bump_versions_fail,
         test_modules_bump_versions_fail_unknown_version,
         test_modules_bump_versions_single_module,
     )
-    from .modules.create import (
+    from .test_modules.create import (
         test_modules_create_fail_exists,
         test_modules_create_nfcore_modules,
         test_modules_create_nfcore_modules_subtool,
         test_modules_create_succeed,
     )
-    from .modules.create_test_yml import (
+    from .test_modules.create_test_yml import (
         test_modules_create_test_yml_check_inputs,
         test_modules_create_test_yml_entry_points,
         test_modules_create_test_yml_get_md5,
         test_modules_custom_yml_dumper,
         test_modules_test_file_dict,
     )
-    from .modules.info import (
+    from .test_modules.info import (
         test_modules_info_in_modules_repo,
         test_modules_info_local,
         test_modules_info_remote,
         test_modules_info_remote_gitlab,
     )
-    from .modules.install import (
+    from .test_modules.install import (
         test_modules_install_different_branch_fail,
         test_modules_install_different_branch_succeed,
         test_modules_install_emptypipeline,
@@ -156,7 +158,7 @@ class TestModules(unittest.TestCase):
         test_modules_install_trimgalore,
         test_modules_install_trimgalore_twice,
     )
-    from .modules.lint import (
+    from .test_modules.lint import (
         test_modules_lint_empty,
         test_modules_lint_gitlab_modules,
         test_modules_lint_multiple_remotes,
@@ -165,14 +167,14 @@ class TestModules(unittest.TestCase):
         test_modules_lint_patched_modules,
         test_modules_lint_trimgalore,
     )
-    from .modules.list import (
+    from .test_modules.list import (
         test_modules_install_and_list_pipeline,
         test_modules_install_gitlab_and_list_pipeline,
         test_modules_list_pipeline,
         test_modules_list_remote,
         test_modules_list_remote_gitlab,
     )
-    from .modules.modules_json import (
+    from .test_modules.modules_json import (
         test_get_modules_json,
         test_mod_json_create,
         test_mod_json_create_with_patch,
@@ -187,12 +189,12 @@ class TestModules(unittest.TestCase):
         test_mod_json_with_empty_modules_value,
         test_mod_json_with_missing_modules_entry,
     )
-    from .modules.modules_test import (
+    from .test_modules.modules_test import (
         test_modules_test_check_inputs,
         test_modules_test_no_installed_modules,
         test_modules_test_no_name_no_prompts,
     )
-    from .modules.patch import (
+    from .test_modules.patch import (
         test_create_patch_change,
         test_create_patch_no_change,
         test_create_patch_try_apply_failed,
@@ -200,12 +202,12 @@ class TestModules(unittest.TestCase):
         test_create_patch_update_fail,
         test_create_patch_update_success,
     )
-    from .modules.remove import (
+    from .test_modules.remove import (
         test_modules_remove_multiqc_from_gitlab,
         test_modules_remove_trimgalore,
         test_modules_remove_trimgalore_uninstalled,
     )
-    from .modules.update import (
+    from .test_modules.update import (
         test_install_and_update,
         test_install_at_hash_and_update,
         test_install_at_hash_and_update_and_save_diff_to_file,
