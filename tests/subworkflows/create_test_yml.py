@@ -49,7 +49,7 @@ def test_subworkflows_create_test_yml_get_md5(self, test_file_dir):
         test_yml_output_path="./",
         no_prompts=True,
     )
-    with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
+    with open(Path(test_file_dir, "test_file.txt"), "w") as fh:
         fh.write("this line is just for testing")
     test_files = meta_builder.get_md5_sums(
         command="dummy",
