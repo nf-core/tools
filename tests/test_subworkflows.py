@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import unittest
 
-import requests_mock
+import responses
 
 import nf_core.create
 import nf_core.modules
@@ -30,9 +30,9 @@ def create_modules_repo_dummy(tmp_dir):
     with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
         fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
 
-    with requests_mock.Mocker() as mock:
-        subworkflow_create = nf_core.subworkflows.SubworkflowCreate(root_dir, "test_subworkflow", "@author", True)
-        subworkflow_create.create()
+    # TODO Add a mock here
+    subworkflow_create = nf_core.subworkflows.SubworkflowCreate(root_dir, "test_subworkflow", "@author", True)
+    subworkflow_create.create()
 
     return root_dir
 
@@ -92,6 +92,13 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_create_fail_exists,
         test_subworkflows_create_nfcore_modules,
         test_subworkflows_create_succeed,
+    )
+    from .subworkflows.create_test_yml import (
+        test_subworkflows_create_test_yml_check_inputs,
+        test_subworkflows_create_test_yml_entry_points,
+        test_subworkflows_create_test_yml_get_md5,
+        test_subworkflows_custom_yml_dumper,
+        test_subworkflows_test_file_dict,
     )
     from .subworkflows.info import (
         test_subworkflows_info_in_modules_repo,

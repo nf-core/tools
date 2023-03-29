@@ -341,7 +341,7 @@ def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, ma
     meets the nf-core guidelines. Documentation of all lint tests can be found
     on the nf-core website: [link=https://nf-co.re/tools-docs/]https://nf-co.re/tools-docs/[/]
 
-    You can ignore tests using a file called [blue].nf-core-lint.yaml[/] [i](if you have a good reason!)[/].
+    You can ignore tests using a file called [blue].nf-core.yml[/] [i](if you have a good reason!)[/].
     See the documentation for details.
     """
 
