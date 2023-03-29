@@ -24,8 +24,8 @@ class ComponentCommand:
         self,
         component_type: str,
         dir: Optional[Union[str, Path]],
-        remote_url: str = None,
-        branch: str = None,
+        remote_url: Optional[str] = None,
+        branch: Optional[str] = None,
         no_pull: bool = False,
         hide_progress: bool = False,
     ) -> None:
