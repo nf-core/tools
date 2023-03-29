@@ -13,6 +13,7 @@
 
 ### Linting
 
+- Update modules lint test to fail if enable_conda is found ([#2213](https://github.com/nf-core/tools/pull/2213))
 - Read module lint configuration from `.nf-core.yml`, not `.nf-core-lint.yml` ([#2221](https://github.com/nf-core/tools/pull/2221))
 - `nf-core schema lint` now defaults to linting `nextflow_schema.json` if no filename is provided ([#2225](https://github.com/nf-core/tools/pull/2225))
 

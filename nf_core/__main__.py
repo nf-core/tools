@@ -1398,7 +1398,9 @@ def build(dir, no_prompts, web_only, url):
 
 # nf-core schema lint
 @schema.command()
-@click.argument("schema_path", type=click.Path(exists=True), default="nextflow_schema.json", metavar="<pipeline schema>")
+@click.argument(
+    "schema_path", type=click.Path(exists=True), default="nextflow_schema.json", metavar="<pipeline schema>"
+)
 def lint(schema_path):
     """
     Check that a given pipeline schema is valid.
