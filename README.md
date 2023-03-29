@@ -610,13 +610,24 @@ If you want to add a parameter to the schema, you first have to add the paramete
 
 The graphical interface is oganzised in groups and within the groups the single parameters are stored. For a better overview you can collapse all groups with the `Collapse groups` button, then your new parameters will be the only remaining one at the bottom of the page. Now you can either create a new group with the `Add group` button or drag and drop the paramters in an existing group. Therefor the group has to be expanded. The group title will be displayed, if you run your pipeline with the `--help` flag and its description apears on the parameter page of your pipeline.
 
-Now you can start to change the parameter itself. The description is a short explanation about the parameter, that apears if you run your pipeline with the `--help` flag. By clicking on the dictionary icon you can add a longer explanation for the parameter page of your pipeline. If you want to specify some conditions for your parameter, like the file extension, you can use the nut icon to open the settings. This menu depends on the `type` you assigned to your parameter. For intergers you can define a min and max value, and for strings the file extension can be specified.
+Now you can start to change the parameter itself. The `ID` of a new parameter should be defined in small letters without whitespaces. The description is a short free text explanation about the parameter, that appears if you run your pipeline with the `--help` flag. By clicking on the dictionary icon you can add a longer explanation for the parameter page of your pipeline. Usually, they contain a small paragraph about the parameter settings or a used datasource, like databases or references. If you want to specify some conditions for your parameter, like the file extension, you can use the nut icon to open the settings. This menu depends on the `type` you assigned to your parameter. For integers you can define a min and max value, and for strings the file extension can be specified.
 
-After you filled your schema, click on the `Finished` button in the top rigth corner, this will automatically update your `nextflow_schema.json`. If this is not working you can copy the schema from the graphical interface and paste it in your `nextflow_schema.json` file.
+The `type` field is one of the most important points in your pipeline schema, since it defines the datatype of your input and how it will be interpreted. This allows extensive testing prior to starting the pipeline. 
+
+The basic datatypes for a pipeline schema are:
+
+- `string`
+- `number`
+- `integer`
+- `boolean`
+
+For the `string` type you have three different options in the settings (nut icon): `enumerated values`, `pattern` and `format`. The first option, `enumerated values`, allows you to specify a list of specific input values. The list has to be separated with a pipe. The `pattern` and `format` settings can depend on each other. The `format` has to be either a directory or a file path. Depending on  the `format` setting selected, specifying the `pattern` setting can be the most efficient and time saving option, especially for `file paths`. The `number` and `integer` types share the same settings. Similarly to `string`, there is an `enumerated values` option with the possibility of specifying a `min` and `max` value. For the `boolean` there is no further settings and the default value is usually `false`. The `boolean` value can be switched to `true` by adding the flag to the command. This parameter type is often used to skip specific sections of a pipeline.
+
+After filling the schema, click on the `Finished` button in the top right corner, this will automatically update your `nextflow_schema.json`. If this is not working, the schema can be copied from the graphical interface and pasted in your `nextflow_schema.json` file.
 
 ### Update existing pipeline schema
 
-Important for the update of a pipeline schema is, that if you want to change the default value of a parameter, you should change it in the `nextflow.config` file, since the value in the config file overwrites the value in the pipeline schema. To change any other parameter use `nf-core schema build --web-only` to open the graphical interface without rebuilding the pipeline schema. Now, you can change your parameters as mentioned above but keep in mind that changing the parameter datatype is depending on the default value you specified in the `nextflow.config` file.
+It's important to change the default value of a parameter in the `nextflow.config` file first and then in the pipeline schema, because the value in the config file overwrites the value in the pipeline schema. To change any other parameter use `nf-core schema build --web-only` to open the graphical interface without rebuilding the pipeline schema. Now, the parameters can be changed as mentioned above but keep in mind that changing the parameter datatype depends on the default value specified in the `nextflow.config` file.
 
 ### Linting a pipeline schema
 
@@ -1032,6 +1043,8 @@ To list subworkflows installed in a local pipeline directory you can use `nf-cor
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 head: 25
 -->
 
@@ -1045,6 +1058,8 @@ This shows documentation about the subworkflow on the command line, similar to w
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows info bam_rseqc`](docs/images/nf-core-subworkflows-info.svg)
@@ -1056,6 +1071,8 @@ A subworkflow installed this way will be installed to the `./subworkflows/nf-cor
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows install bam_rseqc`](docs/images/nf-core-subworkflows-install.svg)
@@ -1075,6 +1092,8 @@ You can update subworkflows installed from a remote repository in your pipeline 
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows update --all --no-preview`](docs/images/nf-core-subworkflows-update.svg)
@@ -1134,6 +1153,8 @@ To delete a subworkflow from your pipeline, run `nf-core subworkflows remove`.
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows remove bam_rseqc`](docs/images/nf-core-subworkflows-remove.svg)
@@ -1162,10 +1183,10 @@ The `nf-core subworkflows create` command will prompt you with the relevant ques
 <!-- RICH-CODEX
 working_dir: tmp
 before_command: git clone https://github.com/nf-core/modules.git && cd modules
-fake_command: nf-core subworkflows create bam_stats_samtools --author @nf-core-bot  --label process_low --meta --force
+fake_command: nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force
 -->
 
-![`cd modules && nf-core subworkflows create bam_stats_samtools --author @nf-core-bot  --label process_low --meta --force`](docs/images/nf-core-subworkflows-create.svg)
+![`cd modules && nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force`](docs/images/nf-core-subworkflows-create.svg)
 
 ### Create a subworkflow test config file
 
@@ -1177,6 +1198,8 @@ After you have written a minimal Nextflow script to test your subworkflow in `/t
 working_dir: tmp/subworkflows
 extra_env:
   PROFILE: 'conda'
+before_command: >
+  echo "repository_type: modules" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows create-test-yml bam_stats_samtools --no-prompts --force`](docs/images/nf-core-subworkflows-create-test.svg)
@@ -1192,6 +1215,8 @@ working_dir: tmp/subworkflows
 timeout: 30
 extra_env:
   PROFILE: 'conda'
+before_command: >
+  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows test bam_rseqc --no-prompts`](docs/images/nf-core-subworkflows-test.svg)
