@@ -23,7 +23,7 @@ class ComponentCommand:
     def __init__(
         self,
         component_type: str,
-        dir: str,
+        dir: Optional[Union[str, Path]],
         remote_url: str = None,
         branch: str = None,
         no_pull: bool = False,
@@ -46,8 +46,6 @@ class ComponentCommand:
         Args:
             nf_dir_req (bool, optional): Whether this command requires being run in the nf-core modules repo or a nf-core pipeline repository. Defaults to True.
         """
-        self.dir: Union[str, Path]
-        self.repo_type: Optional[str]
         try:
             if self.dir:
                 self.dir, self.repo_type, self.org = get_repo_info(self.dir, use_prompt=nf_dir_req)
@@ -77,7 +75,6 @@ class ComponentCommand:
         """
         Get the modules/subworkflows repository available in a clone of nf-core/modules
         """
-        component_base_path: Path
         if self.component_type == "modules":
             component_base_path = Path(self.dir, self.default_modules_path)
         elif self.component_type == "subworkflows":

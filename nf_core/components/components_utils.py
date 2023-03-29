@@ -2,6 +2,7 @@ import logging
 import os
 import re
 from pathlib import Path
+from typing import Optional, Tuple, Union
 
 import questionary
 import rich.prompt
@@ -11,7 +12,9 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-def get_repo_info(directory, use_prompt=True):
+def get_repo_info(
+    directory: Union[str, Path], use_prompt=True
+) -> Tuple[Union[str, Path], Optional[str], Optional[str]]:
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
@@ -77,7 +80,7 @@ def get_repo_info(directory, use_prompt=True):
             raise UserWarning("Organisation path could not be established")
 
     # It was set on the command line, return what we were given
-    return [base_dir, repo_type, org]
+    return (base_dir, repo_type, org)
 
 
 def prompt_component_version_sha(component_name, component_type, modules_repo, installed_sha=None):
