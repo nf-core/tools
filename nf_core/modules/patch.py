@@ -174,7 +174,6 @@ class ModulePatch(ComponentCommand):
         patch_filename = f"{module.replace('/', '-')}.diff"
         module_relpath = Path("modules", module_dir, module)
         patch_relpath = Path(module_relpath, patch_filename)
-        module_current_dir = Path(self.dir, module_relpath)
         patch_path = Path(self.dir, patch_relpath)
 
         if patch_path.exists():
@@ -189,9 +188,12 @@ class ModulePatch(ComponentCommand):
         temp_module_dir = self.modules_json.try_apply_patch_reverse(
             module, self.modules_repo.repo_path, patch_relpath, module_relpath
         )
-        for file in Path(temp_module_dir).glob("*"):
-            file.rename(module_relpath.joinpath(file.name))
-        os.rmdir(temp_module_dir)
+        try:
+            for file in Path(temp_module_dir).glob("*"):
+                file.rename(module_relpath.joinpath(file.name))
+            os.rmdir(temp_module_dir)
+        except Exception as err:
+            raise UserWarning(f"There was a problem reverting the patched file: {err}")
 
         # Remove patch file
         patch_path.unlink()
