@@ -236,25 +236,30 @@ def check_process_section(self, lines, fix_version, progress_bar):
 
     # Check that process labels are correct
     correct_process_labels = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
-    process_label = [l for l in lines if l.lstrip().startswith("label")]
-    if len(process_label) > 0:
-        try:
-            process_label = re.search("process_[A-Za-z]+", process_label[0]).group(0)
-        except AttributeError:
-            process_label = re.search("'([A-Za-z_-]+)'", process_label[0]).group(0)
-        finally:
-            if not process_label in correct_process_labels:
+    all_labels = [l for l in lines if l.lstrip().startswith("label ")]
+    bad_labels = []
+    good_labels = []
+    if len(all_labels) > 0:
+        for label in all_labels:
+            label = re.match("^label\s+([a-zA-Z0-9_-]+)", label).group(1)
+            if label not in correct_process_labels:
+                bad_labels.append(label)
+            else:
+                good_labels.append(label)
+            if len(good_labels) > 1:
                 self.warned.append(
                     (
                         "process_standard_label",
-                        f"Process label ({process_label}) is not among standard labels: `{'`,`'.join(correct_process_labels)}`",
+                        f"Conflicting process labels found: `{'`,`'.join(good_labels)}`",
                         self.main_nf,
                     )
                 )
-            else:
+            elif len(good_labels) == 1:
                 self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
+            else:
+                self.warned.append(("process_standard_label", "Standard process label not found", self.main_nf))
     else:
-        self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
+        self.warned.append(("process_standard_label", "Process label not specified", self.main_nf))
     for i, l in enumerate(lines):
         url = None
         if _container_type(l) == "bioconda":
