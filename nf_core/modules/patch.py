@@ -195,8 +195,14 @@ class ModulePatch(ComponentCommand):
         except Exception as err:
             raise UserWarning(f"There was a problem reverting the patched file: {err}")
 
-        # Remove patch file
-        patch_path.unlink()
-        # Write changes to modules.json
-        self.modules_json.remove_patch_entry(module, self.modules_repo.remote_url, module_dir)
         log.info(f"Patch for {module} reverted!")
+        # Remove patch file if we could revert the patch
+        patch_path.unlink()
+        # Write changes to module.json
+        self.modules_json.remove_patch_entry(module, self.modules_repo.remote_url, module_dir)
+
+        if not all(self.modules_repo.module_files_identical(module, module_relpath, module_version).values()):
+            log.error(
+                f"Module files do not appear to match the remote for the commit sha in the 'module.json': {module_version}\n"
+                f"Recommend reinstalling with 'nf-core modules install --force --sha {module_version} {module}' "
+            )
