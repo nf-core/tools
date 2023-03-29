@@ -278,6 +278,7 @@ class ComponentInstall(ComponentCommand):
             False: if problematic components are not found
         """
         alternate_remotes = False
+        modules_json.load()
         for repo_url, repo_content in modules_json.modules_json["repos"].items():  # ex: https, []
             for dir in repo_content[self.component_type].keys():  # ex: nf-core
                 if dir == self.org and repo_url != self.modules_repo.remote_url:
