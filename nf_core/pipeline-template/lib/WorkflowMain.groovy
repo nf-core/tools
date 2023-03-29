@@ -21,7 +21,7 @@ class WorkflowMain {
     //
     // Generate help string
     //
-    public static String help(workflow, params, log) {
+    public static String help(workflow, params) {
         {% if igenomes -%}
         def command = "nextflow run ${workflow.manifest.name} --input samplesheet.csv --genome GRCh37 -profile docker"
         {% else -%}
@@ -38,7 +38,7 @@ class WorkflowMain {
     //
     // Generate parameter summary log string
     //
-    public static String paramsSummaryLog(workflow, params, log) {
+    public static String paramsSummaryLog(workflow, params) {
         def summary_log = ''
         summary_log += NfcoreTemplate.logo(workflow, params.monochrome_logs)
         summary_log += NfcoreSchema.paramsSummaryLog(workflow, params)
@@ -53,7 +53,7 @@ class WorkflowMain {
     public static void initialise(workflow, params, log) {
         // Print help to screen if required
         if (params.help) {
-            log.info help(workflow, params, log)
+            log.info help(workflow, params)
             System.exit(0)
         }
 
@@ -65,7 +65,7 @@ class WorkflowMain {
         }
 
         // Print parameter summary log to screen
-        log.info paramsSummaryLog(workflow, params, log)
+        log.info paramsSummaryLog(workflow, params)
 
         // Validate workflow parameters via the JSON schema
         if (params.validate_params) {
