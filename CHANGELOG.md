@@ -14,6 +14,8 @@
 ### Linting
 
 - Update modules lint test to fail if enable_conda is found ([#2213](https://github.com/nf-core/tools/pull/2213))
+- Read module lint configuration from `.nf-core.yml`, not `.nf-core-lint.yml` ([#2221](https://github.com/nf-core/tools/pull/2221))
+- `nf-core schema lint` now defaults to linting `nextflow_schema.json` if no filename is provided ([#2225](https://github.com/nf-core/tools/pull/2225))
 
 ### Modules
 
@@ -23,10 +25,14 @@
 
 - Fixing problem when a module included in a subworkflow had a name change from TOOL to TOOL/SUBTOOL ([#2177](https://github.com/nf-core/tools/pull/2177))
 - Fix `nf-core subworkflows test` not running subworkflow tests ([#2181](https://github.com/nf-core/tools/pull/2181))
+- Add tests for `nf-core subworkflows create-test-yml` ([#2219](https://github.com/nf-core/tools/pull/2219))
 
 ### General
 
 - `nf-core modules/subworkflows info` now prints the include statement for the module/subworkflow ([#2182](https://github.com/nf-core/tools/pull/2182)).
+- Add the Nextflow version to Gitpod container matching the minimal Nextflow version for nf-core (according to `nextflow.config`) ([#2196](https://github.com/nf-core/tools/pull/2196))
+- Use `nfcore/gitpod:dev` container in the dev branch ([#2196](https://github.com/nf-core/tools/pull/2196))
+- Replace requests_mock with responses in test mocks ([#2165](https://github.com/nf-core/tools/pull/2165)).
 
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 

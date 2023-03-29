@@ -3,7 +3,6 @@ isort
 myst_parser
 pytest-cov
 pytest-datafiles
-requests-mock
+responses
 Sphinx
 sphinx-rtd-theme
-requests_mock
