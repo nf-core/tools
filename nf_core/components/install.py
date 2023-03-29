@@ -58,6 +58,9 @@ class ComponentInstall(ComponentCommand):
         if not silent:
             modules_json.check_up_to_date()
 
+        # Verify that the remote repo's org_path does not match the org_path of any alternate repo among the installed modules
+        self.check_alternate_remotes(modules_json)
+
         # Verify SHA
         if not self.modules_repo.verify_sha(self.prompt, self.sha):
             return False
@@ -264,3 +267,24 @@ class ComponentInstall(ComponentCommand):
                             self.component_type, component, repo_to_remove, modules_repo.repo_path
                         )
                         return component_values["installed_by"]
+
+    def check_alternate_remotes(self, modules_json):
+        """
+        Check whether there are previously installed components with the same org_path but different remote urls
+        Log warning if multiple remotes exist.
+
+        Return:
+            True: if problematic components are found
+            False: if problematic components are not found
+        """
+        alternate_remotes = False
+        for repo_url, repo_content in modules_json.modules_json["repos"].items():  # ex: https, []
+            for dir in repo_content[self.component_type].keys():  # ex: nf-core
+                if dir == self.org and repo_url != self.modules_repo.remote_url:
+                    alternate_remotes = True
+        if alternate_remotes:
+            warn_msg = f"Multiple module remotes are used with the same org_path '{self.org}': {', '.join(alternate_remotes)}. This may result in reinstalled modules from the wrong remote."
+            log.warning(warn_msg)
+            return True
+        else:
+            return False
