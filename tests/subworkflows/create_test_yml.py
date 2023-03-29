@@ -1,6 +1,6 @@
 import os
 from unittest import mock
-
+from pathlib import Path
 import pytest
 
 import nf_core.subworkflows
@@ -11,7 +11,7 @@ from ..utils import with_temporary_folder
 @with_temporary_folder
 def test_subworkflows_custom_yml_dumper(self, out_dir):
     """Try to create a yml file with the custom yml dumper"""
-    yml_output_path = os.path.join(out_dir, "test.yml")
+    yml_output_path = Path(out_dir, "test.yml")
     meta_builder = nf_core.subworkflows.SubworkflowTestYmlBuilder(
         subworkflow="test/tool",
         directory=self.pipeline_dir,
@@ -21,7 +21,7 @@ def test_subworkflows_custom_yml_dumper(self, out_dir):
     meta_builder.test_yml_output_path = yml_output_path
     meta_builder.tests = [{"testname": "myname"}]
     meta_builder.print_test_yml()
-    assert os.path.isfile(yml_output_path)
+    assert Path(yml_output_path).is_file()
 
 
 @with_temporary_folder
@@ -33,7 +33,7 @@ def test_subworkflows_test_file_dict(self, test_file_dir):
         test_yml_output_path="./",
         no_prompts=True,
     )
-    with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
+    with open(Path(test_file_dir, "test_file.txt"), "w") as fh:
         fh.write("this line is just for testing")
     test_files = meta_builder.create_test_file_dict(test_file_dir)
     assert len(test_files) == 1
@@ -68,7 +68,7 @@ def test_subworkflows_create_test_yml_entry_points(self):
         test_yml_output_path="./",
         no_prompts=True,
     )
-    meta_builder.subworkflow_test_main = os.path.join(
+    meta_builder.subworkflow_test_main = Path(
         self.nfcore_modules, "tests", "subworkflows", "nf-core", subworkflow, "main.nf"
     )
     meta_builder.scrape_workflow_entry_points()
@@ -86,7 +86,7 @@ def test_subworkflows_create_test_yml_check_inputs(self):
         test_yml_output_path="./",
         no_prompts=True,
     )
-    meta_builder.subworkflow_test_main = os.path.join(
+    meta_builder.subworkflow_test_main = Path(
         self.nfcore_modules, "tests", "subworkflows", "nf-core", subworkflow, "main.nf"
     )
     with pytest.raises(UserWarning) as excinfo:
