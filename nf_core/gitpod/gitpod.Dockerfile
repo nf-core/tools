@@ -38,7 +38,7 @@ RUN conda config --add channels defaults && \
     conda config --set channel_priority strict && \
     conda install --quiet --yes --name base mamba && \
     mamba install --quiet --yes --name base \
-    nextflow \
+    nextflow=22.10.1 \
     nf-core \
     nf-test \
     black \
