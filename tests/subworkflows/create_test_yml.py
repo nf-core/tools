@@ -1,6 +1,7 @@
 import os
-from unittest import mock
 from pathlib import Path
+from unittest import mock
+
 import pytest
 
 import nf_core.subworkflows

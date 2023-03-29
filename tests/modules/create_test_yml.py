@@ -43,9 +43,7 @@ def test_modules_create_test_yml_get_md5(self, test_file_dir):
 def test_modules_create_test_yml_entry_points(self):
     """Test extracting test entry points from a main.nf file"""
     meta_builder = nf_core.modules.ModulesTestYmlBuilder("bpipe/test", self.pipeline_dir, False, "./", False, True)
-    meta_builder.module_test_main = Path(
-        self.nfcore_modules, "tests", "modules", "nf-core", "bpipe", "test", "main.nf"
-    )
+    meta_builder.module_test_main = Path(self.nfcore_modules, "tests", "modules", "nf-core", "bpipe", "test", "main.nf")
     meta_builder.scrape_workflow_entry_points()
     assert meta_builder.entry_points[0] == "test_bpipe_test"
 
