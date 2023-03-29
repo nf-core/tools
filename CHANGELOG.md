@@ -7,6 +7,9 @@
 - Turn on automatic clean up of intermediate files in `work/` on successful pipeline completion in full-test config ([#2163](https://github.com/nf-core/tools/pull/2163)) [Contributed by @jfy133]
 - Add documentation to `usage.md` on how to use `params.yml` files, based on nf-core/ampliseq text ([#2173](https://github.com/nf-core/tools/pull/2173/)) [Contributed by @jfy133, @d4straub]
 - Make jobs automatically resubmit for a much wider range of exit codes (now `104` and `130..145`) ([#2170](https://github.com/nf-core/tools/pull/2170))
+- Remove problematic sniffer code in samplesheet_check.py that could give false positive 'missing header' errors ([https://github.com/nf-core/tools/pull/2194]) [Contributed by @Midnighter, @jfy133]
+- Consistent syntax for branch checks in PRs ([#2202](https://github.com/nf-core/tools/issues/2202))
+- Fixed minor Jinja2 templating bug that caused the PR template to miss a newline
 
 ### Linting
 
@@ -22,6 +25,9 @@
 ### General
 
 - `nf-core modules/subworkflows info` now prints the include statement for the module/subworkflow ([#2182](https://github.com/nf-core/tools/pull/2182)).
+- Add the Nextflow version to Gitpod container matching the minimal Nextflow version for nf-core (according to `nextflow.config`) ([#2196](https://github.com/nf-core/tools/pull/2196))
+- Use `nfcore/gitpod:dev` container in the dev branch ([#2196](https://github.com/nf-core/tools/pull/2196))
+- Replace requests_mock with responses in test mocks ([#2165](https://github.com/nf-core/tools/pull/2165)).
 
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 
@@ -41,6 +47,7 @@
 - Only check that a pipeline name doesn't contain dashes if the name is provided by prompt of `--name`. Don't check if a template file is used. ([#2123](https://github.com/nf-core/tools/pull/2123))
 - Deprecate `--enable_conda` parameter. Use `conda.enable` instead ([#2131](https://github.com/nf-core/tools/pull/2131))
 - Handle `json.load()` exceptions ([#2134](https://github.com/nf-core/tools/pull/2134))
+- Deprecate Python 3.7 support because it reaches EOL ([#2210](https://github.com/nf-core/tools/pull/2210))
 
 ## [v2.7.1 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.1) - [2022-12-08]
 
@@ -73,7 +80,8 @@ Another big release with lots of new features and bug fixes. Thanks to all contr
 
 - Fix lint warnings for `samplesheet_check.nf` module ([#1875](https://github.com/nf-core/tools/pull/1875)).
 - Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
-- Remove `CITATION.cff` file from pipeline template, to avoid that pipeline Zenodo entries reference the nf-core publication instead of the pipeline ([#2059](https://github.com/nf-core/tools/pull/2059)).
+- Remove `CITATION.cff` file from pipeline template, to avoid that pipeline Zenodo entries reference the nf-core publication instead of the pipeline ([#2059](https://github.com/nf-core/tools/pull/2059)).- Add initial CHM13 support ([1988](https://github.com/nf-core/tools/issues/1988))
+- Add initial CHM13 support ([1988](https://github.com/nf-core/tools/issues/1988))
 
 ### Linting
 
