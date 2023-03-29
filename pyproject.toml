@@ -22,4 +22,5 @@ known_first_party = ["nf_core"]
 multi_line_output = 3
 
 [mypy]
-ignore_missing_imports = True
+ignore_missing_imports = true
+follow_imports = "skip"
