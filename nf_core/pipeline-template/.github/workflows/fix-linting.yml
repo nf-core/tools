@@ -3,13 +3,7 @@ on:
   issue_comment:
     types: [created]
     paths:
-      - '**.nf'
-      - '**.groovy'
-      - '**.config'
-      - 'bin/'
-      - 'tests/'
-      - 'nextflow_schema.json'
-      - '.github/workflows/*'
+      - '**.md'
 
 jobs:
   deploy:
@@ -59,5 +53,5 @@ jobs:
           git config push.default upstream
           git add .
           git status
-          git commit -m "[automated] Fix linting with Prettier [skip ci]"
+          git commit -m "[automated] Fix linting with Prettier"
           git push {%- endraw %}
