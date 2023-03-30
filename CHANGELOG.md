@@ -7,6 +7,7 @@
 - Turn on automatic clean up of intermediate files in `work/` on successful pipeline completion in full-test config ([#2163](https://github.com/nf-core/tools/pull/2163)) [Contributed by @jfy133]
 - Add documentation to `usage.md` on how to use `params.yml` files, based on nf-core/ampliseq text ([#2173](https://github.com/nf-core/tools/pull/2173/)) [Contributed by @jfy133, @d4straub]
 - Make jobs automatically resubmit for a much wider range of exit codes (now `104` and `130..145`) ([#2170](https://github.com/nf-core/tools/pull/2170))
+- Add a stale GHA wich stale + close issues and stale PRs with specific labels ([#2183](https://github.com/nf-core/tools/pull/2183))
 - Remove problematic sniffer code in samplesheet_check.py that could give false positive 'missing header' errors ([https://github.com/nf-core/tools/pull/2194]) [Contributed by @Midnighter, @jfy133]
 - Consistent syntax for branch checks in PRs ([#2202](https://github.com/nf-core/tools/issues/2202))
 - Fixed minor Jinja2 templating bug that caused the PR template to miss a newline
@@ -30,6 +31,7 @@
 ### General
 
 - `nf-core modules/subworkflows info` now prints the include statement for the module/subworkflow ([#2182](https://github.com/nf-core/tools/pull/2182)).
+- Add a stale GHA wich stale + close issues and stale PRs with specific labels ([#2183](https://github.com/nf-core/tools/pull/2183))
 - update minimum version of rich to 13.3.1 ([#2185](https://github.com/nf-core/tools/pull/2185))
 - Add the Nextflow version to Gitpod container matching the minimal Nextflow version for nf-core (according to `nextflow.config`) ([#2196](https://github.com/nf-core/tools/pull/2196))
 - Use `nfcore/gitpod:dev` container in the dev branch ([#2196](https://github.com/nf-core/tools/pull/2196))
