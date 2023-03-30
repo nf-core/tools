@@ -28,7 +28,7 @@ def test_subworkflows_create_fail_exists(self):
 def test_subworkflows_create_nfcore_modules(self):
     """Create a subworkflow in nf-core/modules clone"""
     subworkflow_create = nf_core.subworkflows.SubworkflowCreate(
-        self.nfcore_modules, "test_subworkflow", "@author", True
+        self.nfcore_modules, "test_subworkflow", "@author", force=True
     )
     subworkflow_create.create()
     assert os.path.exists(os.path.join(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "main.nf"))

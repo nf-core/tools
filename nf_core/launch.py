@@ -98,7 +98,6 @@ class Launch:
         self.cli_launch = True
 
     def launch_pipeline(self):
-
         # Prompt for pipeline if not supplied and no web launch ID
         if self.pipeline is None and self.web_id is None:
             launch_type = questionary.select(
@@ -461,7 +460,6 @@ class Launch:
         answers = {}
         error_msgs = []
         while not while_break:
-
             if len(error_msgs) == 0:
                 self.print_param_header(group_id, group_obj, True)
 
@@ -698,7 +696,6 @@ class Launch:
 
         # Pipeline parameters
         if len(self.schema_obj.input_params) > 0:
-
             # Write the user selection to a file and run nextflow with that
             if self.use_params_file:
                 dump_json_with_prettier(self.params_out, self.schema_obj.input_params)

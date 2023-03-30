@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 from pathlib import Path
 
 import questionary
@@ -74,10 +73,10 @@ class ComponentInstall(ComponentCommand):
         )
 
         # Set the install folder based on the repository name
-        install_folder = os.path.join(self.dir, self.component_type, self.modules_repo.repo_path)
+        install_folder = Path(self.dir, self.component_type, self.modules_repo.repo_path)
 
         # Compute the component directory
-        component_dir = os.path.join(install_folder, component)
+        component_dir = Path(install_folder, component)
 
         # Check that the component is not already installed
         component_not_installed = self.check_component_installed(
@@ -169,19 +168,19 @@ class ComponentInstall(ComponentCommand):
         if component is None:
             component = questionary.autocomplete(
                 f"{'Tool' if self.component_type == 'modules' else 'Subworkflow'} name:",
-                choices=sorted(modules_repo.get_avail_components(self.component_type)),
+                choices=sorted(modules_repo.get_avail_components(self.component_type, commit=self.sha)),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
         # Check that the supplied name is an available module/subworkflow
-        if component and component not in modules_repo.get_avail_components(self.component_type):
+        if component and component not in modules_repo.get_avail_components(self.component_type, commit=self.sha):
             log.error(
                 f"{self.component_type[:-1].title()} '{component}' not found in list of available {self.component_type}."
             )
             log.info(f"Use the command 'nf-core {self.component_type} list' to view available software")
             return False
 
-        if not modules_repo.component_exists(component, self.component_type):
+        if not modules_repo.component_exists(component, self.component_type, commit=self.sha):
             warn_msg = f"{self.component_type[:-1].title()} '{component}' not found in remote '{modules_repo.remote_url}' ({modules_repo.branch})"
             log.warning(warn_msg)
             return False

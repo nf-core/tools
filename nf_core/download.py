@@ -506,7 +506,6 @@ class DownloadWorkflow:
                 containers_download = []
                 containers_pull = []
                 for container in self.containers:
-
                     # Fetch the output and cached filenames for this container
                     out_path, cache_path = self.singularity_image_filenames(container)
 
