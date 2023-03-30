@@ -279,8 +279,8 @@ class ComponentInstall(ComponentCommand):
         """
         alternate_remotes = False
         modules_json.load()
-        for repo_url, repo_content in modules_json.modules_json.get("repos",dict()).items():
-            for dir in repo_content.get(self.component_type,dict()).keys():
+        for repo_url, repo_content in modules_json.modules_json.get("repos", dict()).items():
+            for dir in repo_content.get(self.component_type, dict()).keys():
                 if dir == self.org and repo_url != self.modules_repo.remote_url:
                     alternate_remotes = True
         if alternate_remotes:
