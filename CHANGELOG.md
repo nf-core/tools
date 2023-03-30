@@ -30,6 +30,7 @@
 ### General
 
 - `nf-core modules/subworkflows info` now prints the include statement for the module/subworkflow ([#2182](https://github.com/nf-core/tools/pull/2182)).
+- update minimum version of rich to 13.3.1 ([#2185](https://github.com/nf-core/tools/pull/2185))
 - Add the Nextflow version to Gitpod container matching the minimal Nextflow version for nf-core (according to `nextflow.config`) ([#2196](https://github.com/nf-core/tools/pull/2196))
 - Use `nfcore/gitpod:dev` container in the dev branch ([#2196](https://github.com/nf-core/tools/pull/2196))
 - Replace requests_mock with responses in test mocks ([#2165](https://github.com/nf-core/tools/pull/2165)).
