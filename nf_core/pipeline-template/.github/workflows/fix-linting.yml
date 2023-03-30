@@ -2,6 +2,14 @@ name: Fix linting from a comment
 on:
   issue_comment:
     types: [created]
+    paths:
+      - '**.nf'
+      - '**.groovy'
+      - '**.config'
+      - 'bin/'
+      - 'tests/'
+      - 'nextflow_schema.json'
+      - '.github/workflows/*'
 
 jobs:
   deploy:
