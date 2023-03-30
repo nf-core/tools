@@ -634,13 +634,13 @@ It's important to change the default value of a parameter in the `nextflow.confi
 The pipeline schema is linted as part of the main pipeline `nf-core lint` command,
 however sometimes it can be useful to quickly check the syntax of the JSONSchema without running a full lint run.
 
-Usage is `nf-core schema lint <schema>`, eg:
+Usage is `nf-core schema lint <schema>` (defaulting to `nextflow_schema.json`), eg:
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
 -->
 
-![`nf-core schema lint nextflow_schema.json`](docs/images/nf-core-schema-lint.svg)
+![`nf-core schema lint`](docs/images/nf-core-schema-lint.svg)
 
 ## Bumping a pipeline version number
 

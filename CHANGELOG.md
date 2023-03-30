@@ -14,6 +14,10 @@
 
 ### Linting
 
+- Update modules lint test to fail if enable_conda is found ([#2213](https://github.com/nf-core/tools/pull/2213))
+- Read module lint configuration from `.nf-core.yml`, not `.nf-core-lint.yml` ([#2221](https://github.com/nf-core/tools/pull/2221))
+- `nf-core schema lint` now defaults to linting `nextflow_schema.json` if no filename is provided ([#2225](https://github.com/nf-core/tools/pull/2225))
+
 ### Modules
 
 - Add an `--empty-template` option to create a module without TODO statements or examples ([#2175](https://github.com/nf-core/tools/pull/2175) & [#2177](https://github.com/nf-core/tools/pull/2177))
@@ -22,11 +26,13 @@
 
 - Fixing problem when a module included in a subworkflow had a name change from TOOL to TOOL/SUBTOOL ([#2177](https://github.com/nf-core/tools/pull/2177))
 - Fix `nf-core subworkflows test` not running subworkflow tests ([#2181](https://github.com/nf-core/tools/pull/2181))
+- Add tests for `nf-core subworkflows create-test-yml` ([#2219](https://github.com/nf-core/tools/pull/2219))
 
 ### General
 
 - `nf-core modules/subworkflows info` now prints the include statement for the module/subworkflow ([#2182](https://github.com/nf-core/tools/pull/2182)).
 - Add a stale GHA wich stale + close issues and stale PRs with specific labels ([#2183](https://github.com/nf-core/tools/pull/2183))
+- update minimum version of rich to 13.3.1 ([#2185](https://github.com/nf-core/tools/pull/2185))
 - Add the Nextflow version to Gitpod container matching the minimal Nextflow version for nf-core (according to `nextflow.config`) ([#2196](https://github.com/nf-core/tools/pull/2196))
 - Use `nfcore/gitpod:dev` container in the dev branch ([#2196](https://github.com/nf-core/tools/pull/2196))
 - Replace requests_mock with responses in test mocks ([#2165](https://github.com/nf-core/tools/pull/2165)).
