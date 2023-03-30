@@ -59,7 +59,9 @@ class ComponentInstall(ComponentCommand):
             modules_json.check_up_to_date()
 
         # Verify that the remote repo's org_path does not match the org_path of any alternate repo among the installed modules
-        self.check_alternate_remotes(modules_json)
+        if self.check_alternate_remotes(modules_json):
+            err_msg = f"You are trying to install {self.component_type} from different repositories with the same organization name '{self.org}' (set in the `.nf-core.yml` file in the `org_path` field).\nThis is not supported, and will likely cause problems. org_path should be set to the github account/organization name."
+            log.err(err_msg)
 
         # Verify SHA
         if not self.modules_repo.verify_sha(self.prompt, self.sha):
@@ -271,7 +273,7 @@ class ComponentInstall(ComponentCommand):
     def check_alternate_remotes(self, modules_json):
         """
         Check whether there are previously installed components with the same org_path but different remote urls
-        Log warning if multiple remotes exist.
+        Log error if multiple remotes exist.
 
         Return:
             True: if problematic components are found
@@ -284,8 +286,6 @@ class ComponentInstall(ComponentCommand):
                 if dir == self.org and repo_url != self.modules_repo.remote_url:
                     alternate_remotes = True
         if alternate_remotes:
-            warn_msg = f"Multiple module remotes are used with the same org_path '{self.org}': {', '.join(alternate_remotes)}. This may result in reinstalled modules from the wrong remote."
-            log.warning(warn_msg)
             return True
         else:
             return False
