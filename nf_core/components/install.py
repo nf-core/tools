@@ -62,6 +62,7 @@ class ComponentInstall(ComponentCommand):
         if self.check_alternate_remotes(modules_json):
             err_msg = f"You are trying to install {self.component_type} from different repositories with the same organization name '{self.modules_repo.repo_path}' (set in the `.nf-core.yml` file in the `org_path` field).\nThis is not supported, and will likely cause problems. org_path should be set to the github account/organization name."
             log.err(err_msg)
+            return False
 
         # Verify SHA
         if not self.modules_repo.verify_sha(self.prompt, self.sha):
