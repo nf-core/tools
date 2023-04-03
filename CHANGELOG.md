@@ -12,7 +12,7 @@
 - Consistent syntax for branch checks in PRs ([#2202](https://github.com/nf-core/tools/issues/2202))
 - Fixed minor Jinja2 templating bug that caused the PR template to miss a newline
 - Updated AWS tests to use newly moved `seqeralabs/action-tower-launch` instead of `nf-core/tower-action`
-- Added parameter `--registry` to pipeline template for a configurable default container registry.
+- Added parameter `--container_registry` to pipeline template for a configurable default container registry.
 
 ### Linting
 
