@@ -98,6 +98,7 @@ jobs:
       - name: Install mypy
         run: |
           pip install mypy
-          mypy --install-types --non-interactive nf_core/
+          pip install mypy
+          pip install types-Markdown types-PyYAML types-jsonschema types-requests types-setuptools
       - name: Run mypy
         run: mypy nf_core/
