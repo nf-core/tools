@@ -24,4 +24,4 @@ multi_line_output = 3
 [tool.mypy]
 ignore_missing_imports = true
 follow_imports = "skip"
-disable_error_code = no-redef
+disable_error_code = "no-redef"
