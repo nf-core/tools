@@ -98,6 +98,6 @@ jobs:
       - name: Install mypy
         run: |
           pip install mypy
-          mypy --install-types
+          mypy --install-types --non-interactive nf_core/
       - name: Run mypy
         run: mypy nf_core/
