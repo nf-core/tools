@@ -24,3 +24,4 @@ multi_line_output = 3
 [mypy]
 ignore_missing_imports = true
 follow_imports = "skip"
+allow_redefinition = true
