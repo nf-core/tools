@@ -1,6 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -344,7 +345,9 @@ def test_remove_patch(self):
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
-    patch_obj.remove(BISMARK_ALIGN)
+    with mock.patch.object(nf_core.create.questionary, "confirm") as mock_questionary:
+        mock_questionary.unsafe_ask.return_value = True
+        patch_obj.remove(BISMARK_ALIGN)
     # Check that the diff file has been removed
     assert set(os.listdir(module_path)) == {"main.nf", "meta.yml"}
 

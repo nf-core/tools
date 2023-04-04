@@ -175,6 +175,7 @@ class ModulePatch(ComponentCommand):
         module_relpath = Path("modules", module_dir, module)
         patch_relpath = Path(module_relpath, patch_filename)
         patch_path = Path(self.dir, patch_relpath)
+        module_path = Path(self.dir, module_relpath)
 
         if patch_path.exists():
             remove = questionary.confirm(
@@ -186,11 +187,11 @@ class ModulePatch(ComponentCommand):
 
         # Try to apply the patch in reverse and move resulting files to module dir
         temp_module_dir = self.modules_json.try_apply_patch_reverse(
-            module, self.modules_repo.repo_path, patch_relpath, module_relpath
+            module, self.modules_repo.repo_path, patch_relpath, module_path
         )
         try:
             for file in Path(temp_module_dir).glob("*"):
-                file.rename(module_relpath.joinpath(file.name))
+                file.rename(module_path.joinpath(file.name))
             os.rmdir(temp_module_dir)
         except Exception as err:
             raise UserWarning(f"There was a problem reverting the patched file: {err}")
@@ -201,7 +202,7 @@ class ModulePatch(ComponentCommand):
         # Write changes to module.json
         self.modules_json.remove_patch_entry(module, self.modules_repo.remote_url, module_dir)
 
-        if not all(self.modules_repo.module_files_identical(module, module_relpath, module_version).values()):
+        if not all(self.modules_repo.module_files_identical(module, module_path, module_version).values()):
             log.error(
                 f"Module files do not appear to match the remote for the commit sha in the 'module.json': {module_version}\n"
                 f"Recommend reinstalling with 'nf-core modules install --force --sha {module_version} {module}' "
