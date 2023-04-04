@@ -241,7 +241,17 @@ def check_process_section(self, lines, fix_version, progress_bar):
     good_labels = []
     if len(all_labels) > 0:
         for label in all_labels:
-            label = re.match("^label\s+([a-zA-Z0-9_-]+)", label).group(1)
+            try:
+                label = re.match("^label\s+([a-zA-Z0-9_-]+)", label).group(1)
+            except AttributeError:
+                self.warned.append(
+                    (
+                        "process_standard_label",
+                        f"Specified label appears to contain non-alphanumerics: {label}",
+                        self.main_nf,
+                    )
+                )
+                continue
             if label not in correct_process_labels:
                 bad_labels.append(label)
             else:
