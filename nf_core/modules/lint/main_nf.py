@@ -258,6 +258,19 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
             else:
                 self.warned.append(("process_standard_label", "Standard process label not found", self.main_nf))
+            if len(bad_labels) > 0:
+                self.warned.append(
+                    ("process_standard_label", f"Non-standard labels found: `{'`,`'.join(good_labels)}`", self.main_nf)
+                )
+            if len(all_labels) > len(set(all_labels)):
+                self.warned.append(
+                    (
+                        "process_standard_label",
+                        f"Duplicate labels found: `{'`,`'.join(sorted(all_labels))}`",
+                        self.main_nf,
+                    )
+                )
+
     else:
         self.warned.append(("process_standard_label", "Process label not specified", self.main_nf))
     for i, l in enumerate(lines):
