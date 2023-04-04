@@ -322,3 +322,32 @@ def test_create_patch_update_fail(self):
     with open(module_path / patch_fn, "r") as fh:
         new_patch_contents = fh.read()
     assert patch_contents == new_patch_contents
+
+
+def test_remove_patch(self):
+    """Test creating a patch when there is no change to the module"""
+    setup_patch(self.pipeline_dir, True)
+
+    # Try creating a patch file
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
+    patch_obj.patch(BISMARK_ALIGN)
+
+    module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
+
+    # Check that a patch file with the correct name has been created
+    patch_fn = f"{'-'.join(BISMARK_ALIGN.split('/'))}.diff"
+    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
+
+    # Check the 'modules.json' contains a patch file for the module
+    modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
+        "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
+    )
+
+    patch_obj.remove(BISMARK_ALIGN)
+    # Check that the diff file has been removed
+    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml"}
+
+    # Check that the 'modules.json' entry has been removed
+    modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) is None

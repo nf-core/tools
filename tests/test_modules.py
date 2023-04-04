@@ -203,6 +203,7 @@ class TestModules(unittest.TestCase):
         test_create_patch_try_apply_successful,
         test_create_patch_update_fail,
         test_create_patch_update_success,
+        test_remove_patch,
     )
     from .modules.remove import (
         test_modules_remove_multiqc_from_gitlab,
