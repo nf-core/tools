@@ -285,9 +285,26 @@ def check_process_section(self, lines, fix_version, progress_bar):
         self.warned.append(("process_standard_label", "Process label not specified", self.main_nf))
     for i, l in enumerate(lines):
         url = None
-        if _container_type(l) == "bioconda":
-            bioconda_packages = [b for b in l.split() if "bioconda::" in b]
         l = l.strip(" '\"")
+        if _container_type(l) == "conda":
+            bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+            match = re.search(r"params\.enable_conda", l)
+            if match is None:
+                self.passed.append(
+                    (
+                        "deprecated_enable_conda",
+                        f"Deprecated parameter 'params.enable_conda' correctly not found in the conda definition",
+                        self.main_nf,
+                    )
+                )
+            else:
+                self.failed.append(
+                    (
+                        "deprecated_enable_conda",
+                        f"Found deprecated parameter 'params.enable_conda' in the conda definition",
+                        self.main_nf,
+                    )
+                )
         if _container_type(l) == "singularity":
             # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
             # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
@@ -499,7 +516,7 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
     for line in lines:
         l = line.strip(" '\"")
         build_type = _container_type(l)
-        if build_type == "bioconda":
+        if build_type == "conda":
             new_lines.append(re.sub(rf"{current_version}", f"{latest_version}", line))
         elif build_type in ("singularity", "docker"):
             # Check that the new url is valid
@@ -544,8 +561,8 @@ def _get_build(response):
 
 def _container_type(line):
     """Returns the container type of a build."""
-    if re.search("bioconda::", line):
-        return "bioconda"
+    if line.startswith("conda"):
+        return "conda"
     if line.startswith("https://containers") or line.startswith("https://depot"):
         # Look for a http download URL.
         # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
