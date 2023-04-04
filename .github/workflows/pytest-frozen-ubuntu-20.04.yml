@@ -33,6 +33,7 @@ jobs:
 
       - name: Downgrade git to the Ubuntu official repository's version
         run: |
+          sudo apt update
           sudo apt remove git git-man
           sudo add-apt-repository --remove ppa:git-core/ppa
           sudo apt install git
