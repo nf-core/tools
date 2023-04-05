@@ -139,7 +139,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
                 if match:
                     self.entry_points.append(match.group(1))
         if len(self.entry_points) == 0:
-            raise UserWarning("No workflow entry points found in 'self.module_test_main'")
+            raise UserWarning(f"No workflow entry points found in '{self.subworkflow_test_main}'")
 
     def build_all_tests(self):
         """
@@ -195,7 +195,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
                     ).strip()
                     ep_test["tags"] = [t.strip() for t in prompt_tags.split(",")]
 
-        ep_test["files"] = self.get_md5_sums(entry_point, ep_test["command"])
+        ep_test["files"] = self.get_md5_sums(ep_test["command"])
 
         return ep_test
 
@@ -272,7 +272,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
 
         return test_files
 
-    def get_md5_sums(self, entry_point, command, results_dir=None, results_dir_repeat=None):
+    def get_md5_sums(self, command, results_dir=None, results_dir_repeat=None):
         """
         Recursively go through directories and subdirectories
         and generate tuples of (<file_path>, <md5sum>)
