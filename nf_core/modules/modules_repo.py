@@ -302,7 +302,7 @@ class ModulesRepo:
         """
         self.repo.git.checkout(commit)
 
-    def component_exists(self, component_name, component_type, checkout=True):
+    def component_exists(self, component_name, component_type, checkout=True, commit=None):
         """
         Check if a module/subworkflow exists in the branch of the repo
 
@@ -312,7 +312,7 @@ class ModulesRepo:
         Returns:
             (bool): Whether the module/subworkflow exists in this branch of the repository
         """
-        return component_name in self.get_avail_components(component_type, checkout=checkout)
+        return component_name in self.get_avail_components(component_type, checkout=checkout, commit=commit)
 
     def get_component_dir(self, component_name, component_type):
         """
@@ -449,7 +449,7 @@ class ModulesRepo:
                 return message, date
         raise LookupError(f"Commit '{sha}' not found in the '{self.remote_url}'")
 
-    def get_avail_components(self, component_type, checkout=True):
+    def get_avail_components(self, component_type, checkout=True, commit=None):
         """
         Gets the names of the modules/subworkflows in the repository. They are detected by
         checking which directories have a 'main.nf' file
@@ -459,6 +459,8 @@ class ModulesRepo:
         """
         if checkout:
             self.checkout_branch()
+        if commit is not None:
+            self.checkout(commit)
         # Get directory
         if component_type == "modules":
             directory = self.modules_dir

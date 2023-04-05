@@ -147,7 +147,6 @@ def files_unchanged(self):
 
     # Files that must be completely unchanged from template
     for files in files_exact:
-
         # Ignore if file specified in linting config
         ignore_files = self.lint_config.get("files_unchanged", [])
         if any([f in ignore_files for f in files]):
@@ -177,7 +176,6 @@ def files_unchanged(self):
 
     # Files that can be added to, but that must contain the template contents
     for files in files_partial:
-
         # Ignore if file specified in linting config
         ignore_files = self.lint_config.get("files_unchanged", [])
         if any([f in ignore_files for f in files]):

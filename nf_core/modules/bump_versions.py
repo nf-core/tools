@@ -187,7 +187,6 @@ class ModuleVersionBumper(ComponentCommand):
                 found_match = False
                 newcontent = []
                 for line in content.splitlines():
-
                     # Match the pattern
                     matches_pattern = re.findall(rf"^.*{pattern[0]}.*$", line)
                     if matches_pattern:
