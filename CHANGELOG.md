@@ -23,6 +23,7 @@
 ### Modules
 
 - Add an `--empty-template` option to create a module without TODO statements or examples ([#2175](https://github.com/nf-core/tools/pull/2175) & [#2177](https://github.com/nf-core/tools/pull/2177))
+- Removed the `nf-core modules mulled` command and all its code dependencies ([2199](https://github.com/nf-core/tools/pull/2199)).
 
 ### Subworkflows
 
