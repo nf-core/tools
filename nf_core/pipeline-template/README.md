@@ -67,11 +67,6 @@ CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
 
 Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
 
-> **Warning**
-> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those
-> provided by the `-c` Nextflow option can be used to provide any configuration **except for parameters**;
-> see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
-
 Now, you can run the pipeline using:
 
 <!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
@@ -81,6 +76,11 @@ nextflow run {{ name }} \
    --input samplesheet.csv \
    -profile <docker/singularity/.../institute>
 ```
+
+> **Warning**
+> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those
+> provided by the `-c` Nextflow option can be used to provide any configuration **except for parameters**;
+> see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
 
 {% if branded -%}
 
