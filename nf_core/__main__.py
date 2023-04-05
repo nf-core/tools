@@ -341,7 +341,7 @@ def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, ma
     meets the nf-core guidelines. Documentation of all lint tests can be found
     on the nf-core website: [link=https://nf-co.re/tools-docs/]https://nf-co.re/tools-docs/[/]
 
-    You can ignore tests using a file called [blue].nf-core-lint.yaml[/] [i](if you have a good reason!)[/].
+    You can ignore tests using a file called [blue].nf-core.yml[/] [i](if you have a good reason!)[/].
     See the documentation for details.
     """
 
@@ -1398,7 +1398,9 @@ def build(dir, no_prompts, web_only, url):
 
 # nf-core schema lint
 @schema.command()
-@click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<pipeline schema>")
+@click.argument(
+    "schema_path", type=click.Path(exists=True), default="nextflow_schema.json", metavar="<pipeline schema>"
+)
 def lint(schema_path):
     """
     Check that a given pipeline schema is valid.
@@ -1408,6 +1410,8 @@ def lint(schema_path):
 
     This function runs as part of the nf-core lint command, this is a convenience
     command that does just the schema linting nice and quickly.
+
+    If no schema path is provided, "nextflow_schema.json" will be used (if it exists).
     """
     schema_obj = nf_core.schema.PipelineSchema()
     try:
