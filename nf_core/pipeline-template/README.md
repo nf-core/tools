@@ -92,9 +92,9 @@ For more details, please refer to the [usage documentation](https://nf-co.re/{{ 
 
 ## Pipeline output
 
-<!-- TODO nf-core: if your pipeline comes with a full-sized test dataset, add a sentence linking to the dataset and https://nf-co.re/{{ short_name }}/results. -->
-
-For more details, please refer to the [output documentation](https://nf-co.re/{{ short_name }}/output).
+[results](https://nf-co.re/{{ short_name }}/results) section of the documentation.
+For more details about the output files and reports, please refer to the
+[output documentation](https://nf-co.re/{{ short_name }}/output).
 
 {% endif -%}
 
