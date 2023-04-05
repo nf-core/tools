@@ -56,7 +56,7 @@ class PipelineCreate:
         plain=False,
         default_branch=None,
     ):
-        self.template_params, skip_paths_keys = self.create_param_dict(
+        self.template_params, skip_paths_keys, self.template_yaml = self.create_param_dict(
             name, description, author, version, template_yaml_path, plain
         )
 
@@ -178,7 +178,7 @@ class PipelineCreate:
             if not re.match(r"^[a-z]+$", param_dict["short_name"]):
                 raise UserWarning("[red]Invalid workflow name: must be lowercase without punctuation.")
 
-        return param_dict, skip_paths
+        return param_dict, skip_paths, template_yaml
 
     def customize_template(self, template_areas):
         """Customizes the template parameters.
@@ -283,7 +283,6 @@ class PipelineCreate:
 
         # Set the paths to skip according to customization
         for template_fn_path_obj in template_files:
-
             template_fn_path = str(template_fn_path_obj)
 
             # Skip files that are in the self.skip_paths list
@@ -348,6 +347,11 @@ class PipelineCreate:
 
             # Update the .nf-core.yml with linting configurations
             self.fix_linting()
+
+        log.debug("Dumping pipeline template yml to file")
+        if self.template_yaml:
+            with open(self.outdir / "pipeline_template.yml", "w") as fh:
+                yaml.safe_dump(self.template_yaml, fh)
 
     def update_nextflow_schema(self):
         """

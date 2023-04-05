@@ -2,9 +2,9 @@
 
 nextflow.enable.dsl = 2
 
-include { {{ tool_name_underscore|upper }} } from '../../../../{{ "../" if subtool else "" }}modules/{{ org }}/{{ tool_dir }}/main.nf'
+include { {{ component_name_underscore|upper }} } from '../../../../{{ "../" if subtool else "" }}modules/{{ org }}/{{ component_dir }}/main.nf'
 
-workflow test_{{ tool_name_underscore }} {
+workflow test_{{ component_name_underscore }} {
     {% if has_meta %}
     input = [
         [ id:'test', single_end:false ], // meta map
@@ -14,5 +14,5 @@ workflow test_{{ tool_name_underscore }} {
     input = file(params.test_data['sarscov2']['illumina']['test_single_end_bam'], checkIfExists: true)
     {%- endif %}
 
-    {{ tool_name_underscore|upper }} ( input )
+    {{ component_name_underscore|upper }} ( input )
 }

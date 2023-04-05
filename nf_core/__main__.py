@@ -341,7 +341,7 @@ def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, ma
     meets the nf-core guidelines. Documentation of all lint tests can be found
     on the nf-core website: [link=https://nf-co.re/tools-docs/]https://nf-co.re/tools-docs/[/]
 
-    You can ignore tests using a file called [blue].nf-core-lint.yaml[/] [i](if you have a good reason!)[/].
+    You can ignore tests using a file called [blue].nf-core.yml[/] [i](if you have a good reason!)[/].
     See the documentation for details.
     """
 
@@ -678,7 +678,16 @@ def remove(ctx, dir, tool):
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
 @click.option("-c", "--conda-name", type=str, default=None, help="Name of the conda package to use")
 @click.option("-p", "--conda-package-version", type=str, default=None, help="Version of conda package to use")
-def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_name, conda_package_version):
+@click.option(
+    "-i",
+    "--empty-template",
+    is_flag=True,
+    default=False,
+    help="Create a module from the template without TODOs or examples",
+)
+def create_module(
+    ctx, tool, dir, author, label, meta, no_meta, force, conda_name, conda_package_version, empty_template
+):
     """
     Create a new DSL2 module from the nf-core template.
 
@@ -700,7 +709,7 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
     # Run function
     try:
         module_create = nf_core.modules.ModuleCreate(
-            dir, tool, author, label, has_meta, force, conda_name, conda_package_version
+            dir, tool, author, label, has_meta, force, conda_name, conda_package_version, empty_template
         )
         module_create.create()
     except UserWarning as e:
@@ -1389,7 +1398,9 @@ def build(dir, no_prompts, web_only, url):
 
 # nf-core schema lint
 @schema.command()
-@click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<pipeline schema>")
+@click.argument(
+    "schema_path", type=click.Path(exists=True), default="nextflow_schema.json", metavar="<pipeline schema>"
+)
 def lint(schema_path):
     """
     Check that a given pipeline schema is valid.
@@ -1399,6 +1410,8 @@ def lint(schema_path):
 
     This function runs as part of the nf-core lint command, this is a convenience
     command that does just the schema linting nice and quickly.
+
+    If no schema path is provided, "nextflow_schema.json" will be used (if it exists).
     """
     schema_obj = nf_core.schema.PipelineSchema()
     try:

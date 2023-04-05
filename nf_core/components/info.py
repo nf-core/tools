@@ -8,6 +8,7 @@ from rich import box
 from rich.console import Group
 from rich.markdown import Markdown
 from rich.panel import Panel
+from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 
@@ -128,6 +129,19 @@ class ComponentInfo(ComponentCommand):
                     choices=components,
                     style=nf_core.utils.nfcore_question_style,
                 ).unsafe_ask()
+        else:
+            if self.repo_type == "pipeline":
+                # check if the module is locally installed
+                local_paths = self.modules_json.get_all_components(self.component_type).get(
+                    self.modules_repo.remote_url, {}
+                )
+                for directory, comp in local_paths:
+                    if comp == component:
+                        component_base_path = Path(self.dir, self.component_type)
+                        self.local_path = Path(component_base_path, directory, component)
+                        break
+                if self.local_path:
+                    self.local = True
 
         return component
 
@@ -283,12 +297,37 @@ class ComponentInfo(ComponentCommand):
             renderables.append(outputs_table)
 
         # Installation command
-        if self.remote_location:
+        if self.remote_location and not self.local:
             cmd_base = f"nf-core {self.component_type}"
             if self.remote_location != NF_CORE_MODULES_REMOTE:
                 cmd_base = f"nf-core {self.component_type} --git-remote {self.remote_location}"
             renderables.append(
                 Text.from_markup(f"\n :computer:  Installation command: [magenta]{cmd_base} install {self.component}\n")
             )
+
+        # Print include statement
+        if self.local_path:
+            install_folder = Path(self.dir, self.component_type, self.modules_repo.repo_path)
+            component_name = "_".join(self.component.upper().split("/"))
+            renderables.append(
+                Text.from_markup(f"\n [blue]Use the following statement to include this {self.component_type[:-1]}:")
+            )
+            renderables.append(
+                Syntax(
+                    f"include {{ {component_name} }} from '../{Path(install_folder, self.component).relative_to(self.dir)}/main'",
+                    "groovy",
+                    theme="ansi_dark",
+                    padding=1,
+                )
+            )
+            if self.component_type == "subworkflows":
+                subworkflow_config = Path(install_folder, self.component, "nextflow.config").relative_to(self.dir)
+                if os.path.isfile(subworkflow_config):
+                    renderables.append(
+                        Text.from_markup("\n [blue]Add the following config statement to use this subworkflow:")
+                    )
+                    renderables.append(
+                        Syntax(f"includeConfig '{subworkflow_config}'", "groovy", theme="ansi_dark", padding=1)
+                    )
 
         return Group(*renderables)
