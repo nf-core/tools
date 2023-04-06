@@ -4,6 +4,7 @@ import nf_core.subworkflows
 
 from ..utils import GITLAB_SUBWORKFLOWS_BRANCH, GITLAB_URL
 
+from ..utils import remove_template_modules
 
 def test_subworkflows_list_remote(self):
     """Test listing available subworkflows"""
@@ -40,6 +41,7 @@ def test_subworkflows_install_and_list_subworkflows(self):
 
 def test_subworkflows_install_gitlab_and_list_subworkflows(self):
     """Test listing locally installed subworkflows"""
+    remove_template_modules(self)
     self.subworkflow_install_gitlab.install("bam_sort_stats_samtools")
     subworkflows_list = nf_core.subworkflows.SubworkflowList(self.pipeline_dir, remote=False)
     listed_subworkflows = subworkflows_list.list_components()

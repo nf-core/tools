@@ -59,9 +59,10 @@ class TestModules(unittest.TestCase):
         # Set up the schema
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
-        self.pipeline_dir = os.path.join(self.tmp_dir, "mypipeline")
+        self.pipeline_name = "mypipeline"
+        self.pipeline_dir = os.path.join(self.tmp_dir, self.pipeline_name)
         nf_core.create.PipelineCreate(
-            "mypipeline", "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
+            self.pipeline_name, "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
         # Set up install objects
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
@@ -159,6 +160,7 @@ class TestModules(unittest.TestCase):
         test_modules_install_tracking,
         test_modules_install_trimgalore,
         test_modules_install_trimgalore_twice,
+        test_modules_install_alternate_remote,
     )
     from .modules.lint import (
         test_modules_lint_empty,
