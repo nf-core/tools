@@ -76,8 +76,8 @@ def mock_anaconda_api_calls(rsps: responses.RequestsMock, module, version):
     anaconda_mock = {
         "latest_version": version.split("--")[0],
         "summary": "",
-        "doc_url": "",
-        "dev_url": "",
+        "doc_url": "http://test",
+        "dev_url": "http://test",
         "files": [{"version": version.split("--")[0]}],
         "license": "",
     }

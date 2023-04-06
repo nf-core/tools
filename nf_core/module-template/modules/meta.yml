@@ -7,6 +7,8 @@ name: "{{ component_name_underscore }}"
 description: write your description here
 keywords:
   - sort
+  - example
+  - genomics
 tools:
   - "{{ component }}":
       {% if not_empty_template -%}
@@ -34,9 +36,9 @@ input:
   ## TODO nf-core: Delete / customise this example input
   {%- endif %}
   - {{ 'bam:' if not_empty_template else "input:" }}
-    type: file
-    description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
-    pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
+      type: file
+      description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
+      pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
 
 {% if not_empty_template -%}
 ## TODO nf-core: Add a description of all of the variables used as output
@@ -57,9 +59,9 @@ output:
   ## TODO nf-core: Delete / customise this example output
   {%- endif %}
   - {{ 'bam:' if not_empty_template else "output:" }}
-    type: file
-    description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
-    pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
+      type: file
+      description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
+      pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
 
 authors:
   - "{{ author }}"
