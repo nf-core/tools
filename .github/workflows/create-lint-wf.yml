@@ -115,6 +115,7 @@ jobs:
 
       - name: nf-core modules remove
         run: |
+          find nf-core-testpipeline/workflows/ -type f -exec sed -i '/^include /d' {} \;
           nf-core --log-file log.txt modules remove fastqc --dir nf-core-testpipeline/
           nf-core --log-file log.txt modules remove multiqc --dir nf-core-testpipeline/
           nf-core --log-file log.txt modules remove custom/dumpsoftwareversions --dir nf-core-testpipeline/
