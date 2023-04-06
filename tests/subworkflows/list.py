@@ -2,9 +2,8 @@ from rich.console import Console
 
 import nf_core.subworkflows
 
-from ..utils import GITLAB_SUBWORKFLOWS_BRANCH, GITLAB_URL
+from ..utils import GITLAB_SUBWORKFLOWS_BRANCH, GITLAB_URL, remove_template_modules
 
-from ..utils import remove_template_modules
 
 def test_subworkflows_list_remote(self):
     """Test listing available subworkflows"""

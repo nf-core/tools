@@ -24,9 +24,9 @@ from ..utils import (
     GITLAB_URL,
     OLD_TRIMGALORE_BRANCH,
     OLD_TRIMGALORE_SHA,
+    remove_template_modules,
 )
 
-from ..utils import remove_template_modules
 
 def test_install_and_update(self):
     """Installs a module in the pipeline and updates it (no change)"""
@@ -41,6 +41,7 @@ def test_install_and_update(self):
 
     assert update_obj.update("trimgalore") is True
     assert cmp_module(trimgalore_tmpdir, trimgalore_path) is True
+
 
 def test_install_at_hash_and_update(self):
     """Installs an old version of a module in the pipeline and updates it"""

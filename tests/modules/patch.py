@@ -7,9 +7,7 @@ import pytest
 import nf_core.components.components_command
 import nf_core.modules
 
-from ..utils import GITLAB_URL
-
-from ..utils import remove_template_modules
+from ..utils import GITLAB_URL, remove_template_modules
 
 """
 Test the 'nf-core modules patch' command
@@ -41,6 +39,7 @@ def setup_patch(pipeline_dir, modify_module, pipeline_name):
         module_path = Path(pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
         modify_main_nf(module_path / "main.nf")
 
+
 def modify_workflow_nf(path):
     with open(path, "r") as fh:
         lines = fh.readlines()
@@ -48,6 +47,7 @@ def modify_workflow_nf(path):
         for line in lines:
             if not line.startswith("include {"):
                 fh.write(line)
+
 
 def modify_main_nf(path):
     """Modify a file to test patch creation"""

@@ -2,6 +2,7 @@ import os
 
 from ..utils import remove_template_modules
 
+
 def test_modules_remove_trimgalore(self):
     """Test removing TrimGalore! module after installing it"""
     self.mods_install.install("trimgalore")
@@ -13,6 +14,7 @@ def test_modules_remove_trimgalore(self):
 def test_modules_remove_trimgalore_uninstalled(self):
     """Test removing TrimGalore! module without installing it"""
     assert self.mods_remove.remove("trimgalore") is False
+
 
 # Should this check be removed?
 def test_modules_remove_multiqc_from_gitlab(self):

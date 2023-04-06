@@ -151,6 +151,7 @@ class TestModules(unittest.TestCase):
         test_modules_info_remote_gitlab,
     )
     from .modules.install import (
+        test_modules_install_alternate_remote,
         test_modules_install_different_branch_fail,
         test_modules_install_different_branch_succeed,
         test_modules_install_emptypipeline,
@@ -160,7 +161,6 @@ class TestModules(unittest.TestCase):
         test_modules_install_tracking,
         test_modules_install_trimgalore,
         test_modules_install_trimgalore_twice,
-        test_modules_install_alternate_remote,
     )
     from .modules.lint import (
         test_modules_lint_empty,

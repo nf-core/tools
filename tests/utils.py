@@ -107,6 +107,7 @@ def mock_biocontainers_api_calls(rsps: responses.RequestsMock, module, version):
     }
     rsps.get(biocontainers_api_url, json=biocontainers_mock, status=200)
 
+
 def remove_template_modules(self):
     # Remove modules that may cause org_path conflict
     workflow_path = Path(self.pipeline_dir, "workflows", self.pipeline_name + ".nf")
@@ -117,9 +118,7 @@ def remove_template_modules(self):
             if not line.startswith("include {"):
                 fh.write(line)
 
-    remove_obj = nf_core.modules.ModuleRemove(
-        self.pipeline_dir, no_pull=False
-    )
+    remove_obj = nf_core.modules.ModuleRemove(self.pipeline_dir, no_pull=False)
 
-    for i in ['multiqc','fastqc','custom/dumpsoftwareversions']:
+    for i in ["multiqc", "fastqc", "custom/dumpsoftwareversions"]:
         remove_obj.remove(i)

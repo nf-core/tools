@@ -109,6 +109,7 @@ class TestSubworkflows(unittest.TestCase):
     )
     from .subworkflows.install import (
         test_subworkflow_install_nopipeline,
+        test_subworkflows_install_alternate_remote,
         test_subworkflows_install_bam_sort_stats_samtools,
         test_subworkflows_install_bam_sort_stats_samtools_twice,
         test_subworkflows_install_different_branch_fail,
@@ -118,7 +119,6 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_install_tracking,
         test_subworkflows_install_tracking_added_already_installed,
         test_subworkflows_install_tracking_added_super_subworkflow,
-        test_subworkflows_install_alternate_remote,
     )
     from .subworkflows.list import (
         test_subworkflows_install_and_list_subworkflows,

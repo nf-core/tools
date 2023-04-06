@@ -9,10 +9,10 @@ from ..utils import (
     GITLAB_BRANCH_TEST_BRANCH,
     GITLAB_REPO,
     GITLAB_URL,
+    remove_template_modules,
     with_temporary_folder,
 )
 
-from ..utils import remove_template_modules
 
 def test_modules_install_nopipeline(self):
     """Test installing a module - no pipeline given"""
@@ -86,6 +86,7 @@ def test_modules_install_tracking(self):
     assert mod_json["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"]["trimgalore"][
         "installed_by"
     ] == ["modules"]
+
 
 def test_modules_install_alternate_remote(self):
     """Test installing a module from a different remote with the same organization path"""

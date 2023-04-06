@@ -10,10 +10,9 @@ from ..utils import (
     GITLAB_REPO,
     GITLAB_SUBWORKFLOWS_BRANCH,
     GITLAB_URL,
+    remove_template_modules,
     with_temporary_folder,
 )
-
-from ..utils import remove_template_modules
 
 
 def test_subworkflow_install_nopipeline(self):
@@ -143,6 +142,7 @@ def test_subworkflows_install_tracking_added_super_subworkflow(self):
             "installed_by"
         ]
     ) == sorted(["subworkflows", "bam_sort_stats_samtools"])
+
 
 def test_subworkflows_install_alternate_remote(self):
     """Test installing a subworkflow from a different remote with the same organization path"""
