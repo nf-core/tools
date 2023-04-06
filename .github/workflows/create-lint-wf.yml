@@ -115,9 +115,9 @@ jobs:
 
       - name: nf-core modules remove
         run: |
-          nf-core --log-file log.txt modules remove fastqc
-          nf-core --log-file log.txt modules remove multiqc
-          nf-core --log-file log.txt modules remove custom/dumpsoftwareversions
+          nf-core --log-file log.txt modules remove fastqc --dir nf-core-testpipeline/
+          nf-core --log-file log.txt modules remove multiqc --dir nf-core-testpipeline/
+          nf-core --log-file log.txt modules remove custom/dumpsoftwareversions --dir nf-core-testpipeline/
 
       - name: nf-core modules install gitlab
         run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git --branch main install fastqc --force --dir nf-core-testpipeline/
