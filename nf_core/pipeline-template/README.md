@@ -92,7 +92,7 @@ For more details, please refer to the [usage documentation](https://nf-co.re/{{ 
 
 ## Pipeline output
 
-[results](https://nf-co.re/{{ short_name }}/results) section of the documentation.
+To see the the results of a test run with a full size dataset refer to the [results](https://nf-co.re/{{ short_name }}/results) section of the documentation.
 For more details about the output files and reports, please refer to the
 [output documentation](https://nf-co.re/{{ short_name }}/output).
 
