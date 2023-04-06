@@ -16,7 +16,6 @@ def test_modules_remove_trimgalore_uninstalled(self):
     assert self.mods_remove.remove("trimgalore") is False
 
 
-# Should this check be removed?
 def test_modules_remove_multiqc_from_gitlab(self):
     """Test removing multiqc module after installing it from an alternative source"""
     # Remove modules that may cause org_path conflict

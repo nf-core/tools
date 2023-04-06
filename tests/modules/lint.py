@@ -72,11 +72,9 @@ def test_modules_lint_gitlab_modules(self):
     assert len(module_lint.warned) >= 0
 
 
-# should we remove this? We want to test multiple remotes but not for linting!
 def test_modules_lint_multiple_remotes(self):
     """Lint modules from a different remote"""
     remove_template_modules(self)
-    # self.mods_install.install("fastqc")
     self.mods_install_gitlab.install("multiqc")
     module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
     module_lint.lint(print_results=False, all_modules=True)
