@@ -10,6 +10,7 @@ from ..utils import (
     GITLAB_REPO,
     GITLAB_SUBWORKFLOWS_BRANCH,
     GITLAB_URL,
+    remove_template_modules,
     with_temporary_folder,
 )
 
@@ -62,6 +63,7 @@ def test_subworkflows_install_bam_sort_stats_samtools_twice(self):
 
 def test_subworkflows_install_from_gitlab(self):
     """Test installing a subworkflow from GitLab"""
+    remove_template_modules(self)
     assert self.subworkflow_install_gitlab.install("bam_stats_samtools") is True
     # Verify that the branch entry was added correctly
     modules_json = ModulesJson(self.pipeline_dir)
@@ -140,3 +142,9 @@ def test_subworkflows_install_tracking_added_super_subworkflow(self):
             "installed_by"
         ]
     ) == sorted(["subworkflows", "bam_sort_stats_samtools"])
+
+
+def test_subworkflows_install_alternate_remote(self):
+    """Test installing a subworkflow from a different remote with the same organization path"""
+    self.subworkflow_install.install("bam_sort_stats_samtools")
+    assert self.subworkflow_install_gitlab.install("bam_stats_samtools") is False
