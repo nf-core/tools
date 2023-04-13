@@ -114,7 +114,7 @@ class DownloadWorkflow:
         self.wf_revisions = {}
         self.wf_branches = {}
         self.wf_sha = {}
-        self.wf_download_url = None
+        self.wf_download_url = {}
         self.nf_config = {}
         self.containers = []
 
@@ -162,7 +162,7 @@ class DownloadWorkflow:
         else:
             summary_log.append(f"Output directory: '{self.outdir}'")
 
-        if len(self.revision) == 1:
+        if not self.tower:
             # Only show entry, if option was prompted.
             summary_log.append(f"Include default institutional configuration: '{self.include_configs}'")
 
@@ -187,8 +187,20 @@ class DownloadWorkflow:
         # Summary log
         log.info("Saving '{}'\n {}".format(self.pipeline, "\n ".join(summary_log)))
 
+        # Perform the actual download
+        if self.tower:
+            # self.download_workflow_tower()
+            pass
+        else:
+            self.download_workflow_classic()
+
     def download_workflow_classic(self):
         """Downloads a nf-core workflow from GitHub to the local file system in a self-contained manner."""
+
+        import pdb
+
+        pdb.set_trace()
+
         # Download the pipeline files
         log.info("Downloading workflow files from GitHub")
         self.download_wf_files()
@@ -301,9 +313,13 @@ class DownloadWorkflow:
             else:
                 self.outdir = f"{self.pipeline.replace('/', '-').lower()}_{self.revision[0]}"
 
-        if not self.tower and bool(self.wf_sha):
-            # Set the download URL and return - only applicable for classic downloads
-            self.wf_download_url = f"https://github.com/{self.pipeline}/archive/{list(self.wf_sha.values())[0]}.zip"
+        if not self.tower:
+            for revision, wf_sha in self.wf_sha.items():
+                # Set the download URL and return - only applicable for classic downloads
+                self.wf_download_url = {
+                    **self.wf_download_url,
+                    revision: f"https://github.com/{self.pipeline}/archive/{wf_sha}.zip",
+                }
 
     def prompt_config_inclusion(self):
         """Prompt for inclusion of institutional configurations"""
@@ -903,9 +919,6 @@ class WorkflowRepo(SyncedRepo):
             hide_progress (bool, optional): Whether to hide the progress bar. Defaults to False.
             in_cache (bool, optional): Whether to clone the repository from the cache. Defaults to False.
         """
-        import pdb
-
-        pdb.set_trace()
 
         self.remote_url = remote_url
         self.revision = [].extend(revision) if revision else []
