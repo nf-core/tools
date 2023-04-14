@@ -197,28 +197,32 @@ class DownloadWorkflow:
     def download_workflow_classic(self):
         """Downloads a nf-core workflow from GitHub to the local file system in a self-contained manner."""
 
-        import pdb
-
-        pdb.set_trace()
-
-        # Download the pipeline files
-        log.info("Downloading workflow files from GitHub")
-        self.download_wf_files()
-
-        # Download the centralised configs
+        # Download the centralised configs first
         if self.include_configs:
             log.info("Downloading centralised configs from GitHub")
             self.download_configs()
-            try:
-                self.wf_use_local_configs()
-            except FileNotFoundError as e:
-                log.error("Error editing pipeline config file to use local configs!")
-                log.critical(e)
-                sys.exit(1)
+
+        # Download the pipeline files for each selected revision
+        log.info("Downloading workflow files from GitHub")
+
+        for item in zip(self.revision, self.wf_sha.values(), self.wf_download_url.values()):
+            revision_dirname = self.download_wf_files(revision=item[0], wf_sha=item[1], download_url=item[2])
+
+            if self.include_configs:
+                try:
+                    self.wf_use_local_configs(revision_dirname)
+                except FileNotFoundError as e:
+                    log.error("Error editing pipeline config file to use local configs!")
+                    log.critical(e)
+                    sys.exit(1)
+
+            # Collect all required singularity images
+            if self.container == "singularity":
+                self.find_container_images(revision_dirname)
 
         # Download the singularity images
         if self.container == "singularity":
-            self.find_container_images()
+            log.info(f"Found {len(self.containers)} container{'s' if len(self.containers) > 1 else ''}")
             try:
                 self.get_singularity_images()
             except OSError as e:
@@ -442,23 +446,28 @@ class DownloadWorkflow:
         if self.compress_type == "none":
             self.compress_type = None
 
-    def download_wf_files(self):
+    def download_wf_files(self, revision, wf_sha, download_url):
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
-        log.debug(f"Downloading {self.wf_download_url}")
+        log.debug(f"Downloading {download_url}")
 
         # Download GitHub zip file into memory and extract
-        url = requests.get(self.wf_download_url)
+        url = requests.get(download_url)
         with ZipFile(io.BytesIO(url.content)) as zipfile:
             zipfile.extractall(self.outdir)
 
+        # create a filesystem-safe version of the revision name for the directory
+        revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", revision)
+
         # Rename the internal directory name to be more friendly
-        gh_name = f"{self.pipeline}-{list(self.wf_sha.values())[0] if bool(self.wf_sha) else ''}".split("/")[-1]
-        os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, "workflow"))
+        gh_name = f"{self.pipeline}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
+        os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, revision_dirname))
 
         # Make downloaded files executable
-        for dirpath, _, filelist in os.walk(os.path.join(self.outdir, "workflow")):
+        for dirpath, _, filelist in os.walk(os.path.join(self.outdir, revision_dirname)):
             for fname in filelist:
                 os.chmod(os.path.join(dirpath, fname), 0o775)
+
+        return revision_dirname
 
     def download_configs(self):
         """Downloads the centralised config profiles from nf-core/configs to :attr:`self.outdir`."""
@@ -479,9 +488,9 @@ class DownloadWorkflow:
             for fname in filelist:
                 os.chmod(os.path.join(dirpath, fname), 0o775)
 
-    def wf_use_local_configs(self):
+    def wf_use_local_configs(self, revision_dirname):
         """Edit the downloaded nextflow.config file to use the local config files"""
-        nfconfig_fn = os.path.join(self.outdir, "workflow", "nextflow.config")
+        nfconfig_fn = os.path.join(self.outdir, revision_dirname, "nextflow.config")
         find_str = "https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}"
         repl_str = "${projectDir}/../configs/"
         log.debug(f"Editing 'params.custom_config_base' in '{nfconfig_fn}'")
@@ -507,7 +516,7 @@ class DownloadWorkflow:
         with open(nfconfig_fn, "w") as nfconfig_fh:
             nfconfig_fh.write(nfconfig)
 
-    def find_container_images(self):
+    def find_container_images(self, revision_dirname):
         """Find container image names for workflow.
 
         Starts by using `nextflow config` to pull out any process.container
@@ -533,15 +542,23 @@ class DownloadWorkflow:
                 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
                 'biocontainers/fastqc:0.11.9--0' }"
 
+        Later DSL2, variable is being used:
+            container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+                "https://depot.galaxyproject.org/singularity/${container_id}" :
+                "quay.io/biocontainers/${container_id}" }"
+
+            container_id = 'mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:afaaa4c6f5b308b4b6aa2dd8e99e1466b2a6b0cd-0'
+
         DSL1 / Special case DSL2:
             container "nfcore/cellranger:6.0.2"
         """
 
         log.debug("Fetching container names for workflow")
-        containers_raw = []
+        # since this is run for multiple versions now, account for previous invocations
+        containers_raw = [] if not self.containers else self.containers
 
         # Use linting code to parse the pipeline nextflow config
-        self.nf_config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, "workflow"))
+        self.nf_config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, revision_dirname))
 
         # Find any config variables that look like a container
         for k, v in self.nf_config.items():
@@ -549,7 +566,7 @@ class DownloadWorkflow:
                 containers_raw.append(v.strip('"').strip("'"))
 
         # Recursive search through any DSL2 module files for container spec lines.
-        for subdir, _, files in os.walk(os.path.join(self.outdir, "workflow", "modules")):
+        for subdir, _, files in os.walk(os.path.join(self.outdir, revision_dirname, "modules")):
             for file in files:
                 if file.endswith(".nf"):
                     file_path = os.path.join(subdir, file)
@@ -569,26 +586,60 @@ class DownloadWorkflow:
                                     break  # Prioritise http, exit loop as soon as we find it
 
                                 # No https download, is the entire container string a docker URI?
-                                else:
-                                    # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
-                                    docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
-                                    docker_match = re.match(docker_regex, match.strip(), re.S)
-                                    if docker_match:
-                                        this_container = docker_match.group(0)
+                                # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
+                                docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
+                                docker_match = re.match(docker_regex, match.strip(), re.S)
+                                if docker_match:
+                                    this_container = docker_match.group(0)
+                                    break
 
-                                    # Don't recognise this, throw a warning
-                                    else:
-                                        log.error(
-                                            f"[red]Cannot parse container string in '{file_path}':\n\n{textwrap.indent(match, '    ')}\n\n:warning: Skipping this singularity image.."
-                                        )
+                                """
+                                Some modules declare the container as separate variable. This entails that " instead of ' is used,
+                                so the above regex will match, but end prematurely before the container name is captured.
+
+                                Therefore, we need to repeat the search over the contents, extract the variable name, and use it inside a new regex.
+
+                                To get the variable name ( ${container_id} in above example ), we match the literal word "container" and use lookbehind (reset the match).
+                                Then we skip [^\${}]+ everything that is not $ or curly braces. The next capture group is
+                                ${ followed by any characters that are not curly braces [^{}]+ and ended by a closing curly brace (}),
+                                but only if it's not followed by any other curly braces (?![^{]*}). The latter ensures we capture the innermost
+                                variable name.
+                                """
+                                container_definition = re.search(
+                                    r"(?<=container)[^\${}]+\${([^{}]+)}(?![^{]*})", contents
+                                )
+
+                                if bool(container_definition) & bool(container_definition.group(1)):
+                                    pattern = re.escape(container_definition.group(1))
+                                    # extract the quoted string(s) following the variable assignment
+                                    container_names = re.findall(r"%s\s*=\s*[\"\']([^\"\']+)[\"\']" % pattern, contents)
+
+                                    if bool(container_names):
+                                        if isinstance(container_names, str):
+                                            this_container = (
+                                                f"https://depot.galaxyproject.org/singularity/{container_names}"
+                                            )
+                                            break
+                                        elif isinstance(container_names, list):
+                                            for container_name in container_names:
+                                                containers_raw.append(
+                                                    f"https://depot.galaxyproject.org/singularity/{container_name}"
+                                                )
+                                        else:
+                                            # didn't find valid container declaration, but parsing succeeded.
+                                            this_container = None
+
+                                    break  # break the loop like for url_match and docker_match
+                                else:  # giving up
+                                    log.error(
+                                        f"[red]Cannot parse container string in '{file_path}':\n\n{textwrap.indent(match, '    ')}\n\n:warning: Skipping this singularity image.."
+                                    )
 
                         if this_container:
                             containers_raw.append(this_container)
 
         # Remove duplicates and sort
         self.containers = sorted(list(set(containers_raw)))
-
-        log.info(f"Found {len(self.containers)} container{'s' if len(self.containers) > 1 else ''}")
 
     def get_singularity_images(self):
         """Loop through container names and download Singularity images"""
