@@ -5,7 +5,7 @@ import pytest
 
 import nf_core.modules
 
-from ..utils import GITLAB_URL, remove_template_modules, set_wd
+from ..utils import GITLAB_URL, set_wd
 from .patch import BISMARK_ALIGN, CORRECT_SHA, PATCH_BRANCH, REPO_NAME, modify_main_nf
 
 
@@ -62,7 +62,6 @@ def test_modules_lint_no_gitlab(self):
 
 def test_modules_lint_gitlab_modules(self):
     """Lint modules from a different remote"""
-    remove_template_modules(self)
     self.mods_install_gitlab.install("fastqc")
     self.mods_install_gitlab.install("multiqc")
     module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
@@ -74,7 +73,7 @@ def test_modules_lint_gitlab_modules(self):
 
 def test_modules_lint_multiple_remotes(self):
     """Lint modules from a different remote"""
-    remove_template_modules(self)
+    self.mods_install.install("fastqc")
     self.mods_install_gitlab.install("multiqc")
     module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
     module_lint.lint(print_results=False, all_modules=True)
@@ -87,7 +86,6 @@ def test_modules_lint_patched_modules(self):
     """
     Test creating a patch file and applying it to a new version of the the files
     """
-    remove_template_modules(self)
     setup_patch(self.pipeline_dir, True)
 
     # Create a patch file

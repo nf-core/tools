@@ -48,10 +48,9 @@ class TestSubworkflows(unittest.TestCase):
         # Set up the pipeline structure
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
-        self.pipeline_name = "mypipeline"
-        self.pipeline_dir = os.path.join(self.tmp_dir, self.pipeline_name)
+        self.pipeline_dir = os.path.join(self.tmp_dir, "mypipeline")
         nf_core.create.PipelineCreate(
-            self.pipeline_name, "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
+            "mypipeline", "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
 
         # Set up the nf-core/modules repo dummy
@@ -109,7 +108,6 @@ class TestSubworkflows(unittest.TestCase):
     )
     from .subworkflows.install import (
         test_subworkflow_install_nopipeline,
-        test_subworkflows_install_alternate_remote,
         test_subworkflows_install_bam_sort_stats_samtools,
         test_subworkflows_install_bam_sort_stats_samtools_twice,
         test_subworkflows_install_different_branch_fail,
