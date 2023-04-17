@@ -689,8 +689,11 @@ class DownloadWorkflow:
                     containers_pull.append([container, out_path, cache_path])
 
                 # Exit if we need to pull images and Singularity is not installed
-                if len(containers_pull) > 0 and shutil.which("singularity") is None:
-                    raise OSError("Singularity is needed to pull images, but it is not installed")
+                if len(containers_pull) > 0:
+                    if not shutil.which("singularity") or not shutil.which("apptainer"):
+                        raise OSError(
+                            "Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH"
+                        )
 
                 # Go through each method of fetching containers in order
                 for container in containers_exist:
@@ -881,7 +884,12 @@ class DownloadWorkflow:
 
         # Pull using singularity
         address = f"docker://{container.replace('docker://', '')}"
-        singularity_command = ["singularity", "pull", "--name", output_path, address]
+        if shutil.which("singularity"):
+            singularity_command = ["singularity", "pull", "--name", output_path, address]
+        elif shutil.which("apptainer"):
+            singularity_command = ["apptainer", "pull", "--name", output_path, address]
+        else:
+            raise OSError("Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH")
         log.debug(f"Building singularity image: {address}")
         log.debug(f"Singularity command: {' '.join(singularity_command)}")
 
