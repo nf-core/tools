@@ -7,7 +7,7 @@ import pytest
 import nf_core.components.components_command
 import nf_core.modules
 
-from ..utils import GITLAB_URL, remove_template_modules
+from ..utils import GITLAB_URL
 
 """
 Test the 'nf-core modules patch' command
@@ -69,9 +69,6 @@ def modify_main_nf(path):
 
 def test_create_patch_no_change(self):
     """Test creating a patch when there is no change to the module"""
-    # Remove modules that may cause org_path conflict
-    remove_template_modules(self)
-
     setup_patch(self.pipeline_dir, False, self.pipeline_name)
 
     # Try creating a patch file
@@ -91,9 +88,6 @@ def test_create_patch_no_change(self):
 
 def test_create_patch_change(self):
     """Test creating a patch when there is a change to the module"""
-    # Remove modules that may cause org_path conflict
-    remove_template_modules(self)
-
     setup_patch(self.pipeline_dir, True, self.pipeline_name)
 
     # Try creating a patch file
@@ -127,8 +121,6 @@ def test_create_patch_try_apply_successful(self):
     """
     Test creating a patch file and applying it to a new version of the the files
     """
-    # Remove modules that may cause org_path conflict
-    remove_template_modules(self)
 
     setup_patch(self.pipeline_dir, True, self.pipeline_name)
     module_relpath = Path("modules", REPO_NAME, BISMARK_ALIGN)
@@ -196,8 +188,6 @@ def test_create_patch_try_apply_failed(self):
     """
     Test creating a patch file and applying it to a new version of the the files
     """
-    # Remove modules that may cause org_path conflict
-    remove_template_modules(self)
 
     setup_patch(self.pipeline_dir, True, self.pipeline_name)
     module_relpath = Path("modules", REPO_NAME, BISMARK_ALIGN)
@@ -237,8 +227,6 @@ def test_create_patch_update_success(self):
     Should have the same effect as 'test_create_patch_try_apply_successful'
     but uses higher level api
     """
-    # Remove modules that may cause org_path conflict
-    remove_template_modules(self)
 
     setup_patch(self.pipeline_dir, True, self.pipeline_name)
     module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
@@ -301,8 +289,6 @@ def test_create_patch_update_fail(self):
     """
     Test creating a patch file and updating a module when there is a diff conflict
     """
-    # Remove modules that may cause org_path conflict
-    remove_template_modules(self)
 
     setup_patch(self.pipeline_dir, True, self.pipeline_name)
     module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
