@@ -189,8 +189,7 @@ class DownloadWorkflow:
 
         # Perform the actual download
         if self.tower:
-            # self.download_workflow_tower()
-            pass
+            self.download_workflow_tower()
         else:
             self.download_workflow_classic()
 
@@ -242,8 +241,13 @@ class DownloadWorkflow:
         self.workflow_repo = WorkflowRepo(
             remote_url=f"git@github.com:{self.pipeline}.git",
             revision=self.revision if self.revision else None,
-            commit=self.wf_sha.values if bool(self.wf_sha) else None,
+            commit=self.wf_sha.values() if bool(self.wf_sha) else None,
+            in_cache=False,
         )
+
+        import pdb
+
+        pdb.set_trace()
 
         if self.include_configs:
             log.info("Downloading centralised configs from GitHub")
@@ -457,6 +461,9 @@ class DownloadWorkflow:
 
         # create a filesystem-safe version of the revision name for the directory
         revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", revision)
+        # account for name collisions, if there is a branch / release named "configs" or "singularity-images"
+        if revision_dirname in ["configs", "singularity-images"]:
+            revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", self.pipeline + revision_dirname)
 
         # Rename the internal directory name to be more friendly
         gh_name = f"{self.pipeline}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
@@ -980,16 +987,25 @@ class WorkflowRepo(SyncedRepo):
         """
 
         self.remote_url = remote_url
-        self.revision = [].extend(revision) if revision else []
-        self.commit = [].extend(commit) if commit else []
-        self.hide_progress = hide_progress
+        if isinstance(revision, str):
+            self.revision = [revision]
+        elif isinstance(revision, list):
+            self.revision = [*revision]
+        else:
+            self.revision = []
+        if isinstance(commit, str):
+            self.commit = [commit]
+        elif isinstance(revision, list):
+            self.commit = [*commit]
+        else:
+            self.commit = []
         self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
-        self.setup_local_repo(remote_url, commit, hide_progress, in_cache=in_cache)
+        self.setup_local_repo(remote_url, commit=None, in_cache=in_cache)
 
     def __repr__(self):
         """Called by print, creates representation of object"""
-        return f"<Locally cached repository: {self.fullname}>"
+        return f"<Locally cached repository: {self.fullname}, revisions {', '.join(self.revision)} >"
 
     def retry_setup_local_repo(self):
         if rich.prompt.Confirm.ask(f"[violet]Delete local cache '{self.local_repo_dir}' and try again?"):
@@ -999,7 +1015,7 @@ class WorkflowRepo(SyncedRepo):
         else:
             raise LookupError("Exiting due to error with local modules git repo")
 
-    def setup_local_repo(self, remote, commit, hide_progress=False, in_cache=True):
+    def setup_local_repo(self, remote, commit=None, in_cache=True):
         """
         Sets up the local git repository. If the repository has been cloned previously, it
         returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
@@ -1007,7 +1023,7 @@ class WorkflowRepo(SyncedRepo):
 
         Args:
             remote (str): git url of remote
-            branch (str): name of branch to use
+            commit (str): name of branch to checkout from (optional)
             hide_progress (bool, optional): Whether to hide the progress bar. Defaults to False.
             in_cache (bool, optional): Whether to clone the repository from the cache. Defaults to False.
         Sets self.repo
@@ -1022,7 +1038,7 @@ class WorkflowRepo(SyncedRepo):
                         rich.progress.BarColumn(bar_width=None),
                         "[bold yellow]{task.fields[state]}",
                         transient=True,
-                        disable=hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
+                        disable=os.environ.get("HIDE_PROGRESS", None) is not None,
                     )
                     with pbar:
                         self.repo = git.Repo.clone_from(
@@ -1045,7 +1061,7 @@ class WorkflowRepo(SyncedRepo):
                         rich.progress.BarColumn(bar_width=None),
                         "[bold yellow]{task.fields[state]}",
                         transient=True,
-                        disable=hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
+                        disable=os.environ.get("HIDE_PROGRESS", None) is not None,
                     )
                     with pbar:
                         self.repo.remotes.origin.fetch(
@@ -1057,41 +1073,5 @@ class WorkflowRepo(SyncedRepo):
             log.error(f"[red]Could not set up local cache of modules repository:[/]\n{e}\n")
             self.retry_setup_local_repo()
         finally:
-            self.repo.git.checkout(commit)
-
-    def add_nfcore_configs(self, commit, hide_progress=False):
-        """
-        Pulls the configuration profiles from the nf-core/config repository on GitHub.
-
-        Args:
-            commit: The config version to pull
-            hide_progress (bool, optional): Whether to hide the progress bar. Defaults to False.
-        Sets self.repo
-        """
-
-        try:
-            if os.path.exists(self.local_repo_dir):
-                try:
-                    pbar = rich.progress.Progress(
-                        "[bold blue]{task.description}",
-                        rich.progress.BarColumn(bar_width=None),
-                        "[bold yellow]{task.fields[state]}",
-                        transient=True,
-                        disable=hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
-                    )
-                    with pbar:
-                        self.configs = git.Submodule.add(
-                            self.repo,
-                            "nf-core configuration",
-                            "./conf_institutional",
-                            f"git@github.com:nf-core/configs.git",
-                            progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Adding configuration"),
-                        )
-                except GitCommandError:
-                    raise LookupError(f"Failed to retrieve configuration: `{remote}`")
-
-        except (GitCommandError, InvalidGitRepositoryError) as e:
-            log.error(f"[red]Could not set up local cache of modules repository:[/]\n{e}\n")
-            self.retry_setup_local_repo()
-        finally:
-            self.repo.git.checkout(commit)
+            if commit:
+                self.repo.git.checkout(commit)
