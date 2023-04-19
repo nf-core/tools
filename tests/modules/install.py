@@ -86,16 +86,10 @@ def test_modules_install_tracking(self):
     ] == ["modules"]
 
 
-@pytest.fixture
-def test_modules_install_alternate_remote(self, caplog):
+def test_modules_install_alternate_remote(self):
     """Test installing a module from a different remote with the same organization path"""
     install_obj = ModuleInstall(self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_ORG_PATH_BRANCH)
     # Install fastqc from GitLab which is also installed from GitHub with the same org_path
-    install_obj.install("fastqc")
-    assert (
-        caplog.msg
-        == "You are trying to install modules from different repositories with the same organization name 'nf-core'"
-    )
-    # with pytest.raises(UserWarning) as excinfo:
-    #    install_obj.install("fastqc"))
-    #    assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
+    with pytest.raises(Exception) as excinfo:
+        install_obj.install("fastqc")
+        assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)

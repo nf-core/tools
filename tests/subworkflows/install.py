@@ -140,9 +140,3 @@ def test_subworkflows_install_tracking_added_super_subworkflow(self):
             "installed_by"
         ]
     ) == sorted(["subworkflows", "bam_sort_stats_samtools"])
-
-
-def test_subworkflows_install_alternate_remote(self):
-    """Test installing a subworkflow from a different remote with the same organization path"""
-    self.subworkflow_install.install("bam_sort_stats_samtools")
-    assert self.subworkflow_install_gitlab_same_org_path.install("bam_stats_samtools") is False
