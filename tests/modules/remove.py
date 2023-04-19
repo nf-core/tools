@@ -17,6 +17,6 @@ def test_modules_remove_trimgalore_uninstalled(self):
 def test_modules_remove_multiqc_from_gitlab(self):
     """Test removing multiqc module after installing it from an alternative source"""
     self.mods_install_gitlab.install("multiqc")
-    module_path = os.path.join(self.mods_install_gitlab.dir, "modules", "nf-core", "multiqc")
+    module_path = os.path.join(self.mods_install_gitlab.dir, "modules", "nf-core-test", "multiqc")
     assert self.mods_remove_gitlab.remove("multiqc", force=True)
     assert os.path.exists(module_path) is False
