@@ -245,12 +245,29 @@ class DownloadWorkflow:
             in_cache=False,
         )
 
-        import pdb
+        # Remove tags for those revisions that had not been selected
+        self.workflow_repo.tidy_tags()
 
-        pdb.set_trace()
+        # extract the required containers
+        if self.container == "singularity":
+            for commit in self.wf_sha.values():
+                # Checkout the repo in the current revision
+                self.workflow_repo.checkout(commit)
+                # Collect all required singularity images
+                self.find_container_images(self.workflow_repo.access())
 
-        if self.include_configs:
-            log.info("Downloading centralised configs from GitHub")
+                # Download the singularity images
+                log.info(f"Found {len(self.containers)} container{'s' if len(self.containers) > 1 else ''}")
+                try:
+                    self.get_singularity_images()
+                except OSError as e:
+                    log.critical(f"[red]{e}[/]")
+                    sys.exit(1)
+
+            # Compress into an archive
+            if self.compress_type is not None:
+                log.info("Compressing images")
+                self.compress_download()
 
     def prompt_pipeline_name(self):
         """Prompt for the pipeline name if not set with a flag"""
@@ -973,7 +990,15 @@ class WorkflowRepo(SyncedRepo):
 
     """
 
-    def __init__(self, remote_url, revision, commit, no_pull=False, hide_progress=False, in_cache=True):
+    def __init__(
+        self,
+        remote_url,
+        revision,
+        commit,
+        no_pull=False,
+        hide_progress=False,
+        in_cache=True,
+    ):
         """
         Initializes the object and clones the workflows git repository if it is not already present
 
@@ -985,7 +1010,6 @@ class WorkflowRepo(SyncedRepo):
             hide_progress (bool, optional): Whether to hide the progress bar. Defaults to False.
             in_cache (bool, optional): Whether to clone the repository from the cache. Defaults to False.
         """
-
         self.remote_url = remote_url
         if isinstance(revision, str):
             self.revision = [revision]
@@ -1001,11 +1025,23 @@ class WorkflowRepo(SyncedRepo):
             self.commit = []
         self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
-        self.setup_local_repo(remote_url, commit=None, in_cache=in_cache)
+        self.setup_local_repo(remote_url, in_cache=in_cache)
+
+        # expose some instance attributes
+        self.tags = self.repo.tags
 
     def __repr__(self):
         """Called by print, creates representation of object"""
-        return f"<Locally cached repository: {self.fullname}, revisions {', '.join(self.revision)} >"
+        return f"<Locally cached repository: {self.fullname}, revisions {', '.join(self.revision)}\n cached at: {self.local_repo_dir}>"
+
+    def access(self):
+        if os.path.exists(self.local_repo_dir):
+            return self.local_repo_dir
+        else:
+            return None
+
+    def checkout(self, commit):
+        return super().checkout(commit)
 
     def retry_setup_local_repo(self):
         if rich.prompt.Confirm.ask(f"[violet]Delete local cache '{self.local_repo_dir}' and try again?"):
@@ -1015,7 +1051,7 @@ class WorkflowRepo(SyncedRepo):
         else:
             raise LookupError("Exiting due to error with local modules git repo")
 
-    def setup_local_repo(self, remote, commit=None, in_cache=True):
+    def setup_local_repo(self, remote, in_cache=True):
         """
         Sets up the local git repository. If the repository has been cloned previously, it
         returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
@@ -1072,6 +1108,14 @@ class WorkflowRepo(SyncedRepo):
         except (GitCommandError, InvalidGitRepositoryError) as e:
             log.error(f"[red]Could not set up local cache of modules repository:[/]\n{e}\n")
             self.retry_setup_local_repo()
-        finally:
-            if commit:
-                self.repo.git.checkout(commit)
+
+    def tidy_tags(self):
+        """
+        Function to delete all tags that point to revisions that are not of interest to the downloader.
+        This allows a clutter-free experience in Tower. The commits are evidently still available.
+        """
+        if self.revision and self.repo and self.repo.tags:
+            for tag in self.repo.tags:
+                if tag.name not in self.revision:
+                    self.repo.delete_tag(tag)
+            self.tags = self.repo.tags
