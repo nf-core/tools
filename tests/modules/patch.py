@@ -26,7 +26,7 @@ PATCH_BRANCH = "patch-tester"
 REPO_URL = "https://gitlab.com/nf-core/modules-test.git"
 
 
-def setup_patch(pipeline_dir, modify_module, pipeline_name):
+def setup_patch(pipeline_dir, modify_module):
     install_obj = nf_core.modules.ModuleInstall(
         pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH, sha=ORG_SHA
     )
@@ -38,15 +38,6 @@ def setup_patch(pipeline_dir, modify_module, pipeline_name):
         # Modify the module
         module_path = Path(pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
         modify_main_nf(module_path / "main.nf")
-
-
-def modify_workflow_nf(path):
-    with open(path, "r") as fh:
-        lines = fh.readlines()
-    with open(path, "w") as fh:
-        for line in lines:
-            if not line.startswith("include {"):
-                fh.write(line)
 
 
 def modify_main_nf(path):
@@ -69,7 +60,7 @@ def modify_main_nf(path):
 
 def test_create_patch_no_change(self):
     """Test creating a patch when there is no change to the module"""
-    setup_patch(self.pipeline_dir, False, self.pipeline_name)
+    setup_patch(self.pipeline_dir, False)
 
     # Try creating a patch file
     patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
@@ -88,7 +79,7 @@ def test_create_patch_no_change(self):
 
 def test_create_patch_change(self):
     """Test creating a patch when there is a change to the module"""
-    setup_patch(self.pipeline_dir, True, self.pipeline_name)
+    setup_patch(self.pipeline_dir, True)
 
     # Try creating a patch file
     patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
@@ -122,7 +113,7 @@ def test_create_patch_try_apply_successful(self):
     Test creating a patch file and applying it to a new version of the the files
     """
 
-    setup_patch(self.pipeline_dir, True, self.pipeline_name)
+    setup_patch(self.pipeline_dir, True)
     module_relpath = Path("modules", REPO_NAME, BISMARK_ALIGN)
     module_path = Path(self.pipeline_dir, module_relpath)
 
@@ -189,7 +180,7 @@ def test_create_patch_try_apply_failed(self):
     Test creating a patch file and applying it to a new version of the the files
     """
 
-    setup_patch(self.pipeline_dir, True, self.pipeline_name)
+    setup_patch(self.pipeline_dir, True)
     module_relpath = Path("modules", REPO_NAME, BISMARK_ALIGN)
     module_path = Path(self.pipeline_dir, module_relpath)
 
@@ -228,7 +219,7 @@ def test_create_patch_update_success(self):
     but uses higher level api
     """
 
-    setup_patch(self.pipeline_dir, True, self.pipeline_name)
+    setup_patch(self.pipeline_dir, True)
     module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
 
     # Try creating a patch file
@@ -290,7 +281,7 @@ def test_create_patch_update_fail(self):
     Test creating a patch file and updating a module when there is a diff conflict
     """
 
-    setup_patch(self.pipeline_dir, True, self.pipeline_name)
+    setup_patch(self.pipeline_dir, True)
     module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
 
     # Try creating a patch file

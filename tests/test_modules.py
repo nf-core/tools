@@ -66,7 +66,6 @@ class TestModules(unittest.TestCase):
         ).init_pipeline()
         # Set up install objects
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
-        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True)
         self.mods_install_old = nf_core.modules.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
