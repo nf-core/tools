@@ -16,12 +16,12 @@ Uses a branch (patch-tester) in the GitLab nf-core/modules-test repo when
 testing if the update commands works correctly with patch files
 """
 
-ORG_SHA = "775fcd090fb776a0be695044f8ab1af8896c8452"
-CORRECT_SHA = "335cd32405568ca3b6d4c05ab1e8a98c21e18a4d"
-SUCCEED_SHA = "f1566140c752e9c68fffc189fbe8cb9ee942b3ca"
-FAIL_SHA = "1fc8b0f953d915d66ee40d28bc337ff0998d05bd"
+ORG_SHA = "002623ccc88a3b0cb302c7d8f13792a95354d9f2"
+CORRECT_SHA = "63fd3cdb1be733041db74c15542a7b5b8f4095ed"
+SUCCEED_SHA = "ba15c20c032c549d77c5773659f19c2927daf48e"
+FAIL_SHA = "67b642d4471c4005220a342cad3818d5ba2b5a73"
 BISMARK_ALIGN = "bismark/align"
-REPO_NAME = "nf-core"
+REPO_NAME = "nf-core-test"
 PATCH_BRANCH = "patch-tester"
 REPO_URL = "https://gitlab.com/nf-core/modules-test.git"
 
