@@ -39,7 +39,7 @@
 - Add the Nextflow version to Gitpod container matching the minimal Nextflow version for nf-core (according to `nextflow.config`) ([#2196](https://github.com/nf-core/tools/pull/2196))
 - Use `nfcore/gitpod:dev` container in the dev branch ([#2196](https://github.com/nf-core/tools/pull/2196))
 - Replace requests_mock with responses in test mocks ([#2165](https://github.com/nf-core/tools/pull/2165)).
-- Add warning when installing a module from an `org_path` that exists in multiple remotes in `modules.json` ([#2228](https://github.com/nf-core/tools/pull/2228)).
+- Add warning when installing a module from an `org_path` that exists in multiple remotes in `modules.json` ([#2228](https://github.com/nf-core/tools/pull/2228) [#2239](https://github.com/nf-core/tools/pull/2239)).
 
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 
