@@ -12,6 +12,7 @@
 - Consistent syntax for branch checks in PRs ([#2202](https://github.com/nf-core/tools/issues/2202))
 - Fixed minor Jinja2 templating bug that caused the PR template to miss a newline
 - Updated AWS tests to use newly moved `seqeralabs/action-tower-launch` instead of `nf-core/tower-action`
+- Remove `.cff` files from `.editorconfig` [(#2145)[https://github.com/nf-core/tools/pull/2145]]
 - Simplify pipeline README ([#2186](https://github.com/nf-core/tools/issues/2186))
 
 ### Linting
@@ -23,6 +24,7 @@
 ### Modules
 
 - Add an `--empty-template` option to create a module without TODO statements or examples ([#2175](https://github.com/nf-core/tools/pull/2175) & [#2177](https://github.com/nf-core/tools/pull/2177))
+- Removed the `nf-core modules mulled` command and all its code dependencies ([2199](https://github.com/nf-core/tools/pull/2199)).
 
 ### Subworkflows
 
@@ -38,6 +40,7 @@
 - Add the Nextflow version to Gitpod container matching the minimal Nextflow version for nf-core (according to `nextflow.config`) ([#2196](https://github.com/nf-core/tools/pull/2196))
 - Use `nfcore/gitpod:dev` container in the dev branch ([#2196](https://github.com/nf-core/tools/pull/2196))
 - Replace requests_mock with responses in test mocks ([#2165](https://github.com/nf-core/tools/pull/2165)).
+- Add warning when installing a module from an `org_path` that exists in multiple remotes in `modules.json` ([#2228](https://github.com/nf-core/tools/pull/2228)).
 
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 

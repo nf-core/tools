@@ -1,5 +1,7 @@
 import os
 
+from ..utils import remove_template_modules
+
 
 def test_modules_remove_trimgalore(self):
     """Test removing TrimGalore! module after installing it"""
@@ -16,6 +18,9 @@ def test_modules_remove_trimgalore_uninstalled(self):
 
 def test_modules_remove_multiqc_from_gitlab(self):
     """Test removing multiqc module after installing it from an alternative source"""
+    # Remove modules that may cause org_path conflict
+    remove_template_modules(self)
+
     self.mods_install_gitlab.install("multiqc")
     module_path = os.path.join(self.mods_install_gitlab.dir, "modules", "nf-core", "multiqc")
     assert self.mods_remove_gitlab.remove("multiqc", force=True)

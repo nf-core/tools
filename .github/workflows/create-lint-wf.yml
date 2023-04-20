@@ -107,14 +107,24 @@ jobs:
       - name: nf-core modules install
         run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
 
-      - name: nf-core modules install gitlab
-        run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git --branch main install fastqc --force --dir nf-core-testpipeline/
-
       - name: nf-core modules list local
         run: nf-core --log-file log.txt modules list local --dir nf-core-testpipeline/
 
       - name: nf-core modules list remote
         run: nf-core --log-file log.txt modules list remote
+
+      - name: nf-core modules remove
+        run: |
+          find nf-core-testpipeline/workflows/ -type f -exec sed -i '/^include /d' {} \;
+          nf-core --log-file log.txt modules remove fastqc --dir nf-core-testpipeline/
+          nf-core --log-file log.txt modules remove multiqc --dir nf-core-testpipeline/
+          nf-core --log-file log.txt modules remove custom/dumpsoftwareversions --dir nf-core-testpipeline/
+
+      - name: nf-core modules install gitlab
+        run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git --branch main install fastqc --force --dir nf-core-testpipeline/
+
+      - name: nf-core modules list local gitlab
+        run: nf-core --log-file log.txt modules list local --dir nf-core-testpipeline/
 
       - name: nf-core modules list remote gitlab
         run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git list remote
