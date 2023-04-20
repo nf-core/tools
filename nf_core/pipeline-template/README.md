@@ -84,9 +84,6 @@ nextflow run {{ name }} \
 
 For more details, please refer to the [usage documentation](https://nf-co.re/{{ short_name }}/usage) and the [parameter documentation](https://nf-co.re/{{ short_name }}/parameters).
 
-{% endif -%}
-
-{% if branded -%}
 
 ## Pipeline output
 
