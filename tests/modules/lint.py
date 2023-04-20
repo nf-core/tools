@@ -73,7 +73,6 @@ def test_modules_lint_gitlab_modules(self):
 
 def test_modules_lint_multiple_remotes(self):
     """Lint modules from a different remote"""
-    self.mods_install.install("fastqc")
     self.mods_install_gitlab.install("multiqc")
     module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
     module_lint.lint(print_results=False, all_modules=True)
