@@ -75,7 +75,7 @@ nextflow run {{ name }} \
    -profile <docker/singularity/.../institute>
 ```
 
-> **Warning**
+> **Warning:**
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those
 > provided by the `-c` Nextflow option can be used to provide any configuration **except for parameters**;
 > see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
