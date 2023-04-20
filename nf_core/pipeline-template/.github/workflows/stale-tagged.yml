@@ -12,9 +12,10 @@ jobs:
     steps:
       - uses: actions/stale@v7
         with:
-          stale-issue-message: "This issue is stale because a user tagged it for stale. It has been inactive for more than 30 days. More information is required. Remove stale label or comment or this will be closed in 20 days."
-          stale-pr-message: "This PR is stale because a user tagged it for stale. It has been open more than 45 days with no activity. Remove stale label or comment if it is still useful. In any case a PR will be automatically closed."
-          close-issue-message: "This issue was closed because it has been stalled for 20 days with no activity."
+          stale-issue-message: "This issue has been tagged as stale by an nf-core contributor. Remove stale label or add a comment otherwise this issue will be closed in 20 days."
+ stale-issue-message: "This issue has been tagged as stale by an nf-core contributor. Remove stale label or add a comment otherwise this issue will be closed in 20 days."
+          stale-pr-message: "This PR has been tagged as stale by an nf-core contributor. Remove stale label or add a comment if it is still useful. Otherwise, this PR will be automatically closed."
+          close-issue-message: "This issue was closed because it has been tagged as stale by an nf-core contributor and then stalled for 20 days with no activity."
           days-before-stale: 30
           days-before-close: 20
           days-before-pr-close: -1
