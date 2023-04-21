@@ -71,8 +71,9 @@ Now, you can run the pipeline using:
 
 ```bash
 nextflow run {{ name }} \
+   -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
-   -profile <docker/singularity/.../institute>
+   --outdir <OUTDIR>
 ```
 
 > **Warning:**
