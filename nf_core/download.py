@@ -133,12 +133,13 @@ class DownloadWorkflow:
             )
             self.prompt_revision()
             self.get_revision_hash()
-            # inclusion of configs is unnecessary for Tower.
+            # Inclusion of configs is unnecessary for Tower.
             if not self.tower:
                 self.prompt_config_inclusion()
             self.prompt_container_download()
             self.prompt_use_singularity_cachedir()
             self.prompt_singularity_cachedir_only()
+            # Nothing meaningful to compress here.
             if not self.tower:
                 self.prompt_compression_type()
         except AssertionError as e:
@@ -230,7 +231,7 @@ class DownloadWorkflow:
 
         # Compress into an archive
         if self.compress_type is not None:
-            log.info("Compressing download..")
+            log.info("Compressing output into archive")
             self.compress_download()
 
     def download_workflow_tower(self):
@@ -248,6 +249,9 @@ class DownloadWorkflow:
         # Remove tags for those revisions that had not been selected
         self.workflow_repo.tidy_tags()
 
+        # create a bare clone of the modified repository needed for Tower
+        self.workflow_repo.bare_clone(os.path.join(self.outdir, self.output_filename))
+
         # extract the required containers
         if self.container == "singularity":
             for commit in self.wf_sha.values():
@@ -264,10 +268,9 @@ class DownloadWorkflow:
                     log.critical(f"[red]{e}[/]")
                     sys.exit(1)
 
-            # Compress into an archive
-            if self.compress_type is not None:
-                log.info("Compressing images")
-                self.compress_download()
+        # Justify why compression is skipped for Tower downloads (Prompt is not shown, but CLI argument could have been set)
+        if self.compress_type is not None:
+            log.info("Compression choice is ignored for Tower downloads since nothing can be reasonably compressed.")
 
     def prompt_pipeline_name(self):
         """Prompt for the pipeline name if not set with a flag"""
@@ -1019,11 +1022,12 @@ class WorkflowRepo(SyncedRepo):
             self.revision = []
         if isinstance(commit, str):
             self.commit = [commit]
-        elif isinstance(revision, list):
+        elif isinstance(commit, list):
             self.commit = [*commit]
         else:
             self.commit = []
         self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
+        self.retries = 0  # retries for setting up the locally cached repository
 
         self.setup_local_repo(remote_url, in_cache=in_cache)
 
@@ -1043,13 +1047,24 @@ class WorkflowRepo(SyncedRepo):
     def checkout(self, commit):
         return super().checkout(commit)
 
-    def retry_setup_local_repo(self):
-        if rich.prompt.Confirm.ask(f"[violet]Delete local cache '{self.local_repo_dir}' and try again?"):
-            log.info(f"Removing '{self.local_repo_dir}'")
+    def retry_setup_local_repo(self, skip_confirm=False):
+        self.retries += 1
+        if skip_confirm or rich.prompt.Confirm.ask(
+            f"[violet]Delete local cache '{self.local_repo_dir}' and try again?"
+        ):
+            if (
+                self.retries > 1
+            ):  # One unconfirmed retry is acceptable, but prevent infinite loops without user interaction.
+                log.error(
+                    f"Errors with locally cached repository of '{self.fullname}'. Please delete '{self.local_repo_dir}' manually and try again."
+                )
+                sys.exit(1)
+            if not skip_confirm:  # Feedback to user for manual confirmation.
+                log.info(f"Removing '{self.local_repo_dir}'")
             shutil.rmtree(self.local_repo_dir)
-            self.setup_local_repo(self.remote, self.commit, self.hide_progress)
+            self.setup_local_repo(self.remote_url, in_cache=False)
         else:
-            raise LookupError("Exiting due to error with local modules git repo")
+            raise LookupError("Exiting due to error with locally cached Git repository.")
 
     def setup_local_repo(self, remote, in_cache=True):
         """
@@ -1113,9 +1128,38 @@ class WorkflowRepo(SyncedRepo):
         """
         Function to delete all tags that point to revisions that are not of interest to the downloader.
         This allows a clutter-free experience in Tower. The commits are evidently still available.
+
+        However, due to local caching, the downloader might also want access to revisions that had been deleted before.
+        In that case, don't bother with re-adding the tags and rather download  anew from Github.
         """
         if self.revision and self.repo and self.repo.tags:
-            for tag in self.repo.tags:
-                if tag.name not in self.revision:
-                    self.repo.delete_tag(tag)
-            self.tags = self.repo.tags
+            desired_tags = self.revision.copy()
+            try:
+                for tag in self.repo.tags:
+                    if tag.name not in self.revision:
+                        self.repo.delete_tag(tag)
+                    else:
+                        desired_tags.remove(tag.name)
+                self.tags = self.repo.tags
+                if len(desired_tags) > 0:
+                    log.info(
+                        f"Locally cached version of the pipeline lacks selected revisions {', '.join(desired_tags)}. Downloading anew from GitHub..."
+                    )
+                    self.retry_setup_local_repo(skip_confirm=True)
+                    self.tidy_tags()
+            except (GitCommandError, InvalidGitRepositoryError) as e:
+                log.error(f"[red]Adapting your pipeline download unfortunately failed:[/]\n{e}\n")
+                self.retry_setup_local_repo(skip_confirm=True)
+                sys.exit(1)
+
+    def bare_clone(self, destination):
+        if self.repo:
+            try:
+                destfolder = os.path.abspath(destination)
+                if not os.path.exists(destfolder):
+                    os.makedirs(destfolder)
+                if os.path.exists(destination):
+                    shutil.rmtree(os.path.abspath(destination))
+                self.repo.clone(os.path.abspath(destination), bare=True)
+            except (OSError, GitCommandError, InvalidGitRepositoryError) as e:
+                log.error(f"[red]Failure to create the pipeline download[/]\n{e}\n")
