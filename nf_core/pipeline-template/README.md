@@ -27,7 +27,7 @@
 
 <!-- TODO nf-core: Write a 2-3 sentence summary of what data the pipeline is for and what it does, e.g.
 
-   > **nf-core/rnaseq** is a bioinformatics pipeline that can be used to analyse RNA sequencing data obtained from
+   > **{{name}}** is a bioinformatics pipeline that can be used to analyse RNA sequencing data obtained from
    > organisms with a reference genome and annotation. It takes a samplesheet and FASTQ files as input,
    > performs quality control (QC), trimming and (pseudo-)alignment, and produces a gene expression matrix and extensive QC report.
 -->
