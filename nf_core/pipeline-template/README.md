@@ -27,8 +27,8 @@
 
 **{{ name }}** is a bioinformatics pipeline that ...
 
-<!-- TODO nf-core: 
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a breif overview of the 
+<!-- TODO nf-core:
+   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a breif overview of the
    major pipeline sections and the types of output it produces. You're giving an overview to someone new
    to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
 -->
@@ -48,12 +48,11 @@
 > with `-profile test` before running the workflow on actual data.
 
 <!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
-     Explain what rows and columns represent.
- -->
+     Explain what rows and columns represent. For instance (please edit as appropriate):
 
 First, you need to prepare a samplesheet with your input data that looks as follows:
 
-**samplesheet.csv**:
+`samplesheet.csv`:
 
 ```csv
 sample,fastq_1,fastq_2
@@ -61,6 +60,8 @@ CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
 ```
 
 Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
+
+-->
 
 Now, you can run the pipeline using:
 
