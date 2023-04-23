@@ -6,10 +6,10 @@ from nf_core.modules.install import ModuleInstall
 from nf_core.modules.modules_json import ModulesJson
 
 from ..utils import (
+    GITLAB_BRANCH_ORG_PATH_BRANCH,
     GITLAB_BRANCH_TEST_BRANCH,
     GITLAB_REPO,
     GITLAB_URL,
-    remove_template_modules,
     with_temporary_folder,
 )
 
@@ -50,7 +50,6 @@ def test_modules_install_trimgalore_twice(self):
 
 def test_modules_install_from_gitlab(self):
     """Test installing a module from GitLab"""
-    remove_template_modules(self)
     assert self.mods_install_gitlab.install("fastqc") is True
 
 
@@ -63,7 +62,6 @@ def test_modules_install_different_branch_fail(self):
 
 def test_modules_install_different_branch_succeed(self):
     """Test installing a module from a different branch"""
-    remove_template_modules(self)
     install_obj = ModuleInstall(self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH)
     # The fastp module does exists in the branch-test branch
     assert install_obj.install("fastp") is True
@@ -90,6 +88,8 @@ def test_modules_install_tracking(self):
 
 def test_modules_install_alternate_remote(self):
     """Test installing a module from a different remote with the same organization path"""
-    install_obj = ModuleInstall(self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH)
-    # The fastp module does exists in the branch-test branch
-    assert install_obj.install("fastp") is False
+    install_obj = ModuleInstall(self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_ORG_PATH_BRANCH)
+    # Install fastqc from GitLab which is also installed from GitHub with the same org_path
+    with pytest.raises(Exception) as excinfo:
+        install_obj.install("fastqc")
+        assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)

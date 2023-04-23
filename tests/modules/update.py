@@ -24,7 +24,6 @@ from ..utils import (
     GITLAB_URL,
     OLD_TRIMGALORE_BRANCH,
     OLD_TRIMGALORE_SHA,
-    remove_template_modules,
 )
 
 
@@ -45,7 +44,6 @@ def test_install_and_update(self):
 
 def test_install_at_hash_and_update(self):
     """Installs an old version of a module in the pipeline and updates it"""
-    remove_template_modules(self)
     assert self.mods_install_old.install("trimgalore")
     update_obj = ModuleUpdate(
         self.pipeline_dir, show_diff=False, update_deps=True, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH
@@ -71,7 +69,6 @@ def test_install_at_hash_and_update(self):
 
 def test_install_at_hash_and_update_and_save_diff_to_file(self):
     """Installs an old version of a module in the pipeline and updates it"""
-    remove_template_modules(self)
     self.mods_install_old.install("trimgalore")
     patch_path = os.path.join(self.pipeline_dir, "trimgalore.patch")
     update_obj = ModuleUpdate(
@@ -112,7 +109,6 @@ def test_update_all(self):
 
 def test_update_with_config_fixed_version(self):
     """Try updating when there are entries in the .nf-core.yml"""
-    remove_template_modules(self)
     # Install trimgalore at the latest version
     assert self.mods_install_trimgalore.install("trimgalore")
 
@@ -138,7 +134,6 @@ def test_update_with_config_fixed_version(self):
 
 def test_update_with_config_dont_update(self):
     """Try updating when module is to be ignored"""
-    remove_template_modules(self)
     # Install an old version of trimgalore
     self.mods_install_old.install("trimgalore")
 
@@ -169,7 +164,6 @@ def test_update_with_config_dont_update(self):
 
 def test_update_with_config_fix_all(self):
     """Fix the version of all nf-core modules"""
-    remove_template_modules(self)
     self.mods_install_trimgalore.install("trimgalore")
 
     # Fix the version of all nf-core modules in the .nf-core.yml to an old version
@@ -193,8 +187,7 @@ def test_update_with_config_fix_all(self):
 
 def test_update_with_config_no_updates(self):
     """Don't update any nf-core modules"""
-    remove_template_modules(self)
-    self.mods_install_old.install("trimgalore")
+    assert self.mods_install_old.install("trimgalore")
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Fix the version of all nf-core modules in the .nf-core.yml to an old version
@@ -227,7 +220,6 @@ def test_update_with_config_no_updates(self):
 
 def test_update_different_branch_single_module(self):
     """Try updating a module in a specific branch"""
-    remove_template_modules(self)
     install_obj = ModuleInstall(
         self.pipeline_dir,
         prompt=False,
@@ -254,7 +246,6 @@ def test_update_different_branch_single_module(self):
 
 def test_update_different_branch_mixed_modules_main(self):
     """Try updating all modules where MultiQC is installed from main branch"""
-    remove_template_modules(self)
     # Install fastp
     assert self.mods_install_gitlab_old.install("fastp")
 
@@ -281,7 +272,6 @@ def test_update_different_branch_mixed_modules_main(self):
 
 def test_update_different_branch_mix_modules_branch_test(self):
     """Try updating all modules where MultiQC is installed from branch-test branch"""
-    remove_template_modules(self)
     # Install multiqc from the branch-test branch
     assert self.mods_install_gitlab_old.install(
         "multiqc"
