@@ -25,14 +25,13 @@
 
 ## Introduction
 
-<!-- TODO nf-core: Write a 2-3 sentence summary of what data the pipeline is for and what it does, e.g.
+**{{ name }}** is a bioinformatics pipeline that ...
 
-   > **{{name}}** is a bioinformatics pipeline that can be used to analyse RNA sequencing data obtained from
-   > organisms with a reference genome and annotation. It takes a samplesheet and FASTQ files as input,
-   > performs quality control (QC), trimming and (pseudo-)alignment, and produces a gene expression matrix and extensive QC report.
+<!-- TODO nf-core: 
+   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a breif overview of the 
+   major pipeline sections and the types of output it produces. You're giving an overview to someone new
+   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
 -->
-
-**{{ name }}** is a bioinformatics pipeline for {{ description }}.
 
 <!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
      workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
@@ -43,12 +42,10 @@
 
 ## Usage
 
-
 > **Note**
 > If you are new to nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how
 > to set-up nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline)
 > with `-profile test` before running the workflow on actual data.
-
 
 <!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
      Explain what rows and columns represent.
@@ -84,7 +81,6 @@ nextflow run {{ name }} \
 {% if branded -%}
 
 For more details, please refer to the [usage documentation](https://nf-co.re/{{ short_name }}/usage) and the [parameter documentation](https://nf-co.re/{{ short_name }}/parameters).
-
 
 ## Pipeline output
 
