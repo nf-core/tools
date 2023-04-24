@@ -165,6 +165,7 @@ class TestCli(unittest.TestCase):
             "outdir": "/path/outdir",
             "compress": "tar.gz",
             "force": None,
+            "tower": None,
             "container": "singularity",
             "singularity-cache-only": None,
             "parallel-downloads": 2,
@@ -177,10 +178,11 @@ class TestCli(unittest.TestCase):
 
         mock_dl.assert_called_once_with(
             cmd[-1],
-            params["revision"],
+            (params["revision"],),
             params["outdir"],
             params["compress"],
             "force" in params,
+            "tower" in params,
             params["container"],
             "singularity-cache-only" in params,
             params["parallel-downloads"],
