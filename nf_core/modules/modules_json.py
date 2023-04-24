@@ -427,8 +427,8 @@ class ModulesJson:
             git_url = None
             for repo in missing_installation:
                 if component_type in missing_installation[repo]:
-                    for dir_name in missing_installation[repo][component_type]:
-                        if component in missing_installation[repo][component_type][dir_name]:
+                    if install_dir in missing_installation[repo][component_type]:
+                        if component in missing_installation[repo][component_type][install_dir]:
                             component_in_file = True
                             git_url = repo
                             break

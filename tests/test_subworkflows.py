@@ -12,7 +12,12 @@ import nf_core.create
 import nf_core.modules
 import nf_core.subworkflows
 
-from .utils import GITLAB_SUBWORKFLOWS_BRANCH, GITLAB_URL, OLD_SUBWORKFLOWS_SHA
+from .utils import (
+    GITLAB_SUBWORKFLOWS_BRANCH,
+    GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH,
+    GITLAB_URL,
+    OLD_SUBWORKFLOWS_SHA,
+)
 
 
 def create_modules_repo_dummy(tmp_dir):
@@ -61,6 +66,13 @@ class TestSubworkflows(unittest.TestCase):
         self.subworkflow_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
         self.subworkflow_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
             self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
+        )
+        self.subworkflow_install_gitlab_same_org_path = nf_core.subworkflows.SubworkflowInstall(
+            self.pipeline_dir,
+            prompt=False,
+            force=False,
+            remote_url=GITLAB_URL,
+            branch=GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH,
         )
         self.subworkflow_install_old = nf_core.subworkflows.SubworkflowInstall(
             self.pipeline_dir,

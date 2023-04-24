@@ -9,8 +9,8 @@ from ..utils import (
     GITLAB_BRANCH_TEST_BRANCH,
     GITLAB_REPO,
     GITLAB_SUBWORKFLOWS_BRANCH,
+    GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH,
     GITLAB_URL,
-    remove_template_modules,
     with_temporary_folder,
 )
 
@@ -63,7 +63,6 @@ def test_subworkflows_install_bam_sort_stats_samtools_twice(self):
 
 def test_subworkflows_install_from_gitlab(self):
     """Test installing a subworkflow from GitLab"""
-    remove_template_modules(self)
     assert self.subworkflow_install_gitlab.install("bam_stats_samtools") is True
     # Verify that the branch entry was added correctly
     modules_json = ModulesJson(self.pipeline_dir)
@@ -145,6 +144,11 @@ def test_subworkflows_install_tracking_added_super_subworkflow(self):
 
 
 def test_subworkflows_install_alternate_remote(self):
-    """Test installing a subworkflow from a different remote with the same organization path"""
-    self.subworkflow_install.install("bam_sort_stats_samtools")
-    assert self.subworkflow_install_gitlab.install("bam_stats_samtools") is False
+    """Test installing a module from a different remote with the same organization path"""
+    install_obj = SubworkflowInstall(
+        self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH
+    )
+    # Install a subworkflow from GitLab which is also installed from GitHub with the same org_path
+    with pytest.raises(Exception) as excinfo:
+        install_obj.install("fastqc")
+        assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
