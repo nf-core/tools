@@ -59,6 +59,7 @@ def _print_nf_config(rgc):
             else:
                 # Translate an alias name to the alias used in the pipeline
                 if asset in alias_translations.keys():
+                    log.info(f"Translating refgenie asset alias {asset} to {alias_translations[asset]}.")
                     asset = alias_translations[asset]
                 genomes_str += f'      {asset.ljust(20, " ")} = "{pth}"\n'
         genomes_str += "    }\n"
