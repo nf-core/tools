@@ -21,6 +21,7 @@ A python package with helper tools for the nf-core community.
 - [`nf-core list` - List available pipelines](#listing-pipelines)
 - [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
 - [`nf-core download` - Download pipeline for offline use](#downloading-pipelines-for-offline-use)
+- [`nf-core download --tower` - Download pipeline for Tower](#downloading-pipelines-for-tower)
 - [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
 - [`nf-core create` - Create a new pipeline with the nf-core template](#creating-a-new-pipeline)
 - [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
@@ -400,6 +401,12 @@ Once a full list of containers is found, they are processed in the following ord
 Note that compressing many GBs of binary files can be slow, so specifying `--compress none` is recommended when downloading Singularity images.
 
 If the download speeds are much slower than your internet connection is capable of, you can set `--parallel-downloads` to a large number to download loads of images at once.
+
+### Adapting downloads to Nextflow Tower
+
+[seqeralabs® Nextflow Tower](https://cloud.tower.nf/) provides a graphical user interface to oversee pipeline runs, gather statistics and configure compute resources. While pipelines added to _Tower_ are preferably hosted at a Git service, providing them as disconnected, self-reliant repositories is also possible for premises with restricted network access. Choosing the `--tower` flag will download the pipeline in an appropriate form.
+
+Subsequently, the `*.git` folder can be moved to it's final destination and linked with a pipeline in _Tower_ using the `file:/` prefix.
 
 ## Pipeline software licences
 

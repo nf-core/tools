@@ -49,6 +49,10 @@
 - Removed `quay.io` from all module Docker container references as this is now supplied at pipeline level. ([#2249](https://github.com/nf-core/tools/pull/2249))
 - Remove `CITATION.cff` file from pipeline template, to avoid that pipeline Zenodo entries reference the nf-core publication instead of the pipeline ([#2059](https://github.com/nf-core/tools/pull/2059)).
 
+### Download
+
+- Introduce a `--tower` flag for `nf-core download` to obtain pipelines in an offline format suited for [seqeralabs® Nextflow Tower](https://cloud.tower.nf/) ([#2247](https://github.com/nf-core/tools/pull/2247)).
+
 ### Linting
 
 - Update modules lint test to fail if enable_conda is found ([#2213](https://github.com/nf-core/tools/pull/2213))

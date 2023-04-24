@@ -11,8 +11,8 @@ from git.exc import GitCommandError, InvalidGitRepositoryError
 
 import nf_core.modules.modules_json
 import nf_core.modules.modules_utils
-from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR, load_tools_config
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
+from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR, load_tools_config
 
 log = logging.getLogger(__name__)
 
