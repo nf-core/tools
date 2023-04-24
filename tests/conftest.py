@@ -59,7 +59,6 @@ def local_modules_repo(modules_repo_dummy, tmp_dir, pipeline_dir):
     template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
     # Set up install objects
     mods_install = nf_core.modules.ModuleInstall(pipeline_dir, prompt=False, force=True)
-    mods_install_alt = nf_core.modules.ModuleInstall(pipeline_dir, prompt=True, force=True)
     mods_install_old = nf_core.modules.ModuleInstall(
         pipeline_dir,
         prompt=False,
