@@ -10,7 +10,6 @@ from nf_core.modules.modules_utils import ModuleException
 def test_modules_bump_versions_single_module(local_modules_repo):
     """Test updating a single module"""
     # Change the bpipe/test version to an older version
-    print(local_modules_repo.__dir__())
     main_nf_path = os.path.join(local_modules_repo, "modules", "nf-core", "bpipe", "test", "main.nf")
     with open(main_nf_path, "r") as fh:
         content = fh.read()
