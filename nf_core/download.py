@@ -235,7 +235,7 @@ class DownloadWorkflow:
             self.compress_download()
 
     def download_workflow_tower(self):
-        """Create a bare-cloned git repository of the workflow that includes the configurations, such it can be launched with `tw launch` as file:/ pipeline"""
+        """Create a bare-cloned git repository of the workflow, such it can be launched with `tw launch` as file:/ pipeline"""
 
         log.info("Collecting workflow from GitHub")
 
@@ -261,12 +261,12 @@ class DownloadWorkflow:
                 self.find_container_images(self.workflow_repo.access())
 
                 # Download the singularity images
-                log.info(f"Found {len(self.containers)} container{'s' if len(self.containers) > 1 else ''}")
-                try:
-                    self.get_singularity_images()
-                except OSError as e:
-                    log.critical(f"[red]{e}[/]")
-                    sys.exit(1)
+            log.info(f"Found {len(self.containers)} container{'s' if len(self.containers) > 1 else ''}")
+            try:
+                self.get_singularity_images()
+            except OSError as e:
+                log.critical(f"[red]{e}[/]")
+                sys.exit(1)
 
         # Justify why compression is skipped for Tower downloads (Prompt is not shown, but CLI argument could have been set)
         if self.compress_type is not None:
@@ -581,7 +581,7 @@ class DownloadWorkflow:
         """
 
         log.debug("Fetching container names for workflow")
-        # since this is run for multiple versions now, account for previous invocations
+        # since this is run for multiple revisions now, account for previously detected containers.
         containers_raw = [] if not self.containers else self.containers
 
         # Use linting code to parse the pipeline nextflow config
