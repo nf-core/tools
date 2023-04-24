@@ -47,7 +47,7 @@ def _print_nf_config(rgc):
     """
     abg = rgc.list_assets_by_genome()
     genomes_str = ""
-    alias_translations = _get_alias_translation_file()
+    alias_translations = _get_alias_translation_file(rgc)
     for genome, asset_list in abg.items():
         genomes_str += f"    '{genome}' {{\n"
         for asset in asset_list:
@@ -107,7 +107,7 @@ def _update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
             log.info(f"Created new nextflow config file: {nxf_home_config}")
 
 
-def _get_alias_translation_file():
+def _get_alias_translation_file(rgc):
     """
     Read a file containing alias translations.
 
@@ -124,10 +124,12 @@ def _get_alias_translation_file():
 
     if "REFGENIE" in os.environ:
         refgenie_genomes_config_path = os.environ.get("REFGENIE")
+        refgenie_genomes_config_directory = Path(refgenie_genomes_config_path).parents[0]
+    elif "genome_folder" in rgc:
+        refgenie_genomes_config_directory = Path(rgc["genome_folder"])
     else:
         return translations
 
-    refgenie_genomes_config_directory = Path(refgenie_genomes_config_path).parents[0]
     try:
         with open(refgenie_genomes_config_directory / "alias_translations.yaml") as yaml_file:
             translations = yaml.load(yaml_file, Loader=yaml.Loader)
