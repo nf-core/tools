@@ -3,9 +3,6 @@
 from __future__ import print_function
 
 import concurrent.futures
-from datetime import datetime
-import git
-from git.exc import GitCommandError, InvalidGitRepositoryError
 import io
 import logging
 import os
@@ -15,19 +12,22 @@ import subprocess
 import sys
 import tarfile
 import textwrap
+from datetime import datetime
 from zipfile import ZipFile
 
+import git
 import questionary
 import requests
 import requests_cache
 import rich
 import rich.progress
+from git.exc import GitCommandError, InvalidGitRepositoryError
 
 import nf_core
 import nf_core.list
 import nf_core.utils
-from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
+from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
