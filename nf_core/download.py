@@ -717,7 +717,7 @@ class DownloadWorkflow:
 
                 # Exit if we need to pull images and Singularity is not installed
                 if len(containers_pull) > 0:
-                    if not shutil.which("singularity") or not shutil.which("apptainer"):
+                    if not (shutil.which("singularity") or shutil.which("apptainer")):
                         raise OSError(
                             "Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH"
                         )

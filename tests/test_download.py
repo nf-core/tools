@@ -32,10 +32,10 @@ class DownloadTest(unittest.TestCase):
             download_obj.wf_branches,
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
         download_obj.get_revision_hash()
-        assert download_obj.wf_sha == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
-        assert download_obj.outdir == "nf-core-methylseq-1.6"
+        assert download_obj.wf_sha[download_obj.revision[0]] == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
+        assert download_obj.outdir == "nf-core-methylseq_1.6"
         assert (
-            download_obj.wf_download_url
+            download_obj.wf_download_url[download_obj.revision[0]]
             == "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
         )
 
@@ -51,10 +51,10 @@ class DownloadTest(unittest.TestCase):
             download_obj.wf_branches,
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
         download_obj.get_revision_hash()
-        assert download_obj.wf_sha == "819cbac792b76cf66c840b567ed0ee9a2f620db7"
-        assert download_obj.outdir == "nf-core-exoseq-dev"
+        assert download_obj.wf_sha[download_obj.revision[0]] == "819cbac792b76cf66c840b567ed0ee9a2f620db7"
+        assert download_obj.outdir == "nf-core-exoseq_dev"
         assert (
-            download_obj.wf_download_url
+            download_obj.wf_download_url[download_obj.revision[0]]
             == "https://github.com/nf-core/exoseq/archive/819cbac792b76cf66c840b567ed0ee9a2f620db7.zip"
         )
 
@@ -78,12 +78,16 @@ class DownloadTest(unittest.TestCase):
     def test_download_wf_files(self, outdir):
         download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", revision="1.6")
         download_obj.outdir = outdir
-        download_obj.wf_sha = "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
-        download_obj.wf_download_url = (
-            "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
+        download_obj.wf_sha = {"1.6": "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"}
+        download_obj.wf_download_url = {
+            "1.6": "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
+        }
+        rev = download_obj.download_wf_files(
+            download_obj.revision[0],
+            download_obj.wf_sha[download_obj.revision[0]],
+            download_obj.wf_download_url[download_obj.revision[0]],
         )
-        download_obj.download_wf_files()
-        assert os.path.exists(os.path.join(outdir, "workflow", "main.nf"))
+        assert os.path.exists(os.path.join(outdir, rev, "main.nf"))
 
     #
     # Tests for 'download_configs'
@@ -118,7 +122,7 @@ class DownloadTest(unittest.TestCase):
             download_obj.download_configs()
 
             # Test the function
-            download_obj.wf_use_local_configs()
+            download_obj.wf_use_local_configs("workflow")
             wf_config = nf_core.utils.fetch_wf_config(os.path.join(test_outdir, "workflow"), cache_config=False)
             assert wf_config["params.custom_config_base"] == f"'{test_outdir}/workflow/../configs/'"
 
@@ -133,14 +137,14 @@ class DownloadTest(unittest.TestCase):
             "process.mapping.container": "cutting-edge-container",
             "process.nocontainer": "not-so-cutting-edge",
         }
-        download_obj.find_container_images()
+        download_obj.find_container_images("workflow")
         assert len(download_obj.containers) == 1
         assert download_obj.containers[0] == "cutting-edge-container"
 
     #
     # Tests for 'singularity_pull_image'
     #
-    # If Singularity is installed, but the container can't be accessed because it does not exist or there are aceess
+    # If Singularity is installed, but the container can't be accessed because it does not exist or there are access
     # restrictions, a FileNotFoundError is raised due to the unavailability of the image.
     @pytest.mark.skipif(
         shutil.which("singularity") is None,
@@ -153,16 +157,16 @@ class DownloadTest(unittest.TestCase):
         with pytest.raises(FileNotFoundError):
             download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
 
-    # If Singularity is not installed, it raises a FileNotFoundError because the singularity command can't be found.
+    # If Singularity is not installed, it raises a OSError because the singularity command can't be found.
     @pytest.mark.skipif(
         shutil.which("singularity") is not None,
-        reason="Can't test how the code behaves when sungularity is not installed if it is.",
+        reason="Can't test how the code behaves when singularity is not installed if it is.",
     )
     @with_temporary_folder
     @mock.patch("rich.progress.Progress.add_task")
     def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(OSError):
             download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
 
     #
