@@ -13,7 +13,7 @@ def meta_yml(module_lint_object, module):
 
     The lint test checks that the module has
     a ``meta.yml`` file and that it follows the
-    JSON schema defined in the ``yaml-schema.json``
+    JSON schema defined in the ``modules/yaml-schema.json``
     file in the nf-core/modules repository.
 
     In addition it checks that the module name
