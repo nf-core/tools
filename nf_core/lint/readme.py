@@ -62,24 +62,4 @@ def readme(self):
         else:
             warned.append("README did not have a Nextflow minimum version badge.")
 
-    # Check that the minimum version mentioned in the quick start section is consistent
-    # Looking for: "1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=22.10.1`)"
-    nf_version_re = r"1\.\s*Install\s*\[`Nextflow`\]\(https://www.nextflow.io/docs/latest/getstarted.html#installation\)\s*\(`>=(\d*\.\d*\.\d*)`\)"
-    match = re.search(nf_version_re, content)
-    if match:
-        nf_quickstart_version = match.group(1)
-        try:
-            if nf_quickstart_version != self.minNextflowVersion:
-                raise AssertionError()
-        except (AssertionError, KeyError):
-            failed.append(
-                f"README Nextflow minimium version in Quick Start section does not match config. README: `{nf_quickstart_version}`, Config `{self.minNextflowVersion}`"
-            )
-        else:
-            passed.append(
-                f"README Nextflow minimum version in Quick Start section matched config. README: `{nf_quickstart_version}`, Config: `{self.minNextflowVersion}`"
-            )
-    else:
-        warned.append("README did not have a Nextflow minimum version mentioned in Quick Start section.")
-
     return {"passed": passed, "warned": warned, "failed": failed}
