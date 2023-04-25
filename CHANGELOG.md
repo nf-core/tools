@@ -13,6 +13,7 @@
 - Fixed minor Jinja2 templating bug that caused the PR template to miss a newline
 - Updated AWS tests to use newly moved `seqeralabs/action-tower-launch` instead of `nf-core/tower-action`
 - Remove `.cff` files from `.editorconfig` [(#2145)[https://github.com/nf-core/tools/pull/2145]]
+- Simplify pipeline README ([#2186](https://github.com/nf-core/tools/issues/2186))
 - Added support for the apptainer container engine via `-profile apptainer`. ([#2244](https://github.com/nf-core/tools/issues/2244)) [Contributed by @jfy133]
 
 ### Linting
