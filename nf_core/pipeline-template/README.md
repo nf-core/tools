@@ -28,7 +28,7 @@
 **{{ name }}** is a bioinformatics pipeline that ...
 
 <!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a breif overview of the
+   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
    major pipeline sections and the types of output it produces. You're giving an overview to someone new
    to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
 -->
@@ -43,14 +43,14 @@
 ## Usage
 
 > **Note**
-> If you are new to nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how
-> to set-up nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline)
+> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how
+> to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline)
 > with `-profile test` before running the workflow on actual data.
 
 <!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
      Explain what rows and columns represent. For instance (please edit as appropriate):
 
-First, you need to prepare a samplesheet with your input data that looks as follows:
+First, prepare a samplesheet with your input data that looks as follows:
 
 `samplesheet.csv`:
 
@@ -85,7 +85,7 @@ For more details, please refer to the [usage documentation](https://nf-co.re/{{ 
 
 ## Pipeline output
 
-To see the the results of a test run with a full size dataset refer to the [results](https://nf-co.re/{{ short_name }}/results) section of the documentation.
+To see the the results of a test run with a full size dataset refer to the [results](https://nf-co.re/{{ short_name }}/results) tab on the nf-core website pipeline page.
 For more details about the output files and reports, please refer to the
 [output documentation](https://nf-co.re/{{ short_name }}/output).
 
