@@ -16,12 +16,12 @@ Uses a branch (patch-tester) in the GitLab nf-core/modules-test repo when
 testing if the update commands works correctly with patch files
 """
 
-ORG_SHA = "775fcd090fb776a0be695044f8ab1af8896c8452"
-CORRECT_SHA = "335cd32405568ca3b6d4c05ab1e8a98c21e18a4d"
-SUCCEED_SHA = "f1566140c752e9c68fffc189fbe8cb9ee942b3ca"
-FAIL_SHA = "1fc8b0f953d915d66ee40d28bc337ff0998d05bd"
+ORG_SHA = "002623ccc88a3b0cb302c7d8f13792a95354d9f2"
+CORRECT_SHA = "65ba2ee3bf08c6bb31d880467df72ccdbc8d2b40"
+SUCCEED_SHA = "ba15c20c032c549d77c5773659f19c2927daf48e"
+FAIL_SHA = "67b642d4471c4005220a342cad3818d5ba2b5a73"
 BISMARK_ALIGN = "bismark/align"
-REPO_NAME = "nf-core"
+REPO_NAME = "nf-core-test"
 PATCH_BRANCH = "patch-tester"
 REPO_URL = "https://gitlab.com/nf-core/modules-test.git"
 
@@ -112,6 +112,7 @@ def test_create_patch_try_apply_successful(self):
     """
     Test creating a patch file and applying it to a new version of the the files
     """
+
     setup_patch(self.pipeline_dir, True)
     module_relpath = Path("modules", REPO_NAME, BISMARK_ALIGN)
     module_path = Path(self.pipeline_dir, module_relpath)
@@ -178,6 +179,7 @@ def test_create_patch_try_apply_failed(self):
     """
     Test creating a patch file and applying it to a new version of the the files
     """
+
     setup_patch(self.pipeline_dir, True)
     module_relpath = Path("modules", REPO_NAME, BISMARK_ALIGN)
     module_path = Path(self.pipeline_dir, module_relpath)
@@ -216,6 +218,7 @@ def test_create_patch_update_success(self):
     Should have the same effect as 'test_create_patch_try_apply_successful'
     but uses higher level api
     """
+
     setup_patch(self.pipeline_dir, True)
     module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
 
@@ -277,6 +280,7 @@ def test_create_patch_update_fail(self):
     """
     Test creating a patch file and updating a module when there is a diff conflict
     """
+
     setup_patch(self.pipeline_dir, True)
     module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
 

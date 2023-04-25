@@ -42,7 +42,6 @@ A python package with helper tools for the nf-core community.
   - [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
   - [`modules test` - Run the tests for a module](#run-the-tests-for-a-module-using-pytest)
   - [`modules bump-versions` - Bump software versions of modules](#bump-bioconda-and-container-versions-of-modules-in)
-  - [`modules mulled` - Generate the name for a multi-tool container image](#generate-the-name-for-a-multi-tool-container-image)
 
 - [`nf-core subworkflows` - commands for dealing with subworkflows](#subworkflows)
   - [`subworkflows list` - List available subworkflows](#list-subworkflows)
@@ -634,13 +633,13 @@ It's important to change the default value of a parameter in the `nextflow.confi
 The pipeline schema is linted as part of the main pipeline `nf-core lint` command,
 however sometimes it can be useful to quickly check the syntax of the JSONSchema without running a full lint run.
 
-Usage is `nf-core schema lint <schema>`, eg:
+Usage is `nf-core schema lint <schema>` (defaulting to `nextflow_schema.json`), eg:
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
 -->
 
-![`nf-core schema lint nextflow_schema.json`](docs/images/nf-core-schema-lint.svg)
+![`nf-core schema lint`](docs/images/nf-core-schema-lint.svg)
 
 ## Bumping a pipeline version number
 
@@ -971,17 +970,6 @@ If you want this module to be updated only to a specific version (or downgraded)
 bump-versions:
   star/align: "2.6.1d"
 ```
-
-### Generate the name for a multi-tool container image
-
-When you want to use an image of a multi-tool container and you know the specific dependencies and their versions of that container, for example, by looking them up in the [BioContainers hash.tsv](https://github.com/BioContainers/multi-package-containers/blob/master/combinations/hash.tsv), you can use the `nf-core modules mulled` helper tool. This tool generates the name of a BioContainers mulled image.
-
-<!-- RICH-CODEX
-working_dir: tmp/modules
-after_command: cd ../../ && rm -rf tmp
--->
-
-![`nf-core modules mulled pysam==0.16.0.1 biopython==1.78`](docs/images/nf-core-modules-mulled.svg)
 
 ## Subworkflows
 
