@@ -618,7 +618,8 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, update_d
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-def patch(ctx, tool, dir):
+@click.option("-r", "--remove", is_flag=True, default=False)
+def patch(ctx, tool, dir, remove):
     """
     Create a patch file for minor changes in a module
 
@@ -632,7 +633,10 @@ def patch(ctx, tool, dir):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        module_patch.patch(tool)
+        if remove:
+            module_patch.remove(tool)
+        else:
+            module_patch.patch(tool)
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
