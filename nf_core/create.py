@@ -172,7 +172,7 @@ class PipelineCreate:
             and "nextflow_config" in config_yml["lint"]
             and "manifest.name" in config_yml["lint"]["nextflow_config"]
         ):
-            return param_dict, skip_paths
+            return param_dict, skip_paths, template_yaml
         if param_dict["prefix"] == "nf-core":
             # Check that the pipeline name matches the requirements
             if not re.match(r"^[a-z]+$", param_dict["short_name"]):
