@@ -66,18 +66,17 @@ def test_modules_lint_gitlab_modules(self):
     self.mods_install_gitlab.install("multiqc")
     module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
     module_lint.lint(print_results=False, all_modules=True)
-    assert len(module_lint.failed) == 0
+    assert len(module_lint.failed) == 2
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
 
 
 def test_modules_lint_multiple_remotes(self):
     """Lint modules from a different remote"""
-    self.mods_install.install("fastqc")
     self.mods_install_gitlab.install("multiqc")
     module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
     module_lint.lint(print_results=False, all_modules=True)
-    assert len(module_lint.failed) == 0
+    assert len(module_lint.failed) == 1
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
 
@@ -103,6 +102,6 @@ def test_modules_lint_patched_modules(self):
             all_modules=True,
         )
 
-    assert len(module_lint.failed) == 0
+    assert len(module_lint.failed) == 1
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0

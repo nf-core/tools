@@ -2,6 +2,7 @@
 Update a nextflow.config file with refgenie genomes
 """
 
+import json
 import logging
 import os
 import re
@@ -10,6 +11,7 @@ from textwrap import dedent
 
 import rich
 import rich.traceback
+import yaml
 
 import nf_core.utils
 
@@ -45,6 +47,7 @@ def _print_nf_config(rgc):
     """
     abg = rgc.list_assets_by_genome()
     genomes_str = ""
+    alias_translations = _get_alias_translation_file(rgc)
     for genome, asset_list in abg.items():
         genomes_str += f"    '{genome}' {{\n"
         for asset in asset_list:
@@ -54,6 +57,10 @@ def _print_nf_config(rgc):
             except Exception:
                 log.warning(f"{genome}/{asset} is incomplete, ignoring...")
             else:
+                # Translate an alias name to the alias used in the pipeline
+                if asset in alias_translations.keys():
+                    log.info(f"Translating refgenie asset alias {asset} to {alias_translations[asset]}.")
+                    asset = alias_translations[asset]
                 genomes_str += f'      {asset.ljust(20, " ")} = "{pth}"\n'
         genomes_str += "    }\n"
 
@@ -98,6 +105,38 @@ def _update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
         with open(nxf_home_config, "w") as fh:
             fh.write(include_config_string)
             log.info(f"Created new nextflow config file: {nxf_home_config}")
+
+
+def _get_alias_translation_file(rgc):
+    """
+    Read a file containing alias translations.
+
+    Alias translation file should be located in the same folder as the refgenie `genome_config.yaml` file,
+    the path is set to $REFGENIE environment variable by `refgenie init`.
+    Alias translation file should be named `alias_translations.yaml`
+
+    Input file contains the name of refgenie server aliases as keys and the name of the respective nf-core pipeline aliases as values.
+    Such as:
+    ensembl_gtf: gtf
+    star_index: star
+    """
+    translations = {}
+
+    if "REFGENIE" in os.environ:
+        refgenie_genomes_config_path = os.environ.get("REFGENIE")
+        refgenie_genomes_config_directory = Path(refgenie_genomes_config_path).parents[0]
+    elif "genome_folder" in rgc:
+        refgenie_genomes_config_directory = Path(rgc["genome_folder"])
+    else:
+        return translations
+
+    try:
+        with open(refgenie_genomes_config_directory / "alias_translations.yaml") as yaml_file:
+            translations = yaml.load(yaml_file, Loader=yaml.Loader)
+    except FileNotFoundError:
+        pass
+
+    return translations
 
 
 def update_config(rgc):

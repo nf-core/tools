@@ -6,7 +6,8 @@ import shutil
 import tempfile
 import unittest
 
-import requests_mock
+import requests_cache
+import responses
 
 import nf_core.create
 import nf_core.modules
@@ -18,7 +19,8 @@ from .utils import (
     GITLAB_URL,
     OLD_TRIMGALORE_BRANCH,
     OLD_TRIMGALORE_SHA,
-    mock_api_calls,
+    mock_anaconda_api_calls,
+    mock_biocontainers_api_calls,
 )
 
 
@@ -35,11 +37,13 @@ def create_modules_repo_dummy(tmp_dir):
         fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
 
     # mock biocontainers and anaconda response
-    with requests_mock.Mocker() as mock:
-        mock_api_calls(mock, "bpipe", "0.9.11--hdfd78af_0")
+    with responses.RequestsMock() as rsps:
+        mock_anaconda_api_calls(rsps, "bpipe", "0.9.11--hdfd78af_0")
+        mock_biocontainers_api_calls(rsps, "bpipe", "0.9.11--hdfd78af_0")
         # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
         module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
-        module_create.create()
+        with requests_cache.disabled():
+            module_create.create()
 
     return root_dir
 
@@ -55,13 +59,13 @@ class TestModules(unittest.TestCase):
         # Set up the schema
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
-        self.pipeline_dir = os.path.join(self.tmp_dir, "mypipeline")
+        self.pipeline_name = "mypipeline"
+        self.pipeline_dir = os.path.join(self.tmp_dir, self.pipeline_name)
         nf_core.create.PipelineCreate(
-            "mypipeline", "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
+            self.pipeline_name, "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
         # Set up install objects
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
-        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True)
         self.mods_install_old = nf_core.modules.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
@@ -73,21 +77,21 @@ class TestModules(unittest.TestCase):
         self.mods_install_trimgalore = nf_core.modules.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
-            force=True,
+            force=False,
             remote_url=GITLAB_URL,
             branch=OLD_TRIMGALORE_BRANCH,
         )
         self.mods_install_gitlab = nf_core.modules.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
-            force=True,
+            force=False,
             remote_url=GITLAB_URL,
             branch=GITLAB_DEFAULT_BRANCH,
         )
         self.mods_install_gitlab_old = nf_core.modules.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
-            force=True,
+            force=False,
             remote_url=GITLAB_URL,
             branch=GITLAB_BRANCH_TEST_BRANCH,
             sha=GITLAB_BRANCH_TEST_OLD_SHA,
@@ -146,6 +150,7 @@ class TestModules(unittest.TestCase):
         test_modules_info_remote_gitlab,
     )
     from .modules.install import (
+        test_modules_install_alternate_remote,
         test_modules_install_different_branch_fail,
         test_modules_install_different_branch_succeed,
         test_modules_install_emptypipeline,

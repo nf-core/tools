@@ -213,16 +213,9 @@ class ModulesTestYmlBuilder(ComponentCommand):
                 g_f = gzip.GzipFile(fileobj=fh, mode="rb")
                 if g_f.read() == b"":
                     return True
-        except Exception as e:
-            # Python 3.8+
-            if hasattr(gzip, "BadGzipFile"):
-                if isinstance(e, gzip.BadGzipFile):
-                    pass
-            # Python 3.7
-            elif isinstance(e, OSError):
-                pass
-            else:
-                raise e
+        except gzip.BadGzipFile:
+            pass
+
         return False
 
     def _md5(self, fname):

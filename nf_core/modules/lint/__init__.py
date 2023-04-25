@@ -91,6 +91,8 @@ class ModuleLint(ComponentCommand):
             modules_json.check_up_to_date()
             self.all_remote_modules = []
             for repo_url, components in modules_json.get_all_components(self.component_type).items():
+                if remote_url is not None and remote_url != repo_url:
+                    continue
                 for org, comp in components:
                     self.all_remote_modules.append(
                         NFCoreModule(
