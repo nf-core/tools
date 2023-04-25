@@ -45,7 +45,7 @@ def meta_yml(module_lint_object, module):
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = True
     try:
-        with open(Path(module_lint_object.modules_repo.local_repo_dir, "yaml-schema.json"), "r") as fh:
+        with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/yaml-schema.json"), "r") as fh:
             schema = json.load(fh)
         jsonschema.validators.validate(instance=meta_yaml, schema=schema)
         module.passed.append(("meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))
