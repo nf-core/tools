@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 import nf_core.modules
+from nf_core.modules.lint import main_nf
 
 from ..utils import GITLAB_URL, set_wd
 from .patch import BISMARK_ALIGN, CORRECT_SHA, PATCH_BRANCH, REPO_NAME, modify_main_nf
@@ -105,3 +106,110 @@ def test_modules_lint_patched_modules(self):
     assert len(module_lint.failed) == 1
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
+
+
+# A skeleton object with the passed/warned/failed list attrs
+# Use this in place of a ModuleLint object to test behaviour of
+# linting methods which don't need the full setup
+class MockModuleLint:
+    def __init__(self):
+        self.passed = []
+        self.warned = []
+        self.failed = []
+
+
+PROCESS_LABEL_GOOD = (
+    """
+    label process_high
+    cpus 12
+    """,
+    1,
+    0,
+    0,
+)
+PROCESS_LABEL_NON_ALPHANUMERIC = (
+    """
+    label a:label:with:colons
+    cpus 12
+    """,
+    0,
+    1,
+    0,
+)
+PROCESS_LABEL_GOOD_CONFLICTING = (
+    """
+    label process_high
+    label process_low
+    cpus 12
+    """,
+    0,
+    1,
+    0,
+)
+PROCESS_LABEL_GOOD_DUPLICATES = (
+    """
+    label process_high
+    label process_high
+    cpus 12
+    """,
+    0,
+    2,
+    0,
+)
+PROCESS_LABEL_GOOD_AND_NONSTANDARD = (
+    """
+    label process_high
+    label process_extra_label
+    cpus 12
+    """,
+    1,
+    2,
+    0,
+)
+PROCESS_LABEL_NONSTANDARD = (
+    """
+    label process_extra_label
+    cpus 12
+    """,
+    0,
+    1,
+    0,
+)
+PROCESS_LABEL_NONSTANDARD_DUPLICATES = (
+    """
+    label process_extra_label
+    label process_extra_label
+    cpus 12
+    """,
+    0,
+    3,
+    0,
+)
+PROCESS_LABEL_NONE_FOUND = (
+    """
+    cpus 12
+    """,
+    0,
+    1,
+    0,
+)
+
+PROCESS_LABEL_TEST_CASES = [
+    PROCESS_LABEL_GOOD,
+    PROCESS_LABEL_NON_ALPHANUMERIC,
+    PROCESS_LABEL_GOOD_CONFLICTING,
+    PROCESS_LABEL_GOOD_DUPLICATES,
+    PROCESS_LABEL_GOOD_AND_NONSTANDARD,
+    PROCESS_LABEL_NONSTANDARD,
+    PROCESS_LABEL_NONSTANDARD_DUPLICATES,
+    PROCESS_LABEL_NONE_FOUND,
+]
+
+
+@pytest.mark.parametrize("lines,passed,warned,failed", PROCESS_LABEL_TEST_CASES)
+def test_modules_lint_check_process_labels(self, lines, passed, warned, failed):
+    mocked_ModuleLint = MockModuleLint()
+    main_nf.check_process_labels(mocked_ModuleLint, lines)
+    assert len(mocked_ModuleLint.passed) == passed
+    assert len(mocked_ModuleLint.warned) == warned
+    assert len(mocked_ModuleLint.failed) == failed

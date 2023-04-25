@@ -235,54 +235,8 @@ def check_process_section(self, lines, fix_version, progress_bar):
         self.failed.append(("process_capitals", "Process name is not in capital letters", self.main_nf))
 
     # Check that process labels are correct
-    correct_process_labels = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
-    all_labels = [l for l in lines if l.lstrip().startswith("label ")]
-    bad_labels = []
-    good_labels = []
-    if len(all_labels) > 0:
-        for label in all_labels:
-            try:
-                label = re.match("^label\s+([a-zA-Z0-9_-]+)", label).group(1)
-            except AttributeError:
-                self.warned.append(
-                    (
-                        "process_standard_label",
-                        f"Specified label appears to contain non-alphanumerics: {label}",
-                        self.main_nf,
-                    )
-                )
-                continue
-            if label not in correct_process_labels:
-                bad_labels.append(label)
-            else:
-                good_labels.append(label)
-        if len(good_labels) > 1:
-            self.warned.append(
-                (
-                    "process_standard_label",
-                    f"Conflicting process labels found: `{'`,`'.join(good_labels)}`",
-                    self.main_nf,
-                )
-            )
-        elif len(good_labels) == 1:
-            self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
-        else:
-            self.warned.append(("process_standard_label", "Standard process label not found", self.main_nf))
-        if len(bad_labels) > 0:
-            self.warned.append(
-                ("process_standard_label", f"Non-standard labels found: `{'`,`'.join(good_labels)}`", self.main_nf)
-            )
-        if len(all_labels) > len(set(all_labels)):
-            self.warned.append(
-                (
-                    "process_standard_label",
-                    f"Duplicate labels found: `{'`,`'.join(sorted(all_labels))}`",
-                    self.main_nf,
-                )
-            )
 
-    else:
-        self.warned.append(("process_standard_label", "Process label not specified", self.main_nf))
+    # Deprecated enable_conda
     for i, l in enumerate(lines):
         url = None
         l = l.strip(" '\"")
@@ -435,6 +389,56 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
 
     return docker_tag == singularity_tag
+
+
+def check_process_labels(self, lines):
+    correct_process_labels = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
+    all_labels = [l for l in lines if l.lstrip().startswith("label ")]
+    bad_labels = []
+    good_labels = []
+    if len(all_labels) > 0:
+        for label in all_labels:
+            try:
+                label = re.match("^label\s+([a-zA-Z0-9_-]+)", label).group(1)
+            except AttributeError:
+                self.warned.append(
+                    (
+                        "process_standard_label",
+                        f"Specified label appears to contain non-alphanumerics: {label}",
+                        self.main_nf,
+                    )
+                )
+                continue
+            if label not in correct_process_labels:
+                bad_labels.append(label)
+            else:
+                good_labels.append(label)
+        if len(good_labels) > 1:
+            self.warned.append(
+                (
+                    "process_standard_label",
+                    f"Conflicting process labels found: `{'`,`'.join(good_labels)}`",
+                    self.main_nf,
+                )
+            )
+        elif len(good_labels) == 1:
+            self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
+        else:
+            self.warned.append(("process_standard_label", "Standard process label not found", self.main_nf))
+        if len(bad_labels) > 0:
+            self.warned.append(
+                ("process_standard_label", f"Non-standard labels found: `{'`,`'.join(good_labels)}`", self.main_nf)
+            )
+        if len(all_labels) > len(set(all_labels)):
+            self.warned.append(
+                (
+                    "process_standard_label",
+                    f"Duplicate labels found: `{'`,`'.join(sorted(all_labels))}`",
+                    self.main_nf,
+                )
+            )
+    else:
+        self.warned.append(("process_standard_label", "Process label not specified", self.main_nf))
 
 
 def _parse_input(self, line_raw):
