@@ -17,16 +17,12 @@ def readme(self):
 
            [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.27.6-brightgreen.svg)](https://www.nextflow.io/)
 
-    * Bioconda badge
+    .. note:: This badge are a markdown image ``![alt-text](<image URL>)`` *inside* a markdown link ``[markdown image](<link URL>)``, so a bit fiddly to write.
 
-      * If your pipeline contains a file called ``environment.yml`` in the root directory, a bioconda badge is required
-      * Required badge code:
+    * Zenodo release
 
-        .. code-block:: md
+        * If pipeline is released but still contains a 'zenodo.XXXXXXX' tag, the test fails
 
-           [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)
-
-    .. note:: These badges are a markdown image ``![alt-text](<image URL>)`` *inside* a markdown link ``[markdown image](<link URL>)``, so a bit fiddly to write.
     """
     passed = []
     warned = []
@@ -61,5 +57,17 @@ def readme(self):
                 )
         else:
             warned.append("README did not have a Nextflow minimum version badge.")
+
+    if "zenodo_doi" not in ignore_configs:
+        # Check that zenodo.XXXXXXX has been replaced with the zendo.DOI
+        zenodo_re = r"/zenodo\.X+"
+        match = re.search(zenodo_re, content)
+        if match:
+            warned.append(
+                "README contains the placeholder `zenodo.XXXXXXX`. "
+                "This should be replaced with the zenodo doi (after the first release)."
+            )
+        else:
+            passed.append("README Zenodo placeholder was replaced with DOI.")
 
     return {"passed": passed, "warned": warned, "failed": failed}

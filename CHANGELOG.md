@@ -16,12 +16,14 @@
 - Simplify pipeline README ([#2186](https://github.com/nf-core/tools/issues/2186))
 - Added support for the apptainer container engine via `-profile apptainer`. ([#2244](https://github.com/nf-core/tools/issues/2244)) [Contributed by @jfy133]
 - Add tower.yml file to the pipeline template ([#2251](https://github.com/nf-core/tools/pull/2251))
+- Add mastodon badge to README ([#2253](https://github.com/nf-core/tools/pull/2253))
 
 ### Linting
 
 - Update modules lint test to fail if enable_conda is found ([#2213](https://github.com/nf-core/tools/pull/2213))
 - Read module lint configuration from `.nf-core.yml`, not `.nf-core-lint.yml` ([#2221](https://github.com/nf-core/tools/pull/2221))
 - `nf-core schema lint` now defaults to linting `nextflow_schema.json` if no filename is provided ([#2225](https://github.com/nf-core/tools/pull/2225))
+- Warn if `/zenodo.XXXXXX` is present in the Readme ([#2254](https://github.com/nf-core/tools/pull/2254))
 
 ### Modules
 
