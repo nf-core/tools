@@ -45,6 +45,17 @@ def create_modules_repo_dummy(tmp_dir):
         with requests_cache.disabled():
             module_create.create()
 
+    # Remove doi from meta.yml which makes lint fail
+    meta_yml = os.path.join(root_dir, "modules", "nf-core", "bpipe", "test", "meta.yml")
+    with open(meta_yml, "r") as fh:
+        lines = fh.readlines()
+    for line_index in range(len(lines)):
+        if "doi" in lines[line_index]:
+            to_pop = line_index
+    lines.pop(to_pop)
+    with open(meta_yml, "w") as fh:
+        fh.writelines(lines)
+
     return root_dir
 
 
