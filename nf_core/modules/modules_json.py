@@ -745,6 +745,16 @@ class ModulesJson:
         if write_file:
             self.dump()
 
+    def remove_patch_entry(self, module_name, repo_url, install_dir, write_file=True):
+        if self.modules_json is None:
+            self.load()
+        try:
+            del self.modules_json["repos"][repo_url]["modules"][install_dir][module_name]["patch"]
+        except KeyError:
+            log.warning("No patch entry in 'modules.json' to remove")
+        if write_file:
+            self.dump()
+
     def get_patch_fn(self, module_name, repo_url, install_dir):
         """
         Get the patch filename of a module
