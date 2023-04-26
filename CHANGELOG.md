@@ -15,6 +15,7 @@
 - Remove `.cff` files from `.editorconfig` [(#2145)[https://github.com/nf-core/tools/pull/2145]]
 - Simplify pipeline README ([#2186](https://github.com/nf-core/tools/issues/2186))
 - Added support for the apptainer container engine via `-profile apptainer`. ([#2244](https://github.com/nf-core/tools/issues/2244)) [Contributed by @jfy133]
+- Added config `docker.registry` to pipeline template for a configurable default container registry when using Docker containers. Defaults to `quay.io` ([#2133](https://github.com/nf-core/tools/pull/2133))
 - Add tower.yml file to the pipeline template ([#2251](https://github.com/nf-core/tools/pull/2251))
 - Add mastodon badge to README ([#2253](https://github.com/nf-core/tools/pull/2253))
 
