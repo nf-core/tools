@@ -167,7 +167,8 @@ class TestCli(unittest.TestCase):
             "force": None,
             "tower": None,
             "container": "singularity",
-            "singularity-cache-only": None,
+            "singularity-cache": "copy",
+            "singularity-cache-index": "/path/index.txt",
             "parallel-downloads": 2,
         }
 
@@ -184,7 +185,8 @@ class TestCli(unittest.TestCase):
             "force" in params,
             "tower" in params,
             params["container"],
-            "singularity-cache-only" in params,
+            params["singularity-cache"],
+            params["singularity-cache-index"],
             params["parallel-downloads"],
         )
 

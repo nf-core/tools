@@ -141,11 +141,12 @@ class DownloadWorkflow:
             # Inclusion of configs is unnecessary for Tower.
             if not self.tower and self.include_configs is None:
                 self.prompt_config_inclusion()
+            # If a remote cache is specified, it is safe to assume images should be downloaded.
             if not self.singularity_cache == "remote":
                 self.prompt_container_download()
-                self.prompt_singularity_cachedir_creation()
             else:
                 self.container = "singularity"
+            self.prompt_singularity_cachedir_creation()
             self.prompt_singularity_cachedir_utilization()
             self.prompt_singularity_cachedir_remote(retry=False)
             self.read_remote_containers()
@@ -371,7 +372,7 @@ class DownloadWorkflow:
     def prompt_container_download(self):
         """Prompt whether to download container images or not"""
 
-        if self.container is None:
+        if self.container is None and stderr.is_interactive:
             stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
             self.container = questionary.select(
                 "Download software container images:",
@@ -393,7 +394,8 @@ class DownloadWorkflow:
             if rich.prompt.Confirm.ask(
                 "[blue bold]?[/] [bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
             ):
-                self.singularity_cache == "amend"
+                if not self.singularity_cache_index:
+                    self.singularity_cache == "amend"  # retain "remote" choice.
                 # Prompt user for a cache directory path
                 cachedir_path = None
                 while cachedir_path is None:
@@ -419,7 +421,7 @@ class DownloadWorkflow:
                     if bashrc_path:
                         stderr.print(
                             f"\nSo that [blue]$NXF_SINGULARITY_CACHEDIR[/] is always defined, you can add it to your [blue not bold]~/{os.path.basename(bashrc_path)}[/] file ."
-                            "This will then be autmoatically set every time you open a new terminal. We can add the following line to this file for you: \n"
+                            "This will then be automatically set every time you open a new terminal. We can add the following line to this file for you: \n"
                             f'[blue]export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"[/]'
                         )
                         append_to_file = rich.prompt.Confirm.ask(
@@ -444,16 +446,18 @@ class DownloadWorkflow:
             self.singularity_cache is None  # no choice regarding singularity cache has been made.
             and self.container == "singularity"
             and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None
+            and stderr.is_interactive
         ):
             stderr.print(
                 "\nIf you are working on the same system where you will run Nextflow, you can amend the downloaded images to the ones in the"
                 "[blue not bold]$NXF_SINGULARITY_CACHEDIR[/] folder, Nextflow will automatically find them."
                 "However if you will transfer the downloaded files to a different system then they should be copied to the target folder."
             )
-            self.singularity_cache = rich.prompt.Prompt.ask(
-                "[blue bold]?[/] [bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the target folder or amend new images to the collection?[/]",
+            self.singularity_cache = questionary.select(
+                "[blue bold]?[/] [bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the target folder or amend new images to the cache?[/]",
                 choices=["amend", "copy"],
-            )
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask()
 
     def prompt_singularity_cachedir_remote(self, retry):
         """Prompt about the index of a remote $NXF_SINGULARITY_CACHEDIR"""
@@ -463,10 +467,6 @@ class DownloadWorkflow:
             and self.singularity_cache_index is None
             and stderr.is_interactive  # Use rich auto-detection of interactive shells
         ):
-            stderr.print(
-                "\nNextflow and nf-core can use an environment variable called [blue]$NXF_SINGULARITY_CACHEDIR[/] that is a path to a directory where remote Singularity images are stored. "
-                "This allows downloaded images to be cached in a central location."
-            )
             # Prompt user for a file listing the contents of the remote cache directory
             cachedir_index = None
             while cachedir_index is None:
