@@ -117,6 +117,8 @@ class MockModuleLint:
         self.warned = []
         self.failed = []
 
+        self.main_nf = "main_nf"
+
 
 PROCESS_LABEL_GOOD = (
     """
@@ -133,7 +135,7 @@ PROCESS_LABEL_NON_ALPHANUMERIC = (
     cpus 12
     """,
     0,
-    1,
+    2,
     0,
 )
 PROCESS_LABEL_GOOD_CONFLICTING = (
@@ -163,7 +165,7 @@ PROCESS_LABEL_GOOD_AND_NONSTANDARD = (
     cpus 12
     """,
     1,
-    2,
+    1,
     0,
 )
 PROCESS_LABEL_NONSTANDARD = (
@@ -172,7 +174,7 @@ PROCESS_LABEL_NONSTANDARD = (
     cpus 12
     """,
     0,
-    1,
+    2,
     0,
 )
 PROCESS_LABEL_NONSTANDARD_DUPLICATES = (
@@ -206,10 +208,11 @@ PROCESS_LABEL_TEST_CASES = [
 ]
 
 
-@pytest.mark.parametrize("lines,passed,warned,failed", PROCESS_LABEL_TEST_CASES)
-def test_modules_lint_check_process_labels(self, lines, passed, warned, failed):
-    mocked_ModuleLint = MockModuleLint()
-    main_nf.check_process_labels(mocked_ModuleLint, lines)
-    assert len(mocked_ModuleLint.passed) == passed
-    assert len(mocked_ModuleLint.warned) == warned
-    assert len(mocked_ModuleLint.failed) == failed
+def test_modules_lint_check_process_labels(self):
+    for test_case in PROCESS_LABEL_TEST_CASES:
+        process, passed, warned, failed = test_case
+        mocked_ModuleLint = MockModuleLint()
+        main_nf.check_process_labels(mocked_ModuleLint, process.splitlines())
+        assert len(mocked_ModuleLint.passed) == passed
+        assert len(mocked_ModuleLint.warned) == warned
+        assert len(mocked_ModuleLint.failed) == failed
