@@ -46,7 +46,7 @@
 
 - Deprecate Python 3.7 support because it reaches EOL ([#2210](https://github.com/nf-core/tools/pull/2210))
 - `nf-core modules/subworkflows info` now prints the include statement for the module/subworkflow ([#2182](https://github.com/nf-core/tools/pull/2182)).
-- Add a stale GHA wich stale + close issues and stale PRs with specific labels ([#2183](https://github.com/nf-core/tools/pull/2183))
+- Add a clean-up GHA which closes issues and PRs with specific labels ([#2183](https://github.com/nf-core/tools/pull/2183))
 - update minimum version of rich to 13.3.1 ([#2185](https://github.com/nf-core/tools/pull/2185))
 - Add the Nextflow version to Gitpod container matching the minimal Nextflow version for nf-core (according to `nextflow.config`) ([#2196](https://github.com/nf-core/tools/pull/2196))
 - Use `nfcore/gitpod:dev` container in the dev branch ([#2196](https://github.com/nf-core/tools/pull/2196))
