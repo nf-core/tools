@@ -242,7 +242,7 @@ class DownloadWorkflow:
             self.compress_download()
 
     def download_workflow_tower(self):
-        """Create a bare-cloned git repository of the workflow, such it can be launched with `tw launch` as file:/ pipeline"""
+        """Create a bare-cloned git repository of the workflow, so it can be launched with `tw launch` as file:/ pipeline"""
 
         log.info("Collecting workflow from GitHub")
 
@@ -481,7 +481,7 @@ class DownloadWorkflow:
                     self.singularity_cache_index = None
                     self.singularity_cache = "copy"
                 elif not os.access(cachedir_index, os.R_OK):
-                    log.error(f"'{cachedir_index}' is not a valid, readable file.")
+                    log.error(f"'{cachedir_index}' is not a readable file.")
                     cachedir_index = None
             if cachedir_index:
                 self.singularity_cache_index = cachedir_index
