@@ -108,7 +108,7 @@ class DownloadWorkflow:
         self.force = force
         self.tower = tower
         self.include_configs = None
-        self.container = container
+        self.container = container if not singularity_cache_index else "singularity"
         self.singularity_cache = (
             singularity_cache if not singularity_cache_index else "remote"
         )  # if a singularity_cache_index is given, use the file and overrule choice.
@@ -157,7 +157,7 @@ class DownloadWorkflow:
             sys.exit(1)
 
         summary_log = [
-            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
+            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',...['+str(len(self.revision)-2)+' more revisions]...,'+self.revision[-1]}'",
             f"Pull containers: '{self.container}'",
         ]
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
@@ -228,28 +228,29 @@ class DownloadWorkflow:
 
             # Collect all required singularity images
             if self.container == "singularity":
-                self.find_container_images(revision_dirname)
+                self.find_container_images(os.path.join(self.outdir, revision_dirname))
 
-            try:
-                self.get_singularity_images()
-            except OSError as e:
-                log.critical(f"[red]{e}[/]")
-                sys.exit(1)
+                try:
+                    self.get_singularity_images(current_revision=item[0])
+                except OSError as e:
+                    log.critical(f"[red]{e}[/]")
+                    sys.exit(1)
 
         # Compress into an archive
         if self.compress_type is not None:
             log.info("Compressing output into archive")
             self.compress_download()
 
-    def download_workflow_tower(self):
+    def download_workflow_tower(self, location=None):
         """Create a bare-cloned git repository of the workflow, so it can be launched with `tw launch` as file:/ pipeline"""
 
         log.info("Collecting workflow from GitHub")
 
         self.workflow_repo = WorkflowRepo(
-            remote_url=f"git@github.com:{self.pipeline}.git",
+            remote_url=f"https://github.com/{self.pipeline}.git",
             revision=self.revision if self.revision else None,
             commit=self.wf_sha.values() if bool(self.wf_sha) else None,
+            location=location if location else None,  # manual location is required for the tests to work
             in_cache=False,
         )
 
@@ -261,17 +262,17 @@ class DownloadWorkflow:
 
         # extract the required containers
         if self.container == "singularity":
-            for commit in self.wf_sha.values():
+            for revision, commit in self.wf_sha.items():
                 # Checkout the repo in the current revision
                 self.workflow_repo.checkout(commit)
                 # Collect all required singularity images
                 self.find_container_images(self.workflow_repo.access())
 
-            try:
-                self.get_singularity_images()
-            except OSError as e:
-                log.critical(f"[red]{e}[/]")
-                sys.exit(1)
+                try:
+                    self.get_singularity_images(current_revision=revision)
+                except OSError as e:
+                    log.critical(f"[red]{e}[/]")
+                    sys.exit(1)
 
         # Justify why compression is skipped for Tower downloads (Prompt is not shown, but CLI argument could have been set)
         if self.compress_type is not None:
@@ -412,30 +413,47 @@ class DownloadWorkflow:
                 if cachedir_path:
                     os.environ["NXF_SINGULARITY_CACHEDIR"] = cachedir_path
 
-                    # Ask if user wants this set in their .bashrc
-                    bashrc_path = os.path.expanduser("~/.bashrc")
-                    if not os.path.isfile(bashrc_path):
-                        bashrc_path = os.path.expanduser("~/.bash_profile")
-                        if not os.path.isfile(bashrc_path):
-                            bashrc_path = False
-                    if bashrc_path:
+                    """
+                    Optionally, create a permanent entry for the NXF_SINGULARITY_CACHEDIR in the terminal profile.
+                    Currently support for bash and zsh.
+                    ToDo: "sh", "bash", "dash", "ash","csh", "tcsh", "ksh", "zsh", "fish", "cmd", "powershell", "pwsh"?
+                    """
+
+                    if os.environ["SHELL"] == "/bin/bash":
+                        shellprofile_path = os.path.expanduser("~/~/.bash_profile")
+                        if not os.path.isfile(shellprofile_path):
+                            shellprofile_path = os.path.expanduser("~/.bashrc")
+                            if not os.path.isfile(shellprofile_path):
+                                shellprofile_path = False
+                    elif os.environ["SHELL"] == "/bin/zsh":
+                        shellprofile_path = os.path.expanduser("~/.zprofile")
+                        if not os.path.isfile(shellprofile_path):
+                            shellprofile_path = os.path.expanduser("~/.zshenv")
+                            if not os.path.isfile(shellprofile_path):
+                                shellprofile_path = False
+                    else:
+                        shellprofile_path = os.path.expanduser("~/.profile")
+                        if not os.path.isfile(shellprofile_path):
+                            shellprofile_path = False
+
+                    if shellprofile_path:
                         stderr.print(
-                            f"\nSo that [blue]$NXF_SINGULARITY_CACHEDIR[/] is always defined, you can add it to your [blue not bold]~/{os.path.basename(bashrc_path)}[/] file ."
+                            f"\nSo that [blue]$NXF_SINGULARITY_CACHEDIR[/] is always defined, you can add it to your [blue not bold]~/{os.path.basename(shellprofile_path)}[/] file ."
                             "This will then be automatically set every time you open a new terminal. We can add the following line to this file for you: \n"
                             f'[blue]export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"[/]'
                         )
                         append_to_file = rich.prompt.Confirm.ask(
-                            f"[blue bold]?[/] [bold]Add to [blue not bold]~/{os.path.basename(bashrc_path)}[/] ?[/]"
+                            f"[blue bold]?[/] [bold]Add to [blue not bold]~/{os.path.basename(shellprofile_path)}[/] ?[/]"
                         )
                         if append_to_file:
-                            with open(os.path.expanduser(bashrc_path), "a") as f:
+                            with open(os.path.expanduser(shellprofile_path), "a") as f:
                                 f.write(
                                     "\n\n#######################################\n"
                                     f"## Added by `nf-core download` v{nf_core.__version__} ##\n"
                                     + f'export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"'
                                     + "\n#######################################\n"
                                 )
-                            log.info(f"Successfully wrote to [blue]{bashrc_path}[/]")
+                            log.info(f"Successfully wrote to [blue]{shellprofile_path}[/]")
                             log.warning(
                                 "You will need reload your terminal after the download completes for this to take effect."
                             )
@@ -620,7 +638,7 @@ class DownloadWorkflow:
         with open(nfconfig_fn, "w") as nfconfig_fh:
             nfconfig_fh.write(nfconfig)
 
-    def find_container_images(self, revision_dirname):
+    def find_container_images(self, workflow_directory):
         """Find container image names for workflow.
 
         Starts by using `nextflow config` to pull out any process.container
@@ -662,7 +680,7 @@ class DownloadWorkflow:
         containers_raw = [] if not self.containers else self.containers
 
         # Use linting code to parse the pipeline nextflow config
-        self.nf_config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, revision_dirname))
+        self.nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
 
         # Find any config variables that look like a container
         for k, v in self.nf_config.items():
@@ -670,7 +688,7 @@ class DownloadWorkflow:
                 containers_raw.append(v.strip('"').strip("'"))
 
         # Recursive search through any DSL2 module files for container spec lines.
-        for subdir, _, files in os.walk(os.path.join(self.outdir, revision_dirname, "modules")):
+        for subdir, _, files in os.walk(os.path.join(workflow_directory, "modules")):
             for file in files:
                 if file.endswith(".nf"):
                     file_path = os.path.join(subdir, file)
@@ -745,14 +763,14 @@ class DownloadWorkflow:
         # Remove duplicates and sort
         self.containers = sorted(list(set(containers_raw)))
 
-    def get_singularity_images(self):
+    def get_singularity_images(self, current_revision=""):
         """Loop through container names and download Singularity images"""
 
         if len(self.containers) == 0:
             log.info("No container names found in workflow")
         else:
             log.info(
-                f"Found {len(self.containers)} container image{'s' if len(self.containers) > 1 else ''} in workflow."
+                f"Processing workflow revision {current_revision}, found {len(self.containers)} container image{'s' if len(self.containers) > 1 else ''} in total."
             )
 
             with DownloadProgress() as progress:
@@ -1087,6 +1105,7 @@ class WorkflowRepo(SyncedRepo):
         remote_url,
         revision,
         commit,
+        location=None,
         hide_progress=False,
         in_cache=True,
     ):
@@ -1118,7 +1137,7 @@ class WorkflowRepo(SyncedRepo):
         self.retries = 0  # retries for setting up the locally cached repository
         self.hide_progress = hide_progress
 
-        self.setup_local_repo(remote_url, in_cache=in_cache)
+        self.setup_local_repo(remote=remote_url, location=location, in_cache=in_cache)
 
         # expose some instance attributes
         self.tags = self.repo.tags
@@ -1155,7 +1174,7 @@ class WorkflowRepo(SyncedRepo):
         else:
             raise LookupError("Exiting due to error with locally cached Git repository.")
 
-    def setup_local_repo(self, remote, in_cache=True):
+    def setup_local_repo(self, remote, location=None, in_cache=True):
         """
         Sets up the local git repository. If the repository has been cloned previously, it
         returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
@@ -1163,13 +1182,15 @@ class WorkflowRepo(SyncedRepo):
 
         Args:
             remote (str): git url of remote
-            commit (str): name of branch to checkout from (optional)
-            hide_progress (bool, optional): Whether to hide the progress bar. Defaults to False.
+            location (Path): location where the clone should be created/cached.
             in_cache (bool, optional): Whether to clone the repository from the cache. Defaults to False.
         Sets self.repo
         """
+        if location:
+            self.local_repo_dir = os.path.join(location, self.fullname)
+        else:
+            self.local_repo_dir = os.path.join(NFCORE_DIR if not in_cache else NFCORE_CACHE_DIR, self.fullname)
 
-        self.local_repo_dir = os.path.join(NFCORE_DIR if not in_cache else NFCORE_CACHE_DIR, self.fullname)
         try:
             if not os.path.exists(self.local_repo_dir):
                 try:

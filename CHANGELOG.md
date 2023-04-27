@@ -52,6 +52,7 @@
 ### Download
 
 - Introduce a `--tower` flag for `nf-core download` to obtain pipelines in an offline format suited for [seqeralabs® Nextflow Tower](https://cloud.tower.nf/) ([#2247](https://github.com/nf-core/tools/pull/2247)).
+- Refactored the CLI for `--singularity-cache` in `nf-core download` from a flag to an argument. The prior options were renamed to `amend` (container images are only saved in the `$NXF_SINGULARITY_CACHEDIR`) and `copy` (a copy of the image is saved with the download). `remote` was newly introduced and allows to provide a table of contents of a remote cache via an additional argument `--singularity-cache-index` ([#2247](https://github.com/nf-core/tools/pull/2247)).
 
 ### Linting
 

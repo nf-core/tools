@@ -213,7 +213,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     "-r",
     "--revision",
     multiple=True,
-    help="Pipeline release to download. Multiple invocations are possible, e.g. `-r 1.1 -r 1.2.",
+    help="Pipeline release to download. Multiple invocations are possible, e.g. `-r 1.1 -r 1.2`",
 )
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
