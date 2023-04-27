@@ -148,8 +148,7 @@ class DownloadWorkflow:
                 self.container = "singularity"
             self.prompt_singularity_cachedir_creation()
             self.prompt_singularity_cachedir_utilization()
-            self.prompt_singularity_cachedir_remote(retry=False)
-            self.read_remote_containers()
+            self.prompt_singularity_cachedir_remote()
             # Nothing meaningful to compress here.
             if not self.tower:
                 self.prompt_compression_type()
@@ -177,8 +176,8 @@ class DownloadWorkflow:
         if not self.tower:
             # Only show entry, if option was prompted.
             summary_log.append(f"Include default institutional configuration: '{self.include_configs}'")
-
-        summary_log.append(f"Enabled for seqeralabs® Nextflow Tower: '{self.tower}'")
+        else:
+            summary_log.append(f"Enabled for seqeralabs® Nextflow Tower: '{self.tower}'")
 
         # Check that the outdir doesn't already exist
         if os.path.exists(self.outdir):
@@ -203,9 +202,9 @@ class DownloadWorkflow:
         if self.tower:
             self.download_workflow_tower()
         else:
-            self.download_workflow_classic()
+            self.download_workflow_static()
 
-    def download_workflow_classic(self):
+    def download_workflow_static(self):
         """Downloads a nf-core workflow from GitHub to the local file system in a self-contained manner."""
 
         # Download the centralised configs first
@@ -290,7 +289,8 @@ class DownloadWorkflow:
         Prompt for pipeline revision / branch
         Prompt user for revision tag if '--revision' was not set
         If --tower is specified, allow to select multiple revisions
-        Also the classic download allows for multiple revisions, but
+        Also the static download allows for multiple revisions, but
+        we do not prompt this option interactively.
         """
         if not bool(self.revision):
             (choice, tag_set) = nf_core.utils.prompt_pipeline_release_branch(
@@ -459,7 +459,7 @@ class DownloadWorkflow:
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
-    def prompt_singularity_cachedir_remote(self, retry):
+    def prompt_singularity_cachedir_remote(self):
         """Prompt about the index of a remote $NXF_SINGULARITY_CACHEDIR"""
         if (
             self.container == "singularity"
@@ -485,8 +485,8 @@ class DownloadWorkflow:
                     cachedir_index = None
             if cachedir_index:
                 self.singularity_cache_index = cachedir_index
-            if retry:  # invoke parsing the file again.
-                self.read_remote_containers()
+        # in any case read the remote containers, even if no prompt was shown.
+        self.read_remote_containers()
 
     def read_remote_containers(self):
         """Reads the file specified as index for the remote Singularity cache dir"""
