@@ -727,7 +727,8 @@ def get_biocontainer_tag(package, version):
                         docker_image = all_docker[k]["image"]
                         singularity_image = all_singularity[k]["image"]
                         current_date = date
-                return docker_image["image_name"], singularity_image["image_name"]
+                        docker_image_name = docker_image["image_name"].lstrip("quay.io/")
+                return docker_image_name, singularity_image["image_name"]
             except TypeError:
                 raise LookupError(f"Could not find docker or singularity container for {package}")
         elif response.status_code != 404:
