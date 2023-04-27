@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-# v2.8dev
+# [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
 
 ### Template
 
@@ -26,6 +26,7 @@
 - Read module lint configuration from `.nf-core.yml`, not `.nf-core-lint.yml` ([#2221](https://github.com/nf-core/tools/pull/2221))
 - `nf-core schema lint` now defaults to linting `nextflow_schema.json` if no filename is provided ([#2225](https://github.com/nf-core/tools/pull/2225))
 - Warn if `/zenodo.XXXXXX` is present in the Readme ([#2254](https://github.com/nf-core/tools/pull/2254))
+- Lint all labels in a module ([#2227](https://github.com/nf-core/tools/pull/2227))
 
 ### Modules
 
