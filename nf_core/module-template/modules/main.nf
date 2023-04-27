@@ -30,7 +30,7 @@ process {{ component_name_underscore|upper }} {
     conda "{{ bioconda if bioconda else 'YOUR-TOOL-HERE' }}"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         '{{ singularity_container if singularity_container else 'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE' }}':
-        '{{ docker_container if docker_container else 'quay.io/biocontainers/YOUR-TOOL-HERE' }}' }"
+        '{{ docker_container if docker_container else 'biocontainers/YOUR-TOOL-HERE' }}' }"
 
     input:
     {% if not_empty_template -%}

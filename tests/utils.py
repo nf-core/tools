@@ -102,7 +102,7 @@ def mock_biocontainers_api_calls(rsps: responses.RequestsMock, module, version):
             },
             {
                 "image_type": "Docker",
-                "image_name": f"quay.io/biocontainers/{module}:{version}",
+                "image_name": f"biocontainers/{module}:{version}",
                 "updated": "2021-09-04T00:00:00Z",
             },
         ],

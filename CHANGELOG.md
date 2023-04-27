@@ -18,6 +18,7 @@
 - Added config `docker.registry` to pipeline template for a configurable default container registry when using Docker containers. Defaults to `quay.io` ([#2133](https://github.com/nf-core/tools/pull/2133))
 - Add tower.yml file to the pipeline template ([#2251](https://github.com/nf-core/tools/pull/2251))
 - Add mastodon badge to README ([#2253](https://github.com/nf-core/tools/pull/2253))
+- Removed `quay.io` from all module Docker container references as this is now supplied at pipeline level. ([#2249](https://github.com/nf-core/tools/pull/2249))
 
 ### Linting
 
