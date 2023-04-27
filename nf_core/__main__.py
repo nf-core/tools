@@ -213,14 +213,14 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     "-r",
     "--revision",
     multiple=True,
-    help="Pipeline release to download. Multiple invocations are possible.",
+    help="Pipeline release to download. Multiple invocations are possible, e.g. `-r 1.1 -r 1.2.",
 )
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
     "-x", "--compress", type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]), help="Archive compression type"
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
-@click.option("-t", "--tower", is_flag=True, default=False, help="Customize download for seqeralabs® Nextflow Tower")
+@click.option("-t", "--tower", is_flag=True, default=False, help="Download for seqeralabs® Nextflow Tower")
 @click.option(
     "-c", "--container", type=click.Choice(["none", "singularity"]), help="Download software container images"
 )
