@@ -512,7 +512,7 @@ class DownloadWorkflow:
                     self.containers_remote = sorted(list(set(self.containers_remote)))
             except (FileNotFoundError, LookupError) as e:
                 log.error(f"[red]Issue with reading the specified remote $NXF_SINGULARITY_CACHE index:[/]\n{e}\n")
-                if rich.prompt.Confirm.ask(f"[blue]Specify a new index file and try again?"):
+                if stderr.is_interactive and rich.prompt.Confirm.ask(f"[blue]Specify a new index file and try again?"):
                     self.prompt_singularity_cachedir_remote(retry=True)
                 else:
                     log.info("Proceeding without consideration of the remote $NXF_SINGULARITY_CACHE index.")
