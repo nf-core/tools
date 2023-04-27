@@ -40,6 +40,7 @@
 
 ### General
 
+- Expose the default branch setting for pipeline creation in the CLI [#1961](https://github.com/nf-core/tools/pull/1961).
 - `nf-core modules/subworkflows info` now prints the include statement for the module/subworkflow ([#2182](https://github.com/nf-core/tools/pull/2182)).
 - Add a stale GHA wich stale + close issues and stale PRs with specific labels ([#2183](https://github.com/nf-core/tools/pull/2183))
 - update minimum version of rich to 13.3.1 ([#2185](https://github.com/nf-core/tools/pull/2185))

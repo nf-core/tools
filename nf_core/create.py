@@ -102,8 +102,8 @@ class PipelineCreate:
                     template_yaml = yaml.safe_load(f)
             else:
                 template_yaml = {}
-        except FileNotFoundError:
-            raise UserWarning(f"Template YAML file '{template_yaml_path}' not found.")
+        except FileNotFoundError as exc:
+            raise UserWarning(f"Template YAML file '{template_yaml_path}' not found.") from exc
 
         param_dict = {}
         # Get the necessary parameters either from the template or command line arguments
@@ -276,9 +276,10 @@ class PipelineCreate:
         template_files += list(Path(template_dir).glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
         short_name = self.template_params["short_name"]
+        short_name_capitalized = f"{short_name[0].upper()}{short_name[1:]}"
         rename_files = {
             "workflows/pipeline.nf": f"workflows/{short_name}.nf",
-            "lib/WorkflowPipeline.groovy": f"lib/Workflow{short_name[0].upper()}{short_name[1:]}.groovy",
+            "lib/WorkflowPipeline.groovy": f"lib/Workflow{short_name_capitalized}.groovy",
         }
 
         # Set the paths to skip according to customization
@@ -292,7 +293,7 @@ class PipelineCreate:
             else:
                 if os.path.isdir(template_fn_path):
                     continue
-                if any([s in template_fn_path for s in ignore_strs]):
+                if any(s in template_fn_path for s in ignore_strs):
                     log.debug(f"Ignoring '{template_fn_path}' in jinja2 template creation")
                     continue
 
@@ -487,9 +488,9 @@ class PipelineCreate:
             log.debug(f"Fetching logo '{img_fn}' (attempt {attempt})")
             try:
                 # Try to fetch the logo from the website
-                r = requests.get(url, timeout=180)
-                if r.status_code != 200:
-                    raise UserWarning(f"Got status code {r.status_code}")
+                res = requests.get(url, timeout=180)
+                if res.status_code != 200:
+                    raise UserWarning(f"Got status code {res.status_code}")
                 # Check that the returned image looks right
 
             except (ConnectionError, UserWarning) as e:
@@ -500,7 +501,7 @@ class PipelineCreate:
 
             # Write the new logo to the file
             with open(img_fn, "wb") as fh:
-                fh.write(r.content)
+                fh.write(res.content)
             # Check that the file looks valid
             image_type = filetype.guess(img_fn).extension
             if image_type != "png":
