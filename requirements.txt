@@ -1,6 +1,5 @@
 click
 filetype
-galaxy-tool-util
 GitPython
 jinja2
 jsonschema>=3.0
@@ -15,6 +14,6 @@ questionary>=1.8.0
 refgenie
 requests
 requests_cache
-rich-click>=1.0.0
-rich>=10.7.0
+rich-click>=1.6.1
+rich>=13.3.1
 tabulate

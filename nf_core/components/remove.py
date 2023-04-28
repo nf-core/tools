@@ -127,7 +127,7 @@ class ComponentRemove(ComponentCommand):
                             component, silent=True
                         ):
                             log.warning(
-                                f"Could not install the {self.component_type[:-1]} '{component}', please install it manually with 'nf-core {component_type} install  {component}'."
+                                f"Could not install the {self.component_type[:-1]} '{component}', please install it manually with 'nf-core {self.component_type} install  {component}'."
                             )
                         removed_components.append(component)
                         return removed

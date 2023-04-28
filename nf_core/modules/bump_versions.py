@@ -172,7 +172,7 @@ class ModuleVersionBumper(ComponentCommand):
 
             patterns = [
                 (bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'"),
-                (rf"quay.io/biocontainers/{bioconda_tool_name}:[^'\"\s]+", docker_img),
+                (rf"biocontainers/{bioconda_tool_name}:[^'\"\s]+", docker_img),
                 (
                     rf"https://depot.galaxyproject.org/singularity/{bioconda_tool_name}:[^'\"\s]+",
                     singularity_img,
@@ -187,7 +187,6 @@ class ModuleVersionBumper(ComponentCommand):
                 found_match = False
                 newcontent = []
                 for line in content.splitlines():
-
                     # Match the pattern
                     matches_pattern = re.findall(rf"^.*{pattern[0]}.*$", line)
                     if matches_pattern:

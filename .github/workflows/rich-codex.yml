@@ -18,7 +18,7 @@ jobs:
         uses: nf-core/setup-nextflow@v1
 
       - name: Install nf-core/tools
-        run: pip install .
+        run: pip install git+https://github.com/nf-core/tools.git@dev
 
       - name: Generate terminal images with rich-codex
         uses: ewels/rich-codex@v1

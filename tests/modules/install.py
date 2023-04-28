@@ -6,6 +6,7 @@ from nf_core.modules.install import ModuleInstall
 from nf_core.modules.modules_json import ModulesJson
 
 from ..utils import (
+    GITLAB_BRANCH_ORG_PATH_BRANCH,
     GITLAB_BRANCH_TEST_BRANCH,
     GITLAB_REPO,
     GITLAB_URL,
@@ -83,3 +84,12 @@ def test_modules_install_tracking(self):
     assert mod_json["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"]["trimgalore"][
         "installed_by"
     ] == ["modules"]
+
+
+def test_modules_install_alternate_remote(self):
+    """Test installing a module from a different remote with the same organization path"""
+    install_obj = ModuleInstall(self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_ORG_PATH_BRANCH)
+    # Install fastqc from GitLab which is also installed from GitHub with the same org_path
+    with pytest.raises(Exception) as excinfo:
+        install_obj.install("fastqc")
+        assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)

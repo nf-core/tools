@@ -727,7 +727,8 @@ def get_biocontainer_tag(package, version):
                         docker_image = all_docker[k]["image"]
                         singularity_image = all_singularity[k]["image"]
                         current_date = date
-                return docker_image["image_name"], singularity_image["image_name"]
+                        docker_image_name = docker_image["image_name"].lstrip("quay.io/")
+                return docker_image_name, singularity_image["image_name"]
             except TypeError:
                 raise LookupError(f"Could not find docker or singularity container for {package}")
         elif response.status_code != 404:
@@ -872,7 +873,6 @@ def get_repo_releases_branches(pipeline, wfs):
     # Repo is a nf-core pipeline
     for wf in wfs.remote_workflows:
         if wf.full_name == pipeline or wf.name == pipeline:
-
             # Set to full name just in case it didn't have the nf-core/ prefix
             pipeline = wf.full_name
 
@@ -883,7 +883,6 @@ def get_repo_releases_branches(pipeline, wfs):
     # Arbitrary GitHub repo
     else:
         if pipeline.count("/") == 1:
-
             # Looks like a GitHub address - try working with this repo
             log.debug(
                 f"Pipeline '{pipeline}' not in nf-core, but looks like a GitHub address - fetching releases from API"

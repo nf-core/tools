@@ -33,7 +33,6 @@ def test_tmp_folder_does_not_exist_after():
 
 
 def test_set_wd():
-
     with tempfile.TemporaryDirectory() as tmpdirname:
         with set_wd(tmpdirname):
             context_wd = Path().resolve()

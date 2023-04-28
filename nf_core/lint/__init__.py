@@ -181,6 +181,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .schema_description import schema_description
     from .schema_lint import schema_lint
     from .schema_params import schema_params
+    from .system_exit import system_exit
     from .template_strings import template_strings
     from .version_consistency import version_consistency
 
@@ -223,6 +224,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "template_strings",
             "schema_lint",
             "schema_params",
+            "system_exit",
             "schema_description",
             "actions_schema_validation",
             "merge_markers",
@@ -434,7 +436,6 @@ class PipelineLint(nf_core.utils.Pipeline):
             )
 
     def _print_summary(self):
-
         # Summary table
         summary_colour = "red" if len(self.failed) > 0 else "green"
         table = Table(box=rich.box.ROUNDED, style=summary_colour)

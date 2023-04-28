@@ -52,7 +52,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Developing new modules",
-            "commands": ["create", "create-test-yml", "lint", "bump-versions", "mulled", "test"],
+            "commands": ["create", "create-test-yml", "lint", "bump-versions", "test"],
         },
     ],
     "nf-core subworkflows": [
@@ -341,7 +341,7 @@ def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, ma
     meets the nf-core guidelines. Documentation of all lint tests can be found
     on the nf-core website: [link=https://nf-co.re/tools-docs/]https://nf-co.re/tools-docs/[/]
 
-    You can ignore tests using a file called [blue].nf-core-lint.yaml[/] [i](if you have a good reason!)[/].
+    You can ignore tests using a file called [blue].nf-core.yml[/] [i](if you have a good reason!)[/].
     See the documentation for details.
     """
 
@@ -618,7 +618,8 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, update_d
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-def patch(ctx, tool, dir):
+@click.option("-r", "--remove", is_flag=True, default=False)
+def patch(ctx, tool, dir, remove):
     """
     Create a patch file for minor changes in a module
 
@@ -632,7 +633,10 @@ def patch(ctx, tool, dir):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        module_patch.patch(tool)
+        if remove:
+            module_patch.remove(tool)
+        else:
+            module_patch.patch(tool)
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
@@ -678,7 +682,16 @@ def remove(ctx, dir, tool):
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
 @click.option("-c", "--conda-name", type=str, default=None, help="Name of the conda package to use")
 @click.option("-p", "--conda-package-version", type=str, default=None, help="Version of conda package to use")
-def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_name, conda_package_version):
+@click.option(
+    "-i",
+    "--empty-template",
+    is_flag=True,
+    default=False,
+    help="Create a module from the template without TODOs or examples",
+)
+def create_module(
+    ctx, tool, dir, author, label, meta, no_meta, force, conda_name, conda_package_version, empty_template
+):
     """
     Create a new DSL2 module from the nf-core template.
 
@@ -700,7 +713,7 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
     # Run function
     try:
         module_create = nf_core.modules.ModuleCreate(
-            dir, tool, author, label, has_meta, force, conda_name, conda_package_version
+            dir, tool, author, label, has_meta, force, conda_name, conda_package_version, empty_template
         )
         module_create.create()
     except UserWarning as e:
@@ -864,49 +877,6 @@ def bump_versions(ctx, tool, dir, all, show_all):
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
-
-
-# nf-core modules mulled
-@modules.command()
-@click.argument("specifications", required=True, nargs=-1, metavar="<tool==version> <...>")
-@click.option(
-    "--build-number",
-    type=int,
-    default=0,
-    show_default=True,
-    metavar="<number>",
-    help="The build number for this image. This is an incremental value that starts at zero.",
-)
-def mulled(specifications, build_number):
-    """
-    Generate the name of a BioContainers mulled image version 2.
-
-    When you know the specific dependencies and their versions of a multi-tool container image and you need the name of
-    that image, this command can generate it for you.
-
-    """
-    from nf_core.modules.mulled import MulledImageNameGenerator
-
-    try:
-        image_name = MulledImageNameGenerator.generate_image_name(
-            MulledImageNameGenerator.parse_targets(specifications), build_number=build_number
-        )
-    except ValueError as e:
-        log.error(e)
-        sys.exit(1)
-    if not MulledImageNameGenerator.image_exists(image_name):
-        log.error("The generated multi-tool container image name does not seem to exist yet.")
-        log.info(
-            "Please double check that your provided combination of tools and versions exists in the file: "
-            "[link=https://github.com/BioContainers/multi-package-containers/blob/master/combinations/hash.tsv]BioContainers/multi-package-containers 'combinations/hash.tsv'[/link]"
-        )
-        log.info(
-            "If it does not, please add your desired combination as detailed at: "
-            "https://github.com/BioContainers/multi-package-containers"
-        )
-        sys.exit(1)
-    log.info("Mulled container hash:")
-    stdout.print(image_name)
 
 
 # nf-core modules test
@@ -1389,7 +1359,9 @@ def build(dir, no_prompts, web_only, url):
 
 # nf-core schema lint
 @schema.command()
-@click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<pipeline schema>")
+@click.argument(
+    "schema_path", type=click.Path(exists=True), default="nextflow_schema.json", metavar="<pipeline schema>"
+)
 def lint(schema_path):
     """
     Check that a given pipeline schema is valid.
@@ -1399,6 +1371,8 @@ def lint(schema_path):
 
     This function runs as part of the nf-core lint command, this is a convenience
     command that does just the schema linting nice and quickly.
+
+    If no schema path is provided, "nextflow_schema.json" will be used (if it exists).
     """
     schema_obj = nf_core.schema.PipelineSchema()
     try:
@@ -1446,8 +1420,7 @@ def docs(schema_path, output, format, force, columns):
     # Assume we're in a pipeline dir root if schema path not set
     schema_obj.get_schema_path(schema_path)
     schema_obj.load_schema()
-    if not output:
-        stdout.print(schema_obj.print_documentation(output, format, force, columns.split(",")))
+    schema_obj.print_documentation(output, format, force, columns.split(","))
 
 
 # nf-core bump-version

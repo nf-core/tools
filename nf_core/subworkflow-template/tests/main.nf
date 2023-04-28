@@ -4,7 +4,7 @@ nextflow.enable.dsl = 2
 
 include { {{ subworkflow_name|upper }} } from '../../../../subworkflows/{{ org }}/{{ subworkflow_dir }}/main.nf'
 
-workflow test_{{ subworkflow_name }} {
+workflow test_{{ component_name_underscore }} {
     {% if has_meta %}
     input = [
         [ id:'test' ], // meta map

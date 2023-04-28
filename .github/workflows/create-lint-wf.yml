@@ -84,6 +84,10 @@ jobs:
       - name: remove TODO
         run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
 
+      # Replace zenodo.XXXXXX to pass readme linting
+      - name: replace zenodo.XXXXXX
+        run: find nf-core-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
+
       # Run nf-core linting
       - name: nf-core lint
         run: nf-core --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned
@@ -108,7 +112,7 @@ jobs:
         run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
 
       - name: nf-core modules install gitlab
-        run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git --branch main install fastqc --force --dir nf-core-testpipeline/
+        run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git --branch branch-tester install fastp --dir nf-core-testpipeline/
 
       - name: nf-core modules list local
         run: nf-core --log-file log.txt modules list local --dir nf-core-testpipeline/
