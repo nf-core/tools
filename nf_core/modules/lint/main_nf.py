@@ -403,7 +403,7 @@ def check_process_labels(self, lines):
     if len(all_labels) > 0:
         for label in all_labels:
             try:
-                label = re.match("^label\s+([a-zA-Z0-9_-]+)$", label).group(1)
+                label = re.match(r"^label\s+'?([a-zA-Z0-9_-]+)'?$", label).group(1)
             except AttributeError:
                 self.warned.append(
                     (
