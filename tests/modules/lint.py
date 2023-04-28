@@ -122,7 +122,7 @@ class MockModuleLint:
 
 PROCESS_LABEL_GOOD = (
     """
-    label process_high
+    label 'process_high'
     cpus 12
     """,
     1,
@@ -131,7 +131,7 @@ PROCESS_LABEL_GOOD = (
 )
 PROCESS_LABEL_NON_ALPHANUMERIC = (
     """
-    label a:label:with:colons
+    label 'a:label:with:colons'
     cpus 12
     """,
     0,
@@ -140,8 +140,8 @@ PROCESS_LABEL_NON_ALPHANUMERIC = (
 )
 PROCESS_LABEL_GOOD_CONFLICTING = (
     """
-    label process_high
-    label process_low
+    label 'process_high'
+    label 'process_low'
     cpus 12
     """,
     0,
@@ -150,8 +150,8 @@ PROCESS_LABEL_GOOD_CONFLICTING = (
 )
 PROCESS_LABEL_GOOD_DUPLICATES = (
     """
-    label process_high
-    label process_high
+    label 'process_high'
+    label 'process_high'
     cpus 12
     """,
     0,
@@ -160,8 +160,8 @@ PROCESS_LABEL_GOOD_DUPLICATES = (
 )
 PROCESS_LABEL_GOOD_AND_NONSTANDARD = (
     """
-    label process_high
-    label process_extra_label
+    label 'process_high'
+    label 'process_extra_label'
     cpus 12
     """,
     1,
@@ -170,7 +170,7 @@ PROCESS_LABEL_GOOD_AND_NONSTANDARD = (
 )
 PROCESS_LABEL_NONSTANDARD = (
     """
-    label process_extra_label
+    label 'process_extra_label'
     cpus 12
     """,
     0,
