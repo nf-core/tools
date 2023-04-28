@@ -1275,7 +1275,6 @@ def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, u
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
-        raise
 
 
 # nf-core schema subcommands

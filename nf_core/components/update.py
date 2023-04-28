@@ -887,6 +887,7 @@ class ComponentUpdate(ComponentCommand):
                     # Skip update, we check for name changes with manage_changes_in_linked_components
                     pass
                 else:
+                    log.info(f"Do you see me? {e}")
                     raise
             finally:
                 self._reset_component_type(original_component_type, original_update_all)
