@@ -275,7 +275,7 @@ or the path to a directory containing a Nextflow pipeline _(can be any pipeline,
 
 <!-- RICH-CODEX trim_after: "Command line" -->
 
-![`nf-core launch rnaseq -r 3.8.1`](docs/images/nf-core-launch-rnaseq.svg)
+![`nf-core launch rnaseq -r 3.11.2`](docs/images/nf-core-launch-rnaseq.svg)
 
 Once complete, the wizard will ask you if you want to launch the Nextflow run.
 If not, you can copy and paste the Nextflow command with the `nf-params.json` file of your inputs.
@@ -1084,7 +1084,7 @@ before_command: >
   echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
-![`ls -alh . && nf-core subworkflows update --all --no-preview`](docs/images/nf-core-subworkflows-update.svg)
+![`nf-core --verbose subworkflows update --all --no-preview`](docs/images/nf-core-subworkflows-update.svg)
 
 You can pass the subworkflow name as an optional argument to `nf-core subworkflows update` like above or select it from the list of available subworkflows by only running `nf-core subworkflows update`.
 
