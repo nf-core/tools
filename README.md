@@ -1084,7 +1084,7 @@ before_command: >
   echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
-![`nf-core subworkflows update --all --no-preview`](docs/images/nf-core-subworkflows-update.svg)
+![`ls -alh . && nf-core subworkflows update --all --no-preview`](docs/images/nf-core-subworkflows-update.svg)
 
 You can pass the subworkflow name as an optional argument to `nf-core subworkflows update` like above or select it from the list of available subworkflows by only running `nf-core subworkflows update`.
 
