@@ -63,8 +63,8 @@ class Workflow{{ short_name[0]|upper }}{{ short_name[1:] }} {
 
         return description_html
     }
+    {%- if igenomes %}
 
-    {%- if igenomes -%}
     //
     // Exit pipeline if incorrect --genome key provided
     //
