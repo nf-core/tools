@@ -332,13 +332,23 @@ def check_process_section(self, lines, fix_version, progress_bar):
             self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
             continue
         if not response.ok:
-            self.warned.append(
-                (
-                    "container_links",
-                    f"Access to container {response.url} denied, status code: {response.status_code}",
-                    self.main_nf,
+            if response.status_code in [400, 401, 402, 403]:
+                self.warned.append(
+                    (
+                        "container_links",
+                        f"Access to container {response.url} denied, status code: {response.status_code}",
+                        self.main_nf,
+                    )
                 )
-            )
+
+            else:
+                self.failed.append(
+                    (
+                        "container_links",
+                        f"Unable to connect to {response.url}, status code: {response.status_code}",
+                        self.main_nf,
+                    )
+                )
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
