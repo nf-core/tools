@@ -328,8 +328,11 @@ def check_process_section(self, lines, fix_version, progress_bar):
             log.debug(f"Unable to connect to url '{urlunparse(url)}' due to error: {e}")
             self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
             continue
-        if response.status_code != 200:
-            self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
+        if not response.ok:
+            if 400 <= response.status_code < 500:
+                self.warned.append(("container_links", "Access to container URL denied", self.main_nf))
+            else:
+                self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
