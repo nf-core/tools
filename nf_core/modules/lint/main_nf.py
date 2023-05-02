@@ -329,7 +329,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
             self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
             continue
         if not response.ok:
-            if 400 <= response.status_code < 500:
+            if response.status_code in [400, 401, 402, 403]:
                 self.warned.append(("container_links", "Access to container URL denied", self.main_nf))
             else:
                 self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
