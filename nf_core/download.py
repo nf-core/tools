@@ -162,6 +162,10 @@ class DownloadWorkflow:
         ]
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
             summary_log.append(f"Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {os.environ['NXF_SINGULARITY_CACHEDIR']}")
+            if self.containers_remote:
+                summary_log.append(
+                    f"Successfully read {len(self.containers_remote)} containers from the remote '[blue]$NXF_SINGULARITY_CACHEDIR[/]' contents."
+                )
 
         # Set an output filename now that we have the outdir
         if self.tower:
@@ -523,10 +527,6 @@ class DownloadWorkflow:
                             self.containers_remote.append(match.group(0))
                     if n_total_images == 0:
                         raise LookupError("Could not find valid container names in the index file.")
-                    else:
-                        log.info(
-                            f"Successfully read {n_total_images} containers from the remote $NXF_SINGULARITY_CACHE contents."
-                        )
                     self.containers_remote = sorted(list(set(self.containers_remote)))
             except (FileNotFoundError, LookupError) as e:
                 log.error(f"[red]Issue with reading the specified remote $NXF_SINGULARITY_CACHE index:[/]\n{e}\n")
@@ -825,7 +825,9 @@ class DownloadWorkflow:
 
                 if containers_exist:
                     if self.singularity_cache_index is not None:
-                        log.info(f"{len(containers_exist)} are already cached remotely and won't be retrieved.")
+                        log.info(
+                            f"{len(containers_exist)} containers are already cached remotely and won't be retrieved."
+                        )
                     # Go through each method of fetching containers in order
                     for container in containers_exist:
                         progress.update(task, description="Image file exists at destination")
