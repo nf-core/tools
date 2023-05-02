@@ -290,6 +290,9 @@ def check_process_section(self, lines, fix_version, progress_bar):
             else:
                 self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
+            if l.startswith("biocontainers/"):
+                # When we think it is a biocontainer, assume we are querying quay.io/biocontainers and insert quay.io as prefix
+                l = "quay.io/" + l
             url = urlparse(l.split("'")[0])
             # lint double quotes
             if l.count('"') > 2:
@@ -403,7 +406,7 @@ def check_process_labels(self, lines):
     if len(all_labels) > 0:
         for label in all_labels:
             try:
-                label = re.match("^label\s+([a-zA-Z0-9_-]+)$", label).group(1)
+                label = re.match(r"^label\s+'?([a-zA-Z0-9_-]+)'?$", label).group(1)
             except AttributeError:
                 self.warned.append(
                     (
@@ -581,5 +584,9 @@ def _container_type(line):
         if url_match:
             return "singularity"
         return None
-    if line.startswith("biocontainers/") or line.startswith("quay.io/"):
+    if (
+        line.startswith("biocontainers/")
+        or line.startswith("quay.io/")
+        or (line.count("/") == 1 and line.count(":") == 1)
+    ):
         return "docker"

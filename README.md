@@ -386,7 +386,7 @@ The Singularity image download finds containers using two methods:
 2. It scrapes any files it finds with a `.nf` file extension in the workflow `modules` directory for lines
    that look like `container = "xxx"`. This is the typical method for DSL2 pipelines, which have one container per process.
 
-Some DSL2 modules have container addresses for docker (eg. `quay.io/biocontainers/fastqc:0.11.9--0`) and also URLs for direct downloads of a Singularity continaer (eg. `https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0`).
+Some DSL2 modules have container addresses for docker (eg. `biocontainers/fastqc:0.11.9--0`) and also URLs for direct downloads of a Singularity continaer (eg. `https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0`).
 Where both are found, the download URL is preferred.
 
 Once a full list of containers is found, they are processed in the following order:
@@ -1183,11 +1183,9 @@ To help developers build new subworkflows, the `nf-core subworkflows create-test
 After you have written a minimal Nextflow script to test your subworkflow in `/tests/subworkflow/<subworkflow_name>/main.nf`, this command will run the tests for you and create the `/tests/subworkflow/<tool>/<subtool>/test.yml` file.
 
 <!-- RICH-CODEX
-working_dir: tmp/subworkflows
+working_dir: tmp/modules
 extra_env:
   PROFILE: 'conda'
-before_command: >
-  echo "repository_type: modules" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows create-test-yml bam_stats_samtools --no-prompts --force`](docs/images/nf-core-subworkflows-create-test.svg)
@@ -1199,12 +1197,10 @@ To run unit tests of a subworkflow that you have installed or the test created b
 You can specify the subworkflow name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
 
 <!-- RICH-CODEX
-working_dir: tmp/subworkflows
+working_dir: tmp/modules
 timeout: 30
 extra_env:
   PROFILE: 'conda'
-before_command: >
-  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows test bam_rseqc --no-prompts`](docs/images/nf-core-subworkflows-test.svg)
