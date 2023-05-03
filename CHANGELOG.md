@@ -1,5 +1,11 @@
 # nf-core/tools: Changelog
 
+# v2.9dev
+
+### Template
+
+- The `email` method no longer requires a `multiqc_report` parameter
+
 # [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
 
 ### Template
