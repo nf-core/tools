@@ -6,6 +6,8 @@
 
 ### Linting
 
+- Warn if container access is denied ([#2270](https://github.com/nf-core/tools/pull/2270))
+
 ### Modules
 
 ### Subworkflows

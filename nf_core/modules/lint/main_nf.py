@@ -331,8 +331,14 @@ def check_process_section(self, lines, fix_version, progress_bar):
             log.debug(f"Unable to connect to url '{urlunparse(url)}' due to error: {e}")
             self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
             continue
-        if response.status_code != 200:
-            self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
+        if not response.ok:
+            self.failed.append(
+                (
+                    "container_links",
+                    f"Unable to connect to {response.url}, status code: {response.status_code}",
+                    self.main_nf,
+                )
+            )
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
@@ -581,9 +587,5 @@ def _container_type(line):
         if url_match:
             return "singularity"
         return None
-    if (
-        line.startswith("biocontainers/")
-        or line.startswith("quay.io/")
-        or (line.count("/") == 1 and line.count(":") == 1)
-    ):
+    if line.count("/") >= 1 and line.count(":") == 1:
         return "docker"
