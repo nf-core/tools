@@ -130,11 +130,11 @@ class NfcoreTemplate {
         def email_html    = html_template.toString()
 
         // Render the sendmail template
-        def max_multiqc_email_size = params.containsKey("max_multiqc_email_size") ? params.max_multiqc_email_size as nextflow.util.MemoryUnit : 0
+        def max_multiqc_email_size = params.containsKey('max_multiqc_email_size') ? params.max_multiqc_email_size as nextflow.util.MemoryUnit : 0
         def smail_fields           = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, projectDir: "$projectDir", mqcFile : null, mqcMaxSize : null ]
         if (mqc_report) {
-            smail_fields["mqcFile"] = mqc_report
-            smail_fields["mqcMaxSize"] = max_multiqc_email_size.toBytes()
+            smail_fields['mqcFile']    = mqc_report
+            smail_fields['mqcMaxSize'] = max_multiqc_email_size.toBytes()
         }
         def sf                     = new File("$projectDir/assets/sendmail_template.txt")
         def sendmail_template      = engine.createTemplate(sf).make(smail_fields)
