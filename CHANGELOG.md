@@ -4,6 +4,9 @@
 
 ### Template
 
+- Remove `cleanup = true` from `test_full.config` in pipeline template
+- Fix usage docs for specifying `params.yaml`
+
 ### Linting
 
 - Warn if container access is denied ([#2270](https://github.com/nf-core/tools/pull/2270))
