@@ -38,13 +38,16 @@ RUN conda config --add channels defaults && \
     conda config --set channel_priority strict && \
     conda install --quiet --yes --name base mamba && \
     mamba install --quiet --yes --name base \
-    nextflow=22.10.1 \
-    nf-core \
-    nf-test \
-    black \
-    prettier \
-    pytest-workflow && \
+        nextflow \
+        nf-core \
+        nf-test \
+        black \
+        prettier \
+        pytest-workflow && \
     mamba clean --all -f -y
+
+# Update Nextflow
+RUN nextflow self-update
 
 # Install nf-core
 RUN python -m pip install .
