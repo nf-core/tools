@@ -290,6 +290,14 @@ def check_process_section(self, lines, fix_version, progress_bar):
             else:
                 self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
+            if l.startswith("quay.io/biocontainers") and not l.startswith("quay.io/biocontainers/mulled"):
+                self.failed.append(
+                    (
+                        "container_links",
+                        "quay.io/biocontainers prefix found, please use biocontainers instead",
+                        self.main_nf,
+                    )
+                )
             if l.startswith("biocontainers/"):
                 # When we think it is a biocontainer, assume we are querying quay.io/biocontainers and insert quay.io as prefix
                 l = "quay.io/" + l

@@ -7,6 +7,7 @@
 ### Linting
 
 - Warn if container access is denied ([#2270](https://github.com/nf-core/tools/pull/2270))
+- Error if module container specification has quay.io as prefix when it shouldn't have.
 
 ### Modules
 
