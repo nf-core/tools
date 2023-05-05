@@ -11,6 +11,7 @@
 ### Linting
 
 - Warn if container access is denied ([#2270](https://github.com/nf-core/tools/pull/2270))
+- Detect if container is 'simple name' and try to contact quay.io server by default.
 
 ### Modules
 
