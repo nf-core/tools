@@ -298,6 +298,8 @@ def check_process_section(self, lines, fix_version, progress_bar):
                         self.main_nf,
                     )
                 )
+            else:
+                self.passed.append(("container_links", "Container prefix is correct", self.main_nf))
             if l.startswith("biocontainers/"):
                 # When we think it is a biocontainer, assume we are querying quay.io/biocontainers and insert quay.io as prefix
                 l = "quay.io/" + l
