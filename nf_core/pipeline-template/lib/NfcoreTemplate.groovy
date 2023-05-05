@@ -94,21 +94,19 @@ class NfcoreTemplate {
 
         // On success try attach the multiqc report
         def mqc_report = null
-        if (multiqc_report) {
-            try {
-                if (workflow.success) {
-                    mqc_report = multiqc_report.getVal()
-                    if (mqc_report.getClass() == ArrayList && mqc_report.size() >= 1) {
-                        if (mqc_report.size() > 1) {
-                            log.warn "[$workflow.manifest.name] Found multiple reports from process 'MULTIQC', will use only one"
-                        }
-                        mqc_report = mqc_report[0]
+        try {
+            if (workflow.success) {
+                mqc_report = multiqc_report.getVal()
+                if (mqc_report.getClass() == ArrayList && mqc_report.size() >= 1) {
+                    if (mqc_report.size() > 1) {
+                        log.warn "[$workflow.manifest.name] Found multiple reports from process 'MULTIQC', will use only one"
                     }
+                    mqc_report = mqc_report[0]
                 }
-            } catch (all) {
-                if (multiqc_report) {
-                    log.warn "[$workflow.manifest.name] Could not attach MultiQC report to summary email"
-                }
+            }
+        } catch (all) {
+            if (multiqc_report) {
+                log.warn "[$workflow.manifest.name] Could not attach MultiQC report to summary email"
             }
         }
 
@@ -130,12 +128,8 @@ class NfcoreTemplate {
         def email_html    = html_template.toString()
 
         // Render the sendmail template
-        def max_multiqc_email_size = params.containsKey('max_multiqc_email_size') ? params.max_multiqc_email_size as nextflow.util.MemoryUnit : 0
-        def smail_fields           = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, projectDir: "$projectDir", mqcFile : null, mqcMaxSize : null ]
-        if (mqc_report) {
-            smail_fields['mqcFile']    = mqc_report
-            smail_fields['mqcMaxSize'] = max_multiqc_email_size.toBytes()
-        }
+        def max_multiqc_email_size = params.max_multiqc_email_size as nextflow.util.MemoryUnit
+        def smail_fields           = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, projectDir: "$projectDir", mqcFile: mqc_report, mqcMaxSize: max_multiqc_email_size.toBytes() ]
         def sf                     = new File("$projectDir/assets/sendmail_template.txt")
         def sendmail_template      = engine.createTemplate(sf).make(smail_fields)
         def sendmail_html          = sendmail_template.toString()
@@ -151,10 +145,8 @@ class NfcoreTemplate {
             } catch (all) {
                 // Catch failures and try with plaintext
                 def mail_cmd = [ 'mail', '-s', subject, '--content-type=text/html', email_address ]
-                if (mqc_report) {
-                    if ( mqc_report.size() <= max_multiqc_email_size.toBytes() ) {
-                        mail_cmd += [ '-A', mqc_report ]
-                    }
+                if ( mqc_report.size() <= max_multiqc_email_size.toBytes() ) {
+                    mail_cmd += [ '-A', mqc_report ]
                 }
                 mail_cmd.execute() << email_html
                 log.info "-${colors.purple}[$workflow.manifest.name]${colors.green} Sent summary e-mail to $email_address (mail)-"
