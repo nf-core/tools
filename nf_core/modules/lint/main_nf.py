@@ -290,8 +290,9 @@ def check_process_section(self, lines, fix_version, progress_bar):
             else:
                 self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
-            if l.startswith("biocontainers/"):
-                # When we think it is a biocontainer, assume we are querying quay.io/biocontainers and insert quay.io as prefix
+            # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
+            # If so, add quay.io as default container prefix
+            if l.count("/") == 1 and l.count(":") == 1:
                 l = "quay.io/" + l
             url = urlparse(l.split("'")[0])
             # lint double quotes
