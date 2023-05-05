@@ -161,10 +161,10 @@ class DownloadWorkflow:
             f"Pull containers: '{self.container}'",
         ]
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
-            summary_log.append(f"Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {os.environ['NXF_SINGULARITY_CACHEDIR']}")
+            summary_log.append(f"Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {os.environ['NXF_SINGULARITY_CACHEDIR']}'")
             if self.containers_remote:
                 summary_log.append(
-                    f"Successfully read {len(self.containers_remote)} containers from the remote '[blue]$NXF_SINGULARITY_CACHEDIR[/]' contents."
+                    f"Successfully read {len(self.containers_remote)} containers from the remote '$NXF_SINGULARITY_CACHEDIR' contents."
                 )
 
         # Set an output filename now that we have the outdir
