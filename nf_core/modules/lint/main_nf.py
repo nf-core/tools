@@ -271,15 +271,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.failed.append(("singularity_tag", "Unable to parse singularity tag", self.main_nf))
                 singularity_tag = None
             url = urlparse(l.split("'")[0])
-            # lint double quotes
-            if l.count('"') > 2:
-                self.failed.append(
-                    (
-                        "container_links",
-                        "Too many double quotes found when specifying singularity container",
-                        self.main_nf,
-                    )
-                )
+
         if _container_type(l) == "docker":
             # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
             # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
@@ -304,17 +296,26 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 # When we think it is a biocontainer, assume we are querying quay.io/biocontainers and insert quay.io as prefix
                 l = "quay.io/" + l
             url = urlparse(l.split("'")[0])
-            # lint double quotes
-            if l.count('"') > 2:
-                self.failed.append(
-                    ("container_links", "Too many double quotes found when specifying docker container", self.main_nf)
-                )
+
         # lint double quotes
-        if l.startswith("container"):
+        if l.startswith("container") or _container_type(l) == "docker" or _container_type(l) == "singularity":
             if l.count('"') > 2:
                 self.failed.append(
-                    ("container_links", "Too many double quotes found when specifying containers", self.main_nf)
+                    (
+                        "container_links",
+                        f"Too many double quotes found when specifying container: {l.lstrip('container ')}",
+                        self.main_nf,
+                    )
                 )
+            else:
+                self.passed.append(
+                    (
+                        "container_links",
+                        f"Correct number of double quotes found when specifying container: {l.lstrip('container ')}",
+                        self.main_nf,
+                    )
+                )
+
         # lint more than one container in the same line
         if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or "quay.io/" in l):
             self.warned.append(
