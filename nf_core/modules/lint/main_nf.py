@@ -294,7 +294,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.failed.append(
                     (
                         "container_links",
-                        "quay.io/biocontainers prefix found, please use biocontainers instead",
+                        "'quay.io/biocontainers/' container prefix found, please use just 'biocontainers/' instead",
                         self.main_nf,
                     )
                 )
