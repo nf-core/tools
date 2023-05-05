@@ -5,6 +5,7 @@ tasks:
       python -m pip install -e .
       python -m pip install -r requirements-dev.txt
       pre-commit install --install-hooks
+      nextflow self-update
 vscode:
   extensions: # based on nf-core.nf-core-extensionpack
     - codezombiech.gitignore # Language support for .gitignore files
