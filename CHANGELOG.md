@@ -4,6 +4,8 @@
 
 ### Template
 
+- Added stub in modules template ([#2277])(https://github.com/nf-core/tools/pull/2277)
+
 ### Linting
 
 - Warn if container access is denied ([#2270](https://github.com/nf-core/tools/pull/2270))
