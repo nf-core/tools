@@ -5,14 +5,22 @@
 ### Template
 
 - The `email` method no longer requires a `multiqc_report` parameter
+- Remove `cleanup = true` from `test_full.config` in pipeline template
+- Fix usage docs for specifying `params.yaml`
+- Added stub in modules template ([#2277])(https://github.com/nf-core/tools/pull/2277) [Contributed by @nvnieuwk]
 
 ### Linting
+
+- Warn if container access is denied ([#2270](https://github.com/nf-core/tools/pull/2270))
 
 ### Modules
 
 ### Subworkflows
 
 ### General
+
+- GitPod base image: Always self-update to the latest version of Nextflow. Add [pre-commit](https://pre-commit.com/) dependency.
+- GitPod configs: Update Nextflow as an init task, init pre-commit in pipeline config.
 
 # [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
 
