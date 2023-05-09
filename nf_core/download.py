@@ -423,13 +423,13 @@ class DownloadWorkflow:
                     ToDo: "sh", "dash", "ash","csh", "tcsh", "ksh", "fish", "cmd", "powershell", "pwsh"?
                     """
 
-                    if os.environ["SHELL"] == "/bin/bash":
+                    if os.getenv("SHELL", "") == "/bin/bash":
                         shellprofile_path = os.path.expanduser("~/~/.bash_profile")
                         if not os.path.isfile(shellprofile_path):
                             shellprofile_path = os.path.expanduser("~/.bashrc")
                             if not os.path.isfile(shellprofile_path):
                                 shellprofile_path = False
-                    elif os.environ["SHELL"] == "/bin/zsh":
+                    elif os.getenv("SHELL", "") == "/bin/zsh":
                         shellprofile_path = os.path.expanduser("~/.zprofile")
                         if not os.path.isfile(shellprofile_path):
                             shellprofile_path = os.path.expanduser("~/.zshenv")
