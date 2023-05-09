@@ -283,10 +283,11 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = NoneD
             if l.startswith("quay.io/"):
+                l_stripped = re.sub("\W+$", "", l)
                 self.failed.append(
                     (
                         "container_links",
-                        f"'quay.io/<org>/<container>:<tag>' container name found, please use just '<org>/<container>:<tag>' instead. Offending container name: {l}",
+                        f"{l_stripped} container name found, please use just 'organisation/container:tag' instead.",
                         self.main_nf,
                     )
                 )
