@@ -282,16 +282,16 @@ def check_process_section(self, lines, fix_version, progress_bar):
             else:
                 self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = NoneD
-            if l.startswith("quay.io/biocontainers") and not l.startswith("quay.io/biocontainers/mulled"):
+            if l.startswith("quay.io/"):
                 self.failed.append(
                     (
                         "container_links",
-                        "'quay.io/biocontainers/' container prefix found, please use just 'biocontainers/' instead",
+                        f"'quay.io/<org>/<container>:<tag>' container name found, please use just '<org>/<container>:<tag>' instead. Offending container name: {l}",
                         self.main_nf,
                     )
                 )
             else:
-                self.passed.append(("container_links", "Container prefix is correct", self.main_nf))
+                self.passed.append(("container_links", f"Container prefix is correct", self.main_nf))
 
             # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
             # If so, add quay.io as default container prefix
