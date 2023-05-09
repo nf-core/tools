@@ -18,7 +18,7 @@ testing if the update commands works correctly with patch files
 """
 
 ORG_SHA = "002623ccc88a3b0cb302c7d8f13792a95354d9f2"
-CORRECT_SHA = "0245a9277d51a47c8aa68d264d294cf45312fab8"
+CORRECT_SHA = "1dff30bfca2d98eb7ac7b09269a15e822451d99f"
 SUCCEED_SHA = "ba15c20c032c549d77c5773659f19c2927daf48e"
 FAIL_SHA = "67b642d4471c4005220a342cad3818d5ba2b5a73"
 BISMARK_ALIGN = "bismark/align"
