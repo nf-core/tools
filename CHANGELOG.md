@@ -14,6 +14,7 @@
 - Remove shcema validation from `lib` folder and use Nextflow nf-validation plugin instead ([#1771](https://github.com/nf-core/tools/pull/1771/))
 - Generate input channel from input file using Nextflow nf-validation plugin ([#1771](https://github.com/nf-core/tools/pull/1771/))
 
+
 ### Download
 
 - Introduce a `--tower` flag for `nf-core download` to obtain pipelines in an offline format suited for [seqeralabs® Nextflow Tower](https://cloud.tower.nf/) ([#2247](https://github.com/nf-core/tools/pull/2247)).

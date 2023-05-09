@@ -108,10 +108,10 @@ class DownloadWorkflow:
         self.force = force
         self.tower = tower
         self.include_configs = None
-        self.container = container if not singularity_cache_index else "singularity"
-        self.singularity_cache = (
-            singularity_cache if not singularity_cache_index else "remote"
-        )  # if a singularity_cache_index is given, use the file and overrule choice.
+        # force download of containers if a cache index is given or download is meant to be used for Tower.
+        self.container = "singularity" if singularity_cache_index or bool(tower) else container
+        # if a singularity_cache_index is given, use the file and overrule choice.
+        self.singularity_cache = "remote" if singularity_cache_index else singularity_cache
         self.singularity_cache_index = singularity_cache_index
         self.parallel_downloads = parallel_downloads
 
@@ -377,7 +377,7 @@ class DownloadWorkflow:
     def prompt_container_download(self):
         """Prompt whether to download container images or not"""
 
-        if self.container is None and stderr.is_interactive:
+        if self.container is None and stderr.is_interactive and not self.tower:
             stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
             self.container = questionary.select(
                 "Download software container images:",
@@ -722,7 +722,7 @@ class DownloadWorkflow:
                                 Therefore, we need to repeat the search over the contents, extract the variable name, and use it inside a new regex.
 
                                 To get the variable name ( ${container_id} in above example ), we match the literal word "container" and use lookbehind (reset the match).
-                                Then we skip [^\${}]+ everything that is not $ or curly braces. The next capture group is
+                                Then we skip [^${}]+ everything that is not $ or curly braces. The next capture group is
                                 ${ followed by any characters that are not curly braces [^{}]+ and ended by a closing curly brace (}),
                                 but only if it's not followed by any other curly braces (?![^{]*}). The latter ensures we capture the innermost
                                 variable name.

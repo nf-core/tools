@@ -190,7 +190,7 @@ class DownloadTest(unittest.TestCase):
 
         download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.
 
-        # test if settings are changed accordingly.
+        # test if the settings are changed to mandatory defaults, if an external cache index is used.
         assert download_obj.singularity_cache == "remote" and download_obj.container == "singularity"
         assert isinstance(download_obj.containers_remote, list) and len(download_obj.containers_remote) == 0
         # read in the file
@@ -264,9 +264,11 @@ class DownloadTest(unittest.TestCase):
         # corroborate that the other revisions are inaccessible to the user.
         assert len(download_obj.workflow_repo.tags) == len(download_obj.revision)
 
-        # manually test container image detection for 3.7 revision
+        # download_obj.download_workflow_tower(location=tmp_dir) will run container image detection for all requested revisions
+        assert isinstance(download_obj.containers, list) and len(download_obj.containers) == 33
+        # manually test container image detection for 3.7 revision only
+        download_obj.containers = []  # empty container list for the test
         download_obj.workflow_repo.checkout(download_obj.wf_sha["3.7"])
-        assert isinstance(download_obj.containers, list) and len(download_obj.containers) == 0
         download_obj.find_container_images(download_obj.workflow_repo.access())
         assert len(download_obj.containers) == 30  # 30 containers for 3.7
         assert (
