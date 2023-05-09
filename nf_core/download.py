@@ -157,7 +157,7 @@ class DownloadWorkflow:
             sys.exit(1)
 
         summary_log = [
-            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',...['+str(len(self.revision)-2)+' more revisions]...,'+self.revision[-1]}'",
+            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',...,['+str(len(self.revision)-2)+' more revisions],...,'+self.revision[-1]}'",
             f"Pull containers: '{self.container}'",
         ]
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
@@ -420,7 +420,7 @@ class DownloadWorkflow:
                     """
                     Optionally, create a permanent entry for the NXF_SINGULARITY_CACHEDIR in the terminal profile.
                     Currently support for bash and zsh.
-                    ToDo: "sh", "bash", "dash", "ash","csh", "tcsh", "ksh", "zsh", "fish", "cmd", "powershell", "pwsh"?
+                    ToDo: "sh", "dash", "ash","csh", "tcsh", "ksh", "fish", "cmd", "powershell", "pwsh"?
                     """
 
                     if os.environ["SHELL"] == "/bin/bash":
@@ -476,7 +476,7 @@ class DownloadWorkflow:
                 "However if you will transfer the downloaded files to a different system then they should be copied to the target folder."
             )
             self.singularity_cache = questionary.select(
-                "[blue bold]?[/] [bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the target folder or amend new images to the cache?[/]",
+                "Copy singularity images from $NXF_SINGULARITY_CACHEDIR to the target folder or amend new images to the cache?",
                 choices=["amend", "copy"],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
