@@ -22,7 +22,7 @@ jobs:
             {
               "outdir": "s3://{% raw %}${{ secrets.AWS_S3_BUCKET }}{% endraw %}/{{ short_name }}/{% raw %}results-test-${{ github.sha }}{% endraw %}"
             }
-          profiles: test,aws_tower
+          profiles: test
       - uses: actions/upload-artifact@v3
         with:
           name: Tower debug log file
