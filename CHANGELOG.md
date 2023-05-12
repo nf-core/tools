@@ -8,6 +8,8 @@
 - Remove `cleanup = true` from `test_full.config` in pipeline template
 - Fix usage docs for specifying `params.yaml`
 - Added stub in modules template ([#2277])(https://github.com/nf-core/tools/pull/2277) [Contributed by @nvnieuwk]
+- Move registry definitions out of profile scope ([#2286])(https://github.com/nf-core/tools/pull/2286)
+- Remove `aws_tower` profile ([#2287])(https://github.com/nf-core/tools/pull/2287)
 
 ### Linting
 
