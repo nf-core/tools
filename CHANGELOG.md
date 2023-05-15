@@ -1,5 +1,11 @@
 # nf-core/tools: Changelog
 
+# v2.9 (TBC)
+
+### Template
+
+- Fixed the Slack report to include the pipeline name ([#2291](https://github.com/nf-core/tools/pull/2291))
+
 # [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
 
 ### Template
