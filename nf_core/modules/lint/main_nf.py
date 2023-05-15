@@ -271,15 +271,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.failed.append(("singularity_tag", "Unable to parse singularity tag", self.main_nf))
                 singularity_tag = None
             url = urlparse(l.split("'")[0])
-            # lint double quotes
-            if l.count('"') > 2:
-                self.failed.append(
-                    (
-                        "container_links",
-                        "Too many double quotes found when specifying singularity container",
-                        self.main_nf,
-                    )
-                )
+
         if _container_type(l) == "docker":
             # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
             # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
@@ -289,22 +281,44 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.passed.append(("docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
             else:
                 self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
-                docker_tag = None
-            if l.startswith("biocontainers/"):
-                # When we think it is a biocontainer, assume we are querying quay.io/biocontainers and insert quay.io as prefix
+                docker_tag = NoneD
+            if l.startswith("quay.io/"):
+                l_stripped = re.sub("\W+$", "", l)
+                self.failed.append(
+                    (
+                        "container_links",
+                        f"{l_stripped} container name found, please use just 'organisation/container:tag' instead.",
+                        self.main_nf,
+                    )
+                )
+            else:
+                self.passed.append(("container_links", f"Container prefix is correct", self.main_nf))
+
+            # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
+            # If so, add quay.io as default container prefix
+            if l.count("/") == 1 and l.count(":") == 1:
                 l = "quay.io/" + l
             url = urlparse(l.split("'")[0])
-            # lint double quotes
-            if l.count('"') > 2:
-                self.failed.append(
-                    ("container_links", "Too many double quotes found when specifying docker container", self.main_nf)
-                )
+
         # lint double quotes
-        if l.startswith("container"):
+        if l.startswith("container") or _container_type(l) == "docker" or _container_type(l) == "singularity":
             if l.count('"') > 2:
                 self.failed.append(
-                    ("container_links", "Too many double quotes found when specifying containers", self.main_nf)
+                    (
+                        "container_links",
+                        f"Too many double quotes found when specifying container: {l.lstrip('container ')}",
+                        self.main_nf,
+                    )
                 )
+            else:
+                self.passed.append(
+                    (
+                        "container_links",
+                        f"Correct number of double quotes found when specifying container: {l.lstrip('container ')}",
+                        self.main_nf,
+                    )
+                )
+
         # lint more than one container in the same line
         if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or "quay.io/" in l):
             self.warned.append(
@@ -331,8 +345,14 @@ def check_process_section(self, lines, fix_version, progress_bar):
             log.debug(f"Unable to connect to url '{urlunparse(url)}' due to error: {e}")
             self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
             continue
-        if response.status_code != 200:
-            self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
+        if not response.ok:
+            self.failed.append(
+                (
+                    "container_links",
+                    f"Unable to connect to {response.url}, status code: {response.status_code}",
+                    self.main_nf,
+                )
+            )
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
@@ -581,9 +601,5 @@ def _container_type(line):
         if url_match:
             return "singularity"
         return None
-    if (
-        line.startswith("biocontainers/")
-        or line.startswith("quay.io/")
-        or (line.count("/") == 1 and line.count(":") == 1)
-    ):
+    if line.count("/") >= 1 and line.count(":") == 1:
         return "docker"

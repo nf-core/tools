@@ -1,10 +1,31 @@
 # nf-core/tools: Changelog
 
-# v2.9 (TBC)
+# v2.9dev
 
 ### Template
 
+- `params.max_multiqc_email_size` is no longer required
+- Remove `cleanup = true` from `test_full.config` in pipeline template
+- Fix usage docs for specifying `params.yaml`
+- Added stub in modules template ([#2277])(https://github.com/nf-core/tools/pull/2277) [Contributed by @nvnieuwk]
+- Move registry definitions out of profile scope ([#2286])(https://github.com/nf-core/tools/pull/2286)
+- Remove `aws_tower` profile ([#2287])(https://github.com/nf-core/tools/pull/2287)
 - Fixed the Slack report to include the pipeline name ([#2291](https://github.com/nf-core/tools/pull/2291))
+
+### Linting
+
+- Warn if container access is denied ([#2270](https://github.com/nf-core/tools/pull/2270))
+- Error if module container specification has quay.io as prefix when it shouldn't have ([#2278])(https://github.com/nf-core/tools/pull/2278/files)
+- Detect if container is 'simple name' and try to contact quay.io server by default ([#2281](https://github.com/nf-core/tools/pull/2281))
+
+### Modules
+
+### Subworkflows
+
+### General
+
+- GitPod base image: Always self-update to the latest version of Nextflow. Add [pre-commit](https://pre-commit.com/) dependency.
+- GitPod configs: Update Nextflow as an init task, init pre-commit in pipeline config.
 
 # [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
 
