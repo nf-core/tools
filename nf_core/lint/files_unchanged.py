@@ -104,7 +104,6 @@ def files_unchanged(self):
         [os.path.join("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
         [os.path.join("docs", "README.md")],
         [os.path.join("lib", "nfcore_external_java_deps.jar")],
-        [os.path.join("lib", "NfcoreSchema.groovy")],
         [os.path.join("lib", "NfcoreTemplate.groovy")],
     ]
     files_partial = [
