@@ -427,8 +427,8 @@ class ModulesJson:
             git_url = None
             for repo in missing_installation:
                 if component_type in missing_installation[repo]:
-                    for dir_name in missing_installation[repo][component_type]:
-                        if component in missing_installation[repo][component_type][dir_name]:
+                    if install_dir in missing_installation[repo][component_type]:
+                        if component in missing_installation[repo][component_type][install_dir]:
                             component_in_file = True
                             git_url = repo
                             break
@@ -742,6 +742,16 @@ class ModulesJson:
         if module_name not in self.modules_json["repos"][repo_url]["modules"][install_dir]:
             raise LookupError(f"Module '{install_dir}/{module_name}' not present in 'modules.json'")
         self.modules_json["repos"][repo_url]["modules"][install_dir][module_name]["patch"] = str(patch_filename)
+        if write_file:
+            self.dump()
+
+    def remove_patch_entry(self, module_name, repo_url, install_dir, write_file=True):
+        if self.modules_json is None:
+            self.load()
+        try:
+            del self.modules_json["repos"][repo_url]["modules"][install_dir][module_name]["patch"]
+        except KeyError:
+            log.warning("No patch entry in 'modules.json' to remove")
         if write_file:
             self.dump()
 

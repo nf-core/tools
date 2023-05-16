@@ -130,3 +130,80 @@ class ModulePatch(ComponentCommand):
         # Finally move the created patch file to its final location
         shutil.move(patch_temp_path, patch_path)
         log.info(f"Patch file of '{module_fullname}' written to '{patch_path}'")
+
+    def remove(self, module):
+        # Check modules directory structure
+        self.check_modules_structure()
+
+        self.modules_json.check_up_to_date()
+        self.param_check(module)
+        modules = self.modules_json.get_all_components(self.component_type)[self.modules_repo.remote_url]
+
+        if module is None:
+            choices = [
+                module if directory == self.modules_repo.repo_path else f"{directory}/{module}"
+                for directory, module in modules
+            ]
+            module = questionary.autocomplete(
+                "Tool:",
+                choices,
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask()
+        module_dir = [dir for dir, m in modules if m == module][0]
+        module_fullname = str(Path("modules", module_dir, module))
+
+        # Verify that the module has an entry in the modules.json file
+        if not self.modules_json.module_present(module, self.modules_repo.remote_url, module_dir):
+            raise UserWarning(
+                f"The '{module_fullname}' module does not have an entry in the 'modules.json' file. Cannot compute patch"
+            )
+
+        module_version = self.modules_json.get_module_version(module, self.modules_repo.remote_url, module_dir)
+        if module_version is None:
+            raise UserWarning(
+                f"The '{module_fullname}' module does not have a valid version in the 'modules.json' file. Cannot compute patch"
+            )
+        # Get the module branch and reset it in the ModulesRepo object
+        module_branch = self.modules_json.get_component_branch(
+            self.component_type, module, self.modules_repo.remote_url, module_dir
+        )
+        if module_branch != self.modules_repo.branch:
+            self.modules_repo.setup_branch(module_branch)
+
+        # Set the diff filename based on the module name
+        patch_filename = f"{module.replace('/', '-')}.diff"
+        module_relpath = Path("modules", module_dir, module)
+        patch_relpath = Path(module_relpath, patch_filename)
+        patch_path = Path(self.dir, patch_relpath)
+        module_path = Path(self.dir, module_relpath)
+
+        if patch_path.exists():
+            remove = questionary.confirm(
+                f"Patch exists for module '{module_fullname}'. Are you sure you want to remove?",
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask()
+            if not remove:
+                return
+
+        # Try to apply the patch in reverse and move resulting files to module dir
+        temp_module_dir = self.modules_json.try_apply_patch_reverse(
+            module, self.modules_repo.repo_path, patch_relpath, module_path
+        )
+        try:
+            for file in Path(temp_module_dir).glob("*"):
+                file.rename(module_path.joinpath(file.name))
+            os.rmdir(temp_module_dir)
+        except Exception as err:
+            raise UserWarning(f"There was a problem reverting the patched file: {err}")
+
+        log.info(f"Patch for {module} reverted!")
+        # Remove patch file if we could revert the patch
+        patch_path.unlink()
+        # Write changes to module.json
+        self.modules_json.remove_patch_entry(module, self.modules_repo.remote_url, module_dir)
+
+        if not all(self.modules_repo.module_files_identical(module, module_path, module_version).values()):
+            log.error(
+                f"Module files do not appear to match the remote for the commit sha in the 'module.json': {module_version}\n"
+                f"Recommend reinstalling with 'nf-core modules install --force --sha {module_version} {module}' "
+            )

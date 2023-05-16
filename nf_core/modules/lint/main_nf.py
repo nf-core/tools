@@ -235,31 +235,31 @@ def check_process_section(self, lines, fix_version, progress_bar):
         self.failed.append(("process_capitals", "Process name is not in capital letters", self.main_nf))
 
     # Check that process labels are correct
-    correct_process_labels = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
-    process_label = [l for l in lines if l.lstrip().startswith("label")]
-    if len(process_label) > 0:
-        try:
-            process_label = re.search("process_[A-Za-z]+", process_label[0]).group(0)
-        except AttributeError:
-            process_label = re.search("'([A-Za-z_-]+)'", process_label[0]).group(0)
-        finally:
-            if not process_label in correct_process_labels:
-                self.warned.append(
+    check_process_labels(self, lines)
+
+    # Deprecated enable_conda
+    for i, l in enumerate(lines):
+        url = None
+        l = l.strip(" '\"")
+        if _container_type(l) == "conda":
+            bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+            match = re.search(r"params\.enable_conda", l)
+            if match is None:
+                self.passed.append(
                     (
-                        "process_standard_label",
-                        f"Process label ({process_label}) is not among standard labels: `{'`,`'.join(correct_process_labels)}`",
+                        "deprecated_enable_conda",
+                        f"Deprecated parameter 'params.enable_conda' correctly not found in the conda definition",
                         self.main_nf,
                     )
                 )
             else:
-                self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
-    else:
-        self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
-    for i, l in enumerate(lines):
-        url = None
-        if _container_type(l) == "bioconda":
-            bioconda_packages = [b for b in l.split() if "bioconda::" in b]
-        l = l.strip(" '\"")
+                self.failed.append(
+                    (
+                        "deprecated_enable_conda",
+                        f"Found deprecated parameter 'params.enable_conda' in the conda definition",
+                        self.main_nf,
+                    )
+                )
         if _container_type(l) == "singularity":
             # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
             # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
@@ -271,15 +271,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.failed.append(("singularity_tag", "Unable to parse singularity tag", self.main_nf))
                 singularity_tag = None
             url = urlparse(l.split("'")[0])
-            # lint double quotes
-            if l.count('"') > 2:
-                self.failed.append(
-                    (
-                        "container_links",
-                        "Too many double quotes found when specifying singularity container",
-                        self.main_nf,
-                    )
-                )
+
         if _container_type(l) == "docker":
             # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
             # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
@@ -289,19 +281,44 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.passed.append(("docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
             else:
                 self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
-                docker_tag = None
+                docker_tag = NoneD
+            if l.startswith("quay.io/"):
+                l_stripped = re.sub("\W+$", "", l)
+                self.failed.append(
+                    (
+                        "container_links",
+                        f"{l_stripped} container name found, please use just 'organisation/container:tag' instead.",
+                        self.main_nf,
+                    )
+                )
+            else:
+                self.passed.append(("container_links", f"Container prefix is correct", self.main_nf))
+
+            # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
+            # If so, add quay.io as default container prefix
+            if l.count("/") == 1 and l.count(":") == 1:
+                l = "quay.io/" + l
             url = urlparse(l.split("'")[0])
-            # lint double quotes
-            if l.count('"') > 2:
-                self.failed.append(
-                    ("container_links", "Too many double quotes found when specifying docker container", self.main_nf)
-                )
+
         # lint double quotes
-        if l.startswith("container"):
+        if l.startswith("container") or _container_type(l) == "docker" or _container_type(l) == "singularity":
             if l.count('"') > 2:
                 self.failed.append(
-                    ("container_links", "Too many double quotes found when specifying containers", self.main_nf)
+                    (
+                        "container_links",
+                        f"Too many double quotes found when specifying container: {l.lstrip('container ')}",
+                        self.main_nf,
+                    )
                 )
+            else:
+                self.passed.append(
+                    (
+                        "container_links",
+                        f"Correct number of double quotes found when specifying container: {l.lstrip('container ')}",
+                        self.main_nf,
+                    )
+                )
+
         # lint more than one container in the same line
         if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or "quay.io/" in l):
             self.warned.append(
@@ -328,8 +345,14 @@ def check_process_section(self, lines, fix_version, progress_bar):
             log.debug(f"Unable to connect to url '{urlunparse(url)}' due to error: {e}")
             self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
             continue
-        if response.status_code != 200:
-            self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
+        if not response.ok:
+            self.failed.append(
+                (
+                    "container_links",
+                    f"Unable to connect to {response.url}, status code: {response.status_code}",
+                    self.main_nf,
+                )
+            )
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
@@ -390,6 +413,56 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
 
     return docker_tag == singularity_tag
+
+
+def check_process_labels(self, lines):
+    correct_process_labels = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
+    all_labels = [l.strip() for l in lines if l.lstrip().startswith("label ")]
+    bad_labels = []
+    good_labels = []
+    if len(all_labels) > 0:
+        for label in all_labels:
+            try:
+                label = re.match(r"^label\s+'?([a-zA-Z0-9_-]+)'?$", label).group(1)
+            except AttributeError:
+                self.warned.append(
+                    (
+                        "process_standard_label",
+                        f"Specified label appears to contain non-alphanumerics: {label}",
+                        self.main_nf,
+                    )
+                )
+                continue
+            if label not in correct_process_labels:
+                bad_labels.append(label)
+            else:
+                good_labels.append(label)
+        if len(good_labels) > 1:
+            self.warned.append(
+                (
+                    "process_standard_label",
+                    f"Conflicting process labels found: `{'`,`'.join(good_labels)}`",
+                    self.main_nf,
+                )
+            )
+        elif len(good_labels) == 1:
+            self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
+        else:
+            self.warned.append(("process_standard_label", "Standard process label not found", self.main_nf))
+        if len(bad_labels) > 0:
+            self.warned.append(
+                ("process_standard_label", f"Non-standard labels found: `{'`,`'.join(bad_labels)}`", self.main_nf)
+            )
+        if len(all_labels) > len(set(all_labels)):
+            self.warned.append(
+                (
+                    "process_standard_label",
+                    f"Duplicate labels found: `{'`,`'.join(sorted(all_labels))}`",
+                    self.main_nf,
+                )
+            )
+    else:
+        self.warned.append(("process_standard_label", "Process label not specified", self.main_nf))
 
 
 def _parse_input(self, line_raw):
@@ -471,7 +544,7 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
     for line in lines:
         l = line.strip(" '\"")
         build_type = _container_type(l)
-        if build_type == "bioconda":
+        if build_type == "conda":
             new_lines.append(re.sub(rf"{current_version}", f"{latest_version}", line))
         elif build_type in ("singularity", "docker"):
             # Check that the new url is valid
@@ -516,8 +589,8 @@ def _get_build(response):
 
 def _container_type(line):
     """Returns the container type of a build."""
-    if re.search("bioconda::", line):
-        return "bioconda"
+    if line.startswith("conda"):
+        return "conda"
     if line.startswith("https://containers") or line.startswith("https://depot"):
         # Look for a http download URL.
         # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
@@ -528,5 +601,5 @@ def _container_type(line):
         if url_match:
             return "singularity"
         return None
-    if line.startswith("biocontainers/") or line.startswith("quay.io/"):
+    if line.count("/") >= 1 and line.count(":") == 1:
         return "docker"

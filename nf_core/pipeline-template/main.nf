@@ -4,7 +4,7 @@
     {{ name }}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Github : https://github.com/{{ name }}
-{% if branded %}
+{%- if branded %}
     Website: https://nf-co.re/{{ short_name }}
     Slack  : https://nfcore.slack.com/channels/{{ short_name }}
 {% endif -%}

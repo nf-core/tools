@@ -1,29 +1,88 @@
 # nf-core/tools: Changelog
 
-# v2.8dev
+# v2.9dev
 
 ### Template
 
-- Turn on automatic clean up of intermediate files in `work/` on successful pipeline completion in full-test config ([#2163](https://github.com/nf-core/tools/pull/2163)) [Contributed by @jfy133]
-- Add documentation to `usage.md` on how to use `params.yml` files, based on nf-core/ampliseq text ([#2173](https://github.com/nf-core/tools/pull/2173/)) [Contributed by @jfy133, @d4straub]
-- Make jobs automatically resubmit for a much wider range of exit codes (now `104` and `130..145`) ([#2170](https://github.com/nf-core/tools/pull/2170))
+- `params.max_multiqc_email_size` is no longer required
+- Remove `cleanup = true` from `test_full.config` in pipeline template
+- Fix usage docs for specifying `params.yaml`
+- Added stub in modules template ([#2277])(https://github.com/nf-core/tools/pull/2277) [Contributed by @nvnieuwk]
+- Move registry definitions out of profile scope ([#2286])(https://github.com/nf-core/tools/pull/2286)
+- Remove `aws_tower` profile ([#2287])(https://github.com/nf-core/tools/pull/2287)
+- Fixed the Slack report to include the pipeline name ([#2291](https://github.com/nf-core/tools/pull/2291))
 - Remove shcema validation from `lib` folder and use Nextflow nf-validation plugin instead ([#1771](https://github.com/nf-core/tools/pull/1771/))
 - Generate input channel from input file using Nextflow nf-validation plugin ([#1771](https://github.com/nf-core/tools/pull/1771/))
 
 ### Linting
 
+- Warn if container access is denied ([#2270](https://github.com/nf-core/tools/pull/2270))
+- Error if module container specification has quay.io as prefix when it shouldn't have ([#2278])(https://github.com/nf-core/tools/pull/2278/files)
+- Detect if container is 'simple name' and try to contact quay.io server by default ([#2281](https://github.com/nf-core/tools/pull/2281))
+
+### Modules
+
+### Subworkflows
+
+### General
+
+- GitPod base image: Always self-update to the latest version of Nextflow. Add [pre-commit](https://pre-commit.com/) dependency.
+- GitPod configs: Update Nextflow as an init task, init pre-commit in pipeline config.
+
+# [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
+
+### Template
+
+- Explicitly disable `conda` when a container profile ([#2140](https://github.com/nf-core/tools/pull/2140))
+- Turn on automatic clean up of intermediate files in `work/` on successful pipeline completion in full-test config ([#2163](https://github.com/nf-core/tools/pull/2163)) [Contributed by @jfy133]
+- Add documentation to `usage.md` on how to use `params.yml` files, based on nf-core/ampliseq text ([#2173](https://github.com/nf-core/tools/pull/2173/)) [Contributed by @jfy133, @d4straub]
+- Make jobs automatically resubmit for a much wider range of exit codes (now `104` and `130..145`) ([#2170](https://github.com/nf-core/tools/pull/2170))
+- Add a clean-up GHA which closes issues and PRs with specific labels ([#2183](https://github.com/nf-core/tools/pull/2183))
+- Remove problematic sniffer code in samplesheet_check.py that could give false positive 'missing header' errors ([https://github.com/nf-core/tools/pull/2194]) [Contributed by @Midnighter, @jfy133]
+- Consistent syntax for branch checks in PRs ([#2202](https://github.com/nf-core/tools/issues/2202))
+- Fixed minor Jinja2 templating bug that caused the PR template to miss a newline
+- Updated AWS tests to use newly moved `seqeralabs/action-tower-launch` instead of `nf-core/tower-action`
+- Remove `.cff` files from `.editorconfig` [(#2145)[https://github.com/nf-core/tools/pull/2145]]
+- Simplify pipeline README ([#2186](https://github.com/nf-core/tools/issues/2186))
+- Added support for the apptainer container engine via `-profile apptainer`. ([#2244](https://github.com/nf-core/tools/issues/2244)) [Contributed by @jfy133]
+- Added config `docker.registry` to pipeline template for a configurable default container registry when using Docker containers. Defaults to `quay.io` ([#2133](https://github.com/nf-core/tools/pull/2133))
+- Add tower.yml file to the pipeline template ([#2251](https://github.com/nf-core/tools/pull/2251))
+- Add mastodon badge to README ([#2253](https://github.com/nf-core/tools/pull/2253))
+- Removed `quay.io` from all module Docker container references as this is now supplied at pipeline level. ([#2249](https://github.com/nf-core/tools/pull/2249))
+- Remove `CITATION.cff` file from pipeline template, to avoid that pipeline Zenodo entries reference the nf-core publication instead of the pipeline ([#2059](https://github.com/nf-core/tools/pull/2059)).
+
+### Linting
+
+- Update modules lint test to fail if enable_conda is found ([#2213](https://github.com/nf-core/tools/pull/2213))
+- Read module lint configuration from `.nf-core.yml`, not `.nf-core-lint.yml` ([#2221](https://github.com/nf-core/tools/pull/2221))
+- `nf-core schema lint` now defaults to linting `nextflow_schema.json` if no filename is provided ([#2225](https://github.com/nf-core/tools/pull/2225))
+- Warn if `/zenodo.XXXXXX` is present in the Readme ([#2254](https://github.com/nf-core/tools/pull/2254))
+- Lint all labels in a module ([#2227](https://github.com/nf-core/tools/pull/2227))
+
 ### Modules
 
 - Add an `--empty-template` option to create a module without TODO statements or examples ([#2175](https://github.com/nf-core/tools/pull/2175) & [#2177](https://github.com/nf-core/tools/pull/2177))
+- Removed the `nf-core modules mulled` command and all its code dependencies ([2199](https://github.com/nf-core/tools/pull/2199)).
+- Take into accout the provided `--git_remote` URL when linting all modules ([2243](https://github.com/nf-core/tools/pull/2243)).
 
 ### Subworkflows
 
 - Fixing problem when a module included in a subworkflow had a name change from TOOL to TOOL/SUBTOOL ([#2177](https://github.com/nf-core/tools/pull/2177))
 - Fix `nf-core subworkflows test` not running subworkflow tests ([#2181](https://github.com/nf-core/tools/pull/2181))
+- Add tests for `nf-core subworkflows create-test-yml` ([#2219](https://github.com/nf-core/tools/pull/2219))
 
 ### General
 
+- Deprecate Python 3.7 support because it reaches EOL ([#2210](https://github.com/nf-core/tools/pull/2210))
 - `nf-core modules/subworkflows info` now prints the include statement for the module/subworkflow ([#2182](https://github.com/nf-core/tools/pull/2182)).
+- Add a clean-up GHA which closes issues and PRs with specific labels ([#2183](https://github.com/nf-core/tools/pull/2183))
+- update minimum version of rich to 13.3.1 ([#2185](https://github.com/nf-core/tools/pull/2185))
+- Add the Nextflow version to Gitpod container matching the minimal Nextflow version for nf-core (according to `nextflow.config`) ([#2196](https://github.com/nf-core/tools/pull/2196))
+- Use `nfcore/gitpod:dev` container in the dev branch ([#2196](https://github.com/nf-core/tools/pull/2196))
+- Replace requests_mock with responses in test mocks ([#2165](https://github.com/nf-core/tools/pull/2165)).
+- Add warning when installing a module from an `org_path` that exists in multiple remotes in `modules.json` ([#2228](https://github.com/nf-core/tools/pull/2228) [#2239](https://github.com/nf-core/tools/pull/2239)).
+- Add the possibility to translate refgenie asset aliases to the ones used in a pipeline with an alias_translations.yaml file ([#2242](https://github.com/nf-core/tools/pull/2242)).
+- Add initial CHM13 support ([1988](https://github.com/nf-core/tools/issues/1988))
 
 ## [v2.7.2 - Mercury Eagle Patch](https://github.com/nf-core/tools/releases/tag/2.7.2) - [2022-12-19]
 
@@ -31,7 +90,6 @@
 
 - Fix the syntax of github_output in GitHub actions ([#2114](https://github.com/nf-core/tools/pull/2114))
 - Fix a bug introduced in 2.7 that made pipelines hang ([#2132](https://github.com/nf-core/tools/issues/2132))
-- Explicitly disable `conda` when a container profile ([#2140](https://github.com/nf-core/tools/pull/2140))
 
 ### Linting
 
@@ -75,7 +133,6 @@ Another big release with lots of new features and bug fixes. Thanks to all contr
 
 - Fix lint warnings for `samplesheet_check.nf` module ([#1875](https://github.com/nf-core/tools/pull/1875)).
 - Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
-- Remove `CITATION.cff` file from pipeline template, to avoid that pipeline Zenodo entries reference the nf-core publication instead of the pipeline ([#2059](https://github.com/nf-core/tools/pull/2059)).
 
 ### Linting
 

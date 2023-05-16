@@ -30,7 +30,7 @@ process {{ component_name_underscore|upper }} {
     conda "{{ bioconda if bioconda else 'YOUR-TOOL-HERE' }}"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         '{{ singularity_container if singularity_container else 'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE' }}':
-        '{{ docker_container if docker_container else 'quay.io/biocontainers/YOUR-TOOL-HERE' }}' }"
+        '{{ docker_container if docker_container else 'biocontainers/YOUR-TOOL-HERE' }}' }"
 
     input:
     {% if not_empty_template -%}
@@ -87,6 +87,28 @@ process {{ component_name_underscore|upper }} {
         -T $prefix \\
         {%- endif %}
         $bam
+    {%- endif %}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        {{ tool }}: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' ))
+    END_VERSIONS
+    """
+
+    stub:
+    def args = task.ext.args ?: ''
+    {% if has_meta -%}
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    {%- endif %}
+    {% if not_empty_template -%}
+    // TODO nf-core: A stub section should mimic the execution of the original module as best as possible
+    //               Have a look at the following examples:
+    //               Simple example: https://github.com/nf-core/modules/blob/818474a292b4860ae8ff88e149fbcda68814114d/modules/nf-core/bcftools/annotate/main.nf#L47-L63
+    //               Complex example: https://github.com/nf-core/modules/blob/818474a292b4860ae8ff88e149fbcda68814114d/modules/nf-core/bedtools/split/main.nf#L38-L54
+    {%- endif %}
+    """
+    {% if not_empty_template -%}
+    touch ${prefix}.bam
     {%- endif %}
 
     cat <<-END_VERSIONS > versions.yml
