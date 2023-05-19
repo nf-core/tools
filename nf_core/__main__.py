@@ -11,17 +11,7 @@ import rich.traceback
 import rich_click as click
 
 import nf_core
-import nf_core.bump_version
-import nf_core.create
-import nf_core.download
-import nf_core.launch
-import nf_core.licences
-import nf_core.lint
-import nf_core.list
-import nf_core.modules
-import nf_core.schema
-import nf_core.subworkflows
-import nf_core.sync
+import nf_core.modules.modules_repo
 import nf_core.utils
 
 # Set up logging as the root logger
@@ -163,6 +153,8 @@ def list(keywords, sort, json, show_archived):
     Checks the web for a list of nf-core pipelines with their latest releases.
     Shows which nf-core pipelines you have pulled locally and whether they are up to date.
     """
+    import nf_core.list
+
     stdout.print(nf_core.list.list_workflows(keywords, sort, json, show_archived))
 
 
@@ -207,6 +199,8 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
     a local pipeline directory or an ID from the nf-core web launch tool.
     """
+    import nf_core.launch
+
     launcher = nf_core.launch.Launch(
         pipeline, revision, command_only, params_in, params_out, save_all, show_hidden, url, id
     )
@@ -238,6 +232,8 @@ def download(pipeline, revision, outdir, compress, force, container, singularity
     Collects all files in a single archive and configures the downloaded
     workflow to use relative paths to the configs and singularity images.
     """
+    import nf_core.download
+
     dl = nf_core.download.DownloadWorkflow(
         pipeline, revision, outdir, compress, force, container, singularity_cache_only, parallel_downloads
     )
@@ -256,6 +252,7 @@ def licences(pipeline, json):
     Each of these is queried against the anaconda.org API to find the licence.
     Package name, version and licence is printed to the command line.
     """
+    import nf_core.licences
 
     lic = nf_core.licences.WorkflowLicences(pipeline)
     lic.as_json = json
@@ -289,6 +286,8 @@ def create(name, description, author, version, no_git, force, outdir, template_y
     Uses the nf-core template to make a skeleton Nextflow pipeline with all required
     files, boilerplate code and best-practices.
     """
+    import nf_core.create
+
     try:
         create_obj = nf_core.create.PipelineCreate(
             name, description, author, version, no_git, force, outdir, template_yaml, plain
@@ -344,6 +343,8 @@ def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, ma
     You can ignore tests using a file called [blue].nf-core.yml[/] [i](if you have a good reason!)[/].
     See the documentation for details.
     """
+    import nf_core.lint
+    import nf_core.utils
 
     # Check if pipeline directory is a pipeline
     try:
@@ -460,6 +461,8 @@ def remote(ctx, keywords, json):
     """
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
+    import nf_core.modules
+
     try:
         module_list = nf_core.modules.ModuleList(
             None,
@@ -490,6 +493,8 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     """
     List modules installed locally in a pipeline
     """
+    import nf_core.modules
+
     try:
         module_list = nf_core.modules.ModuleList(
             dir,
@@ -524,6 +529,8 @@ def install(ctx, tool, dir, prompt, force, sha):
 
     Fetches and installs module files from a remote repo e.g. nf-core/modules.
     """
+    import nf_core.modules
+
     try:
         module_install = nf_core.modules.ModuleInstall(
             dir,
@@ -585,6 +592,8 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, update_d
 
     Fetches and updates module files from a remote repo e.g. nf-core/modules.
     """
+    import nf_core.modules
+
     try:
         module_install = nf_core.modules.ModuleUpdate(
             dir,
@@ -626,6 +635,8 @@ def patch(ctx, tool, dir, remove):
     Checks if a module has been modified locally and creates a patch file
     describing how the module has changed from the remote version
     """
+    import nf_core.modules
+
     try:
         module_patch = nf_core.modules.ModulePatch(
             dir,
@@ -657,6 +668,8 @@ def remove(ctx, dir, tool):
     """
     Remove a module from a pipeline.
     """
+    import nf_core.modules
+
     try:
         module_remove = nf_core.modules.ModuleRemove(
             dir,
@@ -710,6 +723,8 @@ def create_module(
     elif no_meta:
         has_meta = False
 
+    import nf_core.modules
+
     # Run function
     try:
         module_create = nf_core.modules.ModuleCreate(
@@ -739,6 +754,8 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
     Given the name of a module, runs the Nextflow test command and automatically generate
     the required `test.yml` file based on the output files.
     """
+    import nf_core.modules
+
     try:
         meta_builder = nf_core.modules.ModulesTestYmlBuilder(
             module_name=tool,
@@ -785,6 +802,8 @@ def lint(
     Test modules within a pipeline or a clone of the
     nf-core/modules repository.
     """
+    import nf_core.modules
+
     try:
         module_lint = nf_core.modules.ModuleLint(
             dir,
@@ -837,6 +856,8 @@ def info(ctx, tool, dir):
     will print this usage info.
     If not, usage from the remote modules repo will be shown.
     """
+    import nf_core.modules
+
     try:
         module_info = nf_core.modules.ModuleInfo(
             dir,
@@ -863,6 +884,8 @@ def bump_versions(ctx, tool, dir, all, show_all):
     Bump versions for one or more modules in a clone of
     the nf-core/modules repo.
     """
+    import nf_core.modules
+
     try:
         version_bumper = nf_core.modules.bump_versions.ModuleVersionBumper(
             dir,
@@ -891,6 +914,8 @@ def test_module(ctx, tool, no_prompts, pytest_args):
 
     Given the name of a module, runs the Nextflow test command.
     """
+    import nf_core.modules
+
     try:
         meta_builder = nf_core.modules.ModulesTest(tool, no_prompts, pytest_args)
         meta_builder.run()
@@ -916,6 +941,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
     If the specified directory is a clone of nf-core/modules, it creates or modifies files
     in 'subworkflows/', 'tests/subworkflows' and 'tests/config/pytest_modules.yml'
     """
+    import nf_core.subworkflows
 
     # Run function
     try:
@@ -944,6 +970,8 @@ def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
     Given the name of a module, runs the Nextflow test command and automatically generate
     the required `test.yml` file based on the output files.
     """
+    import nf_core.subworkflows
+
     try:
         meta_builder = nf_core.subworkflows.SubworkflowTestYmlBuilder(
             subworkflow=subworkflow,
@@ -979,6 +1007,8 @@ def remote(ctx, keywords, json):
     """
     List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
+    import nf_core.subworkflows
+
     try:
         subworkflows_list = nf_core.subworkflows.SubworkflowList(
             None,
@@ -1009,6 +1039,8 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     """
     List subworkflows installed locally in a pipeline
     """
+    import nf_core.subworkflows
+
     try:
         subworkflows_list = nf_core.subworkflows.SubworkflowList(
             dir,
@@ -1046,6 +1078,8 @@ def info(ctx, tool, dir):
     will print this usage info.
     If not, usage from the remote subworkflows repo will be shown.
     """
+    import nf_core.subworkflows
+
     try:
         subworkflow_info = nf_core.subworkflows.SubworkflowInfo(
             dir,
@@ -1072,6 +1106,8 @@ def test_subworkflow(ctx, subworkflow, no_prompts, pytest_args):
 
     Given the name of a subworkflow, runs the Nextflow test command.
     """
+    import nf_core.subworkflows
+
     try:
         meta_builder = nf_core.subworkflows.SubworkflowsTest(subworkflow, no_prompts, pytest_args)
         meta_builder.run()
@@ -1102,6 +1138,8 @@ def install(ctx, subworkflow, dir, prompt, force, sha):
 
     Fetches and installs subworkflow files from a remote repo e.g. nf-core/modules.
     """
+    import nf_core.subworkflows
+
     try:
         subworkflow_install = nf_core.subworkflows.SubworkflowInstall(
             dir,
@@ -1140,6 +1178,8 @@ def remote(ctx, keywords, json):
     """
     List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
+    import nf_core.subworkflows
+
     try:
         subworkflow_list = nf_core.subworkflows.SubworkflowList(
             None,
@@ -1171,6 +1211,8 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     """
     List subworkflows installed locally in a pipeline
     """
+    import nf_core.subworkflows
+
     try:
         subworkflow_list = nf_core.subworkflows.SubworkflowList(
             dir,
@@ -1200,6 +1242,8 @@ def remove(ctx, dir, subworkflow):
     """
     Remove a subworkflow from a pipeline.
     """
+    import nf_core.subworkflows
+
     try:
         module_remove = nf_core.subworkflows.SubworkflowRemove(
             dir,
@@ -1256,6 +1300,8 @@ def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, u
 
     Fetches and updates subworkflow files from a remote repo e.g. nf-core/modules.
     """
+    import nf_core.subworkflows
+
     try:
         subworkflow_install = nf_core.subworkflows.SubworkflowUpdate(
             dir,
@@ -1304,6 +1350,8 @@ def validate(pipeline, params):
     This command takes such a file and validates it against the pipeline
     schema, checking whether all schema rules are satisfied.
     """
+    import nf_core.schema
+
     schema_obj = nf_core.schema.PipelineSchema()
     try:
         schema_obj.get_schema_path(pipeline)
@@ -1348,6 +1396,8 @@ def build(dir, no_prompts, web_only, url):
     https://nf-co.re website where you can annotate and organise parameters.
     Listens for this to be completed and saves the updated schema.
     """
+    import nf_core.schema
+
     try:
         schema_obj = nf_core.schema.PipelineSchema()
         if schema_obj.build_schema(dir, no_prompts, web_only, url) is False:
@@ -1374,6 +1424,8 @@ def lint(schema_path):
 
     If no schema path is provided, "nextflow_schema.json" will be used (if it exists).
     """
+    import nf_core.schema
+
     schema_obj = nf_core.schema.PipelineSchema()
     try:
         schema_obj.get_schema_path(schema_path)
@@ -1415,6 +1467,7 @@ def docs(schema_path, output, format, force, columns):
     if not os.path.exists(schema_path):
         log.error("Could not find 'nextflow_schema.json' in current directory. Please specify a path.")
         sys.exit(1)
+    import nf_core.schema
 
     schema_obj = nf_core.schema.PipelineSchema()
     # Assume we're in a pipeline dir root if schema path not set
@@ -1449,6 +1502,9 @@ def bump_version(new_version, dir, nextflow):
 
     As well as the pipeline version, you can also change the required version of Nextflow.
     """
+    import nf_core.bump_version
+    import nf_core.utils
+
     try:
         # Check if pipeline directory contains necessary files
         nf_core.utils.is_pipeline_directory(dir)
@@ -1494,6 +1550,9 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     the pipeline. It is run automatically for all pipelines when ever a
     new release of [link=https://github.com/nf-core/tools]nf-core/tools[/link] (and the included template) is made.
     """
+    import nf_core.sync
+    import nf_core.utils
+
     # Check if pipeline directory contains necessary files
     nf_core.utils.is_pipeline_directory(dir)
 
