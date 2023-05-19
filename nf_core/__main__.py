@@ -1008,14 +1008,15 @@ def remote(ctx, keywords, json):
     from nf_core.subworkflows import SubworkflowList
 
     try:
-        subworkflows_list = SubworkflowList(
+        subworkflow_list = SubworkflowList(
             None,
             True,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        stdout.print(subworkflows_list.list_subworkflows(keywords, json))
+
+        stdout.print(subworkflow_list.list_components(keywords, json))
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
@@ -1040,14 +1041,14 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     from nf_core.subworkflows import SubworkflowList
 
     try:
-        subworkflows_list = SubworkflowList(
+        subworkflow_list = SubworkflowList(
             dir,
             False,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        stdout.print(subworkflows_list.list_subworkflows(keywords, json))
+        stdout.print(subworkflow_list.list_components(keywords, json))
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
@@ -1154,74 +1155,6 @@ def install(ctx, subworkflow, dir, prompt, force, sha):
     except (UserWarning, LookupError) as e:
         log.error(e)
         raise
-        sys.exit(1)
-
-
-# nf-core subworkflows list subcommands
-@subworkflows.group()
-@click.pass_context
-def list(ctx):
-    """
-    List modules in a local pipeline or remote repository.
-    """
-    pass
-
-
-# nf-core subworkflows list remote
-@list.command()
-@click.pass_context
-@click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
-@click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def remote(ctx, keywords, json):
-    """
-    List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
-    """
-    from nf_core.subworkflows import SubworkflowList
-
-    try:
-        subworkflow_list = SubworkflowList(
-            None,
-            True,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-
-        stdout.print(subworkflow_list.list_components(keywords, json))
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
-
-
-# nf-core subworkflows list local
-@list.command()
-@click.pass_context
-@click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
-@click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-@click.option(
-    "-d",
-    "--dir",
-    type=click.Path(exists=True),
-    default=".",
-    help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
-)
-def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
-    """
-    List subworkflows installed locally in a pipeline
-    """
-    from nf_core.subworkflows import SubworkflowList
-
-    try:
-        subworkflow_list = SubworkflowList(
-            dir,
-            False,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-        stdout.print(subworkflow_list.list_components(keywords, json))
-    except (UserWarning, LookupError) as e:
-        log.error(e)
         sys.exit(1)
 
 
