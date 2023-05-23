@@ -18,7 +18,10 @@ if (params.help) {
 }
 
 // Validate input parameters
-validateParameters()
+if (params.validate_params) {
+    validateParameters()
+}
+
 
 // Print parameter summary log to screen
 log.info logo + paramsSummaryLog(workflow) + citation
