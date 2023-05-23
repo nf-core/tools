@@ -4,11 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { validateParameters            } from 'plugin/nf-validation'
-include { paramsHelp                    } from 'plugin/nf-validation'
-include { paramsSummaryLog              } from 'plugin/nf-validation'
-include { paramsSummaryMap              } from 'plugin/nf-validation'
-include { validateAndConvertSamplesheet } from 'plugin/nf-validation'
+include { validateParameters; paramsHelp paramsSummaryLog; paramsSummaryMap; fromSamplesheet } from 'plugin/nf-validation'
 
 def logo = NfcoreTemplate.logo(workflow, params.monochrome_logs)
 def citation = '\n' + WorkflowMain.citation(workflow) + '\n'
@@ -82,12 +78,9 @@ workflow {{ short_name|upper }} {
     ch_versions = Channel.empty()
 
     //
-    // Create input channel from input file
+    // Create input channel from input file provided through params.input
     //
-    ch_input = Channel.validateAndConvertSamplesheet(
-        file(params.input, checkIfExists:true),
-        file("${projectDir}/assets/schema_input.json", checkIfExists:true)
-    )
+    ch_input = Channel.fromSamplesheet("input")
 
     //
     // MODULE: Run FastQC
