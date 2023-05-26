@@ -1,6 +1,7 @@
 """
 Common utility functions for the nf-core python package.
 """
+import concurrent.futures
 import datetime
 import errno
 import hashlib
@@ -58,6 +59,12 @@ NFCORE_CACHE_DIR = os.path.join(
 NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")), "nfcore")
 
 
+def fetch_remote_version(source_url):
+    response = requests.get(source_url, timeout=3)
+    remote_version = re.sub(r"[^0-9\.]", "", response.text)
+    return remote_version
+
+
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
     """
     Check if the current version of nf-core is outdated
@@ -72,12 +79,16 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     # Build the URL to check against
     source_url = os.environ.get("NFCORE_VERSION_URL", source_url)
     source_url = f"{source_url}?v={current_version}"
-    # Fetch and clean up the remote version
-    if remote_version is None:
-        response = requests.get(source_url, timeout=3)
-        remote_version = re.sub(r"[^0-9\.]", "", response.text)
-    # Check if we have an available update
-    is_outdated = Version(remote_version) > Version(current_version)
+
+    # Fetch the remote version asynchronously
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(fetch_remote_version, source_url)
+        # Retrieve the remote version in the background
+        remote_version = future.result()
+    is_outdated = False
+    if remote_version is not None:
+        # Check if we have an available update
+        is_outdated = Version(remote_version) > Version(current_version)
     return (is_outdated, current_version, remote_version)
 
 
