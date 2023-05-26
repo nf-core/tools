@@ -259,7 +259,7 @@ class DownloadWorkflow:
         )
 
         # Remove tags for those revisions that had not been selected
-        self.workflow_repo.tidy_tags()
+        self.workflow_repo.tidy_tags_and_branches()
 
         # create a bare clone of the modified repository needed for Tower
         self.workflow_repo.bare_clone(os.path.join(self.outdir, self.output_filename))
@@ -1157,6 +1157,9 @@ class WorkflowRepo(SyncedRepo):
     def checkout(self, commit):
         return super().checkout(commit)
 
+    def get_remote_branches(self, remote_url):
+        return super().get_remote_branches(remote_url)
+
     def retry_setup_local_repo(self, skip_confirm=False):
         self.retries += 1
         if skip_confirm or rich.prompt.Confirm.ask(
@@ -1236,29 +1239,51 @@ class WorkflowRepo(SyncedRepo):
             log.error(f"[red]Could not set up local cache of modules repository:[/]\n{e}\n")
             self.retry_setup_local_repo()
 
-    def tidy_tags(self):
+    def tidy_tags_and_branches(self):
         """
-        Function to delete all tags that point to revisions that are not of interest to the downloader.
-        This allows a clutter-free experience in Tower. The commits are evidently still available.
+        Function to delete all tags and branches that are not of interest to the downloader.
+        This allows a clutter-free experience in Tower. The untagged commits are evidently still available.
 
         However, due to local caching, the downloader might also want access to revisions that had been deleted before.
         In that case, don't bother with re-adding the tags and rather download  anew from Github.
         """
         if self.revision and self.repo and self.repo.tags:
-            desired_tags = self.revision.copy()
+            # create a set to keep track of the revisions to process & check
+            desired_revisions = set(self.revision)
+
+            # determine what needs pruning
+            tags_to_remove = {tag for tag in self.repo.tags if tag.name not in desired_revisions}
+            heads_to_remove = {head for head in self.repo.heads if head.name not in desired_revisions}
+
             try:
-                for tag in self.repo.tags:
-                    if tag.name not in self.revision:
-                        self.repo.delete_tag(tag)
-                    else:
-                        desired_tags.remove(tag.name)
+                # delete unwanted tags from repository
+                for tag in tags_to_remove:
+                    self.repo.delete_tag(tag)
                 self.tags = self.repo.tags
-                if len(desired_tags) > 0:
+
+                # switch to a revision that should be kept, because deleting heads fails, if they are checked out (e.g. "master")
+                self.checkout(self.revision[0])
+
+                # delete unwanted heads/branches from repository
+                for head in heads_to_remove:
+                    self.repo.delete_head(head)
+
+                # ensure all desired branches are available
+                for revision in desired_revisions:
+                    self.checkout(revision)
+                self.heads = self.repo.heads
+
+                # get all tags and available remote_branches
+                completed_revisions = {revision.name for revision in self.repo.heads + self.repo.tags}
+
+                # verify that all requested revisions are available.
+                # a local cache might lack revisions that were deleted during a less comprehensive previous download.
+                if bool(desired_revisions - completed_revisions):
                     log.info(
-                        f"Locally cached version of the pipeline lacks selected revisions {', '.join(desired_tags)}. Downloading anew from GitHub..."
+                        f"Locally cached version of the pipeline lacks selected revisions {', '.join(desired_revisions - completed_revisions)}. Downloading anew from GitHub..."
                     )
                     self.retry_setup_local_repo(skip_confirm=True)
-                    self.tidy_tags()
+                    self.tidy_tags_and_branches()
             except (GitCommandError, InvalidGitRepositoryError) as e:
                 log.error(f"[red]Adapting your pipeline download unfortunately failed:[/]\n{e}\n")
                 self.retry_setup_local_repo(skip_confirm=True)
