@@ -79,16 +79,18 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     # Build the URL to check against
     source_url = os.environ.get("NFCORE_VERSION_URL", source_url)
     source_url = f"{source_url}?v={current_version}"
-
-    # Fetch the remote version asynchronously
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        future = executor.submit(fetch_remote_version, source_url)
-        # Retrieve the remote version in the background
-        remote_version = future.result()
+    # check if we have a newer version without blocking the rest of the script
     is_outdated = False
+    remote_version = None
+    try:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(fetch_remote_version, source_url)
+            remote_version = future.result()
+    except Exception as e:
+        log.debug(f"Could not check for nf-core updates: {e}")
     if remote_version is not None:
-        # Check if we have an available update
-        is_outdated = Version(remote_version) > Version(current_version)
+        if Version(remote_version) > Version(current_version):
+            is_outdated = True
     return (is_outdated, current_version, remote_version)
 
 
