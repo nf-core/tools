@@ -83,6 +83,7 @@ workflow {{ short_name|upper }} {
     //
     // Create input channel from input file provided through params.input
     //
+    // TODO: For more information on how to format your samplesheet and assets/schema_input.json, please refer to nf-validation plugin documentation https://nextflow-io.github.io/nf-validation/
     ch_input = Channel.fromSamplesheet("input")
 
     //
