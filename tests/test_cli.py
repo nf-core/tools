@@ -21,7 +21,7 @@ def test_header(mock_cli):
 
 
 @mock.patch("nf_core.__main__.nf_core_cli")
-@mock.patch("nf_core.utils.check_if_outdated", return_value=(True, None, "dummy_version"))
+@mock.patch("nf_core.__main__.check_if_outdated", return_value=(True, None, "dummy_version"))
 def test_header_outdated(mock_check_outdated, mock_nf_core_cli, capsys):
     """Check cli notifies the user when nf_core is outdated"""
     nf_core.__main__.run_nf_core()
