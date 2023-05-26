@@ -196,7 +196,7 @@ class SyncedRepo:
 
     def verify_branch(self):
         """
-        Verifies the active branch conforms do the correct directory structure
+        Verifies the active branch conforms to the correct directory structure
         """
         dir_names = os.listdir(self.local_repo_dir)
         if "modules" not in dir_names:
