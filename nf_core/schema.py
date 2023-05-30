@@ -245,8 +245,8 @@ class PipelineSchema:
             self.get_wf_params()
 
         # Collect parameters to ignore
-        if "schema_ignore_params" in self.pipeline_params:
-            params_ignore = self.pipeline_params.get("schema_ignore_params", "").strip("\"'").split(",")
+        if "validationSchemaIgnoreParams" in self.pipeline_params:
+            params_ignore = self.pipeline_params.get("validationSchemaIgnoreParams", "").strip("\"'").split(",")
         else:
             params_ignore = []
 
@@ -759,8 +759,8 @@ class PipelineSchema:
         Add anything that's found in the Nextflow params that's missing in the pipeline schema
         """
         params_added = []
-        params_ignore = self.pipeline_params.get("schema_ignore_params", "").strip("\"'").split(",")
-        params_ignore.append("schema_ignore_params")
+        params_ignore = self.pipeline_params.get("validationSchemaIgnoreParams", "").strip("\"'").split(",")
+        params_ignore.append("validationSchemaIgnoreParams")
         for p_key, p_val in self.pipeline_params.items():
             # Check if key is in schema parameters
             if p_key not in self.schema_params and p_key not in params_ignore:

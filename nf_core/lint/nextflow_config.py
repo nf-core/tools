@@ -66,7 +66,7 @@ def nextflow_config(self):
 
         * Determines whether boilerplate params are showed by schema. Set to ``false`` by default
 
-    * ``params.schema_ignore_params``
+    * ``params.validationSchemaIgnoreParams``
 
         * A comma separated string of inputs the schema validation should ignore.
 
