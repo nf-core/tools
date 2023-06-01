@@ -157,7 +157,7 @@ class DownloadWorkflow:
             sys.exit(1)
 
         summary_log = [
-            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',...,['+str(len(self.revision)-2)+' more revisions],...,'+self.revision[-1]}'",
+            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
             f"Pull containers: '{self.container}'",
         ]
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
@@ -531,7 +531,7 @@ class DownloadWorkflow:
             except (FileNotFoundError, LookupError) as e:
                 log.error(f"[red]Issue with reading the specified remote $NXF_SINGULARITY_CACHE index:[/]\n{e}\n")
                 if stderr.is_interactive and rich.prompt.Confirm.ask(f"[blue]Specify a new index file and try again?"):
-                    self.prompt_singularity_cachedir_remote(retry=True)
+                    self.prompt_singularity_cachedir_remote()
                 else:
                     log.info("Proceeding without consideration of the remote $NXF_SINGULARITY_CACHE index.")
                     self.singularity_cache_index = None
@@ -731,7 +731,7 @@ class DownloadWorkflow:
                                     r"(?<=container)[^\${}]+\${([^{}]+)}(?![^{]*})", contents
                                 )
 
-                                if bool(container_definition) & bool(container_definition.group(1)):
+                                if bool(container_definition) and bool(container_definition.group(1)):
                                     pattern = re.escape(container_definition.group(1))
                                     # extract the quoted string(s) following the variable assignment
                                     container_names = re.findall(r"%s\s*=\s*[\"\']([^\"\']+)[\"\']" % pattern, contents)
