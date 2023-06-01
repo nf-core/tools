@@ -44,6 +44,17 @@ def bump_pipeline_version(pipeline_obj, new_version):
             )
         ],
     )
+    # multiqc_config.yaml
+    update_file_version(
+        "multiqc_config.yaml",
+        pipeline_obj,
+        [
+            (
+                rf"version\s*=\s*[\'\"]?{re.escape(current_version)}[\'\"]?",
+                f"version = '{new_version}'",
+            )
+        ],
+    )
 
 
 def bump_nextflow_version(pipeline_obj, new_version):
