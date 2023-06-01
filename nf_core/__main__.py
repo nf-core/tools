@@ -209,21 +209,46 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 # nf-core download
 @nf_core_cli.command()
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
-@click.option("-r", "--revision", type=str, help="Pipeline release")
+@click.option(
+    "-r",
+    "--revision",
+    multiple=True,
+    help="Pipeline release to download. Multiple invocations are possible, e.g. `-r 1.1 -r 1.2`",
+)
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
     "-x", "--compress", type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]), help="Archive compression type"
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
+@click.option("-t", "--tower", is_flag=True, default=False, help="Download for seqeralabs® Nextflow Tower")
 @click.option(
     "-c", "--container", type=click.Choice(["none", "singularity"]), help="Download software container images"
 )
 @click.option(
-    "--singularity-cache-only/--singularity-cache-copy",
-    help="Don't / do copy images to the output directory and set 'singularity.cacheDir' in workflow",
+    "-s",
+    "--singularity-cache",
+    type=click.Choice(["amend", "copy", "remote"]),
+    help="Utilize the 'singularity.cacheDir' in the download process, if applicable.",
+)
+@click.option(
+    "-i",
+    "--singularity-cache-index",
+    type=str,
+    help="List of images already available in a remote 'singularity.cacheDir', imposes --singularity-cache=remote",
 )
 @click.option("-p", "--parallel-downloads", type=int, default=4, help="Number of parallel image downloads")
-def download(pipeline, revision, outdir, compress, force, container, singularity_cache_only, parallel_downloads):
+def download(
+    pipeline,
+    revision,
+    outdir,
+    compress,
+    force,
+    tower,
+    container,
+    singularity_cache,
+    singularity_cache_index,
+    parallel_downloads,
+):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
 
@@ -233,7 +258,16 @@ def download(pipeline, revision, outdir, compress, force, container, singularity
     from nf_core.download import DownloadWorkflow
 
     dl = DownloadWorkflow(
-        pipeline, revision, outdir, compress, force, container, singularity_cache_only, parallel_downloads
+        pipeline,
+        revision,
+        outdir,
+        compress,
+        force,
+        tower,
+        container,
+        singularity_cache,
+        singularity_cache_index,
+        parallel_downloads,
     )
     dl.download_workflow()
 

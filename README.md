@@ -20,7 +20,7 @@ A python package with helper tools for the nf-core community.
 - [`nf-core` tools update](#update-tools)
 - [`nf-core list` - List available pipelines](#listing-pipelines)
 - [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
-- [`nf-core download` - Download pipeline for offline use](#downloading-pipelines-for-offline-use)
+- [`nf-core download` - Download a pipeline for offline use](#downloading-pipelines-for-offline-use)
 - [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
 - [`nf-core create` - Create a new pipeline with the nf-core template](#creating-a-new-pipeline)
 - [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
@@ -348,13 +348,13 @@ nextflow run /path/to/download/nf-core-rnaseq-dev/workflow/ --input mydata.csv -
 ### Downloaded nf-core configs
 
 The pipeline files are automatically updated (`params.custom_config_base` is set to `../configs`), so that the local copy of institutional configs are available when running the pipeline.
-So using `-profile <NAME>` should work if available within [nf-core/configs](https://github.com/nf-core/configs).
+So using `-profile <NAME>` should work if available within [nf-core/configs](https://github.com/nf-core/configs). This option is not available when downloading a pipeline for use with [Nextflow Tower](#adapting-downloads-to-nextflow-tower) because the application manages all configurations separately.
 
 ### Downloading singularity containers
 
 If you're using Singularity, the `nf-core download` command can also fetch the required Singularity container images for you.
 To do this, select `singularity` in the prompt or specify `--container singularity` in the command.
-Your archive / target output directory will then include three folders: `workflow`, `configs` and also `singularity-containers`.
+Your archive / target output directory will then also include a separate folder `singularity-containers`.
 
 The downloaded workflow files are again edited to add the following line to the end of the pipeline's `nextflow.config` file:
 
@@ -372,10 +372,9 @@ We highly recommend setting the `$NXF_SINGULARITY_CACHEDIR` environment variable
 If found, the tool will fetch the Singularity images to this directory first before copying to the target output archive / directory.
 Any images previously fetched will be found there and copied directly - this includes images that may be shared with other pipelines or previous pipeline version downloads or download attempts.
 
-If you are running the download on the same system where you will be running the pipeline (eg. a shared filesystem where Nextflow won't have an internet connection at a later date), you can choose to _only_ use the cache via a prompt or cli options `--singularity-cache-only` / `--singularity-cache-copy`.
+If you are running the download on the same system where you will be running the pipeline (eg. a shared filesystem where Nextflow won't have an internet connection at a later date), you can choose to _only_ use the cache via a prompt or cli options `--singularity-cache amend`. This instructs `nf-core download` to fetch all Singularity images to the `$NXF_SINGULARITY_CACHEDIR` directory but does _not_ copy them to the workflow archive / directory. The workflow config file is _not_ edited. This means that when you later run the workflow, Nextflow will just use the cache folder directly.
 
-This instructs `nf-core download` to fetch all Singularity images to the `$NXF_SINGULARITY_CACHEDIR` directory but does _not_ copy them to the workflow archive / directory.
-The workflow config file is _not_ edited. This means that when you later run the workflow, Nextflow will just use the cache folder directly.
+If you are downloading a workflow for a different system, you can provide information about its image cache to `nf-core download`. To avoid unnecessary container image downloads, choose `--singularity-cache remote` and provide a list of already available images as plain text file to `--singularity-cache-index my_list_of_remotely_available_images.txt`. To generate this list on the remote system, run `find $NXF_SINGULARITY_CACHEDIR -name "*.img" > my_list_of_remotely_available_images.txt`. The tool will then only download and copy images into your output directory, which are missing on the remote system.
 
 #### How the Singularity image downloads work
 
@@ -391,15 +390,21 @@ Where both are found, the download URL is preferred.
 
 Once a full list of containers is found, they are processed in the following order:
 
-1. If the target image already exists, nothing is done (eg. with `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache-only` specified)
-2. If found in `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache-only` is _not_ specified, they are copied to the output directory
+1. If the target image already exists, nothing is done (eg. with `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache amend` specified)
+2. If found in `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache copy` is specified, they are copied to the output directory
 3. If they start with `http` they are downloaded directly within Python (default 4 at a time, you can customise this with `--parallel-downloads`)
 4. If they look like a Docker image name, they are fetched using a `singularity pull` command
-   - This requires Singularity to be installed on the system and is substantially slower
+   - This requires Singularity/Apptainer to be installed on the system and is substantially slower
 
-Note that compressing many GBs of binary files can be slow, so specifying `--compress none` is recommended when downloading Singularity images.
+Note that compressing many GBs of binary files can be slow, so specifying `--compress none` is recommended when downloading Singularity images that are copied to the output directory.
 
 If the download speeds are much slower than your internet connection is capable of, you can set `--parallel-downloads` to a large number to download loads of images at once.
+
+### Adapting downloads to Nextflow Tower
+
+[seqeralabs® Nextflow Tower](https://cloud.tower.nf/) provides a graphical user interface to oversee pipeline runs, gather statistics and configure compute resources. While pipelines added to _Tower_ are preferably hosted at a Git service, providing them as disconnected, self-reliant repositories is also possible for premises with restricted network access. Choosing the `--tower` flag will download the pipeline in an appropriate form.
+
+Subsequently, the `*.git` folder can be moved to it's final destination and linked with a pipeline in _Tower_ using the `file:/` prefix.
 
 ## Pipeline software licences
 
