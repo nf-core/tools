@@ -12,7 +12,7 @@
 - Remove `aws_tower` profile ([#2287])(https://github.com/nf-core/tools/pull/2287)
 - Fixed the Slack report to include the pipeline name ([#2291](https://github.com/nf-core/tools/pull/2291))
 - Fix link in the MultiQC report to point to exact version of output docs ([#2298](https://github.com/nf-core/tools/pull/2298))
-- Updates seqeralabs/action-tower-launch to v1.2.4
+- Updates seqeralabs/action-tower-launch to v2.0.0 ([#2301](https://github.com/nf-core/tools/pull/2301))
 
 ### Download
 
