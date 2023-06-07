@@ -13,7 +13,7 @@ class Workflow{{ short_name[0]|upper }}{{ short_name[1:] }} {
     public static void initialise(params, log) {
         {% if igenomes -%}
         genomeExistsError(params, log)
-{% endif %}
+        {% endif %}
 
         if (!params.fasta) {
             Nextflow.error "Genome fasta file not specified with e.g. '--fasta genome.fa' or via a detectable config file."

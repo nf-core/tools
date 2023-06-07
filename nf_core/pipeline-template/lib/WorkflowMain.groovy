@@ -25,13 +25,17 @@ class WorkflowMain {
     // Validate parameters and print summary to screen
     //
     public static void initialise(workflow, params, log) {
+        // Print help to screen if required
+        if (params.help) {
+            return
+        }
+
         // Print workflow version and exit on --version
         if (params.version) {
             String workflow_version = NfcoreTemplate.version(workflow)
             log.info "${workflow.manifest.name} ${workflow_version}"
             System.exit(0)
         }
-
 
         // Check that a -profile or Nextflow config has been provided to run the pipeline
         NfcoreTemplate.checkConfigProvided(workflow, log)
