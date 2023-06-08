@@ -240,7 +240,12 @@ def check_process_section(self, lines, fix_version, progress_bar):
     # Deprecated enable_conda
     for i, l in enumerate(lines):
         url = None
-        l = l.strip().removeprefix("container ").strip(" \n'\"")
+        l = l.strip(" \n'\"")
+
+        # Catch preceeding "container "
+        if l.startswith("container"):
+            l = l.replace("container", "").strip(" \n'\"")
+
         if _container_type(l) == "conda":
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
             match = re.search(r"params\.enable_conda", l)
