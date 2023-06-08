@@ -157,7 +157,7 @@ class DownloadWorkflow:
             sys.exit(1)
 
         summary_log = [
-            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',...,['+str(len(self.revision)-2)+' more revisions],...,'+self.revision[-1]}'",
+            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
             f"Pull containers: '{self.container}'",
         ]
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
@@ -1268,9 +1268,14 @@ class WorkflowRepo(SyncedRepo):
                 for head in heads_to_remove:
                     self.repo.delete_head(head)
 
-                # ensure all desired branches are available
+                # ensure all desired revisions/branches are available
                 for revision in desired_revisions:
-                    self.checkout(revision)
+                    if self.repo.is_valid_object(revision):
+                        self.repo.create_head(revision, revision)
+                        self.checkout(revision)
+                        if self.repo.head.is_detached:
+                            self.repo.head.reset(index=True, working_tree=True)
+
                 self.heads = self.repo.heads
 
                 # get all tags and available remote_branches
