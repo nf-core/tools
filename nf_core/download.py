@@ -13,6 +13,7 @@ import sys
 import tarfile
 import textwrap
 from datetime import datetime
+from distutils.version import StrictVersion
 from zipfile import ZipFile
 
 import git
@@ -531,6 +532,7 @@ class DownloadWorkflow:
             except (FileNotFoundError, LookupError) as e:
                 log.error(f"[red]Issue with reading the specified remote $NXF_SINGULARITY_CACHE index:[/]\n{e}\n")
                 if stderr.is_interactive and rich.prompt.Confirm.ask(f"[blue]Specify a new index file and try again?"):
+                    self.singularity_cache_index = None  # reset chosen path to index file.
                     self.prompt_singularity_cachedir_remote()
                 else:
                     log.info("Proceeding without consideration of the remote $NXF_SINGULARITY_CACHE index.")
@@ -1271,10 +1273,14 @@ class WorkflowRepo(SyncedRepo):
                 # ensure all desired revisions/branches are available
                 for revision in desired_revisions:
                     if self.repo.is_valid_object(revision):
-                        self.repo.create_head(revision, revision)
                         self.checkout(revision)
-                        if self.repo.head.is_detached:
-                            self.repo.head.reset(index=True, working_tree=True)
+
+                # create "latest" branch to ensure at least one branch exists (required for Tower's UI to display revisions correctly)
+                latest = sorted(desired_revisions, key=StrictVersion)[-1]
+                self.repo.create_head("latest", latest)
+                self.checkout(latest)
+                if self.repo.head.is_detached:
+                    self.repo.head.reset(index=True, working_tree=True)
 
                 self.heads = self.repo.heads
 
