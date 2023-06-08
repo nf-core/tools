@@ -12,6 +12,8 @@
 - Remove `aws_tower` profile ([#2287])(https://github.com/nf-core/tools/pull/2287)
 - Fixed the Slack report to include the pipeline name ([#2291](https://github.com/nf-core/tools/pull/2291))
 - Fix link in the MultiQC report to point to exact version of output docs ([#2298](https://github.com/nf-core/tools/pull/2298))
+- Add `singularity.registry = 'quay.io'` in pipeline template
+- Bump minimum required NF version in pipeline template from `22.10.1` -> `23.04.0`
 
 ### Download
 
