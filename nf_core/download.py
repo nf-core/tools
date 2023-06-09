@@ -13,7 +13,6 @@ import sys
 import tarfile
 import textwrap
 from datetime import datetime
-from distutils.version import StrictVersion
 from zipfile import ZipFile
 
 import git
@@ -23,6 +22,7 @@ import requests_cache
 import rich
 import rich.progress
 from git.exc import GitCommandError, InvalidGitRepositoryError
+from pkg_resources import parse_version as VersionParser
 
 import nf_core
 import nf_core.list
@@ -886,7 +886,8 @@ class DownloadWorkflow:
                             # Raise exception if this is not possible
                             log.error("Not able to pull image. Service might be down or internet connection is dead.")
                             raise r
-                        progress.update(task, advance=1)
+                        finally:
+                            progress.update(task, advance=1)
 
     def singularity_image_filenames(self, container):
         """Check Singularity cache for image, copy to destination folder if found.
@@ -1054,18 +1055,12 @@ class DownloadWorkflow:
         if lines:
             # something went wrong with the container retrieval
             if any("FATAL: " in line for line in lines):
-                log.error("Singularity container retrieval failed with the following error:")
-                log.error("".join(lines))
-                if stderr.is_interactive and rich.prompt.Confirm.ask(
-                    f"[blue]Continue downloading the workflow nonetheless?"
-                ):
-                    log.error(
-                        f'Skipped download of "{container}".\n Please troubleshoot command "{" ".join(singularity_command)}" on an individual basis.'
-                    )
-                    progress.remove_task(task)
-                    return
-                else:
-                    raise FileNotFoundError(f'Downloading image "{container}" unfortunately failed.')
+                log.error(f'[bold red]The singularity image "{container}" could not be pulled:[/]\n\n{"".join(lines)}')
+                log.error(
+                    f'Skipping failed pull of "{container}". Please troubleshoot the command \n"{" ".join(singularity_command)}"\n\n\n'
+                )
+                progress.remove_task(task)
+                return
 
         # Copy cached download if we are using the cache
         if cache_path:
@@ -1287,6 +1282,9 @@ class WorkflowRepo(SyncedRepo):
                 for revision in desired_revisions:
                     if not self.repo.is_valid_object(revision):
                         self.checkout(revision)
+                        self.repo.create_head(revision, revision)
+                        if self.repo.head.is_detached:
+                            self.repo.head.reset(index=True, working_tree=True)
 
                 # no branch exists, but one is required for Tower's UI to display revisions correctly). Thus, "latest" will be created.
                 if not bool(self.repo.heads):
@@ -1295,18 +1293,16 @@ class WorkflowRepo(SyncedRepo):
                         self.repo.create_head("latest", "latest")  # create a new head for latest
                         self.checkout("latest")
                     else:
-                        # "latest" is neither a branch (no heads exist) nor a tag, since is_valid_object() returned False.
-                        # try to determine highest contained version number from desired revisions, to which latest will be pinned.
-                        try:
-                            latest = sorted(desired_revisions, key=StrictVersion, reverse=True)[0]
-                        except (
-                            ValueError
-                        ):  # sorting might fail, because desired revisions may have names that do not comply with semantic version requirements.
-                            # retry sorting using first letters only, this should also sort 3.10 before 3.5
-                            latest = sorted(desired_revisions, key=lambda x: str(x)[0:4])[0]
-                        finally:
-                            self.repo.create_head("latest", latest)
-                            self.checkout(latest)
+                        # desired revisions may contain arbitrary branch names that do not correspond to valid sematic versioning patterns.
+                        valid_versions = [
+                            VersionParser(v)
+                            for v in desired_revisions
+                            if re.match(r"\d+\.\d+(?:\.\d+)*(?:[\w\-_])*", v)
+                        ]
+                        # valid versions sorted in ascending order, last will be aliased as "latest".
+                        latest = sorted(valid_versions)[-1]
+                        self.repo.create_head("latest", latest)
+                        self.checkout(latest)
                     if self.repo.head.is_detached:
                         self.repo.head.reset(index=True, working_tree=True)
 
