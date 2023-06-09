@@ -223,10 +223,8 @@ def check_process_section(self, lines, fix_version, progress_bar):
     self.passed.append(("process_exist", "Process definition exists", self.main_nf))
 
     # Checks that build numbers of bioconda, singularity and docker container are matching
-    singularity_tag = "singularity"
-    docker_tag = "docker"
-    bioconda_packages = []
-
+    singularity_tag = None
+    docker_tag = None
     bioconda_packages = []
 
     # Process name should be all capital letters
@@ -419,7 +417,11 @@ def check_process_section(self, lines, fix_version, progress_bar):
             else:
                 self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
 
-    return docker_tag == singularity_tag
+    # Check if a tag exists at all. If not, return None.
+    if singularity_tag is None or docker_tag is None:
+        return None
+    else:
+        return docker_tag == singularity_tag
 
 
 def check_process_labels(self, lines):
@@ -608,5 +610,5 @@ def _container_type(line):
         if url_match:
             return "singularity"
         return None
-    if line.count("/") >= 1 and line.count(":") == 1:
+    if line.count("/") >= 1 and line.count(":") == 1 and line.count(" ") == 0:
         return "docker"
