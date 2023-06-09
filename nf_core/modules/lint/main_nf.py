@@ -222,6 +222,11 @@ def check_process_section(self, lines, fix_version, progress_bar):
         return
     self.passed.append(("process_exist", "Process definition exists", self.main_nf))
 
+    # Checks that build numbers of bioconda, singularity and docker container are matching
+    singularity_tag = "singularity"
+    docker_tag = "docker"
+    bioconda_packages = []
+
     bioconda_packages = []
 
     # Process name should be all capital letters
