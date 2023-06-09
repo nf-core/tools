@@ -1258,8 +1258,8 @@ class WorkflowRepo(SyncedRepo):
             desired_revisions = set(self.revision)
 
             # determine what needs pruning
-            tags_to_remove = {tag for tag in self.repo.tags if tag.name not in desired_revisions}
-            heads_to_remove = {head for head in self.repo.heads if head.name not in desired_revisions}
+            tags_to_remove = {tag for tag in self.repo.tags if tag.name not in desired_revisions.union({"latest"})}
+            heads_to_remove = {head for head in self.repo.heads if head.name not in desired_revisions.union({"latest"})}
 
             try:
                 # delete unwanted tags from repository
@@ -1276,15 +1276,30 @@ class WorkflowRepo(SyncedRepo):
 
                 # ensure all desired revisions/branches are available
                 for revision in desired_revisions:
-                    if self.repo.is_valid_object(revision):
+                    if not self.repo.is_valid_object(revision):
                         self.checkout(revision)
 
-                # create "latest" branch to ensure at least one branch exists (required for Tower's UI to display revisions correctly)
-                latest = sorted(desired_revisions, key=StrictVersion)[-1]
-                self.repo.create_head("latest", latest)
-                self.checkout(latest)
-                if self.repo.head.is_detached:
-                    self.repo.head.reset(index=True, working_tree=True)
+                # no branch exists, but one is required for Tower's UI to display revisions correctly). Thus, "latest" will be created.
+                if not bool(self.repo.heads):
+                    if self.repo.is_valid_object("latest"):
+                        # "latest" exists as tag but not as branch
+                        self.repo.create_head("latest", "latest")  # create a new head for latest
+                        self.checkout("latest")
+                    else:
+                        # "latest" is neither a branch (no heads exist) nor a tag, since is_valid_object() returned False.
+                        # try to determine highest contained version number from desired revisions, to which latest will be pinned.
+                        try:
+                            latest = sorted(desired_revisions, key=StrictVersion, reverse=True)[0]
+                        except (
+                            ValueError
+                        ):  # sorting might fail, because desired revisions may have names that do not comply with semantic version requirements.
+                            # retry sorting using first letters only, this should also sort 3.10 before 3.5
+                            latest = sorted(desired_revisions, key=lambda x: str(x)[0:4])[0]
+                        finally:
+                            self.repo.create_head("latest", latest)
+                            self.checkout(latest)
+                    if self.repo.head.is_detached:
+                        self.repo.head.reset(index=True, working_tree=True)
 
                 self.heads = self.repo.heads
 
