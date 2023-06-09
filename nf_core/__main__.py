@@ -807,6 +807,9 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
+@click.option(
+    "-r", "--registry", type=str, metavar="<registry>", default="quay.io", help="Registry to use for containers"
+)
 @click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
 @click.option("-a", "--all", is_flag=True, help="Run on all modules")
 @click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
@@ -821,7 +824,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 )
 @click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
 def lint(
-    ctx, tool, dir, key, all, fail_warned, local, passed, sort_by, fix_version
+    ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version
 ):  # pylint: disable=redefined-outer-name
     """
     Lint one or more modules in a directory.
@@ -846,6 +849,7 @@ def lint(
         )
         module_lint.lint(
             module=tool,
+            registry=registry,
             key=key,
             all_modules=all,
             print_results=True,
