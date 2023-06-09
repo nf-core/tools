@@ -241,7 +241,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
 
         # Catch preceeding "container "
         if l.startswith("container"):
-            l = l.replace("container", "").strip(": \n'\"}")
+            l = l.replace("container", "").strip(" \n'\"}:")
 
         if _container_type(l) == "conda":
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
