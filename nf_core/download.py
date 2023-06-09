@@ -1054,9 +1054,18 @@ class DownloadWorkflow:
         if lines:
             # something went wrong with the container retrieval
             if any("FATAL: " in line for line in lines):
-                log.info("Singularity container retrieval failed with the following error:")
-                log.info("".join(lines))
-                raise FileNotFoundError(f'The container "{container}" is unavailable.\n{"".join(lines)}')
+                log.error("Singularity container retrieval failed with the following error:")
+                log.error("".join(lines))
+                if stderr.is_interactive and rich.prompt.Confirm.ask(
+                    f"[blue]Continue downloading the workflow nonetheless?"
+                ):
+                    log.error(
+                        f'Skipped download of "{container}".\n Please troubleshoot command "{" ".join(singularity_command)}" on an individual basis.'
+                    )
+                    progress.remove_task(task)
+                    return
+                else:
+                    raise FileNotFoundError(f'Downloading image "{container}" unfortunately failed.')
 
         # Copy cached download if we are using the cache
         if cache_path:
