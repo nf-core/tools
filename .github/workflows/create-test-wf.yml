@@ -23,7 +23,8 @@ jobs:
     strategy:
       matrix:
         NXF_VER:
-          - "23.04.1"
+          - "22.10.1"
+          - "latest-everything"
     steps:
       - uses: actions/checkout@v3
         name: Check out source-code repository
@@ -46,7 +47,7 @@ jobs:
       - name: Run nf-core/tools
         run: |
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
-          nextflow run nf-core-testpipeline -profile test,docker --outdir ./results -plugins nf-amazon@1.16.2
+          nextflow run nf-core-testpipeline -profile test,docker --outdir ./results
 
       - name: Upload log file artifact
         if: ${{ always() }}
