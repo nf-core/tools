@@ -266,8 +266,8 @@ def check_process_section(self, lines, fix_version, progress_bar):
                     )
                 )
         if _container_type(l) == "singularity":
-            # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
-            # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
+            # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img -> v1.2.0_cv1
+            # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0 -> 0.11.9--0
             match = re.search(r"(?::)?([A-Za-z\d\-_.]+?)(?:\.img)?(?:\.sif)?$", l)
             if match is not None:
                 singularity_tag = match.group(1)
@@ -278,8 +278,8 @@ def check_process_section(self, lines, fix_version, progress_bar):
             url = urlparse(l.split("'")[0])
 
         if _container_type(l) == "docker":
-            # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
-            # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
+            # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5 -> 2.7.1--pl526_5
+            # e.g. "biocontainers/biocontainers:v1.2.0_cv1 -> v1.2.0_cv1
             match = re.search(r":([A-Za-z\d\-_.]+)$", l)
             if match is not None:
                 docker_tag = match.group(1)
