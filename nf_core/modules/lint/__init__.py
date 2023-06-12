@@ -265,7 +265,7 @@ class ModuleLint(ComponentCommand):
         # If -k supplied, only run these tests
         self.lint_tests = [k for k in self.lint_tests if k in key]
 
-    def lint_modules(self, modules, registry, local=False, fix_version=False):
+    def lint_modules(self, modules, registry="quay.io", local=False, fix_version=False):
         """
         Lint a list of modules
 
