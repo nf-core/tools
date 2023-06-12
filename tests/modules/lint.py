@@ -90,6 +90,10 @@ def test_modules_lint_registry(self):
     assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
+    module_lint.lint(print_results=False, registry="quay.io", module="samtools")
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
 
 
 def test_modules_lint_patched_modules(self):
