@@ -83,7 +83,7 @@ def test_modules_lint_multiple_remotes(self):
 
 
 def test_modules_lint_registry(self):
-    """Test linting the TrimGalore! module"""
+    """Test linting the samtools module and alternative registry"""
     self.mods_install.install("samtools")
     module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
     module_lint.lint(print_results=False, registry="public.ecr.aws", module="samtools")
