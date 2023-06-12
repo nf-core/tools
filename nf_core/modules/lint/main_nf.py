@@ -268,7 +268,8 @@ def check_process_section(self, lines, fix_version, progress_bar):
         if _container_type(l) == "singularity":
             # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img -> v1.2.0_cv1
             # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0 -> 0.11.9--0
-            match = re.search(r"(?::)?([A-Za-z\d\-_.]+?)(?:\.img)?(?:\.sif)?$", l)
+            # Please god let's find a better way to do this than regex
+            match = re.search(r"(?:[:.])?([A-Za-z\d\-_.]+?)(?:\.img)?(?:\.sif)?$", l)
             if match is not None:
                 singularity_tag = match.group(1)
                 self.passed.append(("singularity_tag", f"Found singularity tag: {singularity_tag}", self.main_nf))
@@ -600,7 +601,7 @@ def _container_type(line):
     """Returns the container type of a build."""
     if line.startswith("conda"):
         return "conda"
-    if line.startswith("https://containers") or line.startswith("https://depot"):
+    if line.startswith("https://") or line.startswith("https://depot"):
         # Look for a http download URL.
         # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
         url_regex = (
@@ -610,5 +611,5 @@ def _container_type(line):
         if url_match:
             return "singularity"
         return None
-    if line.count("/") >= 1 and line.count(":") == 1 and line.count(" ") == 0:
+    if line.count("/") >= 1 and line.count(":") == 1 and line.count(" ") == 0 and "https://" not in line:
         return "docker"
