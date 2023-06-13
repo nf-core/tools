@@ -261,8 +261,14 @@ class DownloadTest(unittest.TestCase):
         assert download_obj.workflow_repo
         assert isinstance(download_obj.workflow_repo, WorkflowRepo)
         assert issubclass(type(download_obj.workflow_repo), SyncedRepo)
+
         # corroborate that the other revisions are inaccessible to the user.
-        assert len(download_obj.workflow_repo.tags) == len(download_obj.revision)
+        all_tags = {tag.name for tag in download_obj.workflow_repo.tags}
+        all_heads = {head.name for head in download_obj.workflow_repo.heads}
+
+        assert set(download_obj.revision) == all_tags
+        # assert that the download has a "latest" branch.
+        assert "latest" in all_heads
 
         # download_obj.download_workflow_tower(location=tmp_dir) will run container image detection for all requested revisions
         assert isinstance(download_obj.containers, list) and len(download_obj.containers) == 33

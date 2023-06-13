@@ -22,12 +22,17 @@ import requests_cache
 import rich
 import rich.progress
 from git.exc import GitCommandError, InvalidGitRepositoryError
+from pkg_resources import parse_version as VersionParser
 
 import nf_core
 import nf_core.list
 import nf_core.utils
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
-from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR
+from nf_core.utils import (
+    NFCORE_CACHE_DIR,
+    NFCORE_DIR,
+    SingularityCacheFilePathValidator,
+)
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
@@ -157,7 +162,7 @@ class DownloadWorkflow:
             sys.exit(1)
 
         summary_log = [
-            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',...,['+str(len(self.revision)-2)+' more revisions],...,'+self.revision[-1]}'",
+            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
             f"Pull containers: '{self.container}'",
         ]
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
@@ -493,8 +498,8 @@ class DownloadWorkflow:
             cachedir_index = None
             while cachedir_index is None:
                 prompt_cachedir_index = questionary.path(
-                    "Specify a list of the remote images already present in the remote system :",
-                    file_filter="*.txt",
+                    "Specify a list of the container images that are already present on the remote system:",
+                    validate=SingularityCacheFilePathValidator,
                     style=nf_core.utils.nfcore_question_style,
                 ).unsafe_ask()
                 cachedir_index = os.path.abspath(os.path.expanduser(prompt_cachedir_index))
@@ -531,7 +536,8 @@ class DownloadWorkflow:
             except (FileNotFoundError, LookupError) as e:
                 log.error(f"[red]Issue with reading the specified remote $NXF_SINGULARITY_CACHE index:[/]\n{e}\n")
                 if stderr.is_interactive and rich.prompt.Confirm.ask(f"[blue]Specify a new index file and try again?"):
-                    self.prompt_singularity_cachedir_remote(retry=True)
+                    self.singularity_cache_index = None  # reset chosen path to index file.
+                    self.prompt_singularity_cachedir_remote()
                 else:
                     log.info("Proceeding without consideration of the remote $NXF_SINGULARITY_CACHE index.")
                     self.singularity_cache_index = None
@@ -731,7 +737,7 @@ class DownloadWorkflow:
                                     r"(?<=container)[^\${}]+\${([^{}]+)}(?![^{]*})", contents
                                 )
 
-                                if bool(container_definition) & bool(container_definition.group(1)):
+                                if bool(container_definition) and bool(container_definition.group(1)):
                                     pattern = re.escape(container_definition.group(1))
                                     # extract the quoted string(s) following the variable assignment
                                     container_names = re.findall(r"%s\s*=\s*[\"\']([^\"\']+)[\"\']" % pattern, contents)
@@ -880,7 +886,8 @@ class DownloadWorkflow:
                             # Raise exception if this is not possible
                             log.error("Not able to pull image. Service might be down or internet connection is dead.")
                             raise r
-                        progress.update(task, advance=1)
+                        finally:
+                            progress.update(task, advance=1)
 
     def singularity_image_filenames(self, container):
         """Check Singularity cache for image, copy to destination folder if found.
@@ -1048,9 +1055,12 @@ class DownloadWorkflow:
         if lines:
             # something went wrong with the container retrieval
             if any("FATAL: " in line for line in lines):
-                log.info("Singularity container retrieval failed with the following error:")
-                log.info("".join(lines))
-                raise FileNotFoundError(f'The container "{container}" is unavailable.\n{"".join(lines)}')
+                log.error(f'[bold red]The singularity image "{container}" could not be pulled:[/]\n\n{"".join(lines)}')
+                log.error(
+                    f'Skipping failed pull of "{container}". Please troubleshoot the command \n"{" ".join(singularity_command)}"\n\n\n'
+                )
+                progress.remove_task(task)
+                return
 
         # Copy cached download if we are using the cache
         if cache_path:
@@ -1252,8 +1262,8 @@ class WorkflowRepo(SyncedRepo):
             desired_revisions = set(self.revision)
 
             # determine what needs pruning
-            tags_to_remove = {tag for tag in self.repo.tags if tag.name not in desired_revisions}
-            heads_to_remove = {head for head in self.repo.heads if head.name not in desired_revisions}
+            tags_to_remove = {tag for tag in self.repo.tags if tag.name not in desired_revisions.union({"latest"})}
+            heads_to_remove = {head for head in self.repo.heads if head.name not in desired_revisions.union({"latest"})}
 
             try:
                 # delete unwanted tags from repository
@@ -1268,9 +1278,34 @@ class WorkflowRepo(SyncedRepo):
                 for head in heads_to_remove:
                     self.repo.delete_head(head)
 
-                # ensure all desired branches are available
+                # ensure all desired revisions/branches are available
                 for revision in desired_revisions:
-                    self.checkout(revision)
+                    if not self.repo.is_valid_object(revision):
+                        self.checkout(revision)
+                        self.repo.create_head(revision, revision)
+                        if self.repo.head.is_detached:
+                            self.repo.head.reset(index=True, working_tree=True)
+
+                # no branch exists, but one is required for Tower's UI to display revisions correctly). Thus, "latest" will be created.
+                if not bool(self.repo.heads):
+                    if self.repo.is_valid_object("latest"):
+                        # "latest" exists as tag but not as branch
+                        self.repo.create_head("latest", "latest")  # create a new head for latest
+                        self.checkout("latest")
+                    else:
+                        # desired revisions may contain arbitrary branch names that do not correspond to valid sematic versioning patterns.
+                        valid_versions = [
+                            VersionParser(v)
+                            for v in desired_revisions
+                            if re.match(r"\d+\.\d+(?:\.\d+)*(?:[\w\-_])*", v)
+                        ]
+                        # valid versions sorted in ascending order, last will be aliased as "latest".
+                        latest = sorted(valid_versions)[-1]
+                        self.repo.create_head("latest", latest)
+                        self.checkout(latest)
+                    if self.repo.head.is_detached:
+                        self.repo.head.reset(index=True, working_tree=True)
+
                 self.heads = self.repo.heads
 
                 # get all tags and available remote_branches
