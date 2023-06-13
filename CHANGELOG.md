@@ -14,6 +14,7 @@
 - Fix link in the MultiQC report to point to exact version of output docs ([#2298](https://github.com/nf-core/tools/pull/2298))
 - Fix parsing of container directive when it is not typical nf-core format ([#2306](https://github.com/nf-core/tools/pull/2306))
 - Add ability to specify custom registry for linting modules, defaults to quay.io ([#2313](https://github.com/nf-core/tools/pull/2313))
+- Add ability to interpret `docker.registry` from `nextflow.config` file. If not found defaults to quay.io.
 
 ### Download
 
