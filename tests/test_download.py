@@ -159,7 +159,17 @@ class DownloadTest(unittest.TestCase):
     def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_rich_progress):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
         with pytest.raises(FileNotFoundError):
-            download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
+            download_obj.singularity_pull_image("a-container", tmp_dir, None, "quay.io", mock_rich_progress)
+
+    @pytest.mark.skipif(
+        shutil.which("singularity") is None,
+        reason="Can't test what Singularity does if it's not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("rich.progress.Progress.add_task")
+    def test_singularity_pull_image_successfully(self, tmp_dir, mock_rich_progress):
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
+        download_obj.singularity_pull_image("hello-world", tmp_dir, None, "docker.io", mock_rich_progress)
 
     # If Singularity is not installed, it raises a OSError because the singularity command can't be found.
     @pytest.mark.skipif(
@@ -171,7 +181,7 @@ class DownloadTest(unittest.TestCase):
     def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
         with pytest.raises(OSError):
-            download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
+            download_obj.singularity_pull_image("a-container", tmp_dir, None, "quay.io", mock_rich_progress)
 
     #
     # Test for '--singularity-cache remote --singularity-cache-index'. Provide a list of containers already available in a remote location.
@@ -185,13 +195,13 @@ class DownloadTest(unittest.TestCase):
             outdir=os.path.join(tmp_dir, "new"),
             revision="3.9",
             compress_type="none",
-            singularity_cache_index=Path(__file__).resolve().parent / "data/testdata_remote_containers.txt",
+            container_cache_index=Path(__file__).resolve().parent / "data/testdata_remote_containers.txt",
         )
 
         download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.
 
         # test if the settings are changed to mandatory defaults, if an external cache index is used.
-        assert download_obj.singularity_cache == "remote" and download_obj.container == "singularity"
+        assert download_obj.container_cache_utilisation == "remote" and download_obj.container_system == "singularity"
         assert isinstance(download_obj.containers_remote, list) and len(download_obj.containers_remote) == 0
         # read in the file
         download_obj.read_remote_containers()
@@ -211,10 +221,10 @@ class DownloadTest(unittest.TestCase):
         download_obj = DownloadWorkflow(
             pipeline="nf-core/methylseq",
             outdir=os.path.join(tmp_dir, "new"),
-            container="singularity",
+            container_system="singularity",
             revision="1.6",
             compress_type="none",
-            singularity_cache="copy",
+            container_cache_utilisation="copy",
         )
 
         download_obj.include_configs = True  # suppress prompt, because stderr.is_interactive doesn't.
@@ -230,6 +240,7 @@ class DownloadTest(unittest.TestCase):
             revision=("3.7", "3.9"),
             compress_type="none",
             tower=True,
+            container_system="singularity",
         )
 
         download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.

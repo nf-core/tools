@@ -252,7 +252,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     "-i",
     "--container-cache-index",
     type=str,
-    help="List of images already available in a remote `singularity.cacheDir`, imposes `--container_cache_utilisation=remote`",
+    help="List of images already available in a remote `singularity.cacheDir`.",
 )
 @click.option("-p", "--parallel-downloads", type=int, default=4, help="Number of parallel image downloads")
 def download(

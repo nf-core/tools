@@ -123,7 +123,7 @@ class DownloadWorkflow:
         # if a container_cache_index is given, use the file and overrule choice.
         if isinstance(container_library, str):
             self.container_library = [container_library]
-        elif isinstance(revision, tuple):
+        elif isinstance(container_library, tuple):
             self.container_library = [*container_library]
         else:
             self.container_library = ["quay.io"]
@@ -892,14 +892,22 @@ class DownloadWorkflow:
 
                     for container in containers_pull:
                         progress.update(task, description="Pulling singularity images")
-                        try:
-                            self.singularity_pull_image(*container, progress)
-                        except RuntimeWarning as r:
-                            # Raise exception if this is not possible
+                        # it is possible to try multiple registries / mirrors if multiple were specified.
+                        for library in self.container_library:
+                            try:
+                                self.singularity_pull_image(*container, library, progress)
+                                # Pulling the image was successful, no RuntimeWarning raised, break the library loop
+                                break
+                            except RuntimeWarning as r:
+                                log.warning(f"Failure to pull from {library}.")
+                                continue
+                        else:
+                            # The else clause executes after the loop completes normally.
+                            # This means the library loop completed without breaking, indicating failure for all libraries (registries)
                             log.error("Not able to pull image. Service might be down or internet connection is dead.")
                             raise r
-                        finally:
-                            progress.update(task, advance=1)
+                        # Task should advance in any case. Failure to pull will not kill the download process.
+                        progress.update(task, advance=1)
 
     def singularity_image_filenames(self, container):
         """Check Singularity cache for image, copy to destination folder if found.
@@ -1023,7 +1031,7 @@ class DownloadWorkflow:
             # Re-raise the caught exception
             raise
 
-    def singularity_pull_image(self, container, out_path, cache_path, progress):
+    def singularity_pull_image(self, container, out_path, cache_path, library, progress):
         """Pull a singularity image using ``singularity pull``
 
         Attempt to use a local installation of singularity to pull the image.
@@ -1031,14 +1039,14 @@ class DownloadWorkflow:
         Args:
             container (str): A pipeline's container name. Usually it is of similar format
                 to ``nfcore/name:version``.
+            library (list of str): A list of libraries to try for pulling the image.
 
         Raises:
             Various exceptions possible from `subprocess` execution of Singularity.
         """
         output_path = cache_path or out_path
-
         # Pull using singularity
-        address = f"docker://{container.replace('docker://', '')}"
+        address = f"docker://{library}{container.replace('docker://', '')}"
         if shutil.which("singularity"):
             singularity_command = ["singularity", "pull", "--name", output_path, address]
         elif shutil.which("apptainer"):
