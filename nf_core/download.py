@@ -177,6 +177,8 @@ class DownloadWorkflow:
             f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
             f"Use containers: '{self.container_system}'",
         ]
+        if self.container_system:
+            summary_log.append(f"Container library: '{', '.join(self.container_library)}'")
         if self.container_system == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
             summary_log.append(f"Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {os.environ['NXF_SINGULARITY_CACHEDIR']}'")
             if self.containers_remote:
@@ -1046,7 +1048,7 @@ class DownloadWorkflow:
         """
         output_path = cache_path or out_path
         # Pull using singularity
-        address = f"docker://{library}{container.replace('docker://', '')}"
+        address = f"docker://{library}/{container.replace('docker://', '')}"
         if shutil.which("singularity"):
             singularity_command = ["singularity", "pull", "--name", output_path, address]
         elif shutil.which("apptainer"):
