@@ -22,6 +22,7 @@ jobs:
           workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
           access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
           compute_env: ${{ secrets.TOWER_COMPUTE_ENV }}
+          hook_url: "${{ secrets.MEGATESTS_ALERTS_SLACK_HOOK_URL }}"
           workdir: s3://${{ secrets.AWS_S3_BUCKET }}{% endraw %}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw %}
           parameters: |
             {
