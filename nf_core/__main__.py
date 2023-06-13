@@ -222,19 +222,37 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 @click.option("-t", "--tower", is_flag=True, default=False, help="Download for seqeralabs® Nextflow Tower")
 @click.option(
-    "-c", "--container", type=click.Choice(["none", "singularity"]), help="Download software container images"
+    "-d",
+    "--download-configuration",
+    is_flag=True,
+    default=False,
+    help="Include configuration profiles in download. Not available with `--tower`",
 )
+# -c changed to -s for consistency with other --container arguments, where it is always the first letter of the last word.
+# Also -c might be used instead of -d for config in a later release, but reusing params for different options in two subsequent releases might be too error-prone.
 @click.option(
     "-s",
-    "--singularity-cache",
+    "--container-system",
+    type=click.Choice(["none", "singularity"]),
+    help="Download container images of required software.",
+)
+@click.option(
+    "-l",
+    "--container-library",
+    multiple=True,
+    help="Container registry/library or mirror to pull images from.",
+)
+@click.option(
+    "-u",
+    "--container-cache-utilisation",
     type=click.Choice(["amend", "copy", "remote"]),
-    help="Utilize the 'singularity.cacheDir' in the download process, if applicable.",
+    help="Utilise a `singularity.cacheDir` in the download process, if applicable.",
 )
 @click.option(
     "-i",
-    "--singularity-cache-index",
+    "--container-cache-index",
     type=str,
-    help="List of images already available in a remote 'singularity.cacheDir', imposes --singularity-cache=remote",
+    help="List of images already available in a remote `singularity.cacheDir`, imposes `--container_cache_utilisation=remote`",
 )
 @click.option("-p", "--parallel-downloads", type=int, default=4, help="Number of parallel image downloads")
 def download(
@@ -244,9 +262,11 @@ def download(
     compress,
     force,
     tower,
-    container,
-    singularity_cache,
-    singularity_cache_index,
+    download_configuration,
+    container_system,
+    container_library,
+    container_cache_utilisation,
+    container_cache_index,
     parallel_downloads,
 ):
     """
@@ -264,9 +284,11 @@ def download(
         compress,
         force,
         tower,
-        container,
-        singularity_cache,
-        singularity_cache_index,
+        download_configuration,
+        container_system,
+        container_library,
+        container_cache_utilisation,
+        container_cache_index,
         parallel_downloads,
     )
     dl.download_workflow()

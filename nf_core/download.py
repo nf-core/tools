@@ -95,9 +95,11 @@ class DownloadWorkflow:
         compress_type=None,
         force=False,
         tower=False,
-        container=None,
-        singularity_cache=None,
-        singularity_cache_index=None,
+        download_configuration=None,
+        container_system=None,
+        container_library=None,
+        container_cache_utilisation=None,
+        container_cache_index=None,
         parallel_downloads=4,
     ):
         self.pipeline = pipeline
@@ -112,12 +114,22 @@ class DownloadWorkflow:
         self.compress_type = compress_type
         self.force = force
         self.tower = tower
-        self.include_configs = None
-        # force download of containers if a cache index is given or download is meant to be used for Tower.
-        self.container = "singularity" if singularity_cache_index or bool(tower) else container
-        # if a singularity_cache_index is given, use the file and overrule choice.
-        self.singularity_cache = "remote" if singularity_cache_index else singularity_cache
-        self.singularity_cache_index = singularity_cache_index
+        # if flag is not specified, do not assume deliberate choice and prompt config inclusion interactively.
+        # this implies that non-interactive "no" choice is only possible implicitly (e.g. with --tower or if prompt is suppressed by !stderr.is_interactive).
+        # only alternative would have been to make it a -d="yes" or -d="no" option.
+        self.include_configs = True if download_configuration else False if bool(tower) else None
+        # Specifying a cache index or container library implies that containers should be downloaded.
+        self.container_system = "singularity" if container_cache_index or bool(container_library) else container_system
+        # if a container_cache_index is given, use the file and overrule choice.
+        if isinstance(container_library, str):
+            self.container_library = [container_library]
+        elif isinstance(revision, tuple):
+            self.container_library = [*container_library]
+        else:
+            self.container_library = ["quay.io"]
+        self.container_cache_utilisation = "remote" if container_cache_index else container_cache_utilisation
+        self.container_cache_index = container_cache_index
+        # allows to specify a container library / registry or a respective mirror to download images from
         self.parallel_downloads = parallel_downloads
 
         self.wf_revisions = {}
@@ -147,10 +159,10 @@ class DownloadWorkflow:
             if not self.tower and self.include_configs is None:
                 self.prompt_config_inclusion()
             # If a remote cache is specified, it is safe to assume images should be downloaded.
-            if not self.singularity_cache == "remote":
+            if not self.container_cache_utilisation == "remote":
                 self.prompt_container_download()
             else:
-                self.container = "singularity"
+                self.container_system = "singularity"
             self.prompt_singularity_cachedir_creation()
             self.prompt_singularity_cachedir_utilization()
             self.prompt_singularity_cachedir_remote()
@@ -163,9 +175,9 @@ class DownloadWorkflow:
 
         summary_log = [
             f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
-            f"Pull containers: '{self.container}'",
+            f"Use containers: '{self.container_system}'",
         ]
-        if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
+        if self.container_system == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
             summary_log.append(f"Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {os.environ['NXF_SINGULARITY_CACHEDIR']}'")
             if self.containers_remote:
                 summary_log.append(
@@ -236,7 +248,7 @@ class DownloadWorkflow:
                     sys.exit(1)
 
             # Collect all required singularity images
-            if self.container == "singularity":
+            if self.container_system == "singularity":
                 self.find_container_images(os.path.join(self.outdir, revision_dirname))
 
                 try:
@@ -270,7 +282,7 @@ class DownloadWorkflow:
         self.workflow_repo.bare_clone(os.path.join(self.outdir, self.output_filename))
 
         # extract the required containers
-        if self.container == "singularity":
+        if self.container_system == "singularity":
             for revision, commit in self.wf_sha.items():
                 # Checkout the repo in the current revision
                 self.workflow_repo.checkout(commit)
@@ -382,9 +394,9 @@ class DownloadWorkflow:
     def prompt_container_download(self):
         """Prompt whether to download container images or not"""
 
-        if self.container is None and stderr.is_interactive and not self.tower:
+        if self.container_system is None and stderr.is_interactive and not self.tower:
             stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
-            self.container = questionary.select(
+            self.container_system = questionary.select(
                 "Download software container images:",
                 choices=["none", "singularity"],
                 style=nf_core.utils.nfcore_question_style,
@@ -393,7 +405,7 @@ class DownloadWorkflow:
     def prompt_singularity_cachedir_creation(self):
         """Prompt about using $NXF_SINGULARITY_CACHEDIR if not already set"""
         if (
-            self.container == "singularity"
+            self.container_system == "singularity"
             and os.environ.get("NXF_SINGULARITY_CACHEDIR") is None
             and stderr.is_interactive  # Use rich auto-detection of interactive shells
         ):
@@ -404,8 +416,8 @@ class DownloadWorkflow:
             if rich.prompt.Confirm.ask(
                 "[blue bold]?[/] [bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
             ):
-                if not self.singularity_cache_index:
-                    self.singularity_cache == "amend"  # retain "remote" choice.
+                if not self.container_cache_index:
+                    self.container_cache_utilisation == "amend"  # retain "remote" choice.
                 # Prompt user for a cache directory path
                 cachedir_path = None
                 while cachedir_path is None:
@@ -470,8 +482,8 @@ class DownloadWorkflow:
     def prompt_singularity_cachedir_utilization(self):
         """Ask if we should *only* use $NXF_SINGULARITY_CACHEDIR without copying into target"""
         if (
-            self.singularity_cache is None  # no choice regarding singularity cache has been made.
-            and self.container == "singularity"
+            self.container_cache_utilisation is None  # no choice regarding singularity cache has been made.
+            and self.container_system == "singularity"
             and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None
             and stderr.is_interactive
         ):
@@ -480,7 +492,7 @@ class DownloadWorkflow:
                 "[blue not bold]$NXF_SINGULARITY_CACHEDIR[/] folder, Nextflow will automatically find them."
                 "However if you will transfer the downloaded files to a different system then they should be copied to the target folder."
             )
-            self.singularity_cache = questionary.select(
+            self.container_cache_utilisation = questionary.select(
                 "Copy singularity images from $NXF_SINGULARITY_CACHEDIR to the target folder or amend new images to the cache?",
                 choices=["amend", "copy"],
                 style=nf_core.utils.nfcore_question_style,
@@ -489,9 +501,9 @@ class DownloadWorkflow:
     def prompt_singularity_cachedir_remote(self):
         """Prompt about the index of a remote $NXF_SINGULARITY_CACHEDIR"""
         if (
-            self.container == "singularity"
-            and self.singularity_cache == "remote"
-            and self.singularity_cache_index is None
+            self.container_system == "singularity"
+            and self.container_cache_utilisation == "remote"
+            and self.container_cache_index is None
             and stderr.is_interactive  # Use rich auto-detection of interactive shells
         ):
             # Prompt user for a file listing the contents of the remote cache directory
@@ -505,26 +517,26 @@ class DownloadWorkflow:
                 cachedir_index = os.path.abspath(os.path.expanduser(prompt_cachedir_index))
                 if prompt_cachedir_index == "":
                     log.error("Will disregard contents of a remote [blue]$NXF_SINGULARITY_CACHEDIR[/]")
-                    self.singularity_cache_index = None
-                    self.singularity_cache = "copy"
+                    self.container_cache_index = None
+                    self.container_cache_utilisation = "copy"
                 elif not os.access(cachedir_index, os.R_OK):
                     log.error(f"'{cachedir_index}' is not a readable file.")
                     cachedir_index = None
             if cachedir_index:
-                self.singularity_cache_index = cachedir_index
+                self.container_cache_index = cachedir_index
         # in any case read the remote containers, even if no prompt was shown.
         self.read_remote_containers()
 
     def read_remote_containers(self):
         """Reads the file specified as index for the remote Singularity cache dir"""
         if (
-            self.container == "singularity"
-            and self.singularity_cache == "remote"
-            and self.singularity_cache_index is not None
+            self.container_system == "singularity"
+            and self.container_cache_utilisation == "remote"
+            and self.container_cache_index is not None
         ):
             n_total_images = 0
             try:
-                with open(self.singularity_cache_index) as indexfile:
+                with open(self.container_cache_index) as indexfile:
                     for line in indexfile.readlines():
                         match = re.search(r"([^\/\\]+\.img)", line, re.S)
                         if match:
@@ -536,15 +548,15 @@ class DownloadWorkflow:
             except (FileNotFoundError, LookupError) as e:
                 log.error(f"[red]Issue with reading the specified remote $NXF_SINGULARITY_CACHE index:[/]\n{e}\n")
                 if stderr.is_interactive and rich.prompt.Confirm.ask(f"[blue]Specify a new index file and try again?"):
-                    self.singularity_cache_index = None  # reset chosen path to index file.
+                    self.container_cache_index = None  # reset chosen path to index file.
                     self.prompt_singularity_cachedir_remote()
                 else:
                     log.info("Proceeding without consideration of the remote $NXF_SINGULARITY_CACHE index.")
-                    self.singularity_cache_index = None
+                    self.container_cache_index = None
                     if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
-                        self.singularity_cache = "copy"  # default to copy if possible, otherwise skip.
+                        self.container_cache_utilisation = "copy"  # default to copy if possible, otherwise skip.
                     else:
-                        self.singularity_cache = None
+                        self.container_cache_utilisation = None
 
     def prompt_compression_type(self):
         """Ask user if we should compress the downloaded files"""
@@ -552,7 +564,7 @@ class DownloadWorkflow:
             stderr.print(
                 "\nIf transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file."
             )
-            if self.container == "singularity":
+            if self.container_system == "singularity":
                 stderr.print(
                     "[bold]This is [italic]not[/] recommended when downloading Singularity images, as it can take a long time and saves very little space."
                 )
@@ -632,7 +644,7 @@ class DownloadWorkflow:
         nfconfig = nfconfig.replace(find_str, repl_str)
 
         # Append the singularity.cacheDir to the end if we need it
-        if self.container == "singularity" and self.singularity_cache == "copy":
+        if self.container_system == "singularity" and self.container_cache_utilisation == "copy":
             nfconfig += (
                 f"\n\n// Added by `nf-core download` v{nf_core.__version__} //\n"
                 + 'singularity.cacheDir = "${projectDir}/../singularity-images/"'
@@ -830,7 +842,7 @@ class DownloadWorkflow:
                         )
 
                 if containers_exist:
-                    if self.singularity_cache_index is not None:
+                    if self.container_cache_index is not None:
                         log.info(
                             f"{len(containers_exist)} containers are already cached remotely and won't be retrieved."
                         )
@@ -926,10 +938,10 @@ class DownloadWorkflow:
         if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
             cache_path = os.path.join(os.environ["NXF_SINGULARITY_CACHEDIR"], out_name)
             # Use only the cache - set this as the main output path
-            if self.singularity_cache == "amend":
+            if self.container_cache_utilisation == "amend":
                 out_path = cache_path
                 cache_path = None
-        elif self.singularity_cache in ["amend", "copy"]:
+        elif self.container_cache_utilisation in ["amend", "copy"]:
             raise FileNotFoundError("Singularity cache is required but no '$NXF_SINGULARITY_CACHEDIR' set!")
 
         return (out_path, cache_path)
