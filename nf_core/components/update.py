@@ -306,16 +306,6 @@ class ComponentUpdate(ComponentCommand):
                     # Update linked components
                     self.update_linked_components(modules_to_update, subworkflows_to_update, updated)
                     self.manage_changes_in_linked_components(component, modules_to_update, subworkflows_to_update)
-            else:
-                # Don't save to a file, just iteratively update the variable
-                self.modules_json.update(
-                    self.component_type,
-                    modules_repo,
-                    component,
-                    version,
-                    installed_by=None,
-                    write_file=False,
-                )
 
         if self.save_diff_fn:
             # Write the modules.json diff to the file
