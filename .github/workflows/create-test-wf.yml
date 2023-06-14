@@ -29,8 +29,9 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
+          aws-region: eu-west-1
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          aws-region: us-west-1
+          role-session-name: NfcoreEuWest1Session
 
       - uses: actions/checkout@v3
         name: Check out source-code repository
