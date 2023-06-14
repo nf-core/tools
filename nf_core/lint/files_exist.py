@@ -52,7 +52,6 @@ def files_exist(self):
         docs/README.md
         docs/usage.md
         lib/nfcore_external_java_deps.jar
-        lib/NfcoreSchema.groovy
         lib/NfcoreTemplate.groovy
         lib/Utils.groovy
         lib/WorkflowMain.groovy
@@ -161,7 +160,6 @@ def files_exist(self):
         [os.path.join("docs", "README.md")],
         [os.path.join("docs", "usage.md")],
         [os.path.join("lib", "nfcore_external_java_deps.jar")],
-        [os.path.join("lib", "NfcoreSchema.groovy")],
         [os.path.join("lib", "NfcoreTemplate.groovy")],
         [os.path.join("lib", "Utils.groovy")],
         [os.path.join("lib", "WorkflowMain.groovy")],

@@ -12,6 +12,7 @@
 - Remove `aws_tower` profile ([#2287])(https://github.com/nf-core/tools/pull/2287)
 - Fixed the Slack report to include the pipeline name ([#2291](https://github.com/nf-core/tools/pull/2291))
 - Fix link in the MultiQC report to point to exact version of output docs ([#2298](https://github.com/nf-core/tools/pull/2298))
+- Remove schema validation from `lib` folder and use Nextflow [nf-validation plugin](https://nextflow-io.github.io/nf-validation/) instead ([#1771](https://github.com/nf-core/tools/pull/1771/))
 - Fix parsing of container directive when it is not typical nf-core format ([#2306](https://github.com/nf-core/tools/pull/2306))
 
 ### Download
@@ -33,6 +34,7 @@
 
 - GitPod base image: Always self-update to the latest version of Nextflow. Add [pre-commit](https://pre-commit.com/) dependency.
 - GitPod configs: Update Nextflow as an init task, init pre-commit in pipeline config.
+- Refgenie: Create `nxf_home/nf-core/refgenie_genomes.config` path if it doesn't exist ([#2312](https://github.com/nf-core/tools/pull/2312))
 
 # [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
 
