@@ -813,7 +813,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
     type=str,
     metavar="<registry>",
     default=None,
-    help="Registry to use for containers. If not specified will interpret it from nextflow.config file at attribute docker.registry",
+    help="Registry to use for containers. If not specified it will use docker.registry value in the nextflow.config file",
 )
 @click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
 @click.option("-a", "--all", is_flag=True, help="Run on all modules")
