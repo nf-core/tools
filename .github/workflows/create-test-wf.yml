@@ -18,6 +18,9 @@ env:
 jobs:
   RunTestWorkflow:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     env:
       NXF_ANSI_LOG: false
     strategy:
