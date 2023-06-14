@@ -25,6 +25,7 @@ jobs:
         NXF_VER:
           - "22.10.1"
           - "latest-everything"
+      fail-fast: false
     steps:
       # Get the repo code
       - uses: actions/checkout@v3
