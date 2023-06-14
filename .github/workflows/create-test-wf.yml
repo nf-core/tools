@@ -27,6 +27,8 @@ jobs:
         NXF_VER:
           - "22.10.1"
           - "latest-everything"
+      fail-fast: false
+
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
