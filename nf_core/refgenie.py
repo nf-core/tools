@@ -184,7 +184,7 @@ def update_config(rgc):
 
     # Save the updated genome config
     try:
-        with open(refgenie_genomes_config_file, "w") as fh:
+        with open(refgenie_genomes_config_file, "w+") as fh:
             fh.write(refgenie_genomes)
         log.info(f"Updated nf-core genomes config: {refgenie_genomes_config_file}")
     except FileNotFoundError:
