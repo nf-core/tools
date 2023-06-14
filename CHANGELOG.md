@@ -27,6 +27,8 @@
 
 ### Modules
 
+- Don't update `modules_json` object if a module is not updated ([#2323](https://github.com/nf-core/tools/pull/2323))
+
 ### Subworkflows
 
 ### General
