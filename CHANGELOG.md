@@ -15,6 +15,7 @@
 - Updates seqeralabs/action-tower-launch to v2.0.0 ([#2301](https://github.com/nf-core/tools/pull/2301))
 - Remove schema validation from `lib` folder and use Nextflow [nf-validation plugin](https://nextflow-io.github.io/nf-validation/) instead ([#1771](https://github.com/nf-core/tools/pull/1771/))
 - Fix parsing of container directive when it is not typical nf-core format ([#2306](https://github.com/nf-core/tools/pull/2306))
+- Add ability to specify custom registry for linting modules, defaults to quay.io ([#2313](https://github.com/nf-core/tools/pull/2313))
 
 ### Download
 
