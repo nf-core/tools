@@ -85,12 +85,13 @@ def test_modules_lint_multiple_remotes(self):
 def test_modules_lint_registry(self):
     """Test linting the samtools module and alternative registry"""
     self.mods_install.install("samtools")
-    module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
-    module_lint.lint(print_results=False, registry="public.ecr.aws", module="samtools")
+    module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, registry="public.ecr.aws")
+    module_lint.lint(print_results=False, module="samtools")
     assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
-    module_lint.lint(print_results=False, registry="quay.io", module="samtools")
+    module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
+    module_lint.lint(print_results=False, module="samtools")
     assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0

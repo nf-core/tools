@@ -69,6 +69,7 @@ class ModuleLint(ComponentCommand):
         remote_url=None,
         branch=None,
         no_pull=False,
+        registry=None,
         hide_progress=False,
     ):
         super().__init__(
@@ -114,6 +115,7 @@ class ModuleLint(ComponentCommand):
                     )
                     for m in self.get_local_components()
                 ]
+            self.config = nf_core.utils.fetch_wf_config(self.dir, cache_config=True)
         else:
             module_dir = Path(self.dir, self.default_modules_path)
             self.all_remote_modules = [
@@ -123,6 +125,15 @@ class ModuleLint(ComponentCommand):
             self.all_local_modules = []
             if not self.all_remote_modules:
                 raise LookupError("No modules in 'modules' directory")
+
+            # This could be better, perhaps glob for all nextflow.config files in?
+            self.config = nf_core.utils.fetch_wf_config(Path(self.dir).joinpath("tests", "config"), cache_config=True)
+
+        if registry is None:
+            self.registry = self.config.get("docker.registry", "quay.io")
+        else:
+            self.registry = registry
+        log.debug(f"Registry set to {self.registry}")
 
         self.lint_config = None
         self.modules_json = None
@@ -313,7 +324,7 @@ class ModuleLint(ComponentCommand):
 
         # Only check the main script in case of a local module
         if local:
-            self.main_nf(mod, fix_version, registry, progress_bar)
+            self.main_nf(mod, fix_version, self.registry, progress_bar)
             self.passed += [LintResult(mod, *m) for m in mod.passed]
             warned = [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
             if not self.fail_warned:
@@ -325,7 +336,7 @@ class ModuleLint(ComponentCommand):
         else:
             for test_name in self.lint_tests:
                 if test_name == "main_nf":
-                    getattr(self, test_name)(mod, fix_version, registry, progress_bar)
+                    getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
                 else:
                     getattr(self, test_name)(mod)
 
