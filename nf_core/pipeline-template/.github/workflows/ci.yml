@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   test:
-    name: Run pipeline with test data
+    name: Run pipeline (${{ matrix.PROFILE }})
     # Only run on push if this is the nf-core dev branch (merged PRs)
     if: "{% raw %}${{{% endraw %} github.event_name != 'push' || (github.event_name == 'push' && github.repository == '{{ name }}') {% raw %}}}{% endraw %}"
     runs-on: ubuntu-latest
@@ -26,6 +26,10 @@ jobs:
         NXF_VER:
           - "23.04.0"
           - "latest-everything"
+        PROFILE:
+          - "test,docker"
+          - "test,docker,public_aws_ecr"
+
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v3
@@ -40,4 +44,4 @@ jobs:
         # For example: adding multiple test runs with different parameters
         # Remember that you can parallelise this by using strategy.matrix
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test,docker --outdir ./results
+          nextflow run ${GITHUB_WORKSPACE} -profile ${{ matrix.PROFILE }} --outdir ./results
