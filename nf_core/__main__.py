@@ -855,6 +855,7 @@ def lint(
         )
         module_lint.lint(
             module=tool,
+            registry=registry,
             key=key,
             all_modules=all,
             print_results=True,

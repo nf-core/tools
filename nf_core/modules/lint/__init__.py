@@ -156,6 +156,7 @@ class ModuleLint(ComponentCommand):
     def lint(
         self,
         module=None,
+        registry="quay.io",
         key=(),
         all_modules=False,
         print_results=True,
@@ -238,11 +239,11 @@ class ModuleLint(ComponentCommand):
 
         # Lint local modules
         if local and len(local_modules) > 0:
-            self.lint_modules(local_modules, local=True, fix_version=fix_version)
+            self.lint_modules(local_modules, registry=registry, local=True, fix_version=fix_version)
 
         # Lint nf-core modules
         if len(remote_modules) > 0:
-            self.lint_modules(remote_modules, local=False, fix_version=fix_version)
+            self.lint_modules(remote_modules, registry=registry, local=False, fix_version=fix_version)
 
         if print_results:
             self._print_results(show_passed=show_passed, sort_by=sort_by)
@@ -275,12 +276,13 @@ class ModuleLint(ComponentCommand):
         # If -k supplied, only run these tests
         self.lint_tests = [k for k in self.lint_tests if k in key]
 
-    def lint_modules(self, modules, local=False, fix_version=False):
+    def lint_modules(self, modules, registry="quay.io", local=False, fix_version=False):
         """
         Lint a list of modules
 
         Args:
             modules ([NFCoreModule]): A list of module objects
+            registry (str): The container registry to use. Should be quay.io in most situations.
             local (boolean): Whether the list consist of local or nf-core modules
             fix_version (boolean): Fix the module version if a newer version is available
         """
@@ -301,9 +303,9 @@ class ModuleLint(ComponentCommand):
 
             for mod in modules:
                 progress_bar.update(lint_progress, advance=1, test_name=mod.module_name)
-                self.lint_module(mod, progress_bar, local=local, fix_version=fix_version)
+                self.lint_module(mod, progress_bar, registry=registry, local=local, fix_version=fix_version)
 
-    def lint_module(self, mod, progress_bar, local=False, fix_version=False):
+    def lint_module(self, mod, progress_bar, registry, local=False, fix_version=False):
         """
         Perform linting on one module
 
