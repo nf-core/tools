@@ -26,7 +26,7 @@ jobs:
           workdir: s3://${{ secrets.AWS_S3_BUCKET }}{% endraw %}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw %}
           parameters: |
             {
-              "hook_url": "${{ secrets.MEGATESTS_ALERTS_SLACK_HOOK_URL }}",
+              "hook_url": "{% raw %}${{ secrets.MEGATESTS_ALERTS_SLACK_HOOK_URL }}{% endraw %}",
               "outdir": "s3://{% raw %}${{ secrets.AWS_S3_BUCKET }}{% endraw %}/{{ short_name }}/{% raw %}results-${{ github.sha }}{% endraw %}"
             }
           profiles: test_full
