@@ -17,7 +17,7 @@ from nf_core.modules.modules_differ import ModulesDiffer
 log = logging.getLogger(__name__)
 
 
-def main_nf(module_lint_object, module, fix_version, progress_bar):
+def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
     """
     Lint a ``main.nf`` module file
 
@@ -121,7 +121,7 @@ def main_nf(module_lint_object, module, fix_version, progress_bar):
         module.passed.append(("main_nf_script_outputs", "Process 'output' block found", module.main_nf))
 
     # Check the process definitions
-    if check_process_section(module, process_lines, fix_version, progress_bar):
+    if check_process_section(module, process_lines, registry, fix_version, progress_bar):
         module.passed.append(("main_nf_container", "Container versions match", module.main_nf))
     else:
         module.warned.append(("main_nf_container", "Container versions do not match", module.main_nf))
@@ -209,12 +209,20 @@ def check_when_section(self, lines):
     self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
 
 
-def check_process_section(self, lines, fix_version, progress_bar):
-    """
-    Lint the section of a module between the process definition
+def check_process_section(self, lines, registry, fix_version, progress_bar):
+    """Lint the section of a module between the process definition
     and the 'input:' definition
     Specifically checks for correct software versions
     and containers
+
+    Args:
+        lines (List[str]): Content of process.
+        registry (str): Base Docker registry for containers. Typically quay.io.
+        fix_version (bool): Fix software version
+        progress_bar (ProgressBar): Progress bar to update.
+
+    Returns:
+        Optional[bool]: True if singularity and docker containers match, False otherwise. If process definition does not exist, None.
     """
     # Check that we have a process section
     if len(lines) == 0:
@@ -223,8 +231,8 @@ def check_process_section(self, lines, fix_version, progress_bar):
     self.passed.append(("process_exist", "Process definition exists", self.main_nf))
 
     # Checks that build numbers of bioconda, singularity and docker container are matching
-    singularity_tag = "singularity"
-    docker_tag = "docker"
+    singularity_tag = None
+    docker_tag = None
     bioconda_packages = []
 
     # Process name should be all capital letters
@@ -240,7 +248,12 @@ def check_process_section(self, lines, fix_version, progress_bar):
     # Deprecated enable_conda
     for i, l in enumerate(lines):
         url = None
-        l = l.strip(" '\"")
+        l = l.strip(" \n'\"}:")
+
+        # Catch preceeding "container "
+        if l.startswith("container"):
+            l = l.replace("container", "").strip(" \n'\"}:")
+
         if _container_type(l) == "conda":
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
             match = re.search(r"params\.enable_conda", l)
@@ -261,9 +274,10 @@ def check_process_section(self, lines, fix_version, progress_bar):
                     )
                 )
         if _container_type(l) == "singularity":
-            # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
-            # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
-            match = re.search(r"(?:/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_.]+?)(?:\.img)?'", l)
+            # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img -> v1.2.0_cv1
+            # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0 -> 0.11.9--0
+            # Please god let's find a better way to do this than regex
+            match = re.search(r"(?:[:.])?([A-Za-z\d\-_.]+?)(?:\.img)?(?:\.sif)?$", l)
             if match is not None:
                 singularity_tag = match.group(1)
                 self.passed.append(("singularity_tag", f"Found singularity tag: {singularity_tag}", self.main_nf))
@@ -273,16 +287,16 @@ def check_process_section(self, lines, fix_version, progress_bar):
             url = urlparse(l.split("'")[0])
 
         if _container_type(l) == "docker":
-            # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
-            # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
-            match = re.search(r"(?:[/])?(?::)?([A-Za-z\d\-_.]+)'", l)
+            # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5 -> 2.7.1--pl526_5
+            # e.g. "biocontainers/biocontainers:v1.2.0_cv1 -> v1.2.0_cv1
+            match = re.search(r":([A-Za-z\d\-_.]+)$", l)
             if match is not None:
                 docker_tag = match.group(1)
                 self.passed.append(("docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
             else:
                 self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
-                docker_tag = NoneD
-            if l.startswith("quay.io/"):
+                docker_tag = None
+            if l.startswith(registry):
                 l_stripped = re.sub(r"\W+$", "", l)
                 self.failed.append(
                     (
@@ -297,7 +311,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
             # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
             # If so, add quay.io as default container prefix
             if l.count("/") == 1 and l.count(":") == 1:
-                l = "quay.io/" + l
+                l = "/".join([registry, l]).replace("//", "/")
             url = urlparse(l.split("'")[0])
 
         # lint double quotes
@@ -320,7 +334,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 )
 
         # lint more than one container in the same line
-        if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or "quay.io/" in l):
+        if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or l.startswith(registry)):
             self.warned.append(
                 (
                     "container_links",
@@ -412,7 +426,11 @@ def check_process_section(self, lines, fix_version, progress_bar):
             else:
                 self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
 
-    return docker_tag == singularity_tag
+    # Check if a tag exists at all. If not, return None.
+    if singularity_tag is None or docker_tag is None:
+        return None
+    else:
+        return docker_tag == singularity_tag
 
 
 def check_process_labels(self, lines):
@@ -591,7 +609,7 @@ def _container_type(line):
     """Returns the container type of a build."""
     if line.startswith("conda"):
         return "conda"
-    if line.startswith("https://containers") or line.startswith("https://depot"):
+    if line.startswith("https://") or line.startswith("https://depot"):
         # Look for a http download URL.
         # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
         url_regex = (
@@ -601,5 +619,5 @@ def _container_type(line):
         if url_match:
             return "singularity"
         return None
-    if line.count("/") >= 1 and line.count(":") == 1:
+    if line.count("/") >= 1 and line.count(":") == 1 and line.count(" ") == 0 and "https://" not in line:
         return "docker"
