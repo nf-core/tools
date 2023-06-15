@@ -303,11 +303,6 @@ def fetch_wf_config(wf_path, cache_config=True):
     return config
 
 
-def parse_nf_config(wf_path, cache_config=True):
-    config = fetch_wf_config(wf_path=wf_path, cache_config=True)
-    return config
-
-
 def nextflow_cmd(cmd):
     """Run a Nextflow command and capture the output. Handle errors nicely"""
     try:
