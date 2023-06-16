@@ -258,7 +258,7 @@ def fetch_wf_config(wf_path, cache_config=True):
 
     if cache_basedir and cache_fn:
         cache_path = os.path.join(cache_basedir, cache_fn)
-        if os.path.isfile(cache_path):
+        if os.path.isfile(cache_path) and cache_config is True:
             log.debug(f"Found a config cache, loading: {cache_path}")
             with open(cache_path, "r") as fh:
                 try:
@@ -274,7 +274,7 @@ def fetch_wf_config(wf_path, cache_config=True):
         ul = l.decode("utf-8")
         try:
             k, v = ul.split(" = ", 1)
-            config[k] = v
+            config[k] = v.strip("'\"")
         except ValueError:
             log.debug(f"Couldn't find key=value config pair:\n  {ul}")
 

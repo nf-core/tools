@@ -7,6 +7,7 @@ from shutil import which
 import pytest
 import questionary
 import rich
+from git import InvalidGitRepositoryError, Repo
 
 import nf_core.modules.modules_utils
 import nf_core.utils
@@ -178,6 +179,14 @@ class ComponentsTest(ComponentCommand):
         # Print nice divider line
         console = rich.console.Console()
         console.rule(self.component_name, style="black")
+
+        # Check uncommitted changed
+        try:
+            repo = Repo(self.dir)
+            if repo.is_dirty():
+                log.warning("You have uncommitted changes. Make sure to commit last changes before running the tests.")
+        except InvalidGitRepositoryError:
+            pass
 
         # Set pytest arguments
         tag = self.component_name

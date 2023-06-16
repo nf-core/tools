@@ -33,7 +33,7 @@ body:
     attributes:
       label: System information
       description: |
-        * Nextflow version _(eg. 22.10.1)_
+        * Nextflow version _(eg. 23.04.0)_
         * Hardware _(eg. HPC, Desktop, Cloud)_
         * Executor _(eg. slurm, local, awsbatch)_
         * OS _(eg. CentOS Linux, macOS, Linux Mint)_

@@ -941,6 +941,8 @@ before_command: sed 's/1.13a/1.10/g' modules/multiqc/main.nf > modules/multiqc/m
 
 To run unit tests of a module that you have installed or the test created by the command [`nf-core modules create-test-yml`](#create-a-module-test-config-file), you can use `nf-core modules test` command. This command runs the tests specified in `modules/tests/software/<tool>/<subtool>/test.yml` file using [pytest](https://pytest-workflow.readthedocs.io/en/stable/).
 
+> This command uses the pytest argument `--git-aware` to avoid copying the whole `.git` directory and files ignored by `git`. This means that it will only include files listed by `git ls-files`. Remember to **commit your changes** after adding a new module to add the new files to your git index.
+
 You can specify the module name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
 
 <!-- RICH-CODEX
@@ -1198,6 +1200,8 @@ extra_env:
 ### Run the tests for a subworkflow using pytest
 
 To run unit tests of a subworkflow that you have installed or the test created by the command [`nf-core subworkflow create-test-yml`](#create-a-subworkflow-test-config-file), you can use `nf-core subworkflows test` command. This command runs the tests specified in `tests/subworkflows/<subworkflow_name>/test.yml` file using [pytest](https://pytest-workflow.readthedocs.io/en/stable/).
+
+> This command uses the pytest argument `--git-aware` to avoid copying the whole `.git` directory and files ignored by `git`. This means that it will only include files listed by `git ls-files`. Remember to **commit your changes** after adding a new subworkflow to add the new files to your git index.
 
 You can specify the subworkflow name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
 
