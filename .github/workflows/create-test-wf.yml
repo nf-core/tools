@@ -25,6 +25,10 @@ jobs:
         NXF_VER:
           - "23.04.0"
           - "latest-everything"
+        PROFILE:
+          - "test,docker"
+          - "test,docker,public_aws_ecr"
+
     steps:
       - uses: actions/checkout@v3
         name: Check out source-code repository
@@ -50,11 +54,7 @@ jobs:
 
       - name: Run nf-core/testpipeline (default)
         run: |
-          nextflow run nf-core-testpipeline -profile test,docker --outdir ./default_results
-
-      - name: Run nf-core/testpipeline (AWS ECR)
-        run: |
-          nextflow run nf-core-testpipeline -profile test,docker,public_aws_ecr --outdir ./awsecr_results
+          nextflow run nf-core-testpipeline -profile ${{ PROFILE }}--outdir ./default_results
 
       - name: Upload log file artifact
         if: ${{ always() }}
