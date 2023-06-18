@@ -19,6 +19,7 @@
 - Add `singularity.registry = 'quay.io'` in pipeline template
 - Bump minimum required NF version in pipeline template from `22.10.1` -> `23.04.0`
 - Add ability to interpret `docker.registry` from `nextflow.config` file. If not found defaults to quay.io. ([#2318](https://github.com/nf-core/tools/pull/2318))
+- Add functions to dynamically include pipeline tool citations in MultiQC methods description section for better reporting. ([#XXXX](XXXX))
 
 ### Download
 
