@@ -116,7 +116,7 @@ class DownloadWorkflow:
         self.tower = tower
         # if flag is not specified, do not assume deliberate choice and prompt config inclusion interactively.
         # this implies that non-interactive "no" choice is only possible implicitly (e.g. with --tower or if prompt is suppressed by !stderr.is_interactive).
-        # only alternative would have been to make it a -d="yes" or -d="no" option.
+        # only alternative would have been to make it a parameter with argument, e.g. -d="yes" or -d="no".
         self.include_configs = True if download_configuration else False if bool(tower) else None
         # Specifying a cache index or container library implies that containers should be downloaded.
         self.container_system = "singularity" if container_cache_index or bool(container_library) else container_system
