@@ -13,6 +13,7 @@ import sys
 import tarfile
 import textwrap
 from datetime import datetime
+from typing import Any
 from zipfile import ZipFile
 
 import git
@@ -900,7 +901,7 @@ class DownloadWorkflow:
                                 self.singularity_pull_image(*container, library, progress)
                                 # Pulling the image was successful, no RuntimeWarning raised, break the library loop
                                 break
-                            except RuntimeWarning as r:
+                            except ContainerError as r:
                                 log.warning(f"Failure to pull from {library}.")
                                 continue
                         else:
@@ -1077,12 +1078,19 @@ class DownloadWorkflow:
         if lines:
             # something went wrong with the container retrieval
             if any("FATAL: " in line for line in lines):
-                log.error(f'[bold red]The singularity image "{container}" could not be pulled:[/]\n\n{"".join(lines)}')
-                log.error(
-                    f'Skipping failed pull of "{container}". Please troubleshoot the command \n"{" ".join(singularity_command)}"\n\n\n'
-                )
+                # log.error(f'[bold red]The singularity image "{container}" could not be pulled:[/]\n\n{"".join(lines)}')
+                # log.error(
+                #   f'Skipping failed pull of "{container}". Please troubleshoot the command \n"{" ".join(singularity_command)}"\n\n\n'
+                # )
                 progress.remove_task(task)
-                return
+                raise ContainerError(
+                    container=container,
+                    registry=library,
+                    address=address,
+                    out_path=out_path if out_path else cache_path or "",
+                    singularity_command=singularity_command,
+                    error_msg=lines,
+                )
 
         # Copy cached download if we are using the cache
         if cache_path:
@@ -1357,3 +1365,97 @@ class WorkflowRepo(SyncedRepo):
                 self.repo.clone(os.path.abspath(destination), bare=True)
             except (OSError, GitCommandError, InvalidGitRepositoryError) as e:
                 log.error(f"[red]Failure to create the pipeline download[/]\n{e}\n")
+
+
+# Distinct errors for the container download, required for acting on the exceptions
+
+
+class ContainerError(Exception):
+    """A class of errors related to pulling containers with Singularity/Apptainer"""
+
+    def __init__(self, container, registry, address, out_path, singularity_command, error_msg):
+        self.container = container
+        self.registry = registry
+        self.address = address
+        self.out_path = out_path
+        self.singularity_command = singularity_command
+        self.error_msg = error_msg
+
+        for line in error_msg:
+            if re.match(r"no\s*such\s*host", line):
+                self.error_type = self.RegistryNotFound(self)
+                break
+            elif re.match(r"requested\s*access\s*to\s*the\s*resource\s*is\s*denied", line):
+                # Quite misleading message, but that is what Singularity returns in that case.
+                self.error_type = self.ImageNotFound(self)
+                break
+            elif re.match(r"manifest\s*unknown", line):
+                self.error_type = self.InvalidTag(self)
+                break
+            elif re.match(r"Image\s*file\s*already\s*exists", line):
+                self.error_type = self.ImageExists(self)
+                break
+            else:
+                continue
+        else:
+            self.error_type = self.OtherError(self)
+
+        log.error(self.error_type.message)
+        log.info(self.error_type.helpmessage)
+        log.debug(f'Failed command:\n{" ".join(singularity_command)}')
+        log.debug(f'Singularity error messages:\n{"".join(error_msg)}')
+
+        raise self.error_type
+
+    class RegistryNotFound(ConnectionRefusedError):
+        """The specified registry does not resolve to a valid IP address"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = (
+                f'[bold red]The specified container library "{self.error_log.registry}" is invalid or unreachable.[/]\n'
+            )
+            self.helpmessage = (
+                f'Please check, if you made a typo when providing "-l / --library {self.error_log.registry}"\n'
+            )
+            super().__init__(self.message, self.helpmessage, self.error_log)
+
+    class ImageNotFound(FileNotFoundError):
+        """The image can not be found in the registry"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = (
+                f'[bold red]"Pulling "{self.error_log.container}" from "{self.error_log.address}" failed.[/]\n'
+            )
+            self.helpmessage = f'Saving image of "{self.error_log.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.f\n'
+            super().__init__(self.message)
+
+    class InvalidTag(AttributeError):
+        """Image and registry are valid, but the (version) tag is not"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = f'[bold red]"{self.error_log.address.split(":")[-1]}" is not a valid tag of "{self.error_log.container}"[/]\n'
+            self.helpmessage = f'Please chose a different library than {self.error_log.registry}\nor try to locate the "{self.error_log.address.split(":")[-1]}" version of "{self.error_log.container}" manually.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.\n'
+            super().__init__(self.message)
+
+    class ImageExists(FileExistsError):
+        """Image already exists in cache/output directory."""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = (
+                f'[bold red]"{self.error_log.container}" already exists at destination and cannot be pulled[/]\n'
+            )
+            self.helpmessage = f'Saving image of "{self.error_log.container}" failed, because "{self.error_log.out_path}" exists.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.\n'
+            super().__init__(self.message)
+
+    class OtherError(RuntimeError):
+        """Undefined error with the container"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = f'[bold red]"{self.error_log.container}" failed for unclear reasons.[/]\n'
+            self.helpmessage = f'Pulling of "{self.error_log.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.\n'
+            super().__init__(self.message, self.helpmessage, self.error_log)

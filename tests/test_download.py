@@ -14,7 +14,7 @@ import pytest
 
 import nf_core.create
 import nf_core.utils
-from nf_core.download import DownloadWorkflow, WorkflowRepo
+from nf_core.download import DownloadWorkflow, WorkflowRepo, ContainerError
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR
 
@@ -158,7 +158,7 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("rich.progress.Progress.add_task")
     def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_rich_progress):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
-        with pytest.raises(RuntimeWarning):
+        with pytest.raises(ContainerError):
             download_obj.singularity_pull_image(
                 "a-container", f"{tmp_dir}/acontainer.sif", None, "quay.io", mock_rich_progress
             )
