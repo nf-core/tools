@@ -238,6 +238,11 @@ class PipelineSchema:
             jsonschema.validate(self.schema_defaults, schema_no_required)
         except jsonschema.exceptions.ValidationError as e:
             raise AssertionError(f"Default parameters are invalid: {e.message}")
+        for param, default in self.schema_defaults.items():
+            if default in ("null", "", None, "None"):
+                log.warning(
+                    f"[yellow][!] Default parameter '{param}' is empty or null. It is advisable to remove the default from the schema"
+                )
         log.info("[green][✓] Default parameters match schema validation")
 
         # Make sure every default parameter exists in the nextflow.config and is of correct type
