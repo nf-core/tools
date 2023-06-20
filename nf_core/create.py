@@ -470,6 +470,10 @@ class PipelineCreate:
         if not self.template_params["github_badges"] or not self.template_params["github"]:
             lint_config["readme"] = ["nextflow_badge"]
 
+        # If the pipeline is unbranded
+        if not self.template_params["branded"]:
+            lint_config["files_unchanged"].extend([".github/ISSUE_TEMPLATE/bug_report.yml"])
+
         # Add the lint content to the preexisting nf-core config
         config_fn, nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
         nf_core_yml["lint"] = lint_config
