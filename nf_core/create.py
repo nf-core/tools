@@ -352,6 +352,7 @@ class PipelineCreate:
         if self.template_yaml:
             with open(self.outdir / "pipeline_template.yml", "w") as fh:
                 yaml.safe_dump(self.template_yaml, fh)
+            run_prettier_on_file(self.outdir / "pipeline_template.yml")
 
     def update_nextflow_schema(self):
         """
