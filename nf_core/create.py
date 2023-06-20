@@ -403,6 +403,12 @@ class PipelineCreate:
                 ".github/workflows/awstest.yml",
                 ".github/workflows/awsfulltest.yml",
             ],
+            "files_unchanged": [
+                "CODE_OF_CONDUCT.md",
+                f"assets/nf-core-{short_name}_logo_light.png",
+                f"docs/images/nf-core-{short_name}_logo_light.png",
+                f"docs/images/nf-core-{short_name}_logo_dark.png",
+            ],
             "nextflow_config": [
                 "manifest.name",
                 "manifest.homePage",
@@ -415,9 +421,26 @@ class PipelineCreate:
             lint_config["files_exist"].extend(
                 [
                     ".github/ISSUE_TEMPLATE/bug_report.yml",
+                    ".github/ISSUE_TEMPLATE/feature_request.yml",
+                    ".github/PULL_REQUEST_TEMPLATE.md",
+                    ".github/CONTRIBUTING.md",
+                    ".github/.dockstore.yml",
+                    ".gitignore",
                 ]
             )
-            lint_config["files_unchanged"] = [".github/ISSUE_TEMPLATE/bug_report.yml"]
+            lint_config["files_unchanged"].extend(
+                [
+                    ".github/ISSUE_TEMPLATE/bug_report.yml",
+                    ".github/ISSUE_TEMPLATE/config.yml",
+                    ".github/ISSUE_TEMPLATE/feature_request.yml",
+                    ".github/PULL_REQUEST_TEMPLATE.md",
+                    ".github/workflows/branch.yml",
+                    ".github/workflows/linting_comment.yml",
+                    ".github/workflows/linting.yml",
+                    ".github/CONTRIBUTING.md",
+                    ".github/.dockstore.yml",
+                ]
+            )
 
         # Add CI specific configurations
         if not self.template_params["ci"]:
