@@ -31,6 +31,7 @@
 - Error if module container specification has quay.io as prefix when it shouldn't have ([#2278])(https://github.com/nf-core/tools/pull/2278/files)
 - Detect if container is 'simple name' and try to contact quay.io server by default ([#2281](https://github.com/nf-core/tools/pull/2281))
 - Warn about null/None/empty default values in `nextflow_schema.json` ([#3328](https://github.com/nf-core/tools/pull/2328))
+- Fix linting when creating a pipeline skipping some parts of the template and add CI test ([#2330](https://github.com/nf-core/tools/pull/2330))
 
 ### Modules
 
