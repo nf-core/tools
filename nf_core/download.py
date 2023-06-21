@@ -896,19 +896,40 @@ class DownloadWorkflow:
                     for container in containers_pull:
                         progress.update(task, description="Pulling singularity images")
                         # it is possible to try multiple registries / mirrors if multiple were specified.
-                        for library in self.container_library:
+                        # Iteration happens over a copy of self.container_library[:], as I want to be able to remove failing registries for subsequent images.
+                        for library in self.container_library[:]:
                             try:
                                 self.singularity_pull_image(*container, library, progress)
-                                # Pulling the image was successful, no RuntimeWarning raised, break the library loop
+                                # Pulling the image was successful, no ContainerError was raised, break the library loop
                                 break
-                            except ContainerError as r:
-                                log.warning(f"Failure to pull from {library}.")
+                            except ContainerError.ImageExists:
+                                # Pulling not required
+                                break
+                            except ContainerError.RegistryNotFound as e:
+                                self.container_library.remove(library)
+                                # The only library was removed
+                                if not self.container_library:
+                                    log.error(e.message)
+                                    log.error(e.helpmessage)
+                                    sys.exit(1)
+                                else:
+                                    # Other libraries can be used
+                                    continue
+                            except ContainerError.ImageNotFound:
+                                # Try other registries
                                 continue
+                            except ContainerError.InvalidTag as e:
+                                # Try other registries
+                                continue
+
                         else:
                             # The else clause executes after the loop completes normally.
                             # This means the library loop completed without breaking, indicating failure for all libraries (registries)
-                            log.error("Not able to pull image. Service might be down or internet connection is dead.")
-                            raise r
+                            log.error(
+                                f"Not able to pull image of {container}. Service might be down or internet connection is dead."
+                            )
+                            if e:
+                                log.error(e.message)
                         # Task should advance in any case. Failure to pull will not kill the download process.
                         progress.update(task, advance=1)
 
