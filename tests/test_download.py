@@ -158,9 +158,52 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("rich.progress.Progress.add_task")
     def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_rich_progress):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
-        with pytest.raises(ContainerError):
+
+        # Test successful pull
+        download_obj.singularity_pull_image(
+            "hello-world", f"{tmp_dir}/hello-world.sif", None, "docker.io", mock_rich_progress
+        )
+
+        # Pull again, but now the image already exists
+        with pytest.raises(ContainerError.ImageExists):
+            download_obj.singularity_pull_image(
+                "hello-world", f"{tmp_dir}/hello-world.sif", None, "docker.io", mock_rich_progress
+            )
+
+        # try to pull from non-existing registry (Name change hello-world_new.sif is needed, otherwise ImageExists is raised before attempting to pull.)
+        with pytest.raises(ContainerError.RegistryNotFound):
+            download_obj.singularity_pull_image(
+                "hello-world",
+                f"{tmp_dir}/hello-world_new.sif",
+                None,
+                "register-this-domain-to-break-the-test.io",
+                mock_rich_progress,
+            )
+
+        # test Image not found for several registries
+        with pytest.raises(ContainerError.ImageNotFound):
             download_obj.singularity_pull_image(
                 "a-container", f"{tmp_dir}/acontainer.sif", None, "quay.io", mock_rich_progress
+            )
+
+        with pytest.raises(ContainerError.ImageNotFound):
+            download_obj.singularity_pull_image(
+                "a-container", f"{tmp_dir}/acontainer.sif", None, "docker.io", mock_rich_progress
+            )
+
+        with pytest.raises(ContainerError.ImageNotFound):
+            download_obj.singularity_pull_image(
+                "a-container", f"{tmp_dir}/acontainer.sif", None, "ghcr.io", mock_rich_progress
+            )
+
+        # Traffic from Github Actions to GitHub's Container Registry is unlimited, so no harm should be done here.
+        with pytest.raises(ContainerError.InvalidTag):
+            download_obj.singularity_pull_image(
+                "ewels/multiqc:go-rewrite",
+                f"{tmp_dir}/umi-transfer.sif",
+                None,
+                "ghcr.io",
+                mock_rich_progress,
             )
 
     @pytest.mark.skipif(

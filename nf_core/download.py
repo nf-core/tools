@@ -1382,17 +1382,25 @@ class ContainerError(Exception):
         self.error_msg = error_msg
 
         for line in error_msg:
-            if re.match(r"no\s*such\s*host", line):
+            if re.search(r"dial\stcp.*no\ssuch\shost", line):
                 self.error_type = self.RegistryNotFound(self)
                 break
-            elif re.match(r"requested\s*access\s*to\s*the\s*resource\s*is\s*denied", line):
-                # Quite misleading message, but that is what Singularity returns in that case.
+            elif (
+                re.search(r"requested\saccess\sto\sthe\sresource\sis\sdenied", line)
+                or re.search(r"StatusCode:\s404", line)
+                or re.search(r"invalid\sstatus\scode\sfrom\sregistry\s400", line)
+            ):
+                # Unfortunately, every registry seems to return an individual error here:
+                # Docker.io: denied: requested access to the resource is denied
+                #                    unauthorized: authentication required
+                # Quay.io: StatusCode: 404,  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n']
+                # ghcr.io: Requesting bearer token: invalid status code from registry 400 (Bad Request)
                 self.error_type = self.ImageNotFound(self)
                 break
-            elif re.match(r"manifest\s*unknown", line):
+            elif re.search(r"manifest\sunknown", line):
                 self.error_type = self.InvalidTag(self)
                 break
-            elif re.match(r"Image\s*file\s*already\s*exists", line):
+            elif re.search(r"Image\sfile\salready\sexists", line):
                 self.error_type = self.ImageExists(self)
                 break
             else:
