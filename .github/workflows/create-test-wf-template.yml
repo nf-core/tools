@@ -53,23 +53,23 @@ jobs:
 
       - name: Create template skip all (except github)
         run: |
-          printf "prefix: my-prefix\nskip:\n\t- ci\n\t- github_badges\n\t- igenomes\n\t- nf_core_configs" > template_skip_all.yml
+          printf "prefix: my-prefix\nskip:['ci', 'github_badges', 'igenomes', 'nf_core_configs']" > template_skip_all.yml
 
       - name: Create template skip github_badges
         run: |
-          printf "prefix: my-prefix\nskip:\n\t- github_badges" > template_skip_github_badges.yml
+          printf "prefix: my-prefix\nskip: github_badges" > template_skip_github_badges.yml
 
       - name: Create template skip igenomes
         run: |
-          printf "prefix: my-prefix\nskip:\n\t- igenomes" > template_skip_igenomes.yml
+          printf "prefix: my-prefix\nskip: igenomes" > template_skip_igenomes.yml
 
       - name: Create template skip ci
         run: |
-          printf "prefix: my-prefix\nskip:\n\t- ci" > template_skip_ci.yml
+          printf "prefix: my-prefix\nskip: ci" > template_skip_ci.yml
 
       - name: Create template skip nf_core_configs
         run: |
-          printf "prefix: my-prefix\nskip:\n\t- nf_core_configs" > template_skip_nf_core_configs.yml
+          printf "prefix: my-prefix\nskip: nf_core_configs" > template_skip_nf_core_configs.yml
 
       - name: Run nf-core/tools
         run: |
