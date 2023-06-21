@@ -7,7 +7,7 @@
 {%- if branded %}
     Website: https://nf-co.re/{{ short_name }}
     Slack  : https://nfcore.slack.com/channels/{{ short_name }}
-{% endif -%}
+{%- endif %}
 ----------------------------------------------------------------------------------------
 */
 
