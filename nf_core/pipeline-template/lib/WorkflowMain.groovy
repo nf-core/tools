@@ -50,6 +50,7 @@ class WorkflowMain {
         }
     }
 
+    {% if igenomes -%}
     //
     // Get attribute from genome config file e.g. fasta
     //
@@ -61,4 +62,4 @@ class WorkflowMain {
         }
         return null
     }
-}
+{% endif -%}}
