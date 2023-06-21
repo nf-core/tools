@@ -53,7 +53,7 @@ jobs:
 
       - name: Create template skip all (except github)
         run: |
-          printf "prefix: my-prefix\nskip:['ci', 'github_badges', 'igenomes', 'nf_core_configs']" > template_skip_all.yml
+          printf "prefix: my-prefix\nskip: ['ci', 'github_badges', 'igenomes', 'nf_core_configs']" > template_skip_all.yml
 
       - name: Create template skip github_badges
         run: |
@@ -74,11 +74,14 @@ jobs:
       - name: Run nf-core/tools
         run: |
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml ${{ matrix.TEMPLATE }}
-          nextflow run nf-core-testpipeline -profile test,docker --outdir ./results
+          nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
+
+      - name: Tar files
+        run: tar -cvf artifact_files.tar log.txt template_skip*.yml
 
       - name: Upload log file artifact
         if: ${{ always() }}
         uses: actions/upload-artifact@v3
         with:
           name: nf-core-log-file
-          path: log.txt
+          path: artifact_files.tar
