@@ -13,6 +13,7 @@ from .utils import with_temporary_folder
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
 PIPELINE_TEMPLATE_YML = TEST_DATA_DIR / "pipeline_create_template.yml"
+PIPELINE_TEMPLATE_YML_SKIP = TEST_DATA_DIR / "pipeline_create_template_skip.yml"
 
 
 class NfcoreCreateTest(unittest.TestCase):
@@ -107,3 +108,31 @@ class NfcoreCreateTest(unittest.TestCase):
         assert os.path.exists(pipeline_template)
         with open(pipeline_template) as fh:
             assert fh.read() == PIPELINE_TEMPLATE_YML.read_text()
+
+    @with_temporary_folder
+    def test_pipeline_creation_with_yml_skip(self, tmp_path):
+        pipeline = nf_core.create.PipelineCreate(
+            name=self.pipeline_name,
+            description=self.pipeline_description,
+            author=self.pipeline_author,
+            version=self.pipeline_version,
+            no_git=False,
+            force=True,
+            outdir=tmp_path,
+            template_yaml_path=PIPELINE_TEMPLATE_YML_SKIP,
+            plain=True,
+            default_branch=self.default_branch,
+        )
+        pipeline.init_pipeline()
+        assert not os.path.isdir(os.path.join(pipeline.outdir, ".git"))
+
+        # Check pipeline yml has been dumped and matches input
+        pipeline_template = os.path.join(pipeline.outdir, "pipeline_template.yml")
+        assert os.path.exists(pipeline_template)
+        with open(pipeline_template) as fh:
+            assert fh.read() == PIPELINE_TEMPLATE_YML_SKIP.read_text()
+
+        # Check that some of the skipped files are not present
+        assert not os.path.exists(os.path.join(pipeline.outdir, "CODE_OF_CONDUCT.md"))
+        assert not os.path.exists(os.path.join(pipeline.outdir, ".github"))
+        assert not os.path.exists(os.path.join(pipeline.outdir, "conf", "igenomes.config"))

@@ -352,6 +352,7 @@ class PipelineCreate:
         if self.template_yaml:
             with open(self.outdir / "pipeline_template.yml", "w") as fh:
                 yaml.safe_dump(self.template_yaml, fh)
+            run_prettier_on_file(self.outdir / "pipeline_template.yml")
 
     def update_nextflow_schema(self):
         """
@@ -403,6 +404,12 @@ class PipelineCreate:
                 ".github/workflows/awstest.yml",
                 ".github/workflows/awsfulltest.yml",
             ],
+            "files_unchanged": [
+                "CODE_OF_CONDUCT.md",
+                f"assets/nf-core-{short_name}_logo_light.png",
+                f"docs/images/nf-core-{short_name}_logo_light.png",
+                f"docs/images/nf-core-{short_name}_logo_dark.png",
+            ],
             "nextflow_config": [
                 "manifest.name",
                 "manifest.homePage",
@@ -415,9 +422,26 @@ class PipelineCreate:
             lint_config["files_exist"].extend(
                 [
                     ".github/ISSUE_TEMPLATE/bug_report.yml",
+                    ".github/ISSUE_TEMPLATE/feature_request.yml",
+                    ".github/PULL_REQUEST_TEMPLATE.md",
+                    ".github/CONTRIBUTING.md",
+                    ".github/.dockstore.yml",
+                    ".gitignore",
                 ]
             )
-            lint_config["files_unchanged"] = [".github/ISSUE_TEMPLATE/bug_report.yml"]
+            lint_config["files_unchanged"].extend(
+                [
+                    ".github/ISSUE_TEMPLATE/bug_report.yml",
+                    ".github/ISSUE_TEMPLATE/config.yml",
+                    ".github/ISSUE_TEMPLATE/feature_request.yml",
+                    ".github/PULL_REQUEST_TEMPLATE.md",
+                    ".github/workflows/branch.yml",
+                    ".github/workflows/linting_comment.yml",
+                    ".github/workflows/linting.yml",
+                    ".github/CONTRIBUTING.md",
+                    ".github/.dockstore.yml",
+                ]
+            )
 
         # Add CI specific configurations
         if not self.template_params["ci"]:
@@ -445,6 +469,10 @@ class PipelineCreate:
         # Add github badges specific configurations
         if not self.template_params["github_badges"] or not self.template_params["github"]:
             lint_config["readme"] = ["nextflow_badge"]
+
+        # If the pipeline is unbranded
+        if not self.template_params["branded"]:
+            lint_config["files_unchanged"].extend([".github/ISSUE_TEMPLATE/bug_report.yml"])
 
         # Add the lint content to the preexisting nf-core config
         config_fn, nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
