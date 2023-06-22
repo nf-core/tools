@@ -385,9 +385,9 @@ The Singularity image download finds containers using two methods:
 2. It scrapes any files it finds with a `.nf` file extension in the workflow `modules` directory for lines
    that look like `container "xxx"`. This is the typical method for DSL2 pipelines, which have one container per process.
 
-> ⚠️ Containers specified with single quotes (container 'xxx') will not be picked up by `nf-core download`. 
+> ⚠️ Containers specified within lines that look like `container 'xxx'` will not be picked up by `nf-core download`. 
 
-Some DSL2 modules have container addresses for docker (eg. `biocontainers/fastqc:0.11.9--0`) and also URLs for direct downloads of a Singularity continaer (eg. `https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0`).
+Some DSL2 modules have container addresses for docker (eg. `biocontainers/fastqc:0.11.9--0`) and also URLs for direct downloads of a Singularity container (eg. `https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0`).
 Where both are found, the download URL is preferred.
 
 Once a full list of containers is found, they are processed in the following order:
