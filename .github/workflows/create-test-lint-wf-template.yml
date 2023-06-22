@@ -4,7 +4,7 @@ on:
     branches:
       - dev
     paths:
-      - "nf_core/pipeline-template/**"
+      - nf_core/pipeline-template/**
   pull_request:
   release:
     types: [published]
@@ -85,7 +85,15 @@ jobs:
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
         run: |
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml ${{ matrix.TEMPLATE }}
+
+      - name: run the pipeline
+        run: |
           nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
+
+      # Remove results folder before linting
+      - name: remove results folder
+        run: |
+          rm -rf ./results
 
       # Try syncing it before we change anything
       - name: nf-core sync
