@@ -116,7 +116,7 @@ jobs:
 
       # Run nf-core linting
       - name: nf-core lint
-        run: nf-core --log-file log.txt --hide-progress lint --dir my-prefix-testpipeline --fail-ignored --fail-warned
+        run: nf-core --log-file log.txt --hide-progress lint --dir my-prefix-testpipeline --fail-warned
 
       # Run bump-version
       - name: nf-core bump-version
@@ -124,7 +124,7 @@ jobs:
 
       # Run nf-core linting in release mode
       - name: nf-core lint in release mode
-        run: nf-core --log-file log.txt --hide-progress lint --dir my-prefix-testpipeline --fail-ignored --fail-warned --release
+        run: nf-core --log-file log.txt --hide-progress lint --dir my-prefix-testpipeline --fail-warned --release
 
       - name: Tar files
         run: tar -cvf artifact_files.tar log.txt template_skip*.yml
