@@ -699,7 +699,7 @@ class DownloadWorkflow:
                 if file.endswith(".nf"):
                     file_path = os.path.join(subdir, file)
                     with open(file_path, "r") as fh:
-                        # Look for any lines with `container = "xxx"`
+                        # Look for any lines with `container "xxx"`
                         this_container = None
                         contents = fh.read()
                         matches = re.findall(r"container\s*\"([^\"]*)\"", contents, re.S)
