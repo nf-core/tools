@@ -902,7 +902,7 @@ class DownloadWorkflow:
                                 self.singularity_pull_image(*container, library, progress)
                                 # Pulling the image was successful, no ContainerError was raised, break the library loop
                                 break
-                            except ContainerError.ImageExists:
+                            except ContainerError.ImageExists as e:
                                 # Pulling not required
                                 break
                             except ContainerError.RegistryNotFound as e:
@@ -915,21 +915,23 @@ class DownloadWorkflow:
                                 else:
                                     # Other libraries can be used
                                     continue
-                            except ContainerError.ImageNotFound:
+                            except ContainerError.ImageNotFound as e:
                                 # Try other registries
                                 continue
                             except ContainerError.InvalidTag as e:
                                 # Try other registries
                                 continue
-
+                            except ContainerError.OtherError as e:
+                                # Try other registries
+                                log.error(e.message)
+                                log.error(e.helpmessage)
+                                continue
                         else:
                             # The else clause executes after the loop completes normally.
                             # This means the library loop completed without breaking, indicating failure for all libraries (registries)
                             log.error(
                                 f"Not able to pull image of {container}. Service might be down or internet connection is dead."
                             )
-                            if e:
-                                log.error(e.message)
                         # Task should advance in any case. Failure to pull will not kill the download process.
                         progress.update(task, advance=1)
 

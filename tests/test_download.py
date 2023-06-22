@@ -228,16 +228,22 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
     def test_get_singularity_images(self, tmp_path, mock_fetch_wf_config):
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_library=["quay.io", "docker.io"])
+        download_obj = DownloadWorkflow(
+            pipeline="dummy",
+            outdir=tmp_path,
+            container_library=("mirage-the-imaginative-registry.io", "quay.io", "ghcr.io", "docker.io"),
+        )
         mock_fetch_wf_config.return_value = {
             "process.mapping.container": "helloworld",
+            "process.mapping.container": "helloworld",
             "process.mapping.container": "helloooooooworld",
+            "process.mapping.container": "ewels/multiqc:gorewrite",
         }
         download_obj.find_container_images("workflow")
+        assert len(download_obj.container_library) == 4
+        # This list of fake container images should produce all kinds of ContainerErrors.
+        # Test that they are all caught inside get_singularity_images().
         download_obj.get_singularity_images()
-        import pdb
-
-        pdb.set_trace()
 
     # If Singularity is not installed, it raises a OSError because the singularity command can't be found.
     @pytest.mark.skipif(
