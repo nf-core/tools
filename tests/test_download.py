@@ -215,8 +215,29 @@ class DownloadTest(unittest.TestCase):
     def test_singularity_pull_image_successfully(self, tmp_dir, mock_rich_progress):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
         download_obj.singularity_pull_image(
-            "hello-world", f"{tmp_dir}/helloworld.sif", None, "docker.io", mock_rich_progress
+            "hello-world", f"{tmp_dir}/yet-another-hello-world.sif", None, "docker.io", mock_rich_progress
         )
+
+    #
+    # Tests for 'get_singularity_images'
+    #
+    @pytest.mark.skipif(
+        shutil.which("singularity") is None,
+        reason="Can't test what Singularity does if it's not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("nf_core.utils.fetch_wf_config")
+    def test_get_singularity_images(self, tmp_path, mock_fetch_wf_config):
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_library=["quay.io", "docker.io"])
+        mock_fetch_wf_config.return_value = {
+            "process.mapping.container": "helloworld",
+            "process.mapping.container": "helloooooooworld",
+        }
+        download_obj.find_container_images("workflow")
+        download_obj.get_singularity_images()
+        import pdb
+
+        pdb.set_trace()
 
     # If Singularity is not installed, it raises a OSError because the singularity command can't be found.
     @pytest.mark.skipif(
