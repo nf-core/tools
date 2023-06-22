@@ -48,6 +48,17 @@ jobs:
         with:
           version: latest-everything
 
+      # Install the Prettier linting tools
+      - uses: actions/setup-node@v3
+
+      - name: Install Prettier
+        run: npm install -g prettier
+
+      # Install the editorconfig linting tools
+      - name: Install editorconfig-checker
+        run: npm install -g editorconfig-checker
+
+      # Create template files
       - name: Create template skip all (except github)
         run: |
           printf "prefix: my-prefix\nskip: ['ci', 'github_badges', 'igenomes', 'nf_core_configs']" > template_skip_all.yml
@@ -68,10 +79,42 @@ jobs:
         run: |
           printf "prefix: my-prefix\nskip: nf_core_configs" > template_skip_nf_core_configs.yml
 
-      - name: Run nf-core/tools
+      # Create a pipeline from the template
+      - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
         run: |
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml ${{ matrix.TEMPLATE }}
           nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
+
+      # Try syncing it before we change anything
+      - name: nf-core sync
+        run: nf-core --log-file log.txt sync --dir my-prefix-testpipeline/
+
+      # Run code style linting
+      - name: Run Prettier --check
+        run: prettier --check my-prefix-testpipeline
+
+      - name: Run ECLint check
+        run: editorconfig-checker -exclude README.md $(find my-prefix-testpipeline/.* -type f | grep -v '.git\|.py\|md\|json\|yml\|yaml\|html\|css\|work\|.nextflow\|build\|nf_core.egg-info\|log.txt\|Makefile')
+
+      # Remove TODO statements
+      - name: remove TODO
+        run: find my-prefix-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
+
+      # Replace zenodo.XXXXXX to pass readme linting
+      - name: replace zenodo.XXXXXX
+        run: find my-prefix-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
+
+      # Run nf-core linting
+      - name: nf-core lint
+        run: nf-core --log-file log.txt --hide-progress lint --dir my-prefix-testpipeline --fail-ignored --fail-warned
+
+      # Run bump-version
+      - name: nf-core bump-version
+        run: nf-core --log-file log.txt bump-version --dir my-prefix-testpipeline/ 1.1
+
+      # Run nf-core linting in release mode
+      - name: nf-core lint in release mode
+        run: nf-core --log-file log.txt --hide-progress lint --dir my-prefix-testpipeline --fail-ignored --fail-warned --release
 
       - name: Tar files
         run: tar -cvf artifact_files.tar log.txt template_skip*.yml
