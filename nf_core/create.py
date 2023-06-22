@@ -489,7 +489,7 @@ class PipelineCreate:
         log.debug(f"Fetching logo from {logo_url}")
 
         email_logo_path = self.outdir / "assets" / f"{self.template_params['name_noslash']}_logo_light.png"
-        self.download_pipeline_logo(f"{logo_url}&w=400", email_logo_path)
+        self.download_pipeline_logo(f"{logo_url}?w=600&theme=light", email_logo_path)
         for theme in ["dark", "light"]:
             readme_logo_url = f"{logo_url}?w=600&theme={theme}"
             readme_logo_path = (
