@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - dev
+    paths:
+      - nf_core/pipeline-template/**
   pull_request:
   release:
     types: [published]
