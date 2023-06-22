@@ -1099,10 +1099,6 @@ class DownloadWorkflow:
         if lines:
             # something went wrong with the container retrieval
             if any("FATAL: " in line for line in lines):
-                # log.error(f'[bold red]The singularity image "{container}" could not be pulled:[/]\n\n{"".join(lines)}')
-                # log.error(
-                #   f'Skipping failed pull of "{container}". Please troubleshoot the command \n"{" ".join(singularity_command)}"\n\n\n'
-                # )
                 progress.remove_task(task)
                 raise ContainerError(
                     container=container,

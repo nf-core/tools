@@ -25,6 +25,21 @@
 
 - Introduce a `--tower` flag for `nf-core download` to obtain pipelines in an offline format suited for [seqeralabs® Nextflow Tower](https://cloud.tower.nf/) ([#2247](https://github.com/nf-core/tools/pull/2247)).
 - Refactored the CLI for `--singularity-cache` in `nf-core download` from a flag to an argument. The prior options were renamed to `amend` (container images are only saved in the `$NXF_SINGULARITY_CACHEDIR`) and `copy` (a copy of the image is saved with the download). `remote` was newly introduced and allows to provide a table of contents of a remote cache via an additional argument `--singularity-cache-index` ([#2247](https://github.com/nf-core/tools/pull/2247)).
+- Refactored the CLI parameters related to container images. Although downloading other images than those of the Singularity/Apptainer container system is not supported for the time being, a generic name for the parameters seemed preferable. So the new parameter `--singularity-cache-index` introduced in [#2247](https://github.com/nf-core/tools/pull/2247) has been renamed to `--container-cache-index` prior to release ([#2336](https://github.com/nf-core/tools/pull/2336)).
+- To address issue [#2311](https://github.com/nf-core/tools/issues/2311), a new parameter `--container-library` was created allowing to specifying the container library (registry) from which container images in OCI format (Docker) should be pulled ([#2336](https://github.com/nf-core/tools/pull/2336)).
+
+#### Updated CLI parameters
+
+| Old parameter         | New parameter                                  |
+| --------------------- | ---------------------------------------------- |
+| new parameter         | `-d` / `--download-configuration`              |
+| new parameter         | `-t` / `--tower`                               |
+| `-c`/ `--container`   | `-s` / `--container-system <VALUE>`            |
+| new parameter         | `-l` / `--container-library <VALUE>`           |
+| `--singularity-cache` | `-u` / `--container-cache-utilisation <VALUE>` |
+| new parameter         | `-i` / `--container-cache-index <VALUE>`       |
+
+_In addition, `-r` / `--revision` has been changed to a parameter that can be provided multiple times so several revisions can be downloaded at once._
 
 ### Linting
 

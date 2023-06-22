@@ -14,7 +14,7 @@ import pytest
 
 import nf_core.create
 import nf_core.utils
-from nf_core.download import DownloadWorkflow, WorkflowRepo, ContainerError
+from nf_core.download import ContainerError, DownloadWorkflow, WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR
 
