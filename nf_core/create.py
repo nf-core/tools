@@ -144,7 +144,10 @@ class PipelineCreate:
         skip_paths = [] if param_dict["branded"] else ["branded"]
 
         for t_area in template_areas:
-            if t_area in template_yaml.get("skip", []):
+            areas_to_skip = template_yaml.get("skip", [])
+            if isinstance(areas_to_skip, str):
+                areas_to_skip = [areas_to_skip]
+            if t_area in areas_to_skip:
                 if template_areas[t_area]["file"]:
                     skip_paths.append(t_area)
                 param_dict[t_area] = False
