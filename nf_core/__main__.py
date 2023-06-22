@@ -1537,6 +1537,7 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     try:
         sync_obj.sync()
     except (SyncException, PullRequestException) as e:
+        raise
         log.error(e)
         sys.exit(1)
 
