@@ -22,9 +22,6 @@ jobs:
       NXF_ANSI_LOG: false
     strategy:
       matrix:
-        NXF_VER:
-          - "23.04.0"
-          - "latest-everything"
         TEMPLATE:
           - "template_skip_all.yml"
           - "template_skip_github_badges.yml"
@@ -49,7 +46,7 @@ jobs:
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v1
         with:
-          version: ${{ matrix.NXF_VER }}
+          version: latest-everything
 
       - name: Create template skip all (except github)
         run: |
