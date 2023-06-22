@@ -469,6 +469,10 @@ class PipelineCreate:
                 ]
             )
 
+        # Add igenomes specific configurations
+        if not self.template_params["igenomes"]:
+            lint_config["files_exist"].extend(["conf/igenomes.config"])
+
         # Add github badges specific configurations
         if not self.template_params["github_badges"] or not self.template_params["github"]:
             lint_config["readme"] = ["nextflow_badge"]
