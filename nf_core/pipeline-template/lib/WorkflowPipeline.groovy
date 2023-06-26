@@ -11,7 +11,7 @@ class Workflow{{ short_name[0]|upper }}{{ short_name[1:] }} {
     // Check and validate parameters
     //
     public static void initialise(params, log) {
-        {% if igenomes -%}
+{% if igenomes %}
         genomeExistsError(params, log)
 {% endif %}
 

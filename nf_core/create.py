@@ -144,7 +144,10 @@ class PipelineCreate:
         skip_paths = [] if param_dict["branded"] else ["branded"]
 
         for t_area in template_areas:
-            if t_area in template_yaml.get("skip", []):
+            areas_to_skip = template_yaml.get("skip", [])
+            if isinstance(areas_to_skip, str):
+                areas_to_skip = [areas_to_skip]
+            if t_area in areas_to_skip:
                 if template_areas[t_area]["file"]:
                     skip_paths.append(t_area)
                 param_dict[t_area] = False
@@ -465,6 +468,10 @@ class PipelineCreate:
                     "custom_config",
                 ]
             )
+
+        # Add igenomes specific configurations
+        if not self.template_params["igenomes"]:
+            lint_config["files_exist"].extend(["conf/igenomes.config"])
 
         # Add github badges specific configurations
         if not self.template_params["github_badges"] or not self.template_params["github"]:

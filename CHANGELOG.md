@@ -45,6 +45,7 @@
 - GitPod base image: Always self-update to the latest version of Nextflow. Add [pre-commit](https://pre-commit.com/) dependency.
 - GitPod configs: Update Nextflow as an init task, init pre-commit in pipeline config.
 - Refgenie: Create `nxf_home/nf-core/refgenie_genomes.config` path if it doesn't exist ([#2312](https://github.com/nf-core/tools/pull/2312))
+- Add CI tests to test running a pipeline whe it's created from a template skipping different areas
 
 # [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
 
