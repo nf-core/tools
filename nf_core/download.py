@@ -13,7 +13,6 @@ import sys
 import tarfile
 import textwrap
 from datetime import datetime
-from typing import Any
 from zipfile import ZipFile
 
 import git
@@ -172,7 +171,7 @@ class DownloadWorkflow:
                 self.prompt_compression_type()
         except AssertionError as e:
             log.critical(e)
-            sys.exit(1)
+            raise RuntimeError from e
 
         summary_log = [
             f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
@@ -207,7 +206,7 @@ class DownloadWorkflow:
         if os.path.exists(self.outdir):
             if not self.force:
                 log.error(f"Output directory '{self.outdir}' already exists (use [red]--force[/] to overwrite)")
-                sys.exit(1)
+                raise IOError
             log.warning(f"Deleting existing output directory: '{self.outdir}'")
             shutil.rmtree(self.outdir)
 
@@ -215,7 +214,7 @@ class DownloadWorkflow:
         if self.output_filename and os.path.exists(self.output_filename):
             if not self.force:
                 log.error(f"Output file '{self.output_filename}' already exists (use [red]--force[/] to overwrite)")
-                sys.exit(1)
+                raise IOError
             log.warning(f"Deleting existing output file: '{self.output_filename}'")
             os.remove(self.output_filename)
 
@@ -248,7 +247,7 @@ class DownloadWorkflow:
                 except FileNotFoundError as e:
                     log.error("Error editing pipeline config file to use local configs!")
                     log.critical(e)
-                    sys.exit(1)
+                    raise e
 
             # Collect all required singularity images
             if self.container_system == "singularity":
@@ -258,7 +257,7 @@ class DownloadWorkflow:
                     self.get_singularity_images(current_revision=item[0])
                 except OSError as e:
                     log.critical(f"[red]{e}[/]")
-                    sys.exit(1)
+                    raise e
 
         # Compress into an archive
         if self.compress_type is not None:
@@ -296,7 +295,7 @@ class DownloadWorkflow:
                     self.get_singularity_images(current_revision=revision)
                 except OSError as e:
                     log.critical(f"[red]{e}[/]")
-                    sys.exit(1)
+                    raise e
 
         # Justify why compression is skipped for Tower downloads (Prompt is not shown, but CLI argument could have been set)
         if self.compress_type is not None:
@@ -911,7 +910,7 @@ class DownloadWorkflow:
                                 if not self.container_library:
                                     log.error(e.message)
                                     log.error(e.helpmessage)
-                                    sys.exit(1)
+                                    raise OSError from e
                                 else:
                                     # Other libraries can be used
                                     continue
@@ -1230,13 +1229,13 @@ class WorkflowRepo(SyncedRepo):
                 log.error(
                     f"Errors with locally cached repository of '{self.fullname}'. Please delete '{self.local_repo_dir}' manually and try again."
                 )
-                sys.exit(1)
+                raise RuntimeError
             if not skip_confirm:  # Feedback to user for manual confirmation.
                 log.info(f"Removing '{self.local_repo_dir}'")
             shutil.rmtree(self.local_repo_dir)
             self.setup_local_repo(self.remote_url, in_cache=False)
         else:
-            raise LookupError("Exiting due to error with locally cached Git repository.")
+            raise RuntimeError("Exiting due to error with locally cached Git repository.")
 
     def setup_local_repo(self, remote, location=None, in_cache=True):
         """
@@ -1273,7 +1272,7 @@ class WorkflowRepo(SyncedRepo):
                         )
                     super().update_local_repo_status(self.fullname, True)
                 except GitCommandError:
-                    raise LookupError(f"Failed to clone from the remote: `{remote}`")
+                    raise RuntimeError(f"Failed to clone from the remote: `{remote}`")
             else:
                 self.repo = git.Repo(self.local_repo_dir)
 
@@ -1371,7 +1370,7 @@ class WorkflowRepo(SyncedRepo):
             except (GitCommandError, InvalidGitRepositoryError) as e:
                 log.error(f"[red]Adapting your pipeline download unfortunately failed:[/]\n{e}\n")
                 self.retry_setup_local_repo(skip_confirm=True)
-                sys.exit(1)
+                raise RuntimeError from e
 
     def bare_clone(self, destination):
         if self.repo:
