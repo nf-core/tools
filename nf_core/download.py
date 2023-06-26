@@ -9,7 +9,6 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import tarfile
 import textwrap
 from datetime import datetime
@@ -38,6 +37,11 @@ log = logging.getLogger(__name__)
 stderr = rich.console.Console(
     stderr=True, style="dim", highlight=False, force_terminal=nf_core.utils.rich_force_colors()
 )
+
+
+class DownloadError(RuntimeError):
+    """A custom exception that is raised when nf-core download encounters a problem that we already took into consideration.
+    In this case, we do not want to print the traceback, but give the user some concise, helpful feedback instead."""
 
 
 class DownloadProgress(rich.progress.Progress):
@@ -170,8 +174,7 @@ class DownloadWorkflow:
             if not self.tower:
                 self.prompt_compression_type()
         except AssertionError as e:
-            log.critical(e)
-            raise RuntimeError from e
+            raise DownloadError from e
 
         summary_log = [
             f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
@@ -205,16 +208,18 @@ class DownloadWorkflow:
         # Check that the outdir doesn't already exist
         if os.path.exists(self.outdir):
             if not self.force:
-                log.error(f"Output directory '{self.outdir}' already exists (use [red]--force[/] to overwrite)")
-                raise IOError
+                raise DownloadError(
+                    f"Output directory '{self.outdir}' already exists (use [red]--force[/] to overwrite)"
+                )
             log.warning(f"Deleting existing output directory: '{self.outdir}'")
             shutil.rmtree(self.outdir)
 
         # Check that compressed output file doesn't already exist
         if self.output_filename and os.path.exists(self.output_filename):
             if not self.force:
-                log.error(f"Output file '{self.output_filename}' already exists (use [red]--force[/] to overwrite)")
-                raise IOError
+                raise DownloadError(
+                    f"Output file '{self.output_filename}' already exists (use [red]--force[/] to overwrite)"
+                )
             log.warning(f"Deleting existing output file: '{self.output_filename}'")
             os.remove(self.output_filename)
 
@@ -245,9 +250,7 @@ class DownloadWorkflow:
                 try:
                     self.wf_use_local_configs(revision_dirname)
                 except FileNotFoundError as e:
-                    log.error("Error editing pipeline config file to use local configs!")
-                    log.critical(e)
-                    raise e
+                    raise DownloadError("Error editing pipeline config file to use local configs!") from e
 
             # Collect all required singularity images
             if self.container_system == "singularity":
@@ -256,8 +259,7 @@ class DownloadWorkflow:
                 try:
                     self.get_singularity_images(current_revision=item[0])
                 except OSError as e:
-                    log.critical(f"[red]{e}[/]")
-                    raise e
+                    raise DownloadError(f"[red]{e}[/]") from e
 
         # Compress into an archive
         if self.compress_type is not None:
@@ -294,8 +296,7 @@ class DownloadWorkflow:
                 try:
                     self.get_singularity_images(current_revision=revision)
                 except OSError as e:
-                    log.critical(f"[red]{e}[/]")
-                    raise e
+                    raise DownloadError(f"[red]{e}[/]") from e
 
         # Justify why compression is skipped for Tower downloads (Prompt is not shown, but CLI argument could have been set)
         if self.compress_type is not None:
@@ -1226,16 +1227,15 @@ class WorkflowRepo(SyncedRepo):
             if (
                 self.retries > 1
             ):  # One unconfirmed retry is acceptable, but prevent infinite loops without user interaction.
-                log.error(
+                raise DownloadError(
                     f"Errors with locally cached repository of '{self.fullname}'. Please delete '{self.local_repo_dir}' manually and try again."
                 )
-                raise RuntimeError
             if not skip_confirm:  # Feedback to user for manual confirmation.
                 log.info(f"Removing '{self.local_repo_dir}'")
             shutil.rmtree(self.local_repo_dir)
             self.setup_local_repo(self.remote_url, in_cache=False)
         else:
-            raise RuntimeError("Exiting due to error with locally cached Git repository.")
+            raise DownloadError("Exiting due to error with locally cached Git repository.")
 
     def setup_local_repo(self, remote, location=None, in_cache=True):
         """
@@ -1272,7 +1272,7 @@ class WorkflowRepo(SyncedRepo):
                         )
                     super().update_local_repo_status(self.fullname, True)
                 except GitCommandError:
-                    raise RuntimeError(f"Failed to clone from the remote: `{remote}`")
+                    raise DownloadError(f"Failed to clone from the remote: `{remote}`")
             else:
                 self.repo = git.Repo(self.local_repo_dir)
 
@@ -1370,7 +1370,7 @@ class WorkflowRepo(SyncedRepo):
             except (GitCommandError, InvalidGitRepositoryError) as e:
                 log.error(f"[red]Adapting your pipeline download unfortunately failed:[/]\n{e}\n")
                 self.retry_setup_local_repo(skip_confirm=True)
-                raise RuntimeError from e
+                raise DownloadError from e
 
     def bare_clone(self, destination):
         if self.repo:

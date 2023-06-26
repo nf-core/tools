@@ -12,6 +12,7 @@ import rich_click as click
 
 from nf_core import __version__
 from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE
+from nf_core.download import DownloadError
 from nf_core.utils import check_if_outdated, rich_force_colors, setup_nfcore_dir
 
 # Set up logging as the root logger
@@ -66,6 +67,20 @@ stdout = rich.console.Console(force_terminal=rich_force_colors())
 
 # Set up the rich traceback
 rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
+
+
+# Define exceptions for which no traceback should be printed,
+# because they are actually preliminary, but intended program terminations.
+# (cleaner than `sys.exit(1)`, which we were using before)
+def selective_traceback_hook(exctype, value, traceback):
+    if exctype in {DownloadError}:  # extend as needed
+        log.error(value)
+    else:
+        # for all other exceptions, print the full traceback
+        sys.__excepthook__(exctype, value, traceback)
+
+
+sys.excepthook = selective_traceback_hook
 
 
 def run_nf_core():
