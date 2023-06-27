@@ -124,13 +124,14 @@ class DownloadWorkflow:
         self.include_configs = True if download_configuration else False if bool(tower) else None
         # Specifying a cache index or container library implies that containers should be downloaded.
         self.container_system = "singularity" if container_cache_index or bool(container_library) else container_system
-        # if a container_cache_index is given, use the file and overrule choice.
-        if isinstance(container_library, str):
+        # Manually specified container library (registry)
+        if isinstance(container_library, str) and bool(len(container_library)):
             self.container_library = [container_library]
-        elif isinstance(container_library, tuple):
+        elif isinstance(container_library, tuple) and bool(len(container_library)):
             self.container_library = [*container_library]
         else:
             self.container_library = ["quay.io"]
+        # if a container_cache_index is given, use the file and overrule choice.
         self.container_cache_utilisation = "remote" if container_cache_index else container_cache_utilisation
         self.container_cache_index = container_cache_index
         # allows to specify a container library / registry or a respective mirror to download images from
@@ -174,7 +175,7 @@ class DownloadWorkflow:
             if not self.tower:
                 self.prompt_compression_type()
         except AssertionError as e:
-            raise DownloadError from e
+            raise DownloadError(e) from e
 
         summary_log = [
             f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
@@ -1370,7 +1371,7 @@ class WorkflowRepo(SyncedRepo):
             except (GitCommandError, InvalidGitRepositoryError) as e:
                 log.error(f"[red]Adapting your pipeline download unfortunately failed:[/]\n{e}\n")
                 self.retry_setup_local_repo(skip_confirm=True)
-                raise DownloadError from e
+                raise DownloadError(e) from e
 
     def bare_clone(self, destination):
         if self.repo:
