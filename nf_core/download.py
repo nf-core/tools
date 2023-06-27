@@ -9,7 +9,6 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import tarfile
 import textwrap
 from datetime import datetime
@@ -38,6 +37,11 @@ log = logging.getLogger(__name__)
 stderr = rich.console.Console(
     stderr=True, style="dim", highlight=False, force_terminal=nf_core.utils.rich_force_colors()
 )
+
+
+class DownloadError(RuntimeError):
+    """A custom exception that is raised when nf-core download encounters a problem that we already took into consideration.
+    In this case, we do not want to print the traceback, but give the user some concise, helpful feedback instead."""
 
 
 class DownloadProgress(rich.progress.Progress):
@@ -95,9 +99,11 @@ class DownloadWorkflow:
         compress_type=None,
         force=False,
         tower=False,
-        container=None,
-        singularity_cache=None,
-        singularity_cache_index=None,
+        download_configuration=None,
+        container_system=None,
+        container_library=None,
+        container_cache_utilisation=None,
+        container_cache_index=None,
         parallel_downloads=4,
     ):
         self.pipeline = pipeline
@@ -112,12 +118,23 @@ class DownloadWorkflow:
         self.compress_type = compress_type
         self.force = force
         self.tower = tower
-        self.include_configs = None
-        # force download of containers if a cache index is given or download is meant to be used for Tower.
-        self.container = "singularity" if singularity_cache_index or bool(tower) else container
-        # if a singularity_cache_index is given, use the file and overrule choice.
-        self.singularity_cache = "remote" if singularity_cache_index else singularity_cache
-        self.singularity_cache_index = singularity_cache_index
+        # if flag is not specified, do not assume deliberate choice and prompt config inclusion interactively.
+        # this implies that non-interactive "no" choice is only possible implicitly (e.g. with --tower or if prompt is suppressed by !stderr.is_interactive).
+        # only alternative would have been to make it a parameter with argument, e.g. -d="yes" or -d="no".
+        self.include_configs = True if download_configuration else False if bool(tower) else None
+        # Specifying a cache index or container library implies that containers should be downloaded.
+        self.container_system = "singularity" if container_cache_index or bool(container_library) else container_system
+        # Manually specified container library (registry)
+        if isinstance(container_library, str) and bool(len(container_library)):
+            self.container_library = [container_library]
+        elif isinstance(container_library, tuple) and bool(len(container_library)):
+            self.container_library = [*container_library]
+        else:
+            self.container_library = ["quay.io"]
+        # if a container_cache_index is given, use the file and overrule choice.
+        self.container_cache_utilisation = "remote" if container_cache_index else container_cache_utilisation
+        self.container_cache_index = container_cache_index
+        # allows to specify a container library / registry or a respective mirror to download images from
         self.parallel_downloads = parallel_downloads
 
         self.wf_revisions = {}
@@ -147,10 +164,10 @@ class DownloadWorkflow:
             if not self.tower and self.include_configs is None:
                 self.prompt_config_inclusion()
             # If a remote cache is specified, it is safe to assume images should be downloaded.
-            if not self.singularity_cache == "remote":
+            if not self.container_cache_utilisation == "remote":
                 self.prompt_container_download()
             else:
-                self.container = "singularity"
+                self.container_system = "singularity"
             self.prompt_singularity_cachedir_creation()
             self.prompt_singularity_cachedir_utilization()
             self.prompt_singularity_cachedir_remote()
@@ -158,14 +175,15 @@ class DownloadWorkflow:
             if not self.tower:
                 self.prompt_compression_type()
         except AssertionError as e:
-            log.critical(e)
-            sys.exit(1)
+            raise DownloadError(e) from e
 
         summary_log = [
             f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
-            f"Pull containers: '{self.container}'",
+            f"Use containers: '{self.container_system}'",
         ]
-        if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
+        if self.container_system:
+            summary_log.append(f"Container library: '{', '.join(self.container_library)}'")
+        if self.container_system == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
             summary_log.append(f"Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {os.environ['NXF_SINGULARITY_CACHEDIR']}'")
             if self.containers_remote:
                 summary_log.append(
@@ -191,16 +209,18 @@ class DownloadWorkflow:
         # Check that the outdir doesn't already exist
         if os.path.exists(self.outdir):
             if not self.force:
-                log.error(f"Output directory '{self.outdir}' already exists (use [red]--force[/] to overwrite)")
-                sys.exit(1)
+                raise DownloadError(
+                    f"Output directory '{self.outdir}' already exists (use [red]--force[/] to overwrite)"
+                )
             log.warning(f"Deleting existing output directory: '{self.outdir}'")
             shutil.rmtree(self.outdir)
 
         # Check that compressed output file doesn't already exist
         if self.output_filename and os.path.exists(self.output_filename):
             if not self.force:
-                log.error(f"Output file '{self.output_filename}' already exists (use [red]--force[/] to overwrite)")
-                sys.exit(1)
+                raise DownloadError(
+                    f"Output file '{self.output_filename}' already exists (use [red]--force[/] to overwrite)"
+                )
             log.warning(f"Deleting existing output file: '{self.output_filename}'")
             os.remove(self.output_filename)
 
@@ -231,19 +251,16 @@ class DownloadWorkflow:
                 try:
                     self.wf_use_local_configs(revision_dirname)
                 except FileNotFoundError as e:
-                    log.error("Error editing pipeline config file to use local configs!")
-                    log.critical(e)
-                    sys.exit(1)
+                    raise DownloadError("Error editing pipeline config file to use local configs!") from e
 
             # Collect all required singularity images
-            if self.container == "singularity":
+            if self.container_system == "singularity":
                 self.find_container_images(os.path.join(self.outdir, revision_dirname))
 
                 try:
                     self.get_singularity_images(current_revision=item[0])
                 except OSError as e:
-                    log.critical(f"[red]{e}[/]")
-                    sys.exit(1)
+                    raise DownloadError(f"[red]{e}[/]") from e
 
         # Compress into an archive
         if self.compress_type is not None:
@@ -270,7 +287,7 @@ class DownloadWorkflow:
         self.workflow_repo.bare_clone(os.path.join(self.outdir, self.output_filename))
 
         # extract the required containers
-        if self.container == "singularity":
+        if self.container_system == "singularity":
             for revision, commit in self.wf_sha.items():
                 # Checkout the repo in the current revision
                 self.workflow_repo.checkout(commit)
@@ -280,8 +297,7 @@ class DownloadWorkflow:
                 try:
                     self.get_singularity_images(current_revision=revision)
                 except OSError as e:
-                    log.critical(f"[red]{e}[/]")
-                    sys.exit(1)
+                    raise DownloadError(f"[red]{e}[/]") from e
 
         # Justify why compression is skipped for Tower downloads (Prompt is not shown, but CLI argument could have been set)
         if self.compress_type is not None:
@@ -382,9 +398,9 @@ class DownloadWorkflow:
     def prompt_container_download(self):
         """Prompt whether to download container images or not"""
 
-        if self.container is None and stderr.is_interactive and not self.tower:
+        if self.container_system is None and stderr.is_interactive and not self.tower:
             stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
-            self.container = questionary.select(
+            self.container_system = questionary.select(
                 "Download software container images:",
                 choices=["none", "singularity"],
                 style=nf_core.utils.nfcore_question_style,
@@ -393,7 +409,7 @@ class DownloadWorkflow:
     def prompt_singularity_cachedir_creation(self):
         """Prompt about using $NXF_SINGULARITY_CACHEDIR if not already set"""
         if (
-            self.container == "singularity"
+            self.container_system == "singularity"
             and os.environ.get("NXF_SINGULARITY_CACHEDIR") is None
             and stderr.is_interactive  # Use rich auto-detection of interactive shells
         ):
@@ -404,8 +420,8 @@ class DownloadWorkflow:
             if rich.prompt.Confirm.ask(
                 "[blue bold]?[/] [bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
             ):
-                if not self.singularity_cache_index:
-                    self.singularity_cache == "amend"  # retain "remote" choice.
+                if not self.container_cache_index:
+                    self.container_cache_utilisation == "amend"  # retain "remote" choice.
                 # Prompt user for a cache directory path
                 cachedir_path = None
                 while cachedir_path is None:
@@ -470,8 +486,8 @@ class DownloadWorkflow:
     def prompt_singularity_cachedir_utilization(self):
         """Ask if we should *only* use $NXF_SINGULARITY_CACHEDIR without copying into target"""
         if (
-            self.singularity_cache is None  # no choice regarding singularity cache has been made.
-            and self.container == "singularity"
+            self.container_cache_utilisation is None  # no choice regarding singularity cache has been made.
+            and self.container_system == "singularity"
             and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None
             and stderr.is_interactive
         ):
@@ -480,7 +496,7 @@ class DownloadWorkflow:
                 "[blue not bold]$NXF_SINGULARITY_CACHEDIR[/] folder, Nextflow will automatically find them."
                 "However if you will transfer the downloaded files to a different system then they should be copied to the target folder."
             )
-            self.singularity_cache = questionary.select(
+            self.container_cache_utilisation = questionary.select(
                 "Copy singularity images from $NXF_SINGULARITY_CACHEDIR to the target folder or amend new images to the cache?",
                 choices=["amend", "copy"],
                 style=nf_core.utils.nfcore_question_style,
@@ -489,9 +505,9 @@ class DownloadWorkflow:
     def prompt_singularity_cachedir_remote(self):
         """Prompt about the index of a remote $NXF_SINGULARITY_CACHEDIR"""
         if (
-            self.container == "singularity"
-            and self.singularity_cache == "remote"
-            and self.singularity_cache_index is None
+            self.container_system == "singularity"
+            and self.container_cache_utilisation == "remote"
+            and self.container_cache_index is None
             and stderr.is_interactive  # Use rich auto-detection of interactive shells
         ):
             # Prompt user for a file listing the contents of the remote cache directory
@@ -505,26 +521,26 @@ class DownloadWorkflow:
                 cachedir_index = os.path.abspath(os.path.expanduser(prompt_cachedir_index))
                 if prompt_cachedir_index == "":
                     log.error("Will disregard contents of a remote [blue]$NXF_SINGULARITY_CACHEDIR[/]")
-                    self.singularity_cache_index = None
-                    self.singularity_cache = "copy"
+                    self.container_cache_index = None
+                    self.container_cache_utilisation = "copy"
                 elif not os.access(cachedir_index, os.R_OK):
                     log.error(f"'{cachedir_index}' is not a readable file.")
                     cachedir_index = None
             if cachedir_index:
-                self.singularity_cache_index = cachedir_index
+                self.container_cache_index = cachedir_index
         # in any case read the remote containers, even if no prompt was shown.
         self.read_remote_containers()
 
     def read_remote_containers(self):
         """Reads the file specified as index for the remote Singularity cache dir"""
         if (
-            self.container == "singularity"
-            and self.singularity_cache == "remote"
-            and self.singularity_cache_index is not None
+            self.container_system == "singularity"
+            and self.container_cache_utilisation == "remote"
+            and self.container_cache_index is not None
         ):
             n_total_images = 0
             try:
-                with open(self.singularity_cache_index) as indexfile:
+                with open(self.container_cache_index) as indexfile:
                     for line in indexfile.readlines():
                         match = re.search(r"([^\/\\]+\.img)", line, re.S)
                         if match:
@@ -536,15 +552,15 @@ class DownloadWorkflow:
             except (FileNotFoundError, LookupError) as e:
                 log.error(f"[red]Issue with reading the specified remote $NXF_SINGULARITY_CACHE index:[/]\n{e}\n")
                 if stderr.is_interactive and rich.prompt.Confirm.ask(f"[blue]Specify a new index file and try again?"):
-                    self.singularity_cache_index = None  # reset chosen path to index file.
+                    self.container_cache_index = None  # reset chosen path to index file.
                     self.prompt_singularity_cachedir_remote()
                 else:
                     log.info("Proceeding without consideration of the remote $NXF_SINGULARITY_CACHE index.")
-                    self.singularity_cache_index = None
+                    self.container_cache_index = None
                     if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
-                        self.singularity_cache = "copy"  # default to copy if possible, otherwise skip.
+                        self.container_cache_utilisation = "copy"  # default to copy if possible, otherwise skip.
                     else:
-                        self.singularity_cache = None
+                        self.container_cache_utilisation = None
 
     def prompt_compression_type(self):
         """Ask user if we should compress the downloaded files"""
@@ -552,7 +568,7 @@ class DownloadWorkflow:
             stderr.print(
                 "\nIf transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file."
             )
-            if self.container == "singularity":
+            if self.container_system == "singularity":
                 stderr.print(
                     "[bold]This is [italic]not[/] recommended when downloading Singularity images, as it can take a long time and saves very little space."
                 )
@@ -632,7 +648,7 @@ class DownloadWorkflow:
         nfconfig = nfconfig.replace(find_str, repl_str)
 
         # Append the singularity.cacheDir to the end if we need it
-        if self.container == "singularity" and self.singularity_cache == "copy":
+        if self.container_system == "singularity" and self.container_cache_utilisation == "copy":
             nfconfig += (
                 f"\n\n// Added by `nf-core download` v{nf_core.__version__} //\n"
                 + 'singularity.cacheDir = "${projectDir}/../singularity-images/"'
@@ -830,7 +846,7 @@ class DownloadWorkflow:
                         )
 
                 if containers_exist:
-                    if self.singularity_cache_index is not None:
+                    if self.container_cache_index is not None:
                         log.info(
                             f"{len(containers_exist)} containers are already cached remotely and won't be retrieved."
                         )
@@ -880,14 +896,45 @@ class DownloadWorkflow:
 
                     for container in containers_pull:
                         progress.update(task, description="Pulling singularity images")
-                        try:
-                            self.singularity_pull_image(*container, progress)
-                        except RuntimeWarning as r:
-                            # Raise exception if this is not possible
-                            log.error("Not able to pull image. Service might be down or internet connection is dead.")
-                            raise r
-                        finally:
-                            progress.update(task, advance=1)
+                        # it is possible to try multiple registries / mirrors if multiple were specified.
+                        # Iteration happens over a copy of self.container_library[:], as I want to be able to remove failing registries for subsequent images.
+                        for library in self.container_library[:]:
+                            try:
+                                self.singularity_pull_image(*container, library, progress)
+                                # Pulling the image was successful, no ContainerError was raised, break the library loop
+                                break
+                            except ContainerError.ImageExists as e:
+                                # Pulling not required
+                                break
+                            except ContainerError.RegistryNotFound as e:
+                                self.container_library.remove(library)
+                                # The only library was removed
+                                if not self.container_library:
+                                    log.error(e.message)
+                                    log.error(e.helpmessage)
+                                    raise OSError from e
+                                else:
+                                    # Other libraries can be used
+                                    continue
+                            except ContainerError.ImageNotFound as e:
+                                # Try other registries
+                                continue
+                            except ContainerError.InvalidTag as e:
+                                # Try other registries
+                                continue
+                            except ContainerError.OtherError as e:
+                                # Try other registries
+                                log.error(e.message)
+                                log.error(e.helpmessage)
+                                continue
+                        else:
+                            # The else clause executes after the loop completes normally.
+                            # This means the library loop completed without breaking, indicating failure for all libraries (registries)
+                            log.error(
+                                f"Not able to pull image of {container}. Service might be down or internet connection is dead."
+                            )
+                        # Task should advance in any case. Failure to pull will not kill the download process.
+                        progress.update(task, advance=1)
 
     def singularity_image_filenames(self, container):
         """Check Singularity cache for image, copy to destination folder if found.
@@ -926,10 +973,10 @@ class DownloadWorkflow:
         if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
             cache_path = os.path.join(os.environ["NXF_SINGULARITY_CACHEDIR"], out_name)
             # Use only the cache - set this as the main output path
-            if self.singularity_cache == "amend":
+            if self.container_cache_utilisation == "amend":
                 out_path = cache_path
                 cache_path = None
-        elif self.singularity_cache in ["amend", "copy"]:
+        elif self.container_cache_utilisation in ["amend", "copy"]:
             raise FileNotFoundError("Singularity cache is required but no '$NXF_SINGULARITY_CACHEDIR' set!")
 
         return (out_path, cache_path)
@@ -1011,7 +1058,7 @@ class DownloadWorkflow:
             # Re-raise the caught exception
             raise
 
-    def singularity_pull_image(self, container, out_path, cache_path, progress):
+    def singularity_pull_image(self, container, out_path, cache_path, library, progress):
         """Pull a singularity image using ``singularity pull``
 
         Attempt to use a local installation of singularity to pull the image.
@@ -1019,14 +1066,14 @@ class DownloadWorkflow:
         Args:
             container (str): A pipeline's container name. Usually it is of similar format
                 to ``nfcore/name:version``.
+            library (list of str): A list of libraries to try for pulling the image.
 
         Raises:
             Various exceptions possible from `subprocess` execution of Singularity.
         """
         output_path = cache_path or out_path
-
         # Pull using singularity
-        address = f"docker://{container.replace('docker://', '')}"
+        address = f"docker://{library}/{container.replace('docker://', '')}"
         if shutil.which("singularity"):
             singularity_command = ["singularity", "pull", "--name", output_path, address]
         elif shutil.which("apptainer"):
@@ -1055,12 +1102,15 @@ class DownloadWorkflow:
         if lines:
             # something went wrong with the container retrieval
             if any("FATAL: " in line for line in lines):
-                log.error(f'[bold red]The singularity image "{container}" could not be pulled:[/]\n\n{"".join(lines)}')
-                log.error(
-                    f'Skipping failed pull of "{container}". Please troubleshoot the command \n"{" ".join(singularity_command)}"\n\n\n'
-                )
                 progress.remove_task(task)
-                return
+                raise ContainerError(
+                    container=container,
+                    registry=library,
+                    address=address,
+                    out_path=out_path if out_path else cache_path or "",
+                    singularity_command=singularity_command,
+                    error_msg=lines,
+                )
 
         # Copy cached download if we are using the cache
         if cache_path:
@@ -1178,16 +1228,15 @@ class WorkflowRepo(SyncedRepo):
             if (
                 self.retries > 1
             ):  # One unconfirmed retry is acceptable, but prevent infinite loops without user interaction.
-                log.error(
+                raise DownloadError(
                     f"Errors with locally cached repository of '{self.fullname}'. Please delete '{self.local_repo_dir}' manually and try again."
                 )
-                sys.exit(1)
             if not skip_confirm:  # Feedback to user for manual confirmation.
                 log.info(f"Removing '{self.local_repo_dir}'")
             shutil.rmtree(self.local_repo_dir)
             self.setup_local_repo(self.remote_url, in_cache=False)
         else:
-            raise LookupError("Exiting due to error with locally cached Git repository.")
+            raise DownloadError("Exiting due to error with locally cached Git repository.")
 
     def setup_local_repo(self, remote, location=None, in_cache=True):
         """
@@ -1224,7 +1273,7 @@ class WorkflowRepo(SyncedRepo):
                         )
                     super().update_local_repo_status(self.fullname, True)
                 except GitCommandError:
-                    raise LookupError(f"Failed to clone from the remote: `{remote}`")
+                    raise DownloadError(f"Failed to clone from the remote: `{remote}`")
             else:
                 self.repo = git.Repo(self.local_repo_dir)
 
@@ -1322,7 +1371,7 @@ class WorkflowRepo(SyncedRepo):
             except (GitCommandError, InvalidGitRepositoryError) as e:
                 log.error(f"[red]Adapting your pipeline download unfortunately failed:[/]\n{e}\n")
                 self.retry_setup_local_repo(skip_confirm=True)
-                sys.exit(1)
+                raise DownloadError(e) from e
 
     def bare_clone(self, destination):
         if self.repo:
@@ -1335,3 +1384,105 @@ class WorkflowRepo(SyncedRepo):
                 self.repo.clone(os.path.abspath(destination), bare=True)
             except (OSError, GitCommandError, InvalidGitRepositoryError) as e:
                 log.error(f"[red]Failure to create the pipeline download[/]\n{e}\n")
+
+
+# Distinct errors for the container download, required for acting on the exceptions
+
+
+class ContainerError(Exception):
+    """A class of errors related to pulling containers with Singularity/Apptainer"""
+
+    def __init__(self, container, registry, address, out_path, singularity_command, error_msg):
+        self.container = container
+        self.registry = registry
+        self.address = address
+        self.out_path = out_path
+        self.singularity_command = singularity_command
+        self.error_msg = error_msg
+
+        for line in error_msg:
+            if re.search(r"dial\stcp.*no\ssuch\shost", line):
+                self.error_type = self.RegistryNotFound(self)
+                break
+            elif (
+                re.search(r"requested\saccess\sto\sthe\sresource\sis\sdenied", line)
+                or re.search(r"StatusCode:\s404", line)
+                or re.search(r"invalid\sstatus\scode\sfrom\sregistry\s400", line)
+            ):
+                # Unfortunately, every registry seems to return an individual error here:
+                # Docker.io: denied: requested access to the resource is denied
+                #                    unauthorized: authentication required
+                # Quay.io: StatusCode: 404,  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n']
+                # ghcr.io: Requesting bearer token: invalid status code from registry 400 (Bad Request)
+                self.error_type = self.ImageNotFound(self)
+                break
+            elif re.search(r"manifest\sunknown", line):
+                self.error_type = self.InvalidTag(self)
+                break
+            elif re.search(r"Image\sfile\salready\sexists", line):
+                self.error_type = self.ImageExists(self)
+                break
+            else:
+                continue
+        else:
+            self.error_type = self.OtherError(self)
+
+        log.error(self.error_type.message)
+        log.info(self.error_type.helpmessage)
+        log.debug(f'Failed command:\n{" ".join(singularity_command)}')
+        log.debug(f'Singularity error messages:\n{"".join(error_msg)}')
+
+        raise self.error_type
+
+    class RegistryNotFound(ConnectionRefusedError):
+        """The specified registry does not resolve to a valid IP address"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = (
+                f'[bold red]The specified container library "{self.error_log.registry}" is invalid or unreachable.[/]\n'
+            )
+            self.helpmessage = (
+                f'Please check, if you made a typo when providing "-l / --library {self.error_log.registry}"\n'
+            )
+            super().__init__(self.message, self.helpmessage, self.error_log)
+
+    class ImageNotFound(FileNotFoundError):
+        """The image can not be found in the registry"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = (
+                f'[bold red]"Pulling "{self.error_log.container}" from "{self.error_log.address}" failed.[/]\n'
+            )
+            self.helpmessage = f'Saving image of "{self.error_log.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.f\n'
+            super().__init__(self.message)
+
+    class InvalidTag(AttributeError):
+        """Image and registry are valid, but the (version) tag is not"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = f'[bold red]"{self.error_log.address.split(":")[-1]}" is not a valid tag of "{self.error_log.container}"[/]\n'
+            self.helpmessage = f'Please chose a different library than {self.error_log.registry}\nor try to locate the "{self.error_log.address.split(":")[-1]}" version of "{self.error_log.container}" manually.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.\n'
+            super().__init__(self.message)
+
+    class ImageExists(FileExistsError):
+        """Image already exists in cache/output directory."""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = (
+                f'[bold red]"{self.error_log.container}" already exists at destination and cannot be pulled[/]\n'
+            )
+            self.helpmessage = f'Saving image of "{self.error_log.container}" failed, because "{self.error_log.out_path}" exists.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.\n'
+            super().__init__(self.message)
+
+    class OtherError(RuntimeError):
+        """Undefined error with the container"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = f'[bold red]"{self.error_log.container}" failed for unclear reasons.[/]\n'
+            self.helpmessage = f'Pulling of "{self.error_log.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.\n'
+            super().__init__(self.message, self.helpmessage, self.error_log)

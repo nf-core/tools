@@ -14,7 +14,7 @@ import pytest
 
 import nf_core.create
 import nf_core.utils
-from nf_core.download import DownloadWorkflow, WorkflowRepo
+from nf_core.download import ContainerError, DownloadWorkflow, WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR
 
@@ -149,7 +149,7 @@ class DownloadTest(unittest.TestCase):
     # Tests for 'singularity_pull_image'
     #
     # If Singularity is installed, but the container can't be accessed because it does not exist or there are access
-    # restrictions, a FileNotFoundError is raised due to the unavailability of the image.
+    # restrictions, a RuntimeWarning is raised due to the unavailability of the image.
     @pytest.mark.skipif(
         shutil.which("singularity") is None,
         reason="Can't test what Singularity does if it's not installed.",
@@ -158,8 +158,92 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("rich.progress.Progress.add_task")
     def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_rich_progress):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
-        with pytest.raises(FileNotFoundError):
-            download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
+
+        # Test successful pull
+        download_obj.singularity_pull_image(
+            "hello-world", f"{tmp_dir}/hello-world.sif", None, "docker.io", mock_rich_progress
+        )
+
+        # Pull again, but now the image already exists
+        with pytest.raises(ContainerError.ImageExists):
+            download_obj.singularity_pull_image(
+                "hello-world", f"{tmp_dir}/hello-world.sif", None, "docker.io", mock_rich_progress
+            )
+
+        # try to pull from non-existing registry (Name change hello-world_new.sif is needed, otherwise ImageExists is raised before attempting to pull.)
+        with pytest.raises(ContainerError.RegistryNotFound):
+            download_obj.singularity_pull_image(
+                "hello-world",
+                f"{tmp_dir}/hello-world_new.sif",
+                None,
+                "register-this-domain-to-break-the-test.io",
+                mock_rich_progress,
+            )
+
+        # test Image not found for several registries
+        with pytest.raises(ContainerError.ImageNotFound):
+            download_obj.singularity_pull_image(
+                "a-container", f"{tmp_dir}/acontainer.sif", None, "quay.io", mock_rich_progress
+            )
+
+        with pytest.raises(ContainerError.ImageNotFound):
+            download_obj.singularity_pull_image(
+                "a-container", f"{tmp_dir}/acontainer.sif", None, "docker.io", mock_rich_progress
+            )
+
+        with pytest.raises(ContainerError.ImageNotFound):
+            download_obj.singularity_pull_image(
+                "a-container", f"{tmp_dir}/acontainer.sif", None, "ghcr.io", mock_rich_progress
+            )
+
+        # Traffic from Github Actions to GitHub's Container Registry is unlimited, so no harm should be done here.
+        with pytest.raises(ContainerError.InvalidTag):
+            download_obj.singularity_pull_image(
+                "ewels/multiqc:go-rewrite",
+                f"{tmp_dir}/umi-transfer.sif",
+                None,
+                "ghcr.io",
+                mock_rich_progress,
+            )
+
+    @pytest.mark.skipif(
+        shutil.which("singularity") is None,
+        reason="Can't test what Singularity does if it's not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("rich.progress.Progress.add_task")
+    def test_singularity_pull_image_successfully(self, tmp_dir, mock_rich_progress):
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
+        download_obj.singularity_pull_image(
+            "hello-world", f"{tmp_dir}/yet-another-hello-world.sif", None, "docker.io", mock_rich_progress
+        )
+
+    #
+    # Tests for 'get_singularity_images'
+    #
+    @pytest.mark.skipif(
+        shutil.which("singularity") is None,
+        reason="Can't test what Singularity does if it's not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("nf_core.utils.fetch_wf_config")
+    def test_get_singularity_images(self, tmp_path, mock_fetch_wf_config):
+        download_obj = DownloadWorkflow(
+            pipeline="dummy",
+            outdir=tmp_path,
+            container_library=("mirage-the-imaginative-registry.io", "quay.io", "ghcr.io", "docker.io"),
+        )
+        mock_fetch_wf_config.return_value = {
+            "process.mapping.container": "helloworld",
+            "process.mapping.container": "helloworld",
+            "process.mapping.container": "helloooooooworld",
+            "process.mapping.container": "ewels/multiqc:gorewrite",
+        }
+        download_obj.find_container_images("workflow")
+        assert len(download_obj.container_library) == 4
+        # This list of fake container images should produce all kinds of ContainerErrors.
+        # Test that they are all caught inside get_singularity_images().
+        download_obj.get_singularity_images()
 
     # If Singularity is not installed, it raises a OSError because the singularity command can't be found.
     @pytest.mark.skipif(
@@ -171,7 +255,9 @@ class DownloadTest(unittest.TestCase):
     def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
         with pytest.raises(OSError):
-            download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
+            download_obj.singularity_pull_image(
+                "a-container", f"{tmp_dir}/anothercontainer.sif", None, "quay.io", mock_rich_progress
+            )
 
     #
     # Test for '--singularity-cache remote --singularity-cache-index'. Provide a list of containers already available in a remote location.
@@ -185,13 +271,13 @@ class DownloadTest(unittest.TestCase):
             outdir=os.path.join(tmp_dir, "new"),
             revision="3.9",
             compress_type="none",
-            singularity_cache_index=Path(__file__).resolve().parent / "data/testdata_remote_containers.txt",
+            container_cache_index=Path(__file__).resolve().parent / "data/testdata_remote_containers.txt",
         )
 
         download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.
 
         # test if the settings are changed to mandatory defaults, if an external cache index is used.
-        assert download_obj.singularity_cache == "remote" and download_obj.container == "singularity"
+        assert download_obj.container_cache_utilisation == "remote" and download_obj.container_system == "singularity"
         assert isinstance(download_obj.containers_remote, list) and len(download_obj.containers_remote) == 0
         # read in the file
         download_obj.read_remote_containers()
@@ -211,10 +297,10 @@ class DownloadTest(unittest.TestCase):
         download_obj = DownloadWorkflow(
             pipeline="nf-core/methylseq",
             outdir=os.path.join(tmp_dir, "new"),
-            container="singularity",
+            container_system="singularity",
             revision="1.6",
             compress_type="none",
-            singularity_cache="copy",
+            container_cache_utilisation="copy",
         )
 
         download_obj.include_configs = True  # suppress prompt, because stderr.is_interactive doesn't.
@@ -230,6 +316,7 @@ class DownloadTest(unittest.TestCase):
             revision=("3.7", "3.9"),
             compress_type="none",
             tower=True,
+            container_system="singularity",
         )
 
         download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.

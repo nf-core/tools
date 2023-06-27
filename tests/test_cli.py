@@ -166,9 +166,11 @@ class TestCli(unittest.TestCase):
             "compress": "tar.gz",
             "force": None,
             "tower": None,
-            "container": "singularity",
-            "singularity-cache": "copy",
-            "singularity-cache-index": "/path/index.txt",
+            "download-configuration": None,
+            "container-system": "singularity",
+            "container-library": "quay.io",
+            "container-cache-utilisation": "copy",
+            "container-cache-index": "/path/index.txt",
             "parallel-downloads": 2,
         }
 
@@ -184,9 +186,11 @@ class TestCli(unittest.TestCase):
             params["compress"],
             "force" in params,
             "tower" in params,
-            params["container"],
-            params["singularity-cache"],
-            params["singularity-cache-index"],
+            "download-configuration" in params,
+            params["container-system"],
+            (params["container-library"],),
+            params["container-cache-utilisation"],
+            params["container-cache-index"],
             params["parallel-downloads"],
         )
 
