@@ -664,13 +664,53 @@ class DownloadWorkflow:
         """Find container image names for workflow.
 
         Starts by using `nextflow config` to pull out any process.container
-        declarations. This works for DSL1. It should return a simple string with resolved logic.
+        declarations. This works for DSL1. It should return a simple string with resolved logic,
+        but not always, e.g. not for differentialabundance 1.2.0
 
         Second, we look for DSL2 containers. These can't be found with
         `nextflow config` at the time of writing, so we scrape the pipeline files.
-        This returns raw source code that will likely need to be cleaned.
+        This returns raw matches that will likely need to be cleaned.
+        """
 
-        If multiple containers are found, prioritise any prefixed with http for direct download.
+        log.debug("Fetching container names for workflow")
+        # since this is run for multiple revisions now, account for previously detected containers.
+        previous_findings = [] if not self.containers else self.containers
+        config_findings = []
+        module_findings = []
+
+        # Use linting code to parse the pipeline nextflow config
+        self.nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
+
+        # Find any config variables that look like a container
+        for k, v in self.nf_config.items():
+            if k.startswith("process.") and k.endswith(".container"):
+                config_findings.append(v.strip('"').strip("'"))
+
+        # rectify the container paths found in the config
+        # Raw config_findings may yield multiple containers, so better create a shallow copy of the list, since length of input and output may be different ?!?
+        config_findings = self.rectify_raw_container_matches(config_findings[:], self.nf_config, "modules.config")
+
+        # Recursive search through any DSL2 module files for container spec lines.
+        for subdir, _, files in os.walk(os.path.join(workflow_directory, "modules")):
+            for file in files:
+                if file.endswith(".nf"):
+                    file_path = os.path.join(subdir, file)
+                    with open(file_path, "r") as fh:
+                        # Look for any lines with `container = "xxx"`
+                        search_space = fh.read()
+                        module_container = re.findall(r"container\s*[\"\']([^\"]*)[\"\']", search_space, re.S)
+                        module_container = self.rectify_raw_container_matches(
+                            module_container[:], search_space, file_path
+                        )
+                        if module_container:
+                            module_findings = module_findings + module_container
+
+        # Remove duplicates and sort
+        self.containers = sorted(list(set(previous_findings + config_findings + module_findings)))
+
+    def rectify_raw_container_matches(self, raw_matches, search_space=None, file_path=""):
+        """Helper function to rectify the raw extracted container matches into fully qualified container names.
+        If multiple containers are found, any prefixed with http for direct download is prioritized
 
         Example syntax:
 
@@ -696,94 +736,71 @@ class DownloadWorkflow:
         DSL1 / Special case DSL2:
             container "nfcore/cellranger:6.0.2"
         """
+        cleaned_matches = []
+        this_container = None
 
-        log.debug("Fetching container names for workflow")
-        # since this is run for multiple revisions now, account for previously detected containers.
-        containers_raw = [] if not self.containers else self.containers
+        for match in raw_matches:
+            # Look for a http download URL.
+            # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
+            url_regex = (
+                r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+            )
+            url_match = re.search(url_regex, match, re.S)
+            if url_match:
+                this_container = url_match.group(0)
+                break  # Prioritise http, exit loop as soon as we find it
 
-        # Use linting code to parse the pipeline nextflow config
-        self.nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
+            # No https download, is the entire container string a docker URI?
+            # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
+            docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
+            docker_match = re.match(docker_regex, match.strip(), re.S)
+            if docker_match:
+                this_container = docker_match.group(0)
+                break
 
-        # Find any config variables that look like a container
-        for k, v in self.nf_config.items():
-            if k.startswith("process.") and k.endswith(".container"):
-                containers_raw.append(v.strip('"').strip("'"))
+            """
+            Some modules declare the container as separate variable. This entails that " instead of ' is used,
+            so the above regex will match, but end prematurely before the container name is captured.
 
-        # Recursive search through any DSL2 module files for container spec lines.
-        for subdir, _, files in os.walk(os.path.join(workflow_directory, "modules")):
-            for file in files:
-                if file.endswith(".nf"):
-                    file_path = os.path.join(subdir, file)
-                    with open(file_path, "r") as fh:
-                        # Look for any lines with `container = "xxx"`
-                        this_container = None
-                        contents = fh.read()
-                        matches = re.findall(r"container\s*\"([^\"]*)\"", contents, re.S)
-                        if matches:
-                            for match in matches:
-                                # Look for a http download URL.
-                                # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
-                                url_regex = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
-                                url_match = re.search(url_regex, match, re.S)
-                                if url_match:
-                                    this_container = url_match.group(0)
-                                    break  # Prioritise http, exit loop as soon as we find it
+            Therefore, we need to repeat the search over the contents, extract the variable name, and use it inside a new regex.
 
-                                # No https download, is the entire container string a docker URI?
-                                # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
-                                docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
-                                docker_match = re.match(docker_regex, match.strip(), re.S)
-                                if docker_match:
-                                    this_container = docker_match.group(0)
-                                    break
+            To get the variable name ( ${container_id} in above example ), we match the literal word "container" and use lookbehind (reset the match).
+            Then we skip [^${}]+ everything that is not $ or curly braces. The next capture group is
+            ${ followed by any characters that are not curly braces [^{}]+ and ended by a closing curly brace (}),
+            but only if it's not followed by any other curly braces (?![^{]*}). The latter ensures we capture the innermost
+            variable name.
+            """
+            if search_space:
+                search_space = str(search_space)  # if search_space was a dict / list, ensure it's a str now
 
-                                """
-                                Some modules declare the container as separate variable. This entails that " instead of ' is used,
-                                so the above regex will match, but end prematurely before the container name is captured.
+                container_definition = re.search(r"(?<=container)[^\${}]+\${([^{}]+)}(?![^{]*})", search_space)
 
-                                Therefore, we need to repeat the search over the contents, extract the variable name, and use it inside a new regex.
+                if bool(container_definition) and bool(container_definition.group(1)):
+                    pattern = re.escape(container_definition.group(1))
+                    # extract the quoted string(s) following the variable assignment
+                    container_names = re.findall(r"%s\s*=\s*[\"\']([^\"\']+)[\"\']" % pattern, search_space)
 
-                                To get the variable name ( ${container_id} in above example ), we match the literal word "container" and use lookbehind (reset the match).
-                                Then we skip [^${}]+ everything that is not $ or curly braces. The next capture group is
-                                ${ followed by any characters that are not curly braces [^{}]+ and ended by a closing curly brace (}),
-                                but only if it's not followed by any other curly braces (?![^{]*}). The latter ensures we capture the innermost
-                                variable name.
-                                """
-                                container_definition = re.search(
-                                    r"(?<=container)[^\${}]+\${([^{}]+)}(?![^{]*})", contents
-                                )
+                    if bool(container_names):
+                        if isinstance(container_names, str):
+                            this_container = f"https://depot.galaxyproject.org/singularity/{container_names}"
+                            break
+                        elif isinstance(container_names, list):
+                            for container_name in container_names:
+                                cleaned_matches.append(f"https://depot.galaxyproject.org/singularity/{container_name}")
+                        else:
+                            # didn't find valid container declaration, but parsing succeeded.
+                            this_container = None
 
-                                if bool(container_definition) and bool(container_definition.group(1)):
-                                    pattern = re.escape(container_definition.group(1))
-                                    # extract the quoted string(s) following the variable assignment
-                                    container_names = re.findall(r"%s\s*=\s*[\"\']([^\"\']+)[\"\']" % pattern, contents)
+                    break  # break the loop like for url_match and docker_match
+            else:  # giving up
+                log.error(
+                    f"[red]Cannot parse container string in '{file_path}':\n\n{textwrap.indent(match, '    ')}\n\n:warning: Skipping this singularity image.."
+                )
 
-                                    if bool(container_names):
-                                        if isinstance(container_names, str):
-                                            this_container = (
-                                                f"https://depot.galaxyproject.org/singularity/{container_names}"
-                                            )
-                                            break
-                                        elif isinstance(container_names, list):
-                                            for container_name in container_names:
-                                                containers_raw.append(
-                                                    f"https://depot.galaxyproject.org/singularity/{container_name}"
-                                                )
-                                        else:
-                                            # didn't find valid container declaration, but parsing succeeded.
-                                            this_container = None
+        if this_container:
+            cleaned_matches.append(this_container)
 
-                                    break  # break the loop like for url_match and docker_match
-                                else:  # giving up
-                                    log.error(
-                                        f"[red]Cannot parse container string in '{file_path}':\n\n{textwrap.indent(match, '    ')}\n\n:warning: Skipping this singularity image.."
-                                    )
-
-                        if this_container:
-                            containers_raw.append(this_container)
-
-        # Remove duplicates and sort
-        self.containers = sorted(list(set(containers_raw)))
+        return cleaned_matches
 
     def get_singularity_images(self, current_revision=""):
         """Loop through container names and download Singularity images"""
