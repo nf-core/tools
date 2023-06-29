@@ -824,7 +824,8 @@ class DownloadWorkflow:
             docker_match = re.match(docker_regex, container_value.strip(), re.S)
             if docker_match:
                 this_container = docker_match.group(0)
-                next
+                cleaned_matches.append(this_container)
+                continue  # skip further processing
 
             """
             # no plain string, we likely need to break it up further
@@ -847,70 +848,70 @@ class DownloadWorkflow:
             when the outer loop has finished.
             """
 
-            if container_value_defs:
-                for _, capture in container_value_defs:
-                    # common false positives
-                    if capture in ["singularity"]:
-                        continue
+            for _, capture in container_value_defs:
+                # common false positive(s)
+                if capture in ["singularity"]:
+                    continue
 
-                    # Look for a http download URL.
-                    # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
-                    url_regex = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
-                    url_match = re.search(url_regex, capture, re.S)
-                    if url_match:
-                        this_container = url_match.group(0)
-                        break  # Prioritise http, exit loop as soon as we find it
+                # Look for a http download URL.
+                # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
+                url_regex = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+                url_match = re.search(url_regex, capture, re.S)
+                if url_match:
+                    this_container = url_match.group(0)
+                    break  # Prioritise http, exit loop as soon as we find it
 
-                    # No https download, is the entire container string a docker URI?
-                    # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
-                    docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
-                    docker_match = re.match(docker_regex, capture, re.S)
-                    if docker_match:
-                        this_container = docker_match.group(0)
-                        break
+                # No https download, is the entire container string a docker URI?
+                # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
+                docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
+                docker_match = re.match(docker_regex, capture, re.S)
+                if docker_match:
+                    this_container = docker_match.group(0)
+                    break
 
-                    """
-                    Some modules declare the container as separate variable. This entails that " instead of ' is used,
-                    so the above regex will match, but end prematurely before the container name is captured.
+            else:
+                """
+                Some modules declare the container as separate variable. This entails that " instead of ' is used,
+                so container_value_defs will not contain it and above loop will not break.
 
-                    Therefore, we need to repeat the search over the contents, extract the variable name, and use it inside a new regex.
-                    This is why the raw search_space is still needed at this level.
+                Therefore, we need to repeat the search over the contents, extract the variable name, and use it inside a new regex.
+                This is why the raw search_space is still needed at this level.
 
-                    To get the variable name ( ${container_id} in above example ), we match the literal word "container" and use lookbehind (reset the match).
-                    Then we skip [^${}]+ everything that is not $ or curly braces. The next capture group is
-                    ${ followed by any characters that are not curly braces [^{}]+ and ended by a closing curly brace (}),
-                    but only if it's not followed by any other curly braces (?![^{]*}). The latter ensures we capture the innermost
-                    variable name.
-                    """
+                To get the variable name ( ${container_id} in above example ), we match the literal word "container" and use lookbehind (reset the match).
+                Then we skip [^${}]+ everything that is not $ or curly braces. The next capture group is
+                ${ followed by any characters that are not curly braces [^{}]+ and ended by a closing curly brace (}),
+                but only if it's not followed by any other curly braces (?![^{]*}). The latter ensures we capture the innermost
+                variable name.
+                """
+                container_definition = re.search(r"(?<=container)[^\${}]+\${([^{}]+)}(?![^{]*})", str(search_space))
 
-                    container_definition = re.search(r"(?<=container)[^\${}]+\${([^{}]+)}(?![^{]*})", str(search_space))
+                if bool(container_definition) and bool(container_definition.group(1)):
+                    pattern = re.escape(container_definition.group(1))
+                    # extract the quoted string(s) following the variable assignment
+                    container_names = re.findall(r"%s\s*=\s*[\"\']([^\"\']+)[\"\']" % pattern, search_space)
 
-                    if bool(container_definition) and bool(container_definition.group(1)):
-                        pattern = re.escape(container_definition.group(1))
-                        # extract the quoted string(s) following the variable assignment
-                        container_names = re.findall(r"%s\s*=\s*[\"\']([^\"\']+)[\"\']" % pattern, search_space)
+                    if bool(container_names):
+                        if isinstance(container_names, str):
+                            this_container = f"https://depot.galaxyproject.org/singularity/{container_names}"
 
-                        if bool(container_names):
-                            if isinstance(container_names, str):
-                                this_container = f"https://depot.galaxyproject.org/singularity/{container_names}"
-                                break
-                            elif isinstance(container_names, list):
-                                for container_name in container_names:
-                                    cleaned_matches.append(
-                                        f"https://depot.galaxyproject.org/singularity/{container_name}"
-                                    )
-                            else:
-                                # didn't find valid container declaration, but parsing succeeded.
-                                this_container = None
+                        elif isinstance(container_names, list):
+                            # this deliberately appends container_names[-1] twice to cleaned_matches
+                            # but deduplication is performed anyway and just setting this_container
+                            # here as well allows for an easy check to see if parsing succeeded.
+                            for container_name in container_names:
+                                this_container = f"https://depot.galaxyproject.org/singularity/{container_name}"
+                                cleaned_matches.append(this_container)
+                        else:
+                            # didn't find valid container declaration, but parsing succeeded.
+                            this_container = None
 
-                    break  # break the loop like for url_match and docker_match
-                else:  # giving up
-                    log.error(
-                        f"[red]Cannot parse container string in '{file_path}':\n\n{textwrap.indent(capture, '    ')}\n\n:warning: Skipping this singularity image."
-                    )
-
+            # If we have a this_container, parsing succeeded.
             if this_container:
                 cleaned_matches.append(this_container)
+            else:
+                log.error(
+                    f"[red]Cannot parse container string in '{file_path}':\n\n{textwrap.indent(capture, '    ')}\n\n:warning: Skipping this singularity image."
+                )
 
         return cleaned_matches
 
