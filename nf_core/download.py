@@ -684,11 +684,13 @@ class DownloadWorkflow:
         # Find any config variables that look like a container
         for k, v in self.nf_config.items():
             if k.startswith("process.") and k.endswith(".container"):
+                # Append tuples, needed for consistency with the container_value_defs
+                # because both will run through rectify_raw_container_matches()
                 config_findings.append(v.strip('"').strip("'"))
 
         # rectify the container paths found in the config
         # Raw config_findings may yield multiple containers, so better create a shallow copy of the list, since length of input and output may be different ?!?
-        config_findings = self.rectify_raw_container_matches(config_findings[:], self.nf_config, "modules.config")
+        config_findings = self.rectify_raw_container_matches(config_findings[:], self.nf_config, "Nextflow configs")
 
         # Recursive search through any DSL2 module files for container spec lines.
         for subdir, _, files in os.walk(os.path.join(workflow_directory, "modules")):
@@ -696,14 +698,51 @@ class DownloadWorkflow:
                 if file.endswith(".nf"):
                     file_path = os.path.join(subdir, file)
                     with open(file_path, "r") as fh:
-                        # Look for any lines with `container = "xxx"`
+                        # Look for any lines with container "xxx" or container 'xxx'
                         search_space = fh.read()
-                        module_container = re.findall(r"container\s*[\"\']([^\"]*)[\"\']", search_space, re.S)
-                        module_container = self.rectify_raw_container_matches(
-                            module_container[:], search_space, file_path
+                        """
+                        Figure out which quotes were used and match everything until the closing quote.
+                        Since the other quote typically appears inside, a simple r"container\s*[\"\']([^\"\']*)[\"\']" unfortunately abridges the matches.
+
+                        container\s+(?P<quote>[\'\"]) matches the literal word "container" followed by a whitespace and a quote character.
+                        The quote character is captured into the quote group \1.
+                        The pattern (?:.(?!\1))*.? is used to match any character (.) not followed by the closing quote character (?!\1).
+                        This capture happens greedy *, but we add a .? to ensure that we don't match the whole file until the last occurrence
+                        of the closing quote character, but rather stop at the first occurrence. \1 inserts the matched quote character into the regex, either " or '.
+                        re.DOTALL is used to account for the string to be spread out across multiple lines.
+                        """
+                        container_regex = re.compile(
+                            r"container\s+(?P<quote>[\'\"])(?P<param>(?:.(?!\1))*.?)\1",
+                            re.DOTALL,
                         )
-                        if module_container:
-                            module_findings = module_findings + module_container
+                        module_container = re.findall(container_regex, search_space)
+
+                        # Not sure if there will ever be multiple container definitions per module, but beware DSL3.
+                        for _, container_value in module_container:
+                            """
+                            Now isolate all quoted strings from the container definition above.
+                            We also need to account for escape sequences before the quotes this time. Yeah!
+
+                            [^\"\'] makes sure that the outermost quote character is not matched.
+                            (?P<quote>(?<![\\])[\'\"]) again captures the quote character, but not if it is preceded by an escape sequence (?<![\\])
+                            (?P<param>(?:.(?!(?<![\\])\1))*.?)\1 is basically what I used above, but again has the (?<![\\]) inserted before \1 to account for escapes.
+                            """
+
+                            container_value_defs = re.findall(
+                                r"[^\"\'](?P<quote>(?<![\\])[\'\"])(?P<param>(?:.(?!(?<![\\])\1))*.?)\1",
+                                container_value,
+                                re.S,
+                            )
+
+                            # no loop this time, because rectify_raw_container_matches() loops over the findings.
+                            container_value_defs = self.rectify_raw_container_matches(
+                                container_value_defs[:], search_space, file_path
+                            )
+                            if container_value_defs:
+                                module_findings = module_findings + container_value_defs
+
+                            for hit in container_value_defs:
+                                log.debug(f"Found container: `{hit}` in `{container_value}`")
 
         # Remove duplicates and sort
         self.containers = sorted(list(set(previous_findings + config_findings + module_findings)))
@@ -739,7 +778,11 @@ class DownloadWorkflow:
         cleaned_matches = []
         this_container = None
 
-        for match in raw_matches:
+        for capture in raw_matches:
+            # if capture is from container_value_defs (modules), it is of length 2 and contains the quote and the value
+            # e.g. ("'", 'https://depot.galaxyproject.org/singularity/ubuntu:20.04')
+            # or ("'", 'nf-core/ubuntu:20.04')
+
             # Look for a http download URL.
             # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
             url_regex = (
