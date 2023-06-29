@@ -28,6 +28,7 @@
 - Refactored the CLI for `--singularity-cache` in `nf-core download` from a flag to an argument. The prior options were renamed to `amend` (container images are only saved in the `$NXF_SINGULARITY_CACHEDIR`) and `copy` (a copy of the image is saved with the download). `remote` was newly introduced and allows to provide a table of contents of a remote cache via an additional argument `--singularity-cache-index` ([#2247](https://github.com/nf-core/tools/pull/2247)).
 - Refactored the CLI parameters related to container images. Although downloading other images than those of the Singularity/Apptainer container system is not supported for the time being, a generic name for the parameters seemed preferable. So the new parameter `--singularity-cache-index` introduced in [#2247](https://github.com/nf-core/tools/pull/2247) has been renamed to `--container-cache-index` prior to release ([#2336](https://github.com/nf-core/tools/pull/2336)).
 - To address issue [#2311](https://github.com/nf-core/tools/issues/2311), a new parameter `--container-library` was created allowing to specify the container library (registry) from which container images in OCI format (Docker) should be pulled ([#2336](https://github.com/nf-core/tools/pull/2336)).
+- Container detection in configs was improved. This allows for DSL2-like container definitions inside the container parameter value provided to process scopes [#2346](https://github.com/nf-core/tools/pull/2346).
 
 #### Updated CLI parameters
 

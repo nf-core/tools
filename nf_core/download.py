@@ -683,7 +683,7 @@ class DownloadWorkflow:
 
         # Find any config variables that look like a container
         for k, v in self.nf_config.items():
-            if k.startswith("process.") and k.endswith(".container"):
+            if (k.startswith("process.") or k.startswith("params.")) and k.endswith(".container"):
                 """
                 Can be plain string / Docker URI or DSL2 syntax
 
@@ -910,7 +910,7 @@ class DownloadWorkflow:
                 cleaned_matches.append(this_container)
             else:
                 log.error(
-                    f"[red]Cannot parse container string in '{file_path}':\n\n{textwrap.indent(capture, '    ')}\n\n:warning: Skipping this singularity image."
+                    f"[red]Cannot parse container string in '{file_path}':\n\n{textwrap.indent(container_value, '    ')}\n\n:warning: Skipping this singularity image."
                 )
 
         return cleaned_matches
