@@ -1,0 +1,37 @@
+./depot.galaxyproject.org-singularity-bbmap-38.93--he522d1c_0.img
+./depot.galaxyproject.org-singularity-bedtools-2.30.0--hc088bd4_0.img
+./depot.galaxyproject.org-singularity-bioconductor-dupradar-1.18.0--r40_1.img
+./depot.galaxyproject.org-singularity-bioconductor-summarizedexperiment-1.20.0--r40_0.img
+./depot.galaxyproject.org-singularity-bioconductor-tximeta-1.8.0--r40_0.img
+./depot.galaxyproject.org-singularity-fastqc-0.11.9--0.img
+./depot.galaxyproject.org-singularity-gffread-0.12.1--h8b12597_0.img
+./depot.galaxyproject.org-singularity-hisat2-2.2.1--h1b792b2_3.img
+./depot.galaxyproject.org-singularity-mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2-59cdd445419f14abac76b31dd0d71217994cbcc9-0.img
+./depot.galaxyproject.org-singularity-mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2-afaaa4c6f5b308b4b6aa2dd8e99e1466b2a6b0cd-0.img
+./depot.galaxyproject.org-singularity-mulled-v2-8849acf39a43cdd6c839a369a74c0adc823e2f91-ab110436faf952a33575c64dd74615a84011450b-0.img
+./depot.galaxyproject.org-singularity-mulled-v2-a97e90b3b802d1da3d6958e0867610c718cb5eb1-0e773bb207600fcb4d38202226eb20a33c7909b6-0.img
+./depot.galaxyproject.org-singularity-mulled-v2-a97e90b3b802d1da3d6958e0867610c718cb5eb1-38aed4501da19db366dc7c8d52d31d94e760cfaf-0.img
+./depot.galaxyproject.org-singularity-mulled-v2-cf0123ef83b3c38c13e3b0696a3f285d3f20f15b-64aad4a4e144878400649e71f42105311be7ed87-0.img
+./depot.galaxyproject.org-singularity-multiqc-1.11--pyhdfd78af_0.img
+./depot.galaxyproject.org-singularity-multiqc-1.13--pyhdfd78af_0.img
+./depot.galaxyproject.org-singularity-perl-5.26.2.img
+./depot.galaxyproject.org-singularity-picard-2.26.10--hdfd78af_0.img
+./depot.galaxyproject.org-singularity-picard-2.27.4--hdfd78af_0.img
+./depot.galaxyproject.org-singularity-preseq-3.1.2--h445547b_2.img
+./depot.galaxyproject.org-singularity-python-3.9--1.img
+./depot.galaxyproject.org-singularity-qualimap-2.2.2d--1.img
+./depot.galaxyproject.org-singularity-rseqc-3.0.1--py37h516909a_1.img
+./depot.galaxyproject.org-singularity-salmon-1.5.2--h84f40af_0.img
+./depot.galaxyproject.org-singularity-samtools-1.15.1--h1170115_0.img
+./depot.galaxyproject.org-singularity-sortmerna-4.3.4--h9ee0642_0.img
+./depot.galaxyproject.org-singularity-stringtie-2.2.1--hecb563c_2.img
+./depot.galaxyproject.org-singularity-subread-2.0.1--hed695b0_0.img
+./depot.galaxyproject.org-singularity-trim-galore-0.6.7--hdfd78af_0.img
+./depot.galaxyproject.org-singularity-ubuntu-20.04.img
+./depot.galaxyproject.org-singularity-ucsc-bedclip-377--h0b8a92a_2.img
+./depot.galaxyproject.org-singularity-ucsc-bedgraphtobigwig-377--h446ed27_1.img
+./depot.galaxyproject.org-singularity-umi_tools-1.1.2--py38h4a8c8d9_0.img
+These entries should not be used:
+On October 5, 2011, the 224-meter containership MV Rena struck a reef close to New Zealand’s coast and broke apart. That spells disaster, no?
+MV Rena
+

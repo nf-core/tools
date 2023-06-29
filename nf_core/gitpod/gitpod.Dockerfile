@@ -3,6 +3,7 @@ FROM gitpod/workspace-base
 USER root
 
 # Install util tools.
+# software-properties-common is needed to add ppa support for Apptainer installation
 RUN apt-get update --quiet && \
     apt-get install --quiet --yes \
     apt-transport-https \
@@ -13,7 +14,13 @@ RUN apt-get update --quiet && \
     wget \
     curl \
     tree \
-    graphviz
+    graphviz \
+    software-properties-common
+
+# Install Apptainer (Singularity)
+RUN add-apt-repository -y ppa:apptainer/ppa && \
+    apt-get update --quiet && \
+    apt install -y apptainer
 
 # Install Conda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
