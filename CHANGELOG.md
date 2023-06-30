@@ -23,6 +23,7 @@
 - Add functions to dynamically include pipeline tool citations in MultiQC methods description section for better reporting. ([#2326](https://github.com/nf-core/tools/pull/2326))
 - Remove `--tracedir` parameter ([#2290](https://github.com/nf-core/tools/pull/2290))
 - Incorrect config parameter warnings when customising pipeline template ([#2333](https://github.com/nf-core/tools/pull/2333))
+- Use markdown syntax in the description for the meta map channels ([#2358](https://github.com/nf-core/tools/pull/2358))
 
 ### Download
 
