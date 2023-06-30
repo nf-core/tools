@@ -29,6 +29,7 @@
 - Refactored the CLI parameters related to container images. Although downloading other images than those of the Singularity/Apptainer container system is not supported for the time being, a generic name for the parameters seemed preferable. So the new parameter `--singularity-cache-index` introduced in [#2247](https://github.com/nf-core/tools/pull/2247) has been renamed to `--container-cache-index` prior to release ([#2336](https://github.com/nf-core/tools/pull/2336)).
 - To address issue [#2311](https://github.com/nf-core/tools/issues/2311), a new parameter `--container-library` was created allowing to specify the container library (registry) from which container images in OCI format (Docker) should be pulled ([#2336](https://github.com/nf-core/tools/pull/2336)).
 - Container detection in configs was improved. This allows for DSL2-like container definitions inside the container parameter value provided to process scopes [#2346](https://github.com/nf-core/tools/pull/2346).
+- Add apptainer to the list of false positve container strings ([#2353](https://github.com/nf-core/tools/pull/2353)).
 
 #### Updated CLI parameters
 
