@@ -327,7 +327,7 @@ Each option has a flag, if all are supplied then it will run without any user in
 working_dir: tmp
 -->
 
-![`nf-core download rnaseq -r 3.8 --outdir nf-core-rnaseq -x none -c none`](docs/images/nf-core-download.svg)
+![`nf-core download rnaseq -r 3.8 --outdir nf-core-rnaseq -x none -s none -d`](docs/images/nf-core-download.svg)
 
 Once downloaded, you will see something like the following file structure for the downloaded pipeline:
 
@@ -571,7 +571,7 @@ timeout: 10
 after_command: rm nf-params.json
 -->
 
-![`nf-core schema validate nf-core-rnaseq/workflow nf-params.json`](docs/images/nf-core-schema-validate.svg)
+![`nf-core schema validate nf-core-rnaseq/3_8 nf-params.json`](docs/images/nf-core-schema-validate.svg)
 
 The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).
 
