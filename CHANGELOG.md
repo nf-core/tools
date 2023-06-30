@@ -17,6 +17,7 @@
 - Fix parsing of container directive when it is not typical nf-core format ([#2306](https://github.com/nf-core/tools/pull/2306))
 - Add ability to specify custom registry for linting modules, defaults to quay.io ([#2313](https://github.com/nf-core/tools/pull/2313))
 - Add `singularity.registry = 'quay.io'` in pipeline template ([#2305](https://github.com/nf-core/tools/pull/2305))
+- Add `apptainer.registry = 'quay.io'` in pipeline template ([#2352](https://github.com/nf-core/tools/pull/2352))
 - Bump minimum required NF version in pipeline template from `22.10.1` -> `23.04.0` ([#2305](https://github.com/nf-core/tools/pull/2305))
 - Add ability to interpret `docker.registry` from `nextflow.config` file. If not found defaults to quay.io. ([#2318](https://github.com/nf-core/tools/pull/2318))
 - Add functions to dynamically include pipeline tool citations in MultiQC methods description section for better reporting. ([#2326](https://github.com/nf-core/tools/pull/2326))
