@@ -733,8 +733,7 @@ class DownloadWorkflow:
                         re.DOTALL is used to account for the string to be spread out across multiple lines.
                         """
                         container_regex = re.compile(
-                            r"container\s+[\s{}=$]*(?P<quote>[\'\"])(?P<param>(?:.(?!\1))*.?)\1[\s}]*",
-                            re.DOTALL,
+                            r"container\s+[\s{}=$]*(?P<quote>[\'\"])(?P<param>(?:.(?!\1))*.?)\1[\s}]*", re.DOTALL
                         )
 
                         local_module_findings = re.findall(container_regex, search_space)
@@ -850,7 +849,7 @@ class DownloadWorkflow:
 
             for _, capture in container_value_defs:
                 # common false positive(s)
-                if capture in ["singularity"]:
+                if capture in ["singularity", "apptainer"]:
                     continue
 
                 # Look for a http download URL.
