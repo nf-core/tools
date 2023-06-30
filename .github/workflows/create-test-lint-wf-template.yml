@@ -1,0 +1,137 @@
+name: Create a pipeline from a template and test it
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - nf_core/pipeline-template/**
+  pull_request:
+  release:
+    types: [published]
+
+# Cancel if a newer run is started
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NXF_ANSI_LOG: false
+
+jobs:
+  RunTestWorkflow:
+    runs-on: ubuntu-latest
+    env:
+      NXF_ANSI_LOG: false
+    strategy:
+      matrix:
+        TEMPLATE:
+          - "template_skip_all.yml"
+          - "template_skip_github_badges.yml"
+          - "template_skip_igenomes.yml"
+          - "template_skip_ci.yml"
+          - "template_skip_nf_core_configs.yml"
+
+    steps:
+      - uses: actions/checkout@v3
+        name: Check out source-code repository
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      - name: Install python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+
+      - name: Install Nextflow
+        uses: nf-core/setup-nextflow@v1
+        with:
+          version: latest-everything
+
+      # Install the Prettier linting tools
+      - uses: actions/setup-node@v3
+
+      - name: Install Prettier
+        run: npm install -g prettier
+
+      # Install the editorconfig linting tools
+      - name: Install editorconfig-checker
+        run: npm install -g editorconfig-checker
+
+      # Create template files
+      - name: Create template skip all (except github)
+        run: |
+          printf "prefix: my-prefix\nskip: ['ci', 'github_badges', 'igenomes', 'nf_core_configs']" > template_skip_all.yml
+
+      - name: Create template skip github_badges
+        run: |
+          printf "prefix: my-prefix\nskip: github_badges" > template_skip_github_badges.yml
+
+      - name: Create template skip igenomes
+        run: |
+          printf "prefix: my-prefix\nskip: igenomes" > template_skip_igenomes.yml
+
+      - name: Create template skip ci
+        run: |
+          printf "prefix: my-prefix\nskip: ci" > template_skip_ci.yml
+
+      - name: Create template skip nf_core_configs
+        run: |
+          printf "prefix: my-prefix\nskip: nf_core_configs" > template_skip_nf_core_configs.yml
+
+      # Create a pipeline from the template
+      - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
+        run: |
+          nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml ${{ matrix.TEMPLATE }}
+
+      - name: run the pipeline
+        run: |
+          nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
+
+      # Remove results folder before linting
+      - name: remove results folder
+        run: |
+          rm -rf ./results
+
+      # Try syncing it before we change anything
+      - name: nf-core sync
+        run: nf-core --log-file log.txt sync --dir my-prefix-testpipeline/ --template-yaml ${{ matrix.TEMPLATE }}
+
+      # Run code style linting
+      - name: Run Prettier --check
+        run: prettier --check my-prefix-testpipeline
+
+      - name: Run ECLint check
+        run: editorconfig-checker -exclude README.md $(find my-prefix-testpipeline/.* -type f | grep -v '.git\|.py\|md\|json\|yml\|yaml\|html\|css\|work\|.nextflow\|build\|nf_core.egg-info\|log.txt\|Makefile')
+
+      # Remove TODO statements
+      - name: remove TODO
+        run: find my-prefix-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
+
+      # Replace zenodo.XXXXXX to pass readme linting
+      - name: replace zenodo.XXXXXX
+        run: find my-prefix-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
+
+      # Run nf-core linting
+      - name: nf-core lint
+        run: nf-core --log-file log.txt --hide-progress lint --dir my-prefix-testpipeline --fail-warned
+
+      # Run bump-version
+      - name: nf-core bump-version
+        run: nf-core --log-file log.txt bump-version --dir my-prefix-testpipeline/ 1.1
+
+      # Run nf-core linting in release mode
+      - name: nf-core lint in release mode
+        run: nf-core --log-file log.txt --hide-progress lint --dir my-prefix-testpipeline --fail-warned --release
+
+      - name: Tar files
+        run: tar -cvf artifact_files.tar log.txt template_skip*.yml
+
+      - name: Upload log file artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: nf-core-log-file
+          path: artifact_files.tar

@@ -17,7 +17,7 @@ input:
       type: map
       description: |
         Groovy Map containing sample information
-        e.g. [ id:'test' ]
+        e.g. `[ id:'test' ]`
   - bam:
       type: file
       description: BAM/CRAM/SAM file
@@ -28,7 +28,7 @@ output:
       type: map
       description: |
         Groovy Map containing sample information
-        e.g. [ id:'test' ]
+        e.g. `[ id:'test' ]`
   - bam:
       type: file
       description: Sorted BAM/CRAM/SAM file

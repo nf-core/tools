@@ -21,7 +21,7 @@ def test_header(mock_cli):
 
 
 @mock.patch("nf_core.__main__.nf_core_cli")
-@mock.patch("nf_core.utils.check_if_outdated", return_value=(True, None, "dummy_version"))
+@mock.patch("nf_core.__main__.check_if_outdated", return_value=(True, None, "dummy_version"))
 def test_header_outdated(mock_check_outdated, mock_nf_core_cli, capsys):
     """Check cli notifies the user when nf_core is outdated"""
     nf_core.__main__.run_nf_core()
@@ -165,8 +165,12 @@ class TestCli(unittest.TestCase):
             "outdir": "/path/outdir",
             "compress": "tar.gz",
             "force": None,
-            "container": "singularity",
-            "singularity-cache-only": None,
+            "tower": None,
+            "download-configuration": None,
+            "container-system": "singularity",
+            "container-library": "quay.io",
+            "container-cache-utilisation": "copy",
+            "container-cache-index": "/path/index.txt",
             "parallel-downloads": 2,
         }
 
@@ -177,12 +181,16 @@ class TestCli(unittest.TestCase):
 
         mock_dl.assert_called_once_with(
             cmd[-1],
-            params["revision"],
+            (params["revision"],),
             params["outdir"],
             params["compress"],
             "force" in params,
-            params["container"],
-            "singularity-cache-only" in params,
+            "tower" in params,
+            "download-configuration" in params,
+            params["container-system"],
+            (params["container-library"],),
+            params["container-cache-utilisation"],
+            params["container-cache-index"],
             params["parallel-downloads"],
         )
 

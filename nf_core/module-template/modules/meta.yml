@@ -30,7 +30,7 @@ input:
       type: map
       description: |
         Groovy Map containing sample information
-        e.g. [ id:'test', single_end:false ]
+        e.g. `[ id:'test', single_end:false ]`
   {% endif %}
   {% if not_empty_template -%}
   ## TODO nf-core: Delete / customise this example input
@@ -49,7 +49,7 @@ output:
       type: map
       description: |
         Groovy Map containing sample information
-        e.g. [ id:'test', single_end:false ]
+        e.g. `[ id:'test', single_end:false ]`
   {% endif %}
   - versions:
       type: file

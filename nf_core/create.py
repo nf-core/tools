@@ -144,7 +144,10 @@ class PipelineCreate:
         skip_paths = [] if param_dict["branded"] else ["branded"]
 
         for t_area in template_areas:
-            if t_area in template_yaml.get("skip", []):
+            areas_to_skip = template_yaml.get("skip", [])
+            if isinstance(areas_to_skip, str):
+                areas_to_skip = [areas_to_skip]
+            if t_area in areas_to_skip:
                 if template_areas[t_area]["file"]:
                     skip_paths.append(t_area)
                 param_dict[t_area] = False
@@ -352,6 +355,7 @@ class PipelineCreate:
         if self.template_yaml:
             with open(self.outdir / "pipeline_template.yml", "w") as fh:
                 yaml.safe_dump(self.template_yaml, fh)
+            run_prettier_on_file(self.outdir / "pipeline_template.yml")
 
     def update_nextflow_schema(self):
         """
@@ -403,6 +407,12 @@ class PipelineCreate:
                 ".github/workflows/awstest.yml",
                 ".github/workflows/awsfulltest.yml",
             ],
+            "files_unchanged": [
+                "CODE_OF_CONDUCT.md",
+                f"assets/nf-core-{short_name}_logo_light.png",
+                f"docs/images/nf-core-{short_name}_logo_light.png",
+                f"docs/images/nf-core-{short_name}_logo_dark.png",
+            ],
             "nextflow_config": [
                 "manifest.name",
                 "manifest.homePage",
@@ -415,9 +425,26 @@ class PipelineCreate:
             lint_config["files_exist"].extend(
                 [
                     ".github/ISSUE_TEMPLATE/bug_report.yml",
+                    ".github/ISSUE_TEMPLATE/feature_request.yml",
+                    ".github/PULL_REQUEST_TEMPLATE.md",
+                    ".github/CONTRIBUTING.md",
+                    ".github/.dockstore.yml",
+                    ".gitignore",
                 ]
             )
-            lint_config["files_unchanged"] = [".github/ISSUE_TEMPLATE/bug_report.yml"]
+            lint_config["files_unchanged"].extend(
+                [
+                    ".github/ISSUE_TEMPLATE/bug_report.yml",
+                    ".github/ISSUE_TEMPLATE/config.yml",
+                    ".github/ISSUE_TEMPLATE/feature_request.yml",
+                    ".github/PULL_REQUEST_TEMPLATE.md",
+                    ".github/workflows/branch.yml",
+                    ".github/workflows/linting_comment.yml",
+                    ".github/workflows/linting.yml",
+                    ".github/CONTRIBUTING.md",
+                    ".github/.dockstore.yml",
+                ]
+            )
 
         # Add CI specific configurations
         if not self.template_params["ci"]:
@@ -442,9 +469,17 @@ class PipelineCreate:
                 ]
             )
 
+        # Add igenomes specific configurations
+        if not self.template_params["igenomes"]:
+            lint_config["files_exist"].extend(["conf/igenomes.config"])
+
         # Add github badges specific configurations
         if not self.template_params["github_badges"] or not self.template_params["github"]:
             lint_config["readme"] = ["nextflow_badge"]
+
+        # If the pipeline is unbranded
+        if not self.template_params["branded"]:
+            lint_config["files_unchanged"].extend([".github/ISSUE_TEMPLATE/bug_report.yml"])
 
         # Add the lint content to the preexisting nf-core config
         config_fn, nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
@@ -461,7 +496,7 @@ class PipelineCreate:
         log.debug(f"Fetching logo from {logo_url}")
 
         email_logo_path = self.outdir / "assets" / f"{self.template_params['name_noslash']}_logo_light.png"
-        self.download_pipeline_logo(f"{logo_url}&w=400", email_logo_path)
+        self.download_pipeline_logo(f"{logo_url}?w=600&theme=light", email_logo_path)
         for theme in ["dark", "light"]:
             readme_logo_url = f"{logo_url}?w=600&theme={theme}"
             readme_logo_path = (
