@@ -908,7 +908,7 @@ The `nf-core modules create` command will prompt you with the relevant questions
 
 <!-- RICH-CODEX
 working_dir: tmp
-before_command: git clone https://github.com/nf-core/modules.git && cd modules
+before_command: rm -rf ~/.config/nfcore/nf-core/modules && git clone https://github.com/nf-core/modules.git && cd modules
 fake_command: nf-core modules create fastqc --author @nf-core-bot  --label process_low --meta --force
 -->
 
@@ -1181,7 +1181,7 @@ The `nf-core subworkflows create` command will prompt you with the relevant ques
 
 <!-- RICH-CODEX
 working_dir: tmp
-before_command: git clone https://github.com/nf-core/modules.git && cd modules
+before_command: rm -rf ~/.config/nfcore/nf-core/modules && git clone https://github.com/nf-core/modules.git && cd modules
 fake_command: nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force
 -->
 
