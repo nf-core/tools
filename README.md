@@ -908,6 +908,7 @@ The `nf-core modules create` command will prompt you with the relevant questions
 
 <!-- RICH-CODEX
 working_dir: tmp
+timeout: 10
 before_command: git clone https://github.com/nf-core/modules.git && cd modules
 fake_command: nf-core modules create fastqc --author @nf-core-bot  --label process_low --meta --force
 -->
