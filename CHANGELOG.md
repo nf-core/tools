@@ -4,9 +4,9 @@
 
 ### Template
 
-- `params.max_multiqc_email_size` is no longer required
-- Remove `cleanup = true` from `test_full.config` in pipeline template
-- Fix usage docs for specifying `params.yaml`
+- `params.max_multiqc_email_size` is no longer required ([#2273](https://github.com/nf-core/tools/pull/2273))
+- Remove `cleanup = true` from `test_full.config` in pipeline template ([#2279](https://github.com/nf-core/tools/pull/2279))
+- Fix usage docs for specifying `params.yaml` ([#2279](https://github.com/nf-core/tools/pull/2279))
 - Added stub in modules template ([#2277])(https://github.com/nf-core/tools/pull/2277) [Contributed by @nvnieuwk]
 - Move registry definitions out of profile scope ([#2286])(https://github.com/nf-core/tools/pull/2286)
 - Remove `aws_tower` profile ([#2287])(https://github.com/nf-core/tools/pull/2287)
@@ -16,11 +16,12 @@
 - Remove schema validation from `lib` folder and use Nextflow [nf-validation plugin](https://nextflow-io.github.io/nf-validation/) instead ([#1771](https://github.com/nf-core/tools/pull/1771/))
 - Fix parsing of container directive when it is not typical nf-core format ([#2306](https://github.com/nf-core/tools/pull/2306))
 - Add ability to specify custom registry for linting modules, defaults to quay.io ([#2313](https://github.com/nf-core/tools/pull/2313))
-- Add `singularity.registry = 'quay.io'` in pipeline template
-- Bump minimum required NF version in pipeline template from `22.10.1` -> `23.04.0`
+- Add `singularity.registry = 'quay.io'` in pipeline template ([#2305](https://github.com/nf-core/tools/pull/2305))
+- Bump minimum required NF version in pipeline template from `22.10.1` -> `23.04.0` ([#2305](https://github.com/nf-core/tools/pull/2305))
 - Add ability to interpret `docker.registry` from `nextflow.config` file. If not found defaults to quay.io. ([#2318](https://github.com/nf-core/tools/pull/2318))
 - Add functions to dynamically include pipeline tool citations in MultiQC methods description section for better reporting. ([#2326](https://github.com/nf-core/tools/pull/2326))
-- Remove `--tracedir` parameter
+- Remove `--tracedir` parameter ([#2290](https://github.com/nf-core/tools/pull/2290))
+- Incorrect config parameter warnings when customising pipeline template ([#2333](https://github.com/nf-core/tools/pull/2333))
 
 ### Download
 
@@ -28,6 +29,7 @@
 - Refactored the CLI for `--singularity-cache` in `nf-core download` from a flag to an argument. The prior options were renamed to `amend` (container images are only saved in the `$NXF_SINGULARITY_CACHEDIR`) and `copy` (a copy of the image is saved with the download). `remote` was newly introduced and allows to provide a table of contents of a remote cache via an additional argument `--singularity-cache-index` ([#2247](https://github.com/nf-core/tools/pull/2247)).
 - Refactored the CLI parameters related to container images. Although downloading other images than those of the Singularity/Apptainer container system is not supported for the time being, a generic name for the parameters seemed preferable. So the new parameter `--singularity-cache-index` introduced in [#2247](https://github.com/nf-core/tools/pull/2247) has been renamed to `--container-cache-index` prior to release ([#2336](https://github.com/nf-core/tools/pull/2336)).
 - To address issue [#2311](https://github.com/nf-core/tools/issues/2311), a new parameter `--container-library` was created allowing to specify the container library (registry) from which container images in OCI format (Docker) should be pulled ([#2336](https://github.com/nf-core/tools/pull/2336)).
+- Container detection in configs was improved. This allows for DSL2-like container definitions inside the container parameter value provided to process scopes [#2346](https://github.com/nf-core/tools/pull/2346).
 
 #### Updated CLI parameters
 
@@ -288,7 +290,6 @@ Another big release with lots of new features and bug fixes. Thanks to all contr
 - Convert `console` snippets to `bash` snippets in the template where applicable ([#1729](https://github.com/nf-core/tools/pull/1729))
 - Add `branch` field to module entries in `modules.json` to record what branch a module was installed from ([#1728](https://github.com/nf-core/tools/issues/1728))
 - Add customisation option to remove all GitHub support with `nf-core create` ([#1766](https://github.com/nf-core/tools/pull/1766))
-- Incorrect config parameter warnings when customising pipeline template ([#2333](https://github.com/nf-core/tools/pull/2333))
 
 ### Linting
 
