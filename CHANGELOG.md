@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-# v2.9dev
+# [v2.9 - Chromium Falcon](https://github.com/nf-core/tools/releases/tag/2.9) + [2023-06-29]
 
 ### Template
 
