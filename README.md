@@ -1185,7 +1185,7 @@ working_dir: tmp/modules
 fake_command: nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force
 -->
 
-![`cd modules && nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force`](docs/images/nf-core-subworkflows-create.svg)
+![`nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force`](docs/images/nf-core-subworkflows-create.svg)
 
 ### Create a subworkflow test config file
 
