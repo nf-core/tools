@@ -156,8 +156,8 @@ class ParamsFileTemplateBuilder:
         if description:
             out += _print_wrapped(description, mode="none")
 
+        out += "\n"
         if len(hidden_props) > 0:
-            out += "\n"
             out += _print_wrapped(f"({len(hidden_props)} hidden parameters are not shown)", mode="none")
             out += "\n\n"
 
@@ -233,6 +233,7 @@ class ParamsFileTemplateBuilder:
         out += _print_wrapped(INTRO.format(pipeline_name=pipeline_name), " ", mode="none", indent=4)
         out += _print_wrapped("\n", " ", mode="none", indent=4, drop_whitespace=False)
         out += _print_wrapped(USAGE, "-", mode="end", indent=4)
+        out += "\n"
 
         # Add all parameter groups
         for definition in schema.get("definitions", {}).values():
