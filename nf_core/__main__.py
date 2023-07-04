@@ -242,12 +242,13 @@ def params_template(pipeline, revision, output, force, show_hidden):
     """
     Build a parameter file template for a pipeline.
 
-    Uses the pipeline schema file to generate a YAML file that can be passed
-    to Nextflow using the `-params-file` option.
-    Parameters descriptions are shown in comments and the all parameters are set
-    to the pipeline defaults.
+    Uses the pipeline schema file to generate a YAML parameters file.
+    Parameters are set to the pipeline defaults and descriptions are shown in comments.
+    After the output file is generated, it can then be edited as needed before
+    passing to nextflow using the `-params-file` option.
 
-    This output file is intended as a template and should be edited before use.
+    Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
+    a local pipeline directory.
     """
     builder = ParamsFileTemplateBuilder(pipeline, revision)
 
