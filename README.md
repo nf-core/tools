@@ -326,7 +326,7 @@ or the path to a directory containing a Nextflow pipeline _(can be any pipeline,
 The generated YAML file contains all parameters set to the pipeline default value along with their description in comments.
 This template can then be used by uncommenting and modifying the value of parameters you want to pass to a pipline run.
 
-Hidden options are not shown by default but can be included using the `-x|--show-hidden` flag.
+Hidden options are not included by default, but can be included using the `-x`/`--show-hidden` flag.
 
 ## Downloading pipelines for offline use
 
