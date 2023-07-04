@@ -12,25 +12,36 @@ from nf_core.params_file import ParamsFileBuilder
 class TestParamsFileBuilder:
     """Class for schema tests"""
 
-    def setup_class(self):
+    @classmethod
+    def setup_class(cls):
         """Create a new PipelineSchema object"""
-        self.schema_obj = nf_core.schema.PipelineSchema()
-        self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        cls.schema_obj = nf_core.schema.PipelineSchema()
+        cls.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
         # Create a test pipeline in temp directory
-        self.tmp_dir = tempfile.mkdtemp()
-        self.template_dir = os.path.join(self.tmp_dir, "wf")
+        cls.tmp_dir = tempfile.mkdtemp()
+        cls.template_dir = os.path.join(cls.tmp_dir, "wf")
         create_obj = nf_core.create.PipelineCreate(
-            "testpipeline", "", "", outdir=self.template_dir, no_git=True, plain=True
+            "testpipeline", "", "", outdir=cls.template_dir, no_git=True, plain=True
         )
         create_obj.init_pipeline()
 
-        self.template_schema = os.path.join(self.template_dir, "nextflow_schema.json")
-        self.params_template_builder = ParamsFileBuilder(self.template_dir)
+        cls.template_schema = os.path.join(cls.template_dir, "nextflow_schema.json")
+        cls.params_template_builder = ParamsFileBuilder(cls.template_dir)
+        cls.invalid_template_schema = os.path.join(cls.template_dir, "nextflow_schema_invalid.json")
 
-    def teardown_class(self):
-        if os.path.exists(self.tmp_dir):
-            shutil.rmtree(self.tmp_dir)
+        # Remove the allOf section to make the schema invalid
+        with open(cls.template_schema, "r") as fh:
+            o = json.load(fh)
+            del o["allOf"]
+
+        with open(cls.invalid_template_schema, "w") as fh:
+            json.dump(o, fh)
+
+    @classmethod
+    def teardown_class(cls):
+        if os.path.exists(cls.tmp_dir):
+            shutil.rmtree(cls.tmp_dir)
 
     def test_build_template(self):
         outfile = os.path.join(self.tmp_dir, "params-file.yml")
@@ -45,19 +56,8 @@ class TestParamsFileBuilder:
 
     def test_build_template_invalid_schema(self, caplog):
         """Build a schema from a template"""
-        outfile = os.path.join(self.tmp_dir, "params-file.yml")
-        schema_path = Path(self.template_schema)
-        invalid_schema_file = shutil.copy(self.template_schema, Path(self.template_schema).name + "_invalid.json")
-
-        # Remove the allOf section to make the schema invalid
-        with open(invalid_schema_file, "r") as fh:
-            o = json.load(fh)
-            del o["allOf"]
-
-        with open(invalid_schema_file, "w") as fh:
-            json.dump(o, fh)
-
-        builder = ParamsFileBuilder(invalid_schema_file)
+        outfile = os.path.join(self.tmp_dir, "params-file-invalid.yml")
+        builder = ParamsFileBuilder(self.invalid_template_schema)
         res = builder.write_template(outfile)
 
         assert res is False
