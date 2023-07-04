@@ -232,7 +232,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     type=str,
     default="nf-params.yml",
     metavar="<filename>",
-    help="Output filename. Defaults to `nf-params.yml`",
+    help="Output filename. Defaults to `nf-params.yml`.",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 @click.option(
