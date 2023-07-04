@@ -6,10 +6,10 @@ from pathlib import Path
 
 import nf_core.create
 import nf_core.schema
-from nf_core.params_template import ParamsFileTemplateBuilder
+from nf_core.params_file import ParamsFileBuilder
 
 
-class TestParamsTemplateBuilder:
+class TestParamsFileBuilder:
     """Class for schema tests"""
 
     def setup_class(self):
@@ -26,7 +26,7 @@ class TestParamsTemplateBuilder:
         create_obj.init_pipeline()
 
         self.template_schema = os.path.join(self.template_dir, "nextflow_schema.json")
-        self.params_template_builder = ParamsFileTemplateBuilder(self.template_dir)
+        self.params_template_builder = ParamsFileBuilder(self.template_dir)
 
     def teardown_class(self):
         if os.path.exists(self.tmp_dir):
@@ -57,7 +57,7 @@ class TestParamsTemplateBuilder:
         with open(invalid_schema_file, "w") as fh:
             json.dump(o, fh)
 
-        builder = ParamsFileTemplateBuilder(invalid_schema_file)
+        builder = ParamsFileBuilder(invalid_schema_file)
         res = builder.write_template(outfile)
 
         assert res is False

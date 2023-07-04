@@ -1,4 +1,4 @@
-""" Create YAML parameter file template """
+""" Create a YAML parameter file """
 
 from __future__ import print_function
 
@@ -75,7 +75,7 @@ def _print_wrapped(text, fill_char="-", mode="both", width=80, indent=0, drop_wh
     return out
 
 
-class ParamsFileTemplateBuilder:
+class ParamsFileBuilder:
     """Class to hold config option to launch a pipeline.
 
     Args:
@@ -111,7 +111,7 @@ class ParamsFileTemplateBuilder:
         # Prompt for pipeline if not supplied
         if self.pipeline is None:
             launch_type = questionary.select(
-                "Generate parameter file template for local pipeline " "or remote GitHub pipeline?",
+                "Generate parameter file for local pipeline " "or remote GitHub pipeline?",
                 choices=["Remote pipeline", "Local path"],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
@@ -272,6 +272,6 @@ class ParamsFileTemplateBuilder:
             return False
         with open(output_fn, "w") as fh:
             fh.write(schema_out)
-            log.info(f"Parameter schema file written to '{output_fn}'")
+            log.info(f"Parameter file written to '{output_fn}'")
 
         return True

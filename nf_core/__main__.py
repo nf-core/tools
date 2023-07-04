@@ -13,7 +13,7 @@ import rich_click as click
 from nf_core import __version__
 from nf_core.download import DownloadError
 from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE
-from nf_core.params_template import ParamsFileTemplateBuilder
+from nf_core.params_file import ParamsFileBuilder
 from nf_core.utils import check_if_outdated, rich_force_colors, setup_nfcore_dir
 
 # Set up logging as the root logger
@@ -238,9 +238,9 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 @click.option(
     "-x", "--show-hidden", is_flag=True, default=False, help="Show hidden params which don't normally need changing"
 )
-def params_template(pipeline, revision, output, force, show_hidden):
+def create_params_file(pipeline, revision, output, force, show_hidden):
     """
-    Build a parameter file template for a pipeline.
+    Build a parameter file for a pipeline.
 
     Uses the pipeline schema file to generate a YAML parameters file.
     Parameters are set to the pipeline defaults and descriptions are shown in comments.
@@ -250,7 +250,7 @@ def params_template(pipeline, revision, output, force, show_hidden):
     Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
     a local pipeline directory.
     """
-    builder = ParamsFileTemplateBuilder(pipeline, revision)
+    builder = ParamsFileBuilder(pipeline, revision)
 
     if not builder.write_template(output, show_hidden=show_hidden, force=force):
         sys.exit(1)

@@ -20,7 +20,7 @@ A python package with helper tools for the nf-core community.
 - [`nf-core` tools update](#update-tools)
 - [`nf-core list` - List available pipelines](#listing-pipelines)
 - [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
-- [`nf-core params-template` - Create a parameter file template](#create-a-parameter-file-template)
+- [`nf-core create-params-file` - Create a parameter file](#create-a-parameter-file)
 - [`nf-core download` - Download a pipeline for offline use](#downloading-pipelines-for-offline-use)
 - [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
 - [`nf-core create` - Create a new pipeline with the nf-core template](#creating-a-new-pipeline)
@@ -312,12 +312,12 @@ Do you want to run this command now?  [y/n]:
 - `--url`
   - Change the URL used for the graphical interface, useful for development work on the website.
 
-## Create a parameter file template
+## Create a parameter file
 
 Sometimes it is easier to manually edit a parameter file than to use the web interface or interactive commandline wizard
 provided by `nf-core launch`, for example when running a pipeline with many options on a remote server without a graphical interface.
 
-You can create a parameter file template with the `nf-core params-template` command.
+You can create a parameter file template with the `nf-core create-params-file` command.
 This file can then be passed to `nextflow` with the `-params-file` flag.
 
 This command takes one argument - either the name of a nf-core pipeline which will be pulled automatically,
