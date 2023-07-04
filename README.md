@@ -317,7 +317,7 @@ Do you want to run this command now?  [y/n]:
 Sometimes it is easier to manually edit a parameter file than to use the web interface or interactive commandline wizard
 provided by `nf-core launch`, for example when running a pipeline with many options on a remote server without a graphical interface.
 
-You can create a parameter file template with the `nf-core create-params-file` command.
+You can create a parameter file with all parameters of a pipeline with the `nf-core create-params-file` command.
 This file can then be passed to `nextflow` with the `-params-file` flag.
 
 This command takes one argument - either the name of a nf-core pipeline which will be pulled automatically,
