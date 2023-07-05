@@ -702,10 +702,12 @@ class DownloadWorkflow:
                     for finding in config_findings_dsl2:
                         config_findings.append((finding + (self.nf_config, "Nextflow configs")))
                 else:  # no regex match, likely just plain string
-                    # Append string also as finding-like tuple for consistency
-                    # because all will run through rectify_raw_container_matches()
-                    # self.nf_config is needed, because we need to restart search over raw input
-                    # if no proper container matches are found.
+                    """
+                    Append string also as finding-like tuple for consistency
+                    because all will run through rectify_raw_container_matches()
+                    self.nf_config is needed, because we need to restart search over raw input
+                    if no proper container matches are found.
+                    """
                     config_findings.append((k, v.strip('"').strip("'"), self.nf_config, "Nextflow configs"))
 
         # rectify the container paths found in the config
@@ -748,8 +750,8 @@ class DownloadWorkflow:
         # Like above run on shallow copy, because length may change at runtime.
         module_findings = self.rectify_raw_container_matches(module_findings[:])
 
-        # Remove duplicates and sort
-        self.containers = sorted(list(set(previous_findings + config_findings + module_findings)))
+        # Again clean list, in case config declares Docker URI but module or previous finding already had the http:// download
+        self.containers = self.prioritize_direct_download(previous_findings + config_findings + module_findings)
 
     def rectify_raw_container_matches(self, raw_findings):
         """Helper function to rectify the raw extracted container matches into fully qualified container names.
@@ -880,9 +882,6 @@ class DownloadWorkflow:
             but only if it's not followed by any other curly braces (?![^{]*}). The latter ensures we capture the innermost
             variable name.
             """
-            import pdb
-
-            pdb.set_trace()
 
             container_definition = re.search(r"(?<=container)[^\${}]+\${([^{}]+)}(?![^{]*})", str(search_space))
 
@@ -909,10 +908,41 @@ class DownloadWorkflow:
                 f"[red]Cannot parse container string in '{file_path}':\n\n{textwrap.indent(container_value, '    ')}\n\n:warning: Skipping this singularity image."
             )
 
-        import pdb
+        """
+        Loop has finished, now we need to remove duplicates and prioritize direct downloads over containers pulled from the registries
+        """
+        return self.prioritize_direct_download(cleaned_matches)
 
-        pdb.set_trace()
-        return cleaned_matches
+    def prioritize_direct_download(self, container_list, d={}):
+        """
+        Helper function that takes a list of container images (URLs and Docker URIs),
+        eliminates all Docker URIs for which also a URL is contained and returns the
+        cleaned and also deduplicated list.
+
+        Conceptually, this works like so:
+
+        Everything after the last Slash should be identical, e.g. "scanpy:1.7.2--pyhdfd78af_0" in
+        ['https://depot.galaxyproject.org/singularity/scanpy:1.7.2--pyhdfd78af_0', 'biocontainers/scanpy:1.7.2--pyhdfd78af_0']
+
+
+        re.sub('.*/(.*)','\\1',c) will drop everything up to the last slash from c (container_id)
+
+        d.get(k:=re.sub('.*/(.*)','\\1',c),'') assigns the truncated string to k (key) and gets the
+        corresponding value from the dict if present or else defaults to "".
+
+        If the regex pattern matches, the original container_id will be assigned to the dict with the k key.
+        r"^$|(?!^http)" matches an empty string (we didn't have it in the dict yet and want to keep it in either case) or
+        any string that does not start with http. Because if our current dict value already starts with http,
+        we want to keep it and not replace with with whatever we have now (which might be the Docker URI).
+
+        A regex that matches http, r"^$|^http" could thus be used to prioritize the Docker URIs over http Downloads
+        """
+        for c in container_list:
+            log.info(c)
+            if re.match(r"^$|(?!^http)", d.get(k := re.sub(".*/(.*)", "\\1", c), "")):
+                log.debug(f"{c} matches and will be saved as {k}")
+                d[k] = c
+        return sorted(list(d.values()))
 
     def get_singularity_images(self, current_revision=""):
         """Loop through container names and download Singularity images"""
