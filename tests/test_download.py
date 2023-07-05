@@ -174,10 +174,68 @@ class DownloadTest(unittest.TestCase):
         assert "nfcore/methylseq:1.4" in download_obj.containers
         assert "nfcore/sarek:dev" in download_obj.containers
         assert "https://depot.galaxyproject.org/singularity/r-shinyngs:1.7.1--r42hdfd78af_1" in download_obj.containers
-        # does not yet pick up nfcore/sarekvep:dev.${params.genome}, because successfully detecting "nfcore/sarek:dev"
-        # breaks the loop already. However, this loop-breaking is needed to stop iterating over DSL2 syntax if a
-        # direct download link has been found. Unless we employ a better deduplication, support for this kind of
-        # free-style if-else switches will sadly remain insufficient.
+        # does not yet pick up nfcore/sarekvep:dev.${params.genome}, because that is no valid URL or Docker URI.
+
+    #
+    # Test for 'find_container_images' in modules
+    #
+    @with_temporary_folder
+    @mock.patch("nf_core.utils.fetch_wf_config")
+    def test_find_container_images_modules(self, tmp_path, mock_fetch_wf_config):
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
+        mock_fetch_wf_config.return_value = {}
+        download_obj.find_container_images(Path(__file__).resolve().parent / "data/mock_module_containers")
+
+        # mock_docker_single_quay_io.nf
+        assert "quay.io/biocontainers/singlequay:1.9--pyh9f0ad1d_0" in download_obj.containers
+
+        # mock_dsl2_apptainer_var1.nf (possible future convention?)
+        assert (
+            "https://depot.galaxyproject.org/singularity/dsltwoapptainervarone:1.1.0--py38h7be5676_2"
+            in download_obj.containers
+        )
+        assert "biocontainers/dsltwoapptainervarone:1.1.0--py38h7be5676_2" not in download_obj.containers
+
+        # mock_dsl2_apptainer_var2.nf (possible future convention?)
+        assert (
+            "https://depot.galaxyproject.org/singularity/dsltwoapptainervartwo:1.1.0--hdfd78af_0"
+            in download_obj.containers
+        )
+        assert "biocontainers/dsltwoapptainervartwo:1.1.0--hdfd78af_0" not in download_obj.containers
+
+        # mock_dsl2_current_inverted.nf (new implementation supports if the direct download URL is listed after Docker URI)
+        assert (
+            "https://depot.galaxyproject.org/singularity/dsltwocurrentinv:3.3.2--h1b792b2_1" in download_obj.containers
+        )
+        assert "biocontainers/dsltwocurrentinv:3.3.2--h1b792b2_1" not in download_obj.containers
+
+        # mock_dsl2_current.nf (main nf-core convention, should be the one in far the most modules)
+        assert (
+            "https://depot.galaxyproject.org/singularity/dsltwocurrent:1.2.1--pyhdfd78af_0" in download_obj.containers
+        )
+        assert "biocontainers/dsltwocurrent:1.2.1--pyhdfd78af_0" not in download_obj.containers
+
+        # mock_dsl2_old.nf (initial DSL2 convention)
+        assert "https://depot.galaxyproject.org/singularity/dsltwoold:0.23.0--0" in download_obj.containers
+        assert "quay.io/biocontainers/dsltwoold:0.23.0--0" not in download_obj.containers
+
+        # mock_dsl2_variable.nf (currently the edgiest edge case supported)
+        assert (
+            "https://depot.galaxyproject.org/singularity/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0"
+            in download_obj.containers
+        )
+        assert (
+            "https://depot.galaxyproject.org/singularity/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:afaaa4c6f5b308b4b6aa2dd8e99e1466b2a6b0cd-0"
+            in download_obj.containers
+        )
+        assert (
+            "quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0"
+            not in download_obj.containers
+        )
+        assert (
+            "quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:afaaa4c6f5b308b4b6aa2dd8e99e1466b2a6b0cd-0"
+            not in download_obj.containers
+        )
 
     #
     # Tests for 'singularity_pull_image'
