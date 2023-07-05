@@ -781,6 +781,13 @@ class DownloadWorkflow:
         """
         cleaned_matches = []
 
+        # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
+        url_regex = (
+            r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+        )
+        # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
+        docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
+
         for _, container_value, search_space, file_path in raw_findings:
             """
             Now we need to isolate all container paths (typically quoted strings) from the raw container_value
@@ -814,20 +821,15 @@ class DownloadWorkflow:
             Mostly, it is a nested DSL2 string, but it may also just be a plain string.
 
             """
-            # reset for each raw_finding
-            this_container = None
 
             # first check if container_value it is a plain container URI like in DSL1 pipelines?
-            # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
-            docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
             docker_match = re.match(docker_regex, container_value.strip(), re.S)
             if docker_match:
-                this_container = docker_match.group(0)
-                cleaned_matches.append(this_container)
-                continue  # skip further processing
+                cleaned_matches.append(docker_match.group(0))
+                continue  # skip further processing, we already have a match
 
             """
-            # no plain string, we likely need to break it up further
+            no plain string, we likely need to break it up further
 
             [^\"\'] makes sure that the outermost quote character is not matched.
             (?P<quote>(?<![\\])[\'\"]) again captures the quote character, but not if it is preceded by an escape sequence (?<![\\])
@@ -839,79 +841,77 @@ class DownloadWorkflow:
             )
 
             """
-            For later DSL2 syntax, container_value_defs should contain both, the download URL and the Docker URI.
-            By breaking the loop upon finding a download URL, we avoid duplication
-            (Container is downloaded directly as well as pulled and converted from Docker)
+            eliminate known false positives and create plain list out of the tuples returned by the regex above
+            example result:
+            ['https://depot.galaxyproject.org/singularity/scanpy:1.7.2--pyhdfd78af_0', 'biocontainers/scanpy:1.7.2--pyhdfd78af_0']
+            """
+            container_value_defs = [
+                capture for _, capture in container_value_defs[:] if not capture in ["singularity", "apptainer"]
+            ]
 
-            For earlier DSL2, both end up in different raw_findings, so a deduplication is necessary
-            when the outer loop has finished.
+            """
+            For later DSL2 syntax, container_value_defs should contain both, the download URL and the Docker URI.
+            For earlier DSL2, both end up in different raw_findings, so a subsequent deduplication is necessary anyway
+            to not pull a container that is already downloaded directly.
+
+            At this point, we just add everything that is either a URL or a Docker URI to cleaned matches.
             """
 
-            for _, capture in container_value_defs:
-                # common false positive(s)
-                if capture in ["singularity", "apptainer"]:
+            either_url_or_docker = re.compile(f"{url_regex}|{docker_regex}")
+            valid_containers = list(filter(either_url_or_docker.match, container_value_defs))
+
+            if valid_containers:
+                cleaned_matches = cleaned_matches + valid_containers
+                # Yeah, we have successfully extracted something from this raw_finding, so move on.
+                continue
+
+            """
+            Neither a plain Docker URI nor a DSL2-like definition was found. This is a tricky case, then.
+
+            Some modules declare the container as separate variable. This entails that " instead of ' is used,
+            so container_value will not contain it.
+
+            Therefore, we need to repeat the search over the raw contents, extract the variable name, and use it inside a new regex.
+            This is why the raw search_space is still needed at this level.
+
+            To get the variable name ( ${container_id} in above example ), we match the literal word "container" and use lookbehind (reset the match).
+            Then we skip [^${}]+ everything that is not $ or curly braces. The next capture group is
+            ${ followed by any characters that are not curly braces [^{}]+ and ended by a closing curly brace (}),
+            but only if it's not followed by any other curly braces (?![^{]*}). The latter ensures we capture the innermost
+            variable name.
+            """
+            import pdb
+
+            pdb.set_trace()
+
+            container_definition = re.search(r"(?<=container)[^\${}]+\${([^{}]+)}(?![^{]*})", str(search_space))
+
+            if bool(container_definition) and bool(container_definition.group(1)):
+                pattern = re.escape(container_definition.group(1))
+                # extract the quoted string(s) following the variable assignment
+                container_names = re.findall(r"%s\s*=\s*[\"\']([^\"\']+)[\"\']" % pattern, search_space)
+
+                if bool(container_names):
+                    if isinstance(container_names, str):
+                        cleaned_matches.append(f"https://depot.galaxyproject.org/singularity/{container_names}")
+
+                    elif isinstance(container_names, list):
+                        # this deliberately appends container_names[-1] twice to cleaned_matches
+                        # but deduplication is performed anyway and just setting this_container
+                        # here as well allows for an easy check to see if parsing succeeded.
+                        for container_name in container_names:
+                            cleaned_matches.append(f"https://depot.galaxyproject.org/singularity/{container_name}")
+
                     continue
 
-                # Look for a http download URL.
-                # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
-                url_regex = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
-                url_match = re.search(url_regex, capture, re.S)
-                if url_match:
-                    this_container = url_match.group(0)
-                    break  # Prioritise http, exit loop as soon as we find it
+            # all implemented options exhausted. Nothing left to be done:
+            log.error(
+                f"[red]Cannot parse container string in '{file_path}':\n\n{textwrap.indent(container_value, '    ')}\n\n:warning: Skipping this singularity image."
+            )
 
-                # No https download, is the entire container string a docker URI?
-                # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
-                docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
-                docker_match = re.match(docker_regex, capture, re.S)
-                if docker_match:
-                    this_container = docker_match.group(0)
-                    break
+        import pdb
 
-            else:
-                """
-                Some modules declare the container as separate variable. This entails that " instead of ' is used,
-                so container_value_defs will not contain it and above loop will not break.
-
-                Therefore, we need to repeat the search over the contents, extract the variable name, and use it inside a new regex.
-                This is why the raw search_space is still needed at this level.
-
-                To get the variable name ( ${container_id} in above example ), we match the literal word "container" and use lookbehind (reset the match).
-                Then we skip [^${}]+ everything that is not $ or curly braces. The next capture group is
-                ${ followed by any characters that are not curly braces [^{}]+ and ended by a closing curly brace (}),
-                but only if it's not followed by any other curly braces (?![^{]*}). The latter ensures we capture the innermost
-                variable name.
-                """
-                container_definition = re.search(r"(?<=container)[^\${}]+\${([^{}]+)}(?![^{]*})", str(search_space))
-
-                if bool(container_definition) and bool(container_definition.group(1)):
-                    pattern = re.escape(container_definition.group(1))
-                    # extract the quoted string(s) following the variable assignment
-                    container_names = re.findall(r"%s\s*=\s*[\"\']([^\"\']+)[\"\']" % pattern, search_space)
-
-                    if bool(container_names):
-                        if isinstance(container_names, str):
-                            this_container = f"https://depot.galaxyproject.org/singularity/{container_names}"
-
-                        elif isinstance(container_names, list):
-                            # this deliberately appends container_names[-1] twice to cleaned_matches
-                            # but deduplication is performed anyway and just setting this_container
-                            # here as well allows for an easy check to see if parsing succeeded.
-                            for container_name in container_names:
-                                this_container = f"https://depot.galaxyproject.org/singularity/{container_name}"
-                                cleaned_matches.append(this_container)
-                        else:
-                            # didn't find valid container declaration, but parsing succeeded.
-                            this_container = None
-
-            # If we have a this_container, parsing succeeded.
-            if this_container:
-                cleaned_matches.append(this_container)
-            else:
-                log.error(
-                    f"[red]Cannot parse container string in '{file_path}':\n\n{textwrap.indent(container_value, '    ')}\n\n:warning: Skipping this singularity image."
-                )
-
+        pdb.set_trace()
         return cleaned_matches
 
     def get_singularity_images(self, current_revision=""):
