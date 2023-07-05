@@ -30,7 +30,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core": [
         {
             "name": "Commands for users",
-            "commands": ["list", "launch", "params-template", "download", "licences"],
+            "commands": ["list", "launch", "create-params-file", "download", "licences"],
         },
         {
             "name": "Commands for developers",
@@ -222,7 +222,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
         sys.exit(1)
 
 
-# nf-core params-template
+# nf-core create-params-file
 @nf_core_cli.command()
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
 @click.option("-r", "--revision", help="Release/branch/SHA of the pipeline (if remote)")
