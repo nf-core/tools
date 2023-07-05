@@ -790,6 +790,9 @@ class DownloadWorkflow:
         # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
         docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
 
+        # at this point, we don't have to distinguish anymore, because we will later prioritize direct downloads over Docker URIs.
+        either_url_or_docker = re.compile(f"{url_regex}|{docker_regex}", re.S)
+
         for _, container_value, search_space, file_path in raw_findings:
             """
             Now we need to isolate all container paths (typically quoted strings) from the raw container_value
@@ -822,13 +825,15 @@ class DownloadWorkflow:
 
             Mostly, it is a nested DSL2 string, but it may also just be a plain string.
 
-            """
 
-            # first check if container_value it is a plain container URI like in DSL1 pipelines?
-            docker_match = re.match(docker_regex, container_value.strip(), re.S)
-            if docker_match:
-                cleaned_matches.append(docker_match.group(0))
-                continue  # skip further processing, we already have a match
+            First check if container_value it is a plain container URI like in DSL1 pipelines
+            or a plain URL like in the old DSL2 convention
+
+            """
+            direct_match = re.match(either_url_or_docker, container_value.strip())
+            if direct_match:
+                cleaned_matches.append(direct_match.group(0))
+                continue  # oh yes, that was plain sailing
 
             """
             no plain string, we likely need to break it up further
@@ -859,7 +864,6 @@ class DownloadWorkflow:
             At this point, we just add everything that is either a URL or a Docker URI to cleaned matches.
             """
 
-            either_url_or_docker = re.compile(f"{url_regex}|{docker_regex}")
             valid_containers = list(filter(either_url_or_docker.match, container_value_defs))
 
             if valid_containers:
