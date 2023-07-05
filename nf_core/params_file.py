@@ -90,7 +90,7 @@ class ParamsFileBuilder:
         pipeline=None,
         revision=None,
     ):
-        """Initialise the ParamFileTemplateBuilder class
+        """Initialise the ParamFileBuilder class
 
         Args:
             pipeline (str, optional): Path to a local pipeline path or a remote pipeline.
@@ -212,7 +212,7 @@ class ParamsFileBuilder:
 
         return out
 
-    def generate_template_file(self, show_hidden=False):
+    def generate_params_file(self, show_hidden=False):
         """Generate the contents of a parameter template file.
 
         Assumes the pipeline has been fetched (if remote) and the schema loaded.
@@ -265,7 +265,7 @@ class ParamsFileBuilder:
             log.info("Please fix this file, then try again.")
             return False
 
-        schema_out = self.generate_template_file(show_hidden=show_hidden)
+        schema_out = self.generate_params_file(show_hidden=show_hidden)
 
         if os.path.exists(output_fn) and not force:
             log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")

@@ -252,7 +252,7 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     """
     builder = ParamsFileBuilder(pipeline, revision)
 
-    if not builder.write_template(output, show_hidden=show_hidden, force=force):
+    if not builder.write_params_file(output, show_hidden=show_hidden, force=force):
         sys.exit(1)
 
 
