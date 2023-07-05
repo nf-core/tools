@@ -4,6 +4,8 @@
 
 ### Template
 
+### Download
+- Improved container image resolution and prioritization of http downloads over Docker URIs.
 ### Linting
 
 ### Modules

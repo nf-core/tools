@@ -693,7 +693,7 @@ class DownloadWorkflow:
 
                 # for DSL2 syntax in process scope of configs
                 config_regex = re.compile(
-                    r"[\s{}=$]*(?P<quote>(?<![\\])[\'\"])(?P<param>(?:.(?!(?<![\\])\1))*.?)\1[\s}]*"
+                    r"[\\s{}=$]*(?P<quote>(?<![\\])[\'\"])(?P<param>(?:.(?!(?<![\\])\1))*.?)\1[\\s}]*"
                 )
                 config_findings_dsl2 = re.findall(config_regex, v)
 
@@ -724,18 +724,18 @@ class DownloadWorkflow:
                         search_space = fh.read()
                         """
                         Figure out which quotes were used and match everything until the closing quote.
-                        Since the other quote typically appears inside, a simple r"container\s*[\"\']([^\"\']*)[\"\']" unfortunately abridges the matches.
+                        Since the other quote typically appears inside, a simple r"container\\s*[\"\']([^\"\']*)[\"\']" unfortunately abridges the matches.
 
-                        container\s+[\s{}$=]* matches the literal word "container" followed by whitespace, brackets, equal or variable names.
+                        container\\s+[\\s{}$=]* matches the literal word "container" followed by whitespace, brackets, equal or variable names.
                         (?P<quote>[\'\"]) The quote character is captured into the quote group \1.
                         The pattern (?:.(?!\1))*.? is used to match any character (.) not followed by the closing quote character (?!\1).
                         This capture happens greedy *, but we add a .? to ensure that we don't match the whole file until the last occurrence
                         of the closing quote character, but rather stop at the first occurrence. \1 inserts the matched quote character into the regex, either " or '.
-                        It may be followed by whitespace or closing bracket [\s}]*
+                        It may be followed by whitespace or closing bracket [\\s}]*
                         re.DOTALL is used to account for the string to be spread out across multiple lines.
                         """
                         container_regex = re.compile(
-                            r"container\s+[\s{}=$]*(?P<quote>[\'\"])(?P<param>(?:.(?!\1))*.?)\1[\s}]*", re.DOTALL
+                            r"container\s+[\\s{}=$]*(?P<quote>[\'\"])(?P<param>(?:.(?!\1))*.?)\1[\\s}]*", re.DOTALL
                         )
 
                         local_module_findings = re.findall(container_regex, search_space)
