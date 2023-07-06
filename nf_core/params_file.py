@@ -225,11 +225,12 @@ class ParamsFileBuilder:
         """
         schema = self.schema_obj.schema
         pipeline_name = self.schema_obj.pipeline_manifest.get("name", self.pipeline)
+        pipeline_version = self.schema_obj.pipeline_manifest.get("version", "0.0.0")
 
         # Build the header section
         out = ""
 
-        out += _print_wrapped(pipeline_name, "~", mode="both", indent=4)
+        out += _print_wrapped(f"{pipeline_name} {pipeline_version}", "~", mode="both", indent=4)
         out += _print_wrapped(INTRO.format(pipeline_name=pipeline_name), " ", mode="none", indent=4)
         out += _print_wrapped("\n", " ", mode="none", indent=4, drop_whitespace=False)
         out += _print_wrapped(USAGE, "-", mode="end", indent=4)
