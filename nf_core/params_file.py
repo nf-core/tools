@@ -242,7 +242,7 @@ class ParamsFileBuilder:
 
         return out
 
-    def write_template(self, output_fn="nf-params.yaml", show_hidden=False, force=False):
+    def write_params_file(self, output_fn="nf-params.yaml", show_hidden=False, force=False):
         """Build a template file for the pipeline schema.
 
         Args:
