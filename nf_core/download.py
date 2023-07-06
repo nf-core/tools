@@ -917,7 +917,7 @@ class DownloadWorkflow:
         """
         return self.prioritize_direct_download(cleaned_matches)
 
-    def prioritize_direct_download(self, container_list, d={}):
+    def prioritize_direct_download(self, container_list):
         """
         Helper function that takes a list of container images (URLs and Docker URIs),
         eliminates all Docker URIs for which also a URL is contained and returns the
@@ -941,6 +941,7 @@ class DownloadWorkflow:
 
         A regex that matches http, r"^$|^http" could thus be used to prioritize the Docker URIs over http Downloads
         """
+        d = {}
         for c in container_list:
             log.info(c)
             if re.match(r"^$|(?!^http)", d.get(k := re.sub(".*/(.*)", "\\1", c), "")):
