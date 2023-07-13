@@ -4,7 +4,7 @@
 
 ### Template
 
-- Remove pipeline version from `multiqc_config.yml`links and adapt linting accordingly ([]())
+- Fix links in `multiqc_config.yml` ([#2372](https://github.com/nf-core/tools/pull/2372))
 
 ### Linting
 
