@@ -4,6 +4,8 @@
 
 ### Template
 
+- Remove pipeline version from `multiqc_config.yml`links and adapt linting accordingly ([]())
+
 ### Linting
 
 ### Modules
