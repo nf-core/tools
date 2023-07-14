@@ -826,7 +826,7 @@ class DownloadWorkflow:
             Mostly, it is a nested DSL2 string, but it may also just be a plain string.
 
 
-            First check if container_value it is a plain container URI like in DSL1 pipelines
+            First, check if container_value is a plain container URI like in DSL1 pipelines
             or a plain URL like in the old DSL2 convention
 
             """
@@ -943,7 +943,6 @@ class DownloadWorkflow:
         """
         d = {}
         for c in container_list:
-            log.info(c)
             if re.match(r"^$|(?!^http)", d.get(k := re.sub(".*/(.*)", "\\1", c), "")):
                 log.debug(f"{c} matches and will be saved as {k}")
                 d[k] = c
