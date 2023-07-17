@@ -4,7 +4,7 @@
 
 ### Template
 
-- Remove default false from nextflow_schema.json ([#2375](https://github.com/nf-core/tools/pull/2375))
+- Remove default false from nextflow_schema.json ([#2376](https://github.com/nf-core/tools/pull/2376))
 
 ### Download
 
