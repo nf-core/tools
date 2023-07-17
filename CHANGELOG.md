@@ -4,6 +4,8 @@
 
 ### Template
 
+- Remove default false from nextflow_schema.json ([#2375](https://github.com/nf-core/tools/pull/2375))
+
 ### Download
 
 - Improved container image resolution and prioritization of http downloads over Docker URIs ([#2364](https://github.com/nf-core/tools/pull/2364)).
