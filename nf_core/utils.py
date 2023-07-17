@@ -733,6 +733,7 @@ def get_biocontainer_tag(package, version):
                 # Obtain common builds from Docker and Singularity images
                 common_keys = list(all_docker.keys() & all_singularity.keys())
                 current_date = None
+                docker_image_name = docker_image["image_name"] if docker_image is not None else None
                 for k in common_keys:
                     # Get the most recent common image
                     date = max(all_docker[k]["date"], all_docker[k]["date"])
