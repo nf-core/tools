@@ -4,6 +4,10 @@
 
 ### Template
 
+### Download
+
+- Improved container image resolution and prioritization of http downloads over Docker URIs ([#2364](https://github.com/nf-core/tools/pull/2364)).
+
 ### Linting
 
 ### Modules
