@@ -12,6 +12,8 @@
 
 ### General
 
+- Initialise `docker_image_name` to fix `UnboundLocalError` error ([#2374](https://github.com/nf-core/tools/pull/2374))
+
 # [v2.9 - Chromium Falcon](https://github.com/nf-core/tools/releases/tag/2.9) + [2023-06-29]
 
 ### Template
