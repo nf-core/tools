@@ -51,8 +51,8 @@ def bump_pipeline_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                "/dev/",
-                f"/{multiqc_new_version}/",
+                "/dev",
+                f"/{multiqc_new_version}",
             ),
             (
                 rf"{re.escape(current_version)}",
