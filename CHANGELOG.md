@@ -5,6 +5,12 @@
 ### Template
 
 - Fix links in `multiqc_config.yml` ([#2372](https://github.com/nf-core/tools/pull/2372))
+- Remove default false from nextflow_schema.json ([#2376](https://github.com/nf-core/tools/pull/2376))
+- Add module MULTIQC to modules.config ([#2377](https://github.com/nf-core/tools/pull/2377))
+
+### Download
+
+- Improved container image resolution and prioritization of http downloads over Docker URIs ([#2364](https://github.com/nf-core/tools/pull/2364)).
 
 ### Linting
 
@@ -13,6 +19,8 @@
 ### Subworkflows
 
 ### General
+
+- Fix prompt pipeline revision during launch ([#2375](https://github.com/nf-core/tools/pull/2375))
 
 # [v2.9 - Chromium Falcon](https://github.com/nf-core/tools/releases/tag/2.9) + [2023-06-29]
 
