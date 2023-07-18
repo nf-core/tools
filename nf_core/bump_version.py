@@ -45,14 +45,19 @@ def bump_pipeline_version(pipeline_obj, new_version):
         ],
     )
     # multiqc_config.yaml
+    multiqc_new_version = "dev" if "dev" in new_version else new_version
     update_file_version(
         Path("assets", "multiqc_config.yml"),
         pipeline_obj,
         [
             (
+                "/dev/",
+                f"/{multiqc_new_version}/",
+            ),
+            (
                 rf"{re.escape(current_version)}",
-                f"{new_version}",
-            )
+                f"{multiqc_new_version}",
+            ),
         ],
     )
 
