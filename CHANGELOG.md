@@ -4,6 +4,7 @@
 
 ### Template
 
+- Remove default false from nextflow_schema.json ([#2376](https://github.com/nf-core/tools/pull/2376))
 - Add module MULTIQC to modules.config ([#2377](https://github.com/nf-core/tools/pull/2377))
 
 ### Download
