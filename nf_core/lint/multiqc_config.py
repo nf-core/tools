@@ -72,6 +72,7 @@ def multiqc_config(self):
         # Check that the minimum plugins exist and are coming first in the summary
         try:
             version = self.nf_config.get("manifest.version", "").strip(" '\"")
+            version = "dev" if "dev" in version else version
             if "report_comment" not in mqc_yml:
                 raise AssertionError()
             if mqc_yml["report_comment"].strip() != (
