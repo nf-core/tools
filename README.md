@@ -20,6 +20,7 @@ A python package with helper tools for the nf-core community.
 - [`nf-core` tools update](#update-tools)
 - [`nf-core list` - List available pipelines](#listing-pipelines)
 - [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
+- [`nf-core create-params-file` - Create a parameter file](#create-a-parameter-file)
 - [`nf-core download` - Download a pipeline for offline use](#downloading-pipelines-for-offline-use)
 - [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
 - [`nf-core create` - Create a new pipeline with the nf-core template](#creating-a-new-pipeline)
@@ -310,6 +311,22 @@ Do you want to run this command now?  [y/n]:
   - This option forces the wizard to show all parameters, including those labelled as 'hidden'.
 - `--url`
   - Change the URL used for the graphical interface, useful for development work on the website.
+
+## Create a parameter file
+
+Sometimes it is easier to manually edit a parameter file than to use the web interface or interactive commandline wizard
+provided by `nf-core launch`, for example when running a pipeline with many options on a remote server without a graphical interface.
+
+You can create a parameter file with all parameters of a pipeline with the `nf-core create-params-file` command.
+This file can then be passed to `nextflow` with the `-params-file` flag.
+
+This command takes one argument - either the name of a nf-core pipeline which will be pulled automatically,
+or the path to a directory containing a Nextflow pipeline _(can be any pipeline, doesn't have to be nf-core)_.
+
+The generated YAML file contains all parameters set to the pipeline default value along with their description in comments.
+This template can then be used by uncommenting and modifying the value of parameters you want to pass to a pipline run.
+
+Hidden options are not included by default, but can be included using the `-x`/`--show-hidden` flag.
 
 ## Downloading pipelines for offline use
 

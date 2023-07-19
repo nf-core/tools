@@ -13,6 +13,7 @@ import rich_click as click
 from nf_core import __version__
 from nf_core.download import DownloadError
 from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE
+from nf_core.params_file import ParamsFileBuilder
 from nf_core.utils import check_if_outdated, rich_force_colors, setup_nfcore_dir
 
 # Set up logging as the root logger
@@ -29,7 +30,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core": [
         {
             "name": "Commands for users",
-            "commands": ["list", "launch", "download", "licences"],
+            "commands": ["list", "launch", "create-params-file", "download", "licences"],
         },
         {
             "name": "Commands for developers",
@@ -218,6 +219,40 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 
     launcher = Launch(pipeline, revision, command_only, params_in, params_out, save_all, show_hidden, url, id)
     if not launcher.launch_pipeline():
+        sys.exit(1)
+
+
+# nf-core create-params-file
+@nf_core_cli.command()
+@click.argument("pipeline", required=False, metavar="<pipeline name>")
+@click.option("-r", "--revision", help="Release/branch/SHA of the pipeline (if remote)")
+@click.option(
+    "-o",
+    "--output",
+    type=str,
+    default="nf-params.yml",
+    metavar="<filename>",
+    help="Output filename. Defaults to `nf-params.yml`.",
+)
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
+@click.option(
+    "-x", "--show-hidden", is_flag=True, default=False, help="Show hidden params which don't normally need changing"
+)
+def create_params_file(pipeline, revision, output, force, show_hidden):
+    """
+    Build a parameter file for a pipeline.
+
+    Uses the pipeline schema file to generate a YAML parameters file.
+    Parameters are set to the pipeline defaults and descriptions are shown in comments.
+    After the output file is generated, it can then be edited as needed before
+    passing to nextflow using the `-params-file` option.
+
+    Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
+    a local pipeline directory.
+    """
+    builder = ParamsFileBuilder(pipeline, revision)
+
+    if not builder.write_params_file(output, show_hidden=show_hidden, force=force):
         sys.exit(1)
 
 
