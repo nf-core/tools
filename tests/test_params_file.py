@@ -45,7 +45,7 @@ class TestParamsFileBuilder:
 
     def test_build_template(self):
         outfile = os.path.join(self.tmp_dir, "params-file.yml")
-        self.params_template_builder.write_template(outfile)
+        self.params_template_builder.write_params_file(outfile)
 
         assert os.path.exists(outfile)
 
@@ -58,7 +58,7 @@ class TestParamsFileBuilder:
         """Build a schema from a template"""
         outfile = os.path.join(self.tmp_dir, "params-file-invalid.yml")
         builder = ParamsFileBuilder(self.invalid_template_schema)
-        res = builder.write_template(outfile)
+        res = builder.write_params_file(outfile)
 
         assert res is False
         assert "Pipeline schema file is invalid" in caplog.text
@@ -71,7 +71,7 @@ class TestParamsFileBuilder:
         with open(outfile, "w") as fp:
             pass
 
-        res = self.params_template_builder.write_template(outfile)
+        res = self.params_template_builder.write_params_file(outfile)
 
         assert res is False
         assert f"File '{outfile}' exists!" in caplog.text
