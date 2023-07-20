@@ -14,6 +14,8 @@
 
 ### Linting
 
+- Add new command `nf-core subworkflows lint` ([]())
+
 ### Modules
 
 ### Subworkflows

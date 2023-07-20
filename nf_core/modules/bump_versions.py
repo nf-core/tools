@@ -83,7 +83,7 @@ class ModuleVersionBumper(ComponentCommand):
             else:
                 module = questionary.autocomplete(
                     "Tool name:",
-                    choices=[m.module_name for m in nfcore_modules],
+                    choices=[m.component_name for m in nfcore_modules],
                     style=nf_core.utils.nfcore_question_style,
                 ).unsafe_ask()
 
@@ -93,7 +93,7 @@ class ModuleVersionBumper(ComponentCommand):
                 raise nf_core.modules.modules_utils.ModuleException(
                     "You cannot specify a tool and request all tools to be bumped."
                 )
-            nfcore_modules = [m for m in nfcore_modules if m.module_name == module]
+            nfcore_modules = [m for m in nfcore_modules if m.component_name == module]
             if len(nfcore_modules) == 0:
                 raise nf_core.modules.modules_utils.ModuleException(f"Could not find the specified module: '{module}'")
 
@@ -106,20 +106,22 @@ class ModuleVersionBumper(ComponentCommand):
         )
         with progress_bar:
             bump_progress = progress_bar.add_task(
-                "Bumping nf-core modules versions", total=len(nfcore_modules), test_name=nfcore_modules[0].module_name
+                "Bumping nf-core modules versions",
+                total=len(nfcore_modules),
+                test_name=nfcore_modules[0].component_name,
             )
             for mod in nfcore_modules:
-                progress_bar.update(bump_progress, advance=1, test_name=mod.module_name)
+                progress_bar.update(bump_progress, advance=1, test_name=mod.component_name)
                 self.bump_module_version(mod)
 
         self._print_results()
 
     def bump_module_version(self, module):
         """
-        Bump the bioconda and container version of a single NFCoreModule
+        Bump the bioconda and container version of a single NFCoreComponent
 
         Args:
-            module: NFCoreModule
+            module: NFCoreComponent
         """
         config_version = None
         # Extract bioconda version from `main.nf`
@@ -127,15 +129,15 @@ class ModuleVersionBumper(ComponentCommand):
 
         # If multiple versions - don't update! (can't update mulled containers)
         if not bioconda_packages or len(bioconda_packages) > 1:
-            self.failed.append(("Ignoring mulled container", module.module_name))
+            self.failed.append(("Ignoring mulled container", module.component_name))
             return False
 
         # Don't update if blocked in blacklist
         self.bump_versions_config = self.tools_config.get("bump-versions", {})
-        if module.module_name in self.bump_versions_config:
-            config_version = self.bump_versions_config[module.module_name]
+        if module.component_name in self.bump_versions_config:
+            config_version = self.bump_versions_config[module.component_name]
             if not config_version:
-                self.ignored.append(("Omitting module due to config.", module.module_name))
+                self.ignored.append(("Omitting module due to config.", module.component_name))
                 return False
 
         # check for correct version and newer versions
@@ -148,12 +150,12 @@ class ModuleVersionBumper(ComponentCommand):
             try:
                 response = nf_core.utils.anaconda_package(bp)
             except (LookupError, ValueError):
-                self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
+                self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.component_name))
                 return False
 
             # Check that required version is available at all
             if bioconda_version not in response.get("versions"):
-                self.failed.append((f"Conda package had unknown version: `{module.main_nf}`", module.module_name))
+                self.failed.append((f"Conda package had unknown version: `{module.main_nf}`", module.component_name))
                 return False
 
             # Check version is latest available
@@ -162,12 +164,12 @@ class ModuleVersionBumper(ComponentCommand):
             last_ver = config_version
 
         if last_ver is not None and last_ver != bioconda_version:
-            log.debug(f"Updating version for {module.module_name}")
+            log.debug(f"Updating version for {module.component_name}")
             # Get docker and singularity container links
             try:
                 docker_img, singularity_img = nf_core.utils.get_biocontainer_tag(bioconda_tool_name, last_ver)
             except LookupError as e:
-                self.failed.append((f"Could not download container tags: {e}", module.module_name))
+                self.failed.append((f"Could not download container tags: {e}", module.component_name))
                 return False
 
             patterns = [
@@ -203,7 +205,7 @@ class ModuleVersionBumper(ComponentCommand):
                     content = "\n".join(newcontent) + "\n"
                 else:
                     self.failed.append(
-                        (f"Did not find pattern {pattern[0]} in module {module.module_name}", module.module_name)
+                        (f"Did not find pattern {pattern[0]} in module {module.component_name}", module.component_name)
                     )
                     return False
 
@@ -214,13 +216,13 @@ class ModuleVersionBumper(ComponentCommand):
             self.updated.append(
                 (
                     f"Module updated:  {bioconda_version} --> {last_ver}",
-                    module.module_name,
+                    module.component_name,
                 )
             )
             return True
 
         else:
-            self.up_to_date.append((f"Module version up to date: {module.module_name}", module.module_name))
+            self.up_to_date.append((f"Module version up to date: {module.component_name}", module.component_name))
             return True
 
     def get_bioconda_version(self, module):
@@ -235,7 +237,7 @@ class ModuleVersionBumper(ComponentCommand):
                     if "bioconda::" in l:
                         bioconda_packages = [b for b in l.split() if "bioconda::" in b]
         except FileNotFoundError:
-            log.error(f"Could not read `main.nf` of {module.module_name} module.")
+            log.error(f"Could not read `main.nf` of {module.component_name} module.")
 
         return bioconda_packages
 

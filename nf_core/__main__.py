@@ -912,8 +912,8 @@ def lint(
     Test modules within a pipeline or a clone of the
     nf-core/modules repository.
     """
+    from nf_core.components.lint import LintException
     from nf_core.modules import ModuleLint
-    from nf_core.modules.lint import ModuleLintException
 
     try:
         module_lint = ModuleLint(
@@ -938,7 +938,7 @@ def lint(
         )
         if len(module_lint.failed) > 0:
             sys.exit(1)
-    except ModuleLintException as e:
+    except LintException as e:
         log.error(e)
         sys.exit(1)
     except (UserWarning, LookupError) as e:

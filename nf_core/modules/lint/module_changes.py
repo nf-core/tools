@@ -27,10 +27,14 @@ def module_changes(module_lint_object, module):
         # the patch in reverse before comparing with the remote
         tempdir_parent = Path(tempfile.mkdtemp())
         tempdir = tempdir_parent / "tmp_module_dir"
-        shutil.copytree(module.module_dir, tempdir)
+        shutil.copytree(module.component_dir, tempdir)
         try:
             new_lines = ModulesDiffer.try_apply_patch(
-                module.module_name, module_lint_object.modules_repo.repo_path, module.patch_path, tempdir, reverse=True
+                module.component_name,
+                module_lint_object.modules_repo.repo_path,
+                module.patch_path,
+                tempdir,
+                reverse=True,
             )
             for file, lines in new_lines.items():
                 with open(tempdir / file, "w") as fh:
@@ -39,19 +43,19 @@ def module_changes(module_lint_object, module):
             # This error is already reported by module_patch, so just return
             return
     else:
-        tempdir = module.module_dir
+        tempdir = module.component_dir
     module.branch = module_lint_object.modules_json.get_component_branch(
-        "modules", module.module_name, module.repo_url, module.org
+        "modules", module.component_name, module.repo_url, module.org
     )
     modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=module.repo_url, branch=module.branch)
 
-    for f, same in modules_repo.module_files_identical(module.module_name, tempdir, module.git_sha).items():
+    for f, same in modules_repo.module_files_identical(module.component_name, tempdir, module.git_sha).items():
         if same:
             module.passed.append(
                 (
                     "check_local_copy",
                     "Local copy of module up to date",
-                    f"{Path(module.module_dir, f)}",
+                    f"{Path(module.component_dir, f)}",
                 )
             )
         else:
@@ -59,6 +63,6 @@ def module_changes(module_lint_object, module):
                 (
                     "check_local_copy",
                     "Local copy of module does not match remote",
-                    f"{Path(module.module_dir, f)}",
+                    f"{Path(module.component_dir, f)}",
                 )
             )

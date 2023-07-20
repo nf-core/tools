@@ -38,7 +38,7 @@ def module_tests(_, module):
         pytest_yml_path = os.path.join(module.base_dir, "tests", "config", "pytest_modules.yml")
         with open(pytest_yml_path, "r") as fh:
             pytest_yml = yaml.safe_load(fh)
-            if module.module_name in pytest_yml.keys():
+            if module.component_name in pytest_yml.keys():
                 module.passed.append(("test_pytest_yml", "correct entry in pytest_modules.yml", pytest_yml_path))
             else:
                 module.failed.append(("test_pytest_yml", "missing entry in pytest_modules.yml", pytest_yml_path))
@@ -55,7 +55,7 @@ def module_tests(_, module):
             all_tags_correct = True
             for test in test_yml:
                 for tag in test["tags"]:
-                    if not tag in [module.module_name, module.module_name.split("/")[0]]:
+                    if not tag in [module.component_name, module.component_name.split("/")[0]]:
                         all_tags_correct = False
 
                 # Look for md5sums of empty files

@@ -20,33 +20,16 @@ from rich.table import Table
 
 import nf_core.modules.modules_utils
 import nf_core.utils
-from nf_core.components.components_command import ComponentCommand
+from nf_core.components.lint import ComponentLint, LintException, LintResult
+from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.lint_utils import console
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.nfcore_module import NFCoreModule
 from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
 
 
-class ModuleLintException(Exception):
-    """Exception raised when there was an error with module linting"""
-
-    pass
-
-
-class LintResult:
-    """An object to hold the results of a lint test"""
-
-    def __init__(self, mod, lint_test, message, file_path):
-        self.mod = mod
-        self.lint_test = lint_test
-        self.message = message
-        self.file_path = file_path
-        self.module_name = mod.module_name
-
-
-class ModuleLint(ComponentCommand):
+class ModuleLint(ComponentLint):
     """
     An object for linting modules either in a clone of the 'nf-core/modules'
     repository or in any nf-core pipeline directory
@@ -73,85 +56,14 @@ class ModuleLint(ComponentCommand):
         hide_progress=False,
     ):
         super().__init__(
-            "modules",
+            component_type="modules",
             dir=dir,
+            fail_warned=fail_warned,
             remote_url=remote_url,
             branch=branch,
             no_pull=no_pull,
             hide_progress=hide_progress,
         )
-
-        self.fail_warned = fail_warned
-        self.passed = []
-        self.warned = []
-        self.failed = []
-        self.lint_tests = self.get_all_lint_tests(self.repo_type == "pipeline")
-
-        if self.repo_type == "pipeline":
-            modules_json = ModulesJson(self.dir)
-            modules_json.check_up_to_date()
-            self.all_remote_modules = []
-            for repo_url, components in modules_json.get_all_components(self.component_type).items():
-                if remote_url is not None and remote_url != repo_url:
-                    continue
-                for org, comp in components:
-                    self.all_remote_modules.append(
-                        NFCoreModule(
-                            comp,
-                            repo_url,
-                            Path(self.dir, self.component_type, org, comp),
-                            self.repo_type,
-                            Path(self.dir),
-                        )
-                    )
-            if not self.all_remote_modules:
-                raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
-            local_module_dir = Path(self.dir, "modules", "local")
-            self.all_local_modules = []
-            if local_module_dir.exists():
-                self.all_local_modules = [
-                    NFCoreModule(
-                        m, None, Path(local_module_dir, m), self.repo_type, Path(self.dir), remote_module=False
-                    )
-                    for m in self.get_local_components()
-                ]
-            self.config = nf_core.utils.fetch_wf_config(self.dir, cache_config=True)
-        else:
-            module_dir = Path(self.dir, self.default_modules_path)
-            self.all_remote_modules = [
-                NFCoreModule(m, None, module_dir / m, self.repo_type, Path(self.dir))
-                for m in self.get_components_clone_modules()
-            ]
-            self.all_local_modules = []
-            if not self.all_remote_modules:
-                raise LookupError("No modules in 'modules' directory")
-
-            # This could be better, perhaps glob for all nextflow.config files in?
-            self.config = nf_core.utils.fetch_wf_config(Path(self.dir).joinpath("tests", "config"), cache_config=True)
-
-        if registry is None:
-            self.registry = self.config.get("docker.registry", "quay.io")
-        else:
-            self.registry = registry
-        log.debug(f"Registry set to {self.registry}")
-
-        self.lint_config = None
-        self.modules_json = None
-
-    @staticmethod
-    def get_all_lint_tests(is_pipeline):
-        if is_pipeline:
-            return [
-                "module_patch",
-                "module_version",
-                "main_nf",
-                "meta_yml",
-                "module_todos",
-                "module_deprecations",
-                "module_changes",
-            ]
-        else:
-            return ["main_nf", "meta_yml", "module_todos", "module_deprecations", "module_tests"]
 
     def lint(
         self,
@@ -202,7 +114,7 @@ class ModuleLint(ComponentCommand):
                     "name": "tool_name",
                     "message": "Tool name:",
                     "when": lambda x: x["all_modules"] == "Named module",
-                    "choices": [m.module_name for m in self.all_remote_modules],
+                    "choices": [m.component_name for m in self.all_remote_components],
                 },
             ]
             answers = questionary.unsafe_prompt(questions, style=nf_core.utils.nfcore_question_style)
@@ -212,14 +124,14 @@ class ModuleLint(ComponentCommand):
         # Only lint the given module
         if module:
             if all_modules:
-                raise ModuleLintException("You cannot specify a tool and request all tools to be linted.")
+                raise LintException("You cannot specify a tool and request all tools to be linted.")
             local_modules = []
-            remote_modules = [m for m in self.all_remote_modules if m.module_name == module]
+            remote_modules = [m for m in self.all_remote_components if m.component_name == module]
             if len(remote_modules) == 0:
-                raise ModuleLintException(f"Could not find the specified module: '{module}'")
+                raise LintException(f"Could not find the specified module: '{module}'")
         else:
-            local_modules = self.all_local_modules
-            remote_modules = self.all_remote_modules
+            local_modules = self.all_local_components
+            remote_modules = self.all_remote_components
 
         if self.repo_type == "modules":
             log.info(f"Linting modules repo: [magenta]'{self.dir}'")
@@ -249,39 +161,12 @@ class ModuleLint(ComponentCommand):
             self._print_results(show_passed=show_passed, sort_by=sort_by)
             self.print_summary()
 
-    def set_up_pipeline_files(self):
-        self.load_lint_config()
-        self.modules_json = ModulesJson(self.dir)
-        self.modules_json.load()
-
-        # Only continue if a lint config has been loaded
-        if self.lint_config:
-            for test_name in self.lint_tests:
-                if self.lint_config.get(test_name, {}) is False:
-                    log.info(f"Ignoring lint test: {test_name}")
-                    self.lint_tests.remove(test_name)
-
-    def filter_tests_by_key(self, key):
-        """Filters the tests by the supplied key"""
-        # Check that supplied test keys exist
-        bad_keys = [k for k in key if k not in self.lint_tests]
-        if len(bad_keys) > 0:
-            raise AssertionError(
-                "Test name{} not recognised: '{}'".format(
-                    _s(bad_keys),
-                    "', '".join(bad_keys),
-                )
-            )
-
-        # If -k supplied, only run these tests
-        self.lint_tests = [k for k in self.lint_tests if k in key]
-
     def lint_modules(self, modules, registry="quay.io", local=False, fix_version=False):
         """
         Lint a list of modules
 
         Args:
-            modules ([NFCoreModule]): A list of module objects
+            modules ([NFCoreComponent]): A list of module objects
             registry (str): The container registry to use. Should be quay.io in most situations.
             local (boolean): Whether the list consist of local or nf-core modules
             fix_version (boolean): Fix the module version if a newer version is available
@@ -298,11 +183,11 @@ class ModuleLint(ComponentCommand):
             lint_progress = progress_bar.add_task(
                 f"Linting {'local' if local else 'nf-core'} modules",
                 total=len(modules),
-                test_name=modules[0].module_name,
+                test_name=modules[0].component_name,
             )
 
             for mod in modules:
-                progress_bar.update(lint_progress, advance=1, test_name=mod.module_name)
+                progress_bar.update(lint_progress, advance=1, test_name=mod.component_name)
                 self.lint_module(mod, progress_bar, registry=registry, local=local, fix_version=fix_version)
 
     def lint_module(self, mod, progress_bar, registry, local=False, fix_version=False):
@@ -348,118 +233,3 @@ class ModuleLint(ComponentCommand):
                 self.failed += warned
 
             self.failed += [LintResult(mod, *m) for m in mod.failed]
-
-    def _print_results(self, show_passed=False, sort_by="test"):
-        """Print linting results to the command line.
-
-        Uses the ``rich`` library to print a set of formatted tables to the command line
-        summarising the linting results.
-        """
-
-        log.debug("Printing final results")
-
-        sort_order = ["lint_test", "module_name", "message"]
-        if sort_by == "module":
-            sort_order = ["module_name", "lint_test", "message"]
-
-        # Sort the results
-        self.passed.sort(key=operator.attrgetter(*sort_order))
-        self.warned.sort(key=operator.attrgetter(*sort_order))
-        self.failed.sort(key=operator.attrgetter(*sort_order))
-
-        # Find maximum module name length
-        max_mod_name_len = 40
-        for tests in [self.passed, self.warned, self.failed]:
-            try:
-                for lint_result in tests:
-                    max_mod_name_len = max(len(lint_result.module_name), max_mod_name_len)
-            except:
-                pass
-
-        # Helper function to format test links nicely
-        def format_result(test_results, table):
-            """
-            Given an list of error message IDs and the message texts, return a nicely formatted
-            string for the terminal with appropriate ASCII colours.
-            """
-            # TODO: Row styles don't work current as table-level style overrides.
-            # I'd like to make an issue about this on the rich repo so leaving here in case there is a future fix
-            last_modname = False
-            even_row = False
-            for lint_result in test_results:
-                if last_modname and lint_result.module_name != last_modname:
-                    even_row = not even_row
-                last_modname = lint_result.module_name
-                table.add_row(
-                    Markdown(f"{lint_result.module_name}"),
-                    os.path.relpath(lint_result.file_path, self.dir),
-                    Markdown(f"{lint_result.message}"),
-                    style="dim" if even_row else None,
-                )
-            return table
-
-        # Print blank line for spacing
-        console.print("")
-
-        # Table of passed tests
-        if len(self.passed) > 0 and show_passed:
-            table = Table(style="green", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
-            table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("File path")
-            table.add_column("Test message")
-            table = format_result(self.passed, table)
-            console.print(
-                rich.panel.Panel(
-                    table,
-                    title=rf"[bold][✔] {len(self.passed)} Module Test{_s(self.passed)} Passed",
-                    title_align="left",
-                    style="green",
-                    padding=0,
-                )
-            )
-
-        # Table of warning tests
-        if len(self.warned) > 0:
-            table = Table(style="yellow", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
-            table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("File path")
-            table.add_column("Test message")
-            table = format_result(self.warned, table)
-            console.print(
-                rich.panel.Panel(
-                    table,
-                    title=rf"[bold][!] {len(self.warned)} Module Test Warning{_s(self.warned)}",
-                    title_align="left",
-                    style="yellow",
-                    padding=0,
-                )
-            )
-
-        # Table of failing tests
-        if len(self.failed) > 0:
-            table = Table(style="red", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
-            table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("File path")
-            table.add_column("Test message")
-            table = format_result(self.failed, table)
-            console.print(
-                rich.panel.Panel(
-                    table,
-                    title=rf"[bold][✗] {len(self.failed)} Module Test{_s(self.failed)} Failed",
-                    title_align="left",
-                    style="red",
-                    padding=0,
-                )
-            )
-
-    def print_summary(self):
-        """Print a summary table to the console."""
-        table = Table(box=rich.box.ROUNDED)
-        table.add_column("[bold green]LINT RESULTS SUMMARY", no_wrap=True)
-        table.add_row(
-            rf"[✔] {len(self.passed):>3} Test{_s(self.passed)} Passed",
-            style="green",
-        )
-        table.add_row(rf"[!] {len(self.warned):>3} Test Warning{_s(self.warned)}", style="yellow")
-        table.add_row(rf"[✗] {len(self.failed):>3} Test{_s(self.failed)} Failed", style="red")
-        console.print(table)
