@@ -9,22 +9,15 @@ nf-core modules lint
 from __future__ import print_function
 
 import logging
-import operator
 import os
-from pathlib import Path
 
 import questionary
 import rich
-from rich.markdown import Markdown
-from rich.table import Table
 
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.lint import ComponentLint, LintException, LintResult
-from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.lint_utils import console
-from nf_core.modules.modules_json import ModulesJson
-from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
 
@@ -62,6 +55,7 @@ class ModuleLint(ComponentLint):
             remote_url=remote_url,
             branch=branch,
             no_pull=no_pull,
+            registry=registry,
             hide_progress=hide_progress,
         )
 

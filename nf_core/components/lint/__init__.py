@@ -10,7 +10,6 @@ import operator
 import os
 from pathlib import Path
 
-import questionary
 import rich
 from rich.markdown import Markdown
 from rich.table import Table
@@ -156,6 +155,13 @@ class ComponentLint(ComponentCommand):
         else:
             return ["main_nf", "meta_yml", "module_todos", "module_deprecations", "module_tests"]
 
+    @staticmethod
+    def get_all_subworkflow_lint_tests(is_pipeline):
+        if is_pipeline:
+            return ["main_nf"]
+        else:
+            return ["main_nf"]
+
     def set_up_pipeline_files(self):
         self.load_lint_config()
         self.modules_json = ModulesJson(self.dir)
@@ -193,7 +199,7 @@ class ComponentLint(ComponentCommand):
         log.debug("Printing final results")
 
         sort_order = ["lint_test", "component_name", "message"]
-        if sort_by == "module":
+        if sort_by == "module" or sort_by == "subworkflow":
             sort_order = ["component_name", "lint_test", "message"]
 
         # Sort the results
