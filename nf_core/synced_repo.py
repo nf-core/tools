@@ -281,12 +281,12 @@ class SyncedRepo:
         self.checkout_branch()
         return True
 
-    def module_files_identical(self, module_name, base_path, commit):
+    def component_files_identical(self, component_name, base_path, commit, component_type):
         """
-        Checks whether the module files in a pipeline are identical to the ones in the remote
+        Checks whether the module or subworkflow files in a pipeline are identical to the ones in the remote
         Args:
-            module_name (str): The name of the module
-            base_path (str): The path to the module in the pipeline
+            component_name (str): The name of the module or subworkflow
+            base_path (str): The path to the module/subworkflow in the pipeline
 
         Returns:
             (bool): Whether the pipeline files are identical to the repo files
@@ -295,14 +295,14 @@ class SyncedRepo:
             self.checkout_branch()
         else:
             self.checkout(commit)
-        module_files = ["main.nf", "meta.yml"]
-        files_identical = {file: True for file in module_files}
-        module_dir = self.get_component_dir(module_name, "modules")
-        for file in module_files:
+        component_files = ["main.nf", "meta.yml"]
+        files_identical = {file: True for file in component_files}
+        component_dir = self.get_component_dir(component_name, component_type)
+        for file in component_files:
             try:
-                files_identical[file] = filecmp.cmp(os.path.join(module_dir, file), os.path.join(base_path, file))
+                files_identical[file] = filecmp.cmp(os.path.join(component_dir, file), os.path.join(base_path, file))
             except FileNotFoundError:
-                log.debug(f"Could not open file: {os.path.join(module_dir, file)}")
+                log.debug(f"Could not open file: {os.path.join(component_dir, file)}")
                 continue
         self.checkout_branch()
         return files_identical

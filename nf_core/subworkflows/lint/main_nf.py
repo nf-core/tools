@@ -8,7 +8,7 @@ import re
 log = logging.getLogger(__name__)
 
 
-def main_nf(subworkflow_lint_object, subworkflow):
+def main_nf(_, subworkflow):
     """
     Lint a ``main.nf`` subworkflow file
 

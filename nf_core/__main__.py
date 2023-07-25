@@ -1195,9 +1195,8 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     help="Sort lint output by subworkflow or test name.",
     show_default=True,
 )
-@click.option("--fix-version", is_flag=True, help="Fix the subworkflow version if a newer version is available")
 def lint(
-    ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version
+    ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by
 ):  # pylint: disable=redefined-outer-name
     """
     Lint one or more subworkflows in a directory.
@@ -1230,7 +1229,6 @@ def lint(
             local=local,
             show_passed=passed,
             sort_by=sort_by,
-            fix_version=fix_version,
         )
         if len(subworkflow_lint.failed) > 0:
             sys.exit(1)

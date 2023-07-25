@@ -62,7 +62,6 @@ class SubworkflowLint(ComponentLint):
         show_passed=False,
         sort_by="test",
         local=False,
-        fix_version=False,
     ):
         """
         Lint all or one specific subworkflow
@@ -80,7 +79,6 @@ class SubworkflowLint(ComponentLint):
         :param subworkflow:     A specific subworkflow to lint
         :param print_results:   Whether to print the linting results
         :param show_passed:     Whether passed tests should be shown as well
-        :param fix_version:     Update the subworkflow version if a newer version is available
         :param hide_progress:   Don't show progress bars
 
         :returns:               A SubworkflowLint object containing information of
@@ -138,17 +136,17 @@ class SubworkflowLint(ComponentLint):
 
         # Lint local subworkflows
         if local and len(local_subworkflows) > 0:
-            self.lint_subworkflows(local_subworkflows, registry=registry, local=True, fix_version=fix_version)
+            self.lint_subworkflows(local_subworkflows, registry=registry, local=True)
 
         # Lint nf-core subworkflows
         if len(remote_subworkflows) > 0:
-            self.lint_subworkflows(remote_subworkflows, registry=registry, local=False, fix_version=fix_version)
+            self.lint_subworkflows(remote_subworkflows, registry=registry, local=False)
 
         if print_results:
             self._print_results(show_passed=show_passed, sort_by=sort_by)
             self.print_summary()
 
-    def lint_subworkflows(self, subworkflows, registry="quay.io", local=False, fix_version=False):
+    def lint_subworkflows(self, subworkflows, registry="quay.io", local=False):
         """
         Lint a list of subworkflows
 
@@ -156,7 +154,6 @@ class SubworkflowLint(ComponentLint):
             subworkflows ([NFCoreComponent]): A list of subworkflow objects
             registry (str): The container registry to use. Should be quay.io in most situations.
             local (boolean): Whether the list consist of local or nf-core subworkflows
-            fix_version (boolean): Fix the subworkflow version if a newer version is available
         """
         progress_bar = rich.progress.Progress(
             "[bold blue]{task.description}",
@@ -175,9 +172,9 @@ class SubworkflowLint(ComponentLint):
 
             for swf in subworkflows:
                 progress_bar.update(lint_progress, advance=1, test_name=swf.component_name)
-                self.lint_subworkflow(swf, progress_bar, registry=registry, local=local, fix_version=fix_version)
+                self.lint_subworkflow(swf, progress_bar, registry=registry, local=local)
 
-    def lint_subworkflow(self, swf, progress_bar, registry, local=False, fix_version=False):
+    def lint_subworkflow(self, swf, progress_bar, registry, local=False):
         """
         Perform linting on one subworkflow
 

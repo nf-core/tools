@@ -158,9 +158,9 @@ class ComponentLint(ComponentCommand):
     @staticmethod
     def get_all_subworkflow_lint_tests(is_pipeline):
         if is_pipeline:
-            return ["main_nf"]
+            return ["main_nf", "meta_yml", "subworkflow_changes", "subworkflow_todos", "subworkflow_version"]
         else:
-            return ["main_nf"]
+            return ["main_nf", "meta_yml", "subworkflow_todos", "subworkflow_tests"]
 
     def set_up_pipeline_files(self):
         self.load_lint_config()
