@@ -36,7 +36,9 @@ def meta_yml(subworkflow_lint_object, subworkflow):
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = True
     try:
-        with open(Path(subworkflow_lint_object.modules_repo.local_repo_dir, "subworkflow/yaml-schema.json"), "r") as fh:
+        with open(
+            Path(subworkflow_lint_object.modules_repo.local_repo_dir, "subworkflows/yaml-schema.json"), "r"
+        ) as fh:
             schema = json.load(fh)
         jsonschema.validators.validate(instance=meta_yaml, schema=schema)
         subworkflow.passed.append(("meta_yml_valid", "Subworkflow `meta.yml` is valid", subworkflow.meta_yml))
@@ -90,10 +92,13 @@ def meta_yml(subworkflow_lint_object, subworkflow):
 
         # confirm that all included components in ``main.nf`` are specified in ``meta.yml``
         included_components = nf_core.components.components_utils.get_components_to_install(subworkflow.component_dir)
+        included_components = (
+            included_components[0] + included_components[1]
+        )  # join included modules and included subworkflows in a single list
         if "modules" in meta_yaml:
             meta_components = [x for x in meta_yaml["modules"]]
-            for component in meta_components:
-                if component in included_components:
+            for component in included_components:
+                if component in meta_components:
                     subworkflow.passed.append(
                         (
                             "meta_include",

@@ -30,6 +30,11 @@ class SubworkflowLint(ComponentLint):
 
     # Import lint functions
     from .main_nf import main_nf
+    from .meta_yml import meta_yml
+    from .subworkflow_changes import subworkflow_changes
+    from .subworkflow_tests import subworkflow_tests
+    from .subworkflow_todos import subworkflow_todos
+    from .subworkflow_version import subworkflow_version
 
     def __init__(
         self,

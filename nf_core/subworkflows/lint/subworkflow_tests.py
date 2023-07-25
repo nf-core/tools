@@ -6,7 +6,7 @@ import os
 
 import yaml
 
-import nf_core.subworkflows.SubworkflowTestYmlBuilder
+import nf_core.subworkflows
 
 log = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ def subworkflow_tests(_, subworkflow):
         pytest_yml_path = os.path.join(subworkflow.base_dir, "tests", "config", "pytest_modules.yml")
         with open(pytest_yml_path, "r") as fh:
             pytest_yml = yaml.safe_load(fh)
-            if subworkflow.component_name in pytest_yml.keys():
+            if "subworkflows/" + subworkflow.component_name in pytest_yml.keys():
                 subworkflow.passed.append(("test_pytest_yml", "correct entry in pytest_modules.yml", pytest_yml_path))
             else:
                 subworkflow.failed.append(("test_pytest_yml", "missing entry in pytest_modules.yml", pytest_yml_path))
@@ -55,7 +55,7 @@ def subworkflow_tests(_, subworkflow):
 
             # Verify that tags are correct
             included_components = nf_core.subworkflows.SubworkflowTestYmlBuilder.parse_module_tags(
-                subworkflow.component_dir
+                subworkflow, subworkflow.component_dir
             )
             for test in test_yml:
                 for component in included_components:
@@ -114,5 +114,6 @@ def subworkflow_tests(_, subworkflow):
         # Test that the file exists
         subworkflow.passed.append(("test_yml_exists", "Test `test.yml` exists", subworkflow.test_yml))
     except FileNotFoundError:
+        subworkflow.failed.append(("test_yml_exists", "Test `test.yml` does not exist", subworkflow.test_yml))
         subworkflow.failed.append(("test_yml_exists", "Test `test.yml` does not exist", subworkflow.test_yml))
         subworkflow.failed.append(("test_yml_exists", "Test `test.yml` does not exist", subworkflow.test_yml))
