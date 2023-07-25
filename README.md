@@ -54,6 +54,7 @@ A python package with helper tools for the nf-core community.
   - [`subworkflows remove` - Remove a subworkflow from a pipeline](#remove-a-subworkflow-from-a-pipeline)
   - [`subworkflows create` - Create a subworkflow from the template](#create-a-new-subworkflow)
   - [`subworkflows create-test-yml` - Create the `test.yml` file for a subworkflow](#create-a-subworkflow-test-config-file)
+  - [`subworkflows lint` - Check a subworkflows against nf-core guidelines](#check-a-subworkflow-against-nf-core-guidelines)
   - [`subworkflows test` - Run the tests for a subworkflow](#run-the-tests-for-a-subworkflow-using-pytest)
 - [Citation](#citation)
 
@@ -1217,6 +1218,20 @@ extra_env:
 -->
 
 ![`nf-core subworkflows create-test-yml bam_stats_samtools --no-prompts --force`](docs/images/nf-core-subworkflows-create-test.svg)
+
+### Check a subworkflow against nf-core guidelines
+
+Run the `nf-core subworkflows lint` command to check subworkflows in the current working directory (pipeline or nf-core/modules clone) against nf-core guidelines.
+
+Use the `--all` flag to run linting on all subworkflows found. Use `--dir <pipeline_dir>` to specify another directory than the current working directory.
+
+<!-- RICH-CODEX
+working_dir: tmp/modules
+extra_env:
+  PROFILE: 'conda'
+-->
+
+![`nf-core subworkflows lint bam_stats_samtools`](docs/images/nf-core-subworkflows-lint.svg)
 
 ### Run the tests for a subworkflow using pytest
 
