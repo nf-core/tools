@@ -4,8 +4,10 @@ from pathlib import Path
 import jsonschema.validators
 import yaml
 
+import nf_core.components.components_utils
 
-def meta_yml(_, subworkflow):
+
+def meta_yml(subworkflow_lint_object, subworkflow):
     """
     Lint a ``meta.yml`` file
 
@@ -17,6 +19,9 @@ def meta_yml(_, subworkflow):
     In addition it checks that the subworkflow name
     and subworkflow input is consistent between the
     ``meta.yml`` and the ``main.nf``.
+
+    Checks that all input and output channels are specified in ``meta.yml``.
+    Checks that all included components in ``main.nf`` are specified in ``meta.yml``.
 
     """
     # Read the meta.yml file
@@ -82,3 +87,25 @@ def meta_yml(_, subworkflow):
                     subworkflow.meta_yml,
                 )
             )
+
+        # confirm that all included components in ``main.nf`` are specified in ``meta.yml``
+        included_components = nf_core.components.components_utils.get_components_to_install(subworkflow.component_dir)
+        if "modules" in meta_yaml:
+            meta_components = [x for x in meta_yaml["modules"]]
+            for component in meta_components:
+                if component in included_components:
+                    subworkflow.passed.append(
+                        (
+                            "meta_include",
+                            f"Included module/subworkflow `{component}` specified in `meta.yml`",
+                            subworkflow.meta_yml,
+                        )
+                    )
+                else:
+                    subworkflow.failed.append(
+                        (
+                            "meta_include",
+                            f"Included module/subworkflow `{component}` missing in `meta.yml`",
+                            subworkflow.meta_yml,
+                        )
+                    )

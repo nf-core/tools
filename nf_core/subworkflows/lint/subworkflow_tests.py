@@ -6,6 +6,8 @@ import os
 
 import yaml
 
+import nf_core.subworkflows.SubworkflowTestYmlBuilder
+
 log = logging.getLogger(__name__)
 
 
@@ -18,6 +20,7 @@ def subworkflow_tests(_, subworkflow):
     and that the subworkflow is present in the ``pytest_modules.yml``
     file.
 
+    Additionally, hecks that all included components in test ``main.nf`` are specified in ``test.yml``
     """
 
     if os.path.exists(subworkflow.test_dir):
@@ -51,10 +54,27 @@ def subworkflow_tests(_, subworkflow):
             test_yml = yaml.safe_load(fh)
 
             # Verify that tags are correct
-            all_tags_correct = True
+            included_components = nf_core.subworkflows.SubworkflowTestYmlBuilder.parse_module_tags(
+                subworkflow.component_dir
+            )
             for test in test_yml:
-                if not sorted(test["tags"]) == sorted([subworkflow.component_name, "subworkflows"]):
-                    all_tags_correct = False
+                for component in included_components:
+                    if component in test["tags"]:
+                        subworkflow.passed.append(
+                            (
+                                "test_yml_tags",
+                                f"Included module/subworkflow `{component}` specified in `test.yml`",
+                                subworkflow.test_yml,
+                            )
+                        )
+                    else:
+                        subworkflow.failed.append(
+                            (
+                                "test_yml_tags",
+                                f"Included module/subworkflow `{component}` missing in `test.yml`",
+                                subworkflow.test_yml,
+                            )
+                        )
 
                 # Look for md5sums of empty files
                 for tfile in test.get("files", []):
@@ -91,12 +111,8 @@ def subworkflow_tests(_, subworkflow):
                             )
                         )
 
-            if all_tags_correct:
-                subworkflow.passed.append(("test_yml_tags", "tags adhere to guidelines", subworkflow.test_yml))
-            else:
-                subworkflow.failed.append(("test_yml_tags", "tags do not adhere to guidelines", subworkflow.test_yml))
-
         # Test that the file exists
         subworkflow.passed.append(("test_yml_exists", "Test `test.yml` exists", subworkflow.test_yml))
     except FileNotFoundError:
+        subworkflow.failed.append(("test_yml_exists", "Test `test.yml` does not exist", subworkflow.test_yml))
         subworkflow.failed.append(("test_yml_exists", "Test `test.yml` does not exist", subworkflow.test_yml))
