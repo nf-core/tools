@@ -54,7 +54,7 @@ A python package with helper tools for the nf-core community.
   - [`subworkflows remove` - Remove a subworkflow from a pipeline](#remove-a-subworkflow-from-a-pipeline)
   - [`subworkflows create` - Create a subworkflow from the template](#create-a-new-subworkflow)
   - [`subworkflows create-test-yml` - Create the `test.yml` file for a subworkflow](#create-a-subworkflow-test-config-file)
-  - [`subworkflows lint` - Check a subworkflows against nf-core guidelines](#check-a-subworkflow-against-nf-core-guidelines)
+  - [`subworkflows lint` - Check a subworkflow against nf-core guidelines](#check-a-subworkflow-against-nf-core-guidelines)
   - [`subworkflows test` - Run the tests for a subworkflow](#run-the-tests-for-a-subworkflow-using-pytest)
 - [Citation](#citation)
 
@@ -1221,9 +1221,9 @@ extra_env:
 
 ### Check a subworkflow against nf-core guidelines
 
-Run the `nf-core subworkflows lint` command to check subworkflows in the current working directory (pipeline or nf-core/modules clone) against nf-core guidelines.
+Run the `nf-core subworkflows lint` command to check subworkflows in the current working directory (a pipeline or a clone of nf-core/modules) against nf-core guidelines.
 
-Use the `--all` flag to run linting on all subworkflows found. Use `--dir <pipeline_dir>` to specify another directory than the current working directory.
+Use the `--all` flag to run linting on all subworkflows found. Use `--dir <pipeline_dir>` to specify a different directory than the current working directory.
 
 <!-- RICH-CODEX
 working_dir: tmp/modules

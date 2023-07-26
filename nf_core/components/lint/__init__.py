@@ -104,7 +104,7 @@ class ComponentLint(ComponentCommand):
             if local_component_dir.exists():
                 self.all_local_components = [
                     NFCoreComponent(
-                        m,
+                        comp,
                         None,
                         Path(local_component_dir, m),
                         self.repo_type,
@@ -112,7 +112,7 @@ class ComponentLint(ComponentCommand):
                         self.component_type,
                         remote_component=False,
                     )
-                    for m in self.get_local_components()
+                    for comp in self.get_local_components()
                 ]
             self.config = nf_core.utils.fetch_wf_config(self.dir, cache_config=True)
         else:

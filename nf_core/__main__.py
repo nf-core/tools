@@ -1173,7 +1173,7 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
 # nf-core subworkflows lint
 @subworkflows.command()
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
 @click.option(
     "-r",
@@ -1196,7 +1196,7 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     show_default=True,
 )
 def lint(
-    ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by
+    ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by
 ):  # pylint: disable=redefined-outer-name
     """
     Lint one or more subworkflows in a directory.
@@ -1221,7 +1221,7 @@ def lint(
             hide_progress=ctx.obj["hide_progress"],
         )
         subworkflow_lint.lint(
-            subworkflow=tool,
+            subworkflow=subworkflow,
             registry=registry,
             key=key,
             all_subworkflows=all,

@@ -6,8 +6,8 @@ from pathlib import Path
 
 class NFCoreComponent:
     """
-    A class to hold the information about a nf-core module or subworkflow
-    Includes functionality for linting
+    A class to hold the information about a nf-core module or subworkflow.
+    Includes functionality for linting.
     """
 
     def __init__(
