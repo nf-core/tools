@@ -106,7 +106,7 @@ class ComponentLint(ComponentCommand):
                     NFCoreComponent(
                         comp,
                         None,
-                        Path(local_component_dir, m),
+                        Path(local_component_dir, comp),
                         self.repo_type,
                         Path(self.dir),
                         self.component_type,
