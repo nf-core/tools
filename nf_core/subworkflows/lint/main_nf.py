@@ -120,37 +120,36 @@ def check_main_section(self, lines, included_components):
 
     # Check that all included components are used
     # Check that all included component versions are used
-    main_nf_include_used = False
-    main_nf_include_versions = False
     if included_components is not None:
         for component in included_components:
             if component in script:
                 self.passed.append(
-                    ("main_nf_include_used", f"All included components are used in main.nf", self.main_nf)
+                    ("main_nf_include_used", f"Included component '{component}' used in main.nf", self.main_nf)
                 )
-                main_nf_include_used = True
+            else:
+                self.warned.append(
+                    (
+                        "main_nf_include_used",
+                        f"Included component '{component}' not used in main.nf",
+                        self.main_nf,
+                    )
+                )
             if component + ".out.versions" not in script:
                 self.passed.append(
-                    ("main_nf_include_versions", f"All included component versions are added in main.nf", self.main_nf)
+                    (
+                        "main_nf_include_versions",
+                        f"Included component '{component}' versions are added in main.nf",
+                        self.main_nf,
+                    )
                 )
-                main_nf_include_versions = True
-
-    if not main_nf_include_used:
-        self.warned.append(
-            (
-                "main_nf_include_used",
-                f"Not all included components are used in main.nf",
-                self.main_nf,
-            )
-        )
-    if not main_nf_include_versions:
-        self.warned.append(
-            (
-                "main_nf_include_versions",
-                f"Not all included component versions are added in main.nf",
-                self.main_nf,
-            )
-        )
+            else:
+                self.warned.append(
+                    (
+                        "main_nf_include_versions",
+                        f"Included component '{component}' versions are not added in main.nf",
+                        self.main_nf,
+                    )
+                )
 
 
 def check_subworkflow_section(self, lines):
