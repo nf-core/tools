@@ -1,0 +1,18 @@
+name: toot-release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  toot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: rzr/fediverse-action@master
+        with:
+          access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+          host: "mstdn.science" # custom host if not "mastodon.social" (default)
+          # GitHub event payload
+          # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#release
+          # repo name can be queried with ${{ github.event.repository.name }}
+          message: "Pipeline release {{ name }} v${{ github.event.release.tag_name }} - ${{ github.event.release.tag_name }}! Please see the release notes: ${{ github.event.release.html_url }}"
