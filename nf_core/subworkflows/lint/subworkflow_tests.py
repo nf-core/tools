@@ -3,6 +3,7 @@ Lint the tests of a subworkflow in nf-core/modules
 """
 import logging
 import os
+from pathlib import Path
 
 import yaml
 
@@ -53,7 +54,7 @@ def subworkflow_tests(_, subworkflow):
         with open(subworkflow.test_yml, "r") as fh:
             test_yml = yaml.safe_load(fh)
 
-            # Verify that tags are correct
+            # Verify that tags are correct. All included components in test main.nf should be specified in test.yml so pytests run for all of them
             included_components = nf_core.subworkflows.SubworkflowTestYmlBuilder.parse_module_tags(
                 subworkflow, subworkflow.component_dir
             )
@@ -75,6 +76,12 @@ def subworkflow_tests(_, subworkflow):
                                 subworkflow.test_yml,
                             )
                         )
+                    if component.startswith("subworkflows/"):
+                        included_components += nf_core.subworkflows.SubworkflowTestYmlBuilder.parse_module_tags(
+                            _,
+                            Path(subworkflow.component_dir).parent.joinpath(component.replace("subworkflows/", "")),
+                        )
+                        included_components = list(set(included_components))
 
                 # Look for md5sums of empty files
                 for tfile in test.get("files", []):
