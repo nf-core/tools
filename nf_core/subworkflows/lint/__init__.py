@@ -89,7 +89,7 @@ class SubworkflowLint(ComponentLint):
         :returns:               A SubworkflowLint object containing information of
                                 the passed, warned and failed tests
         """
-
+        # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for subworkflow or all
         if subworkflow is None and not all_subworkflows:
             questions = [
@@ -160,6 +160,7 @@ class SubworkflowLint(ComponentLint):
             registry (str): The container registry to use. Should be quay.io in most situations.
             local (boolean): Whether the list consist of local or nf-core subworkflows
         """
+        # TODO: consider unifying modules and subworkflows lint_subworkflows() function and add it to the ComponentLint class
         progress_bar = rich.progress.Progress(
             "[bold blue]{task.description}",
             rich.progress.BarColumn(bar_width=None),
@@ -195,7 +196,7 @@ class SubworkflowLint(ComponentLint):
         (repo_type==modules), files that are relevant for subworkflow testing are
         also examined
         """
-
+        # TODO: consider unifying modules and subworkflows lint_subworkflow() function and add it to the ComponentLint class
         # Only check the main script in case of a local subworkflow
         if local:
             self.main_nf(swf)

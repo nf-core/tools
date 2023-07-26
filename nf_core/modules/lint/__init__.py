@@ -93,7 +93,7 @@ class ModuleLint(ComponentLint):
         :returns:               A ModuleLint object containing information of
                                 the passed, warned and failed tests
         """
-
+        # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for module or all
         if module is None and not all_modules:
             questions = [
@@ -165,6 +165,7 @@ class ModuleLint(ComponentLint):
             local (boolean): Whether the list consist of local or nf-core modules
             fix_version (boolean): Fix the module version if a newer version is available
         """
+        # TODO: consider unifying modules and subworkflows lint_modules() function and add it to the ComponentLint class
         progress_bar = rich.progress.Progress(
             "[bold blue]{task.description}",
             rich.progress.BarColumn(bar_width=None),
@@ -200,7 +201,7 @@ class ModuleLint(ComponentLint):
         (repo_type==modules), files that are relevant for module testing are
         also examined
         """
-
+        # TODO: consider unifying modules and subworkflows lint_module() function and add it to the ComponentLint class
         # Only check the main script in case of a local module
         if local:
             self.main_nf(mod, fix_version, self.registry, progress_bar)
