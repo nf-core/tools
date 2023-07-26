@@ -202,7 +202,9 @@ class ModulePatch(ComponentCommand):
         # Write changes to module.json
         self.modules_json.remove_patch_entry(module, self.modules_repo.remote_url, module_dir)
 
-        if not all(self.modules_repo.module_files_identical(module, module_path, module_version).values()):
+        if not all(
+            self.modules_repo.component_files_identical(module, module_path, module_version, "modules").values()
+        ):
             log.error(
                 f"Module files do not appear to match the remote for the commit sha in the 'module.json': {module_version}\n"
                 f"Recommend reinstalling with 'nf-core modules install --force --sha {module_version} {module}' "

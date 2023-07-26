@@ -33,11 +33,11 @@ def module_todos(_, module):
     """
 
     # Main module directory
-    mod_results = pipeline_todos(None, root_dir=module.module_dir)
+    mod_results = pipeline_todos(None, root_dir=module.component_dir)
     for i, warning in enumerate(mod_results["warned"]):
         module.warned.append(("module_todo", warning, mod_results["file_paths"][i]))
     for i, passed in enumerate(mod_results["passed"]):
-        module.passed.append(("module_todo", passed, module.module_dir))
+        module.passed.append(("module_todo", passed, module.component_dir))
 
     # Module tests directory
     test_results = pipeline_todos(None, root_dir=module.test_dir)

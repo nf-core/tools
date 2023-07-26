@@ -354,7 +354,11 @@ class ModulesJson:
             for commit in modules_repo.get_component_git_log(component_name, component_type, depth=1000)
         )
         for commit_sha in commit_shas:
-            if all(modules_repo.module_files_identical(component_name, component_path, commit_sha).values()):
+            if all(
+                modules_repo.component_files_identical(
+                    component_name, component_path, commit_sha, component_type
+                ).values()
+            ):
                 return commit_sha
         return None
 

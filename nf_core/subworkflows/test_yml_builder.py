@@ -185,7 +185,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
         while len(ep_test["tags"]) == 0:
             tag_defaults = ["subworkflows"]
             tag_defaults.append("subworkflows/" + self.subworkflow)
-            tag_defaults += self.parse_module_tags()
+            tag_defaults += self.parse_module_tags(self.subworkflow_dir)
             if self.no_prompts:
                 ep_test["tags"] = sorted(tag_defaults)
             else:
@@ -199,12 +199,12 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
 
         return ep_test
 
-    def parse_module_tags(self):
+    def parse_module_tags(self, subworkflow_dir):
         """
-        Parse the subworkflow test main.nf file to retrieve all imported modules for adding tags.
+        Parse the subworkflow main.nf file to retrieve all imported modules for adding tags.
         """
         tags = []
-        with open(Path(self.subworkflow_dir, "main.nf"), "r") as fh:
+        with open(Path(subworkflow_dir, "main.nf"), "r") as fh:
             for line in fh:
                 regex = re.compile(
                     r"include(?: *{ *)([a-zA-Z\_0-9]*)(?: *as *)?(?:[a-zA-Z\_0-9]*)?(?: *})(?: *from *)(?:'|\")(.*)(?:'|\")"

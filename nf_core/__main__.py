@@ -912,8 +912,8 @@ def lint(
     Test modules within a pipeline or a clone of the
     nf-core/modules repository.
     """
+    from nf_core.components.lint import LintException
     from nf_core.modules import ModuleLint
-    from nf_core.modules.lint import ModuleLintException
 
     try:
         module_lint = ModuleLint(
@@ -938,7 +938,7 @@ def lint(
         )
         if len(module_lint.failed) > 0:
             sys.exit(1)
-    except ModuleLintException as e:
+    except LintException as e:
         log.error(e)
         sys.exit(1)
     except (UserWarning, LookupError) as e:
@@ -1167,6 +1167,76 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
         stdout.print(subworkflow_list.list_components(keywords, json))
     except (UserWarning, LookupError) as e:
         log.error(e)
+        sys.exit(1)
+
+
+# nf-core subworkflows lint
+@subworkflows.command()
+@click.pass_context
+@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
+@click.option(
+    "-r",
+    "--registry",
+    type=str,
+    metavar="<registry>",
+    default=None,
+    help="Registry to use for containers. If not specified it will use docker.registry value in the nextflow.config file",
+)
+@click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
+@click.option("-a", "--all", is_flag=True, help="Run on all subworkflows")
+@click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
+@click.option("--local", is_flag=True, help="Run additional lint tests for local subworkflows")
+@click.option("--passed", is_flag=True, help="Show passed tests")
+@click.option(
+    "--sort-by",
+    type=click.Choice(["subworkflow", "test"]),
+    default="test",
+    help="Sort lint output by subworkflow or test name.",
+    show_default=True,
+)
+def lint(
+    ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by
+):  # pylint: disable=redefined-outer-name
+    """
+    Lint one or more subworkflows in a directory.
+
+    Checks DSL2 subworkflow code against nf-core guidelines to ensure
+    that all subworkflows follow the same standards.
+
+    Test subworkflows within a pipeline or a clone of the
+    nf-core/modules repository.
+    """
+    from nf_core.components.lint import LintException
+    from nf_core.subworkflows import SubworkflowLint
+
+    try:
+        subworkflow_lint = SubworkflowLint(
+            dir,
+            fail_warned=fail_warned,
+            registry=ctx.params["registry"],
+            remote_url=ctx.obj["modules_repo_url"],
+            branch=ctx.obj["modules_repo_branch"],
+            no_pull=ctx.obj["modules_repo_no_pull"],
+            hide_progress=ctx.obj["hide_progress"],
+        )
+        subworkflow_lint.lint(
+            subworkflow=subworkflow,
+            registry=registry,
+            key=key,
+            all_subworkflows=all,
+            print_results=True,
+            local=local,
+            show_passed=passed,
+            sort_by=sort_by,
+        )
+        if len(subworkflow_lint.failed) > 0:
+            sys.exit(1)
+    except LintException as e:
+        log.error(e)
+        sys.exit(1)
+    except (UserWarning, LookupError) as e:
+        log.critical(e)
         sys.exit(1)
 
 

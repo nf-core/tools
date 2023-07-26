@@ -25,10 +25,10 @@ def meta_yml(module_lint_object, module):
     meta_yaml = None
     if module.is_patched:
         lines = ModulesDiffer.try_apply_patch(
-            module.module_name,
+            module.component_name,
             module_lint_object.modules_repo.repo_path,
             module.patch_path,
-            Path(module.module_dir).relative_to(module.base_dir),
+            Path(module.component_dir).relative_to(module.base_dir),
             reverse=True,
         ).get("meta.yml")
         if lines is not None:
@@ -59,7 +59,7 @@ def meta_yml(module_lint_object, module):
         module.failed.append(
             (
                 "meta_yml_valid",
-                f"The `meta.yml` of the module {module.module_name} is not valid: {e.message}.{hint}",
+                f"The `meta.yml` of the module {module.component_name} is not valid: {e.message}.{hint}",
                 module.meta_yml,
             )
         )

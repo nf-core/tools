@@ -45,10 +45,10 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
     lines = None
     if module.is_patched:
         lines = ModulesDiffer.try_apply_patch(
-            module.module_name,
+            module.component_name,
             module_lint_object.modules_repo.repo_path,
             module.patch_path,
-            Path(module.module_dir).relative_to(module.base_dir),
+            Path(module.component_dir).relative_to(module.base_dir),
             reverse=True,
         ).get("main.nf")
     if lines is None:
