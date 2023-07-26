@@ -20,8 +20,6 @@ jobs:
             Please see the changelog: ${{ github.event.release.html_url }}
 
   send-tweet:
-    needs: [release]
-    if: needs.release.result == 'success'
     runs-on: ubuntu-latest
 
     steps:
