@@ -8,6 +8,7 @@
 
 pipeline_lint_tests/index.rst
 module_lint_tests/index.rst
+subworkflow_lint_tests/index.rst
 api/index.rst
 ```
 
@@ -17,7 +18,7 @@ This documentation is for the `nf-core/tools` package.
 
 - [Pipeline code lint tests](pipeline_lint_tests/index.md) (run by `nf-core lint`)
 - [Module code lint tests](module_lint_tests/index.md) (run by `nf-core modules lint`)
-- [Subworkflow code lint tests](subworkflow_lint_test/index.mf) (run by `nf-core subworkflows lint`)
+- [Subworkflow code lint tests](subworkflow_lint_tests/index.md) (run by `nf-core subworkflows lint`)
 - [nf-core/tools Python package API reference](api/index.md)
 - {ref}`genindex`
 - {ref}`modindex`
