@@ -59,7 +59,7 @@ def subworkflow_tests(_, subworkflow):
                 subworkflow, subworkflow.component_dir
             )
             for test in test_yml:
-                for component in included_components:
+                for component in set(included_components):
                     if component in test["tags"]:
                         subworkflow.passed.append(
                             (
