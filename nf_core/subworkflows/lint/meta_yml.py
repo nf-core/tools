@@ -95,9 +95,9 @@ def meta_yml(subworkflow_lint_object, subworkflow):
         included_components = (
             included_components[0] + included_components[1]
         )  # join included modules and included subworkflows in a single list
-        if "modules" in meta_yaml:
-            meta_components = [x for x in meta_yaml["modules"]]
-            for component in included_components:
+        if "components" in meta_yaml:
+            meta_components = [x for x in meta_yaml["components"]]
+            for component in set(included_components):
                 if component in meta_components:
                     subworkflow.passed.append(
                         (
@@ -114,3 +114,19 @@ def meta_yml(subworkflow_lint_object, subworkflow):
                             subworkflow.meta_yml,
                         )
                     )
+        if "modules" in meta_yaml:
+            subworkflow.failed.append(
+                (
+                    "meta_modules_deprecated",
+                    f"Deprecated section 'modules' found in `meta.yml`, use 'components' instead",
+                    subworkflow.meta_yml,
+                )
+            )
+        else:
+            subworkflow.failed.append(
+                (
+                    "meta_modules_deprecated",
+                    f"Deprecated section 'modules' not found in `meta.yml`",
+                    subworkflow.meta_yml,
+                )
+            )
