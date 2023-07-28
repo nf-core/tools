@@ -43,6 +43,6 @@ jobs:
           username: ${{ secrets.ftp_username}}
           password: ${{ secrets.ftp_password }}
           local-dir: "./docs/api/_build/html/"
-          server-dir: ${{ secrets.ftp_server_dir }}/${{ matrix.dir }}/
+          server-dir: ${{ secrets.ftp_server_old_site_dir }}/${{ matrix.dir }}/
           protocol: ${{ secrets.ftp_protocol }}
           port: ${{ secrets.ftp_port }}
