@@ -120,6 +120,17 @@ class PipelineSchema:
         if "type" not in param or "default" not in param:
             return param
 
+        # Handle the case in which the default value is null (i.e. None in Python)
+        if param["default"] is None:
+            if not isinstance(param["type"], list):
+                param["type"] = [param["type"]]
+
+            # Make sure param["type"] contains the string "null"
+            # This is to make sure it's valid JSON for the jsonschema library spec
+            if "null" not in param["type"]:
+                param["type"].append("null")
+            return param
+
         # Bools
         if param["type"] == "boolean":
             if not isinstance(param["default"], bool):
