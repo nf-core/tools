@@ -125,10 +125,13 @@ class PipelineSchema:
             if not isinstance(param["type"], list):
                 param["type"] = [param["type"]]
 
-            # Make sure param["type"] contains the string "null"
+            # Make sure param["type"] contains "null"
             # This is to make sure it's valid JSON for the jsonschema library spec
             if "null" not in param["type"]:
                 param["type"].append("null")
+
+            if len(param["type"]) == 1:
+                param["type"] = param["type"][0]
             return param
 
         # Bools
