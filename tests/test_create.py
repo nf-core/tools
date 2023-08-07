@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest import mock
 
 import git
+import yaml
 
 import nf_core.create
 
@@ -58,6 +59,8 @@ class NfcoreCreateTest(unittest.TestCase):
         assert os.path.isdir(os.path.join(pipeline.outdir, ".git"))
         assert f" {self.default_branch}\n" in git.Repo.init(pipeline.outdir).git.branch()
         assert not os.path.exists(os.path.join(pipeline.outdir, "pipeline_template.yml"))
+        with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
+            assert "template" not in fh.read()
 
     @with_temporary_folder
     def test_pipeline_creation_initiation_with_yml(self, tmp_path):
@@ -77,11 +80,13 @@ class NfcoreCreateTest(unittest.TestCase):
         assert os.path.isdir(os.path.join(pipeline.outdir, ".git"))
         assert f" {self.default_branch}\n" in git.Repo.init(pipeline.outdir).git.branch()
 
-        # Check pipeline yml has been dumped and matches input
-        pipeline_template = os.path.join(pipeline.outdir, "pipeline_template.yml")
-        assert os.path.exists(pipeline_template)
-        with open(pipeline_template) as fh:
-            assert fh.read() == PIPELINE_TEMPLATE_YML.read_text()
+        # Check pipeline template yml has been dumped to `.nf-core.yml` and matches input
+        assert not os.path.exists(os.path.join(pipeline.outdir, "pipeline_template.yml"))
+        assert os.path.exists(os.path.join(pipeline.outdir, ".nf-core.yml"))
+        with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
+            nfcore_yml = yaml.safe_load(fh)
+            assert "template" in nfcore_yml
+            assert nfcore_yml["template"] == yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text())
 
     @mock.patch.object(nf_core.create.PipelineCreate, "customize_template")
     @mock.patch.object(nf_core.create.questionary, "confirm")
@@ -103,11 +108,13 @@ class NfcoreCreateTest(unittest.TestCase):
         assert os.path.isdir(os.path.join(pipeline.outdir, ".git"))
         assert f" {self.default_branch}\n" in git.Repo.init(pipeline.outdir).git.branch()
 
-        # Check pipeline yml has been dumped and matches input
-        pipeline_template = os.path.join(pipeline.outdir, "pipeline_template.yml")
-        assert os.path.exists(pipeline_template)
-        with open(pipeline_template) as fh:
-            assert fh.read() == PIPELINE_TEMPLATE_YML.read_text()
+        # Check pipeline template yml has been dumped to `.nf-core.yml` and matches input
+        assert not os.path.exists(os.path.join(pipeline.outdir, "pipeline_template.yml"))
+        assert os.path.exists(os.path.join(pipeline.outdir, ".nf-core.yml"))
+        with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
+            nfcore_yml = yaml.safe_load(fh)
+            assert "template" in nfcore_yml
+            assert nfcore_yml["template"] == yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text())
 
     @with_temporary_folder
     def test_pipeline_creation_with_yml_skip(self, tmp_path):
@@ -126,11 +133,13 @@ class NfcoreCreateTest(unittest.TestCase):
         pipeline.init_pipeline()
         assert not os.path.isdir(os.path.join(pipeline.outdir, ".git"))
 
-        # Check pipeline yml has been dumped and matches input
-        pipeline_template = os.path.join(pipeline.outdir, "pipeline_template.yml")
-        assert os.path.exists(pipeline_template)
-        with open(pipeline_template) as fh:
-            assert fh.read() == PIPELINE_TEMPLATE_YML_SKIP.read_text()
+        # Check pipeline template yml has been dumped to `.nf-core.yml` and matches input
+        assert not os.path.exists(os.path.join(pipeline.outdir, "pipeline_template.yml"))
+        assert os.path.exists(os.path.join(pipeline.outdir, ".nf-core.yml"))
+        with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
+            nfcore_yml = yaml.safe_load(fh)
+            assert "template" in nfcore_yml
+            assert nfcore_yml["template"] == yaml.safe_load(PIPELINE_TEMPLATE_YML_SKIP.read_text())
 
         # Check that some of the skipped files are not present
         assert not os.path.exists(os.path.join(pipeline.outdir, "CODE_OF_CONDUCT.md"))
