@@ -187,9 +187,7 @@ class PipelineCreate:
         """Customizes the template parameters.
 
         Args:
-            name (str): Name for the pipeline.
-            description (str): Description for the pipeline.
-            author (str): Authors name of the pipeline.
+            template_areas (list<str>): List of available template areas to skip.
         """
         template_yaml = {}
         prefix = questionary.text("Pipeline prefix", style=nf_core.utils.nfcore_question_style).unsafe_ask()
@@ -351,11 +349,13 @@ class PipelineCreate:
             # Update the .nf-core.yml with linting configurations
             self.fix_linting()
 
-        log.debug("Dumping pipeline template yml to file")
         if self.template_yaml:
-            with open(self.outdir / "pipeline_template.yml", "w") as fh:
-                yaml.safe_dump(self.template_yaml, fh)
-            run_prettier_on_file(self.outdir / "pipeline_template.yml")
+            config_fn, config_yml = nf_core.utils.load_tools_config(self.outdir)
+            with open(self.outdir / config_fn, "w") as fh:
+                config_yml.update(template=self.template_yaml)
+                yaml.safe_dump(config_yml, fh)
+                log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
+                run_prettier_on_file(self.outdir / config_fn)
 
     def update_nextflow_schema(self):
         """

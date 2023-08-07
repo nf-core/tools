@@ -78,6 +78,7 @@ def files_exist(self):
 
         Singularity
         parameters.settings.json
+        pipeline_template.yml # saving information in .nf-core.yml
         .nf-core.yaml  # NB: Should be yml, not yaml
         bin/markdown_to_html.r
         conf/aws.config
@@ -181,6 +182,7 @@ def files_exist(self):
     files_fail_ifexists = [
         "Singularity",
         "parameters.settings.json",
+        "pipeline_template.yml",  # saving information in .nf-core.yml
         ".nf-core.yaml",  # yml not yaml
         os.path.join("bin", "markdown_to_html.r"),
         os.path.join("conf", "aws.config"),
