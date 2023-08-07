@@ -45,6 +45,6 @@ jobs:
           username: ${{ secrets.ftp_username}}
           password: ${{ secrets.ftp_password }}
           local-dir: "./docs/api/_build/html/"
-          server-dir: ${{ secrets.ftp_server_dir }}/dev/
+          server-dir: ${{ secrets.ftp_server_old_site_dir }}/dev/
           protocol: ${{ secrets.ftp_protocol }}
           port: ${{ secrets.ftp_port }}
