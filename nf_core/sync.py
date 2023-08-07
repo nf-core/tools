@@ -82,7 +82,7 @@ class PipelineSync:
         self.gh_repo = gh_repo
         self.pr_url = ""
 
-        self.config_yml_path, self.config_yml = nf_core.utils.load_tools_config()
+        self.config_yml_path, self.config_yml = nf_core.utils.load_tools_config(self.pipeline_dir)
 
         # Throw deprecation warning if template_yaml_path is set
         if template_yaml_path is not None:
