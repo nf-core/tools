@@ -102,7 +102,7 @@ class PipelineSync:
                     yaml.safe_dump(self.config_yml, fh)
                 log.info(f"Saved pipeline creation settings to '{self.config_yml_path}'")
                 raise SystemExit(
-                    f"Please commit your changes and delete {template_yaml_path} file. Then run the sync command again."
+                    f"Please commit your changes and delete the {template_yaml_path} file. Then run the sync command again."
                 )
 
         # Set up the API auth if supplied on the command line
