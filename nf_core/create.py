@@ -57,7 +57,7 @@ class PipelineCreate:
         default_branch=None,
     ):
         self.template_params, skip_paths_keys, self.template_yaml = self.create_param_dict(
-            name, description, author, version, template_yaml_path, plain
+            name, description, author, version, template_yaml_path, plain, outdir if outdir else "."
         )
 
         skippable_paths = {
@@ -90,16 +90,28 @@ class PipelineCreate:
             outdir = os.path.join(os.getcwd(), self.template_params["name_noslash"])
         self.outdir = Path(outdir)
 
-    def create_param_dict(self, name, description, author, version, template_yaml_path, plain):
+    def create_param_dict(self, name, description, author, version, template_yaml_path, plain, pipeline_dir):
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
+            name (str): Name for the pipeline.
+            description (str): Description for the pipeline.
+            author (str): Authors name of the pipeline.
+            version (str): Version flag.
             template_yaml_path (str): Path to YAML file containing template parameters.
+            plain (bool): If true the pipeline template will be initialized plain, without customisation.
+            pipeline_dir (str): Path to the pipeline directory.
         """
+        # Try reading config file
+        _, config_yml = nf_core.utils.load_tools_config(pipeline_dir)
+
+        # Obtain template customization info from template yaml file or `.nf-core.yml` config file
         try:
             if template_yaml_path is not None:
                 with open(template_yaml_path, "r") as f:
                     template_yaml = yaml.safe_load(f)
+            elif "template" in config_yml:
+                template_yaml = config_yml["template"]
             else:
                 template_yaml = {}
         except FileNotFoundError:
@@ -169,7 +181,6 @@ class PipelineCreate:
         param_dict["logo_dark"] = f"{param_dict['name_noslash']}_logo_dark.png"
         param_dict["version"] = version
 
-        _, config_yml = nf_core.utils.load_tools_config()
         if (
             "lint" in config_yml
             and "nextflow_config" in config_yml["lint"]
