@@ -8,6 +8,7 @@ import re
 import shutil
 
 import git
+import questionary
 import requests
 import requests_cache
 import rich
@@ -43,6 +44,7 @@ class PipelineSync:
         make_pr (bool): Set this to `True` to create a GitHub pull-request with the changes
         gh_username (str): GitHub username
         gh_repo (str): GitHub repository name
+        template_yaml_path (str): Path to template.yml file for pipeline creation settings. DEPRECATED
 
     Attributes:
         pipeline_dir (str): Path to target pipeline directory
@@ -62,6 +64,7 @@ class PipelineSync:
         make_pr=False,
         gh_repo=None,
         gh_username=None,
+        template_yaml_path=None,
     ):
         """Initialise syncing object"""
 
@@ -80,6 +83,27 @@ class PipelineSync:
         self.pr_url = ""
 
         self.config_yml_path, self.config_yml = nf_core.utils.load_tools_config()
+
+        # Throw deprecation warning if template_yaml_path is set
+        if template_yaml_path is not None:
+            log.warning(
+                f"The `template_yaml_path` argument is deprecated. Saving pipeline creation settings in .nf-core.yml instead. Please remove {template_yaml_path} file."
+            )
+            if "template" in self.config_yml:
+                overwrite_template = questionary.confirm(
+                    f"A template section already exists in '{self.config_yml_path}'. Do you want to overwrite?",
+                    style=nf_core.utils.nfcore_question_style,
+                    default=False,
+                ).unsafe_ask()
+            if overwrite_template or "template" not in self.config_yml:
+                with open(template_yaml_path, "r") as f:
+                    self.config_yml["template"] = yaml.safe_load(f)
+                with open(self.config_yml_path, "w") as fh:
+                    yaml.safe_dump(self.config_yml, fh)
+                log.info(f"Saved pipeline creation settings to '{self.config_yml_path}'")
+                raise SystemExit(
+                    f"Please commit your changes and delete {template_yaml_path} file. Then run the sync command again."
+                )
 
         # Set up the API auth if supplied on the command line
         self.gh_api = nf_core.utils.gh_api
