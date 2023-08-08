@@ -1235,6 +1235,13 @@ class DownloadWorkflow:
             Various exceptions possible from `subprocess` execution of Singularity.
         """
         output_path = cache_path or out_path
+
+        # Sometimes, container still contain an explicit library specification, which
+        # results in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
+        container_parts = container.split("/")
+        if len(container_parts) > 2:
+            container = "/".join(container_parts[-2:])
+
         # Pull using singularity
         address = f"docker://{library}/{container.replace('docker://', '')}"
         if shutil.which("singularity"):
