@@ -28,7 +28,7 @@
 - Fix prompt pipeline revision during launch ([#2375](https://github.com/nf-core/tools/pull/2375))
 - Add a `create-params-file` command to create a YAML parameter file for a pipeline containing parameter documentation and defaults. ([#2362](https://github.com/nf-core/tools/pull/2362))
 - Update the Code of Conduct ([#2381](https://github.com/nf-core/tools/pull/2381))
-- Remove `--no-git` option from `nf-core create`
+- Remove `--no-git` option from `nf-core create` ([#2394](https://github.com/nf-core/tools/pull/2394))
 
 # [v2.9 - Chromium Falcon](https://github.com/nf-core/tools/releases/tag/2.9) + [2023-06-29]
 
