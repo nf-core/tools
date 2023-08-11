@@ -378,12 +378,11 @@ def licences(pipeline, json):
 @click.option("-d", "--description", type=str, help="A short description of your pipeline")
 @click.option("-a", "--author", type=str, help="Name of the main author(s)")
 @click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
-@click.option("--no-git", is_flag=True, default=False, help="Do not initialise pipeline as new git repository")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
 @click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 @click.option("--plain", is_flag=True, help="Use the standard nf-core template")
-def create(name, description, author, version, no_git, force, outdir, template_yaml, plain):
+def create(name, description, author, version, force, outdir, template_yaml, plain):
     """
     Create a new pipeline using the nf-core template.
 
@@ -393,7 +392,16 @@ def create(name, description, author, version, no_git, force, outdir, template_y
     from nf_core.create import PipelineCreate
 
     try:
-        create_obj = PipelineCreate(name, description, author, version, no_git, force, outdir, template_yaml, plain)
+        create_obj = PipelineCreate(
+            name,
+            description,
+            author,
+            version=version,
+            force=force,
+            outdir=outdir,
+            template_yaml_path=template_yaml,
+            plain=plain,
+        )
         create_obj.init_pipeline()
     except UserWarning as e:
         log.error(e)
