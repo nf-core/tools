@@ -14,12 +14,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+
 jobs:
   pytest:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
+        runner: ["ubuntu-latest"]
+        include:
+          - runner: "ubuntu-20.04"
+            python-version: "3.8"
 
     steps:
       - uses: actions/checkout@v3
