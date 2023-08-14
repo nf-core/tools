@@ -9,7 +9,11 @@
 - Add module MULTIQC to modules.config ([#2377](https://github.com/nf-core/tools/pull/2377))
 - Update the Code of Conduct ([#2381](https://github.com/nf-core/tools/pull/2381))
 - Save template information to `.nf-core.yml` and deprecate argument `--template-yaml` for `nf-core sync` ([#2388](https://github.com/nf-core/tools/pull/2388) and [#2389](https://github.com/nf-core/tools/pull/2389))
+<<<<<<< HEAD
 - Remove fixed Ubuntu test and added to standard testing matrix
+=======
+- Reduce container finding error to warning since the registries are not consistent.
+>>>>>>> 4e7fd2f3 (fix: Drop container error to warning)
 
 ### Download
 

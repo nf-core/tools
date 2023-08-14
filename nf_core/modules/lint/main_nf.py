@@ -346,8 +346,9 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
         if url is None:
             continue
         try:
+            container_url = "https://" + urlunparse(url) if not url.scheme == "https" else urlunparse(url)
             response = requests.head(
-                "https://" + urlunparse(url) if not url.scheme == "https" else urlunparse(url),
+                container_url,
                 stream=True,
                 allow_redirects=True,
             )
@@ -360,10 +361,10 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             self.failed.append(("container_links", "Unable to connect to container URL", self.main_nf))
             continue
         if not response.ok:
-            self.failed.append(
+            self.warned.append(
                 (
                     "container_links",
-                    f"Unable to connect to {response.url}, status code: {response.status_code}",
+                    f"Unable to connect to container registry, code:  {response.status_code}, url: {response.url}",
                     self.main_nf,
                 )
             )
