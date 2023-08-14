@@ -43,7 +43,7 @@ jobs:
           pip install -e .
 
       - name: Downgrade git to the Ubuntu official repository's version
-        if: ${{ matrix.runner == 'ubuntu-latest' && matrix.python-version == '3.8' }}
+        if: ${{ matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8' }}
         run: |
           sudo apt update
           sudo apt remove git git-man
