@@ -10,6 +10,7 @@ import shutil
 import sys
 import time
 from pathlib import Path
+from textwrap import dedent
 
 import filetype
 import git
@@ -17,6 +18,7 @@ import jinja2
 import questionary
 import requests
 import yaml
+from rich.prompt import Confirm, Prompt
 
 import nf_core
 import nf_core.schema
@@ -132,20 +134,52 @@ class PipelineCreate:
         # Define the different template areas, and what actions to take for each
         # if they are skipped
         template_areas = {
-            "github": {"name": "GitHub hosting", "file": True, "content": False},
-            "ci": {"name": "GitHub CI", "file": True, "content": False},
-            "github_badges": {"name": "GitHub badges", "file": False, "content": True},
-            "igenomes": {"name": "iGenomes config", "file": True, "content": True},
-            "nf_core_configs": {"name": "nf-core/configs", "file": False, "content": True},
+            "github": {"description": "Would you like to initialise a Git repository?", "file": True, "content": False},
+            "ci": {
+                "description": dedent(
+                    """\
+                    Would you like to include Continuous Integration tests?
+                    [grey39]nf-core provides Github Actions for CI testing:
+                     - GHA for full size testing with AWS
+                     - GHA for small testing with AWS
+                     - Comment on PRs against the master branch instead of dev
+                     - GHA to run the pipeline with minimal tests
+                     - Stale or delete manually tagged issues and PRs
+                     - Fix code linting from a comment on the PR
+                     - Posting an automated comment to the PR after linting the code
+                     - Run code linting (Prettier, Black, nf-core standards)[/]"""
+                ),
+                "file": True,
+                "content": False,
+            },
+            "github_badges": {
+                "description": "Would you like to add GitHub badges to your RADME.md file?",
+                "file": False,
+                "content": True,
+            },
+            "igenomes": {
+                "description": "Would you like to use genomic data?\n[grey39]The pipeline template will include built-in configuration for reference genomes with iGenomes[/]",
+                "file": True,
+                "content": True,
+            },
+            "nf_core_configs": {
+                "description": dedent(
+                    """\
+                    Would you like to include nf-core configuration files?
+                    [grey39]The pipeline will include several configuration profiles (see [link=https://github.com/nf-core/configs]the nf-core/configs repository[/link])[\]"""
+                ),
+                "file": False,
+                "content": True,
+            },
         }
 
         # Once all necessary parameters are set, check if the user wants to customize the template more
         if template_yaml_path is None and not plain:
-            customize_template = questionary.confirm(
-                "Do you want to customize which parts of the template are used?",
-                style=nf_core.utils.nfcore_question_style,
+            customize_template = Confirm.ask(
+                "[bold][blue]?[/] Would you like to add this pipeline to nf-core?\n[grey39]Pipelines that are not intended to be part of nf-core can be created with more customization,\nbut it is difficult to modify them afterwards to fulfill nf-core standards.[/]",
                 default=False,
-            ).unsafe_ask()
+            )
+
             if customize_template:
                 template_yaml.update(self.customize_template(template_areas))
 
@@ -201,18 +235,18 @@ class PipelineCreate:
             template_areas (list<str>): List of available template areas to skip.
         """
         template_yaml = {}
-        prefix = questionary.text("Pipeline prefix", style=nf_core.utils.nfcore_question_style).unsafe_ask()
+        prefix = Prompt.ask(
+            "[bold][blue]?[/] Provide your organisation name\n[grey39]The pipeline name will be prefixed with the provided organisation[/]"
+        )
         while not re.match(r"^[a-zA-Z_][a-zA-Z0-9-_]*$", prefix):
             log.error("[red]Pipeline prefix cannot start with digit or hyphen and cannot contain punctuation.[/red]")
-            prefix = questionary.text(
-                "Please provide a new pipeline prefix", style=nf_core.utils.nfcore_question_style
-            ).unsafe_ask()
+            prefix = Prompt.ask("[bold][blue]?[/] Please provide a new organisation name")
         template_yaml["prefix"] = prefix
 
-        choices = [{"name": template_areas[area]["name"], "value": area} for area in template_areas]
-        template_yaml["skip"] = questionary.checkbox(
-            "Skip template areas?", choices=choices, style=nf_core.utils.nfcore_question_style
-        ).unsafe_ask()
+        template_yaml["skip"] = []
+        for area in template_areas:
+            if not Confirm.ask(f"[bold][blue]?[/] {template_areas[area]['description']}"):
+                template_yaml["skip"].append(area)
         return template_yaml
 
     def get_param(self, param_name, passed_value, template_yaml, template_yaml_path):
