@@ -177,10 +177,10 @@ class PipelineCreate:
         if template_yaml_path is None and not plain:
             customize_template = Confirm.ask(
                 "[bold][blue]?[/] Would you like to add this pipeline to nf-core?\n[grey39]Pipelines that are not intended to be part of nf-core can be created with more customization,\nbut it is difficult to modify them afterwards to fulfill nf-core standards.[/]",
-                default=False,
+                default=True,
             )
 
-            if customize_template:
+            if not customize_template:
                 template_yaml.update(self.customize_template(template_areas))
 
         # Now look in the template for more options, otherwise default to nf-core defaults
