@@ -1,25 +1,11 @@
-# ![nf-core/tools](docs/images/nfcore-tools_logo_light.png#gh-light-mode-only) ![nf-core/tools](docs/images/nfcore-tools_logo_dark.png#gh-dark-mode-only) <!-- omit in toc -->
+---
+title: Installation & Update
+description: Installation and update instructions for nf-core/tools
+weight: 10
+section: general
+---
 
-[![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=master&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amaster)
-[![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
-[![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![code style: prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
-[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
-
-[![install with Bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/recipes/nf-core/README.html)
-[![install with PyPI](https://img.shields.io/badge/install%20with-PyPI-blue.svg)](https://pypi.org/project/nf-core/)
-[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23tools-4A154B?logo=slack)](https://nfcore.slack.com/channels/tools)
-
-A python package with helper tools for the nf-core community.
-
-> **Read this documentation on the nf-core website: [https://nf-co.re/tools](https://nf-co.re/tools)**
-
-The nf-core tools package is written in Python and can be imported and used within other packages.
-For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools-docs/).
-
-## Installation
-
-### Bioconda
+## Bioconda
 
 You can install `nf-core/tools` from [bioconda](https://bioconda.github.io/recipes/nf-core/README.html).
 
@@ -38,7 +24,7 @@ conda create --name nf-core python=3.8 nf-core nextflow
 conda activate nf-core
 ```
 
-### Python Package Index
+## Python Package Index
 
 `nf-core/tools` can also be installed from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
 
@@ -46,7 +32,7 @@ conda activate nf-core
 pip install nf-core
 ```
 
-### Docker image
+## Docker image
 
 There is a docker image that you can use to run `nf-core/tools` that has all of the requirements packaged (including Nextflow) and so should work out of the box. It is called [`nfcore/tools`](https://hub.docker.com/r/nfcore/tools) _**(NB: no hyphen!)**_
 
@@ -74,7 +60,7 @@ If you use `$NXF_SINGULARITY_CACHEDIR` for downloads, you'll also need to make t
 docker run -itv `pwd`:`pwd` -w `pwd` -u $(id -u):$(id -g) -v $NXF_SINGULARITY_CACHEDIR:$NXF_SINGULARITY_CACHEDIR -e NXF_SINGULARITY_CACHEDIR nfcore/tools launch viralrecon -r 1.1.0
 ```
 
-#### Docker bash alias
+### Docker bash alias
 
 The above base command is a bit of a mouthful to type, to say the least.
 To make it easier to use, we highly recommend adding the following bash alias to your `~/.bashrc` file:
@@ -89,7 +75,7 @@ Once applied (you may need to reload your shell) you can just use the `nf-core` 
 nf-core list
 ```
 
-#### Docker versions
+### Docker versions
 
 You can use docker image tags to specify the version you would like to use. For example, `nfcore/tools:dev` for the latest development version of the code, or `nfcore/tools:1.14` for version `1.14` of tools.
 If you omit this, it will default to `:latest`, which should be the latest stable release.
@@ -102,7 +88,7 @@ Then build using the `--build-arg NXF_VER` flag as follows:
 docker build -t nfcore/tools:dev . --build-arg NXF_VER=20.04.0
 ```
 
-### Development version
+## Development version
 
 If you would like the latest development version of tools, the command is:
 
@@ -117,7 +103,7 @@ Go to the cloned directory and install with pip (also installs development requi
 pip install --upgrade -r requirements-dev.txt -e .
 ```
 
-### Using a specific Python interpreter
+## Using a specific Python interpreter
 
 If you prefer, you can also run tools with a specific Python interpreter.
 The command line usage and flags are then exactly the same as if you ran with the `nf-core` command.
@@ -131,7 +117,7 @@ python3 -m nf_core list
 ~/my_env/bin/python -m nf_core create --name mypipeline --description "This is a new skeleton pipeline"
 ```
 
-### Using with your own Python scripts
+## Using with your own Python scripts
 
 The tools functionality is written in such a way that you can import it into your own scripts.
 For example, if you would like to get a list of all available nf-core pipelines:
@@ -146,7 +132,7 @@ for wf in wfs.remote_workflows:
 
 Please see [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/) for the function documentation.
 
-### Automatic version check
+## Automatic version check
 
 nf-core/tools automatically checks the web to see if there is a new version of nf-core/tools available.
 If you would prefer to skip this check, set the environment variable `NFCORE_NO_VERSION_CHECK`. For example:
@@ -155,12 +141,39 @@ If you would prefer to skip this check, set the environment variable `NFCORE_NO_
 export NFCORE_NO_VERSION_CHECK=1
 ```
 
-## Citation
+## Update tools
 
-If you use `nf-core tools` in your work, please cite the `nf-core` publication as follows:
+It is advisable to keep nf-core/tools updated to the most recent version. The command to update depends on the system used to install it, for example if you have installed it with conda you can use:
 
-> **The nf-core framework for community-curated bioinformatics pipelines.**
->
-> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
->
-> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
+```bash
+conda update nf-core
+```
+
+if you used pip:
+
+```bash
+pip install --upgrade nf-core
+```
+
+Please refer to the respective documentation for further details to manage packages, as for example [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-pkgs.html#updating-packages) or [pip](https://packaging.python.org/en/latest/tutorials/installing-packages/#upgrading-packages).
+
+## Activate shell completions for nf-core/tools
+
+Auto-completion for the `nf-core` command is available for bash, zsh and fish. To activate it, add the following lines to the respective shell config files.
+
+| shell | shell config file                         | command                                            |
+| ----- | ----------------------------------------- | -------------------------------------------------- |
+| bash  | `~/.bashrc`                               | `eval "$(_NF_CORE_COMPLETE=bash_source nf-core)"`  |
+| zsh   | `~/.zshrc`                                | `eval "$(_NF_CORE_COMPLETE=zsh_source nf-core)"`   |
+| fish  | `~/.config/fish/completions/nf-core.fish` | `eval (env _NF_CORE_COMPLETE=fish_source nf-core)` |
+
+After a restart of the shell session you should have auto-completion for the `nf-core` command and all its sub-commands and options.
+
+:::note
+The added line will run the command `nf-core` (which will also slow down startup time of your shell). You should therefore either have the nf-core/tools installed globally.
+You can also wrap it inside `if type nf-core > /dev/null; then ` \<YOUR EVAL CODE LINE\> `fi` for bash and zsh or `if command -v nf-core &> /dev/null eval (env _NF_CORE_COMPLETE=fish_source nf-core) end` for fish. You need to then source the config in your environment for the completions to be activated.
+:::
+
+:::info
+If you see the error `command not found compdef` , be sure that your config file contains the line `autoload -Uz compinit && compinit` before the eval line.
+:::
