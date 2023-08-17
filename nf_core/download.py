@@ -1238,9 +1238,15 @@ class DownloadWorkflow:
 
         # Sometimes, container still contain an explicit library specification, which
         # results in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
+        # Thus, we trim whatever precedes the base image specification, but also
+        # issue a warning about that behavior.
         container_parts = container.split("/")
         if len(container_parts) > 2:
             container = "/".join(container_parts[-2:])
+            found_library = container_parts[-3]
+            log.info(
+                f'Found explicit container library [bright_magenta]{found_library}[/] in a module. Upon pull failure, retry the download with [bright_magenta] -l "{found_library}"[/]'
+            )
 
         # Pull using singularity
         address = f"docker://{library}/{container.replace('docker://', '')}"
