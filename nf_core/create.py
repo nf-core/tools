@@ -57,7 +57,7 @@ class PipelineCreate:
         default_branch=None,
     ):
         self.template_params, skip_paths_keys, self.template_yaml = self.create_param_dict(
-            name, description, author, version, template_yaml_path, plain
+            name, description, author, version, template_yaml_path, plain, outdir if outdir else "."
         )
 
         skippable_paths = {
@@ -90,16 +90,28 @@ class PipelineCreate:
             outdir = os.path.join(os.getcwd(), self.template_params["name_noslash"])
         self.outdir = Path(outdir)
 
-    def create_param_dict(self, name, description, author, version, template_yaml_path, plain):
+    def create_param_dict(self, name, description, author, version, template_yaml_path, plain, pipeline_dir):
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
+            name (str): Name for the pipeline.
+            description (str): Description for the pipeline.
+            author (str): Authors name of the pipeline.
+            version (str): Version flag.
             template_yaml_path (str): Path to YAML file containing template parameters.
+            plain (bool): If true the pipeline template will be initialized plain, without customisation.
+            pipeline_dir (str): Path to the pipeline directory.
         """
+        # Try reading config file
+        _, config_yml = nf_core.utils.load_tools_config(pipeline_dir)
+
+        # Obtain template customization info from template yaml file or `.nf-core.yml` config file
         try:
             if template_yaml_path is not None:
                 with open(template_yaml_path, "r") as f:
                     template_yaml = yaml.safe_load(f)
+            elif "template" in config_yml:
+                template_yaml = config_yml["template"]
             else:
                 template_yaml = {}
         except FileNotFoundError:
@@ -169,7 +181,6 @@ class PipelineCreate:
         param_dict["logo_dark"] = f"{param_dict['name_noslash']}_logo_dark.png"
         param_dict["version"] = version
 
-        _, config_yml = nf_core.utils.load_tools_config()
         if (
             "lint" in config_yml
             and "nextflow_config" in config_yml["lint"]
@@ -187,9 +198,7 @@ class PipelineCreate:
         """Customizes the template parameters.
 
         Args:
-            name (str): Name for the pipeline.
-            description (str): Description for the pipeline.
-            author (str): Authors name of the pipeline.
+            template_areas (list<str>): List of available template areas to skip.
         """
         template_yaml = {}
         prefix = questionary.text("Pipeline prefix", style=nf_core.utils.nfcore_question_style).unsafe_ask()
@@ -351,11 +360,13 @@ class PipelineCreate:
             # Update the .nf-core.yml with linting configurations
             self.fix_linting()
 
-        log.debug("Dumping pipeline template yml to file")
         if self.template_yaml:
-            with open(self.outdir / "pipeline_template.yml", "w") as fh:
-                yaml.safe_dump(self.template_yaml, fh)
-            run_prettier_on_file(self.outdir / "pipeline_template.yml")
+            config_fn, config_yml = nf_core.utils.load_tools_config(self.outdir)
+            with open(self.outdir / config_fn, "w") as fh:
+                config_yml.update(template=self.template_yaml)
+                yaml.safe_dump(config_yml, fh)
+                log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
+                run_prettier_on_file(self.outdir / config_fn)
 
     def update_nextflow_schema(self):
         """

@@ -8,12 +8,18 @@
 - Remove default false from nextflow_schema.json ([#2376](https://github.com/nf-core/tools/pull/2376))
 - Add module MULTIQC to modules.config ([#2377](https://github.com/nf-core/tools/pull/2377))
 - Add GitHub workflow for automated release announcements ([#2382](https://github.com/nf-core/tools/pull/2382))
+- Update the Code of Conduct ([#2381](https://github.com/nf-core/tools/pull/2381))
+- Save template information to `.nf-core.yml` and deprecate argument `--template-yaml` for `nf-core sync` ([#2388](https://github.com/nf-core/tools/pull/2388) and [#2389](https://github.com/nf-core/tools/pull/2389))
+- ([#2397](https://github.com/nf-core/tools/pull/2397)) Remove fixed Ubuntu test and added to standard testing matrix
+- ([#2396](https://github.com/nf-core/tools/pull/2396)) Reduce container finding error to warning since the registries are not consistent.
 
 ### Download
 
 - Improved container image resolution and prioritization of http downloads over Docker URIs ([#2364](https://github.com/nf-core/tools/pull/2364)).
 
 ### Linting
+
+- Add new command `nf-core subworkflows lint` ([#2379](https://github.com/nf-core/tools/pull/2379))
 
 ### Modules
 
@@ -24,6 +30,8 @@
 - Initialise `docker_image_name` to fix `UnboundLocalError` error ([#2374](https://github.com/nf-core/tools/pull/2374))
 - Fix prompt pipeline revision during launch ([#2375](https://github.com/nf-core/tools/pull/2375))
 - Add a `create-params-file` command to create a YAML parameter file for a pipeline containing parameter documentation and defaults. ([#2362](https://github.com/nf-core/tools/pull/2362))
+- Update the Code of Conduct ([#2381](https://github.com/nf-core/tools/pull/2381))
+- Remove `--no-git` option from `nf-core create` ([#2394](https://github.com/nf-core/tools/pull/2394))
 
 # [v2.9 - Chromium Falcon](https://github.com/nf-core/tools/releases/tag/2.9) + [2023-06-29]
 

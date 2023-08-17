@@ -97,7 +97,7 @@ jobs:
 
       # Try syncing it before we change anything
       - name: nf-core sync
-        run: nf-core --log-file log.txt sync --dir my-prefix-testpipeline/ --template-yaml ${{ matrix.TEMPLATE }}
+        run: nf-core --log-file log.txt sync --dir my-prefix-testpipeline/
 
       # Run code style linting
       - name: Run Prettier --check
