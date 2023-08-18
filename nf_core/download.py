@@ -1244,9 +1244,10 @@ class DownloadWorkflow:
         if len(container_parts) > 2:
             container = "/".join(container_parts[-2:])
             found_library = container_parts[-3]
-            log.info(
-                f'Found explicit container library [bright_magenta]{found_library}[/] in a module. Upon pull failure, retry the download with [bright_magenta] -l "{found_library}"[/]'
-            )
+            if found_library not in ["", "docker:"]:
+                log.info(
+                    f'Found explicit container library [bright_magenta]{found_library}[/] in a module. Upon pull failure, retry the download with [bright_magenta] -l "{found_library}"[/]'
+                )
 
         # Pull using singularity
         address = f"docker://{library}/{container.replace('docker://', '')}"
