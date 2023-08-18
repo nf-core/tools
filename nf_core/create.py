@@ -187,10 +187,15 @@ class PipelineCreate:
             and "manifest.name" in config_yml["lint"]["nextflow_config"]
         ):
             return param_dict, skip_paths, template_yaml
-        if param_dict["prefix"] == "nf-core":
-            # Check that the pipeline name matches the requirements
-            if not re.match(r"^[a-z]+$", param_dict["short_name"]):
+
+        # Check that the pipeline name matches the requirements
+        if not re.match(r"^[a-z]+$", param_dict["short_name"]):
+            if param_dict["prefix"] == "nf-core":
                 raise UserWarning("[red]Invalid workflow name: must be lowercase without punctuation.")
+            else:
+                log.warning(
+                    "Your workflow name is not lowercase without punctuation. This may cause Nextflow errors.\nConsider changing the name to avoid special characters."
+                )
 
         return param_dict, skip_paths, template_yaml
 
