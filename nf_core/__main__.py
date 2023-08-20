@@ -488,6 +488,49 @@ def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, ma
         sys.exit(1)
 
 
+# nf-core pipelines subcommands
+@nf_core_cli.group()
+@click.pass_context
+def pipelines(ctx):
+    """
+    Commands to manage nf-core pipelines.
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
+
+# nf-core pipeline install
+@pipelines.command("create")
+@click.pass_context
+@click.option(
+    "-n",
+    "--name",
+    type=str,
+    help="The name of your new pipeline",
+)
+@click.option("-d", "--description", type=str, help="A short description of your pipeline")
+@click.option("-a", "--author", type=str, help="Name of the main author(s)")
+@click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
+@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+@click.option("--plain", is_flag=True, help="Use the standard nf-core template")
+def create_pipeline(ctx, name, description, author, version, force, outdir, template_yaml, plain):
+    """
+    Create a new pipeline using the nf-core template.
+
+    Uses the nf-core template to make a skeleton Nextflow pipeline with all required
+    files, boilerplate code and best-practices.
+    \n\n
+    Run without any command line arguments to use an interactive interface.
+    """
+    from nf_core.pipelines.create import PipelineCreateApp
+
+    app = PipelineCreateApp()
+    app.run()
+
+
 # nf-core modules subcommands
 @nf_core_cli.group()
 @click.option(

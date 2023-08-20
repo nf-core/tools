@@ -1,0 +1,32 @@
+#logo {
+    text-align:center;
+}
+.cta {
+    layout: horizontal;
+    margin-bottom: 1;
+}
+.cta Button {
+    margin-left: 3;
+    margin-right: 3;
+}
+
+.field_help {
+    padding: 1 1 0 1;
+    color: $text-muted;
+    text-style: italic;
+}
+.validation_msg {
+    padding: 0 1;
+    color: $error;
+}
+.-valid {
+    border: tall $success-darken-3;
+}
+
+Horizontal{
+    width: 100%;
+    height: auto;
+}
+.column {
+    width: 1fr;
+}

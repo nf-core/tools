@@ -7,8 +7,9 @@ markdown>=3.3
 packaging
 pre-commit
 prompt_toolkit>=3.0.3
-pytest>=7.0.0
+pydantic>=2.2.1
 pytest-workflow>=1.6.0
+pytest>=7.0.0
 pyyaml
 questionary>=1.8.0
 refgenie
@@ -17,3 +18,4 @@ requests_cache
 rich-click>=1.6.1
 rich>=13.3.1
 tabulate
+textual>=0.33.0
