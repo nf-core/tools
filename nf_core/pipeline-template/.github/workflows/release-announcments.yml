@@ -41,8 +41,7 @@ jobs:
               consumer_key=os.getenv("TWITTER_CONSUMER_KEY"),
               consumer_secret=os.getenv("TWITTER_CONSUMER_SECRET"),
           )
-          version = os.getenv("VERSION").strip('"')
-          tweet = os.getenv("TWEET").format(version=version)
+          tweet = os.getenv("TWEET")
           client.create_tweet(text=tweet)
         env:
           TWEET: |
