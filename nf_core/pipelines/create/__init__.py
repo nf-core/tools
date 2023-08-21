@@ -1,14 +1,6 @@
 """A Textual app to create a pipeline."""
-from pydantic import BaseModel, field_validator, Field
-import re
-from typing import Optional
-from textual import on
-from textual.app import App, ComposeResult
-from textual.screen import Screen
-from textual.containers import Horizontal, Center
-from textual.validation import Function, Validator, ValidationResult
-from textual.widgets import Button, Footer, Header, Static, Markdown, Input, Pretty
-from textwrap import dedent
+from textual.app import App
+from textual.widgets import Button
 
 from nf_core.pipelines.create.utils import CreateConfig
 from nf_core.pipelines.create.welcome import WelcomeScreen
