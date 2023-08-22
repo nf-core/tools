@@ -1,10 +1,11 @@
-from pydantic import BaseModel, field_validator
 import re
 from typing import Optional
+
+from pydantic import BaseModel, field_validator
 from textual import on
 from textual.app import ComposeResult
-from textual.validation import Validator, ValidationResult
-from textual.widgets import Static, Input
+from textual.validation import ValidationResult, Validator
+from textual.widgets import Input, Static
 
 
 class CreateConfig(BaseModel):
@@ -64,7 +65,8 @@ class TextInput(Static):
         yield Static(classes="validation_msg")
 
     @on(Input.Changed)
-    def show_invalid_reasons(self, event: Input.Changed) -> None:
+    @on(Input.Submitted)
+    def show_invalid_reasons(self, event: Input.Changed | Input.Submitted) -> None:
         """Validate the text input and show errors if invalid."""
         if not event.validation_result.is_valid:
             self.query_one(".validation_msg").update("\n".join(event.validation_result.failure_descriptions))
