@@ -1,10 +1,11 @@
 """A Textual app to create a pipeline."""
+from textwrap import dedent
+
 from textual import on
 from textual.app import ComposeResult
+from textual.containers import Center, Horizontal
 from textual.screen import Screen
-from textual.containers import Horizontal, Center
-from textual.widgets import Button, Footer, Header, Markdown, Input
-from textwrap import dedent
+from textual.widgets import Button, Footer, Header, Input, Markdown
 
 from nf_core.pipelines.create.utils import CreateConfig, TextInput
 
@@ -58,8 +59,12 @@ class BasicDetails(Screen):
         config = {}
         for text_input in self.query("TextInput"):
             this_input = text_input.query_one(Input)
-            this_input.validate(this_input.value)
+            validation_result = this_input.validate(this_input.value)
             config[text_input.field_id] = this_input.value
+            if not validation_result.is_valid:
+                text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
+            else:
+                text_input.query_one(".validation_msg").update("")
         try:
             self.parent.TEMPLATE_CONFIG = CreateConfig(**config)
             self.parent.switch_screen("choose_type")
