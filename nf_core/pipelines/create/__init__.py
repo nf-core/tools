@@ -2,10 +2,11 @@
 from textual.app import App
 from textual.widgets import Button
 
-from nf_core.pipelines.create.utils import CreateConfig
-from nf_core.pipelines.create.welcome import WelcomeScreen
 from nf_core.pipelines.create.basicdetails import BasicDetails
 from nf_core.pipelines.create.pipelinetype import ChoosePipelineType
+from nf_core.pipelines.create.usegenomicdata import UseGenomicData
+from nf_core.pipelines.create.utils import CreateConfig
+from nf_core.pipelines.create.welcome import WelcomeScreen
 
 
 class PipelineCreateApp(App):
@@ -22,6 +23,7 @@ class PipelineCreateApp(App):
         "welcome": WelcomeScreen(),
         "basic_details": BasicDetails(),
         "choose_type": ChoosePipelineType(),
+        "genomic_data": UseGenomicData(),
     }
 
     # Initialise config as empty
@@ -37,7 +39,7 @@ class PipelineCreateApp(App):
         elif event.button.id == "type_nfcore":
             self.switch_screen("type_nfcore")
         elif event.button.id == "type_custom":
-            self.switch_screen("type_custom")
+            self.switch_screen("genomic_data")
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
