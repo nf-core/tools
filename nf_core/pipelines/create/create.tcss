@@ -10,6 +10,20 @@
     margin-right: 3;
 }
 
+.custom_grid {
+    height: auto;
+}
+.custom_grid Switch {
+    width: auto;
+}
+.custom_grid Static {
+    width: 1fr;
+    margin: 1 8;
+}
+.custom_grid Button {
+    width: auto;
+}
+
 .field_help {
     padding: 1 1 0 1;
     color: $text-muted;
@@ -29,4 +43,29 @@ Horizontal{
 }
 .column {
     width: 1fr;
+}
+
+/* Display help messages */
+
+.help_box {
+    background: white;
+    margin-left: 15;
+    margin-right: 25;
+    margin-bottom: 1;
+    display: none;
+}
+.displayed .help_box {
+    display: block;
+}
+#show_help {
+    display: block;
+}
+#hide_help {
+    display: none;
+}
+.displayed #show_help {
+    display: none;
+}
+.displayed #hide_help {
+    display: block;
 }
