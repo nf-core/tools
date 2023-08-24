@@ -17,7 +17,36 @@ see the [nf-core docs](https://nf-co.re/docs/usage/reference_genomes).
 """
 
 markdown_ci = """
-Add Github Continuous Integration tests
+Nf-core provides a set of Continuous Integration (CI) tests for Github.
+When you open a pull request (PR) on your pipeline repository, these tests will run automatically.
+
+There are different types of tests:
+* Linting tests check that your code is formatted correctly and that it adheres to nf-core standards
+    For code linting they will use [prettier](https://prettier.io/).
+* Pipeline tests run your pipeline on a small dataset to check that it works
+    These tests are run with a small test dataset on GitHub and a larger test dataset on AWS
+* Marking old issues as stale
+"""
+
+markdown_badges = """
+The pipeline `README.md` will include badges for:
+* AWS CI Tests
+* Zenodo DOI
+* Nextflow
+* Conda
+* Docker
+* Singularity
+* Launching on Nextflow Tower
+"""
+
+markdown_configuration = """
+Nf-core has a repository with a collection of configuration profiles.
+
+Those config files define a set of parameters which are specific to compute environments at different Institutions.
+They can be used within all nf-core pipelines.
+If you are likely to be running nf-core pipelines regularly it is a good idea to use or create a custom config file for your organisation.
+
+For more information about nf-core configuration profiles, see the [nf-core/configs repository](https://github.com/nf-core/configs)
 """
 
 
@@ -77,8 +106,26 @@ class CustomPipeline(Screen):
         yield Header()
         yield Footer()
         yield ScrollableContainer(
-            PipelineFeature(markdown_genomes, "Use reference genomes", "Include reference genome files"),
-            PipelineFeature(markdown_ci, "Add Github CI tests", "Include GitHub Continuous Integration (CI) tests"),
+            PipelineFeature(
+                markdown_genomes,
+                "Use reference genomes",
+                "The pipeline will be configured to use a copy of the most common reference genome files from iGenomes",
+            ),
+            PipelineFeature(
+                markdown_ci,
+                "Add Github CI tests",
+                "The pipeline will include several GitHub actions for Continuous Integration (CI) testing",
+            ),
+            PipelineFeature(
+                markdown_badges,
+                "Add Github badges",
+                "The README.md file of the pipeline will include GitHub badges",
+            ),
+            PipelineFeature(
+                markdown_configuration,
+                "Add configuration files",
+                "The pipeline will include configuration profiles containing custom parameters requried to run nf-core pipelines at different institutions",
+            ),
         )
         yield Center(
             Button("Done", id="custom_done", variant="success"),
