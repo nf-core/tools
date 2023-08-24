@@ -45,6 +45,13 @@ Horizontal{
     width: 1fr;
 }
 
+HorizontalScroll {
+    width: 100%;
+}
+.feature_subtitle {
+    color: grey;
+}
+
 /* Display help messages */
 
 .help_box {

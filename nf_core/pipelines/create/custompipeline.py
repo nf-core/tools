@@ -1,6 +1,5 @@
-from textual import on
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal
+from textual.containers import Center, HorizontalScroll, ScrollableContainer
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown, Static, Switch
 
@@ -25,8 +24,8 @@ Add Github Continuous Integration tests
 class HelpText(Markdown):
     """A class to show a text box with help text."""
 
-    def __init__(self, markdown: str, classes: str, id: str) -> None:
-        super().__init__(markdown=markdown, classes=classes, id=id)
+    def __init__(self, markdown: str, classes: str) -> None:
+        super().__init__(markdown=markdown, classes=classes)
 
     def show(self) -> None:
         """Method to show the help text box."""
@@ -37,44 +36,51 @@ class HelpText(Markdown):
         self.remove_class("displayed")
 
 
+class PipelineFeature(Static):
+    """Widget for the selection of pipeline features."""
+
+    def __init__(self, markdown: str, title: str, subtitle: str) -> None:
+        self.markdown = markdown
+        self.title = title
+        self.subtitle = subtitle
+        super().__init__()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """When the button is pressed, change the type of the button."""
+        if event.button.id == "show_help":
+            self.add_class("displayed")
+        elif event.button.id == "hide_help":
+            self.remove_class("displayed")
+
+    def compose(self) -> ComposeResult:
+        """
+        Create child widgets.
+
+        Displayed row with a switch, a short text description and a help button.
+        Hidden row with a help text box.
+        """
+        yield HorizontalScroll(
+            Switch(value=True),
+            Static(self.title, classes="feature_title"),
+            Static(self.subtitle, classes="feature_subtitle"),
+            Button("Show help", id="show_help", variant="primary"),
+            Button("Hide help", id="hide_help"),
+            classes="custom_grid",
+        )
+        yield HelpText(self.markdown, classes="help_box")
+
+
 class CustomPipeline(Screen):
     """Select if the pipeline will use genomic data."""
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        yield Horizontal(
-            Switch(value=True),
-            Static("Use reference genomes"),
-            Button("Show help", id="show_help", name="genomes", variant="primary"),
-            Button("Hide help", id="hide_help", name="genomes"),
-            classes="custom_grid",
+        yield ScrollableContainer(
+            PipelineFeature(markdown_genomes, "Use reference genomes", "Include reference genome files"),
+            PipelineFeature(markdown_ci, "Add Github CI tests", "Include GitHub Continuous Integration (CI) tests"),
         )
-        yield HelpText(markdown_genomes, classes="help_box", id="genomes")
-
-        yield Horizontal(
-            Switch(value=True),
-            Static("Include GitHub Continuous Integration (CI) tests"),
-            Button("Show help", id="show_help", name="ci", variant="primary"),
-            Button("Hide help", id="hide_help", name="ci"),
-            classes="custom_grid",
-        )
-        yield HelpText(markdown_ci, classes="help_box", id="ci")
-
         yield Center(
-            Button("Done", id="done", variant="success"),
+            Button("Done", id="custom_done", variant="success"),
             classes="cta",
         )
-
-    @on(Button.Pressed)
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Save answer to the config."""
-        help_text = self.query_one(f"#{event.button.name}", HelpText)
-        if event.button.id == "show_help":
-            help_text.show()
-            self.add_class("displayed")
-        elif event.button.id == "hide_help":
-            help_text.hide()
-            self.remove_class("displayed")
-        elif event.button.id == "done":
-            pass
