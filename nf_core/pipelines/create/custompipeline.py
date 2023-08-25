@@ -1,5 +1,7 @@
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, HorizontalScroll, ScrollableContainer
+from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown, Static, Switch
 
@@ -68,10 +70,11 @@ class HelpText(Markdown):
 class PipelineFeature(Static):
     """Widget for the selection of pipeline features."""
 
-    def __init__(self, markdown: str, title: str, subtitle: str) -> None:
+    def __init__(self, markdown: str, title: str, subtitle: str, field_id: str) -> None:
         self.markdown = markdown
         self.title = title
         self.subtitle = subtitle
+        self.field_id = field_id
         super().__init__()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -89,7 +92,7 @@ class PipelineFeature(Static):
         Hidden row with a help text box.
         """
         yield HorizontalScroll(
-            Switch(value=True),
+            Switch(value=True, id=self.field_id),
             Static(self.title, classes="feature_title"),
             Static(self.subtitle, classes="feature_subtitle"),
             Button("Show help", id="show_help", variant="primary"),
@@ -110,24 +113,39 @@ class CustomPipeline(Screen):
                 markdown_genomes,
                 "Use reference genomes",
                 "The pipeline will be configured to use a copy of the most common reference genome files from iGenomes",
+                "igenomes",
             ),
             PipelineFeature(
                 markdown_ci,
                 "Add Github CI tests",
                 "The pipeline will include several GitHub actions for Continuous Integration (CI) testing",
+                "ci",
             ),
             PipelineFeature(
                 markdown_badges,
                 "Add Github badges",
                 "The README.md file of the pipeline will include GitHub badges",
+                "github_badges",
             ),
             PipelineFeature(
                 markdown_configuration,
                 "Add configuration files",
                 "The pipeline will include configuration profiles containing custom parameters requried to run nf-core pipelines at different institutions",
+                "nf_core_configs",
             ),
         )
         yield Center(
             Button("Done", id="custom_done", variant="success"),
             classes="cta",
         )
+
+    @on(Button.Pressed)
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Save fields to the config."""
+        skip = []
+        for feature_input in self.query("PipelineFeature"):
+            this_switch = feature_input.query_one(Switch)
+            if not this_switch.value:
+                skip.append(this_switch.id)
+        self.parent.TEMPLATE_CONFIG.template_yaml = {"skip": skip}
+        self.parent.switch_screen("custom_done")
