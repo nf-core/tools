@@ -142,10 +142,11 @@ class CustomPipeline(Screen):
     @on(Button.Pressed)
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
-        skip = []
-        for feature_input in self.query("PipelineFeature"):
-            this_switch = feature_input.query_one(Switch)
-            if not this_switch.value:
-                skip.append(this_switch.id)
-        self.parent.TEMPLATE_CONFIG.template_yaml = {"skip": skip}
-        self.parent.switch_screen("custom_done")
+        if event.button.id == "custom_done":
+            skip = []
+            for feature_input in self.query("PipelineFeature"):
+                this_switch = feature_input.query_one(Switch)
+                if not this_switch.value:
+                    skip.append(this_switch.id)
+            self.parent.TEMPLATE_CONFIG.template_yaml = {"skip": skip}
+            self.parent.switch_screen("custom_done")

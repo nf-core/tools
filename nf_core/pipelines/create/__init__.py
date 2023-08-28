@@ -40,8 +40,6 @@ class PipelineCreateApp(App):
             self.switch_screen("type_nfcore")
         elif event.button.id == "type_custom":
             self.switch_screen("type_custom")
-        elif event.button.id == "custom_done":
-            pass
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
