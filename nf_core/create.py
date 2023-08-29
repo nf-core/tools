@@ -40,6 +40,7 @@ class PipelineCreate:
         outdir (str): Path to the local output directory.
         template_yaml_path (str): Path to template.yml file for pipeline creation settings.
         plain (bool): If true the Git repository will be initialized plain.
+        organisation (str): Name of the GitHub organisation to create the pipeline. Will be the prefix of the pipeline.
         default_branch (str): Specifies the --initial-branch name.
     """
 
@@ -54,10 +55,11 @@ class PipelineCreate:
         outdir=None,
         template_yaml_path=None,
         plain=False,
+        organisation="nf-core",
         default_branch=None,
     ):
         self.template_params, skip_paths_keys, self.template_yaml = self.create_param_dict(
-            name, description, author, version, template_yaml_path, plain, outdir if outdir else "."
+            name, description, author, organisation, version, template_yaml_path, plain, outdir if outdir else "."
         )
 
         skippable_paths = {
@@ -90,13 +92,16 @@ class PipelineCreate:
             outdir = os.path.join(os.getcwd(), self.template_params["name_noslash"])
         self.outdir = Path(outdir)
 
-    def create_param_dict(self, name, description, author, version, template_yaml_path, plain, pipeline_dir):
+    def create_param_dict(
+        self, name, description, author, organisation, version, template_yaml_path, plain, pipeline_dir
+    ):
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
             name (str): Name for the pipeline.
             description (str): Description for the pipeline.
             author (str): Authors name of the pipeline.
+            organisation (str): Name of the GitHub organisation to create the pipeline.
             version (str): Version flag.
             template_yaml_path (str): Path to YAML file containing template parameters.
             plain (bool): If true the pipeline template will be initialized plain, without customisation.
@@ -108,8 +113,11 @@ class PipelineCreate:
         # Obtain template customization info from template yaml file or `.nf-core.yml` config file
         try:
             if template_yaml_path is not None:
-                with open(template_yaml_path, "r") as f:
-                    template_yaml = yaml.safe_load(f)
+                if isinstance(template_yaml_path, str):
+                    with open(template_yaml_path, "r") as f:
+                        template_yaml = yaml.safe_load(f)
+                else:
+                    template_yaml = template_yaml_path
             elif "template" in config_yml:
                 template_yaml = config_yml["template"]
             else:
@@ -150,7 +158,10 @@ class PipelineCreate:
                 template_yaml.update(self.customize_template(template_areas))
 
         # Now look in the template for more options, otherwise default to nf-core defaults
-        param_dict["prefix"] = template_yaml.get("prefix", "nf-core")
+        if "prefix" in template_yaml:
+            log.info(f"Using organisation name found in {template_yaml_path}")
+            organisation = template_yaml.get("prefix")
+        param_dict["prefix"] = organisation
         param_dict["branded"] = param_dict["prefix"] == "nf-core"
 
         skip_paths = [] if param_dict["branded"] else ["branded"]

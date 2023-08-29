@@ -539,6 +539,7 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
         force=config.force,
         outdir=config.outdir,
         template_yaml_path=config.template_yaml,
+        organisation=config.org,
         plain=config.is_nfcore,
     )
     create_obj.init_pipeline()
