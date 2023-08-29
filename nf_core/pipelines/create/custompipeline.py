@@ -135,18 +135,17 @@ class CustomPipeline(Screen):
             ),
         )
         yield Center(
-            Button("Done", id="custom_done", variant="success"),
+            Button("Done", id="done", variant="success"),
             classes="cta",
         )
 
-    @on(Button.Pressed)
+    @on(Button.Pressed, "#done")
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
-        if event.button.id == "custom_done":
-            skip = []
-            for feature_input in self.query("PipelineFeature"):
-                this_switch = feature_input.query_one(Switch)
-                if not this_switch.value:
-                    skip.append(this_switch.id)
-            self.parent.TEMPLATE_CONFIG.template_yaml = {"skip": skip}
-            self.parent.switch_screen("custom_done")
+        skip = []
+        for feature_input in self.query("PipelineFeature"):
+            this_switch = feature_input.query_one(Switch)
+            if not this_switch.value:
+                skip.append(this_switch.id)
+        self.parent.TEMPLATE_CONFIG.template_yaml = {"skip": skip}
+        self.parent.TEMPLATE_CONFIG.is_nfcore = False

@@ -4,12 +4,13 @@ from textual.widgets import Button
 
 from nf_core.pipelines.create.basicdetails import BasicDetails
 from nf_core.pipelines.create.custompipeline import CustomPipeline
+from nf_core.pipelines.create.nfcorepipeline import NfcorePipeline
 from nf_core.pipelines.create.pipelinetype import ChoosePipelineType
 from nf_core.pipelines.create.utils import CreateConfig
 from nf_core.pipelines.create.welcome import WelcomeScreen
 
 
-class PipelineCreateApp(App):
+class PipelineCreateApp(App[CreateConfig]):
     """A Textual app to manage stopwatches."""
 
     CSS_PATH = "create.tcss"
@@ -24,6 +25,7 @@ class PipelineCreateApp(App):
         "basic_details": BasicDetails(),
         "choose_type": ChoosePipelineType(),
         "type_custom": CustomPipeline(),
+        "type_nfcore": NfcorePipeline(),
     }
 
     # Initialise config as empty
@@ -40,6 +42,8 @@ class PipelineCreateApp(App):
             self.switch_screen("type_nfcore")
         elif event.button.id == "type_custom":
             self.switch_screen("type_custom")
+        elif event.button.id == "done":
+            self.exit(self.TEMPLATE_CONFIG)
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""

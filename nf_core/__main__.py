@@ -525,10 +525,23 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
     \n\n
     Run without any command line arguments to use an interactive interface.
     """
+    from nf_core.create import PipelineCreate
     from nf_core.pipelines.create import PipelineCreateApp
 
     app = PipelineCreateApp()
-    app.run()
+    config = app.run()
+
+    create_obj = PipelineCreate(
+        config.name,
+        config.description,
+        config.author,
+        version=config.version,
+        force=config.force,
+        outdir=config.outdir,
+        template_yaml_path=config.template_yaml,
+        plain=config.is_nfcore,
+    )
+    create_obj.init_pipeline()
 
 
 # nf-core modules subcommands
