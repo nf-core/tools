@@ -33,6 +33,7 @@
 - Update the Code of Conduct ([#2381](https://github.com/nf-core/tools/pull/2381))
 - Remove `--no-git` option from `nf-core create` ([#2394](https://github.com/nf-core/tools/pull/2394))
 - Throw warning when custom workflow name contains special characters ([#2401](https://github.com/nf-core/tools/pull/2401))
+- Bump version of nf-test snapshot files with `nf-core bump-version` ([#2410](https://github.com/nf-core/tools/pull/2410))
 
 # [v2.9 - Chromium Falcon](https://github.com/nf-core/tools/releases/tag/2.9) + [2023-06-29]
 
