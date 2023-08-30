@@ -1,7 +1,7 @@
 import re
 from typing import Optional
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from textual import on
 from textual.app import ComposeResult
 from textual.validation import ValidationResult, Validator
@@ -18,8 +18,10 @@ class CreateConfig(BaseModel):
     version: Optional[str] = None
     force: Optional[bool] = None
     outdir: Optional[str] = None
-    template_yaml: Optional[dict] = None
+    skip_features: Optional[dict] = None
     is_nfcore: Optional[bool] = None
+
+    model_config = ConfigDict(extra="allow")
 
     @field_validator("name")
     @classmethod

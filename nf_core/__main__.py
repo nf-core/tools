@@ -367,47 +367,6 @@ def licences(pipeline, json):
         sys.exit(1)
 
 
-# nf-core create
-@nf_core_cli.command()
-@click.option(
-    "-n",
-    "--name",
-    type=str,
-    help="The name of your new pipeline",
-)
-@click.option("-d", "--description", type=str, help="A short description of your pipeline")
-@click.option("-a", "--author", type=str, help="Name of the main author(s)")
-@click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
-@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
-@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
-@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-@click.option("--plain", is_flag=True, help="Use the standard nf-core template")
-def create(name, description, author, version, force, outdir, template_yaml, plain):
-    """
-    Create a new pipeline using the nf-core template.
-
-    Uses the nf-core template to make a skeleton Nextflow pipeline with all required
-    files, boilerplate code and best-practices.
-    """
-    from nf_core.create import PipelineCreate
-
-    try:
-        create_obj = PipelineCreate(
-            name,
-            description,
-            author,
-            version=version,
-            force=force,
-            outdir=outdir,
-            template_yaml_path=template_yaml,
-            plain=plain,
-        )
-        create_obj.init_pipeline()
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
-
-
 # nf-core lint
 @nf_core_cli.command()
 @click.option(
@@ -500,7 +459,7 @@ def pipelines(ctx):
     ctx.ensure_object(dict)
 
 
-# nf-core pipeline install
+# nf-core pipeline create
 @pipelines.command("create")
 @click.pass_context
 @click.option(
@@ -515,8 +474,12 @@ def pipelines(ctx):
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
 @click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-@click.option("--plain", is_flag=True, help="Use the standard nf-core template")
-def create_pipeline(ctx, name, description, author, version, force, outdir, template_yaml, plain):
+@click.option(
+    "--organisation",
+    type=str,
+    help="The name of the GitHub organisation where the pipeline will be hosted (default: nf-core",
+)
+def create_pipeline(ctx, name, description, author, version, force, outdir, template_yaml, organisation):
     """
     Create a new pipeline using the nf-core template.
 
@@ -528,21 +491,33 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
     from nf_core.create import PipelineCreate
     from nf_core.pipelines.create import PipelineCreateApp
 
-    app = PipelineCreateApp()
-    config = app.run()
+    if (name and description and author) or (template_yaml):
+        # If all command arguments are used, run without the interactive interface
+        config = organisation if template_yaml else None
+    else:
+        log.info(
+            "Ignoring provided arguments. Launching interactive nf-core pipeline creation tool."
+            "\nRun with all command line arguments to avoid using an interactive interface."
+        )
+        app = PipelineCreateApp()
+        config = app.run()
+        print(config)
 
-    create_obj = PipelineCreate(
-        config.name,
-        config.description,
-        config.author,
-        version=config.version,
-        force=config.force,
-        outdir=config.outdir,
-        template_yaml_path=config.template_yaml,
-        organisation=config.org,
-        plain=config.is_nfcore,
-    )
-    create_obj.init_pipeline()
+    try:
+        create_obj = PipelineCreate(
+            name,
+            description,
+            author,
+            version=version,
+            force=force,
+            outdir=outdir,
+            template_config=config,
+            organisation=organisation,
+        )
+        create_obj.init_pipeline()
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
 
 
 # nf-core modules subcommands
