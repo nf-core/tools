@@ -16,7 +16,7 @@
 ### Download
 
 - Improved container image resolution and prioritization of http downloads over Docker URIs ([#2364](https://github.com/nf-core/tools/pull/2364)).
-- Explicit container registry specifications will be ignored, so registries provided with `-l`/`--container-library` are used instead. ([#2403](https://github.com/nf-core/tools/pull/2403)).
+- Registries provided with `-l`/`--container-library` will be ignored for modules with explicit container registry specifications ([#2403](https://github.com/nf-core/tools/pull/2403)).
 
 ### Linting
 
