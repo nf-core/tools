@@ -36,7 +36,7 @@ class PipelineCreate:
         author (str): Authors name of the pipeline.
         version (str): Version flag. Semantic versioning only. Defaults to `1.0dev`.
         no_git (bool): Prevents the creation of a local Git repository for the pipeline. Defaults to False.
-        force (bool): Overwrites a given workflow directory with the same name. Defaults to False.
+        force (bool): Overwrites a given workflow directory with the same name. Defaults to False. Used for tests and sync command.
             May the force be with you.
         outdir (str): Path to the local output directory.
         template_config (str|CreateConfig): Path to template.yml file for pipeline creation settings. or pydantic model with the customisation for pipeline creation settings.

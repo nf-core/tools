@@ -2,7 +2,9 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, HorizontalScroll, ScrollableContainer
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Markdown, Static, Switch
+from textual.widgets import Button, Footer, Header, Switch
+
+from nf_core.pipelines.create.utils import PipelineFeature, markdown_genomes
 
 
 class NfcorePipeline(Screen):
@@ -11,7 +13,14 @@ class NfcorePipeline(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        # TODO: add features to customise the pipeline template
+        yield ScrollableContainer(
+            PipelineFeature(
+                markdown_genomes,
+                "Use reference genomes",
+                "The pipeline will be configured to use a copy of the most common reference genome files from iGenomes",
+                "igenomes",
+            ),
+        )
         yield Center(
             Button("Continue", id="continue", variant="success"),
             classes="cta",
