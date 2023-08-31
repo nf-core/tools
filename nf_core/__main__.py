@@ -536,7 +536,7 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
 )
 @click.option("-d", "--description", type=str, help="A short description of your pipeline")
 @click.option("-a", "--author", type=str, help="Name of the main author(s)")
-@click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
+@click.option("--version", type=str, help="The initial version number to use")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
 @click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
@@ -562,12 +562,18 @@ def create(name, description, author, version, force, outdir, template_yaml, pla
         )
         sys.exit(1)
     else:
-        log.info(
-            "Launching interactive nf-core pipeline creation tool."
-            "\nRun with all command line arguments to avoid using an interactive interface."
-        )
-        app = PipelineCreateApp()
-        config = app.run()
+        if rich.prompt.Confirm.ask(
+            "[blue bold]?[/] [bold] [green]nf-core create[/] command is deprecated in favor of [green]nf-core pipelines create[/].[/]\n"
+            "[bold]Will launch an interactive interface. Do you want to continue?[/]"
+        ):
+            log.info(
+                "Launching interactive nf-core pipeline creation tool."
+                "\nRun with all command line arguments to avoid using an interactive interface."
+            )
+            app = PipelineCreateApp()
+            config = app.run()
+        else:
+            sys.exit(0)
 
     try:
         create_obj = PipelineCreate(
