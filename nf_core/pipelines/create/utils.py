@@ -109,8 +109,8 @@ class ValidateConfig(Validator):
 class HelpText(Markdown):
     """A class to show a text box with help text."""
 
-    def __init__(self, markdown: str, classes: str) -> None:
-        super().__init__(markdown=markdown, classes=classes)
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
 
     def show(self) -> None:
         """Method to show the help text box."""
@@ -124,12 +124,12 @@ class HelpText(Markdown):
 class PipelineFeature(Static):
     """Widget for the selection of pipeline features."""
 
-    def __init__(self, markdown: str, title: str, subtitle: str, field_id: str) -> None:
+    def __init__(self, markdown: str, title: str, subtitle: str, field_id: str, **kwargs) -> None:
+        super().__init__(**kwargs)
         self.markdown = markdown
         self.title = title
         self.subtitle = subtitle
         self.field_id = field_id
-        super().__init__()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """When the button is pressed, change the type of the button."""
@@ -153,7 +153,7 @@ class PipelineFeature(Static):
             Button("Hide help", id="hide_help"),
             classes="custom_grid",
         )
-        yield HelpText(self.markdown, classes="help_box")
+        yield HelpText(markdown=self.markdown, classes="help_box")
 
 
 ## Markdown text to reuse in different screens
