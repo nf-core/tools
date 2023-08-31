@@ -33,17 +33,22 @@ class PipelineCreateApp(App[CreateConfig]):
     # Initialise config as empty
     TEMPLATE_CONFIG = CreateConfig()
 
+    # Initialise pipeline type
+    PIPELINE_TYPE = None
+
     def on_mount(self) -> None:
         self.push_screen("welcome")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle all button pressed events."""
         if event.button.id == "start":
-            self.switch_screen("basic_details")
+            self.switch_screen("choose_type")
         elif event.button.id == "type_nfcore":
-            self.switch_screen("type_nfcore")
+            self.PIPELINE_TYPE = "nfcore"
+            self.switch_screen("basic_details")
         elif event.button.id == "type_custom":
-            self.switch_screen("type_custom")
+            self.PIPELINE_TYPE = "custom"
+            self.switch_screen("basic_details")
         elif event.button.id == "continue":
             self.switch_screen("final_details")
 

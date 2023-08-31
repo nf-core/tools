@@ -30,6 +30,7 @@ class BasicDetails(Screen):
                 "GitHub organisation",
                 "nf-core",
                 classes="column",
+                disabled=self.parent.PIPELINE_TYPE == "nfcore",
             )
             yield TextInput(
                 "name",
@@ -67,6 +68,9 @@ class BasicDetails(Screen):
                 text_input.query_one(".validation_msg").update("")
         try:
             self.parent.TEMPLATE_CONFIG = CreateConfig(**config)
-            self.parent.switch_screen("choose_type")
+            if self.parent.PIPELINE_TYPE == "nfcore":
+                self.parent.switch_screen("type_nfcore")
+            elif self.parent.PIPELINE_TYPE == "custom":
+                self.parent.switch_screen("type_custom")
         except ValueError:
             pass
