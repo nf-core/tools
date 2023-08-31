@@ -1081,7 +1081,10 @@ class DownloadWorkflow:
                                     continue
                             except ContainerError.ImageNotFound as e:
                                 # Try other registries
-                                continue
+                                if e.error_log.absoluteURI:
+                                    break  # there no point in trying other registries if absolute URI was specified.
+                                else:
+                                    continue
                             except ContainerError.InvalidTag as e:
                                 # Try other registries
                                 continue
@@ -1089,7 +1092,10 @@ class DownloadWorkflow:
                                 # Try other registries
                                 log.error(e.message)
                                 log.error(e.helpmessage)
-                                continue
+                                if e.error_log.absoluteURI:
+                                    break  # there no point in trying other registries if absolute URI was specified.
+                                else:
+                                    continue
                         else:
                             # The else clause executes after the loop completes normally.
                             # This means the library loop completed without breaking, indicating failure for all libraries (registries)
@@ -1237,20 +1243,16 @@ class DownloadWorkflow:
         output_path = cache_path or out_path
 
         # Sometimes, container still contain an explicit library specification, which
-        # results in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
-        # Thus, we trim whatever precedes the base image specification, but also
-        # issue a warning about that behavior.
+        # resulted in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
+        # Thus, if an explicit registry is specified, the provided -l value is ignored.
         container_parts = container.split("/")
         if len(container_parts) > 2:
-            container = "/".join(container_parts[-2:])
-            found_library = container_parts[-3]
-            if found_library not in ["", "docker:"]:
-                log.info(
-                    f'Found explicit container library [bright_magenta]{found_library}[/] in a module. Upon pull failure, retry the download with [bright_magenta] -l "{found_library}"[/]'
-                )
+            address = container
+            absolute_URI = True
+        else:
+            address = f"docker://{library}/{container.replace('docker://', '')}"
+            absolute_URI = False
 
-        # Pull using singularity
-        address = f"docker://{library}/{container.replace('docker://', '')}"
         if shutil.which("singularity"):
             singularity_command = ["singularity", "pull", "--name", output_path, address]
         elif shutil.which("apptainer"):
@@ -1284,6 +1286,7 @@ class DownloadWorkflow:
                     container=container,
                     registry=library,
                     address=address,
+                    absolute_URI=absolute_URI,
                     out_path=out_path if out_path else cache_path or "",
                     singularity_command=singularity_command,
                     error_msg=lines,
@@ -1569,10 +1572,11 @@ class WorkflowRepo(SyncedRepo):
 class ContainerError(Exception):
     """A class of errors related to pulling containers with Singularity/Apptainer"""
 
-    def __init__(self, container, registry, address, out_path, singularity_command, error_msg):
+    def __init__(self, container, registry, address, absolute_URI, out_path, singularity_command, error_msg):
         self.container = container
         self.registry = registry
         self.address = address
+        self.absolute_URI = absolute_URI
         self.out_path = out_path
         self.singularity_command = singularity_command
         self.error_msg = error_msg
@@ -1629,10 +1633,15 @@ class ContainerError(Exception):
 
         def __init__(self, error_log):
             self.error_log = error_log
-            self.message = (
-                f'[bold red]"Pulling "{self.error_log.container}" from "{self.error_log.address}" failed.[/]\n'
-            )
-            self.helpmessage = f'Saving image of "{self.error_log.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.f\n'
+            if not self.error_log.absolute_URI:
+                self.message = (
+                    f'[bold red]"Pulling "{self.error_log.container}" from "{self.error_log.address}" failed.[/]\n'
+                )
+                self.helpmessage = f'Saving image of "{self.error_log.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.f\n'
+            else:
+                self.message = f'[bold red]"The pipeline requested the download of non-existing container image "{self.error_log.address}"[/]\n'
+                self.helpmessage = f'Please try to rerun \n"{" ".join(self.error_log.singularity_command)}" manually with a different registry.f\n'
+
             super().__init__(self.message)
 
     class InvalidTag(AttributeError):
@@ -1660,6 +1669,11 @@ class ContainerError(Exception):
 
         def __init__(self, error_log):
             self.error_log = error_log
-            self.message = f'[bold red]"{self.error_log.container}" failed for unclear reasons.[/]\n'
-            self.helpmessage = f'Pulling of "{self.error_log.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.\n'
+            if not self.error_log.absolute_URI:
+                self.message = f'[bold red]"{self.error_log.container}" failed for unclear reasons.[/]\n'
+                self.helpmessage = f'Pulling of "{self.error_log.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.\n'
+            else:
+                self.message = f'[bold red]"The pipeline requested the download of non-existing container image "{self.error_log.address}"[/]\n'
+                self.helpmessage = f'Please try to rerun \n"{" ".join(self.error_log.singularity_command)}" manually with a different registry.f\n'
+
             super().__init__(self.message, self.helpmessage, self.error_log)
