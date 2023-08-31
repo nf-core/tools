@@ -5,10 +5,10 @@ on:
     branches:
       - dev
     paths-ignore:
-    - 'CHANGELOG.md'
+      - "CHANGELOG.md"
   pull_request:
     paths-ignore:
-    - 'CHANGELOG.md'
+      - "CHANGELOG.md"
   release:
     types: [published]
 

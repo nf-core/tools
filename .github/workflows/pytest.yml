@@ -6,12 +6,12 @@ on:
     branches:
       - dev
     paths-ignore:
-      - 'docs/**'
-      - 'CHANGELOG.md'
+      - "docs/**"
+      - "CHANGELOG.md"
   pull_request:
-      paths-ignore:
-        - 'docs/**'
-        - 'CHANGELOG.md'
+    paths-ignore:
+      - "docs/**"
+      - "CHANGELOG.md"
   release:
     types: [published]
 
