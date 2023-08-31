@@ -455,7 +455,6 @@ class PipelineCreate:
                     ".github/ISSUE_TEMPLATE/feature_request.yml",
                     ".github/PULL_REQUEST_TEMPLATE.md",
                     ".github/workflows/branch.yml",
-                    ".github/workflows/linting_comment.yml",
                     ".github/workflows/linting.yml",
                     ".github/CONTRIBUTING.md",
                     ".github/.dockstore.yml",
@@ -468,7 +467,6 @@ class PipelineCreate:
                 [
                     ".github/workflows/branch.yml",
                     ".github/workflows/ci.yml",
-                    ".github/workflows/linting_comment.yml",
                     ".github/workflows/linting.yml",
                 ]
             )

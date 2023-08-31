@@ -33,7 +33,6 @@ def files_exist(self):
         .github/PULL_REQUEST_TEMPLATE.md
         .github/workflows/branch.yml
         .github/workflows/ci.yml
-        .github/workflows/linting_comment.yml
         .github/workflows/linting.yml
         [LICENSE, LICENSE.md, LICENCE, LICENCE.md]  # NB: British / American spelling
         assets/email_template.html
@@ -145,7 +144,6 @@ def files_exist(self):
         [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
         [os.path.join(".github", "workflows", "branch.yml")],
         [os.path.join(".github", "workflows", "ci.yml")],
-        [os.path.join(".github", "workflows", "linting_comment.yml")],
         [os.path.join(".github", "workflows", "linting.yml")],
         [os.path.join("assets", "email_template.html")],
         [os.path.join("assets", "email_template.txt")],
