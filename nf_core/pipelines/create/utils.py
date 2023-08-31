@@ -31,12 +31,22 @@ class CreateConfig(BaseModel):
             raise ValueError("Must be lowercase without punctuation.")
         return v
 
-    @field_validator("org", "description", "author")
+    @field_validator("org", "description", "author", "version")
     @classmethod
     def notempty(cls, v: str) -> str:
         """Check that string values are not empty."""
         if v.strip() == "":
             raise ValueError("Cannot be left empty.")
+        return v
+
+    @field_validator("version")
+    @classmethod
+    def version_nospecialchars(cls, v: str) -> str:
+        """Check that the pipeline version is simple."""
+        if not re.match(r"^([0-9]+)(\.?([0-9]+))*(dev)?$", v):
+            raise ValueError(
+                "Must contain at least one number, and can be prefixed by 'dev'. Do not use a 'v' prefix or spaces."
+            )
         return v
 
 

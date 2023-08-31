@@ -4,6 +4,7 @@ from textual.widgets import Button
 
 from nf_core.pipelines.create.basicdetails import BasicDetails
 from nf_core.pipelines.create.custompipeline import CustomPipeline
+from nf_core.pipelines.create.finaldetails import FinalDetails
 from nf_core.pipelines.create.nfcorepipeline import NfcorePipeline
 from nf_core.pipelines.create.pipelinetype import ChoosePipelineType
 from nf_core.pipelines.create.utils import CreateConfig
@@ -26,6 +27,7 @@ class PipelineCreateApp(App[CreateConfig]):
         "choose_type": ChoosePipelineType(),
         "type_custom": CustomPipeline(),
         "type_nfcore": NfcorePipeline(),
+        "final_details": FinalDetails(),
     }
 
     # Initialise config as empty
@@ -42,8 +44,8 @@ class PipelineCreateApp(App[CreateConfig]):
             self.switch_screen("type_nfcore")
         elif event.button.id == "type_custom":
             self.switch_screen("type_custom")
-        elif event.button.id == "done":
-            self.exit(self.TEMPLATE_CONFIG)
+        elif event.button.id == "continue":
+            self.switch_screen("final_details")
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""

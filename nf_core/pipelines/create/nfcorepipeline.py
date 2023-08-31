@@ -13,11 +13,11 @@ class NfcorePipeline(Screen):
         yield Footer()
         # TODO: add features to customise the pipeline template
         yield Center(
-            Button("Done", id="done", variant="success"),
+            Button("Continue", id="continue", variant="success"),
             classes="cta",
         )
 
-    @on(Button.Pressed, "#done")
+    @on(Button.Pressed, "#continue")
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
         skip = []

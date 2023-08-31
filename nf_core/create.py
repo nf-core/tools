@@ -65,7 +65,6 @@ class PipelineCreate:
             self.update_config(organisation, version, force, outdir if outdir else ".")
         elif isinstance(template_config, CreateConfig):
             self.config = template_config
-            self.update_config(organisation, version, force, outdir if outdir else ".")
         elif from_config_file:
             # Try reading config file
             _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else ".")
@@ -102,7 +101,7 @@ class PipelineCreate:
         # Set fields used by the class methods
         self.no_git = no_git
         self.default_branch = default_branch
-        self.force = force
+        self.force = self.config.force
         if outdir is None:
             outdir = os.path.join(os.getcwd(), self.config.name_noslash)
         self.outdir = Path(outdir)
@@ -406,7 +405,7 @@ class PipelineCreate:
         for a customized pipeline.
         """
         # Create a lint config
-        short_name = self.skip_areas["short_name"]
+        short_name = self.config.short_name
         lint_config = {
             "files_exist": [
                 "CODE_OF_CONDUCT.md",
@@ -488,7 +487,7 @@ class PipelineCreate:
             lint_config["readme"] = ["nextflow_badge"]
 
         # If the pipeline is unbranded
-        if not self.skip_areas["branded"]:
+        if not self.config.is_nfcore:
             lint_config["files_unchanged"].extend([".github/ISSUE_TEMPLATE/bug_report.yml"])
 
         # Add the lint content to the preexisting nf-core config
