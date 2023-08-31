@@ -459,7 +459,7 @@ def pipelines(ctx):
     ctx.ensure_object(dict)
 
 
-# nf-core pipeline create
+# nf-core pipelines create
 @pipelines.command("create")
 @click.pass_context
 @click.option(
@@ -493,15 +493,14 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
 
     if (name and description and author) or (template_yaml):
         # If all command arguments are used, run without the interactive interface
-        config = organisation if template_yaml else None
+        config = None
     else:
         log.info(
-            "Ignoring provided arguments. Launching interactive nf-core pipeline creation tool."
+            "Launching interactive nf-core pipeline creation tool."
             "\nRun with all command line arguments to avoid using an interactive interface."
         )
         app = PipelineCreateApp()
         config = app.run()
-        print(config)
 
     try:
         create_obj = PipelineCreate(
@@ -513,6 +512,58 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
             outdir=outdir,
             template_config=config,
             organisation=organisation,
+        )
+        create_obj.init_pipeline()
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
+
+
+# nf-core create (deprecated)
+@nf_core_cli.command(hidden=True, deprecated=True)
+@click.option(
+    "-n",
+    "--name",
+    type=str,
+    help="The name of your new pipeline",
+)
+@click.option("-d", "--description", type=str, help="A short description of your pipeline")
+@click.option("-a", "--author", type=str, help="Name of the main author(s)")
+@click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
+@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+@click.option("--plain", is_flag=True, help="Use the standard nf-core template")
+def create(name, description, author, version, force, outdir, template_yaml, plain):
+    """
+    Create a new pipeline using the nf-core template.
+
+    Uses the nf-core template to make a skeleton Nextflow pipeline with all required
+    files, boilerplate code and best-practices.
+    """
+    from nf_core.create import PipelineCreate
+    from nf_core.pipelines.create import PipelineCreateApp
+
+    if (name and description and author) or (template_yaml):
+        # If all command arguments are used, run without the interactive interface
+        config = None
+    else:
+        log.info(
+            "Launching interactive nf-core pipeline creation tool."
+            "\nRun with all command line arguments to avoid using an interactive interface."
+        )
+        app = PipelineCreateApp()
+        config = app.run()
+
+    try:
+        create_obj = PipelineCreate(
+            name,
+            description,
+            author,
+            version=version,
+            force=force,
+            outdir=outdir,
+            template_config=config,
         )
         create_obj.init_pipeline()
     except UserWarning as e:

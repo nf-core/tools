@@ -18,7 +18,7 @@ class CreateConfig(BaseModel):
     version: Optional[str] = None
     force: Optional[bool] = None
     outdir: Optional[str] = None
-    skip_features: Optional[dict] = None
+    skip_features: Optional[list] = None
     is_nfcore: Optional[bool] = None
 
     model_config = ConfigDict(extra="allow")

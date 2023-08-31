@@ -1,13 +1,13 @@
 from textual.app import ComposeResult
-from textual.screen import Screen
 from textual.containers import Center
-from textual.widgets import Button, Footer, Header, Static, Markdown
+from textual.screen import Screen
+from textual.widgets import Button, Footer, Header, Markdown, Static
 
 markdown = """
 # nf-core create
 
 This app will help you create a new nf-core pipeline.
-It uses the nf-core pipeline template, which is kept at
+It uses the nf-core pipeline template, which is kept
 within the [nf-core/tools repository](https://github.com/nf-core/tools).
 
 Using this tool is mandatory when making a pipeline that may

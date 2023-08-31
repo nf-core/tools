@@ -41,7 +41,7 @@ class PipelineCreate:
         outdir (str): Path to the local output directory.
         template_config (str|CreateConfig): Path to template.yml file for pipeline creation settings. or pydantic model with the customisation for pipeline creation settings.
         organisation (str): Name of the GitHub organisation to create the pipeline. Will be the prefix of the pipeline.
-        from_config_file (bool): If true the pipeline will be created from the `.nf-core.yml` config file.
+        from_config_file (bool): If true the pipeline will be created from the `.nf-core.yml` config file. Used for tests and sync command.
         default_branch (str): Specifies the --initial-branch name.
     """
 
@@ -62,15 +62,18 @@ class PipelineCreate:
         if template_config is not None and isinstance(template_config, str):
             # Obtain a CreateConfig object from the template yaml file
             self.config = self.check_template_yaml_info(template_config, name, description, author)
-            self.update_config(self, organisation, version, force, outdir if outdir else ".")
+            self.update_config(organisation, version, force, outdir if outdir else ".")
         elif isinstance(template_config, CreateConfig):
             self.config = template_config
+            self.update_config(organisation, version, force, outdir if outdir else ".")
         elif from_config_file:
             # Try reading config file
             _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else ".")
             # Obtain a CreateConfig object from `.nf-core.yml` config file
             if "template" in config_yml:
                 self.config = CreateConfig(**config_yml["template"])
+        else:
+            raise UserWarning("The template configuration was not provided.")
 
         self.skip_areas, skip_paths = self.obtain_skipped_areas_dict(
             self.config.skip_features, outdir if outdir else "."
@@ -160,9 +163,9 @@ class PipelineCreate:
         if self.config.org is None:
             self.config.org = organisation
         if self.config.version is None:
-            self.config.version = version
+            self.config.version = version if version else "1.0dev"
         if self.config.force is None:
-            self.config.force = force
+            self.config.force = force if force else False
         if self.config.outdir is None:
             self.config.outdir = pipeline_dir
         if self.config.is_nfcore is None:

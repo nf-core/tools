@@ -59,13 +59,13 @@ HorizontalScroll {
     margin-left: 15;
     margin-right: 25;
     margin-bottom: 1;
-    overflow-y: scroll;
     display: none;
 
     height: 0;
 }
 .displayed .help_box {
     display: block;
+    overflow-y: scroll;
 
     transition: height 50ms;
     height: 10;
