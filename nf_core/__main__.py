@@ -494,6 +494,13 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
     if (name and description and author) or (template_yaml):
         # If all command arguments are used, run without the interactive interface
         config = None
+    elif name or description or author or version or force or outdir or organisation:
+        log.error(
+            "Command arguments are not accepted in interactive mode.\n"
+            "Run with all command line arguments to avoid using an interactive interface"
+            "or run without any command line arguments to use an interactive interface."
+        )
+        sys.exit(1)
     else:
         log.info(
             "Launching interactive nf-core pipeline creation tool."
@@ -547,6 +554,13 @@ def create(name, description, author, version, force, outdir, template_yaml, pla
     if (name and description and author) or (template_yaml):
         # If all command arguments are used, run without the interactive interface
         config = None
+    elif name or description or author or version or force or outdir or plain:
+        log.error(
+            "Command arguments are not accepted in interactive mode.\n"
+            "Run with all command line arguments to avoid using an interactive interface"
+            "or run without any command line arguments to use an interactive interface."
+        )
+        sys.exit(1)
     else:
         log.info(
             "Launching interactive nf-core pipeline creation tool."
