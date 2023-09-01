@@ -24,12 +24,21 @@ class FinalDetails(Screen):
             )
         )
 
-        yield TextInput(
-            "version",
-            "Version",
-            "First version of the pipeline",
-            "1.0dev",
-        )
+        with Horizontal():
+            yield TextInput(
+                "version",
+                "Version",
+                "First version of the pipeline",
+                "1.0dev",
+                classes="column",
+            )
+            yield TextInput(
+                "outdir",
+                "Output directory",
+                "Path to the output directory where the pipeline will be created",
+                ".",
+                classes="column",
+            )
         with Horizontal():
             yield Switch(value=False, id="force")
             yield Static("If the pipeline output directory exists, remove it and continue.", classes="custom_grid")
@@ -42,22 +51,23 @@ class FinalDetails(Screen):
     @on(Button.Pressed, "#finish")
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
+        new_config = {}
         for text_input in self.query("TextInput"):
-            this_input = self.query_one(Input)
+            this_input = text_input.query_one(Input)
             validation_result = this_input.validate(this_input.value)
-            version = this_input.value
+            new_config[text_input.field_id] = this_input.value
             if not validation_result.is_valid:
                 text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
             else:
                 text_input.query_one(".validation_msg").update("")
         try:
-            self.parent.TEMPLATE_CONFIG.version = version
+            self.parent.TEMPLATE_CONFIG.__dict__.update(new_config)
         except ValueError:
             pass
 
         this_switch = self.query_one(Switch)
         try:
-            self.parent.TEMPLATE_CONFIG.force = this_switch.value
+            self.parent.TEMPLATE_CONFIG.__dict__.update({"force": this_switch.value})
         except ValueError:
             pass
 

@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator
@@ -32,7 +33,7 @@ class CreateConfig(BaseModel):
             raise ValueError("Must be lowercase without punctuation.")
         return v
 
-    @field_validator("org", "description", "author", "version")
+    @field_validator("org", "description", "author", "version", "outdir")
     @classmethod
     def notempty(cls, v: str) -> str:
         """Check that string values are not empty."""
@@ -48,6 +49,14 @@ class CreateConfig(BaseModel):
             raise ValueError(
                 "Must contain at least one number, and can be prefixed by 'dev'. Do not use a 'v' prefix or spaces."
             )
+        return v
+
+    @field_validator("outdir")
+    @classmethod
+    def path_valid(cls, v: str) -> str:
+        """Check that a path is valid."""
+        if not Path(v).is_dir():
+            raise ValueError("Must be a valid path.")
         return v
 
 

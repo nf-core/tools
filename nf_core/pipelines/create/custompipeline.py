@@ -85,5 +85,4 @@ class CustomPipeline(Screen):
             this_switch = feature_input.query_one(Switch)
             if not this_switch.value:
                 skip.append(this_switch.id)
-        self.parent.TEMPLATE_CONFIG.skip_features = skip
-        self.parent.TEMPLATE_CONFIG.is_nfcore = False
+        self.parent.TEMPLATE_CONFIG.__dict__.update({"skip_features": skip, "is_nfcore": False})
