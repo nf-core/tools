@@ -85,7 +85,7 @@ class PipelineCreate:
             ],
             "ci": [".github/workflows/"],
             "igenomes": ["conf/igenomes.config"],
-            "branded": [
+            "is_nfcore": [
                 ".github/ISSUE_TEMPLATE/config",
                 "CODE_OF_CONDUCT.md",
                 ".github/workflows/awsfulltest.yml",
@@ -187,11 +187,11 @@ class PipelineCreate:
         # Define the different template areas, and what actions to take for each
         # if they are skipped
         template_areas = {
-            "github": {"name": "GitHub hosting", "file": True, "content": False},
-            "ci": {"name": "GitHub CI", "file": True, "content": False},
-            "github_badges": {"name": "GitHub badges", "file": False, "content": True},
-            "igenomes": {"name": "iGenomes config", "file": True, "content": True},
-            "nf_core_configs": {"name": "nf-core/configs", "file": False, "content": True},
+            "github": {"file": True, "content": False},
+            "ci": {"file": True, "content": False},
+            "github_badges": {"file": False, "content": True},
+            "igenomes": {"file": True, "content": True},
+            "nf_core_configs": {"file": False, "content": True},
         }
 
         skip_paths = []
@@ -486,7 +486,7 @@ class PipelineCreate:
         if not self.skip_areas["github_badges"] or not self.skip_areas["github"]:
             lint_config["readme"] = ["nextflow_badge"]
 
-        # If the pipeline is unbranded
+        # If the pipeline is not nf-core
         if not self.config.is_nfcore:
             lint_config["files_unchanged"].extend([".github/ISSUE_TEMPLATE/bug_report.yml"])
 

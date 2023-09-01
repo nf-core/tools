@@ -322,7 +322,7 @@ class NfcoreTemplate {
         String workflow_version = NfcoreTemplate.version(workflow)
         String.format(
             """\n
-            ${dashedLine(monochrome_logs)}{% if branded %}
+            ${dashedLine(monochrome_logs)}{% if is_nfcore %}
                                                     ${colors.green},--.${colors.black}/${colors.green},-.${colors.reset}
             ${colors.blue}        ___     __   __   __   ___     ${colors.green}/,-._.--~\'${colors.reset}
             ${colors.blue}  |\\ | |__  __ /  ` /  \\ |__) |__         ${colors.yellow}}  {${colors.reset}
