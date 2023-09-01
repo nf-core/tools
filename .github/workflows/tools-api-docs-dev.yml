@@ -4,7 +4,11 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - "CHANGELOG.md"
   pull_request:
+    paths-ignore:
+      - "CHANGELOG.md"
   release:
     types: [published]
 

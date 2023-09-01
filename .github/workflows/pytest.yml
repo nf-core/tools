@@ -5,7 +5,13 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - "docs/**"
+      - "CHANGELOG.md"
   pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "CHANGELOG.md"
   release:
     types: [published]
 
