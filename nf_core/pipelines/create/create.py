@@ -47,9 +47,9 @@ class PipelineCreate:
 
     def __init__(
         self,
-        name,
-        description,
-        author,
+        name=None,
+        description=None,
+        author=None,
         version="1.0dev",
         no_git=False,
         force=False,
@@ -59,11 +59,7 @@ class PipelineCreate:
         from_config_file=False,
         default_branch=None,
     ):
-        if template_config is not None and isinstance(template_config, str):
-            # Obtain a CreateConfig object from the template yaml file
-            self.config = self.check_template_yaml_info(template_config, name, description, author)
-            self.update_config(organisation, version, force, outdir if outdir else ".")
-        elif isinstance(template_config, CreateConfig):
+        if isinstance(template_config, CreateConfig):
             self.config = template_config
         elif from_config_file:
             # Try reading config file
@@ -71,12 +67,16 @@ class PipelineCreate:
             # Obtain a CreateConfig object from `.nf-core.yml` config file
             if "template" in config_yml:
                 self.config = CreateConfig(**config_yml["template"])
+            else:
+                raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
+        elif (name and description and author) or (template_config and isinstance(template_config, str)):
+            # Obtain a CreateConfig object from the template yaml file
+            self.config = self.check_template_yaml_info(template_config, name, description, author)
+            self.update_config(organisation, version, force, outdir)
         else:
             raise UserWarning("The template configuration was not provided.")
 
-        self.jinja_params, skip_paths = self.obtain_jinja_params_dict(
-            self.config.skip_features, outdir if outdir else "."
-        )
+        self.jinja_params, skip_paths = self.obtain_jinja_params_dict(self.config.skip_features, self.config.outdir)
 
         skippable_paths = {
             "github": [
@@ -123,12 +123,14 @@ class PipelineCreate:
             UserWarning: if template yaml file does not exist.
         """
         # Obtain template customization info from template yaml file or `.nf-core.yml` config file
-        try:
-            with open(template_yaml, "r") as f:
-                template_yaml = yaml.safe_load(f)
-                config = CreateConfig(**template_yaml)
-        except FileNotFoundError:
-            raise UserWarning(f"Template YAML file '{template_yaml}' not found.")
+        config = CreateConfig()
+        if template_yaml:
+            try:
+                with open(template_yaml, "r") as f:
+                    template_yaml = yaml.safe_load(f)
+                    config = CreateConfig(**template_yaml)
+            except FileNotFoundError:
+                raise UserWarning(f"Template YAML file '{template_yaml}' not found.")
 
         missing_fields = []
         if config.name is None and name is None:
@@ -150,14 +152,14 @@ class PipelineCreate:
 
         return config
 
-    def update_config(self, organisation, version, force, pipeline_dir):
+    def update_config(self, organisation, version, force, outdir):
         """Updates the config file with arguments provided through command line.
 
         Args:
             organisation (str): Name of the GitHub organisation to create the pipeline.
             version (str): Version of the pipeline.
             force (bool): Overwrites a given workflow directory with the same name.
-            pipeline_dir (str): Path to the local output directory.
+            outdir (str): Path to the local output directory.
         """
         if self.config.org is None:
             self.config.org = organisation
@@ -166,9 +168,9 @@ class PipelineCreate:
         if self.config.force is None:
             self.config.force = force if force else False
         if self.config.outdir is None:
-            self.config.outdir = pipeline_dir
+            self.config.outdir = outdir if outdir else "."
         if self.config.is_nfcore is None:
-            self.config.is_nfcore = True if organisation == "nf-core" else False
+            self.config.is_nfcore = organisation == "nf-core"
 
     def obtain_jinja_params_dict(self, features_to_skip, pipeline_dir):
         """Creates a dictionary of parameters for the new pipeline.
@@ -280,7 +282,7 @@ class PipelineCreate:
         env = jinja2.Environment(
             loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
         )
-        template_dir = os.path.join(os.path.dirname(__file__), "pipeline-template")
+        template_dir = os.path.join(os.path.dirname(nf_core.__file__), "pipeline-template")
         object_attrs = self.jinja_params
         object_attrs["nf_core_version"] = nf_core.__version__
 

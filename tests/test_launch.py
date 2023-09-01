@@ -9,8 +9,8 @@ from unittest import mock
 
 import pytest
 
-import nf_core.create
 import nf_core.launch
+import nf_core.pipelines.create.create
 
 from .utils import with_temporary_file, with_temporary_folder
 
@@ -71,7 +71,7 @@ class TestLaunch(unittest.TestCase):
     def test_make_pipeline_schema(self, tmp_path):
         """Create a workflow, but delete the schema file, then try to load it"""
         test_pipeline_dir = os.path.join(tmp_path, "wf")
-        create_obj = nf_core.create.PipelineCreate(
+        create_obj = nf_core.pipelines.create.create.PipelineCreate(
             "testpipeline", "", "", outdir=test_pipeline_dir, no_git=True, plain=True
         )
         create_obj.init_pipeline()

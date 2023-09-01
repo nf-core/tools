@@ -9,8 +9,8 @@ import unittest
 import requests_cache
 import responses
 
-import nf_core.create
 import nf_core.modules
+import nf_core.pipelines.create.create
 
 from .utils import (
     GITLAB_BRANCH_TEST_BRANCH,
@@ -72,7 +72,7 @@ class TestModules(unittest.TestCase):
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
         self.pipeline_name = "mypipeline"
         self.pipeline_dir = os.path.join(self.tmp_dir, self.pipeline_name)
-        nf_core.create.PipelineCreate(
+        nf_core.pipelines.create.create.PipelineCreate(
             self.pipeline_name, "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
         # Set up install objects

@@ -228,7 +228,7 @@ class TestCli(unittest.TestCase):
         assert error_txt in captured_logs.output[-1]
         assert captured_logs.records[-1].levelname == "ERROR"
 
-    @mock.patch("nf_core.create.PipelineCreate")
+    @mock.patch("nf_core.pipelines.create.PipelineCreate")
     def test_create(self, mock_create):
         """Test nf-core pipeline is created and cli parameters are passed on."""
         params = {

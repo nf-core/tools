@@ -9,8 +9,8 @@ import unittest
 
 import yaml
 
-import nf_core.create
 import nf_core.lint
+import nf_core.pipelines.create.create
 
 from .utils import with_temporary_folder
 
@@ -21,12 +21,12 @@ class TestLint(unittest.TestCase):
     def setUp(self):
         """Function that runs at start of tests for common resources
 
-        Use nf_core.create() to make a pipeline that we can use for testing
+        Use nf_core.pipelines.create() to make a pipeline that we can use for testing
         """
 
         self.tmp_dir = tempfile.mkdtemp()
         self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
-        self.create_obj = nf_core.create.PipelineCreate(
+        self.create_obj = nf_core.pipelines.create.create.PipelineCreate(
             "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir, plain=True
         )
         self.create_obj.init_pipeline()

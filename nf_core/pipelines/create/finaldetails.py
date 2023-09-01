@@ -7,7 +7,8 @@ from textual.containers import Center, Horizontal
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
-from nf_core.pipelines.create.utils import CreateConfig, TextInput
+from nf_core.pipelines.create.create import PipelineCreate
+from nf_core.pipelines.create.utils import TextInput
 
 
 class FinalDetails(Screen):
@@ -71,4 +72,9 @@ class FinalDetails(Screen):
         except ValueError:
             pass
 
-        self.parent.exit(self.parent.TEMPLATE_CONFIG)
+        # self.parent.exit(self.parent.TEMPLATE_CONFIG)
+        # Create the new pipeline
+        create_obj = PipelineCreate(template_config=self.parent.TEMPLATE_CONFIG)
+        create_obj.init_pipeline()
+        self.parent.exit()
+        # self.parent.switch_screen("github_repo")

@@ -488,12 +488,25 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
     \n\n
     Run without any command line arguments to use an interactive interface.
     """
-    from nf_core.create import PipelineCreate
     from nf_core.pipelines.create import PipelineCreateApp
+    from nf_core.pipelines.create.create import PipelineCreate
 
     if (name and description and author) or (template_yaml):
         # If all command arguments are used, run without the interactive interface
-        config = None
+        try:
+            create_obj = PipelineCreate(
+                name,
+                description,
+                author,
+                version=version,
+                force=force,
+                outdir=outdir,
+                organisation=organisation,
+            )
+            create_obj.init_pipeline()
+        except UserWarning as e:
+            log.error(e)
+            sys.exit(1)
     elif name or description or author or version or force or outdir or organisation:
         log.error(
             "Command arguments are not accepted in interactive mode.\n"
@@ -507,23 +520,7 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
             "\nRun with all command line arguments to avoid using an interactive interface."
         )
         app = PipelineCreateApp()
-        config = app.run()
-
-    try:
-        create_obj = PipelineCreate(
-            name,
-            description,
-            author,
-            version=version,
-            force=force,
-            outdir=outdir,
-            template_config=config,
-            organisation=organisation,
-        )
-        create_obj.init_pipeline()
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
+        app.run()
 
 
 # nf-core create (deprecated)
@@ -548,12 +545,24 @@ def create(name, description, author, version, force, outdir, template_yaml, pla
     Uses the nf-core template to make a skeleton Nextflow pipeline with all required
     files, boilerplate code and best-practices.
     """
-    from nf_core.create import PipelineCreate
     from nf_core.pipelines.create import PipelineCreateApp
+    from nf_core.pipelines.create.create import PipelineCreate
 
     if (name and description and author) or (template_yaml):
         # If all command arguments are used, run without the interactive interface
-        config = None
+        try:
+            create_obj = PipelineCreate(
+                name,
+                description,
+                author,
+                version=version,
+                force=force,
+                outdir=outdir,
+            )
+            create_obj.init_pipeline()
+        except UserWarning as e:
+            log.error(e)
+            sys.exit(1)
     elif name or description or author or version or force or outdir or plain:
         log.error(
             "Command arguments are not accepted in interactive mode.\n"
@@ -571,24 +580,9 @@ def create(name, description, author, version, force, outdir, template_yaml, pla
                 "\nRun with all command line arguments to avoid using an interactive interface."
             )
             app = PipelineCreateApp()
-            config = app.run()
+            app.run()
         else:
             sys.exit(0)
-
-    try:
-        create_obj = PipelineCreate(
-            name,
-            description,
-            author,
-            version=version,
-            force=force,
-            outdir=outdir,
-            template_config=config,
-        )
-        create_obj.init_pipeline()
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
 
 
 # nf-core modules subcommands

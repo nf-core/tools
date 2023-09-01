@@ -4,7 +4,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-import nf_core.create
+import nf_core.pipelines.create.create
 import nf_core.schema
 from nf_core.params_file import ParamsFileBuilder
 
@@ -21,7 +21,7 @@ class TestParamsFileBuilder:
         # Create a test pipeline in temp directory
         cls.tmp_dir = tempfile.mkdtemp()
         cls.template_dir = os.path.join(cls.tmp_dir, "wf")
-        create_obj = nf_core.create.PipelineCreate(
+        create_obj = nf_core.pipelines.create.create.PipelineCreate(
             "testpipeline", "", "", outdir=cls.template_dir, no_git=True, plain=True
         )
         create_obj.init_pipeline()

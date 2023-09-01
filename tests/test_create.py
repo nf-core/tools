@@ -8,7 +8,7 @@ from unittest import mock
 import git
 import yaml
 
-import nf_core.create
+import nf_core.pipelines.create.create
 
 from .utils import with_temporary_folder
 
@@ -26,7 +26,7 @@ class NfcoreCreateTest(unittest.TestCase):
         self.default_branch = "default"
 
     def test_pipeline_creation(self):
-        pipeline = nf_core.create.PipelineCreate(
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(
             name=self.pipeline_name,
             description=self.pipeline_description,
             author=self.pipeline_author,
@@ -44,7 +44,7 @@ class NfcoreCreateTest(unittest.TestCase):
 
     @with_temporary_folder
     def test_pipeline_creation_initiation(self, tmp_path):
-        pipeline = nf_core.create.PipelineCreate(
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(
             name=self.pipeline_name,
             description=self.pipeline_description,
             author=self.pipeline_author,
@@ -64,7 +64,7 @@ class NfcoreCreateTest(unittest.TestCase):
 
     @with_temporary_folder
     def test_pipeline_creation_initiation_with_yml(self, tmp_path):
-        pipeline = nf_core.create.PipelineCreate(
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(
             name=self.pipeline_name,
             description=self.pipeline_description,
             author=self.pipeline_author,
@@ -88,13 +88,13 @@ class NfcoreCreateTest(unittest.TestCase):
             assert "template" in nfcore_yml
             assert nfcore_yml["template"] == yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text())
 
-    @mock.patch.object(nf_core.create.PipelineCreate, "customize_template")
-    @mock.patch.object(nf_core.create.questionary, "confirm")
+    @mock.patch.object(nf_core.pipelines.create.create.PipelineCreate, "customize_template")
+    @mock.patch.object(nf_core.pipelines.create.create.questionary, "confirm")
     @with_temporary_folder
     def test_pipeline_creation_initiation_customize_template(self, mock_questionary, mock_customize, tmp_path):
         mock_questionary.unsafe_ask.return_value = True
         mock_customize.return_value = {"prefix": "testprefix"}
-        pipeline = nf_core.create.PipelineCreate(
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(
             name=self.pipeline_name,
             description=self.pipeline_description,
             author=self.pipeline_author,
@@ -118,7 +118,7 @@ class NfcoreCreateTest(unittest.TestCase):
 
     @with_temporary_folder
     def test_pipeline_creation_with_yml_skip(self, tmp_path):
-        pipeline = nf_core.create.PipelineCreate(
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(
             name=self.pipeline_name,
             description=self.pipeline_description,
             author=self.pipeline_author,

@@ -1,5 +1,5 @@
-import nf_core.create
 import nf_core.lint
+import nf_core.pipelines.create.create
 
 
 def test_version_consistency(self):

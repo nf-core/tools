@@ -16,8 +16,8 @@ import yaml
 from git import GitCommandError, InvalidGitRepositoryError
 
 import nf_core
-import nf_core.create
 import nf_core.list
+import nf_core.pipelines.create.create
 import nf_core.utils
 
 log = logging.getLogger(__name__)
@@ -251,7 +251,7 @@ class PipelineSync:
         log.info("Making a new template pipeline using pipeline variables")
 
         # Only show error messages from pipeline creation
-        logging.getLogger("nf_core.create").setLevel(logging.ERROR)
+        logging.getLogger("nf_core.pipelines.create").setLevel(logging.ERROR)
 
         # Re-write the template yaml info from .nf-core.yml config
         if "template" in self.config_yml:
@@ -259,7 +259,7 @@ class PipelineSync:
                 yaml.safe_dump(self.config_yml, config_path)
 
         try:
-            nf_core.create.PipelineCreate(
+            nf_core.pipelines.create.create.PipelineCreate(
                 name=self.wf_config["manifest.name"].strip('"').strip("'"),
                 description=self.wf_config["manifest.description"].strip('"').strip("'"),
                 version=self.wf_config["manifest.version"].strip('"').strip("'"),
