@@ -74,7 +74,7 @@ class PipelineCreate:
         else:
             raise UserWarning("The template configuration was not provided.")
 
-        self.skip_areas, skip_paths = self.obtain_skipped_areas_dict(
+        self.jinja_params, skip_paths = self.obtain_skipped_areas_dict(
             self.config.skip_features, outdir if outdir else "."
         )
 
@@ -103,7 +103,7 @@ class PipelineCreate:
         self.default_branch = default_branch
         self.force = self.config.force
         if outdir is None:
-            outdir = os.path.join(os.getcwd(), self.config.name_noslash)
+            outdir = os.path.join(os.getcwd(), self.jinja_params["name_noslash"])
         self.outdir = Path(outdir)
 
     def check_template_yaml_info(self, template_yaml, name, description, author):
@@ -178,7 +178,7 @@ class PipelineCreate:
             pipeline_dir (str): Path to the pipeline directory.
 
         Returns:
-            skip_areas (dict): Dictionary of template areas to skip with values true/false.
+            jinja_params (dict): Dictionary of template areas to skip with values true/false.
             skip_paths (list<str>): List of template areas which contain paths to skip.
         """
         # Try reading config file
@@ -194,48 +194,51 @@ class PipelineCreate:
             "nf_core_configs": {"file": False, "content": True},
         }
 
+        # Set the parameters for the jinja template
+        jinja_params = self.config.model_dump()
+
+        # Add template areas to jinja params and create list of areas with paths to skip
         skip_paths = []
-        skip_areas = {}
         for t_area in template_areas:
             if t_area in features_to_skip:
                 if template_areas[t_area]["file"]:
                     skip_paths.append(t_area)
-                skip_areas[t_area] = False
+                jinja_params[t_area] = False
             else:
-                skip_areas[t_area] = True
+                jinja_params[t_area] = True
 
         # If github is selected, exclude also github_badges
         # if not param_dict["github"]:
         #    param_dict["github_badges"] = False
 
         # Set the last parameters based on the ones provided
-        self.config.short_name = (
-            self.config.name.lower().replace(r"/\s+/", "-").replace(f"{self.config.org}/", "").replace("/", "-")
+        jinja_params["short_name"] = (
+            jinja_params["name"].lower().replace(r"/\s+/", "-").replace(f"{jinja_params['org']}/", "").replace("/", "-")
         )
-        self.config.name = f"{self.config.org}/{self.config.short_name}"
-        self.config.name_noslash = self.config.name.replace("/", "-")
-        self.config.prefix_nodash = self.config.org.replace("-", "")
-        self.config.name_docker = self.config.name.replace(self.config.org, self.config.prefix_nodash)
-        self.config.logo_light = f"{self.config.name_noslash}_logo_light.png"
-        self.config.logo_dark = f"{self.config.name_noslash}_logo_dark.png"
+        jinja_params["name"] = f"{jinja_params['org']}/{jinja_params['short_name']}"
+        jinja_params["name_noslash"] = jinja_params["name"].replace("/", "-")
+        jinja_params["prefix_nodash"] = jinja_params["org"].replace("-", "")
+        jinja_params["name_docker"] = jinja_params["name"].replace(jinja_params["org"], jinja_params["prefix_nodash"])
+        jinja_params["logo_light"] = f"{jinja_params['name_noslash']}_logo_light.png"
+        jinja_params["logo_dark"] = f"{jinja_params['name_noslash']}_logo_dark.png"
 
         if (
             "lint" in config_yml
             and "nextflow_config" in config_yml["lint"]
             and "manifest.name" in config_yml["lint"]["nextflow_config"]
         ):
-            return skip_areas, skip_paths
+            return jinja_params, skip_paths
 
         # Check that the pipeline name matches the requirements
-        if not re.match(r"^[a-z]+$", self.config.short_name):
-            if self.config.is_nfcore:
+        if not re.match(r"^[a-z]+$", jinja_params["short_name"]):
+            if jinja_params["is_nfcore"]:
                 raise UserWarning("[red]Invalid workflow name: must be lowercase without punctuation.")
             else:
                 log.warning(
                     "Your workflow name is not lowercase without punctuation. This may cause Nextflow errors.\nConsider changing the name to avoid special characters."
                 )
 
-        return skip_areas, skip_paths
+        return jinja_params, skip_paths
 
     def init_pipeline(self):
         """Creates the nf-core pipeline."""
@@ -278,14 +281,14 @@ class PipelineCreate:
             loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
         )
         template_dir = os.path.join(os.path.dirname(__file__), "pipeline-template")
-        object_attrs = self.config.model_dump()
+        object_attrs = self.jinja_params
         object_attrs["nf_core_version"] = nf_core.__version__
 
         # Can't use glob.glob() as need recursive hidden dotfiles - https://stackoverflow.com/a/58126417/713980
         template_files = list(Path(template_dir).glob("**/*"))
         template_files += list(Path(template_dir).glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
-        short_name = self.config.short_name
+        short_name = self.jinja_params["short_name"]
         rename_files = {
             "workflows/pipeline.nf": f"workflows/{short_name}.nf",
             "lib/WorkflowPipeline.groovy": f"lib/Workflow{short_name.title()}.groovy",
@@ -343,14 +346,14 @@ class PipelineCreate:
                 os.chmod(output_path, template_stat.st_mode)
 
         # Remove all unused parameters in the nextflow schema
-        if not self.skip_areas["igenomes"] or not self.skip_areas["nf_core_configs"]:
+        if not self.jinja_params["igenomes"] or not self.jinja_params["nf_core_configs"]:
             self.update_nextflow_schema()
 
         if self.config.is_nfcore:
             # Make a logo and save it, if it is a nf-core pipeline
             self.make_pipeline_logo()
         else:
-            if self.skip_areas["github"]:
+            if self.jinja_params["github"]:
                 # Remove field mentioning nf-core docs
                 # in the github bug report template
                 self.remove_nf_core_in_bug_report_template()
@@ -405,7 +408,7 @@ class PipelineCreate:
         for a customized pipeline.
         """
         # Create a lint config
-        short_name = self.config.short_name
+        short_name = self.jinja_params["short_name"]
         lint_config = {
             "files_exist": [
                 "CODE_OF_CONDUCT.md",
@@ -430,7 +433,7 @@ class PipelineCreate:
         }
 
         # Add GitHub hosting specific configurations
-        if not self.skip_areas["github"]:
+        if not self.jinja_params["github"]:
             lint_config["files_exist"].extend(
                 [
                     ".github/ISSUE_TEMPLATE/bug_report.yml",
@@ -456,7 +459,7 @@ class PipelineCreate:
             )
 
         # Add CI specific configurations
-        if not self.skip_areas["ci"]:
+        if not self.jinja_params["ci"]:
             lint_config["files_exist"].extend(
                 [
                     ".github/workflows/branch.yml",
@@ -467,7 +470,7 @@ class PipelineCreate:
             )
 
         # Add custom config specific configurations
-        if not self.skip_areas["nf_core_configs"]:
+        if not self.jinja_params["nf_core_configs"]:
             lint_config["files_exist"].extend(["conf/igenomes.config"])
             lint_config["nextflow_config"].extend(
                 [
@@ -479,11 +482,11 @@ class PipelineCreate:
             )
 
         # Add igenomes specific configurations
-        if not self.skip_areas["igenomes"]:
+        if not self.jinja_params["igenomes"]:
             lint_config["files_exist"].extend(["conf/igenomes.config"])
 
         # Add github badges specific configurations
-        if not self.skip_areas["github_badges"] or not self.skip_areas["github"]:
+        if not self.jinja_params["github_badges"] or not self.jinja_params["github"]:
             lint_config["readme"] = ["nextflow_badge"]
 
         # If the pipeline is not nf-core
@@ -501,14 +504,14 @@ class PipelineCreate:
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
 
-        logo_url = f"https://nf-co.re/logo/{self.config.short_name}?theme=light"
+        logo_url = f"https://nf-co.re/logo/{self.jinja_params['short_name']}?theme=light"
         log.debug(f"Fetching logo from {logo_url}")
 
-        email_logo_path = self.outdir / "assets" / f"{self.config.name_noslash}_logo_light.png"
+        email_logo_path = self.outdir / "assets" / f"{self.jinja_params['name_noslash']}_logo_light.png"
         self.download_pipeline_logo(f"{logo_url}?w=600&theme=light", email_logo_path)
         for theme in ["dark", "light"]:
             readme_logo_url = f"{logo_url}?w=600&theme={theme}"
-            readme_logo_path = self.outdir / "docs" / "images" / f"{self.config.name_noslash}_logo_{theme}.png"
+            readme_logo_path = self.outdir / "docs" / "images" / f"{self.jinja_params['name_noslash']}_logo_{theme}.png"
             self.download_pipeline_logo(readme_logo_url, readme_logo_path)
 
     def download_pipeline_logo(self, url, img_fn):
