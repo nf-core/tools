@@ -74,7 +74,7 @@ class PipelineCreate:
         else:
             raise UserWarning("The template configuration was not provided.")
 
-        self.jinja_params, skip_paths = self.obtain_skipped_areas_dict(
+        self.jinja_params, skip_paths = self.obtain_jinja_params_dict(
             self.config.skip_features, outdir if outdir else "."
         )
 
@@ -170,7 +170,7 @@ class PipelineCreate:
         if self.config.is_nfcore is None:
             self.config.is_nfcore = True if organisation == "nf-core" else False
 
-    def obtain_skipped_areas_dict(self, features_to_skip, pipeline_dir):
+    def obtain_jinja_params_dict(self, features_to_skip, pipeline_dir):
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
