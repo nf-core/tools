@@ -12,6 +12,7 @@
 - Save template information to `.nf-core.yml` and deprecate argument `--template-yaml` for `nf-core sync` ([#2388](https://github.com/nf-core/tools/pull/2388) and [#2389](https://github.com/nf-core/tools/pull/2389))
 - ([#2397](https://github.com/nf-core/tools/pull/2397)) Remove fixed Ubuntu test and added to standard testing matrix
 - ([#2396](https://github.com/nf-core/tools/pull/2396)) Reduce container finding error to warning since the registries are not consistent.
+- ([#2415](https://github.com/nf-core/tools/pull/2415#issuecomment-1709847086)) Add autoMounts for apptainer.
 
 ### Download
 
