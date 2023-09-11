@@ -25,6 +25,8 @@
 
 ### Modules
 
+- `nf-core modules list` now works on pipeline repos as well as module repos
+
 ### Subworkflows
 
 ### General
