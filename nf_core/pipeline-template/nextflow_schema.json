@@ -64,14 +64,6 @@
                     "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
                     "fa_icon": "far fa-file-code"
                 },
-                "igenomes_base": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "description": "Directory / URL base for iGenomes references.",
-                    "default": "s3://ngi-igenomes/igenomes",
-                    "fa_icon": "fas fa-cloud-download-alt",
-                    "hidden": true
-                },
                 "igenomes_ignore": {
                     "type": "boolean",
                     "description": "Do not load the iGenomes reference config.",
