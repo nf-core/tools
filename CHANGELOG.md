@@ -14,7 +14,7 @@
 - ([#2396](https://github.com/nf-core/tools/pull/2396)) Reduce container finding error to warning since the registries are not consistent.
 - ([#2415](https://github.com/nf-core/tools/pull/2415#issuecomment-1709847086)) Add autoMounts for apptainer.
 - Remove `igenomes_base` from the schema, so that nf-validation doesn't create a file path and throw errors offline for s3 objects.
-- ([Commit a103f44](https://github.com/CarsonJM/tools/commit/a103f4484eca8c6d668e4653a4ed8d20faf1b41d)) Modified devcontainer permissions so that singularity can be run in Codespaces/VS Code devcontainers.
+- Modified devcontainer permissions so that singularity can be run in Codespaces/VS Code devcontainers ([Commit a103f44](https://github.com/CarsonJM/tools/commit/a103f4484eca8c6d668e4653a4ed8d20faf1b41d))
 
 ### Download
 
