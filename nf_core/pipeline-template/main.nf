@@ -100,11 +100,6 @@ workflow {
 */
 
 
-// Create citation string
-def createCitation(workflow, monochrome) {
-
-}
-
 // Get version string from manifest and/or git commit
 def version(workflow) {
     String version_string = ""
