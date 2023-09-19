@@ -4,7 +4,7 @@
 
 ### Template
 
-- Fix links in `multiqc_config.yml` ([#2372](https://github.com/nf-core/tools/pull/2372))
+- Fix links in `multiqc_config.yml` ([#2372](https://github.com/nf-core/tools/pull/2372) and [#2412](https://github.com/nf-core/tools/pull/2412))
 - Remove default false from nextflow_schema.json ([#2376](https://github.com/nf-core/tools/pull/2376))
 - Add module MULTIQC to modules.config ([#2377](https://github.com/nf-core/tools/pull/2377))
 - Add GitHub workflow for automated release announcements ([#2382](https://github.com/nf-core/tools/pull/2382))
