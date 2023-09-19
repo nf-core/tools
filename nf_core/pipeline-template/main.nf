@@ -22,7 +22,7 @@ nextflow.enable.dsl = 2
 // TODO nf-core: Remove this line if you don't need a FASTA file
 //   This is an example of how to use getGenomeAttribute() to fetch parameters
 //   from igenomes.config using `--genome`
-params.fasta = WorkflowMain.getGenomeAttribute(params, 'fasta')
+params.fasta = .getGenomeAttribute(params, 'fasta')
 {% endif %}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -32,9 +32,23 @@ params.fasta = WorkflowMain.getGenomeAttribute(params, 'fasta')
 
 include { validateParameters; paramsHelp } from 'plugin/nf-validation'
 
+// Pretty print to terminal
+def logo = NfcoreTemplate.logo(workflow, monochrome)
+log.info logo
+def citation = '\n' + "If you use ${workflow.manifest.name} for your analysis please cite:\n\n" +
+    // TODO nf-core: Add Zenodo DOI for pipeline after first release
+    //"* The pipeline\n" +
+    //"  https://doi.org/10.5281/zenodo.XXXXXXX\n\n" +
+    "* The nf-core framework\n" +
+    "  https://doi.org/10.1038/s41587-020-0439-x\n\n" +
+    "* Software dependencies\n" +
+    "  https://github.com/${workflow.manifest.name}/blob/master/CITATIONS.md" + '\n'
+log.info citation
+
 // Print help message if needed
 if (params.help) {
-    log.info createCitation(workflow, params.monochrome_logs)
+    def String command = "nextflow run ${workflow.manifest.name} --input samplesheet.csv -profile docker"
+    log.info paramsHelp(command)
     System.exit(0)
 }
 
@@ -88,18 +102,7 @@ workflow {
 
 // Create citation string
 def createCitation(workflow, monochrome) {
-    def logo = NfcoreTemplate.logo(workflow, monochrome)
-    def citation = '\n' + "If you use ${workflow.manifest.name} for your analysis please cite:\n\n" +
-        // TODO nf-core: Add Zenodo DOI for pipeline after first release
-        //"* The pipeline\n" +
-        //"  https://doi.org/10.5281/zenodo.XXXXXXX\n\n" +
-        "* The nf-core framework\n" +
-        "  https://doi.org/10.1038/s41587-020-0439-x\n\n" +
-        "* Software dependencies\n" +
-        "  https://github.com/${workflow.manifest.name}/blob/master/CITATIONS.md" + '\n'
-    
-    def String command = "nextflow run ${workflow.manifest.name} --input samplesheet.csv --genome GRCh37 -profile docker"
-    return logo + paramsHelp(command) + citation + NfcoreTemplate.dashedLine(monochrome)
+
 }
 
 // Get version string from manifest and/or git commit
