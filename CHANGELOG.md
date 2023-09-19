@@ -15,6 +15,7 @@
 - ([#2415](https://github.com/nf-core/tools/pull/2415#issuecomment-1709847086)) Add autoMounts for apptainer.
 - Remove `igenomes_base` from the schema, so that nf-validation doesn't create a file path and throw errors offline for s3 objects.
 - Update Gitpod profile resources to reflect base environment settings.
+- Replace `WorkflowMain.initialise()` with native Nextflow tools where possible in order to simplify the pipeline.
 
 ### Download
 
