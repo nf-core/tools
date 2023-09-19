@@ -43,11 +43,12 @@ if (params.validate_params) {
     validateParameters()
 }
 
-if ( params.version ) {
+if (params.version) {
     log.info "${workflow.manifest.name}" + getVersion(workflow) + '\n'
     System.exit(0)
 }
-WorkflowMain.initialise(workflow, params, log)
+
+checkConfigProvided(workflow)
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -116,4 +117,21 @@ def version(workflow) {
     }
 
     return version_string
+}
+
+// Check configuration is provided via profiles or custom config
+def checkConfigProvided(workflow) {
+    if (workflow.profile == 'standard' && workflow.configFiles.size() <= 1) {
+        log.warn "[$workflow.manifest.name] You are attempting to run the pipeline without any custom configuration!\n\n" +
+            "This will be dependent on your local compute environment but can be achieved via one or more of the following:\n" +
+            "   (1) Using an existing pipeline profile e.g. `-profile docker` or `-profile singularity`\n" +
+            "   (2) Using an existing nf-core/configs for your Institution e.g. `-profile crick` or `-profile uppmax`\n" +
+            "   (3) Using your own local custom config e.g. `-c /path/to/your/custom.config`\n\n" +
+            "Please refer to the quick start section and usage docs for the pipeline.\n "
+    }
+    
+    // Check that conda channels are set-up correctly
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        Utils.checkCondaChannels(log)
+    }
 }
