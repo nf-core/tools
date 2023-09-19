@@ -125,7 +125,7 @@ def checkConfigProvided(workflow) {
             "   (1) Using an existing pipeline profile e.g. `-profile docker` or `-profile singularity`\n" +
             "   (2) Using an existing nf-core/configs for your Institution e.g. `-profile crick` or `-profile uppmax`\n" +
             "   (3) Using your own local custom config e.g. `-c /path/to/your/custom.config`\n\n" +
-            "Please refer to the quick start section and usage docs for the pipeline.\n "
+            "Please refer to the quick start section and usage docs for the pipeline.\n"
     }
     
     // Check that conda channels are set-up correctly
