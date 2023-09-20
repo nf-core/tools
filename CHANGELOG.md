@@ -15,6 +15,7 @@
 - ([#2415](https://github.com/nf-core/tools/pull/2415#issuecomment-1709847086)) Add autoMounts for apptainer.
 - Remove `igenomes_base` from the schema, so that nf-validation doesn't create a file path and throw errors offline for s3 objects.
 - Update Gitpod profile resources to reflect base environment settings.
+- ([#747](https://github.com/nf-core/tools/issues/747)) Add to the template the code to dump the selected pipeline parameters into a json file.
 
 ### Download
 
