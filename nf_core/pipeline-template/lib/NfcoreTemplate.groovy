@@ -226,15 +226,15 @@ class NfcoreTemplate {
     //
     // Dump pipeline parameters in a json file
     //
-    public static void dump_parameters(params) {
+    public static void dump_parameters(workflow, params) {
         def output_d = new File("${params.outdir}/pipeline_info/")
         if (!output_d.exists()) {
             output_d.mkdirs()
         }
 
-        def output_pf  = new File(output_d, "params.json")
-        def jsonStr    = ""
-        jsonStr        = JsonOutput.toJson(params)
+        def timestamp  = new java.util.Date().format( 'yyyy-MM-dd_HH-mm-ss')
+        def output_pf  = new File(output_d, "params_${timestamp}.json")
+        def jsonStr    = JsonOutput.toJson(params)
         output_pf.text = JsonOutput.prettyPrint(jsonStr)
     }
 
