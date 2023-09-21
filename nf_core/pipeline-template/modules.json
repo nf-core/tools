@@ -21,6 +21,15 @@
                         "installed_by": ["modules"]
                     }
                 }
+            },
+            "subworkflows": {
+                "nf-core": {
+                    "initialise": {
+                        "branch": "master",
+                        "git_sha": "709d34798f0fd91052be97ebb83f2a76d2174ba0",
+                        "installed_by": ["subworkflows"]
+                    }
+                }
             }
         }
     }
