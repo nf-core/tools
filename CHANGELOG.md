@@ -29,6 +29,8 @@
 
 ### Subworkflows
 
+- Fix bug: missing subworkflow name when using `nf-core subworkflows create` ([#2435](https://github.com/nf-core/tools/pull/2435))
+
 ### General
 
 - Initialise `docker_image_name` to fix `UnboundLocalError` error ([#2374](https://github.com/nf-core/tools/pull/2374))
