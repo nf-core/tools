@@ -26,7 +26,7 @@
                 "nf-core": {
                     "initialise": {
                         "branch": "master",
-                        "git_sha": "7b55a4631bebd1cf827a448d0b70386681fea475",
+                        "git_sha": "2a3d1b469385914c4eeca70f36bc378473049d93",
                         "installed_by": ["subworkflows"]
                     }
                 }
