@@ -162,6 +162,9 @@ def test_update_with_config_dont_update(self):
 
 def test_update_with_config_fix_all(self):
     """Fix the version of all nf-core subworkflows"""
+    # Remove intialise
+    self.subworkflow_remove.remove("initialise")
+
     # Install subworkflow at the latest version
     assert self.subworkflow_install.install("fastq_align_bowtie2")
 

@@ -12,6 +12,10 @@ def test_subworkflows_remove_uninstalled_subworkflow(self):
 
 def test_subworkflows_remove_subworkflow(self):
     """Test removing subworkflow and all it's dependencies after installing it"""
+    # Remove initialise subworkflow for clean slate
+    self.subworkflow_remove.remove("initialise")
+
+    # Install subworkflow
     self.subworkflow_install.install("bam_sort_stats_samtools")
 
     subworkflow_path = Path(self.subworkflow_install.dir, "subworkflows", "nf-core")
@@ -34,6 +38,10 @@ def test_subworkflows_remove_subworkflow(self):
 
 def test_subworkflows_remove_subworkflow_keep_installed_module(self):
     """Test removing subworkflow and all it's dependencies after installing it, except for a separately installed module"""
+    # Remove initialise subworkflow for clean slate
+    self.subworkflow_remove.remove("initialise")
+
+    # Install subworkflow and module
     self.subworkflow_install.install("bam_sort_stats_samtools")
     self.mods_install.install("samtools/index")
 
@@ -44,6 +52,7 @@ def test_subworkflows_remove_subworkflow_keep_installed_module(self):
 
     mod_json_before = ModulesJson(self.pipeline_dir).get_modules_json()
     assert self.subworkflow_remove.remove("bam_sort_stats_samtools")
+
     mod_json_after = ModulesJson(self.pipeline_dir).get_modules_json()
 
     assert Path.exists(subworkflow_path) is False
