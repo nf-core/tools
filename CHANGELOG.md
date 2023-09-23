@@ -21,6 +21,7 @@
 
 - Improved container image resolution and prioritization of http downloads over Docker URIs ([#2364](https://github.com/nf-core/tools/pull/2364)).
 - Registries provided with `-l`/`--container-library` will be ignored for modules with explicit container registry specifications ([#2403](https://github.com/nf-core/tools/pull/2403)).
+- Fix unintentional downloading of containers in test for the Tower download functionality. Bug reported by @adamrtalbot and @awgymer ([#2434](https://github.com/nf-core/tools/pull/2434)).
 
 ### Linting
 

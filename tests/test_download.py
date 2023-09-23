@@ -402,7 +402,8 @@ class DownloadTest(unittest.TestCase):
     # Test Download for Tower
     #
     @with_temporary_folder
-    def test_download_workflow_for_tower(self, tmp_dir):
+    @mock.patch("nf_core.download.DownloadWorkflow.get_singularity_images")
+    def test_download_workflow_for_tower(self, tmp_dir, _):
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
             revision=("3.7", "3.9"),
@@ -451,11 +452,6 @@ class DownloadTest(unittest.TestCase):
 
         # download_obj.download_workflow_tower(location=tmp_dir) will run container image detection for all requested revisions
         assert isinstance(download_obj.containers, list) and len(download_obj.containers) == 33
-        # manually test container image detection for 3.7 revision only
-        download_obj.containers = []  # empty container list for the test
-        download_obj.workflow_repo.checkout(download_obj.wf_sha["3.7"])
-        download_obj.find_container_images(download_obj.workflow_repo.access())
-        assert len(download_obj.containers) == 30  # 30 containers for 3.7
         assert (
             "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0" in download_obj.containers
         )  # direct definition
