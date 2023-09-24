@@ -4,7 +4,7 @@
 
 ### Template
 
-- Fix links in `multiqc_config.yml` ([#2372](https://github.com/nf-core/tools/pull/2372))
+- Fix links in `multiqc_config.yml` ([#2372](https://github.com/nf-core/tools/pull/2372) and [#2412](https://github.com/nf-core/tools/pull/2412))
 - Remove default false from nextflow_schema.json ([#2376](https://github.com/nf-core/tools/pull/2376))
 - Add module MULTIQC to modules.config ([#2377](https://github.com/nf-core/tools/pull/2377))
 - Add GitHub workflow for automated release announcements ([#2382](https://github.com/nf-core/tools/pull/2382))
@@ -15,11 +15,14 @@
 - ([#2415](https://github.com/nf-core/tools/pull/2415#issuecomment-1709847086)) Add autoMounts for apptainer.
 - Remove `igenomes_base` from the schema, so that nf-validation doesn't create a file path and throw errors offline for s3 objects.
 - Modified devcontainer permissions so that singularity can be run in Codespaces/VS Code devcontainers ([Commit a103f44](https://github.com/CarsonJM/tools/commit/a103f4484eca8c6d668e4653a4ed8d20faf1b41d))
+- Update Gitpod profile resources to reflect base environment settings.
+- ([#747](https://github.com/nf-core/tools/issues/747)) Add to the template the code to dump the selected pipeline parameters into a json file.
 
 ### Download
 
 - Improved container image resolution and prioritization of http downloads over Docker URIs ([#2364](https://github.com/nf-core/tools/pull/2364)).
 - Registries provided with `-l`/`--container-library` will be ignored for modules with explicit container registry specifications ([#2403](https://github.com/nf-core/tools/pull/2403)).
+- Fix unintentional downloading of containers in test for the Tower download functionality. Bug reported by @adamrtalbot and @awgymer ([#2434](https://github.com/nf-core/tools/pull/2434)).
 
 ### Linting
 
