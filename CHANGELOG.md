@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-# v2.10dev
+# [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]
 
 ### Template
 
