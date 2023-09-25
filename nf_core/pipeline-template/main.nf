@@ -44,6 +44,7 @@ include { {{ short_name|upper }} } from './workflows/{{ short_name }}'
 // WORKFLOW: Run main {{ name }} analysis pipeline
 //
 workflow {{ prefix_nodash|upper }}_{{ short_name|upper }} {
+    log.info NfcoreTemplate.logo(workflow, params.monochrome_logs)
     INITIALISE(params.version, params.help, params.validate_params)
     {{ short_name|upper }} ()
 }
