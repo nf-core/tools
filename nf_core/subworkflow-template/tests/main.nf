@@ -2,7 +2,7 @@
 
 nextflow.enable.dsl = 2
 
-include { {{ subworkflow_name|upper }} } from '../../../../subworkflows/{{ org }}/{{ subworkflow_dir }}/main.nf'
+include { {{ component_name_underscore|upper }} } from '../../../../subworkflows/{{ org }}/{{ subworkflow_dir }}/main.nf'
 
 workflow test_{{ component_name_underscore }} {
     {% if has_meta %}
@@ -14,5 +14,5 @@ workflow test_{{ component_name_underscore }} {
     input = file(params.test_data['sarscov2']['illumina']['test_single_end_bam'], checkIfExists: true)
     {%- endif %}
 
-    {{ subworkflow_name|upper }} ( input )
+    {{ component_name_underscore|upper }} ( input )
 }
