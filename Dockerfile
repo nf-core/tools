@@ -1,4 +1,4 @@
-FROM python:3.8.9-slim
+FROM python:3.11.5-slim
 LABEL authors="phil.ewels@scilifelab.se,erik.danielsson@scilifelab.se" \
     description="Docker image containing requirements for the nfcore tools"
 
