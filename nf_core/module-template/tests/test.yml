@@ -3,7 +3,7 @@
 #                nf-core modules create-test-yml {{ tool }}{%- if subtool %}/{{ subtool }}{%- endif %}
 {% endif -%}
 - name: "{{ component }}{{ ' '+subtool if subtool else '' }}"
-  command: nextflow run ./tests/modules/{{ org }}/{{ component_dir }} -entry test_{{ component_name_underscore }} -c ./tests/config/nextflow.config -c ./tests/modules/{{ org }}/{{ component_dir }}/nextflow.config
+  command: nextflow run ./tests/modules/{{ org }}/{{ component_dir }} -entry test_{{ component_name_underscore }} -c ./tests/config/nextflow.config
   tags:
     - "{{ component }}{% if subtool -%}"
     - "{{ component }}/{{ subtool }}{%- endif %}"

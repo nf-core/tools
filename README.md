@@ -20,6 +20,7 @@ A python package with helper tools for the nf-core community.
 - [`nf-core` tools update](#update-tools)
 - [`nf-core list` - List available pipelines](#listing-pipelines)
 - [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
+- [`nf-core create-params-file` - Create a parameter file](#create-a-parameter-file)
 - [`nf-core download` - Download a pipeline for offline use](#downloading-pipelines-for-offline-use)
 - [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
 - [`nf-core create` - Create a new pipeline with the nf-core template](#creating-a-new-pipeline)
@@ -53,6 +54,7 @@ A python package with helper tools for the nf-core community.
   - [`subworkflows remove` - Remove a subworkflow from a pipeline](#remove-a-subworkflow-from-a-pipeline)
   - [`subworkflows create` - Create a subworkflow from the template](#create-a-new-subworkflow)
   - [`subworkflows create-test-yml` - Create the `test.yml` file for a subworkflow](#create-a-subworkflow-test-config-file)
+  - [`subworkflows lint` - Check a subworkflow against nf-core guidelines](#check-a-subworkflow-against-nf-core-guidelines)
   - [`subworkflows test` - Run the tests for a subworkflow](#run-the-tests-for-a-subworkflow-using-pytest)
 - [Citation](#citation)
 
@@ -76,7 +78,7 @@ conda install nf-core
 Alternatively, you can create a new environment with both nf-core/tools and nextflow:
 
 ```bash
-conda create --name nf-core python=3.8 nf-core nextflow
+conda create --name nf-core python=3.11 nf-core nextflow
 conda activate nf-core
 ```
 
@@ -225,10 +227,14 @@ Auto-completion for the `nf-core` command is available for bash, zsh and fish. T
 
 After a restart of the shell session you should have auto-completion for the `nf-core` command and all its sub-commands and options.
 
-> **NB:** The added line will run the command `nf-core` (which will also slow down startup time of your shell). You should therefore either have the nf-core/tools installed globally.
-> You can also wrap it inside `if type nf-core > /dev/null; then ` \<YOUR EVAL CODE LINE\> `fi` for bash and zsh or `if command -v nf-core &> /dev/null eval (env _NF_CORE_COMPLETE=fish_source nf-core) end` for fish. You need to then source the config in your environment for the completions to be activated.
+:::note
+The added line will run the command `nf-core` (which will also slow down startup time of your shell). You should therefore either have the nf-core/tools installed globally.
+You can also wrap it inside `if type nf-core > /dev/null; then ` \<YOUR EVAL CODE LINE\> `fi` for bash and zsh or `if command -v nf-core &> /dev/null eval (env _NF_CORE_COMPLETE=fish_source nf-core) end` for fish. You need to then source the config in your environment for the completions to be activated.
+:::
 
-> **NB:** If you see the error `command not found compdef` , be sure that your config file contains the line `autoload -Uz compinit && compinit` before the eval line.
+:::info
+If you see the error `command not found compdef` , be sure that your config file contains the line `autoload -Uz compinit && compinit` before the eval line.
+:::
 
 ## Listing pipelines
 
@@ -311,6 +317,22 @@ Do you want to run this command now?  [y/n]:
 - `--url`
   - Change the URL used for the graphical interface, useful for development work on the website.
 
+## Create a parameter file
+
+Sometimes it is easier to manually edit a parameter file than to use the web interface or interactive commandline wizard
+provided by `nf-core launch`, for example when running a pipeline with many options on a remote server without a graphical interface.
+
+You can create a parameter file with all parameters of a pipeline with the `nf-core create-params-file` command.
+This file can then be passed to `nextflow` with the `-params-file` flag.
+
+This command takes one argument - either the name of a nf-core pipeline which will be pulled automatically,
+or the path to a directory containing a Nextflow pipeline _(can be any pipeline, doesn't have to be nf-core)_.
+
+The generated YAML file contains all parameters set to the pipeline default value along with their description in comments.
+This template can then be used by uncommenting and modifying the value of parameters you want to pass to a pipline run.
+
+Hidden options are not included by default, but can be included using the `-x`/`--show-hidden` flag.
+
 ## Downloading pipelines for offline use
 
 Sometimes you may need to run an nf-core pipeline on a server or HPC system that has no internet connection.
@@ -343,14 +365,18 @@ You can run the pipeline by simply providing the directory path for the `workflo
 nextflow run /path/to/download/nf-core-rnaseq-dev/workflow/ --input mydata.csv --outdir results  # usual parameters here
 ```
 
-> Note that if you downloaded Singularity container images, you will need to use `-profile singularity` or have it enabled in your config file.
+:::note
+If you downloaded Singularity container images, you will need to use `-profile singularity` or have it enabled in your config file.
+:::
 
 ### Downloaded nf-core configs
 
 The pipeline files are automatically updated (`params.custom_config_base` is set to `../configs`), so that the local copy of institutional configs are available when running the pipeline.
 So using `-profile <NAME>` should work if available within [nf-core/configs](https://github.com/nf-core/configs).
 
-> ⚠️ This option is not available when downloading a pipeline for use with [Nextflow Tower](#adapting-downloads-to-nextflow-tower) because the application manages all configurations separately.
+:::warning
+This option is not available when downloading a pipeline for use with [Nextflow Tower](#adapting-downloads-to-nextflow-tower) because the application manages all configurations separately.
+:::
 
 ### Downloading Apptainer containers
 
@@ -408,14 +434,18 @@ If the download speeds are much slower than your internet connection is capable 
 
 Subsequently, the `*.git` folder can be moved to it's final destination and linked with a pipeline in _Tower_ using the `file:/` prefix.
 
-> 💡 Also without access to Tower, pipelines downloaded with the `--tower` flag can be run: `nextflow run -r 2.5 file:/path/to/pipelinedownload.git`. Downloads in this format allow you to include multiple revisions of a pipeline in a single file, but require that the revision (e.g. `-r 2.5`) is always explicitly specified.
+:::tip
+Also without access to Tower, pipelines downloaded with the `--tower` flag can be run: `nextflow run -r 2.5 file:/path/to/pipelinedownload.git`. Downloads in this format allow you to include multiple revisions of a pipeline in a single file, but require that the revision (e.g. `-r 2.5`) is always explicitly specified.
+:::
 
 ## Pipeline software licences
 
 Sometimes it's useful to see the software licences of the tools used in a pipeline.
 You can use the `licences` subcommand to fetch and print the software licence from each conda / PyPI package used in an nf-core pipeline.
 
-> ⚠️ This command does not currently work for newer DSL2 pipelines. This will hopefully be addressed [soon](https://github.com/nf-core/tools/issues/1155).
+:::warning
+This command does not currently work for newer DSL2 pipelines. This will hopefully be addressed [soon](https://github.com/nf-core/tools/issues/1155).
+:::
 
 <!-- RICH-CODEX
 timeout: 10
@@ -443,8 +473,10 @@ You can then continue to edit, commit and push normally as you build your pipeli
 
 Please see the [nf-core documentation](https://nf-co.re/developers/adding_pipelines) for a full walkthrough of how to create a new nf-core workflow.
 
-> As the log output says, remember to come and discuss your idea for a pipeline as early as possible!
-> See the [documentation](https://nf-co.re/developers/adding_pipelines#join-the-community) for instructions.
+:::tip
+As the log output says, remember to come and discuss your idea for a pipeline as early as possible!
+See the [documentation](https://nf-co.re/developers/adding_pipelines#join-the-community) for instructions.
+:::
 
 Note that if the required arguments for `nf-core create` are not given, it will interactively prompt for them. If you prefer, you can supply them as command line arguments. See `nf-core create --help` for more information.
 
@@ -946,7 +978,9 @@ before_command: sed 's/1.13a/1.10/g' modules/multiqc/main.nf > modules/multiqc/m
 
 To run unit tests of a module that you have installed or the test created by the command [`nf-core modules create-test-yml`](#create-a-module-test-config-file), you can use `nf-core modules test` command. This command runs the tests specified in `modules/tests/software/<tool>/<subtool>/test.yml` file using [pytest](https://pytest-workflow.readthedocs.io/en/stable/).
 
-> This command uses the pytest argument `--git-aware` to avoid copying the whole `.git` directory and files ignored by `git`. This means that it will only include files listed by `git ls-files`. Remember to **commit your changes** after adding a new module to add the new files to your git index.
+:::info
+This command uses the pytest argument `--git-aware` to avoid copying the whole `.git` directory and files ignored by `git`. This means that it will only include files listed by `git ls-files`. Remember to **commit your changes** after adding a new module to add the new files to your git index.
+:::
 
 You can specify the module name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
 
@@ -1201,11 +1235,27 @@ extra_env:
 
 ![`nf-core subworkflows create-test-yml bam_stats_samtools --no-prompts --force`](docs/images/nf-core-subworkflows-create-test.svg)
 
+### Check a subworkflow against nf-core guidelines
+
+Run the `nf-core subworkflows lint` command to check subworkflows in the current working directory (a pipeline or a clone of nf-core/modules) against nf-core guidelines.
+
+Use the `--all` flag to run linting on all subworkflows found. Use `--dir <pipeline_dir>` to specify a different directory than the current working directory.
+
+<!-- RICH-CODEX
+working_dir: tmp/modules
+extra_env:
+  PROFILE: 'conda'
+-->
+
+![`nf-core subworkflows lint bam_stats_samtools`](docs/images/nf-core-subworkflows-lint.svg)
+
 ### Run the tests for a subworkflow using pytest
 
 To run unit tests of a subworkflow that you have installed or the test created by the command [`nf-core subworkflow create-test-yml`](#create-a-subworkflow-test-config-file), you can use `nf-core subworkflows test` command. This command runs the tests specified in `tests/subworkflows/<subworkflow_name>/test.yml` file using [pytest](https://pytest-workflow.readthedocs.io/en/stable/).
 
-> This command uses the pytest argument `--git-aware` to avoid copying the whole `.git` directory and files ignored by `git`. This means that it will only include files listed by `git ls-files`. Remember to **commit your changes** after adding a new subworkflow to add the new files to your git index.
+:::info
+This command uses the pytest argument `--git-aware` to avoid copying the whole `.git` directory and files ignored by `git`. This means that it will only include files listed by `git ls-files`. Remember to **commit your changes** after adding a new subworkflow to add the new files to your git index.
+:::
 
 You can specify the subworkflow name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
 

@@ -216,7 +216,7 @@ class Launch:
                     log.error(e)
                     return False
 
-                self.pipeline_revision = nf_core.utils.prompt_pipeline_release_branch(wf_releases, wf_branches)
+                self.pipeline_revision, _ = nf_core.utils.prompt_pipeline_release_branch(wf_releases, wf_branches)
             self.nextflow_cmd += f" -r {self.pipeline_revision}"
 
         # Get schema from name, load it and lint it

@@ -4,7 +4,11 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - "CHANGELOG.md"
   pull_request:
+    paths-ignore:
+      - "CHANGELOG.md"
   release:
     types: [published]
 
@@ -22,10 +26,10 @@ jobs:
       - name: Check out source-code repository
         uses: actions/checkout@v3
 
-      - name: Set up Python 3.8
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.11
 
       - name: Install python dependencies
         run: |
@@ -45,6 +49,6 @@ jobs:
           username: ${{ secrets.ftp_username}}
           password: ${{ secrets.ftp_password }}
           local-dir: "./docs/api/_build/html/"
-          server-dir: ${{ secrets.ftp_server_dir }}/dev/
+          server-dir: ${{ secrets.ftp_server_old_site_dir }}/dev/
           protocol: ${{ secrets.ftp_protocol }}
           port: ${{ secrets.ftp_port }}

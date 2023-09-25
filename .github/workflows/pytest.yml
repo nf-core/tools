@@ -5,7 +5,13 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - "docs/**"
+      - "CHANGELOG.md"
   pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "CHANGELOG.md"
   release:
     types: [published]
 
@@ -14,12 +20,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+
 jobs:
   pytest:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.11"]
+        runner: ["ubuntu-latest"]
+        include:
+          - runner: "ubuntu-20.04"
+            python-version: "3.8"
 
     steps:
       - uses: actions/checkout@v3
@@ -34,6 +47,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip -r requirements-dev.txt
           pip install -e .
+
+      - name: Downgrade git to the Ubuntu official repository's version
+        if: ${{ matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8' }}
+        run: |
+          sudo apt update
+          sudo apt remove git git-man
+          sudo add-apt-repository --remove ppa:git-core/ppa
+          sudo apt install git
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v1

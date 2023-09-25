@@ -58,7 +58,7 @@ def run_linting(
     # Verify that the requested tests exist
     if key:
         all_tests = set(PipelineLint._get_all_lint_tests(release_mode)).union(
-            set(nf_core.modules.lint.ModuleLint.get_all_lint_tests(is_pipeline=True))
+            set(nf_core.modules.lint.ModuleLint.get_all_module_lint_tests(is_pipeline=True))
         )
         bad_keys = [k for k in key if k not in all_tests]
         if len(bad_keys) > 0:
@@ -96,7 +96,7 @@ def run_linting(
     if key:
         # Select only the module lint tests
         module_lint_tests = list(
-            set(key).intersection(set(nf_core.modules.lint.ModuleLint.get_all_lint_tests(is_pipeline=True)))
+            set(key).intersection(set(nf_core.modules.lint.ModuleLint.get_all_module_lint_tests(is_pipeline=True)))
         )
     else:
         # If no key is supplied, run the default modules tests
@@ -115,10 +115,10 @@ def run_linting(
         return lint_obj, module_lint_obj
 
     # Run the module lint tests
-    if len(module_lint_obj.all_local_modules) > 0:
-        module_lint_obj.lint_modules(module_lint_obj.all_local_modules, local=True)
-    if len(module_lint_obj.all_remote_modules) > 0:
-        module_lint_obj.lint_modules(module_lint_obj.all_remote_modules, local=False)
+    if len(module_lint_obj.all_local_components) > 0:
+        module_lint_obj.lint_modules(module_lint_obj.all_local_components, local=True)
+    if len(module_lint_obj.all_remote_components) > 0:
+        module_lint_obj.lint_modules(module_lint_obj.all_remote_components, local=False)
 
     # Print the results
     lint_obj._print_results(show_passed)

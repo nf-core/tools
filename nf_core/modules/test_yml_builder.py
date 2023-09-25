@@ -177,7 +177,7 @@ class ModulesTestYmlBuilder(ComponentCommand):
             # See https://github.com/nf-core/tools/issues/1562
             default_val = (
                 f"nextflow run ./tests/modules/{self.org}/{self.module_name} -entry {entry_point} "
-                f"-c ./tests/config/nextflow.config -c ./tests/modules/{self.org}/{self.module_name}/nextflow.config"
+                f"-c ./tests/config/nextflow.config"
             )
             if self.no_prompts:
                 ep_test["command"] = default_val

@@ -236,7 +236,6 @@ class TestCli(unittest.TestCase):
             "description": "pipeline description",
             "author": "Kalle Anka",
             "version": "1.2.3",
-            "no-git": None,
             "force": None,
             "outdir": "/path/outdir",
             "template-yaml": "file.yaml",
@@ -251,12 +250,11 @@ class TestCli(unittest.TestCase):
             params["name"],
             params["description"],
             params["author"],
-            params["version"],
-            "no-git" in params,
-            "force" in params,
-            params["outdir"],
-            params["template-yaml"],
-            "plain" in params,
+            version=params["version"],
+            force="force" in params,
+            outdir=params["outdir"],
+            template_yaml_path=params["template-yaml"],
+            plain="plain" in params,
         )
         mock_create.return_value.init_pipeline.assert_called_once()
 
