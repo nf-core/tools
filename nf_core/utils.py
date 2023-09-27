@@ -510,9 +510,16 @@ class GitHub_API_Session(requests_cache.CachedSession):
         if not self.has_init:
             self.lazy_init()
         request = self.get(url)
-        if request.status_code not in self.return_ok:
-            self.log_content_headers(request)
-            raise AssertionError(f"GitHub API PR failed - got return code {request.status_code} from {url}")
+        if request.status_code in self.return_retry:
+            stderr = rich.console.Console(stderr=True, force_terminal=rich_force_colors())
+            try:
+                r = self.request_retry(url)
+            except Exception as e:
+                stderr.print_exception()
+                raise e
+            else:
+                return r
+
         return request
 
     def get(self, url, **kwargs):
