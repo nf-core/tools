@@ -6,6 +6,8 @@
 
 ### Linting
 
+- Fix incorrectly failing linting if 'modules' was not found in meta.yml ([#2447](https://github.com/nf-core/tools/pull/2447))
+
 ### Modules
 
 ### Subworkflows
