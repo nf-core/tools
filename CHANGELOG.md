@@ -6,6 +6,8 @@
 
 ### Linting
 
+- Correctly pass subworkflow linting test if `COMPONENT.out.versions` is used in the script ([#2448](https://github.com/nf-core/tools/pull/2448))
+
 ### Modules
 
 ### Subworkflows
