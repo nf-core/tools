@@ -134,7 +134,7 @@ def check_main_section(self, lines, included_components):
                         self.main_nf,
                     )
                 )
-            if component + ".out.versions" not in script:
+            if component + ".out.versions" in script:
                 self.passed.append(
                     (
                         "main_nf_include_versions",
