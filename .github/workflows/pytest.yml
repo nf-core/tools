@@ -59,18 +59,7 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
-      - name: Cache Nextflow
-        uses: actions/cache@v3
-        id: nfcore_cache
-        with:
-          path: ~/.nextflow
-          # use date
-          key: ${{ runner.os }}-nextflow-${{ steps.date.outputs.date }}
-          restore-keys: |
-            ${{ runner.os }}-nextflow-
-
-      - if: ${{ steps.nfcore_cache.outputs.cache-hit != 'true' }}
-        name: Install Nextflow
+      - name: Install Nextflow
         uses: nf-core/setup-nextflow@v1
         with:
           version: "latest-everything"
