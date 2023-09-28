@@ -26,6 +26,8 @@ env:
 jobs:
   pytest:
     runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
     strategy:
       matrix:
         python-version: ["3.8", "3.11"]
