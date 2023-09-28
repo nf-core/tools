@@ -43,7 +43,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip -r requirements-dev.txt
@@ -56,13 +55,17 @@ jobs:
           sudo apt remove git git-man
           sudo add-apt-repository --remove ppa:git-core/ppa
           sudo apt install git
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
       - name: Cache Nextflow
         uses: actions/cache@v3
         id: nfcore_cache
         with:
           path: ~/.nextflow
-          key: ${{ runner.os }}-nextflow-${{ hashFiles('nextflow.config') }}
+          # use date
+          key: ${{ runner.os }}-nextflow-${{ steps.date.outputs.date }}
           restore-keys: |
             ${{ runner.os }}-nextflow-
 
