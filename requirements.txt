@@ -1,6 +1,7 @@
 click
 filetype
 GitPython
+PyGithub
 jinja2
 jsonschema>=3.0
 markdown>=3.3

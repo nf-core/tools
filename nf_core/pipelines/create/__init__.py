@@ -5,6 +5,7 @@ from textual.widgets import Button
 from nf_core.pipelines.create.basicdetails import BasicDetails
 from nf_core.pipelines.create.custompipeline import CustomPipeline
 from nf_core.pipelines.create.finaldetails import FinalDetails
+from nf_core.pipelines.create.githubrepo import GithubRepo
 from nf_core.pipelines.create.nfcorepipeline import NfcorePipeline
 from nf_core.pipelines.create.pipelinetype import ChoosePipelineType
 from nf_core.pipelines.create.utils import CreateConfig
@@ -28,6 +29,7 @@ class PipelineCreateApp(App[CreateConfig]):
         "type_custom": CustomPipeline(),
         "type_nfcore": NfcorePipeline(),
         "final_details": FinalDetails(),
+        "github_repo": GithubRepo(),
     }
 
     # Initialise config as empty
