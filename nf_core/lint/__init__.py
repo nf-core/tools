@@ -470,7 +470,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_failures = "### :x: Test failures:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
+                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.failed
                     ]
@@ -484,7 +484,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_ignored = "### :grey_question: Tests ignored:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
+                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.ignored
                     ]
@@ -498,7 +498,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_fixed = "### :grey_question: Tests fixed:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
+                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.fixed
                     ]
@@ -512,7 +512,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
+                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.warned
                     ]
@@ -527,7 +527,7 @@ class PipelineLint(nf_core.utils.Pipeline):
                 "\n".join(
                     [
                         (
-                            f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html)"
+                            f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html)"
                             f" - {strip_ansi_codes(msg, '`')}"
                         )
                         for eid, msg in self.passed
