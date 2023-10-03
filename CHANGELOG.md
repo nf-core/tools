@@ -1,131 +1,14 @@
 # nf-core/tools: Changelog
 
-# v2.11dev
+# v2.9dev
 
 ### Template
 
-### Linting
-
-- Fix incorrectly failing linting if 'modules' was not found in meta.yml ([#2447](https://github.com/nf-core/tools/pull/2447))
-- Correctly pass subworkflow linting test if `COMPONENT.out.versions` is used in the script ([#2448](https://github.com/nf-core/tools/pull/2448))
-
-### Modules
+- The `email` method no longer requires a `multiqc_report` parameter
 
 ### Subworkflows
 
-### General
-
-# [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]
-
-### Template
-
-- Fix links in `multiqc_config.yml` ([#2372](https://github.com/nf-core/tools/pull/2372) and [#2412](https://github.com/nf-core/tools/pull/2412))
-- Remove default false from nextflow_schema.json ([#2376](https://github.com/nf-core/tools/pull/2376))
-- Add module MULTIQC to modules.config ([#2377](https://github.com/nf-core/tools/pull/2377))
-- Add GitHub workflow for automated release announcements ([#2382](https://github.com/nf-core/tools/pull/2382))
-- Update the Code of Conduct ([#2381](https://github.com/nf-core/tools/pull/2381))
-- Save template information to `.nf-core.yml` and deprecate argument `--template-yaml` for `nf-core sync` ([#2388](https://github.com/nf-core/tools/pull/2388) and [#2389](https://github.com/nf-core/tools/pull/2389))
-- ([#2397](https://github.com/nf-core/tools/pull/2397)) Remove fixed Ubuntu test and added to standard testing matrix
-- ([#2396](https://github.com/nf-core/tools/pull/2396)) Reduce container finding error to warning since the registries are not consistent.
-- ([#2415](https://github.com/nf-core/tools/pull/2415#issuecomment-1709847086)) Add autoMounts for apptainer.
-- Remove `igenomes_base` from the schema, so that nf-validation doesn't create a file path and throw errors offline for s3 objects.
-- Modified devcontainer permissions so that singularity can be run in Codespaces/VS Code devcontainers ([Commit a103f44](https://github.com/CarsonJM/tools/commit/a103f4484eca8c6d668e4653a4ed8d20faf1b41d))
-- Update Gitpod profile resources to reflect base environment settings.
-- ([#747](https://github.com/nf-core/tools/issues/747)) Add to the template the code to dump the selected pipeline parameters into a json file.
-
-### Download
-
-- Improved container image resolution and prioritization of http downloads over Docker URIs ([#2364](https://github.com/nf-core/tools/pull/2364)).
-- Registries provided with `-l`/`--container-library` will be ignored for modules with explicit container registry specifications ([#2403](https://github.com/nf-core/tools/pull/2403)).
-- Fix unintentional downloading of containers in test for the Tower download functionality. Bug reported by @adamrtalbot and @awgymer ([#2434](https://github.com/nf-core/tools/pull/2434)).
-
-### Linting
-
-- Add new command `nf-core subworkflows lint` ([#2379](https://github.com/nf-core/tools/pull/2379))
-
-### Modules
-
-### Subworkflows
-
-- Fix bug: missing subworkflow name when using `nf-core subworkflows create` ([#2435](https://github.com/nf-core/tools/pull/2435))
-
-### General
-
-- Initialise `docker_image_name` to fix `UnboundLocalError` error ([#2374](https://github.com/nf-core/tools/pull/2374))
-- Fix prompt pipeline revision during launch ([#2375](https://github.com/nf-core/tools/pull/2375))
-- Add a `create-params-file` command to create a YAML parameter file for a pipeline containing parameter documentation and defaults. ([#2362](https://github.com/nf-core/tools/pull/2362))
-- Update the Code of Conduct ([#2381](https://github.com/nf-core/tools/pull/2381))
-- Remove `--no-git` option from `nf-core create` ([#2394](https://github.com/nf-core/tools/pull/2394))
-- Throw warning when custom workflow name contains special characters ([#2401](https://github.com/nf-core/tools/pull/2401))
-- Bump version of nf-test snapshot files with `nf-core bump-version` ([#2410](https://github.com/nf-core/tools/pull/2410))
-
-# [v2.9 - Chromium Falcon](https://github.com/nf-core/tools/releases/tag/2.9) + [2023-06-29]
-
-### Template
-
-- `params.max_multiqc_email_size` is no longer required ([#2273](https://github.com/nf-core/tools/pull/2273))
-- Remove `cleanup = true` from `test_full.config` in pipeline template ([#2279](https://github.com/nf-core/tools/pull/2279))
-- Fix usage docs for specifying `params.yaml` ([#2279](https://github.com/nf-core/tools/pull/2279))
-- Added stub in modules template ([#2277](https://github.com/nf-core/tools/pull/2277)) [Contributed by @nvnieuwk]
-- Move registry definitions out of profile scope ([#2286])(https://github.com/nf-core/tools/pull/2286)
-- Remove `aws_tower` profile ([#2287])(https://github.com/nf-core/tools/pull/2287)
-- Fixed the Slack report to include the pipeline name ([#2291](https://github.com/nf-core/tools/pull/2291))
-- Fix link in the MultiQC report to point to exact version of output docs ([#2298](https://github.com/nf-core/tools/pull/2298))
-- Updates seqeralabs/action-tower-launch to v2.0.0 ([#2301](https://github.com/nf-core/tools/pull/2301))
-- Remove schema validation from `lib` folder and use Nextflow [nf-validation plugin](https://nextflow-io.github.io/nf-validation/) instead ([#1771](https://github.com/nf-core/tools/pull/1771/))
-- Fix parsing of container directive when it is not typical nf-core format ([#2306](https://github.com/nf-core/tools/pull/2306))
-- Add ability to specify custom registry for linting modules, defaults to quay.io ([#2313](https://github.com/nf-core/tools/pull/2313))
-- Add `singularity.registry = 'quay.io'` in pipeline template ([#2305](https://github.com/nf-core/tools/pull/2305))
-- Add `apptainer.registry = 'quay.io'` in pipeline template ([#2352](https://github.com/nf-core/tools/pull/2352))
-- Bump minimum required NF version in pipeline template from `22.10.1` -> `23.04.0` ([#2305](https://github.com/nf-core/tools/pull/2305))
-- Add ability to interpret `docker.registry` from `nextflow.config` file. If not found defaults to quay.io. ([#2318](https://github.com/nf-core/tools/pull/2318))
-- Add functions to dynamically include pipeline tool citations in MultiQC methods description section for better reporting. ([#2326](https://github.com/nf-core/tools/pull/2326))
-- Remove `--tracedir` parameter ([#2290](https://github.com/nf-core/tools/pull/2290))
-- Incorrect config parameter warnings when customising pipeline template ([#2333](https://github.com/nf-core/tools/pull/2333))
-- Use markdown syntax in the description for the meta map channels ([#2358](https://github.com/nf-core/tools/pull/2358))
-
-### Download
-
-- Introduce a `--tower` flag for `nf-core download` to obtain pipelines in an offline format suited for [seqeralabs® Nextflow Tower](https://cloud.tower.nf/) ([#2247](https://github.com/nf-core/tools/pull/2247)).
-- Refactored the CLI for `--singularity-cache` in `nf-core download` from a flag to an argument. The prior options were renamed to `amend` (container images are only saved in the `$NXF_SINGULARITY_CACHEDIR`) and `copy` (a copy of the image is saved with the download). `remote` was newly introduced and allows to provide a table of contents of a remote cache via an additional argument `--singularity-cache-index` ([#2247](https://github.com/nf-core/tools/pull/2247)).
-- Refactored the CLI parameters related to container images. Although downloading other images than those of the Singularity/Apptainer container system is not supported for the time being, a generic name for the parameters seemed preferable. So the new parameter `--singularity-cache-index` introduced in [#2247](https://github.com/nf-core/tools/pull/2247) has been renamed to `--container-cache-index` prior to release ([#2336](https://github.com/nf-core/tools/pull/2336)).
-- To address issue [#2311](https://github.com/nf-core/tools/issues/2311), a new parameter `--container-library` was created allowing to specify the container library (registry) from which container images in OCI format (Docker) should be pulled ([#2336](https://github.com/nf-core/tools/pull/2336)).
-- Container detection in configs was improved. This allows for DSL2-like container definitions inside the container parameter value provided to process scopes [#2346](https://github.com/nf-core/tools/pull/2346).
-- Add apptainer to the list of false positve container strings ([#2353](https://github.com/nf-core/tools/pull/2353)).
-
-#### Updated CLI parameters
-
-| Old parameter         | New parameter                                  |
-| --------------------- | ---------------------------------------------- |
-| new parameter         | `-d` / `--download-configuration`              |
-| new parameter         | `-t` / `--tower`                               |
-| `-c`/ `--container`   | `-s` / `--container-system <VALUE>`            |
-| new parameter         | `-l` / `--container-library <VALUE>`           |
-| `--singularity-cache` | `-u` / `--container-cache-utilisation <VALUE>` |
-| new parameter         | `-i` / `--container-cache-index <VALUE>`       |
-
-_In addition, `-r` / `--revision` has been changed to a parameter that can be provided multiple times so several revisions can be downloaded at once._
-
-### Linting
-
-- Warn if container access is denied ([#2270](https://github.com/nf-core/tools/pull/2270))
-- Error if module container specification has quay.io as prefix when it shouldn't have ([#2278](https://github.com/nf-core/tools/pull/2278/files)
-- Detect if container is 'simple name' and try to contact quay.io server by default ([#2281](https://github.com/nf-core/tools/pull/2281))
-- Warn about null/None/empty default values in `nextflow_schema.json` ([#3328](https://github.com/nf-core/tools/pull/2328))
-- Fix linting when creating a pipeline skipping some parts of the template and add CI test ([#2330](https://github.com/nf-core/tools/pull/2330))
-
-### Modules
-
-- Don't update `modules_json` object if a module is not updated ([#2323](https://github.com/nf-core/tools/pull/2323))
-
-### Subworkflows
-
-### General
-
-- GitPod base image: Always self-update to the latest version of Nextflow. Add [pre-commit](https://pre-commit.com/) dependency.
-- GitPod configs: Update Nextflow as an init task, init pre-commit in pipeline config.
-- Refgenie: Create `nxf_home/nf-core/refgenie_genomes.config` path if it doesn't exist ([#2312](https://github.com/nf-core/tools/pull/2312))
-- Add CI tests to test running a pipeline whe it's created from a template skipping different areas
+- Fixed issue with subworkflow installation for subworkflows which include other subworkflows ([2460](https://github.com/nf-core/tools/issues/2460))
 
 # [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
 
@@ -140,7 +23,7 @@ _In addition, `-r` / `--revision` has been changed to a parameter that can be pr
 - Consistent syntax for branch checks in PRs ([#2202](https://github.com/nf-core/tools/issues/2202))
 - Fixed minor Jinja2 templating bug that caused the PR template to miss a newline
 - Updated AWS tests to use newly moved `seqeralabs/action-tower-launch` instead of `nf-core/tower-action`
-- Remove `.cff` files from `.editorconfig` ([#2145](https://github.com/nf-core/tools/pull/2145))
+- Remove `.cff` files from `.editorconfig` [(#2145)[https://github.com/nf-core/tools/pull/2145]]
 - Simplify pipeline README ([#2186](https://github.com/nf-core/tools/issues/2186))
 - Added support for the apptainer container engine via `-profile apptainer`. ([#2244](https://github.com/nf-core/tools/issues/2244)) [Contributed by @jfy133]
 - Added config `docker.registry` to pipeline template for a configurable default container registry when using Docker containers. Defaults to `quay.io` ([#2133](https://github.com/nf-core/tools/pull/2133))
@@ -1167,7 +1050,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 - Move `params`section from `base.config` to `nextflow.config`
 - Use `env` scope to export `PYTHONNOUSERSITE` in `nextflow.config` to prevent conflicts with host Python environment
 - Bump minimum Nextflow version to `19.10.0` - required to properly use `env` scope in `nextflow.config`
-- Added support for nf-tower in the travis tests, using public mailbox <nf-core@mailinator.com>
+- Added support for nf-tower in the travis tests, using public mailbox nf-core@mailinator.com
 - Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
 - Adjusted `.travis.yml` checks to allow for `patch` branches to be tested
 - Add Python 3.7 dependency to the `environment.yml` file

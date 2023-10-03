@@ -128,7 +128,7 @@ def prompt_component_version_sha(component_name, component_type, modules_repo, i
 
 def get_components_to_install(subworkflow_dir):
     """
-    Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
+    Parse the subworkflow test main.nf file to retrieve all imported modules and subworkflows.
     """
     modules = []
     subworkflows = []
@@ -144,5 +144,6 @@ def get_components_to_install(subworkflow_dir):
                     name_split = name.lower().split("_")
                     modules.append("/".join(name_split))
                 elif link.startswith("../"):
-                    subworkflows.append(name.lower())
+                    name_split = name.lower().split("_")
+                    subworkflows.append("/".join(name_split))
     return modules, subworkflows
