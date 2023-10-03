@@ -511,7 +511,6 @@ class GitHub_API_Session(requests_cache.CachedSession):
         """
         if not self.has_init:
             self.lazy_init()
-        log.critical(url)
         request = self.get(url)
         if request.status_code in self.return_retry:
             stderr = rich.console.Console(stderr=True, force_terminal=rich_force_colors())
