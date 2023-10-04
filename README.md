@@ -59,7 +59,7 @@ A python package with helper tools for the nf-core community.
 - [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
-For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools-docs/).
+For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools/docs/).
 
 ## Installation
 
@@ -188,7 +188,7 @@ for wf in wfs.remote_workflows:
     print(wf.full_name)
 ```
 
-Please see [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/) for the function documentation.
+Please see [https://nf-co.re/tools/docs/](https://nf-co.re/tools/docs/) for the function documentation.
 
 ### Automatic version check
 
@@ -535,7 +535,7 @@ Each test result name on the left is a terminal hyperlink.
 In most terminals you can <kbd>ctrl</kbd> + <kbd>click</kbd> ( <kbd>cmd</kbd> + <kbd>click</kbd>) these
 links to open documentation specific to this test in your browser.
 
-Alternatively visit <https://nf-co.re/tools-docs/lint_tests/index.html> and find your test to read more.
+Alternatively visit <https://nf-co.re/tools/docs/latest/pipeline_lint_tests/index.html> and find your test to read more.
 
 ### Linting config
 
