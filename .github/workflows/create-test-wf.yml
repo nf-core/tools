@@ -32,6 +32,8 @@ jobs:
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
+        env:
+          AGENT_TOOLSDIRECTORY: ${{ runner.tool_cache }}
         with:
           python-version: 3.11
 
