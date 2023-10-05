@@ -35,12 +35,17 @@ jobs:
         run: |
           echo "runner.tool_cache: ${{ runner.tool_cache }}"
 
-      # - name: Set up Python 3.11
-      #   uses: actions/setup-python@v4
-      #   env:
-      #     AGENT_TOOLSDIRECTORY: ${{ runner.tool_cache }}
-      #   with:
-      #     python-version: 3.11
+      - name: check permissions
+        run: |
+          echo "ls -l ${{ runner.tool_cache }}"
+          echo "ls -l ."
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        env:
+          AGENT_TOOLSDIRECTORY: ${{ runner.tool_cache }}
+        with:
+          python-version: 3.11
 
       # - name: Install python dependencies
       #   run: |
