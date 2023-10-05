@@ -26,13 +26,10 @@ jobs:
         name: Check out source-code repository
 
       - name: check installed python version
-        run: python --version >> $GITHUB_ENV
-
-      - name: check AGENT_TOOLSDIRECTORY env variable
-        run: echo $AGENT_TOOLSDIRECTORY >> $GITHUB_ENV
-
-      - name: check runner.tool_cache env variable
-        run: echo ${{ runner.tool_cache }} >> $GITHUB_ENV
+        run: |
+          echo "Python Version:"
+          python -c "import sys; print(sys.version)"
+          echo "AGENT_TOOLSDIRECTORY: $AGENT_TOOLSDIRECTORY"
 
       # - name: Set up Python 3.11
       #   uses: actions/setup-python@v4
