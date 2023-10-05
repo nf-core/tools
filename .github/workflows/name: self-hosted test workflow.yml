@@ -35,15 +35,10 @@ jobs:
         run: |
           echo "runner.tool_cache: ${{ runner.tool_cache }}"
 
-      - name: check permissions
-        run: |
-          echo "ls -l ${{ runner.tool_cache }}"
-          echo "ls -l ."
-
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         env:
-          AGENT_TOOLSDIRECTORY: "/opt/hostedtoolcache"
+          AGENT_TOOLSDIRECTORY: ${{ runner.tool_cache }}
         with:
           python-version: 3.11
 
