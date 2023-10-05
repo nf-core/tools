@@ -6,6 +6,7 @@ on:
   pull_request:
   release:
     types: [published]
+  workflow_dispatch:
 
 # Cancel if a newer run is started
 concurrency:
@@ -17,7 +18,7 @@ env:
 
 jobs:
   RunTestWorkflow:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       NXF_ANSI_LOG: false
     strategy:
