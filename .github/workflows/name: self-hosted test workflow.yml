@@ -35,12 +35,12 @@ jobs:
         run: |
           echo "runner.tool_cache: ${{ runner.tool_cache }}"
 
-      - name: Set up Python 3.10 # Can't use 3.11 on AWS EC2 for now
+      - name: Set up Python 3.10.0 # Can't use 3.11 on AWS EC2 for now
         uses: actions/setup-python@v4
         env:
           AGENT_TOOLSDIRECTORY: ${{ runner.tool_cache }}
         with:
-          python-version: 3.10
+          python-version: 3.10.0
 
       - name: Install python dependencies
         run: |
