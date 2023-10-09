@@ -4,6 +4,7 @@
 
 import org.yaml.snakeyaml.Yaml
 import groovy.json.JsonOutput
+import nextflow.extension.FilesEx
 
 class NfcoreTemplate {
 
@@ -227,15 +228,15 @@ class NfcoreTemplate {
     // Dump pipeline parameters in a json file
     //
     public static void dump_parameters(workflow, params) {
-        def output_d = new File("${params.outdir}/pipeline_info/")
-        if (!output_d.exists()) {
-            output_d.mkdirs()
-        }
-
         def timestamp  = new java.util.Date().format( 'yyyy-MM-dd_HH-mm-ss')
-        def output_pf  = new File(output_d, "params_${timestamp}.json")
+        def filename   = "params_${timestamp}.json"
+        def temp_pf    = new File(workflow.launchDir.toString(), ".${filename}")
         def jsonStr    = JsonOutput.toJson(params)
-        output_pf.text = JsonOutput.prettyPrint(jsonStr)
+        temp_pf.text   = JsonOutput.prettyPrint(jsonStr)
+
+        def destination = "${params.outdir}/pipeline_info/params_${timestamp}.json"
+        FilesEx.copyTo(temp_pf.toPath(), destination)
+        temp_pf.delete()
     }
 
     //
