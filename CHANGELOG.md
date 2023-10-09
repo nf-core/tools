@@ -4,6 +4,8 @@
 
 ### Template
 
+- Support remote paths when dumping pipeline parameters into a json file ([#2465](https://github.com/nf-core/tools/pull/2465)
+
 ### Linting
 
 - Fix incorrectly failing linting if 'modules' was not found in meta.yml ([#2447](https://github.com/nf-core/tools/pull/2447))
