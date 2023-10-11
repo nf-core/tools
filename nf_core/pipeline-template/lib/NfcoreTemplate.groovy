@@ -142,12 +142,14 @@ class NfcoreTemplate {
             try {
                 if (params.plaintext_email) { throw GroovyException('Send plaintext e-mail, not HTML') }
                 // Try to send HTML e-mail using sendmail
+                def sendmail_tf = new File(workflow.launchDir.toString(), ".sendmail_tmp.html")
+                sendmail_tf.withWriter { w -> w << sendmail_html }
                 [ 'sendmail', '-t' ].execute() << sendmail_html
                 log.info "-${colors.purple}[$workflow.manifest.name]${colors.green} Sent summary e-mail to $email_address (sendmail)-"
             } catch (all) {
                 // Catch failures and try with plaintext
                 def mail_cmd = [ 'mail', '-s', subject, '--content-type=text/html', email_address ]
-                if ( mqc_report.size() <= max_multiqc_email_size.toBytes() ) {
+                if ( mqc_report != null && mqc_report.size() <= max_multiqc_email_size.toBytes() ) {
                     mail_cmd += [ '-A', mqc_report ]
                 }
                 mail_cmd.execute() << email_html
@@ -156,14 +158,16 @@ class NfcoreTemplate {
         }
 
         // Write summary e-mail HTML to a file
-        def output_d = new File("${params.outdir}/pipeline_info/")
-        if (!output_d.exists()) {
-            output_d.mkdirs()
-        }
-        def output_hf = new File(output_d, "pipeline_report.html")
+        def output_hf = new File(workflow.launchDir.toString(), ".pipeline_report.html")
         output_hf.withWriter { w -> w << email_html }
-        def output_tf = new File(output_d, "pipeline_report.txt")
+        FilesEx.copyTo(output_hf.toPath(), "${params.outdir}/pipeline_info/pipeline_report.html");
+        output_hf.delete()
+
+        // Write summary e-mail TXT to a file
+        def output_tf = new File(workflow.launchDir.toString(), ".pipeline_report.txt")
         output_tf.withWriter { w -> w << email_txt }
+        FilesEx.copyTo(output_tf.toPath(), "${params.outdir}/pipeline_info/pipeline_report.txt");
+        output_tf.delete()
     }
 
     //
@@ -234,8 +238,7 @@ class NfcoreTemplate {
         def jsonStr    = JsonOutput.toJson(params)
         temp_pf.text   = JsonOutput.prettyPrint(jsonStr)
 
-        def destination = "${params.outdir}/pipeline_info/params_${timestamp}.json"
-        FilesEx.copyTo(temp_pf.toPath(), destination)
+        FilesEx.copyTo(temp_pf.toPath(), "${params.outdir}/pipeline_info/params_${timestamp}.json")
         temp_pf.delete()
     }
 

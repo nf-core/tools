@@ -4,7 +4,7 @@
 
 ### Template
 
-- Support remote paths when dumping pipeline parameters into a json file ([#2465](https://github.com/nf-core/tools/pull/2465)
+- Fix writing files to a remote outdir in the NfcoreTemplate helper functions ([#2465](https://github.com/nf-core/tools/pull/2465)
 
 ### Linting
 
