@@ -54,8 +54,9 @@ jobs:
 
       - name: Run nf-core/tools
         run: |
+          echo "docker.userEmulation = false\ndocker.fixOwnership = true\n" > aws_docker.config
           nf-core --verbose --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
-          nextflow run nf-core-testpipeline -profile test,docker --outdir ./results
+          nextflow run nf-core-testpipeline -profile test,docker --outdir ./results -c aws_docker.config
 
       - name: Upload log file artifact
         if: ${{ always() }}
