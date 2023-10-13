@@ -42,11 +42,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install .
 
-      - uses: actions/setup-java@v3
-        with:
-          distribution: "temurin"
-          java-version: "17"
-
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v1
         with:
