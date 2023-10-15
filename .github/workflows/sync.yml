@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   get-pipelines:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -31,7 +31,7 @@ jobs:
 
   sync:
     needs: get-pipelines
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     strategy:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
