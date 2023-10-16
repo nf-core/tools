@@ -209,9 +209,9 @@ class ComponentCommand:
                 )
                 # Move wrong modules to the right directory
                 for module in wrong_location_modules:
-                    modules_dir: Path = Path("modules").resolve()
-                    correct_dir: Path = Path(modules_dir, self.modules_repo.repo_path, Path(*module.parts[2:]))
-                    wrong_dir: Path = Path(modules_dir, module)
+                    modules_dir = Path("modules").resolve()
+                    correct_dir = Path(modules_dir, self.modules_repo.repo_path, Path(*module.parts[2:]))
+                    wrong_dir = Path(modules_dir, module)
                     shutil.move(wrong_dir, correct_dir)
                     log.info(f"Moved {wrong_dir} to {correct_dir}.")
                 shutil.rmtree(Path(self.dir, "modules", self.modules_repo.repo_path, "modules"))
