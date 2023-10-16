@@ -25,7 +25,7 @@ def actions_ci(self):
              release:
              types: [published]
 
-    * The minimum Nextflow version specified in the pipeline's ``nextflow.config`` matches that defined by ``nxf_ver`` in the test matrix:
+    * The minimum Nextflow version specified in the pipeline's ``nextflow.config`` matches that defined by ``NXF_VER`` in the test matrix:
 
       .. code-block:: yaml
          :emphasize-lines: 4
@@ -33,9 +33,9 @@ def actions_ci(self):
          strategy:
            matrix:
              # Nextflow versions: check pipeline minimum and current latest
-             nxf_ver: ['19.10.0', '']
+             NXF_VER: ['19.10.0', '']
 
-      .. note:: These ``matrix`` variables run the test workflow twice, varying the ``nxf_ver`` variable each time.
+      .. note:: These ``matrix`` variables run the test workflow twice, varying the ``NXF_VER`` variable each time.
                 This is used in the ``nextflow run`` commands to test the pipeline with both the latest available version
                 of the pipeline (``''``) and the stated minimum required version.
     """
