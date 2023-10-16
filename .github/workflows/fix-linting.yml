@@ -10,7 +10,7 @@ jobs:
       contains(github.event.comment.html_url, '/pull/') &&
       contains(github.event.comment.body, '@nf-core-bot fix linting') &&
       github.repository == 'nf-core/tools'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       # Use the @nf-core-bot token to check out so we can push later
       - uses: actions/checkout@v3
@@ -25,6 +25,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
 
       - uses: actions/setup-node@v3
+        with:
+          node-version: "20"
 
       - name: Install Prettier
         run: npm install -g prettier @prettier/plugin-php
@@ -42,6 +44,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
+
       - name: python-isort
         uses: isort/isort-action@v1.0.0
         with:
