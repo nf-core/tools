@@ -146,7 +146,7 @@ class ComponentCommand:
         Returns:
             [str]: The names of the modules/subworkflows
         """
-        repo_dir: Path = Path(self.dir, self.component_type, install_dir)
+        repo_dir = Path(self.dir, self.component_type, install_dir)
         if not repo_dir.exists():
             raise LookupError(f"Nothing installed from {install_dir} in pipeline")
 
