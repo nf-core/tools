@@ -24,7 +24,7 @@ def get_repo_info(
         raise UserWarning(f"Could not find directory: {directory}")
 
     # Try to find the root directory
-    base_dir = nf_core.utils.determine_base_dir(directory)
+    base_dir: Path = nf_core.utils.determine_base_dir(directory)
 
     # Figure out the repository type from the .nf-core.yml config file if we can
     config_fn, tools_config = nf_core.utils.load_tools_config(base_dir)
