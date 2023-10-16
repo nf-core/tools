@@ -8,9 +8,11 @@ import re
 import shutil
 
 import git
+import questionary
 import requests
 import requests_cache
 import rich
+import yaml
 from git import GitCommandError, InvalidGitRepositoryError
 
 import nf_core
@@ -42,6 +44,7 @@ class PipelineSync:
         make_pr (bool): Set this to `True` to create a GitHub pull-request with the changes
         gh_username (str): GitHub username
         gh_repo (str): GitHub repository name
+        template_yaml_path (str): Path to template.yml file for pipeline creation settings. DEPRECATED
 
     Attributes:
         pipeline_dir (str): Path to target pipeline directory
@@ -52,7 +55,6 @@ class PipelineSync:
         required_config_vars (list): List of nextflow variables required to make template pipeline
         gh_username (str): GitHub username
         gh_repo (str): GitHub repository name
-        template_yaml (str): Path to template.yml file for pipeline creation settings.
     """
 
     def __init__(
@@ -80,11 +82,28 @@ class PipelineSync:
         self.gh_repo = gh_repo
         self.pr_url = ""
 
-        self.template_yaml_path = template_yaml_path
-        # Save contents of template.yml for using outside of git.
-        if self.template_yaml_path is not None:
-            with open(self.template_yaml_path, "r") as template_yaml:
-                self.template_yaml_cache = template_yaml.read()
+        self.config_yml_path, self.config_yml = nf_core.utils.load_tools_config(self.pipeline_dir)
+
+        # Throw deprecation warning if template_yaml_path is set
+        if template_yaml_path is not None:
+            log.warning(
+                f"The `template_yaml_path` argument is deprecated. Saving pipeline creation settings in .nf-core.yml instead. Please remove {template_yaml_path} file."
+            )
+            if "template" in self.config_yml:
+                overwrite_template = questionary.confirm(
+                    f"A template section already exists in '{self.config_yml_path}'. Do you want to overwrite?",
+                    style=nf_core.utils.nfcore_question_style,
+                    default=False,
+                ).unsafe_ask()
+            if overwrite_template or "template" not in self.config_yml:
+                with open(template_yaml_path, "r") as f:
+                    self.config_yml["template"] = yaml.safe_load(f)
+                with open(self.config_yml_path, "w") as fh:
+                    yaml.safe_dump(self.config_yml, fh)
+                log.info(f"Saved pipeline creation settings to '{self.config_yml_path}'")
+                raise SystemExit(
+                    f"Please commit your changes and delete the {template_yaml_path} file. Then run the sync command again."
+                )
 
         # Set up the API auth if supplied on the command line
         self.gh_api = nf_core.utils.gh_api
@@ -213,7 +232,7 @@ class PipelineSync:
         # Delete everything
         log.info("Deleting all files in 'TEMPLATE' branch")
         for the_file in os.listdir(self.pipeline_dir):
-            if the_file == ".git" or the_file == self.template_yaml_path:
+            if the_file == ".git":
                 continue
             file_path = os.path.join(self.pipeline_dir, the_file)
             log.debug(f"Deleting {file_path}")
@@ -234,10 +253,10 @@ class PipelineSync:
         # Only show error messages from pipeline creation
         logging.getLogger("nf_core.create").setLevel(logging.ERROR)
 
-        # Re-write the template yaml from cache which may have been updated
-        if self.template_yaml_path and self.template_yaml_cache:
-            with open(self.template_yaml_path, "w") as template_path:
-                template_path.write(self.template_yaml_cache)
+        # Re-write the template yaml info from .nf-core.yml config
+        if "template" in self.config_yml:
+            with open(self.config_yml_path, "w") as config_path:
+                yaml.safe_dump(self.config_yml, config_path)
 
         try:
             nf_core.create.PipelineCreate(
@@ -248,13 +267,9 @@ class PipelineSync:
                 force=True,
                 outdir=self.pipeline_dir,
                 author=self.wf_config["manifest.author"].strip('"').strip("'"),
-                template_yaml_path=self.template_yaml_path,
                 plain=True,
             ).init_pipeline()
         except Exception as err:
-            if self.template_yaml_path:
-                # If sync fails, remove template_yaml_path before raising error.
-                os.remove(self.template_yaml_path)
             # Reset to where you were to prevent git getting messed up.
             self.repo.git.reset("--hard")
             raise SyncException(f"Failed to rebuild pipeline from template with error:\n{err}")
@@ -338,7 +353,7 @@ class PipelineSync:
             f"resolving any merge conflicts in the `{self.merge_branch}` branch (or your own fork, if you prefer). "
             "Once complete, make a new minor release of your pipeline.\n\n"
             "For instructions on how to merge this PR, please see "
-            "[https://nf-co.re/developers/sync](https://nf-co.re/developers/sync#merging-automated-prs).\n\n"
+            "[https://nf-co.re/docs/contributing/sync/](https://nf-co.re/docs/contributing/sync/#merging-automated-prs).\n\n"
             "For more information about this release of [nf-core/tools](https://github.com/nf-core/tools), "
             "please see the `v{tag}` [release page](https://github.com/nf-core/tools/releases/tag/{tag})."
         ).format(tag=nf_core.__version__)

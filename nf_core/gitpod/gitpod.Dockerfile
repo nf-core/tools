@@ -3,6 +3,7 @@ FROM gitpod/workspace-base
 USER root
 
 # Install util tools.
+# software-properties-common is needed to add ppa support for Apptainer installation
 RUN apt-get update --quiet && \
     apt-get install --quiet --yes \
     apt-transport-https \
@@ -13,7 +14,13 @@ RUN apt-get update --quiet && \
     wget \
     curl \
     tree \
-    graphviz
+    graphviz \
+    software-properties-common
+
+# Install Apptainer (Singularity)
+RUN add-apt-repository -y ppa:apptainer/ppa && \
+    apt-get update --quiet && \
+    apt install -y apptainer
 
 # Install Conda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
@@ -38,13 +45,17 @@ RUN conda config --add channels defaults && \
     conda config --set channel_priority strict && \
     conda install --quiet --yes --name base mamba && \
     mamba install --quiet --yes --name base \
-    nextflow=22.10.1 \
-    nf-core \
-    nf-test \
-    black \
-    prettier \
-    pytest-workflow && \
+        nextflow \
+        nf-core \
+        nf-test \
+        black \
+        prettier \
+        pre-commit \
+        pytest-workflow && \
     mamba clean --all -f -y
+
+# Update Nextflow
+RUN nextflow self-update
 
 # Install nf-core
 RUN python -m pip install .
