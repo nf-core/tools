@@ -242,7 +242,7 @@ class ComponentCommand:
                     for line in lines:
                         fh.write(line)
                 # Update path in modules.json if the file is in the correct format
-                modules_json: ModulesJson = ModulesJson(self.dir)
+                modules_json = ModulesJson(self.dir)
                 modules_json.load()
                 if modules_json.has_git_url_and_modules():
                     modules_json.modules_json["repos"][self.modules_repo.remote_url]["modules"][
