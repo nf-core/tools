@@ -216,7 +216,7 @@ class ComponentCommand:
                     log.info(f"Moved {wrong_dir} to {correct_dir}.")
                 shutil.rmtree(Path(self.dir, "modules", self.modules_repo.repo_path, "modules"))
                 # Regenerate modules.json file
-                modules_json: ModulesJson = ModulesJson(self.dir)
+                modules_json = ModulesJson(self.dir)
                 modules_json.check_up_to_date()
 
     def check_patch_paths(self, patch_path: Path, module_name: str) -> None:
