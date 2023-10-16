@@ -67,7 +67,7 @@ class ComponentCommand:
         """
         Get the local modules/subworkflows in a pipeline
         """
-        local_component_dir: Path = Path(self.dir, self.component_type, "local")
+        local_component_dir = Path(self.dir, self.component_type, "local")
         return [
             str(path.relative_to(local_component_dir)) for path in local_component_dir.iterdir() if path.suffix == ".nf"
         ]
