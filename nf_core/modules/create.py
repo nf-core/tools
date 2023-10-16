@@ -30,4 +30,3 @@ class ModuleCreate(ComponentCreate):
             conda_version,
             empty_template,
         )
-        self.tool = self.component
