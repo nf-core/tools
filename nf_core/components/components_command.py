@@ -194,8 +194,8 @@ class ComponentCommand:
             wrong_location_modules: List[Path] = []
             for directory, _, files in os.walk(Path(self.dir, "modules")):
                 if "main.nf" in files:
-                    module_path: Path = Path(directory).relative_to(Path(self.dir, "modules"))
-                    parts: Tuple[str, ...] = module_path.parts
+                    module_path = Path(directory).relative_to(Path(self.dir, "modules"))
+                    parts = module_path.parts
                     # Check that there are modules installed directly under the 'modules' directory
                     if parts[1] == "modules":
                         wrong_location_modules.append(module_path)
