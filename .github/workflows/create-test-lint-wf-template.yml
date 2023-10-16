@@ -16,6 +16,7 @@ concurrency:
 
 env:
   NXF_ANSI_LOG: false
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   RunTestWorkflow:
