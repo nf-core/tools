@@ -90,7 +90,9 @@ jobs:
 
       - name: run the pipeline
         run: |
-          nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
+          echo "docker.userEmulation = false" > aws_docker.config
+          echo "docker.fixOwnership = true" >> aws_docker.config
+          nextflow run my-prefix-testpipeline -profile test,docker -c aws_docker.config --outdir ./results
 
       # Remove results folder before linting
       - name: remove results folder
