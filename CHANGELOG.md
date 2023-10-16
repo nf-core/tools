@@ -34,6 +34,7 @@
 - Modified devcontainer permissions so that singularity can be run in Codespaces/VS Code devcontainers ([Commit a103f44](https://github.com/CarsonJM/tools/commit/a103f4484eca8c6d668e4653a4ed8d20faf1b41d))
 - Update Gitpod profile resources to reflect base environment settings.
 - ([#747](https://github.com/nf-core/tools/issues/747)) Add to the template the code to dump the selected pipeline parameters into a json file.
+- [#2161] Disable process selector warnings by default.
 
 ### Download
 
