@@ -110,7 +110,7 @@ def prompt_component_version_sha(
         next_page_commits = [next(all_commits, None) for _ in range(10)]
         next_page_commits = [commit for commit in next_page_commits if commit is not None]
         if all(commit is None for commit in next_page_commits):
-            next_page_commits = None
+            next_page_commits = []
 
         choices = []
         for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
@@ -120,7 +120,7 @@ def prompt_component_version_sha(
                 message += " (installed version)"
             commit_display = [(display_color, message), ("class:choice-default", "")]
             choices.append(questionary.Choice(title=commit_display, value=sha))
-        if next_page_commits is not None:
+        if next_page_commits:
             choices += [older_commits_choice]
         git_sha = questionary.select(
             f"Select '{component_name}' commit:", choices=choices, style=nf_core.utils.nfcore_question_style
