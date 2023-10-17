@@ -24,27 +24,6 @@ from nf_core.lint_utils import dump_json_with_prettier, run_prettier_on_file
 log = logging.getLogger(__name__)
 
 
-def nested_getitem(d, keys):
-    current = d
-    for k in keys:
-        current = current[k]
-    return current
-
-
-def nested_setitem(d, keys, value):
-    current = d
-    for k in keys[:-1]:
-        current = current[k]
-    current[keys[-1]] = value
-
-
-def nested_delitem(d, keys):
-    current = d
-    for k in keys[:-1]:
-        current = current[k]
-    del current[keys[-1]]
-
-
 class PipelineSchema:
     """Class to generate a schema object with
     functions to handle pipeline JSON Schema"""
@@ -821,10 +800,10 @@ class PipelineSchema:
                 ):
                     s_key_def = s_key + ("default",)
                     if p_def is None:
-                        nested_delitem(self.schema, s_key_def)
+                        nf_core.utils.nested_delitem(self.schema, s_key_def)
                         log.debug(f"Removed '{p_key}' default from pipeline schema")
                     else:
-                        nested_setitem(self.schema, s_key_def, p_def)
+                        nf_core.utils.nested_setitem(self.schema, s_key_def, p_def)
                         log.debug(f"Updating '{p_key}' default to '{p_def}' in pipeline schema")
             # There is no default in schema but now there is a default to write
             elif (
@@ -838,7 +817,7 @@ class PipelineSchema:
                     "[blue]Update pipeline schema?"
                 ):
                     s_key_def = s_key + ("default",)
-                    nested_setitem(self.schema, s_key_def, p_def)
+                    nf_core.utils.nested_setitem(self.schema, s_key_def, p_def)
                     log.debug(f"Updating '{p_key}' default to '{p_def}' in pipeline schema")
         return params_added
 
