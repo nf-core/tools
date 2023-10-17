@@ -1,7 +1,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import Tuple, List, Optional
+from typing import List, Optional, Tuple
 
 import questionary
 import rich.prompt
