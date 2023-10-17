@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 import rich
 
@@ -110,11 +110,13 @@ class ComponentList(ComponentCommand):
             modules_json = modules_json.modules_json
 
             for repo_url, component_with_dir in sorted(repos_with_comps.items()):
+
                 repo_entry: Dict[str, Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]]
+
                 repo_entry = modules_json["repos"].get(repo_url, {})
                 for install_dir, component in sorted(component_with_dir):
-                    repo_modules = repo_entry.get(self.component_type)
-                    component_entry = repo_modules.get(install_dir).get(component)
+                    repo_modules = cast(dict, repo_entry.get(self.component_type))
+                    component_entry = cast(dict, cast(dict, repo_modules.get(install_dir)).get(component))
 
                     if component_entry:
                         version_sha = component_entry["git_sha"]
