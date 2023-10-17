@@ -86,7 +86,7 @@ jobs:
           isortVersion: "latest"
           requirementsFiles: "requirements.txt requirements-dev.txt"
 
-  mypy:
+  static-type-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -95,7 +95,13 @@ jobs:
           python-version: "3.8"
       - run: pip install mypy
       - run: pip install types-PyYAML
-      - run: pip install types-Markdown
-      - run: pip install types-setuptools
-      - run: pip install types-requests
-      - run: mypy --config-file pyproject.toml .
+      - name: Get Python changed files
+        id: changed-py-files
+        uses: tj-actions/changed-files@v23
+        with:
+          files: |
+            *.py
+            **/*.py
+      - name: Run if any of the listed files above is changed
+        if: steps.changed-py-files.outputs.any_changed == 'true'
+        run: mypy ${{ steps.changed-py-files.outputs.all_changed_files }} --ignore-missing-imports

@@ -3,7 +3,6 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Dict
 
 import git
 import rich
@@ -35,7 +34,7 @@ class ModulesRepo(SyncedRepo):
     pull a remote several times in one command.
     """
 
-    local_repo_statuses = Dict[str, bool]
+    local_repo_statuses = {}
     no_pull_global = False
 
     def __init__(self, remote_url=None, branch=None, no_pull=False, hide_progress=False):
