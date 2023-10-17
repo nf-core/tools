@@ -94,7 +94,7 @@ jobs:
       with:
         python-version: '3.11'
     - run: pip install mypy
-    - run: mypy --install-types
+    - run: pip install types-PyYAML
     - name: Get Python changed files
       id: changed-py-files
       uses: tj-actions/changed-files@v23
