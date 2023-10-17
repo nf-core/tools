@@ -159,6 +159,9 @@ class PipelineSchema:
             param["default"] = float(param["default"])
             return param
 
+        if param["default"] is None:
+            return param
+
         # Strings
         param["default"] = str(param["default"])
         return param
@@ -830,9 +833,11 @@ class PipelineSchema:
             p_val = p_val in ["true", "True"]  # Convert to bool
             p_type = "boolean"
 
-        p_schema = {"type": p_type, "default": p_val}
+        # Don't return a default for anything false-y except 0
+        if not p_val and not (p_val == 0 and p_val is not False):
+            return {"type": p_type}
 
-        return p_schema
+        return {"type": p_type, "default": p_val}
 
     def launch_web_builder(self):
         """
