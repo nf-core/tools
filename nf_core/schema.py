@@ -24,6 +24,24 @@ from nf_core.lint_utils import dump_json_with_prettier, run_prettier_on_file
 log = logging.getLogger(__name__)
 
 
+def nested_getitem(d, keys):
+    current = d
+    for k in keys:
+        current = current[k]
+    return current
+
+def nested_setitem(d, keys, value):
+    current = d
+    for k in keys[:-1]:
+        current = current[k]
+    current[keys[-1]] = value
+
+def nested_delitem(d, keys):
+    current = d
+    for k in keys[:-1]:
+        current = current[k]
+    del current[keys[-1]]
+
 class PipelineSchema:
     """Class to generate a schema object with
     functions to handle pipeline JSON Schema"""
