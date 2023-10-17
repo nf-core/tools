@@ -142,12 +142,19 @@ class ModulesTestYmlBuilder(ComponentCommand):
         """
         Go over each entry point and build structure
         """
+
+        # Build the stub test
+        stub_test = self.build_single_test(self.entry_points[0], stub=True)
+        if stub_test:
+            self.tests.append(stub_test)
+
+        # Build the other tests
         for entry_point in self.entry_points:
             ep_test = self.build_single_test(entry_point)
             if ep_test:
                 self.tests.append(ep_test)
 
-    def build_single_test(self, entry_point):
+    def build_single_test(self, entry_point, stub=False):
         """Given the supplied cli flags, prompt for any that are missing.
 
         Returns: Test command
@@ -158,6 +165,7 @@ class ModulesTestYmlBuilder(ComponentCommand):
             "tags": [],
             "files": [],
         }
+        stub_option = " -stub" if stub else ""
 
         # Print nice divider line
         console = rich.console.Console()
@@ -178,6 +186,7 @@ class ModulesTestYmlBuilder(ComponentCommand):
             default_val = (
                 f"nextflow run ./tests/modules/{self.org}/{self.module_name} -entry {entry_point} "
                 f"-c ./tests/config/nextflow.config"
+                f"{stub_option}"
             )
             if self.no_prompts:
                 ep_test["command"] = default_val
