@@ -93,8 +93,7 @@ jobs:
       - uses: actions/setup-python@v3
         with:
           python-version: "3.11"
-      - run: pip install mypy
-      - run: pip install types-PyYAML
+      - run: pip install mypy types-PyYAML
       - name: Get Python changed files
         id: changed-py-files
         uses: tj-actions/changed-files@v23
