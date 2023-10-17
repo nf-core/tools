@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GITHUB_TOKEN: ${{ github.token }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   pytest:
@@ -42,8 +42,8 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install python dependencies
+          cache: "pip"
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip -r requirements-dev.txt
           pip install -e .
@@ -55,6 +55,9 @@ jobs:
           sudo apt remove git git-man
           sudo add-apt-repository --remove ppa:git-core/ppa
           sudo apt install git
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v1
