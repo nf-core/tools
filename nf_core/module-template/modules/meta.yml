@@ -1,3 +1,5 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/yaml-schema.json
 name: "{{ component_name_underscore }}"
 {% if not_empty_template -%}
 ## TODO nf-core: Add a description of the module and list keywords
@@ -5,6 +7,8 @@ name: "{{ component_name_underscore }}"
 description: write your description here
 keywords:
   - sort
+  - example
+  - genomics
 tools:
   - "{{ component }}":
       {% if not_empty_template -%}
@@ -26,15 +30,15 @@ input:
       type: map
       description: |
         Groovy Map containing sample information
-        e.g. [ id:'test', single_end:false ]
+        e.g. `[ id:'test', single_end:false ]`
   {% endif %}
   {% if not_empty_template -%}
   ## TODO nf-core: Delete / customise this example input
   {%- endif %}
   - {{ 'bam:' if not_empty_template else "input:" }}
-    type: file
-    description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
-    pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
+      type: file
+      description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
+      pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
 
 {% if not_empty_template -%}
 ## TODO nf-core: Add a description of all of the variables used as output
@@ -45,7 +49,7 @@ output:
       type: map
       description: |
         Groovy Map containing sample information
-        e.g. [ id:'test', single_end:false ]
+        e.g. `[ id:'test', single_end:false ]`
   {% endif %}
   - versions:
       type: file
@@ -55,9 +59,9 @@ output:
   ## TODO nf-core: Delete / customise this example output
   {%- endif %}
   - {{ 'bam:' if not_empty_template else "output:" }}
-    type: file
-    description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
-    pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
+      type: file
+      description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
+      pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
 
 authors:
   - "{{ author }}"

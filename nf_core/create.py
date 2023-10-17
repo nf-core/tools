@@ -57,7 +57,7 @@ class PipelineCreate:
         default_branch=None,
     ):
         self.template_params, skip_paths_keys, self.template_yaml = self.create_param_dict(
-            name, description, author, version, template_yaml_path, plain
+            name, description, author, version, template_yaml_path, plain, outdir if outdir else "."
         )
 
         skippable_paths = {
@@ -90,16 +90,28 @@ class PipelineCreate:
             outdir = os.path.join(os.getcwd(), self.template_params["name_noslash"])
         self.outdir = Path(outdir)
 
-    def create_param_dict(self, name, description, author, version, template_yaml_path, plain):
+    def create_param_dict(self, name, description, author, version, template_yaml_path, plain, pipeline_dir):
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
+            name (str): Name for the pipeline.
+            description (str): Description for the pipeline.
+            author (str): Authors name of the pipeline.
+            version (str): Version flag.
             template_yaml_path (str): Path to YAML file containing template parameters.
+            plain (bool): If true the pipeline template will be initialized plain, without customisation.
+            pipeline_dir (str): Path to the pipeline directory.
         """
+        # Try reading config file
+        _, config_yml = nf_core.utils.load_tools_config(pipeline_dir)
+
+        # Obtain template customization info from template yaml file or `.nf-core.yml` config file
         try:
             if template_yaml_path is not None:
                 with open(template_yaml_path, "r") as f:
                     template_yaml = yaml.safe_load(f)
+            elif "template" in config_yml:
+                template_yaml = config_yml["template"]
             else:
                 template_yaml = {}
         except FileNotFoundError:
@@ -144,7 +156,10 @@ class PipelineCreate:
         skip_paths = [] if param_dict["branded"] else ["branded"]
 
         for t_area in template_areas:
-            if t_area in template_yaml.get("skip", []):
+            areas_to_skip = template_yaml.get("skip", [])
+            if isinstance(areas_to_skip, str):
+                areas_to_skip = [areas_to_skip]
+            if t_area in areas_to_skip:
                 if template_areas[t_area]["file"]:
                     skip_paths.append(t_area)
                 param_dict[t_area] = False
@@ -166,17 +181,21 @@ class PipelineCreate:
         param_dict["logo_dark"] = f"{param_dict['name_noslash']}_logo_dark.png"
         param_dict["version"] = version
 
-        _, config_yml = nf_core.utils.load_tools_config()
         if (
             "lint" in config_yml
             and "nextflow_config" in config_yml["lint"]
             and "manifest.name" in config_yml["lint"]["nextflow_config"]
         ):
-            return param_dict, skip_paths
-        if param_dict["prefix"] == "nf-core":
-            # Check that the pipeline name matches the requirements
-            if not re.match(r"^[a-z]+$", param_dict["short_name"]):
+            return param_dict, skip_paths, template_yaml
+
+        # Check that the pipeline name matches the requirements
+        if not re.match(r"^[a-z]+$", param_dict["short_name"]):
+            if param_dict["prefix"] == "nf-core":
                 raise UserWarning("[red]Invalid workflow name: must be lowercase without punctuation.")
+            else:
+                log.warning(
+                    "Your workflow name is not lowercase without punctuation. This may cause Nextflow errors.\nConsider changing the name to avoid special characters."
+                )
 
         return param_dict, skip_paths, template_yaml
 
@@ -184,9 +203,7 @@ class PipelineCreate:
         """Customizes the template parameters.
 
         Args:
-            name (str): Name for the pipeline.
-            description (str): Description for the pipeline.
-            author (str): Authors name of the pipeline.
+            template_areas (list<str>): List of available template areas to skip.
         """
         template_yaml = {}
         prefix = questionary.text("Pipeline prefix", style=nf_core.utils.nfcore_question_style).unsafe_ask()
@@ -348,10 +365,13 @@ class PipelineCreate:
             # Update the .nf-core.yml with linting configurations
             self.fix_linting()
 
-        log.debug("Dumping pipeline template yml to file")
         if self.template_yaml:
-            with open(self.outdir / "pipeline_template.yml", "w") as fh:
-                yaml.safe_dump(self.template_yaml, fh)
+            config_fn, config_yml = nf_core.utils.load_tools_config(self.outdir)
+            with open(self.outdir / config_fn, "w") as fh:
+                config_yml.update(template=self.template_yaml)
+                yaml.safe_dump(config_yml, fh)
+                log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
+                run_prettier_on_file(self.outdir / config_fn)
 
     def update_nextflow_schema(self):
         """
@@ -403,6 +423,12 @@ class PipelineCreate:
                 ".github/workflows/awstest.yml",
                 ".github/workflows/awsfulltest.yml",
             ],
+            "files_unchanged": [
+                "CODE_OF_CONDUCT.md",
+                f"assets/nf-core-{short_name}_logo_light.png",
+                f"docs/images/nf-core-{short_name}_logo_light.png",
+                f"docs/images/nf-core-{short_name}_logo_dark.png",
+            ],
             "nextflow_config": [
                 "manifest.name",
                 "manifest.homePage",
@@ -415,9 +441,26 @@ class PipelineCreate:
             lint_config["files_exist"].extend(
                 [
                     ".github/ISSUE_TEMPLATE/bug_report.yml",
+                    ".github/ISSUE_TEMPLATE/feature_request.yml",
+                    ".github/PULL_REQUEST_TEMPLATE.md",
+                    ".github/CONTRIBUTING.md",
+                    ".github/.dockstore.yml",
+                    ".gitignore",
                 ]
             )
-            lint_config["files_unchanged"] = [".github/ISSUE_TEMPLATE/bug_report.yml"]
+            lint_config["files_unchanged"].extend(
+                [
+                    ".github/ISSUE_TEMPLATE/bug_report.yml",
+                    ".github/ISSUE_TEMPLATE/config.yml",
+                    ".github/ISSUE_TEMPLATE/feature_request.yml",
+                    ".github/PULL_REQUEST_TEMPLATE.md",
+                    ".github/workflows/branch.yml",
+                    ".github/workflows/linting_comment.yml",
+                    ".github/workflows/linting.yml",
+                    ".github/CONTRIBUTING.md",
+                    ".github/.dockstore.yml",
+                ]
+            )
 
         # Add CI specific configurations
         if not self.template_params["ci"]:
@@ -442,9 +485,17 @@ class PipelineCreate:
                 ]
             )
 
+        # Add igenomes specific configurations
+        if not self.template_params["igenomes"]:
+            lint_config["files_exist"].extend(["conf/igenomes.config"])
+
         # Add github badges specific configurations
         if not self.template_params["github_badges"] or not self.template_params["github"]:
             lint_config["readme"] = ["nextflow_badge"]
+
+        # If the pipeline is unbranded
+        if not self.template_params["branded"]:
+            lint_config["files_unchanged"].extend([".github/ISSUE_TEMPLATE/bug_report.yml"])
 
         # Add the lint content to the preexisting nf-core config
         config_fn, nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
@@ -461,7 +512,7 @@ class PipelineCreate:
         log.debug(f"Fetching logo from {logo_url}")
 
         email_logo_path = self.outdir / "assets" / f"{self.template_params['name_noslash']}_logo_light.png"
-        self.download_pipeline_logo(f"{logo_url}&w=400", email_logo_path)
+        self.download_pipeline_logo(f"{logo_url}?w=600&theme=light", email_logo_path)
         for theme in ["dark", "light"]:
             readme_logo_url = f"{logo_url}?w=600&theme={theme}"
             readme_logo_path = (

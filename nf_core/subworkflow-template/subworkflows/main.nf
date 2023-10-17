@@ -7,7 +7,7 @@
 include { SAMTOOLS_SORT      } from '../../../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_INDEX     } from '../../../modules/nf-core/samtools/index/main'
 
-workflow {{ subworkflow_name|upper }} {
+workflow {{ component_name_underscore|upper }} {
 
     take:
     // TODO nf-core: edit input (take) channels

@@ -3,8 +3,8 @@ a nf-core pipeline.
 """
 
 import logging
-import os
 import re
+from pathlib import Path
 
 import rich.console
 
@@ -44,6 +44,36 @@ def bump_pipeline_version(pipeline_obj, new_version):
             )
         ],
     )
+    # multiqc_config.yaml
+    multiqc_new_version = "dev" if "dev" in new_version else new_version
+    update_file_version(
+        Path("assets", "multiqc_config.yml"),
+        pipeline_obj,
+        [
+            (
+                "/dev",
+                f"/{multiqc_new_version}",
+            ),
+            (
+                rf"{re.escape(current_version)}",
+                f"{multiqc_new_version}",
+            ),
+        ],
+    )
+    # nf-test snap files
+    pipeline_name = pipeline_obj.nf_config.get("manifest.name", "").strip(" '\"")
+    snap_files = [f for f in Path().glob("tests/pipeline/*.snap")]
+    for snap_file in snap_files:
+        update_file_version(
+            snap_file,
+            pipeline_obj,
+            [
+                (
+                    f"{pipeline_name}={current_version}",
+                    f"{pipeline_name}={new_version}",
+                )
+            ],
+        )
 
 
 def bump_nextflow_version(pipeline_obj, new_version):
@@ -77,7 +107,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
 
     # .github/workflows/ci.yml - Nextflow version matrix
     update_file_version(
-        os.path.join(".github", "workflows", "ci.yml"),
+        Path(".github", "workflows", "ci.yml"),
         pipeline_obj,
         [
             (

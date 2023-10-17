@@ -4,7 +4,7 @@ import urllib
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from .nfcore_module import NFCoreModule
+from ..components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
 
@@ -83,10 +83,17 @@ def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], Lis
             else:
                 nfcore_modules.append(m)
 
-    # Make full (relative) file paths and create NFCoreModule objects
+    # Make full (relative) file paths and create NFCoreComponent objects
     local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
     nfcore_modules = [
-        NFCoreModule(m, "nf-core/modules", Path(nfcore_modules_dir, m), repo_type=repo_type, base_dir=Path(dir))
+        NFCoreComponent(
+            m,
+            "nf-core/modules",
+            Path(nfcore_modules_dir, m),
+            repo_type=repo_type,
+            base_dir=Path(dir),
+            component_type="modules",
+        )
         for m in nfcore_modules
     ]
 

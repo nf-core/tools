@@ -1,10 +1,10 @@
 from pathlib import Path
 
+from ...components.nfcore_component import NFCoreComponent
 from ..modules_differ import ModulesDiffer
-from ..nfcore_module import NFCoreModule
 
 
-def module_patch(module_lint_obj, module: NFCoreModule):
+def module_patch(module_lint_obj, module: NFCoreComponent):
     """
     Lint a patch file found in a module
 
@@ -34,7 +34,7 @@ def check_patch_valid(module, patch_path):
     file creation or deletion we issue a lint warning.
 
     Args:
-        module (NFCoreModule): The module currently being linted
+        module (NFCoreComponent): The module currently being linted
         patch_path (Path): The absolute path to the patch file.
 
     Returns:
@@ -154,7 +154,7 @@ def patch_reversible(module_lint_object, module, patch_path):
     Try applying a patch in reverse to see if it is up to date
 
     Args:
-        module (NFCoreModule): The module currently being linted
+        module (NFCoreComponent): The module currently being linted
         patch_path (Path): The absolute path to the patch file.
 
     Returns:
@@ -162,10 +162,10 @@ def patch_reversible(module_lint_object, module, patch_path):
     """
     try:
         ModulesDiffer.try_apply_patch(
-            module.module_name,
+            module.component_name,
             module_lint_object.modules_repo.repo_path,
             patch_path,
-            Path(module.module_dir).relative_to(module.base_dir),
+            Path(module.component_dir).relative_to(module.base_dir),
             reverse=True,
         )
     except LookupError:
