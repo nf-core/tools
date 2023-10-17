@@ -37,7 +37,7 @@ class ComponentCommand:
         self.hide_progress = hide_progress
         self._configure_repo_and_paths()
 
-    def _configure_repo_and_paths(self, nf_dir_req: Optional[bool] = True) -> None:
+    def _configure_repo_and_paths(self, nf_dir_req: bool = True) -> None:
         """
         Determine the repo type and set some default paths.
         If this is a modules repo, determine the org_path too.
