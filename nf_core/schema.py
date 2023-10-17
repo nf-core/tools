@@ -806,8 +806,8 @@ class PipelineSchema:
             p_val = None
 
         # Booleans
-        if p_val in ["True", "False"]:
-            p_val = p_val == "True"  # Convert to bool
+        if p_val in ["true", "false", "True", "False"]:
+            p_val = p_val in ["true", "True"]  # Convert to bool
             p_type = "boolean"
 
         p_schema = {"type": p_type, "default": p_val}
