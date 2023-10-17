@@ -110,7 +110,6 @@ class ComponentList(ComponentCommand):
             modules_json = modules_json.modules_json
 
             for repo_url, component_with_dir in sorted(repos_with_comps.items()):
-
                 repo_entry: Dict[str, Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]]
 
                 repo_entry = modules_json["repos"].get(repo_url, {})
