@@ -22,7 +22,7 @@ class ComponentCommand:
     def __init__(
         self,
         component_type: str,
-        dir: Union[str, os.PathLike],
+        dir: str,
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,
         no_pull: bool = False,
@@ -66,7 +66,7 @@ class ComponentCommand:
         """
         Get the local modules/subworkflows in a pipeline
         """
-        self.dir: Union[str, os.PathLike]
+        self.dir: str
         local_component_dir = Path(self.dir, self.component_type, "local")
         return [
             str(path.relative_to(local_component_dir)) for path in local_component_dir.iterdir() if path.suffix == ".nf"
