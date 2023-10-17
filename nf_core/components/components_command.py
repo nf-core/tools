@@ -51,7 +51,7 @@ class ComponentCommand:
 
         try:
             if self.dir_arg:
-                self.dir_path, self.repo_type, self.org = get_repo_info(self.dir_path, use_prompt=nf_dir_req)
+                self.dir_path, self.repo_type, self.org = get_repo_info(self.dir_arg, use_prompt=nf_dir_req)
             else:
                 self.repo_type = None
                 self.org = ""
