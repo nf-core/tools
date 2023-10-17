@@ -20,7 +20,8 @@ A python package with helper tools for the nf-core community.
 - [`nf-core` tools update](#update-tools)
 - [`nf-core list` - List available pipelines](#listing-pipelines)
 - [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
-- [`nf-core download` - Download pipeline for offline use](#downloading-pipelines-for-offline-use)
+- [`nf-core create-params-file` - Create a parameter file](#create-a-parameter-file)
+- [`nf-core download` - Download a pipeline for offline use](#downloading-pipelines-for-offline-use)
 - [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
 - [`nf-core create` - Create a new pipeline with the nf-core template](#creating-a-new-pipeline)
 - [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
@@ -42,7 +43,6 @@ A python package with helper tools for the nf-core community.
   - [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
   - [`modules test` - Run the tests for a module](#run-the-tests-for-a-module-using-pytest)
   - [`modules bump-versions` - Bump software versions of modules](#bump-bioconda-and-container-versions-of-modules-in)
-  - [`modules mulled` - Generate the name for a multi-tool container image](#generate-the-name-for-a-multi-tool-container-image)
 
 - [`nf-core subworkflows` - commands for dealing with subworkflows](#subworkflows)
   - [`subworkflows list` - List available subworkflows](#list-subworkflows)
@@ -54,6 +54,7 @@ A python package with helper tools for the nf-core community.
   - [`subworkflows remove` - Remove a subworkflow from a pipeline](#remove-a-subworkflow-from-a-pipeline)
   - [`subworkflows create` - Create a subworkflow from the template](#create-a-new-subworkflow)
   - [`subworkflows create-test-yml` - Create the `test.yml` file for a subworkflow](#create-a-subworkflow-test-config-file)
+  - [`subworkflows lint` - Check a subworkflow against nf-core guidelines](#check-a-subworkflow-against-nf-core-guidelines)
   - [`subworkflows test` - Run the tests for a subworkflow](#run-the-tests-for-a-subworkflow-using-pytest)
 - [Citation](#citation)
 
@@ -77,7 +78,7 @@ conda install nf-core
 Alternatively, you can create a new environment with both nf-core/tools and nextflow:
 
 ```bash
-conda create --name nf-core python=3.8 nf-core nextflow
+conda create --name nf-core python=3.11 nf-core nextflow
 conda activate nf-core
 ```
 
@@ -226,10 +227,14 @@ Auto-completion for the `nf-core` command is available for bash, zsh and fish. T
 
 After a restart of the shell session you should have auto-completion for the `nf-core` command and all its sub-commands and options.
 
-> **NB:** The added line will run the command `nf-core` (which will also slow down startup time of your shell). You should therefore either have the nf-core/tools installed globally.
-> You can also wrap it inside `if type nf-core > /dev/null; then ` \<YOUR EVAL CODE LINE\> `fi` for bash and zsh or `if command -v nf-core &> /dev/null eval (env _NF_CORE_COMPLETE=fish_source nf-core) end` for fish. You need to then source the config in your environment for the completions to be activated.
+:::note
+The added line will run the command `nf-core` (which will also slow down startup time of your shell). You should therefore either have the nf-core/tools installed globally.
+You can also wrap it inside `if type nf-core > /dev/null; then ` \<YOUR EVAL CODE LINE\> `fi` for bash and zsh or `if command -v nf-core &> /dev/null eval (env _NF_CORE_COMPLETE=fish_source nf-core) end` for fish. You need to then source the config in your environment for the completions to be activated.
+:::
 
-> **NB:** If you see the error `command not found compdef` , be sure that your config file contains the line `autoload -Uz compinit && compinit` before the eval line.
+:::info
+If you see the error `command not found compdef` , be sure that your config file contains the line `autoload -Uz compinit && compinit` before the eval line.
+:::
 
 ## Listing pipelines
 
@@ -312,6 +317,22 @@ Do you want to run this command now?  [y/n]:
 - `--url`
   - Change the URL used for the graphical interface, useful for development work on the website.
 
+## Create a parameter file
+
+Sometimes it is easier to manually edit a parameter file than to use the web interface or interactive commandline wizard
+provided by `nf-core launch`, for example when running a pipeline with many options on a remote server without a graphical interface.
+
+You can create a parameter file with all parameters of a pipeline with the `nf-core create-params-file` command.
+This file can then be passed to `nextflow` with the `-params-file` flag.
+
+This command takes one argument - either the name of a nf-core pipeline which will be pulled automatically,
+or the path to a directory containing a Nextflow pipeline _(can be any pipeline, doesn't have to be nf-core)_.
+
+The generated YAML file contains all parameters set to the pipeline default value along with their description in comments.
+This template can then be used by uncommenting and modifying the value of parameters you want to pass to a pipline run.
+
+Hidden options are not included by default, but can be included using the `-x`/`--show-hidden` flag.
+
 ## Downloading pipelines for offline use
 
 Sometimes you may need to run an nf-core pipeline on a server or HPC system that has no internet connection.
@@ -328,7 +349,7 @@ Each option has a flag, if all are supplied then it will run without any user in
 working_dir: tmp
 -->
 
-![`nf-core download rnaseq -r 3.8 --outdir nf-core-rnaseq -x none -c none`](docs/images/nf-core-download.svg)
+![`nf-core download rnaseq -r 3.8 --outdir nf-core-rnaseq -x none -s none -d`](docs/images/nf-core-download.svg)
 
 Once downloaded, you will see something like the following file structure for the downloaded pipeline:
 
@@ -344,18 +365,24 @@ You can run the pipeline by simply providing the directory path for the `workflo
 nextflow run /path/to/download/nf-core-rnaseq-dev/workflow/ --input mydata.csv --outdir results  # usual parameters here
 ```
 
-> Note that if you downloaded singularity images, you will need to use `-profile singularity` or have it enabled in your config file.
+:::note
+If you downloaded Singularity container images, you will need to use `-profile singularity` or have it enabled in your config file.
+:::
 
 ### Downloaded nf-core configs
 
 The pipeline files are automatically updated (`params.custom_config_base` is set to `../configs`), so that the local copy of institutional configs are available when running the pipeline.
 So using `-profile <NAME>` should work if available within [nf-core/configs](https://github.com/nf-core/configs).
 
-### Downloading singularity containers
+:::warning
+This option is not available when downloading a pipeline for use with [Nextflow Tower](#adapting-downloads-to-nextflow-tower) because the application manages all configurations separately.
+:::
 
-If you're using Singularity, the `nf-core download` command can also fetch the required Singularity container images for you.
-To do this, select `singularity` in the prompt or specify `--container singularity` in the command.
-Your archive / target output directory will then include three folders: `workflow`, `configs` and also `singularity-containers`.
+### Downloading Apptainer containers
+
+If you're using [Singularity](https://apptainer.org) (Apptainer), the `nf-core download` command can also fetch the required container images for you.
+To do this, select `singularity` in the prompt or specify `--container-system singularity` in the command.
+Your archive / target output directory will then also include a separate folder `singularity-containers`.
 
 The downloaded workflow files are again edited to add the following line to the end of the pipeline's `nextflow.config` file:
 
@@ -373,10 +400,9 @@ We highly recommend setting the `$NXF_SINGULARITY_CACHEDIR` environment variable
 If found, the tool will fetch the Singularity images to this directory first before copying to the target output archive / directory.
 Any images previously fetched will be found there and copied directly - this includes images that may be shared with other pipelines or previous pipeline version downloads or download attempts.
 
-If you are running the download on the same system where you will be running the pipeline (eg. a shared filesystem where Nextflow won't have an internet connection at a later date), you can choose to _only_ use the cache via a prompt or cli options `--singularity-cache-only` / `--singularity-cache-copy`.
+If you are running the download on the same system where you will be running the pipeline (eg. a shared filesystem where Nextflow won't have an internet connection at a later date), you can choose to _only_ use the cache via a prompt or cli options `--container-cache-utilisation amend`. This instructs `nf-core download` to fetch all Singularity images to the `$NXF_SINGULARITY_CACHEDIR` directory but does _not_ copy them to the workflow archive / directory. The workflow config file is _not_ edited. This means that when you later run the workflow, Nextflow will just use the cache folder directly.
 
-This instructs `nf-core download` to fetch all Singularity images to the `$NXF_SINGULARITY_CACHEDIR` directory but does _not_ copy them to the workflow archive / directory.
-The workflow config file is _not_ edited. This means that when you later run the workflow, Nextflow will just use the cache folder directly.
+If you are downloading a workflow for a different system, you can provide information about the contents of its image cache to `nf-core download`. To avoid unnecessary container image downloads, choose `--container-cache-utilisation remote` and provide a list of already available images as plain text file to `--container-cache-index my_list_of_remotely_available_images.txt`. To generate this list on the remote system, run `find $NXF_SINGULARITY_CACHEDIR -name "*.img" > my_list_of_remotely_available_images.txt`. The tool will then only download and copy images into your output directory, which are missing on the remote system.
 
 #### How the Singularity image downloads work
 
@@ -387,27 +413,39 @@ The Singularity image download finds containers using two methods:
 2. It scrapes any files it finds with a `.nf` file extension in the workflow `modules` directory for lines
    that look like `container = "xxx"`. This is the typical method for DSL2 pipelines, which have one container per process.
 
-Some DSL2 modules have container addresses for docker (eg. `quay.io/biocontainers/fastqc:0.11.9--0`) and also URLs for direct downloads of a Singularity continaer (eg. `https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0`).
+Some DSL2 modules have container addresses for docker (eg. `biocontainers/fastqc:0.11.9--0`) and also URLs for direct downloads of a Singularity container (eg. `https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0`).
 Where both are found, the download URL is preferred.
 
 Once a full list of containers is found, they are processed in the following order:
 
-1. If the target image already exists, nothing is done (eg. with `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache-only` specified)
-2. If found in `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache-only` is _not_ specified, they are copied to the output directory
+1. If the target image already exists, nothing is done (eg. with `$NXF_SINGULARITY_CACHEDIR` and `--container-cache-utilisation amend` specified)
+2. If found in `$NXF_SINGULARITY_CACHEDIR` and `--container-cache-utilisation copy` is specified, they are copied to the output directory
 3. If they start with `http` they are downloaded directly within Python (default 4 at a time, you can customise this with `--parallel-downloads`)
-4. If they look like a Docker image name, they are fetched using a `singularity pull` command
-   - This requires Singularity to be installed on the system and is substantially slower
+4. If they look like a Docker image name, they are fetched using a `singularity pull` command. Choose the container libraries (registries) queried by providing one or multiple `--container-library` parameter(s). For example, if you call `nf-core download` with `-l quay.io -l ghcr.io -l docker.io`, every image will be pulled from `quay.io` unless an error is encountered. Subsequently, `ghcr.io` and then `docker.io` will be queried for any image that has failed before.
+   - This requires Singularity/Apptainer to be installed on the system and is substantially slower
 
-Note that compressing many GBs of binary files can be slow, so specifying `--compress none` is recommended when downloading Singularity images.
+Note that compressing many GBs of binary files can be slow, so specifying `--compress none` is recommended when downloading Singularity images that are copied to the output directory.
 
 If the download speeds are much slower than your internet connection is capable of, you can set `--parallel-downloads` to a large number to download loads of images at once.
+
+### Adapting downloads to Nextflow Tower
+
+[seqeralabs® Nextflow Tower](https://cloud.tower.nf/) provides a graphical user interface to oversee pipeline runs, gather statistics and configure compute resources. While pipelines added to _Tower_ are preferably hosted at a Git service, providing them as disconnected, self-reliant repositories is also possible for premises with restricted network access. Choosing the `--tower` flag will download the pipeline in an appropriate form.
+
+Subsequently, the `*.git` folder can be moved to it's final destination and linked with a pipeline in _Tower_ using the `file:/` prefix.
+
+:::tip
+Also without access to Tower, pipelines downloaded with the `--tower` flag can be run: `nextflow run -r 2.5 file:/path/to/pipelinedownload.git`. Downloads in this format allow you to include multiple revisions of a pipeline in a single file, but require that the revision (e.g. `-r 2.5`) is always explicitly specified.
+:::
 
 ## Pipeline software licences
 
 Sometimes it's useful to see the software licences of the tools used in a pipeline.
 You can use the `licences` subcommand to fetch and print the software licence from each conda / PyPI package used in an nf-core pipeline.
 
-> ⚠️ This command does not currently work for newer DSL2 pipelines. This will hopefully be addressed [soon](https://github.com/nf-core/tools/issues/1155).
+:::warning
+This command does not currently work for newer DSL2 pipelines. This will hopefully be addressed [soon](https://github.com/nf-core/tools/issues/1155).
+:::
 
 <!-- RICH-CODEX
 timeout: 10
@@ -435,8 +473,10 @@ You can then continue to edit, commit and push normally as you build your pipeli
 
 Please see the [nf-core documentation](https://nf-co.re/developers/adding_pipelines) for a full walkthrough of how to create a new nf-core workflow.
 
-> As the log output says, remember to come and discuss your idea for a pipeline as early as possible!
-> See the [documentation](https://nf-co.re/developers/adding_pipelines#join-the-community) for instructions.
+:::tip
+As the log output says, remember to come and discuss your idea for a pipeline as early as possible!
+See the [documentation](https://nf-co.re/developers/adding_pipelines#join-the-community) for instructions.
+:::
 
 Note that if the required arguments for `nf-core create` are not given, it will interactively prompt for them. If you prefer, you can supply them as command line arguments. See `nf-core create --help` for more information.
 
@@ -563,7 +603,7 @@ timeout: 10
 after_command: rm nf-params.json
 -->
 
-![`nf-core schema validate nf-core-rnaseq/workflow nf-params.json`](docs/images/nf-core-schema-validate.svg)
+![`nf-core schema validate nf-core-rnaseq/3_8 nf-params.json`](docs/images/nf-core-schema-validate.svg)
 
 The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).
 
@@ -610,26 +650,37 @@ If you want to add a parameter to the schema, you first have to add the paramete
 
 The graphical interface is oganzised in groups and within the groups the single parameters are stored. For a better overview you can collapse all groups with the `Collapse groups` button, then your new parameters will be the only remaining one at the bottom of the page. Now you can either create a new group with the `Add group` button or drag and drop the paramters in an existing group. Therefor the group has to be expanded. The group title will be displayed, if you run your pipeline with the `--help` flag and its description apears on the parameter page of your pipeline.
 
-Now you can start to change the parameter itself. The description is a short explanation about the parameter, that apears if you run your pipeline with the `--help` flag. By clicking on the dictionary icon you can add a longer explanation for the parameter page of your pipeline. If you want to specify some conditions for your parameter, like the file extension, you can use the nut icon to open the settings. This menu depends on the `type` you assigned to your parameter. For intergers you can define a min and max value, and for strings the file extension can be specified.
+Now you can start to change the parameter itself. The `ID` of a new parameter should be defined in small letters without whitespaces. The description is a short free text explanation about the parameter, that appears if you run your pipeline with the `--help` flag. By clicking on the dictionary icon you can add a longer explanation for the parameter page of your pipeline. Usually, they contain a small paragraph about the parameter settings or a used datasource, like databases or references. If you want to specify some conditions for your parameter, like the file extension, you can use the nut icon to open the settings. This menu depends on the `type` you assigned to your parameter. For integers you can define a min and max value, and for strings the file extension can be specified.
 
-After you filled your schema, click on the `Finished` button in the top rigth corner, this will automatically update your `nextflow_schema.json`. If this is not working you can copy the schema from the graphical interface and paste it in your `nextflow_schema.json` file.
+The `type` field is one of the most important points in your pipeline schema, since it defines the datatype of your input and how it will be interpreted. This allows extensive testing prior to starting the pipeline.
+
+The basic datatypes for a pipeline schema are:
+
+- `string`
+- `number`
+- `integer`
+- `boolean`
+
+For the `string` type you have three different options in the settings (nut icon): `enumerated values`, `pattern` and `format`. The first option, `enumerated values`, allows you to specify a list of specific input values. The list has to be separated with a pipe. The `pattern` and `format` settings can depend on each other. The `format` has to be either a directory or a file path. Depending on the `format` setting selected, specifying the `pattern` setting can be the most efficient and time saving option, especially for `file paths`. The `number` and `integer` types share the same settings. Similarly to `string`, there is an `enumerated values` option with the possibility of specifying a `min` and `max` value. For the `boolean` there is no further settings and the default value is usually `false`. The `boolean` value can be switched to `true` by adding the flag to the command. This parameter type is often used to skip specific sections of a pipeline.
+
+After filling the schema, click on the `Finished` button in the top right corner, this will automatically update your `nextflow_schema.json`. If this is not working, the schema can be copied from the graphical interface and pasted in your `nextflow_schema.json` file.
 
 ### Update existing pipeline schema
 
-Important for the update of a pipeline schema is, that if you want to change the default value of a parameter, you should change it in the `nextflow.config` file, since the value in the config file overwrites the value in the pipeline schema. To change any other parameter use `nf-core schema build --web-only` to open the graphical interface without rebuilding the pipeline schema. Now, you can change your parameters as mentioned above but keep in mind that changing the parameter datatype is depending on the default value you specified in the `nextflow.config` file.
+It's important to change the default value of a parameter in the `nextflow.config` file first and then in the pipeline schema, because the value in the config file overwrites the value in the pipeline schema. To change any other parameter use `nf-core schema build --web-only` to open the graphical interface without rebuilding the pipeline schema. Now, the parameters can be changed as mentioned above but keep in mind that changing the parameter datatype depends on the default value specified in the `nextflow.config` file.
 
 ### Linting a pipeline schema
 
 The pipeline schema is linted as part of the main pipeline `nf-core lint` command,
 however sometimes it can be useful to quickly check the syntax of the JSONSchema without running a full lint run.
 
-Usage is `nf-core schema lint <schema>`, eg:
+Usage is `nf-core schema lint <schema>` (defaulting to `nextflow_schema.json`), eg:
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
 -->
 
-![`nf-core schema lint nextflow_schema.json`](docs/images/nf-core-schema-lint.svg)
+![`nf-core schema lint`](docs/images/nf-core-schema-lint.svg)
 
 ## Bumping a pipeline version number
 
@@ -889,6 +940,7 @@ The `nf-core modules create` command will prompt you with the relevant questions
 
 <!-- RICH-CODEX
 working_dir: tmp
+timeout: 10
 before_command: git clone https://github.com/nf-core/modules.git && cd modules
 fake_command: nf-core modules create fastqc --author @nf-core-bot  --label process_low --meta --force
 -->
@@ -926,6 +978,10 @@ before_command: sed 's/1.13a/1.10/g' modules/multiqc/main.nf > modules/multiqc/m
 
 To run unit tests of a module that you have installed or the test created by the command [`nf-core modules create-test-yml`](#create-a-module-test-config-file), you can use `nf-core modules test` command. This command runs the tests specified in `modules/tests/software/<tool>/<subtool>/test.yml` file using [pytest](https://pytest-workflow.readthedocs.io/en/stable/).
 
+:::info
+This command uses the pytest argument `--git-aware` to avoid copying the whole `.git` directory and files ignored by `git`. This means that it will only include files listed by `git ls-files`. Remember to **commit your changes** after adding a new module to add the new files to your git index.
+:::
+
 You can specify the module name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
 
 <!-- RICH-CODEX
@@ -960,17 +1016,6 @@ If you want this module to be updated only to a specific version (or downgraded)
 bump-versions:
   star/align: "2.6.1d"
 ```
-
-### Generate the name for a multi-tool container image
-
-When you want to use an image of a multi-tool container and you know the specific dependencies and their versions of that container, for example, by looking them up in the [BioContainers hash.tsv](https://github.com/BioContainers/multi-package-containers/blob/master/combinations/hash.tsv), you can use the `nf-core modules mulled` helper tool. This tool generates the name of a BioContainers mulled image.
-
-<!-- RICH-CODEX
-working_dir: tmp/modules
-after_command: cd ../../ && rm -rf tmp
--->
-
-![`nf-core modules mulled pysam==0.16.0.1 biopython==1.78`](docs/images/nf-core-modules-mulled.svg)
 
 ## Subworkflows
 
@@ -1170,12 +1215,11 @@ It will start in the current working directory, or whatever is specified with `-
 The `nf-core subworkflows create` command will prompt you with the relevant questions in order to create all of the necessary subworkflow files.
 
 <!-- RICH-CODEX
-working_dir: tmp
-before_command: git clone https://github.com/nf-core/modules.git && cd modules
+working_dir: tmp/modules
 fake_command: nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force
 -->
 
-![`cd modules && nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force`](docs/images/nf-core-subworkflows-create.svg)
+![`nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force`](docs/images/nf-core-subworkflows-create.svg)
 
 ### Create a subworkflow test config file
 
@@ -1184,28 +1228,42 @@ To help developers build new subworkflows, the `nf-core subworkflows create-test
 After you have written a minimal Nextflow script to test your subworkflow in `/tests/subworkflow/<subworkflow_name>/main.nf`, this command will run the tests for you and create the `/tests/subworkflow/<tool>/<subtool>/test.yml` file.
 
 <!-- RICH-CODEX
-working_dir: tmp/subworkflows
+working_dir: tmp/modules
 extra_env:
   PROFILE: 'conda'
-before_command: >
-  echo "repository_type: modules" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows create-test-yml bam_stats_samtools --no-prompts --force`](docs/images/nf-core-subworkflows-create-test.svg)
+
+### Check a subworkflow against nf-core guidelines
+
+Run the `nf-core subworkflows lint` command to check subworkflows in the current working directory (a pipeline or a clone of nf-core/modules) against nf-core guidelines.
+
+Use the `--all` flag to run linting on all subworkflows found. Use `--dir <pipeline_dir>` to specify a different directory than the current working directory.
+
+<!-- RICH-CODEX
+working_dir: tmp/modules
+extra_env:
+  PROFILE: 'conda'
+-->
+
+![`nf-core subworkflows lint bam_stats_samtools`](docs/images/nf-core-subworkflows-lint.svg)
 
 ### Run the tests for a subworkflow using pytest
 
 To run unit tests of a subworkflow that you have installed or the test created by the command [`nf-core subworkflow create-test-yml`](#create-a-subworkflow-test-config-file), you can use `nf-core subworkflows test` command. This command runs the tests specified in `tests/subworkflows/<subworkflow_name>/test.yml` file using [pytest](https://pytest-workflow.readthedocs.io/en/stable/).
 
+:::info
+This command uses the pytest argument `--git-aware` to avoid copying the whole `.git` directory and files ignored by `git`. This means that it will only include files listed by `git ls-files`. Remember to **commit your changes** after adding a new subworkflow to add the new files to your git index.
+:::
+
 You can specify the subworkflow name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
 
 <!-- RICH-CODEX
-working_dir: tmp/subworkflows
+working_dir: tmp/modules
 timeout: 30
 extra_env:
   PROFILE: 'conda'
-before_command: >
-  echo "repository_type: pipeline" >> .nf-core.yml
 -->
 
 ![`nf-core subworkflows test bam_rseqc --no-prompts`](docs/images/nf-core-subworkflows-test.svg)

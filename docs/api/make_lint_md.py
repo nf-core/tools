@@ -5,6 +5,7 @@ import os
 
 import nf_core.lint
 import nf_core.modules.lint
+import nf_core.subworkflows.lint
 
 
 def make_docs(docs_basedir, lint_tests, md_template):
@@ -44,14 +45,31 @@ modules_docs_basedir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 make_docs(
     modules_docs_basedir,
     list(
-        set(nf_core.modules.lint.ModuleLint.get_all_lint_tests(is_pipeline=True)).union(
-            nf_core.modules.lint.ModuleLint.get_all_lint_tests(is_pipeline=False)
+        set(nf_core.modules.lint.ModuleLint.get_all_module_lint_tests(is_pipeline=True)).union(
+            nf_core.modules.lint.ModuleLint.get_all_module_lint_tests(is_pipeline=False)
         )
     ),
     """# {0}
 
 ```{{eval-rst}}
 .. automethod:: nf_core.modules.lint.ModuleLint.{0}
+```
+""",
+)
+
+# Create the subworkflows lint docs
+subworkflows_docs_basedir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_src", "subworkflow_lint_tests")
+make_docs(
+    subworkflows_docs_basedir,
+    list(
+        set(nf_core.subworkflows.lint.SubworkflowLint.get_all_subworkflow_lint_tests(is_pipeline=True)).union(
+            nf_core.subworkflows.lint.SubworkflowLint.get_all_subworkflow_lint_tests(is_pipeline=False)
+        )
+    ),
+    """# {0}
+
+```{{eval-rst}}
+.. automethod:: nf_core.subworkflows.lint.SubworkflowLint.{0}
 ```
 """,
 )

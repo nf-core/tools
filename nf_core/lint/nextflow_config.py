@@ -62,11 +62,11 @@ def nextflow_config(self):
         * Should always be set to default value:
         ``https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}``
 
-    * ``params.show_hidden_params``
+    * ``params.validationShowHiddenParams``
 
         * Determines whether boilerplate params are showed by schema. Set to ``false`` by default
 
-    * ``params.schema_ignore_params``
+    * ``params.validationSchemaIgnoreParams``
 
         * A comma separated string of inputs the schema validation should ignore.
 
@@ -92,20 +92,22 @@ def nextflow_config(self):
     * Process-level configuration syntax still using the old Nextflow syntax, for example: ``process.$fastqc`` instead of ``process withName:'fastqc'``.
 
     .. tip:: You can choose to ignore tests for the presence or absence of specific config variables
-             by creating a file called ``.nf-core-lint.yml`` in the root of your pipeline and creating
+             by creating a file called ``.nf-core.yml`` in the root of your pipeline and creating
              a list the config variables that should be ignored. For example:
 
              .. code-block:: yaml
 
-                nextflow_config:
-                    - params.input
+                lint:
+                    nextflow_config:
+                        - params.input
 
              The other checks in this test (depreciated syntax etc) can not be individually identified,
              but you can skip the entire test block if you wish:
 
              .. code-block:: yaml
 
-                nextflow_config: False
+                lint:
+                    nextflow_config: False
     """
     passed = []
     warned = []
@@ -128,8 +130,8 @@ def nextflow_config(self):
         ["process.time"],
         ["params.outdir"],
         ["params.input"],
-        ["params.show_hidden_params"],
-        ["params.schema_ignore_params"],
+        ["params.validationShowHiddenParams"],
+        ["params.validationSchemaIgnoreParams"],
     ]
     # Throw a warning if these are missing
     config_warn = [

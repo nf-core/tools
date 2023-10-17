@@ -225,9 +225,10 @@ class Workflows:
         for wf in filtered_workflows:
             wf_name = f"[bold][link=https://nf-co.re/{wf.name}]{wf.name}[/link]"
             version = "[yellow]dev"
+            published = "[dim]-"
             if len(wf.releases) > 0:
-                version = f"[blue]{wf.releases[-1]['tag_name']}"
-            published = wf.releases[-1]["published_at_pretty"] if len(wf.releases) > 0 else "[dim]-"
+                version = f"[blue]{wf.releases[0]['tag_name']}"
+                published = wf.releases[0]["published_at_pretty"]
             pulled = wf.local_wf.last_pull_pretty if wf.local_wf is not None else "[dim]-"
             if wf.local_wf is not None:
                 revision = ""

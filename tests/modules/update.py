@@ -187,7 +187,7 @@ def test_update_with_config_fix_all(self):
 
 def test_update_with_config_no_updates(self):
     """Don't update any nf-core modules"""
-    self.mods_install_old.install("trimgalore")
+    assert self.mods_install_old.install("trimgalore")
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Fix the version of all nf-core modules in the .nf-core.yml to an old version

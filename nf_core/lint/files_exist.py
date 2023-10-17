@@ -52,7 +52,6 @@ def files_exist(self):
         docs/README.md
         docs/usage.md
         lib/nfcore_external_java_deps.jar
-        lib/NfcoreSchema.groovy
         lib/NfcoreTemplate.groovy
         lib/Utils.groovy
         lib/WorkflowMain.groovy
@@ -79,6 +78,7 @@ def files_exist(self):
 
         Singularity
         parameters.settings.json
+        pipeline_template.yml # saving information in .nf-core.yml
         .nf-core.yaml  # NB: Should be yml, not yaml
         bin/markdown_to_html.r
         conf/aws.config
@@ -161,7 +161,6 @@ def files_exist(self):
         [os.path.join("docs", "README.md")],
         [os.path.join("docs", "usage.md")],
         [os.path.join("lib", "nfcore_external_java_deps.jar")],
-        [os.path.join("lib", "NfcoreSchema.groovy")],
         [os.path.join("lib", "NfcoreTemplate.groovy")],
         [os.path.join("lib", "Utils.groovy")],
         [os.path.join("lib", "WorkflowMain.groovy")],
@@ -183,6 +182,7 @@ def files_exist(self):
     files_fail_ifexists = [
         "Singularity",
         "parameters.settings.json",
+        "pipeline_template.yml",  # saving information in .nf-core.yml
         ".nf-core.yaml",  # yml not yaml
         os.path.join("bin", "markdown_to_html.r"),
         os.path.join("conf", "aws.config"),

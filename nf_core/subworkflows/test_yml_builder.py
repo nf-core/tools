@@ -139,7 +139,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
                 if match:
                     self.entry_points.append(match.group(1))
         if len(self.entry_points) == 0:
-            raise UserWarning("No workflow entry points found in 'self.module_test_main'")
+            raise UserWarning(f"No workflow entry points found in '{self.subworkflow_test_main}'")
 
     def build_all_tests(self):
         """
@@ -185,7 +185,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
         while len(ep_test["tags"]) == 0:
             tag_defaults = ["subworkflows"]
             tag_defaults.append("subworkflows/" + self.subworkflow)
-            tag_defaults += self.parse_module_tags()
+            tag_defaults += self.parse_module_tags(self.subworkflow_dir)
             if self.no_prompts:
                 ep_test["tags"] = sorted(tag_defaults)
             else:
@@ -195,16 +195,16 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
                     ).strip()
                     ep_test["tags"] = [t.strip() for t in prompt_tags.split(",")]
 
-        ep_test["files"] = self.get_md5_sums(entry_point, ep_test["command"])
+        ep_test["files"] = self.get_md5_sums(ep_test["command"])
 
         return ep_test
 
-    def parse_module_tags(self):
+    def parse_module_tags(self, subworkflow_dir):
         """
-        Parse the subworkflow test main.nf file to retrieve all imported modules for adding tags.
+        Parse the subworkflow main.nf file to retrieve all imported modules for adding tags.
         """
         tags = []
-        with open(Path(self.subworkflow_dir, "main.nf"), "r") as fh:
+        with open(Path(subworkflow_dir, "main.nf"), "r") as fh:
             for line in fh:
                 regex = re.compile(
                     r"include(?: *{ *)([a-zA-Z\_0-9]*)(?: *as *)?(?:[a-zA-Z\_0-9]*)?(?: *})(?: *from *)(?:'|\")(.*)(?:'|\")"
@@ -272,7 +272,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
 
         return test_files
 
-    def get_md5_sums(self, entry_point, command, results_dir=None, results_dir_repeat=None):
+    def get_md5_sums(self, command, results_dir=None, results_dir_repeat=None):
         """
         Recursively go through directories and subdirectories
         and generate tuples of (<file_path>, <md5sum>)

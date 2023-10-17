@@ -1,10 +1,11 @@
-image: nfcore/gitpod:latest
+image: nfcore/gitpod:dev
 tasks:
   - name: install current state of nf-core/tools and setup pre-commit
     command: |
       python -m pip install -e .
       python -m pip install -r requirements-dev.txt
       pre-commit install --install-hooks
+      nextflow self-update
 vscode:
   extensions: # based on nf-core.nf-core-extensionpack
     - codezombiech.gitignore # Language support for .gitignore files
