@@ -218,6 +218,6 @@ def test_nested_setitem():
 
 def test_nested_delitem():
     d = {"a": {"b": {"c": "value"}}}
-    nf_core.utils.nested_setitem(d, ["a", "b", "c"])
+    nf_core.utils.nested_delitem(d, ["a", "b", "c"])
     assert "c" not in d["a"]["b"]
     assert d == {"a": {"b": {}}}
