@@ -53,7 +53,7 @@ class PipelineSchema:
         self.pipeline_dir = None
         self.schema_filename = None
         self.schema_defaults = {}
-        self.schema_params = []
+        self.schema_params = {}
         self.input_params = {}
         self.pipeline_params = {}
         self.invalid_nextflow_config_default_parameters = {}
@@ -128,7 +128,7 @@ class PipelineSchema:
         with open(self.schema_filename, "r") as fh:
             self.schema = json.load(fh)
         self.schema_defaults = {}
-        self.schema_params = []
+        self.schema_params = {}
         log.debug(f"JSON file loaded: {self.schema_filename}")
 
     def sanitise_param_default(self, param):
@@ -172,18 +172,20 @@ class PipelineSchema:
         """
         # Top level schema-properties (ungrouped)
         for p_key, param in self.schema.get("properties", {}).items():
-            self.schema_params.append(p_key)
+            self.schema_params[p_key] = ('properties', p_key)
             if "default" in param:
                 param = self.sanitise_param_default(param)
-                self.schema_defaults[p_key] = param["default"]
+                if param['default'] is not None:
+                    self.schema_defaults[p_key] = param["default"]
 
         # Grouped schema properties in subschema definitions
-        for _, definition in self.schema.get("definitions", {}).items():
+        for defn_name, definition in self.schema.get("definitions", {}).items():
             for p_key, param in definition.get("properties", {}).items():
-                self.schema_params.append(p_key)
+                self.schema_params[p_key] = ('definitions', defn_name, 'properties', p_key)
                 if "default" in param:
                     param = self.sanitise_param_default(param)
-                    self.schema_defaults[p_key] = param["default"]
+                    if param['default'] is not None:
+                        self.schema_defaults[p_key] = param["default"]
 
     def save_schema(self, suppress_logging=False):
         """Save a pipeline schema to a file"""
