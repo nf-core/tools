@@ -25,3 +25,4 @@ multi_line_output = 3
 ignore_missing_imports = true
 follow_imports = "skip"
 disable_error_code = "no-redef"
+exclude = 'docs'

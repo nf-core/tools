@@ -1,7 +1,6 @@
 """
 Common utility functions for the nf-core python package.
 """
-import concurrent.futures
 import datetime
 import errno
 import hashlib
@@ -52,17 +51,10 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     ]
 )
 
-NFCORE_CACHE_DIR = os.path.join(
-    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME"), ".cache")),
-    "nfcore",
-)
-NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")), "nfcore")
-
-
-def fetch_remote_version(source_url):
-    response = requests.get(source_url, timeout=3)
-    remote_version = re.sub(r"[^0-9\.]", "", response.text)
-    return remote_version
+home = os.getenv("HOME")
+assert home
+NFCORE_CACHE_DIR = os.path.join(os.environ.get("XDG_CACHE_HOME", os.path.join(home, ".cache")), "nfcore")
+NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(home, ".config")), "nfcore")
 
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
@@ -71,7 +63,7 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     """
     # Exit immediately if disabled via ENV var
     if os.environ.get("NFCORE_NO_VERSION_CHECK", False):
-        return (True, "", "")
+        return True
     # Set and clean up the current version string
     if current_version is None:
         current_version = nf_core.__version__
@@ -79,18 +71,12 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     # Build the URL to check against
     source_url = os.environ.get("NFCORE_VERSION_URL", source_url)
     source_url = f"{source_url}?v={current_version}"
-    # check if we have a newer version without blocking the rest of the script
-    is_outdated = False
-    if remote_version is None:  # we set it manually for tests
-        try:
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(fetch_remote_version, source_url)
-                remote_version = future.result()
-        except Exception as e:
-            log.debug(f"Could not check for nf-core updates: {e}")
-    if remote_version is not None:
-        if Version(remote_version) > Version(current_version):
-            is_outdated = True
+    # Fetch and clean up the remote version
+    if remote_version is None:
+        response = requests.get(source_url, timeout=3)
+        remote_version = re.sub(r"[^0-9\.]", "", response.text)
+    # Check if we have an available update
+    is_outdated = Version(remote_version) > Version(current_version)
     return (is_outdated, current_version, remote_version)
 
 
@@ -258,7 +244,7 @@ def fetch_wf_config(wf_path, cache_config=True):
 
     if cache_basedir and cache_fn:
         cache_path = os.path.join(cache_basedir, cache_fn)
-        if os.path.isfile(cache_path) and cache_config is True:
+        if os.path.isfile(cache_path):
             log.debug(f"Found a config cache, loading: {cache_path}")
             with open(cache_path, "r") as fh:
                 try:
@@ -274,7 +260,7 @@ def fetch_wf_config(wf_path, cache_config=True):
         ul = l.decode("utf-8")
         try:
             k, v = ul.split(" = ", 1)
-            config[k] = v.strip("'\"")
+            config[k] = v
         except ValueError:
             log.debug(f"Couldn't find key=value config pair:\n  {ul}")
 
@@ -510,16 +496,9 @@ class GitHub_API_Session(requests_cache.CachedSession):
         if not self.has_init:
             self.lazy_init()
         request = self.get(url)
-        if request.status_code in self.return_retry:
-            stderr = rich.console.Console(stderr=True, force_terminal=rich_force_colors())
-            try:
-                r = self.request_retry(url)
-            except Exception as e:
-                stderr.print_exception()
-                raise e
-            else:
-                return r
-
+        if request.status_code not in self.return_ok:
+            self.log_content_headers(request)
+            raise AssertionError(f"GitHub API PR failed - got return code {request.status_code} from {url}")
         return request
 
     def get(self, url, **kwargs):
@@ -740,7 +719,6 @@ def get_biocontainer_tag(package, version):
                 # Obtain common builds from Docker and Singularity images
                 common_keys = list(all_docker.keys() & all_singularity.keys())
                 current_date = None
-                docker_image_name = docker_image["image_name"].lstrip("quay.io/") if docker_image is not None else None
                 for k in common_keys:
                     # Get the most recent common image
                     date = max(all_docker[k]["date"], all_docker[k]["date"])
@@ -748,8 +726,7 @@ def get_biocontainer_tag(package, version):
                         docker_image = all_docker[k]["image"]
                         singularity_image = all_singularity[k]["image"]
                         current_date = date
-                        docker_image_name = docker_image["image_name"].lstrip("quay.io/")
-                return docker_image_name, singularity_image["image_name"]
+                return docker_image["image_name"], singularity_image["image_name"]
             except TypeError:
                 raise LookupError(f"Could not find docker or singularity container for {package}")
         elif response.status_code != 404:
@@ -844,65 +821,34 @@ def prompt_remote_pipeline_name(wfs):
     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
 
 
-def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
+def prompt_pipeline_release_branch(wf_releases, wf_branches):
     """Prompt for pipeline release / branch
 
     Args:
         wf_releases (array): Array of repo releases as returned by the GitHub API
         wf_branches (array): Array of repo branches, as returned by the GitHub API
-        multiple (bool): Allow selection of multiple releases & branches (for Tower)
 
     Returns:
         choice (str): Selected release / branch name
     """
-    # Prompt user for release tag, tag_set will contain all available.
+    # Prompt user for release tag
     choices = []
-    tag_set = []
 
     # Releases
     if len(wf_releases) > 0:
         for tag in map(lambda release: release.get("tag_name"), wf_releases):
             tag_display = [("fg:ansiblue", f"{tag}  "), ("class:choice-default", "[release]")]
             choices.append(questionary.Choice(title=tag_display, value=tag))
-            tag_set.append(tag)
 
     # Branches
     for branch in wf_branches.keys():
         branch_display = [("fg:ansiyellow", f"{branch}  "), ("class:choice-default", "[branch]")]
         choices.append(questionary.Choice(title=branch_display, value=branch))
-        tag_set.append(branch)
 
     if len(choices) == 0:
         return False
 
-    if multiple:
-        return (
-            questionary.checkbox("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask(),
-            tag_set,
-        )
-
-    else:
-        return (
-            questionary.select("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask(),
-            tag_set,
-        )
-
-
-class SingularityCacheFilePathValidator(questionary.Validator):
-    """
-    Validator for file path specified as --singularity-cache-index argument in nf-core download
-    """
-
-    def validate(self, value):
-        if len(value.text):
-            if os.path.isfile(value.text):
-                return True
-            else:
-                raise questionary.ValidationError(
-                    message="Invalid remote cache index file", cursor_position=len(value.text)
-                )
-        else:
-            return True
+    return questionary.select("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask()
 
 
 def get_repo_releases_branches(pipeline, wfs):

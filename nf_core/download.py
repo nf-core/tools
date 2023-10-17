@@ -30,7 +30,6 @@ from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
 from nf_core.utils import (
     NFCORE_CACHE_DIR,
     NFCORE_DIR,
-    SingularityCacheFilePathValidator,
 )
 
 log = logging.getLogger(__name__)
