@@ -13,6 +13,8 @@
 
 ### Modules
 
+- Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
+
 ### Subworkflows
 
 ### General
