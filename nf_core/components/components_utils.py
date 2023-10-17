@@ -7,11 +7,12 @@ import questionary
 import rich.prompt
 
 import nf_core.utils
+from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
 
-def get_repo_info(directory: str, use_prompt=True) -> Tuple[str, Optional[str], str]:
+def get_repo_info(directory: str, use_prompt: Optional[bool] = True) -> Tuple[str, Optional[str], str]:
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
@@ -80,7 +81,9 @@ def get_repo_info(directory: str, use_prompt=True) -> Tuple[str, Optional[str], 
     return (base_dir, repo_type, org)
 
 
-def prompt_component_version_sha(component_name, component_type, modules_repo, installed_sha=None):
+def prompt_component_version_sha(
+    component_name: str, component_type: str, modules_repo: ModulesRepo, installed_sha=None
+) -> str:
     """
     Creates an interactive questionary prompt for selecting the module/subworkflow version
     Args:
@@ -126,7 +129,7 @@ def prompt_component_version_sha(component_name, component_type, modules_repo, i
     return git_sha
 
 
-def get_components_to_install(subworkflow_dir) -> Tuple[List[str], List[str]]:
+def get_components_to_install(subworkflow_dir: str) -> Tuple[List[str], List[str]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """
