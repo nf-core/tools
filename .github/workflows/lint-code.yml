@@ -97,4 +97,5 @@ jobs:
       - run: pip install types-PyYAML
       - run: pip install types-Markdown
       - run: pip install types-setuptools
+      - run: pip install types-requests
       - run: mypy .
