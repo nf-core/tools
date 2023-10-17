@@ -12,19 +12,18 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-def get_repo_info(
-    directory: Union[str, Path], use_prompt=True
-) -> Tuple[Union[str, Path], Optional[str], Optional[str]]:
+def get_repo_info(directory: Union[str, os.PathLike[str]], use_prompt=True):
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
     """
+
     # Verify that the pipeline dir exists
     if directory is None or not Path(directory).is_dir():
         raise UserWarning(f"Could not find directory: {directory}")
 
     # Try to find the root directory
-    base_dir: Path = nf_core.utils.determine_base_dir(directory)
+    base_dir: Union[str, os.PathLike[str]] = nf_core.utils.determine_base_dir(directory)
 
     # Figure out the repository type from the .nf-core.yml config file if we can
     config_fn, tools_config = nf_core.utils.load_tools_config(base_dir)

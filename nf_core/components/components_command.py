@@ -3,9 +3,7 @@ import mmap
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
-
-import yaml
+from typing import Dict, List, Optional, Union
 
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
@@ -24,7 +22,7 @@ class ComponentCommand:
     def __init__(
         self,
         component_type: str,
-        dir_arg: Optional[Union[str, os.PathLike[str]]],
+        dir_arg: Optional[os.PathLike[str]],
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,
         no_pull: bool = False,
@@ -35,7 +33,7 @@ class ComponentCommand:
         """
         self.component_type = component_type
         self.dir_arg = dir_arg
-        self.modules_repo: ModulesRepo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
+        self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
         self._configure_repo_and_paths()
 
@@ -47,9 +45,12 @@ class ComponentCommand:
         Args:
             nf_dir_req (bool, optional): Whether this command requires being run in the nf-core modules repo or a nf-core pipeline repository. Defaults to True.
         """
+        self.dir_path: Union[str, os.PathLike[str]]
+        self.repo_type: Optional[str]
+        self.org: Union[str, os.PathLike[str]]
+
         try:
             if self.dir_arg:
-                self.dir_path: os.PathLike[str]
                 self.dir_path, self.repo_type, self.org = get_repo_info(self.dir_path, use_prompt=nf_dir_req)
             else:
                 self.repo_type = None
@@ -59,10 +60,10 @@ class ComponentCommand:
                 raise
             self.repo_type = None
             self.org = ""
-        self.default_modules_path: Path = Path("modules", self.org)
-        self.default_tests_path: Path = Path("tests", "modules", self.org)
-        self.default_subworkflows_path: Path = Path("subworkflows", self.org)
-        self.default_subworkflows_tests_path: Path = Path("tests", "subworkflows", self.org)
+        self.default_modules_path = Path("modules", self.org)
+        self.default_tests_path = Path("tests", "modules", self.org)
+        self.default_subworkflows_path = Path("subworkflows", self.org)
+        self.default_subworkflows_tests_path = Path("tests", "subworkflows", self.org)
 
     def get_local_components(self) -> List[str]:
         """
