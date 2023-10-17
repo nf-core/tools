@@ -30,17 +30,20 @@ def nested_getitem(d, keys):
         current = current[k]
     return current
 
+
 def nested_setitem(d, keys, value):
     current = d
     for k in keys[:-1]:
         current = current[k]
     current[keys[-1]] = value
 
+
 def nested_delitem(d, keys):
     current = d
     for k in keys[:-1]:
         current = current[k]
     del current[keys[-1]]
+
 
 class PipelineSchema:
     """Class to generate a schema object with
@@ -175,19 +178,19 @@ class PipelineSchema:
         """
         # Top level schema-properties (ungrouped)
         for p_key, param in self.schema.get("properties", {}).items():
-            self.schema_params[p_key] = ('properties', p_key)
+            self.schema_params[p_key] = ("properties", p_key)
             if "default" in param:
                 param = self.sanitise_param_default(param)
-                if param['default'] is not None:
+                if param["default"] is not None:
                     self.schema_defaults[p_key] = param["default"]
 
         # Grouped schema properties in subschema definitions
         for defn_name, definition in self.schema.get("definitions", {}).items():
             for p_key, param in definition.get("properties", {}).items():
-                self.schema_params[p_key] = ('definitions', defn_name, 'properties', p_key)
+                self.schema_params[p_key] = ("definitions", defn_name, "properties", p_key)
                 if "default" in param:
                     param = self.sanitise_param_default(param)
-                    if param['default'] is not None:
+                    if param["default"] is not None:
                         self.schema_defaults[p_key] = param["default"]
 
     def save_schema(self, suppress_logging=False):
@@ -809,15 +812,14 @@ class PipelineSchema:
                     log.debug(f"Adding '{p_key}' to pipeline schema")
                     params_added.append(p_key)
             # Param has a default that does not match the schema
-            elif p_key in self.schema_defaults and (s_def := self.schema_defaults[p_key]) != (p_def := self.build_schema_param(p_val).get('default')):
-                if (
-                    self.no_prompts
-                    or Confirm.ask(
-                        f":sparkles: Default for [bold]'params.{p_key}'[/] in the pipeline config does not match schema. (schema: '{s_def}' | config: '{p_def}'). "
-                        "[blue]Update pipeline schema?"
-                    )
+            elif p_key in self.schema_defaults and (s_def := self.schema_defaults[p_key]) != (
+                p_def := self.build_schema_param(p_val).get("default")
+            ):
+                if self.no_prompts or Confirm.ask(
+                    f":sparkles: Default for [bold]'params.{p_key}'[/] in the pipeline config does not match schema. (schema: '{s_def}' | config: '{p_def}'). "
+                    "[blue]Update pipeline schema?"
                 ):
-                    s_key_def = s_key + ('default', )
+                    s_key_def = s_key + ("default",)
                     if p_def is None:
                         nested_delitem(self.schema, s_key_def)
                         log.debug(f"Removed '{p_key}' default from pipeline schema")
@@ -825,16 +827,17 @@ class PipelineSchema:
                         nested_setitem(self.schema, s_key_def, p_def)
                         log.debug(f"Updating '{p_key}' default to '{p_def}' in pipeline schema")
             # There is no default in schema but now there is a default to write
-            elif s_key and (p_key not in self.schema_defaults) and (p_key not in params_ignore) and (p_def := self.build_schema_param(p_val).get('default')):
-                print(p_def, type(p_def))
-                if (
-                    self.no_prompts
-                    or Confirm.ask(
-                        f":sparkles: Default for [bold]'params.{p_key}'[/] is not in schema (def='{p_def}'). "
-                        "[blue]Update pipeline schema?"
-                    )
+            elif (
+                s_key
+                and (p_key not in self.schema_defaults)
+                and (p_key not in params_ignore)
+                and (p_def := self.build_schema_param(p_val).get("default"))
+            ):
+                if self.no_prompts or Confirm.ask(
+                    f":sparkles: Default for [bold]'params.{p_key}'[/] is not in schema (def='{p_def}'). "
+                    "[blue]Update pipeline schema?"
                 ):
-                    s_key_def = s_key + ('default', )
+                    s_key_def = s_key + ("default",)
                     nested_setitem(self.schema, s_key_def, p_def)
                     log.debug(f"Updating '{p_key}' default to '{p_def}' in pipeline schema")
         return params_added
