@@ -113,13 +113,16 @@ def prompt_component_version_sha(
             next_page_commits = []
 
         choices = []
-        for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
-            display_color = "fg:ansiblue" if sha != installed_sha else "fg:ansired"
-            message = f"{title} {sha}"
-            if installed_sha == sha:
-                message += " (installed version)"
-            commit_display = [(display_color, message), ("class:choice-default", "")]
-            choices.append(questionary.Choice(title=commit_display, value=sha))
+        for commit in commits:
+            if commit:
+                title = commit["trunc_message"]
+                sha = commit["git_sha"]
+                display_color = "fg:ansiblue" if sha != installed_sha else "fg:ansired"
+                message = f"{title} {sha}"
+                if installed_sha == sha:
+                    message += " (installed version)"
+                commit_display = [(display_color, message), ("class:choice-default", "")]
+                choices.append(questionary.Choice(title=commit_display, value=sha))
         if next_page_commits:
             choices += [older_commits_choice]
         git_sha = questionary.select(
