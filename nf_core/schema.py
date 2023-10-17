@@ -785,12 +785,15 @@ class PipelineSchema:
     def add_schema_found_configs(self):
         """
         Add anything that's found in the Nextflow params that's missing in the pipeline schema
+        Update defaults if they have changed
         """
         params_added = []
         params_ignore = self.pipeline_params.get("validationSchemaIgnoreParams", "").strip("\"'").split(",")
         params_ignore.append("validationSchemaIgnoreParams")
         for p_key, p_val in self.pipeline_params.items():
+            s_key = self.schema_params.get(p_key)
             # Check if key is in schema parameters
+            # Key is in pipeline but not in schema or ignored from schema
             if p_key not in self.schema_params and p_key not in params_ignore:
                 if (
                     self.no_prompts
@@ -805,7 +808,35 @@ class PipelineSchema:
                     self.schema["properties"][p_key] = self.build_schema_param(p_val)
                     log.debug(f"Adding '{p_key}' to pipeline schema")
                     params_added.append(p_key)
-
+            # Param has a default that does not match the schema
+            elif p_key in self.schema_defaults and (s_def := self.schema_defaults[p_key]) != (p_def := self.build_schema_param(p_val).get('default')):
+                if (
+                    self.no_prompts
+                    or Confirm.ask(
+                        f":sparkles: Default for [bold]'params.{p_key}'[/] in the pipeline config does not match schema. (schema: '{s_def}' | config: '{p_def}'). "
+                        "[blue]Update pipeline schema?"
+                    )
+                ):
+                    s_key_def = s_key + ('default', )
+                    if p_def is None:
+                        nested_delitem(self.schema, s_key_def)
+                        log.debug(f"Removed '{p_key}' default from pipeline schema")
+                    else:
+                        nested_setitem(self.schema, s_key_def, p_def)
+                        log.debug(f"Updating '{p_key}' default to '{p_def}' in pipeline schema")
+            # There is no default in schema but now there is a default to write
+            elif s_key and (p_key not in self.schema_defaults) and (p_key not in params_ignore) and (p_def := self.build_schema_param(p_val).get('default')):
+                print(p_def, type(p_def))
+                if (
+                    self.no_prompts
+                    or Confirm.ask(
+                        f":sparkles: Default for [bold]'params.{p_key}'[/] is not in schema (def='{p_def}'). "
+                        "[blue]Update pipeline schema?"
+                    )
+                ):
+                    s_key_def = s_key + ('default', )
+                    nested_setitem(self.schema, s_key_def, p_def)
+                    log.debug(f"Updating '{p_key}' default to '{p_def}' in pipeline schema")
         return params_added
 
     def build_schema_param(self, p_val):
