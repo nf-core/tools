@@ -262,9 +262,9 @@ class PipelineSchema:
         except jsonschema.exceptions.ValidationError as e:
             raise AssertionError(f"Default parameters are invalid: {e.message}")
         for param, default in self.schema_defaults.items():
-            if default in ("null", "", None, "None"):
+            if default in ("null", "", None, "None") or default is False:
                 log.warning(
-                    f"[yellow][!] Default parameter '{param}' is empty or null. It is advisable to remove the default from the schema"
+                    f"[yellow][!] Default parameter '{param}' is empty, null, or False. It is advisable to remove the default from the schema"
                 )
         log.info("[green][✓] Default parameters match schema validation")
 
