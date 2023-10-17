@@ -318,16 +318,32 @@ def nextflow_config(self):
                 )
             )
 
-    # Check for the availability of the "test" configuration profile
-    nf_proc = subprocess.run(
-        ["nextflow", "config", "-flat", "-profile", "test"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-    )
-    if nf_proc.returncode == 1:
-        # The equivalent command has already succeeded without `-profile test`, in utils.Pipeline.fetch_wf_config,
-        # so we assume that the error now is due to a missing test profile
-        failed.append("``test`` configuration profile is missing.")
-    else:
-        # Command was able to find the test profile
-        passed.append("``test`` configuration profile exists.")
+    # Check for the availability of the "test" configuration profile by parsing nextflow.config
+    with open(os.path.join(self.wf_path, "nextflow.config"), "r") as f:
+        content = f.read()
+
+        # Remove comments
+        cleaned_content = re.sub(r"//.*", "", content)
+        cleaned_content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
+
+        match = re.search(r"\bprofiles\s*{", cleaned_content)
+        if not match:
+            failed.append("nextflow.config does not contain `profiles` scope, but `test` profile is required")
+        else:
+            # Extract profiles scope content and check for test profile
+            start = match.end()
+            end = start
+            brace_count = 1
+            while brace_count > 0 and end < len(content):
+                if cleaned_content[end] == "{":
+                    brace_count += 1
+                elif cleaned_content[end] == "}":
+                    brace_count -= 1
+                end += 1
+            profiles_content = cleaned_content[start : end - 1].strip()
+            if re.search(r"\btest\s*{", profiles_content):
+                passed.append("nextflow.config contains configuration profile `test`")
+            else:
+                failed.append("nextflow.config does not contain configuration profile `test`")
 
     return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}

@@ -1,5 +1,5 @@
-import subprocess
-from unittest import mock
+import os
+import re
 
 import nf_core.create
 import nf_core.lint
@@ -38,17 +38,18 @@ def test_nextflow_config_dev_in_release_mode_failed(self):
     assert len(result["warned"]) == 0
 
 
-@mock.patch("subprocess.run")
-def test_nextflow_config_missing_test_profile_failed(self, mock_subprocess):
-    """Tests that the test fails if nextflow command with `-profile test` exits
-    with exit code 1."""
-    self.lint_obj._load_pipeline_config()
-    with mock.patch("subprocess.run") as mock_subprocess:
-        mock_subprocess.return_value = mock.Mock(returncode=1)
-        result = self.lint_obj.nextflow_config()
-        mock_subprocess.assert_called_once_with(
-            ["nextflow", "config", "-flat", "-profile", "test"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
-
+def test_nextflow_config_missing_test_profile_failed(self):
+    """Test failure if config file does not contain `test` profile."""
+    new_pipeline = self._make_pipeline_copy()
+    # Change the name of the test profile so there is no such profile
+    nf_conf_file = os.path.join(new_pipeline, "nextflow.config")
+    with open(nf_conf_file, "r") as f:
+        content = f.read()
+        fail_content = re.sub(r"\btest\b", "testfail", content)
+    with open(nf_conf_file, "w") as f:
+        f.write(fail_content)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj._load_pipeline_config()
+    result = lint_obj.nextflow_config()
     assert len(result["failed"]) > 0
     assert len(result["warned"]) == 0
