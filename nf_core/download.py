@@ -27,10 +27,7 @@ import nf_core
 import nf_core.list
 import nf_core.utils
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
-from nf_core.utils import (
-    NFCORE_CACHE_DIR,
-    NFCORE_DIR,
-)
+from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
