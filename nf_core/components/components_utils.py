@@ -82,7 +82,7 @@ def get_repo_info(directory: str, use_prompt: Optional[bool] = True) -> Tuple[st
 
 
 def prompt_component_version_sha(
-    component_name: str, component_type: str, modules_repo: ModulesRepo, installed_sha: Optional[str] =None
+    component_name: str, component_type: str, modules_repo: ModulesRepo, installed_sha: Optional[str] = None
 ) -> str:
     """
     Creates an interactive questionary prompt for selecting the module/subworkflow version
