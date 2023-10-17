@@ -166,6 +166,7 @@ class ModulesTestYmlBuilder(ComponentCommand):
             "files": [],
         }
         stub_option = " -stub" if stub else ""
+        stub_name = " stub" if stub else ""
 
         # Print nice divider line
         console = rich.console.Console()
@@ -174,7 +175,7 @@ class ModulesTestYmlBuilder(ComponentCommand):
         log.info(f"Building test meta for entry point '{entry_point}'")
 
         while ep_test["name"] == "":
-            default_val = f"{self.module_name.replace('/', ' ')} {entry_point}"
+            default_val = f"{self.module_name.replace('/', ' ')} {entry_point}{stub_name}"
             if self.no_prompts:
                 ep_test["name"] = default_val
             else:

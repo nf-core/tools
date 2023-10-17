@@ -17,6 +17,8 @@
 
 ### Subworkflows
 
+- Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
+
 ### General
 
 # [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]

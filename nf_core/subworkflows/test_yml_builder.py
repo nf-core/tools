@@ -145,12 +145,19 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
         """
         Go over each entry point and build structure
         """
+
+        # Build the stub test
+        stub_test = self.build_single_test(self.entry_points[0], stub=True)
+        if stub_test:
+            self.tests.append(stub_test)
+
+        # Build the other tests
         for entry_point in self.entry_points:
             ep_test = self.build_single_test(entry_point)
             if ep_test:
                 self.tests.append(ep_test)
 
-    def build_single_test(self, entry_point):
+    def build_single_test(self, entry_point, stub=False):
         """Given the supplied cli flags, prompt for any that are missing.
 
         Returns: Test command
@@ -161,6 +168,8 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
             "tags": [],
             "files": [],
         }
+        stub_option = " -stub" if stub else ""
+        stub_name = " stub" if stub else ""
 
         # Print nice divider line
         console = rich.console.Console()
@@ -169,14 +178,14 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
         log.info(f"Building test meta for entry point '{entry_point}'")
 
         while ep_test["name"] == "":
-            default_val = f"{self.subworkflow} {entry_point}"
+            default_val = f"{self.subworkflow} {entry_point}{stub_name}"
             if self.no_prompts:
                 ep_test["name"] = default_val
             else:
                 ep_test["name"] = rich.prompt.Prompt.ask("[violet]Test name", default=default_val).strip()
 
         while ep_test["command"] == "":
-            default_val = f"nextflow run ./tests/subworkflows/{self.modules_repo.repo_path}/{self.subworkflow} -entry {entry_point} -c ./tests/config/nextflow.config"
+            default_val = f"nextflow run ./tests/subworkflows/{self.modules_repo.repo_path}/{self.subworkflow} -entry {entry_point} -c ./tests/config/nextflow.config{stub_option}"
             if self.no_prompts:
                 ep_test["command"] = default_val
             else:
@@ -195,7 +204,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
                     ).strip()
                     ep_test["tags"] = [t.strip() for t in prompt_tags.split(",")]
 
-        ep_test["files"] = self.get_md5_sums(ep_test["command"])
+        ep_test["files"] = self.get_md5_sums(ep_test["command"], stub=stub)
 
         return ep_test
 
@@ -244,7 +253,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
         md5sum = hash_md5.hexdigest()
         return md5sum
 
-    def create_test_file_dict(self, results_dir, is_repeat=False):
+    def create_test_file_dict(self, results_dir, is_repeat=False, stub=False):
         """Walk through directory and collect md5 sums"""
         test_files = []
         for root, _, files in os.walk(results_dir, followlinks=True):
@@ -256,14 +265,15 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
                 # add the key here so that it comes first in the dict
                 test_file = {"path": file_path}
                 # Check that this isn't an empty file
-                if self.check_if_empty_file(file_path):
+                if self.check_if_empty_file(file_path) and not stub:
                     if not is_repeat:
                         self.errors.append(f"Empty file found! '{os.path.basename(file_path)}'")
                 # Add the md5 anyway, linting should fail later and can be manually removed if needed.
                 #  Originally we skipped this if empty, but then it's too easy to miss the warning.
                 #  Equally, if a file is legitimately empty we don't want to prevent this from working.
-                file_md5 = self._md5(file_path)
-                test_file["md5sum"] = file_md5
+                if not stub:
+                    file_md5 = self._md5(file_path)
+                    test_file["md5sum"] = file_md5
                 # Switch out the results directory path with the expected 'output' directory
                 test_file["path"] = file_path.replace(results_dir, "output")
                 test_files.append(test_file)
@@ -272,7 +282,7 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
 
         return test_files
 
-    def get_md5_sums(self, command, results_dir=None, results_dir_repeat=None):
+    def get_md5_sums(self, command, results_dir=None, results_dir_repeat=None, stub=False):
         """
         Recursively go through directories and subdirectories
         and generate tuples of (<file_path>, <md5sum>)
@@ -294,11 +304,11 @@ class SubworkflowTestYmlBuilder(ComponentCommand):
                     log.error(f"Directory '{results_dir}' does not exist")
                     results_dir = None
 
-        test_files = self.create_test_file_dict(results_dir=results_dir)
+        test_files = self.create_test_file_dict(results_dir=results_dir, stub=stub)
 
         # If test was repeated, compare the md5 sums
         if results_dir_repeat:
-            test_files_repeat = self.create_test_file_dict(results_dir=results_dir_repeat, is_repeat=True)
+            test_files_repeat = self.create_test_file_dict(results_dir=results_dir_repeat, is_repeat=True, stub=stub)
 
             # Compare both test.yml files
             for i in range(len(test_files)):
