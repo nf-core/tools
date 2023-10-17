@@ -1,8 +1,7 @@
 import logging
-import os
 import re
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Tuple, List, Optional
 
 import questionary
 import rich.prompt
@@ -12,7 +11,7 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-def get_repo_info(directory: str, use_prompt=True):
+def get_repo_info(directory: str, use_prompt=True) -> Tuple[str, Optional[str], str]:
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
@@ -27,7 +26,7 @@ def get_repo_info(directory: str, use_prompt=True):
 
     # Figure out the repository type from the .nf-core.yml config file if we can
     config_fn, tools_config = nf_core.utils.load_tools_config(base_dir)
-    repo_type = tools_config.get("repository_type", None)
+    repo_type: Optional[str] = tools_config.get("repository_type", None)
 
     # If not set, prompt the user
     if not repo_type and use_prompt:
@@ -57,7 +56,6 @@ def get_repo_info(directory: str, use_prompt=True):
         raise UserWarning(f"Invalid repository type: '{repo_type}'")
 
     # Check for org if modules repo
-    org = None
     if repo_type == "pipeline":
         org = ""
     elif repo_type == "modules":
@@ -128,7 +126,7 @@ def prompt_component_version_sha(component_name, component_type, modules_repo, i
     return git_sha
 
 
-def get_components_to_install(subworkflow_dir):
+def get_components_to_install(subworkflow_dir) -> Tuple[List[str], List[str]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """
