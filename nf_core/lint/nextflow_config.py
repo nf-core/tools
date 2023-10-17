@@ -1,6 +1,8 @@
 import logging
 import os
 import re
+import subprocess
+from nf_core.utils import nextflow_cmd
 
 log = logging.getLogger(__name__)
 
@@ -108,6 +110,11 @@ def nextflow_config(self):
 
                 lint:
                     nextflow_config: False
+    
+    **The configuration should contain the following or the test will fail:**
+
+    * A ``test`` configuration profile should exist.
+
     """
     passed = []
     warned = []
@@ -311,5 +318,15 @@ def nextflow_config(self):
                     "\n".join(lines)
                 )
             )
+
+    # Check for the availability of the "test" configuration profile
+    nf_proc = subprocess.run(["nextflow", "config", "-flat", "-profile", "test"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if nf_proc.returncode == 1:
+        # The equivalent command has already succeeded without `-profile test`, in utils.Pipeline.fetch_wf_config,
+        # so we assume that the error now is due to a missing test profile
+        failed.append("``test`` configuration profile is missing.")
+    else:
+        # Command was able to find the test profile
+        passed.append("``test`` configuration profile exists.")
 
     return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}
