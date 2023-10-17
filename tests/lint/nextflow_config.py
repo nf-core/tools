@@ -1,7 +1,9 @@
-import nf_core.create
-import nf_core.lint
 import subprocess
 from unittest import mock
+
+import nf_core.create
+import nf_core.lint
+
 
 def test_nextflow_config_example_pass(self):
     """Tests that config variable existence test works with good pipeline example"""
@@ -34,6 +36,7 @@ def test_nextflow_config_dev_in_release_mode_failed(self):
     result = lint_obj.nextflow_config()
     assert len(result["failed"]) > 0
     assert len(result["warned"]) == 0
+
 
 @mock.patch("subprocess.run")
 def test_nextflow_config_missing_test_profile_failed(self, mock_subprocess):
