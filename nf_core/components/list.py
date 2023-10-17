@@ -17,8 +17,8 @@ class ComponentList(ComponentCommand):
         component_type: str,
         pipeline_dir: str,
         remote: bool = True,
-        remote_url: str = None,
-        branch: str = None,
+        remote_url: Optional[str] = None,
+        branch: Optional[str] = None,
         no_pull: bool = False,
     ) -> None:
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
