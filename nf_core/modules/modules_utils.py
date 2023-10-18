@@ -21,7 +21,6 @@ def repo_full_name_from_remote(remote_url: str) -> str:
     See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
     """
     # Check whether we have a https or ssh url
-    path: str
     if remote_url.startswith("https"):
         path = urllib.parse.urlparse(remote_url)
         path = path.path
@@ -84,7 +83,9 @@ def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], Lis
                 nfcore_modules.append(m)
 
     # Make full (relative) file paths and create NFCoreComponent objects
-    local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
+    if local_modules_dir:
+        local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
+
     nfcore_modules = [
         NFCoreComponent(
             m,
