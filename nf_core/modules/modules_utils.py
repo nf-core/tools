@@ -1,8 +1,8 @@
 import logging
 import os
-from urllib.parse import urlparse
 from pathlib import Path
 from typing import List, Optional, Tuple
+from urllib.parse import urlparse
 
 from ..components.nfcore_component import NFCoreComponent
 
