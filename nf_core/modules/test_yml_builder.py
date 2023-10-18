@@ -143,16 +143,16 @@ class ModulesTestYmlBuilder(ComponentCommand):
         Go over each entry point and build structure
         """
 
-        # Build the stub test
-        stub_test = self.build_single_test(self.entry_points[0], stub=True)
-        if stub_test:
-            self.tests.append(stub_test)
-
         # Build the other tests
         for entry_point in self.entry_points:
             ep_test = self.build_single_test(entry_point)
             if ep_test:
                 self.tests.append(ep_test)
+
+        # Build the stub test
+        stub_test = self.build_single_test(self.entry_points[0], stub=True)
+        if stub_test:
+            self.tests.append(stub_test)
 
     def build_single_test(self, entry_point, stub=False):
         """Given the supplied cli flags, prompt for any that are missing.
