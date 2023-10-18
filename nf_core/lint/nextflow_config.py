@@ -108,6 +108,11 @@ def nextflow_config(self):
 
                 lint:
                     nextflow_config: False
+
+    **The configuration should contain the following or the test will fail:**
+
+    * A ``test`` configuration profile should exist.
+
     """
     passed = []
     warned = []
@@ -311,5 +316,33 @@ def nextflow_config(self):
                     "\n".join(lines)
                 )
             )
+
+    # Check for the availability of the "test" configuration profile by parsing nextflow.config
+    with open(os.path.join(self.wf_path, "nextflow.config"), "r") as f:
+        content = f.read()
+
+        # Remove comments
+        cleaned_content = re.sub(r"//.*", "", content)
+        cleaned_content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
+
+        match = re.search(r"\bprofiles\s*{", cleaned_content)
+        if not match:
+            failed.append("nextflow.config does not contain `profiles` scope, but `test` profile is required")
+        else:
+            # Extract profiles scope content and check for test profile
+            start = match.end()
+            end = start
+            brace_count = 1
+            while brace_count > 0 and end < len(content):
+                if cleaned_content[end] == "{":
+                    brace_count += 1
+                elif cleaned_content[end] == "}":
+                    brace_count -= 1
+                end += 1
+            profiles_content = cleaned_content[start : end - 1].strip()
+            if re.search(r"\btest\s*{", profiles_content):
+                passed.append("nextflow.config contains configuration profile `test`")
+            else:
+                failed.append("nextflow.config does not contain configuration profile `test`")
 
     return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}
