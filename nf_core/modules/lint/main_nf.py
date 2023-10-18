@@ -246,9 +246,9 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
     check_process_labels(self, lines)
 
     # Deprecated enable_conda
-    for i, l in enumerate(lines):
+    for i, raw_line in enumerate(lines):
         url = None
-        l = l.strip(" \n'\"}:")
+        l = raw_line.strip(" \n'\"}:")
 
         # Catch preceeding "container "
         if l.startswith("container"):
@@ -314,8 +314,8 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                 l = "/".join([registry, l]).replace("//", "/")
             url = urlparse(l.split("'")[0])
 
-        # lint double quotes
         if l.startswith("container") or _container_type(l) == "docker" or _container_type(l) == "singularity":
+            # lint double quotes
             if l.count('"') > 2:
                 self.failed.append(
                     (
@@ -332,6 +332,34 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                         self.main_nf,
                     )
                 )
+
+            # Check for spaces in url
+            single_quoted_items = raw_line.split("'")
+            double_quoted_items = raw_line.split('"')
+            # Look for container link as single item surrounded by quotes
+            # (if there are multiple links, this will be warned in the next check)
+            container_link = None
+            if len(single_quoted_items) == 3:
+                container_link = single_quoted_items[1]
+            elif len(double_quoted_items) == 3:
+                container_link = double_quoted_items[1]
+            if container_link:
+                if container_link.contains(" "):
+                    self.failed.append(
+                        (
+                            "container_links",
+                            f"Space character found in container: {container_link}",
+                            self.main_nf,
+                        )
+                    )
+                else:
+                    self.passed.append(
+                        (
+                            "container_links",
+                            f"No space characters found in container: {container_link}",
+                            self.main_nf,
+                        )
+                    )
 
         # lint more than one container in the same line
         if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or l.startswith(registry)):

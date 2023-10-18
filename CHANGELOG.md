@@ -45,6 +45,7 @@
 ### Linting
 
 - Add new command `nf-core subworkflows lint` ([#2379](https://github.com/nf-core/tools/pull/2379))
+- Check for spaces in container URLs ([#2452](https://github.com/nf-core/tools/issues/2452))
 
 ### Modules
 

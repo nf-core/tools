@@ -231,3 +231,84 @@ def test_modules_lint_check_process_labels(self):
         assert len(mocked_ModuleLint.passed) == passed
         assert len(mocked_ModuleLint.warned) == warned
         assert len(mocked_ModuleLint.failed) == failed
+
+
+# Test cases for linting the container definitions
+
+CONTAINER_SINGLE_GOOD = (
+    """
+    //Conda is not supported at the moment: https://github.com/broadinstitute/gatk/issues/7811
+    container "quay.io/nf-core/gatk:4.4.0.0" //Biocontainers is missing a package
+    """,
+    1,  # passed
+    0,  # warned
+    0,  # failed
+)
+
+CONTAINER_TWO_LINKS_GOOD = (
+    """
+    conda "bioconda::gatk4=4.4.0.0"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0':
+        'biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"
+    """,
+    1,
+    0,
+    0,
+)
+
+CONTAINER_WITH_SPACE_BAD = (
+    """
+    conda "bioconda::gatk4=4.4.0.0"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0 ':
+        'biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"
+    """,
+    0,
+    1,
+    0,
+)
+
+CONTAINER_WITH_SPACE_BAD = (
+    """
+    conda "bioconda::gatk4=4.4.0.0"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0 ':
+        'biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"
+    """,
+    0,
+    1,
+    0,
+)
+
+CONTAINER_MULTIPLE_DBLQUOTES_BAD = (
+    """
+    conda "bioconda::gatk4=4.4.0.0"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0 ':
+        "biocontainers/gatk4:4.4.0.0--py36hdfd78af_0" }"
+    """,
+    0,
+    1,
+    0,
+)
+
+CONTAINER_TEST_CASES = [
+    CONTAINER_SINGLE_GOOD,
+    CONTAINER_TWO_LINKS_GOOD,
+    CONTAINER_WITH_SPACE_BAD,
+    CONTAINER_WITH_SPACE_BAD,
+    CONTAINER_MULTIPLE_DBLQUOTES_BAD,
+]
+
+
+def test_modules_lint_check_process_labels(self):
+    for test_case in CONTAINER_TEST_CASES:
+        process, passed, warned, failed = test_case
+        mocked_ModuleLint = MockModuleLint()
+        main_nf.check_process_section(
+            mocked_ModuleLint, process.splitlines(), registry="quay.io", fix_version=False, progress_bar=False
+        )
+        assert len(mocked_ModuleLint.passed) == passed
+        assert len(mocked_ModuleLint.warned) == warned
+        assert len(mocked_ModuleLint.failed) == failed
