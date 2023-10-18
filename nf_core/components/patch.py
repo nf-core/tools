@@ -19,7 +19,7 @@ class ComponentPatch(ComponentCommand):
     def __init__(self, pipeline_dir, component_type, remote_url=None, branch=None, no_pull=False, installed_by=False):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
 
-        self.modules_json = ModulesJson(dir)
+        self.modules_json = ModulesJson(pipeline_dir)
 
     def _parameter_checks(self, component):
         """Checks the compatibility of the supplied parameters.
@@ -81,7 +81,7 @@ class ComponentPatch(ComponentCommand):
 
         # Set the diff filename based on the module name
         patch_filename = f"{component.replace('/', '-')}.diff"
-        component_relpath = Path("modules", component_dir, component)
+        component_relpath = Path(self.component_type, component_dir, component)
         patch_relpath = Path(component_relpath, patch_filename)
         component_current_dir = Path(self.dir, component_relpath)
         patch_path = Path(self.dir, patch_relpath)
@@ -158,7 +158,7 @@ class ComponentPatch(ComponentCommand):
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         component_dir = [dir for dir, m in components if m == component][0]
-        component_fullname = str(Path("modules", component_dir, component))
+        component_fullname = str(Path(self.component_type, component_dir, component))
 
         # Verify that the component has an entry in the modules.json file
         if not self.modules_json.module_present(component, self.modules_repo.remote_url, component_dir):
@@ -182,7 +182,7 @@ class ComponentPatch(ComponentCommand):
 
         # Set the diff filename based on the component name
         patch_filename = f"{component.replace('/', '-')}.diff"
-        component_relpath = Path("modules", component_dir, component)
+        component_relpath = Path(self.component_type, component_dir, component)
         patch_relpath = Path(component_relpath, patch_filename)
         patch_path = Path(self.dir, patch_relpath)
         component_path = Path(self.dir, component_relpath)
@@ -213,7 +213,7 @@ class ComponentPatch(ComponentCommand):
         self.modules_json.remove_patch_entry(component, self.modules_repo.remote_url, component_dir)
 
         if not all(
-            self.modules_repo.component_files_identical(component, component_path, component_version, "modules").values()
+            self.modules_repo.component_files_identical(component, component_path, component_version, self.component_type).values()
         ):
             log.error(
                 f"Module files do not appear to match the remote for the commit sha in the 'module.json': {component_version}\n"
