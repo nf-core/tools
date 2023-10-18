@@ -6,4 +6,6 @@ pytest-datafiles
 responses
 Sphinx
 sphinx-rtd-theme
-pyupgrade
+mypy
+types-PyYAML
+pyupgrades
