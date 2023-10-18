@@ -213,6 +213,7 @@ class TestLint(unittest.TestCase):
         test_nextflow_config_bad_name_fail,
         test_nextflow_config_dev_in_release_mode_failed,
         test_nextflow_config_example_pass,
+        test_nextflow_config_missing_test_profile_failed,
     )
     from .lint.version_consistency import test_version_consistency
 
