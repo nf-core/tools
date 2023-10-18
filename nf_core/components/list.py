@@ -114,6 +114,7 @@ class ComponentList(ComponentCommand):
 
                 repo_entry = modules_json["repos"].get(repo_url, {})
                 for install_dir, component in sorted(component_with_dir):
+                    # Use cast() to predict the return type of recursive get():s
                     repo_modules = cast(dict, repo_entry.get(self.component_type))
                     component_entry = cast(dict, cast(dict, repo_modules.get(install_dir)).get(component))
 
