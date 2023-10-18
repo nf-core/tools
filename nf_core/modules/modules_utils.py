@@ -1,6 +1,6 @@
 import logging
 import os
-import urllib
+from urllib.parse import urlparse
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -22,18 +22,16 @@ def repo_full_name_from_remote(remote_url: str) -> str:
     """
     # Check whether we have a https or ssh url
     if remote_url.startswith("https"):
-        path = urllib.parse.urlparse(remote_url)
-        path = path.path
+        path = urlparse(remote_url).path
         # Remove the intial '/'
         path = path[1:]
         # Remove extension
         path = os.path.splitext(path)[0]
     else:
         # Remove the initial `git@``
-        path = remote_url.split("@")
-        path = path[-1] if len(path) > 1 else path[0]
-        path = urllib.parse.urlparse(path)
-        path = path.path
+        split_path: list = remote_url.split("@")
+        path = split_path[-1] if len(split_path) > 1 else split_path[0]
+        path = urlparse(path).path
         # Remove extension
         path = os.path.splitext(path)[0]
     return path
