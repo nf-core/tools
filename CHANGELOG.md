@@ -13,7 +13,11 @@
 
 ### Modules
 
+- Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
+
 ### Subworkflows
+
+- Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
 
 ### General
 
@@ -45,6 +49,7 @@
 ### Linting
 
 - Add new command `nf-core subworkflows lint` ([#2379](https://github.com/nf-core/tools/pull/2379))
+- Check for existence of test profile ([#2478](https://github.com/nf-core/tools/pull/2478))
 - Check for spaces in container URLs ([#2452](https://github.com/nf-core/tools/issues/2452))
 
 ### Modules
