@@ -6,3 +6,5 @@ pytest-datafiles
 responses
 Sphinx
 sphinx-rtd-theme
+mypy
+types-PyYAML
