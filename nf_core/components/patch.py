@@ -34,7 +34,9 @@ class ComponentPatch(ComponentCommand):
 
         if component is not None and component not in component_names:
             component_dir = [dir for dir, m in components if m == component][0]
-            raise UserWarning(f"{self.component_type[:-1].title()} '{Path(self.component_type, component_dir, module)}' does not exist in the pipeline")
+            raise UserWarning(
+                f"{self.component_type[:-1].title()} '{Path(self.component_type, component_dir, module)}' does not exist in the pipeline"
+            )
 
     def patch(self, component=None):
         # Check modules directory structure
@@ -212,7 +214,9 @@ class ComponentPatch(ComponentCommand):
         self.modules_json.remove_patch_entry(component, self.modules_repo.remote_url, component_dir)
 
         if not all(
-            self.modules_repo.component_files_identical(component, component_path, component_version, self.component_type).values()
+            self.modules_repo.component_files_identical(
+                component, component_path, component_version, self.component_type
+            ).values()
         ):
             log.error(
                 f"Module files do not appear to match the remote for the commit sha in the 'module.json': {component_version}\n"
