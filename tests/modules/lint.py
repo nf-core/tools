@@ -269,18 +269,6 @@ CONTAINER_WITH_SPACE_BAD = (
     0,
 )
 
-CONTAINER_WITH_SPACE_BAD = (
-    """
-    conda "bioconda::gatk4=4.4.0.0"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0 ':
-        'biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"
-    """,
-    0,
-    1,
-    0,
-)
-
 CONTAINER_MULTIPLE_DBLQUOTES_BAD = (
     """
     conda "bioconda::gatk4=4.4.0.0"
@@ -296,7 +284,6 @@ CONTAINER_MULTIPLE_DBLQUOTES_BAD = (
 CONTAINER_TEST_CASES = [
     CONTAINER_SINGLE_GOOD,
     CONTAINER_TWO_LINKS_GOOD,
-    CONTAINER_WITH_SPACE_BAD,
     CONTAINER_WITH_SPACE_BAD,
     CONTAINER_MULTIPLE_DBLQUOTES_BAD,
 ]
