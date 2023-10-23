@@ -344,7 +344,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             elif len(double_quoted_items) == 3:
                 container_link = double_quoted_items[1]
             if container_link:
-                if ' ' in container_link:
+                if " " in container_link:
                     self.failed.append(
                         (
                             "container_links",
