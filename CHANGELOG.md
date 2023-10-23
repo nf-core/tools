@@ -10,6 +10,7 @@
 
 - Fix incorrectly failing linting if 'modules' was not found in meta.yml ([#2447](https://github.com/nf-core/tools/pull/2447))
 - Correctly pass subworkflow linting test if `COMPONENT.out.versions` is used in the script ([#2448](https://github.com/nf-core/tools/pull/2448))
+- Check for spaces in modules container URLs ([#2452](https://github.com/nf-core/tools/issues/2452))
 
 ### Modules
 
@@ -50,7 +51,6 @@
 
 - Add new command `nf-core subworkflows lint` ([#2379](https://github.com/nf-core/tools/pull/2379))
 - Check for existence of test profile ([#2478](https://github.com/nf-core/tools/pull/2478))
-- Check for spaces in container URLs ([#2452](https://github.com/nf-core/tools/issues/2452))
 
 ### Modules
 
