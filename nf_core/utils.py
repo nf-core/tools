@@ -270,7 +270,7 @@ def fetch_wf_config(wf_path, cache_config=True):
     log.debug("No config cache found")
 
     # Call `nextflow config`
-    nfconfig_raw = nextflow_cmd("nextflow", f"config -flat {wf_path}")
+    nfconfig_raw = run_cmd("nextflow", f"config -flat {wf_path}")
     for l in nfconfig_raw.splitlines():
         ul = l.decode("utf-8")
         try:
@@ -307,6 +307,7 @@ def fetch_wf_config(wf_path, cache_config=True):
 def run_cmd(executable: str, cmd: str) -> Union[Optional[ByteString], str]:
     """Run a specified command and capture the output. Handle errors nicely."""
     full_cmd = f"{executable} {cmd}"
+    log.debug(f"Running command: {full_cmd}")
     try:
         proc = subprocess.run(shlex.split(full_cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
         return proc.stdout
