@@ -147,23 +147,45 @@ class ComponentCreate(ComponentCommand):
 
         # Create component template with jinja2
         self._render_template()
+        log.info(f"Created component template: '{self.component_name}'")
 
         # generate nf-tests
-        nf_core.utils.run_cmd("nf-test", f"generate process {self.file_paths['main.nf']}")
-        # move generated main.nf.test file into test directory
+        nf_core.utils.run_cmd(
+            "nf-test", f"generate process {self.file_paths[os.path.join(self.component_type, 'main.nf')]}"
+        )
 
-        Path("main.nf.test").rename(self.file_paths[os.path.join(self.component_type, "test", "main.nf.test")])
+        # move generated main.nf.test file into tests directory
+        tests_dir = Path(self.directory, self.component_type, self.org, self.component_dir, "tests")
+        tests_dir.mkdir(exist_ok=True)
 
+        Path(tests_dir.parent, "main.nf.test").rename(tests_dir / "main.nf.test")
+
+        self.file_paths[os.path.join(self.component_type, "tests", "main.nf.test")] = os.path.join(
+            self.directory, self.component_type, self.org, self.component_dir, "tests", "main.nf.test"
+        )
+
+        log.debug(f"Created nf-test: '{self.file_paths[os.path.join(self.component_type, 'tests', 'main.nf.test')]}'")
         # inside main.nf.test replace the path to the main.nf file with the relative path for the script
-        with open(self.file_paths["tests/main.nf.test"], "r") as f:
+        with open(self.file_paths[os.path.join(self.component_type, "tests", "main.nf.test")], "r") as f:
             lines = f.readlines()
-        with open(self.file_paths["tests/main.nf.test"], "w") as f:
+        with open(self.file_paths[os.path.join(self.component_type, "tests", "main.nf.test")], "w") as f:
             for line in lines:
-                if line.startswith("script"):
-                    f.write(f"script ../main.nf\n")
+                if line.strip().startswith("script "):
+                    log.debug(f"Replacing script path in nf-test: '{line.strip()}'")
+                    f.write(f"    script ../main.nf\n")
+                # add tag elements after process line
+                if line.strip().startswith("process "):
+                    log.debug(f"Adding tag elements to nf-test: '{line.strip()}'")
+                    f.write(line)
+                    f.write("\n")
+                    f.write(f"    tag 'modules'\n")
+                    f.write(f"    tag 'modules_nfcore'\n")
+                    f.write(f"    tag '{self.component_name_underscore}'\n")
+                    f.write(f"    tag '{self.component}'\n")
+                    if self.subtool:
+                        f.write(f"    tag '{self.subtool}'\n")
                 else:
                     f.write(line)
-
         new_files = list(self.file_paths.values())
         log.info("Created / edited following files:\n  " + "\n  ".join(new_files))
 
@@ -265,9 +287,14 @@ class ComponentCreate(ComponentCommand):
             log.debug(f"Rendering template file: '{template_fn}'")
             j_template = env.get_template(template_fn)
             object_attrs["nf_core_version"] = nf_core.__version__
-            rendered_output = j_template.render(object_attrs)
+            try:
+                rendered_output = j_template.render(object_attrs)
+            except Exception as e:
+                log.error(f"Could not render template file '{template_fn}':\n{e}")
+                raise e
 
             # Write output to the target file
+            log.debug(f"Writing output to: '{dest_fn}'")
             os.makedirs(os.path.dirname(dest_fn), exist_ok=True)
             with open(dest_fn, "w") as fh:
                 log.debug(f"Writing output to: '{dest_fn}'")
@@ -367,16 +394,9 @@ class ComponentCreate(ComponentCommand):
                 parent_tool_main_nf = os.path.join(
                     self.directory, self.component_type, self.org, self.component, "main.nf"
                 )
-                parent_tool_test_nf = os.path.join(
-                    self.directory, self.component_type, self.org, self.component, "main.nf"
-                )
                 if self.subtool and os.path.exists(parent_tool_main_nf):
                     raise UserWarning(
                         f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.component_name}'"
-                    )
-                if self.subtool and os.path.exists(parent_tool_test_nf):
-                    raise UserWarning(
-                        f"Module '{parent_tool_test_nf}' exists already, cannot make subtool '{self.component_name}'"
                     )
 
                 # If no subtool, check that there isn't already a tool/subtool
@@ -392,11 +412,8 @@ class ComponentCreate(ComponentCommand):
             # For modules - can be tool/ or tool/subtool/ so can't do in template directory structure
             file_paths[os.path.join(self.component_type, "main.nf")] = os.path.join(component_dir, "main.nf")
             file_paths[os.path.join(self.component_type, "meta.yml")] = os.path.join(component_dir, "meta.yml")
-            file_paths[os.path.join(self.component_type, "test", "main.nf.test")] = os.path.join(
-                component_dir, "test", "main.nf.test"
-            )
-            file_paths[os.path.join(self.component_type, "test", "tags.yml")] = os.path.join(
-                component_dir, "test", "tags.yml"
+            file_paths[os.path.join(self.component_type, "tests", "tags.yml")] = os.path.join(
+                component_dir, "tests", "tags.yml"
             )
 
         return file_paths
