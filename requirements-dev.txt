@@ -8,3 +8,4 @@ Sphinx
 sphinx-rtd-theme
 mypy
 types-PyYAML
+types-requests
