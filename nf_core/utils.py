@@ -54,10 +54,10 @@ nfcore_question_style = prompt_toolkit.styles.Style(
 )
 
 NFCORE_CACHE_DIR = os.path.join(
-    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME"), ".cache")),
+    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME") or "", ".cache")),
     "nfcore",
 )
-NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")), "nfcore")
+NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
 
 
 def fetch_remote_version(source_url):
@@ -329,6 +329,7 @@ def setup_nfcore_dir():
     """
     if not os.path.exists(NFCORE_DIR):
         os.makedirs(NFCORE_DIR)
+        return True
 
 
 def setup_requests_cachedir():
