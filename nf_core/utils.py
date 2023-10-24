@@ -270,7 +270,7 @@ def fetch_wf_config(wf_path, cache_config=True):
     log.debug("No config cache found")
 
     # Call `nextflow config`
-    nfconfig_raw = nextflow_cmd("nextflow", f"config -flat {wf_path}")
+    nfconfig_raw = run_cmd("nextflow", f"config -flat {wf_path}")
     for l in nfconfig_raw.splitlines():
         ul = l.decode("utf-8")
         try:
