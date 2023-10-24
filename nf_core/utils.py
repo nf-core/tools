@@ -17,6 +17,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import ByteString, Optional, Union
 
 import git
 import prompt_toolkit
@@ -269,7 +270,7 @@ def fetch_wf_config(wf_path, cache_config=True):
     log.debug("No config cache found")
 
     # Call `nextflow config`
-    nfconfig_raw = nextflow_cmd(f"nextflow config -flat {wf_path}")
+    nfconfig_raw = nextflow_cmd("nextflow", f"config -flat {wf_path}")
     for l in nfconfig_raw.splitlines():
         ul = l.decode("utf-8")
         try:
@@ -303,17 +304,20 @@ def fetch_wf_config(wf_path, cache_config=True):
     return config
 
 
-def nextflow_cmd(cmd):
-    """Run a Nextflow command and capture the output. Handle errors nicely"""
+def run_cmd(executable: str, cmd: str) -> Union[Optional[ByteString], str]:
+    """Run a specified command and capture the output. Handle errors nicely."""
+    full_cmd = f"{executable} {cmd}"
     try:
-        nf_proc = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        return nf_proc.stdout
+        proc = subprocess.run(shlex.split(full_cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        return proc.stdout
     except OSError as e:
         if e.errno == errno.ENOENT:
-            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
+            raise AssertionError(
+                f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
+            )
     except subprocess.CalledProcessError as e:
         raise AssertionError(
-            f"Command '{cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
+            f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
         )
 
 

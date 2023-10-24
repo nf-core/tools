@@ -16,7 +16,7 @@ import nf_core.create
 import nf_core.utils
 from nf_core.download import ContainerError, DownloadWorkflow, WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
-from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR, nextflow_cmd
+from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR, run_cmd
 
 from .utils import with_temporary_file, with_temporary_folder
 
@@ -156,8 +156,8 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("nf_core.utils.fetch_wf_config")
     def test__find_container_images_config_nextflow(self, tmp_path, mock_fetch_wf_config):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
-        nfconfig_raw = nextflow_cmd(
-            f"nextflow config -flat {Path(__file__).resolve().parent / 'data/mock_config_containers'}"
+        nfconfig_raw = run_cmd(
+            "nextflow", f"config -flat {Path(__file__).resolve().parent / 'data/mock_config_containers'}"
         )
         config = {}
         for l in nfconfig_raw.splitlines():
