@@ -11,7 +11,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 import jinja2
 import questionary
@@ -57,7 +57,7 @@ class ComponentCreate(ComponentCommand):
         self.bioconda = None
         self.singularity_container = None
         self.docker_container = None
-        self.file_paths = {}
+        self.file_paths: Dict[str, str] = {}
         self.not_empty_template = not empty_template
 
     def create(self):
@@ -165,27 +165,40 @@ class ComponentCreate(ComponentCommand):
         )
 
         log.debug(f"Created nf-test: '{self.file_paths[os.path.join(self.component_type, 'tests', 'main.nf.test')]}'")
-        # inside main.nf.test replace the path to the main.nf file with the relative path for the script
+        # Read the content from the file
         with open(self.file_paths[os.path.join(self.component_type, "tests", "main.nf.test")], "r") as f:
             lines = f.readlines()
+
+        # Construct the modified content
+        modified_content = []
+        for line in lines:
+            if line.strip().startswith("script "):
+                log.debug(f"Replacing script path in nf-test: '{line.strip()}'")
+                modified_content.append(f"    script ../main.nf\n")
+            elif line.strip().startswith('process "'):
+                log.debug(f"Adding tag elements to nf-test: '{line.strip()}'")
+                modified_content.append(line)
+                modified_content.append("\n")
+                modified_content.append(f"    tag 'modules'\n")
+                modified_content.append(f"    tag 'modules_nfcore'\n")
+                modified_content.append(f"    tag '{self.component_name_underscore}'\n")
+                modified_content.append(f"    tag '{self.component}'\n")
+                if self.subtool:
+                    modified_content.append(f"    tag '{self.subtool}'\n")
+            else:
+                modified_content.append(line)
+
+        # Combine the modified content into one string
+        content = "".join(modified_content)
+
+        # Apply the regex substitution
+        replacement = '            outdir   = "$outputDir"'
+        content = re.sub(r"(params\s*{)\s*[^}]+(})", r"\1\n    " + replacement + r"\2", content, flags=re.DOTALL)
+
+        # Write the final content back to the file
         with open(self.file_paths[os.path.join(self.component_type, "tests", "main.nf.test")], "w") as f:
-            for line in lines:
-                if line.strip().startswith("script "):
-                    log.debug(f"Replacing script path in nf-test: '{line.strip()}'")
-                    f.write(f"    script ../main.nf\n")
-                # add tag elements after process line
-                if line.strip().startswith("process "):
-                    log.debug(f"Adding tag elements to nf-test: '{line.strip()}'")
-                    f.write(line)
-                    f.write("\n")
-                    f.write(f"    tag 'modules'\n")
-                    f.write(f"    tag 'modules_nfcore'\n")
-                    f.write(f"    tag '{self.component_name_underscore}'\n")
-                    f.write(f"    tag '{self.component}'\n")
-                    if self.subtool:
-                        f.write(f"    tag '{self.subtool}'\n")
-                else:
-                    f.write(line)
+            f.write(content)
+
         new_files = list(self.file_paths.values())
         log.info("Created / edited following files:\n  " + "\n  ".join(new_files))
 
