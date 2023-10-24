@@ -174,6 +174,7 @@ class TestModules(unittest.TestCase):
     )
     from .modules.lint import (
         test_modules_lint_check_process_labels,
+        test_modules_lint_check_url,
         test_modules_lint_empty,
         test_modules_lint_gitlab_modules,
         test_modules_lint_multiple_remotes,

@@ -315,61 +315,8 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             url = urlparse(l.split("'")[0])
 
         if l.startswith("container") or _container_type(l) == "docker" or _container_type(l) == "singularity":
-            # lint double quotes
-            if l.count('"') > 2:
-                self.failed.append(
-                    (
-                        "container_links",
-                        f"Too many double quotes found when specifying container: {l.lstrip('container ')}",
-                        self.main_nf,
-                    )
-                )
-            else:
-                self.passed.append(
-                    (
-                        "container_links",
-                        f"Correct number of double quotes found when specifying container: {l.lstrip('container ')}",
-                        self.main_nf,
-                    )
-                )
+            check_container_link_line(self, raw_line, registry)
 
-            # Check for spaces in url
-            single_quoted_items = raw_line.split("'")
-            double_quoted_items = raw_line.split('"')
-            # Look for container link as single item surrounded by quotes
-            # (if there are multiple links, this will be warned in the next check)
-            container_link = None
-            if len(single_quoted_items) == 3:
-                container_link = single_quoted_items[1]
-            elif len(double_quoted_items) == 3:
-                container_link = double_quoted_items[1]
-            if container_link:
-                if " " in container_link:
-                    self.failed.append(
-                        (
-                            "container_links",
-                            f"Space character found in container: {container_link}",
-                            self.main_nf,
-                        )
-                    )
-                else:
-                    self.passed.append(
-                        (
-                            "container_links",
-                            f"No space characters found in container: {container_link}",
-                            self.main_nf,
-                        )
-                    )
-
-        # lint more than one container in the same line
-        if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or l.startswith(registry)):
-            self.warned.append(
-                (
-                    "container_links",
-                    "Docker and Singularity containers specified in the same line. Only first one checked.",
-                    self.main_nf,
-                )
-            )
         # Try to connect to container URLs
         if url is None:
             continue
@@ -510,6 +457,68 @@ def check_process_labels(self, lines):
             )
     else:
         self.warned.append(("process_standard_label", "Process label not specified", self.main_nf))
+
+
+def check_container_link_line(self, raw_line, registry):
+    """Look for common problems in the container name / URL, for docker and singularity."""
+
+    l = raw_line.strip(" \n'\"}:")
+
+    # lint double quotes
+    if l.count('"') > 2:
+        self.failed.append(
+            (
+                "container_links",
+                f"Too many double quotes found when specifying container: {l.lstrip('container ')}",
+                self.main_nf,
+            )
+        )
+    else:
+        self.passed.append(
+            (
+                "container_links",
+                f"Correct number of double quotes found when specifying container: {l.lstrip('container ')}",
+                self.main_nf,
+            )
+        )
+
+    # Check for spaces in url
+    single_quoted_items = raw_line.split("'")
+    double_quoted_items = raw_line.split('"')
+    # Look for container link as single item surrounded by quotes
+    # (if there are multiple links, this will be warned in the next check)
+    container_link = None
+    if len(single_quoted_items) == 3:
+        container_link = single_quoted_items[1]
+    elif len(double_quoted_items) == 3:
+        container_link = double_quoted_items[1]
+    if container_link:
+        if " " in container_link:
+            self.failed.append(
+                (
+                    "container_links",
+                    f"Space character found in container: '{container_link}'",
+                    self.main_nf,
+                )
+            )
+        else:
+            self.passed.append(
+                (
+                    "container_links",
+                    f"No space characters found in container: '{container_link}'",
+                    self.main_nf,
+                )
+            )
+
+        # lint more than one container in the same line
+        if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or l.startswith(registry)):
+            self.warned.append(
+                (
+                    "container_links",
+                    "Docker and Singularity containers specified in the same line. Only first one checked.",
+                    self.main_nf,
+                )
+            )
 
 
 def _parse_input(self, line_raw):

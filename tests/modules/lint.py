@@ -236,49 +236,49 @@ def test_modules_lint_check_process_labels(self):
 # Test cases for linting the container definitions
 
 CONTAINER_SINGLE_GOOD = (
+    "Single-line container definition should pass",
     """
-    //Conda is not supported at the moment: https://github.com/broadinstitute/gatk/issues/7811
     container "quay.io/nf-core/gatk:4.4.0.0" //Biocontainers is missing a package
     """,
-    1,  # passed
+    2,  # passed
     0,  # warned
     0,  # failed
 )
 
 CONTAINER_TWO_LINKS_GOOD = (
+    "Multi-line container definition should pass",
     """
-    conda "bioconda::gatk4=4.4.0.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0':
         'biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"
     """,
-    1,
+    6,
     0,
     0,
 )
 
 CONTAINER_WITH_SPACE_BAD = (
+    "Space in container URL should fail",
     """
-    conda "bioconda::gatk4=4.4.0.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0 ':
         'biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"
     """,
+    5,
     0,
     1,
-    0,
 )
 
 CONTAINER_MULTIPLE_DBLQUOTES_BAD = (
+    "Incorrect quoting of container string should fail",
     """
-    conda "bioconda::gatk4=4.4.0.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/gatk4:4.4.0.0--py36hdfd78af_0 ':
         "biocontainers/gatk4:4.4.0.0--py36hdfd78af_0" }"
     """,
+    4,
     0,
     1,
-    0,
 )
 
 CONTAINER_TEST_CASES = [
@@ -289,13 +289,20 @@ CONTAINER_TEST_CASES = [
 ]
 
 
-def test_modules_lint_check_process_labels(self):
+def test_modules_lint_check_url(self):
     for test_case in CONTAINER_TEST_CASES:
-        process, passed, warned, failed = test_case
+        test, process, passed, warned, failed = test_case
         mocked_ModuleLint = MockModuleLint()
-        main_nf.check_process_section(
-            mocked_ModuleLint, process.splitlines(), registry="quay.io", fix_version=False, progress_bar=False
-        )
-        assert len(mocked_ModuleLint.passed) == passed
-        assert len(mocked_ModuleLint.warned) == warned
-        assert len(mocked_ModuleLint.failed) == failed
+        for line in process.splitlines():
+            if line.strip():
+                main_nf.check_container_link_line(mocked_ModuleLint, line, registry="quay.io")
+
+        assert (
+            len(mocked_ModuleLint.passed) == passed
+        ), f"{test}: Expected {passed} PASS, got {len(mocked_ModuleLint.passed)}."
+        assert (
+            len(mocked_ModuleLint.warned) == warned
+        ), f"{test}: Expected {warned} WARN, got {len(mocked_ModuleLint.warned)}."
+        assert (
+            len(mocked_ModuleLint.failed) == failed
+        ), f"{test}: Expected {failed} FAIL, got {len(mocked_ModuleLint.failed)}."
