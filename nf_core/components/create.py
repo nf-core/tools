@@ -199,6 +199,13 @@ class ComponentCreate(ComponentCommand):
                 )
                 modified_content.append('    //Example: test("homo_sapiens - [bam, bai, bed] - fasta - fai")\n')
                 modified_content.append(line)
+                log.debug("Adding TODO nf-core comment about using a setup method")
+                modified_content.append(
+                    "\n    //TODO nf-core: If you are created a test for a chained module\n"
+                    "    //(the module requires running more than one process to generate the required output)\n"
+                    "    //add the 'setup' method here.\n"
+                    "    //You can find more information about how to use a 'setup' method in the docs (https://nf-co.re/docs/contributing/modules#steps-for-creating-nf-test-for-chained-modules).\n"
+                )
             elif line.strip().startswith("assert process.success"):
                 log.debug(f"Replacing assertion lines in nf-test: '{line.strip()}'")
                 modified_content.append("            assertAll(\n")
