@@ -172,19 +172,44 @@ class ComponentCreate(ComponentCommand):
         # Construct the modified content
         modified_content = []
         for line in lines:
-            if line.strip().startswith("script "):
+            if line.strip().startswith("nextflow_process"):
+                log.debug("Adding TODO nf-core comment to nf-test")
+                modified_content.append(
+                    "// TODO nf-core: Once you have added the required tests, please run the following command to build this file:\n"
+                )
+                modified_content.append(f"// nf-core {self.component_type} create-test-snap {self.component_name}\n")
+                modified_content.append(line)
+            elif line.strip().startswith("script "):
                 log.debug(f"Replacing script path in nf-test: '{line.strip()}'")
                 modified_content.append(f"    script ../main.nf\n")
             elif line.strip().startswith('process "'):
                 log.debug(f"Adding tag elements to nf-test: '{line.strip()}'")
                 modified_content.append(line)
                 modified_content.append("\n")
-                modified_content.append(f"    tag 'modules'\n")
-                modified_content.append(f"    tag 'modules_nfcore'\n")
-                modified_content.append(f"    tag '{self.component_name_underscore}'\n")
-                modified_content.append(f"    tag '{self.component}'\n")
+                modified_content.append("    tag 'modules'\n")
+                modified_content.append("    tag 'modules_nfcore'\n")
+                modified_content.append(f"    tag '{self.component_name}'\n")
                 if self.subtool:
+                    modified_content.append(f"    tag '{self.component}'\n")
                     modified_content.append(f"    tag '{self.subtool}'\n")
+            elif line.strip().startswith('test("Should run without failures")'):
+                log.debug("Adding TODO nf-core comment to change test name")
+                modified_content.append(
+                    "    //TODO nf-core: Change the test name preferably indicating the test-data and file-format used\n"
+                )
+                modified_content.append('    //Example: test("homo_sapiens - [bam, bai, bed] - fasta - fai")\n')
+                modified_content.append(line)
+            elif line.strip().startswith("assert process.success"):
+                log.debug(f"Replacing assertion lines in nf-test: '{line.strip()}'")
+                modified_content.append("            assertAll(\n")
+                modified_content.append("                { assert process.success },\n")
+            elif line.strip().startswith("assert snapshot(process.out).match()"):
+                log.debug(f"Replacing assertion lines in nf-test: '{line.strip()}'")
+                modified_content.append("                { assert snapshot(process.out).match() }\n")
+                modified_content.append(
+                    "                //TODO nf-core: Add all required assertions to verify the test output.\n"
+                )
+                modified_content.append("            )\n")
             else:
                 modified_content.append(line)
 
