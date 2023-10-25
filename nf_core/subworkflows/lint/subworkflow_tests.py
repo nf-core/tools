@@ -52,11 +52,21 @@ def subworkflow_tests(_, subworkflow):
             with open(pytest_yml_path, "r") as fh:
                 pytest_yml = yaml.safe_load(fh)
                 if "subworkflows/" + subworkflow.component_name in pytest_yml.keys():
-                    subworkflow.passed.append(("test_pytest_yml", "correct entry in pytest_modules.yml", pytest_yml_path))
+                    subworkflow.passed.append(
+                        ("test_pytest_yml", "correct entry in pytest_modules.yml", pytest_yml_path)
+                    )
                 elif os.path.exists(nftest_main_nf):
-                    subworkflow.passed.append(("test_pytest_yml", "missing entry in pytest_modules.yml, but found nf-test test", nftest_main_nf))
+                    subworkflow.passed.append(
+                        (
+                            "test_pytest_yml",
+                            "missing entry in pytest_modules.yml, but found nf-test test",
+                            nftest_main_nf,
+                        )
+                    )
                 else:
-                    subworkflow.failed.append(("test_pytest_yml", "missing entry in pytest_modules.yml", pytest_yml_path))
+                    subworkflow.failed.append(
+                        ("test_pytest_yml", "missing entry in pytest_modules.yml", pytest_yml_path)
+                    )
         except FileNotFoundError:
             subworkflow.failed.append(("test_pytest_yml", "Could not open pytest_modules.yml file", pytest_yml_path))
 

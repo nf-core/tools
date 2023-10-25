@@ -49,7 +49,13 @@ def module_tests(_, module):
                 if module.component_name in pytest_yml.keys():
                     module.passed.append(("test_pytest_yml", "correct entry in pytest_modules.yml", pytest_yml_path))
                 elif os.path.exists(nftest_main_nf):
-                    module.passed.append(("test_pytest_yml", "missing entry in pytest_modules.yml, but found nf-test test", nftest_main_nf))
+                    module.passed.append(
+                        (
+                            "test_pytest_yml",
+                            "missing entry in pytest_modules.yml, but found nf-test test",
+                            nftest_main_nf,
+                        )
+                    )
                 else:
                     module.failed.append(("test_pytest_yml", "missing entry in pytest_modules.yml", pytest_yml_path))
         except FileNotFoundError:
