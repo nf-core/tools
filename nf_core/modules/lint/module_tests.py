@@ -19,22 +19,26 @@ def module_tests(_, module):
     file.
 
     """
-
+    nftest_testdir = os.path.join(module.component_dir, "tests")
+    if os.path.exists(nftest_testdir):
+        module.passed.append(("test_dir_exists", "nf-test test directory exists", nftest_testdir))
     if os.path.exists(module.test_dir):
         module.passed.append(("test_dir_exists", "Test directory exists", module.test_dir))
     else:
         module.failed.append(("test_dir_exists", "Test directory is missing", module.test_dir))
+        module.failed.append(("test_dir_exists", "Test directory is missing", nftest_testdir))
         return
 
     # Lint the test main.nf file
     pytest_main_nf = os.path.join(module.test_dir, "main.nf")
     nftest_main_nf = os.path.join(module.component_dir, "tests", "main.nf.test")
     if os.path.exists(nftest_main_nf):
-        module.passed.append(("test_main_exists", "test `main.nf.test` exists", module.test_main_nf))
+        module.passed.append(("test_main_exists", "test `main.nf.test` exists", nftest_main_nf))
     elif os.path.exists(pytest_main_nf):
         module.passed.append(("test_main_exists", "test `main.nf` exists", module.test_main_nf))
     else:
         module.failed.append(("test_main_exists", "test `main.nf` does not exist", module.test_main_nf))
+        module.failed.append(("test_main_exists", "test `main.nf.test` does not exist", nftest_main_nf))
 
     if os.path.exists(pytest_main_nf):
         # Check that entry in pytest_modules.yml exists
@@ -45,7 +49,7 @@ def module_tests(_, module):
                 if module.component_name in pytest_yml.keys():
                     module.passed.append(("test_pytest_yml", "correct entry in pytest_modules.yml", pytest_yml_path))
                 elif os.path.exists(nftest_main_nf):
-                    module.passed.append(("test_pytest_yml", "missing entry in pytest_modules.yml, but found nf-test test", pytest_yml_path))
+                    module.passed.append(("test_pytest_yml", "missing entry in pytest_modules.yml, but found nf-test test", pytest_main_nf))
                 else:
                     module.failed.append(("test_pytest_yml", "missing entry in pytest_modules.yml", pytest_yml_path))
         except FileNotFoundError:
