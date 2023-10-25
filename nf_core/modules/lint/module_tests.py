@@ -26,7 +26,7 @@ def module_tests(_, module):
         module.passed.append(("test_dir_exists", "Test directory exists", module.test_dir))
     else:
         module.failed.append(("test_dir_exists", "Test directory is missing", module.test_dir))
-        module.failed.append(("test_dir_exists", "Test directory is missing", nftest_testdir))
+        module.failed.append(("test_dir_exists", "nf-test directory is missing", nftest_testdir))
         return
 
     # Lint the test main.nf file
@@ -49,7 +49,7 @@ def module_tests(_, module):
                 if module.component_name in pytest_yml.keys():
                     module.passed.append(("test_pytest_yml", "correct entry in pytest_modules.yml", pytest_yml_path))
                 elif os.path.exists(nftest_main_nf):
-                    module.passed.append(("test_pytest_yml", "missing entry in pytest_modules.yml, but found nf-test test", pytest_main_nf))
+                    module.passed.append(("test_pytest_yml", "missing entry in pytest_modules.yml, but found nf-test test", nftest_main_nf))
                 else:
                     module.failed.append(("test_pytest_yml", "missing entry in pytest_modules.yml", pytest_yml_path))
         except FileNotFoundError:
