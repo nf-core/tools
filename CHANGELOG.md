@@ -16,10 +16,12 @@
 
 - Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
 - Replace ModulePatch by ComponentPatch ([#2482](https://github.com/nf-core/tools/pull/2482))
+- Fixed `nf-core modules lint` to work with new module structure for nf-test ([#2494](https://github.com/nf-core/tools/pull/2494))
 
 ### Subworkflows
 
 - Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
+- Fixed `nf-core subworkflows lint` to work with new module structure for nf-test ([#2494](https://github.com/nf-core/tools/pull/2494))
 
 ### General
 
