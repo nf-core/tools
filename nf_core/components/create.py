@@ -149,103 +149,8 @@ class ComponentCreate(ComponentCommand):
         self._render_template()
         log.info(f"Created component template: '{self.component_name}'")
 
-        # generate nf-tests
-        nf_core.utils.run_cmd(
-            "nf-test", f"generate process {self.file_paths[os.path.join(self.component_type, 'main.nf')]}"
-        )
-
-        # move generated main.nf.test file into tests directory
-        tests_dir = Path(self.directory, self.component_type, self.org, self.component_dir, "tests")
-        tests_dir.mkdir(exist_ok=True)
-
-        Path(tests_dir.parent, "main.nf.test").rename(tests_dir / "main.nf.test")
-
-        self.file_paths[os.path.join(self.component_type, "tests", "main.nf.test")] = os.path.join(
-            self.directory, self.component_type, self.org, self.component_dir, "tests", "main.nf.test"
-        )
-
-        log.debug(f"Created nf-test: '{self.file_paths[os.path.join(self.component_type, 'tests', 'main.nf.test')]}'")
-        # Read the content from the file
-        with open(self.file_paths[os.path.join(self.component_type, "tests", "main.nf.test")], "r") as f:
-            lines = f.readlines()
-
-        # Construct the modified content
-        modified_content = []
-        for line in lines:
-            if line.strip().startswith("nextflow_process"):
-                log.debug("Adding TODO nf-core comment to nf-test")
-                modified_content.append(
-                    "// TODO nf-core: Once you have added the required tests, please run the following command to build this file:\n"
-                )
-                modified_content.append(f"// nf-core {self.component_type} create-test-snap {self.component_name}\n")
-                modified_content.append(line)
-            elif line.strip().startswith("script "):
-                log.debug(f"Replacing script path in nf-test: '{line.strip()}'")
-                modified_content.append(f"    script ../main.nf\n")
-            elif line.strip().startswith('process "'):
-                log.debug(f"Adding tag elements to nf-test: '{line.strip()}'")
-                modified_content.append(line)
-                modified_content.append("\n")
-                modified_content.append("    tag 'modules'\n")
-                modified_content.append("    tag 'modules_nfcore'\n")
-                modified_content.append(f"    tag '{self.component_name}'\n")
-                if self.subtool:
-                    modified_content.append(f"    tag '{self.component}'\n")
-                    modified_content.append(f"    tag '{self.subtool}'\n")
-            elif line.strip().startswith('test("Should run without failures")'):
-                log.debug("Adding TODO nf-core comment to change test name")
-                modified_content.append(
-                    "    // TODO nf-core: Change the test name preferably indicating the test-data and file-format used. Example:\n"
-                )
-                modified_content.append('    test("sarscov2 - bam") {\n')
-                log.debug("Adding TODO nf-core comment about using a setup method")
-                modified_content.append(
-                    "\n        // TODO nf-core: If you are created a test for a chained module\n"
-                    "        // (the module requires running more than one process to generate the required output)\n"
-                    "        // add the 'setup' method here.\n"
-                    "        // You can find more information about how to use a 'setup' method in the docs (https://nf-co.re/docs/contributing/modules#steps-for-creating-nf-test-for-chained-modules).\n"
-                )
-            elif line.strip().startswith("// input[0]"):
-                log.debug(f"Replacing input data example: '{line.strip()}'")
-                if self.has_meta:
-                    modified_content.append(
-                        "                input = [\n"
-                        "                    [ id:'test', single_end:false ], // meta map\n"
-                        "                    file(params.test_data['sarscov2']['illumina']['test_paired_end_bam'], checkIfExists: true)\n"
-                        "                    ]\n"
-                    )
-                else:
-                    modified_content.append(
-                        "                // input = file(params.test_data['sarscov2']['illumina']['test_single_end_bam'], checkIfExists: true)\n"
-                    )
-
-            elif line.strip().startswith("assert process.success"):
-                log.debug(f"Replacing assertion lines in nf-test: '{line.strip()}'")
-                modified_content.append("            assertAll(\n")
-                modified_content.append("                { assert process.success },\n")
-            elif line.strip().startswith("assert snapshot(process.out).match()"):
-                log.debug(f"Replacing assertion lines in nf-test: '{line.strip()}'")
-                modified_content.append("                { assert snapshot(process.out).match() }\n")
-                modified_content.append(
-                    "                //TODO nf-core: Add all required assertions to verify the test output.\n"
-                )
-                modified_content.append("            )\n")
-            else:
-                modified_content.append(line)
-
-        # Combine the modified content into one string
-        content = "".join(modified_content)
-
-        # Apply the regex substitution
-        replacement = '            outdir   = "$outputDir"'
-        content = re.sub(r"(params\s*{)\s*[^}]+(})", r"\1\n    " + replacement + r"\2", content, flags=re.DOTALL)
-
-        # Write the final content back to the file
-        with open(self.file_paths[os.path.join(self.component_type, "tests", "main.nf.test")], "w") as f:
-            f.write(content)
-
         new_files = list(self.file_paths.values())
-        log.info("Created / edited following files:\n  " + "\n  ".join(new_files))
+        log.info("Created following files:\n  " + "\n  ".join(new_files))
 
     def _get_bioconda_tool(self):
         """
@@ -472,6 +377,9 @@ class ComponentCreate(ComponentCommand):
             file_paths[os.path.join(self.component_type, "meta.yml")] = os.path.join(component_dir, "meta.yml")
             file_paths[os.path.join(self.component_type, "tests", "tags.yml")] = os.path.join(
                 component_dir, "tests", "tags.yml"
+            )
+            file_paths[os.path.join(self.component_type, "tests", "main.nf.test")] = os.path.join(
+                component_dir, "tests", "main.nf.test"
             )
 
         return file_paths

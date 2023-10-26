@@ -4,4 +4,4 @@ slackreport.json
 docs/api/_build
 testing
 nf_core/module-template/modules/meta.yml
-nf-core/module-template/modules/tests/tags.yml
+nf_core/module-template/modules/tests/tags.yml
