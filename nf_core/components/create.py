@@ -195,17 +195,30 @@ class ComponentCreate(ComponentCommand):
             elif line.strip().startswith('test("Should run without failures")'):
                 log.debug("Adding TODO nf-core comment to change test name")
                 modified_content.append(
-                    "    //TODO nf-core: Change the test name preferably indicating the test-data and file-format used\n"
+                    "    // TODO nf-core: Change the test name preferably indicating the test-data and file-format used. Example:\n"
                 )
-                modified_content.append('    //Example: test("homo_sapiens - [bam, bai, bed] - fasta - fai")\n')
-                modified_content.append(line)
+                modified_content.append('    test("sarscov2 - bam") {\n')
                 log.debug("Adding TODO nf-core comment about using a setup method")
                 modified_content.append(
-                    "\n    //TODO nf-core: If you are created a test for a chained module\n"
-                    "    //(the module requires running more than one process to generate the required output)\n"
-                    "    //add the 'setup' method here.\n"
-                    "    //You can find more information about how to use a 'setup' method in the docs (https://nf-co.re/docs/contributing/modules#steps-for-creating-nf-test-for-chained-modules).\n"
+                    "\n        // TODO nf-core: If you are created a test for a chained module\n"
+                    "        // (the module requires running more than one process to generate the required output)\n"
+                    "        // add the 'setup' method here.\n"
+                    "        // You can find more information about how to use a 'setup' method in the docs (https://nf-co.re/docs/contributing/modules#steps-for-creating-nf-test-for-chained-modules).\n"
                 )
+            elif line.strip().startswith("// input[0]"):
+                log.debug(f"Replacing input data example: '{line.strip()}'")
+                if self.has_meta:
+                    modified_content.append(
+                        "                input = [\n"
+                        "                    [ id:'test', single_end:false ], // meta map\n"
+                        "                    file(params.test_data['sarscov2']['illumina']['test_paired_end_bam'], checkIfExists: true)\n"
+                        "                    ]\n"
+                    )
+                else:
+                    modified_content.append(
+                        "                // input = file(params.test_data['sarscov2']['illumina']['test_single_end_bam'], checkIfExists: true)\n"
+                    )
+
             elif line.strip().startswith("assert process.success"):
                 log.debug(f"Replacing assertion lines in nf-test: '{line.strip()}'")
                 modified_content.append("            assertAll(\n")
