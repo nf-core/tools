@@ -22,7 +22,7 @@ def module_tests(_, module):
     nftest_testdir = os.path.join(module.component_dir, "tests")
     if os.path.exists(nftest_testdir):
         module.passed.append(("test_dir_exists", "nf-test test directory exists", nftest_testdir))
-    if os.path.exists(module.test_dir):
+    elif os.path.exists(module.test_dir):
         module.passed.append(("test_dir_exists", "Test directory exists", module.test_dir))
     else:
         module.failed.append(("test_dir_exists", "Test directory is missing", module.test_dir))
