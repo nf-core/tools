@@ -1,2 +1,2 @@
-{ { component_name_underscore } }:
+{{ component_name_underscore }}:
   - "modules/{{ org }}/{{ component_dir }}/**"
