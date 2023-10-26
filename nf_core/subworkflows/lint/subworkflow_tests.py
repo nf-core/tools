@@ -31,7 +31,7 @@ def subworkflow_tests(_, subworkflow):
         subworkflow.passed.append(("test_dir_exists", "Test directory exists", subworkflow.test_dir))
     else:
         subworkflow.failed.append(("test_dir_exists", "Test directory is missing", subworkflow.test_dir))
-        subworkflow.failed.append(("test_dir_exists", "nf-test directory is missing", nftest_testdir))
+        subworkflow.warned.append(("test_dir_exists", "nf-test directory is missing", nftest_testdir))
         return
 
     # Lint the test main.nf file
@@ -43,7 +43,7 @@ def subworkflow_tests(_, subworkflow):
         subworkflow.passed.append(("test_main_exists", "test `main.nf` exists", subworkflow.test_main_nf))
     else:
         subworkflow.failed.append(("test_main_exists", "test `main.nf` does not exist", subworkflow.test_main_nf))
-        subworkflow.failed.append(("test_main_exists", "test `main.nf.test` does not exist", nftest_main_nf))
+        subworkflow.warned.append(("test_main_exists", "test `main.nf.test` does not exist", nftest_main_nf))
 
     if os.path.exists(pytest_main_nf):
         # Check that entry in pytest_modules.yml exists
