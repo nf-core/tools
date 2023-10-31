@@ -48,7 +48,7 @@ def test_modules_create_nfcore_modules(self):
         with requests_cache.disabled():
             module_create.create()
     assert os.path.exists(os.path.join(self.nfcore_modules, "modules", "nf-core", "fastqc", "main.nf"))
-    assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "modules", "nf-core", "fastqc", "main.nf"))
+    assert os.path.exists(os.path.join(self.nfcore_modules, "modules", "nf-core", "fastqc", "tests", "main.nf.test"))
 
 
 def test_modules_create_nfcore_modules_subtool(self):
@@ -62,4 +62,6 @@ def test_modules_create_nfcore_modules_subtool(self):
         with requests_cache.disabled():
             module_create.create()
     assert os.path.exists(os.path.join(self.nfcore_modules, "modules", "nf-core", "star", "index", "main.nf"))
-    assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "modules", "nf-core", "star", "index", "main.nf"))
+    assert os.path.exists(
+        os.path.join(self.nfcore_modules, "modules", "nf-core", "star", "index", "tests", "main.nf.test")
+    )
