@@ -1,5 +1,5 @@
 // TODO nf-core: Once you have added the required tests, please run the following command to build this file:
-// nf-core modules create-test-snap {{ component_name }}
+// nf-core modules create-nf-test {{ component_name }}
 nextflow_process {
 
     name "Test Process {{ component_name_underscore|upper }}"
@@ -25,7 +25,7 @@ nextflow_process {
         when {
             process {
                 """
-                // define inputs of the process here. Example:
+                // TODO nf-core: define inputs of the process here. Example:
                 {% if has_meta %}
                 input = [
                     [ id:'test', single_end:false ], // meta map

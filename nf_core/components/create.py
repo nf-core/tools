@@ -82,7 +82,7 @@ class ComponentCreate(ComponentCommand):
         For modules:
 
         ```tree
-        modules/modules/nf-core/tool/subtool/
+        modules/nf-core/tool/subtool/
         ├── main.nf
         ├── meta.yml
         └── tests
@@ -94,14 +94,15 @@ class ComponentCreate(ComponentCommand):
         and matching Docker / Singularity images from BioContainers.
 
         For subworkflows:
-        subworkflows/nf-core/subworkflow_name/
-            * main.nf
-            * meta.yml
-        tests/subworkflows/nf-core/subworkflow_name/
-            * main.nf
-            * test.yml
-            * nextflow.config
-        tests/config/pytest_modules.yml
+
+        ```tree
+        subworkflows/nf-core/tool/subtool/
+        ├── main.nf
+        ├── meta.yml
+        └── tests
+            ├── main.nf.test
+            └── tags.yml
+        ```
 
         """
 
