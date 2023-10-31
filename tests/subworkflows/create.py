@@ -33,5 +33,5 @@ def test_subworkflows_create_nfcore_modules(self):
     subworkflow_create.create()
     assert os.path.exists(os.path.join(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "main.nf"))
     assert os.path.exists(
-        os.path.join(self.nfcore_modules, "tests", "subworkflows", "nf-core", "test_subworkflow", "main.nf")
+        os.path.join(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test")
     )
