@@ -4,14 +4,22 @@
 
 ### Template
 
+- Fix writing files to a remote outdir in the NfcoreTemplate helper functions ([#2465](https://github.com/nf-core/tools/pull/2465)
+
 ### Linting
 
 - Fix incorrectly failing linting if 'modules' was not found in meta.yml ([#2447](https://github.com/nf-core/tools/pull/2447))
 - Correctly pass subworkflow linting test if `COMPONENT.out.versions` is used in the script ([#2448](https://github.com/nf-core/tools/pull/2448))
+- Check for spaces in modules container URLs ([#2452](https://github.com/nf-core/tools/issues/2452))
 
 ### Modules
 
+- Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
+- Replace ModulePatch by ComponentPatch ([#2482](https://github.com/nf-core/tools/pull/2482))
+
 ### Subworkflows
+
+- Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
 
 ### General
 
@@ -32,6 +40,7 @@
 - Modified devcontainer permissions so that singularity can be run in Codespaces/VS Code devcontainers ([Commit a103f44](https://github.com/CarsonJM/tools/commit/a103f4484eca8c6d668e4653a4ed8d20faf1b41d))
 - Update Gitpod profile resources to reflect base environment settings.
 - ([#747](https://github.com/nf-core/tools/issues/747)) Add to the template the code to dump the selected pipeline parameters into a json file.
+- [#2161] Disable process selector warnings by default.
 
 ### Download
 
@@ -42,6 +51,7 @@
 ### Linting
 
 - Add new command `nf-core subworkflows lint` ([#2379](https://github.com/nf-core/tools/pull/2379))
+- Check for existence of test profile ([#2478](https://github.com/nf-core/tools/pull/2478))
 
 ### Modules
 
