@@ -23,8 +23,6 @@ nextflow_process {
         // You can find more information about how to use a 'setup' method in the docs (https://nf-co.re/docs/contributing/modules#steps-for-creating-nf-test-for-chained-modules).
 
         when {
-            params {
-                outdir   = "$outputDir"}
             process {
                 """
                 // define inputs of the process here. Example:
