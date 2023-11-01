@@ -6,9 +6,9 @@ nextflow_workflow {
     script "../main.nf"
     workflow "{{ component_name_underscore|upper }}"
 
-    tag 'subworkflows'
-    tag 'subworkflows_nfcore'
-    tag '{{ component_name }}'
+    tag "subworkflows"
+    tag "subworkflows_nfcore"
+    tag "{{ component_name }}"
     // TODO nf-core: Add tags for all modules used within this subworkflow
 
 

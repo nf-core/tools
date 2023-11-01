@@ -3,15 +3,15 @@
 nextflow_process {
 
     name "Test Process {{ component_name_underscore|upper }}"
-    script ../main.nf
+    script "../main.nf"
     process "{{ component_name_underscore|upper }}"
 
-    tag 'modules'
-    tag 'modules_nfcore'
+    tag "modules"
+    tag "modules_nfcore"
     {%- if subtool %}
-    tag '{{ component }}'
+    tag "{{ component }}"
     {%- endif %}
-    tag '{{ component_name }}'
+    tag "{{ component_name }}"
 
     // TODO nf-core: Change the test name preferably indicating the test-data and file-format used
     test("sarscov2 - bam") {
