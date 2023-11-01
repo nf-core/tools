@@ -17,7 +17,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import ByteString, Optional, Union
+from typing import Union
 
 import git
 import prompt_toolkit
@@ -270,14 +270,16 @@ def fetch_wf_config(wf_path, cache_config=True):
     log.debug("No config cache found")
 
     # Call `nextflow config`
-    nfconfig_raw = run_cmd("nextflow", f"config -flat {wf_path}")
-    for l in nfconfig_raw.splitlines():
-        ul = l.decode("utf-8")
-        try:
-            k, v = ul.split(" = ", 1)
-            config[k] = v.strip("'\"")
-        except ValueError:
-            log.debug(f"Couldn't find key=value config pair:\n  {ul}")
+    result = run_cmd("nextflow", f"config -flat {wf_path}")
+    if result is not None:
+        nfconfig_raw, _ = result
+        for l in nfconfig_raw.splitlines():
+            ul = l.decode("utf-8")
+            try:
+                k, v = ul.split(" = ", 1)
+                config[k] = v.strip("'\"")
+            except ValueError:
+                log.debug(f"Couldn't find key=value config pair:\n  {ul}")
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
@@ -304,22 +306,26 @@ def fetch_wf_config(wf_path, cache_config=True):
     return config
 
 
-def run_cmd(executable: str, cmd: str) -> Union[Optional[ByteString], str]:
+def run_cmd(executable: str, cmd: str) -> Union[tuple[bytes, bytes], None]:
     """Run a specified command and capture the output. Handle errors nicely."""
     full_cmd = f"{executable} {cmd}"
     log.debug(f"Running command: {full_cmd}")
     try:
         proc = subprocess.run(shlex.split(full_cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        return proc.stdout
+        return (proc.stdout, proc.stderr)
     except OSError as e:
         if e.errno == errno.ENOENT:
-            raise AssertionError(
+            raise RuntimeError(
                 f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
             )
     except subprocess.CalledProcessError as e:
-        raise AssertionError(
-            f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
-        )
+        log.debug(f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}")
+        if executable == "nf-test":
+            return (e.stdout, e.stderr)
+        else:
+            raise RuntimeError(
+                f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
+            )
 
 
 def setup_nfcore_dir():

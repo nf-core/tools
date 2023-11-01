@@ -128,12 +128,14 @@ class Workflows:
         # Fetch details about local cached pipelines with `nextflow list`
         else:
             log.debug("Getting list of local nextflow workflows")
-            nflist_raw = nf_core.utils.run_cmd("nextflow", "list")
-            for wf_name in nflist_raw.splitlines():
-                if not str(wf_name).startswith("nf-core/"):
-                    self.local_unmatched.append(wf_name)
-                else:
-                    self.local_workflows.append(LocalWorkflow(wf_name))
+            result = nf_core.utils.run_cmd("nextflow", "list")
+            if result is not None:
+                nflist_raw, _ = result
+                for wf_name in nflist_raw.splitlines():
+                    if not str(wf_name).startswith("nf-core/"):
+                        self.local_unmatched.append(wf_name)
+                    else:
+                        self.local_workflows.append(LocalWorkflow(wf_name))
 
         # Find additional information about each workflow by checking its git history
         log.debug(f"Fetching extra info about {len(self.local_workflows)} local workflows")
@@ -342,12 +344,14 @@ class LocalWorkflow:
 
             # Use `nextflow info` to get more details about the workflow
             else:
-                nfinfo_raw = str(nf_core.utils.run_cmd("nextflow", f"info -d {self.full_name}"))
-                re_patterns = {"repository": r"repository\s*: (.*)", "local_path": r"local path\s*: (.*)"}
-                for key, pattern in re_patterns.items():
-                    m = re.search(pattern, nfinfo_raw)
-                    if m:
-                        setattr(self, key, m.group(1))
+                result = nf_core.utils.run_cmd("nextflow", f"info -d {self.full_name}")
+                if result is not None:
+                    nfinfo_raw, _ = result
+                    re_patterns = {"repository": r"repository\s*: (.*)", "local_path": r"local path\s*: (.*)"}
+                    for key, pattern in re_patterns.items():
+                        m = re.search(pattern, str(nfinfo_raw))
+                        if m:
+                            setattr(self, key, m.group(1))
 
         # Pull information from the local git repository
         if self.local_path is not None:

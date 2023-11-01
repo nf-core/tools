@@ -849,34 +849,32 @@ def create_module(
         sys.exit(1)
 
 
-# nf-core modules create-test-yml
-@modules.command("create-test-yml")
+# nf-core modules create-snapshot
+@modules.command("create-snapshot")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
-@click.option("-o", "--output", type=str, help="Path for output YAML file")
-@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
+@click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
+def create_snapshot(ctx, tool, run_tests, no_prompts, update):
     """
-    Auto-generate a test.yml file for a new module.
+    Generate nf-test snapshots for a module.
 
-    Given the name of a module, runs the Nextflow test command and automatically generate
-    the required `test.yml` file based on the output files.
+    Given the name of a module, runs the nf-test command to generate snapshots.
     """
-    from nf_core.modules import ModulesTestYmlBuilder
+    from nf_core.components.snapshot_generator import ComponentTestSnapshotGenerator
 
     try:
-        meta_builder = ModulesTestYmlBuilder(
-            module_name=tool,
+        snap_generator = ComponentTestSnapshotGenerator(
+            component_name=tool,
             run_tests=run_tests,
-            test_yml_output_path=output,
-            force_overwrite=force,
             no_prompts=no_prompts,
+            update=update,
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
+            verbose=ctx.obj["verbose"],
         )
-        meta_builder.run()
+        snap_generator.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
