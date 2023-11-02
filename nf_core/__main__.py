@@ -1076,34 +1076,34 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
         sys.exit(1)
 
 
-# nf-core subworkflows create-test-yml
-@subworkflows.command("create-test-yml")
+# nf-core subworkflows create-snapshot
+@subworkflows.command("create-snapshot")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
-@click.option("-o", "--output", type=str, help="Path for output YAML file")
-@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
+@click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
+def create_test_yml(ctx, subworkflow, run_tests, no_prompts, update):
     """
     Auto-generate a test.yml file for a new subworkflow.
 
     Given the name of a module, runs the Nextflow test command and automatically generate
     the required `test.yml` file based on the output files.
     """
-    from nf_core.subworkflows import SubworkflowTestYmlBuilder
+    from nf_core.components.snapshot_generator import ComponentTestSnapshotGenerator
 
     try:
-        meta_builder = SubworkflowTestYmlBuilder(
-            subworkflow=subworkflow,
+        snap_generator = ComponentTestSnapshotGenerator(
+            component_type="subworkflows",
+            component_name=subworkflow,
             run_tests=run_tests,
-            test_yml_output_path=output,
-            force_overwrite=force,
             no_prompts=no_prompts,
+            update=update,
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
+            verbose=ctx.obj["verbose"],
         )
-        meta_builder.run()
+        snap_generator.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
