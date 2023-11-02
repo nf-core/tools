@@ -147,13 +147,6 @@ class TestModules(unittest.TestCase):
         test_modules_create_nfcore_modules_subtool,
         test_modules_create_succeed,
     )
-    from .modules.create_test_yml import (
-        test_modules_create_test_yml_check_inputs,
-        test_modules_create_test_yml_entry_points,
-        test_modules_create_test_yml_get_md5,
-        test_modules_custom_yml_dumper,
-        test_modules_test_file_dict,
-    )
     from .modules.info import (
         test_modules_info_in_modules_repo,
         test_modules_info_local,
