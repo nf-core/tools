@@ -55,20 +55,17 @@ HorizontalScroll {
 /* Display help messages */
 
 .help_box {
-    background: white;
-    margin-left: 15;
-    margin-right: 25;
-    margin-bottom: 1;
+    background: #333333;
+    padding: 1 5;
+    margin: 1 10;
+    overflow-y: auto;
+    transition: height 50ms;
     display: none;
-
     height: 0;
 }
 .displayed .help_box {
     display: block;
-    overflow-y: scroll;
-
-    transition: height 50ms;
-    height: 10;
+    height: 12;
 }
 #show_help {
     display: block;
