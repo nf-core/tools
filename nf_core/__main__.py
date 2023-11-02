@@ -866,6 +866,7 @@ def create_snapshot(ctx, tool, run_tests, no_prompts, update):
 
     try:
         snap_generator = ComponentTestSnapshotGenerator(
+            component_type="modules",
             component_name=tool,
             run_tests=run_tests,
             no_prompts=no_prompts,
