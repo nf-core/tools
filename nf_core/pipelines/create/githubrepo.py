@@ -6,7 +6,7 @@ import git
 from github import Github, GithubException
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal
+from textual.containers import Center, Horizontal, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
@@ -43,43 +43,45 @@ class GithubRepo(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        yield Markdown(dedent(github_text_markdown))
         with Horizontal():
-            yield TextInput(
-                "gh_username",
-                "GitHub username",
-                "Your GitHub username",
-                classes="column",
-            )
-            token = "GITHUB_AUTH_TOKEN" in os.environ
-            yield TextInput(
-                "token",
-                "GitHub token",
-                "Your GitHub personal access token for login. Will use the environment variable GITHUB_AUTH_TOKEN if set.",
-                classes="column",
-                disabled=token,
-            )
-        yield Markdown(dedent(repo_config_markdown))
-        with Horizontal():
-            yield Switch(value=False, id="private")
-            yield Static("Select if the new GitHub repo must be private.", classes="custom_grid")
-        with Horizontal():
-            yield Switch(value=True, id="push")
-            yield Static(
-                "Select if you would like to push all the pipeline template files to your GitHub repo\nand all the branches required to keep the pipeline up to date with new releases of nf-core.",
-                classes="custom_grid",
-            )
-        yield Center(
-            Button("Create GitHub repo", id="create", variant="success"),
-            Button("Finish without creating a repo", id="finish", variant="primary"),
-            classes="cta",
-        )
+            with VerticalScroll():
+                yield Markdown(dedent(github_text_markdown))
+                with Horizontal():
+                    yield TextInput(
+                        "gh_username",
+                        "GitHub username",
+                        "Your GitHub username",
+                        classes="column",
+                    )
+                    token = "GITHUB_AUTH_TOKEN" in os.environ
+                    yield TextInput(
+                        "token",
+                        "GitHub token",
+                        "Your GitHub personal access token for login. Will use the environment variable GITHUB_AUTH_TOKEN if set.",
+                        classes="column",
+                        disabled=token,
+                    )
+                yield Markdown(dedent(repo_config_markdown))
+                with Horizontal():
+                    yield Switch(value=False, id="private")
+                    yield Static("Select if the new GitHub repo must be private.", classes="custom_grid")
+                with Horizontal():
+                    yield Switch(value=True, id="push")
+                    yield Static(
+                        "Select if you would like to push all the pipeline template files to your GitHub repo\nand all the branches required to keep the pipeline up to date with new releases of nf-core.",
+                        classes="custom_grid",
+                    )
+                yield Center(
+                    Button("Create GitHub repo", id="create", variant="success"),
+                    Button("Finish without creating a repo", id="exit", variant="primary"),
+                    classes="cta",
+                )
+            yield Center(self.parent.LOG_HANDLER.console, classes="cta log")
 
     @on(Button.Pressed, "#create")
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Create a GitHub repo"""
         # Save GitHub username and token
-        print("button pressed")
         github_variables = {}
         for text_input in self.query("TextInput"):
             this_input = text_input.query_one(Input)
@@ -134,13 +136,13 @@ class GithubRepo(Screen):
         except UserWarning as e:
             log.info(f"There was an error with message: {e}" f"\n{exit_help_text_markdown}")
 
-        self.parent.exit()
+        self.parent.switch_screen("bye")
 
-    @on(Button.Pressed, "#finish")
+    @on(Button.Pressed, "#exit")
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Show help message and exit"""
         log.info(exit_help_text_markdown)
-        self.parent.exit()
+        self.parent.switch_screen("bye")
 
     def _create_repo_and_push(self, org, pipeline_repo, private, push):
         """Create a GitHub repository and push all branches."""

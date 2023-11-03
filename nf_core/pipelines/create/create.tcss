@@ -9,6 +9,9 @@
     margin-left: 3;
     margin-right: 3;
 }
+.log {
+    width: 30%;
+}
 
 .custom_grid {
     height: auto;

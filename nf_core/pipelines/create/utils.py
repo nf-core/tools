@@ -1,13 +1,17 @@
 import re
+from logging import LogRecord
 from pathlib import Path
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator
+from rich.logging import RichHandler
 from textual import on
+from textual._context import active_app
 from textual.app import ComposeResult
 from textual.containers import HorizontalScroll
 from textual.validation import ValidationResult, Validator
-from textual.widgets import Button, Input, Markdown, Static, Switch
+from textual.widget import Widget
+from textual.widgets import Button, Input, Markdown, RichLog, Static, Switch
 
 
 class CreateConfig(BaseModel):
@@ -163,6 +167,27 @@ class PipelineFeature(Static):
             classes="custom_grid",
         )
         yield HelpText(markdown=self.markdown, classes="help_box")
+
+
+class LoggingConsole(RichLog):
+    file = False
+    console: Widget
+
+    def print(self, content):
+        self.write(content)
+
+
+class CustomLogHandler(RichHandler):
+    """A Logging handler which extends RichHandler to write to a Widget and handle a Textual App."""
+
+    def emit(self, record: LogRecord) -> None:
+        """Invoked by logging."""
+        try:
+            app = active_app.get()
+        except LookupError:
+            pass
+        else:
+            super().emit(record)
 
 
 ## Markdown text to reuse in different screens

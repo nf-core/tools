@@ -3,7 +3,7 @@ from textwrap import dedent
 
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal
+from textual.containers import Center, Horizontal, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
@@ -17,37 +17,42 @@ class FinalDetails(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        yield Markdown(
-            dedent(
-                """
-                # Final details
-                """
-            )
-        )
-
         with Horizontal():
-            yield TextInput(
-                "version",
-                "Version",
-                "First version of the pipeline",
-                "1.0dev",
-                classes="column",
-            )
-            yield TextInput(
-                "outdir",
-                "Output directory",
-                "Path to the output directory where the pipeline will be created",
-                ".",
-                classes="column",
-            )
-        with Horizontal():
-            yield Switch(value=False, id="force")
-            yield Static("If the pipeline output directory exists, remove it and continue.", classes="custom_grid")
+            with VerticalScroll():
+                yield Markdown(
+                    dedent(
+                        """
+                        # Final details
+                        """
+                    )
+                )
 
-        yield Center(
-            Button("Finish", id="finish", variant="success"),
-            classes="cta",
-        )
+                with Horizontal():
+                    yield TextInput(
+                        "version",
+                        "Version",
+                        "First version of the pipeline",
+                        "1.0dev",
+                        classes="column",
+                    )
+                    yield TextInput(
+                        "outdir",
+                        "Output directory",
+                        "Path to the output directory where the pipeline will be created",
+                        ".",
+                        classes="column",
+                    )
+                with Horizontal():
+                    yield Switch(value=False, id="force")
+                    yield Static(
+                        "If the pipeline output directory exists, remove it and continue.", classes="custom_grid"
+                    )
+
+                yield Center(
+                    Button("Finish", id="finish", variant="success"),
+                    classes="cta",
+                )
+            yield Center(self.parent.LOG_HANDLER.console, classes="cta log")
 
     @on(Button.Pressed, "#finish")
     def on_button_pressed(self, event: Button.Pressed) -> None:

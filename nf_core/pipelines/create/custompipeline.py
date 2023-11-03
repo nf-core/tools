@@ -1,6 +1,6 @@
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Center, ScrollableContainer
+from textual.containers import Center, Horizontal, ScrollableContainer, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Switch
 
@@ -46,36 +46,39 @@ class CustomPipeline(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        yield ScrollableContainer(
-            PipelineFeature(
-                markdown_genomes,
-                "Use reference genomes",
-                "The pipeline will be configured to use a copy of the most common reference genome files from iGenomes",
-                "igenomes",
-            ),
-            PipelineFeature(
-                markdown_ci,
-                "Add Github CI tests",
-                "The pipeline will include several GitHub actions for Continuous Integration (CI) testing",
-                "ci",
-            ),
-            PipelineFeature(
-                markdown_badges,
-                "Add Github badges",
-                "The README.md file of the pipeline will include GitHub badges",
-                "github_badges",
-            ),
-            PipelineFeature(
-                markdown_configuration,
-                "Add configuration files",
-                "The pipeline will include configuration profiles containing custom parameters requried to run nf-core pipelines at different institutions",
-                "nf_core_configs",
-            ),
-        )
-        yield Center(
-            Button("Continue", id="continue", variant="success"),
-            classes="cta",
-        )
+        with Horizontal():
+            with VerticalScroll():
+                yield ScrollableContainer(
+                    PipelineFeature(
+                        markdown_genomes,
+                        "Use reference genomes",
+                        "The pipeline will be configured to use a copy of the most common reference genome files from iGenomes",
+                        "igenomes",
+                    ),
+                    PipelineFeature(
+                        markdown_ci,
+                        "Add Github CI tests",
+                        "The pipeline will include several GitHub actions for Continuous Integration (CI) testing",
+                        "ci",
+                    ),
+                    PipelineFeature(
+                        markdown_badges,
+                        "Add Github badges",
+                        "The README.md file of the pipeline will include GitHub badges",
+                        "github_badges",
+                    ),
+                    PipelineFeature(
+                        markdown_configuration,
+                        "Add configuration files",
+                        "The pipeline will include configuration profiles containing custom parameters requried to run nf-core pipelines at different institutions",
+                        "nf_core_configs",
+                    ),
+                )
+                yield Center(
+                    Button("Continue", id="continue", variant="success"),
+                    classes="cta",
+                )
+            yield Center(self.parent.LOG_HANDLER.console, classes="cta log")
 
     @on(Button.Pressed, "#continue")
     def on_button_pressed(self, event: Button.Pressed) -> None:
