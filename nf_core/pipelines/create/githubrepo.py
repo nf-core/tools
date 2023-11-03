@@ -3,7 +3,7 @@ import os
 from textwrap import dedent
 
 import git
-from github import Github, GithubException
+from github import Github, GithubException, UnknownObjectException
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal, VerticalScroll
@@ -56,8 +56,8 @@ class GithubRepo(Screen):
                     token = "GITHUB_AUTH_TOKEN" in os.environ
                     yield TextInput(
                         "token",
-                        "GitHub token",
-                        "Your GitHub personal access token for login. Will use the environment variable GITHUB_AUTH_TOKEN if set.",
+                        "Using the environment variable GITHUB_AUTH_TOKEN" if token else "GitHub token",
+                        "Your GitHub personal access token for login.",
                         classes="column",
                         disabled=token,
                     )
@@ -72,76 +72,89 @@ class GithubRepo(Screen):
                         classes="custom_grid",
                     )
                 yield Center(
-                    Button("Create GitHub repo", id="create", variant="success"),
+                    Button("Create GitHub repo", id="create_github", variant="success"),
                     Button("Finish without creating a repo", id="exit", variant="primary"),
                     classes="cta",
                 )
             yield Center(self.parent.LOG_HANDLER.console, classes="cta log")
 
-    @on(Button.Pressed, "#create")
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Create a GitHub repo"""
-        # Save GitHub username and token
-        github_variables = {}
-        for text_input in self.query("TextInput"):
-            this_input = text_input.query_one(Input)
-            github_variables[text_input.field_id] = this_input.value
-        # Save GitHub repo config
-        for switch_input in self.query("Switch"):
-            this_switch = switch_input.query_one(Switch)
-            github_variables[switch_input.field_id] = this_switch.value
+        """Create a GitHub repo or show help message and exit"""
+        if event.button.id == "create_github":
+            # Create a GitHub repo
 
-        # Pipeline git repo
-        pipeline_repo = git.Repo.init(self.parent.TEMPLATE_CONFIG.outdir)
+            # Save GitHub username and token
+            github_variables = {}
+            for text_input in self.query("TextInput"):
+                this_input = text_input.query_one(Input)
+                github_variables[text_input.field_id] = this_input.value
+            # Save GitHub repo config
+            for switch_input in self.query("Switch"):
+                github_variables[switch_input.id] = switch_input.value
 
-        # GitHub authentication
-        if "GITHUB_AUTH_TOKEN" in os.environ:
-            github_auth = self._github_authentication(github_variables["gh_username"], os.environ["GITHUB_AUTH_TOKEN"])
-        elif github_variables["token"]:
-            github_auth = self._github_authentication(github_variables["gh_username"], github_variables["token"])
-        else:
-            raise UserWarning(
-                f"Could not authenticate to GitHub with user name '{github_variables['gh_username']}'."
-                "Please provide an authentication token or set the environment variable 'GITHUB_AUTH_TOKEN'."
-                f"\n{exit_help_text_markdown}"
-            )
+            # Pipeline git repo
+            pipeline_repo = git.Repo.init(self.parent.TEMPLATE_CONFIG.outdir)
 
-        user = github_auth.get_user()
-        org = None
-        # Make sure that the authentication was successful
-        try:
-            user.login
-        except GithubException.GithubException as e:
-            raise UserWarning(
-                f"Could not authenticate to GitHub with user name '{github_variables['gh_username']}'."
-                "Please make sure that the provided user name and token are correct."
-                f"\n{exit_help_text_markdown}"
-            )
-
-        # Check if organisation exists
-        # If the organisation is nf-core or it doesn¡t exist, the repo will be created in the user account
-        if self.parent.TEMPLATE_CONFIG.org != "nf-core":
-            try:
-                org = github_auth.get_organization(self.parent.TEMPLATE_CONFIG.org)
-            except GithubException.UnknownObjectException:
-                pass
-
-        # Create the repo
-        try:
-            if org:
-                self._create_repo_and_push(org, pipeline_repo, github_variables["private"], github_variables["push"])
+            # GitHub authentication
+            if "GITHUB_AUTH_TOKEN" in os.environ:
+                github_auth = self._github_authentication(
+                    github_variables["gh_username"], os.environ["GITHUB_AUTH_TOKEN"]
+                )
+                log.debug("Using GITHUB_AUTH_TOKEN environment variable")
+            elif github_variables["token"]:
+                github_auth = self._github_authentication(github_variables["gh_username"], github_variables["token"])
             else:
-                # Create the repo in the user's account
-                self._create_repo_and_push(user, pipeline_repo, github_variables["private"], github_variables["push"])
-        except UserWarning as e:
-            log.info(f"There was an error with message: {e}" f"\n{exit_help_text_markdown}")
+                raise UserWarning(
+                    f"Could not authenticate to GitHub with user name '{github_variables['gh_username']}'."
+                    "Please provide an authentication token or set the environment variable 'GITHUB_AUTH_TOKEN'."
+                    f"\n{exit_help_text_markdown}"
+                )
 
-        self.parent.switch_screen("bye")
+            user = github_auth.get_user()
+            org = None
+            # Make sure that the authentication was successful
+            try:
+                user.login
+                log.debug("GitHub authentication successful")
+            except GithubException as e:
+                raise UserWarning(
+                    f"Could not authenticate to GitHub with user name '{github_variables['gh_username']}'."
+                    "Please make sure that the provided user name and token are correct."
+                    f"\n{exit_help_text_markdown}"
+                )
 
-    @on(Button.Pressed, "#exit")
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Show help message and exit"""
-        log.info(exit_help_text_markdown)
+            # Check if organisation exists
+            # If the organisation is nf-core or it doesn't exist, the repo will be created in the user account
+            if self.parent.TEMPLATE_CONFIG.org != "nf-core":
+                try:
+                    org = github_auth.get_organization(self.parent.TEMPLATE_CONFIG.org)
+                    log.info(
+                        f"Repo will be created in the GitHub organisation account '{self.parent.TEMPLATE_CONFIG.org}'"
+                    )
+                except UnknownObjectException:
+                    pass
+
+            # Create the repo
+            try:
+                if org:
+                    self._create_repo_and_push(
+                        org, pipeline_repo, github_variables["private"], github_variables["push"]
+                    )
+                else:
+                    # Create the repo in the user's account
+                    log.info(
+                        f"Repo will be created in the GitHub organisation account '{github_variables['gh_username']}'"
+                    )
+                    self._create_repo_and_push(
+                        user, pipeline_repo, github_variables["private"], github_variables["push"]
+                    )
+                log.info(f"GitHub repository '{self.parent.TEMPLATE_CONFIG.name}' created successfully")
+            except UserWarning as e:
+                log.info(f"There was an error with message: {e}" f"\n{exit_help_text_markdown}")
+        elif event.button.id == "exit":
+            # Show help message and exit
+            log.info(exit_help_text_markdown)
+
         self.parent.switch_screen("bye")
 
     def _create_repo_and_push(self, org, pipeline_repo, private, push):
@@ -153,10 +166,10 @@ class GithubRepo(Screen):
             try:
                 repo.get_commits().totalCount
                 raise UserWarning(f"GitHub repository '{self.parent.TEMPLATE_CONFIG.name}' already exists")
-            except GithubException.GithubException:
+            except GithubException:
                 # Repo is empty
                 repo_exists = True
-        except GithubException.UnknownObjectException:
+        except UnknownObjectException:
             # Repo doesn't exist
             repo_exists = False
 
@@ -167,7 +180,11 @@ class GithubRepo(Screen):
             )
 
         # Add the remote and push
-        pipeline_repo.create_remote("origin", repo.clone_url)
+        try:
+            pipeline_repo.create_remote("origin", repo.clone_url)
+        except git.exc.GitCommandError:
+            # Remote already exists
+            pass
         if push:
             pipeline_repo.remotes.origin.push(all=True).raise_if_error()
 

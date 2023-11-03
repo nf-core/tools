@@ -580,7 +580,11 @@ def create(name, description, author, version, force, outdir, template_yaml, pla
                 "\nRun with all command line arguments to avoid using an interactive interface."
             )
             app = PipelineCreateApp()
-            app.run()
+            try:
+                app.run()
+            except UserWarning as e:
+                log.error(e)
+                sys.exit(1)
         else:
             sys.exit(0)
 
