@@ -652,7 +652,7 @@ def install(ctx, tool, dir, prompt, force, sha):
             ctx.obj["modules_repo_no_pull"],
         )
         exit_status = module_install.install(tool)
-        if not exit_status and all:
+        if not exit_status:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
@@ -673,7 +673,9 @@ def install(ctx, tool, dir, prompt, force, sha):
 @click.option("-f", "--force", is_flag=True, default=False, help="Force update of module")
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-@click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
+@click.option(
+    "-a", "--all", "install_all", is_flag=True, default=False, help="Update all modules installed in pipeline"
+)
 @click.option(
     "-x/-y",
     "--preview/--no-preview",
@@ -696,7 +698,7 @@ def install(ctx, tool, dir, prompt, force, sha):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
-def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, update_deps):
+def update(ctx, tool, dir, force, prompt, sha, install_all, preview, save_diff, update_deps):
     """
     Update DSL2 modules within a pipeline.
 
@@ -719,7 +721,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, update_d
             ctx.obj["modules_repo_no_pull"],
         )
         exit_status = module_install.update(tool)
-        if not exit_status and all:
+        if not exit_status and install_all:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
@@ -1342,7 +1344,7 @@ def install(ctx, subworkflow, dir, prompt, force, sha):
             ctx.obj["modules_repo_no_pull"],
         )
         exit_status = subworkflow_install.install(subworkflow)
-        if not exit_status and all:
+        if not exit_status and install_all:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
@@ -1394,7 +1396,9 @@ def remove(ctx, dir, subworkflow):
 @click.option("-f", "--force", is_flag=True, default=False, help="Force update of subworkflow")
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the subworkflow")
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install subworkflow at commit SHA")
-@click.option("-a", "--all", is_flag=True, default=False, help="Update all subworkflow installed in pipeline")
+@click.option(
+    "-a", "--all", "install_all", is_flag=True, default=False, help="Update all subworkflow installed in pipeline"
+)
 @click.option(
     "-x/-y",
     "--preview/--no-preview",
@@ -1417,7 +1421,7 @@ def remove(ctx, dir, subworkflow):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
-def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, update_deps):
+def update(ctx, subworkflow, dir, force, prompt, sha, install_all, preview, save_diff, update_deps):
     """
     Update DSL2 subworkflow within a pipeline.
 
@@ -1440,7 +1444,7 @@ def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, u
             ctx.obj["modules_repo_no_pull"],
         )
         exit_status = subworkflow_install.update(subworkflow)
-        if not exit_status and all:
+        if not exit_status and install_all:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)

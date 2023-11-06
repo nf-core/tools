@@ -318,6 +318,8 @@ def run_cmd(executable: str, cmd: str) -> Union[tuple[bytes, bytes], None]:
             raise RuntimeError(
                 f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
             )
+        else:
+            return None
     except subprocess.CalledProcessError as e:
         log.debug(f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}")
         if executable == "nf-test":
