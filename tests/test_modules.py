@@ -135,25 +135,25 @@ class TestModules(unittest.TestCase):
     # Test of the individual modules commands. #
     ############################################
 
-    from .modules.bump_versions import (
+    from .modules.bump_versions import (  # type: ignore[misc]
         test_modules_bump_versions_all_modules,
         test_modules_bump_versions_fail,
         test_modules_bump_versions_fail_unknown_version,
         test_modules_bump_versions_single_module,
     )
-    from .modules.create import (
+    from .modules.create import (  # type: ignore[misc]
         test_modules_create_fail_exists,
         test_modules_create_nfcore_modules,
         test_modules_create_nfcore_modules_subtool,
         test_modules_create_succeed,
     )
-    from .modules.info import (
+    from .modules.info import (  # type: ignore[misc]
         test_modules_info_in_modules_repo,
         test_modules_info_local,
         test_modules_info_remote,
         test_modules_info_remote_gitlab,
     )
-    from .modules.install import (
+    from .modules.install import (  # type: ignore[misc]
         test_modules_install_alternate_remote,
         test_modules_install_different_branch_fail,
         test_modules_install_different_branch_succeed,
@@ -165,7 +165,7 @@ class TestModules(unittest.TestCase):
         test_modules_install_trimgalore,
         test_modules_install_trimgalore_twice,
     )
-    from .modules.lint import (
+    from .modules.lint import (  # type: ignore[misc]
         test_modules_lint_check_process_labels,
         test_modules_lint_check_url,
         test_modules_lint_empty,
@@ -174,16 +174,19 @@ class TestModules(unittest.TestCase):
         test_modules_lint_new_modules,
         test_modules_lint_no_gitlab,
         test_modules_lint_patched_modules,
+        test_modules_lint_snapshot_file,
+        test_modules_lint_snapshot_file_missing_fail,
+        test_modules_lint_snapshot_file_not_needed,
         test_modules_lint_trimgalore,
     )
-    from .modules.list import (
+    from .modules.list import (  # type: ignore[misc]
         test_modules_install_and_list_pipeline,
         test_modules_install_gitlab_and_list_pipeline,
         test_modules_list_pipeline,
         test_modules_list_remote,
         test_modules_list_remote_gitlab,
     )
-    from .modules.modules_json import (
+    from .modules.modules_json import (  # type: ignore[misc]
         test_get_modules_json,
         test_mod_json_create,
         test_mod_json_create_with_patch,
@@ -198,12 +201,12 @@ class TestModules(unittest.TestCase):
         test_mod_json_with_empty_modules_value,
         test_mod_json_with_missing_modules_entry,
     )
-    from .modules.modules_test import (
+    from .modules.modules_test import (  # type: ignore[misc]
         test_modules_test_check_inputs,
         test_modules_test_no_installed_modules,
         test_modules_test_no_name_no_prompts,
     )
-    from .modules.patch import (
+    from .modules.patch import (  # type: ignore[misc]
         test_create_patch_change,
         test_create_patch_no_change,
         test_create_patch_try_apply_failed,
@@ -212,12 +215,12 @@ class TestModules(unittest.TestCase):
         test_create_patch_update_success,
         test_remove_patch,
     )
-    from .modules.remove import (
+    from .modules.remove import (  # type: ignore[misc]
         test_modules_remove_multiqc_from_gitlab,
         test_modules_remove_trimgalore,
         test_modules_remove_trimgalore_uninstalled,
     )
-    from .modules.update import (
+    from .modules.update import (  # type: ignore[misc]
         test_install_and_update,
         test_install_at_hash_and_update,
         test_install_at_hash_and_update_and_save_diff_to_file,

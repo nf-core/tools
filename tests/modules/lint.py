@@ -306,3 +306,36 @@ def test_modules_lint_check_url(self):
         assert (
             len(mocked_ModuleLint.failed) == failed
         ), f"{test}: Expected {failed} FAIL, got {len(mocked_ModuleLint.failed)}."
+
+
+def test_modules_lint_snapshot_file(self):
+    """Test linting a module with a snapshot file"""
+    Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap").touch()
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+
+
+def test_modules_lint_snapshot_file_missing_fail(self):
+    """Test linting a module with a snapshot file missing, which should fail"""
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+    assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+
+
+def test_modules_lint_snapshot_file_not_needed(self):
+    """Test linting a module which doesn't need a snapshot file by removing the snapshot keyword in the main.nf.test file"""
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test"), "r") as fh:
+        content = fh.read()
+        new_content = content.replace("snapshot(", "snap (")
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test"), "w") as fh:
+        fh.write(new_content)
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0

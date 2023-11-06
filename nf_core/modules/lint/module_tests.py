@@ -40,6 +40,18 @@ def module_tests(_, module):
         module.failed.append(("test_main_exists", "test `main.nf` does not exist", module.test_main_nf))
         module.warned.append(("test_main_exists", "test `main.nf.test` does not exist", nftest_main_nf))
 
+    if os.path.exists(nftest_main_nf):
+        # Check if main.nf.test.snap file exists, if 'snap(' is inside main.nf.test
+        with open(nftest_main_nf, "r") as fh:
+            if "snapshot(" in fh.read():
+                snap_file = os.path.join(module.component_dir, "tests", "main.nf.test.snap")
+                if os.path.exists(snap_file):
+                    module.passed.append(("test_main_snap", "snapshot file `main.nf.test.snap` exists", snap_file))
+                else:
+                    module.failed.append(
+                        ("test_main_snap", "snapshot file `main.nf.test.snap` does not exist", snap_file)
+                    )
+
     if os.path.exists(pytest_main_nf):
         # Check that entry in pytest_modules.yml exists
         try:

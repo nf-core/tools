@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import pytest
 
 import nf_core.subworkflows
@@ -53,5 +56,42 @@ def test_subworkflows_lint_multiple_remotes(self):
     subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
     subworkflow_lint.lint(print_results=False, all_modules=True)
     assert len(subworkflow_lint.failed) == 1
+    assert len(subworkflow_lint.passed) > 0
+    assert len(subworkflow_lint.warned) >= 0
+
+
+def test_subworkflows_lint_snapshot_file(self):
+    """Test linting a subworkflow with a snapshot file"""
+    Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap").touch()
+    subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+    subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
+    assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
+    assert len(subworkflow_lint.passed) > 0
+    assert len(subworkflow_lint.warned) >= 0
+
+
+def test_subworkflows_lint_snapshot_file_missing_fail(self):
+    """Test linting a subworkflow with a snapshot file missing, which should fail"""
+    subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+    subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
+    assert len(subworkflow_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
+    assert len(subworkflow_lint.passed) > 0
+    assert len(subworkflow_lint.warned) >= 0
+
+
+def test_subworkflows_lint_snapshot_file_not_needed(self):
+    """Test linting a subworkflow which doesn't need a snapshot file by removing the snapshot keyword in the main.nf.test file"""
+    with open(
+        Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test"), "r"
+    ) as fh:
+        content = fh.read()
+        new_content = content.replace("snapshot(", "snap (")
+    with open(
+        Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test"), "w"
+    ) as fh:
+        fh.write(new_content)
+    subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+    subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
+    assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
     assert len(subworkflow_lint.passed) > 0
     assert len(subworkflow_lint.warned) >= 0
