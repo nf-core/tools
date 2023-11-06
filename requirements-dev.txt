@@ -9,3 +9,4 @@ sphinx-rtd-theme
 textual-dev>=1.1.0
 mypy
 types-PyYAML
+types-requests
