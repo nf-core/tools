@@ -76,12 +76,31 @@ jobs:
       - name: Check out source-code repository
         uses: actions/checkout@v3
 
-      - name: Set up Python 3.8
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.11
       - name: python-isort
         uses: isort/isort-action@v1.1.0
         with:
           isortVersion: "latest"
           requirementsFiles: "requirements.txt requirements-dev.txt"
+
+  static-type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.11"
+      - run: pip install mypy types-PyYAML
+      - name: Get Python changed files
+        id: changed-py-files
+        uses: tj-actions/changed-files@v23
+        with:
+          files: |
+            *.py
+            **/*.py
+      - name: Run if any of the listed files above is changed
+        if: steps.changed-py-files.outputs.any_changed == 'true'
+        run: mypy ${{ steps.changed-py-files.outputs.all_changed_files }}

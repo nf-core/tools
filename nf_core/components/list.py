@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 import rich
 
@@ -11,11 +12,19 @@ log = logging.getLogger(__name__)
 
 
 class ComponentList(ComponentCommand):
-    def __init__(self, component_type, pipeline_dir, remote=True, remote_url=None, branch=None, no_pull=False):
+    def __init__(
+        self,
+        component_type: str,
+        pipeline_dir: str,
+        remote: bool = True,
+        remote_url: Optional[str] = None,
+        branch: Optional[str] = None,
+        no_pull: bool = False,
+    ) -> None:
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.remote = remote
 
-    def list_components(self, keywords=None, print_json=False):
+    def list_components(self, keywords: Optional[List[str]] = None, print_json=False) -> rich.table.Table:
         keywords = keywords or []
         """
         Get available modules/subworkflows names from GitHub tree for repo
@@ -25,11 +34,11 @@ class ComponentList(ComponentCommand):
         # self.check_component_structure(self.component_type)
 
         # Initialise rich table
-        table = rich.table.Table()
+        table: rich.table.Table = rich.table.Table()
         table.add_column(f"{self.component_type[:-1].capitalize()} Name")
-        components = []
+        components: List[str] = []
 
-        def pattern_msg(keywords):
+        def pattern_msg(keywords: List[str]):
             if len(keywords) == 0:
                 return ""
             if len(keywords) == 1:
@@ -78,11 +87,11 @@ class ComponentList(ComponentCommand):
                 return ""
 
             # Verify that 'modules.json' is consistent with the installed modules
-            modules_json = ModulesJson(self.dir)
+            modules_json: ModulesJson = ModulesJson(self.dir)
             modules_json.check_up_to_date()
 
             # Filter by keywords
-            repos_with_comps = {
+            repos_with_comps: Dict[str, List[Tuple[str, str]]] = {
                 repo_url: [comp for comp in components if all(k in comp[1] for k in keywords)]
                 for repo_url, components in modules_json.get_all_components(self.component_type).items()
             }
@@ -101,10 +110,13 @@ class ComponentList(ComponentCommand):
             modules_json = modules_json.modules_json
 
             for repo_url, component_with_dir in sorted(repos_with_comps.items()):
+                repo_entry: Dict[str, Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]]
+
                 repo_entry = modules_json["repos"].get(repo_url, {})
                 for install_dir, component in sorted(component_with_dir):
-                    repo_modules = repo_entry.get(self.component_type)
-                    component_entry = repo_modules.get(install_dir).get(component)
+                    # Use cast() to predict the return type of recursive get():s
+                    repo_modules = cast(dict, repo_entry.get(self.component_type))
+                    component_entry = cast(dict, cast(dict, repo_modules.get(install_dir)).get(component))
 
                     if component_entry:
                         version_sha = component_entry["git_sha"]

@@ -480,6 +480,8 @@ class GitHub_API_Session(requests_cache.CachedSession):
         if os.environ.get("GITHUB_TOKEN") is not None and self.auth is None:
             self.auth_mode = "Bearer token with GITHUB_TOKEN"
             self.auth = BearerAuth(os.environ["GITHUB_TOKEN"])
+        else:
+            log.warning("Could not find GitHub authentication token. Some API requests may fail.")
 
         log.debug(f"Using GitHub auth: {self.auth_mode}")
 
@@ -510,9 +512,16 @@ class GitHub_API_Session(requests_cache.CachedSession):
         if not self.has_init:
             self.lazy_init()
         request = self.get(url)
-        if request.status_code not in self.return_ok:
-            self.log_content_headers(request)
-            raise AssertionError(f"GitHub API PR failed - got return code {request.status_code} from {url}")
+        if request.status_code in self.return_retry:
+            stderr = rich.console.Console(stderr=True, force_terminal=rich_force_colors())
+            try:
+                r = self.request_retry(url)
+            except Exception as e:
+                stderr.print_exception()
+                raise e
+            else:
+                return r
+
         return request
 
     def get(self, url, **kwargs):
@@ -826,7 +835,7 @@ def prompt_remote_pipeline_name(wfs):
     # Non nf-core repo on GitHub
     if pipeline.count("/") == 1:
         try:
-            gh_api.get(f"https://api.github.com/repos/{pipeline}")
+            gh_api.safe_get(f"https://api.github.com/repos/{pipeline}")
         except Exception:
             # No repo found - pass and raise error at the end
             pass

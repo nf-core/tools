@@ -16,6 +16,7 @@ concurrency:
 
 env:
   NXF_ANSI_LOG: false
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   RunTestWorkflow:
@@ -35,10 +36,10 @@ jobs:
       - uses: actions/checkout@v3
         name: Check out source-code repository
 
-      - name: Set up Python 3.8
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.11
 
       - name: Install python dependencies
         run: |
