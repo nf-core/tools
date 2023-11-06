@@ -22,7 +22,7 @@ class TestParamsFileBuilder:
         cls.tmp_dir = tempfile.mkdtemp()
         cls.template_dir = os.path.join(cls.tmp_dir, "wf")
         create_obj = nf_core.pipelines.create.create.PipelineCreate(
-            "testpipeline", "", "", outdir=cls.template_dir, no_git=True, plain=True
+            "testpipeline", "a description", "Me", outdir=cls.template_dir, no_git=True
         )
         create_obj.init_pipeline()
 

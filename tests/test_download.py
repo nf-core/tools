@@ -116,7 +116,6 @@ class DownloadTest(unittest.TestCase):
             "Test McTestFace",
             no_git=True,
             outdir=test_pipeline_dir,
-            plain=True,
         )
         create_obj.init_pipeline()
 

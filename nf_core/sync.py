@@ -267,7 +267,6 @@ class PipelineSync:
                 force=True,
                 outdir=self.pipeline_dir,
                 author=self.wf_config["manifest.author"].strip('"').strip("'"),
-                plain=True,
             ).init_pipeline()
         except Exception as err:
             # Reset to where you were to prevent git getting messed up.

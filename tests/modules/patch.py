@@ -349,7 +349,7 @@ def test_remove_patch(self):
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
-    with mock.patch.object(nf_core.pipelines.create.questionary, "confirm") as mock_questionary:
+    with mock.patch.object(nf_core.modules.patch.questionary, "confirm") as mock_questionary:
         mock_questionary.unsafe_ask.return_value = True
         patch_obj.remove(BISMARK_ALIGN)
     # Check that the diff file has been removed

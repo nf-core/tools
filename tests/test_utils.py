@@ -45,7 +45,6 @@ class TestUtils(unittest.TestCase):
             "Test McTestFace",
             no_git=True,
             outdir=self.test_pipeline_dir,
-            plain=True,
         )
         self.create_obj.init_pipeline()
         # Base Pipeline object on this directory

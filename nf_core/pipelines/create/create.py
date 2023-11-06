@@ -10,11 +10,11 @@ import shutil
 import sys
 import time
 from pathlib import Path
+from typing import Optional, Union
 
 import filetype
 import git
 import jinja2
-import questionary
 import requests
 import yaml
 
@@ -47,17 +47,17 @@ class PipelineCreate:
 
     def __init__(
         self,
-        name=None,
-        description=None,
-        author=None,
-        version="1.0dev",
-        no_git=False,
-        force=False,
-        outdir=None,
-        template_config=None,
-        organisation="nf-core",
-        from_config_file=False,
-        default_branch=None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        author: Optional[str] = None,
+        version: str = "1.0dev",
+        no_git: bool = False,
+        force: bool = False,
+        outdir: Optional[str] = None,
+        template_config: Optional[Union[str, CreateConfig, Path]] = None,
+        organisation: str = "nf-core",
+        from_config_file: bool = False,
+        default_branch: Optional[str] = None,
     ):
         if isinstance(template_config, CreateConfig):
             self.config = template_config
@@ -69,14 +69,18 @@ class PipelineCreate:
                 self.config = CreateConfig(**config_yml["template"])
             else:
                 raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
-        elif (name and description and author) or (template_config and isinstance(template_config, str)):
+        elif (name and description and author) or (
+            template_config and (isinstance(template_config, str) or isinstance(template_config, Path))
+        ):
             # Obtain a CreateConfig object from the template yaml file
             self.config = self.check_template_yaml_info(template_config, name, description, author)
             self.update_config(organisation, version, force, outdir)
         else:
             raise UserWarning("The template configuration was not provided.")
 
-        self.jinja_params, skip_paths = self.obtain_jinja_params_dict(self.config.skip_features, self.config.outdir)
+        self.jinja_params, skip_paths = self.obtain_jinja_params_dict(
+            self.config.skip_features or [], self.config.outdir
+        )
 
         skippable_paths = {
             "github": [
@@ -209,9 +213,9 @@ class PipelineCreate:
             else:
                 jinja_params[t_area] = True
 
-        # If github is selected, exclude also github_badges
-        # if not param_dict["github"]:
-        #    param_dict["github_badges"] = False
+        # Add is_nfcore as an area to skip for non-nf-core pipelines, to skip all nf-core files
+        if not jinja_params["is_nfcore"]:
+            skip_paths.append("is_nfcore")
 
         # Set the last parameters based on the ones provided
         jinja_params["short_name"] = (

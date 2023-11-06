@@ -1,5 +1,11 @@
-prefix: testprefix
-skip:
+name: test
+description: just for 4w3s0m3 tests
+author: Chuck Norris
+version: 1.0.0
+force: True
+org: testprefix
+is_nfcore: False
+skip_features:
   - github
   - ci
   - github_badges

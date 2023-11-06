@@ -228,21 +228,17 @@ class TestCli(unittest.TestCase):
         assert error_txt in captured_logs.output[-1]
         assert captured_logs.records[-1].levelname == "ERROR"
 
-    @mock.patch("nf_core.pipelines.create.PipelineCreate")
+    @mock.patch("nf_core.pipelines.create.create.PipelineCreate")
     def test_create(self, mock_create):
         """Test nf-core pipeline is created and cli parameters are passed on."""
         params = {
-            "name": "pipeline name",
+            "name": "pipelinename",
             "description": "pipeline description",
             "author": "Kalle Anka",
-            "version": "1.2.3",
-            "force": None,
             "outdir": "/path/outdir",
-            "template-yaml": "file.yaml",
-            "plain": None,
         }
 
-        cmd = ["create"] + self.assemble_params(params)
+        cmd = ["pipelines", "create"] + self.assemble_params(params)
         result = self.invoke_cli(cmd)
 
         assert result.exit_code == 0
@@ -250,13 +246,37 @@ class TestCli(unittest.TestCase):
             params["name"],
             params["description"],
             params["author"],
-            version=params["version"],
             force="force" in params,
+            version=None,
             outdir=params["outdir"],
-            template_yaml_path=params["template-yaml"],
-            plain="plain" in params,
+            organisation=None,
         )
         mock_create.return_value.init_pipeline.assert_called_once()
+
+    @mock.patch("nf_core.pipelines.create.create.PipelineCreate")
+    def test_create_error(self, mock_create):
+        """Test `nf-core pipelines create` run without providing all the arguments thorws an error."""
+        params = {
+            "name": "pipelinename",
+        }
+
+        cmd = ["pipelines", "create"] + self.assemble_params(params)
+        result = self.invoke_cli(cmd)
+
+        assert result.exit_code == 1
+        assert "Command arguments are not accepted in interactive mode." in result.output
+
+    @mock.patch("nf_core.pipelines.create.PipelineCreateApp")
+    def test_create_app(self, mock_create):
+        """Test `nf-core pipelines create` runs an App."""
+        cmd = ["pipelines", "create"]
+        result = self.invoke_cli(cmd)
+
+        assert result.exit_code == 0
+        assert "Launching interactive nf-core pipeline creation tool." in result.output
+
+        mock_create.assert_called_once_with()
+        mock_create.return_value.run.assert_called_once()
 
     @mock.patch("nf_core.utils.is_pipeline_directory")
     @mock.patch("nf_core.lint.run_linting")

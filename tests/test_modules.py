@@ -73,7 +73,7 @@ class TestModules(unittest.TestCase):
         self.pipeline_name = "mypipeline"
         self.pipeline_dir = os.path.join(self.tmp_dir, self.pipeline_name)
         nf_core.pipelines.create.create.PipelineCreate(
-            self.pipeline_name, "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
+            self.pipeline_name, "it is mine", "me", no_git=True, outdir=self.pipeline_dir
         ).init_pipeline()
         # Set up install objects
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)

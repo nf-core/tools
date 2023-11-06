@@ -27,7 +27,7 @@ class TestModules(unittest.TestCase):
         self.pipeline_dir = os.path.join(self.tmp_dir, "testpipeline")
         default_branch = "master"
         self.create_obj = nf_core.pipelines.create.create.PipelineCreate(
-            "testing", "test pipeline", "tester", outdir=self.pipeline_dir, plain=True, default_branch=default_branch
+            "testing", "test pipeline", "tester", outdir=self.pipeline_dir, default_branch=default_branch
         )
         self.create_obj.init_pipeline()
         self.remote_path = os.path.join(self.tmp_dir, "remote_repo")
