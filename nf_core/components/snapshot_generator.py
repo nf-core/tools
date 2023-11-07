@@ -7,6 +7,7 @@ from __future__ import print_function
 import logging
 import os
 import re
+from pathlib import Path
 from typing import List, Optional
 
 import questionary
@@ -75,12 +76,10 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
                 choices=self.components_from_repo(self.org),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        self.component_dir = os.path.join(
-            self.component_type, self.modules_repo.repo_path, *self.component_name.split("/")
-        )
+        self.component_dir = Path(self.component_type, self.modules_repo.repo_path, *self.component_name.split("/"))
 
         # First, sanity check that the module directory exists
-        if not os.path.isdir(self.component_dir):
+        if not (self.dir / self.component_dir).is_dir():
             raise UserWarning(
                 f"Cannot find directory '{self.component_dir}'.{' Should be TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else ''}"
             )
@@ -132,7 +131,7 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
 
         result = nf_core.utils.run_cmd(
             "nf-test",
-            f"test --tag {self.component_name} --profile {os.environ['PROFILE']} {verbose} {update}",
+            f"test {self.dir} --tag {self.component_name} --profile {os.environ['PROFILE']} {verbose} {update}",
         )
         if result is not None:
             nftest_out, nftest_err = result
@@ -171,7 +170,7 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
                     log.info("Removing obsolete snapshots")
                     nf_core.utils.run_cmd(
                         "nf-test",
-                        f"test --tag {self.component_name} --profile {os.environ['PROFILE']} --clean-snapshot",
+                        f"test {self.dir} --tag {self.component_name} --profile {os.environ['PROFILE']} --clean-snapshot",
                     )
                 else:
                     answer = Confirm.ask("nf-test found obsolete snapshots. Do you want to remove them?", default=True)
@@ -179,7 +178,7 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
                         log.info("Removing obsolete snapshots")
                         nf_core.utils.run_cmd(
                             "nf-test",
-                            f"test --tag {self.component_name} --profile {os.environ['PROFILE']} --clean-snapshot",
+                            f"test {self.dir} --tag {self.component_name} --profile {os.environ['PROFILE']} --clean-snapshot",
                         )
                     else:
                         log.debug("Obsolete snapshots not removed")
