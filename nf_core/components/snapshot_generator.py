@@ -10,7 +10,6 @@ import re
 from typing import List, Optional
 
 import questionary
-import yaml
 from rich import print
 from rich.panel import Panel
 from rich.prompt import Confirm
@@ -34,7 +33,6 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
         component_name: Optional[str] = None,
         directory: str = ".",
         run_tests: bool = False,
-        force_overwrite: bool = False,
         no_prompts: bool = False,
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,
@@ -46,23 +44,24 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
         self.remote_url = remote_url
         self.branch = branch
         self.run_tests = run_tests
-        self.force_overwrite = force_overwrite
         self.no_prompts = no_prompts
-        self.component_dir: str = None
+        self.component_dir: str = directory
         self.errors: List[str] = []
         self.verbose = verbose
         self.obsolete_snapshots: bool = False
         self.update = update
 
-    def run(self):
+    def run(self) -> None:
         """Run build steps"""
         self.check_inputs()
         self.check_snapshot_stability()
         if len(self.errors) > 0:
             errors = "\n - ".join(self.errors)
             raise UserWarning(f"Ran, but found errors:\n - {errors}")
+        else:
+            log.info("All tests passed!")
 
-    def check_inputs(self):
+    def check_inputs(self) -> None:
         """Do more complex checks about supplied flags."""
         # Check modules directory structure
         if self.component_type == "modules":
@@ -75,9 +74,10 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
                 choices=self.components_from_repo(self.org),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        self.component_dir = os.path.join(
-            self.component_type, self.modules_repo.repo_path, *self.component_name.split("/")
-        )
+        if self.component_dir == "":
+            self.component_dir = os.path.join(
+                self.component_type, self.modules_repo.repo_path, *self.component_name.split("/")
+            )
 
         # First, sanity check that the module directory exists
         if not os.path.isdir(self.component_dir):
@@ -95,10 +95,10 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
             os.environ["PROFILE"] = ""
             if self.no_prompts:
                 log.info(
-                    "Setting env var '$PROFILE' to an empty string as not set.\n"
-                    "Tests will run with Docker by default. "
+                    "Setting env var '$PROFILE' to Docker as not set.\n"
                     "To use Singularity set 'export PROFILE=singularity' in your shell before running this command."
                 )
+                os.environ["PROFILE"] = "docker"
             else:
                 question = {
                     "type": "list",
@@ -110,7 +110,7 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
                 profile = answer["profile"].lower()
                 os.environ["PROFILE"] = profile
 
-    def display_nftest_output(self, nftest_out, nftest_err):
+    def display_nftest_output(self, nftest_out: bytes, nftest_err: bytes) -> None:
         nftest_output = Text.from_ansi(nftest_out.decode())
         print(Panel(nftest_output, title="nf-test output"))
         if nftest_err:
