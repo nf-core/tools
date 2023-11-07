@@ -25,7 +25,7 @@ class TestComponents(unittest.TestCase):
         Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_NFTEST_BRANCH)
 
         # Set $PROFILE environment variable to docker - tests will run with Docker
-        if not os.environ["PROFILE"]:
+        if os.environ.get("PROFILE") is None:
             os.environ["PROFILE"] = "docker"
 
     def tearDown(self):
