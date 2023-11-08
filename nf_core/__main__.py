@@ -855,10 +855,11 @@ def create_module(
 @modules.command("create-snapshot")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
 @click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
 @click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
-def create_snapshot(ctx, tool, run_tests, no_prompts, update):
+def create_snapshot(ctx, tool, dir, run_tests, no_prompts, update):
     """
     Generate nf-test snapshots for a module.
 
@@ -870,6 +871,7 @@ def create_snapshot(ctx, tool, run_tests, no_prompts, update):
         snap_generator = ComponentTestSnapshotGenerator(
             component_type="modules",
             component_name=tool,
+            directory=dir,
             run_tests=run_tests,
             no_prompts=no_prompts,
             update=update,
@@ -1082,10 +1084,11 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
 @subworkflows.command("create-snapshot")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
 @click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
 @click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
-def create_test_yml(ctx, subworkflow, run_tests, no_prompts, update):
+def create_test_yml(ctx, subworkflow, dir, run_tests, no_prompts, update):
     """
     Auto-generate a test.yml file for a new subworkflow.
 
@@ -1098,6 +1101,7 @@ def create_test_yml(ctx, subworkflow, run_tests, no_prompts, update):
         snap_generator = ComponentTestSnapshotGenerator(
             component_type="subworkflows",
             component_name=subworkflow,
+            directory=dir,
             run_tests=run_tests,
             no_prompts=no_prompts,
             update=update,

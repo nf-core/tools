@@ -19,6 +19,7 @@ from rich.text import Text
 
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
+from tests.utils import set_wd
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +47,6 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
         self.branch = branch
         self.run_tests = run_tests
         self.no_prompts = no_prompts
-        self.component_dir: str | Path = directory
         self.errors: List[str] = []
         self.verbose = verbose
         self.obsolete_snapshots: bool = False
@@ -55,7 +55,8 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
     def run(self) -> None:
         """Run build steps"""
         self.check_inputs()
-        self.check_snapshot_stability()
+        with set_wd(self.dir):
+            self.check_snapshot_stability()
         if len(self.errors) > 0:
             errors = "\n - ".join(self.errors)
             raise UserWarning(f"Ran, but found errors:\n - {errors}")
@@ -75,8 +76,8 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
                 choices=self.components_from_repo(self.org),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        if self.component_dir == "":
-            self.component_dir = Path(self.component_type, self.modules_repo.repo_path, *self.component_name.split("/"))
+
+        self.component_dir = Path(self.component_type, self.modules_repo.repo_path, *self.component_name.split("/"))
 
         # First, sanity check that the module directory exists
         if not Path(self.dir, self.component_dir).is_dir():
@@ -131,7 +132,7 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
 
         result = nf_core.utils.run_cmd(
             "nf-test",
-            f"test {self.dir} --tag {self.component_name} --profile {os.environ['PROFILE']} {verbose} {update}",
+            f"test --tag {self.component_name} --profile {os.environ['PROFILE']} {verbose} {update}",
         )
         if result is not None:
             nftest_out, nftest_err = result
@@ -172,7 +173,7 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
                     log.info("Removing obsolete snapshots")
                     nf_core.utils.run_cmd(
                         "nf-test",
-                        f"test {self.dir} --tag {self.component_name} --profile {os.environ['PROFILE']} --clean-snapshot",
+                        f"test --tag {self.component_name} --profile {os.environ['PROFILE']} --clean-snapshot",
                     )
                 else:
                     answer = Confirm.ask("nf-test found obsolete snapshots. Do you want to remove them?", default=True)
@@ -180,7 +181,7 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
                         log.info("Removing obsolete snapshots")
                         nf_core.utils.run_cmd(
                             "nf-test",
-                            f"test {self.dir} --tag {self.component_name} --profile {os.environ['PROFILE']} --clean-snapshot",
+                            f"test --tag {self.component_name} --profile {os.environ['PROFILE']} --clean-snapshot",
                         )
                     else:
                         log.debug("Obsolete snapshots not removed")

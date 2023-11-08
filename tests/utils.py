@@ -68,7 +68,7 @@ def set_wd(path: Path):
         Path to the working directory to be used iside this context.
     """
     start_wd = Path().absolute()
-    os.chdir(path)
+    os.chdir(Path(path).resolve())
     try:
         yield
     finally:
