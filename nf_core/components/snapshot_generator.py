@@ -145,7 +145,6 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
 
             # check if nf-test was successful
             if "Assertion failed:" in nftest_out.decode():
-                log.error("nf-test failed")
                 return False
             else:
                 log.debug("nf-test successful")
@@ -158,10 +157,13 @@ class ComponentTestSnapshotGenerator(ComponentCommand):
         """Run the nf-test twice and check if the snapshot changes"""
         log.info("Generating nf-test snapshot")
         if not self.generate_snapshot():
+            log.error("nf-test failed")
+            self.errors.append("nf-test failed")
             return False  # stop here if the first run failed
         log.info("Generating nf-test snapshot again to check stability")
         if not self.generate_snapshot():
             log.error("nf-test snapshot is not stable")
+            self.errors.append("nf-test snapshot is not stable")
             return False
         else:
             if self.obsolete_snapshots:
