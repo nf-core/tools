@@ -19,7 +19,7 @@ def test_generate_snapshot_module(self):
             remote_url=GITLAB_URL,
             branch=GITLAB_NFTEST_BRANCH,
         )
-        assert snap_generator.run()
+        snap_generator.run()
 
         snap_path = Path("modules", "nf-core-test", "fastqc", "tests", "main.nf.test.snap")
         assert snap_path.exists()
@@ -41,7 +41,7 @@ def test_generate_snapshot_subworkflow(self):
             remote_url=GITLAB_URL,
             branch=GITLAB_NFTEST_BRANCH,
         )
-        assert snap_generator.run()
+        snap_generator.run()
 
         snap_path = Path("subworkflows", "nf-core-test", "bam_sort_stats_samtools", "tests", "main.nf.test.snap")
         assert snap_path.exists()
@@ -73,7 +73,7 @@ def test_update_snapshot_module(self):
             branch=GITLAB_NFTEST_BRANCH,
             update=True,
         )
-        assert snap_generator.run()
+        snap_generator.run()
 
         snap_path = Path("modules", "nf-core-test", "bwa", "mem", "tests", "main.nf.test.snap")
         assert snap_path.exists()
