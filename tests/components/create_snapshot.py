@@ -2,6 +2,8 @@ import json
 import os
 from pathlib import Path
 
+import pytest
+
 from nf_core.components.snapshot_generator import ComponentTestSnapshotGenerator
 
 from ..utils import GITLAB_NFTEST_BRANCH, GITLAB_URL, set_wd
@@ -17,10 +19,7 @@ def test_generate_snapshot_module(self):
             remote_url=GITLAB_URL,
             branch=GITLAB_NFTEST_BRANCH,
         )
-        try:
-            snap_generator.run()
-        except UserWarning as e:
-            assert False, f"'ComponentTestSnapshotGenerator' raised an exception {e}"
+        assert snap_generator.run()
 
         snap_path = Path("modules", "nf-core-test", "fastqc", "tests", "main.nf.test.snap")
         assert snap_path.exists()
@@ -42,10 +41,7 @@ def test_generate_snapshot_subworkflow(self):
             remote_url=GITLAB_URL,
             branch=GITLAB_NFTEST_BRANCH,
         )
-        try:
-            snap_generator.run()
-        except UserWarning as e:
-            assert False, f"'ComponentTestSnapshotGenerator' raised an exception {e}"
+        assert snap_generator.run()
 
         snap_path = Path("subworkflows", "nf-core-test", "bam_sort_stats_samtools", "tests", "main.nf.test.snap")
         assert snap_path.exists()
@@ -77,10 +73,7 @@ def test_update_snapshot_module(self):
             branch=GITLAB_NFTEST_BRANCH,
             update=True,
         )
-        try:
-            snap_generator.run()
-        except UserWarning as e:
-            assert False, f"'ComponentTestSnapshotGenerator' raised an exception {e}"
+        assert snap_generator.run()
 
         snap_path = Path("modules", "nf-core-test", "bwa", "mem", "tests", "main.nf.test.snap")
         assert snap_path.exists()
@@ -89,3 +82,18 @@ def test_update_snapshot_module(self):
             snap_content = json.load(fh)
         assert "Single-End" in snap_content
         assert snap_content["Single-End"]["timestamp"] != original_timestamp
+
+
+def test_test_not_found(self):
+    """Generate the snapshot for a module in nf-core/modules clone"""
+    with set_wd(self.nfcore_modules):
+        snap_generator = ComponentTestSnapshotGenerator(
+            component_type="modules",
+            component_name="fastp",
+            no_prompts=True,
+            remote_url=GITLAB_URL,
+            branch=GITLAB_NFTEST_BRANCH,
+        )
+        with pytest.raises(UserWarning) as e:
+            snap_generator.run()
+            assert "Test file 'main.nf.test' not found" in e
