@@ -85,7 +85,7 @@ def test_update_snapshot_module(self):
 
 
 def test_test_not_found(self):
-    """Generate the snapshot for a module in nf-core/modules clone which diesn't contain tests"""
+    """Generate the snapshot for a module in nf-core/modules clone which doesn't contain tests"""
     with set_wd(self.nfcore_modules):
         snap_generator = ComponentTestSnapshotGenerator(
             component_type="modules",
