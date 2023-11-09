@@ -43,5 +43,6 @@ class TestComponents(unittest.TestCase):
         test_generate_snapshot_module,
         test_generate_snapshot_subworkflow,
         test_test_not_found,
+        test_unstable_snapshot,
         test_update_snapshot_module,
     )

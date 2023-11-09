@@ -85,7 +85,7 @@ def test_update_snapshot_module(self):
 
 
 def test_test_not_found(self):
-    """Generate the snapshot for a module in nf-core/modules clone"""
+    """Generate the snapshot for a module in nf-core/modules clone which diesn't contain tests"""
     with set_wd(self.nfcore_modules):
         snap_generator = ComponentTestSnapshotGenerator(
             component_type="modules",
@@ -97,3 +97,18 @@ def test_test_not_found(self):
         with pytest.raises(UserWarning) as e:
             snap_generator.run()
             assert "Test file 'main.nf.test' not found" in e
+
+
+def test_unstable_snapshot(self):
+    """Generate the snapshot for a module in nf-core/modules clone with unstable snapshots"""
+    with set_wd(self.nfcore_modules):
+        snap_generator = ComponentTestSnapshotGenerator(
+            component_type="modules",
+            component_name="kallisto/quant",
+            no_prompts=True,
+            remote_url=GITLAB_URL,
+            branch=GITLAB_NFTEST_BRANCH,
+        )
+        with pytest.raises(UserWarning) as e:
+            snap_generator.run()
+            assert "nf-test snapshot is not stable" in e
