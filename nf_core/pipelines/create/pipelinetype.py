@@ -1,5 +1,5 @@
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal, VerticalScroll
+from textual.containers import Center
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown
 
@@ -40,13 +40,10 @@ class ChoosePipelineType(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        with Horizontal():
-            with VerticalScroll():
-                yield Markdown(markdown_intro)
-                yield Center(
-                    Button("nf-core", id="type_nfcore", variant="success"),
-                    Button("Custom", id="type_custom", variant="primary"),
-                    classes="cta",
-                )
-                yield Markdown(markdown_details)
-            yield Center(self.parent.LOG_HANDLER.console, classes="cta log")
+        yield Markdown(markdown_intro)
+        yield Center(
+            Button("nf-core", id="type_nfcore", variant="success"),
+            Button("Custom", id="type_custom", variant="primary"),
+            classes="cta",
+        )
+        yield Markdown(markdown_details)

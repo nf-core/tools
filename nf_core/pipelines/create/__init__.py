@@ -5,7 +5,6 @@ from textual.app import App
 from textual.widgets import Button
 
 from nf_core.pipelines.create.basicdetails import BasicDetails
-from nf_core.pipelines.create.bye import ByeScreen
 from nf_core.pipelines.create.custompipeline import CustomPipeline
 from nf_core.pipelines.create.finaldetails import FinalDetails
 from nf_core.pipelines.create.githubrepo import GithubRepo
@@ -45,7 +44,6 @@ class PipelineCreateApp(App[CreateConfig]):
         "type_nfcore": NfcorePipeline(),
         "final_details": FinalDetails(),
         "github_repo": GithubRepo(),
-        "bye": ByeScreen(),
     }
 
     # Initialise config as empty
@@ -56,6 +54,8 @@ class PipelineCreateApp(App[CreateConfig]):
 
     # Log handler
     LOG_HANDLER = log_handler
+    # Logging state
+    LOGGING_STATE = None
 
     def on_mount(self) -> None:
         self.push_screen("welcome")

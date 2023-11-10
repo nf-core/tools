@@ -3,7 +3,7 @@ from textwrap import dedent
 
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal, VerticalScroll
+from textual.containers import Center, Horizontal
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown
 
@@ -16,46 +16,43 @@ class BasicDetails(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
+        yield Markdown(
+            dedent(
+                """
+                # Basic details
+                """
+            )
+        )
         with Horizontal():
-            with VerticalScroll():
-                yield Markdown(
-                    dedent(
-                        """
-                        # Basic details
-                        """
-                    )
-                )
-                with Horizontal():
-                    yield TextInput(
-                        "org",
-                        "Organisation",
-                        "GitHub organisation",
-                        "nf-core",
-                        classes="column",
-                        disabled=self.parent.PIPELINE_TYPE == "nfcore",
-                    )
-                    yield TextInput(
-                        "name",
-                        "Pipeline Name",
-                        "Workflow name",
-                        classes="column",
-                    )
+            yield TextInput(
+                "org",
+                "Organisation",
+                "GitHub organisation",
+                "nf-core",
+                classes="column",
+                disabled=self.parent.PIPELINE_TYPE == "nfcore",
+            )
+            yield TextInput(
+                "name",
+                "Pipeline Name",
+                "Workflow name",
+                classes="column",
+            )
 
-                yield TextInput(
-                    "description",
-                    "Description",
-                    "A short description of your pipeline.",
-                )
-                yield TextInput(
-                    "author",
-                    "Author(s)",
-                    "Name of the main author / authors",
-                )
-                yield Center(
-                    Button("Next", variant="success"),
-                    classes="cta",
-                )
-            yield Center(self.parent.LOG_HANDLER.console, classes="cta log")
+        yield TextInput(
+            "description",
+            "Description",
+            "A short description of your pipeline.",
+        )
+        yield TextInput(
+            "author",
+            "Author(s)",
+            "Name of the main author / authors",
+        )
+        yield Center(
+            Button("Next", variant="success"),
+            classes="cta",
+        )
 
     @on(Button.Pressed)
     def on_button_pressed(self, event: Button.Pressed) -> None:

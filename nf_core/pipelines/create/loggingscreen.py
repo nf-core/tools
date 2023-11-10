@@ -7,11 +7,11 @@ from textual.widgets import Button, Footer, Header, Markdown, Static
 markdown = """
 # nf-core create
 
-Bye!
+Visualising logging output.
 """
 
 
-class ByeScreen(Screen):
+class LoggingScreen(Screen):
     """A screen to show the final logs."""
 
     def compose(self) -> ComposeResult:
@@ -26,10 +26,21 @@ class ByeScreen(Screen):
             id="logo",
         )
         yield Markdown(markdown)
+        if self.parent.LOGGING_STATE == "repo created":
+            yield Center(
+                Button("Close App", id="close_app", variant="success"),
+                classes="cta",
+            )
+        else:
+            yield Center(
+                Button("Close logging screen", id="close_screen", variant="success"),
+                classes="cta",
+            )
         yield Center(self.parent.LOG_HANDLER.console, classes="cta")
-        yield Center(Button("Close", id="close", variant="success"), classes="cta")
 
-    @on(Button.Pressed, "#close")
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Close app"""
-        self.parent.exit()
+        """Close the logging screen or the whole app."""
+        if event.button.id == "close_app":
+            self.parent.exit()
+        if event.button.id == "close_screen":
+            self.parent.switch_screen("github_repo")
