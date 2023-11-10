@@ -56,6 +56,8 @@ def meta_yml(module_lint_object, module):
             hint = f"\nCheck the entry for `{e.path[0]}`."
         if e.message.startswith("None is not of type 'object'") and len(e.path) > 2:
             hint = f"\nCheck that the child entries of {e.path[0]+'.'+e.path[2]} are indented correctly."
+        if e.schema.get("message"):
+            e.message = e.schema["message"]
         module.failed.append(
             (
                 "meta_yml_valid",
