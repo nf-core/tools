@@ -102,7 +102,7 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
         [
             (
                 rf"(nextflowVersion\s*=\s*[\'\"]?!>=\s*)({re.escape(current_version)})([\'\"]?)",
-                rf"\g<1>{re.escape(new_version)}\g<3>",
+                rf"\g<1>{new_version}\g<3>",
             )
         ],
     )
@@ -116,7 +116,7 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
                 # example:
                 # NXF_VER:
                 #   - "20.04.0"
-                rf"- [\"]{re.escape(current_version)}[\"]",
+                rf"- \"{re.escape(current_version)}\"",
                 f'- "{new_version}"',
             )
         ],
