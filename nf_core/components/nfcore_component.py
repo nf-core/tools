@@ -46,6 +46,7 @@ class NFCoreComponent:
             # Initialize the important files
             self.main_nf = self.component_dir / "main.nf"
             self.meta_yml = self.component_dir / "meta.yml"
+            self.process_name = ""
             self.environment_yml = self.component_dir / "environment.yml"
 
             repo_dir = self.component_dir.parts[: self.component_dir.parts.index(self.component_name.split("/")[0])][-1]
@@ -67,6 +68,7 @@ class NFCoreComponent:
             # These attributes are only used by nf-core modules
             # so just initialize them to None
             self.meta_yml = ""
+            self.environment_yml = ""
             self.test_dir = None
             self.test_yml = None
             self.test_main_nf = None
