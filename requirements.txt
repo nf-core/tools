@@ -4,7 +4,6 @@ GitPython
 jinja2
 jsonschema>=3.0
 markdown>=3.3
-nf-test
 packaging
 pre-commit
 prompt_toolkit>=3.0.3

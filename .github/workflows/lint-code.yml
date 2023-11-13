@@ -100,6 +100,15 @@ jobs:
           python -m pip install --upgrade pip -r requirements-dev.txt
           pip install -e .
 
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: 3.11
+
+      - name: Install nf-test
+        run: |
+          conda install -c bioconda nf-test
+
       - name: Get Python changed files
         id: changed-py-files
         uses: tj-actions/changed-files@v23
