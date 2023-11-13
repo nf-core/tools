@@ -17,7 +17,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Union
+from typing import Tuple, Union
 
 import git
 import prompt_toolkit
@@ -306,7 +306,7 @@ def fetch_wf_config(wf_path, cache_config=True):
     return config
 
 
-def run_cmd(executable: str, cmd: str) -> Union[tuple[bytes, bytes], None]:
+def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
     """Run a specified command and capture the output. Handle errors nicely."""
     full_cmd = f"{executable} {cmd}"
     log.debug(f"Running command: {full_cmd}")
