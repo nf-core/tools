@@ -2,12 +2,13 @@ import json
 from pathlib import Path
 
 import yaml
+from jsonschema import exceptions, validators
 
 from nf_core.components.lint import ComponentLint
 from nf_core.components.nfcore_component import NFCoreComponent
 
 
-def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent):
+def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None:
     """
     Lint an ``environment.yml`` file.
 
@@ -27,41 +28,49 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent):
         module.failed.append(
             ("environment_yml_exists", "Module `environment.yml` does not exist", module.environment_yml)
         )
-        return
 
-    # Check that the dependencies section is sorted alphabetically
+    # Confirm that the environment.yml file is valid according to the JSON schema
     if env_yml:
-        if "dependencies" in env_yml:
-            if isinstance(env_yml["dependencies"], list):
-                if sorted(env_yml["dependencies"]) == env_yml["dependencies"]:
-                    module.passed.append(
-                        (
-                            "environment_yml_sorted",
-                            "Module's `environment.yml` is sorted alphabetically",
-                            module.environment_yml,
-                        )
-                    )
-                else:
-                    module.failed.append(
-                        (
-                            "environment_yml_sorted",
-                            "Module's `environment.yml` is not sorted alphabetically",
-                            module.environment_yml,
-                        )
-                    )
-            else:
-                module.failed.append(
-                    (
-                        "environment_yml_valid",
-                        "Module's `environment.yml` doesn't have a correctly formatted `dependencies` section, expecting an array",
-                        module.environment_yml,
-                    )
-                )
-        else:
+        valid_env_yml = False
+        try:
+            with open(
+                Path(module_lint_object.modules_repo.local_repo_dir, "modules/environment-schema.json"), "r"
+            ) as fh:
+                schema = json.load(fh)
+            validators.validate(instance=env_yml, schema=schema)
+            module.passed.append(
+                ("environment_yml_valid", "Module's `environment.yml` is valid", module.environment_yml)
+            )
+            valid_env_yml = True
+        except exceptions.ValidationError as e:
+            hint = ""
+            if len(e.path) > 0:
+                hint = f"\nCheck the entry for `{e.path[0]}`."
+            if e.schema.get("message"):
+                e.message = e.schema["message"]
             module.failed.append(
                 (
                     "environment_yml_valid",
-                    "Module's `environment.yml` doesn't contain the required `dependencies` section",
+                    f"The `environment.yml` of the module {module.component_name} is not valid: {e.message}.{hint}",
                     module.environment_yml,
                 )
             )
+
+        # Check that the dependencies section is sorted alphabetically
+        if valid_env_yml:
+            if sorted(env_yml["dependencies"]) == env_yml["dependencies"]:
+                module.passed.append(
+                    (
+                        "environment_yml_sorted",
+                        "Module's `environment.yml` is sorted alphabetically",
+                        module.environment_yml,
+                    )
+                )
+            else:
+                module.failed.append(
+                    (
+                        "environment_yml_sorted",
+                        "Module's `environment.yml` is not sorted alphabetically",
+                        module.environment_yml,
+                    )
+                )

@@ -49,7 +49,6 @@ class ComponentCreate(ComponentCommand):
         self.subtool = None
         self.tool_conda_name = conda_name
         self.tool_conda_version = conda_version
-        self.tool_licence = None
         self.tool_licence = ""
         self.tool_description = ""
         self.tool_doc_url = ""

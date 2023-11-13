@@ -66,7 +66,7 @@ class NFCoreComponent:
             self.component_name = self.component_dir.stem
             # These attributes are only used by nf-core modules
             # so just initialize them to None
-            self.meta_yml = None
+            self.meta_yml = ""
             self.test_dir = None
             self.test_yml = None
             self.test_main_nf = None

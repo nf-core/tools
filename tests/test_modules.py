@@ -5,6 +5,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 
 import requests_cache
 import responses
@@ -27,15 +28,12 @@ from .utils import (
 def create_modules_repo_dummy(tmp_dir):
     """Create a dummy copy of the nf-core/modules repo"""
 
-    root_dir = os.path.join(tmp_dir, "modules")
-    os.makedirs(os.path.join(root_dir, "modules", "nf-core"))
-    os.makedirs(os.path.join(root_dir, "tests", "modules", "nf-core"))
-    os.makedirs(os.path.join(root_dir, "tests", "config"))
-    with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
-        fh.writelines(["test:", "\n  - modules/test/**", "\n  - tests/modules/test/**"])
-    with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
+    root_dir = Path(tmp_dir, "modules")
+    Path(root_dir, "modules", "nf-core").mkdir(parents=True)
+    Path(root_dir, "tests", "modules", "nf-core").mkdir(parents=True)
+    Path(root_dir, "tests", "config").mkdir(parents=True)
+    with open(Path(root_dir, ".nf-core.yml"), "w") as fh:
         fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
-
     # mock biocontainers and anaconda response
     with responses.RequestsMock() as rsps:
         mock_anaconda_api_calls(rsps, "bpipe", "0.9.11--hdfd78af_0")
@@ -46,7 +44,8 @@ def create_modules_repo_dummy(tmp_dir):
             module_create.create()
 
     # Remove doi from meta.yml which makes lint fail
-    meta_yml = os.path.join(root_dir, "modules", "nf-core", "bpipe", "test", "meta.yml")
+    meta_yml = Path(root_dir, "modules", "nf-core", "bpipe", "test", "meta.yml")
+    Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap").touch()
     with open(meta_yml, "r") as fh:
         lines = fh.readlines()
     for line_index in range(len(lines)):
@@ -69,9 +68,9 @@ class TestModules(unittest.TestCase):
 
         # Set up the schema
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
+        self.template_dir = Path(root_repo_dir, "nf_core", "pipeline-template")
         self.pipeline_name = "mypipeline"
-        self.pipeline_dir = os.path.join(self.tmp_dir, self.pipeline_name)
+        self.pipeline_dir = Path(self.tmp_dir, self.pipeline_name)
         nf_core.create.PipelineCreate(
             self.pipeline_name, "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
@@ -166,6 +165,10 @@ class TestModules(unittest.TestCase):
         test_modules_install_trimgalore_twice,
     )
     from .modules.lint import (  # type: ignore[misc]
+        test_modules_environment_yml_file_doesnt_exists,
+        test_modules_environment_yml_file_not_array,
+        test_modules_environment_yml_file_sorted_correctly,
+        test_modules_environment_yml_file_sorted_incorrectly,
         test_modules_lint_check_process_labels,
         test_modules_lint_check_url,
         test_modules_lint_empty,

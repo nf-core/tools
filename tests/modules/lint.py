@@ -1,7 +1,7 @@
-import os
 from pathlib import Path
 
 import pytest
+import yaml
 
 import nf_core.modules
 from nf_core.modules.lint import main_nf
@@ -10,7 +10,7 @@ from ..utils import GITLAB_URL, set_wd
 from .patch import BISMARK_ALIGN, CORRECT_SHA, PATCH_BRANCH, REPO_NAME, modify_main_nf
 
 
-def setup_patch(pipeline_dir, modify_module):
+def setup_patch(pipeline_dir: str, modify_module: bool):
     install_obj = nf_core.modules.ModuleInstall(
         pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH, sha=CORRECT_SHA
     )
@@ -310,7 +310,6 @@ def test_modules_lint_check_url(self):
 
 def test_modules_lint_snapshot_file(self):
     """Test linting a module with a snapshot file"""
-    Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap").touch()
     module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
     module_lint.lint(print_results=False, module="bpipe/test")
     assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
@@ -320,11 +319,14 @@ def test_modules_lint_snapshot_file(self):
 
 def test_modules_lint_snapshot_file_missing_fail(self):
     """Test linting a module with a snapshot file missing, which should fail"""
+    Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap").unlink()
     module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
-    module_lint.lint(print_results=False, module="bpipe/test")
+    module_lint.lint(print_results=False, module="fastqc")
+    Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap").touch()
     assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
+    assert module_lint.failed[0].lint_test == "snapshot_file"
 
 
 def test_modules_lint_snapshot_file_not_needed(self):
@@ -339,3 +341,61 @@ def test_modules_lint_snapshot_file_not_needed(self):
     assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
+
+
+def test_modules_environment_yml_file_doesnt_exists(self):
+    """Test linting a module with an environment.yml file"""
+    Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml").rename(
+        Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml.bak")
+    )
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+    Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml.bak").rename(
+        Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml")
+    )
+    assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+    assert module_lint.failed[0].lint_test == "environment_yml_exists"
+
+
+def test_modules_environment_yml_file_sorted_correctly(self):
+    """Test linting a module with a correctly sorted environment.yml file"""
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+
+
+def test_modules_environment_yml_file_sorted_incorrectly(self):
+    """Test linting a module with an incorrectly sorted environment.yml file"""
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml"), "r") as fh:
+        yaml_content = yaml.safe_load(fh)
+    # Add a new dependency to the environment.yml file and reverse the order
+    yaml_content["dependencies"].append("z")
+    yaml_content["dependencies"].reverse()
+    yaml_content = yaml.dump(yaml_content)
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml"), "w") as fh:
+        fh.write(yaml_content)
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+    assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+    assert module_lint.failed[0].lint_test == "environment_yml_sorted"
+
+
+def test_modules_environment_yml_file_not_array(self):
+    """Test linting a module with an incorrectly formatted environment.yml file"""
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml")) as fh:
+        yaml_content = yaml.safe_load(fh)
+    yaml_content["dependencies"] = "z"
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml"), "w") as fh:
+        fh.write(yaml.dump(yaml_content))
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(module="bpipe/test")
+    assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+    assert module_lint.failed[0].lint_test == "environment_yml_valid"
