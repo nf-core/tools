@@ -42,7 +42,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         [
             (
                 rf"(version\s*=\s*['\"]){re.escape(current_version)}(['\"])",
-                rf"\g<1>{new_version}",
+                rf"\g<1>{new_version}\g<2>",
             )
         ],
     )
