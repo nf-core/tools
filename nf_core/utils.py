@@ -677,9 +677,6 @@ def parse_anaconda_licence(anaconda_response, version=None):
         l = l.replace("Clause", "clause")  # BSD capitilisation
         l = re.sub(r"-only$", "", l)  # Remove superflous GPL "only" version suffixes
         clean_licences.append(l)
-    # convert to string if only one licence
-    if len(clean_licences) == 1:
-        clean_licences = clean_licences[0]
     return clean_licences
 
 

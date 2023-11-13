@@ -4,6 +4,7 @@ GitPython
 jinja2
 jsonschema>=3.0
 markdown>=3.3
+nf-test
 packaging
 pre-commit
 prompt_toolkit>=3.0.3
@@ -17,3 +18,4 @@ requests_cache
 rich-click>=1.6.1
 rich>=13.3.1
 tabulate
+

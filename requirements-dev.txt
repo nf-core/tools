@@ -1,6 +1,7 @@
 black
 isort
 myst_parser
+nf-test
 pytest-cov
 pytest-datafiles
 responses
