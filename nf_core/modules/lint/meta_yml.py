@@ -13,7 +13,7 @@ def meta_yml(module_lint_object, module):
 
     The lint test checks that the module has
     a ``meta.yml`` file and that it follows the
-    JSON schema defined in the ``modules/yaml-schema.json``
+    JSON schema defined in the ``modules/meta-schema.json``
     file in the nf-core/modules repository.
 
     In addition it checks that the module name
@@ -45,7 +45,7 @@ def meta_yml(module_lint_object, module):
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = True
     try:
-        with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/yaml-schema.json"), "r") as fh:
+        with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/meta-schema.json"), "r") as fh:
             schema = json.load(fh)
         jsonschema.validators.validate(instance=meta_yaml, schema=schema)
         module.passed.append(("meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))
