@@ -6,6 +6,7 @@
 
 - Fix writing files to a remote outdir in the NfcoreTemplate helper functions ([#2465](https://github.com/nf-core/tools/pull/2465))
 - Fancier syntax highlighting for example samplesheets in the usage.md template ([#2503](https://github.com/nf-core/tools/pull/2503))
+- Use closure for multiqc ext.args ([#2509](https://github.com/nf-core/tools/pull/2509))
 
 ### Linting
 
@@ -26,6 +27,8 @@
 - Fixed `nf-core subworkflows lint` to work with new module structure for nf-test ([#2494](https://github.com/nf-core/tools/pull/2494))
 
 ### General
+
+- `bump_version` keeps now the indentation level of the updated version entries ([#2514](https://github.com/nf-core/tools/pull/2514))
 
 # [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]
 
