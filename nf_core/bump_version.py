@@ -5,16 +5,18 @@ a nf-core pipeline.
 import logging
 import re
 from pathlib import Path
+from typing import List, Tuple, Union
 
 import rich.console
 
 import nf_core.utils
+from nf_core.utils import Pipeline
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
 
 
-def bump_pipeline_version(pipeline_obj, new_version):
+def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
     """Bumps a pipeline version number.
 
     Args:
@@ -39,8 +41,8 @@ def bump_pipeline_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                rf"version\s*=\s*[\'\"]?{re.escape(current_version)}[\'\"]?",
-                f"version = '{new_version}'",
+                rf"(version\s*=\s*['\"]){re.escape(current_version)}(['\"])",
+                rf"\g<1>{new_version}\g<2>",
             )
         ],
     )
@@ -76,7 +78,7 @@ def bump_pipeline_version(pipeline_obj, new_version):
         )
 
 
-def bump_nextflow_version(pipeline_obj, new_version):
+def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
     """Bumps the required Nextflow version number of a pipeline.
 
     Args:
@@ -99,8 +101,8 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                rf"nextflowVersion\s*=\s*[\'\"]?!>={re.escape(current_version)}[\'\"]?",
-                f"nextflowVersion = '!>={new_version}'",
+                rf"(nextflowVersion\s*=\s*[\'\"]?!>=\s*)({re.escape(current_version)})([\'\"]?)",
+                rf"\g<1>{new_version}\g<3>",
             )
         ],
     )
@@ -114,7 +116,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
                 # example:
                 # NXF_VER:
                 #   - "20.04.0"
-                rf"- [\"]{re.escape(current_version)}[\"]",
+                rf"- \"{re.escape(current_version)}\"",
                 f'- "{new_version}"',
             )
         ],
@@ -138,7 +140,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
     )
 
 
-def update_file_version(filename, pipeline_obj, patterns):
+def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patterns: List[Tuple[str, str]]) -> None:
     """Updates the version number in a requested file.
 
     Args:
@@ -146,7 +148,6 @@ def update_file_version(filename, pipeline_obj, patterns):
         pipeline_obj (nf_core.lint.PipelineLint): A PipelineLint object that holds information
             about the pipeline contents and build files.
         pattern (str): Regex pattern to apply.
-        newstr (str): The replaced string.
 
     Raises:
         ValueError, if the version number cannot be found.
