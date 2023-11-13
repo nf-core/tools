@@ -46,6 +46,7 @@ class NFCoreComponent:
             # Initialize the important files
             self.main_nf = self.component_dir / "main.nf"
             self.meta_yml = self.component_dir / "meta.yml"
+            self.environment_yml = self.component_dir / "environment.yml"
 
             repo_dir = self.component_dir.parts[: self.component_dir.parts.index(self.component_name.split("/")[0])][-1]
             self.org = repo_dir

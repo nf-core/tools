@@ -85,6 +85,7 @@ class ComponentCreate(ComponentCommand):
         modules/nf-core/tool/subtool/
         ├── main.nf
         ├── meta.yml
+        ├── environment.yml
         └── tests
             ├── main.nf.test
             └── tags.yml
@@ -376,6 +377,9 @@ class ComponentCreate(ComponentCommand):
             # For modules - can be tool/ or tool/subtool/ so can't do in template directory structure
             file_paths[os.path.join(self.component_type, "main.nf")] = os.path.join(component_dir, "main.nf")
             file_paths[os.path.join(self.component_type, "meta.yml")] = os.path.join(component_dir, "meta.yml")
+            file_paths[os.path.join(self.component_type, "environment.yml")] = os.path.join(
+                component_dir, "environment.yml"
+            )
             file_paths[os.path.join(self.component_type, "tests", "tags.yml")] = os.path.join(
                 component_dir, "tests", "tags.yml"
             )

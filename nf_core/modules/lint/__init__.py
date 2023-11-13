@@ -29,6 +29,7 @@ class ModuleLint(ComponentLint):
     """
 
     # Import lint functions
+    from .environment_yml import environment_yml
     from .main_nf import main_nf
     from .meta_yml import meta_yml
     from .module_changes import module_changes

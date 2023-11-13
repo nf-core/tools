@@ -1,3 +1,4 @@
+name: "{{ component }}"
 channels:
   - conda-forge
   - bioconda
