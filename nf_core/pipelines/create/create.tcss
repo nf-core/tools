@@ -79,3 +79,18 @@ HorizontalScroll {
 .displayed #hide_help {
     display: block;
 }
+
+/* Show password */
+
+#show_password {
+    display: block;
+}
+#hide_password {
+    display: none;
+}
+.displayed #show_password {
+    display: none;
+}
+.displayed #hide_password {
+    display: block;
+}

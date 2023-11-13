@@ -77,6 +77,7 @@ class TextInput(Static):
         Pass on kwargs upstream for standard usage."""
         super().__init__(**kwargs)
         self.field_id: str = field_id
+        self.id: str = field_id
         self.placeholder: str = placeholder
         self.description: str = description
         self.default: str = default

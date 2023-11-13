@@ -62,6 +62,8 @@ class GithubRepo(Screen):
                 password=True,
                 classes="column",
             )
+            yield Button("Show", id="show_password")
+            yield Button("Hide", id="hide_password")
         yield Markdown(dedent(repo_config_markdown))
         with Horizontal():
             yield Switch(value=False, id="private")
@@ -80,7 +82,15 @@ class GithubRepo(Screen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Create a GitHub repo or show help message and exit"""
-        if event.button.id == "create_github":
+        if event.button.id == "show_password":
+            self.add_class("displayed")
+            text_input = self.query_one("#token", TextInput)
+            text_input.query_one(Input).password = False
+        elif event.button.id == "hide_password":
+            self.remove_class("displayed")
+            text_input = self.query_one("#token", TextInput)
+            text_input.query_one(Input).password = True
+        elif event.button.id == "create_github":
             # Create a GitHub repo
 
             # Save GitHub username and token
@@ -146,12 +156,15 @@ class GithubRepo(Screen):
                 log.info(f"GitHub repository '{self.parent.TEMPLATE_CONFIG.name}' created successfully")
             except UserWarning as e:
                 log.info(f"There was an error with message: {e}" f"\n{exit_help_text_markdown}")
+
+            self.parent.LOGGING_STATE = "repo created"
+            self.parent.switch_screen(LoggingScreen())
         elif event.button.id == "exit":
             # Show help message and exit
             log.info(exit_help_text_markdown)
 
-        self.parent.LOGGING_STATE = "repo created"
-        self.parent.switch_screen(LoggingScreen())
+            self.parent.LOGGING_STATE = "repo created"
+            self.parent.switch_screen(LoggingScreen())
 
     def _create_repo_and_push(self, org, pipeline_repo, private, push):
         """Create a GitHub repository and push all branches."""
