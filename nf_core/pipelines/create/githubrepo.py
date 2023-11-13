@@ -3,8 +3,8 @@ import os
 from textwrap import dedent
 
 import git
+import yaml
 from github import Github, GithubException, UnknownObjectException
-from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
 from textual.screen import Screen
@@ -46,19 +46,21 @@ class GithubRepo(Screen):
         yield Footer()
         yield Markdown(dedent(github_text_markdown))
         with Horizontal():
+            gh_user, gh_token = self._get_github_credentials()
             yield TextInput(
                 "gh_username",
                 "GitHub username",
                 "Your GitHub username",
+                default=gh_user[0] if gh_user is not None else "GitHub username",
                 classes="column",
             )
-            token = "GITHUB_AUTH_TOKEN" in os.environ
             yield TextInput(
                 "token",
-                "Using the environment variable GITHUB_AUTH_TOKEN" if token else "GitHub token",
+                "GitHub token",
                 "Your GitHub personal access token for login.",
+                default=gh_token if gh_token is not None else "GitHub token",
+                password=True,
                 classes="column",
-                disabled=token,
             )
         yield Markdown(dedent(repo_config_markdown))
         with Horizontal():
@@ -94,12 +96,7 @@ class GithubRepo(Screen):
             pipeline_repo = git.Repo.init(self.parent.TEMPLATE_CONFIG.outdir)
 
             # GitHub authentication
-            if "GITHUB_AUTH_TOKEN" in os.environ:
-                github_auth = self._github_authentication(
-                    github_variables["gh_username"], os.environ["GITHUB_AUTH_TOKEN"]
-                )
-                log.debug("Using GITHUB_AUTH_TOKEN environment variable")
-            elif github_variables["token"]:
+            if github_variables["token"]:
                 github_auth = self._github_authentication(github_variables["gh_username"], github_variables["token"])
             else:
                 raise UserWarning(
@@ -192,3 +189,19 @@ class GithubRepo(Screen):
         log.debug(f"Authenticating GitHub as {gh_username}")
         github_auth = Github(gh_username, gh_token)
         return github_auth
+
+    def _get_github_credentials(self):
+        """Get GitHub credentials"""
+        gh_user = None
+        gh_token = None
+        # Use gh CLI config if installed
+        gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
+        if os.path.exists(gh_cli_config_fn):
+            with open(gh_cli_config_fn, "r") as fh:
+                gh_cli_config = yaml.safe_load(fh)
+                gh_user = (gh_cli_config["github.com"]["user"],)
+                gh_token = gh_cli_config["github.com"]["oauth_token"]
+        # If gh CLI not installed, try to get credentials from environment variables
+        elif os.environ.get("GITHUB_TOKEN") is not None:
+            gh_token = self.auth = os.environ["GITHUB_TOKEN"]
+        return (gh_user, gh_token)

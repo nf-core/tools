@@ -71,7 +71,7 @@ class TextInput(Static):
     and validation messages.
     """
 
-    def __init__(self, field_id, placeholder, description, default=None, **kwargs) -> None:
+    def __init__(self, field_id, placeholder, description, default=None, password=None, **kwargs) -> None:
         """Initialise the widget with our values.
 
         Pass on kwargs upstream for standard usage."""
@@ -80,6 +80,7 @@ class TextInput(Static):
         self.placeholder: str = placeholder
         self.description: str = description
         self.default: str = default
+        self.password: bool = password
 
     def compose(self) -> ComposeResult:
         yield Static(self.description, classes="field_help")
@@ -87,6 +88,7 @@ class TextInput(Static):
             placeholder=self.placeholder,
             validators=[ValidateConfig(self.field_id)],
             value=self.default,
+            password=self.password,
         )
         yield Static(classes="validation_msg")
 

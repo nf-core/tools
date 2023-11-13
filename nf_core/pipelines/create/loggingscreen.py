@@ -37,10 +37,3 @@ class LoggingScreen(Screen):
                 classes="cta",
             )
         yield Center(self.parent.LOG_HANDLER.console, classes="cta")
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Close the logging screen or the whole app."""
-        if event.button.id == "close_app":
-            self.parent.exit()
-        if event.button.id == "close_screen":
-            self.parent.switch_screen("github_repo")
