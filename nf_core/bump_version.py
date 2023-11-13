@@ -5,7 +5,7 @@ a nf-core pipeline.
 import logging
 import re
 from pathlib import Path
-from typing import Union
+from typing import List, Union
 
 import rich.console
 
@@ -42,7 +42,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         [
             (
                 rf"(version\s*=\s*['\"]){re.escape(current_version)}(['\"])",
-                rf"\g<1>{new_version}\g<2>",
+                rf"\g<1>{new_version}",
             )
         ],
     )
@@ -140,7 +140,7 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
     )
 
 
-def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patterns: list[tuple[str, str]]) -> None:
+def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patterns: List[tuple[str, str]]) -> None:
     """Updates the version number in a requested file.
 
     Args:
