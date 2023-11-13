@@ -1,13 +1,15 @@
 import json
 from pathlib import Path
 
-import jsonschema.validators
 import yaml
+from jsonschema import exceptions, validators
 
+from nf_core.components.lint import ComponentLint
+from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_differ import ModulesDiffer
 
 
-def meta_yml(module_lint_object, module):
+def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None:
     """
     Lint a ``meta.yml`` file
 
@@ -47,15 +49,15 @@ def meta_yml(module_lint_object, module):
     try:
         with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/meta-schema.json"), "r") as fh:
             schema = json.load(fh)
-        jsonschema.validators.validate(instance=meta_yaml, schema=schema)
+        validators.validate(instance=meta_yaml, schema=schema)
         module.passed.append(("meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))
-    except jsonschema.exceptions.ValidationError as e:
+    except exceptions.ValidationError as e:
         valid_meta_yml = False
         hint = ""
         if len(e.path) > 0:
             hint = f"\nCheck the entry for `{e.path[0]}`."
         if e.message.startswith("None is not of type 'object'") and len(e.path) > 2:
-            hint = f"\nCheck that the child entries of {e.path[0]+'.'+e.path[2]} are indented correctly."
+            hint = f"\nCheck that the child entries of {str(e.path[0])+'.'+str(e.path[2])} are indented correctly."
         module.failed.append(
             (
                 "meta_yml_valid",
@@ -63,7 +65,6 @@ def meta_yml(module_lint_object, module):
                 module.meta_yml,
             )
         )
-        return
 
     # Confirm that all input and output channels are specified
     if valid_meta_yml:
