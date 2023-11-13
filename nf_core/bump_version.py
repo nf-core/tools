@@ -5,7 +5,7 @@ a nf-core pipeline.
 import logging
 import re
 from pathlib import Path
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import rich.console
 
@@ -140,7 +140,7 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
     )
 
 
-def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patterns: List[tuple[str, str]]) -> None:
+def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patterns: List[Tuple[str, str]]) -> None:
     """Updates the version number in a requested file.
 
     Args:
