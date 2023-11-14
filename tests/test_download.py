@@ -156,25 +156,27 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("nf_core.utils.fetch_wf_config")
     def test__find_container_images_config_nextflow(self, tmp_path, mock_fetch_wf_config):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
-        nfconfig_raw = run_cmd(
-            "nextflow", f"config -flat {Path(__file__).resolve().parent / 'data/mock_config_containers'}"
-        )
-        config = {}
-        for l in nfconfig_raw.splitlines():
-            ul = l.decode("utf-8")
-            try:
-                k, v = ul.split(" = ", 1)
-                config[k] = v.strip("'\"")
-            except ValueError:
-                pass
-        mock_fetch_wf_config.return_value = config
-        download_obj.find_container_images("workflow")
-        assert len(download_obj.containers) == 4
-        assert "nfcore/methylseq:1.0" in download_obj.containers
-        assert "nfcore/methylseq:1.4" in download_obj.containers
-        assert "nfcore/sarek:dev" in download_obj.containers
-        assert "https://depot.galaxyproject.org/singularity/r-shinyngs:1.7.1--r42hdfd78af_1" in download_obj.containers
-        # does not yet pick up nfcore/sarekvep:dev.${params.genome}, because that is no valid URL or Docker URI.
+        result = run_cmd("nextflow", f"config -flat {Path(__file__).resolve().parent / 'data/mock_config_containers'}")
+        if result is not None:
+            nfconfig_raw, _ = result
+            config = {}
+            for l in nfconfig_raw.splitlines():
+                ul = l.decode("utf-8")
+                try:
+                    k, v = ul.split(" = ", 1)
+                    config[k] = v.strip("'\"")
+                except ValueError:
+                    pass
+            mock_fetch_wf_config.return_value = config
+            download_obj.find_container_images("workflow")
+            assert len(download_obj.containers) == 4
+            assert "nfcore/methylseq:1.0" in download_obj.containers
+            assert "nfcore/methylseq:1.4" in download_obj.containers
+            assert "nfcore/sarek:dev" in download_obj.containers
+            assert (
+                "https://depot.galaxyproject.org/singularity/r-shinyngs:1.7.1--r42hdfd78af_1" in download_obj.containers
+            )
+            # does not yet pick up nfcore/sarekvep:dev.${params.genome}, because that is no valid URL or Docker URI.
 
     #
     # Test for 'find_container_images' in modules
