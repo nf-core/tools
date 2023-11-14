@@ -9,7 +9,7 @@ from __future__ import print_function
 import logging
 import os
 import re
-from typing import List, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import questionary
 import rich
@@ -28,15 +28,22 @@ from nf_core.utils import rich_force_colors
 log = logging.getLogger(__name__)
 
 
-class ModuleVersionBumper(ComponentCommand):
-    def __init__(self, pipeline_dir, remote_url=None, branch=None, no_pull=False):
+class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
+    def __init__(
+        self,
+        pipeline_dir: str,
+        remote_url: Optional[str] = None,
+        branch: Optional[str] = None,
+        no_pull: bool = False,
+    ):
         super().__init__("modules", pipeline_dir, remote_url, branch, no_pull)
 
-        self.up_to_date = None
-        self.updated = None
-        self.failed = []
-        self.show_up_to_date = None
-        self.tools_config = {}
+        self.up_to_date: List[Tuple[str, str]] = []
+        self.updated: List[Tuple[str, str]] = []
+        self.failed: List[Tuple[str, str]] = []
+        self.ignored: List[Tuple[str, str]] = []
+        self.show_up_to_date: Optional[bool] = None
+        self.tools_config: Dict[str, Any] = {}
 
     def bump_versions(
         self, module: Union[NFCoreComponent, None] = None, all_modules: bool = False, show_uptodate: bool = False
@@ -251,7 +258,7 @@ class ModuleVersionBumper(ComponentCommand):
 
         return bioconda_packages
 
-    def _print_results(self):
+    def _print_results(self) -> None:
         """
         Print the results for the bump_versions command
         Uses the ``rich`` library to print a set of formatted tables to the command line
@@ -269,13 +276,13 @@ class ModuleVersionBumper(ComponentCommand):
             except:
                 pass
 
-        def format_result(module_updates, table):
+        def format_result(module_updates: List[Tuple[str, str]], table: Table) -> Table:
             """
             Create rows for module updates
             """
             # TODO: Row styles don't work current as table-level style overrides.
             # I'd like to make an issue about this on the rich repo so leaving here in case there is a future fix
-            last_modname = False
+            last_modname = ""
             row_style = None
             for module_update in module_updates:
                 if last_modname and module_update[1] != last_modname:
