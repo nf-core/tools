@@ -178,7 +178,6 @@ class ModuleVersionBumper(ComponentCommand):
                 return False
 
             patterns = [
-                (bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'"),
                 (rf"biocontainers/{bioconda_tool_name}:[^'\"\s]+", docker_img),
                 (
                     rf"https://depot.galaxyproject.org/singularity/{bioconda_tool_name}:[^'\"\s]+",
@@ -217,6 +216,13 @@ class ModuleVersionBumper(ComponentCommand):
             # Write new content to the file
             with open(module.main_nf, "w") as fh:
                 fh.write(content)
+
+            # change version in environment.yml
+            with open(module.environment_yml, "r") as fh:
+                env_yml = yaml.safe_load(fh)
+            re.sub(bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'", env_yml["dependencies"])
+            with open(module.environment_yml, "w") as fh:
+                yaml.dump(env_yml, fh, default_flow_style=False)
 
             self.updated.append(
                 (
