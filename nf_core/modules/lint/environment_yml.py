@@ -56,8 +56,8 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
                 )
             )
 
-        # Check that the dependencies section is sorted alphabetically
         if valid_env_yml:
+            # Check that the dependencies section is sorted alphabetically
             if sorted(env_yml["dependencies"]) == env_yml["dependencies"]:
                 module.passed.append(
                     (
@@ -71,6 +71,23 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
                     (
                         "environment_yml_sorted",
                         "Module's `environment.yml` is not sorted alphabetically",
+                        module.environment_yml,
+                    )
+                )
+            # Check that the name in the environment.yml file matches the module name
+            if env_yml["name"] == module.component_name:
+                module.passed.append(
+                    (
+                        "environment_yml_name",
+                        "Module's `environment.yml` name matches module name",
+                        module.environment_yml,
+                    )
+                )
+            else:
+                module.failed.append(
+                    (
+                        "environment_yml_name",
+                        "Module's `environment.yml` name does not match module name",
                         module.environment_yml,
                     )
                 )

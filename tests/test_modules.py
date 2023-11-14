@@ -166,6 +166,7 @@ class TestModules(unittest.TestCase):
     )
     from .modules.lint import (  # type: ignore[misc]
         test_modules_environment_yml_file_doesnt_exists,
+        test_modules_environment_yml_file_name_mismatch,
         test_modules_environment_yml_file_not_array,
         test_modules_environment_yml_file_sorted_correctly,
         test_modules_environment_yml_file_sorted_incorrectly,
