@@ -9,9 +9,11 @@ from __future__ import print_function
 import logging
 import os
 import re
+from typing import List, Union
 
 import questionary
 import rich
+import yaml
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.table import Table
@@ -19,6 +21,7 @@ from rich.table import Table
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
+from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.utils import plural_s as _s
 from nf_core.utils import rich_force_colors
 
@@ -31,11 +34,13 @@ class ModuleVersionBumper(ComponentCommand):
 
         self.up_to_date = None
         self.updated = None
-        self.failed = None
+        self.failed = []
         self.show_up_to_date = None
         self.tools_config = {}
 
-    def bump_versions(self, module=None, all_modules=False, show_uptodate=False):
+    def bump_versions(
+        self, module: Union[NFCoreComponent, None] = None, all_modules: bool = False, show_uptodate: bool = False
+    ) -> None:
         """
         Bump the container and conda version of single module or all modules
 
@@ -116,7 +121,7 @@ class ModuleVersionBumper(ComponentCommand):
 
         self._print_results()
 
-    def bump_module_version(self, module):
+    def bump_module_version(self, module: NFCoreComponent) -> bool:
         """
         Bump the bioconda and container version of a single NFCoreComponent
 
@@ -225,19 +230,18 @@ class ModuleVersionBumper(ComponentCommand):
             self.up_to_date.append((f"Module version up to date: {module.component_name}", module.component_name))
             return True
 
-    def get_bioconda_version(self, module):
+    def get_bioconda_version(self, module: NFCoreComponent) -> List[str]:
         """
         Extract the bioconda version from a module
         """
         # Check whether file exists and load it
-        bioconda_packages = False
+        bioconda_packages = []
         try:
-            with open(module.main_nf, "r") as fh:
-                for l in fh:
-                    if "bioconda::" in l:
-                        bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+            with open(module.environment_yml, "r") as fh:
+                env_yml = yaml.safe_load(fh)
+            bioconda_packages = env_yml.get("dependencies", [])
         except FileNotFoundError:
-            log.error(f"Could not read `main.nf` of {module.component_name} module.")
+            log.error(f"Could not read `environment.yml` of {module.component_name} module.")
 
         return bioconda_packages
 
