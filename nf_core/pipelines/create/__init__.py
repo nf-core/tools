@@ -75,7 +75,7 @@ class PipelineCreateApp(App[CreateConfig]):
         elif event.button.id == "close_screen":
             self.switch_screen("github_repo")
         if event.button.id == "close_app":
-            self.exit()
+            self.exit(return_code=0)
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""

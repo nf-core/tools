@@ -10,3 +10,4 @@ textual-dev>=1.2.1
 mypy
 types-PyYAML
 types-requests
+pytest-textual-snapshot

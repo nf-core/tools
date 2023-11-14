@@ -521,6 +521,7 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
         )
         app = PipelineCreateApp()
         app.run()
+        sys.exit(app.return_code or 0)
 
 
 # nf-core create (deprecated)
@@ -582,6 +583,7 @@ def create(name, description, author, version, force, outdir, template_yaml, pla
             app = PipelineCreateApp()
             try:
                 app.run()
+                sys.exit(app.return_code or 0)
             except UserWarning as e:
                 log.error(e)
                 sys.exit(1)
