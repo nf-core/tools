@@ -64,6 +64,15 @@ jobs:
         with:
           version: "latest-everything"
 
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: 3.11
+
+      - name: Install nf-test
+        run: |
+          conda install -c bioconda nf-test
+
       - name: Test with pytest
         run: python3 -m pytest tests/ --color=yes --cov-report=xml --cov-config=.github/.coveragerc --cov=nf_core
 
