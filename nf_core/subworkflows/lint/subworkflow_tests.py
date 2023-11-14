@@ -51,9 +51,11 @@ def subworkflow_tests(_, subworkflow):
             if "snapshot(" in fh.read():
                 snap_file = os.path.join(subworkflow.component_dir, "tests", "main.nf.test.snap")
                 if os.path.exists(snap_file):
-                    subworkflow.passed.append(("test_main_snap", "test `main.nf.test.snap` exists", snap_file))
+                    subworkflow.passed.append(("test_snapshot_exists", "test `main.nf.test.snap` exists", snap_file))
                 else:
-                    subworkflow.failed.append(("test_main_snap", "test `main.nf.test.snap` does not exist", snap_file))
+                    subworkflow.failed.append(
+                        ("test_snapshot_exists", "test `main.nf.test.snap` does not exist", snap_file)
+                    )
 
     if os.path.exists(pytest_main_nf):
         # Check that entry in pytest_modules.yml exists
