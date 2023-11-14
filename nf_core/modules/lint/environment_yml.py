@@ -22,12 +22,24 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
         with open(Path(module.component_dir, "environment.yml"), "r") as fh:
             env_yml = yaml.safe_load(fh)
 
-        module.passed.append(("environment_yml_exists", "Module `environment.yml` exists", module.environment_yml))
+        module.passed.append(("environment_yml_exists", "Module's `environment.yml` exists", module.environment_yml))
 
     except FileNotFoundError:
-        module.failed.append(
-            ("environment_yml_exists", "Module `environment.yml` does not exist", module.environment_yml)
-        )
+        # check if the module's main.nf requires a conda environment
+        with open(Path(module.component_dir, "main.nf"), "r") as fh:
+            main_nf = fh.read()
+            if "conda '${modulesDir}/environment.yml'" in main_nf:
+                module.failed.append(
+                    ("environment_yml_exists", "Module's `environment.yml` does not exist", module.environment_yml)
+                )
+            else:
+                module.passed.append(
+                    (
+                        "environment_yml_exists",
+                        "Module's `environment.yml` does not exist, but it is also not included in the main.nf",
+                        module.environment_yml,
+                    )
+                )
 
     # Confirm that the environment.yml file is valid according to the JSON schema
     if env_yml:
@@ -74,8 +86,11 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
                         module.environment_yml,
                     )
                 )
-            # Check that the name in the environment.yml file matches the module name
-            if env_yml["name"] == module.component_name:
+            # Check that the name in the environment.yml file matches the name in the meta.yml file
+            with open(Path(module.component_dir, "meta.yml"), "r") as fh:
+                meta_yml = yaml.safe_load(fh)
+
+            if env_yml["name"] == meta_yml["name"]:
                 module.passed.append(
                     (
                         "environment_yml_name",
@@ -87,7 +102,7 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
                 module.failed.append(
                     (
                         "environment_yml_name",
-                        "Module's `environment.yml` name does not match module name",
+                        f"Conflicting process name between environment.yml (`{env_yml['name']}`) and meta.yml (`{module.component_name}`)",
                         module.environment_yml,
                     )
                 )
