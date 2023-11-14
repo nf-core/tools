@@ -62,9 +62,16 @@ def test_generate_snapshot_subworkflow(self):
 
 def test_update_snapshot_module(self):
     """Update the snapshot of a module in nf-core/modules clone"""
-    original_timestamp = "2023-10-18T11:02:55.420631681"
 
     with set_wd(self.nfcore_modules):
+        snap_path = Path("modules", "nf-core-test", "bwa", "mem", "tests", "main.nf.test.snap")
+        with open(snap_path, "r") as fh:
+            snap_content = json.load(fh)
+        original_timestamp = snap_content["Single-End"]["timestamp"]
+        # delete the timestamp in json
+        snap_content["Single-End"]["content"][0]["0"][0][1] = ""
+        with open(snap_path, "w") as fh:
+            json.dump(snap_content, fh)
         snap_generator = ComponentTestSnapshotGenerator(
             component_type="modules",
             component_name="bwa/mem",
@@ -74,9 +81,6 @@ def test_update_snapshot_module(self):
             update=True,
         )
         snap_generator.run()
-
-        snap_path = Path("modules", "nf-core-test", "bwa", "mem", "tests", "main.nf.test.snap")
-        assert snap_path.exists()
 
         with open(snap_path, "r") as fh:
             snap_content = json.load(fh)
