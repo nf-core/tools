@@ -82,7 +82,7 @@ def subworkflow_tests(_, subworkflow):
                         ("test_snapshot_exists", "test `main.nf.test.snap` does not exist", snap_file)
                     )
             # Verify that tags are correct.
-            main_nf_tags = subworkflow._get_main_nf_tags(fh)
+            main_nf_tags = subworkflow._get_main_nf_tags(subworkflow.nftest_main_nf)
             required_tags = [
                 "subworkflows",
                 f"subworkflows/{subworkflow.component_name}",
@@ -108,7 +108,7 @@ def subworkflow_tests(_, subworkflow):
                 )
 
     # Check pytest_modules.yml does not contain entries for subworkflows with nf-test
-    pytest_yml_path = os.path.join(subworkflow.base_dir, "tests", "config", "pytest_modules.yml")
+    pytest_yml_path = subworkflow.base_dir / "tests" / "config" / "pytest_modules.yml"
     if pytest_yml_path.is_file():
         try:
             with open(pytest_yml_path, "r") as fh:

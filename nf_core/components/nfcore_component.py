@@ -73,18 +73,20 @@ class NFCoreComponent:
             self.test_yml = None
             self.test_main_nf = None
 
-    def _get_main_nf_tags(self, test_main_nf):
+    def _get_main_nf_tags(self, test_main_nf: str):
         """Collect all tags from the main.nf.test file."""
         tags = []
-        for line in test_main_nf:
-            if line.strip().startswith("tag"):
-                tags.append(line.strip().split()[1].strip('"'))
+        with open(test_main_nf, "r") as fh:
+            for line in fh:
+                if line.strip().startswith("tag"):
+                    tags.append(line.strip().split()[1].strip('"'))
         return tags
 
-    def _get_included_components(self, main_nf):
+    def _get_included_components(self, main_nf: str):
         """Collect all included components from the main.nf file."""
         included_components = []
-        for line in main_nf:
-            if line.strip().startswith("include"):
-                included_components.append(line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/"))
+        with open(main_nf, "r") as fh:
+            for line in fh:
+                if line.strip().startswith("include"):
+                    included_components.append(line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/"))
         return included_components
