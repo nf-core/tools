@@ -64,14 +64,20 @@ jobs:
         with:
           version: "latest-everything"
 
-      - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Cache nf-test installation
+        id: cache-software
+        uses: actions/cache@v3
         with:
-          python-version: 3.11
+          path: |
+            /usr/local/bin/nf-test
+            /home/runner/.nf-test/nf-test.jar
+          key: ${{ runner.os }}-${{ env.NFTEST_VER }}-nftest
 
       - name: Install nf-test
+        if: steps.cache-software.outputs.cache-hit != 'true'
         run: |
-          conda install -c bioconda nf-test
+          wget -qO- https://code.askimed.com/install/nf-test | bash
+          sudo mv nf-test /usr/local/bin/
 
       - name: Test with pytest
         run: python3 -m pytest tests/ --color=yes --cov-report=xml --cov-config=.github/.coveragerc --cov=nf_core
