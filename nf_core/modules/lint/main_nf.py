@@ -256,6 +256,8 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             l = l.replace("container", "").strip(" \n'\"}:")
 
         if _container_type(l) == "conda":
+            if "bioconda::" in l:
+                bioconda_packages = [b for b in l.split() if "bioconda::" in b]
             match = re.search(r"params\.enable_conda", l)
             if match is None:
                 self.passed.append(
@@ -352,6 +354,9 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             bioconda_packages = [x for x in env_yml["dependencies"] if isinstance(x, str) and "bioconda::" in x]
     except FileNotFoundError:
         pass
+    except NotADirectoryError:
+        pass
+
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
     for bp in bioconda_packages:
