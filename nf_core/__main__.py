@@ -1088,7 +1088,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
 @click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
 @click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
-def create_test_yml(ctx, subworkflow, dir, run_tests, no_prompts, update):
+def create_snapshot(ctx, subworkflow, dir, run_tests, no_prompts, update):
     """
     Auto-generate a test.yml file for a new subworkflow.
 

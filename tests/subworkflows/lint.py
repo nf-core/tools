@@ -5,7 +5,7 @@ import pytest
 
 import nf_core.subworkflows
 
-from ..utils import GITLAB_URL
+from ..utils import GITLAB_SUBWORKFLOWS_BRANCH, GITLAB_URL
 
 
 def test_subworkflows_lint(self):
@@ -28,7 +28,9 @@ def test_subworkflows_lint_new_subworkflow(self):
     """lint a new subworkflow"""
     subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
     subworkflow_lint.lint(print_results=True, all_subworkflows=True)
-    assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
+    assert (
+        len(subworkflow_lint.failed) == 1  # test snap missing after creating a subworkflow
+    ), f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
     assert len(subworkflow_lint.passed) > 0
     assert len(subworkflow_lint.warned) >= 0
 
@@ -42,9 +44,11 @@ def test_subworkflows_lint_no_gitlab(self):
 def test_subworkflows_lint_gitlab_subworkflows(self):
     """Lint subworkflows from a different remote"""
     self.subworkflow_install_gitlab.install("bam_stats_samtools")
-    subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
+    subworkflow_lint = nf_core.subworkflows.SubworkflowLint(
+        dir=self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
+    )
     subworkflow_lint.lint(print_results=False, all_subworkflows=True)
-    assert len(subworkflow_lint.failed) == 2
+    assert len(subworkflow_lint.failed) == 0
     assert len(subworkflow_lint.passed) > 0
     assert len(subworkflow_lint.warned) >= 0
 
@@ -53,9 +57,11 @@ def test_subworkflows_lint_multiple_remotes(self):
     """Lint subworkflows from a different remote"""
     self.subworkflow_install_gitlab.install("bam_stats_samtools")
     self.subworkflow_install.install("fastq_align_bowtie2")
-    subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
-    subworkflow_lint.lint(print_results=False, all_modules=True)
-    assert len(subworkflow_lint.failed) == 1
+    subworkflow_lint = nf_core.subworkflows.SubworkflowLint(
+        dir=self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
+    )
+    subworkflow_lint.lint(print_results=False, all_subworkflows=True)
+    assert len(subworkflow_lint.failed) == 0
     assert len(subworkflow_lint.passed) > 0
     assert len(subworkflow_lint.warned) >= 0
 
