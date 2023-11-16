@@ -58,6 +58,11 @@ def meta_yml(module_lint_object, module):
             hint = f"\nCheck that the child entries of {e.path[0]+'.'+e.path[2]} are indented correctly."
         if e.schema.get("message"):
             e.message = e.schema["message"]
+            incorrect_value = meta_yaml
+            for key in e.path:
+                incorrect_value = incorrect_value[key]
+
+            hint = hint + f"\nThe current value is `{incorrect_value}`."
         module.failed.append(
             (
                 "meta_yml_valid",

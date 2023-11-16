@@ -83,7 +83,7 @@ def mock_anaconda_api_calls(rsps: responses.RequestsMock, module, version):
         "doc_url": "http://test",
         "dev_url": "http://test",
         "files": [{"version": version.split("--")[0]}],
-        "license": "",
+        "license": "MIT",
     }
     rsps.get(anaconda_api_url, json=anaconda_mock, status=200)
 
