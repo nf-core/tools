@@ -1351,7 +1351,6 @@ def install(ctx, subworkflow, dir, prompt, force, sha):
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
-        raise
         sys.exit(1)
 
 
