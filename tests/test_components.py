@@ -3,6 +3,7 @@
 
 import os
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -33,7 +34,10 @@ class TestComponents(unittest.TestCase):
 
         # Clean up temporary files
         if self.tmp_dir.is_dir():
-            shutil.rmtree(self.tmp_dir)
+            try:
+                shutil.rmtree(self.tmp_dir)
+            except PermissionError:
+                subprocess.run(["rm", "-rf", self.tmp_dir])
 
     ############################################
     # Test of the individual components commands. #

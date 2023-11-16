@@ -10,8 +10,10 @@ nextflow_workflow {
     tag "subworkflows_nfcore"
     tag "{{ component_name }}"
     tag "subworkflows/{{ component_name }}"
-
-    // TODO nf-core: Add tags for all modules used within this subworkflow
+    // TODO nf-core: Add tags for all modules used within this subworkflow. Example:
+    tag "samtools"
+    tag "samtools/sort"
+    tag "samtools/index"
 
 
     // TODO nf-core: Change the test name preferably indicating the test-data and file-format used

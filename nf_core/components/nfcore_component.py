@@ -51,9 +51,9 @@ class NFCoreComponent:
 
             repo_dir = self.component_dir.parts[: self.component_dir.parts.index(self.component_name.split("/")[0])][-1]
             self.org = repo_dir
-            self.test_dir = Path(self.base_dir, "tests", component_type, repo_dir, self.component_name)
-            self.test_yml = self.test_dir / "test.yml"
-            self.test_main_nf = self.test_dir / "main.nf"
+            self.nftest_testdir = self.component_dir / "tests"
+            self.nftest_main_nf = self.nftest_testdir / "main.nf.test"
+            self.tags_yml = self.nftest_testdir / "tags.yml"
 
             if self.repo_type == "pipeline":
                 patch_fn = f"{self.component_name.replace('/', '-')}.diff"
@@ -72,3 +72,21 @@ class NFCoreComponent:
             self.test_dir = None
             self.test_yml = None
             self.test_main_nf = None
+
+    def _get_main_nf_tags(self, test_main_nf: str):
+        """Collect all tags from the main.nf.test file."""
+        tags = []
+        with open(test_main_nf, "r") as fh:
+            for line in fh:
+                if line.strip().startswith("tag"):
+                    tags.append(line.strip().split()[1].strip('"'))
+        return tags
+
+    def _get_included_components(self, main_nf: str):
+        """Collect all included components from the main.nf file."""
+        included_components = []
+        with open(main_nf, "r") as fh:
+            for line in fh:
+                if line.strip().startswith("include"):
+                    included_components.append(line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/"))
+        return included_components
