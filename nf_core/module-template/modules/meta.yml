@@ -19,7 +19,7 @@ tools:
       documentation: "{{ tool_doc_url }}"
       tool_dev_url: "{{ tool_dev_url }}"
       doi: ""
-      licence: "{{ tool_licence }}"
+      licence: {{ tool_licence }}
 
 {% if not_empty_template -%}
 ## TODO nf-core: Add a description of all of the variables used as input
