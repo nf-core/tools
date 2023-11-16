@@ -47,7 +47,7 @@ class TestSchema(unittest.TestCase):
 
     def test_load_lint_schema_nofile(self):
         """Check that linting raises properly if a non-existant file is given"""
-        with pytest.raises(AssertionError):
+        with pytest.raises(RuntimeError):
             self.schema_obj.get_schema_path("fake_file")
 
     def test_load_lint_schema_notjson(self):

@@ -65,7 +65,7 @@ class TestList(unittest.TestCase):
         """Test the local workflow class and try to get local
         Nextflow workflow information"""
         loc_wf = nf_core.list.LocalWorkflow("myWF")
-        with pytest.raises(AssertionError):
+        with pytest.raises(RuntimeError):
             loc_wf.get_local_nf_workflow_details()
 
     def test_local_workflows_compare_and_fail_silently(self):
