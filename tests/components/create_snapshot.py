@@ -100,7 +100,7 @@ def test_test_not_found(self):
         )
         with pytest.raises(UserWarning) as e:
             snap_generator.run()
-            assert "Test file 'main.nf.test' not found" in str(e.value)
+        assert "Test file 'main.nf.test' not found" in str(e.value)
 
 
 def test_unstable_snapshot(self):
@@ -115,4 +115,4 @@ def test_unstable_snapshot(self):
         )
         with pytest.raises(UserWarning) as e:
             snap_generator.run()
-            assert "nf-test snapshot is not stable" in str(e.value)
+        assert "nf-test snapshot is not stable" in str(e.value)
