@@ -97,7 +97,7 @@ def module_tests(_, module):
                     )
                 )
 
-    # Check pytest_modules.yml does not contain entries for subworkflows with nf-test
+    # Check pytest_modules.yml does not contain entries for modules with nf-test
     pytest_yml_path = module.base_dir / "tests" / "config" / "pytest_modules.yml"
     if pytest_yml_path.is_file():
         try:

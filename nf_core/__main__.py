@@ -1090,10 +1090,8 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
 @click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
 def create_snapshot(ctx, subworkflow, dir, run_tests, no_prompts, update):
     """
-    Auto-generate a test.yml file for a new subworkflow.
-
-    Given the name of a module, runs the Nextflow test command and automatically generate
-    the required `test.yml` file based on the output files.
+    Generate nf-test snapshots for a module.
+    Given the name of a module, runs the nf-test command to generate snapshots.
     """
     from nf_core.components.snapshot_generator import ComponentTestSnapshotGenerator
 
