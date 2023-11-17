@@ -65,3 +65,5 @@ output:
 
 authors:
   - "{{ author }}"
+maintainers:
+  - "{{ author }}"

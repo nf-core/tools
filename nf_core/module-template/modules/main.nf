@@ -113,7 +113,7 @@ process {{ component_name_underscore|upper }} {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        {{ tool }}: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' ))
+        {{ component }}: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' ))
     END_VERSIONS
     """
 }
