@@ -666,6 +666,7 @@ def install(ctx, tool, dir, prompt, force, sha):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
@@ -698,7 +699,7 @@ def install(ctx, tool, dir, prompt, force, sha):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
-def update(ctx, tool, dir, force, prompt, sha, install_all, preview, save_diff, update_deps):
+def update(ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps):
     """
     Update DSL2 modules within a pipeline.
 
@@ -708,11 +709,11 @@ def update(ctx, tool, dir, force, prompt, sha, install_all, preview, save_diff, 
 
     try:
         module_install = ModuleUpdate(
-            dir,
+            directory,
             force,
             prompt,
             sha,
-            all,
+            install_all,
             preview,
             save_diff,
             update_deps,
@@ -1307,7 +1308,7 @@ def install(ctx, subworkflow, dir, prompt, force, sha):
             ctx.obj["modules_repo_no_pull"],
         )
         exit_status = subworkflow_install.install(subworkflow)
-        if not exit_status and install_all:
+        if not exit_status:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
