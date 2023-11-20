@@ -7,9 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from git import Repo
-
-from nf_core.modules.modules_repo import ModulesRepo
+from git.repo import Repo
 
 from .utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 
@@ -39,7 +37,7 @@ class TestComponents(unittest.TestCase):
     # Test of the individual components commands. #
     ############################################
 
-    from .components.create_snapshot import (  # type: ignore[misc]
+    from .components.generate_snapshot import (  # type: ignore[misc]
         test_generate_snapshot_module,
         test_generate_snapshot_once,
         test_generate_snapshot_subworkflow,

@@ -861,7 +861,7 @@ def create_module(
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
 @click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
 @click.option("-o", "--once", is_flag=True, default=False, help="Run tests only once. Don't check snapshot stability")
-def create_snapshot(ctx, tool, dir, run_tests, no_prompts, update, once):
+def test_module(ctx, tool, dir, run_tests, no_prompts, update, once):
     """
     Generate nf-test snapshots for a module.
 
@@ -1070,7 +1070,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
 @click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
 @click.option("-o", "--once", is_flag=True, default=False, help="Run tests only once. Don't check snapshot stability")
-def create_snapshot(ctx, subworkflow, dir, run_tests, no_prompts, update, once):
+def test_subworkflow(ctx, subworkflow, dir, run_tests, no_prompts, update, once):
     """
     Generate nf-test snapshots for a module.
     Given the name of a module, runs the nf-test command to generate snapshots.
