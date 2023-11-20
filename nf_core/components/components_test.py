@@ -24,7 +24,7 @@ from tests.utils import set_wd
 log = logging.getLogger(__name__)
 
 
-class ComponentsTest(ComponentCommand):
+class ComponentsTest(ComponentCommand):  # type: ignore[misc]
     """
     Class to generate and test nf-test snapshots for modules.
 
@@ -96,7 +96,7 @@ class ComponentsTest(ComponentCommand):
         os.environ[
             "NFT_DIFF_ARGS"
         ] = "--line-numbers --expand-tabs=2"  # taken from https://code.askimed.com/nf-test/docs/assertions/snapshots/#snapshot-differences
-        with set_wd(self.dir):
+        with set_wd(Path(self.dir)):
             self.check_snapshot_stability()
         if len(self.errors) > 0:
             errors = "\n - ".join(self.errors)
