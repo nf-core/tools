@@ -50,6 +50,8 @@ class ComponentsTest(ComponentCommand):
         flag indicating if verbose output should be used
     update : bool
         flag indicating if the existing snapshot should be updated
+    once : bool
+        flag indicating if the test should be run only once
 
     Methods
     -------
@@ -74,17 +76,18 @@ class ComponentsTest(ComponentCommand):
         branch: Optional[str] = None,
         verbose: bool = False,
         update: bool = False,
+        once: bool = False,
     ):
-        super().__init__(component_type, directory, remote_url, branch)
+        super().__init__(component_type, directory, remote_url, branch, no_prompts=no_prompts)
         self.component_name = component_name
         self.remote_url = remote_url
         self.branch = branch
         self.run_tests = run_tests
-        self.no_prompts = no_prompts
         self.errors: List[str] = []
         self.verbose = verbose
         self.obsolete_snapshots: bool = False
         self.update = update
+        self.once = once
 
     def run(self) -> None:
         """Run build steps"""
@@ -168,7 +171,7 @@ class ComponentsTest(ComponentCommand):
                 if self.no_prompts:
                     log.info("Updating snapshot")
                     self.update = True
-                else:
+                elif self.update is None:
                     answer = Confirm.ask(
                         "[bold][blue]?[/] nf-test found differences in the snapshot. Do you want to update it?",
                         default=True,
@@ -232,6 +235,8 @@ class ComponentsTest(ComponentCommand):
         log.info("Generating nf-test snapshot")
         if not self.generate_snapshot():
             return False  # stop here if the first run failed
+        elif self.once:
+            return True  # stop here if the test should be run only once
         log.info("Generating nf-test snapshot again to check stability")
         if not self.generate_snapshot():
             log.error("nf-test snapshot is not stable")

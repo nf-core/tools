@@ -41,6 +41,7 @@ class TestComponents(unittest.TestCase):
 
     from .components.create_snapshot import (  # type: ignore[misc]
         test_generate_snapshot_module,
+        test_generate_snapshot_once,
         test_generate_snapshot_subworkflow,
         test_test_not_found,
         test_unstable_snapshot,

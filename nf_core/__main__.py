@@ -859,7 +859,8 @@ def create_module(
 @click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
 @click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
-def create_snapshot(ctx, tool, dir, run_tests, no_prompts, update):
+@click.option("-o", "--once", is_flag=True, default=False, help="Run tests only once. Don't check snapshot stability")
+def create_snapshot(ctx, tool, dir, run_tests, no_prompts, update, once):
     """
     Generate nf-test snapshots for a module.
 
@@ -875,6 +876,7 @@ def create_snapshot(ctx, tool, dir, run_tests, no_prompts, update):
             run_tests=run_tests,
             no_prompts=no_prompts,
             update=update,
+            once=once,
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
             verbose=ctx.obj["verbose"],
@@ -1066,7 +1068,8 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
 @click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
 @click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
-def create_snapshot(ctx, subworkflow, dir, run_tests, no_prompts, update):
+@click.option("-o", "--once", is_flag=True, default=False, help="Run tests only once. Don't check snapshot stability")
+def create_snapshot(ctx, subworkflow, dir, run_tests, no_prompts, update, once):
     """
     Generate nf-test snapshots for a module.
     Given the name of a module, runs the nf-test command to generate snapshots.
@@ -1081,6 +1084,7 @@ def create_snapshot(ctx, subworkflow, dir, run_tests, no_prompts, update):
             run_tests=run_tests,
             no_prompts=no_prompts,
             update=update,
+            once=once,
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
             verbose=ctx.obj["verbose"],

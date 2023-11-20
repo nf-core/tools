@@ -1,6 +1,7 @@
 """Test generate a snapshot"""
 import json
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -58,6 +59,25 @@ def test_generate_snapshot_subworkflow(self):
             "test.idxstats:md5,df60a8c8d6621100d05178c93fb053a2"
             in snap_content["test_bam_sort_stats_samtools_paired_end_idxstats"]["content"][0][0]
         )
+
+
+def test_generate_snapshot_once(
+    self,
+):
+    """Generate the snapshot for a module in nf-core/modules clone only once"""
+    with set_wd(self.nfcore_modules):
+        snap_generator = ComponentsTest(
+            component_type="modules",
+            component_name="fastqc",
+            once=True,
+            no_prompts=True,
+            remote_url=GITLAB_URL,
+            branch=GITLAB_NFTEST_BRANCH,
+        )
+        snap_generator.repo_type = "modules"
+        snap_generator.generate_snapshot = MagicMock()
+        snap_generator.run()
+        snap_generator.generate_snapshot.assert_called_once()
 
 
 def test_update_snapshot_module(self):
