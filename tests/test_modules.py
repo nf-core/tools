@@ -199,11 +199,6 @@ class TestModules(unittest.TestCase):
         test_mod_json_with_empty_modules_value,
         test_mod_json_with_missing_modules_entry,
     )
-    from .modules.modules_test import (  # type: ignore[misc]
-        test_modules_test_check_inputs,
-        test_modules_test_no_installed_modules,
-        test_modules_test_no_name_no_prompts,
-    )
     from .modules.patch import (  # type: ignore[misc]
         test_create_patch_change,
         test_create_patch_no_change,

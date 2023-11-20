@@ -1,10 +1,10 @@
+"""Test generate a snapshot"""
 import json
-import os
 from pathlib import Path
 
 import pytest
 
-from nf_core.components.snapshot_generator import ComponentTestSnapshotGenerator
+from nf_core.components.components_test import ComponentsTest
 
 from ..utils import GITLAB_NFTEST_BRANCH, GITLAB_URL, set_wd
 
@@ -12,7 +12,7 @@ from ..utils import GITLAB_NFTEST_BRANCH, GITLAB_URL, set_wd
 def test_generate_snapshot_module(self):
     """Generate the snapshot for a module in nf-core/modules clone"""
     with set_wd(self.nfcore_modules):
-        snap_generator = ComponentTestSnapshotGenerator(
+        snap_generator = ComponentsTest(
             component_type="modules",
             component_name="fastqc",
             no_prompts=True,
@@ -34,7 +34,7 @@ def test_generate_snapshot_module(self):
 def test_generate_snapshot_subworkflow(self):
     """Generate the snapshot for a subworkflows in nf-core/modules clone"""
     with set_wd(self.nfcore_modules):
-        snap_generator = ComponentTestSnapshotGenerator(
+        snap_generator = ComponentsTest(
             component_type="subworkflows",
             component_name="bam_sort_stats_samtools",
             no_prompts=True,
@@ -72,7 +72,7 @@ def test_update_snapshot_module(self):
         snap_content["Single-End"]["content"][0]["0"][0][1] = ""
         with open(snap_path, "w") as fh:
             json.dump(snap_content, fh)
-        snap_generator = ComponentTestSnapshotGenerator(
+        snap_generator = ComponentsTest(
             component_type="modules",
             component_name="bwa/mem",
             no_prompts=True,
@@ -91,7 +91,7 @@ def test_update_snapshot_module(self):
 def test_test_not_found(self):
     """Generate the snapshot for a module in nf-core/modules clone which doesn't contain tests"""
     with set_wd(self.nfcore_modules):
-        snap_generator = ComponentTestSnapshotGenerator(
+        snap_generator = ComponentsTest(
             component_type="modules",
             component_name="fastp",
             no_prompts=True,
@@ -106,7 +106,7 @@ def test_test_not_found(self):
 def test_unstable_snapshot(self):
     """Generate the snapshot for a module in nf-core/modules clone with unstable snapshots"""
     with set_wd(self.nfcore_modules):
-        snap_generator = ComponentTestSnapshotGenerator(
+        snap_generator = ComponentsTest(
             component_type="modules",
             component_name="kallisto/quant",
             no_prompts=True,

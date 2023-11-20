@@ -851,8 +851,8 @@ def create_module(
         sys.exit(1)
 
 
-# nf-core modules create-snapshot
-@modules.command("create-snapshot")
+# nf-core modules test
+@modules.command("test")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
@@ -865,10 +865,10 @@ def create_snapshot(ctx, tool, dir, run_tests, no_prompts, update):
 
     Given the name of a module, runs the nf-test command to generate snapshots.
     """
-    from nf_core.components.snapshot_generator import ComponentTestSnapshotGenerator
+    from nf_core.components.components_test import ComponentsTest
 
     try:
-        snap_generator = ComponentTestSnapshotGenerator(
+        snap_generator = ComponentsTest(
             component_type="modules",
             component_name=tool,
             directory=dir,
@@ -1027,28 +1027,6 @@ def bump_versions(ctx, tool, dir, all, show_all):
         sys.exit(1)
 
 
-# nf-core modules test
-@modules.command("test")
-@click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-@click.option("-a", "--pytest_args", type=str, required=False, multiple=True, help="Additional pytest arguments")
-def test_module(ctx, tool, no_prompts, pytest_args):
-    """
-    Run module tests locally.
-
-    Given the name of a module, runs the Nextflow test command.
-    """
-    from nf_core.modules import ModulesTest
-
-    try:
-        meta_builder = ModulesTest(tool, no_prompts, pytest_args)
-        meta_builder.run()
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
-
-
 # nf-core subworkflows create
 @subworkflows.command("create")
 @click.pass_context
@@ -1080,8 +1058,8 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
         sys.exit(1)
 
 
-# nf-core subworkflows create-snapshot
-@subworkflows.command("create-snapshot")
+# nf-core subworkflows test
+@subworkflows.command("test")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
@@ -1093,10 +1071,10 @@ def create_snapshot(ctx, subworkflow, dir, run_tests, no_prompts, update):
     Generate nf-test snapshots for a module.
     Given the name of a module, runs the nf-test command to generate snapshots.
     """
-    from nf_core.components.snapshot_generator import ComponentTestSnapshotGenerator
+    from nf_core.components.components_test import ComponentsTest
 
     try:
-        snap_generator = ComponentTestSnapshotGenerator(
+        snap_generator = ComponentsTest(
             component_type="subworkflows",
             component_name=subworkflow,
             directory=dir,
@@ -1287,28 +1265,6 @@ def info(ctx, tool, dir):
         stdout.print(subworkflow_info.get_component_info())
     except (UserWarning, LookupError) as e:
         log.error(e)
-        sys.exit(1)
-
-
-# nf-core subworkflows test
-@subworkflows.command("test")
-@click.pass_context
-@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
-@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-@click.option("-a", "--pytest_args", type=str, required=False, multiple=True, help="Additional pytest arguments")
-def test_subworkflow(ctx, subworkflow, no_prompts, pytest_args):
-    """
-    Run subworkflow tests locally.
-
-    Given the name of a subworkflow, runs the Nextflow test command.
-    """
-    from nf_core.subworkflows import SubworkflowsTest
-
-    try:
-        meta_builder = SubworkflowsTest(subworkflow, no_prompts, pytest_args)
-        meta_builder.run()
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
         sys.exit(1)
 
 

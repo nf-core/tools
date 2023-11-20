@@ -138,11 +138,6 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_remove_subworkflow,
         test_subworkflows_remove_subworkflow_keep_installed_module,
     )
-    from .subworkflows.subworkflows_test import (  # type: ignore[misc]
-        test_subworkflows_test_check_inputs,
-        test_subworkflows_test_no_installed_subworkflows,
-        test_subworkflows_test_no_name_no_prompts,
-    )
     from .subworkflows.update import (  # type: ignore[misc]
         test_install_and_update,
         test_install_at_hash_and_update,
