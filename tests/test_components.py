@@ -46,3 +46,8 @@ class TestComponents(unittest.TestCase):
         test_unstable_snapshot,
         test_update_snapshot_module,
     )
+    from .components.snapshot_test import (  # type: ignore[misc]
+        test_components_test_check_inputs,
+        test_components_test_no_installed_modules,
+        test_components_test_no_name_no_prompts,
+    )

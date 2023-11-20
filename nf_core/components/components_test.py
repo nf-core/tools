@@ -109,11 +109,19 @@ class ComponentsTest(ComponentCommand):
 
         # Get the component name if not specified
         if self.component_name is None:
-            self.component_name = questionary.autocomplete(
-                "Tool name:" if self.component_type == "modules" else "Subworkflow name:",
-                choices=self.components_from_repo(self.org),
-                style=nf_core.utils.nfcore_question_style,
-            ).unsafe_ask()
+            if self.no_prompts:
+                raise UserWarning(
+                    f"{self.component_type[:-1].title()} name not provided and prompts deactivated. Please provide the {self.component_type[:-1]} name{' as TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else ''}."
+                )
+            else:
+                try:
+                    self.component_name = questionary.autocomplete(
+                        "Tool name:" if self.component_type == "modules" else "Subworkflow name:",
+                        choices=self.components_from_repo(self.org),
+                        style=nf_core.utils.nfcore_question_style,
+                    ).unsafe_ask()
+                except LookupError:
+                    raise
 
         self.component_dir = Path(self.component_type, self.modules_repo.repo_path, *self.component_name.split("/"))
 

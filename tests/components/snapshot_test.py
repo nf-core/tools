@@ -33,8 +33,8 @@ def test_components_test_no_installed_modules(self):
         module_dir = Path(self.nfcore_modules, "modules")
         shutil.rmtree(module_dir)
         module_dir.mkdir()
-        meta_builder = ComponentsTest(component_type="modules", component_name=None, no_prompts=True)
+        meta_builder = ComponentsTest(component_type="modules", component_name=None, no_prompts=False)
         meta_builder.repo_type = "modules"
-        with pytest.raises(UserWarning) as excinfo:
+        with pytest.raises(LookupError) as excinfo:
             meta_builder.check_inputs()
-    assert "No installed modules were found" in str(excinfo.value)
+    assert "Nothing installed from" in str(excinfo.value)
