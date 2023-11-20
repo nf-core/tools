@@ -44,7 +44,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Developing new modules",
-            "commands": ["create", "create-test-yml", "lint", "bump-versions", "test"],
+            "commands": ["create", "lint", "bump-versions", "test"],
         },
     ],
     "nf-core subworkflows": [
@@ -54,7 +54,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Developing new subworkflows",
-            "commands": ["create", "create-test-yml"],
+            "commands": ["create", "test", "lint"],
         },
     ],
 }

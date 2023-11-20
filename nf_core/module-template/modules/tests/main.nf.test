@@ -1,5 +1,5 @@
 // TODO nf-core: Once you have added the required tests, please run the following command to build this file:
-// nf-core modules create-nf-test {{ component_name }}
+// nf-core modules test {{ component_name }}
 nextflow_process {
 
     name "Test Process {{ component_name_underscore|upper }}"
