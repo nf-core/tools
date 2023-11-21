@@ -144,7 +144,7 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
             os.environ["PROFILE"] = ""
             if self.no_prompts:
                 log.info(
-                    "Setting env var '$PROFILE' to Docker as not set.\n"
+                    "Setting environment variable '$PROFILE' to Docker as not set otherwise.\n"
                     "To use Singularity set 'export PROFILE=singularity' in your shell before running this command."
                 )
                 os.environ["PROFILE"] = "docker"
