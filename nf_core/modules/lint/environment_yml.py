@@ -4,10 +4,10 @@ from pathlib import Path
 
 import yaml
 from jsonschema import exceptions, validators
-from utils import custom_yaml_dumper
 
 from nf_core.components.lint import ComponentLint
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.utils import custom_yaml_dumper
 
 log = logging.getLogger(__name__)
 
