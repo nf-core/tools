@@ -20,7 +20,7 @@ def module_tests(_, module: NFCoreComponent):
 
     """
     repo_dir = module.component_dir.parts[: module.component_dir.parts.index(module.component_name.split("/")[0])][-1]
-    test_dir = Path(module.base_dir, "tests", "module", repo_dir, module.component_name)
+    test_dir = Path(module.base_dir, "tests", "modules", repo_dir, module.component_name)
     pytest_main_nf = Path(test_dir, "main.nf")
     is_pytest = pytest_main_nf.is_file()
     if module.nftest_testdir.is_dir():

@@ -2,15 +2,16 @@
 Lint the tests of a subworkflow in nf-core/modules
 """
 import logging
-import os
 from pathlib import Path
 
 import yaml
 
+from nf_core.components.nfcore_component import NFCoreComponent
+
 log = logging.getLogger(__name__)
 
 
-def subworkflow_tests(_, subworkflow):
+def subworkflow_tests(_, subworkflow: NFCoreComponent):
     """
     Lint the tests of a subworkflow in ``nf-core/modules``
 
@@ -20,8 +21,10 @@ def subworkflow_tests(_, subworkflow):
     Additionally, hecks that all included components in test ``main.nf`` are specified in ``test.yml``
     """
 
-    repo_dir = module.component_dir.parts[: module.component_dir.parts.index(module.component_name.split("/")[0])][-1]
-    test_dir = Path(module.base_dir, "tests", "module", repo_dir, module.component_name)
+    repo_dir = subworkflow.component_dir.parts[
+        : subworkflow.component_dir.parts.index(subworkflow.component_name.split("/")[0])
+    ][-1]
+    test_dir = Path(subworkflow.base_dir, "tests", "subworfklows", repo_dir, subworkflow.component_name)
     pytest_main_nf = Path(test_dir, "main.nf")
     is_pytest = pytest_main_nf.is_file()
 
