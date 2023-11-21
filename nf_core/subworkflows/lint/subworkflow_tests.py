@@ -7,8 +7,6 @@ from pathlib import Path
 
 import yaml
 
-import nf_core.subworkflows
-
 log = logging.getLogger(__name__)
 
 
@@ -21,19 +19,33 @@ def subworkflow_tests(_, subworkflow):
 
     Additionally, hecks that all included components in test ``main.nf`` are specified in ``test.yml``
     """
+
+    repo_dir = module.component_dir.parts[: module.component_dir.parts.index(module.component_name.split("/")[0])][-1]
+    test_dir = Path(module.base_dir, "tests", "module", repo_dir, module.component_name)
+    pytest_main_nf = Path(test_dir, "main.nf")
+    is_pytest = pytest_main_nf.is_file()
+
     if subworkflow.nftest_testdir.is_dir():
         subworkflow.passed.append(("test_dir_exists", "nf-test test directory exists", subworkflow.nftest_testdir))
     else:
-        subworkflow.warned.append(("test_dir_exists", "nf-test directory is missing", subworkflow.nftest_testdir))
+        if is_pytest:
+            subworkflow.warned.append(("test_dir_exists", "nf-test directory is missing", subworkflow.nftest_testdir))
+        else:
+            subworkflow.failed.append(("test_dir_exists", "nf-test directory is missing", subworkflow.nftest_testdir))
         return
 
     # Lint the test main.nf file
     if subworkflow.nftest_main_nf.is_file():
         subworkflow.passed.append(("test_main_exists", "test `main.nf.test` exists", subworkflow.nftest_main_nf))
     else:
-        subworkflow.warned.append(
-            ("test_main_exists", "test `main.nf.test` does not exist", subworkflow.nftest_main_nf)
-        )
+        if is_pytest:
+            subworkflow.warned.append(
+                ("test_main_exists", "test `main.nf.test` does not exist", subworkflow.nftest_main_nf)
+            )
+        else:
+            subworkflow.failed.append(
+                ("test_main_exists", "test `main.nf.test` does not exist", subworkflow.nftest_main_nf)
+            )
 
     if subworkflow.nftest_main_nf.is_file():
         with open(subworkflow.nftest_main_nf, "r") as fh:
@@ -109,12 +121,12 @@ def subworkflow_tests(_, subworkflow):
 
     # Check pytest_modules.yml does not contain entries for subworkflows with nf-test
     pytest_yml_path = subworkflow.base_dir / "tests" / "config" / "pytest_modules.yml"
-    if pytest_yml_path.is_file():
+    if pytest_yml_path.is_file() and not is_pytest:
         try:
             with open(pytest_yml_path, "r") as fh:
                 pytest_yml = yaml.safe_load(fh)
                 if "subworkflows/" + subworkflow.component_name in pytest_yml.keys():
-                    subworkflow.warned.append(
+                    subworkflow.failed.append(
                         (
                             "test_pytest_yml",
                             "subworkflow with nf-test should not be listed in pytest_modules.yml",
@@ -151,4 +163,7 @@ def subworkflow_tests(_, subworkflow):
                     )
                 )
     else:
-        subworkflow.warned.append(("test_tags_yml_exists", "file `tags.yml` does not exist", subworkflow.tags_yml))
+        if is_pytest:
+            subworkflow.warned.append(("test_tags_yml_exists", "file `tags.yml` does not exist", subworkflow.tags_yml))
+        else:
+            subworkflow.failed.append(("test_tags_yml_exists", "file `tags.yml` does not exist", subworkflow.tags_yml))
