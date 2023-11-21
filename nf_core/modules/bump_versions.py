@@ -136,8 +136,21 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
             module: NFCoreComponent
         """
         config_version = None
-        # Extract bioconda version from `main.nf`
-        bioconda_packages = self.get_bioconda_version(module)
+        bioconda_packages = []
+        try:
+            # Extract bioconda version from `environment.yml`
+            bioconda_packages = self.get_bioconda_version(module)
+        except FileNotFoundError:
+            # try it in the main.nf instead
+            try:
+                with open(module.main_nf, "r") as fh:
+                    for l in fh:
+                        if "bioconda::" in l:
+                            bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+            except FileNotFoundError:
+                log.error(
+                    f"Neither `environment.yml` nor `main.nf` of {module.component_name} module could be read to get bioconada version of used tools."
+                )
 
         # If multiple versions - don't update! (can't update mulled containers)
         if not bioconda_packages or len(bioconda_packages) > 1:
