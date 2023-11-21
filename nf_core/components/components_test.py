@@ -245,20 +245,14 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         else:
             if self.obsolete_snapshots:
                 # ask if the user wants to remove obsolete snapshots using nf-test --clean-snapshot
-                if self.no_prompts:
+                if self.no_prompts or Confirm.ask(
+                    "nf-test found obsolete snapshots. Do you want to remove them?", default=True
+                ):
                     log.info("Removing obsolete snapshots")
                     nf_core.utils.run_cmd(
                         "nf-test",
                         f"test --tag {self.component_name} --profile {os.environ['PROFILE']} --clean-snapshot",
                     )
                 else:
-                    answer = Confirm.ask("nf-test found obsolete snapshots. Do you want to remove them?", default=True)
-                    if answer:
-                        log.info("Removing obsolete snapshots")
-                        nf_core.utils.run_cmd(
-                            "nf-test",
-                            f"test --tag {self.component_name} --profile {os.environ['PROFILE']} --clean-snapshot",
-                        )
-                    else:
-                        log.debug("Obsolete snapshots not removed")
+                    log.debug("Obsolete snapshots not removed")
             return True
