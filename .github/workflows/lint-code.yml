@@ -135,4 +135,5 @@ jobs:
           enable_threshold_check: "true"
           enable_base_tip_check: "true"
           github_token: ${{ secrets.GITHUB_TOKEN }}
-        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'dev' }}
+        # only run on PRs to dev branch or manual dispatch
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'dev' }}  || github.event_name == 'workflow_dispatch'
