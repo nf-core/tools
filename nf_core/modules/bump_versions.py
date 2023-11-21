@@ -12,16 +12,19 @@ import re
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import questionary
-import rich
 import yaml
+from rich.box import ROUNDED
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.progress import BarColumn, Progress
 from rich.table import Table
 
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.utils import custom_yaml_dumper
 from nf_core.utils import plural_s as _s
 from nf_core.utils import rich_force_colors
 
@@ -109,9 +112,9 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
             if len(nfcore_modules) == 0:
                 raise nf_core.modules.modules_utils.ModuleException(f"Could not find the specified module: '{module}'")
 
-        progress_bar = rich.progress.Progress(
+        progress_bar = Progress(
             "[bold blue]{task.description}",
-            rich.progress.BarColumn(bar_width=None),
+            BarColumn(bar_width=None),
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
             disable=os.environ.get("HIDE_PROGRESS", None) is not None,
@@ -242,7 +245,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
                 env_yml = yaml.safe_load(fh)
             re.sub(bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'", env_yml["dependencies"])
             with open(module.environment_yml, "w") as fh:
-                yaml.dump(env_yml, fh, default_flow_style=False)
+                yaml.dump(env_yml, fh, default_flow_style=False, Dumper=custom_yaml_dumper())
 
             self.updated.append(
                 (
@@ -314,12 +317,12 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         # Table of up to date modules
         if len(self.up_to_date) > 0 and self.show_up_to_date:
             console.print(
-                rich.panel.Panel(
+                Panel(
                     rf"[!] {len(self.up_to_date)} Module{_s(self.up_to_date)} version{_s(self.up_to_date)} up to date.",
                     style="bold green",
                 )
             )
-            table = Table(style="green", box=rich.box.ROUNDED)
+            table = Table(style="green", box=ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
             table.add_column("Update Message")
             table = format_result(self.up_to_date, table)
@@ -327,10 +330,8 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
 
         # Table of updated modules
         if len(self.updated) > 0:
-            console.print(
-                rich.panel.Panel(rf"[!] {len(self.updated)} Module{_s(self.updated)} updated", style="bold yellow")
-            )
-            table = Table(style="yellow", box=rich.box.ROUNDED)
+            console.print(Panel(rf"[!] {len(self.updated)} Module{_s(self.updated)} updated", style="bold yellow"))
+            table = Table(style="yellow", box=ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
             table.add_column("Update message")
             table = format_result(self.updated, table)
@@ -338,10 +339,8 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
 
         # Table of modules that couldn't be updated
         if len(self.failed) > 0:
-            console.print(
-                rich.panel.Panel(rf"[!] {len(self.failed)} Module update{_s(self.failed)} failed", style="bold red")
-            )
-            table = Table(style="red", box=rich.box.ROUNDED)
+            console.print(Panel(rf"[!] {len(self.failed)} Module update{_s(self.failed)} failed", style="bold red"))
+            table = Table(style="red", box=ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
             table.add_column("Update message")
             table = format_result(self.failed, table)
@@ -349,10 +348,8 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
 
         # Table of modules ignored due to `.nf-core.yml`
         if len(self.ignored) > 0:
-            console.print(
-                rich.panel.Panel(rf"[!] {len(self.ignored)} Module update{_s(self.ignored)} ignored", style="grey58")
-            )
-            table = Table(style="grey58", box=rich.box.ROUNDED)
+            console.print(Panel(rf"[!] {len(self.ignored)} Module update{_s(self.ignored)} ignored", style="grey58"))
+            table = Table(style="grey58", box=ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
             table.add_column("Update message")
             table = format_result(self.ignored, table)

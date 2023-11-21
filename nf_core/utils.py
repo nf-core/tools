@@ -998,7 +998,7 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-def load_tools_config(directory="."):
+def load_tools_config(directory: Union[str, Path] = "."):
     """
     Parse the nf-core.yml configuration file
 
