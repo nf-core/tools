@@ -38,8 +38,6 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         name of the tool to run tests for
     directory: str
         path to modules repository directory
-    run_tests : bool
-        flag indicating if tests should be run
     no_prompts : bool
         flat indicating if prompts are used
     remote_url : str
@@ -70,7 +68,6 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         component_type: str,
         component_name: Optional[str] = None,
         directory: str = ".",
-        run_tests: bool = False,
         no_prompts: bool = False,
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,
@@ -82,7 +79,6 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         self.component_name = component_name
         self.remote_url = remote_url
         self.branch = branch
-        self.run_tests = run_tests
         self.errors: List[str] = []
         self.verbose = verbose
         self.obsolete_snapshots: bool = False
@@ -133,11 +129,6 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
             raise UserWarning(
                 f"Cannot find directory '{self.component_dir}'.{' Should be TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else ''}"
             )
-
-        # Check that we're running tests if no prompts
-        if not self.run_tests and self.no_prompts:
-            log.debug("Setting run_tests to True as running without prompts")
-            self.run_tests = True
 
         # Check container software to use
         if os.environ.get("PROFILE") is None:

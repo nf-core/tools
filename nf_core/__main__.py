@@ -857,11 +857,10 @@ def create_module(
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
-@click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
 @click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
 @click.option("-o", "--once", is_flag=True, default=False, help="Run tests only once. Don't check snapshot stability")
-def test_module(ctx, tool, dir, run_tests, no_prompts, update, once):
+def test_module(ctx, tool, dir, no_prompts, update, once):
     """
     Run nf-test for a module.
 
@@ -874,7 +873,6 @@ def test_module(ctx, tool, dir, run_tests, no_prompts, update, once):
             component_type="modules",
             component_name=tool,
             directory=dir,
-            run_tests=run_tests,
             no_prompts=no_prompts,
             update=update,
             once=once,
@@ -1070,7 +1068,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
 @click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
 @click.option("-o", "--once", is_flag=True, default=False, help="Run tests only once. Don't check snapshot stability")
-def test_subworkflow(ctx, subworkflow, dir, run_tests, no_prompts, update, once):
+def test_subworkflow(ctx, subworkflow, dir, no_prompts, update, once):
     """
     Run nf-test for a subworkflow.
 
@@ -1083,7 +1081,6 @@ def test_subworkflow(ctx, subworkflow, dir, run_tests, no_prompts, update, once)
             component_type="subworkflows",
             component_name=subworkflow,
             directory=dir,
-            run_tests=run_tests,
             no_prompts=no_prompts,
             update=update,
             once=once,
