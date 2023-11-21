@@ -861,16 +861,16 @@ def create_module(
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
 @click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
 @click.option("-o", "--once", is_flag=True, default=False, help="Run tests only once. Don't check snapshot stability")
-def create_snapshot(ctx, tool, dir, run_tests, no_prompts, update, once):
+def test_module(ctx, tool, dir, run_tests, no_prompts, update, once):
     """
-    Generate nf-test snapshots for a module.
+    Run nf-test for a module.
 
-    Given the name of a module, runs the nf-test command to generate snapshots.
+    Given the name of a module, runs the nf-test command to test the module and generate snapshots.
     """
     from nf_core.components.components_test import ComponentsTest
 
     try:
-        snap_generator = ComponentsTest(
+        module_tester = ComponentsTest(
             component_type="modules",
             component_name=tool,
             directory=dir,
@@ -882,7 +882,7 @@ def create_snapshot(ctx, tool, dir, run_tests, no_prompts, update, once):
             branch=ctx.obj["modules_repo_branch"],
             verbose=ctx.obj["verbose"],
         )
-        snap_generator.run()
+        module_tester.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
@@ -1070,15 +1070,16 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
 @click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
 @click.option("-o", "--once", is_flag=True, default=False, help="Run tests only once. Don't check snapshot stability")
-def create_snapshot(ctx, subworkflow, dir, run_tests, no_prompts, update, once):
+def test_subworkflow(ctx, subworkflow, dir, run_tests, no_prompts, update, once):
     """
-    Generate nf-test snapshots for a module.
-    Given the name of a module, runs the nf-test command to generate snapshots.
+    Run nf-test for a subworkflow.
+
+    Given the name of a subworkflow, runs the nf-test command to test the subworkflow and generate snapshots.
     """
     from nf_core.components.components_test import ComponentsTest
 
     try:
-        snap_generator = ComponentsTest(
+        sw_tester = ComponentsTest(
             component_type="subworkflows",
             component_name=subworkflow,
             directory=dir,
@@ -1090,7 +1091,7 @@ def create_snapshot(ctx, subworkflow, dir, run_tests, no_prompts, update, once):
             branch=ctx.obj["modules_repo_branch"],
             verbose=ctx.obj["verbose"],
         )
-        snap_generator.run()
+        sw_tester.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
