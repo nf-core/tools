@@ -135,3 +135,4 @@ jobs:
           enable_threshold_check: "true"
           enable_base_tip_check: "true"
           github_token: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'dev' }}
