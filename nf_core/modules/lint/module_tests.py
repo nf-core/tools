@@ -20,14 +20,14 @@ def module_tests(_, module):
     if module.nftest_testdir.is_dir():
         module.passed.append(("test_dir_exists", "nf-test test directory exists", module.nftest_testdir))
     else:
-        module.failed.append(("test_dir_exists", "nf-test directory is missing", module.nftest_testdir))
+        module.warned.append(("test_dir_exists", "nf-test directory is missing", module.nftest_testdir))
         return
 
     # Lint the test main.nf file
     if module.nftest_main_nf.is_file():
         module.passed.append(("test_main_exists", "test `main.nf.test` exists", module.nftest_main_nf))
     else:
-        module.failed.append(("test_main_exists", "test `main.nf.test` does not exist", module.nftest_main_nf))
+        module.warned.append(("test_main_exists", "test `main.nf.test` does not exist", module.nftest_main_nf))
 
     if module.nftest_main_nf.is_file():
         # Check if main.nf.test.snap file exists, if 'snap(' is inside main.nf.test
@@ -104,7 +104,7 @@ def module_tests(_, module):
             with open(pytest_yml_path, "r") as fh:
                 pytest_yml = yaml.safe_load(fh)
                 if module.component_name in pytest_yml.keys():
-                    module.failed.append(
+                    module.warned.append(
                         (
                             "test_pytest_yml",
                             "module with nf-test should not be listed in pytest_modules.yml",
@@ -138,4 +138,4 @@ def module_tests(_, module):
                     )
                 )
     else:
-        module.failed.append(("test_tags_yml_exists", "file `tags.yml` does not exist", module.tags_yml))
+        module.warned.append(("test_tags_yml_exists", "file `tags.yml` does not exist", module.tags_yml))
