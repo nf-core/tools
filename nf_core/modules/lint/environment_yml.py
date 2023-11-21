@@ -1,11 +1,15 @@
 import json
+import logging
 from pathlib import Path
 
 import yaml
 from jsonschema import exceptions, validators
+from utils import custom_yaml_dumper
 
 from nf_core.components.lint import ComponentLint
 from nf_core.components.nfcore_component import NFCoreComponent
+
+log = logging.getLogger(__name__)
 
 
 def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None:
@@ -74,18 +78,19 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
                 module.passed.append(
                     (
                         "environment_yml_sorted",
-                        "Module's `environment.yml` is sorted alphabetically",
+                        "The dependencies in the module's `environment.yml` were not sorted alphabetically",
                         module.environment_yml,
                     )
                 )
             else:
-                module.failed.append(
-                    (
-                        "environment_yml_sorted",
-                        "Module's `environment.yml` is not sorted alphabetically",
-                        module.environment_yml,
-                    )
+                # sort it and write it back to the file
+                log.info(
+                    f"Dependencies in {module.component_name}'s environment.yml were not sorted alphabetically. Sorting them now."
                 )
+                env_yml["dependencies"].sort()
+                with open(Path(module.component_dir, "environment.yml"), "w") as fh:
+                    yaml.dump(env_yml, fh, Dumper=custom_yaml_dumper())
+
             # Check that the name in the environment.yml file matches the name in the meta.yml file
             with open(Path(module.component_dir, "meta.yml"), "r") as fh:
                 meta_yml = yaml.safe_load(fh)
@@ -94,7 +99,7 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
                 module.passed.append(
                     (
                         "environment_yml_name",
-                        "Module's `environment.yml` name matches module name",
+                        "The module's `environment.yml` name matches module name",
                         module.environment_yml,
                     )
                 )

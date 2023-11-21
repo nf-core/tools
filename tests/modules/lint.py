@@ -380,10 +380,10 @@ def test_modules_environment_yml_file_sorted_incorrectly(self):
         fh.write(yaml_content)
     module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
     module_lint.lint(print_results=False, module="bpipe/test")
-    assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    # we fix the sorting on the fly, so this should pass
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
-    assert module_lint.failed[0].lint_test == "environment_yml_sorted"
 
 
 def test_modules_environment_yml_file_not_array(self):
