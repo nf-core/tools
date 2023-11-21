@@ -17,6 +17,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Tuple, Union
 
 import git
 import prompt_toolkit
@@ -53,10 +54,10 @@ nfcore_question_style = prompt_toolkit.styles.Style(
 )
 
 NFCORE_CACHE_DIR = os.path.join(
-    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME"), ".cache")),
+    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME") or "", ".cache")),
     "nfcore",
 )
-NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")), "nfcore")
+NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
 
 
 def fetch_remote_version(source_url):
@@ -269,14 +270,16 @@ def fetch_wf_config(wf_path, cache_config=True):
     log.debug("No config cache found")
 
     # Call `nextflow config`
-    nfconfig_raw = nextflow_cmd(f"nextflow config -flat {wf_path}")
-    for l in nfconfig_raw.splitlines():
-        ul = l.decode("utf-8")
-        try:
-            k, v = ul.split(" = ", 1)
-            config[k] = v.strip("'\"")
-        except ValueError:
-            log.debug(f"Couldn't find key=value config pair:\n  {ul}")
+    result = run_cmd("nextflow", f"config -flat {wf_path}")
+    if result is not None:
+        nfconfig_raw, _ = result
+        for l in nfconfig_raw.splitlines():
+            ul = l.decode("utf-8")
+            try:
+                k, v = ul.split(" = ", 1)
+                config[k] = v.strip("'\"")
+            except ValueError:
+                log.debug(f"Couldn't find key=value config pair:\n  {ul}")
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
@@ -303,18 +306,28 @@ def fetch_wf_config(wf_path, cache_config=True):
     return config
 
 
-def nextflow_cmd(cmd):
-    """Run a Nextflow command and capture the output. Handle errors nicely"""
+def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
+    """Run a specified command and capture the output. Handle errors nicely."""
+    full_cmd = f"{executable} {cmd}"
+    log.debug(f"Running command: {full_cmd}")
     try:
-        nf_proc = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        return nf_proc.stdout
+        proc = subprocess.run(shlex.split(full_cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        return (proc.stdout, proc.stderr)
     except OSError as e:
         if e.errno == errno.ENOENT:
-            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
+            raise RuntimeError(
+                f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
+            )
+        else:
+            return None
     except subprocess.CalledProcessError as e:
-        raise AssertionError(
-            f"Command '{cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
-        )
+        log.debug(f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}")
+        if executable == "nf-test":
+            return (e.stdout, e.stderr)
+        else:
+            raise RuntimeError(
+                f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
+            )
 
 
 def setup_nfcore_dir():
@@ -324,6 +337,7 @@ def setup_nfcore_dir():
     """
     if not os.path.exists(NFCORE_DIR):
         os.makedirs(NFCORE_DIR)
+        return True
 
 
 def setup_requests_cachedir():
@@ -984,7 +998,7 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-def load_tools_config(directory="."):
+def load_tools_config(directory: Union[str, Path] = "."):
     """
     Parse the nf-core.yml configuration file
 
