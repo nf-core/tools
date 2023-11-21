@@ -78,7 +78,7 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
                 module.passed.append(
                     (
                         "environment_yml_sorted",
-                        "The dependencies in the module's `environment.yml` were not sorted alphabetically",
+                        "The dependencies in the module's `environment.yml` are sorted alphabetically",
                         module.environment_yml,
                     )
                 )
