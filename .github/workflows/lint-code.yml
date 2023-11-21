@@ -132,6 +132,7 @@ jobs:
         with:
           max_tip: "60"
           sufficient_tip: "10"
+          mypy_config: "mypy.ini"
           enable_threshold_check: "true"
           enable_base_tip_check: "true"
           github_token: ${{ secrets.GITHUB_TOKEN }}
