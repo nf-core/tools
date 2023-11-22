@@ -114,6 +114,7 @@ def nextflow_config(self):
     * A ``test`` configuration profile should exist.
 
     """
+
     passed = []
     warned = []
     failed = []

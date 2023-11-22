@@ -20,6 +20,7 @@ def multiqc_config(self):
 
         export_plots: true
     """
+
     passed = []
     failed = []
 
