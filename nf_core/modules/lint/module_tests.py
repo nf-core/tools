@@ -154,3 +154,17 @@ def module_tests(_, module: NFCoreComponent):
             module.warned.append(("test_tags_yml_exists", "file `tags.yml` does not exist", module.tags_yml))
         else:
             module.failed.append(("test_tags_yml_exists", "file `tags.yml` does not exist", module.tags_yml))
+
+    # Check that the old test directory does not exist
+    if not is_pytest:
+        old_test_dir = Path(module.base_dir, "tests", "modules", module.component_name)
+        if old_test_dir.is_dir():
+            module.failed.append(
+                (
+                    "test_old_test_dir",
+                    f"Pytest files are still present at `{Path('tests', 'modules', module.component_name)}`. Please remove this directory and its contents.",
+                    old_test_dir,
+                )
+            )
+        else:
+            module.passed.append(("test_old_test_dir", "Old pytests don't exist for this module", old_test_dir))

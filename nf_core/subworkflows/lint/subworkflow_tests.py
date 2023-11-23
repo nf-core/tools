@@ -170,3 +170,11 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
             subworkflow.warned.append(("test_tags_yml_exists", "file `tags.yml` does not exist", subworkflow.tags_yml))
         else:
             subworkflow.failed.append(("test_tags_yml_exists", "file `tags.yml` does not exist", subworkflow.tags_yml))
+
+    # Check that the old test directory does not exist
+    if not is_pytest:
+        old_test_dir = Path(subworkflow.base_dir, "tests", "subworkflows", subworkflow.component_name)
+        if old_test_dir.is_dir():
+            subworkflow.failed.append(("test_old_test_dir", "old test directory exists", old_test_dir))
+        else:
+            subworkflow.passed.append(("test_old_test_dir", "old test directory does not exist", old_test_dir))
