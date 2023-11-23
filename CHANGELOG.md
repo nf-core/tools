@@ -4,7 +4,9 @@
 
 ### Template
 
-- Fix writing files to a remote outdir in the NfcoreTemplate helper functions ([#2465](https://github.com/nf-core/tools/pull/2465)
+- Fix writing files to a remote outdir in the NfcoreTemplate helper functions ([#2465](https://github.com/nf-core/tools/pull/2465))
+- Fancier syntax highlighting for example samplesheets in the usage.md template ([#2503](https://github.com/nf-core/tools/pull/2503))
+- Use closure for multiqc ext.args ([#2509](https://github.com/nf-core/tools/pull/2509))
 
 ### Linting
 
@@ -16,12 +18,17 @@
 
 - Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
 - Replace ModulePatch by ComponentPatch ([#2482](https://github.com/nf-core/tools/pull/2482))
+- Fixed `nf-core modules lint` to work with new module structure for nf-test ([#2494](https://github.com/nf-core/tools/pull/2494))
 
 ### Subworkflows
 
 - Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
+- Fixed `nf-core subworkflows lint` to work with new module structure for nf-test ([#2494](https://github.com/nf-core/tools/pull/2494))
 
 ### General
+
+- Change testing framework for modules and subworkflows from pytest to nf-test ([#2490](https://github.com/nf-core/tools/pull/2490))
+- `bump_version` keeps now the indentation level of the updated version entries ([#2514](https://github.com/nf-core/tools/pull/2514))
 
 # [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]
 

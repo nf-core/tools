@@ -3,10 +3,7 @@
 
 import os
 import shutil
-import tempfile
 import unittest
-
-import responses
 
 import nf_core.create
 import nf_core.modules
@@ -17,6 +14,7 @@ from .utils import (
     GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH,
     GITLAB_URL,
     OLD_SUBWORKFLOWS_SHA,
+    create_tmp_pipeline,
 )
 
 
@@ -47,18 +45,10 @@ class TestSubworkflows(unittest.TestCase):
 
     def setUp(self):
         """Create a new PipelineStructure and Launch objects"""
-        self.tmp_dir = tempfile.mkdtemp()
         self.component_type = "subworkflows"
 
         # Set up the pipeline structure
-        root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
-        self.pipeline_name = "mypipeline"
-        self.pipeline_dir = os.path.join(self.tmp_dir, self.pipeline_name)
-        nf_core.create.PipelineCreate(
-            self.pipeline_name, "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
-        ).init_pipeline()
-
+        self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
 
@@ -101,25 +91,18 @@ class TestSubworkflows(unittest.TestCase):
     # Test of the individual subworkflow commands. #
     ################################################
 
-    from .subworkflows.create import (
+    from .subworkflows.create import (  # type: ignore[misc]
         test_subworkflows_create_fail_exists,
         test_subworkflows_create_nfcore_modules,
         test_subworkflows_create_succeed,
     )
-    from .subworkflows.create_test_yml import (
-        test_subworkflows_create_test_yml_check_inputs,
-        test_subworkflows_create_test_yml_entry_points,
-        test_subworkflows_create_test_yml_get_md5,
-        test_subworkflows_custom_yml_dumper,
-        test_subworkflows_test_file_dict,
-    )
-    from .subworkflows.info import (
+    from .subworkflows.info import (  # type: ignore[misc]
         test_subworkflows_info_in_modules_repo,
         test_subworkflows_info_local,
         test_subworkflows_info_remote,
         test_subworkflows_info_remote_gitlab,
     )
-    from .subworkflows.install import (
+    from .subworkflows.install import (  # type: ignore[misc]
         test_subworkflow_install_nopipeline,
         test_subworkflows_install_alternate_remote,
         test_subworkflows_install_bam_sort_stats_samtools,
@@ -132,24 +115,30 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_install_tracking_added_already_installed,
         test_subworkflows_install_tracking_added_super_subworkflow,
     )
-    from .subworkflows.list import (
+    from .subworkflows.lint import (  # type: ignore[misc]
+        test_subworkflows_lint,
+        test_subworkflows_lint_empty,
+        test_subworkflows_lint_gitlab_subworkflows,
+        test_subworkflows_lint_multiple_remotes,
+        test_subworkflows_lint_new_subworkflow,
+        test_subworkflows_lint_no_gitlab,
+        test_subworkflows_lint_snapshot_file,
+        test_subworkflows_lint_snapshot_file_missing_fail,
+        test_subworkflows_lint_snapshot_file_not_needed,
+    )
+    from .subworkflows.list import (  # type: ignore[misc]
         test_subworkflows_install_and_list_subworkflows,
         test_subworkflows_install_gitlab_and_list_subworkflows,
         test_subworkflows_list_remote,
         test_subworkflows_list_remote_gitlab,
     )
-    from .subworkflows.remove import (
+    from .subworkflows.remove import (  # type: ignore[misc]
         test_subworkflows_remove_included_subworkflow,
         test_subworkflows_remove_one_of_two_subworkflow,
         test_subworkflows_remove_subworkflow,
         test_subworkflows_remove_subworkflow_keep_installed_module,
     )
-    from .subworkflows.subworkflows_test import (
-        test_subworkflows_test_check_inputs,
-        test_subworkflows_test_no_installed_subworkflows,
-        test_subworkflows_test_no_name_no_prompts,
-    )
-    from .subworkflows.update import (
+    from .subworkflows.update import (  # type: ignore[misc]
         test_install_and_update,
         test_install_at_hash_and_update,
         test_install_at_hash_and_update_and_save_diff_to_file,

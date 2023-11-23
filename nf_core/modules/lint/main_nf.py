@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
 import requests
+import yaml
 
 import nf_core
 import nf_core.modules.modules_utils
@@ -255,7 +256,8 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             l = l.replace("container", "").strip(" \n'\"}:")
 
         if _container_type(l) == "conda":
-            bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+            if "bioconda::" in l:
+                bioconda_packages = [b for b in l.split() if "bioconda::" in b]
             match = re.search(r"params\.enable_conda", l)
             if match is None:
                 self.passed.append(
@@ -343,6 +345,17 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                     self.main_nf,
                 )
             )
+
+    # Get bioconda packages from environment.yml
+    try:
+        with open(Path(self.component_dir, "environment.yml"), "r") as fh:
+            env_yml = yaml.safe_load(fh)
+        if "dependencies" in env_yml:
+            bioconda_packages = [x for x in env_yml["dependencies"] if isinstance(x, str) and "bioconda::" in x]
+    except FileNotFoundError:
+        pass
+    except NotADirectoryError:
+        pass
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions

@@ -10,11 +10,12 @@ import logging
 import os
 import re
 import subprocess
+from pathlib import Path
+from typing import Dict, Optional
 
 import jinja2
 import questionary
 import rich
-import yaml
 from packaging.version import parse as parse_version
 
 import nf_core
@@ -27,16 +28,16 @@ log = logging.getLogger(__name__)
 class ComponentCreate(ComponentCommand):
     def __init__(
         self,
-        component_type,
-        directory=".",
-        component="",
-        author=None,
-        process_label=None,
-        has_meta=None,
-        force=False,
-        conda_name=None,
-        conda_version=None,
-        empty_template=False,
+        component_type: str,
+        directory: str = ".",
+        component: str = "",
+        author: Optional[str] = None,
+        process_label: Optional[str] = None,
+        has_meta: Optional[str] = None,
+        force: bool = False,
+        conda_name: Optional[str] = None,
+        conda_version: Optional[str] = None,
+        empty_template: bool = False,
     ):
         super().__init__(component_type, directory)
         self.directory = directory
@@ -48,7 +49,6 @@ class ComponentCreate(ComponentCommand):
         self.subtool = None
         self.tool_conda_name = conda_name
         self.tool_conda_version = conda_version
-        self.tool_licence = None
         self.tool_licence = ""
         self.tool_description = ""
         self.tool_doc_url = ""
@@ -56,7 +56,7 @@ class ComponentCreate(ComponentCommand):
         self.bioconda = None
         self.singularity_container = None
         self.docker_container = None
-        self.file_paths = {}
+        self.file_paths: Dict[str, str] = {}
         self.not_empty_template = not empty_template
 
     def create(self):
@@ -71,36 +71,38 @@ class ComponentCreate(ComponentCommand):
 
         If <directory> is a pipeline, this function creates a file called:
         '<directory>/modules/local/tool.nf'
-          OR
+            OR
         '<directory>/modules/local/tool_subtool.nf'
-          OR for subworkflows
+            OR for subworkflows
         '<directory>/subworkflows/local/subworkflow_name.nf'
 
         If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
 
         For modules:
 
-        modules/modules/nf-core/tool/subtool/
-            * main.nf
-            * meta.yml
-        modules/tests/modules/nf-core/tool/subtool/
-            * main.nf
-            * test.yml
-            * nextflow.config
-        tests/config/pytest_modules.yml
+        ```tree
+        modules/nf-core/tool/subtool/
+        ├── main.nf
+        ├── meta.yml
+        ├── environment.yml
+        └── tests
+            ├── main.nf.test
+            └── tags.yml
+        ```
 
         The function will attempt to automatically find a Bioconda package called <component>
         and matching Docker / Singularity images from BioContainers.
 
         For subworkflows:
-        subworkflows/nf-core/subworkflow_name/
-            * main.nf
-            * meta.yml
-        tests/subworkflows/nf-core/subworkflow_name/
-            * main.nf
-            * test.yml
-            * nextflow.config
-        tests/config/pytest_modules.yml
+
+        ```tree
+        subworkflows/nf-core/tool/subtool/
+        ├── main.nf
+        ├── meta.yml
+        └── tests
+            ├── main.nf.test
+            └── tags.yml
+        ```
 
         """
 
@@ -146,34 +148,10 @@ class ComponentCreate(ComponentCommand):
 
         # Create component template with jinja2
         self._render_template()
-
-        if self.repo_type == "modules":
-            # Add entry to pytest_modules.yml
-            try:
-                with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "r") as fh:
-                    pytest_modules_yml = yaml.safe_load(fh)
-                if self.subtool:
-                    pytest_modules_yml[self.component_name] = [
-                        f"modules/{self.org}/{self.component}/{self.subtool}/**",
-                        f"tests/modules/{self.org}/{self.component}/{self.subtool}/**",
-                    ]
-                else:
-                    pytest_modules_yml[
-                        ("" if self.component_type == "modules" else self.component_type + "/") + self.component_name
-                    ] = [
-                        f"{self.component_type}/{self.org}/{self.component}/**",
-                        f"tests/{self.component_type}/{self.org}/{self.component}/**",
-                    ]
-                pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
-                with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
-                    yaml.dump(pytest_modules_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
-            except FileNotFoundError:
-                raise UserWarning("Could not open 'tests/config/pytest_modules.yml' file!")
+        log.info(f"Created component template: '{self.component_name}'")
 
         new_files = list(self.file_paths.values())
-        if self.repo_type == "modules":
-            new_files.append(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"))
-        log.info("Created / edited following files:\n  " + "\n  ".join(new_files))
+        log.info("Created following files:\n  " + "\n  ".join(new_files))
 
     def _get_bioconda_tool(self):
         """
@@ -273,9 +251,14 @@ class ComponentCreate(ComponentCommand):
             log.debug(f"Rendering template file: '{template_fn}'")
             j_template = env.get_template(template_fn)
             object_attrs["nf_core_version"] = nf_core.__version__
-            rendered_output = j_template.render(object_attrs)
+            try:
+                rendered_output = j_template.render(object_attrs)
+            except Exception as e:
+                log.error(f"Could not render template file '{template_fn}':\n{e}")
+                raise e
 
             # Write output to the target file
+            log.debug(f"Writing output to: '{dest_fn}'")
             os.makedirs(os.path.dirname(dest_fn), exist_ok=True)
             with open(dest_fn, "w") as fh:
                 log.debug(f"Writing output to: '{dest_fn}'")
@@ -362,17 +345,12 @@ class ComponentCreate(ComponentCommand):
             file_paths[os.path.join(self.component_type, "main.nf")] = component_file
 
         if self.repo_type == "modules":
-            software_dir = os.path.join(self.directory, self.component_type, self.org, self.component_dir)
-            test_dir = os.path.join(self.directory, "tests", self.component_type, self.org, self.component_dir)
+            component_dir = os.path.join(self.directory, self.component_type, self.org, self.component_dir)
 
             # Check if module/subworkflow directories exist already
-            if os.path.exists(software_dir) and not self.force_overwrite:
+            if os.path.exists(component_dir) and not self.force_overwrite:
                 raise UserWarning(
-                    f"{self.component_type[:-1]} directory exists: '{software_dir}'. Use '--force' to overwrite"
-                )
-            if os.path.exists(test_dir) and not self.force_overwrite:
-                raise UserWarning(
-                    f"{self.component_type[:-1]} test directory exists: '{test_dir}'. Use '--force' to overwrite"
+                    f"{self.component_type[:-1]} directory exists: '{component_dir}'. Use '--force' to overwrite"
                 )
 
             if self.component_type == "modules":
@@ -380,16 +358,9 @@ class ComponentCreate(ComponentCommand):
                 parent_tool_main_nf = os.path.join(
                     self.directory, self.component_type, self.org, self.component, "main.nf"
                 )
-                parent_tool_test_nf = os.path.join(
-                    self.directory, self.component_type, self.org, self.component, "main.nf"
-                )
                 if self.subtool and os.path.exists(parent_tool_main_nf):
                     raise UserWarning(
                         f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.component_name}'"
-                    )
-                if self.subtool and os.path.exists(parent_tool_test_nf):
-                    raise UserWarning(
-                        f"Module '{parent_tool_test_nf}' exists already, cannot make subtool '{self.component_name}'"
                     )
 
                 # If no subtool, check that there isn't already a tool/subtool
@@ -403,11 +374,18 @@ class ComponentCreate(ComponentCommand):
 
             # Set file paths
             # For modules - can be tool/ or tool/subtool/ so can't do in template directory structure
-            file_paths[os.path.join(self.component_type, "main.nf")] = os.path.join(software_dir, "main.nf")
-            file_paths[os.path.join(self.component_type, "meta.yml")] = os.path.join(software_dir, "meta.yml")
-            file_paths[os.path.join("tests", "main.nf")] = os.path.join(test_dir, "main.nf")
-            file_paths[os.path.join("tests", "test.yml")] = os.path.join(test_dir, "test.yml")
-            file_paths[os.path.join("tests", "nextflow.config")] = os.path.join(test_dir, "nextflow.config")
+            file_paths[os.path.join(self.component_type, "main.nf")] = os.path.join(component_dir, "main.nf")
+            file_paths[os.path.join(self.component_type, "meta.yml")] = os.path.join(component_dir, "meta.yml")
+            if self.component_type == "modules":
+                file_paths[os.path.join(self.component_type, "environment.yml")] = os.path.join(
+                    component_dir, "environment.yml"
+                )
+            file_paths[os.path.join(self.component_type, "tests", "tags.yml")] = os.path.join(
+                component_dir, "tests", "tags.yml"
+            )
+            file_paths[os.path.join(self.component_type, "tests", "main.nf.test")] = os.path.join(
+                component_dir, "tests", "main.nf.test"
+            )
 
         return file_paths
 

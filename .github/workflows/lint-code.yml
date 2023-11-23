@@ -92,8 +92,29 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v3
         with:
-          python-version: "3.11"
-      - run: pip install mypy types-PyYAML
+          python-version: 3.11
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip -r requirements-dev.txt
+          pip install -e .
+
+      - name: Cache nf-test installation
+        id: cache-software
+        uses: actions/cache@v3
+        with:
+          path: |
+            /usr/local/bin/nf-test
+            /home/runner/.nf-test/nf-test.jar
+          key: ${{ runner.os }}-${{ env.NFTEST_VER }}-nftest
+
+      - name: Install nf-test
+        if: steps.cache-software.outputs.cache-hit != 'true'
+        run: |
+          wget -qO- https://code.askimed.com/install/nf-test | bash
+          sudo mv nf-test /usr/local/bin/
+
       - name: Get Python changed files
         id: changed-py-files
         uses: tj-actions/changed-files@v23
