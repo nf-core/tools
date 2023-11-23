@@ -16,8 +16,9 @@ import shlex
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Generator, Tuple, Union
 
 import git
 import prompt_toolkit
@@ -1147,3 +1148,21 @@ def validate_file_md5(file_name, expected_md5hex):
         raise IOError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
 
     return True
+
+
+@contextmanager
+def set_wd(path: Path) -> Generator[None, None, None]:
+    """Sets the working directory for this context.
+
+    Arguments
+    ---------
+
+    path : Path
+        Path to the working directory to be used inside this context.
+    """
+    start_wd = Path().absolute()
+    os.chdir(Path(path).resolve())
+    try:
+        yield
+    finally:
+        os.chdir(start_wd)

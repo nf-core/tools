@@ -207,3 +207,20 @@ def test_validate_file_md5():
         nf_core.utils.validate_file_md5(test_file, different_md5)
     with pytest.raises(ValueError):
         nf_core.utils.validate_file_md5(test_file, non_hex_string)
+
+
+def test_set_wd():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        with nf_core.utils.set_wd(tmpdirname):
+            context_wd = Path().resolve()
+        assert context_wd == Path(tmpdirname).resolve()
+        assert context_wd != Path().resolve()
+
+
+def test_set_wd_revert_on_raise():
+    wd_before_context = Path().resolve()
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        with pytest.raises(Exception):
+            with nf_core.utils.set_wd(tmpdirname):
+                raise Exception
+    assert wd_before_context == Path().resolve()
