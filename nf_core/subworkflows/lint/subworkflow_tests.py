@@ -39,15 +39,15 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
 
     # Lint the test main.nf file
     if subworkflow.nftest_main_nf.is_file():
-        subworkflow.passed.append(("test_main_exists", "test `main.nf.test` exists", subworkflow.nftest_main_nf))
+        subworkflow.passed.append(("test_main_nf_exists", "test `main.nf.test` exists", subworkflow.nftest_main_nf))
     else:
         if is_pytest:
             subworkflow.warned.append(
-                ("test_main_exists", "test `main.nf.test` does not exist", subworkflow.nftest_main_nf)
+                ("test_main_nf_exists", "test `main.nf.test` does not exist", subworkflow.nftest_main_nf)
             )
         else:
             subworkflow.failed.append(
-                ("test_main_exists", "test `main.nf.test` does not exist", subworkflow.nftest_main_nf)
+                ("test_main_nf_exists", "test `main.nf.test` does not exist", subworkflow.nftest_main_nf)
             )
 
     if subworkflow.nftest_main_nf.is_file():
