@@ -58,7 +58,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
                 (
                     f"/releases/tag/{current_version}",
                     f"/tree/dev",
-                ),
+                )
             ],
         )
     if multiqc_current_version == "dev":
@@ -69,13 +69,19 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
                 (
                     f"/tree/dev",
                     f"/releases/tag/{multiqc_new_version}",
-                ),
-                (
-                    "/dev/",
-                    f"/{multiqc_new_version}/",
-                ),
+                )
             ],
         )
+    update_file_version(
+        Path("assets", "multiqc_config.yml"),
+        pipeline_obj,
+        [
+            (
+                f"/{multiqc_current_version}/",
+                f"/{multiqc_new_version}/",
+            ),
+        ],
+    )
     # nf-test snap files
     pipeline_name = pipeline_obj.nf_config.get("manifest.name", "").strip(" '\"")
     snap_files = [f for f in Path().glob("tests/pipeline/*.snap")]
