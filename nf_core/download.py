@@ -754,33 +754,49 @@ class DownloadWorkflow:
         self.containers = self.prioritize_direct_download(previous_findings + config_findings + module_findings)
 
     def rectify_raw_container_matches(self, raw_findings):
-        """Helper function to rectify the raw extracted container matches into fully qualified container names.
+        """
+        Helper function to rectify the raw extracted container matches into fully qualified container names.
         If multiple containers are found, any prefixed with http for direct download is prioritized
 
         Example syntax:
 
         Early DSL2:
+
+        .. code-block:: groovy
+
             if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
-                container "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0"
+                container 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0'
             } else {
-                container "quay.io/biocontainers/fastqc:0.11.9--0"
+                container 'quay.io/biocontainers/fastqc:0.11.9--0'
             }
 
         Later DSL2:
+
+        .. code-block:: groovy
+
             container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
                 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
                 'biocontainers/fastqc:0.11.9--0' }"
 
+
         Later DSL2, variable is being used:
+
+        .. code-block:: groovy
+
             container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-                "https://depot.galaxyproject.org/singularity/${container_id}" :
-                "quay.io/biocontainers/${container_id}" }"
+                'https://depot.galaxyproject.org/singularity/${container_id}' :
+                'quay.io/biocontainers/${container_id}' }"
 
             container_id = 'mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:afaaa4c6f5b308b4b6aa2dd8e99e1466b2a6b0cd-0'
 
         DSL1 / Special case DSL2:
+
+        .. code-block:: groovy
+
             container "nfcore/cellranger:6.0.2"
+
         """
+
         cleaned_matches = []
 
         # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
@@ -830,6 +846,7 @@ class DownloadWorkflow:
             or a plain URL like in the old DSL2 convention
 
             """
+
             direct_match = re.match(either_url_or_docker, container_value.strip())
             if direct_match:
                 cleaned_matches.append(direct_match.group(0))
@@ -852,6 +869,7 @@ class DownloadWorkflow:
             example result:
             ['https://depot.galaxyproject.org/singularity/scanpy:1.7.2--pyhdfd78af_0', 'biocontainers/scanpy:1.7.2--pyhdfd78af_0']
             """
+
             container_value_defs = [
                 capture for _, capture in container_value_defs[:] if not capture in ["singularity", "apptainer"]
             ]
