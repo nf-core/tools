@@ -5,8 +5,9 @@ import yaml
 
 import nf_core.modules
 from nf_core.modules.lint import main_nf
+from nf_core.utils import set_wd
 
-from ..utils import GITLAB_URL, set_wd
+from ..utils import GITLAB_URL
 from .patch import BISMARK_ALIGN, CORRECT_SHA, PATCH_BRANCH, REPO_NAME, modify_main_nf
 
 
