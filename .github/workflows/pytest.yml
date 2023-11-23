@@ -64,6 +64,21 @@ jobs:
         with:
           version: "latest-everything"
 
+      - name: Cache nf-test installation
+        id: cache-software
+        uses: actions/cache@v3
+        with:
+          path: |
+            /usr/local/bin/nf-test
+            /home/runner/.nf-test/nf-test.jar
+          key: ${{ runner.os }}-${{ env.NFTEST_VER }}-nftest
+
+      - name: Install nf-test
+        if: steps.cache-software.outputs.cache-hit != 'true'
+        run: |
+          wget -qO- https://code.askimed.com/install/nf-test | bash
+          sudo mv nf-test /usr/local/bin/
+
       - name: Test with pytest
         run: python3 -m pytest tests/ --color=yes --cov-report=xml --cov-config=.github/.coveragerc --cov=nf_core
 

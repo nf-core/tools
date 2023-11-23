@@ -144,6 +144,7 @@ class ComponentLint(ComponentCommand):
     def get_all_module_lint_tests(is_pipeline):
         if is_pipeline:
             return [
+                "environment_yml",
                 "module_patch",
                 "module_version",
                 "main_nf",
@@ -153,7 +154,7 @@ class ComponentLint(ComponentCommand):
                 "module_changes",
             ]
         else:
-            return ["main_nf", "meta_yml", "module_todos", "module_deprecations", "module_tests"]
+            return ["environment_yml", "main_nf", "meta_yml", "module_todos", "module_deprecations", "module_tests"]
 
     @staticmethod
     def get_all_subworkflow_lint_tests(is_pipeline):

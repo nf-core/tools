@@ -44,7 +44,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Developing new modules",
-            "commands": ["create", "create-test-yml", "lint", "bump-versions", "test"],
+            "commands": ["create", "lint", "bump-versions", "test"],
         },
     ],
     "nf-core subworkflows": [
@@ -54,7 +54,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Developing new subworkflows",
-            "commands": ["create", "create-test-yml"],
+            "commands": ["create", "test", "lint"],
         },
     ],
 }
@@ -652,7 +652,7 @@ def install(ctx, tool, dir, prompt, force, sha):
             ctx.obj["modules_repo_no_pull"],
         )
         exit_status = module_install.install(tool)
-        if not exit_status and all:
+        if not exit_status:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
@@ -666,6 +666,7 @@ def install(ctx, tool, dir, prompt, force, sha):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
@@ -673,7 +674,9 @@ def install(ctx, tool, dir, prompt, force, sha):
 @click.option("-f", "--force", is_flag=True, default=False, help="Force update of module")
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-@click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
+@click.option(
+    "-a", "--all", "install_all", is_flag=True, default=False, help="Update all modules installed in pipeline"
+)
 @click.option(
     "-x/-y",
     "--preview/--no-preview",
@@ -696,7 +699,7 @@ def install(ctx, tool, dir, prompt, force, sha):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
-def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, update_deps):
+def update(ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps):
     """
     Update DSL2 modules within a pipeline.
 
@@ -706,11 +709,11 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, update_d
 
     try:
         module_install = ModuleUpdate(
-            dir,
+            directory,
             force,
             prompt,
             sha,
-            all,
+            install_all,
             preview,
             save_diff,
             update_deps,
@@ -719,7 +722,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, update_d
             ctx.obj["modules_repo_no_pull"],
         )
         exit_status = module_install.update(tool)
-        if not exit_status and all:
+        if not exit_status and install_all:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
@@ -849,34 +852,35 @@ def create_module(
         sys.exit(1)
 
 
-# nf-core modules create-test-yml
-@modules.command("create-test-yml")
+# nf-core modules test
+@modules.command("test")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
-@click.option("-o", "--output", type=str, help="Path for output YAML file")
-@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
+@click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
+@click.option("-o", "--once", is_flag=True, default=False, help="Run tests only once. Don't check snapshot stability")
+def test_module(ctx, tool, dir, no_prompts, update, once):
     """
-    Auto-generate a test.yml file for a new module.
+    Run nf-test for a module.
 
-    Given the name of a module, runs the Nextflow test command and automatically generate
-    the required `test.yml` file based on the output files.
+    Given the name of a module, runs the nf-test command to test the module and generate snapshots.
     """
-    from nf_core.modules import ModulesTestYmlBuilder
+    from nf_core.components.components_test import ComponentsTest
 
     try:
-        meta_builder = ModulesTestYmlBuilder(
-            module_name=tool,
-            run_tests=run_tests,
-            test_yml_output_path=output,
-            force_overwrite=force,
+        module_tester = ComponentsTest(
+            component_type="modules",
+            component_name=tool,
+            directory=dir,
             no_prompts=no_prompts,
+            update=update,
+            once=once,
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
+            verbose=ctx.obj["verbose"],
         )
-        meta_builder.run()
+        module_tester.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
@@ -1024,28 +1028,6 @@ def bump_versions(ctx, tool, dir, all, show_all):
         sys.exit(1)
 
 
-# nf-core modules test
-@modules.command("test")
-@click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-@click.option("-a", "--pytest_args", type=str, required=False, multiple=True, help="Additional pytest arguments")
-def test_module(ctx, tool, no_prompts, pytest_args):
-    """
-    Run module tests locally.
-
-    Given the name of a module, runs the Nextflow test command.
-    """
-    from nf_core.modules import ModulesTest
-
-    try:
-        meta_builder = ModulesTest(tool, no_prompts, pytest_args)
-        meta_builder.run()
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
-
-
 # nf-core subworkflows create
 @subworkflows.command("create")
 @click.pass_context
@@ -1077,34 +1059,36 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
         sys.exit(1)
 
 
-# nf-core subworkflows create-test-yml
-@subworkflows.command("create-test-yml")
+# nf-core subworkflows test
+@subworkflows.command("test")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
 @click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
-@click.option("-o", "--output", type=str, help="Path for output YAML file")
-@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
+@click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
+@click.option("-o", "--once", is_flag=True, default=False, help="Run tests only once. Don't check snapshot stability")
+def test_subworkflow(ctx, subworkflow, dir, no_prompts, update, once):
     """
-    Auto-generate a test.yml file for a new subworkflow.
+    Run nf-test for a subworkflow.
 
-    Given the name of a module, runs the Nextflow test command and automatically generate
-    the required `test.yml` file based on the output files.
+    Given the name of a subworkflow, runs the nf-test command to test the subworkflow and generate snapshots.
     """
-    from nf_core.subworkflows import SubworkflowTestYmlBuilder
+    from nf_core.components.components_test import ComponentsTest
 
     try:
-        meta_builder = SubworkflowTestYmlBuilder(
-            subworkflow=subworkflow,
-            run_tests=run_tests,
-            test_yml_output_path=output,
-            force_overwrite=force,
+        sw_tester = ComponentsTest(
+            component_type="subworkflows",
+            component_name=subworkflow,
+            directory=dir,
             no_prompts=no_prompts,
+            update=update,
+            once=once,
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
+            verbose=ctx.obj["verbose"],
         )
-        meta_builder.run()
+        sw_tester.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
@@ -1287,28 +1271,6 @@ def info(ctx, tool, dir):
         sys.exit(1)
 
 
-# nf-core subworkflows test
-@subworkflows.command("test")
-@click.pass_context
-@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
-@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-@click.option("-a", "--pytest_args", type=str, required=False, multiple=True, help="Additional pytest arguments")
-def test_subworkflow(ctx, subworkflow, no_prompts, pytest_args):
-    """
-    Run subworkflow tests locally.
-
-    Given the name of a subworkflow, runs the Nextflow test command.
-    """
-    from nf_core.subworkflows import SubworkflowsTest
-
-    try:
-        meta_builder = SubworkflowsTest(subworkflow, no_prompts, pytest_args)
-        meta_builder.run()
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
-
-
 # nf-core subworkflows install
 @subworkflows.command()
 @click.pass_context
@@ -1344,11 +1306,10 @@ def install(ctx, subworkflow, dir, prompt, force, sha):
             ctx.obj["modules_repo_no_pull"],
         )
         exit_status = subworkflow_install.install(subworkflow)
-        if not exit_status and all:
+        if not exit_status:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
-        raise
         sys.exit(1)
 
 
@@ -1396,7 +1357,9 @@ def remove(ctx, dir, subworkflow):
 @click.option("-f", "--force", is_flag=True, default=False, help="Force update of subworkflow")
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the subworkflow")
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install subworkflow at commit SHA")
-@click.option("-a", "--all", is_flag=True, default=False, help="Update all subworkflow installed in pipeline")
+@click.option(
+    "-a", "--all", "install_all", is_flag=True, default=False, help="Update all subworkflow installed in pipeline"
+)
 @click.option(
     "-x/-y",
     "--preview/--no-preview",
@@ -1419,7 +1382,7 @@ def remove(ctx, dir, subworkflow):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
-def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, update_deps):
+def update(ctx, subworkflow, dir, force, prompt, sha, install_all, preview, save_diff, update_deps):
     """
     Update DSL2 subworkflow within a pipeline.
 
@@ -1442,7 +1405,7 @@ def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, u
             ctx.obj["modules_repo_no_pull"],
         )
         exit_status = subworkflow_install.update(subworkflow)
-        if not exit_status and all:
+        if not exit_status and install_all:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)

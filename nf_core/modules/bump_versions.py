@@ -9,33 +9,48 @@ from __future__ import print_function
 import logging
 import os
 import re
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import questionary
-import rich
+import yaml
+from rich.box import ROUNDED
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.progress import BarColumn, Progress
 from rich.table import Table
 
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
+from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.utils import custom_yaml_dumper
 from nf_core.utils import plural_s as _s
 from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
 
 
-class ModuleVersionBumper(ComponentCommand):
-    def __init__(self, pipeline_dir, remote_url=None, branch=None, no_pull=False):
+class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
+    def __init__(
+        self,
+        pipeline_dir: str,
+        remote_url: Optional[str] = None,
+        branch: Optional[str] = None,
+        no_pull: bool = False,
+    ):
         super().__init__("modules", pipeline_dir, remote_url, branch, no_pull)
 
-        self.up_to_date = None
-        self.updated = None
-        self.failed = None
-        self.show_up_to_date = None
-        self.tools_config = {}
+        self.up_to_date: List[Tuple[str, str]] = []
+        self.updated: List[Tuple[str, str]] = []
+        self.failed: List[Tuple[str, str]] = []
+        self.ignored: List[Tuple[str, str]] = []
+        self.show_up_to_date: Optional[bool] = None
+        self.tools_config: Dict[str, Any] = {}
 
-    def bump_versions(self, module=None, all_modules=False, show_uptodate=False):
+    def bump_versions(
+        self, module: Union[NFCoreComponent, None] = None, all_modules: bool = False, show_uptodate: bool = False
+    ) -> None:
         """
         Bump the container and conda version of single module or all modules
 
@@ -97,9 +112,9 @@ class ModuleVersionBumper(ComponentCommand):
             if len(nfcore_modules) == 0:
                 raise nf_core.modules.modules_utils.ModuleException(f"Could not find the specified module: '{module}'")
 
-        progress_bar = rich.progress.Progress(
+        progress_bar = Progress(
             "[bold blue]{task.description}",
-            rich.progress.BarColumn(bar_width=None),
+            BarColumn(bar_width=None),
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
             disable=os.environ.get("HIDE_PROGRESS", None) is not None,
@@ -116,7 +131,7 @@ class ModuleVersionBumper(ComponentCommand):
 
         self._print_results()
 
-    def bump_module_version(self, module):
+    def bump_module_version(self, module: NFCoreComponent) -> bool:
         """
         Bump the bioconda and container version of a single NFCoreComponent
 
@@ -124,8 +139,21 @@ class ModuleVersionBumper(ComponentCommand):
             module: NFCoreComponent
         """
         config_version = None
-        # Extract bioconda version from `main.nf`
-        bioconda_packages = self.get_bioconda_version(module)
+        bioconda_packages = []
+        try:
+            # Extract bioconda version from `environment.yml`
+            bioconda_packages = self.get_bioconda_version(module)
+        except FileNotFoundError:
+            # try it in the main.nf instead
+            try:
+                with open(module.main_nf, "r") as fh:
+                    for l in fh:
+                        if "bioconda::" in l:
+                            bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+            except FileNotFoundError:
+                log.error(
+                    f"Neither `environment.yml` nor `main.nf` of {module.component_name} module could be read to get bioconada version of used tools."
+                )
 
         # If multiple versions - don't update! (can't update mulled containers)
         if not bioconda_packages or len(bioconda_packages) > 1:
@@ -173,7 +201,6 @@ class ModuleVersionBumper(ComponentCommand):
                 return False
 
             patterns = [
-                (bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'"),
                 (rf"biocontainers/{bioconda_tool_name}:[^'\"\s]+", docker_img),
                 (
                     rf"https://depot.galaxyproject.org/singularity/{bioconda_tool_name}:[^'\"\s]+",
@@ -213,6 +240,13 @@ class ModuleVersionBumper(ComponentCommand):
             with open(module.main_nf, "w") as fh:
                 fh.write(content)
 
+            # change version in environment.yml
+            with open(module.environment_yml, "r") as fh:
+                env_yml = yaml.safe_load(fh)
+            re.sub(bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'", env_yml["dependencies"])
+            with open(module.environment_yml, "w") as fh:
+                yaml.dump(env_yml, fh, default_flow_style=False, Dumper=custom_yaml_dumper())
+
             self.updated.append(
                 (
                     f"Module updated:  {bioconda_version} --> {last_ver}",
@@ -225,23 +259,22 @@ class ModuleVersionBumper(ComponentCommand):
             self.up_to_date.append((f"Module version up to date: {module.component_name}", module.component_name))
             return True
 
-    def get_bioconda_version(self, module):
+    def get_bioconda_version(self, module: NFCoreComponent) -> List[str]:
         """
         Extract the bioconda version from a module
         """
         # Check whether file exists and load it
-        bioconda_packages = False
+        bioconda_packages = []
         try:
-            with open(module.main_nf, "r") as fh:
-                for l in fh:
-                    if "bioconda::" in l:
-                        bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+            with open(module.environment_yml, "r") as fh:
+                env_yml = yaml.safe_load(fh)
+            bioconda_packages = env_yml.get("dependencies", [])
         except FileNotFoundError:
-            log.error(f"Could not read `main.nf` of {module.component_name} module.")
+            log.error(f"Could not read `environment.yml` of {module.component_name} module.")
 
         return bioconda_packages
 
-    def _print_results(self):
+    def _print_results(self) -> None:
         """
         Print the results for the bump_versions command
         Uses the ``rich`` library to print a set of formatted tables to the command line
@@ -259,13 +292,13 @@ class ModuleVersionBumper(ComponentCommand):
             except:
                 pass
 
-        def format_result(module_updates, table):
+        def format_result(module_updates: List[Tuple[str, str]], table: Table) -> Table:
             """
             Create rows for module updates
             """
             # TODO: Row styles don't work current as table-level style overrides.
             # I'd like to make an issue about this on the rich repo so leaving here in case there is a future fix
-            last_modname = False
+            last_modname = ""
             row_style = None
             for module_update in module_updates:
                 if last_modname and module_update[1] != last_modname:
@@ -284,12 +317,12 @@ class ModuleVersionBumper(ComponentCommand):
         # Table of up to date modules
         if len(self.up_to_date) > 0 and self.show_up_to_date:
             console.print(
-                rich.panel.Panel(
+                Panel(
                     rf"[!] {len(self.up_to_date)} Module{_s(self.up_to_date)} version{_s(self.up_to_date)} up to date.",
                     style="bold green",
                 )
             )
-            table = Table(style="green", box=rich.box.ROUNDED)
+            table = Table(style="green", box=ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
             table.add_column("Update Message")
             table = format_result(self.up_to_date, table)
@@ -297,10 +330,8 @@ class ModuleVersionBumper(ComponentCommand):
 
         # Table of updated modules
         if len(self.updated) > 0:
-            console.print(
-                rich.panel.Panel(rf"[!] {len(self.updated)} Module{_s(self.updated)} updated", style="bold yellow")
-            )
-            table = Table(style="yellow", box=rich.box.ROUNDED)
+            console.print(Panel(rf"[!] {len(self.updated)} Module{_s(self.updated)} updated", style="bold yellow"))
+            table = Table(style="yellow", box=ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
             table.add_column("Update message")
             table = format_result(self.updated, table)
@@ -308,10 +339,8 @@ class ModuleVersionBumper(ComponentCommand):
 
         # Table of modules that couldn't be updated
         if len(self.failed) > 0:
-            console.print(
-                rich.panel.Panel(rf"[!] {len(self.failed)} Module update{_s(self.failed)} failed", style="bold red")
-            )
-            table = Table(style="red", box=rich.box.ROUNDED)
+            console.print(Panel(rf"[!] {len(self.failed)} Module update{_s(self.failed)} failed", style="bold red"))
+            table = Table(style="red", box=ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
             table.add_column("Update message")
             table = format_result(self.failed, table)
@@ -319,10 +348,8 @@ class ModuleVersionBumper(ComponentCommand):
 
         # Table of modules ignored due to `.nf-core.yml`
         if len(self.ignored) > 0:
-            console.print(
-                rich.panel.Panel(rf"[!] {len(self.ignored)} Module update{_s(self.ignored)} ignored", style="grey58")
-            )
-            table = Table(style="grey58", box=rich.box.ROUNDED)
+            console.print(Panel(rf"[!] {len(self.ignored)} Module update{_s(self.ignored)} ignored", style="grey58"))
+            table = Table(style="grey58", box=ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
             table.add_column("Update message")
             table = format_result(self.ignored, table)
