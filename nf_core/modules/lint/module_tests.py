@@ -34,12 +34,12 @@ def module_tests(_, module: NFCoreComponent):
 
     # Lint the test main.nf file
     if module.nftest_main_nf.is_file():
-        module.passed.append(("test_main_exists", "test `main.nf.test` exists", module.nftest_main_nf))
+        module.passed.append(("test_main_nf_exists", "test `main.nf.test` exists", module.nftest_main_nf))
     else:
         if is_pytest:
-            module.warned.append(("test_main_exists", "test `main.nf.test` does not exist", module.nftest_main_nf))
+            module.warned.append(("test_main_nf_exists", "test `main.nf.test` does not exist", module.nftest_main_nf))
         else:
-            module.failed.append(("test_main_exists", "test `main.nf.test` does not exist", module.nftest_main_nf))
+            module.failed.append(("test_main_nf_exists", "test `main.nf.test` does not exist", module.nftest_main_nf))
 
     if module.nftest_main_nf.is_file():
         # Check if main.nf.test.snap file exists, if 'snap(' is inside main.nf.test
@@ -104,7 +104,7 @@ def module_tests(_, module: NFCoreComponent):
                 module.failed.append(
                     (
                         "test_main_tags",
-                        f"Tags do not adhere to guidelines. Tags missing in `main.nf.test`: {missing_tags}",
+                        f"Tags do not adhere to guidelines. Tags missing in `main.nf.test`: `{','.join(missing_tags)}`",
                         module.nftest_main_nf,
                     )
                 )
@@ -140,12 +140,18 @@ def module_tests(_, module: NFCoreComponent):
                 if f"modules/{module.org}/{module.component_name}/**" in tags_yml[module.component_name]:
                     module.passed.append(("test_tags_yml", "correct path in tags.yml", module.tags_yml))
                 else:
-                    module.failed.append(("test_tags_yml", "incorrect path in tags.yml", module.tags_yml))
+                    module.failed.append(
+                        (
+                            "test_tags_yml",
+                            f"incorrect path in tags.yml, expected `modules/{module.org}/{module.component_name}/**`, got `{tags_yml[module.component_name][0]}`",
+                            module.tags_yml,
+                        )
+                    )
             else:
                 module.failed.append(
                     (
                         "test_tags_yml",
-                        "incorrect entry in tags.yml, should be '<TOOL>' or '<TOOL>/<SUBTOOL>'",
+                        f"incorrect key in tags.yml, should be `{module.component_name}`, got `{list(tags_yml.keys())[0]}`.",
                         module.tags_yml,
                     )
                 )
@@ -154,3 +160,17 @@ def module_tests(_, module: NFCoreComponent):
             module.warned.append(("test_tags_yml_exists", "file `tags.yml` does not exist", module.tags_yml))
         else:
             module.failed.append(("test_tags_yml_exists", "file `tags.yml` does not exist", module.tags_yml))
+
+    # Check that the old test directory does not exist
+    if not is_pytest:
+        old_test_dir = Path(module.base_dir, "tests", "modules", module.component_name)
+        if old_test_dir.is_dir():
+            module.failed.append(
+                (
+                    "test_old_test_dir",
+                    f"Pytest files are still present at `{Path('tests', 'modules', module.component_name)}`. Please remove this directory and its contents.",
+                    old_test_dir,
+                )
+            )
+        else:
+            module.passed.append(("test_old_test_dir", "Old pytests don't exist for this module", old_test_dir))
