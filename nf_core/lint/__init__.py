@@ -167,8 +167,8 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .actions_awsfulltest import actions_awsfulltest  # type: ignore[misc]
     from .actions_awstest import actions_awstest  # type: ignore[misc]
     from .actions_ci import actions_ci  # type: ignore[misc]
-    from .actions_schema_validation import (
-        actions_schema_validation,  # type: ignore[misc]
+    from .actions_schema_validation import (  # type: ignore[misc]
+        actions_schema_validation,
     )
     from .files_exist import files_exist  # type: ignore[misc]
     from .files_unchanged import files_unchanged  # type: ignore[misc]
@@ -177,8 +177,8 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .modules_structure import modules_structure  # type: ignore[misc]
     from .multiqc_config import multiqc_config  # type: ignore[misc]
     from .nextflow_config import nextflow_config  # type: ignore[misc]
-    from .pipeline_name_conventions import (
-        pipeline_name_conventions,  # type: ignore[misc]
+    from .pipeline_name_conventions import (  # type: ignore[misc]
+        pipeline_name_conventions,
     )
     from .pipeline_todos import pipeline_todos  # type: ignore[misc]
     from .readme import readme  # type: ignore[misc]
