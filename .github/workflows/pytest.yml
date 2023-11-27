@@ -33,19 +33,22 @@ jobs:
         include:
           - runner: "ubuntu-20.04"
             python-version: "3.8"
+
     steps:
-      - uses: actions/checkout@v2
-        name: Check out source-code repository
+      - name: Check conditions
+        id: conditions
+        run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> $GITHUB_ENV
+
+      - name: Check out source-code repository
+        uses: actions/checkout@v4
+        if: ${{ needs.conditions.outputs.run-tests == 'true' }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-
-      - name: Check conditions
-        id: conditions
-        run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> $GITHUB_ENV
+        if: ${{ needs.conditions.outputs.run-tests == 'true' }}
 
   test:
     needs: setup
