@@ -422,6 +422,97 @@ def test_modules_environment_yml_file_name_mismatch(self):
     assert module_lint.failed[0].lint_test == "environment_yml_name"
 
 
+def test_modules_meta_yml_incorrect_licence_field(self):
+    """Test linting a module with an incorrect Licence field in meta.yml"""
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml")) as fh:
+        meta_yml = yaml.safe_load(fh)
+    meta_yml["tools"][0]["bpipe"]["licence"] = "[MIT]"
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml"), "w") as fh:
+        fh.write(yaml.dump(meta_yml))
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+
+    # reset changes
+    meta_yml["tools"][0]["bpipe"]["licence"] = ["MIT"]
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml"), "w") as fh:
+        fh.write(yaml.dump(meta_yml))
+
+    assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) >= 0
+    assert len(module_lint.warned) >= 0
+    assert module_lint.failed[0].lint_test == "meta_yml_valid"
+
+
+def test_modules_meta_yml_input_mismatch(self):
+    """Test linting a module with an extra entry in input fields in meta.yml compared to module.input"""
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf")) as fh:
+        main_nf = fh.read()
+    main_nf_new = main_nf.replace("path bam", "path bai")
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf"), "w") as fh:
+        fh.write(main_nf_new)
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf"), "w") as fh:
+        fh.write(main_nf)
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) >= 0
+    assert len(module_lint.warned) == 2
+    lint_tests = [x.lint_test for x in module_lint.warned]
+    # check that it is there twice:
+    assert lint_tests.count("meta_input_meta_only") == 1
+    assert lint_tests.count("meta_input_main_only") == 1
+
+
+def test_modules_meta_yml_output_mismatch(self):
+    """Test linting a module with an extra entry in output fields in meta.yml compared to module.output"""
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf")) as fh:
+        main_nf = fh.read()
+    main_nf_new = main_nf.replace("emit: bam", "emit: bai")
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf"), "w") as fh:
+        fh.write(main_nf_new)
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf"), "w") as fh:
+        fh.write(main_nf)
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) >= 0
+    assert len(module_lint.warned) == 2
+    lint_tests = [x.lint_test for x in module_lint.warned]
+    # check that it is there twice:
+    assert lint_tests.count("meta_output_meta_only") == 1
+    assert lint_tests.count("meta_output_main_only") == 1
+
+
+def test_modules_meta_yml_incorrect_name(self):
+    """Test linting a module with an incorrect name in meta.yml"""
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml")) as fh:
+        meta_yml = yaml.safe_load(fh)
+    meta_yml["name"] = "bpipe/test"
+    # need to make the same change to the environment.yml file
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml")) as fh:
+        environment_yml = yaml.safe_load(fh)
+    environment_yml["name"] = "bpipe/test"
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml"), "w") as fh:
+        fh.write(yaml.dump(meta_yml))
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml"), "w") as fh:
+        fh.write(yaml.dump(environment_yml))
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+
+    # reset changes
+    meta_yml["name"] = "bpipe_test"
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml"), "w") as fh:
+        fh.write(yaml.dump(meta_yml))
+    environment_yml["name"] = "bpipe_test"
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml"), "w") as fh:
+        fh.write(yaml.dump(environment_yml))
+
+    assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) >= 0
+    assert len(module_lint.warned) >= 0
+    assert module_lint.failed[0].lint_test == "meta_name"
+
+
 def test_modules_missing_test_dir(self):
     """Test linting a module with a missing test directory"""
     Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests").rename(

@@ -2,7 +2,7 @@ import json
 import logging
 from typing import Dict, List, Optional, Tuple, Union, cast
 
-import rich
+import rich.table
 
 from nf_core.components.components_command import ComponentCommand
 from nf_core.modules.modules_json import ModulesJson
@@ -24,7 +24,7 @@ class ComponentList(ComponentCommand):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.remote = remote
 
-    def list_components(self, keywords: Optional[List[str]] = None, print_json=False) -> rich.table.Table:
+    def list_components(self, keywords: Optional[List[str]] = None, print_json=False) -> Union[rich.table.Table, str]:
         keywords = keywords or []
         """
         Get available modules/subworkflows names from GitHub tree for repo
@@ -38,7 +38,7 @@ class ComponentList(ComponentCommand):
         table.add_column(f"{self.component_type[:-1].capitalize()} Name")
         components: List[str] = []
 
-        def pattern_msg(keywords: List[str]):
+        def pattern_msg(keywords: List[str]) -> str:
             if len(keywords) == 0:
                 return ""
             if len(keywords) == 1:
@@ -107,37 +107,40 @@ class ComponentList(ComponentCommand):
             table.add_column("Date")
 
             # Load 'modules.json'
-            modules_json = modules_json.modules_json
+            modules_json_file = modules_json.modules_json
 
             for repo_url, component_with_dir in sorted(repos_with_comps.items()):
                 repo_entry: Dict[str, Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]]
+                if modules_json_file is None:
+                    log.warning(f"Modules JSON file '{modules_json.modules_json_path}' is missing. ")
+                    continue
+                else:
+                    repo_entry = modules_json_file["repos"].get(repo_url, {})
+                    for install_dir, component in sorted(component_with_dir):
+                        # Use cast() to predict the return type of recursive get():s
+                        repo_modules = cast(dict, repo_entry.get(self.component_type))
+                        component_entry = cast(dict, cast(dict, repo_modules.get(install_dir)).get(component))
 
-                repo_entry = modules_json["repos"].get(repo_url, {})
-                for install_dir, component in sorted(component_with_dir):
-                    # Use cast() to predict the return type of recursive get():s
-                    repo_modules = cast(dict, repo_entry.get(self.component_type))
-                    component_entry = cast(dict, cast(dict, repo_modules.get(install_dir)).get(component))
-
-                    if component_entry:
-                        version_sha = component_entry["git_sha"]
-                        try:
-                            # pass repo_name to get info on modules even outside nf-core/modules
-                            message, date = ModulesRepo(
-                                remote_url=repo_url,
-                                branch=component_entry["branch"],
-                            ).get_commit_info(version_sha)
-                        except LookupError as e:
-                            log.warning(e)
+                        if component_entry:
+                            version_sha = component_entry["git_sha"]
+                            try:
+                                # pass repo_name to get info on modules even outside nf-core/modules
+                                message, date = ModulesRepo(
+                                    remote_url=repo_url,
+                                    branch=component_entry["branch"],
+                                ).get_commit_info(version_sha)
+                            except LookupError as e:
+                                log.warning(e)
+                                date = "[red]Not Available"
+                                message = "[red]Not Available"
+                        else:
+                            log.warning(
+                                f"Commit SHA for {self.component_type[:-1]} '{install_dir}/{self.component_type}' is missing from 'modules.json'"
+                            )
+                            version_sha = "[red]Not Available"
                             date = "[red]Not Available"
                             message = "[red]Not Available"
-                    else:
-                        log.warning(
-                            f"Commit SHA for {self.component_type[:-1]} '{install_dir}/{self.component_type}' is missing from 'modules.json'"
-                        )
-                        version_sha = "[red]Not Available"
-                        date = "[red]Not Available"
-                        message = "[red]Not Available"
-                    table.add_row(component, repo_url, version_sha, message, date)
+                        table.add_row(component, repo_url, version_sha, message, date)
 
         if print_json:
             return json.dumps(components, sort_keys=True, indent=4)
