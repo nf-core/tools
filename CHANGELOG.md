@@ -7,6 +7,7 @@
 - Fix writing files to a remote outdir in the NfcoreTemplate helper functions ([#2465](https://github.com/nf-core/tools/pull/2465))
 - Fancier syntax highlighting for example samplesheets in the usage.md template ([#2503](https://github.com/nf-core/tools/pull/2503))
 - Use closure for multiqc ext.args ([#2509](https://github.com/nf-core/tools/pull/2509))
+- Fix how the modules template references the conda environment file ([#2540](https://github.com/nf-core/tools/pull/2540))
 
 ### Linting
 
