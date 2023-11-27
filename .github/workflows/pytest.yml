@@ -28,12 +28,11 @@ jobs:
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
-        python-version: ["3.8", "3.11"]
+        python-version: ["3.8", "3.12"]
         runner: ["ubuntu-latest"]
         include:
           - runner: "ubuntu-20.04"
             python-version: "3.8"
-
     steps:
       - uses: actions/checkout@v3
         name: Check out source-code repository
@@ -43,6 +42,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
+        # run full test matrix only on PRs to the master branch
+        if: github.ref == 'refs/heads/master' || matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8'
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip -r requirements-dev.txt
