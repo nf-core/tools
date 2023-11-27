@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Dict, Optional
@@ -38,6 +39,7 @@ class ComponentCreate(ComponentCommand):
         conda_name: Optional[str] = None,
         conda_version: Optional[str] = None,
         empty_template: bool = False,
+        migrate_pytest: bool = False,
     ):
         super().__init__(component_type, directory)
         self.directory = directory
@@ -58,6 +60,7 @@ class ComponentCreate(ComponentCommand):
         self.docker_container = None
         self.file_paths: Dict[str, str] = {}
         self.not_empty_template = not empty_template
+        self.migrate_pytest = migrate_pytest
 
     def create(self):
         """
@@ -136,19 +139,35 @@ class ComponentCreate(ComponentCommand):
         # Check existence of directories early for fast-fail
         self.file_paths = self._get_component_dirs()
 
-        if self.component_type == "modules":
-            # Try to find a bioconda package for 'component'
-            self._get_bioconda_tool()
+        if self.migrate_pytest:
+            # Rename the component directory to old
+            component_old = self.component_dir + "_old"
+            component_old_path = Path(self.directory, self.component_type, self.org, component_old)
+            Path(self.directory, self.component_type, self.org, self.component_dir).rename(component_old_path)
+        else:
+            if self.component_type == "modules":
+                # Try to find a bioconda package for 'component'
+                self._get_bioconda_tool()
 
-        # Prompt for GitHub username
-        self._get_username()
+            # Prompt for GitHub username
+            self._get_username()
 
-        if self.component_type == "modules":
-            self._get_module_structure_components()
+            if self.component_type == "modules":
+                self._get_module_structure_components()
 
         # Create component template with jinja2
         self._render_template()
         log.info(f"Created component template: '{self.component_name}'")
+
+        if self.migrate_pytest:
+            self._copy_old_files(component_old_path)
+            log.info("Migrate pytest tests: Copied original module files to new module")
+            try:
+                self._update_nftest_file()
+                log.info("Migrate pytest tests: Updated `main.nf.test` with contents of pytest")
+            except Exception as e:
+                log.info(f"Could not update `main.nf.test` file: {e}")
+            shutil.rmtree(component_old_path)
 
         new_files = list(self.file_paths.values())
         log.info("Created following files:\n  " + "\n  ".join(new_files))
@@ -348,7 +367,7 @@ class ComponentCreate(ComponentCommand):
             component_dir = os.path.join(self.directory, self.component_type, self.org, self.component_dir)
 
             # Check if module/subworkflow directories exist already
-            if os.path.exists(component_dir) and not self.force_overwrite:
+            if os.path.exists(component_dir) and not self.force_overwrite and not self.migrate_pytest:
                 raise UserWarning(
                     f"{self.component_type[:-1]} directory exists: '{component_dir}'. Use '--force' to overwrite"
                 )
@@ -358,7 +377,7 @@ class ComponentCreate(ComponentCommand):
                 parent_tool_main_nf = os.path.join(
                     self.directory, self.component_type, self.org, self.component, "main.nf"
                 )
-                if self.subtool and os.path.exists(parent_tool_main_nf):
+                if self.subtool and os.path.exists(parent_tool_main_nf) and not self.migrate_pytest:
                     raise UserWarning(
                         f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.component_name}'"
                     )
@@ -367,7 +386,7 @@ class ComponentCreate(ComponentCommand):
                 tool_glob = glob.glob(
                     f"{os.path.join(self.directory, self.component_type, self.org, self.component)}/*/main.nf"
                 )
-                if not self.subtool and tool_glob:
+                if not self.subtool and tool_glob and not self.migrate_pytest:
                     raise UserWarning(
                         f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.component_name}'"
                     )
@@ -411,3 +430,160 @@ class ComponentCreate(ComponentCommand):
                 f"[violet]GitHub Username:[/]{' (@author)' if author_default is None else ''}",
                 default=author_default,
             )
+
+    def _copy_old_files(self, component_old_path):
+        """Copy files from old module to new module"""
+        log.debug("Copying original main.nf file")
+        shutil.copyfile(component_old_path / "main.nf", self.file_paths[self.component_type + "/main.nf"])
+        log.debug("Copying original meta.yml file")
+        shutil.copyfile(component_old_path / "meta.yml", self.file_paths[self.component_type + "/meta.yml"])
+        if self.component_type == "modules":
+            log.debug("Copying original environment.yml file")
+            shutil.copyfile(
+                component_old_path / "environment.yml", self.file_paths[self.component_type + "/environment.yml"]
+            )
+        # Create a nextflow.config file if it contains information other than publishDir
+        pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
+        nextflow_config = pytest_dir / "nextflow.config"
+        if nextflow_config.is_file():
+            with open(nextflow_config, "r") as fh:
+                config_lines = ""
+                for line in fh:
+                    if "publishDir" not in line:
+                        config_lines += line
+            if len(config_lines) > 0:
+                log.debug("Copying nextflow.config file from pytest tests")
+                with open(
+                    Path(self.directory, self.component_type, self.org, self.component_dir, "tests", "nextflow.config"),
+                    "w+",
+                ) as ofh:
+                    ofh.write(config_lines)
+
+    def _collect_pytest_tests(self):
+        pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
+        tests = []
+        name = None
+        input = None
+        in_input = False
+        input_number = 0
+        number_of_inputs = []
+        with open(pytest_dir / "main.nf") as fh:
+            for line in fh:
+                if line.strip().startswith("workflow"):
+                    # One test
+                    if name and input:
+                        tests.append((name, input))
+                        name = None
+                        input = None
+                    name = line.split()[1]
+                elif line.strip().startswith("input"):
+                    # First input
+                    input = [line.split("=")[1]]
+                    in_input = True
+                    number_of_inputs.append(1)
+                elif "=" in line and "nextflow.enable.dsl" not in line:
+                    # We need another input
+                    input_number += 1
+                    in_input = True
+                    input.append(line.split("=")[1])
+                    number_of_inputs[input_number] += 1
+                elif in_input:
+                    # Retrieve all lines of an input
+                    if self.component_dir.replace("/", "_").upper() in line:
+                        in_input = False
+                        continue
+                    input[input_number] += line
+
+        if name and input:
+            tests.append((name, input))
+
+        if max(number_of_inputs) > 1:
+            # Check that all tests have the same number of inputs
+            for test in tests:
+                if len(test[1]) < max(number_of_inputs):
+                    for i in range(max(number_of_inputs) - len(test[1])):
+                        test[1].append(" []")
+
+        return tests
+
+    def _create_new_test(self, name, inputs):
+        input_string = ""
+        for i, input in enumerate(inputs):
+            input_string += f"                input[{i}] ={input}"
+        test = f"""
+        test("{name}") {{
+            when {{
+                process {{
+                    \"""
+            {input_string}
+                    \"""
+                }}
+            }}
+
+            then {{
+                assertAll(
+                    {{ assert process.success }},
+                    {{ assert snapshot(process.out.versions).match("versions") }}
+                    {{ assert snapshot(process.out).match() }}
+                )
+            }}
+        }}
+        """
+        return test
+
+    def _update_nftest_file(self):
+        """Update the nftest file with the pytest tests"""
+        test_script = self.file_paths[os.path.join(self.component_type, "tests", "main.nf.test")]
+        nextflow_config = Path(
+            self.directory, self.component_type, self.org, self.component_dir, "tests", "nextflow.config"
+        )
+        pytest_tests = self._collect_pytest_tests()
+        in_input = False
+        # Update test script
+        new_lines = ""
+        with open(test_script, "r") as fh:
+            for line in fh:
+                if line.strip().startswith("script"):
+                    new_lines += line
+                    if nextflow_config.is_file():
+                        # Add nextflow config
+                        new_lines += '    config "./nextflow.config"\n'
+                    continue
+                elif line.strip().startswith("test"):
+                    # Update test name
+                    test_name = line.split('"')
+                    test_name[1] = pytest_tests[0][0]
+                    new_lines += '"'.join(test_name)
+                    continue
+                elif line.strip().startswith("input"):
+                    # Update input
+                    in_input = True
+                    new_lines += f"                input[0] ={pytest_tests[0][1][0]}"
+                    if len(pytest_tests[0][1]) > 1:
+                        # Add more inputs
+                        input_number = 1
+                        for input in pytest_tests[0][1][1:]:
+                            new_lines += f"                input[{input_number}] ={input}"
+                            input_number += 1
+                    continue
+                elif in_input:
+                    # While we are inside the process script defining inputs
+                    if line.strip() == '"""':
+                        in_input = False
+                        new_lines += line
+                    continue
+                elif line == "    }\n":
+                    # If we finished adding a test, check if there are more tests to add
+                    new_lines += line
+                    if len(pytest_tests) > 1:
+                        for t in pytest_tests[1:]:
+                            name, inputs = t
+                            new_lines += self._create_new_test(name, inputs)
+                    continue
+                elif "assert snapshot(process.out.versions).match(" in line:
+                    new_lines += line
+                    new_lines += "                { assert snapshot(process.out).match() }\n"
+                    continue
+                new_lines += line
+        with open(test_script, "w") as fh:
+            fh.write(new_lines)
