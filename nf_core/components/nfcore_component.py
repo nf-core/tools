@@ -110,7 +110,7 @@ class NFCoreComponent:
         # path foo
         # don't match anything inside comments or after "output:"
         if "input:" not in data:
-            log.debug(f"Could not find any inputs in {self.main_nf}")
+            log.info(f"Could not find any inputs in {self.main_nf}")
             return inputs
         input_data = data.split("input:")[1].split("output:")[0]
         regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
