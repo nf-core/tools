@@ -177,6 +177,8 @@ class TestModules(unittest.TestCase):
         test_modules_environment_yml_file_not_array,
         test_modules_environment_yml_file_sorted_correctly,
         test_modules_environment_yml_file_sorted_incorrectly,
+        test_modules_incorrect_tags_yml_key,
+        test_modules_incorrect_tags_yml_values,
         test_modules_lint_check_process_labels,
         test_modules_lint_check_url,
         test_modules_lint_empty,
@@ -193,6 +195,11 @@ class TestModules(unittest.TestCase):
         test_modules_meta_yml_incorrect_name,
         test_modules_meta_yml_input_mismatch,
         test_modules_meta_yml_output_mismatch,
+        test_modules_missing_required_tag,
+        test_modules_missing_tags_yml,
+        test_modules_missing_test_dir,
+        test_modules_missing_test_main_nf,
+        test_modules_unused_pytest_files,
     )
     from .modules.list import (  # type: ignore[misc]
         test_modules_install_and_list_pipeline,
