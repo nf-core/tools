@@ -113,7 +113,7 @@ class NFCoreComponent:
             log.debug(f"Could not find any inputs in {self.main_nf}")
             return inputs
         input_data = data.split("input:")[1].split("output:")[0]
-        regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s]+))"
+        regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
         matches = re.finditer(regex, input_data, re.MULTILINE)
         for matchNum, match in enumerate(matches, start=1):
             if match.group(3):
@@ -132,7 +132,7 @@ class NFCoreComponent:
             log.info(f"Could not find any outputs in {self.main_nf}")
             return outputs
         output_data = data.split("output:")[1].split("when:")[0]
-        regex = r"emit:\s*([^)\s]+)"
+        regex = r"emit:\s*([^)\s,]+)"
         matches = re.finditer(regex, output_data, re.MULTILINE)
         for matchNum, match in enumerate(matches, start=1):
             outputs.append(match.group(1))
