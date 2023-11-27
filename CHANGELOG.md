@@ -8,6 +8,10 @@
 - Fancier syntax highlighting for example samplesheets in the usage.md template ([#2503](https://github.com/nf-core/tools/pull/2503))
 - Use closure for multiqc ext.args ([#2509](https://github.com/nf-core/tools/pull/2509))
 
+### Download
+
+- Bugfix for AttributeError: 'ContainerError' object has no attribute 'absoluteURI' ([#2543](https://github.com/nf-core/tools/pull/2543)).
+
 ### Linting
 
 - Fix incorrectly failing linting if 'modules' was not found in meta.yml ([#2447](https://github.com/nf-core/tools/pull/2447))
