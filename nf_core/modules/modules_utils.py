@@ -37,7 +37,7 @@ def repo_full_name_from_remote(remote_url: str) -> str:
     return path
 
 
-def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], List[str]]:
+def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], List[NFCoreComponent]]:
     """
     Make a list of all modules installed in this repository
 
@@ -52,7 +52,7 @@ def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], Lis
     """
     # initialize lists
     local_modules: List[str] = []
-    nfcore_modules: List[str] = []
+    nfcore_modules_names: List[str] = []
     local_modules_dir: Optional[str] = None
     nfcore_modules_dir = os.path.join(dir, "modules", "nf-core")
 
@@ -76,9 +76,9 @@ def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], Lis
             # Not a module, but contains sub-modules
             if not "main.nf" in m_content:
                 for tool in m_content:
-                    nfcore_modules.append(os.path.join(m, tool))
+                    nfcore_modules_names.append(os.path.join(m, tool))
             else:
-                nfcore_modules.append(m)
+                nfcore_modules_names.append(m)
 
     # Make full (relative) file paths and create NFCoreComponent objects
     if local_modules_dir:
@@ -93,7 +93,7 @@ def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], Lis
             base_dir=Path(dir),
             component_type="modules",
         )
-        for m in nfcore_modules
+        for m in nfcore_modules_names
     ]
 
     return local_modules, nfcore_modules

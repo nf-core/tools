@@ -3,12 +3,12 @@
 
 import os
 import shutil
-import tempfile
 import unittest
 from pathlib import Path
 
 import requests_cache
 import responses
+import yaml
 
 import nf_core.create
 import nf_core.modules
@@ -45,16 +45,29 @@ def create_modules_repo_dummy(tmp_dir):
             module_create.create()
 
     # Remove doi from meta.yml which makes lint fail
-    meta_yml = Path(root_dir, "modules", "nf-core", "bpipe", "test", "meta.yml")
+    meta_yml_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "meta.yml")
     Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap").touch()
-    with open(meta_yml, "r") as fh:
-        lines = fh.readlines()
-    for line_index in range(len(lines)):
-        if "doi" in lines[line_index]:
-            to_pop = line_index
-    lines.pop(to_pop)
-    with open(meta_yml, "w") as fh:
-        fh.writelines(lines)
+    with open(meta_yml_path, "r") as fh:
+        meta_yml = yaml.safe_load(fh)
+    del meta_yml["tools"][0]["bpipe"]["doi"]
+    with open(meta_yml_path, "w") as fh:
+        yaml.dump(meta_yml, fh)
+
+    # remove "TODO" statements from main.nf
+    main_nf_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "main.nf")
+    with open(main_nf_path, "r") as fh:
+        main_nf = fh.read()
+    main_nf = main_nf.replace("TODO", "")
+    with open(main_nf_path, "w") as fh:
+        fh.write(main_nf)
+
+    # remove "TODO" statements from main.nf.test
+    main_nf_test_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test")
+    with open(main_nf_test_path, "r") as fh:
+        main_nf_test = fh.read()
+    main_nf_test = main_nf_test.replace("TODO", "")
+    with open(main_nf_test_path, "w") as fh:
+        fh.write(main_nf_test)
 
     return root_dir
 
@@ -176,6 +189,10 @@ class TestModules(unittest.TestCase):
         test_modules_lint_snapshot_file_missing_fail,
         test_modules_lint_snapshot_file_not_needed,
         test_modules_lint_trimgalore,
+        test_modules_meta_yml_incorrect_licence_field,
+        test_modules_meta_yml_incorrect_name,
+        test_modules_meta_yml_input_mismatch,
+        test_modules_meta_yml_output_mismatch,
     )
     from .modules.list import (  # type: ignore[misc]
         test_modules_install_and_list_pipeline,

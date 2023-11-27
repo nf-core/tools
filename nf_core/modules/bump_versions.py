@@ -49,7 +49,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         self.tools_config: Dict[str, Any] = {}
 
     def bump_versions(
-        self, module: Union[NFCoreComponent, None] = None, all_modules: bool = False, show_uptodate: bool = False
+        self, module: Union[str, None] = None, all_modules: bool = False, show_uptodate: bool = False
     ) -> None:
         """
         Bump the container and conda version of single module or all modules
