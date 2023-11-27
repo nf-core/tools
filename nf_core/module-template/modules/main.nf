@@ -27,7 +27,7 @@ process {{ component_name_underscore|upper }} {
     //               For Conda, the build (i.e. "h9402c20_2") must be EXCLUDED to support installation on different operating systems.
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     {% endif -%}
-    conda "${modulesDir}/environment.yml"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         '{{ singularity_container if singularity_container else 'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE' }}':
         '{{ docker_container if docker_container else 'biocontainers/YOUR-TOOL-HERE' }}' }"
