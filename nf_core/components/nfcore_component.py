@@ -1,7 +1,11 @@
 """
 The NFCoreComponent class holds information and utility functions for a single module or subworkflow
 """
+import logging
+import re
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 
 class NFCoreComponent:
@@ -44,16 +48,16 @@ class NFCoreComponent:
 
         if remote_component:
             # Initialize the important files
-            self.main_nf = self.component_dir / "main.nf"
-            self.meta_yml = self.component_dir / "meta.yml"
+            self.main_nf = Path(self.component_dir, "main.nf")
+            self.meta_yml = Path(self.component_dir, "meta.yml")
             self.process_name = ""
-            self.environment_yml = self.component_dir / "environment.yml"
+            self.environment_yml = Path(self.component_dir, "environment.yml")
 
             repo_dir = self.component_dir.parts[: self.component_dir.parts.index(self.component_name.split("/")[0])][-1]
             self.org = repo_dir
-            self.nftest_testdir = self.component_dir / "tests"
-            self.nftest_main_nf = self.nftest_testdir / "main.nf.test"
-            self.tags_yml = self.nftest_testdir / "tags.yml"
+            self.nftest_testdir = Path(self.component_dir, "tests")
+            self.nftest_main_nf = Path(self.nftest_testdir, "main.nf.test")
+            self.tags_yml = Path(self.nftest_testdir, "tags.yml")
 
             if self.repo_type == "pipeline":
                 patch_fn = f"{self.component_name.replace('/', '-')}.diff"
@@ -90,3 +94,47 @@ class NFCoreComponent:
                 if line.strip().startswith("include"):
                     included_components.append(line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/"))
         return included_components
+
+    def get_inputs_from_main_nf(self):
+        """Collect all inputs from the main.nf file."""
+        inputs = []
+        with open(self.main_nf, "r") as f:
+            data = f.read()
+        # get input values from main.nf after "input:", which can be formatted as tuple val(foo) path(bar) or val foo or val bar or path bar or path foo
+        # regex matches:
+        # val(foo)
+        # path(bar)
+        # val foo
+        # val bar
+        # path bar
+        # path foo
+        # don't match anything inside comments or after "output:"
+        if "input:" not in data:
+            log.info(f"Could not find any inputs in {self.main_nf}")
+            return inputs
+        input_data = data.split("input:")[1].split("output:")[0]
+        regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+        matches = re.finditer(regex, input_data, re.MULTILINE)
+        for matchNum, match in enumerate(matches, start=1):
+            if match.group(3):
+                inputs.append(match.group(3))
+            elif match.group(4):
+                inputs.append(match.group(4))
+        log.info(f"Found {len(inputs)} inputs in {self.main_nf}")
+        self.inputs = inputs
+
+    def get_outputs_from_main_nf(self):
+        outputs = []
+        with open(self.main_nf, "r") as f:
+            data = f.read()
+        # get output values from main.nf after "output:". the names are always after "emit:"
+        if "output:" not in data:
+            log.info(f"Could not find any outputs in {self.main_nf}")
+            return outputs
+        output_data = data.split("output:")[1].split("when:")[0]
+        regex = r"emit:\s*([^)\s,]+)"
+        matches = re.finditer(regex, output_data, re.MULTILINE)
+        for matchNum, match in enumerate(matches, start=1):
+            outputs.append(match.group(1))
+        log.info(f"Found {len(outputs)} outputs in {self.main_nf}")
+        self.outputs = outputs
