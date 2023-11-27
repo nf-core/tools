@@ -2,14 +2,16 @@
 Lint the tests of a module in nf-core/modules
 """
 import logging
-import os
+from pathlib import Path
 
 import yaml
+
+from nf_core.components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
 
 
-def module_tests(_, module):
+def module_tests(_, module: NFCoreComponent):
     """
     Lint the tests of a module in ``nf-core/modules``
 
@@ -17,17 +19,27 @@ def module_tests(_, module):
     and contains a ``main.nf.test`` a ``main.nf.test.snap`` and ``tags.yml``.
 
     """
+    repo_dir = module.component_dir.parts[: module.component_dir.parts.index(module.component_name.split("/")[0])][-1]
+    test_dir = Path(module.base_dir, "tests", "modules", repo_dir, module.component_name)
+    pytest_main_nf = Path(test_dir, "main.nf")
+    is_pytest = pytest_main_nf.is_file()
     if module.nftest_testdir.is_dir():
         module.passed.append(("test_dir_exists", "nf-test test directory exists", module.nftest_testdir))
     else:
-        module.failed.append(("test_dir_exists", "nf-test directory is missing", module.nftest_testdir))
+        if is_pytest:
+            module.warned.append(("test_dir_exists", "nf-test directory is missing", module.nftest_testdir))
+        else:
+            module.failed.append(("test_dir_exists", "nf-test directory is missing", module.nftest_testdir))
         return
 
     # Lint the test main.nf file
     if module.nftest_main_nf.is_file():
-        module.passed.append(("test_main_exists", "test `main.nf.test` exists", module.nftest_main_nf))
+        module.passed.append(("test_main_nf_exists", "test `main.nf.test` exists", module.nftest_main_nf))
     else:
-        module.failed.append(("test_main_exists", "test `main.nf.test` does not exist", module.nftest_main_nf))
+        if is_pytest:
+            module.warned.append(("test_main_nf_exists", "test `main.nf.test` does not exist", module.nftest_main_nf))
+        else:
+            module.failed.append(("test_main_nf_exists", "test `main.nf.test` does not exist", module.nftest_main_nf))
 
     if module.nftest_main_nf.is_file():
         # Check if main.nf.test.snap file exists, if 'snap(' is inside main.nf.test
@@ -92,14 +104,14 @@ def module_tests(_, module):
                 module.failed.append(
                     (
                         "test_main_tags",
-                        f"Tags do not adhere to guidelines. Tags missing in `main.nf.test`: {missing_tags}",
+                        f"Tags do not adhere to guidelines. Tags missing in `main.nf.test`: `{','.join(missing_tags)}`",
                         module.nftest_main_nf,
                     )
                 )
 
     # Check pytest_modules.yml does not contain entries for modules with nf-test
     pytest_yml_path = module.base_dir / "tests" / "config" / "pytest_modules.yml"
-    if pytest_yml_path.is_file():
+    if pytest_yml_path.is_file() and not is_pytest:
         try:
             with open(pytest_yml_path, "r") as fh:
                 pytest_yml = yaml.safe_load(fh)
@@ -128,14 +140,37 @@ def module_tests(_, module):
                 if f"modules/{module.org}/{module.component_name}/**" in tags_yml[module.component_name]:
                     module.passed.append(("test_tags_yml", "correct path in tags.yml", module.tags_yml))
                 else:
-                    module.failed.append(("test_tags_yml", "incorrect path in tags.yml", module.tags_yml))
+                    module.failed.append(
+                        (
+                            "test_tags_yml",
+                            f"incorrect path in tags.yml, expected `modules/{module.org}/{module.component_name}/**`, got `{tags_yml[module.component_name][0]}`",
+                            module.tags_yml,
+                        )
+                    )
             else:
                 module.failed.append(
                     (
                         "test_tags_yml",
-                        "incorrect entry in tags.yml, should be '<TOOL>' or '<TOOL>/<SUBTOOL>'",
+                        f"incorrect key in tags.yml, should be `{module.component_name}`, got `{list(tags_yml.keys())[0]}`.",
                         module.tags_yml,
                     )
                 )
     else:
-        module.failed.append(("test_tags_yml_exists", "file `tags.yml` does not exist", module.tags_yml))
+        if is_pytest:
+            module.warned.append(("test_tags_yml_exists", "file `tags.yml` does not exist", module.tags_yml))
+        else:
+            module.failed.append(("test_tags_yml_exists", "file `tags.yml` does not exist", module.tags_yml))
+
+    # Check that the old test directory does not exist
+    if not is_pytest:
+        old_test_dir = Path(module.base_dir, "tests", "modules", module.component_name)
+        if old_test_dir.is_dir():
+            module.failed.append(
+                (
+                    "test_old_test_dir",
+                    f"Pytest files are still present at `{Path('tests', 'modules', module.component_name)}`. Please remove this directory and its contents.",
+                    old_test_dir,
+                )
+            )
+        else:
+            module.passed.append(("test_old_test_dir", "Old pytests don't exist for this module", old_test_dir))
