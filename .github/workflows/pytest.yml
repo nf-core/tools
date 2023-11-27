@@ -24,7 +24,7 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  pytest:
+  setup:
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
@@ -34,16 +34,32 @@ jobs:
           - runner: "ubuntu-20.04"
             python-version: "3.8"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
         name: Check out source-code repository
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-        # run full test matrix only on PRs to the master branch
-        if: github.ref == 'refs/heads/master' || matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8'
+
+      - name: Check conditions
+        id: conditions
+        run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> $GITHUB_ENV
+
+  test:
+    needs: setup
+    if: ${{ needs.setup.outputs.run-tests == 'true' }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v2
+        name: Check out source-code repository
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
 
       - name: Install dependencies
         run: |
