@@ -24,7 +24,7 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  pytest:
+  setup:
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
@@ -33,17 +33,40 @@ jobs:
         include:
           - runner: "ubuntu-20.04"
             python-version: "3.8"
+
     steps:
-      - uses: actions/checkout@v3
-        name: Check out source-code repository
+      - name: Check conditions
+        id: conditions
+        run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> $GITHUB_ENV
+
+      - name: Check out source-code repository
+        uses: actions/checkout@v4
+        if: ${{ env.run-tests == 'true' }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-        # run full test matrix only on PRs to the master branch
-        if: github.ref == 'refs/heads/master' || matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8'
+        if: ${{ env.run-tests == 'true' }}
+    outputs:
+      python-version: ${{ matrix.python-version }}
+      runner: ${{ matrix.runner }}
+      run-tests: ${{ env.run-tests }}
+
+  test:
+    needs: setup
+    if: ${{ needs.setup.outputs.run-tests == 'true' }}
+    runs-on: ${{ needs.setup.outputs.runner }}
+    steps:
+      - uses: actions/checkout@v2
+        name: Check out source-code repository
+
+      - name: Set up Python ${{ needs.setup.outputs.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ needs.setup.outputs.python-version }}
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -51,7 +74,7 @@ jobs:
           pip install -e .
 
       - name: Downgrade git to the Ubuntu official repository's version
-        if: ${{ matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8' }}
+        if: ${{ needs.setup.outputs.runner == 'ubuntu-20.04' && needs.setup.outputs.python-version == '3.8' }}
         run: |
           sudo apt update
           sudo apt remove git git-man
