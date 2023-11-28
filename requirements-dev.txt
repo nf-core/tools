@@ -9,3 +9,6 @@ sphinx-rtd-theme
 mypy
 types-PyYAML
 types-requests
+types-jsonschema
+types-Markdown
+types-setuptools

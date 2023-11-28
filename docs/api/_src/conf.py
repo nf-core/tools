@@ -14,6 +14,7 @@
 #
 import os
 import sys
+from typing import Dict
 
 sys.path.insert(0, os.path.abspath("../../../nf_core"))
 import nf_core
@@ -58,7 +59,7 @@ master_doc = "index"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language: str = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -113,7 +114,7 @@ htmlhelp_basename = "nf-coredoc"
 
 # -- Options for LaTeX output ------------------------------------------------
 
-latex_elements = {
+latex_elements: Dict[str, str] = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',

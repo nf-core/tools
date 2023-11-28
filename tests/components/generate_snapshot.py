@@ -6,8 +6,9 @@ from unittest.mock import MagicMock
 import pytest
 
 from nf_core.components.components_test import ComponentsTest
+from nf_core.utils import set_wd
 
-from ..utils import GITLAB_NFTEST_BRANCH, GITLAB_URL, set_wd
+from ..utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 
 
 def test_generate_snapshot_module(self):

@@ -33,13 +33,13 @@ jobs:
           - "template_skip_nf_core_configs.yml"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Check out source-code repository
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: 3.12
 
       - name: Install python dependencies
         run: |
@@ -52,7 +52,7 @@ jobs:
           version: latest-everything
 
       # Install the Prettier linting tools
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
 
       - name: Install Prettier
         run: npm install -g prettier
