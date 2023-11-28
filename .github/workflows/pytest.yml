@@ -57,7 +57,7 @@ jobs:
   test:
     needs: setup
     if: ${{ needs.setup.outputs.run-tests == 'true' }}
-    runs-on: ${{ needs.setup.outputs.runner }}
+    runs-on: ["self-hosted"]
     steps:
       - uses: actions/checkout@v2
         name: Check out source-code repository
