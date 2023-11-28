@@ -26,7 +26,7 @@ jobs:
           - "23.04.0"
           - "latest-everything"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Check out source-code repository
 
       - name: Set up Python 3.12
