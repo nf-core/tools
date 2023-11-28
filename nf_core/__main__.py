@@ -151,7 +151,7 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
 
 
 # nf-core list
-@nf_core_cli.command()
+@nf_core_cli.command("list")
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option(
     "-s",
@@ -162,7 +162,7 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
 )
 @click.option("--json", is_flag=True, default=False, help="Print full output as JSON")
 @click.option("--show-archived", is_flag=True, default=False, help="Print archived workflows")
-def list(keywords, sort, json, show_archived):
+def list_pipelines(keywords, sort, json, show_archived):
     """
     List available nf-core pipelines with local info.
 
@@ -553,9 +553,9 @@ def subworkflows(ctx, git_remote, branch, no_pull):
 
 
 # nf-core modules list subcommands
-@modules.group()
+@modules.group("list")
 @click.pass_context
-def list(ctx):
+def modules_list(ctx):
     """
     List modules in a local pipeline or remote repository.
     """
@@ -563,11 +563,11 @@ def list(ctx):
 
 
 # nf-core modules list remote
-@list.command()
+@modules_list.command("remote")
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def remote(ctx, keywords, json):
+def modules_list_remote(ctx, keywords, json):
     """
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
@@ -588,7 +588,7 @@ def remote(ctx, keywords, json):
 
 
 # nf-core modules list local
-@list.command()
+@modules_list.command("local")
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
@@ -599,7 +599,7 @@ def remote(ctx, keywords, json):
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
+def modules_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     """
     List modules installed locally in a pipeline
     """
@@ -620,7 +620,7 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
 
 
 # nf-core modules install
-@modules.command()
+@modules.command("install")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
@@ -633,7 +633,7 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
 @click.option("-f", "--force", is_flag=True, default=False, help="Force reinstallation of module if it already exists")
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-def install(ctx, tool, dir, prompt, force, sha):
+def modules_install(ctx, tool, dir, prompt, force, sha):
     """
     Install DSL2 modules within a pipeline.
 
@@ -660,7 +660,7 @@ def install(ctx, tool, dir, prompt, force, sha):
 
 
 # nf-core modules update
-@modules.command()
+@modules.command("update")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
@@ -699,7 +699,7 @@ def install(ctx, tool, dir, prompt, force, sha):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
-def update(ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps):
+def modules_update(ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps):
     """
     Update DSL2 modules within a pipeline.
 
@@ -767,7 +767,7 @@ def patch(ctx, tool, dir, remove):
 
 
 # nf-core modules remove
-@modules.command()
+@modules.command("remove")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
@@ -777,7 +777,7 @@ def patch(ctx, tool, dir, remove):
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-def remove(ctx, dir, tool):
+def modules_remove(ctx, dir, tool):
     """
     Remove a module from a pipeline.
     """
@@ -887,7 +887,7 @@ def test_module(ctx, tool, dir, no_prompts, update, once):
 
 
 # nf-core modules lint
-@modules.command()
+@modules.command("lint")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
@@ -912,9 +912,7 @@ def test_module(ctx, tool, dir, no_prompts, update, once):
     show_default=True,
 )
 @click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
-def lint(
-    ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version
-):  # pylint: disable=redefined-outer-name
+def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version):
     """
     Lint one or more modules in a directory.
 
@@ -959,7 +957,7 @@ def lint(
 
 
 # nf-core modules info
-@modules.command()
+@modules.command("info")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
@@ -969,7 +967,7 @@ def lint(
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def info(ctx, tool, dir):
+def modules_info(ctx, tool, dir):
     """
     Show developer usage information about a given module.
 
@@ -1095,9 +1093,9 @@ def test_subworkflow(ctx, subworkflow, dir, no_prompts, update, once):
 
 
 # nf-core subworkflows list subcommands
-@subworkflows.group()
+@subworkflows.group("list")
 @click.pass_context
-def list(ctx):
+def subworkflows_list(ctx):
     """
     List subworkflows in a local pipeline or remote repository.
     """
@@ -1105,11 +1103,11 @@ def list(ctx):
 
 
 # nf-core subworkflows list remote
-@list.command()
+@subworkflows_list.command("remote")
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def remote(ctx, keywords, json):
+def subworkflows_list_remote(ctx, keywords, json):
     """
     List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
@@ -1131,7 +1129,7 @@ def remote(ctx, keywords, json):
 
 
 # nf-core subworkflows list local
-@list.command()
+@subworkflows_list.command("local")
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
@@ -1142,7 +1140,7 @@ def remote(ctx, keywords, json):
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
+def subworkflows_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     """
     List subworkflows installed locally in a pipeline
     """
@@ -1163,7 +1161,7 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
 
 
 # nf-core subworkflows lint
-@subworkflows.command()
+@subworkflows.command("lint")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
@@ -1187,9 +1185,7 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     help="Sort lint output by subworkflow or test name.",
     show_default=True,
 )
-def lint(
-    ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by
-):  # pylint: disable=redefined-outer-name
+def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by):
     """
     Lint one or more subworkflows in a directory.
 
@@ -1233,7 +1229,7 @@ def lint(
 
 
 # nf-core subworkflows info
-@subworkflows.command()
+@subworkflows.command("info")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="subworkflow name")
 @click.option(
@@ -1243,7 +1239,7 @@ def lint(
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def info(ctx, tool, dir):
+def subworkflows_info(ctx, tool, dir):
     """
     Show developer usage information about a given subworkflow.
 
@@ -1272,7 +1268,7 @@ def info(ctx, tool, dir):
 
 
 # nf-core subworkflows install
-@subworkflows.command()
+@subworkflows.command("install")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option(
@@ -1287,7 +1283,7 @@ def info(ctx, tool, dir):
     "-f", "--force", is_flag=True, default=False, help="Force reinstallation of subworkflow if it already exists"
 )
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install subworkflow at commit SHA")
-def install(ctx, subworkflow, dir, prompt, force, sha):
+def subworkflows_install(ctx, subworkflow, dir, prompt, force, sha):
     """
     Install DSL2 subworkflow within a pipeline.
 
@@ -1314,7 +1310,7 @@ def install(ctx, subworkflow, dir, prompt, force, sha):
 
 
 # nf-core subworkflows remove
-@subworkflows.command()
+@subworkflows.command("remove")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option(
@@ -1324,7 +1320,7 @@ def install(ctx, subworkflow, dir, prompt, force, sha):
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-def remove(ctx, dir, subworkflow):
+def subworkflows_remove(ctx, dir, subworkflow):
     """
     Remove a subworkflow from a pipeline.
     """
@@ -1344,7 +1340,7 @@ def remove(ctx, dir, subworkflow):
 
 
 # nf-core subworkflows update
-@subworkflows.command()
+@subworkflows.command("update")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option(
@@ -1382,7 +1378,7 @@ def remove(ctx, dir, subworkflow):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
-def update(ctx, subworkflow, dir, force, prompt, sha, install_all, preview, save_diff, update_deps):
+def subworkflows_update(ctx, subworkflow, dir, force, prompt, sha, install_all, preview, save_diff, update_deps):
     """
     Update DSL2 subworkflow within a pipeline.
 
@@ -1396,7 +1392,7 @@ def update(ctx, subworkflow, dir, force, prompt, sha, install_all, preview, save
             force,
             prompt,
             sha,
-            all,
+            install_all,
             preview,
             save_diff,
             update_deps,
@@ -1496,11 +1492,11 @@ def build(dir, no_prompts, web_only, url):
 
 
 # nf-core schema lint
-@schema.command()
+@schema.command("lint")
 @click.argument(
     "schema_path", type=click.Path(exists=True), default="nextflow_schema.json", metavar="<pipeline schema>"
 )
-def lint(schema_path):
+def schema_lint(schema_path):
     """
     Check that a given pipeline schema is valid.
 
