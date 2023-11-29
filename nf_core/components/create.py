@@ -510,26 +510,11 @@ class ComponentCreate(ComponentCommand):
         input_string = ""
         for i, input in enumerate(inputs):
             input_string += f"                input[{i}] ={input}"
-        test = f"""
-        test("{name}") {{
-            when {{
-                process {{
-                    \"""
-            {input_string}
-                    \"""
-                }}
-            }}
-
-            then {{
-                assertAll(
-                    {{ assert process.success }},
-                    {{ assert snapshot(process.out.versions).match("versions") }}
-                    {{ assert snapshot(process.out).match() }}
-                )
-            }}
-        }}
-        """
-        return test
+        with open(Path("../module-template/tests/main.nf.test"), "r") as fh:
+            test = fh.readlines()[15:48]
+        test[1] = f'    test("{name}") {{'
+        test[12:20] = f"                {input_string}"
+        return "".join(test)
 
     def _update_nftest_file(self):
         """Update the nftest file with the pytest tests"""
@@ -538,52 +523,38 @@ class ComponentCreate(ComponentCommand):
             self.directory, self.component_type, self.org, self.component_dir, "tests", "nextflow.config"
         )
         pytest_tests = self._collect_pytest_tests()
-        in_input = False
+        subtool_lines = 0
+        meta_lines = 0
+
         # Update test script
-        new_lines = ""
         with open(test_script, "r") as fh:
-            for line in fh:
-                if line.strip().startswith("script"):
-                    new_lines += line
-                    if nextflow_config.is_file():
-                        # Add nextflow config
-                        new_lines += '    config "./nextflow.config"\n'
-                    continue
-                elif line.strip().startswith("test"):
-                    # Update test name
-                    test_name = line.split('"')
-                    test_name[1] = pytest_tests[0][0]
-                    new_lines += '"'.join(test_name)
-                    continue
-                elif line.strip().startswith("input"):
-                    # Update input
-                    in_input = True
-                    new_lines += f"                input[0] ={pytest_tests[0][1][0]}"
-                    if len(pytest_tests[0][1]) > 1:
-                        # Add more inputs
-                        input_number = 1
-                        for input in pytest_tests[0][1][1:]:
-                            new_lines += f"                input[{input_number}] ={input}"
-                            input_number += 1
-                    continue
-                elif in_input:
-                    # While we are inside the process script defining inputs
-                    if line.strip() == '"""':
-                        in_input = False
-                        new_lines += line
-                    continue
-                elif line == "    }\n":
-                    # If we finished adding a test, check if there are more tests to add
-                    new_lines += line
-                    if len(pytest_tests) > 1:
-                        for t in pytest_tests[1:]:
-                            name, inputs = t
-                            new_lines += self._create_new_test(name, inputs)
-                    continue
-                elif "assert snapshot(process.out.versions).match(" in line:
-                    new_lines += line
-                    new_lines += "                { assert snapshot(process.out).match() }\n"
-                    continue
-                new_lines += line
+            main_nf_test = fh.readlines()
+
+        if nextflow_config.is_file():
+            # Add nextflow config
+            main_nf_test[5] += '    config "./nextflow.config"\n'
+        # Update test name
+        if self.subtool:
+            # Add 1 to the line index as we have the subtool tag
+            subtool_lines += 1
+        main_nf_test[13 + subtool_lines] = f'    test("{pytest_tests[0][0]}") {{\n'
+        # Update input
+        if self.has_meta:
+            meta_lines += 4
+        main_nf_test[
+            25 + subtool_lines : 26 + subtool_lines + meta_lines
+        ] = f"                input[0] ={pytest_tests[0][1][0]}"
+        # Add more inputs if we have more than one
+        if len(pytest_tests[0][1]) > 1:
+            input_number = 1
+            for input in pytest_tests[0][1][1:]:
+                main_nf_test[25 + subtool_lines] += f"                input[{input_number}] ={input}"
+                input_number += 1
+        # Add more tests if we have more than one
+        if len(pytest_tests) > 1:
+            for t in pytest_tests[1:]:
+                name, inputs = t
+                main_nf_test[38 + subtool_lines] += self._create_new_test(name, inputs)
+
         with open(test_script, "w") as fh:
-            fh.write(new_lines)
+            fh.write(main_nf_test)
