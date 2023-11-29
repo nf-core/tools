@@ -25,7 +25,7 @@ env:
 
 jobs:
   setup:
-    runs-on: ${{ matrix.runner }}
+    runs-on: ["self-hosted"]
     strategy:
       matrix:
         python-version: ["3.8", "3.12"]
