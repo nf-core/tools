@@ -78,7 +78,7 @@ jobs:
         if: ${{ needs.setup.outputs.runner == 'ubuntu-20.04' && needs.setup.outputs.python-version == '3.8' }}
         run: |
           sudo apt update
-          sudo apt remove git git-man
+          sudo apt remove -y git git-man
           sudo add-apt-repository --remove ppa:git-core/ppa
           sudo apt install -y git
       - name: Get current date
