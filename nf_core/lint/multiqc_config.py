@@ -21,8 +21,8 @@ def multiqc_config(self) -> Dict[str, List[str]]:
 
         export_plots: true
     """
-    passed = []
-    failed = []
+    passed: List[str] = []
+    failed: List[str] = []
 
     # Remove field that should be ignored according to the linting config
     ignore_configs = self.lint_config.get("multiqc_config", [])
@@ -39,10 +39,16 @@ def multiqc_config(self) -> Dict[str, List[str]]:
     except Exception as e:
         return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}
 
-    # Check that the report_comment exists and matches
+    # check if requried sections are present
+    required_sections = ["report_section_order", "export_plots", "report_comment"]
+    for section in required_sections:
+        if section not in mqc_yml and section not in ignore_configs:
+            failed.append(f"'assets/multiqc_config.yml' does not contain `{section}`")
+            return {"passed": passed, "failed": failed}
+        else:
+            passed.append(f"'assets/multiqc_config.yml' contains `{section}`")
+
     try:
-        if "report_section_order" not in mqc_yml:
-            raise AssertionError("`report_section_order` missing")
         orders = {}
         summary_plugin_name = f"{self.pipeline_prefix}-{self.pipeline_name}-summary"
         min_plugins = ["software_versions", summary_plugin_name]
@@ -87,31 +93,21 @@ def multiqc_config(self) -> Dict[str, List[str]]:
                 f'<a href="https://nf-co.re/{self.pipeline_name}/{version}/docs/output" target="_blank">documentation</a>.'
             )
 
-        try:
-            if "report_comment" not in mqc_yml:
-                raise KeyError()
-            if mqc_yml["report_comment"].strip() != report_comments:
-                raise AssertionError()
-        except (AssertionError, KeyError, TypeError) as e:
-            if isinstance(e, AssertionError):
-                # find where the report_comment is wrong and give it as a hint
-                hint = report_comments
-                failed.append(
-                    f"'assets/multiqc_config.yml' does not contain a matching 'report_comment'.  \n"
-                    f"The expected comment is:  \n"
-                    f"```{hint}```  \n"
-                    f"The current comment is:  \n"
-                    f"```{ mqc_yml['report_comment'].strip()}```"
-                )
-            else:
-                failed.append("'assets/multiqc_config.yml' does not contain a 'report_comment' section.")
+        if mqc_yml["report_comment"].strip() != report_comments:
+            # find where the report_comment is wrong and give it as a hint
+            hint = report_comments
+            failed.append(
+                f"'assets/multiqc_config.yml' does not contain a matching 'report_comment'.  \n"
+                f"The expected comment is:  \n"
+                f"```{hint}```  \n"
+                f"The current comment is:  \n"
+                f"```{ mqc_yml['report_comment'].strip()}```"
+            )
         else:
             passed.append("'assets/multiqc_config.yml' contains a matching 'report_comment'.")
 
     # Check that export_plots is activated
     try:
-        if "export_plots" not in mqc_yml:
-            raise AssertionError()
         if not mqc_yml["export_plots"]:
             raise AssertionError()
     except (AssertionError, KeyError, TypeError):

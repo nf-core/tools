@@ -214,6 +214,8 @@ class TestLint(unittest.TestCase):
         test_multiqc_config_exists_ignore,
         test_multiqc_config_missing_report_section_order,
         test_multiqc_config_report_comment_fail,
+        test_multiqc_config_report_comment_release_fail,
+        test_multiqc_config_report_comment_release_succeed,
         test_multiqc_incorrect_export_plots,
     )
     from .lint.nextflow_config import (  # type: ignore[misc]
