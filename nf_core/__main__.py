@@ -1062,7 +1062,6 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
-@click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
 @click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
 @click.option("-o", "--once", is_flag=True, default=False, help="Run tests only once. Don't check snapshot stability")
