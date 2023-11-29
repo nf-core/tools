@@ -19,6 +19,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
       - name: Install editorconfig-checker
         run: npm install -g editorconfig-checker
@@ -33,6 +35,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
       - name: Install Prettier
         run: npm install -g prettier
