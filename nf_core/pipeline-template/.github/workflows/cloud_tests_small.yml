@@ -24,7 +24,7 @@ jobs:
           access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
           compute_env: ${{ secrets.TOWER_CE_AWS_CPU }}
           workdir: "${{ secrets.TOWER_BUCKET_AWS }}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}"
-          run_name: "aws_fetchngs_small"
+          run_name: "aws_{{ short_name }}_small"
           profiles: test
           parameters: |
             {
