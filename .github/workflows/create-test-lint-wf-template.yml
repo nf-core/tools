@@ -20,7 +20,7 @@ env:
 
 jobs:
   RunTestWorkflow:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       NXF_ANSI_LOG: false
     strategy:
