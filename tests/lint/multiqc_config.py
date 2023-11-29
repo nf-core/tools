@@ -34,7 +34,7 @@ def test_multiqc_config_missing_report_section_order(self):
 
 
 def test_multiqc_incorrect_export_plots(self):
-    """Test that linting fails if the multiqc_config.yml file as an incorrect value for export_plots"""
+    """Test that linting fails if the multiqc_config.yml file has an incorrect value for export_plots"""
     new_pipeline = self._make_pipeline_copy()
     with open(Path(new_pipeline, "assets", "multiqc_config.yml"), "r") as fh:
         mqc_yml = yaml.safe_load(fh)
@@ -91,7 +91,7 @@ def test_multiqc_config_report_comment_release_fail(self):
 
 
 def test_multiqc_config_report_comment_release_succeed(self):
-    """Test that linting fails if the multiqc_config.yml file has an incorrect report_comment for a release version"""
+    """Test that linting fails if the multiqc_config.yml file has a correct report_comment for a release version"""
 
     import nf_core.bump_version
 

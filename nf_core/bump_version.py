@@ -50,7 +50,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
     # multiqc_config.yaml
     multiqc_new_version = "dev" if "dev" in new_version else new_version
     multiqc_current_version = "dev" if "dev" in current_version else current_version
-    if multiqc_new_version == "dev":
+    if multiqc_new_version == "dev" and multiqc_current_version != "dev":
         update_file_version(
             Path("assets", "multiqc_config.yml"),
             pipeline_obj,
@@ -61,7 +61,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
                 )
             ],
         )
-    if multiqc_current_version == "dev":
+    if multiqc_current_version == "dev" and multiqc_new_version != "dev":
         update_file_version(
             Path("assets", "multiqc_config.yml"),
             pipeline_obj,
