@@ -25,6 +25,7 @@ jobs:
           compute_env: ${{ secrets.TOWER_CE_AWS_CPU }}
           workdir: "${{ secrets.TOWER_BUCKET_AWS }}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}"
           run_name: "aws_{{ short_name }}_small"
+          revision: ${{ github.sha }}
           profiles: test
           parameters: |
             {
@@ -45,6 +46,7 @@ jobs:
           compute_env: ${{ secrets.TOWER_CE_GCP_CPU }}
           workdir: "${{ secrets.TOWER_BUCKET_GCP }}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw %}"
           run_name: "gcp_{{ short_name }}_small"
+          revision: ${{ github.sha }}
           profiles: test
           parameters: |
             {
@@ -65,6 +67,7 @@ jobs:
           compute_env: ${{ secrets.TOWER_CE_AZURE_CPU }}
           workdir: "${{ secrets.TOWER_BUCKET_AZURE }}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw % }"
           run_name: "azure_{{ short_name }}_small"
+          revision: ${{ github.sha }}
           profiles: test
           parameters: |
             {
