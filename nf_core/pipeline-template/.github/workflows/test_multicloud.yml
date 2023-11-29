@@ -23,7 +23,7 @@ jobs:
           workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
           access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
           compute_env: ${{ secrets.TOWER_CE_AWS_CPU }}
-          workdir: "{% raw %}${{ secrets.TOWER_BUCKET_AWS }}/work{% endraw %}/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw %}"
+          workdir: "{% raw %}${{ secrets.TOWER_BUCKET_AWS }}/work/{{ short_name }}/work-${{ github.sha }}{% endraw %}"
           run_name: "aws_{{ short_name }}_small"
           revision: ${{ github.sha }}
           profiles: test
