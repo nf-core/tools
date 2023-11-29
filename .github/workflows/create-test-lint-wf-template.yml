@@ -20,7 +20,7 @@ env:
 
 jobs:
   RunTestWorkflow:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       NXF_ANSI_LOG: false
     strategy:
@@ -53,6 +53,8 @@ jobs:
 
       # Install the Prettier linting tools
       - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
       - name: Install Prettier
         run: npm install -g prettier

@@ -58,7 +58,7 @@ jobs:
     name: Test with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: setup
     if: ${{ needs.setup.outputs.run-tests == 'true' }}
-    runs-on: ["self-hosted"]
+    runs-on: ${{ needs.setup.outputs.runner }}
     steps:
       - uses: actions/checkout@v2
         name: Check out source-code repository
