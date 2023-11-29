@@ -1,9 +1,10 @@
 import os
+from typing import Dict, List
 
 import yaml
 
 
-def multiqc_config(self):
+def multiqc_config(self) -> Dict[str, List[str]]:
     """Make sure basic multiQC plugins are installed and plots are exported
     Basic template:
 
@@ -41,7 +42,7 @@ def multiqc_config(self):
     # Check that the report_comment exists and matches
     try:
         if "report_section_order" not in mqc_yml:
-            raise AssertionError()
+            raise AssertionError("`report_section_order` missing")
         orders = {}
         summary_plugin_name = f"{self.pipeline_prefix}-{self.pipeline_name}-summary"
         min_plugins = ["software_versions", summary_plugin_name]
