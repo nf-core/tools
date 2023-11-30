@@ -67,7 +67,7 @@ jobs:
     name: Test with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: [setup, list_tests]
     if: ${{ needs.setup.outputs.run-tests == 'true' }}
-    runs-on: ${{ needs.setup.outputs.runner }}
+    runs-on: "self-hosted"
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
     steps:
