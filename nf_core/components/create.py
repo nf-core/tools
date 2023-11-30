@@ -17,11 +17,13 @@ from typing import Dict, Optional
 import jinja2
 import questionary
 import rich
+import yaml
 from packaging.version import parse as parse_version
 
 import nf_core
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
+from nf_core.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
@@ -475,3 +477,12 @@ class ComponentCreate(ComponentCommand):
                 "You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link].\n"
                 f"Once done, make sure to delete the module pytest files to avoid linting errors: {pytest_dir}"
             )
+        # Delete tags from pytest_modules.yml
+        modules_yml = Path(self.directory, "tests", "config", "pytest_modules.yml")
+        with open(modules_yml, "r") as fh:
+            yml_file = yaml.safe_load(fh)
+        yml_key = self.component_dir if self.component_type == "modules" else f"subworkflows/{self.component_dir}"
+        del yml_file[yml_key]
+        with open(modules_yml, "w") as fh:
+            yaml.dump(yml_file, fh)
+        run_prettier_on_file(modules_yml)

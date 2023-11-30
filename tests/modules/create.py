@@ -7,6 +7,7 @@ from unittest import mock
 import pytest
 import requests_cache
 import responses
+import yaml
 from git.repo import Repo
 
 import nf_core.modules
@@ -105,6 +106,11 @@ def test_modules_migrate(self, mock_rich_ask):
     # Check that pytest folder is deleted
     assert not pytest_dir.is_dir()
 
+    # Check that pytest_modules.yml is updated
+    with open(Path(self.nfcore_modules, "tests", "config", "pytest_modules.yml")) as fh:
+        modules_yml = yaml.safe_load(fh)
+    assert "samtools/sort" not in modules_yml.keys()
+
 
 @mock.patch("rich.prompt.Confirm.ask")
 def test_modules_migrate_no_delete(self, mock_rich_ask):
@@ -123,3 +129,8 @@ def test_modules_migrate_no_delete(self, mock_rich_ask):
 
     # Check that pytest folder is not deleted
     assert pytest_dir.is_dir()
+
+    # Check that pytest_modules.yml is updated
+    with open(Path(self.nfcore_modules, "tests", "config", "pytest_modules.yml")) as fh:
+        modules_yml = yaml.safe_load(fh)
+    assert "samtools/sort" not in modules_yml.keys()
