@@ -13,7 +13,7 @@ concurrency:
 jobs:
   push_dockerhub:
     name: Push new Docker image to Docker Hub (dev)
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     # Only run for the nf-core repo, for releases and merged PRs
     if: ${{ github.repository == 'nf-core/tools' }}
     env:

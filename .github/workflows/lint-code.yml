@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   EditorConfig:
-    runs-on: ["self-hosted"]
+    runs-on: ["ubuntu-latest"]
     steps:
       - uses: actions/checkout@v4
 
@@ -30,7 +30,7 @@ jobs:
         run: editorconfig-checker -exclude README.md $(git ls-files | grep -v 'test\|.py\|md\|json\|yml\|yaml\|html\|css\|Makefile')
 
   Prettier:
-    runs-on: ["self-hosted"]
+    runs-on: ["ubuntu-latest"]
     steps:
       - uses: actions/checkout@v4
 
@@ -45,7 +45,7 @@ jobs:
         run: prettier --check ${GITHUB_WORKSPACE}
 
   PythonBlack:
-    runs-on: ["self-hosted"]
+    runs-on: ["ubuntu-latest"]
     steps:
       - uses: actions/checkout@v4
 
@@ -75,7 +75,7 @@ jobs:
           allow-repeats: false
 
   isort:
-    runs-on: ["self-hosted"]
+    runs-on: ["ubuntu-latest"]
     steps:
       - name: Check out source-code repository
         uses: actions/checkout@v4
@@ -91,7 +91,7 @@ jobs:
           requirementsFiles: "requirements.txt requirements-dev.txt"
 
   static-type-check:
-    runs-on: ["self-hosted"]
+    runs-on: ["ubuntu-latest"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
