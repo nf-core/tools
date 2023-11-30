@@ -15,9 +15,9 @@ on:
           - gcp
 jobs:
   run-small-tests-on-aws:
+    #Run tests on AWS {%- raw %}
     if: ${{ ( github.event_name != 'workflow_dispatch' ||  ( inputs.platform == 'all' || github.event.inputs.platform == 'aws' ) ) }}
     runs-on: ubuntu-latest
-    #Run tests on AWS {%- raw %}
     steps:
       - uses: seqeralabs/action-tower-launch@v2
         with:
