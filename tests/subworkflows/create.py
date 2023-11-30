@@ -1,8 +1,14 @@
+import filecmp
 import os
+import shutil
+from pathlib import Path
+from unittest import mock
 
 import pytest
+from git.repo import Repo
 
 import nf_core.subworkflows
+from tests.utils import GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH, GITLAB_URL
 
 
 def test_subworkflows_create_succeed(self):
@@ -35,3 +41,57 @@ def test_subworkflows_create_nfcore_modules(self):
     assert os.path.exists(
         os.path.join(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test")
     )
+
+
+@mock.patch("rich.prompt.Confirm.ask")
+def test_subworkflows_migrate(self, mock_rich_ask):
+    """Create a subworkflow with the --migrate-pytest option to convert pytest to nf-test"""
+    pytest_dir = Path(self.nfcore_modules, "tests", "subworkflows", "nf-core", "bam_stats_samtools")
+
+    # Clone modules repo with pytests
+    shutil.rmtree(self.nfcore_modules)
+    Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH)
+    old_main_nf = Path(self.nfcore_modules, "subworkflows", "nf-core", "bam_stats_samtools", "main.nf")
+    old_meta_yml = Path(self.nfcore_modules, "subworkflows", "nf-core", "bam_stats_samtools", "meta.yml")
+
+    # Create a module with --migrate-pytest
+    mock_rich_ask.return_value = True
+    module_create = nf_core.subworkflows.SubworkflowCreate(
+        self.nfcore_modules, "bam_stats_samtools", migrate_pytest=True
+    )
+    module_create.create()
+
+    new_main_nf = Path(self.nfcore_modules, "subworkflows", "nf-core", "bam_stats_samtools", "main.nf")
+    new_meta_yml = Path(self.nfcore_modules, "subworkflows", "nf-core", "bam_stats_samtools", "meta.yml")
+    nextflow_config = Path(
+        self.nfcore_modules, "subworkflows", "nf-core", "bam_stats_samtools", "tests", "nextflow.config"
+    )
+
+    # Check that old files have been copied to the new module
+    assert filecmp.cmp(old_main_nf, new_main_nf, shallow=True)
+    assert filecmp.cmp(old_meta_yml, new_meta_yml, shallow=True)
+    assert nextflow_config.is_file()
+
+    # Check that pytest folder is deleted
+    assert not pytest_dir.is_dir()
+
+
+@mock.patch("rich.prompt.Confirm.ask")
+def test_subworkflows_migrate_no_delete(self, mock_rich_ask):
+    """Create a subworkflow with the --migrate-pytest option to convert pytest to nf-test.
+    Test that pytest directory is not deleted."""
+    pytest_dir = Path(self.nfcore_modules, "tests", "subworkflows", "nf-core", "bam_stats_samtools")
+
+    # Clone modules repo with pytests
+    shutil.rmtree(self.nfcore_modules)
+    Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH)
+
+    # Create a module with --migrate-pytest
+    mock_rich_ask.return_value = False
+    module_create = nf_core.subworkflows.SubworkflowCreate(
+        self.nfcore_modules, "bam_stats_samtools", migrate_pytest=True
+    )
+    module_create.create()
+
+    # Check that pytest folder is not deleted
+    assert pytest_dir.is_dir()

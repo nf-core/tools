@@ -466,12 +466,12 @@ class ComponentCreate(ComponentCommand):
                 log.info(fh.read())
             shutil.rmtree(pytest_dir)
             log.info(
-                f"[yellow]Please copy the pytest tests to nf-test 'main.nf.test'.[/]"
-                f"You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link]. "
+                "[yellow]Please copy the pytest tests to nf-test 'main.nf.test'.[/]\n"
+                "You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link]. "
             )
         else:
             log.info(
-                f"[yellow]Please copy the pytest tests to nf-test 'main.nf.test'.[/]"
-                f"You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link]. "
+                "[yellow]Please copy the pytest tests to nf-test 'main.nf.test'.[/]\n"
+                "You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link].\n"
                 f"Once done, make sure to delete the module pytest files to avoid linting errors: {pytest_dir}"
             )
