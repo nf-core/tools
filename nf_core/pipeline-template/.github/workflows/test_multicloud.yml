@@ -15,7 +15,7 @@ on:
           - gcp
 jobs:
   run-small-tests-on-aws:
-    #Run tests on AWS {%- raw %}
+    # Run tests on AWS {%- raw %}
     if: ${{ ( github.event_name != 'workflow_dispatch' ||  ( inputs.platform == 'all' || github.event.inputs.platform == 'aws' ) ) }}
     runs-on: ubuntu-latest
     steps:
@@ -31,52 +31,51 @@ jobs:
           parameters: |
             {
                 "outdir": "{% raw %}${{ secrets.TOWER_BUCKET_AWS }}{% endraw %}/work/{{ short_name }}/{% raw %}results-test-${{ github.sha }}{% endraw %}/"
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Tower debug log file
+          path: tower_action_*.log
+  # Run tests on GCP {%- raw %}
+  run-small-tests-on-gcp:
+    if: ${{ github.event.inputs.platform == 'all' || github.event.inputs.platform == 'gcp' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: seqeralabs/action-tower-launch@v2
+        with:
+          workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
+          access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
+          compute_env: ${{ secrets.TOWER_CE_GCP_CPU }}
+          revision: ${{ github.sha }}
+          workdir: "${{ secrets.TOWER_BUCKET_GCP }}{ % endraw %}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw %}"
+          run_name: "gcp_{{ short_name }}_small"
+          profiles: test
+          parameters: |
+            {
+                "outdir": "{% raw %}${{ secrets.TOWER_BUCKET_GCP }}{% endraw %}/work/{{ short_name }}/{% raw %}results-test-${{ github.sha }}{% endraw %}/"
             }
       - uses: actions/upload-artifact@v3
         with:
           name: Tower debug log file
           path: tower_action_*.log
-  # run-small-tests-on-gcp:
-  #   if: ${{ github.event.inputs.platform == 'all' || github.event.inputs.platform == 'gcp' }}
-  #   runs-on: ubuntu-latest
-  #   #Run tests on GCP {%- raw %}
-  #   steps:
-  #     - uses: seqeralabs/action-tower-launch@v2
-  #       with:
-  #         workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
-  #         access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
-  #         compute_env: ${{ secrets.TOWER_CE_GCP_CPU }}
-  #         revision: ${{ github.sha }}
-  #         workdir: "${{ secrets.TOWER_BUCKET_GCP }}{ % endraw %}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw %}"
-  #         run_name: "gcp_{{ short_name }}_small"
-  #         profiles: test
-  #         parameters: |
-  #           {
-  #               "outdir": "{% raw %}${{ secrets.TOWER_BUCKET_GCP }}{% endraw %}/work/{{ short_name }}/{% raw %}results-test-${{ github.sha }}{% endraw %}/"
-  #           }
-  #     - uses: actions/upload-artifact@v3
-  #       with:
-  #         name: Tower debug log file
-  #         path: tower_action_*.log
-  # run-small-tests-on-azure:
-  #   if: ${{ github.event.inputs.platform == 'all' || github.event.inputs.platform == 'azure' }}
-  #   runs-on: ubuntu-latest
-  #   #Run tests on AZURE {%- raw %}
-  #   steps:
-  #     - uses: seqeralabs/action-tower-launch@v2
-  #       with:
-  #         workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
-  #         access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
-  #         compute_env: ${{ secrets.TOWER_CE_AZURE_CPU }}
-  #         revision: ${{ github.sha }}
-  #         workdir: "${{ secrets.TOWER_BUCKET_AZURE }}{ % endraw %}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw % }"
-  #         run_name: "azure_{{ short_name }}_small"
-  #         profiles: test
-  #         parameters: |
-  #           {
-  #               "outdir": "{% raw %}${{ secrets.TOWER_BUCKET_AZURE }}{% endraw %}/work/{{ short_name }}/{% raw %}results-test-${{ github.sha }}{% endraw %}/"
-  #           }
-  #     - uses: actions/upload-artifact@v3
-  #       with:
-  #         name: Tower debug log file
-  #         path: tower_action_*.log
+  #Run tests on AZURE {%- raw %}
+  run-small-tests-on-azure:
+    if: ${{ github.event.inputs.platform == 'all' || github.event.inputs.platform == 'azure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: seqeralabs/action-tower-launch@v2
+        with:
+          workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
+          access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
+          compute_env: ${{ secrets.TOWER_CE_AZURE_CPU }}
+          revision: ${{ github.sha }}
+          workdir: "${{ secrets.TOWER_BUCKET_AZURE }}{ % endraw %}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw % }"
+          run_name: "azure_{{ short_name }}_small"
+          profiles: test
+          parameters: |
+            {
+                "outdir": "{% raw %}${{ secrets.TOWER_BUCKET_AZURE }}{% endraw %}/work/{{ short_name }}/{% raw %}results-test-${{ github.sha }}{% endraw %}/"
+            }
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Tower debug log file
+          path: tower_action_*.log
