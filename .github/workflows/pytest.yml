@@ -25,7 +25,7 @@ env:
 
 jobs:
   setup:
-    runs-on: ${{ matrix.runner }}
+    runs-on: ["ubuntu-latest"]
     strategy:
       matrix:
         python-version: ["3.8", "3.12"]
@@ -55,6 +55,7 @@ jobs:
       run-tests: ${{ env.run-tests }}
 
   test:
+    name: Test with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: setup
     if: ${{ needs.setup.outputs.run-tests == 'true' }}
     runs-on: ${{ needs.setup.outputs.runner }}
@@ -77,9 +78,9 @@ jobs:
         if: ${{ needs.setup.outputs.runner == 'ubuntu-20.04' && needs.setup.outputs.python-version == '3.8' }}
         run: |
           sudo apt update
-          sudo apt remove git git-man
+          sudo apt remove -y git git-man
           sudo add-apt-repository --remove ppa:git-core/ppa
-          sudo apt install git
+          sudo apt install -y git
       - name: Get current date
         id: date
         run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
