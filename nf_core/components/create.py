@@ -162,12 +162,8 @@ class ComponentCreate(ComponentCommand):
         if self.migrate_pytest:
             self._copy_old_files(component_old_path)
             log.info("Migrate pytest tests: Copied original module files to new module")
-            try:
-                self._update_nftest_file()
-                log.info("Migrate pytest tests: Updated `main.nf.test` with contents of pytest")
-            except Exception as e:
-                log.info(f"Could not update `main.nf.test` file: {e}")
             shutil.rmtree(component_old_path)
+            self._print_and_delete_pytest_files()
 
         new_files = list(self.file_paths.values())
         log.info("Created following files:\n  " + "\n  ".join(new_files))
@@ -459,102 +455,23 @@ class ComponentCreate(ComponentCommand):
                 ) as ofh:
                     ofh.write(config_lines)
 
-    def _collect_pytest_tests(self):
+    def _print_and_delete_pytest_files(self):
+        """Prompt if pytest files should be deleted and printed to stdout"""
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
-        tests = []
-        name = None
-        input = None
-        in_input = False
-        input_number = 0
-        number_of_inputs = []
-        with open(pytest_dir / "main.nf") as fh:
-            for line in fh:
-                if line.strip().startswith("workflow"):
-                    # One test
-                    if name and input:
-                        tests.append((name, input))
-                        name = None
-                        input = None
-                    name = line.split()[1]
-                elif line.strip().startswith("input"):
-                    # First input
-                    input = [line.split("=")[1]]
-                    in_input = True
-                    number_of_inputs.append(1)
-                elif "=" in line and "nextflow.enable.dsl" not in line:
-                    # We need another input
-                    input_number += 1
-                    in_input = True
-                    input.append(line.split("=")[1])
-                    number_of_inputs[input_number] += 1
-                elif in_input:
-                    # Retrieve all lines of an input
-                    if self.component_dir.replace("/", "_").upper() in line:
-                        in_input = False
-                        continue
-                    input[input_number] += line
-
-        if name and input:
-            tests.append((name, input))
-
-        if max(number_of_inputs) > 1:
-            # Check that all tests have the same number of inputs
-            for test in tests:
-                if len(test[1]) < max(number_of_inputs):
-                    for i in range(max(number_of_inputs) - len(test[1])):
-                        test[1].append(" []")
-
-        return tests
-
-    def _create_new_test(self, name, inputs):
-        input_string = ""
-        for i, input in enumerate(inputs):
-            input_string += f"                input[{i}] ={input}"
-        with open(Path("../module-template/tests/main.nf.test"), "r") as fh:
-            test = fh.readlines()[15:48]
-        test[1] = f'    test("{name}") {{'
-        test[12:20] = f"                {input_string}"
-        return "".join(test)
-
-    def _update_nftest_file(self):
-        """Update the nftest file with the pytest tests"""
-        test_script = self.file_paths[os.path.join(self.component_type, "tests", "main.nf.test")]
-        nextflow_config = Path(
-            self.directory, self.component_type, self.org, self.component_dir, "tests", "nextflow.config"
-        )
-        pytest_tests = self._collect_pytest_tests()
-        subtool_lines = 0
-        meta_lines = 0
-
-        # Update test script
-        with open(test_script, "r") as fh:
-            main_nf_test = fh.readlines()
-
-        if nextflow_config.is_file():
-            # Add nextflow config
-            main_nf_test[5] += '    config "./nextflow.config"\n'
-        # Update test name
-        if self.subtool:
-            # Add 1 to the line index as we have the subtool tag
-            subtool_lines += 1
-        main_nf_test[13 + subtool_lines] = f'    test("{pytest_tests[0][0]}") {{\n'
-        # Update input
-        if self.has_meta:
-            meta_lines += 4
-        main_nf_test[
-            25 + subtool_lines : 26 + subtool_lines + meta_lines
-        ] = f"                input[0] ={pytest_tests[0][1][0]}"
-        # Add more inputs if we have more than one
-        if len(pytest_tests[0][1]) > 1:
-            input_number = 1
-            for input in pytest_tests[0][1][1:]:
-                main_nf_test[25 + subtool_lines] += f"                input[{input_number}] ={input}"
-                input_number += 1
-        # Add more tests if we have more than one
-        if len(pytest_tests) > 1:
-            for t in pytest_tests[1:]:
-                name, inputs = t
-                main_nf_test[38 + subtool_lines] += self._create_new_test(name, inputs)
-
-        with open(test_script, "w") as fh:
-            fh.write(main_nf_test)
+        if rich.prompt.Confirm.ask(
+            "[violet]Do you want to delete pytest files?[/]\nPytest file 'main.nf' will be printed to standard output to allow copying the tests manually to 'main.nf.test'.",
+            default=False,
+        ):
+            with open(pytest_dir / "main.nf", "r") as fh:
+                log.info(fh.read())
+            shutil.rmtree(pytest_dir)
+            log.info(
+                f"[yellow]Please copy the pytest tests to nf-test 'main.nf.test'.[/]"
+                f"You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link]. "
+            )
+        else:
+            log.info(
+                f"[yellow]Please copy the pytest tests to nf-test 'main.nf.test'.[/]"
+                f"You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link]. "
+                f"Once done, make sure to delete the module pytest files to avoid linting errors: {pytest_dir}"
+            )
