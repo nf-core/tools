@@ -4,6 +4,7 @@ The NFCoreComponent class holds information and utility functions for a single m
 import logging
 import re
 from pathlib import Path
+from typing import Union
 
 log = logging.getLogger(__name__)
 
@@ -77,7 +78,7 @@ class NFCoreComponent:
             self.test_yml = None
             self.test_main_nf = None
 
-    def _get_main_nf_tags(self, test_main_nf: str):
+    def _get_main_nf_tags(self, test_main_nf: Union[Path, str]):
         """Collect all tags from the main.nf.test file."""
         tags = []
         with open(test_main_nf, "r") as fh:
@@ -86,13 +87,19 @@ class NFCoreComponent:
                     tags.append(line.strip().split()[1].strip('"'))
         return tags
 
-    def _get_included_components(self, main_nf: str):
+    def _get_included_components(self, main_nf: Union[Path, str]):
         """Collect all included components from the main.nf file."""
         included_components = []
         with open(main_nf, "r") as fh:
             for line in fh:
                 if line.strip().startswith("include"):
-                    included_components.append(line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/"))
+                    # get tool/subtool or subworkflow name from include statement, can be in the form
+                    #'../../../modules/nf-core/hisat2/align/main'
+                    #'../bam_sort_stats_samtools/main'
+                    #'../subworkflows/nf-core/bam_sort_stats_samtools/main'
+                    component = line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/")
+                    component = component.replace("'../", "subworkflows/")
+                    included_components.append(component)
         return included_components
 
     def get_inputs_from_main_nf(self):
