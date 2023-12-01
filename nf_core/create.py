@@ -11,7 +11,7 @@ import sys
 import time
 from pathlib import Path
 
-import filetype
+import filetype  # type: ignore
 import git
 import jinja2
 import questionary

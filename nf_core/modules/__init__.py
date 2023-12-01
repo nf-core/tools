@@ -6,9 +6,7 @@ from .lint import ModuleLint
 from .list import ModuleList
 from .modules_json import ModulesJson
 from .modules_repo import ModulesRepo
-from .modules_test import ModulesTest
 from .modules_utils import ModuleException
 from .patch import ModulePatch
 from .remove import ModuleRemove
-from .test_yml_builder import ModulesTestYmlBuilder
 from .update import ModuleUpdate

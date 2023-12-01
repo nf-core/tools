@@ -7,6 +7,7 @@
 - Fix writing files to a remote outdir in the NfcoreTemplate helper functions ([#2465](https://github.com/nf-core/tools/pull/2465))
 - Fancier syntax highlighting for example samplesheets in the usage.md template ([#2503](https://github.com/nf-core/tools/pull/2503))
 - Use closure for multiqc ext.args ([#2509](https://github.com/nf-core/tools/pull/2509))
+- Fix how the modules template references the conda environment file ([#2540](https://github.com/nf-core/tools/pull/2540))
 
 ### Linting
 
@@ -28,7 +29,10 @@
 
 ### General
 
+- Change testing framework for modules and subworkflows from pytest to nf-test ([#2490](https://github.com/nf-core/tools/pull/2490))
 - `bump_version` keeps now the indentation level of the updated version entries ([#2514](https://github.com/nf-core/tools/pull/2514))
+- Run tests with Python 3.12 ([#2522](https://github.com/nf-core/tools/pull/2522)).
+- Add mypy to pre-commit config for the tools repo ([#2545](https://github.com/nf-core/tools/pull/2545))
 
 # [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]
 

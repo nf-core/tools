@@ -3,9 +3,9 @@ import logging
 import os
 import shutil
 from pathlib import Path
+from typing import Dict
 
 import git
-import rich
 import rich.progress
 from git.exc import GitCommandError
 
@@ -61,7 +61,7 @@ class SyncedRepo:
     An object to store details about a locally cached code repository.
     """
 
-    local_repo_statuses = {}
+    local_repo_statuses: Dict[str, bool] = {}
     no_pull_global = False
 
     @staticmethod
