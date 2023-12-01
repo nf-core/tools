@@ -102,11 +102,11 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
                 "subworkflows",
                 f"subworkflows/{subworkflow.component_name}",
                 "subworkflows_nfcore",
-                subworkflow.component_name,
             ]
             included_components = []
             if subworkflow.main_nf.is_file():
                 included_components = subworkflow._get_included_components(subworkflow.main_nf)
+            log.debug(f"Required tags: {required_tags}")
             missing_tags = []
             for tag in required_tags + included_components:
                 if tag not in main_nf_tags:

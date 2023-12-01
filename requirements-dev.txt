@@ -11,3 +11,4 @@ types-PyYAML
 types-requests
 types-jsonschema
 types-Markdown
+types-setuptools
