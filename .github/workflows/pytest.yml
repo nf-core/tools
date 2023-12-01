@@ -40,9 +40,29 @@ jobs:
         id: conditions
         run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> $GITHUB_ENV
 
+      - name: Check queue size
+        id: queue
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: { workflow_runs: runs } } = await github.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: context.workflow,
+              branch: context.ref.replace('refs/heads/', ''),
+              status: 'queued',
+            });
+            const count = runs.length;
+            return {
+              'queue-size-exceeded': count > 30,
+              'queue-size': count,
+            };
+
     outputs:
       python-version: ${{ matrix.python-version }}
-      runner: ${{ matrix.runner }}
+      # set runner to self-hosted if queue size is exceeded
+      runner: ${{ steps.queue.outputs['queue-size-exceeded'] == 'true' && 'self-hosted' || matrix.runner }}
       run-tests: ${{ env.run-tests }}
 
   # create a test matrix based on all python files in /tests
