@@ -1,2 +1,2 @@
-{{ component_dir }}:
+{ { component_dir } }:
   - "modules/{{ org }}/{{ component_dir }}/**"

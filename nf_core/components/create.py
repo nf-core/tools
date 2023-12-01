@@ -7,7 +7,6 @@ from __future__ import print_function
 import glob
 import json
 import logging
-import os
 import re
 import shutil
 import subprocess
@@ -60,7 +59,7 @@ class ComponentCreate(ComponentCommand):
         self.bioconda = None
         self.singularity_container = None
         self.docker_container = None
-        self.file_paths: Dict[str, str] = {}
+        self.file_paths: Dict[str, Path] = {}
         self.not_empty_template = not empty_template
         self.migrate_pytest = migrate_pytest
 
@@ -130,11 +129,11 @@ class ComponentCreate(ComponentCommand):
 
         # Determine the component name
         self.component_name = self.component
-        self.component_dir = self.component
+        self.component_dir = Path(self.component)
 
         if self.subtool:
             self.component_name = f"{self.component}/{self.subtool}"
-            self.component_dir = os.path.join(self.component, self.subtool)
+            self.component_dir = Path(self.component, self.subtool)
 
         self.component_name_underscore = self.component_name.replace("/", "_")
 
@@ -143,7 +142,7 @@ class ComponentCreate(ComponentCommand):
 
         if self.migrate_pytest:
             # Rename the component directory to old
-            component_old = self.component_dir + "_old"
+            component_old = self.component_dir.parent / (self.component_dir.name + "_old")
             component_old_path = Path(self.directory, self.component_type, self.org, component_old)
             Path(self.directory, self.component_type, self.org, self.component_dir).rename(component_old_path)
         else:
@@ -167,7 +166,7 @@ class ComponentCreate(ComponentCommand):
             shutil.rmtree(component_old_path)
             self._print_and_delete_pytest_files()
 
-        new_files = list(self.file_paths.values())
+        new_files = [str(path) for path in self.file_paths.values()]
         log.info("Created following files:\n  " + "\n  ".join(new_files))
 
     def _get_bioconda_tool(self):
@@ -276,16 +275,16 @@ class ComponentCreate(ComponentCommand):
 
             # Write output to the target file
             log.debug(f"Writing output to: '{dest_fn}'")
-            os.makedirs(os.path.dirname(dest_fn), exist_ok=True)
+            dest_fn.parent.mkdir(exist_ok=True)
             with open(dest_fn, "w") as fh:
                 log.debug(f"Writing output to: '{dest_fn}'")
                 fh.write(rendered_output)
 
             # Mirror file permissions
-            template_stat = os.stat(
-                os.path.join(os.path.dirname(nf_core.__file__), f"{self.component_type[:-1]}-template", template_fn)
-            )
-            os.chmod(dest_fn, template_stat.st_mode)
+            template_stat = (
+                Path(nf_core.__file__).parent / f"{self.component_type[:-1]}-template" / template_fn
+            ).stat()
+            dest_fn.chmod(template_stat.st_mode)
 
     def _collect_name_prompt(self):
         """
@@ -336,17 +335,17 @@ class ComponentCreate(ComponentCommand):
         """
         file_paths = {}
         if self.repo_type == "pipeline":
-            local_component_dir = os.path.join(self.directory, self.component_type, "local")
+            local_component_dir = Path(self.directory, self.component_type, "local")
             # Check whether component file already exists
-            component_file = os.path.join(local_component_dir, f"{self.component_name}.nf")
-            if os.path.exists(component_file) and not self.force_overwrite:
+            component_file = local_component_dir / f"{self.component_name}.nf"
+            if component_file.exists() and not self.force_overwrite:
                 raise UserWarning(
                     f"{self.component_type[:-1].title()} file exists already: '{component_file}'. Use '--force' to overwrite"
                 )
 
             if self.component_type == "modules":
                 # If a subtool, check if there is a module called the base tool name already
-                if self.subtool and os.path.exists(os.path.join(local_component_dir, f"{self.component}.nf")):
+                if self.subtool and (local_component_dir / f"{self.component}.nf").exists():
                     raise UserWarning(
                         f"Module '{self.component}' exists already, cannot make subtool '{self.component_name}'"
                     )
@@ -359,30 +358,28 @@ class ComponentCreate(ComponentCommand):
                     )
 
             # Set file paths
-            file_paths[os.path.join(self.component_type, "main.nf")] = component_file
+            file_paths["main.nf"] = component_file
 
         if self.repo_type == "modules":
-            component_dir = os.path.join(self.directory, self.component_type, self.org, self.component_dir)
+            component_dir = Path(self.directory, self.component_type, self.org, self.component_dir)
 
             # Check if module/subworkflow directories exist already
-            if os.path.exists(component_dir) and not self.force_overwrite and not self.migrate_pytest:
+            if component_dir.exists() and not self.force_overwrite and not self.migrate_pytest:
                 raise UserWarning(
                     f"{self.component_type[:-1]} directory exists: '{component_dir}'. Use '--force' to overwrite"
                 )
 
             if self.component_type == "modules":
                 # If a subtool, check if there is a module called the base tool name already
-                parent_tool_main_nf = os.path.join(
-                    self.directory, self.component_type, self.org, self.component, "main.nf"
-                )
-                if self.subtool and os.path.exists(parent_tool_main_nf) and not self.migrate_pytest:
+                parent_tool_main_nf = Path(self.directory, self.component_type, self.org, self.component, "main.nf")
+                if self.subtool and parent_tool_main_nf.exists() and not self.migrate_pytest:
                     raise UserWarning(
                         f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.component_name}'"
                     )
 
                 # If no subtool, check that there isn't already a tool/subtool
                 tool_glob = glob.glob(
-                    f"{os.path.join(self.directory, self.component_type, self.org, self.component)}/*/main.nf"
+                    f"{Path(self.directory, self.component_type, self.org, self.component)}/*/main.nf"
                 )
                 if not self.subtool and tool_glob and not self.migrate_pytest:
                     raise UserWarning(
@@ -391,18 +388,12 @@ class ComponentCreate(ComponentCommand):
 
             # Set file paths
             # For modules - can be tool/ or tool/subtool/ so can't do in template directory structure
-            file_paths[os.path.join(self.component_type, "main.nf")] = os.path.join(component_dir, "main.nf")
-            file_paths[os.path.join(self.component_type, "meta.yml")] = os.path.join(component_dir, "meta.yml")
+            file_paths["main.nf"] = component_dir / "main.nf"
+            file_paths["meta.yml"] = component_dir / "meta.yml"
             if self.component_type == "modules":
-                file_paths[os.path.join(self.component_type, "environment.yml")] = os.path.join(
-                    component_dir, "environment.yml"
-                )
-            file_paths[os.path.join(self.component_type, "tests", "tags.yml")] = os.path.join(
-                component_dir, "tests", "tags.yml"
-            )
-            file_paths[os.path.join(self.component_type, "tests", "main.nf.test")] = os.path.join(
-                component_dir, "tests", "main.nf.test"
-            )
+                file_paths["environment.yml"] = component_dir / "environment.yml"
+            file_paths["tests/tags.yml"] = component_dir / "tests" / "tags.yml"
+            file_paths["tests/main.nf.test"] = component_dir / "tests" / "main.nf.test"
 
         return file_paths
 
@@ -413,8 +404,7 @@ class ComponentCreate(ComponentCommand):
         # Try to guess the current user if `gh` is installed
         author_default = None
         try:
-            with open(os.devnull, "w") as devnull:
-                gh_auth_user = json.loads(subprocess.check_output(["gh", "api", "/user"], stderr=devnull))
+            gh_auth_user = json.loads(subprocess.check_output(["gh", "api", "/user"], stderr=subprocess.DEVNULL))
             author_default = f"@{gh_auth_user['login']}"
         except Exception as e:
             log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
@@ -432,14 +422,12 @@ class ComponentCreate(ComponentCommand):
     def _copy_old_files(self, component_old_path):
         """Copy files from old module to new module"""
         log.debug("Copying original main.nf file")
-        shutil.copyfile(component_old_path / "main.nf", self.file_paths[self.component_type + "/main.nf"])
+        shutil.copyfile(component_old_path / "main.nf", self.file_paths["main.nf"])
         log.debug("Copying original meta.yml file")
-        shutil.copyfile(component_old_path / "meta.yml", self.file_paths[self.component_type + "/meta.yml"])
+        shutil.copyfile(component_old_path / "meta.yml", self.file_paths["meta.yml"])
         if self.component_type == "modules":
             log.debug("Copying original environment.yml file")
-            shutil.copyfile(
-                component_old_path / "environment.yml", self.file_paths[self.component_type + "/environment.yml"]
-            )
+            shutil.copyfile(component_old_path / "environment.yml", self.file_paths["environment.yml"])
         # Create a nextflow.config file if it contains information other than publishDir
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
         nextflow_config = pytest_dir / "nextflow.config"
@@ -481,8 +469,9 @@ class ComponentCreate(ComponentCommand):
         modules_yml = Path(self.directory, "tests", "config", "pytest_modules.yml")
         with open(modules_yml, "r") as fh:
             yml_file = yaml.safe_load(fh)
-        yml_key = self.component_dir if self.component_type == "modules" else f"subworkflows/{self.component_dir}"
-        del yml_file[yml_key]
+        yml_key = str(self.component_dir) if self.component_type == "modules" else f"subworkflows/{self.component_dir}"
+        if yml_key in yml_file:
+            del yml_file[yml_key]
         with open(modules_yml, "w") as fh:
             yaml.dump(yml_file, fh)
         run_prettier_on_file(modules_yml)
