@@ -114,7 +114,8 @@ jobs:
         run: |
           wget -qO- https://code.askimed.com/install/nf-test | bash
           sudo mv nf-test /usr/local/bin/
-
+      - name: print nextflow.config
+        run: cat nextflow.config
       - name: Test with pytest
         run: |
           python3 -m pytest tests/${{matrix.test}} --color=yes --cov-report=xml --cov-config=.github/.coveragerc --cov=nf_core || exit_code=$?
