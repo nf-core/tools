@@ -70,6 +70,7 @@ jobs:
     runs-on: "self-hosted"
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
+      fail-fast: false # run all tests even if one fails
     steps:
       - uses: actions/checkout@v4
         name: Check out source-code repository
