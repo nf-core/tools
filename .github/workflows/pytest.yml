@@ -43,7 +43,7 @@ jobs:
     outputs:
       python-version: ${{ matrix.python-version }}
       runner: ${{ matrix.runner }}
-      run-tests: ${{ steps.conditions.outputs.run-tests }}
+      run-tests: ${{ env.run-tests }}
 
   # create a test matrix based on all python files in /tests
   list_tests:
