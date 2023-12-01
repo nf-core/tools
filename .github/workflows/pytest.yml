@@ -32,8 +32,8 @@ jobs:
         python-version: ["3.8", "3.12"]
         runner: ["ubuntu-latest"]
         include:
-          - runner: "ubuntu-20.04"
-            python-version: "3.8"
+          - python-version: "3.8"
+            runner: "ubuntu-20.04"
 
     steps:
       - name: Check conditions
@@ -84,10 +84,10 @@ jobs:
           echo "tests=$(find tests/test_* | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_ENV
 
   test:
-    name: Test with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
+    name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: [setup, list_tests]
     if: ${{ needs.setup.outputs.run-tests == 'true' }}
-    runs-on: ${{ needs.setup.outputs.runner }}
+    runs-on: "self-hosted"
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
     steps:
