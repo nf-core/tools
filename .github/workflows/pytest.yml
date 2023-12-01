@@ -43,7 +43,7 @@ jobs:
     outputs:
       python-version: ${{ matrix.python-version }}
       runner: ${{ matrix.runner }}
-      run-tests: ${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}"
+      run-tests: ${{ steps.conditions.outputs.run-tests }}
 
   # create a test matrix based on all python files in /tests
   list_tests:
