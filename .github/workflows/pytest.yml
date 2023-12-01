@@ -35,15 +35,10 @@ jobs:
           - python-version: "3.8"
             runner: "ubuntu-20.04"
 
-    steps:
-      - name: Check conditions
-        id: conditions
-        run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> $GITHUB_ENV
-
     outputs:
       python-version: ${{ matrix.python-version }}
       runner: ${{ matrix.runner }}
-      run-tests: ${{ env.run-tests }}
+      run-tests: ${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}"
 
   # create a test matrix based on all python files in /tests
   list_tests:
@@ -115,7 +110,8 @@ jobs:
           wget -qO- https://code.askimed.com/install/nf-test | bash
           sudo mv nf-test /usr/local/bin/
       - name: print nextflow.config
-        run: cat nextflow.config
+        run: cat /opt/actions-runner/nextflow.config
+
       - name: Test with pytest
         run: |
           python3 -m pytest tests/${{matrix.test}} --color=yes --cov-report=xml --cov-config=.github/.coveragerc --cov=nf_core || exit_code=$?
