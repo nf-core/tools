@@ -461,19 +461,19 @@ class ComponentCreate(ComponentCommand):
         """Prompt if pytest files should be deleted and printed to stdout"""
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
         if rich.prompt.Confirm.ask(
-            "[violet]Do you want to delete pytest files?[/]\nPytest file 'main.nf' will be printed to standard output to allow copying the tests manually to 'main.nf.test'.",
+            "[violet]Do you want to delete the pytest files?[/]\nPytest file 'main.nf' will be printed to standard output to allow migrating the tests manually to 'main.nf.test'.",
             default=False,
         ):
             with open(pytest_dir / "main.nf", "r") as fh:
                 log.info(fh.read())
             shutil.rmtree(pytest_dir)
             log.info(
-                "[yellow]Please copy the pytest tests to nf-test 'main.nf.test'.[/]\n"
+                "[yellow]Please convert the pytest tests to nf-test in 'main.nf.test'.[/]\n"
                 "You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link]. "
             )
         else:
             log.info(
-                "[yellow]Please copy the pytest tests to nf-test 'main.nf.test'.[/]\n"
+                "[yellow]Please migrate the pytest tests to nf-test in 'main.nf.test'.[/]\n"
                 "You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link].\n"
                 f"Once done, make sure to delete the module pytest files to avoid linting errors: {pytest_dir}"
             )
