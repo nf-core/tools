@@ -90,7 +90,8 @@ jobs:
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml ${{ matrix.TEMPLATE }}
 
       - name: print configs
-        run: nextflow config
+        run: |
+          echo "Configs: $(nextflow config -flat -profile test,self_hosted_runner)"
 
       - name: run the pipeline
         run: |

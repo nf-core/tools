@@ -49,20 +49,21 @@ jobs:
   list_tests:
     name: Get test file matrix
     needs: setup
-    if: ${{ needs.setup.outputs.run-tests == 'true' }}
+
     runs-on: ${{ needs.setup.outputs.runner }}
     outputs:
       tests: ${{ env.tests }}
     steps:
       - uses: actions/checkout@v4
         name: Check out source-code repository
-
+      - name: Print conditions
+        run: echo "run-tests=${{ needs.setup.outputs.run-tests }}" >> $GITHUB_ENV
       - name: List tests
         id: list_tests
         run:
           | # get all python files in /tests strting with test_ excluding test_modules, test_subworkflows and test_components
-          echo "tests=$(find tests/test_* -not -name test_modules.py -not -name test_subworkflows.py -not -name test_components.py -name  | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_ENV
-          #
+          echo "tests=$(find tests/test_* | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_ENV
+        if: ${{ needs.setup.outputs.run-tests == 'true' }}
 
   test:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
