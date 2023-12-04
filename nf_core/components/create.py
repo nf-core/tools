@@ -143,9 +143,12 @@ class ComponentCreate(ComponentCommand):
 
         if self.migrate_pytest:
             # Rename the component directory to old
-            component_old = self.component_dir + "_old"
-            component_old_path = Path(self.directory, self.component_type, self.org, component_old)
-            Path(self.directory, self.component_type, self.org, self.component_dir).rename(component_old_path)
+            component_old_dir = self.component_dir + "_old"
+            component_parent_path = Path(self.directory, self.component_type, self.org)
+            component_old_path = component_parent_path / component_old_dir
+            component_path = component_parent_path / self.component_dir
+
+            component_path.rename(component_old_path)
         else:
             if self.component_type == "modules":
                 # Try to find a bioconda package for 'component'
