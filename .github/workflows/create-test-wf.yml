@@ -44,10 +44,6 @@ jobs:
         with:
           version: ${{ matrix.NXF_VER }}
 
-      - name: print configs
-        run: |
-          echo "Configs: $(nextflow config -flat -profile test,self_hosted_runner my-prefix-testpipeline)"
-
       - name: Run nf-core/tools
         run: |
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
