@@ -60,8 +60,9 @@ jobs:
       - name: List tests
         id: list_tests
         run:
-          | # get all python files in /tests except __init__.py and also all subdirectories and remove trailing commas
-          echo "tests=$(find tests/test_* | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_ENV
+          | # get all python files in /tests strting with test_ excluding test_modules, test_subworkflows and test_components
+          echo "tests=$(find tests/test_* -not -name test_modules.py -not -name test_subworkflows.py -not -name test_components.py -name  | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_ENV
+          #
 
   test:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
@@ -149,12 +150,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
+
       - name: Download all artifacts
         # Downloads coverage1, coverage2, etc.
         uses: actions/download-artifact@v3
+
       - name: Run coverage
         run: |
-          coverage combine coverage*/.coverage*
+          coverage combine coverage*/.coverage* --sources=nf_core
           coverage report
           coverage xml
       - uses: codecov/codecov-action@v3
