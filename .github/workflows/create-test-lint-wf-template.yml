@@ -91,7 +91,7 @@ jobs:
 
       - name: print configs
         run: |
-          echo "Configs: $(nextflow config -flat -profile test,self_hosted_runner)"
+          echo "Configs: $(nextflow config -flat -profile test,self_hosted_runner my-prefix-testpipeline)"
 
       - name: run the pipeline
         run: |
