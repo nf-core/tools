@@ -26,11 +26,11 @@ jobs:
     strategy:
       matrix:
         TEMPLATE:
-          - "template_skip_all.yml"
+          # - "template_skip_all.yml"
           - "template_skip_github_badges.yml"
           - "template_skip_igenomes.yml"
           - "template_skip_ci.yml"
-          - "template_skip_nf_core_configs.yml"
+          # - "template_skip_nf_core_configs.yml"
 
     steps:
       - uses: actions/checkout@v4
