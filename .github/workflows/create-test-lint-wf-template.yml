@@ -91,7 +91,7 @@ jobs:
 
       - name: run the pipeline
         run: |
-          nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
+          nextflow run my-prefix-testpipeline -profile test,self_hosted_runner --outdir ./results
 
       # Remove results folder before linting
       - name: remove results folder
