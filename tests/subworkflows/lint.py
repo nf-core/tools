@@ -28,9 +28,8 @@ def test_subworkflows_lint_new_subworkflow(self):
     """lint a new subworkflow"""
     subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
     subworkflow_lint.lint(print_results=True, all_subworkflows=True)
-    assert (
-        len(subworkflow_lint.failed) == 1  # test snap missing after creating a subworkflow
-    ), f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
+    assert len(subworkflow_lint.failed) == 0
+
     assert len(subworkflow_lint.passed) > 0
     assert len(subworkflow_lint.warned) >= 0
 
@@ -68,7 +67,6 @@ def test_subworkflows_lint_multiple_remotes(self):
 
 def test_subworkflows_lint_snapshot_file(self):
     """Test linting a subworkflow with a snapshot file"""
-    Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap").touch()
     subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
     subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
     assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
@@ -78,8 +76,10 @@ def test_subworkflows_lint_snapshot_file(self):
 
 def test_subworkflows_lint_snapshot_file_missing_fail(self):
     """Test linting a subworkflow with a snapshot file missing, which should fail"""
+    Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap").unlink()
     subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
     subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
+    Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap").touch()
     assert len(subworkflow_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
     assert len(subworkflow_lint.passed) > 0
     assert len(subworkflow_lint.warned) >= 0
@@ -96,8 +96,11 @@ def test_subworkflows_lint_snapshot_file_not_needed(self):
         Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test"), "w"
     ) as fh:
         fh.write(new_content)
+
+    Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap").unlink()
     subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
     subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
+    Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap").touch()
     assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
     assert len(subworkflow_lint.passed) > 0
     assert len(subworkflow_lint.warned) >= 0

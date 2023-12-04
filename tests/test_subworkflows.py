@@ -4,6 +4,7 @@
 import os
 import shutil
 import unittest
+from pathlib import Path
 
 import nf_core.create
 import nf_core.modules
@@ -21,22 +22,18 @@ from .utils import (
 def create_modules_repo_dummy(tmp_dir):
     """Create a dummy copy of the nf-core/modules repo"""
 
-    root_dir = os.path.join(tmp_dir, "modules")
-    os.makedirs(os.path.join(root_dir, "modules"))
-    os.makedirs(os.path.join(root_dir, "subworkflows"))
-    os.makedirs(os.path.join(root_dir, "subworkflows", "nf-core"))
-    os.makedirs(os.path.join(root_dir, "tests", "modules"))
-    os.makedirs(os.path.join(root_dir, "tests", "subworkflows"))
-    os.makedirs(os.path.join(root_dir, "tests", "config"))
-    with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
-        fh.writelines(["test:", "\n  - modules/test/**", "\n  - tests/modules/test/**"])
-    with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
+    root_dir = Path(tmp_dir, "modules")
+    Path(root_dir, "modules").mkdir(parents=True, exist_ok=True)
+    Path(root_dir, "subworkflows").mkdir(parents=True, exist_ok=True)
+    Path(root_dir, "subworkflows", "nf-core").mkdir(parents=True, exist_ok=True)
+    Path(root_dir, "tests", "config").mkdir(parents=True, exist_ok=True)
+    with open(Path(root_dir, ".nf-core.yml"), "w") as fh:
         fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
-
     # TODO Add a mock here
     subworkflow_create = nf_core.subworkflows.SubworkflowCreate(root_dir, "test_subworkflow", "@author", True)
     subworkflow_create.create()
 
+    Path(root_dir, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap").touch()
     return root_dir
 
 

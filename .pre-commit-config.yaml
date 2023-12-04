@@ -11,3 +11,13 @@ repos:
     rev: "v2.7.1"
     hooks:
       - id: prettier
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: "v1.7.1" # Use the sha / tag you want to point at
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-PyYAML
+          - types-requests
+          - types-jsonschema
+          - types-Markdown
+          - types-setuptools
