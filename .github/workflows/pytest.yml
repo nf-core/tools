@@ -79,7 +79,7 @@ jobs:
           path: "nf-core_tools"
 
       - name: change to nf-core_tools directory
-        run: cd nf-core_tools
+        run: cd nf-core_tools && pwd
 
       - name: Set up Python ${{ needs.setup.outputs.python-version }}
         uses: actions/setup-python@v4
@@ -151,6 +151,10 @@ jobs:
         with:
           python-version: 3.12
           cache: "pip"
+
+      - name: change to nf-core_tools directory
+        run: cd nf-core_tools
+
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
