@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Dict, Optional
@@ -16,11 +17,13 @@ from typing import Dict, Optional
 import jinja2
 import questionary
 import rich
+import yaml
 from packaging.version import parse as parse_version
 
 import nf_core
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
+from nf_core.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
@@ -38,6 +41,7 @@ class ComponentCreate(ComponentCommand):
         conda_name: Optional[str] = None,
         conda_version: Optional[str] = None,
         empty_template: bool = False,
+        migrate_pytest: bool = False,
     ):
         super().__init__(component_type, directory)
         self.directory = directory
@@ -58,6 +62,7 @@ class ComponentCreate(ComponentCommand):
         self.docker_container = None
         self.file_paths: Dict[str, str] = {}
         self.not_empty_template = not empty_template
+        self.migrate_pytest = migrate_pytest
 
     def create(self):
         """
@@ -136,19 +141,34 @@ class ComponentCreate(ComponentCommand):
         # Check existence of directories early for fast-fail
         self.file_paths = self._get_component_dirs()
 
-        if self.component_type == "modules":
-            # Try to find a bioconda package for 'component'
-            self._get_bioconda_tool()
+        if self.migrate_pytest:
+            # Rename the component directory to old
+            component_old_dir = self.component_dir + "_old"
+            component_parent_path = Path(self.directory, self.component_type, self.org)
+            component_old_path = component_parent_path / component_old_dir
+            component_path = component_parent_path / self.component_dir
 
-        # Prompt for GitHub username
-        self._get_username()
+            component_path.rename(component_old_path)
+        else:
+            if self.component_type == "modules":
+                # Try to find a bioconda package for 'component'
+                self._get_bioconda_tool()
 
-        if self.component_type == "modules":
-            self._get_module_structure_components()
+            # Prompt for GitHub username
+            self._get_username()
+
+            if self.component_type == "modules":
+                self._get_module_structure_components()
 
         # Create component template with jinja2
         self._render_template()
         log.info(f"Created component template: '{self.component_name}'")
+
+        if self.migrate_pytest:
+            self._copy_old_files(component_old_path)
+            log.info("Migrate pytest tests: Copied original module files to new module")
+            shutil.rmtree(component_old_path)
+            self._print_and_delete_pytest_files()
 
         new_files = list(self.file_paths.values())
         log.info("Created following files:\n  " + "\n  ".join(new_files))
@@ -348,7 +368,7 @@ class ComponentCreate(ComponentCommand):
             component_dir = os.path.join(self.directory, self.component_type, self.org, self.component_dir)
 
             # Check if module/subworkflow directories exist already
-            if os.path.exists(component_dir) and not self.force_overwrite:
+            if os.path.exists(component_dir) and not self.force_overwrite and not self.migrate_pytest:
                 raise UserWarning(
                     f"{self.component_type[:-1]} directory exists: '{component_dir}'. Use '--force' to overwrite"
                 )
@@ -358,7 +378,7 @@ class ComponentCreate(ComponentCommand):
                 parent_tool_main_nf = os.path.join(
                     self.directory, self.component_type, self.org, self.component, "main.nf"
                 )
-                if self.subtool and os.path.exists(parent_tool_main_nf):
+                if self.subtool and os.path.exists(parent_tool_main_nf) and not self.migrate_pytest:
                     raise UserWarning(
                         f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.component_name}'"
                     )
@@ -367,7 +387,7 @@ class ComponentCreate(ComponentCommand):
                 tool_glob = glob.glob(
                     f"{os.path.join(self.directory, self.component_type, self.org, self.component)}/*/main.nf"
                 )
-                if not self.subtool and tool_glob:
+                if not self.subtool and tool_glob and not self.migrate_pytest:
                     raise UserWarning(
                         f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.component_name}'"
                     )
@@ -411,3 +431,61 @@ class ComponentCreate(ComponentCommand):
                 f"[violet]GitHub Username:[/]{' (@author)' if author_default is None else ''}",
                 default=author_default,
             )
+
+    def _copy_old_files(self, component_old_path):
+        """Copy files from old module to new module"""
+        log.debug("Copying original main.nf file")
+        shutil.copyfile(component_old_path / "main.nf", self.file_paths[self.component_type + "/main.nf"])
+        log.debug("Copying original meta.yml file")
+        shutil.copyfile(component_old_path / "meta.yml", self.file_paths[self.component_type + "/meta.yml"])
+        if self.component_type == "modules":
+            log.debug("Copying original environment.yml file")
+            shutil.copyfile(
+                component_old_path / "environment.yml", self.file_paths[self.component_type + "/environment.yml"]
+            )
+        # Create a nextflow.config file if it contains information other than publishDir
+        pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
+        nextflow_config = pytest_dir / "nextflow.config"
+        if nextflow_config.is_file():
+            with open(nextflow_config, "r") as fh:
+                config_lines = ""
+                for line in fh:
+                    if "publishDir" not in line:
+                        config_lines += line
+            if len(config_lines) > 0:
+                log.debug("Copying nextflow.config file from pytest tests")
+                with open(
+                    Path(self.directory, self.component_type, self.org, self.component_dir, "tests", "nextflow.config"),
+                    "w+",
+                ) as ofh:
+                    ofh.write(config_lines)
+
+    def _print_and_delete_pytest_files(self):
+        """Prompt if pytest files should be deleted and printed to stdout"""
+        pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
+        if rich.prompt.Confirm.ask(
+            "[violet]Do you want to delete the pytest files?[/]\nPytest file 'main.nf' will be printed to standard output to allow migrating the tests manually to 'main.nf.test'.",
+            default=False,
+        ):
+            with open(pytest_dir / "main.nf", "r") as fh:
+                log.info(fh.read())
+            shutil.rmtree(pytest_dir)
+            log.info(
+                "[yellow]Please convert the pytest tests to nf-test in 'main.nf.test'.[/]\n"
+                "You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link]. "
+            )
+        else:
+            log.info(
+                "[yellow]Please migrate the pytest tests to nf-test in 'main.nf.test'.[/]\n"
+                "You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link].\n"
+                f"Once done, make sure to delete the module pytest files to avoid linting errors: {pytest_dir}"
+            )
+        # Delete tags from pytest_modules.yml
+        modules_yml = Path(self.directory, "tests", "config", "pytest_modules.yml")
+        with open(modules_yml, "r") as fh:
+            yml_file = yaml.safe_load(fh)
+        yml_key = self.component_dir if self.component_type == "modules" else f"subworkflows/{self.component_dir}"
+        del yml_file[yml_key]
+        with open(modules_yml, "w") as fh:
+            yaml.dump(yml_file, fh)
+        run_prettier_on_file(modules_yml)

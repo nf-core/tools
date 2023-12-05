@@ -152,6 +152,8 @@ class TestModules(unittest.TestCase):
         test_modules_create_nfcore_modules,
         test_modules_create_nfcore_modules_subtool,
         test_modules_create_succeed,
+        test_modules_migrate,
+        test_modules_migrate_no_delete,
     )
     from .modules.info import (  # type: ignore[misc]
         test_modules_info_in_modules_repo,

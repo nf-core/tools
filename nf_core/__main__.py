@@ -815,8 +815,20 @@ def modules_remove(ctx, dir, tool):
     default=False,
     help="Create a module from the template without TODOs or examples",
 )
+@click.option("--migrate-pytest", is_flag=True, default=False, help="Migrate a module with pytest tests to nf-test")
 def create_module(
-    ctx, tool, dir, author, label, meta, no_meta, force, conda_name, conda_package_version, empty_template
+    ctx,
+    tool,
+    dir,
+    author,
+    label,
+    meta,
+    no_meta,
+    force,
+    conda_name,
+    conda_package_version,
+    empty_template,
+    migrate_pytest,
 ):
     """
     Create a new DSL2 module from the nf-core template.
@@ -841,7 +853,7 @@ def create_module(
     # Run function
     try:
         module_create = ModuleCreate(
-            dir, tool, author, label, has_meta, force, conda_name, conda_package_version, empty_template
+            dir, tool, author, label, has_meta, force, conda_name, conda_package_version, empty_template, migrate_pytest
         )
         module_create.create()
     except UserWarning as e:
@@ -1033,7 +1045,8 @@ def bump_versions(ctx, tool, dir, all, show_all):
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
 @click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username prefixed with '@'")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
-def create_subworkflow(ctx, subworkflow, dir, author, force):
+@click.option("--migrate-pytest", is_flag=True, default=False, help="Migrate a module with pytest tests to nf-test")
+def create_subworkflow(ctx, subworkflow, dir, author, force, migrate_pytest):
     """
     Create a new subworkflow from the nf-core template.
 
@@ -1047,7 +1060,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
 
     # Run function
     try:
-        subworkflow_create = SubworkflowCreate(dir, subworkflow, author, force)
+        subworkflow_create = SubworkflowCreate(dir, subworkflow, author, force, migrate_pytest)
         subworkflow_create.create()
     except UserWarning as e:
         log.critical(e)
