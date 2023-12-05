@@ -3,10 +3,8 @@
 
 import os
 import shutil
-import tempfile
 import unittest
-
-import responses
+from pathlib import Path
 
 import nf_core.modules
 import nf_core.pipelines.create.create
@@ -17,28 +15,25 @@ from .utils import (
     GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH,
     GITLAB_URL,
     OLD_SUBWORKFLOWS_SHA,
+    create_tmp_pipeline,
 )
 
 
 def create_modules_repo_dummy(tmp_dir):
     """Create a dummy copy of the nf-core/modules repo"""
 
-    root_dir = os.path.join(tmp_dir, "modules")
-    os.makedirs(os.path.join(root_dir, "modules"))
-    os.makedirs(os.path.join(root_dir, "subworkflows"))
-    os.makedirs(os.path.join(root_dir, "subworkflows", "nf-core"))
-    os.makedirs(os.path.join(root_dir, "tests", "modules"))
-    os.makedirs(os.path.join(root_dir, "tests", "subworkflows"))
-    os.makedirs(os.path.join(root_dir, "tests", "config"))
-    with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
-        fh.writelines(["test:", "\n  - modules/test/**", "\n  - tests/modules/test/**"])
-    with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
+    root_dir = Path(tmp_dir, "modules")
+    Path(root_dir, "modules").mkdir(parents=True, exist_ok=True)
+    Path(root_dir, "subworkflows").mkdir(parents=True, exist_ok=True)
+    Path(root_dir, "subworkflows", "nf-core").mkdir(parents=True, exist_ok=True)
+    Path(root_dir, "tests", "config").mkdir(parents=True, exist_ok=True)
+    with open(Path(root_dir, ".nf-core.yml"), "w") as fh:
         fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
-
     # TODO Add a mock here
     subworkflow_create = nf_core.subworkflows.SubworkflowCreate(root_dir, "test_subworkflow", "@author", True)
     subworkflow_create.create()
 
+    Path(root_dir, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap").touch()
     return root_dir
 
 
@@ -47,7 +42,6 @@ class TestSubworkflows(unittest.TestCase):
 
     def setUp(self):
         """Create a new PipelineStructure and Launch objects"""
-        self.tmp_dir = tempfile.mkdtemp()
         self.component_type = "subworkflows"
 
         # Set up the pipeline structure
@@ -101,25 +95,18 @@ class TestSubworkflows(unittest.TestCase):
     # Test of the individual subworkflow commands. #
     ################################################
 
-    from .subworkflows.create import (
+    from .subworkflows.create import (  # type: ignore[misc]
         test_subworkflows_create_fail_exists,
         test_subworkflows_create_nfcore_modules,
         test_subworkflows_create_succeed,
     )
-    from .subworkflows.create_test_yml import (
-        test_subworkflows_create_test_yml_check_inputs,
-        test_subworkflows_create_test_yml_entry_points,
-        test_subworkflows_create_test_yml_get_md5,
-        test_subworkflows_custom_yml_dumper,
-        test_subworkflows_test_file_dict,
-    )
-    from .subworkflows.info import (
+    from .subworkflows.info import (  # type: ignore[misc]
         test_subworkflows_info_in_modules_repo,
         test_subworkflows_info_local,
         test_subworkflows_info_remote,
         test_subworkflows_info_remote_gitlab,
     )
-    from .subworkflows.install import (
+    from .subworkflows.install import (  # type: ignore[misc]
         test_subworkflow_install_nopipeline,
         test_subworkflows_install_alternate_remote,
         test_subworkflows_install_bam_sort_stats_samtools,
@@ -132,24 +119,30 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_install_tracking_added_already_installed,
         test_subworkflows_install_tracking_added_super_subworkflow,
     )
-    from .subworkflows.list import (
+    from .subworkflows.lint import (  # type: ignore[misc]
+        test_subworkflows_lint,
+        test_subworkflows_lint_empty,
+        test_subworkflows_lint_gitlab_subworkflows,
+        test_subworkflows_lint_multiple_remotes,
+        test_subworkflows_lint_new_subworkflow,
+        test_subworkflows_lint_no_gitlab,
+        test_subworkflows_lint_snapshot_file,
+        test_subworkflows_lint_snapshot_file_missing_fail,
+        test_subworkflows_lint_snapshot_file_not_needed,
+    )
+    from .subworkflows.list import (  # type: ignore[misc]
         test_subworkflows_install_and_list_subworkflows,
         test_subworkflows_install_gitlab_and_list_subworkflows,
         test_subworkflows_list_remote,
         test_subworkflows_list_remote_gitlab,
     )
-    from .subworkflows.remove import (
+    from .subworkflows.remove import (  # type: ignore[misc]
         test_subworkflows_remove_included_subworkflow,
         test_subworkflows_remove_one_of_two_subworkflow,
         test_subworkflows_remove_subworkflow,
         test_subworkflows_remove_subworkflow_keep_installed_module,
     )
-    from .subworkflows.subworkflows_test import (
-        test_subworkflows_test_check_inputs,
-        test_subworkflows_test_no_installed_subworkflows,
-        test_subworkflows_test_no_name_no_prompts,
-    )
-    from .subworkflows.update import (
+    from .subworkflows.update import (  # type: ignore[misc]
         test_install_and_update,
         test_install_at_hash_and_update,
         test_install_at_hash_and_update_and_save_diff_to_file,

@@ -79,4 +79,4 @@ class PipelineCreateApp(App[CreateConfig]):
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
-        self.dark = not self.dark
+        self.dark: bool = not self.dark

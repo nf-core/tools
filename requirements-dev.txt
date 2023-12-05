@@ -10,4 +10,7 @@ textual-dev>=1.2.1
 mypy
 types-PyYAML
 types-requests
+types-jsonschema
+types-Markdown
+types-setuptools
 pytest-textual-snapshot

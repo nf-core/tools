@@ -3,7 +3,7 @@ from logging import LogRecord
 from pathlib import Path
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 from rich.logging import RichHandler
 from textual import on
 from textual._context import active_app
@@ -118,7 +118,7 @@ class ValidateConfig(Validator):
         try:
             CreateConfig(**{f"{self.key}": value})
             return self.success()
-        except ValueError as e:
+        except ValidationError as e:
             return self.failure(", ".join([err["msg"] for err in e.errors()]))
 
 

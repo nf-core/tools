@@ -1,89 +1,109 @@
+"""
+The ComponentsTest class handles the generation and testing of nf-test snapshots.
+"""
+
+from __future__ import print_function
+
 import logging
 import os
-import sys
+import re
 from pathlib import Path
-from shutil import which
+from typing import List, Optional
 
-import pytest
 import questionary
-import rich
-from git import InvalidGitRepositoryError, Repo
+from rich import print
+from rich.panel import Panel
+from rich.prompt import Confirm
+from rich.syntax import Syntax
+from rich.text import Text
 
-import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.modules.modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
 
 
-class ComponentsTest(ComponentCommand):
+class ComponentsTest(ComponentCommand):  # type: ignore[misc]
     """
-    Class to run module and subworkflow pytests.
+    Class to generate and test nf-test snapshots for modules.
 
     ...
 
     Attributes
     ----------
+    component_type : str
+        type of component to test (modules or subworkflows)
     component_name : str
         name of the tool to run tests for
+    directory: str
+        path to modules repository directory
     no_prompts : bool
         flat indicating if prompts are used
-    pytest_args : tuple
-        additional arguments passed to pytest command
+    remote_url : str
+        URL of the remote repository
+    branch : str
+        branch of the remote repository
+    verbose : bool
+        flag indicating if verbose output should be used
+    update : bool
+        flag indicating if the existing snapshot should be updated
+    once : bool
+        flag indicating if the test should be run only once
 
     Methods
     -------
     run():
         Run test steps
-    _check_inputs():
+    check_inputs():
         Check inputs. Ask for component_name if not provided and check that the directory exists
-    _set_profile():
-        Set software profile
-    _run_pytests(self):
-        Run pytest
+    generate_snapshot():
+        Generate the nf-test snapshot using `nf-test test` command
+    check_snapshot_stability():
+        Run the nf-test twice and check if the snapshot changes
     """
 
     def __init__(
         self,
-        component_type,
-        component_name=None,
-        no_prompts=False,
-        pytest_args="",
-        remote_url=None,
-        branch=None,
-        no_pull=False,
+        component_type: str,
+        component_name: Optional[str] = None,
+        directory: str = ".",
+        no_prompts: bool = False,
+        remote_url: Optional[str] = None,
+        branch: Optional[str] = None,
+        verbose: bool = False,
+        update: bool = False,
+        once: bool = False,
     ):
-        super().__init__(component_type=component_type, dir=".", remote_url=remote_url, branch=branch, no_pull=no_pull)
+        super().__init__(component_type, directory, remote_url, branch, no_prompts=no_prompts)
         self.component_name = component_name
-        self.no_prompts = no_prompts
-        self.pytest_args = pytest_args
+        self.remote_url = remote_url
+        self.branch = branch
+        self.errors: List[str] = []
+        self.verbose = verbose
+        self.obsolete_snapshots: bool = False
+        self.update = update
+        self.once = once
 
-    def run(self):
-        """Run test steps"""
-        if not self.no_prompts:
-            log.info(
-                "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
-            )
-        self._check_inputs()
-        self._set_profile()
-        self._check_profile()
-        self._run_pytests()
+    def run(self) -> None:
+        """Run build steps"""
+        self.check_inputs()
+        os.environ["NFT_DIFF"] = "pdiff"  # set nf-test differ to pdiff to get a better diff output
+        os.environ[
+            "NFT_DIFF_ARGS"
+        ] = "--line-numbers --expand-tabs=2"  # taken from https://code.askimed.com/nf-test/docs/assertions/snapshots/#snapshot-differences
+        with nf_core.utils.set_wd(Path(self.dir)):
+            self.check_snapshot_stability()
+        if len(self.errors) > 0:
+            errors = "\n - ".join(self.errors)
+            raise UserWarning(f"Ran, but found errors:\n - {errors}")
+        else:
+            log.info("All tests passed!")
 
-    def _check_inputs(self):
+    def check_inputs(self) -> None:
         """Do more complex checks about supplied flags."""
         # Check modules directory structure
-        self.check_modules_structure()
-
-        # Retrieving installed modules
-        if self.repo_type == "modules":
-            installed_components = self.get_components_clone_modules()
-        else:
-            modules_json = ModulesJson(self.dir)
-            modules_json.check_up_to_date()
-            installed_components = modules_json.get_all_components(self.component_type).get(
-                self.modules_repo.remote_url
-            )
+        if self.component_type == "modules":
+            self.check_modules_structure()
 
         # Get the component name if not specified
         if self.component_name is None:
@@ -91,110 +111,138 @@ class ComponentsTest(ComponentCommand):
                 raise UserWarning(
                     f"{self.component_type[:-1].title()} name not provided and prompts deactivated. Please provide the {self.component_type[:-1]} name{' as TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else ''}."
                 )
-            if not installed_components:
-                if self.component_type == "modules":
-                    dir_structure_message = f"modules/{self.modules_repo.repo_path}/TOOL/SUBTOOL/ and tests/modules/{self.modules_repo.repo_path}/TOOLS/SUBTOOL/"
-                elif self.component_type == "subworkflows":
-                    dir_structure_message = f"subworkflows/{self.modules_repo.repo_path}/SUBWORKFLOW/ and tests/subworkflows/{self.modules_repo.repo_path}/SUBWORKFLOW/"
-                raise UserWarning(
-                    f"No installed {self.component_type} were found from '{self.modules_repo.remote_url}'.\n"
-                    f"Are you running the tests inside the repository root directory?\n"
-                    f"Make sure that the directory structure is {dir_structure_message}"
-                )
-            self.component_name = questionary.autocomplete(
-                f"{self.component_type[:-1]} name:",
-                choices=installed_components,
-                style=nf_core.utils.nfcore_question_style,
-            ).unsafe_ask()
+            else:
+                try:
+                    self.component_name = questionary.autocomplete(
+                        "Tool name:" if self.component_type == "modules" else "Subworkflow name:",
+                        choices=self.components_from_repo(self.org),
+                        style=nf_core.utils.nfcore_question_style,
+                    ).unsafe_ask()
+                except LookupError:
+                    raise
 
-        # Sanity check that the module directory exists
-        self._validate_folder_structure()
+        self.component_dir = Path(self.component_type, self.modules_repo.repo_path, *self.component_name.split("/"))
 
-    def _validate_folder_structure(self):
-        """Validate that the modules follow the correct folder structure to run the tests:
-        - modules/nf-core/TOOL/SUBTOOL/
-        - tests/modules/nf-core/TOOL/SUBTOOL/
-        or
-        - subworkflows/nf-core/SUBWORKFLOW/
-        - tests/subworkflows/nf-core/SUBWORKFLOW/
-        """
-        if self.component_type == "modules":
-            component_path = Path(self.default_modules_path) / self.component_name
-            test_path = Path(self.default_tests_path) / self.component_name
-        elif self.component_type == "subworkflows":
-            component_path = Path(self.default_subworkflows_path) / self.component_name
-            test_path = Path(self.default_subworkflows_tests_path) / self.component_name
-
-        if not (self.dir / component_path).is_dir():
+        # First, sanity check that the module directory exists
+        if not Path(self.dir, self.component_dir).is_dir():
             raise UserWarning(
-                f"Cannot find directory '{component_path}'. Should be {'TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else 'SUBWORKFLOW'}. Are you running the tests inside the modules repository root directory?"
-            )
-        if not (self.dir / test_path).is_dir():
-            raise UserWarning(
-                f"Cannot find directory '{test_path}'. Should be {'TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else 'SUBWORKFLOW'}. "
-                "Are you running the tests inside the modules repository root directory? "
-                "Do you have tests for the specified module?"
+                f"Cannot find directory '{self.component_dir}'.{' Should be TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else ''}"
             )
 
-    def _set_profile(self):
-        """Set $PROFILE env variable.
-        The config expects $PROFILE and Nextflow fails if it's not set.
-        """
+        # Check container software to use
         if os.environ.get("PROFILE") is None:
             os.environ["PROFILE"] = ""
             if self.no_prompts:
                 log.info(
-                    "Setting environment variable '$PROFILE' to an empty string as not set.\n"
-                    "Tests will run with Docker by default. "
+                    "Setting environment variable '$PROFILE' to Docker as not set otherwise.\n"
                     "To use Singularity set 'export PROFILE=singularity' in your shell before running this command."
                 )
+                os.environ["PROFILE"] = "docker"
             else:
                 question = {
                     "type": "list",
                     "name": "profile",
-                    "message": "Choose software profile",
+                    "message": "Choose container software to run the test with",
                     "choices": ["Docker", "Singularity", "Conda"],
                 }
                 answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
                 profile = answer["profile"].lower()
                 os.environ["PROFILE"] = profile
-                log.info(f"Setting environment variable '$PROFILE' to '{profile}'")
 
-    def _check_profile(self):
-        """Check if profile is available"""
-        profile = os.environ.get("PROFILE")
-        # Make sure the profile read from the environment is a valid Nextflow profile.
-        valid_nextflow_profiles = ["docker", "singularity", "conda"]
-        if profile in valid_nextflow_profiles:
-            if not which(profile):
-                raise UserWarning(f"Command '{profile}' not found - is it installed?")
+    def display_nftest_output(self, nftest_out: bytes, nftest_err: bytes) -> None:
+        nftest_output = Text.from_ansi(nftest_out.decode())
+        print(Panel(nftest_output, title="nf-test output"))
+        if nftest_err:
+            syntax = Syntax(nftest_err.decode(), "diff", theme="ansi_dark")
+            print(Panel(syntax, title="nf-test error"))
+            if "Different Snapshot:" in nftest_err.decode():
+                log.error("nf-test failed due to differences in the snapshots")
+                # prompt to update snapshot
+                if self.no_prompts:
+                    log.info("Updating snapshot")
+                    self.update = True
+                elif self.update is None:
+                    answer = Confirm.ask(
+                        "[bold][blue]?[/] nf-test found differences in the snapshot. Do you want to update it?",
+                        default=True,
+                    )
+                    if answer:
+                        log.info("Updating snapshot")
+                        self.update = True
+                    else:
+                        log.debug("Snapshot not updated")
+                if self.update:
+                    # update snapshot using nf-test --update-snapshot
+                    self.generate_snapshot()
+
+            else:
+                self.errors.append("nf-test failed")
+
+    def generate_snapshot(self) -> bool:
+        """Generate the nf-test snapshot using `nf-test test` command
+
+        returns True if the test was successful, False otherwise
+        """
+
+        log.debug("Running nf-test test")
+
+        # set verbose flag if self.verbose is True
+        verbose = "--verbose --debug" if self.verbose else ""
+        update = "--update-snapshot" if self.update else ""
+        self.update = False  # reset self.update to False to test if the new snapshot is stable
+
+        result = nf_core.utils.run_cmd(
+            "nf-test",
+            f"test --tag {self.component_name} --profile {os.environ['PROFILE']} {verbose} {update}",
+        )
+        if result is not None:
+            nftest_out, nftest_err = result
+            self.display_nftest_output(nftest_out, nftest_err)
+            # check if nftest_out contains obsolete snapshots
+            pattern = r"Snapshot Summary:.*?(\d+)\s+obsolete"
+            compiled_pattern = re.compile(pattern, re.DOTALL)  # re.DOTALL to allow . to match newlines
+            obsolete_snapshots = compiled_pattern.search(nftest_out.decode())
+            if obsolete_snapshots:
+                self.obsolete_snapshots = True
+
+            # check if nf-test was successful
+            if "Assertion failed:" in nftest_out.decode():
+                return False
+            elif "no valid tests found." in nftest_out.decode():
+                log.error("Test file 'main.nf.test' not found")
+                self.errors.append("Test file 'main.nf.test' not found")
+                return False
+            else:
+                log.debug("nf-test successful")
+                return True
         else:
-            raise UserWarning(
-                f"The PROFILE '{profile}' set in the shell environment is not valid.\n"
-                f"Valid Nextflow profiles are '{', '.join(valid_nextflow_profiles)}'."
-            )
+            log.error("nf-test failed")
+            self.errors.append("nf-test failed")
+            return False
 
-    def _run_pytests(self):
-        """Given a module/subworkflow name, run tests."""
-        # Print nice divider line
-        console = rich.console.Console()
-        console.rule(self.component_name, style="black")
-
-        # Check uncommitted changed
-        try:
-            repo = Repo(self.dir)
-            if repo.is_dirty():
-                log.warning("You have uncommitted changes. Make sure to commit last changes before running the tests.")
-        except InvalidGitRepositoryError:
-            pass
-
-        # Set pytest arguments
-        tag = self.component_name
-        if self.component_type == "subworkflows":
-            tag = "subworkflows/" + tag
-        command_args = ["--tag", f"{tag}", "--symlink", "--keep-workflow-wd", "--git-aware"]
-        command_args += self.pytest_args
-
-        # Run pytest
-        log.info(f"Running pytest for {self.component_type[:-1]} '{self.component_name}'")
-        sys.exit(pytest.main(command_args))
+    def check_snapshot_stability(self) -> bool:
+        """Run the nf-test twice and check if the snapshot changes"""
+        log.info("Generating nf-test snapshot")
+        if not self.generate_snapshot():
+            return False  # stop here if the first run failed
+        elif self.once:
+            return True  # stop here if the test should be run only once
+        log.info("Generating nf-test snapshot again to check stability")
+        if not self.generate_snapshot():
+            log.error("nf-test snapshot is not stable")
+            self.errors.append("nf-test snapshot is not stable")
+            return False
+        else:
+            if self.obsolete_snapshots:
+                # ask if the user wants to remove obsolete snapshots using nf-test --clean-snapshot
+                if self.no_prompts or Confirm.ask(
+                    "nf-test found obsolete snapshots. Do you want to remove them?", default=True
+                ):
+                    log.info("Removing obsolete snapshots")
+                    nf_core.utils.run_cmd(
+                        "nf-test",
+                        f"test --tag {self.component_name} --profile {os.environ['PROFILE']} --clean-snapshot",
+                    )
+                else:
+                    log.debug("Obsolete snapshots not removed")
+            return True

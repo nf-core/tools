@@ -14,11 +14,13 @@ concurrency:
 
 jobs:
   EditorConfig:
-    runs-on: ubuntu-latest
+    runs-on: ["self-hosted"]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
       - name: Install editorconfig-checker
         run: npm install -g editorconfig-checker
@@ -28,11 +30,13 @@ jobs:
         run: editorconfig-checker -exclude README.md $(git ls-files | grep -v 'test\|.py\|md\|json\|yml\|yaml\|html\|css\|Makefile')
 
   Prettier:
-    runs-on: ubuntu-latest
+    runs-on: ["self-hosted"]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
       - name: Install Prettier
         run: npm install -g prettier
@@ -41,9 +45,9 @@ jobs:
         run: prettier --check ${GITHUB_WORKSPACE}
 
   PythonBlack:
-    runs-on: ubuntu-latest
+    runs-on: ["self-hosted"]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check code lints with Black
         uses: psf/black@stable
@@ -71,15 +75,15 @@ jobs:
           allow-repeats: false
 
   isort:
-    runs-on: ubuntu-latest
+    runs-on: ["self-hosted"]
     steps:
       - name: Check out source-code repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: 3.12
       - name: python-isort
         uses: isort/isort-action@v1.1.0
         with:
@@ -87,13 +91,34 @@ jobs:
           requirementsFiles: "requirements.txt requirements-dev.txt"
 
   static-type-check:
-    runs-on: ubuntu-latest
+    runs-on: ["self-hosted"]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
-      - run: pip install mypy types-PyYAML
+          python-version: 3.12
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip -r requirements-dev.txt
+          pip install -e .
+
+      - name: Cache nf-test installation
+        id: cache-software
+        uses: actions/cache@v3
+        with:
+          path: |
+            /usr/local/bin/nf-test
+            /home/runner/.nf-test/nf-test.jar
+          key: ${{ runner.os }}-${{ env.NFTEST_VER }}-nftest
+
+      - name: Install nf-test
+        if: steps.cache-software.outputs.cache-hit != 'true'
+        run: |
+          wget -qO- https://code.askimed.com/install/nf-test | bash
+          sudo mv nf-test /usr/local/bin/
+
       - name: Get Python changed files
         id: changed-py-files
         uses: tj-actions/changed-files@v23

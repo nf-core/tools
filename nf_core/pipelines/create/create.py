@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 from typing import Optional, Union
 
-import filetype
+import filetype  # type: ignore
 import git
 import jinja2
 import requests
