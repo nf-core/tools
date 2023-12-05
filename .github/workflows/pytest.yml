@@ -32,8 +32,8 @@ jobs:
         python-version: ["3.8", "3.12"]
         runner: ["ubuntu-latest"]
         include:
-          - python-version: "3.8"
-            runner: "ubuntu-20.04"
+          - runner: "ubuntu-20.04"
+            python-version: "3.8"
 
     steps:
       - name: Check conditions
@@ -161,4 +161,4 @@ jobs:
           coverage combine coverage*/.coverage*
           coverage xml -i
 
-          - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v3
