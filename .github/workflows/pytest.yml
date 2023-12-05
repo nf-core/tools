@@ -54,11 +54,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         name: Check out source-code repository
+        with:
+          path: "nf-core_tools"
 
       - name: List tests
         id: list_tests
-        run:
-          | # get all python files in /tests strting with test_ excluding test_modules, test_subworkflows and test_components
+        run: |
+          # get all python files in /tests strting with test_ excluding test_modules, test_subworkflows and test_components
+          cd nf-core_tools
           echo "tests=$(find tests/test_* | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_ENV
 
   test:
@@ -72,6 +75,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         name: Check out source-code repository
+        with:
+          path: "nf-core_tools"
+
+      - name: change to nf-core_tools directory
+        run: cd nf-core_tools
 
       - name: Set up Python ${{ needs.setup.outputs.python-version }}
         uses: actions/setup-python@v4
