@@ -58,7 +58,7 @@ jobs:
         id: list_tests
         run:
           | # get all python files in /tests strting with test_ excluding test_modules, test_subworkflows and test_components
-          echo "tests=$(find tests/test_cli* | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_ENV
+          echo "tests=$(find tests/test_* | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_ENV
 
   test:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
@@ -159,6 +159,6 @@ jobs:
       - name: Run coverage
         run: |
           coverage combine coverage*/.coverage*
-          coverage xml
+          coverage xml -i
 
           - uses: codecov/codecov-action@v3
