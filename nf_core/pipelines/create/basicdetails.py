@@ -50,7 +50,7 @@ class BasicDetails(Screen):
             "Name of the main author / authors",
         )
         yield Center(
-            Button("Next", variant="success"),
+            Button("Next", id="next", variant="success"),
             classes="cta",
         )
 
