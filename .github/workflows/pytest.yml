@@ -54,6 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         name: Check out source-code repository
+
       - name: List tests
         id: list_tests
         run:
@@ -162,3 +163,5 @@ jobs:
           coverage xml -i
 
       - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
