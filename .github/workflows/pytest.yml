@@ -158,6 +158,9 @@ jobs:
           coverage combine coverage*/.coverage*
           coverage xml -i
 
+      - name: show directory
+        run: ls -la
+
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
