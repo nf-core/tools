@@ -97,8 +97,10 @@ class NFCoreComponent:
                     #'../../../modules/nf-core/hisat2/align/main'
                     #'../bam_sort_stats_samtools/main'
                     #'../subworkflows/nf-core/bam_sort_stats_samtools/main'
+                    #'plugin/nf-validation'
                     component = line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/")
                     component = component.replace("'../", "subworkflows/")
+                    component = component.replace("'", "")
                     included_components.append(component)
         return included_components
 
