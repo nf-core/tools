@@ -112,8 +112,6 @@ jobs:
         run: |
           wget -qO- https://code.askimed.com/install/nf-test | bash
           sudo mv nf-test /usr/local/bin/
-      - name: print nextflow.config
-        run: cat /opt/actions-runner/nextflow.config
 
       - name: Test with pytest
         run: |
