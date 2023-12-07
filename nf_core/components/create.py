@@ -142,9 +142,12 @@ class ComponentCreate(ComponentCommand):
 
         if self.migrate_pytest:
             # Rename the component directory to old
-            component_old = self.component_dir.parent / (self.component_dir.name + "_old")
-            component_old_path = Path(self.directory, self.component_type, self.org, component_old)
-            Path(self.directory, self.component_type, self.org, self.component_dir).rename(component_old_path)
+            component_old_dir = self.component_dir + "_old"
+            component_parent_path = Path(self.directory, self.component_type, self.org)
+            component_old_path = component_parent_path / component_old_dir
+            component_path = component_parent_path / self.component_dir
+
+            component_path.rename(component_old_path)
         else:
             if self.component_type == "modules":
                 # Try to find a bioconda package for 'component'
@@ -449,19 +452,19 @@ class ComponentCreate(ComponentCommand):
         """Prompt if pytest files should be deleted and printed to stdout"""
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
         if rich.prompt.Confirm.ask(
-            "[violet]Do you want to delete pytest files?[/]\nPytest file 'main.nf' will be printed to standard output to allow copying the tests manually to 'main.nf.test'.",
+            "[violet]Do you want to delete the pytest files?[/]\nPytest file 'main.nf' will be printed to standard output to allow migrating the tests manually to 'main.nf.test'.",
             default=False,
         ):
             with open(pytest_dir / "main.nf", "r") as fh:
                 log.info(fh.read())
             shutil.rmtree(pytest_dir)
             log.info(
-                "[yellow]Please copy the pytest tests to nf-test 'main.nf.test'.[/]\n"
+                "[yellow]Please convert the pytest tests to nf-test in 'main.nf.test'.[/]\n"
                 "You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link]. "
             )
         else:
             log.info(
-                "[yellow]Please copy the pytest tests to nf-test 'main.nf.test'.[/]\n"
+                "[yellow]Please migrate the pytest tests to nf-test in 'main.nf.test'.[/]\n"
                 "You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link].\n"
                 f"Once done, make sure to delete the module pytest files to avoid linting errors: {pytest_dir}"
             )

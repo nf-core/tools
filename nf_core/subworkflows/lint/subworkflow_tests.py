@@ -24,10 +24,10 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
     repo_dir = subworkflow.component_dir.parts[
         : subworkflow.component_dir.parts.index(subworkflow.component_name.split("/")[0])
     ][-1]
-    test_dir = Path(subworkflow.base_dir, "tests", "subworfklows", repo_dir, subworkflow.component_name)
+    test_dir = Path(subworkflow.base_dir, "tests", "subworkflows", repo_dir, subworkflow.component_name)
     pytest_main_nf = Path(test_dir, "main.nf")
     is_pytest = pytest_main_nf.is_file()
-
+    log.debug(f"{pytest_main_nf} is pytest: {is_pytest}")
     if subworkflow.nftest_testdir.is_dir():
         subworkflow.passed.append(("test_dir_exists", "nf-test test directory exists", subworkflow.nftest_testdir))
     else:
@@ -106,6 +106,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
             included_components = []
             if subworkflow.main_nf.is_file():
                 included_components = subworkflow._get_included_components(subworkflow.main_nf)
+            log.debug(f"Included components: {included_components}")
             log.debug(f"Required tags: {required_tags}")
             missing_tags = []
             for tag in required_tags + included_components:

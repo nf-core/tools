@@ -14,19 +14,20 @@
 - Fix incorrectly failing linting if 'modules' was not found in meta.yml ([#2447](https://github.com/nf-core/tools/pull/2447))
 - Correctly pass subworkflow linting test if `COMPONENT.out.versions` is used in the script ([#2448](https://github.com/nf-core/tools/pull/2448))
 - Check for spaces in modules container URLs ([#2452](https://github.com/nf-core/tools/issues/2452))
+- Correctly ignore `timeline.enabled`, `report.enabled`, `trace.enabled`, `dag.enabled` variables when linting a pipeline. ([#2507](https://github.com/nf-core/tools/pull/2507))
 
 ### Modules
 
 - Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
 - Replace ModulePatch by ComponentPatch ([#2482](https://github.com/nf-core/tools/pull/2482))
 - Fixed `nf-core modules lint` to work with new module structure for nf-test ([#2494](https://github.com/nf-core/tools/pull/2494))
-- Add option `--migrate-pytest` to create a module with nf-test taking into account an existing module
+- Add option `--migrate-pytest` to create a module with nf-test taking into account an existing module ([#2549](https://github.com/nf-core/tools/pull/2549))
 
 ### Subworkflows
 
 - Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
 - Fixed `nf-core subworkflows lint` to work with new module structure for nf-test ([#2494](https://github.com/nf-core/tools/pull/2494))
-- Add option `--migrate-pytest` to create a subworkflow with nf-test taking into account an existing subworkflow
+- Add option `--migrate-pytest` to create a subworkflow with nf-test taking into account an existing subworkflow ([#2549](https://github.com/nf-core/tools/pull/2549))
 
 ### General
 

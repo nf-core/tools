@@ -82,25 +82,30 @@ def test_modules_create_nfcore_modules_subtool(self):
 def test_modules_migrate(self, mock_rich_ask):
     """Create a module with the --migrate-pytest option to convert pytest to nf-test"""
     pytest_dir = Path(self.nfcore_modules, "tests", "modules", "nf-core", "samtools", "sort")
+    module_dir = Path(self.nfcore_modules, "modules", "nf-core", "samtools", "sort")
 
     # Clone modules repo with pytests
     shutil.rmtree(self.nfcore_modules)
     Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH)
-    old_main_nf = Path(self.nfcore_modules, "modules", "nf-core", "samtools", "sort", "main.nf")
-    old_meta_yml = Path(self.nfcore_modules, "modules", "nf-core", "samtools", "sort", "meta.yml")
+    with open(module_dir / "main.nf", "r") as fh:
+        old_main_nf = fh.read()
+    with open(module_dir / "meta.yml", "r") as fh:
+        old_meta_yml = fh.read()
 
     # Create a module with --migrate-pytest
     mock_rich_ask.return_value = True
     module_create = nf_core.modules.ModuleCreate(self.nfcore_modules, "samtools/sort", migrate_pytest=True)
     module_create.create()
 
-    new_main_nf = Path(self.nfcore_modules, "modules", "nf-core", "samtools", "sort", "main.nf")
-    new_meta_yml = Path(self.nfcore_modules, "modules", "nf-core", "samtools", "sort", "meta.yml")
-    nextflow_config = Path(self.nfcore_modules, "modules", "nf-core", "samtools", "sort", "tests", "nextflow.config")
+    with open(module_dir / "main.nf", "r") as fh:
+        new_main_nf = fh.read()
+    with open(module_dir / "meta.yml", "r") as fh:
+        new_meta_yml = fh.read()
+    nextflow_config = module_dir / "tests" / "nextflow.config"
 
     # Check that old files have been copied to the new module
-    assert filecmp.cmp(old_main_nf, new_main_nf, shallow=True)
-    assert filecmp.cmp(old_meta_yml, new_meta_yml, shallow=True)
+    assert old_main_nf == new_main_nf
+    assert old_meta_yml == new_meta_yml
     assert nextflow_config.is_file()
 
     # Check that pytest folder is deleted
