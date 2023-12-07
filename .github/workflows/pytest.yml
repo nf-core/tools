@@ -149,7 +149,7 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
+          pip install coverage
 
       - name: Download all artifacts
         # Downloads coverage1, coverage2, etc.
