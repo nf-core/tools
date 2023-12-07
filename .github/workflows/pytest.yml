@@ -58,10 +58,7 @@ jobs:
       - name: List tests
         id: list_tests
         run: |
-          tests=$(find tests/test_* | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')
-          # reverse list to run slowest tests first
-          tests=$(echo $tests | jq '.test | reverse')
-          echo "tests" >> $GITHUB_ENV
+          echo "tests=$(find tests/test_* | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_ENV
 
   test:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
@@ -115,8 +112,6 @@ jobs:
         run: |
           wget -qO- https://code.askimed.com/install/nf-test | bash
           sudo mv nf-test /usr/local/bin/
-      - name: print nextflow.config
-        run: cat /opt/actions-runner/nextflow.config
 
       - name: Test with pytest
         run: |
@@ -135,6 +130,10 @@ jobs:
         with:
           name: coverage${{ matrix.test }}
           path: .coverage
+
+      - name: Cleanup work directory
+        run: |
+          rm -rf work
 
   coverage:
     needs: test
@@ -158,7 +157,9 @@ jobs:
 
       - name: Run coverage
         run: |
+          rm -f .coverage
           coverage combine coverage*/.coverage*
+          coverage report
           coverage xml -i
 
       - name: show directory
