@@ -58,13 +58,16 @@ jobs:
       - name: List tests
         id: list_tests
         run: |
-          echo "tests=$(find tests/test_* | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_ENV
+          tests=$(find tests/test_* | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')
+          # reverse list to run slowest tests first
+          tests=$(echo $tests | jq '.test | reverse')
+          echo "tests" >> $GITHUB_ENV
 
   test:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: [setup, list_tests]
     if: ${{ needs.setup.outputs.run-tests == 'true' }}
-    runs-on: "self-hosted"
+    runs-on: ${{ needs.setup.outputs.runner }}
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
       fail-fast: false # run all tests even if one fails
