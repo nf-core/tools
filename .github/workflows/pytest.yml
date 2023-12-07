@@ -163,8 +163,7 @@ jobs:
         run: |
           rm -f .coverage
           coverage combine coverage*/.coverage*
-          coverage report
-          coverage xml -i
+          coverage report -m
 
       - name: show directory
         run: ls -la
