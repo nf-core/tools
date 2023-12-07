@@ -48,7 +48,7 @@ jobs:
   # create a test matrix based on all python files in /tests
   list_tests:
     name: Get test file matrix
-    runs-on: "ubuntu-latest"
+    runs-on: "self-hosted"
     outputs:
       tests: ${{ env.tests }}
     steps:
@@ -64,7 +64,7 @@ jobs:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: [setup, list_tests]
     if: ${{ needs.setup.outputs.run-tests == 'true' }}
-    runs-on: ${{ needs.setup.outputs.runner }}
+    runs-on: self-hosted
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
       fail-fast: false # run all tests even if one fails
