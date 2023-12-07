@@ -92,6 +92,8 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_create_fail_exists,
         test_subworkflows_create_nfcore_modules,
         test_subworkflows_create_succeed,
+        test_subworkflows_migrate,
+        test_subworkflows_migrate_no_delete,
     )
     from .subworkflows.info import (  # type: ignore[misc]
         test_subworkflows_info_in_modules_repo,
