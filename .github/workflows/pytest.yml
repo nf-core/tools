@@ -48,7 +48,7 @@ jobs:
   # create a test matrix based on all python files in /tests
   list_tests:
     name: Get test file matrix
-    runs-on: ["self-hosted"]
+    runs-on: "ubuntu-latest"
     outputs:
       tests: ${{ env.tests }}
     steps:
