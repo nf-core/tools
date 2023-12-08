@@ -67,7 +67,8 @@ class ModulesJson:
         new_modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": {}}
 
         if not self.modules_dir.exists():
-            raise UserWarning("Can't find a ./modules directory. Is this a DSL2 pipeline?")
+            log.info(f"Creating ./modules directory in '{self.dir}'")
+            self.modules_dir.mkdir()
 
         # Get repositories
         repos, _ = self.get_pipeline_module_repositories("modules", self.modules_dir)
