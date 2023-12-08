@@ -131,3 +131,7 @@ jobs:
         with:
           name: nf-core-log-file
           path: log.txt
+
+      - name: Cleanup work directory
+        run: rm -rf work
+        if: always()

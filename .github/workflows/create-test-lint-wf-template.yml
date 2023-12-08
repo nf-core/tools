@@ -142,3 +142,7 @@ jobs:
         with:
           name: nf-core-log-file
           path: artifact_files.tar
+
+      - name: Cleanup work directory
+        run: rm -rf work
+        if: always()
