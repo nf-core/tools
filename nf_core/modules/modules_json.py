@@ -67,8 +67,12 @@ class ModulesJson:
         new_modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": {}}
 
         if not self.modules_dir.exists():
-            log.info(f"Creating ./modules directory in '{self.dir}'")
-            self.modules_dir.mkdir()
+            import rich.prompt
+            if rich.prompt.Confirm.ask("[bold][blue]?[/] Can't find a ./modules directory. Would you like me to create one?", default=True):
+                log.info(f"Creating ./modules directory in '{self.dir}'")
+                self.modules_dir.mkdir()
+            else:
+                raise UserWarning("Cannot proceed without a ./modules directory.")
 
         # Get repositories
         repos, _ = self.get_pipeline_module_repositories("modules", self.modules_dir)
