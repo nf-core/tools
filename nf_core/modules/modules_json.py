@@ -9,6 +9,7 @@ from pathlib import Path
 
 import git
 import questionary
+import rich.prompt
 from git.exc import GitCommandError
 
 import nf_core.utils
@@ -67,8 +68,6 @@ class ModulesJson:
         new_modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": {}}
 
         if not self.modules_dir.exists():
-            import rich.prompt
-
             if rich.prompt.Confirm.ask(
                 "[bold][blue]?[/] Can't find a ./modules directory. Would you like me to create one?", default=True
             ):
