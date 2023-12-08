@@ -170,7 +170,7 @@ jobs:
         run: |
           rm -f .coverage
           coverage combine coverage*/.coverage*
-          coverage report
+          coverage report --debug=coverage
           coverage xml
 
       - name: show directory
