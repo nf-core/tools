@@ -144,5 +144,5 @@ jobs:
           path: artifact_files.tar
 
       - name: Cleanup work directory
-        run: rm -rf work
+        run: rm -rf work || true
         if: always()

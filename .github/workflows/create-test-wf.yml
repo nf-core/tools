@@ -57,5 +57,6 @@ jobs:
           path: log.txt
 
       - name: Cleanup work directory
-        run: rm -rf work
+        # cleanup and fail gracefully if I get a permission error
+        run: rm -rf work || true
         if: always()
