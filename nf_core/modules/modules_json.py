@@ -68,7 +68,10 @@ class ModulesJson:
 
         if not self.modules_dir.exists():
             import rich.prompt
-            if rich.prompt.Confirm.ask("[bold][blue]?[/] Can't find a ./modules directory. Would you like me to create one?", default=True):
+
+            if rich.prompt.Confirm.ask(
+                "[bold][blue]?[/] Can't find a ./modules directory. Would you like me to create one?", default=True
+            ):
                 log.info(f"Creating ./modules directory in '{self.dir}'")
                 self.modules_dir.mkdir()
             else:
