@@ -26,10 +26,11 @@ jobs:
           - "23.04.0"
           - "latest-everything"
     steps:
-      - name: go to working directory
+      - name: go to subdirectory and change nextflow workdir
         run: |
           mkdir -p create-lint-wf
           cd create-lint-wf
+          export NXF_WORK=$(pwd)
 
       # Get the repo code
       - uses: actions/checkout@v4

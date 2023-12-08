@@ -35,8 +35,9 @@ jobs:
     steps:
       - name: go to working directory
         run: |
-          mkdir -p create-test-lint-wf-template
-          cd create-test-lint-wf-template
+          mkdir -p create-lint-wf-template
+          cd create-lint-wf-template
+          export NXF_WORK=$(pwd)
 
       - uses: actions/checkout@v4
         name: Check out source-code repository

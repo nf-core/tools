@@ -30,6 +30,7 @@ jobs:
         run: |
           mkdir -p create-test-wf
           cd create-test-wf
+          export NXF_WORK=$(pwd)
 
       - uses: actions/checkout@v4
         name: Check out source-code repository
