@@ -163,7 +163,7 @@ jobs:
       - name: show directory
         run: |
           pwd
-          tree
+          ls -la /opt/actions-runner/_work/tools/tools
 
       - name: Run coverage
         run: |
