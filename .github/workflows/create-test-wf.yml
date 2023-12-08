@@ -26,6 +26,11 @@ jobs:
           - "23.04.0"
           - "latest-everything"
     steps:
+      - name: go to working directory
+        run: |
+          mkdir -p create-test-wf
+          cd create-test-wf
+
       - uses: actions/checkout@v4
         name: Check out source-code repository
 

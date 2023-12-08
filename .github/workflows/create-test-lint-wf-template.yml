@@ -33,6 +33,11 @@ jobs:
           # - "template_skip_nf_core_configs.yml"
 
     steps:
+      - name: go to working directory
+        run: |
+          mkdir -p create-test-lint-wf-template
+          cd create-test-lint-wf-template
+
       - uses: actions/checkout@v4
         name: Check out source-code repository
 

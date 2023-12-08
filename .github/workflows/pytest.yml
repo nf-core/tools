@@ -69,6 +69,11 @@ jobs:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
       fail-fast: false # run all tests even if one fails
     steps:
+      - name: go to working directory
+        run: |
+          mkdir -p pytest
+          cd pytest
+
       - uses: actions/checkout@v4
         name: Check out source-code repository
 

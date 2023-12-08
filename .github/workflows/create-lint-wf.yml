@@ -26,6 +26,11 @@ jobs:
           - "23.04.0"
           - "latest-everything"
     steps:
+      - name: go to working directory
+        run: |
+          mkdir -p create-lint-wf
+          cd create-lint-wf
+
       # Get the repo code
       - uses: actions/checkout@v4
         name: Check out source-code repository
