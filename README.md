@@ -433,7 +433,7 @@ If the download speeds are much slower than your internet connection is capable 
 Subsequently, the `*.git` folder can be moved to it's final destination and linked with a pipeline in _Tower_ using the `file:/` prefix.
 
 :::tip
-Also without access to Tower, pipelines downloaded with the `--tower` flag can be run: `nextflow run -r 2.5 file:/path/to/pipelinedownload.git`. Downloads in this format allow you to include multiple revisions of a pipeline in a single file, but require that the revision (e.g. `-r 2.5`) is always explicitly specified.
+Also without access to Tower, pipelines downloaded with the `--tower` flag can be run if the _absolute_ path is specified: `nextflow run -r 2.5 file:/path/to/pipelinedownload.git`. Downloads in this format allow you to include multiple revisions of a pipeline in a single file, but require that the revision (e.g. `-r 2.5`) is always explicitly specified.
 :::
 
 ## Pipeline software licences

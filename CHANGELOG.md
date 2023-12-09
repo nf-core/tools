@@ -9,6 +9,10 @@
 - Use closure for multiqc ext.args ([#2509](https://github.com/nf-core/tools/pull/2509))
 - Fix how the modules template references the conda environment file ([#2540](https://github.com/nf-core/tools/pull/2540))
 
+### Download
+
+- Bugfix for AttributeError: 'ContainerError' object has no attribute 'absoluteURI' ([#2543](https://github.com/nf-core/tools/pull/2543)).
+
 ### Linting
 
 - Fix incorrectly failing linting if 'modules' was not found in meta.yml ([#2447](https://github.com/nf-core/tools/pull/2447))

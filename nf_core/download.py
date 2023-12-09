@@ -1081,7 +1081,7 @@ class DownloadWorkflow:
                                     continue
                             except ContainerError.ImageNotFound as e:
                                 # Try other registries
-                                if e.error_log.absoluteURI:
+                                if e.error_log.absolute_URI:
                                     break  # there no point in trying other registries if absolute URI was specified.
                                 else:
                                     continue
@@ -1092,7 +1092,7 @@ class DownloadWorkflow:
                                 # Try other registries
                                 log.error(e.message)
                                 log.error(e.helpmessage)
-                                if e.error_log.absoluteURI:
+                                if e.error_log.absolute_URI:
                                     break  # there no point in trying other registries if absolute URI was specified.
                                 else:
                                     continue
