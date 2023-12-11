@@ -41,6 +41,7 @@
 - Add mypy to pre-commit config for the tools repo ([#2545](https://github.com/nf-core/tools/pull/2545))
 - Use Path objects for ComponentCreate and update the structure of components templates ([#2551](https://github.com/nf-core/tools/pull/2551)).
 - GitPod base image: swap tool installation back to `conda` from `mamba` ([#2566](https://github.com/nf-core/tools/pull/2566)).
+- Sort the `installed_by` list in `modules.json` ([]()).
 
 # [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]
 

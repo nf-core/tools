@@ -678,7 +678,7 @@ class ModulesJson:
             repo_component_entry[component_name]["installed_by"] = [installed_by]
         finally:
             new_installed_by = repo_component_entry[component_name]["installed_by"] + list(installed_by_log)
-            repo_component_entry[component_name]["installed_by"] = [*set(new_installed_by)]
+            repo_component_entry[component_name]["installed_by"] = [*set(new_installed_by)].sort()
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
