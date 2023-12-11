@@ -9,6 +9,10 @@
 - Use closure for multiqc ext.args ([#2509](https://github.com/nf-core/tools/pull/2509))
 - Fix how the modules template references the conda environment file ([#2540](https://github.com/nf-core/tools/pull/2540))
 
+### Download
+
+- Bugfix for AttributeError: 'ContainerError' object has no attribute 'absoluteURI' ([#2543](https://github.com/nf-core/tools/pull/2543)).
+
 ### Linting
 
 - Fix incorrectly failing linting if 'modules' was not found in meta.yml ([#2447](https://github.com/nf-core/tools/pull/2447))
@@ -36,6 +40,7 @@
 - Run tests with Python 3.12 ([#2522](https://github.com/nf-core/tools/pull/2522)).
 - Add mypy to pre-commit config for the tools repo ([#2545](https://github.com/nf-core/tools/pull/2545))
 - Use Path objects for ComponentCreate and update the structure of components templates ([#2551](https://github.com/nf-core/tools/pull/2551)).
+- GitPod base image: swap tool installation back to `conda` from `mamba` ([#2566](https://github.com/nf-core/tools/pull/2566)).
 
 # [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]
 
