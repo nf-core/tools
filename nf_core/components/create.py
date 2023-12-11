@@ -400,6 +400,7 @@ class ComponentCreate(ComponentCommand):
                 file_paths[os.path.join(self.component_type, "environment.yml")] = os.path.join(
                     component_dir, "environment.yml"
                 )
+                file_paths["templates"] = component_dir / "templates"
             file_paths[os.path.join(self.component_type, "tests", "tags.yml")] = os.path.join(
                 component_dir, "tests", "tags.yml"
             )
