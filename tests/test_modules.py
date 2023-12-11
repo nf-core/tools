@@ -3,11 +3,12 @@
 
 import os
 import shutil
-import tempfile
 import unittest
+from pathlib import Path
 
 import requests_cache
 import responses
+import yaml
 
 import nf_core.create
 import nf_core.modules
@@ -19,6 +20,7 @@ from .utils import (
     GITLAB_URL,
     OLD_TRIMGALORE_BRANCH,
     OLD_TRIMGALORE_SHA,
+    create_tmp_pipeline,
     mock_anaconda_api_calls,
     mock_biocontainers_api_calls,
 )
@@ -27,15 +29,12 @@ from .utils import (
 def create_modules_repo_dummy(tmp_dir):
     """Create a dummy copy of the nf-core/modules repo"""
 
-    root_dir = os.path.join(tmp_dir, "modules")
-    os.makedirs(os.path.join(root_dir, "modules", "nf-core"))
-    os.makedirs(os.path.join(root_dir, "tests", "modules", "nf-core"))
-    os.makedirs(os.path.join(root_dir, "tests", "config"))
-    with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
-        fh.writelines(["test:", "\n  - modules/test/**", "\n  - tests/modules/test/**"])
-    with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
+    root_dir = Path(tmp_dir, "modules")
+    Path(root_dir, "modules", "nf-core").mkdir(parents=True)
+    Path(root_dir, "tests", "modules", "nf-core").mkdir(parents=True)
+    Path(root_dir, "tests", "config").mkdir(parents=True)
+    with open(Path(root_dir, ".nf-core.yml"), "w") as fh:
         fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
-
     # mock biocontainers and anaconda response
     with responses.RequestsMock() as rsps:
         mock_anaconda_api_calls(rsps, "bpipe", "0.9.11--hdfd78af_0")
@@ -46,15 +45,29 @@ def create_modules_repo_dummy(tmp_dir):
             module_create.create()
 
     # Remove doi from meta.yml which makes lint fail
-    meta_yml = os.path.join(root_dir, "modules", "nf-core", "bpipe", "test", "meta.yml")
-    with open(meta_yml, "r") as fh:
-        lines = fh.readlines()
-    for line_index in range(len(lines)):
-        if "doi" in lines[line_index]:
-            to_pop = line_index
-    lines.pop(to_pop)
-    with open(meta_yml, "w") as fh:
-        fh.writelines(lines)
+    meta_yml_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "meta.yml")
+    Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap").touch()
+    with open(meta_yml_path, "r") as fh:
+        meta_yml = yaml.safe_load(fh)
+    del meta_yml["tools"][0]["bpipe"]["doi"]
+    with open(meta_yml_path, "w") as fh:
+        yaml.dump(meta_yml, fh)
+
+    # remove "TODO" statements from main.nf
+    main_nf_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "main.nf")
+    with open(main_nf_path, "r") as fh:
+        main_nf = fh.read()
+    main_nf = main_nf.replace("TODO", "")
+    with open(main_nf_path, "w") as fh:
+        fh.write(main_nf)
+
+    # remove "TODO" statements from main.nf.test
+    main_nf_test_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test")
+    with open(main_nf_test_path, "r") as fh:
+        main_nf_test = fh.read()
+    main_nf_test = main_nf_test.replace("TODO", "")
+    with open(main_nf_test_path, "w") as fh:
+        fh.write(main_nf_test)
 
     return root_dir
 
@@ -64,17 +77,10 @@ class TestModules(unittest.TestCase):
 
     def setUp(self):
         """Create a new PipelineSchema and Launch objects"""
-        self.tmp_dir = tempfile.mkdtemp()
         self.component_type = "modules"
 
         # Set up the schema
-        root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
-        self.pipeline_name = "mypipeline"
-        self.pipeline_dir = os.path.join(self.tmp_dir, self.pipeline_name)
-        nf_core.create.PipelineCreate(
-            self.pipeline_name, "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
-        ).init_pipeline()
+        self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
         # Set up install objects
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
         self.mods_install_old = nf_core.modules.ModuleInstall(
@@ -135,32 +141,27 @@ class TestModules(unittest.TestCase):
     # Test of the individual modules commands. #
     ############################################
 
-    from .modules.bump_versions import (
+    from .modules.bump_versions import (  # type: ignore[misc]
         test_modules_bump_versions_all_modules,
         test_modules_bump_versions_fail,
         test_modules_bump_versions_fail_unknown_version,
         test_modules_bump_versions_single_module,
     )
-    from .modules.create import (
+    from .modules.create import (  # type: ignore[misc]
         test_modules_create_fail_exists,
         test_modules_create_nfcore_modules,
         test_modules_create_nfcore_modules_subtool,
         test_modules_create_succeed,
+        test_modules_migrate,
+        test_modules_migrate_no_delete,
     )
-    from .modules.create_test_yml import (
-        test_modules_create_test_yml_check_inputs,
-        test_modules_create_test_yml_entry_points,
-        test_modules_create_test_yml_get_md5,
-        test_modules_custom_yml_dumper,
-        test_modules_test_file_dict,
-    )
-    from .modules.info import (
+    from .modules.info import (  # type: ignore[misc]
         test_modules_info_in_modules_repo,
         test_modules_info_local,
         test_modules_info_remote,
         test_modules_info_remote_gitlab,
     )
-    from .modules.install import (
+    from .modules.install import (  # type: ignore[misc]
         test_modules_install_alternate_remote,
         test_modules_install_different_branch_fail,
         test_modules_install_different_branch_succeed,
@@ -172,24 +173,44 @@ class TestModules(unittest.TestCase):
         test_modules_install_trimgalore,
         test_modules_install_trimgalore_twice,
     )
-    from .modules.lint import (
+    from .modules.lint import (  # type: ignore[misc]
+        test_modules_environment_yml_file_doesnt_exists,
+        test_modules_environment_yml_file_name_mismatch,
+        test_modules_environment_yml_file_not_array,
+        test_modules_environment_yml_file_sorted_correctly,
+        test_modules_environment_yml_file_sorted_incorrectly,
+        test_modules_incorrect_tags_yml_key,
+        test_modules_incorrect_tags_yml_values,
         test_modules_lint_check_process_labels,
+        test_modules_lint_check_url,
         test_modules_lint_empty,
         test_modules_lint_gitlab_modules,
         test_modules_lint_multiple_remotes,
         test_modules_lint_new_modules,
         test_modules_lint_no_gitlab,
         test_modules_lint_patched_modules,
+        test_modules_lint_snapshot_file,
+        test_modules_lint_snapshot_file_missing_fail,
+        test_modules_lint_snapshot_file_not_needed,
         test_modules_lint_trimgalore,
+        test_modules_meta_yml_incorrect_licence_field,
+        test_modules_meta_yml_incorrect_name,
+        test_modules_meta_yml_input_mismatch,
+        test_modules_meta_yml_output_mismatch,
+        test_modules_missing_required_tag,
+        test_modules_missing_tags_yml,
+        test_modules_missing_test_dir,
+        test_modules_missing_test_main_nf,
+        test_modules_unused_pytest_files,
     )
-    from .modules.list import (
+    from .modules.list import (  # type: ignore[misc]
         test_modules_install_and_list_pipeline,
         test_modules_install_gitlab_and_list_pipeline,
         test_modules_list_pipeline,
         test_modules_list_remote,
         test_modules_list_remote_gitlab,
     )
-    from .modules.modules_json import (
+    from .modules.modules_json import (  # type: ignore[misc]
         test_get_modules_json,
         test_mod_json_create,
         test_mod_json_create_with_patch,
@@ -204,12 +225,7 @@ class TestModules(unittest.TestCase):
         test_mod_json_with_empty_modules_value,
         test_mod_json_with_missing_modules_entry,
     )
-    from .modules.modules_test import (
-        test_modules_test_check_inputs,
-        test_modules_test_no_installed_modules,
-        test_modules_test_no_name_no_prompts,
-    )
-    from .modules.patch import (
+    from .modules.patch import (  # type: ignore[misc]
         test_create_patch_change,
         test_create_patch_no_change,
         test_create_patch_try_apply_failed,
@@ -218,12 +234,12 @@ class TestModules(unittest.TestCase):
         test_create_patch_update_success,
         test_remove_patch,
     )
-    from .modules.remove import (
+    from .modules.remove import (  # type: ignore[misc]
         test_modules_remove_multiqc_from_gitlab,
         test_modules_remove_trimgalore,
         test_modules_remove_trimgalore_uninstalled,
     )
-    from .modules.update import (
+    from .modules.update import (  # type: ignore[misc]
         test_install_and_update,
         test_install_at_hash_and_update,
         test_install_at_hash_and_update_and_save_diff_to_file,

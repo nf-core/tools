@@ -3,5 +3,6 @@ adaptivecard.json
 slackreport.json
 docs/api/_build
 testing
-nf_core/module-template/modules/meta.yml
-nf_core/module-template/tests/test.yml
+nf_core/module-template/meta.yml
+nf_core/module-template/tests/tags.yml
+nf_core/subworkflow-template/tests/tags.yml

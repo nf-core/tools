@@ -29,14 +29,15 @@ class ModuleLint(ComponentLint):
     """
 
     # Import lint functions
-    from .main_nf import main_nf
-    from .meta_yml import meta_yml
-    from .module_changes import module_changes
-    from .module_deprecations import module_deprecations
-    from .module_patch import module_patch
-    from .module_tests import module_tests
-    from .module_todos import module_todos
-    from .module_version import module_version
+    from .environment_yml import environment_yml  # type: ignore[misc]
+    from .main_nf import main_nf  # type: ignore[misc]
+    from .meta_yml import meta_yml  # type: ignore[misc]
+    from .module_changes import module_changes  # type: ignore[misc]
+    from .module_deprecations import module_deprecations  # type: ignore[misc]
+    from .module_patch import module_patch  # type: ignore[misc]
+    from .module_tests import module_tests  # type: ignore[misc]
+    from .module_todos import module_todos  # type: ignore[misc]
+    from .module_version import module_version  # type: ignore[misc]
 
     def __init__(
         self,

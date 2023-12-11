@@ -221,3 +221,19 @@ def test_nested_delitem():
     nf_core.utils.nested_delitem(d, ["a", "b", "c"])
     assert "c" not in d["a"]["b"]
     assert d == {"a": {"b": {}}}
+
+def test_set_wd():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        with nf_core.utils.set_wd(tmpdirname):
+            context_wd = Path().resolve()
+        assert context_wd == Path(tmpdirname).resolve()
+        assert context_wd != Path().resolve()
+
+
+def test_set_wd_revert_on_raise():
+    wd_before_context = Path().resolve()
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        with pytest.raises(Exception):
+            with nf_core.utils.set_wd(tmpdirname):
+                raise Exception
+    assert wd_before_context == Path().resolve()
