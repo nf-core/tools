@@ -74,6 +74,7 @@ jobs:
           mkdir -p pytest
           cd pytest
           export NXF_WORK=$(pwd)
+          echo $"which python: $(which python)"
 
       - uses: actions/checkout@v4
         name: Check out source-code repository
@@ -121,6 +122,7 @@ jobs:
 
       - name: Test with pytest
         run: |
+          echo "Which nf-core: $(which nf-core)"
           python3 -m pytest tests/${{matrix.test}} --color=yes --cov-report=xml --cov-config=.github/.coveragerc --cov=nf_core -s --durations=0 || exit_code=$?
           # don't fail if no tests were collected, e.g. for test_licence.py
           if [ "${exit_code}" -eq 5 ]; then
@@ -160,11 +162,13 @@ jobs:
         # Downloads coverage1, coverage2, etc.
         uses: actions/download-artifact@v3
 
-      - name: Setup ssh session
-        uses: Warpbuilds/action-debugger@v1.3
+      # - name: Setup ssh session
+      #   uses: Warpbuilds/action-debugger@v1.3
 
       - name: Run coverage
         run: |
+          echo "Which nf-core: $(which nf-core)"
+          echo "Which python: $(which python)"
           rm -f .coverage
           coverage combine coverage*/.coverage*
           coverage report --debug=coverage
