@@ -165,6 +165,8 @@ jobs:
         run: |
           pwd
           ls -la /opt/actions-runner/_work/tools/tools
+      - name: Setup ssh session
+        uses: Warpbuilds/action-debugger@v1.3
 
       - name: Run coverage
         run: |
