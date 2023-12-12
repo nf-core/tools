@@ -3,7 +3,7 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Union
 
 import git
 from git.cmd import Git
@@ -174,8 +174,11 @@ class SyncedRepo:
         else:
             self.branch = branch
 
-        # Verify that the branch exists by checking it out
-        self.branch_exists()
+        # Verify that the branch exists using git
+        try:
+            self.checkout_branch()
+        except git.GitCommandError:
+            raise LookupError(f"Branch '{self.branch}' not found in '{self.remote_url}'")
 
     def get_default_branch(self):
         """
@@ -184,15 +187,6 @@ class SyncedRepo:
         origin_head = next(ref for ref in self.repo.refs if ref.name == "origin/HEAD")
         _, branch = origin_head.ref.name.split("/")
         return branch
-
-    def branch_exists(self):
-        """
-        Verifies that the branch exists in the repository by trying to check it out
-        """
-        try:
-            self.checkout_branch()
-        except GitCommandError:
-            raise LookupError(f"Branch '{self.branch}' not found in '{self.remote_url}'")
 
     def verify_branch(self):
         """
@@ -211,7 +205,9 @@ class SyncedRepo:
         """
         Checks out the specified branch of the repository
         """
-        self.repo.git.checkout(self.branch)
+        # only checkout if we're on a detached head or if we're not already on the branch
+        if self.repo.head.is_detached or self.repo.active_branch.name != self.branch:
+            self.repo.git.checkout(self.branch)
 
     def checkout(self, commit):
         """
@@ -249,7 +245,9 @@ class SyncedRepo:
         elif component_type == "subworkflows":
             return os.path.join(self.subworkflows_dir, component_name)
 
-    def install_component(self, component_name, install_dir, commit, component_type):
+    def install_component(
+        self, component_name: Union[str, Path], install_dir: str, commit: str, component_type: str
+    ) -> bool:
         """
         Install the module/subworkflow files into a pipeline at the given commit
 
