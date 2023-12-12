@@ -9,7 +9,7 @@ import git
 from git.cmd import Git
 from git.exc import GitCommandError
 
-import nf_core.modules.modules_utils
+from nf_core.modules.modules_utils import repo_full_name_from_remote
 from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ class RemoteProgressbar(git.RemoteProgress):
             state="Waiting for response",
         )
 
-    def update(self, op_code, cur_count: int, max_count: int, message=""):
+    def update(self, op_code, cur_count, max_count, message=""):
         """
         Overrides git.RemoteProgress.update.
         Called every time there is a change in the remote operation
@@ -53,7 +53,7 @@ class RemoteProgressbar(git.RemoteProgress):
         if not self.progress_bar.tasks[self.tid].started:
             self.progress_bar.start_task(self.tid)
         self.progress_bar.update(
-            self.tid, total=max_count, completed=cur_count, state=f"{cur_count / max_count * 100:.1f}%"
+            self.tid, total=max_count, completed=cur_count, state=f"{float(cur_count) / float(max_count) * 100:.1f}%"
         )
 
 
@@ -118,7 +118,7 @@ class SyncedRepo:
 
         self.remote_url = remote_url
 
-        self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
+        self.fullname = repo_full_name_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, hide_progress)
 
