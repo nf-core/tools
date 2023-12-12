@@ -6,9 +6,10 @@ from pathlib import Path
 from typing import Dict
 
 import git
-import rich.progress
+from git.cmd import Git
 from git.exc import GitCommandError
 
+import nf_core.modules.modules_utils
 from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ class RemoteProgressbar(git.RemoteProgress):
             state="Waiting for response",
         )
 
-    def update(self, op_code, cur_count, max_count=None, message=""):
+    def update(self, op_code, cur_count: int, max_count: int, message=""):
         """
         Overrides git.RemoteProgress.update.
         Called every time there is a change in the remote operation
@@ -90,7 +91,7 @@ class SyncedRepo:
             (set[str]): All branches found in the remote
         """
         try:
-            unparsed_branches = git.Git().ls_remote(remote_url)
+            unparsed_branches = Git().ls_remote(remote_url)
         except git.GitCommandError:
             raise LookupError(f"Was unable to fetch branches from '{remote_url}'")
         else:
