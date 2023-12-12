@@ -94,8 +94,11 @@ def module_tests(_, module: NFCoreComponent):
             required_tags = ["modules", "modules_nfcore", module.component_name]
             if module.component_name.count("/") == 1:
                 required_tags.append(module.component_name.split("/")[0])
+            chained_components_tags = module._get_included_components_in_chained_tests(module.nftest_main_nf)
             missing_tags = []
-            for tag in required_tags:
+            log.debug(f"Required tags: {required_tags}")
+            log.debug(f"Included components for chained nf-tests: {chained_components_tags}")
+            for tag in set(required_tags + chained_components_tags):
                 if tag not in main_nf_tags:
                     missing_tags.append(tag)
             if len(missing_tags) == 0:

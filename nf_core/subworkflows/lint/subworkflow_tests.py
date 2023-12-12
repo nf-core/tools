@@ -106,10 +106,12 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
             included_components = []
             if subworkflow.main_nf.is_file():
                 included_components = subworkflow._get_included_components(subworkflow.main_nf)
+            chained_components_tags = subworkflow._get_included_components_in_chained_tests(subworkflow.nftest_main_nf)
             log.debug(f"Included components: {included_components}")
             log.debug(f"Required tags: {required_tags}")
+            log.debug(f"Included components for chained nf-tests: {chained_components_tags}")
             missing_tags = []
-            for tag in required_tags + included_components:
+            for tag in set(required_tags + included_components + chained_components_tags):
                 if tag not in main_nf_tags:
                     missing_tags.append(tag)
             if len(missing_tags) == 0:
