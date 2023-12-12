@@ -19,7 +19,7 @@
 - Correctly pass subworkflow linting test if `COMPONENT.out.versions` is used in the script ([#2448](https://github.com/nf-core/tools/pull/2448))
 - Check for spaces in modules container URLs ([#2452](https://github.com/nf-core/tools/issues/2452))
 - Correctly ignore `timeline.enabled`, `report.enabled`, `trace.enabled`, `dag.enabled` variables when linting a pipeline. ([#2507](https://github.com/nf-core/tools/pull/2507))
-- Don't fail linting if md5sum for empty files are found in a stub test ([]())
+- Don't fail linting if md5sum for empty files are found in a stub test ([#2571](https://github.com/nf-core/tools/pull/2571))
 
 ### Modules
 
