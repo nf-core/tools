@@ -33,7 +33,12 @@ def create_modules_repo_dummy(tmp_dir):
     subworkflow_create = nf_core.subworkflows.SubworkflowCreate(root_dir, "test_subworkflow", "@author", True)
     subworkflow_create.create()
 
-    Path(root_dir, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap").touch()
+    # Add dummy content to main.nf.test.snap
+    test_snap_path = Path(root_dir, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap")
+    test_snap_path.touch()
+    with open(test_snap_path, "w") as fh:
+        fh.write('{\n    "my test": {}\n}')
+
     return root_dir
 
 

@@ -46,12 +46,17 @@ def create_modules_repo_dummy(tmp_dir):
 
     # Remove doi from meta.yml which makes lint fail
     meta_yml_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "meta.yml")
-    Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap").touch()
+
     with open(meta_yml_path, "r") as fh:
         meta_yml = yaml.safe_load(fh)
     del meta_yml["tools"][0]["bpipe"]["doi"]
     with open(meta_yml_path, "w") as fh:
         yaml.dump(meta_yml, fh)
+    # Add dummy content to main.nf.test.snap
+    test_snap_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
+    test_snap_path.touch()
+    with open(test_snap_path, "w") as fh:
+        fh.write('{\n    "my test": {}\n}')
 
     # remove "TODO" statements from main.nf
     main_nf_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "main.nf")

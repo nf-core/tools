@@ -60,58 +60,67 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
                     subworkflow.passed.append(("test_snapshot_exists", "test `main.nf.test.snap` exists", snap_file))
                     # Validate no empty files
                     with open(snap_file, "r") as snap_fh:
-                        snap_content = json.load(snap_fh)
-                        for test_name in snap_content.keys():
-                            if "d41d8cd98f00b204e9800998ecf8427e" in str(snap_content[test_name]):
-                                if "stub" not in test_name:
-                                    subworkflow.failed.append(
-                                        (
-                                            "test_snap_md5sum",
-                                            "md5sum for empty file found: d41d8cd98f00b204e9800998ecf8427e",
-                                            snap_file,
+                        try:
+                            snap_content = json.load(snap_fh)
+                            for test_name in snap_content.keys():
+                                if "d41d8cd98f00b204e9800998ecf8427e" in str(snap_content[test_name]):
+                                    if "stub" not in test_name:
+                                        subworkflow.failed.append(
+                                            (
+                                                "test_snap_md5sum",
+                                                "md5sum for empty file found: d41d8cd98f00b204e9800998ecf8427e",
+                                                snap_file,
+                                            )
                                         )
-                                    )
+                                    else:
+                                        subworkflow.passed.append(
+                                            (
+                                                "test_snap_md5sum",
+                                                "md5sum for empty file found, but it is a stub test",
+                                                snap_file,
+                                            )
+                                        )
                                 else:
                                     subworkflow.passed.append(
                                         (
                                             "test_snap_md5sum",
-                                            "md5sum for empty file found, but it is a stub test",
+                                            "no md5sum for empty file found",
                                             snap_file,
                                         )
                                     )
-                            else:
-                                subworkflow.passed.append(
-                                    (
-                                        "test_snap_md5sum",
-                                        "no md5sum for empty file found",
-                                        snap_file,
-                                    )
-                                )
-                            if "7029066c27ac6f5ef18d660d5741979a" in str(snap_content[test_name]):
-                                if "stub" not in test_name:
-                                    subworkflow.failed.append(
-                                        (
-                                            "test_snap_md5sum",
-                                            "md5sum for compressed empty file found: 7029066c27ac6f5ef18d660d5741979a",
-                                            snap_file,
+                                if "7029066c27ac6f5ef18d660d5741979a" in str(snap_content[test_name]):
+                                    if "stub" not in test_name:
+                                        subworkflow.failed.append(
+                                            (
+                                                "test_snap_md5sum",
+                                                "md5sum for compressed empty file found: 7029066c27ac6f5ef18d660d5741979a",
+                                                snap_file,
+                                            )
                                         )
-                                    )
+                                    else:
+                                        subworkflow.failed.append(
+                                            (
+                                                "test_snap_md5sum",
+                                                "md5sum for compressed empty file found, but it is a stub test",
+                                                snap_file,
+                                            )
+                                        )
                                 else:
-                                    subworkflow.failed.append(
+                                    subworkflow.passed.append(
                                         (
                                             "test_snap_md5sum",
-                                            "md5sum for compressed empty file found, but it is a stub test",
+                                            "no md5sum for compressed empty file found",
                                             snap_file,
                                         )
                                     )
-                            else:
-                                subworkflow.passed.append(
-                                    (
-                                        "test_snap_md5sum",
-                                        "no md5sum for compressed empty file found",
-                                        snap_file,
-                                    )
+                        except json.decoder.JSONDecodeError as e:
+                            subworkflow.failed.append(
+                                (
+                                    "test_snapshot_exists",
+                                    f"snapshot file `main.nf.test.snap` can't be read: {e}",
+                                    snap_file,
                                 )
+                            )
                 else:
                     subworkflow.failed.append(
                         ("test_snapshot_exists", "test `main.nf.test.snap` does not exist", snap_file)
