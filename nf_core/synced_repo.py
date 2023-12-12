@@ -8,6 +8,7 @@ from typing import Dict, Union
 import git
 from git.cmd import Git
 from git.exc import GitCommandError
+from git.repo import Repo
 
 from nf_core.utils import load_tools_config
 
@@ -56,7 +57,7 @@ class RemoteProgressbar(git.RemoteProgress):
         )
 
 
-class SyncedRepo:
+class SyncedRepo(Repo):
     """
     An object to store details about a locally cached code repository.
     """
@@ -117,7 +118,7 @@ class SyncedRepo:
 
         self.remote_url = remote_url
 
-        self.fullname = nf_core.modules.modules_utilsrepo_full_name_from_remote(self.remote_url)
+        self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, hide_progress)
 
@@ -216,7 +217,9 @@ class SyncedRepo:
         Args:
             commit (str): Git SHA of the commit
         """
-        self.repo.git.checkout(commit)
+        # only checkout if we are not already on the commit
+        if self.repo.head.commit.hexsha != commit:
+            self.repo.git.checkout(commit)
 
     def component_exists(self, component_name, component_type, checkout=True, commit=None):
         """
