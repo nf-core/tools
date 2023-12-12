@@ -1,6 +1,7 @@
 """
 Lint the tests of a module in nf-core/modules
 """
+import json
 import logging
 from pathlib import Path
 
@@ -52,39 +53,58 @@ def module_tests(_, module: NFCoreComponent):
                     )
                     # Validate no empty files
                     with open(snap_file, "r") as snap_fh:
-                        snap_content = snap_fh.read()
-                        if "d41d8cd98f00b204e9800998ecf8427e" in snap_content:
-                            module.failed.append(
-                                (
-                                    "test_snap_md5sum",
-                                    "md5sum for empty file found: d41d8cd98f00b204e9800998ecf8427e",
-                                    snap_file,
+                        snap_content = json.load(snap_fh)
+                        for test_name in snap_content.keys():
+                            if "d41d8cd98f00b204e9800998ecf8427e" in str(snap_content[test_name]):
+                                if "stub" not in test_name:
+                                    module.failed.append(
+                                        (
+                                            "test_snap_md5sum",
+                                            "md5sum for empty file found: d41d8cd98f00b204e9800998ecf8427e",
+                                            snap_file,
+                                        )
+                                    )
+                                else:
+                                    module.passed.append(
+                                        (
+                                            "test_snap_md5sum",
+                                            "md5sum for empty file found, but it is a stub test",
+                                            snap_file,
+                                        )
+                                    )
+                            else:
+                                module.passed.append(
+                                    (
+                                        "test_snap_md5sum",
+                                        "no md5sum for empty file found",
+                                        snap_file,
+                                    )
                                 )
-                            )
-                        else:
-                            module.passed.append(
-                                (
-                                    "test_snap_md5sum",
-                                    "no md5sum for empty file found",
-                                    snap_file,
+                            if "7029066c27ac6f5ef18d660d5741979a" in str(snap_content[test_name]):
+                                if "stub" not in test_name:
+                                    module.failed.append(
+                                        (
+                                            "test_snap_md5sum",
+                                            "md5sum for compressed empty file found: 7029066c27ac6f5ef18d660d5741979a",
+                                            snap_file,
+                                        )
+                                    )
+                                else:
+                                    module.passed.append(
+                                        (
+                                            "test_snap_md5sum",
+                                            "md5sum for compressed empty file found, but it is a stub test",
+                                            snap_file,
+                                        )
+                                    )
+                            else:
+                                module.passed.append(
+                                    (
+                                        "test_snap_md5sum",
+                                        "no md5sum for compressed empty file found",
+                                        snap_file,
+                                    )
                                 )
-                            )
-                        if "7029066c27ac6f5ef18d660d5741979a" in snap_content:
-                            module.failed.append(
-                                (
-                                    "test_snap_md5sum",
-                                    "md5sum for compressed empty file found: 7029066c27ac6f5ef18d660d5741979a",
-                                    snap_file,
-                                )
-                            )
-                        else:
-                            module.passed.append(
-                                (
-                                    "test_snap_md5sum",
-                                    "no md5sum for compressed empty file found",
-                                    snap_file,
-                                )
-                            )
                 else:
                     module.failed.append(
                         ("test_snapshot_exists", "snapshot file `main.nf.test.snap` does not exist", snap_file)
