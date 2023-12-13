@@ -289,8 +289,6 @@ class ComponentUpdate(ComponentCommand):
                 recursive_update = True
                 modules_to_update, subworkflows_to_update = self.get_components_to_update(component)
                 if not silent and len(modules_to_update + subworkflows_to_update) > 0:
-                    self.modules_json.load()
-                    self.modules_json.dump(run_prettier=True)
                     if not self.update_all:
                         log.warning(
                             f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be {'asked for update' if self.show_diff else 'automatically updated'}.\n"
@@ -326,8 +324,12 @@ class ComponentUpdate(ComponentCommand):
                 )
         elif not all_patches_successful and not silent:
             log.info(f"Updates complete. Please apply failed patch{plural_es(components_info)} manually.")
+            self.modules_json.load()
+            self.modules_json.dump(run_prettier=True)
         elif not silent:
             log.info("Updates complete :sparkles:")
+            self.modules_json.load()
+            self.modules_json.dump(run_prettier=True)
 
         return exit_value
 
