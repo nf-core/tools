@@ -159,7 +159,6 @@ jobs:
 
       - name: Install deps
         run: |
-          cd pytest
           python -m pip install --upgrade pip -r requirements-dev.txt
           pip install -e .
 
