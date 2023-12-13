@@ -202,6 +202,7 @@ class TestModules(unittest.TestCase):
         test_modules_missing_test_dir,
         test_modules_missing_test_main_nf,
         test_modules_unused_pytest_files,
+        test_nftest_failing_linting,
     )
     from .modules.list import (  # type: ignore[misc]
         test_modules_install_and_list_pipeline,
