@@ -125,7 +125,7 @@ jobs:
       - name: Test with pytest
         run: |
           echo "Which nf-core: $(which nf-core)"
-          python3 -m pytest tests/${{matrix.test}} --color=yes --cov-report=xml --cov-config=.github/.coveragerc --cov=nf_core -s --durations=0 || exit_code=$?
+          python3 -m pytest tests/${{matrix.test}} --color=yes --cov-report=xml --cov-config=.github/.coveragerc -s --durations=0 || exit_code=$?
           # don't fail if no tests were collected, e.g. for test_licence.py
           if [ "${exit_code}" -eq 5 ]; then
             echo "No tests were collected"
