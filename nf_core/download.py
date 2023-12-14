@@ -493,7 +493,7 @@ class DownloadWorkflow:
         ):
             stderr.print(
                 "\nIf you are working on the same system where you will run Nextflow, you can amend the downloaded images to the ones in the"
-                "[blue not bold]$NXF_SINGULARITY_CACHEDIR[/] folder, Nextflow will automatically find them."
+                "[blue not bold]$NXF_SINGULARITY_CACHEDIR[/] folder, Nextflow will automatically find them. "
                 "However if you will transfer the downloaded files to a different system then they should be copied to the target folder."
             )
             self.container_cache_utilisation = questionary.select(
@@ -1081,7 +1081,7 @@ class DownloadWorkflow:
                                     continue
                             except ContainerError.ImageNotFound as e:
                                 # Try other registries
-                                if e.error_log.absoluteURI:
+                                if e.error_log.absolute_URI:
                                     break  # there no point in trying other registries if absolute URI was specified.
                                 else:
                                     continue
@@ -1092,7 +1092,7 @@ class DownloadWorkflow:
                                 # Try other registries
                                 log.error(e.message)
                                 log.error(e.helpmessage)
-                                if e.error_log.absoluteURI:
+                                if e.error_log.absolute_URI:
                                     break  # there no point in trying other registries if absolute URI was specified.
                                 else:
                                     continue

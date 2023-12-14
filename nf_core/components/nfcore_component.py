@@ -4,6 +4,7 @@ The NFCoreComponent class holds information and utility functions for a single m
 import logging
 import re
 from pathlib import Path
+from typing import Union
 
 log = logging.getLogger(__name__)
 
@@ -77,7 +78,7 @@ class NFCoreComponent:
             self.test_yml = None
             self.test_main_nf = None
 
-    def _get_main_nf_tags(self, test_main_nf: str):
+    def _get_main_nf_tags(self, test_main_nf: Union[Path, str]):
         """Collect all tags from the main.nf.test file."""
         tags = []
         with open(test_main_nf, "r") as fh:
@@ -86,13 +87,65 @@ class NFCoreComponent:
                     tags.append(line.strip().split()[1].strip('"'))
         return tags
 
-    def _get_included_components(self, main_nf: str):
+    def _get_included_components(self, main_nf: Union[Path, str]):
         """Collect all included components from the main.nf file."""
         included_components = []
         with open(main_nf, "r") as fh:
             for line in fh:
                 if line.strip().startswith("include"):
-                    included_components.append(line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/"))
+                    # get tool/subtool or subworkflow name from include statement, can be in the form
+                    #'../../../modules/nf-core/hisat2/align/main'
+                    #'../bam_sort_stats_samtools/main'
+                    #'../subworkflows/nf-core/bam_sort_stats_samtools/main'
+                    #'plugin/nf-validation'
+                    component = line.strip().split()[-1].split(self.org)[-1].split("main")[0].strip("/")
+                    component = component.replace("'../", "subworkflows/")
+                    component = component.replace("'", "")
+                    included_components.append(component)
+        return included_components
+
+    def _get_included_components_in_chained_tests(self, main_nf_test: Union[Path, str]):
+        """Collect all included components from the main.nf file."""
+        included_components = []
+        with open(main_nf_test, "r") as fh:
+            for line in fh:
+                if line.strip().startswith("script"):
+                    # get tool/subtool or subworkflow name from script statement, can be:
+                    # if the component is a module TOOL/SUBTOOL:
+                    # '../../SUBTOOL/main.nf'
+                    # '../../../TOOL/SUBTOOL/main.nf'
+                    # '../../../TOOL/main.nf'
+                    # if the component is a module TOOL:
+                    # '../../TOOL/main.nf'
+                    # '../../TOOL/SUBTOOL/main.nf'
+                    # if the component uses full paths or is a subworkflow:
+                    # '(../../)modules/nf-core/TOOL/(SUBTOOL/)main.nf'
+                    # '(../../)subworkflows/nf-core/TOOL/(SUBTOOL/)main.nf'
+                    # the line which uses the current component script:
+                    # '../main.nf'
+                    component = (
+                        line.strip()
+                        .split("../")[-1]
+                        .split(self.org)[-1]
+                        .split("main.nf")[0]
+                        .strip("'")
+                        .strip('"')
+                        .strip("/")
+                    )
+                    if (
+                        "/" in self.component_name
+                        and "/" not in component
+                        and line.count("../") == 2
+                        and self.org not in line
+                        and component != ""
+                    ):
+                        # Add the current component name "TOOL" to the tag
+                        component = f"{self.component_name.split('/')[0]}/{component}"
+                    if "subworkflows" in line:
+                        # Add the subworkflows prefix to the tag
+                        component = f"subworkflows/{component}"
+                    if component != "":
+                        included_components.append(component)
         return included_components
 
     def get_inputs_from_main_nf(self):
