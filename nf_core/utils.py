@@ -1176,6 +1176,7 @@ def nested_delitem(d, keys):
         current = current[k]
     del current[keys[-1]]
 
+
 @contextmanager
 def set_wd(path: Path) -> Generator[None, None, None]:
     """Sets the working directory for this context.

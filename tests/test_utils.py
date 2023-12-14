@@ -222,6 +222,7 @@ def test_nested_delitem():
     assert "c" not in d["a"]["b"]
     assert d == {"a": {"b": {}}}
 
+
 def test_set_wd():
     with tempfile.TemporaryDirectory() as tmpdirname:
         with nf_core.utils.set_wd(tmpdirname):
