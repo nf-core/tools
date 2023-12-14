@@ -8,6 +8,7 @@
 - Fancier syntax highlighting for example samplesheets in the usage.md template ([#2503](https://github.com/nf-core/tools/pull/2503))
 - Use closure for multiqc ext.args ([#2509](https://github.com/nf-core/tools/pull/2509))
 - Fix how the modules template references the conda environment file ([#2540](https://github.com/nf-core/tools/pull/2540))
+- Unset env variable JAVA_TOOL_OPTIONS in gitpod ([#2569](https://github.com/nf-core/tools/pull/2569))
 
 ### Download
 
@@ -19,6 +20,7 @@
 - Correctly pass subworkflow linting test if `COMPONENT.out.versions` is used in the script ([#2448](https://github.com/nf-core/tools/pull/2448))
 - Check for spaces in modules container URLs ([#2452](https://github.com/nf-core/tools/issues/2452))
 - Correctly ignore `timeline.enabled`, `report.enabled`, `trace.enabled`, `dag.enabled` variables when linting a pipeline. ([#2507](https://github.com/nf-core/tools/pull/2507))
+- Don't fail linting if md5sum for empty files are found in a stub test ([#2571](https://github.com/nf-core/tools/pull/2571))
 
 ### Modules
 
@@ -26,6 +28,7 @@
 - Replace ModulePatch by ComponentPatch ([#2482](https://github.com/nf-core/tools/pull/2482))
 - Fixed `nf-core modules lint` to work with new module structure for nf-test ([#2494](https://github.com/nf-core/tools/pull/2494))
 - Add option `--migrate-pytest` to create a module with nf-test taking into account an existing module ([#2549](https://github.com/nf-core/tools/pull/2549))
+- Modules `--migrate-pytest` copies template scripts ([#2568](https://github.com/nf-core/tools/pull/2568))
 
 ### Subworkflows
 
@@ -41,6 +44,8 @@
 - Add mypy to pre-commit config for the tools repo ([#2545](https://github.com/nf-core/tools/pull/2545))
 - Use Path objects for ComponentCreate and update the structure of components templates ([#2551](https://github.com/nf-core/tools/pull/2551)).
 - GitPod base image: swap tool installation back to `conda` from `mamba` ([#2566](https://github.com/nf-core/tools/pull/2566)).
+- Sort the `installed_by` list in `modules.json` ([#2570](https://github.com/nf-core/tools/pull/2570)).
+- Unset env variable JAVA_TOOL_OPTIONS in gitpod ([#2569](https://github.com/nf-core/tools/pull/2569))
 
 # [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]
 
