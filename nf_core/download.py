@@ -1381,6 +1381,9 @@ class WorkflowRepo(SyncedRepo):
 
         self.setup_local_repo(remote=remote_url, location=location, in_cache=in_cache)
 
+        # expose some instance attributes
+        self.tags = self.repo.tags
+
     def __repr__(self):
         """Called by print, creates representation of object"""
         return f"<Locally cached repository: {self.fullname}, revisions {', '.join(self.revision)}\n cached at: {self.local_repo_dir}>"
@@ -1495,6 +1498,7 @@ class WorkflowRepo(SyncedRepo):
                 # delete unwanted tags from repository
                 for tag in tags_to_remove:
                     self.repo.delete_tag(tag)
+                self.tags = self.repo.tags
 
                 # switch to a revision that should be kept, because deleting heads fails, if they are checked out (e.g. "master")
                 self.checkout(self.revision[0])
@@ -1530,6 +1534,8 @@ class WorkflowRepo(SyncedRepo):
                         self.checkout(latest)
                     if self.repo.head.is_detached:
                         self.repo.head.reset(index=True, working_tree=True)
+
+                self.heads = self.repo.heads
 
                 # get all tags and available remote_branches
                 completed_revisions = {revision.name for revision in self.repo.heads + self.repo.tags}

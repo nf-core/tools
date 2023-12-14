@@ -3,12 +3,11 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict
 
 import git
-from git.cmd import Git
+import rich.progress
 from git.exc import GitCommandError
-from git.repo import Repo
 
 from nf_core.utils import load_tools_config
 
@@ -45,7 +44,7 @@ class RemoteProgressbar(git.RemoteProgress):
             state="Waiting for response",
         )
 
-    def update(self, op_code, cur_count, max_count, message=""):
+    def update(self, op_code, cur_count, max_count=None, message=""):
         """
         Overrides git.RemoteProgress.update.
         Called every time there is a change in the remote operation
@@ -53,11 +52,11 @@ class RemoteProgressbar(git.RemoteProgress):
         if not self.progress_bar.tasks[self.tid].started:
             self.progress_bar.start_task(self.tid)
         self.progress_bar.update(
-            self.tid, total=max_count, completed=cur_count, state=f"{float(cur_count) / float(max_count) * 100:.1f}%"
+            self.tid, total=max_count, completed=cur_count, state=f"{cur_count / max_count * 100:.1f}%"
         )
 
 
-class SyncedRepo(Repo):
+class SyncedRepo:
     """
     An object to store details about a locally cached code repository.
     """
@@ -91,7 +90,7 @@ class SyncedRepo(Repo):
             (set[str]): All branches found in the remote
         """
         try:
-            unparsed_branches = Git().ls_remote(remote_url)
+            unparsed_branches = git.Git().ls_remote(remote_url)
         except git.GitCommandError:
             raise LookupError(f"Was unable to fetch branches from '{remote_url}'")
         else:
@@ -175,11 +174,8 @@ class SyncedRepo(Repo):
         else:
             self.branch = branch
 
-        # Verify that the branch exists using git
-        try:
-            self.checkout_branch()
-        except git.GitCommandError:
-            raise LookupError(f"Branch '{self.branch}' not found in '{self.remote_url}'")
+        # Verify that the branch exists by checking it out
+        self.branch_exists()
 
     def get_default_branch(self):
         """
@@ -188,6 +184,15 @@ class SyncedRepo(Repo):
         origin_head = next(ref for ref in self.repo.refs if ref.name == "origin/HEAD")
         _, branch = origin_head.ref.name.split("/")
         return branch
+
+    def branch_exists(self):
+        """
+        Verifies that the branch exists in the repository by trying to check it out
+        """
+        try:
+            self.checkout_branch()
+        except GitCommandError:
+            raise LookupError(f"Branch '{self.branch}' not found in '{self.remote_url}'")
 
     def verify_branch(self):
         """
@@ -206,9 +211,7 @@ class SyncedRepo(Repo):
         """
         Checks out the specified branch of the repository
         """
-        # only checkout if we're on a detached head or if we're not already on the branch
-        if self.repo.head.is_detached or self.repo.active_branch.name != self.branch:
-            self.repo.git.checkout(self.branch)
+        self.repo.git.checkout(self.branch)
 
     def checkout(self, commit):
         """
@@ -217,9 +220,7 @@ class SyncedRepo(Repo):
         Args:
             commit (str): Git SHA of the commit
         """
-        # only checkout if we are not already on the commit
-        if self.repo.head.commit.hexsha != commit:
-            self.repo.git.checkout(commit)
+        self.repo.git.checkout(commit)
 
     def component_exists(self, component_name, component_type, checkout=True, commit=None):
         """
@@ -248,9 +249,7 @@ class SyncedRepo(Repo):
         elif component_type == "subworkflows":
             return os.path.join(self.subworkflows_dir, component_name)
 
-    def install_component(
-        self, component_name: Union[str, Path], install_dir: str, commit: str, component_type: str
-    ) -> bool:
+    def install_component(self, component_name, install_dir, commit, component_type):
         """
         Install the module/subworkflow files into a pipeline at the given commit
 
