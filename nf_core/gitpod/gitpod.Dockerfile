@@ -54,6 +54,7 @@ RUN conda config --add channels defaults && \
         black \
         prettier \
         pre-commit \
+        openjdk \
         pytest-workflow && \
     conda clean --all --force-pkgs-dirs --yes
 
