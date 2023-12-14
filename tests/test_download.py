@@ -266,7 +266,7 @@ class DownloadTest(unittest.TestCase):
 
         # Test successful pull with absolute URI (use tiny 3.5MB test container from the "Kogia" project: https://github.com/bschiffthaler/kogia)
         download_obj.singularity_pull_image(
-            "docker.io/bschiffthaler/sed", f"{tmp_dir}/hello-world.sif", None, "docker.io", mock_rich_progress
+            "docker.io/bschiffthaler/sed", f"{tmp_dir}/sed.sif", None, "docker.io", mock_rich_progress
         )
 
         # try to pull from non-existing registry (Name change hello-world_new.sif is needed, otherwise ImageExists is raised before attempting to pull.)
