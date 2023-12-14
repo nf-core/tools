@@ -29,6 +29,7 @@
 - Replace ModulePatch by ComponentPatch ([#2482](https://github.com/nf-core/tools/pull/2482))
 - Fixed `nf-core modules lint` to work with new module structure for nf-test ([#2494](https://github.com/nf-core/tools/pull/2494))
 - Add option `--migrate-pytest` to create a module with nf-test taking into account an existing module ([#2549](https://github.com/nf-core/tools/pull/2549))
+- When `.nf-core.yml` is not found create it in the current directory instead of the root filesystem ([#2237](https://github.com/nf-core/tools/issues/2237))
 - Modules `--migrate-pytest` copies template scripts ([#2568](https://github.com/nf-core/tools/pull/2568))
 
 ### Subworkflows
