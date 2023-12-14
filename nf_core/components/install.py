@@ -127,6 +127,8 @@ class ComponentInstall(ComponentCommand):
             self.install_included_components(component_dir)
 
         if not silent:
+            modules_json.load()
+            modules_json.dump(run_prettier=True)
             # Print include statement
             component_name = "_".join(component.upper().split("/"))
             log.info(f"Use the following statement to include this {self.component_type[:-1]}:")
