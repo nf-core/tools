@@ -122,9 +122,14 @@ jobs:
           wget -qO- https://code.askimed.com/install/nf-test | bash
           sudo mv nf-test /usr/local/bin/
 
+      - name: export workdir
+        run: |
+          export NXF_WORK=$(pwd)
+
       - name: Test with pytest
         run: |
-          python3 -m pytest tests/${{matrix.test}} --color=yes --cov --cov-report=xml --cov-config=.github/.coveragerc -s --durations=0 || exit_code=$?
+          python3 -m pytest tests/${{matrix.test}} --color=yes --cov --cov-report=xml --cov-config=.github/.coveragerc -s --durations=0
+          exit_code=$?
           # don't fail if no tests were collected, e.g. for test_licence.py
           if [ "${exit_code}" -eq 5 ]; then
             echo "No tests were collected"
