@@ -39,6 +39,7 @@
 
 ### General
 
+- Update `schema build` functionality to automatically update defaults which have changed in the `nextflow.config`([#2479](https://github.com/nf-core/tools/pull/2479))
 - Change testing framework for modules and subworkflows from pytest to nf-test ([#2490](https://github.com/nf-core/tools/pull/2490))
 - `bump_version` keeps now the indentation level of the updated version entries ([#2514](https://github.com/nf-core/tools/pull/2514))
 - Run tests with Python 3.12 ([#2522](https://github.com/nf-core/tools/pull/2522)).

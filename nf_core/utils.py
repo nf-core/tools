@@ -1150,6 +1150,33 @@ def validate_file_md5(file_name, expected_md5hex):
     return True
 
 
+def nested_setitem(d, keys, value):
+    """Sets the value in a nested dict using a list of keys to traverse
+
+    Args:
+        d (dict): the nested dictionary to traverse
+        keys (list[Any]): A list of keys to iteratively traverse
+        value (Any): The value to be set for the last key in the chain
+    """
+    current = d
+    for k in keys[:-1]:
+        current = current[k]
+    current[keys[-1]] = value
+
+
+def nested_delitem(d, keys):
+    """Deletes a key from a nested dictionary
+
+    Args:
+        d (dict): the nested dictionary to traverse
+        keys (list[Any]): A list of keys to iteratively traverse, deleting the final one
+    """
+    current = d
+    for k in keys[:-1]:
+        current = current[k]
+    del current[keys[-1]]
+
+
 @contextmanager
 def set_wd(path: Path) -> Generator[None, None, None]:
     """Sets the working directory for this context.

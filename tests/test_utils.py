@@ -209,6 +209,20 @@ def test_validate_file_md5():
         nf_core.utils.validate_file_md5(test_file, non_hex_string)
 
 
+def test_nested_setitem():
+    d = {"a": {"b": {"c": "value"}}}
+    nf_core.utils.nested_setitem(d, ["a", "b", "c"], "value new")
+    assert d["a"]["b"]["c"] == "value new"
+    assert d == {"a": {"b": {"c": "value new"}}}
+
+
+def test_nested_delitem():
+    d = {"a": {"b": {"c": "value"}}}
+    nf_core.utils.nested_delitem(d, ["a", "b", "c"])
+    assert "c" not in d["a"]["b"]
+    assert d == {"a": {"b": {}}}
+
+
 def test_set_wd():
     with tempfile.TemporaryDirectory() as tmpdirname:
         with nf_core.utils.set_wd(tmpdirname):
