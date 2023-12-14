@@ -120,7 +120,7 @@ class ModulesRepo(SyncedRepo):
                     )
                     with pbar:
                         self.repo.remotes.origin.fetch(
-                            depth=1, progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
+                            progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
                         )
                     ModulesRepo.update_local_repo_status(self.fullname, True)
 

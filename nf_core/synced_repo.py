@@ -208,7 +208,7 @@ class SyncedRepo(Repo):
         """
         # only checkout if we're on a detached head or if we're not already on the branch
         if self.repo.head.is_detached or self.repo.active_branch.name != self.branch:
-            self.repo.git.switch(self.branch)
+            self.repo.git.checkout(self.branch)
 
     def checkout(self, commit):
         """
@@ -348,17 +348,7 @@ class SyncedRepo(Repo):
         Verifies that a given commit sha exists on the branch
         """
         self.checkout_branch()
-
-        # check if sha exist, if not try shallow fetch until sha
-        sha_exists = False
-        try:
-            self.repo.remotes.origin.fetch(sha, depth=1)
-            sha_exists = True
-        except GitCommandError:
-            log.debug(f"Could not fetch commit {sha} from {self.remote_url}")
-            sha_exists = False
-
-        return sha_exists
+        return sha in (commit.hexsha for commit in self.repo.iter_commits())
 
     def get_commit_info(self, sha):
         """
