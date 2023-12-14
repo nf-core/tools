@@ -137,6 +137,8 @@ jobs:
             echo "Tests failed with exit code ${exit_code}"
             exit 1
           fi
+      - name: Report coverage
+        run: coverage report
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
@@ -173,8 +175,6 @@ jobs:
 
       - name: Run coverage
         run: |
-          echo "Which nf-core: $(which nf-core)"
-          echo "Which python: $(which python)"
           rm -f .coverage
           coverage combine coverage*/.coverage*
           coverage report --debug=coverage
