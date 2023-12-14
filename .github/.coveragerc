@@ -1,2 +1,5 @@
 [run]
 omit = nf_core/pipeline-template/*
+source = nf_core
+relative_files = True
+
