@@ -6,6 +6,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Union
 
 import git
 import questionary
@@ -41,7 +42,7 @@ class ModulesJson:
         self.modules_dir = Path(self.dir, "modules")
         self.subworkflows_dir = Path(self.dir, "subworkflows")
         self.modules_json_path = Path(self.dir, "modules.json")
-        self.modules_json = None
+        self.modules_json: Union(dict, None) = None
         self.pipeline_modules = None
         self.pipeline_subworkflows = None
         self.pipeline_components = None
@@ -1035,13 +1036,17 @@ class ModulesJson:
             )
         return branch
 
-    def dump(self):
+    def dump(self, run_prettier: bool = False):
         """
         Sort the modules.json, and write it to file
         """
         # Sort the modules.json
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
-        dump_json_with_prettier(self.modules_json_path, self.modules_json)
+        if run_prettier:
+            dump_json_with_prettier(self.modules_json_path, self.modules_json)
+        else:
+            with open(self.modules_json_path, "w") as fh:
+                json.dump(self.modules_json, fh, indent=4)
 
     def resolve_missing_installation(self, missing_installation, component_type):
         missing_but_in_mod_json = [
