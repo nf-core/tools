@@ -114,7 +114,7 @@ jobs:
           path: |
             /usr/local/bin/nf-test
             /home/runner/.nf-test/nf-test.jar
-          key: ${{ runner.os }}-${{ env.NFTEST_VER }}-nftest
+          key: ${{ runner.os }}-nftest-${{ env.date }}
 
       - name: Install nf-test
         if: steps.cache-software.outputs.cache-hit != 'true'

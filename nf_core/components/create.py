@@ -431,6 +431,11 @@ class ComponentCreate(ComponentCommand):
         if self.component_type == "modules":
             log.debug("Copying original environment.yml file")
             shutil.copyfile(component_old_path / "environment.yml", self.file_paths["environment.yml"])
+            if (component_old_path / "templates").is_dir():
+                log.debug("Copying original templates directory")
+                shutil.copytree(
+                    component_old_path / "templates", self.file_paths["environment.yml"].parent / "templates"
+                )
         # Create a nextflow.config file if it contains information other than publishDir
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
         nextflow_config = pytest_dir / "nextflow.config"

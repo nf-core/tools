@@ -2,12 +2,13 @@ from pathlib import Path
 
 import pytest
 import yaml
+from git.repo import Repo
 
 import nf_core.modules
 from nf_core.modules.lint import main_nf
 from nf_core.utils import set_wd
 
-from ..utils import GITLAB_URL
+from ..utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 from .patch import BISMARK_ALIGN, CORRECT_SHA, PATCH_BRANCH, REPO_NAME, modify_main_nf
 
 
@@ -622,3 +623,24 @@ def test_modules_unused_pytest_files(self):
     assert len(module_lint.passed) >= 0
     assert len(module_lint.warned) >= 0
     assert module_lint.failed[0].lint_test == "test_old_test_dir"
+
+
+def test_nftest_failing_linting(self):
+    """Test linting a module which includes other modules in nf-test tests.
+    Linting tests"""
+    # Clone modules repo with testing modules
+    tmp_dir = self.nfcore_modules.parent
+    self.nfcore_modules = Path(tmp_dir, "modules-test")
+    Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_NFTEST_BRANCH)
+
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="kallisto/quant")
+
+    assert len(module_lint.failed) == 4, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) >= 0
+    assert len(module_lint.warned) >= 0
+    assert module_lint.failed[0].lint_test == "environment_yml_valid"
+    assert module_lint.failed[1].lint_test == "meta_yml_valid"
+    assert module_lint.failed[2].lint_test == "test_main_tags"
+    assert "kallisto/index" in module_lint.failed[2].message
+    assert module_lint.failed[3].lint_test == "test_tags_yml"
