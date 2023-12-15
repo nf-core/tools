@@ -8,4 +8,4 @@ Sphinx
 sphinx-rtd-theme
 mypy
 types-PyYAML
-pyupgrades
+pyupgrade
