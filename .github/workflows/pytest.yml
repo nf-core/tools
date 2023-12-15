@@ -142,7 +142,7 @@ jobs:
         run: coverage report
 
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: coverage_${{ matrix.test }}
           path: .coverage
@@ -156,7 +156,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.9
+      - name: Set up Python 3.12
         uses: actions/setup-python@v4
         env:
           AGENT_TOOLSDIRECTORY: /opt/actions-runner/_work/tools/tools/
@@ -169,14 +169,13 @@ jobs:
           pip install -e .
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
 
       - name: Setup ssh session
         uses: Warpbuilds/action-debugger@v1.3
 
       - name: Run coverage
         run: |
-          rm -f .coverage
           coverage combine coverage*/.coverage*
           coverage report --debug=coverage
           coverage xml
