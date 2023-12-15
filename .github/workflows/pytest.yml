@@ -139,7 +139,9 @@ jobs:
             exit 1
           fi
       - name: Report coverage
-        run: coverage report
+        run: |
+          ls -la
+          coverage report --data-file=.coverage
 
       - name: Upload coverage
         uses: actions/upload-artifact@v3
@@ -171,8 +173,8 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v3
 
-      - name: Setup ssh session
-        uses: Warpbuilds/action-debugger@v1.3
+      # - name: Setup ssh session
+      #   uses: Warpbuilds/action-debugger@v1.3
 
       - name: Run coverage
         run: |
