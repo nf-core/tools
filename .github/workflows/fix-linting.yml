@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Use the @nf-core-bot token to check out so we can push later
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.nf_core_bot_auth_token }}
 
@@ -24,7 +24,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
       - name: Install Prettier
         run: npm install -g prettier @prettier/plugin-php
@@ -38,10 +40,10 @@ jobs:
           # Override to remove the default --check flag so that we make changes
           options: "--color"
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: 3.12
       - name: python-isort
         uses: isort/isort-action@v1.0.0
         with:

@@ -203,6 +203,8 @@ def nextflow_config(self):
 
     # Check the variables that should be set to 'true'
     for k in ["timeline.enabled", "report.enabled", "trace.enabled", "dag.enabled"]:
+        if k in ignore_configs:
+            continue
         if self.nf_config.get(k) == "true":
             passed.append(f"Config ``{k}`` had correct value: ``{self.nf_config.get(k)}``")
         else:

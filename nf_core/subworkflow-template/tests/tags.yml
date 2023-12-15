@@ -1,0 +1,2 @@
+subworkflows/{{ component_name_underscore }}:
+  - subworkflows/{{ org }}/{{ component_dir }}/**

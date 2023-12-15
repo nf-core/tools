@@ -38,10 +38,3 @@ def module_todos(_, module):
         module.warned.append(("module_todo", warning, mod_results["file_paths"][i]))
     for i, passed in enumerate(mod_results["passed"]):
         module.passed.append(("module_todo", passed, module.component_dir))
-
-    # Module tests directory
-    test_results = pipeline_todos(None, root_dir=module.test_dir)
-    for i, warning in enumerate(test_results["warned"]):
-        module.warned.append(("module_todo", warning, test_results["file_paths"][i]))
-    for i, passed in enumerate(test_results["passed"]):
-        module.passed.append(("module_todo", passed, module.test_dir))

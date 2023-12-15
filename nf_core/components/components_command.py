@@ -27,6 +27,7 @@ class ComponentCommand:
         branch: Optional[str] = None,
         no_pull: bool = False,
         hide_progress: bool = False,
+        no_prompts: bool = False,
     ) -> None:
         """
         Initialise the ComponentClass object
@@ -35,6 +36,7 @@ class ComponentCommand:
         self.dir = dir
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
+        self.no_prompts = no_prompts
         self._configure_repo_and_paths()
 
     def _configure_repo_and_paths(self, nf_dir_req: bool = True) -> None:
@@ -48,7 +50,7 @@ class ComponentCommand:
 
         try:
             if self.dir:
-                self.dir, self.repo_type, self.org = get_repo_info(self.dir, use_prompt=nf_dir_req)
+                self.dir, self.repo_type, self.org = get_repo_info(self.dir, use_prompt=not self.no_prompts)
             else:
                 self.repo_type = None
                 self.org = ""
