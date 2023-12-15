@@ -367,10 +367,10 @@ class PipelineLint(nf_core.utils.Pipeline):
             Given an list of error message IDs and the message texts, return a nicely formatted
             string for the terminal with appropriate ASCII colours.
             """
+            tools_version = __version__
+            if "dev" in __version__:
+                tools_version = "latest"
             for eid, msg in test_results:
-                tools_version = __version__
-                if "dev" in __version__:
-                    tools_version = "latest"
                 yield Markdown(
                     f"[{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html): {msg}"
                 )
@@ -461,6 +461,10 @@ class PipelineLint(nf_core.utils.Pipeline):
             overall_result += " :warning:"
         if len(self.failed) > 0:
             overall_result = "Failed :x:"
+
+        tools_version = __version__
+        if "dev" in __version__:
+            tools_version = "latest"
 
         # List of tests for details
         test_failure_count = ""
