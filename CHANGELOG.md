@@ -9,7 +9,7 @@
 - Use closure for multiqc ext.args ([#2509](https://github.com/nf-core/tools/pull/2509))
 - Fix how the modules template references the conda environment file ([#2540](https://github.com/nf-core/tools/pull/2540))
 - Unset env variable JAVA_TOOL_OPTIONS in gitpod ([#2569](https://github.com/nf-core/tools/pull/2569))
-- Pin the version of nf-validation ([]())
+- Pin the version of nf-validation ([#2579](https://github.com/nf-core/tools/pull/2579))
 
 ### Download
 
