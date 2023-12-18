@@ -71,6 +71,7 @@
 - Update Gitpod profile resources to reflect base environment settings.
 - ([#747](https://github.com/nf-core/tools/issues/747)) Add to the template the code to dump the selected pipeline parameters into a json file.
 - [#2161] Disable process selector warnings by default.
+- Remove `docker.userEmulation` from nextflow.config in pipeline template ([#2580](https://github.com/nf-core/tools/pull/2580))
 
 ### Download
 
