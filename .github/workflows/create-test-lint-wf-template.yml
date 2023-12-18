@@ -66,6 +66,8 @@ jobs:
       # Create template files
       - name: Create template skip all (except github)
         run: |
+          mkdir create-test-lint-wf && cd create-test-lint-wf
+          export NXF_WORK=$(pwd)
           printf "prefix: my-prefix\nskip: ['ci', 'github_badges', 'igenomes', 'nf_core_configs']" > template_skip_all.yml
 
       - name: Create template skip github_badges
@@ -87,8 +89,6 @@ jobs:
       # Create a pipeline from the template
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
         run: |
-          mkdir create-test-lint-wf && cd create-test-lint-wf
-          export NXF_WORK=$(pwd)
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml ${{ matrix.TEMPLATE }}
 
       - name: run the pipeline
