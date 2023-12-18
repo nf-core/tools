@@ -29,6 +29,8 @@ jobs:
       # Get the repo code
       - uses: actions/checkout@v4
         name: Check out source-code repository
+        with:
+          clean: false
 
       # Set up nf-core/tools
       - name: Set up Python 3.12

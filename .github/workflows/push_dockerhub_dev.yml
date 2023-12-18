@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+        with:
+          clean: false
 
       - name: Build nfcore/tools:dev docker image
         run: docker build --no-cache . -t nfcore/tools:dev
