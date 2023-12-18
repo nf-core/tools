@@ -56,4 +56,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: nf-core-log-file
-          path: log.txt
+          path: create-test-wf/log.txt
