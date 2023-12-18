@@ -52,12 +52,8 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install Prettier
-        run: npm install -g prettier
-
-      # Install the editorconfig linting tools
-      - name: Install editorconfig-checker
-        run: npm install -g editorconfig-checker
+      - name: Install Prettier and editorconfig-checker
+        run: npm install -g prettier editorconfig-checker
 
       # Build a pipeline from the template
       - name: nf-core create
@@ -68,7 +64,10 @@ jobs:
 
       # Try syncing it before we change anything
       - name: nf-core sync
-        run: nf-core --log-file log.txt sync --dir nf-core-testpipeline/
+        run: |
+          pwd
+          ls -altr
+          nf-core --log-file log.txt sync --dir nf-core-testpipeline/
 
       # Build a module from the template
       - name: nf-core modules create
