@@ -17,8 +17,6 @@ jobs:
     runs-on: ["self-hosted"]
     steps:
       - uses: actions/checkout@v4
-        with:
-          clean: false
 
       - uses: actions/setup-node@v4
         with:
@@ -35,8 +33,6 @@ jobs:
     runs-on: ["self-hosted"]
     steps:
       - uses: actions/checkout@v4
-        with:
-          clean: false
 
       - uses: actions/setup-node@v4
         with:
@@ -52,8 +48,6 @@ jobs:
     runs-on: ["self-hosted"]
     steps:
       - uses: actions/checkout@v4
-        with:
-          clean: false
 
       - name: Check code lints with Black
         uses: psf/black@stable
@@ -85,8 +79,6 @@ jobs:
     steps:
       - name: Check out source-code repository
         uses: actions/checkout@v4
-        with:
-          clean: false
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
@@ -102,8 +94,6 @@ jobs:
     runs-on: ["self-hosted"]
     steps:
       - uses: actions/checkout@v4
-        with:
-          clean: false
       - uses: actions/setup-python@v4
         with:
           python-version: 3.12

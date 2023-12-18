@@ -25,8 +25,6 @@ jobs:
     steps:
       - name: Check out source-code repository
         uses: actions/checkout@v4
-        with:
-          clean: false
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v4

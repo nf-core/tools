@@ -29,8 +29,6 @@ jobs:
       # Get the repo code
       - uses: actions/checkout@v4
         name: Check out source-code repository
-        with:
-          clean: false
 
       # Set up nf-core/tools
       - name: Set up Python 3.12
@@ -63,7 +61,10 @@ jobs:
 
       # Build a pipeline from the template
       - name: nf-core create
-        run: nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
+        run: |
+          mkdir create-lint-wf && cd create-lint-wf
+          export NXF_WORK=$(pwd)
+          nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
 
       # Try syncing it before we change anything
       - name: nf-core sync

@@ -38,8 +38,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         name: Check out nf-core/tools
-        with:
-          clean: false
 
       - uses: actions/checkout@v4
         name: Check out nf-core/${{ matrix.pipeline }}
