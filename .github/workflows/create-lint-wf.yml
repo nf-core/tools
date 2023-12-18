@@ -74,8 +74,7 @@ jobs:
 
       # Run code style linting
       - name: Run Prettier --check
-        run: prettier --check nf-core-testpipeline
-        working-directory: create-lint-wf
+        run: prettier --check create-lint-wf/nf-core-testpipeline
 
       - name: Run ECLint check
         run: editorconfig-checker -exclude README.md $(find nf-core-testpipeline/.* -type f | grep -v '.git\|.py\|md\|json\|yml\|yaml\|html\|css\|work\|.nextflow\|build\|nf_core.egg-info\|log.txt\|Makefile')
