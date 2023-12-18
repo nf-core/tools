@@ -20,9 +20,6 @@ jobs:
     runs-on: self-hosted
     env:
       NXF_ANSI_LOG: false
-    defaults:
-      run:
-        working-directory: ./create-lint-wf
     strategy:
       matrix:
         NXF_VER:
@@ -61,12 +58,15 @@ jobs:
       # Build a pipeline from the template
       - name: nf-core create
         run: |
+          mkdir create-lint-wf && cd create-lint-wf
           export NXF_WORK=$(pwd)
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
 
       # Try syncing it before we change anything
       - name: nf-core sync
         run: |
+          pwd
+          ls -altr
           nf-core --log-file log.txt sync --dir nf-core-testpipeline/
 
       # Build a module from the template
