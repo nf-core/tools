@@ -46,7 +46,6 @@
 - Update `schema build` functionality to automatically update defaults which have changed in the `nextflow.config`([#2479](https://github.com/nf-core/tools/pull/2479))
 - Change testing framework for modules and subworkflows from pytest to nf-test ([#2490](https://github.com/nf-core/tools/pull/2490))
 - `bump_version` keeps now the indentation level of the updated version entries ([#2514](https://github.com/nf-core/tools/pull/2514))
-- Run tests with Python 3.12 ([#2522](https://github.com/nf-core/tools/pull/2522)).
 - Add mypy to pre-commit config for the tools repo ([#2545](https://github.com/nf-core/tools/pull/2545))
 - Use Path objects for ComponentCreate and update the structure of components templates ([#2551](https://github.com/nf-core/tools/pull/2551)).
 - GitPod base image: swap tool installation back to `conda` from `mamba` ([#2566](https://github.com/nf-core/tools/pull/2566)).
