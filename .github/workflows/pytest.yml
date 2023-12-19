@@ -29,28 +29,26 @@ jobs:
     runs-on: ["self-hosted"]
     strategy:
       matrix:
-        python-version: ["3.8", "3.12"]
+        python-version: ["3.8", "3.11"]
         runner: ["ubuntu-latest"]
         include:
-          - runner: "ubuntu-20.04"
-            python-version: "3.8"
+          - python-version: "3.8"
+            runner: "ubuntu-20.04"
 
     steps:
       - name: Check conditions
         id: conditions
-        run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> $GITHUB_ENV
+        run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> "$GITHUB_OUTPUT"
 
     outputs:
       python-version: ${{ matrix.python-version }}
       runner: ${{ matrix.runner }}
-      run-tests: ${{ env.run-tests }}
+      run-tests: ${{ steps.conditions.outputs.run-tests }}
 
   # create a test matrix based on all python files in /tests
   list_tests:
     name: Get test file matrix
     runs-on: "self-hosted"
-    outputs:
-      tests: ${{ env.tests }}
     steps:
       - uses: actions/checkout@v4
         name: Check out source-code repository
@@ -58,12 +56,14 @@ jobs:
       - name: List tests
         id: list_tests
         run: |
-          echo "tests=$(find tests/test_* | tac | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_ENV
+          echo "tests=$(find tests/test_* | tac | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_OUTPUT
+    outputs:
+      tests: ${{ steps.list_tests.outputs.tests }}
 
   test:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: [setup, list_tests]
-    if: ${{ needs.setup.outputs.run-tests == 'true' }}
+    if: ${{ needs.setup.outputs.run-tests }}
     runs-on: self-hosted
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}

@@ -147,6 +147,14 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
                             module.meta_yml,
                         )
                     )
+                elif output == "meta":
+                    module.passed.append(
+                        (
+                            "meta_output_meta_only",
+                            f"`{output}` is skipped for `meta.yml` outputs",
+                            module.meta_yml,
+                        )
+                    )
                 else:
                     module.warned.append(
                         (

@@ -12,12 +12,14 @@
 
 ### Download
 
-- Bugfix for AttributeError: 'ContainerError' object has no attribute 'absoluteURI' ([#2543](https://github.com/nf-core/tools/pull/2543)).
+- Add `docker://` prefix for absolute container URIs as well ([#2576](https://github.com/nf-core/tools/pull/2576)).
+- Bugfix for AttributeError: `ContainerError` object has no attribute `absoluteURI` ([#2543](https://github.com/nf-core/tools/pull/2543)).
 
 ### Linting
 
 - Fix incorrectly failing linting if 'modules' was not found in meta.yml ([#2447](https://github.com/nf-core/tools/pull/2447))
 - Correctly pass subworkflow linting test if `COMPONENT.out.versions` is used in the script ([#2448](https://github.com/nf-core/tools/pull/2448))
+- Add pyupgrade to pre-commit config and dev requirements as mentioned in [#2200](https://github.com/nf-core/tools/issues/2200)
 - Check for spaces in modules container URLs ([#2452](https://github.com/nf-core/tools/issues/2452))
 - Correctly ignore `timeline.enabled`, `report.enabled`, `trace.enabled`, `dag.enabled` variables when linting a pipeline. ([#2507](https://github.com/nf-core/tools/pull/2507))
 - Lint nf-test main.nf.test tags include all used components in chained tests ([#2572](https://github.com/nf-core/tools/pull/2572))
@@ -29,6 +31,8 @@
 - Replace ModulePatch by ComponentPatch ([#2482](https://github.com/nf-core/tools/pull/2482))
 - Fixed `nf-core modules lint` to work with new module structure for nf-test ([#2494](https://github.com/nf-core/tools/pull/2494))
 - Add option `--migrate-pytest` to create a module with nf-test taking into account an existing module ([#2549](https://github.com/nf-core/tools/pull/2549))
+- When installing modules and subworkflows, automatically create the `./modules` directory if it doesn't exist ([#2563](https://github.com/nf-core/tools/issues/2563))
+- When `.nf-core.yml` is not found create it in the current directory instead of the root filesystem ([#2237](https://github.com/nf-core/tools/issues/2237))
 - Modules `--migrate-pytest` copies template scripts ([#2568](https://github.com/nf-core/tools/pull/2568))
 
 ### Subworkflows
@@ -42,7 +46,6 @@
 - Update `schema build` functionality to automatically update defaults which have changed in the `nextflow.config`([#2479](https://github.com/nf-core/tools/pull/2479))
 - Change testing framework for modules and subworkflows from pytest to nf-test ([#2490](https://github.com/nf-core/tools/pull/2490))
 - `bump_version` keeps now the indentation level of the updated version entries ([#2514](https://github.com/nf-core/tools/pull/2514))
-- Run tests with Python 3.12 ([#2522](https://github.com/nf-core/tools/pull/2522)).
 - Add mypy to pre-commit config for the tools repo ([#2545](https://github.com/nf-core/tools/pull/2545))
 - Use Path objects for ComponentCreate and update the structure of components templates ([#2551](https://github.com/nf-core/tools/pull/2551)).
 - GitPod base image: swap tool installation back to `conda` from `mamba` ([#2566](https://github.com/nf-core/tools/pull/2566)).
