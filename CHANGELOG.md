@@ -13,7 +13,8 @@
 
 ### Download
 
-- Bugfix for AttributeError: 'ContainerError' object has no attribute 'absoluteURI' ([#2543](https://github.com/nf-core/tools/pull/2543)).
+- Add `docker://` prefix for absolute container URIs as well ([#2576](https://github.com/nf-core/tools/pull/2576)).
+- Bugfix for AttributeError: `ContainerError` object has no attribute `absoluteURI` ([#2543](https://github.com/nf-core/tools/pull/2543)).
 
 ### Linting
 

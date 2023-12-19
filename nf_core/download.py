@@ -1247,7 +1247,7 @@ class DownloadWorkflow:
         # Thus, if an explicit registry is specified, the provided -l value is ignored.
         container_parts = container.split("/")
         if len(container_parts) > 2:
-            address = container
+            address = f"docker://{container}"
             absolute_URI = True
         else:
             address = f"docker://{library}/{container.replace('docker://', '')}"
