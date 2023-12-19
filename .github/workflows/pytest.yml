@@ -31,13 +31,13 @@ jobs:
         python-version: ["3.8", "3.12"]
         runner: ["ubuntu-latest"]
         include:
-          - runner: "ubuntu-20.04"
-            python-version: "3.8"
+          - python-version: "3.8"
+            runner: "ubuntu-20.04"
 
     steps:
       - name: Check conditions
         id: conditions
-        run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> $GITHUB_ENV
+        run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> "$GITHUB_OUTPUT"
 
     outputs:
       python-version: ${{ matrix.python-version }}
