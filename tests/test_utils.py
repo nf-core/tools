@@ -181,7 +181,7 @@ class TestUtils(unittest.TestCase):
                 break
         else:
             raise AssertionError("MultiQC release v1.10 not found")
-        assert "master" in wf_branches.keys()
+        assert "main" in wf_branches.keys()
 
     def test_get_repo_releases_branches_not_exists(self):
         wfs = nf_core.list.Workflows()
