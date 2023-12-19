@@ -1,31 +1,33 @@
 import logging
-import os
 import re
 from pathlib import Path
+from typing import List, Optional, Tuple
 
 import questionary
 import rich.prompt
 
 import nf_core.utils
+from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
 
-def get_repo_info(directory, use_prompt=True):
+def get_repo_info(directory: str, use_prompt: Optional[bool] = True) -> Tuple[str, Optional[str], str]:
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
     """
+
     # Verify that the pipeline dir exists
     if directory is None or not Path(directory).is_dir():
         raise UserWarning(f"Could not find directory: {directory}")
 
     # Try to find the root directory
-    base_dir = nf_core.utils.determine_base_dir(directory)
+    base_dir: str = nf_core.utils.determine_base_dir(directory)
 
     # Figure out the repository type from the .nf-core.yml config file if we can
     config_fn, tools_config = nf_core.utils.load_tools_config(base_dir)
-    repo_type = tools_config.get("repository_type", None)
+    repo_type: Optional[str] = tools_config.get("repository_type", None)
 
     # If not set, prompt the user
     if not repo_type and use_prompt:
@@ -55,7 +57,6 @@ def get_repo_info(directory, use_prompt=True):
         raise UserWarning(f"Invalid repository type: '{repo_type}'")
 
     # Check for org if modules repo
-    org = None
     if repo_type == "pipeline":
         org = ""
     elif repo_type == "modules":
@@ -77,10 +78,12 @@ def get_repo_info(directory, use_prompt=True):
             raise UserWarning("Organisation path could not be established")
 
     # It was set on the command line, return what we were given
-    return [base_dir, repo_type, org]
+    return (base_dir, repo_type, org)
 
 
-def prompt_component_version_sha(component_name, component_type, modules_repo, installed_sha=None):
+def prompt_component_version_sha(
+    component_name: str, component_type: str, modules_repo: ModulesRepo, installed_sha: Optional[str] = None
+) -> str:
     """
     Creates an interactive questionary prompt for selecting the module/subworkflow version
     Args:
@@ -107,17 +110,20 @@ def prompt_component_version_sha(component_name, component_type, modules_repo, i
         next_page_commits = [next(all_commits, None) for _ in range(10)]
         next_page_commits = [commit for commit in next_page_commits if commit is not None]
         if all(commit is None for commit in next_page_commits):
-            next_page_commits = None
+            next_page_commits = []
 
         choices = []
-        for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
-            display_color = "fg:ansiblue" if sha != installed_sha else "fg:ansired"
-            message = f"{title} {sha}"
-            if installed_sha == sha:
-                message += " (installed version)"
-            commit_display = [(display_color, message), ("class:choice-default", "")]
-            choices.append(questionary.Choice(title=commit_display, value=sha))
-        if next_page_commits is not None:
+        for commit in commits:
+            if commit:
+                title = commit["trunc_message"]
+                sha = commit["git_sha"]
+                display_color = "fg:ansiblue" if sha != installed_sha else "fg:ansired"
+                message = f"{title} {sha}"
+                if installed_sha == sha:
+                    message += " (installed version)"
+                commit_display = [(display_color, message), ("class:choice-default", "")]
+                choices.append(questionary.Choice(title=commit_display, value=sha))
+        if next_page_commits:
             choices += [older_commits_choice]
         git_sha = questionary.select(
             f"Select '{component_name}' commit:", choices=choices, style=nf_core.utils.nfcore_question_style
@@ -126,7 +132,7 @@ def prompt_component_version_sha(component_name, component_type, modules_repo, i
     return git_sha
 
 
-def get_components_to_install(subworkflow_dir):
+def get_components_to_install(subworkflow_dir: str) -> Tuple[List[str], List[str]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """

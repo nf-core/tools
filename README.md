@@ -39,7 +39,6 @@ A python package with helper tools for the nf-core community.
   - [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
   - [`modules patch` - Create a patch file for a module](#create-a-patch-file-for-a-module)
   - [`modules create` - Create a module from the template](#create-a-new-module)
-  - [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
   - [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
   - [`modules test` - Run the tests for a module](#run-the-tests-for-a-module-using-pytest)
   - [`modules bump-versions` - Bump software versions of modules](#bump-bioconda-and-container-versions-of-modules-in)
@@ -53,13 +52,12 @@ A python package with helper tools for the nf-core community.
   - [`subworkflows update` - Update subworkflows in a pipeline](#update-subworkflows-in-a-pipeline)
   - [`subworkflows remove` - Remove a subworkflow from a pipeline](#remove-a-subworkflow-from-a-pipeline)
   - [`subworkflows create` - Create a subworkflow from the template](#create-a-new-subworkflow)
-  - [`subworkflows create-test-yml` - Create the `test.yml` file for a subworkflow](#create-a-subworkflow-test-config-file)
   - [`subworkflows lint` - Check a subworkflow against nf-core guidelines](#check-a-subworkflow-against-nf-core-guidelines)
   - [`subworkflows test` - Run the tests for a subworkflow](#run-the-tests-for-a-subworkflow-using-pytest)
 - [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
-For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools-docs/).
+For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools/docs/).
 
 ## Installation
 
@@ -188,7 +186,7 @@ for wf in wfs.remote_workflows:
     print(wf.full_name)
 ```
 
-Please see [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/) for the function documentation.
+Please see [https://nf-co.re/tools/docs/](https://nf-co.re/tools/docs/) for the function documentation.
 
 ### Automatic version check
 
@@ -227,14 +225,12 @@ Auto-completion for the `nf-core` command is available for bash, zsh and fish. T
 
 After a restart of the shell session you should have auto-completion for the `nf-core` command and all its sub-commands and options.
 
-:::note
-The added line will run the command `nf-core` (which will also slow down startup time of your shell). You should therefore either have the nf-core/tools installed globally.
-You can also wrap it inside `if type nf-core > /dev/null; then ` \<YOUR EVAL CODE LINE\> `fi` for bash and zsh or `if command -v nf-core &> /dev/null eval (env _NF_CORE_COMPLETE=fish_source nf-core) end` for fish. You need to then source the config in your environment for the completions to be activated.
-:::
+> [!NOTE]
+> The added line will run the command `nf-core` (which will also slow down startup time of your shell). You should therefore either have the nf-core/tools installed globally.
+> You can also wrap it inside `if type nf-core > /dev/null; then ` \<YOUR EVAL CODE LINE\> `fi` for bash and zsh or `if command -v nf-core &> /dev/null eval (env _NF_CORE_COMPLETE=fish_source nf-core) end` for fish. You need to then source the config in your environment for the completions to be activated.
 
-:::info
-If you see the error `command not found compdef` , be sure that your config file contains the line `autoload -Uz compinit && compinit` before the eval line.
-:::
+> [!TIP]
+> If you see the error `command not found compdef` , be sure that your config file contains the line `autoload -Uz compinit && compinit` before the eval line.
 
 ## Listing pipelines
 
@@ -365,18 +361,16 @@ You can run the pipeline by simply providing the directory path for the `workflo
 nextflow run /path/to/download/nf-core-rnaseq-dev/workflow/ --input mydata.csv --outdir results  # usual parameters here
 ```
 
-:::note
-If you downloaded Singularity container images, you will need to use `-profile singularity` or have it enabled in your config file.
-:::
+> [!NOTE]
+> If you downloaded Singularity container images, you will need to use `-profile singularity` or have it enabled in your config file.
 
 ### Downloaded nf-core configs
 
 The pipeline files are automatically updated (`params.custom_config_base` is set to `../configs`), so that the local copy of institutional configs are available when running the pipeline.
 So using `-profile <NAME>` should work if available within [nf-core/configs](https://github.com/nf-core/configs).
 
-:::warning
-This option is not available when downloading a pipeline for use with [Nextflow Tower](#adapting-downloads-to-nextflow-tower) because the application manages all configurations separately.
-:::
+> [!WARNING]
+> This option is not available when downloading a pipeline for use with [Nextflow Tower](#adapting-downloads-to-nextflow-tower) because the application manages all configurations separately.
 
 ### Downloading Apptainer containers
 
@@ -434,18 +428,16 @@ If the download speeds are much slower than your internet connection is capable 
 
 Subsequently, the `*.git` folder can be moved to it's final destination and linked with a pipeline in _Tower_ using the `file:/` prefix.
 
-:::tip
-Also without access to Tower, pipelines downloaded with the `--tower` flag can be run: `nextflow run -r 2.5 file:/path/to/pipelinedownload.git`. Downloads in this format allow you to include multiple revisions of a pipeline in a single file, but require that the revision (e.g. `-r 2.5`) is always explicitly specified.
-:::
+> [!TIP]
+> Also without access to Tower, pipelines downloaded with the `--tower` flag can be run if the _absolute_ path is specified: `nextflow run -r 2.5 file:/path/to/pipelinedownload.git`. Downloads in this format allow you to include multiple revisions of a pipeline in a single file, but require that the revision (e.g. `-r 2.5`) is always explicitly specified.
 
 ## Pipeline software licences
 
 Sometimes it's useful to see the software licences of the tools used in a pipeline.
 You can use the `licences` subcommand to fetch and print the software licence from each conda / PyPI package used in an nf-core pipeline.
 
-:::warning
-This command does not currently work for newer DSL2 pipelines. This will hopefully be addressed [soon](https://github.com/nf-core/tools/issues/1155).
-:::
+> [!WARNING]
+> This command does not currently work for newer DSL2 pipelines. This will hopefully be addressed [soon](https://github.com/nf-core/tools/issues/1155).
 
 <!-- RICH-CODEX
 timeout: 10
@@ -473,10 +465,9 @@ You can then continue to edit, commit and push normally as you build your pipeli
 
 Please see the [nf-core documentation](https://nf-co.re/developers/adding_pipelines) for a full walkthrough of how to create a new nf-core workflow.
 
-:::tip
-As the log output says, remember to come and discuss your idea for a pipeline as early as possible!
-See the [documentation](https://nf-co.re/developers/adding_pipelines#join-the-community) for instructions.
-:::
+> [!TIP]
+> As the log output says, remember to come and discuss your idea for a pipeline as early as possible!
+> See the [documentation](https://nf-co.re/developers/adding_pipelines#join-the-community) for instructions.
 
 Note that if the required arguments for `nf-core create` are not given, it will interactively prompt for them. If you prefer, you can supply them as command line arguments. See `nf-core create --help` for more information.
 
@@ -535,7 +526,7 @@ Each test result name on the left is a terminal hyperlink.
 In most terminals you can <kbd>ctrl</kbd> + <kbd>click</kbd> ( <kbd>cmd</kbd> + <kbd>click</kbd>) these
 links to open documentation specific to this test in your browser.
 
-Alternatively visit <https://nf-co.re/tools-docs/lint_tests/index.html> and find your test to read more.
+Alternatively visit <https://nf-co.re/tools/docs/latest/pipeline_lint_tests/index.html> and find your test to read more.
 
 ### Linting config
 
@@ -947,20 +938,6 @@ fake_command: nf-core modules create fastqc --author @nf-core-bot  --label proce
 
 ![`cd modules && nf-core modules create fastqc --author @nf-core-bot  --label process_low --meta --force`](docs/images/nf-core-modules-create.svg)
 
-### Create a module test config file
-
-All modules on [nf-core/modules](https://github.com/nf-core/modules) have a strict requirement of being unit tested using minimal test data.
-To help developers build new modules, the `nf-core modules create-test-yml` command automates the creation of the yaml file required to document the output file `md5sum` and other information generated by the testing.
-After you have written a minimal Nextflow script to test your module `tests/modules/<tool>/<subtool>/main.nf`, this command will run the tests for you and create the `tests/modules/<tool>/<subtool>/test.yml` file.
-
-<!-- RICH-CODEX
-working_dir: tmp/modules
-extra_env:
-  PROFILE: 'conda'
--->
-
-![`nf-core modules create-test-yml fastqc --no-prompts --force`](docs/images/nf-core-modules-create-test.svg)
-
 ### Check a module against nf-core guidelines
 
 Run the `nf-core modules lint` command to check modules in the current working directory (pipeline or nf-core/modules clone) against nf-core guidelines.
@@ -974,15 +951,12 @@ before_command: sed 's/1.13a/1.10/g' modules/multiqc/main.nf > modules/multiqc/m
 
 ![`nf-core modules lint multiqc`](docs/images/nf-core-modules-lint.svg)
 
-### Run the tests for a module using pytest
+### Create a test for a module
 
-To run unit tests of a module that you have installed or the test created by the command [`nf-core modules create-test-yml`](#create-a-module-test-config-file), you can use `nf-core modules test` command. This command runs the tests specified in `modules/tests/software/<tool>/<subtool>/test.yml` file using [pytest](https://pytest-workflow.readthedocs.io/en/stable/).
+All modules on [nf-core/modules](https://github.com/nf-core/modules) have a strict requirement of being unit tested using minimal test data. We use [nf-test](https://code.askimed.com/nf-test/) as our testing framework.
+Each module comes already with a template for the test file in `test/main.nf.test`. Replace the placeholder code in that file with your specific input, output and proces. In order to generate the corresponding snapshot after writing your test, you can use the `nf-core modules test` command. This command will run `nf-test test` twice, to also check for snapshot stability, i.e. that the same snapshot is generated on multiple runs.
 
-:::info
-This command uses the pytest argument `--git-aware` to avoid copying the whole `.git` directory and files ignored by `git`. This means that it will only include files listed by `git ls-files`. Remember to **commit your changes** after adding a new module to add the new files to your git index.
-:::
-
-You can specify the module name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
+You can specify the module name in the form TOOL/SUBTOOL in the command or provide it later through interactive prompts.
 
 <!-- RICH-CODEX
 working_dir: tmp/modules
@@ -991,7 +965,15 @@ extra_env:
   PROFILE: 'conda'
 -->
 
-![`nf-core modules test samtools/view --no-prompts`](docs/images/nf-core-modules-test.svg)
+![`nf-core modules test fastqc --no-prompts --force`](docs/images/nf-core-modules-test.svg)
+
+In case you changed something in the test and want to update the snapshot, run
+
+```bash
+nf-core modules test --update
+```
+
+If you want to run the test only once without checking for snapshot stability, you can use the `--once` flag.
 
 ### Bump bioconda and container versions of modules in
 
@@ -1221,19 +1203,29 @@ fake_command: nf-core subworkflows create bam_stats_samtools --author @nf-core-b
 
 ![`nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force`](docs/images/nf-core-subworkflows-create.svg)
 
-### Create a subworkflow test config file
+### Create a test for a subworkflow
 
-All subworkflows on [nf-core/modules](https://github.com/nf-core/modules) have a strict requirement of being unit tested using minimal test data.
-To help developers build new subworkflows, the `nf-core subworkflows create-test-yml` command automates the creation of the yaml file required to document the output file `md5sum` and other information generated by the testing.
-After you have written a minimal Nextflow script to test your subworkflow in `/tests/subworkflow/<subworkflow_name>/main.nf`, this command will run the tests for you and create the `/tests/subworkflow/<tool>/<subtool>/test.yml` file.
+All subworkflows on [nf-core/modules](https://github.com/nf-core/modules) have a strict requirement of being unit tested using minimal test data. We use [nf-test](https://code.askimed.com/nf-test/) as our testing framework.
+Each subworkflow comes already with a template for the test file in `test/main.nf.test`. Replace the placeholder code in that file with your specific input, output and proces. In order to generate the corresponding snapshot after writing your test, you can use the `nf-core subworkflows test` command. This command will run `nf-test test` twice, to also check for snapshot stability, i.e. that the same snapshot is generated on multiple runs.
+
+You can specify the subworkflow name in the command or provide it later through interactive prompts.
 
 <!-- RICH-CODEX
 working_dir: tmp/modules
+timeout: 30
 extra_env:
   PROFILE: 'conda'
 -->
 
-![`nf-core subworkflows create-test-yml bam_stats_samtools --no-prompts --force`](docs/images/nf-core-subworkflows-create-test.svg)
+![`nf-core subworkflows test bam_rseqc --no-prompts`](docs/images/nf-core-subworkflows-test.svg)
+
+In case you changed something in the test and want to update the snapshot, run
+
+```bash
+nf-core subworkflows test --update
+```
+
+If you want to run the test only once without checking for snapshot stability, you can use the `--once` flag.
 
 ### Check a subworkflow against nf-core guidelines
 
@@ -1248,25 +1240,6 @@ extra_env:
 -->
 
 ![`nf-core subworkflows lint bam_stats_samtools`](docs/images/nf-core-subworkflows-lint.svg)
-
-### Run the tests for a subworkflow using pytest
-
-To run unit tests of a subworkflow that you have installed or the test created by the command [`nf-core subworkflow create-test-yml`](#create-a-subworkflow-test-config-file), you can use `nf-core subworkflows test` command. This command runs the tests specified in `tests/subworkflows/<subworkflow_name>/test.yml` file using [pytest](https://pytest-workflow.readthedocs.io/en/stable/).
-
-:::info
-This command uses the pytest argument `--git-aware` to avoid copying the whole `.git` directory and files ignored by `git`. This means that it will only include files listed by `git ls-files`. Remember to **commit your changes** after adding a new subworkflow to add the new files to your git index.
-:::
-
-You can specify the subworkflow name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
-
-<!-- RICH-CODEX
-working_dir: tmp/modules
-timeout: 30
-extra_env:
-  PROFILE: 'conda'
--->
-
-![`nf-core subworkflows test bam_rseqc --no-prompts`](docs/images/nf-core-subworkflows-test.svg)
 
 ## Citation
 

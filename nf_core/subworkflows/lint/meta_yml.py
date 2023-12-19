@@ -123,7 +123,7 @@ def meta_yml(subworkflow_lint_object, subworkflow):
                 )
             )
         else:
-            subworkflow.failed.append(
+            subworkflow.passed.append(
                 (
                     "meta_modules_deprecated",
                     f"Deprecated section 'modules' not found in `meta.yml`",

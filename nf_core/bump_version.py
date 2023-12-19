@@ -5,16 +5,18 @@ a nf-core pipeline.
 import logging
 import re
 from pathlib import Path
+from typing import List, Tuple, Union
 
 import rich.console
 
 import nf_core.utils
+from nf_core.utils import Pipeline
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
 
 
-def bump_pipeline_version(pipeline_obj, new_version):
+def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
     """Bumps a pipeline version number.
 
     Args:
@@ -30,7 +32,8 @@ def bump_pipeline_version(pipeline_obj, new_version):
         new_version = new_version[1:]
     if not current_version:
         raise UserWarning("Could not find config variable 'manifest.version'")
-
+    if current_version == new_version:
+        raise UserWarning(f"Current version is already: {current_version}")
     log.info(f"Changing version number from '{current_version}' to '{new_version}'")
 
     # nextflow.config - workflow manifest version
@@ -39,24 +42,54 @@ def bump_pipeline_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                rf"version\s*=\s*[\'\"]?{re.escape(current_version)}[\'\"]?",
-                f"version = '{new_version}'",
+                rf"(version\s*=\s*['\"]){re.escape(current_version)}(['\"])",
+                rf"\g<1>{new_version}\g<2>",
             )
         ],
     )
     # multiqc_config.yaml
     multiqc_new_version = "dev" if "dev" in new_version else new_version
+    multiqc_current_version = "dev" if "dev" in current_version else current_version
+    if multiqc_current_version != "dev" and multiqc_new_version != "dev":
+        update_file_version(
+            Path("assets", "multiqc_config.yml"),
+            pipeline_obj,
+            [
+                (
+                    f"/releases/tag/{current_version}",
+                    f"/releases/tag/{new_version}",
+                )
+            ],
+        )
+    if multiqc_current_version != "dev" and multiqc_new_version == "dev":
+        update_file_version(
+            Path("assets", "multiqc_config.yml"),
+            pipeline_obj,
+            [
+                (
+                    f"/releases/tag/{current_version}",
+                    f"/tree/dev",
+                )
+            ],
+        )
+    if multiqc_current_version == "dev" and multiqc_new_version != "dev":
+        update_file_version(
+            Path("assets", "multiqc_config.yml"),
+            pipeline_obj,
+            [
+                (
+                    f"/tree/dev",
+                    f"/releases/tag/{multiqc_new_version}",
+                )
+            ],
+        )
     update_file_version(
         Path("assets", "multiqc_config.yml"),
         pipeline_obj,
         [
             (
-                "/dev",
-                f"/{multiqc_new_version}",
-            ),
-            (
-                rf"{re.escape(current_version)}",
-                f"{multiqc_new_version}",
+                f"/{multiqc_current_version}/",
+                f"/{multiqc_new_version}/",
             ),
         ],
     )
@@ -76,7 +109,7 @@ def bump_pipeline_version(pipeline_obj, new_version):
         )
 
 
-def bump_nextflow_version(pipeline_obj, new_version):
+def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
     """Bumps the required Nextflow version number of a pipeline.
 
     Args:
@@ -99,8 +132,8 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                rf"nextflowVersion\s*=\s*[\'\"]?!>={re.escape(current_version)}[\'\"]?",
-                f"nextflowVersion = '!>={new_version}'",
+                rf"(nextflowVersion\s*=\s*[\'\"]?!>=\s*)({re.escape(current_version)})([\'\"]?)",
+                rf"\g<1>{new_version}\g<3>",
             )
         ],
     )
@@ -114,7 +147,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
                 # example:
                 # NXF_VER:
                 #   - "20.04.0"
-                rf"- [\"]{re.escape(current_version)}[\"]",
+                rf"- \"{re.escape(current_version)}\"",
                 f'- "{new_version}"',
             )
         ],
@@ -138,7 +171,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
     )
 
 
-def update_file_version(filename, pipeline_obj, patterns):
+def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patterns: List[Tuple[str, str]]) -> None:
     """Updates the version number in a requested file.
 
     Args:
@@ -146,7 +179,6 @@ def update_file_version(filename, pipeline_obj, patterns):
         pipeline_obj (nf_core.lint.PipelineLint): A PipelineLint object that holds information
             about the pipeline contents and build files.
         pattern (str): Regex pattern to apply.
-        newstr (str): The replaced string.
 
     Raises:
         ValueError, if the version number cannot be found.
@@ -186,7 +218,7 @@ def update_file_version(filename, pipeline_obj, patterns):
         if found_match:
             content = "\n".join(newcontent) + "\n"
         else:
-            log.error(f"Could not find version number in {filename}: '{pattern}'")
+            log.error(f"Could not find version number in {filename}: `{pattern}`")
 
     log.info(f"Updated version in '{filename}'")
     for replacement in replacements:

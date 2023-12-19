@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
 import requests
+import yaml
 
 import nf_core
 import nf_core.modules.modules_utils
@@ -246,16 +247,17 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
     check_process_labels(self, lines)
 
     # Deprecated enable_conda
-    for i, l in enumerate(lines):
+    for i, raw_line in enumerate(lines):
         url = None
-        l = l.strip(" \n'\"}:")
+        l = raw_line.strip(" \n'\"}:")
 
         # Catch preceeding "container "
         if l.startswith("container"):
             l = l.replace("container", "").strip(" \n'\"}:")
 
         if _container_type(l) == "conda":
-            bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+            if "bioconda::" in l:
+                bioconda_packages = [b for b in l.split() if "bioconda::" in b]
             match = re.search(r"params\.enable_conda", l)
             if match is None:
                 self.passed.append(
@@ -314,34 +316,9 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                 l = "/".join([registry, l]).replace("//", "/")
             url = urlparse(l.split("'")[0])
 
-        # lint double quotes
         if l.startswith("container") or _container_type(l) == "docker" or _container_type(l) == "singularity":
-            if l.count('"') > 2:
-                self.failed.append(
-                    (
-                        "container_links",
-                        f"Too many double quotes found when specifying container: {l.lstrip('container ')}",
-                        self.main_nf,
-                    )
-                )
-            else:
-                self.passed.append(
-                    (
-                        "container_links",
-                        f"Correct number of double quotes found when specifying container: {l.lstrip('container ')}",
-                        self.main_nf,
-                    )
-                )
+            check_container_link_line(self, raw_line, registry)
 
-        # lint more than one container in the same line
-        if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or l.startswith(registry)):
-            self.warned.append(
-                (
-                    "container_links",
-                    "Docker and Singularity containers specified in the same line. Only first one checked.",
-                    self.main_nf,
-                )
-            )
         # Try to connect to container URLs
         if url is None:
             continue
@@ -368,6 +345,17 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                     self.main_nf,
                 )
             )
+
+    # Get bioconda packages from environment.yml
+    try:
+        with open(Path(self.component_dir, "environment.yml"), "r") as fh:
+            env_yml = yaml.safe_load(fh)
+        if "dependencies" in env_yml:
+            bioconda_packages = [x for x in env_yml["dependencies"] if isinstance(x, str) and "bioconda::" in x]
+    except FileNotFoundError:
+        pass
+    except NotADirectoryError:
+        pass
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
@@ -482,6 +470,68 @@ def check_process_labels(self, lines):
             )
     else:
         self.warned.append(("process_standard_label", "Process label not specified", self.main_nf))
+
+
+def check_container_link_line(self, raw_line, registry):
+    """Look for common problems in the container name / URL, for docker and singularity."""
+
+    l = raw_line.strip(" \n'\"}:")
+
+    # lint double quotes
+    if l.count('"') > 2:
+        self.failed.append(
+            (
+                "container_links",
+                f"Too many double quotes found when specifying container: {l.lstrip('container ')}",
+                self.main_nf,
+            )
+        )
+    else:
+        self.passed.append(
+            (
+                "container_links",
+                f"Correct number of double quotes found when specifying container: {l.lstrip('container ')}",
+                self.main_nf,
+            )
+        )
+
+    # Check for spaces in url
+    single_quoted_items = raw_line.split("'")
+    double_quoted_items = raw_line.split('"')
+    # Look for container link as single item surrounded by quotes
+    # (if there are multiple links, this will be warned in the next check)
+    container_link = None
+    if len(single_quoted_items) == 3:
+        container_link = single_quoted_items[1]
+    elif len(double_quoted_items) == 3:
+        container_link = double_quoted_items[1]
+    if container_link:
+        if " " in container_link:
+            self.failed.append(
+                (
+                    "container_links",
+                    f"Space character found in container: '{container_link}'",
+                    self.main_nf,
+                )
+            )
+        else:
+            self.passed.append(
+                (
+                    "container_links",
+                    f"No space characters found in container: '{container_link}'",
+                    self.main_nf,
+                )
+            )
+
+        # lint more than one container in the same line
+        if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or l.startswith(registry)):
+            self.warned.append(
+                (
+                    "container_links",
+                    "Docker and Singularity containers specified in the same line. Only first one checked.",
+                    self.main_nf,
+                )
+            )
 
 
 def _parse_input(self, line_raw):
