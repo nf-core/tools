@@ -2,7 +2,6 @@
 The ComponentsTest class handles the generation and testing of nf-test snapshots.
 """
 
-from __future__ import print_function
 
 import logging
 import os
@@ -190,10 +189,11 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         verbose = "--verbose --debug" if self.verbose else ""
         update = "--update-snapshot" if self.update else ""
         self.update = False  # reset self.update to False to test if the new snapshot is stable
+        tag = f"subworkflows/{self.component_name}" if self.component_type == "subworkflows" else self.component_name
 
         result = nf_core.utils.run_cmd(
             "nf-test",
-            f"test --tag {self.component_name} --profile {os.environ['PROFILE']} {verbose} {update}",
+            f"test --tag {tag} --profile {os.environ['PROFILE']} {verbose} {update}",
         )
         if result is not None:
             nftest_out, nftest_err = result
