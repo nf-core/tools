@@ -57,7 +57,7 @@ A python package with helper tools for the nf-core community.
 - [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
-For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools-docs/).
+For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools/docs/).
 
 ## Installation
 
@@ -76,7 +76,7 @@ conda install nf-core
 Alternatively, you can create a new environment with both nf-core/tools and nextflow:
 
 ```bash
-conda create --name nf-core python=3.11 nf-core nextflow
+conda create --name nf-core python=3.12 nf-core nextflow
 conda activate nf-core
 ```
 
@@ -186,7 +186,7 @@ for wf in wfs.remote_workflows:
     print(wf.full_name)
 ```
 
-Please see [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/) for the function documentation.
+Please see [https://nf-co.re/tools/docs/](https://nf-co.re/tools/docs/) for the function documentation.
 
 ### Automatic version check
 
@@ -433,7 +433,7 @@ If the download speeds are much slower than your internet connection is capable 
 Subsequently, the `*.git` folder can be moved to it's final destination and linked with a pipeline in _Tower_ using the `file:/` prefix.
 
 :::tip
-Also without access to Tower, pipelines downloaded with the `--tower` flag can be run: `nextflow run -r 2.5 file:/path/to/pipelinedownload.git`. Downloads in this format allow you to include multiple revisions of a pipeline in a single file, but require that the revision (e.g. `-r 2.5`) is always explicitly specified.
+Also without access to Tower, pipelines downloaded with the `--tower` flag can be run if the _absolute_ path is specified: `nextflow run -r 2.5 file:/path/to/pipelinedownload.git`. Downloads in this format allow you to include multiple revisions of a pipeline in a single file, but require that the revision (e.g. `-r 2.5`) is always explicitly specified.
 :::
 
 ## Pipeline software licences
@@ -533,7 +533,7 @@ Each test result name on the left is a terminal hyperlink.
 In most terminals you can <kbd>ctrl</kbd> + <kbd>click</kbd> ( <kbd>cmd</kbd> + <kbd>click</kbd>) these
 links to open documentation specific to this test in your browser.
 
-Alternatively visit <https://nf-co.re/tools-docs/lint_tests/index.html> and find your test to read more.
+Alternatively visit <https://nf-co.re/tools/docs/latest/pipeline_lint_tests/index.html> and find your test to read more.
 
 ### Linting config
 

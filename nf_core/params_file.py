@@ -89,7 +89,7 @@ class ParamsFileBuilder:
         self,
         pipeline=None,
         revision=None,
-    ):
+    ) -> None:
         """Initialise the ParamFileBuilder class
 
         Args:

@@ -30,6 +30,7 @@ class TestLint(unittest.TestCase):
             "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir, plain=True
         )
         self.create_obj.init_pipeline()
+
         # Base lint object on this directory
         self.lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
 
@@ -178,44 +179,52 @@ class TestLint(unittest.TestCase):
     #######################
     # SPECIFIC LINT TESTS #
     #######################
-    from .lint.actions_awsfulltest import (
+    from .lint.actions_awsfulltest import (  # type: ignore[misc]
         test_actions_awsfulltest_fail,
         test_actions_awsfulltest_pass,
         test_actions_awsfulltest_warn,
     )
-    from .lint.actions_awstest import (
+    from .lint.actions_awstest import (  # type: ignore[misc]
         test_actions_awstest_fail,
         test_actions_awstest_pass,
     )
-    from .lint.actions_ci import (
+    from .lint.actions_ci import (  # type: ignore[misc]
         test_actions_ci_fail_wrong_nf,
         test_actions_ci_fail_wrong_trigger,
         test_actions_ci_pass,
     )
-    from .lint.actions_schema_validation import (
+    from .lint.actions_schema_validation import (  # type: ignore[misc]
         test_actions_schema_validation_fails_for_additional_property,
         test_actions_schema_validation_missing_jobs,
         test_actions_schema_validation_missing_on,
     )
-    from .lint.files_exist import (
+    from .lint.files_exist import (  # type: ignore[misc]
         test_files_exist_depreciated_file,
         test_files_exist_missing_config,
         test_files_exist_missing_main,
         test_files_exist_pass,
     )
-    from .lint.files_unchanged import (
+    from .lint.files_unchanged import (  # type: ignore[misc]
         test_files_unchanged_fail,
         test_files_unchanged_pass,
     )
-    from .lint.merge_markers import test_merge_markers_found
-    from .lint.modules_json import test_modules_json_pass
-    from .lint.nextflow_config import (
+    from .lint.merge_markers import test_merge_markers_found  # type: ignore[misc]
+    from .lint.modules_json import test_modules_json_pass  # type: ignore[misc]
+    from .lint.multiqc_config import (  # type: ignore[misc]
+        test_multiqc_config_exists_ignore,
+        test_multiqc_config_missing_report_section_order,
+        test_multiqc_config_report_comment_fail,
+        test_multiqc_config_report_comment_release_fail,
+        test_multiqc_config_report_comment_release_succeed,
+        test_multiqc_incorrect_export_plots,
+    )
+    from .lint.nextflow_config import (  # type: ignore[misc]
         test_nextflow_config_bad_name_fail,
         test_nextflow_config_dev_in_release_mode_failed,
         test_nextflow_config_example_pass,
         test_nextflow_config_missing_test_profile_failed,
     )
-    from .lint.version_consistency import test_version_consistency
+    from .lint.version_consistency import test_version_consistency  # type: ignore[misc]
 
 
 # TODO nf-core: Assess and strip out if no longer required for DSL2

@@ -59,24 +59,6 @@ def with_temporary_file(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
-@contextmanager
-def set_wd(path: Path) -> Generator[None, None, None]:
-    """Sets the working directory for this context.
-
-    Arguments
-    ---------
-
-    path : Path
-        Path to the working directory to be used iside this context.
-    """
-    start_wd = Path().absolute()
-    os.chdir(Path(path).resolve())
-    try:
-        yield
-    finally:
-        os.chdir(start_wd)
-
-
 def mock_anaconda_api_calls(rsps: responses.RequestsMock, module: str, version: str) -> None:
     """Mock anaconda api calls for module"""
     anaconda_api_url = f"https://api.anaconda.org/package/bioconda/{module}"

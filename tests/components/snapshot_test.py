@@ -5,8 +5,7 @@ from pathlib import Path
 import pytest
 
 from nf_core.components.components_test import ComponentsTest
-
-from ..utils import set_wd
+from nf_core.utils import set_wd
 
 
 def test_components_test_check_inputs(self):

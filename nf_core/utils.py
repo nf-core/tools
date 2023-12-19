@@ -16,8 +16,9 @@ import shlex
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Generator, Tuple, Union
 
 import git
 import prompt_toolkit
@@ -1036,12 +1037,12 @@ def load_tools_config(directory: Union[str, Path] = "."):
 
 def determine_base_dir(directory="."):
     base_dir = start_dir = Path(directory).absolute()
-    while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
+    while base_dir != base_dir.parent:
         base_dir = base_dir.parent
         config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
         if config_fn:
-            break
-    return directory if base_dir == start_dir else base_dir
+            return directory if base_dir == start_dir else base_dir
+    return directory
 
 
 def get_first_available_path(directory, paths):
@@ -1147,3 +1148,48 @@ def validate_file_md5(file_name, expected_md5hex):
         raise IOError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
 
     return True
+
+
+def nested_setitem(d, keys, value):
+    """Sets the value in a nested dict using a list of keys to traverse
+
+    Args:
+        d (dict): the nested dictionary to traverse
+        keys (list[Any]): A list of keys to iteratively traverse
+        value (Any): The value to be set for the last key in the chain
+    """
+    current = d
+    for k in keys[:-1]:
+        current = current[k]
+    current[keys[-1]] = value
+
+
+def nested_delitem(d, keys):
+    """Deletes a key from a nested dictionary
+
+    Args:
+        d (dict): the nested dictionary to traverse
+        keys (list[Any]): A list of keys to iteratively traverse, deleting the final one
+    """
+    current = d
+    for k in keys[:-1]:
+        current = current[k]
+    del current[keys[-1]]
+
+
+@contextmanager
+def set_wd(path: Path) -> Generator[None, None, None]:
+    """Sets the working directory for this context.
+
+    Arguments
+    ---------
+
+    path : Path
+        Path to the working directory to be used inside this context.
+    """
+    start_wd = Path().absolute()
+    os.chdir(Path(path).resolve())
+    try:
+        yield
+    finally:
+        os.chdir(start_wd)

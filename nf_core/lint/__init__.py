@@ -164,26 +164,30 @@ class PipelineLint(nf_core.utils.Pipeline):
         warned (list): A list of tuples of the form: ``(<warned no>, <reason>)``
     """
 
-    from .actions_awsfulltest import actions_awsfulltest
-    from .actions_awstest import actions_awstest
-    from .actions_ci import actions_ci
-    from .actions_schema_validation import actions_schema_validation
-    from .files_exist import files_exist
-    from .files_unchanged import files_unchanged
-    from .merge_markers import merge_markers
-    from .modules_json import modules_json
-    from .modules_structure import modules_structure
-    from .multiqc_config import multiqc_config
-    from .nextflow_config import nextflow_config
-    from .pipeline_name_conventions import pipeline_name_conventions
-    from .pipeline_todos import pipeline_todos
-    from .readme import readme
-    from .schema_description import schema_description
-    from .schema_lint import schema_lint
-    from .schema_params import schema_params
-    from .system_exit import system_exit
-    from .template_strings import template_strings
-    from .version_consistency import version_consistency
+    from .actions_awsfulltest import actions_awsfulltest  # type: ignore[misc]
+    from .actions_awstest import actions_awstest  # type: ignore[misc]
+    from .actions_ci import actions_ci  # type: ignore[misc]
+    from .actions_schema_validation import (  # type: ignore[misc]
+        actions_schema_validation,
+    )
+    from .files_exist import files_exist  # type: ignore[misc]
+    from .files_unchanged import files_unchanged  # type: ignore[misc]
+    from .merge_markers import merge_markers  # type: ignore[misc]
+    from .modules_json import modules_json  # type: ignore[misc]
+    from .modules_structure import modules_structure  # type: ignore[misc]
+    from .multiqc_config import multiqc_config  # type: ignore[misc]
+    from .nextflow_config import nextflow_config  # type: ignore[misc]
+    from .pipeline_name_conventions import (  # type: ignore[misc]
+        pipeline_name_conventions,
+    )
+    from .pipeline_todos import pipeline_todos  # type: ignore[misc]
+    from .readme import readme  # type: ignore[misc]
+    from .schema_description import schema_description  # type: ignore[misc]
+    from .schema_lint import schema_lint  # type: ignore[misc]
+    from .schema_params import schema_params  # type: ignore[misc]
+    from .system_exit import system_exit  # type: ignore[misc]
+    from .template_strings import template_strings  # type: ignore[misc]
+    from .version_consistency import version_consistency  # type: ignore[misc]
 
     def __init__(
         self, wf_path, release_mode=False, fix=(), key=None, fail_ignored=False, fail_warned=False, hide_progress=False
@@ -367,10 +371,10 @@ class PipelineLint(nf_core.utils.Pipeline):
             Given an list of error message IDs and the message texts, return a nicely formatted
             string for the terminal with appropriate ASCII colours.
             """
+            tools_version = __version__
+            if "dev" in __version__:
+                tools_version = "latest"
             for eid, msg in test_results:
-                tools_version = __version__
-                if "dev" in __version__:
-                    tools_version = "latest"
                 yield Markdown(
                     f"[{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html): {msg}"
                 )
@@ -462,6 +466,10 @@ class PipelineLint(nf_core.utils.Pipeline):
         if len(self.failed) > 0:
             overall_result = "Failed :x:"
 
+        tools_version = __version__
+        if "dev" in __version__:
+            tools_version = "latest"
+
         # List of tests for details
         test_failure_count = ""
         test_failures = ""
@@ -470,7 +478,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_failures = "### :x: Test failures:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
+                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.failed
                     ]
@@ -484,7 +492,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_ignored = "### :grey_question: Tests ignored:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
+                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.ignored
                     ]
@@ -498,7 +506,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_fixed = "### :grey_question: Tests fixed:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
+                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.fixed
                     ]
@@ -512,7 +520,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
+                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.warned
                     ]
@@ -527,7 +535,7 @@ class PipelineLint(nf_core.utils.Pipeline):
                 "\n".join(
                     [
                         (
-                            f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html)"
+                            f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html)"
                             f" - {strip_ansi_codes(msg, '`')}"
                         )
                         for eid, msg in self.passed

@@ -32,7 +32,7 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
         # check if the module's main.nf requires a conda environment
         with open(Path(module.component_dir, "main.nf"), "r") as fh:
             main_nf = fh.read()
-            if "conda '${modulesDir}/environment.yml'" in main_nf:
+            if 'conda "${moduleDir}/environment.yml"' in main_nf:
                 module.failed.append(
                     ("environment_yml_exists", "Module's `environment.yml` does not exist", module.environment_yml)
                 )

@@ -92,7 +92,7 @@ pre-commit run --all
 ## API Documentation
 
 We aim to write function docstrings according to the [Google Python style-guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings). These are used to automatically generate package documentation on the nf-core website using Sphinx.
-You can find this documentation here: [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/)
+You can find this documentation here: [https://nf-co.re/tools/docs/](https://nf-co.re/tools/docs/)
 
 If you would like to test the documentation, you can install Sphinx locally by following Sphinx's [installation instruction](https://www.sphinx-doc.org/en/master/usage/installation.html).
 Once done, you can run `make clean` and then `make html` in the `docs/api` directory of `nf-core tools`.
