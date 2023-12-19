@@ -2,7 +2,7 @@
 // nf-core subworkflows test {{ component_name }}
 nextflow_workflow {
 
-    name "Test Workflow {{ component_name_underscore|upper }}"
+    name "Test Subworkflow {{ component_name_underscore|upper }}"
     script "../main.nf"
     workflow "{{ component_name_underscore|upper }}"
 
