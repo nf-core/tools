@@ -42,7 +42,7 @@ jobs:
     outputs:
       python-version: ${{ matrix.python-version }}
       runner: ${{ matrix.runner }}
-      run-tests: ${{ env.run-tests }}
+      run-tests: ${{ steps.conditions.outputs.run-tests }}
 
   test:
     name: Test with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
