@@ -1,5 +1,15 @@
 # nf-core/tools: Changelog
 
+# v2.11.1dev
+
+### Template
+
+### Linting
+
+### General
+
+### Modules & Subworkflows
+
 # [v2.11 - Magnesium Dragon](https://github.com/nf-core/tools/releases/tag/2.11) + [2023-12-19]
 
 ### Template
