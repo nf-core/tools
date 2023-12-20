@@ -4,6 +4,8 @@
 
 ### Template
 
+- Add a Github Action Workflow to the pipeline template that tests a successful download with 'nf-core download' ([#2618](https://github.com/nf-core/tools/pull/2618))
+
 ### Download
 
 ### Linting
