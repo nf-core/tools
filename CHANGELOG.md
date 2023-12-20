@@ -11,6 +11,8 @@
 
 ### General
 
+- Only dump `modules.json` when it is modified ([#2609](https://github.com/nf-core/tools/pull/2609))
+
 ### Modules & Subworkflows
 
 # [v2.11 - Magnesium Dragon](https://github.com/nf-core/tools/releases/tag/2.11) + [2023-12-19]
