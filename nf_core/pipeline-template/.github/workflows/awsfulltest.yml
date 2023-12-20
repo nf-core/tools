@@ -31,7 +31,7 @@ jobs:
             }
           profiles: test_full
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4
         with:
           name: Tower debug log file
           path: |
