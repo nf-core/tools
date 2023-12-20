@@ -900,7 +900,7 @@ If you want to make a minor change to a locally installed module but still keep 
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
-before_command:  sed "s/process_medium/process_low/g" modules/nf-core/modules/fastqc/main.nf > modules/nf-core/modules/fastqc/main.nf.patch && mv modules/nf-core/modules/fastqc/main.nf.patch modules/nf-core/modules/fastqc/main.nf
+before_command:  sed "s/process_medium/process_low/g" modules/nf-core/fastqc/main.nf > modules/nf-core/fastqc/main.nf.patch && mv modules/nf-core/fastqc/main.nf.patch modules/nf-core/fastqc/main.nf
 -->
 
 ![`nf-core modules patch fastqc`](docs/images/nf-core-modules-patch.svg)
@@ -965,7 +965,7 @@ extra_env:
   PROFILE: 'conda'
 -->
 
-![`nf-core modules test fastqc --no-prompts --force`](docs/images/nf-core-modules-test.svg)
+![`nf-core modules test fastqc --no-prompts`](docs/images/nf-core-modules-test.svg)
 
 In case you changed something in the test and want to update the snapshot, run
 
@@ -1076,6 +1076,9 @@ This shows documentation about the subworkflow on the command line, similar to w
 working_dir: tmp/nf-core-nextbigthing
 before_command: >
   echo "repository_type: pipeline" >> .nf-core.yml
+
+head: 15
+tail: 10
 -->
 
 ![`nf-core subworkflows info bam_rseqc`](docs/images/nf-core-subworkflows-info.svg)
