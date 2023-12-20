@@ -1,5 +1,19 @@
 # nf-core/tools: Changelog
 
+# v2.12dev
+
+### Template
+
+### Download
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### General
+
 # [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
 ### Template
