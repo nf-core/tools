@@ -1,21 +1,17 @@
 # nf-core/tools: Changelog
 
-# v2.11.1dev
+# [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
 ### Template
 
 - Rename `release-announcments.yml` to `release-announcements.yml` ([#2610](https://github.com/nf-core/tools/pull/2610))
 - Fix `nextflow.config` `docker.runOptions` ([#2607](https://github.com/nf-core/tools/pull/2607))
 
-### Linting
-
 ### General
 
 - Only dump `modules.json` when it is modified ([#2609](https://github.com/nf-core/tools/pull/2609))
 
-### Modules & Subworkflows
-
-# [v2.11 - Magnesium Dragon](https://github.com/nf-core/tools/releases/tag/2.11) + [2023-12-19]
+# [v2.11 - Magnesium Dragon](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-19]
 
 ### Template
 
