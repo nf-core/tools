@@ -98,7 +98,7 @@ jobs:
       - name: Test with pytest
         run: python3 -m pytest tests/ --color=yes --cov-report=xml --cov-config=.github/.coveragerc --cov=nf_core
 
-      - uses: codecov/codecov-action@v1
+      - uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3
         name: Upload code coverage report
         with:
           if: success()
