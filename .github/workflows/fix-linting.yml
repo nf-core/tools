@@ -34,12 +34,6 @@ jobs:
       - name: Run 'prettier --write'
         run: prettier --write ${GITHUB_WORKSPACE}
 
-      - name: Run Black
-        uses: psf/black@stable
-        with:
-          # Override to remove the default --check flag so that we make changes
-          options: "--color"
-
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:

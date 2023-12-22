@@ -1,4 +1,3 @@
-black
 myst_parser
 pytest-cov
 pytest-datafiles
