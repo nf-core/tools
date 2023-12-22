@@ -16,6 +16,7 @@ norecursedirs = [ ".*", "build", "dist", "*.egg", "data", "__pycache__", ".githu
 line-length = 120
 target-version = "py38"
 ignore = ["E501"]
+select = ["I", "E4", "E7", "E9", "F"]
 
 [tool.ruff.isort]
 known-first-party = ["nf_core"]

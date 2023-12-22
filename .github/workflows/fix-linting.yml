@@ -44,7 +44,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff
       - name: Run Ruff
-        run: ruff format --fix .
+        run: |
+          ruff check --fix .
+          ruff format .
 
       - name: Commit & push changes
         run: |
