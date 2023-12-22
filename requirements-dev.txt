@@ -6,7 +6,6 @@ Sphinx
 sphinx-rtd-theme
 mypy
 types-PyYAML
-pyupgrade
 types-requests
 types-jsonschema
 types-Markdown
