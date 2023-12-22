@@ -74,7 +74,7 @@ def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], Lis
                 )
             m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
             # Not a module, but contains sub-modules
-            if not "main.nf" in m_content:
+            if "main.nf" not in m_content:
                 for tool in m_content:
                     nfcore_modules_names.append(os.path.join(m, tool))
             else:

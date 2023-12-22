@@ -2,7 +2,6 @@ import os
 import re
 
 import pytest
-import yaml
 
 import nf_core.modules
 from nf_core.modules.modules_utils import ModuleException

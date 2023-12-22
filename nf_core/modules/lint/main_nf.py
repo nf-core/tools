@@ -263,7 +263,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                 self.passed.append(
                     (
                         "deprecated_enable_conda",
-                        f"Deprecated parameter 'params.enable_conda' correctly not found in the conda definition",
+                        "Deprecated parameter 'params.enable_conda' correctly not found in the conda definition",
                         self.main_nf,
                     )
                 )
@@ -271,7 +271,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                 self.failed.append(
                     (
                         "deprecated_enable_conda",
-                        f"Found deprecated parameter 'params.enable_conda' in the conda definition",
+                        "Found deprecated parameter 'params.enable_conda' in the conda definition",
                         self.main_nf,
                     )
                 )
@@ -308,7 +308,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                     )
                 )
             else:
-                self.passed.append(("container_links", f"Container prefix is correct", self.main_nf))
+                self.passed.append(("container_links", "Container prefix is correct", self.main_nf))
 
             # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
             # If so, add quay.io as default container prefix
@@ -576,7 +576,7 @@ def _parse_output(self, line):
     output = []
     if "meta" in line:
         output.append("meta")
-    if not "emit:" in line:
+    if "emit:" not in line:
         self.failed.append(("missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
     else:
         output.append(line.split("emit:")[1].strip())

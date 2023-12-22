@@ -24,9 +24,8 @@ import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.utils import custom_yaml_dumper
+from nf_core.utils import custom_yaml_dumper, rich_force_colors
 from nf_core.utils import plural_s as _s
-from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
 

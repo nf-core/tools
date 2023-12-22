@@ -317,7 +317,7 @@ class PipelineSchema:
                     param
                 ] = f"String should not be set to `{config_default}`"
         if schema_param["type"] == "boolean":
-            if not str(config_default) in ["false", "true"]:
+            if str(config_default) not in ["false", "true"]:
                 self.invalid_nextflow_config_default_parameters[
                     param
                 ] = f"Booleans should only be true or false, not `{config_default}`"

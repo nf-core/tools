@@ -53,7 +53,7 @@ def get_repo_info(directory: str, use_prompt: Optional[bool] = True) -> Tuple[st
         raise UserWarning("Repository type could not be established")
 
     # Check if it's a valid answer
-    if not repo_type in ["pipeline", "modules"]:
+    if repo_type not in ["pipeline", "modules"]:
         raise UserWarning(f"Invalid repository type: '{repo_type}'")
 
     # Check for org if modules repo

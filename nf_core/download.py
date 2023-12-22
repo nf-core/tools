@@ -551,7 +551,7 @@ class DownloadWorkflow:
                     self.containers_remote = sorted(list(set(self.containers_remote)))
             except (FileNotFoundError, LookupError) as e:
                 log.error(f"[red]Issue with reading the specified remote $NXF_SINGULARITY_CACHE index:[/]\n{e}\n")
-                if stderr.is_interactive and rich.prompt.Confirm.ask(f"[blue]Specify a new index file and try again?"):
+                if stderr.is_interactive and rich.prompt.Confirm.ask("[blue]Specify a new index file and try again?"):
                     self.container_cache_index = None  # reset chosen path to index file.
                     self.prompt_singularity_cachedir_remote()
                 else:
@@ -853,7 +853,7 @@ class DownloadWorkflow:
             ['https://depot.galaxyproject.org/singularity/scanpy:1.7.2--pyhdfd78af_0', 'biocontainers/scanpy:1.7.2--pyhdfd78af_0']
             """
             container_value_defs = [
-                capture for _, capture in container_value_defs[:] if not capture in ["singularity", "apptainer"]
+                capture for _, capture in container_value_defs[:] if capture not in ["singularity", "apptainer"]
             ]
 
             """
@@ -1066,7 +1066,7 @@ class DownloadWorkflow:
                                 self.singularity_pull_image(*container, library, progress)
                                 # Pulling the image was successful, no ContainerError was raised, break the library loop
                                 break
-                            except ContainerError.ImageExists as e:
+                            except ContainerError.ImageExists:
                                 # Pulling not required
                                 break
                             except ContainerError.RegistryNotFound as e:
@@ -1085,7 +1085,7 @@ class DownloadWorkflow:
                                     break  # there no point in trying other registries if absolute URI was specified.
                                 else:
                                     continue
-                            except ContainerError.InvalidTag as e:
+                            except ContainerError.InvalidTag:
                                 # Try other registries
                                 continue
                             except ContainerError.OtherError as e:

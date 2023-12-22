@@ -2,7 +2,6 @@
 Update a nextflow.config file with refgenie genomes
 """
 
-import json
 import logging
 import os
 import re

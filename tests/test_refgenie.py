@@ -7,8 +7,6 @@ import subprocess
 import tempfile
 import unittest
 
-import yaml
-
 
 class TestRefgenie(unittest.TestCase):
     """Class for refgenie tests"""

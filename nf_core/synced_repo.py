@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Dict
 
 import git
-import rich.progress
 from git.exc import GitCommandError
 
 from nf_core.utils import load_tools_config

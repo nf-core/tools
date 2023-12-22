@@ -118,7 +118,7 @@ def meta_yml(subworkflow_lint_object, subworkflow):
             subworkflow.failed.append(
                 (
                     "meta_modules_deprecated",
-                    f"Deprecated section 'modules' found in `meta.yml`, use 'components' instead",
+                    "Deprecated section 'modules' found in `meta.yml`, use 'components' instead",
                     subworkflow.meta_yml,
                 )
             )
@@ -126,7 +126,7 @@ def meta_yml(subworkflow_lint_object, subworkflow):
             subworkflow.passed.append(
                 (
                     "meta_modules_deprecated",
-                    f"Deprecated section 'modules' not found in `meta.yml`",
+                    "Deprecated section 'modules' not found in `meta.yml`",
                     subworkflow.meta_yml,
                 )
             )

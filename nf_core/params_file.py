@@ -9,8 +9,6 @@ import textwrap
 from typing import Literal, Optional
 
 import questionary
-import rich
-import rich.columns
 
 import nf_core.list
 import nf_core.utils
@@ -197,7 +195,6 @@ class ParamsFileBuilder:
         self.schema_obj.get_schema_defaults()
         default = properties.get("default")
         typ = properties.get("type")
-        required = name in required_properties
 
         out += _print_wrapped(name, "-", mode="both")
 

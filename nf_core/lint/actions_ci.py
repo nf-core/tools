@@ -1,5 +1,4 @@
 import os
-import re
 
 import yaml
 
@@ -62,7 +61,7 @@ def actions_ci(self):
         if not (
             pr_subtree is None
             or ("branches" in pr_subtree and "dev" in pr_subtree["branches"])
-            or ("ignore_branches" in pr_subtree and not "dev" in pr_subtree["ignore_branches"])
+            or ("ignore_branches" in pr_subtree and "dev" not in pr_subtree["ignore_branches"])
         ):
             raise AssertionError()
         if "published" not in ciwf[True]["release"]["types"]:

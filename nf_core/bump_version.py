@@ -68,7 +68,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
             [
                 (
                     f"/releases/tag/{current_version}",
-                    f"/tree/dev",
+                    "/tree/dev",
                 )
             ],
         )
@@ -78,7 +78,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
             pipeline_obj,
             [
                 (
-                    f"/tree/dev",
+                    "/tree/dev",
                     f"/releases/tag/{multiqc_new_version}",
                 )
             ],

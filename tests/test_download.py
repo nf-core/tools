@@ -1,7 +1,6 @@
 """Tests for the download subcommand of nf-core tools
 """
 
-import hashlib
 import os
 import re
 import shutil
@@ -16,9 +15,9 @@ import nf_core.create
 import nf_core.utils
 from nf_core.download import ContainerError, DownloadWorkflow, WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
-from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR, run_cmd
+from nf_core.utils import run_cmd
 
-from .utils import with_temporary_file, with_temporary_folder
+from .utils import with_temporary_folder
 
 
 class DownloadTest(unittest.TestCase):
@@ -343,7 +342,6 @@ class DownloadTest(unittest.TestCase):
             container_library=("mirage-the-imaginative-registry.io", "quay.io", "ghcr.io", "docker.io"),
         )
         mock_fetch_wf_config.return_value = {
-            "process.mapping.container": "helloworld",
             "process.mapping.container": "helloworld",
             "process.mapping.container": "helloooooooworld",
             "process.mapping.container": "ewels/multiqc:gorewrite",

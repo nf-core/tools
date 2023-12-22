@@ -68,7 +68,7 @@ class TestParamsFileBuilder:
 
         # Creates a new empty file
         outfile = Path(self.tmp_dir) / "params-file.yml"
-        with open(outfile, "w") as fp:
+        with open(outfile, "w"):
             pass
 
         res = self.params_template_builder.write_params_file(outfile)
