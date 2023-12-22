@@ -8,3 +8,6 @@ select = ["I", "E4", "E7", "E9", "F"]
 
 [tool.ruff.isort]
 known-first-party = ["nf_core"]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["E402", "F401"]
