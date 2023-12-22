@@ -146,9 +146,9 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
             # try it in the main.nf instead
             try:
                 with open(module.main_nf, "r") as fh:
-                    for l in fh:
-                        if "bioconda::" in l:
-                            bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+                    for line in fh:
+                        if "bioconda::" in line:
+                            bioconda_packages = [b for b in line.split() if "bioconda::" in b]
             except FileNotFoundError:
                 log.error(
                     f"Neither `environment.yml` nor `main.nf` of {module.component_name} module could be read to get bioconada version of used tools."
@@ -288,7 +288,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         for m in [self.up_to_date, self.updated, self.failed]:
             try:
                 max_mod_name_len = max(len(m[2]), max_mod_name_len)
-            except:
+            except Exception:
                 pass
 
         def format_result(module_updates: List[Tuple[str, str]], table: Table) -> Table:

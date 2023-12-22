@@ -16,8 +16,9 @@ import os
 import sys
 from typing import Dict
 
-sys.path.insert(0, os.path.abspath("../../../nf_core"))
 import nf_core
+
+sys.path.insert(0, os.path.abspath("../../../nf_core"))
 
 # -- Project information -----------------------------------------------------
 

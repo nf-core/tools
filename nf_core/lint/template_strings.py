@@ -32,9 +32,9 @@ def template_strings(self):
 
         with io.open(fn, "r", encoding="latin1") as fh:
             lnum = 0
-            for l in fh:
+            for line in fh:
                 lnum += 1
-                cc_matches = re.findall(r"[^$]{{[^:}]*}}", l)
+                cc_matches = re.findall(r"[^$]{{[^:}]*}}", line)
                 if len(cc_matches) > 0:
                     for cc_match in cc_matches:
                         failed.append(f"Found a Jinja template string in `{fn}` L{lnum}: {cc_match}")

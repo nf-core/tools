@@ -139,7 +139,7 @@ class Pipeline:
         try:
             repo = git.Repo(self.wf_path)
             self.git_sha = repo.head.object.hexsha
-        except:
+        except Exception:
             log.debug(f"Could not find git hash for pipeline: {self.wf_path}")
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
@@ -274,8 +274,8 @@ def fetch_wf_config(wf_path, cache_config=True):
     result = run_cmd("nextflow", f"config -flat {wf_path}")
     if result is not None:
         nfconfig_raw, _ = result
-        for l in nfconfig_raw.splitlines():
-            ul = l.decode("utf-8")
+        for line in nfconfig_raw.splitlines():
+            ul = line.decode("utf-8")
             try:
                 k, v = ul.split(" = ", 1)
                 config[k] = v.strip("'\"")
@@ -287,8 +287,8 @@ def fetch_wf_config(wf_path, cache_config=True):
     try:
         main_nf = os.path.join(wf_path, "main.nf")
         with open(main_nf, "r") as fh:
-            for l in fh:
-                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", l)
+            for line in fh:
+                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", line)
                 if match:
                     config[match.group(1)] = "null"
     except FileNotFoundError as e:
@@ -666,18 +666,18 @@ def parse_anaconda_licence(anaconda_response, version=None):
 
     # Clean up / standardise licence names
     clean_licences = []
-    for l in licences:
-        l = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", l)
-        l = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", l, flags=re.IGNORECASE)
-        l = l.replace("GPL-", "GPLv")
-        l = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", l)  # Add v prefix to GPL version if none found
-        l = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", l)  # Remove superflous .0 from GPL version
-        l = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", l)
-        l = re.sub(r"GPL\s*v", "GPL v", l)  # Normalise whitespace to one space between GPL and v
-        l = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", l)  # Normalise whitespace around >= GPL versions
-        l = l.replace("Clause", "clause")  # BSD capitilisation
-        l = re.sub(r"-only$", "", l)  # Remove superflous GPL "only" version suffixes
-        clean_licences.append(l)
+    for license in licences:
+        license = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", license)
+        license = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", license, flags=re.IGNORECASE)
+        license = license.replace("GPL-", "GPLv")
+        license = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", license)  # Add v prefix to GPL version if none found
+        license = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", license)  # Remove superflous .0 from GPL version
+        license = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", license)
+        license = re.sub(r"GPL\s*v", "GPL v", license)  # Normalise whitespace to one space between GPL and v
+        license = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", license)  # Normalise whitespace around >= GPL versions
+        license = license.replace("Clause", "clause")  # BSD capitilisation
+        license = re.sub(r"-only$", "", license)  # Remove superflous GPL "only" version suffixes
+        clean_licences.append(license)
     return clean_licences
 
 

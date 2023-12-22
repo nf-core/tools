@@ -8,6 +8,7 @@ from typing import Dict
 import git
 from git.exc import GitCommandError
 
+from nf_core.modules.modules_utils import repo_full_name_from_remote
 from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
@@ -116,7 +117,7 @@ class SyncedRepo:
 
         self.remote_url = remote_url
 
-        self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
+        self.fullname = repo_full_name_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, hide_progress)
 

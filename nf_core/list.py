@@ -205,7 +205,7 @@ class Workflows:
             def sort_pulled_date(wf):
                 try:
                     return wf.local_wf.last_pull * -1
-                except:
+                except Exception:
                     return 0
 
             filtered_workflows.sort(key=sort_pulled_date)

@@ -24,7 +24,7 @@ class TestRefgenie(unittest.TestCase):
         # avoids adding includeConfig statement to config file outside the current tmpdir
         try:
             self.NXF_HOME_ORIGINAL = os.environ["NXF_HOME"]
-        except:
+        except Exception:
             self.NXF_HOME_ORIGINAL = None
         os.environ["NXF_HOME"] = self.NXF_HOME
 

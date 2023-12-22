@@ -159,8 +159,8 @@ class DownloadTest(unittest.TestCase):
         if result is not None:
             nfconfig_raw, _ = result
             config = {}
-            for l in nfconfig_raw.splitlines():
-                ul = l.decode("utf-8")
+            for line in nfconfig_raw.splitlines():
+                ul = line.decode("utf-8")
                 try:
                     k, v = ul.split(" = ", 1)
                     config[k] = v.strip("'\"")
@@ -342,8 +342,8 @@ class DownloadTest(unittest.TestCase):
             container_library=("mirage-the-imaginative-registry.io", "quay.io", "ghcr.io", "docker.io"),
         )
         mock_fetch_wf_config.return_value = {
-            "process.mapping.container": "helloworld",
-            "process.mapping.container": "helloooooooworld",
+            "process.helloworld.container": "helloworld",
+            "process.hellooworld.container": "helloooooooworld",
             "process.mapping.container": "ewels/multiqc:gorewrite",
         }
         download_obj.find_container_images("workflow")

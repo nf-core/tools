@@ -45,30 +45,30 @@ def main_nf(_, subworkflow):
     subworkflow_lines = []
     workflow_lines = []
     main_lines = []
-    for l in lines:
-        if re.search(r"^\s*workflow\s*\w*\s*{", l) and state == "subworkflow":
+    for line in lines:
+        if re.search(r"^\s*workflow\s*\w*\s*{", line) and state == "subworkflow":
             state = "workflow"
-        if re.search(r"take\s*:", l) and state in ["workflow"]:
+        if re.search(r"take\s*:", line) and state in ["workflow"]:
             state = "take"
             continue
-        if re.search(r"main\s*:", l) and state in ["take", "workflow"]:
+        if re.search(r"main\s*:", line) and state in ["take", "workflow"]:
             state = "main"
             continue
-        if re.search(r"emit\s*:", l) and state in ["take", "main", "workflow"]:
+        if re.search(r"emit\s*:", line) and state in ["take", "main", "workflow"]:
             state = "emit"
             continue
 
         # Perform state-specific linting checks
-        if state == "subworkflow" and not _is_empty(l):
-            subworkflow_lines.append(l)
-        if state == "workflow" and not _is_empty(l):
-            workflow_lines.append(l)
-        if state == "take" and not _is_empty(l):
-            inputs.extend(_parse_input(subworkflow, l))
-        if state == "emit" and not _is_empty(l):
-            outputs.extend(_parse_output(subworkflow, l))
-        if state == "main" and not _is_empty(l):
-            main_lines.append(l)
+        if state == "subworkflow" and not _is_empty(line):
+            subworkflow_lines.append(line)
+        if state == "workflow" and not _is_empty(line):
+            workflow_lines.append(line)
+        if state == "take" and not _is_empty(line):
+            inputs.extend(_parse_input(subworkflow, line))
+        if state == "emit" and not _is_empty(line):
+            outputs.extend(_parse_output(subworkflow, line))
+        if state == "main" and not _is_empty(line):
+            main_lines.append(line)
 
     # Check that we have required sections
     if not len(outputs):
@@ -177,9 +177,9 @@ def check_subworkflow_section(self, lines):
     )
 
     includes = []
-    for l in lines:
-        if l.strip().startswith("include"):
-            component_name = l.split("{")[1].split("}")[0].strip()
+    for line in lines:
+        if line.strip().startswith("include"):
+            component_name = line.split("{")[1].split("}")[0].strip()
             if " as " in component_name:
                 component_name = component_name.split(" as ")[1].strip()
             includes.append(component_name)

@@ -395,7 +395,7 @@ class PipelineSync:
         try:
             list_prs_json = json.loads(list_prs_request.content)
             list_prs_pp = json.dumps(list_prs_json, indent=4)
-        except:
+        except Exception:
             list_prs_json = list_prs_request.content
             list_prs_pp = list_prs_request.content
 
@@ -438,7 +438,7 @@ class PipelineSync:
         try:
             pr_request_json = json.loads(pr_request.content)
             pr_request_pp = json.dumps(pr_request_json, indent=4)
-        except:
+        except Exception:
             pr_request_json = pr_request.content
             pr_request_pp = pr_request.content
 
