@@ -1,5 +1,4 @@
 black
-isort
 myst_parser
 pytest-cov
 pytest-datafiles
