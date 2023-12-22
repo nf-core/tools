@@ -1,4 +1,10 @@
 repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff-format # formatter
+      - id: ruff # linter
+        args: [--fix]
   - repo: https://github.com/psf/black
     rev: 23.1.0
     hooks:
