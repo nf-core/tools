@@ -195,6 +195,7 @@ class ParamsFileBuilder:
         self.schema_obj.get_schema_defaults()
         default = properties.get("default")
         typ = properties.get("type")
+        required = name in required_properties
 
         out += _print_wrapped(name, "-", mode="both")
 
@@ -203,6 +204,9 @@ class ParamsFileBuilder:
 
         if typ:
             out += _print_wrapped(f"Type: {typ}", mode="none", indent=4)
+
+        if required:
+            out += _print_wrapped("Required", mode="none", indent=4)
 
         out += _print_wrapped("\n", mode="end")
         out += f"# {name} = {json.dumps(default)}\n"
