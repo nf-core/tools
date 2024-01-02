@@ -446,7 +446,7 @@ class ComponentCreate(ComponentCommand):
                     if "publishDir" not in line and line.strip() != "":
                         config_lines += line
             # if the nextflow.config file only contained publishDir, non_publish_dir_lines will be 11 characters long (`process {\n}`)
-            if len(non_publish_dir_lines) > 11:
+            if len(config_lines) > 11:
                 log.debug("Copying nextflow.config file from pytest tests")
                 with open(
                     Path(self.directory, self.component_type, self.org, self.component_dir, "tests", "nextflow.config"),
