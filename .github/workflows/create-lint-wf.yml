@@ -154,5 +154,5 @@ jobs:
           path: create-lint-wf/log.txt
 
       - name: Cleanup work directory
-        run: rm -rf work || true
+        run: rm -rf create-lint-wf || true
         if: always()

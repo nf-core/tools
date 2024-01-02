@@ -157,5 +157,5 @@ jobs:
           path: create-test-lint-wf/artifact_files.tar
 
       - name: Cleanup work directory
-        run: rm -rf work || true
+        run: rm -rf create-test-lint-wf || true
         if: always()
