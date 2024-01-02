@@ -104,6 +104,12 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin" # See 'Supported distributions' for available options
+          java-version: "21"
+
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v1
 
