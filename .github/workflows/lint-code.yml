@@ -121,7 +121,7 @@ jobs:
 
       - name: Get Python changed files
         id: changed-py-files
-        uses: tj-actions/changed-files@v23
+        uses: tj-actions/changed-files@6c44eb8294bb9c93d6118427f4ff8404b695e1d7 # v24
         with:
           files: |
             *.py
