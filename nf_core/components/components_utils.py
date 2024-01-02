@@ -138,7 +138,7 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[str], List[str
     """
     modules = []
     subworkflows = []
-    with open(Path(subworkflow_dir, "main.nf"), "r") as fh:
+    with open(Path(subworkflow_dir, "main.nf")) as fh:
         for line in fh:
             regex = re.compile(
                 r"include(?: *{ *)([a-zA-Z\_0-9]*)(?: *as *)?(?:[a-zA-Z\_0-9]*)?(?: *})(?: *from *)(?:'|\")(.*)(?:'|\")"

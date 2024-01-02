@@ -1,6 +1,5 @@
 """ Code to deal with pipeline JSON Schema """
 
-from __future__ import print_function
 
 import copy
 import json
@@ -107,7 +106,7 @@ class PipelineSchema:
 
     def load_schema(self):
         """Load a pipeline schema from a file"""
-        with open(self.schema_filename, "r") as fh:
+        with open(self.schema_filename) as fh:
             self.schema = json.load(fh)
         self.schema_defaults = {}
         self.schema_params = {}
@@ -189,7 +188,7 @@ class PipelineSchema:
         """
         # First, try to load as JSON
         try:
-            with open(params_path, "r") as fh:
+            with open(params_path) as fh:
                 try:
                     params = json.load(fh)
                 except json.JSONDecodeError as e:
@@ -200,7 +199,7 @@ class PipelineSchema:
             log.debug(f"Could not load input params as JSON: {json_e}")
             # This failed, try to load as YAML
             try:
-                with open(params_path, "r") as fh:
+                with open(params_path) as fh:
                     params = yaml.safe_load(fh)
                     self.input_params.update(params)
                     log.debug(f"Loaded YAML input params: {params_path}")

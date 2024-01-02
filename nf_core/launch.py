@@ -1,6 +1,5 @@
 """ Launch a pipeline, interactively collecting params """
 
-from __future__ import print_function
 
 import copy
 import json

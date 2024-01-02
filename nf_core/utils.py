@@ -188,7 +188,7 @@ class Pipeline:
     def _load_conda_environment(self):
         """Try to load the pipeline environment.yml file, if it exists"""
         try:
-            with open(os.path.join(self.wf_path, "environment.yml"), "r") as fh:
+            with open(os.path.join(self.wf_path, "environment.yml")) as fh:
                 self.conda_config = yaml.safe_load(fh)
         except FileNotFoundError:
             log.debug("No conda `environment.yml` file found.")
@@ -262,7 +262,7 @@ def fetch_wf_config(wf_path, cache_config=True):
         cache_path = os.path.join(cache_basedir, cache_fn)
         if os.path.isfile(cache_path) and cache_config is True:
             log.debug(f"Found a config cache, loading: {cache_path}")
-            with open(cache_path, "r") as fh:
+            with open(cache_path) as fh:
                 try:
                     config = json.load(fh)
                 except json.JSONDecodeError as e:
@@ -286,7 +286,7 @@ def fetch_wf_config(wf_path, cache_config=True):
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
     try:
         main_nf = os.path.join(wf_path, "main.nf")
-        with open(main_nf, "r") as fh:
+        with open(main_nf) as fh:
             for l in fh:
                 match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", l)
                 if match:
@@ -312,7 +312,7 @@ def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
     full_cmd = f"{executable} {cmd}"
     log.debug(f"Running command: {full_cmd}")
     try:
-        proc = subprocess.run(shlex.split(full_cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=True)
         return (proc.stdout, proc.stderr)
     except OSError as e:
         if e.errno == errno.ENOENT:
@@ -480,7 +480,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
         gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
         if self.auth is None and os.path.exists(gh_cli_config_fn):
             try:
-                with open(gh_cli_config_fn, "r") as fh:
+                with open(gh_cli_config_fn) as fh:
                     gh_cli_config = yaml.safe_load(fh)
                     self.auth = requests.auth.HTTPBasicAuth(
                         gh_cli_config["github.com"]["user"], gh_cli_config["github.com"]["oauth_token"]
@@ -792,7 +792,7 @@ def custom_yaml_dumper():
 
             See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
             """
-            return super(CustomDumper, self).increase_indent(flow=flow, indentless=False)
+            return super().increase_indent(flow=flow, indentless=False)
 
         # HACK: insert blank lines between top-level objects
         # inspired by https://stackoverflow.com/a/44284819/3786245
@@ -1025,7 +1025,7 @@ def load_tools_config(directory: Union[str, Path] = "."):
             log.debug(f"No tools config file found: {CONFIG_PATHS[0]}")
         return Path(directory, CONFIG_PATHS[0]), {}
 
-    with open(config_fn, "r") as fh:
+    with open(config_fn) as fh:
         tools_config = yaml.safe_load(fh)
 
     # If the file is empty
@@ -1145,7 +1145,7 @@ def validate_file_md5(file_name, expected_md5hex):
     if file_md5hex.upper() == expected_md5hex.upper():
         log.debug(f"md5 sum of image matches expected: {expected_md5hex}")
     else:
-        raise IOError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
+        raise OSError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
 
     return True
 

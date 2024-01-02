@@ -81,7 +81,7 @@ class NFCoreComponent:
     def _get_main_nf_tags(self, test_main_nf: Union[Path, str]):
         """Collect all tags from the main.nf.test file."""
         tags = []
-        with open(test_main_nf, "r") as fh:
+        with open(test_main_nf) as fh:
             for line in fh:
                 if line.strip().startswith("tag"):
                     tags.append(line.strip().split()[1].strip('"'))
@@ -90,7 +90,7 @@ class NFCoreComponent:
     def _get_included_components(self, main_nf: Union[Path, str]):
         """Collect all included components from the main.nf file."""
         included_components = []
-        with open(main_nf, "r") as fh:
+        with open(main_nf) as fh:
             for line in fh:
                 if line.strip().startswith("include"):
                     # get tool/subtool or subworkflow name from include statement, can be in the form
@@ -107,7 +107,7 @@ class NFCoreComponent:
     def _get_included_components_in_chained_tests(self, main_nf_test: Union[Path, str]):
         """Collect all included components from the main.nf file."""
         included_components = []
-        with open(main_nf_test, "r") as fh:
+        with open(main_nf_test) as fh:
             for line in fh:
                 if line.strip().startswith("script"):
                     # get tool/subtool or subworkflow name from script statement, can be:
@@ -151,7 +151,7 @@ class NFCoreComponent:
     def get_inputs_from_main_nf(self):
         """Collect all inputs from the main.nf file."""
         inputs = []
-        with open(self.main_nf, "r") as f:
+        with open(self.main_nf) as f:
             data = f.read()
         # get input values from main.nf after "input:", which can be formatted as tuple val(foo) path(bar) or val foo or val bar or path bar or path foo
         # regex matches:
@@ -178,7 +178,7 @@ class NFCoreComponent:
 
     def get_outputs_from_main_nf(self):
         outputs = []
-        with open(self.main_nf, "r") as f:
+        with open(self.main_nf) as f:
             data = f.read()
         # get output values from main.nf after "output:". the names are always after "emit:"
         if "output:" not in data:

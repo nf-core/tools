@@ -75,7 +75,7 @@ class PipelineCreate:
             ],
         }
         # Get list of files we're skipping with the supplied skip keys
-        self.skip_paths = set(sp for k in skip_paths_keys for sp in skippable_paths[k])
+        self.skip_paths = {sp for k in skip_paths_keys for sp in skippable_paths[k]}
 
         # Set convenience variables
         self.name = self.template_params["name"]
@@ -108,7 +108,7 @@ class PipelineCreate:
         # Obtain template customization info from template yaml file or `.nf-core.yml` config file
         try:
             if template_yaml_path is not None:
-                with open(template_yaml_path, "r") as f:
+                with open(template_yaml_path) as f:
                     template_yaml = yaml.safe_load(f)
             elif "template" in config_yml:
                 template_yaml = config_yml["template"]
@@ -395,7 +395,7 @@ class PipelineCreate:
         """
         bug_report_path = self.outdir / ".github" / "ISSUE_TEMPLATE" / "bug_report.yml"
 
-        with open(bug_report_path, "r") as fh:
+        with open(bug_report_path) as fh:
             contents = yaml.load(fh, Loader=yaml.FullLoader)
 
         # Remove the first item in the body, which is the information about the docs

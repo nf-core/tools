@@ -54,7 +54,7 @@ def version_consistency(self):
     if len(set(versions.values())) != 1:
         failed.append(
             "The versioning is not consistent between container, release tag "
-            "and config. Found {}".format(", ".join(["{} = {}".format(k, v) for k, v in versions.items()]))
+            "and config. Found {}".format(", ".join([f"{k} = {v}" for k, v in versions.items()]))
         )
 
     passed.append("Version tags are numeric and consistent between container, release tag and config.")

@@ -26,7 +26,7 @@ def meta_yml(subworkflow_lint_object, subworkflow):
     """
     # Read the meta.yml file
     try:
-        with open(subworkflow.meta_yml, "r") as fh:
+        with open(subworkflow.meta_yml) as fh:
             meta_yaml = yaml.safe_load(fh)
         subworkflow.passed.append(("meta_yml_exists", "Subworkflow `meta.yml` exists", subworkflow.meta_yml))
     except FileNotFoundError:
@@ -36,9 +36,7 @@ def meta_yml(subworkflow_lint_object, subworkflow):
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = True
     try:
-        with open(
-            Path(subworkflow_lint_object.modules_repo.local_repo_dir, "subworkflows/yaml-schema.json"), "r"
-        ) as fh:
+        with open(Path(subworkflow_lint_object.modules_repo.local_repo_dir, "subworkflows/yaml-schema.json")) as fh:
             schema = json.load(fh)
         jsonschema.validators.validate(instance=meta_yaml, schema=schema)
         subworkflow.passed.append(("meta_yml_valid", "Subworkflow `meta.yml` is valid", subworkflow.meta_yml))

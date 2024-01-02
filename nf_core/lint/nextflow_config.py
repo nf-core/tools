@@ -190,13 +190,11 @@ def nextflow_config(self):
 
     # Check and warn if the process configuration is done with deprecated syntax
     process_with_deprecated_syntax = list(
-        set(
-            [
-                re.search(r"^(process\.\$.*?)\.+.*$", ck).group(1)
-                for ck in self.nf_config.keys()
-                if re.match(r"^(process\.\$.*?)\.+.*$", ck)
-            ]
-        )
+        {
+            re.search(r"^(process\.\$.*?)\.+.*$", ck).group(1)
+            for ck in self.nf_config.keys()
+            if re.match(r"^(process\.\$.*?)\.+.*$", ck)
+        }
     )
     for pd in process_with_deprecated_syntax:
         warned.append(f"Process configuration is done with deprecated_syntax: {pd}")
@@ -300,7 +298,7 @@ def nextflow_config(self):
         ]
         path = os.path.join(self.wf_path, "nextflow.config")
         i = 0
-        with open(path, "r") as f:
+        with open(path) as f:
             for line in f:
                 if lines[i] in line:
                     i += 1
@@ -320,7 +318,7 @@ def nextflow_config(self):
             )
 
     # Check for the availability of the "test" configuration profile by parsing nextflow.config
-    with open(os.path.join(self.wf_path, "nextflow.config"), "r") as f:
+    with open(os.path.join(self.wf_path, "nextflow.config")) as f:
         content = f.read()
 
         # Remove comments

@@ -499,7 +499,7 @@ class ComponentUpdate(ComponentCommand):
                         ]
             elif isinstance(self.update_config[repo_name], dict):
                 # If it is a dict, then there are entries for individual components or component directories
-                for component_dir in set([dir for dir, _ in components]):
+                for component_dir in {dir for dir, _ in components}:
                     if isinstance(self.update_config[repo_name][component_dir], str):
                         # If a string is given it is the commit SHA to which we should update to
                         custom_sha = self.update_config[repo_name][component_dir]

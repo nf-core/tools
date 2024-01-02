@@ -134,7 +134,7 @@ class TestLint(unittest.TestCase):
         self.lint_obj._save_json_results(json_fn)
 
         # Load created JSON file and check its contents
-        with open(json_fn, "r") as fh:
+        with open(json_fn) as fh:
             try:
                 saved_json = json.load(fh)
             except json.JSONDecodeError as e:

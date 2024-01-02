@@ -9,7 +9,7 @@ def test_actions_schema_validation_missing_jobs(self):
     """Missing 'jobs' field should result in failure"""
     new_pipeline = self._make_pipeline_copy()
 
-    with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "r") as fh:
+    with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml")) as fh:
         awstest_yml = yaml.safe_load(fh)
     awstest_yml.pop("jobs")
     with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "w") as fh:
@@ -27,7 +27,7 @@ def test_actions_schema_validation_missing_on(self):
     """Missing 'on' field should result in failure"""
     new_pipeline = self._make_pipeline_copy()
 
-    with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "r") as fh:
+    with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml")) as fh:
         awstest_yml = yaml.safe_load(fh)
     awstest_yml.pop(True)
     with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "w") as fh:
@@ -46,7 +46,7 @@ def test_actions_schema_validation_fails_for_additional_property(self):
     """Missing 'jobs' field should result in failure"""
     new_pipeline = self._make_pipeline_copy()
 
-    with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "r") as fh:
+    with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml")) as fh:
         awstest_yml = yaml.safe_load(fh)
     awstest_yml["not_jobs"] = awstest_yml["jobs"]
     with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "w") as fh:

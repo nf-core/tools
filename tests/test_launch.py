@@ -321,7 +321,7 @@ class TestLaunch(TestCase):
             == f'nextflow run {self.pipeline_dir} -params-file "{os.path.relpath(self.nf_params_fn)}"'
         )
         # Check saved parameters file
-        with open(self.nf_params_fn, "r") as fh:
+        with open(self.nf_params_fn) as fh:
             try:
                 saved_json = json.load(fh)
             except json.JSONDecodeError as e:

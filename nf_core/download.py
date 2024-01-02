@@ -1,6 +1,5 @@
 """Downloads a nf-core pipeline to the local file system."""
 
-from __future__ import print_function
 
 import concurrent.futures
 import io
@@ -640,7 +639,7 @@ class DownloadWorkflow:
         log.debug(f"Editing 'params.custom_config_base' in '{nfconfig_fn}'")
 
         # Load the nextflow.config file into memory
-        with open(nfconfig_fn, "r") as nfconfig_fh:
+        with open(nfconfig_fn) as nfconfig_fh:
             nfconfig = nfconfig_fh.read()
 
         # Replace the target string
@@ -700,7 +699,7 @@ class DownloadWorkflow:
                 if bool(config_findings_dsl2):
                     # finding fill always be a tuple of length 2, first the quote used and second the enquoted value.
                     for finding in config_findings_dsl2:
-                        config_findings.append((finding + (self.nf_config, "Nextflow configs")))
+                        config_findings.append(finding + (self.nf_config, "Nextflow configs"))
                 else:  # no regex match, likely just plain string
                     """
                     Append string also as finding-like tuple for consistency
@@ -719,7 +718,7 @@ class DownloadWorkflow:
             for file in files:
                 if file.endswith(".nf"):
                     file_path = os.path.join(subdir, file)
-                    with open(file_path, "r") as fh:
+                    with open(file_path) as fh:
                         # Look for any lines with container "xxx" or container 'xxx'
                         search_space = fh.read()
                         """
@@ -744,7 +743,7 @@ class DownloadWorkflow:
                         for finding in local_module_findings:
                             # append finding since we want to collect them from all modules
                             # also append search_space because we need to start over later if nothing was found.
-                            module_findings.append((finding + (search_space, file_path)))
+                            module_findings.append(finding + (search_space, file_path))
 
         # Not sure if there will ever be multiple container definitions per module, but beware DSL3.
         # Like above run on shallow copy, because length may change at runtime.

@@ -30,7 +30,7 @@ def template_strings(self):
         if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
             continue
 
-        with io.open(fn, "r", encoding="latin1") as fh:
+        with open(fn, encoding="latin1") as fh:
             lnum = 0
             for l in fh:
                 lnum += 1

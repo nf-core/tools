@@ -41,7 +41,7 @@ def pipeline_todos(self, root_dir=None):
 
     ignore = [".git"]
     if os.path.isfile(os.path.join(root_dir, ".gitignore")):
-        with io.open(os.path.join(root_dir, ".gitignore"), "rt", encoding="latin1") as fh:
+        with open(os.path.join(root_dir, ".gitignore"), encoding="latin1") as fh:
             for l in fh:
                 ignore.append(os.path.basename(l.strip().rstrip("/")))
     for root, dirs, files in os.walk(root_dir, topdown=True):
@@ -52,7 +52,7 @@ def pipeline_todos(self, root_dir=None):
             files[:] = [f for f in files if not fnmatch.fnmatch(os.path.join(root, f), i)]
         for fname in files:
             try:
-                with io.open(os.path.join(root, fname), "rt", encoding="latin1") as fh:
+                with open(os.path.join(root, fname), encoding="latin1") as fh:
                     for l in fh:
                         if "TODO nf-core" in l:
                             l = (

@@ -6,7 +6,6 @@ Command:
 nf-core modules lint
 """
 
-from __future__ import print_function
 
 import logging
 import os
