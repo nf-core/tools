@@ -6,7 +6,7 @@ runners:
     cloud: "aws"
     instance_type: "t3a.large"
     # Ubuntu-20.4, ami image
-    machine_image: "ami-0905a3c97561e0b69"
+    machine_image: "ami-for-eu-west-1"
     preemptible: false
     region: "eu-west-1"
     # Add this label in the "runs-on" param in .github/workflows/<workflow-name>.yml
