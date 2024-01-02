@@ -170,9 +170,11 @@ class NFCoreComponent:
         matches = re.finditer(regex, input_data, re.MULTILINE)
         for matchNum, match in enumerate(matches, start=1):
             if match.group(3):
-                inputs.append(match.group(3))
+                input_val = match.group(3).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
+                inputs.append(input_val)
             elif match.group(4):
-                inputs.append(match.group(4))
+                input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
+                inputs.append(input_val)
         log.info(f"Found {len(inputs)} inputs in {self.main_nf}")
         self.inputs = inputs
 
