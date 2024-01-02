@@ -179,7 +179,7 @@ jobs:
 
       - name: Run coverage
         run: |
-          coverage combine coverage*/.coverage*
+          coverage combine coverage*/.coverage* --keep
           coverage report
           coverage xml
 
