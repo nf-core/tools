@@ -66,5 +66,5 @@ jobs:
 
       - name: Cleanup work directory
         # cleanup and fail gracefully if I get a permission error
-        run: rm -rf create-test-wf || true
+        run: rm -rf create-test-wf
         if: always()
