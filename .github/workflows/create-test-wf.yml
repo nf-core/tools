@@ -55,7 +55,7 @@ jobs:
           mkdir create-test-wf && cd create-test-wf
           export NXF_WORK=$(pwd)
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
-          nextflow run nf-core-testpipeline -profile test,self_hosted_runner --outdir ./results
+          nextflow run nf-core-testpipeline -profile test,self_hosted_runner --outdir ./results -cleanup
 
       - name: Upload log file artifact
         if: ${{ always() }}
@@ -65,6 +65,6 @@ jobs:
           path: create-test-wf/log.txt
 
       - name: Cleanup work directory
-        # cleanup and fail gracefully if I get a permission error
+        # cleanup work directory
         run: rm -rf create-test-wf
         if: always()

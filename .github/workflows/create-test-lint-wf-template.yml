@@ -101,7 +101,7 @@ jobs:
       - name: run the pipeline
         run: |
           cd create-test-lint-wf
-          nextflow run my-prefix-testpipeline -profile test,self_hosted_runner --outdir ./results
+          nextflow run my-prefix-testpipeline -profile test,self_hosted_runner --outdir ./results -cleanup
 
       # Remove results folder before linting
       - name: remove results folder
