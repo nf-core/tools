@@ -26,7 +26,7 @@ env:
 
 jobs:
   setup:
-    runs-on: ["self-hosted"]
+    runs-on: "ubuntu-latest"
     strategy:
       matrix:
         python-version: ["3.8", "3.11"]
@@ -48,7 +48,7 @@ jobs:
   # create a test matrix based on all python files in /tests
   list_tests:
     name: Get test file matrix
-    runs-on: "self-hosted"
+    runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
         name: Check out source-code repository
