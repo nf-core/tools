@@ -64,7 +64,7 @@ jobs:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: [setup, list_tests]
     if: ${{ needs.setup.outputs.run-tests }}
-    runs-on: self-hosted
+    runs-on: cirun-aws-runner
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
       fail-fast: false # run all tests even if one fails
