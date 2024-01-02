@@ -154,12 +154,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.12
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         env:
           AGENT_TOOLSDIRECTORY: /opt/actions-runner/_work/tools/tools/
         with:
-          python-version: 3.12
+          python-version: 3.11
+          cache: "pip"
 
       - name: Install deps
         run: |
@@ -175,7 +176,7 @@ jobs:
 
       - name: Run coverage
         run: |
-          coverage combine coverage*/.coverage* --keep
+          coverage combine --keep coverage*/.coverage*
           coverage report
           coverage xml
 
