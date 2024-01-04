@@ -43,7 +43,7 @@ def test_nextflow_config_missing_test_profile_failed(self):
     new_pipeline = self._make_pipeline_copy()
     # Change the name of the test profile so there is no such profile
     nf_conf_file = os.path.join(new_pipeline, "nextflow.config")
-    with open(nf_conf_file, "r") as f:
+    with open(nf_conf_file) as f:
         content = f.read()
         fail_content = re.sub(r"\btest\b", "testfail", content)
     with open(nf_conf_file, "w") as f:

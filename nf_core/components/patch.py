@@ -35,7 +35,7 @@ class ComponentPatch(ComponentCommand):
         if component is not None and component not in component_names:
             component_dir = [dir for dir, m in components if m == component][0]
             raise UserWarning(
-                f"{self.component_type[:-1].title()} '{Path(self.component_type, component_dir, module)}' does not exist in the pipeline"
+                f"{self.component_type[:-1].title()} '{Path(self.component_type, component_dir, component)}' does not exist in the pipeline"
             )
 
     def patch(self, component=None):
@@ -220,5 +220,5 @@ class ComponentPatch(ComponentCommand):
         ):
             log.error(
                 f"Module files do not appear to match the remote for the commit sha in the 'module.json': {component_version}\n"
-                f"Recommend reinstalling with 'nf-core modules install --force --sha {component_version} {module}' "
+                f"Recommend reinstalling with 'nf-core modules install --force --sha {component_version} {component}' "
             )

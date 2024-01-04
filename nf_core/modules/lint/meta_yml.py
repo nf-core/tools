@@ -54,7 +54,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
             meta_yaml = yaml.safe_load("".join(lines))
     if meta_yaml is None:
         try:
-            with open(module.meta_yml, "r") as fh:
+            with open(module.meta_yml) as fh:
                 meta_yaml = yaml.safe_load(fh)
             module.passed.append(("meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
         except FileNotFoundError:
@@ -64,7 +64,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = False
     try:
-        with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/meta-schema.json"), "r") as fh:
+        with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/meta-schema.json")) as fh:
             schema = json.load(fh)
         validators.validate(instance=meta_yaml, schema=schema)
         module.passed.append(("meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))

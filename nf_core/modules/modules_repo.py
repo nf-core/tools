@@ -1,8 +1,6 @@
-import filecmp
 import logging
 import os
 import shutil
-from pathlib import Path
 
 import git
 import rich

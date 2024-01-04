@@ -934,7 +934,7 @@ def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed,
     Test modules within a pipeline or a clone of the
     nf-core/modules repository.
     """
-    from nf_core.components.lint import LintException
+    from nf_core.components.lint import LintExceptionError
     from nf_core.modules import ModuleLint
 
     try:
@@ -960,7 +960,7 @@ def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed,
         )
         if len(module_lint.failed) > 0:
             sys.exit(1)
-    except LintException as e:
+    except LintExceptionError as e:
         log.error(e)
         sys.exit(1)
     except (UserWarning, LookupError) as e:
@@ -1020,7 +1020,7 @@ def bump_versions(ctx, tool, dir, all, show_all):
     the nf-core/modules repo.
     """
     from nf_core.modules.bump_versions import ModuleVersionBumper
-    from nf_core.modules.modules_utils import ModuleException
+    from nf_core.modules.modules_utils import ModuleExceptionError
 
     try:
         version_bumper = ModuleVersionBumper(
@@ -1030,7 +1030,7 @@ def bump_versions(ctx, tool, dir, all, show_all):
             ctx.obj["modules_repo_no_pull"],
         )
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
-    except ModuleException as e:
+    except ModuleExceptionError as e:
         log.error(e)
         sys.exit(1)
     except (UserWarning, LookupError) as e:
@@ -1207,7 +1207,7 @@ def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, lo
     Test subworkflows within a pipeline or a clone of the
     nf-core/modules repository.
     """
-    from nf_core.components.lint import LintException
+    from nf_core.components.lint import LintExceptionError
     from nf_core.subworkflows import SubworkflowLint
 
     try:
@@ -1232,7 +1232,7 @@ def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, lo
         )
         if len(subworkflow_lint.failed) > 0:
             sys.exit(1)
-    except LintException as e:
+    except LintExceptionError as e:
         log.error(e)
         sys.exit(1)
     except (UserWarning, LookupError) as e:
@@ -1647,7 +1647,7 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     the pipeline. It is run automatically for all pipelines when ever a
     new release of [link=https://github.com/nf-core/tools]nf-core/tools[/link] (and the included template) is made.
     """
-    from nf_core.sync import PipelineSync, PullRequestException, SyncException
+    from nf_core.sync import PipelineSync, PullRequestExceptionError, SyncExceptionError
     from nf_core.utils import is_pipeline_directory
 
     # Check if pipeline directory contains necessary files
@@ -1657,7 +1657,7 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     sync_obj = PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml)
     try:
         sync_obj.sync()
-    except (SyncException, PullRequestException) as e:
+    except (SyncExceptionError, PullRequestExceptionError) as e:
         log.error(e)
         sys.exit(1)
 

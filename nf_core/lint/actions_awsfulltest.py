@@ -32,7 +32,7 @@ def actions_awsfulltest(self):
     fn = os.path.join(self.wf_path, ".github", "workflows", "awsfulltest.yml")
     if os.path.isfile(fn):
         try:
-            with open(fn, "r") as fh:
+            with open(fn) as fh:
                 wf = yaml.safe_load(fh)
         except Exception as e:
             return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}

@@ -40,7 +40,7 @@ def check_patch_valid(module, patch_path):
     Returns:
         (bool): False if any test failed, True otherwise
     """
-    with open(patch_path, "r") as fh:
+    with open(patch_path) as fh:
         patch_lines = fh.readlines()
 
     # Check that the file contains a patch for at least one file
@@ -170,8 +170,8 @@ def patch_reversible(module_lint_object, module, patch_path):
         )
     except LookupError:
         # Patch failed. Save the patch file by moving to the install dir
-        module.failed.append((("patch_reversible", "Patch file is outdated or edited", patch_path)))
+        module.failed.append(("patch_reversible", "Patch file is outdated or edited", patch_path))
         return False
 
-    module.passed.append((("patch_reversible", "Patch agrees with module files", patch_path)))
+    module.passed.append(("patch_reversible", "Patch agrees with module files", patch_path))
     return True

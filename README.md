@@ -2,9 +2,8 @@
 
 [![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=master&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amaster)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
-[![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![code style: prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
-[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
+[![code style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v1.json)](https://github.com/charliermarsh/ruff)
 
 [![install with Bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/recipes/nf-core/README.html)
 [![install with PyPI](https://img.shields.io/badge/install%20with-PyPI-blue.svg)](https://pypi.org/project/nf-core/)
@@ -900,7 +899,7 @@ If you want to make a minor change to a locally installed module but still keep 
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
-before_command:  sed "s/process_medium/process_low/g" modules/nf-core/modules/fastqc/main.nf > modules/nf-core/modules/fastqc/main.nf.patch && mv modules/nf-core/modules/fastqc/main.nf.patch modules/nf-core/modules/fastqc/main.nf
+before_command:  sed "s/process_medium/process_low/g" modules/nf-core/fastqc/main.nf > modules/nf-core/fastqc/main.nf.patch && mv modules/nf-core/fastqc/main.nf.patch modules/nf-core/fastqc/main.nf
 -->
 
 ![`nf-core modules patch fastqc`](docs/images/nf-core-modules-patch.svg)
@@ -965,7 +964,7 @@ extra_env:
   PROFILE: 'conda'
 -->
 
-![`nf-core modules test fastqc --no-prompts --force`](docs/images/nf-core-modules-test.svg)
+![`nf-core modules test fastqc --no-prompts`](docs/images/nf-core-modules-test.svg)
 
 In case you changed something in the test and want to update the snapshot, run
 
@@ -1076,6 +1075,9 @@ This shows documentation about the subworkflow on the command line, similar to w
 working_dir: tmp/nf-core-nextbigthing
 before_command: >
   echo "repository_type: pipeline" >> .nf-core.yml
+
+head: 15
+tail: 10
 -->
 
 ![`nf-core subworkflows info bam_rseqc`](docs/images/nf-core-subworkflows-info.svg)
