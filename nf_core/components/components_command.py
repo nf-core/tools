@@ -227,7 +227,7 @@ class ComponentCommand:
         if patch_path.exists():
             log.info(f"Modules {module_name} contains a patch file.")
             rewrite = False
-            with open(patch_path, "r") as fh:
+            with open(patch_path) as fh:
                 lines = fh.readlines()
                 for index, line in enumerate(lines):
                     # Check if there are old paths in the patch file and replace
@@ -264,7 +264,7 @@ class ComponentCommand:
         if self.repo_type == "pipeline":
             workflow_files = Path(self.dir, "workflows").glob("*.nf")
             for workflow_file in workflow_files:
-                with open(workflow_file, "r") as fh:
+                with open(workflow_file) as fh:
                     # Check if component path is in the file using mmap
                     with mmap.mmap(fh.fileno(), 0, access=mmap.ACCESS_READ) as s:
                         if s.find(component_path.encode()) != -1:

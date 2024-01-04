@@ -53,7 +53,7 @@ def get_repo_info(directory: str, use_prompt: Optional[bool] = True) -> Tuple[st
         raise UserWarning("Repository type could not be established")
 
     # Check if it's a valid answer
-    if not repo_type in ["pipeline", "modules"]:
+    if repo_type not in ["pipeline", "modules"]:
         raise UserWarning(f"Invalid repository type: '{repo_type}'")
 
     # Check for org if modules repo
@@ -138,7 +138,7 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[str], List[str
     """
     modules = []
     subworkflows = []
-    with open(Path(subworkflow_dir, "main.nf"), "r") as fh:
+    with open(Path(subworkflow_dir, "main.nf")) as fh:
         for line in fh:
             regex = re.compile(
                 r"include(?: *{ *)([a-zA-Z\_0-9]*)(?: *as *)?(?:[a-zA-Z\_0-9]*)?(?: *})(?: *from *)(?:'|\")(.*)(?:'|\")"

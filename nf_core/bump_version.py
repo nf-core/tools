@@ -68,7 +68,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
             [
                 (
                     f"/releases/tag/{current_version}",
-                    f"/tree/dev",
+                    "/tree/dev",
                 )
             ],
         )
@@ -78,7 +78,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
             pipeline_obj,
             [
                 (
-                    f"/tree/dev",
+                    "/tree/dev",
                     f"/releases/tag/{multiqc_new_version}",
                 )
             ],
@@ -187,7 +187,7 @@ def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patt
     fn = pipeline_obj._fp(filename)
     content = ""
     try:
-        with open(fn, "r") as fh:
+        with open(fn) as fh:
             content = fh.read()
     except FileNotFoundError:
         log.warning(f"File not found: '{fn}'")

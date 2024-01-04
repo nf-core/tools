@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import pytest
@@ -87,9 +86,7 @@ def test_subworkflows_lint_snapshot_file_missing_fail(self):
 
 def test_subworkflows_lint_snapshot_file_not_needed(self):
     """Test linting a subworkflow which doesn't need a snapshot file by removing the snapshot keyword in the main.nf.test file"""
-    with open(
-        Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test"), "r"
-    ) as fh:
+    with open(Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test")) as fh:
         content = fh.read()
         new_content = content.replace("snapshot(", "snap (")
     with open(
