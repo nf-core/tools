@@ -46,7 +46,7 @@ You can run Ruff on the command line (it's included in `requirements-dev.txt`) -
 ruff format .
 ```
 
-Alternatively, Black has [integrations for most common editors](https://github.com/astral-sh/ruff-lsp) and VSCode(https://github.com/astral-sh/ruff-vscode)
+Alternatively, Ruff has [integrations for most common editors](https://github.com/astral-sh/ruff-lsp) and VSCode(https://github.com/astral-sh/ruff-vscode)
 to automatically format code when you hit save.
 
 There is an automated CI check that runs when you open a pull-request to nf-core/tools that will fail if
