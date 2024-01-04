@@ -15,8 +15,7 @@ norecursedirs = [ ".*", "build", "dist", "*.egg", "data", "__pycache__", ".githu
 [tool.ruff]
 line-length = 120
 target-version = "py38"
-ignore = ["E501"]
-select = ["I", "E4", "E7", "E9", "F"]
+select = ["I", "E1", "E4", "E7", "E9", "F", "UP", "N"]
 cache-dir = "~/.cache/ruff"
 
 [tool.ruff.isort]
