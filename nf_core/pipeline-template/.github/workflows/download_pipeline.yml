@@ -3,7 +3,7 @@ name: Test successful pipeline download with 'nf-core download'
 # Run the workflow when:
 #  - dispatched manually
 #  - when a PR is opened or reopened to dev or master branches
-#  - the head branch of the pull request is updated. (Do we need this?)
+#  - the head branch of the pull request is updated, i.e. if fixes for a release are pushed last minute to dev.
 
 on:
   workflow_dispatch:
@@ -12,9 +12,9 @@ on:
       - opened
     branches:
       - master
-  #pull_request_target:
-  #  branches:
-  #    - master
+  pull_request_target:
+    branches:
+      - master
 
 env:
   NXF_ANSI_LOG: false
