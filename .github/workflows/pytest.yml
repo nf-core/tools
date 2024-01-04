@@ -50,7 +50,7 @@ jobs:
     if: ${{ needs.setup.outputs.run-tests}}
     runs-on: ${{ needs.setup.outputs.runner }}
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@v4
         name: Check out source-code repository
 
       - name: Set up Python ${{ needs.setup.outputs.python-version }}
