@@ -193,7 +193,7 @@ class ParamsFileBuilder:
         description = properties.get("description", "")
         self.schema_obj.get_schema_defaults()
         default = properties.get("default")
-        typ = properties.get("type")
+        type = properties.get("type")
         required = name in required_properties
 
         out += _print_wrapped(name, "-", mode="both")
@@ -201,8 +201,8 @@ class ParamsFileBuilder:
         if description:
             out += _print_wrapped(description + "\n", mode="none", indent=4)
 
-        if typ:
-            out += _print_wrapped(f"Type: {typ}", mode="none", indent=4)
+        if type:
+            out += _print_wrapped(f"Type: {type}", mode="none", indent=4)
 
         if required:
             out += _print_wrapped("Required", mode="none", indent=4)
