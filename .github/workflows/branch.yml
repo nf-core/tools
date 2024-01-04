@@ -18,7 +18,7 @@ jobs:
       # If the above check failed, post a comment on the PR explaining the failure
       - name: Post PR comment
         if: failure()
-        uses: mshick/add-pr-comment@v1
+        uses: mshick/add-pr-comment@7c0890544fb33b0bdd2e59467fbacb62e028a096 # v2
         with:
           message: |
             ## This PR is against the `master` branch :x:
