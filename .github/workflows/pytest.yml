@@ -128,7 +128,7 @@ jobs:
 
       - name: Test with pytest
         run: |
-          python3 -m pytest tests/${{matrix.test}} --color=yes --cov --durations=0 -n auto  && exit_code=0|| exit_code=$?
+          python3 -m pytest tests/${{matrix.test}} --color=yes --cov --durations=0 -n 2  && exit_code=0|| exit_code=$?
           # don't fail if no tests were collected, e.g. for test_licence.py
           if [ "${exit_code}" -eq 5 ]; then
             echo "No tests were collected"
@@ -152,6 +152,11 @@ jobs:
     needs: test
     runs-on: self-hosted
     steps:
+      - name: go to subdirectory
+        run: |
+          mkdir -p pytest
+          cd pytest
+
       - uses: actions/checkout@v4
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
