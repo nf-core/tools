@@ -165,7 +165,6 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip -r requirements-dev.txt
-          pip install -e .
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -173,7 +172,9 @@ jobs:
       # #debugging
       # - name: Setup ssh session
       #   uses: Warpbuilds/action-debugger@v1.3
-
+      - name: Run coverage on one file
+        run: |
+          coverage report --data-file=coverage_test_components.py/.coverage
       - name: Run coverage
         run: |
           coverage combine --keep coverage*/.coverage*
