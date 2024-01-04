@@ -157,10 +157,6 @@ jobs:
           name: nf-core-log-file
           path: create-test-lint-wf/artifact_files.tar
 
-      #debugging
-      - name: Setup ssh session
-        uses: Warpbuilds/action-debugger@v1.3
-
       - name: Cleanup work directory
-        run: rm -rf create-test-lint-wf
+        run: sudo rm -rf create-test-lint-wf
         if: always()

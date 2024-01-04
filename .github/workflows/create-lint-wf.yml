@@ -163,5 +163,5 @@ jobs:
           path: create-lint-wf/log.txt
 
       - name: Cleanup work directory
-        run: rm -rf create-lint-wf
+        run: sudo rm -rf create-lint-wf
         if: always()
