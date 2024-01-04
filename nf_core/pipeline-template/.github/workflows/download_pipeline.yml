@@ -12,18 +12,16 @@ on:
       - opened
     branches:
       - master
-      - dev
   #pull_request_target:
   #  branches:
   #    - master
-  #    - dev
 
 env:
   NXF_ANSI_LOG: false
 
 jobs:
   download:
-    runs-on: ubuntu-latest
+    runs-on: ["self-hosted"]
     steps:
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v1
