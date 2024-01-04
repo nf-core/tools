@@ -68,8 +68,8 @@ def _determine_change_type(pr_title) -> str:
         "Template": "### Template updates",
         "Download": "### Download updates",
         "Linting": "### Linting updates",
-        "Modules": "### New modules",
-        "Subworkflows": "### New subworkflows",
+        "Modules": "### Modules",
+        "Subworkflows": "### Subworkflows",
     }
     current_section = "### General"
 
