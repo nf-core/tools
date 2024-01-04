@@ -1,5 +1,4 @@
 import fnmatch
-import io
 import logging
 import os
 
@@ -23,9 +22,9 @@ def merge_markers(self):
 
     ignore = [".git"]
     if os.path.isfile(os.path.join(self.wf_path, ".gitignore")):
-        with io.open(os.path.join(self.wf_path, ".gitignore"), "rt", encoding="latin1") as fh:
-            for l in fh:
-                ignore.append(os.path.basename(l.strip().rstrip("/")))
+        with open(os.path.join(self.wf_path, ".gitignore"), encoding="latin1") as fh:
+            for line in fh:
+                ignore.append(os.path.basename(line.strip().rstrip("/")))
     for root, dirs, files in os.walk(self.wf_path, topdown=True):
         # Ignore files
         for i_base in ignore:
@@ -41,12 +40,12 @@ def merge_markers(self):
             if nf_core.utils.is_file_binary(os.path.join(root, fname)):
                 continue
             try:
-                with io.open(os.path.join(root, fname), "rt", encoding="latin1") as fh:
-                    for l in fh:
-                        if ">>>>>>>" in l:
-                            failed.append(f"Merge marker '>>>>>>>' in `{os.path.join(root, fname)}`: {l[:30]}")
-                        if "<<<<<<<" in l:
-                            failed.append(f"Merge marker '<<<<<<<' in `{os.path.join(root, fname)}`: {l[:30]}")
+                with open(os.path.join(root, fname), encoding="latin1") as fh:
+                    for line in fh:
+                        if ">>>>>>>" in line:
+                            failed.append(f"Merge marker '>>>>>>>' in `{os.path.join(root, fname)}`: {line[:30]}")
+                        if "<<<<<<<" in line:
+                            failed.append(f"Merge marker '<<<<<<<' in `{os.path.join(root, fname)}`: {line[:30]}")
             except FileNotFoundError:
                 log.debug(f"Could not open file {os.path.join(root, fname)} in merge_markers lint test")
     if len(failed) == 0:

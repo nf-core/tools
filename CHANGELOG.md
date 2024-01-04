@@ -14,6 +14,8 @@
 
 ### General
 
+- Add Ruff linter and formatter replacing Black, isort and pyupgrade ([#2620](https://github.com/nf-core/tools/pull/2620))
+
 # [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
 ### Template

@@ -1,4 +1,3 @@
-import filecmp
 import os
 import shutil
 from pathlib import Path
@@ -87,9 +86,9 @@ def test_modules_migrate(self, mock_rich_ask):
     # Clone modules repo with pytests
     shutil.rmtree(self.nfcore_modules)
     Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH)
-    with open(module_dir / "main.nf", "r") as fh:
+    with open(module_dir / "main.nf") as fh:
         old_main_nf = fh.read()
-    with open(module_dir / "meta.yml", "r") as fh:
+    with open(module_dir / "meta.yml") as fh:
         old_meta_yml = fh.read()
 
     # Create a module with --migrate-pytest
@@ -97,9 +96,9 @@ def test_modules_migrate(self, mock_rich_ask):
     module_create = nf_core.modules.ModuleCreate(self.nfcore_modules, "samtools/sort", migrate_pytest=True)
     module_create.create()
 
-    with open(module_dir / "main.nf", "r") as fh:
+    with open(module_dir / "main.nf") as fh:
         new_main_nf = fh.read()
-    with open(module_dir / "meta.yml", "r") as fh:
+    with open(module_dir / "meta.yml") as fh:
         new_meta_yml = fh.read()
     nextflow_config = module_dir / "tests" / "nextflow.config"
 

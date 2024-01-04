@@ -31,7 +31,7 @@ def version_consistency(self):
     versions["manifest.version"] = self.nf_config.get("manifest.version", "").strip(" '\"")
 
     # Get version from the docker tag
-    if self.nf_config.get("process.container", "") and not ":" in self.nf_config.get("process.container", ""):
+    if self.nf_config.get("process.container", "") and ":" not in self.nf_config.get("process.container", ""):
         failed.append(f"Docker slug seems not to have a version tag: {self.nf_config.get('process.container', '')}")
 
     # Get config container tag (if set; one container per workflow)
@@ -53,8 +53,9 @@ def version_consistency(self):
     # Check if they are consistent
     if len(set(versions.values())) != 1:
         failed.append(
-            "The versioning is not consistent between container, release tag "
-            "and config. Found {}".format(", ".join(["{} = {}".format(k, v) for k, v in versions.items()]))
+            "The versioning is not consistent between container, release tag " "and config. Found {}".format(
+                ", ".join([f"{k} = {v}" for k, v in versions.items()])
+            )
         )
 
     passed.append("Version tags are numeric and consistent between container, release tag and config.")

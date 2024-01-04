@@ -23,13 +23,13 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-class SyncException(Exception):
+class SyncExceptionError(Exception):
     """Exception raised when there was an error with TEMPLATE branch synchronisation"""
 
     pass
 
 
-class PullRequestException(Exception):
+class PullRequestExceptionError(Exception):
     """Exception raised when there was an error creating a Pull-Request on GitHub.com"""
 
     pass
@@ -96,7 +96,7 @@ class PipelineSync:
                     default=False,
                 ).unsafe_ask()
             if overwrite_template or "template" not in self.config_yml:
-                with open(template_yaml_path, "r") as f:
+                with open(template_yaml_path) as f:
                     self.config_yml["template"] = yaml.safe_load(f)
                 with open(self.config_yml_path, "w") as fh:
                     yaml.safe_dump(self.config_yml, fh)
@@ -138,20 +138,20 @@ class PipelineSync:
             try:
                 # Check that we have an API auth token
                 if os.environ.get("GITHUB_AUTH_TOKEN", "") == "":
-                    raise PullRequestException("GITHUB_AUTH_TOKEN not set!")
+                    raise PullRequestExceptionError("GITHUB_AUTH_TOKEN not set!")
 
                 # Check that we know the github username and repo name
                 if self.gh_username is None and self.gh_repo is None:
-                    raise PullRequestException("Could not find GitHub username and repo name")
+                    raise PullRequestExceptionError("Could not find GitHub username and repo name")
 
                 self.push_template_branch()
                 self.create_merge_base_branch()
                 self.push_merge_branch()
                 self.make_pull_request()
                 self.close_open_template_merge_prs()
-            except PullRequestException as e:
+            except PullRequestExceptionError as e:
                 self.reset_target_dir()
-                raise PullRequestException(e)
+                raise PullRequestExceptionError(e)
 
         self.reset_target_dir()
 
@@ -170,7 +170,7 @@ class PipelineSync:
         try:
             self.repo = git.Repo(self.pipeline_dir)
         except InvalidGitRepositoryError:
-            raise SyncException(f"'{self.pipeline_dir}' does not appear to be a git repository")
+            raise SyncExceptionError(f"'{self.pipeline_dir}' does not appear to be a git repository")
 
         # get current branch so we can switch back later
         self.original_branch = self.repo.active_branch.name
@@ -178,7 +178,7 @@ class PipelineSync:
 
         # Check to see if there are uncommitted changes on current branch
         if self.repo.is_dirty(untracked_files=True):
-            raise SyncException(
+            raise SyncExceptionError(
                 "Uncommitted changes found in pipeline directory!\nPlease commit these before running nf-core sync"
             )
 
@@ -192,7 +192,7 @@ class PipelineSync:
                 log.info(f"Checking out workflow branch '{self.from_branch}'")
                 self.repo.git.checkout(self.from_branch)
         except GitCommandError:
-            raise SyncException(f"Branch `{self.from_branch}` not found!")
+            raise SyncExceptionError(f"Branch `{self.from_branch}` not found!")
 
         # If not specified, get the name of the active branch
         if not self.from_branch:
@@ -208,7 +208,7 @@ class PipelineSync:
         # Check that we have the required variables
         for rvar in self.required_config_vars:
             if rvar not in self.wf_config:
-                raise SyncException(f"Workflow config variable `{rvar}` not found!")
+                raise SyncExceptionError(f"Workflow config variable `{rvar}` not found!")
 
     def checkout_template_branch(self):
         """
@@ -223,7 +223,7 @@ class PipelineSync:
             try:
                 self.repo.git.checkout("TEMPLATE")
             except GitCommandError:
-                raise SyncException("Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'")
+                raise SyncExceptionError("Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'")
 
     def delete_template_branch_files(self):
         """
@@ -242,7 +242,7 @@ class PipelineSync:
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
             except Exception as e:
-                raise SyncException(e)
+                raise SyncExceptionError(e)
 
     def make_template_pipeline(self):
         """
@@ -272,7 +272,7 @@ class PipelineSync:
         except Exception as err:
             # Reset to where you were to prevent git getting messed up.
             self.repo.git.reset("--hard")
-            raise SyncException(f"Failed to rebuild pipeline from template with error:\n{err}")
+            raise SyncExceptionError(f"Failed to rebuild pipeline from template with error:\n{err}")
 
     def commit_template_changes(self):
         """If we have any changes with the new template files, make a git commit"""
@@ -287,7 +287,7 @@ class PipelineSync:
             self.made_changes = True
             log.info("Committed changes to 'TEMPLATE' branch")
         except Exception as e:
-            raise SyncException(f"Could not commit changes to TEMPLATE:\n{e}")
+            raise SyncExceptionError(f"Could not commit changes to TEMPLATE:\n{e}")
         return True
 
     def push_template_branch(self):
@@ -299,7 +299,7 @@ class PipelineSync:
         try:
             self.repo.git.push()
         except GitCommandError as e:
-            raise PullRequestException(f"Could not push TEMPLATE branch:\n  {e}")
+            raise PullRequestExceptionError(f"Could not push TEMPLATE branch:\n  {e}")
 
     def create_merge_base_branch(self):
         """Create a new branch from the updated TEMPLATE branch
@@ -326,7 +326,7 @@ class PipelineSync:
         try:
             self.repo.create_head(self.merge_branch)
         except GitCommandError as e:
-            raise SyncException(f"Could not create new branch '{self.merge_branch}'\n{e}")
+            raise SyncExceptionError(f"Could not create new branch '{self.merge_branch}'\n{e}")
 
     def push_merge_branch(self):
         """Push the newly created merge branch to the remote repository"""
@@ -335,7 +335,7 @@ class PipelineSync:
             origin = self.repo.remote()
             origin.push(self.merge_branch)
         except GitCommandError as e:
-            raise PullRequestException(f"Could not push branch '{self.merge_branch}':\n  {e}")
+            raise PullRequestExceptionError(f"Could not push branch '{self.merge_branch}':\n  {e}")
 
     def make_pull_request(self):
         """Create a pull request to a base branch (default: dev),
@@ -374,7 +374,7 @@ class PipelineSync:
                 )
             except Exception as e:
                 stderr.print_exception()
-                raise PullRequestException(f"Something went badly wrong - {e}")
+                raise PullRequestExceptionError(f"Something went badly wrong - {e}")
             else:
                 self.gh_pr_returned_data = r.json()
                 self.pr_url = self.gh_pr_returned_data["html_url"]
@@ -395,7 +395,7 @@ class PipelineSync:
         try:
             list_prs_json = json.loads(list_prs_request.content)
             list_prs_pp = json.dumps(list_prs_json, indent=4)
-        except:
+        except Exception:
             list_prs_json = list_prs_request.content
             list_prs_pp = list_prs_request.content
 
@@ -438,7 +438,7 @@ class PipelineSync:
         try:
             pr_request_json = json.loads(pr_request.content)
             pr_request_pp = json.dumps(pr_request_json, indent=4)
-        except:
+        except Exception:
             pr_request_json = pr_request.content
             pr_request_pp = pr_request.content
 
@@ -462,4 +462,4 @@ class PipelineSync:
         try:
             self.repo.git.checkout(self.original_branch)
         except GitCommandError as e:
-            raise SyncException(f"Could not reset to original branch `{self.original_branch}`:\n{e}")
+            raise SyncExceptionError(f"Could not reset to original branch `{self.original_branch}`:\n{e}")

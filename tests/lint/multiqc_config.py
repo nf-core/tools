@@ -18,7 +18,7 @@ def test_multiqc_config_exists_ignore(self):
 def test_multiqc_config_missing_report_section_order(self):
     """Test that linting fails if the multiqc_config.yml file is missing the report_section_order"""
     new_pipeline = self._make_pipeline_copy()
-    with open(Path(new_pipeline, "assets", "multiqc_config.yml"), "r") as fh:
+    with open(Path(new_pipeline, "assets", "multiqc_config.yml")) as fh:
         mqc_yml = yaml.safe_load(fh)
     mqc_yml_tmp = mqc_yml
     mqc_yml.pop("report_section_order")
@@ -36,7 +36,7 @@ def test_multiqc_config_missing_report_section_order(self):
 def test_multiqc_incorrect_export_plots(self):
     """Test that linting fails if the multiqc_config.yml file has an incorrect value for export_plots"""
     new_pipeline = self._make_pipeline_copy()
-    with open(Path(new_pipeline, "assets", "multiqc_config.yml"), "r") as fh:
+    with open(Path(new_pipeline, "assets", "multiqc_config.yml")) as fh:
         mqc_yml = yaml.safe_load(fh)
     mqc_yml_tmp = mqc_yml
     mqc_yml["export_plots"] = False
@@ -54,7 +54,7 @@ def test_multiqc_incorrect_export_plots(self):
 def test_multiqc_config_report_comment_fail(self):
     """Test that linting fails if the multiqc_config.yml file has an incorrect report_comment"""
     new_pipeline = self._make_pipeline_copy()
-    with open(Path(new_pipeline, "assets", "multiqc_config.yml"), "r") as fh:
+    with open(Path(new_pipeline, "assets", "multiqc_config.yml")) as fh:
         mqc_yml = yaml.safe_load(fh)
     mqc_yml_tmp = mqc_yml
     mqc_yml["report_comment"] = "This is a test"
@@ -73,7 +73,7 @@ def test_multiqc_config_report_comment_fail(self):
 def test_multiqc_config_report_comment_release_fail(self):
     """Test that linting fails if the multiqc_config.yml file has an incorrect report_comment for a release version"""
     new_pipeline = self._make_pipeline_copy()
-    with open(Path(new_pipeline, "assets", "multiqc_config.yml"), "r") as fh:
+    with open(Path(new_pipeline, "assets", "multiqc_config.yml")) as fh:
         mqc_yml = yaml.safe_load(fh)
     mqc_yml_tmp = mqc_yml
     with open(Path(new_pipeline, "assets", "multiqc_config.yml"), "w") as fh:

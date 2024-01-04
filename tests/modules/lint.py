@@ -333,7 +333,7 @@ def test_modules_lint_snapshot_file_missing_fail(self):
 
 def test_modules_lint_snapshot_file_not_needed(self):
     """Test linting a module which doesn't need a snapshot file by removing the snapshot keyword in the main.nf.test file"""
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test"), "r") as fh:
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test")) as fh:
         content = fh.read()
         new_content = content.replace("snapshot(", "snap (")
     with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test"), "w") as fh:
@@ -372,7 +372,7 @@ def test_modules_environment_yml_file_sorted_correctly(self):
 
 def test_modules_environment_yml_file_sorted_incorrectly(self):
     """Test linting a module with an incorrectly sorted environment.yml file"""
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml"), "r") as fh:
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml")) as fh:
         yaml_content = yaml.safe_load(fh)
     # Add a new dependency to the environment.yml file and reverse the order
     yaml_content["dependencies"].append("z")
@@ -548,7 +548,7 @@ def test_modules_missing_test_main_nf(self):
 
 def test_modules_missing_required_tag(self):
     """Test linting a module with a missing required tag"""
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test"), "r") as fh:
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test")) as fh:
         content = fh.read()
         new_content = content.replace("modules_nfcore", "foo")
     with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test"), "w") as fh:
@@ -581,7 +581,7 @@ def test_modules_missing_tags_yml(self):
 
 def test_modules_incorrect_tags_yml_key(self):
     """Test linting a module with an incorrect key in tags.yml file"""
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml"), "r") as fh:
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")) as fh:
         content = fh.read()
         new_content = content.replace("bpipe/test:", "bpipe_test:")
     with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml"), "w") as fh:
@@ -598,7 +598,7 @@ def test_modules_incorrect_tags_yml_key(self):
 
 def test_modules_incorrect_tags_yml_values(self):
     """Test linting a module with an incorrect path in tags.yml file"""
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml"), "r") as fh:
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")) as fh:
         content = fh.read()
         new_content = content.replace("modules/nf-core/bpipe/test/**", "foo")
     with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml"), "w") as fh:
