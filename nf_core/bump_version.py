@@ -187,7 +187,7 @@ def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patt
     fn = pipeline_obj._fp(filename)
     content = ""
     try:
-        with open(fn, "r") as fh:
+        with open(fn) as fh:
             content = fh.read()
     except FileNotFoundError:
         log.warning(f"File not found: '{fn}'")

@@ -96,7 +96,7 @@ class PipelineSync:
                     default=False,
                 ).unsafe_ask()
             if overwrite_template or "template" not in self.config_yml:
-                with open(template_yaml_path, "r") as f:
+                with open(template_yaml_path) as f:
                     self.config_yml["template"] = yaml.safe_load(f)
                 with open(self.config_yml_path, "w") as fh:
                     yaml.safe_dump(self.config_yml, fh)

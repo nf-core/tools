@@ -36,7 +36,7 @@ def actions_schema_validation(self):
 
         # load workflow
         try:
-            with open(wf_path, "r") as fh:
+            with open(wf_path) as fh:
                 wf_json = yaml.safe_load(fh)
         except Exception as e:
             failed.append(f"Could not parse yaml file: {wf}, {e}")

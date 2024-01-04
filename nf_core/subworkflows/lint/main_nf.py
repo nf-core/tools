@@ -32,7 +32,7 @@ def main_nf(_, subworkflow):
     if lines is None:
         try:
             # Check whether file exists and load it
-            with open(subworkflow.main_nf, "r") as fh:
+            with open(subworkflow.main_nf) as fh:
                 lines = fh.readlines()
             subworkflow.passed.append(("main_nf_exists", "Subworkflow file exists", subworkflow.main_nf))
         except FileNotFoundError:

@@ -55,7 +55,7 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
     if lines is None:
         try:
             # Check whether file exists and load it
-            with open(module.main_nf, "r") as fh:
+            with open(module.main_nf) as fh:
                 lines = fh.readlines()
             module.passed.append(("main_nf_exists", "Module file exists", module.main_nf))
         except FileNotFoundError:
@@ -348,7 +348,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
 
     # Get bioconda packages from environment.yml
     try:
-        with open(Path(self.component_dir, "environment.yml"), "r") as fh:
+        with open(Path(self.component_dir, "environment.yml")) as fh:
             env_yml = yaml.safe_load(fh)
         if "dependencies" in env_yml:
             bioconda_packages = [x for x in env_yml["dependencies"] if isinstance(x, str) and "bioconda::" in x]
@@ -607,7 +607,7 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
     # Get latest build
     build = _get_build(response)
 
-    with open(self.main_nf, "r") as source:
+    with open(self.main_nf) as source:
         lines = source.readlines()
 
     # Check if the new version + build exist and replace

@@ -31,7 +31,7 @@ class TestParamsFileBuilder:
         cls.invalid_template_schema = os.path.join(cls.template_dir, "nextflow_schema_invalid.json")
 
         # Remove the allOf section to make the schema invalid
-        with open(cls.template_schema, "r") as fh:
+        with open(cls.template_schema) as fh:
             o = json.load(fh)
             del o["allOf"]
 
@@ -49,7 +49,7 @@ class TestParamsFileBuilder:
 
         assert os.path.exists(outfile)
 
-        with open(outfile, "r") as fh:
+        with open(outfile) as fh:
             out = fh.read()
 
         assert "nf-core/testpipeline" in out

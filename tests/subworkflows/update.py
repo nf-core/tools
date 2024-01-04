@@ -72,7 +72,7 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
     assert update_obj.update("fastq_align_bowtie2") is True
     assert cmp_component(tmpdir, sw_path) is True
 
-    with open(patch_path, "r") as fh:
+    with open(patch_path) as fh:
         line = fh.readline()
         assert line.startswith(
             "Changes in module 'nf-core/fastq_align_bowtie2' between (f3c078809a2513f1c95de14f6633fe1f03572fdb) and"

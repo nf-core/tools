@@ -4,8 +4,6 @@ or for a single module
 """
 
 
-from __future__ import print_function
-
 import logging
 import os
 import re
@@ -145,7 +143,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         except FileNotFoundError:
             # try it in the main.nf instead
             try:
-                with open(module.main_nf, "r") as fh:
+                with open(module.main_nf) as fh:
                     for line in fh:
                         if "bioconda::" in line:
                             bioconda_packages = [b for b in line.split() if "bioconda::" in b]
@@ -207,7 +205,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
                 ),
             ]
 
-            with open(module.main_nf, "r") as fh:
+            with open(module.main_nf) as fh:
                 content = fh.read()
 
             # Go over file content of main.nf and find replacements
@@ -240,7 +238,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
                 fh.write(content)
 
             # change version in environment.yml
-            with open(module.environment_yml, "r") as fh:
+            with open(module.environment_yml) as fh:
                 env_yml = yaml.safe_load(fh)
             re.sub(bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'", env_yml["dependencies"])
             with open(module.environment_yml, "w") as fh:
@@ -265,7 +263,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         # Check whether file exists and load it
         bioconda_packages = []
         try:
-            with open(module.environment_yml, "r") as fh:
+            with open(module.environment_yml) as fh:
                 env_yml = yaml.safe_load(fh)
             bioconda_packages = env_yml.get("dependencies", [])
         except FileNotFoundError:

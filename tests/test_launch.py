@@ -234,7 +234,7 @@ class TestLaunch(TestCase):
         assert result["validate"]("") is True
         assert result["validate"]("123.56.78") == "Must be a number"
         assert result["validate"]("123.56sdkfjb") == "Must be a number"
-        assert result["filter"]("123.456") == float(123.456)
+        assert result["filter"]("123.456") == 123.456
         assert result["filter"]("") == ""
 
     def test_ob_to_questionary_integer(self):
@@ -248,7 +248,7 @@ class TestLaunch(TestCase):
         assert result["validate"]("") is True
         assert result["validate"]("123.45") == "Must be an integer"
         assert result["validate"]("123.56sdkfjb") == "Must be an integer"
-        assert result["filter"]("123") == int(123)
+        assert result["filter"]("123") == 123
         assert result["filter"]("") == ""
 
     def test_ob_to_questionary_range(self):
@@ -321,7 +321,7 @@ class TestLaunch(TestCase):
             == f'nextflow run {self.pipeline_dir} -params-file "{os.path.relpath(self.nf_params_fn)}"'
         )
         # Check saved parameters file
-        with open(self.nf_params_fn, "r") as fh:
+        with open(self.nf_params_fn) as fh:
             try:
                 saved_json = json.load(fh)
             except json.JSONDecodeError as e:

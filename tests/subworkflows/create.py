@@ -52,9 +52,9 @@ def test_subworkflows_migrate(self, mock_rich_ask):
     # Clone modules repo with pytests
     shutil.rmtree(self.nfcore_modules)
     Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH)
-    with open(subworkflow_dir / "main.nf", "r") as fh:
+    with open(subworkflow_dir / "main.nf") as fh:
         old_main_nf = fh.read()
-    with open(subworkflow_dir / "meta.yml", "r") as fh:
+    with open(subworkflow_dir / "meta.yml") as fh:
         old_meta_yml = fh.read()
 
     # Create a subworkflow with --migrate-pytest
@@ -64,9 +64,9 @@ def test_subworkflows_migrate(self, mock_rich_ask):
     )
     subworkflow_create.create()
 
-    with open(subworkflow_dir / "main.nf", "r") as fh:
+    with open(subworkflow_dir / "main.nf") as fh:
         new_main_nf = fh.read()
-    with open(subworkflow_dir / "meta.yml", "r") as fh:
+    with open(subworkflow_dir / "meta.yml") as fh:
         new_meta_yml = fh.read()
     nextflow_config = subworkflow_dir / "tests" / "nextflow.config"
 

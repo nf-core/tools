@@ -1,6 +1,5 @@
 """Lists available nf-core pipelines and versions."""
 
-from __future__ import print_function
 
 import json
 import logging

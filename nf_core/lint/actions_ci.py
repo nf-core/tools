@@ -47,7 +47,7 @@ def actions_ci(self):
         return {"ignored": ["'.github/workflows/ci.yml' not found"]}
 
     try:
-        with open(fn, "r") as fh:
+        with open(fn) as fh:
             ciwf = yaml.safe_load(fh)
     except Exception as e:
         return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}

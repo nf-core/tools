@@ -85,7 +85,7 @@ def _update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
     if os.path.exists(nxf_home_config):
         # look for include statement in config
         has_include_statement = False
-        with open(nxf_home_config, "r") as fh:
+        with open(nxf_home_config) as fh:
             lines = fh.readlines()
             for line in lines:
                 if re.match(rf"\s*includeConfig\s*'{os.path.abspath(refgenie_genomes_config_file)}'", line):
