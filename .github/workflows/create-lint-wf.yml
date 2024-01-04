@@ -83,7 +83,8 @@ jobs:
 
       - name: Run Ruff check
         run: ruff check create-lint-wf/nf-core-testpipeline
-
+      - name: Run Ruff format
+        run: ruff format create-lint-wf/nf-core-testpipeline
       - name: Run ECLint check
         run: editorconfig-checker -exclude README.md $(find nf-core-testpipeline/.* -type f | grep -v '.git\|.py\|md\|json\|yml\|yaml\|html\|css\|work\|.nextflow\|build\|nf_core.egg-info\|log.txt\|Makefile')
         working-directory: create-lint-wf
