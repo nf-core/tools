@@ -26,7 +26,7 @@ from nf_core.utils import plural_s as _s
 log = logging.getLogger(__name__)
 
 
-class LintException(Exception):
+class LintExceptionError(Exception):
     """Exception raised when there was an error with module or subworkflow linting"""
 
     pass

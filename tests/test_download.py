@@ -258,7 +258,7 @@ class DownloadTest(unittest.TestCase):
         )
 
         # Pull again, but now the image already exists
-        with pytest.raises(ContainerError.ImageExists):
+        with pytest.raises(ContainerError.ImageExistsError):
             download_obj.singularity_pull_image(
                 "hello-world", f"{tmp_dir}/hello-world.sif", None, "docker.io", mock_rich_progress
             )
@@ -268,8 +268,8 @@ class DownloadTest(unittest.TestCase):
             "docker.io/bschiffthaler/sed", f"{tmp_dir}/sed.sif", None, "docker.io", mock_rich_progress
         )
 
-        # try to pull from non-existing registry (Name change hello-world_new.sif is needed, otherwise ImageExists is raised before attempting to pull.)
-        with pytest.raises(ContainerError.RegistryNotFound):
+        # try to pull from non-existing registry (Name change hello-world_new.sif is needed, otherwise ImageExistsError is raised before attempting to pull.)
+        with pytest.raises(ContainerError.RegistryNotFoundError):
             download_obj.singularity_pull_image(
                 "hello-world",
                 f"{tmp_dir}/hello-world_new.sif",
@@ -279,23 +279,23 @@ class DownloadTest(unittest.TestCase):
             )
 
         # test Image not found for several registries
-        with pytest.raises(ContainerError.ImageNotFound):
+        with pytest.raises(ContainerError.ImageNotFoundError):
             download_obj.singularity_pull_image(
                 "a-container", f"{tmp_dir}/acontainer.sif", None, "quay.io", mock_rich_progress
             )
 
-        with pytest.raises(ContainerError.ImageNotFound):
+        with pytest.raises(ContainerError.ImageNotFoundError):
             download_obj.singularity_pull_image(
                 "a-container", f"{tmp_dir}/acontainer.sif", None, "docker.io", mock_rich_progress
             )
 
-        with pytest.raises(ContainerError.ImageNotFound):
+        with pytest.raises(ContainerError.ImageNotFoundError):
             download_obj.singularity_pull_image(
                 "a-container", f"{tmp_dir}/acontainer.sif", None, "ghcr.io", mock_rich_progress
             )
 
         # test Image not found for absolute URI.
-        with pytest.raises(ContainerError.ImageNotFound):
+        with pytest.raises(ContainerError.ImageNotFoundError):
             download_obj.singularity_pull_image(
                 "docker.io/bschiffthaler/nothingtopullhere",
                 f"{tmp_dir}/nothingtopullhere.sif",
@@ -305,7 +305,7 @@ class DownloadTest(unittest.TestCase):
             )
 
         # Traffic from Github Actions to GitHub's Container Registry is unlimited, so no harm should be done here.
-        with pytest.raises(ContainerError.InvalidTag):
+        with pytest.raises(ContainerError.InvalidTagError):
             download_obj.singularity_pull_image(
                 "ewels/multiqc:go-rewrite",
                 f"{tmp_dir}/umi-transfer.sif",

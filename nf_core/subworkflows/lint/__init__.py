@@ -15,7 +15,7 @@ import rich
 
 import nf_core.modules.modules_utils
 import nf_core.utils
-from nf_core.components.lint import ComponentLint, LintException, LintResult
+from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
 from nf_core.lint_utils import console
 
 log = logging.getLogger(__name__)
@@ -113,11 +113,11 @@ class SubworkflowLint(ComponentLint):
         # Only lint the given module
         if subworkflow:
             if all_subworkflows:
-                raise LintException("You cannot specify a tool and request all tools to be linted.")
+                raise LintExceptionError("You cannot specify a tool and request all tools to be linted.")
             local_subworkflows = []
             remote_subworkflows = [s for s in self.all_remote_components if s.component_name == subworkflow]
             if len(remote_subworkflows) == 0:
-                raise LintException(f"Could not find the specified subworkflow: '{subworkflow}'")
+                raise LintExceptionError(f"Could not find the specified subworkflow: '{subworkflow}'")
         else:
             local_subworkflows = self.all_local_components
             remote_subworkflows = self.all_remote_components

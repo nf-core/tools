@@ -20,7 +20,7 @@ import requests_cache
 import rich
 import rich.progress
 from git.exc import GitCommandError, InvalidGitRepositoryError
-from pkg_resources import parse_version as VersionParser
+from pkg_resources import parse_version as version_parser
 
 import nf_core
 import nf_core.list
@@ -1065,10 +1065,10 @@ class DownloadWorkflow:
                                 self.singularity_pull_image(*container, library, progress)
                                 # Pulling the image was successful, no ContainerError was raised, break the library loop
                                 break
-                            except ContainerError.ImageExists:
+                            except ContainerError.ImageExistsError:
                                 # Pulling not required
                                 break
-                            except ContainerError.RegistryNotFound as e:
+                            except ContainerError.RegistryNotFoundError as e:
                                 self.container_library.remove(library)
                                 # The only library was removed
                                 if not self.container_library:
@@ -1078,13 +1078,13 @@ class DownloadWorkflow:
                                 else:
                                     # Other libraries can be used
                                     continue
-                            except ContainerError.ImageNotFound as e:
+                            except ContainerError.ImageNotFoundError as e:
                                 # Try other registries
                                 if e.error_log.absolute_URI:
                                     break  # there no point in trying other registries if absolute URI was specified.
                                 else:
                                     continue
-                            except ContainerError.InvalidTag:
+                            except ContainerError.InvalidTagError:
                                 # Try other registries
                                 continue
                             except ContainerError.OtherError as e:
@@ -1523,7 +1523,7 @@ class WorkflowRepo(SyncedRepo):
                     else:
                         # desired revisions may contain arbitrary branch names that do not correspond to valid sematic versioning patterns.
                         valid_versions = [
-                            VersionParser(v)
+                            version_parser(v)
                             for v in desired_revisions
                             if re.match(r"\d+\.\d+(?:\.\d+)*(?:[\w\-_])*", v)
                         ]
@@ -1582,7 +1582,7 @@ class ContainerError(Exception):
 
         for line in error_msg:
             if re.search(r"dial\stcp.*no\ssuch\shost", line):
-                self.error_type = self.RegistryNotFound(self)
+                self.error_type = self.RegistryNotFoundError(self)
                 break
             elif (
                 re.search(r"requested\saccess\sto\sthe\sresource\sis\sdenied", line)
@@ -1594,13 +1594,13 @@ class ContainerError(Exception):
                 #                    unauthorized: authentication required
                 # Quay.io: StatusCode: 404,  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n']
                 # ghcr.io: Requesting bearer token: invalid status code from registry 400 (Bad Request)
-                self.error_type = self.ImageNotFound(self)
+                self.error_type = self.ImageNotFoundError(self)
                 break
             elif re.search(r"manifest\sunknown", line):
-                self.error_type = self.InvalidTag(self)
+                self.error_type = self.InvalidTagError(self)
                 break
             elif re.search(r"Image\sfile\salready\sexists", line):
-                self.error_type = self.ImageExists(self)
+                self.error_type = self.ImageExistsError(self)
                 break
             else:
                 continue
@@ -1614,7 +1614,7 @@ class ContainerError(Exception):
 
         raise self.error_type
 
-    class RegistryNotFound(ConnectionRefusedError):
+    class RegistryNotFoundError(ConnectionRefusedError):
         """The specified registry does not resolve to a valid IP address"""
 
         def __init__(self, error_log):
@@ -1627,7 +1627,7 @@ class ContainerError(Exception):
             )
             super().__init__(self.message, self.helpmessage, self.error_log)
 
-    class ImageNotFound(FileNotFoundError):
+    class ImageNotFoundError(FileNotFoundError):
         """The image can not be found in the registry"""
 
         def __init__(self, error_log):
@@ -1643,7 +1643,7 @@ class ContainerError(Exception):
 
             super().__init__(self.message)
 
-    class InvalidTag(AttributeError):
+    class InvalidTagError(AttributeError):
         """Image and registry are valid, but the (version) tag is not"""
 
         def __init__(self, error_log):
@@ -1652,7 +1652,7 @@ class ContainerError(Exception):
             self.helpmessage = f'Please chose a different library than {self.error_log.registry}\nor try to locate the "{self.error_log.address.split(":")[-1]}" version of "{self.error_log.container}" manually.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.\n'
             super().__init__(self.message)
 
-    class ImageExists(FileExistsError):
+    class ImageExistsError(FileExistsError):
         """Image already exists in cache/output directory."""
 
         def __init__(self, error_log):

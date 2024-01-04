@@ -71,7 +71,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
 
         # Verify that this is not a pipeline
         if not self.repo_type == "modules":
-            raise nf_core.modules.modules_utils.ModuleException(
+            raise nf_core.modules.modules_utils.ModuleExceptionError(
                 "This command only works on the nf-core/modules repository, not on pipelines!"
             )
 
@@ -102,12 +102,14 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         if module:
             self.show_up_to_date = True
             if all_modules:
-                raise nf_core.modules.modules_utils.ModuleException(
+                raise nf_core.modules.modules_utils.ModuleExceptionError(
                     "You cannot specify a tool and request all tools to be bumped."
                 )
             nfcore_modules = [m for m in nfcore_modules if m.component_name == module]
             if len(nfcore_modules) == 0:
-                raise nf_core.modules.modules_utils.ModuleException(f"Could not find the specified module: '{module}'")
+                raise nf_core.modules.modules_utils.ModuleExceptionError(
+                    f"Could not find the specified module: '{module}'"
+                )
 
         progress_bar = Progress(
             "[bold blue]{task.description}",

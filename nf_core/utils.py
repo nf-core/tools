@@ -181,9 +181,9 @@ class Pipeline:
 
         self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "").strip("'").split("/")
 
-        nextflowVersionMatch = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
-        if nextflowVersionMatch:
-            self.minNextflowVersion = nextflowVersionMatch.group(0)
+        nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
+        if nextflow_version_match:
+            self.minNextflowVersion = nextflow_version_match.group(0)
 
     def _load_conda_environment(self):
         """Try to load the pipeline environment.yml file, if it exists"""
@@ -312,7 +312,7 @@ def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
     full_cmd = f"{executable} {cmd}"
     log.debug(f"Running command: {full_cmd}")
     try:
-        proc = subprocess.run(shlex.split(full_cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=True)
         return (proc.stdout, proc.stderr)
     except OSError as e:
         if e.errno == errno.ENOENT:
@@ -433,7 +433,7 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 return web_response
 
 
-class GitHub_API_Session(requests_cache.CachedSession):
+class GitHubAPISession(requests_cache.CachedSession):
     """
     Class to provide a single session for interacting with the GitHub API for a run.
     Inherits the requests_cache.CachedSession and adds additional functionality,
@@ -590,7 +590,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
 
 
 # Single session object to use for entire codebase. Not sure if there's a better way to do this?
-gh_api = GitHub_API_Session()
+gh_api = GitHubAPISession()
 
 
 def anaconda_package(dep, dep_channels=None):
@@ -792,7 +792,7 @@ def custom_yaml_dumper():
 
             See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
             """
-            return super(CustomDumper, self).increase_indent(flow=flow, indentless=False)
+            return super().increase_indent(flow=flow, indentless=False)
 
         # HACK: insert blank lines between top-level objects
         # inspired by https://stackoverflow.com/a/44284819/3786245

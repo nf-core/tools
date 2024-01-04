@@ -4,7 +4,7 @@ import re
 import pytest
 
 import nf_core.modules
-from nf_core.modules.modules_utils import ModuleException
+from nf_core.modules.modules_utils import ModuleExceptionError
 
 
 def test_modules_bump_versions_single_module(self):
@@ -31,7 +31,7 @@ def test_modules_bump_versions_all_modules(self):
 def test_modules_bump_versions_fail(self):
     """Fail updating a module with wrong name"""
     version_bumper = nf_core.modules.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
-    with pytest.raises(ModuleException) as excinfo:
+    with pytest.raises(ModuleExceptionError) as excinfo:
         version_bumper.bump_versions(module="no/module")
     assert "Could not find the specified module:" in str(excinfo.value)
 

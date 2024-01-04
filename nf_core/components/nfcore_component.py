@@ -168,7 +168,7 @@ class NFCoreComponent:
         input_data = data.split("input:")[1].split("output:")[0]
         regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
         matches = re.finditer(regex, input_data, re.MULTILINE)
-        for matchNum, match in enumerate(matches, start=1):
+        for _, match in enumerate(matches, start=1):
             if match.group(3):
                 inputs.append(match.group(3))
             elif match.group(4):
@@ -187,7 +187,7 @@ class NFCoreComponent:
         output_data = data.split("output:")[1].split("when:")[0]
         regex = r"emit:\s*([^)\s,]+)"
         matches = re.finditer(regex, output_data, re.MULTILINE)
-        for matchNum, match in enumerate(matches, start=1):
+        for _, match in enumerate(matches, start=1):
             outputs.append(match.group(1))
         log.info(f"Found {len(outputs)} outputs in {self.main_nf}")
         self.outputs = outputs

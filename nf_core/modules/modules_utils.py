@@ -9,7 +9,7 @@ from ..components.nfcore_component import NFCoreComponent
 log = logging.getLogger(__name__)
 
 
-class ModuleException(Exception):
+class ModuleExceptionError(Exception):
     """Exception raised when there was an error with module commands"""
 
     pass
@@ -69,7 +69,7 @@ def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], Lis
     if os.path.exists(nfcore_modules_dir):
         for m in sorted([m for m in os.listdir(nfcore_modules_dir) if not m == "lib"]):
             if not os.path.isdir(os.path.join(nfcore_modules_dir, m)):
-                raise ModuleException(
+                raise ModuleExceptionError(
                     f"File found in '{nfcore_modules_dir}': '{m}'! This directory should only contain module directories."
                 )
             m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
