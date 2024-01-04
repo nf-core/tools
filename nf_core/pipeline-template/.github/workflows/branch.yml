@@ -19,7 +19,7 @@ jobs:
       # NOTE - this doesn't currently work if the PR is coming from a fork, due to limitations in GitHub actions secrets
       - name: Post PR comment
         if: failure()
-        uses: mshick/add-pr-comment@7c0890544fb33b0bdd2e59467fbacb62e028a096 # v2
+        uses: mshick/add-pr-comment@v2
         with:
           message: |
             ## This PR is against the `master` branch :x:
