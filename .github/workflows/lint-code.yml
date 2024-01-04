@@ -61,7 +61,7 @@ jobs:
       - name: Run Ruff check
         run: ruff check .
 
-     - name: Run Ruff format
+      - name: Run Ruff format
         run: ruff format .
 
       # If the above check failed, post a comment on the PR explaining the failure
