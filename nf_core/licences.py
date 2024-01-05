@@ -1,6 +1,5 @@
 """Lists software licences for a given workflow."""
 
-from __future__ import print_function
 
 import json
 import logging

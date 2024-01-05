@@ -553,6 +553,7 @@ class ModulesJson:
         Check that we have the "installed_by" value in 'modules.json', otherwise add it.
         Assume that the modules/subworkflows were installed by an nf-core command (don't track installed by subworkflows).
         """
+        dump_modules_json = False
         try:
             self.load()
             if not self.has_git_url_and_modules():
@@ -566,9 +567,11 @@ class ModulesJson:
                             for _, component in install_dir_entry.items():
                                 if "installed_by" in component and isinstance(component["installed_by"], str):
                                     log.debug(f"Updating {component} in modules.json")
+                                    dump_modules_json = True
                                     component["installed_by"] = [component["installed_by"]]
         except UserWarning:
             log.info("The 'modules.json' file is not up to date. Recreating the 'modules.json' file.")
+            dump_modules_json = True
             self.create()
 
         # Get unsynced components
@@ -593,8 +596,10 @@ class ModulesJson:
         # If some modules/subworkflows didn't have an entry in the 'modules.json' file
         # we try to determine the SHA from the commit log of the remote
         if len(modules_missing_from_modules_json) > 0:
+            dump_modules_json = True
             self.resolve_missing_from_modules_json(modules_missing_from_modules_json, "modules")
         if len(subworkflows_missing_from_modules_json) > 0:
+            dump_modules_json = True
             self.resolve_missing_from_modules_json(subworkflows_missing_from_modules_json, "subworkflows")
 
         # If the "installed_by" value is not present for modules/subworkflows, add it.
@@ -603,6 +608,7 @@ class ModulesJson:
                 for install_dir, installed_components in dir_content.items():
                     for component, component_features in installed_components.items():
                         if "installed_by" not in component_features:
+                            dump_modules_json = True
                             self.modules_json["repos"][repo][component_type][install_dir][component]["installed_by"] = [
                                 component_type
                             ]
@@ -612,12 +618,14 @@ class ModulesJson:
         self.pipeline_components = None
         subworkflows_dict = self.get_all_components("subworkflows")
         if subworkflows_dict:
+            dump_modules_json = True
             for repo, subworkflows in subworkflows_dict.items():
                 for org, subworkflow in subworkflows:
                     self.recreate_dependencies(repo, org, subworkflow)
         self.pipeline_components = original_pipeline_components
 
-        self.dump()
+        if dump_modules_json:
+            self.dump(run_prettier=True)
 
     def load(self):
         """
@@ -629,7 +637,7 @@ class ModulesJson:
             UserWarning: If the modules.json file is not found
         """
         try:
-            with open(self.modules_json_path, "r") as fh:
+            with open(self.modules_json_path) as fh:
                 try:
                     self.modules_json = json.load(fh)
                 except json.JSONDecodeError as e:

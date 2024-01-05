@@ -55,7 +55,7 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
     if lines is None:
         try:
             # Check whether file exists and load it
-            with open(module.main_nf, "r") as fh:
+            with open(module.main_nf) as fh:
                 lines = fh.readlines()
             module.passed.append(("main_nf_exists", "Module file exists", module.main_nf))
         except FileNotFoundError:
@@ -81,39 +81,39 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
     script_lines = []
     shell_lines = []
     when_lines = []
-    for l in lines:
-        if re.search(r"^\s*process\s*\w*\s*{", l) and state == "module":
+    for line in lines:
+        if re.search(r"^\s*process\s*\w*\s*{", line) and state == "module":
             state = "process"
-        if re.search(r"input\s*:", l) and state in ["process"]:
+        if re.search(r"input\s*:", line) and state in ["process"]:
             state = "input"
             continue
-        if re.search(r"output\s*:", l) and state in ["input", "process"]:
+        if re.search(r"output\s*:", line) and state in ["input", "process"]:
             state = "output"
             continue
-        if re.search(r"when\s*:", l) and state in ["input", "output", "process"]:
+        if re.search(r"when\s*:", line) and state in ["input", "output", "process"]:
             state = "when"
             continue
-        if re.search(r"script\s*:", l) and state in ["input", "output", "when", "process"]:
+        if re.search(r"script\s*:", line) and state in ["input", "output", "when", "process"]:
             state = "script"
             continue
-        if re.search(r"shell\s*:", l) and state in ["input", "output", "when", "process"]:
+        if re.search(r"shell\s*:", line) and state in ["input", "output", "when", "process"]:
             state = "shell"
             continue
 
         # Perform state-specific linting checks
-        if state == "process" and not _is_empty(l):
-            process_lines.append(l)
-        if state == "input" and not _is_empty(l):
-            inputs.extend(_parse_input(module, l))
-        if state == "output" and not _is_empty(l):
-            outputs += _parse_output(module, l)
+        if state == "process" and not _is_empty(line):
+            process_lines.append(line)
+        if state == "input" and not _is_empty(line):
+            inputs.extend(_parse_input(module, line))
+        if state == "output" and not _is_empty(line):
+            outputs += _parse_output(module, line)
             outputs = list(set(outputs))  # remove duplicate 'meta's
-        if state == "when" and not _is_empty(l):
-            when_lines.append(l)
-        if state == "script" and not _is_empty(l):
-            script_lines.append(l)
-        if state == "shell" and not _is_empty(l):
-            shell_lines.append(l)
+        if state == "when" and not _is_empty(line):
+            when_lines.append(line)
+        if state == "script" and not _is_empty(line):
+            script_lines.append(line)
+        if state == "shell" and not _is_empty(line):
+            shell_lines.append(line)
 
     # Check that we have required sections
     if not len(outputs):
@@ -140,7 +140,7 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
 
     # Check that shell uses a template
     if len(shell_lines):
-        if any("template" in l for l in shell_lines):
+        if any("template" in line for line in shell_lines):
             module.passed.append(("main_nf_shell_template", "`template` found in `shell` block", module.main_nf))
         else:
             module.failed.append(("main_nf_shell_template", "No `template` found in `shell` block", module.main_nf))
@@ -249,21 +249,21 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
     # Deprecated enable_conda
     for i, raw_line in enumerate(lines):
         url = None
-        l = raw_line.strip(" \n'\"}:")
+        line = raw_line.strip(" \n'\"}:")
 
         # Catch preceeding "container "
-        if l.startswith("container"):
-            l = l.replace("container", "").strip(" \n'\"}:")
+        if line.startswith("container"):
+            line = line.replace("container", "").strip(" \n'\"}:")
 
-        if _container_type(l) == "conda":
-            if "bioconda::" in l:
-                bioconda_packages = [b for b in l.split() if "bioconda::" in b]
-            match = re.search(r"params\.enable_conda", l)
+        if _container_type(line) == "conda":
+            if "bioconda::" in line:
+                bioconda_packages = [b for b in line.split() if "bioconda::" in b]
+            match = re.search(r"params\.enable_conda", line)
             if match is None:
                 self.passed.append(
                     (
                         "deprecated_enable_conda",
-                        f"Deprecated parameter 'params.enable_conda' correctly not found in the conda definition",
+                        "Deprecated parameter 'params.enable_conda' correctly not found in the conda definition",
                         self.main_nf,
                     )
                 )
@@ -271,35 +271,35 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                 self.failed.append(
                     (
                         "deprecated_enable_conda",
-                        f"Found deprecated parameter 'params.enable_conda' in the conda definition",
+                        "Found deprecated parameter 'params.enable_conda' in the conda definition",
                         self.main_nf,
                     )
                 )
-        if _container_type(l) == "singularity":
+        if _container_type(line) == "singularity":
             # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img -> v1.2.0_cv1
             # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0 -> 0.11.9--0
             # Please god let's find a better way to do this than regex
-            match = re.search(r"(?:[:.])?([A-Za-z\d\-_.]+?)(?:\.img)?(?:\.sif)?$", l)
+            match = re.search(r"(?:[:.])?([A-Za-z\d\-_.]+?)(?:\.img)?(?:\.sif)?$", line)
             if match is not None:
                 singularity_tag = match.group(1)
                 self.passed.append(("singularity_tag", f"Found singularity tag: {singularity_tag}", self.main_nf))
             else:
                 self.failed.append(("singularity_tag", "Unable to parse singularity tag", self.main_nf))
                 singularity_tag = None
-            url = urlparse(l.split("'")[0])
+            url = urlparse(line.split("'")[0])
 
-        if _container_type(l) == "docker":
+        if _container_type(line) == "docker":
             # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5 -> 2.7.1--pl526_5
             # e.g. "biocontainers/biocontainers:v1.2.0_cv1 -> v1.2.0_cv1
-            match = re.search(r":([A-Za-z\d\-_.]+)$", l)
+            match = re.search(r":([A-Za-z\d\-_.]+)$", line)
             if match is not None:
                 docker_tag = match.group(1)
                 self.passed.append(("docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
             else:
                 self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
                 docker_tag = None
-            if l.startswith(registry):
-                l_stripped = re.sub(r"\W+$", "", l)
+            if line.startswith(registry):
+                l_stripped = re.sub(r"\W+$", "", line)
                 self.failed.append(
                     (
                         "container_links",
@@ -308,15 +308,15 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
                     )
                 )
             else:
-                self.passed.append(("container_links", f"Container prefix is correct", self.main_nf))
+                self.passed.append(("container_links", "Container prefix is correct", self.main_nf))
 
             # Guess if container name is simple one (e.g. nfcore/ubuntu:20.04)
             # If so, add quay.io as default container prefix
-            if l.count("/") == 1 and l.count(":") == 1:
-                l = "/".join([registry, l]).replace("//", "/")
-            url = urlparse(l.split("'")[0])
+            if line.count("/") == 1 and line.count(":") == 1:
+                line = "/".join([registry, line]).replace("//", "/")
+            url = urlparse(line.split("'")[0])
 
-        if l.startswith("container") or _container_type(l) == "docker" or _container_type(l) == "singularity":
+        if line.startswith("container") or _container_type(line) == "docker" or _container_type(line) == "singularity":
             check_container_link_line(self, raw_line, registry)
 
         # Try to connect to container URLs
@@ -348,7 +348,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
 
     # Get bioconda packages from environment.yml
     try:
-        with open(Path(self.component_dir, "environment.yml"), "r") as fh:
+        with open(Path(self.component_dir, "environment.yml")) as fh:
             env_yml = yaml.safe_load(fh)
         if "dependencies" in env_yml:
             bioconda_packages = [x for x in env_yml["dependencies"] if isinstance(x, str) and "bioconda::" in x]
@@ -424,7 +424,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
 
 def check_process_labels(self, lines):
     correct_process_labels = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
-    all_labels = [l.strip() for l in lines if l.lstrip().startswith("label ")]
+    all_labels = [line.strip() for line in lines if line.lstrip().startswith("label ")]
     bad_labels = []
     good_labels = []
     if len(all_labels) > 0:
@@ -475,14 +475,14 @@ def check_process_labels(self, lines):
 def check_container_link_line(self, raw_line, registry):
     """Look for common problems in the container name / URL, for docker and singularity."""
 
-    l = raw_line.strip(" \n'\"}:")
+    line = raw_line.strip(" \n'\"}:")
 
     # lint double quotes
-    if l.count('"') > 2:
+    if line.count('"') > 2:
         self.failed.append(
             (
                 "container_links",
-                f"Too many double quotes found when specifying container: {l.lstrip('container ')}",
+                f"Too many double quotes found when specifying container: {line.lstrip('container ')}",
                 self.main_nf,
             )
         )
@@ -490,7 +490,7 @@ def check_container_link_line(self, raw_line, registry):
         self.passed.append(
             (
                 "container_links",
-                f"Correct number of double quotes found when specifying container: {l.lstrip('container ')}",
+                f"Correct number of double quotes found when specifying container: {line.lstrip('container ')}",
                 self.main_nf,
             )
         )
@@ -524,7 +524,9 @@ def check_container_link_line(self, raw_line, registry):
             )
 
         # lint more than one container in the same line
-        if ("https://containers" in l or "https://depot" in l) and ("biocontainers/" in l or l.startswith(registry)):
+        if ("https://containers" in line or "https://depot" in line) and (
+            "biocontainers/" in line or line.startswith(registry)
+        ):
             self.warned.append(
                 (
                     "container_links",
@@ -576,7 +578,7 @@ def _parse_output(self, line):
     output = []
     if "meta" in line:
         output.append("meta")
-    if not "emit:" in line:
+    if "emit:" not in line:
         self.failed.append(("missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
     else:
         output.append(line.split("emit:")[1].strip())
@@ -605,14 +607,14 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
     # Get latest build
     build = _get_build(response)
 
-    with open(self.main_nf, "r") as source:
+    with open(self.main_nf) as source:
         lines = source.readlines()
 
     # Check if the new version + build exist and replace
     new_lines = []
     for line in lines:
-        l = line.strip(" '\"")
-        build_type = _container_type(l)
+        line_stripped = line.strip(" '\"")
+        build_type = _container_type(line_stripped)
         if build_type == "conda":
             new_lines.append(re.sub(rf"{current_version}", f"{latest_version}", line))
         elif build_type in ("singularity", "docker"):

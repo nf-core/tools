@@ -44,7 +44,7 @@ def module_tests(_, module: NFCoreComponent):
 
     if module.nftest_main_nf.is_file():
         # Check if main.nf.test.snap file exists, if 'snap(' is inside main.nf.test
-        with open(module.nftest_main_nf, "r") as fh:
+        with open(module.nftest_main_nf) as fh:
             if "snapshot(" in fh.read():
                 snap_file = module.nftest_testdir / "main.nf.test.snap"
                 if snap_file.is_file():
@@ -52,7 +52,7 @@ def module_tests(_, module: NFCoreComponent):
                         ("test_snapshot_exists", "snapshot file `main.nf.test.snap` exists", snap_file)
                     )
                     # Validate no empty files
-                    with open(snap_file, "r") as snap_fh:
+                    with open(snap_file) as snap_fh:
                         try:
                             snap_content = json.load(snap_fh)
                             for test_name in snap_content.keys():
@@ -145,7 +145,7 @@ def module_tests(_, module: NFCoreComponent):
     pytest_yml_path = module.base_dir / "tests" / "config" / "pytest_modules.yml"
     if pytest_yml_path.is_file() and not is_pytest:
         try:
-            with open(pytest_yml_path, "r") as fh:
+            with open(pytest_yml_path) as fh:
                 pytest_yml = yaml.safe_load(fh)
                 if module.component_name in pytest_yml.keys():
                     module.failed.append(
@@ -165,7 +165,7 @@ def module_tests(_, module: NFCoreComponent):
     if module.tags_yml.is_file():
         # Check that tags.yml exists and it has the correct entry
         module.passed.append(("test_tags_yml_exists", "file `tags.yml` exists", module.tags_yml))
-        with open(module.tags_yml, "r") as fh:
+        with open(module.tags_yml) as fh:
             tags_yml = yaml.safe_load(fh)
             if module.component_name in tags_yml.keys():
                 module.passed.append(("test_tags_yml", "correct entry in tags.yml", module.tags_yml))
