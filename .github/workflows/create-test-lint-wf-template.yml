@@ -51,18 +51,6 @@ jobs:
         with:
           version: latest-everything
 
-      # Install the Prettier linting tools
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install Prettier
-        run: npm install -g prettier
-
-      # Install the editorconfig linting tools
-      - name: Install editorconfig-checker
-        run: npm install -g editorconfig-checker
-
       # Create template files
       - name: Create template skip all (except github)
         run: |
@@ -107,11 +95,8 @@ jobs:
         run: nf-core --log-file log.txt sync --dir create-test-lint-wf/my-prefix-testpipeline/
 
       # Run code style linting
-      - name: Run Prettier --check
-        run: prettier --check create-test-lint-wf/my-prefix-testpipeline
-
-      - name: Run ECLint check
-        run: editorconfig-checker -exclude README.md $(find my-prefix-testpipeline/.* -type f | grep -v '.git\|.py\|md\|json\|yml\|yaml\|html\|css\|work\|.nextflow\|build\|nf_core.egg-info\|log.txt\|Makefile')
+      - name: Run pre-commit
+        run: pre-commit run --all-files
         working-directory: create-test-lint-wf
 
       # Remove TODO statements
