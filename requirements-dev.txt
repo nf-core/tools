@@ -1,7 +1,6 @@
 myst_parser
 pytest-cov
 pytest-datafiles
-pytest-xdist
 responses
 Sphinx
 sphinx-rtd-theme

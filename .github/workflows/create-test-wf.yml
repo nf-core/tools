@@ -56,7 +56,6 @@ jobs:
           export NXF_WORK=$(pwd)
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
           nextflow run nf-core-testpipeline -profile test,self_hosted_runner --outdir ./results
-          nextflow clean -f
 
       - name: Upload log file artifact
         if: ${{ always() }}

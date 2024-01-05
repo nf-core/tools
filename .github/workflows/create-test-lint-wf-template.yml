@@ -26,11 +26,9 @@ jobs:
     strategy:
       matrix:
         TEMPLATE:
-          # - "template_skip_all.yml"
           - "template_skip_github_badges.yml"
           - "template_skip_igenomes.yml"
           - "template_skip_ci.yml"
-          # - "template_skip_nf_core_configs.yml"
         runner: ["self-hosted"]
         include:
           - TEMPLATE: "template_skip_all.yml"
@@ -108,7 +106,6 @@ jobs:
         run: |
           cd create-test-lint-wf
           nextflow run my-prefix-testpipeline -profile test,self_hosted_runner --outdir ./results
-          nextflow clean -f
 
       # Remove results folder before linting
       - name: remove results folder
