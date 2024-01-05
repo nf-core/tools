@@ -5,9 +5,7 @@ Helper functions for tests
 import functools
 import os
 import tempfile
-from contextlib import contextmanager
-from pathlib import Path
-from typing import Any, Callable, Generator, Tuple
+from typing import Any, Callable, Tuple
 
 import responses
 

@@ -1,7 +1,4 @@
-import tempfile
 from pathlib import Path
-
-import pytest
 
 from .utils import with_temporary_file, with_temporary_folder
 

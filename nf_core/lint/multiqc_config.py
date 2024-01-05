@@ -34,7 +34,7 @@ def multiqc_config(self) -> Dict[str, List[str]]:
         return {"ignored": ["'assets/multiqc_config.yml' not found"]}
 
     try:
-        with open(fn, "r") as fh:
+        with open(fn) as fh:
             mqc_yml = yaml.safe_load(fh)
     except Exception as e:
         return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}

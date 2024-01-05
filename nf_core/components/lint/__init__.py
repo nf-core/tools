@@ -3,7 +3,6 @@ Code for linting modules and subworkflows in the nf-core/modules repository and
 in nf-core pipelines
 """
 
-from __future__ import print_function
 
 import logging
 import operator
@@ -27,7 +26,7 @@ from nf_core.utils import plural_s as _s
 log = logging.getLogger(__name__)
 
 
-class LintException(Exception):
+class LintExceptionError(Exception):
     """Exception raised when there was an error with module or subworkflow linting"""
 
     pass
@@ -216,7 +215,7 @@ class ComponentLint(ComponentCommand):
             try:
                 for lint_result in tests:
                     max_name_len = max(len(lint_result.component_name), max_name_len)
-            except:
+            except Exception:
                 pass
 
         # Helper function to format test links nicely

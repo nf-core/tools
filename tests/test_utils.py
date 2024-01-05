@@ -134,7 +134,7 @@ class TestUtils(unittest.TestCase):
 
     def test_pip_package_pass(self):
         result = nf_core.utils.pip_package("multiqc=1.10")
-        assert type(result) == dict
+        assert isinstance(result, dict)
 
     @mock.patch("requests.get")
     def test_pip_package_timeout(self, mock_get):

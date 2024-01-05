@@ -47,15 +47,15 @@ RUN conda config --add channels defaults && \
     conda config --add channels conda-forge && \
     conda config --set channel_priority strict && \
     conda install --quiet --yes --name base \
-        mamba \
-        nextflow \
-        nf-core \
-        nf-test \
-        black \
-        prettier \
-        pre-commit \
-        openjdk \
-        pytest-workflow && \
+    mamba \
+    nextflow \
+    nf-core \
+    nf-test \
+    prettier \
+    pre-commit \
+    ruff \
+    openjdk \
+    pytest-workflow && \
     conda clean --all --force-pkgs-dirs --yes
 
 # Update Nextflow

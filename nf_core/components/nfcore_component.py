@@ -81,7 +81,7 @@ class NFCoreComponent:
     def _get_main_nf_tags(self, test_main_nf: Union[Path, str]):
         """Collect all tags from the main.nf.test file."""
         tags = []
-        with open(test_main_nf, "r") as fh:
+        with open(test_main_nf) as fh:
             for line in fh:
                 if line.strip().startswith("tag"):
                     tags.append(line.strip().split()[1].strip('"'))
@@ -90,7 +90,7 @@ class NFCoreComponent:
     def _get_included_components(self, main_nf: Union[Path, str]):
         """Collect all included components from the main.nf file."""
         included_components = []
-        with open(main_nf, "r") as fh:
+        with open(main_nf) as fh:
             for line in fh:
                 if line.strip().startswith("include"):
                     # get tool/subtool or subworkflow name from include statement, can be in the form
@@ -107,7 +107,7 @@ class NFCoreComponent:
     def _get_included_components_in_chained_tests(self, main_nf_test: Union[Path, str]):
         """Collect all included components from the main.nf file."""
         included_components = []
-        with open(main_nf_test, "r") as fh:
+        with open(main_nf_test) as fh:
             for line in fh:
                 if line.strip().startswith("script"):
                     # get tool/subtool or subworkflow name from script statement, can be:
@@ -151,7 +151,7 @@ class NFCoreComponent:
     def get_inputs_from_main_nf(self):
         """Collect all inputs from the main.nf file."""
         inputs = []
-        with open(self.main_nf, "r") as f:
+        with open(self.main_nf) as f:
             data = f.read()
         # get input values from main.nf after "input:", which can be formatted as tuple val(foo) path(bar) or val foo or val bar or path bar or path foo
         # regex matches:
@@ -168,17 +168,19 @@ class NFCoreComponent:
         input_data = data.split("input:")[1].split("output:")[0]
         regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
         matches = re.finditer(regex, input_data, re.MULTILINE)
-        for matchNum, match in enumerate(matches, start=1):
+        for _, match in enumerate(matches, start=1):
             if match.group(3):
-                inputs.append(match.group(3))
+                input_val = match.group(3).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
+                inputs.append(input_val)
             elif match.group(4):
-                inputs.append(match.group(4))
+                input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
+                inputs.append(input_val)
         log.info(f"Found {len(inputs)} inputs in {self.main_nf}")
         self.inputs = inputs
 
     def get_outputs_from_main_nf(self):
         outputs = []
-        with open(self.main_nf, "r") as f:
+        with open(self.main_nf) as f:
             data = f.read()
         # get output values from main.nf after "output:". the names are always after "emit:"
         if "output:" not in data:
@@ -187,7 +189,7 @@ class NFCoreComponent:
         output_data = data.split("output:")[1].split("when:")[0]
         regex = r"emit:\s*([^)\s,]+)"
         matches = re.finditer(regex, output_data, re.MULTILINE)
-        for matchNum, match in enumerate(matches, start=1):
+        for _, match in enumerate(matches, start=1):
             outputs.append(match.group(1))
         log.info(f"Found {len(outputs)} outputs in {self.main_nf}")
         self.outputs = outputs
