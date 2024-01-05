@@ -6,9 +6,10 @@ from textwrap import dedent
 import git
 import yaml
 from github import Github, GithubException, UnknownObjectException
-from textual import work
+from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
+from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
@@ -135,6 +136,7 @@ class GithubRepo(Screen):
                     self._create_repo_and_push(
                         org, pipeline_repo, github_variables["private"], github_variables["push"]
                     )
+                    self.screen.loading = True
                 else:
                     # Create the repo in the user's account
                     log.info(
@@ -143,12 +145,21 @@ class GithubRepo(Screen):
                     self._create_repo_and_push(
                         user, pipeline_repo, github_variables["private"], github_variables["push"]
                     )
+                    self.screen.loading = True
                 log.info(f"GitHub repository '{self.parent.TEMPLATE_CONFIG.name}' created successfully")
             except UserWarning as e:
                 log.info(f"There was an error with message: {e}")
                 self.parent.switch_screen("github_exit")
 
-            self.parent.switch_screen(LoggingScreen())
+    class RepoCreated(Message):
+        """Custom message to indicate that the GitHub repo has been created."""
+
+        pass
+
+    @on(RepoCreated)
+    def stop_loading(self) -> None:
+        self.screen.loading = False
+        self.parent.switch_screen(LoggingScreen())
 
     @work(thread=True)
     def _create_repo_and_push(self, org, pipeline_repo, private, push):
@@ -163,9 +174,11 @@ class GithubRepo(Screen):
             except GithubException:
                 # Repo is empty
                 repo_exists = True
-            except UserWarning:
+            except UserWarning as e:
                 # Repo already exists
-                self.parent.switch_screen(LoggingScreen())
+                self.post_message(self.RepoCreated())
+                log.info(e)
+                return
         except UnknownObjectException:
             # Repo doesn't exist
             repo_exists = False
@@ -184,6 +197,8 @@ class GithubRepo(Screen):
             pass
         if push:
             pipeline_repo.remotes.origin.push(all=True).raise_if_error()
+
+        self.post_message(self.RepoCreated())
 
     def _github_authentication(self, gh_username, gh_token):
         """Authenticate to GitHub"""
