@@ -291,6 +291,7 @@ Do you want to run this command now?  [y/n]:
 ```
 
 ### Launch tool options
+
 - `-r`, `--revision`
   - Specify a pipeline release (or branch / git commit sha) of the project to run
 - `-i`, `--id`
