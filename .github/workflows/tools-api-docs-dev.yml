@@ -43,7 +43,7 @@ jobs:
       - name: Sync dev docs
         # Only sync with the website if it was a push from nf-core/tools dev branch
         if: github.repository == 'nf-core/tools' && github.event_name == 'push' && github.event.ref == 'refs/heads/dev'
-        uses: SamKirkland/FTP-Deploy-Action@4.0.0
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.ftp_server }}
           username: ${{ secrets.ftp_username}}
