@@ -30,14 +30,14 @@ jobs:
           - "template_skip_igenomes.yml"
           - "template_skip_ci.yml"
         runner: ["self-hosted"]
-        profile: [",self_hosted_runner"]
+        profile: ["self_hosted_runner"]
         include:
           - TEMPLATE: "template_skip_all.yml"
             runner: ubuntu-latest
-            profile: ""
+            profile: "docker"
           - TEMPLATE: "template_skip_nf_core_configs.yml"
             runner: ubuntu-latest
-            profile: ""
+            profile: "docker"
 
     steps:
       - name: go to working directory
@@ -108,7 +108,7 @@ jobs:
       - name: run the pipeline
         run: |
           cd create-test-lint-wf
-          nextflow run my-prefix-testpipeline -profile test${{matrix.profile}} --outdir ./results
+          nextflow run my-prefix-testpipeline -profile test,${{matrix.profile}} --outdir ./results
 
       # Remove results folder before linting
       - name: remove results folder
