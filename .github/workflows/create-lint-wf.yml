@@ -32,7 +32,7 @@ jobs:
 
       # Set up nf-core/tools
       - name: Set up Python 3.11
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
 
