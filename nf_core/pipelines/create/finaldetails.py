@@ -9,7 +9,6 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
 from nf_core.pipelines.create.create import PipelineCreate
-from nf_core.pipelines.create.loggingscreen import LoggingScreen
 from nf_core.pipelines.create.utils import TextInput
 
 
@@ -86,8 +85,7 @@ class FinalDetails(Screen):
     @on(PipelineCreated)
     def stop_loading(self) -> None:
         self.screen.loading = False
-        self.parent.LOGGING_STATE = "pipeline created"
-        self.parent.switch_screen(LoggingScreen())
+        self.parent.switch_screen("github_repo_question")
 
     @work(thread=True)
     def create_pipeline(self) -> None:

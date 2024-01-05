@@ -148,7 +148,6 @@ class GithubRepo(Screen):
                 log.info(f"There was an error with message: {e}")
                 self.parent.switch_screen("github_exit")
 
-            self.parent.LOGGING_STATE = "repo created"
             self.parent.switch_screen(LoggingScreen())
 
     @work(thread=True)
@@ -164,6 +163,9 @@ class GithubRepo(Screen):
             except GithubException:
                 # Repo is empty
                 repo_exists = True
+            except UserWarning:
+                # Repo already exists
+                self.parent.switch_screen(LoggingScreen())
         except UnknownObjectException:
             # Repo doesn't exist
             repo_exists = False

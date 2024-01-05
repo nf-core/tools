@@ -25,14 +25,8 @@ class LoggingScreen(Screen):
             id="logo",
         )
         yield Markdown(markdown)
-        if self.parent.LOGGING_STATE == "repo created":
-            yield Center(
-                Button("Close App", id="close_app", variant="success"),
-                classes="cta",
-            )
-        else:
-            yield Center(
-                Button("Close logging screen", id="close_screen", variant="success"),
-                classes="cta",
-            )
+        yield Center(
+            Button("Close App", id="close_app", variant="success"),
+            classes="cta",
+        )
         yield Center(self.parent.LOG_HANDLER.console, classes="cta")
