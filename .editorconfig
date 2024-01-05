@@ -10,3 +10,7 @@ indent_style = space
 
 [*.{md,yml,yaml,html,css,scss,js,cff}]
 indent_size = 2
+
+# ignore python and markdown files
+[*.{py,md}]
+indent_style = unset
