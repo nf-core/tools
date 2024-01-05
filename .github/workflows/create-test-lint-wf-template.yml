@@ -20,24 +20,37 @@ env:
 
 jobs:
   RunTestWorkflow:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     env:
       NXF_ANSI_LOG: false
     strategy:
       matrix:
         TEMPLATE:
-          - "template_skip_all.yml"
           - "template_skip_github_badges.yml"
           - "template_skip_igenomes.yml"
           - "template_skip_ci.yml"
-          - "template_skip_nf_core_configs.yml"
+        runner: ["self-hosted"]
+        profile: ["self_hosted_runner"]
+        include:
+          - TEMPLATE: "template_skip_all.yml"
+            runner: ubuntu-latest
+            profile: "docker"
+          - TEMPLATE: "template_skip_nf_core_configs.yml"
+            runner: ubuntu-latest
+            profile: "docker"
 
     steps:
+      - name: go to working directory
+        run: |
+          mkdir -p create-lint-wf-template
+          cd create-lint-wf-template
+          export NXF_WORK=$(pwd)
+
       - uses: actions/checkout@v4
         name: Check out source-code repository
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
 
@@ -50,18 +63,6 @@ jobs:
         uses: nf-core/setup-nextflow@v1
         with:
           version: latest-everything
-
-      # Install the Prettier linting tools
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install Prettier
-        run: npm install -g prettier
-
-      # Install the editorconfig linting tools
-      - name: Install editorconfig-checker
-        run: npm install -g editorconfig-checker
 
       # Create template files
       - name: Create template skip all (except github)
@@ -95,7 +96,7 @@ jobs:
       - name: run the pipeline
         run: |
           cd create-test-lint-wf
-          nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
+          nextflow run my-prefix-testpipeline -profile test,${{matrix.profile}} --outdir ./results
 
       # Remove results folder before linting
       - name: remove results folder
@@ -107,11 +108,8 @@ jobs:
         run: nf-core --log-file log.txt sync --dir create-test-lint-wf/my-prefix-testpipeline/
 
       # Run code style linting
-      - name: Run Prettier --check
-        run: prettier --check create-test-lint-wf/my-prefix-testpipeline
-
-      - name: Run ECLint check
-        run: editorconfig-checker -exclude README.md $(find my-prefix-testpipeline/.* -type f | grep -v '.git\|.py\|md\|json\|yml\|yaml\|html\|css\|work\|.nextflow\|build\|nf_core.egg-info\|log.txt\|Makefile')
+      - name: Run pre-commit
+        run: pre-commit run --all-files
         working-directory: create-test-lint-wf
 
       # Remove TODO statements
@@ -145,7 +143,11 @@ jobs:
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: nf-core-log-file
           path: create-test-lint-wf/artifact_files.tar
+
+      - name: Cleanup work directory
+        run: sudo rm -rf create-test-lint-wf
+        if: always()
