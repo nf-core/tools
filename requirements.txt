@@ -19,5 +19,5 @@ requests_cache
 rich-click>=1.6.1
 rich>=13.3.1
 tabulate
-textual>=0.41.0
+textual>=0.47.1
 pdiff

@@ -4,6 +4,7 @@ from textwrap import dedent
 from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
+from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
@@ -75,6 +76,16 @@ class FinalDetails(Screen):
 
         # Create the new pipeline
         self.create_pipeline()
+        self.screen.loading = True
+
+    class PipelineCreated(Message):
+        """Custom message to indicate that the pipeline has been created."""
+
+        pass
+
+    @on(PipelineCreated)
+    def stop_loading(self) -> None:
+        self.screen.loading = False
         self.parent.LOGGING_STATE = "pipeline created"
         self.parent.switch_screen(LoggingScreen())
 
@@ -83,3 +94,4 @@ class FinalDetails(Screen):
         """Create the pipeline."""
         create_obj = PipelineCreate(template_config=self.parent.TEMPLATE_CONFIG)
         create_obj.init_pipeline()
+        self.post_message(self.PipelineCreated())
