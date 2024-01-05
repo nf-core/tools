@@ -24,6 +24,7 @@
 
 - Rename `release-announcments.yml` to `release-announcements.yml` ([#2610](https://github.com/nf-core/tools/pull/2610))
 - Fix `nextflow.config` `docker.runOptions` ([#2607](https://github.com/nf-core/tools/pull/2607))
+- Use `pre-commit` to lint files in GitHub CI ([#2635](https://github.com/nf-core/tools/pull/2635))
 
 ### General
 
