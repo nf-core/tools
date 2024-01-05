@@ -20,7 +20,7 @@ concurrency:
 jobs:
   api-docs:
     name: Build & push Sphinx API docs
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out source-code repository
