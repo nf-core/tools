@@ -1,10 +1,12 @@
 import logging
 import os
+from pathlib import Path
 from textwrap import dedent
 
 import git
 import yaml
 from github import Github, GithubException, UnknownObjectException
+from textual import work
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
 from textual.screen import Screen
@@ -90,7 +92,10 @@ class GithubRepo(Screen):
                 github_variables[switch_input.id] = switch_input.value
 
             # Pipeline git repo
-            pipeline_repo = git.Repo.init(self.parent.TEMPLATE_CONFIG.outdir)
+            pipeline_repo = git.Repo.init(
+                Path(self.parent.TEMPLATE_CONFIG.outdir)
+                / Path(self.parent.TEMPLATE_CONFIG.org + "-" + self.parent.TEMPLATE_CONFIG.name)
+            )
 
             # GitHub authentication
             if github_variables["token"]:
@@ -146,6 +151,7 @@ class GithubRepo(Screen):
             self.parent.LOGGING_STATE = "repo created"
             self.parent.switch_screen(LoggingScreen())
 
+    @work(thread=True)
     def _create_repo_and_push(self, org, pipeline_repo, private, push):
         """Create a GitHub repository and push all branches."""
         # Check if repo already exists

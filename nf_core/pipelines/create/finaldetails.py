@@ -1,7 +1,7 @@
 """A Textual app to create a pipeline."""
 from textwrap import dedent
 
-from textual import on
+from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
 from textual.screen import Screen
@@ -74,7 +74,12 @@ class FinalDetails(Screen):
             pass
 
         # Create the new pipeline
-        create_obj = PipelineCreate(template_config=self.parent.TEMPLATE_CONFIG)
-        create_obj.init_pipeline()
+        self.create_pipeline()
         self.parent.LOGGING_STATE = "pipeline created"
         self.parent.switch_screen(LoggingScreen())
+
+    @work(thread=True)
+    def create_pipeline(self) -> None:
+        """Create the pipeline."""
+        create_obj = PipelineCreate(template_config=self.parent.TEMPLATE_CONFIG)
+        create_obj.init_pipeline()
