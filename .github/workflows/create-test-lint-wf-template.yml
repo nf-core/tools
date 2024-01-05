@@ -31,6 +31,12 @@ jobs:
           - "template_skip_igenomes.yml"
           - "template_skip_ci.yml"
           # - "template_skip_nf_core_configs.yml"
+        runner: ["self-hosted"]
+        include:
+          - TEMPLATE: "template_skip_all.yml"
+            runner: ubuntu-latest
+          - TEMPLATE: "template_skip_nf_core_configs.yml"
+            runner: ubuntu-latest
 
     steps:
       - name: go to working directory
