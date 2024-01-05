@@ -37,7 +37,7 @@ jobs:
 
       - name: Sync release docs
         if: github.repository == 'nf-core/tools'
-        uses: SamKirkland/FTP-Deploy-Action@8a24039354ee91000cb948cb4a1dbdf1a1b94a3c # v4.3.4
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.ftp_server }}
           username: ${{ secrets.ftp_username}}
