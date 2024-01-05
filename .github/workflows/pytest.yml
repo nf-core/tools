@@ -74,7 +74,6 @@ jobs:
           mkdir -p pytest
           cd pytest
           export NXF_WORK=$(pwd)
-          echo $"which python: $(which python)"
 
       - uses: actions/checkout@v4
         name: Check out source-code repository
@@ -121,9 +120,8 @@ jobs:
           wget -qO- https://code.askimed.com/install/nf-test | bash
           sudo mv nf-test /usr/local/bin/
 
-      - name: export workdir & move coveragerc file up
+      - name: move coveragerc file up
         run: |
-          export NXF_WORK=$(pwd)
           mv .github/.coveragerc .
 
       - name: Test with pytest
@@ -137,10 +135,6 @@ jobs:
             echo "Tests failed with exit code ${exit_code}"
             exit 1
           fi
-      - name: Report coverage
-        run: |
-          ls -la
-          coverage report --data-file=.coverage
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
@@ -177,21 +171,11 @@ jobs:
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
-
-      # #debugging
-      # - name: Setup ssh session
-      #   uses: Warpbuilds/action-debugger@v1.3
-      - name: Run coverage on one file
-        run: |
-          coverage report --data-file=coverage_test_components.py/.coverage
       - name: Run coverage
         run: |
           coverage combine --keep coverage*/.coverage*
           coverage report
           coverage xml
-
-      - name: show directory
-        run: ls -la
 
       - uses: codecov/codecov-action@v3
         with:
