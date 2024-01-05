@@ -186,7 +186,7 @@ class CustomLogHandler(RichHandler):
     def emit(self, record: LogRecord) -> None:
         """Invoked by logging."""
         try:
-            app = active_app.get()
+            _app = active_app.get()
         except LookupError:
             pass
         else:

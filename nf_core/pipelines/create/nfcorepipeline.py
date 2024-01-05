@@ -1,6 +1,6 @@
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal, ScrollableContainer
+from textual.containers import Center, ScrollableContainer
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Switch
 

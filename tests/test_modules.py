@@ -20,7 +20,6 @@ from .utils import (
     GITLAB_URL,
     OLD_TRIMGALORE_BRANCH,
     OLD_TRIMGALORE_SHA,
-    create_tmp_pipeline,
     mock_anaconda_api_calls,
     mock_biocontainers_api_calls,
 )

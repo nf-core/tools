@@ -23,7 +23,7 @@ After creating the pipeline template locally, we can create a GitHub repository 
 repo_config_markdown = """
 Please select the the GitHub repository settings:
 """
-exit_help_text_markdown = f"""
+exit_help_text_markdown = """
 If you would like to create the GitHub repository later, you can do it manually by following these steps:
 1. Create a new GitHub repository
 2. Add the remote to your local repository
@@ -121,7 +121,7 @@ class GithubRepo(Screen):
             try:
                 user.login
                 log.debug("GitHub authentication successful")
-            except GithubException as e:
+            except GithubException:
                 raise UserWarning(
                     f"Could not authenticate to GitHub with user name '{github_variables['gh_username']}'."
                     "Please make sure that the provided user name and token are correct."
@@ -210,7 +210,7 @@ class GithubRepo(Screen):
         # Use gh CLI config if installed
         gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
         if os.path.exists(gh_cli_config_fn):
-            with open(gh_cli_config_fn, "r") as fh:
+            with open(gh_cli_config_fn) as fh:
                 gh_cli_config = yaml.safe_load(fh)
                 gh_user = (gh_cli_config["github.com"]["user"],)
                 gh_token = gh_cli_config["github.com"]["oauth_token"]

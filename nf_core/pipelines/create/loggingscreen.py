@@ -1,4 +1,3 @@
-from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center
 from textual.screen import Screen

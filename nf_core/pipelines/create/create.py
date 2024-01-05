@@ -130,7 +130,7 @@ class PipelineCreate:
         config = CreateConfig()
         if template_yaml:
             try:
-                with open(template_yaml, "r") as f:
+                with open(template_yaml) as f:
                     template_yaml = yaml.safe_load(f)
                     config = CreateConfig(**template_yaml)
             except FileNotFoundError:
@@ -397,7 +397,7 @@ class PipelineCreate:
         """
         bug_report_path = self.outdir / ".github" / "ISSUE_TEMPLATE" / "bug_report.yml"
 
-        with open(bug_report_path, "r") as fh:
+        with open(bug_report_path) as fh:
             contents = yaml.load(fh, Loader=yaml.FullLoader)
 
         # Remove the first item in the body, which is the information about the docs

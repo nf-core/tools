@@ -15,7 +15,6 @@ from .utils import (
     GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH,
     GITLAB_URL,
     OLD_SUBWORKFLOWS_SHA,
-    create_tmp_pipeline,
 )
 
 
