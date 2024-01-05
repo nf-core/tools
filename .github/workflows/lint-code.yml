@@ -30,5 +30,4 @@ jobs:
         run: pip install pre-commit
 
       - name: Run pre-commit
-        id: prettier_status
         run: pre-commit run --all-files

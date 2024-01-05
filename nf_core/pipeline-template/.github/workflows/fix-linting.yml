@@ -24,32 +24,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
 
-      - uses: actions/setup-node@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+          cache: "pip"
 
-      - name: Install Prettier
-        run: npm install -g prettier @prettier/plugin-php
+      - name: Install pre-commit
+        run: pip install pre-commit
 
-      # Check that we actually need to fix something
-      - name: Run 'prettier --check'
-        id: prettier_status
-        run: |
-          if prettier --check ${GITHUB_WORKSPACE}; then
-            echo "result=pass" >> $GITHUB_OUTPUT
-          else
-            echo "result=fail" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run 'prettier --write'
-        if: steps.prettier_status.outputs.result == 'fail'
-        run: prettier --write ${GITHUB_WORKSPACE}
+      - name: Run pre-commit
+        run: pre-commit run --all-files || echo "status=fail" >> $GITHUB_ENV
 
       - name: Commit & push changes
-        if: steps.prettier_status.outputs.result == 'fail'
+        if: env.status == 'fail'
         run: |
           git config user.email "core@nf-co.re"
           git config user.name "nf-core-bot"
           git config push.default upstream
           git add .
           git status
-          git commit -m "[automated] Fix linting with Prettier"
+          git commit -m "[automated] Fix linting with pre-commit"
           git push {%- endraw %}
