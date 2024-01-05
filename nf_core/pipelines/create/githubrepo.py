@@ -23,19 +23,6 @@ After creating the pipeline template locally, we can create a GitHub repository 
 repo_config_markdown = """
 Please select the the GitHub repository settings:
 """
-exit_help_text_markdown = """
-If you would like to create the GitHub repository later, you can do it manually by following these steps:
-1. Create a new GitHub repository
-2. Add the remote to your local repository
-```bash
-cd <pipeline_directory>
-git remote add origin git@github.com:<username>/<repo_name>.git
-```
-3. Push the code to the remote
-```bash
-git push --all origin
-```
-"""
 
 
 class GithubRepo(Screen):
@@ -112,7 +99,6 @@ class GithubRepo(Screen):
                 raise UserWarning(
                     f"Could not authenticate to GitHub with user name '{github_variables['gh_username']}'."
                     "Please provide an authentication token or set the environment variable 'GITHUB_AUTH_TOKEN'."
-                    f"\n{exit_help_text_markdown}"
                 )
 
             user = github_auth.get_user()
@@ -125,7 +111,6 @@ class GithubRepo(Screen):
                 raise UserWarning(
                     f"Could not authenticate to GitHub with user name '{github_variables['gh_username']}'."
                     "Please make sure that the provided user name and token are correct."
-                    f"\n{exit_help_text_markdown}"
                 )
 
             # Check if organisation exists
@@ -155,13 +140,8 @@ class GithubRepo(Screen):
                     )
                 log.info(f"GitHub repository '{self.parent.TEMPLATE_CONFIG.name}' created successfully")
             except UserWarning as e:
-                log.info(f"There was an error with message: {e}" f"\n{exit_help_text_markdown}")
-
-            self.parent.LOGGING_STATE = "repo created"
-            self.parent.switch_screen(LoggingScreen())
-        elif event.button.id == "exit":
-            # Show help message and exit
-            log.info(exit_help_text_markdown)
+                log.info(f"There was an error with message: {e}")
+                self.parent.switch_screen("github_exit")
 
             self.parent.LOGGING_STATE = "repo created"
             self.parent.switch_screen(LoggingScreen())
