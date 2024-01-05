@@ -187,16 +187,16 @@ def files_unchanged(self):
         else:
             for f in files:
                 try:
-                    with open(_pf(f), "r") as fh:
+                    with open(_pf(f)) as fh:
                         pipeline_file = fh.read()
-                    with open(_tf(f), "r") as fh:
+                    with open(_tf(f)) as fh:
                         template_file = fh.read()
                     if template_file in pipeline_file:
                         passed.append(f"`{f}` matches the template")
                     else:
                         if "files_unchanged" in self.fix:
                             # Try to fix the problem by overwriting the pipeline file
-                            with open(_tf(f), "r") as fh:
+                            with open(_tf(f)) as fh:
                                 template_file = fh.read()
                             with open(_pf(f), "w") as fh:
                                 fh.write(template_file)

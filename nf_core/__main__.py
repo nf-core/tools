@@ -407,7 +407,7 @@ def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, ma
 
     Runs a large number of automated tests to ensure that the supplied pipeline
     meets the nf-core guidelines. Documentation of all lint tests can be found
-    on the nf-core website: [link=https://nf-co.re/tools-docs/]https://nf-co.re/tools-docs/[/]
+    on the nf-core website: [link=https://nf-co.re/tools/docs/]https://nf-co.re/tools/docs/[/]
 
     You can ignore tests using a file called [blue].nf-core.yml[/] [i](if you have a good reason!)[/].
     See the documentation for details.
@@ -918,8 +918,20 @@ def modules_remove(ctx, dir, tool):
     default=False,
     help="Create a module from the template without TODOs or examples",
 )
+@click.option("--migrate-pytest", is_flag=True, default=False, help="Migrate a module with pytest tests to nf-test")
 def create_module(
-    ctx, tool, dir, author, label, meta, no_meta, force, conda_name, conda_package_version, empty_template
+    ctx,
+    tool,
+    dir,
+    author,
+    label,
+    meta,
+    no_meta,
+    force,
+    conda_name,
+    conda_package_version,
+    empty_template,
+    migrate_pytest,
 ):
     """
     Create a new DSL2 module from the nf-core template.
@@ -944,7 +956,7 @@ def create_module(
     # Run function
     try:
         module_create = ModuleCreate(
-            dir, tool, author, label, has_meta, force, conda_name, conda_package_version, empty_template
+            dir, tool, author, label, has_meta, force, conda_name, conda_package_version, empty_template, migrate_pytest
         )
         module_create.create()
     except UserWarning as e:
@@ -1025,7 +1037,7 @@ def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed,
     Test modules within a pipeline or a clone of the
     nf-core/modules repository.
     """
-    from nf_core.components.lint import LintException
+    from nf_core.components.lint import LintExceptionError
     from nf_core.modules import ModuleLint
 
     try:
@@ -1051,7 +1063,7 @@ def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed,
         )
         if len(module_lint.failed) > 0:
             sys.exit(1)
-    except LintException as e:
+    except LintExceptionError as e:
         log.error(e)
         sys.exit(1)
     except (UserWarning, LookupError) as e:
@@ -1111,7 +1123,7 @@ def bump_versions(ctx, tool, dir, all, show_all):
     the nf-core/modules repo.
     """
     from nf_core.modules.bump_versions import ModuleVersionBumper
-    from nf_core.modules.modules_utils import ModuleException
+    from nf_core.modules.modules_utils import ModuleExceptionError
 
     try:
         version_bumper = ModuleVersionBumper(
@@ -1121,7 +1133,7 @@ def bump_versions(ctx, tool, dir, all, show_all):
             ctx.obj["modules_repo_no_pull"],
         )
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
-    except ModuleException as e:
+    except ModuleExceptionError as e:
         log.error(e)
         sys.exit(1)
     except (UserWarning, LookupError) as e:
@@ -1136,7 +1148,8 @@ def bump_versions(ctx, tool, dir, all, show_all):
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
 @click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username prefixed with '@'")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
-def create_subworkflow(ctx, subworkflow, dir, author, force):
+@click.option("--migrate-pytest", is_flag=True, default=False, help="Migrate a module with pytest tests to nf-test")
+def create_subworkflow(ctx, subworkflow, dir, author, force, migrate_pytest):
     """
     Create a new subworkflow from the nf-core template.
 
@@ -1150,7 +1163,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
 
     # Run function
     try:
-        subworkflow_create = SubworkflowCreate(dir, subworkflow, author, force)
+        subworkflow_create = SubworkflowCreate(dir, subworkflow, author, force, migrate_pytest)
         subworkflow_create.create()
     except UserWarning as e:
         log.critical(e)
@@ -1297,7 +1310,7 @@ def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, lo
     Test subworkflows within a pipeline or a clone of the
     nf-core/modules repository.
     """
-    from nf_core.components.lint import LintException
+    from nf_core.components.lint import LintExceptionError
     from nf_core.subworkflows import SubworkflowLint
 
     try:
@@ -1322,7 +1335,7 @@ def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, lo
         )
         if len(subworkflow_lint.failed) > 0:
             sys.exit(1)
-    except LintException as e:
+    except LintExceptionError as e:
         log.error(e)
         sys.exit(1)
     except (UserWarning, LookupError) as e:
@@ -1737,7 +1750,7 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     the pipeline. It is run automatically for all pipelines when ever a
     new release of [link=https://github.com/nf-core/tools]nf-core/tools[/link] (and the included template) is made.
     """
-    from nf_core.sync import PipelineSync, PullRequestException, SyncException
+    from nf_core.sync import PipelineSync, PullRequestExceptionError, SyncExceptionError
     from nf_core.utils import is_pipeline_directory
 
     # Check if pipeline directory contains necessary files
@@ -1747,7 +1760,7 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     sync_obj = PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml)
     try:
         sync_obj.sync()
-    except (SyncException, PullRequestException) as e:
+    except (SyncExceptionError, PullRequestExceptionError) as e:
         log.error(e)
         sys.exit(1)
 

@@ -133,7 +133,7 @@ class TestUtils(unittest.TestCase):
 
     def test_pip_package_pass(self):
         result = nf_core.utils.pip_package("multiqc=1.10")
-        assert type(result) == dict
+        assert isinstance(result, dict)
 
     @mock.patch("requests.get")
     def test_pip_package_timeout(self, mock_get):
@@ -174,13 +174,13 @@ class TestUtils(unittest.TestCase):
     def test_get_repo_releases_branches_not_nf_core(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
-        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("ewels/MultiQC", wfs)
+        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("MultiQC/MultiQC", wfs)
         for r in wf_releases:
             if r.get("tag_name") == "v1.10":
                 break
         else:
             raise AssertionError("MultiQC release v1.10 not found")
-        assert "master" in wf_branches.keys()
+        assert "main" in wf_branches.keys()
 
     def test_get_repo_releases_branches_not_exists(self):
         wfs = nf_core.list.Workflows()
@@ -206,6 +206,20 @@ def test_validate_file_md5():
         nf_core.utils.validate_file_md5(test_file, different_md5)
     with pytest.raises(ValueError):
         nf_core.utils.validate_file_md5(test_file, non_hex_string)
+
+
+def test_nested_setitem():
+    d = {"a": {"b": {"c": "value"}}}
+    nf_core.utils.nested_setitem(d, ["a", "b", "c"], "value new")
+    assert d["a"]["b"]["c"] == "value new"
+    assert d == {"a": {"b": {"c": "value new"}}}
+
+
+def test_nested_delitem():
+    d = {"a": {"b": {"c": "value"}}}
+    nf_core.utils.nested_delitem(d, ["a", "b", "c"])
+    assert "c" not in d["a"]["b"]
+    assert d == {"a": {"b": {}}}
 
 
 def test_set_wd():

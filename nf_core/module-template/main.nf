@@ -91,7 +91,7 @@ process {{ component_name_underscore|upper }} {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        {{ component }}: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' ))
+        {{ component }}: \$(samtools --version |& sed '1!d ; s/samtools //')
     END_VERSIONS
     """
 
@@ -113,7 +113,7 @@ process {{ component_name_underscore|upper }} {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        {{ component }}: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' ))
+        {{ component }}: \$(samtools --version |& sed '1!d ; s/samtools //')
     END_VERSIONS
     """
 }

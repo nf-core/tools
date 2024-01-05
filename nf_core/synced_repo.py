@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Dict
 
 import git
-import rich.progress
 from git.exc import GitCommandError
 
 from nf_core.utils import load_tools_config
@@ -116,8 +115,6 @@ class SyncedRepo:
             remote_url = NF_CORE_MODULES_REMOTE
 
         self.remote_url = remote_url
-
-        self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, hide_progress)
 

@@ -1,6 +1,35 @@
 # nf-core/tools: Changelog
 
-# v2.11dev
+# v2.12dev
+
+### Template
+
+### Download
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### General
+
+- Add Ruff linter and formatter replacing Black, isort and pyupgrade ([#2620](https://github.com/nf-core/tools/pull/2620))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.8.0 ([#2630](https://github.com/nf-core/tools/pull/2630))
+- Update mshick/add-pr-comment action to v2 ([#2632](https://github.com/nf-core/tools/pull/2632))
+
+# [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
+
+### Template
+
+- Rename `release-announcments.yml` to `release-announcements.yml` ([#2610](https://github.com/nf-core/tools/pull/2610))
+- Fix `nextflow.config` `docker.runOptions` ([#2607](https://github.com/nf-core/tools/pull/2607))
+
+### General
+
+- Only dump `modules.json` when it is modified ([#2609](https://github.com/nf-core/tools/pull/2609))
+
+# [v2.11 - Magnesium Dragon](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-19]
 
 ### Template
 
@@ -8,31 +37,53 @@
 - Fancier syntax highlighting for example samplesheets in the usage.md template ([#2503](https://github.com/nf-core/tools/pull/2503))
 - Use closure for multiqc ext.args ([#2509](https://github.com/nf-core/tools/pull/2509))
 - Fix how the modules template references the conda environment file ([#2540](https://github.com/nf-core/tools/pull/2540))
+- Unset env variable JAVA_TOOL_OPTIONS in gitpod ([#2569](https://github.com/nf-core/tools/pull/2569))
+- Pin the version of nf-validation ([#2579](https://github.com/nf-core/tools/pull/2579))
+- Disable process selector warnings by default ([#2161](https://github.com/nf-core/tools/issues/2161))
+- Remove `docker.userEmulation` from nextflow.config in pipeline template ([#2580](https://github.com/nf-core/tools/pull/2580))
+
+### Download
+
+- Add `docker://` prefix for absolute container URIs as well ([#2576](https://github.com/nf-core/tools/pull/2576)).
+- Bugfix for AttributeError: `ContainerError` object has no attribute `absoluteURI` ([#2543](https://github.com/nf-core/tools/pull/2543)).
 
 ### Linting
 
 - Fix incorrectly failing linting if 'modules' was not found in meta.yml ([#2447](https://github.com/nf-core/tools/pull/2447))
 - Correctly pass subworkflow linting test if `COMPONENT.out.versions` is used in the script ([#2448](https://github.com/nf-core/tools/pull/2448))
+- Add pyupgrade to pre-commit config and dev requirements as mentioned in [#2200](https://github.com/nf-core/tools/issues/2200)
 - Check for spaces in modules container URLs ([#2452](https://github.com/nf-core/tools/issues/2452))
 - Correctly ignore `timeline.enabled`, `report.enabled`, `trace.enabled`, `dag.enabled` variables when linting a pipeline. ([#2507](https://github.com/nf-core/tools/pull/2507))
+- Lint nf-test main.nf.test tags include all used components in chained tests ([#2572](https://github.com/nf-core/tools/pull/2572))
+- Don't fail linting if md5sum for empty files are found in a stub test ([#2571](https://github.com/nf-core/tools/pull/2571))
+- Check for existence of test profile ([#2478](https://github.com/nf-core/tools/pull/2478))
 
 ### Modules
 
 - Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
 - Replace ModulePatch by ComponentPatch ([#2482](https://github.com/nf-core/tools/pull/2482))
 - Fixed `nf-core modules lint` to work with new module structure for nf-test ([#2494](https://github.com/nf-core/tools/pull/2494))
+- Add option `--migrate-pytest` to create a module with nf-test taking into account an existing module ([#2549](https://github.com/nf-core/tools/pull/2549))
+- When installing modules and subworkflows, automatically create the `./modules` directory if it doesn't exist ([#2563](https://github.com/nf-core/tools/issues/2563))
+- When `.nf-core.yml` is not found create it in the current directory instead of the root filesystem ([#2237](https://github.com/nf-core/tools/issues/2237))
+- Modules `--migrate-pytest` copies template scripts ([#2568](https://github.com/nf-core/tools/pull/2568))
 
 ### Subworkflows
 
 - Added stub test creation to `create_test_yml` ([#2476](https://github.com/nf-core/tools/pull/2476))
 - Fixed `nf-core subworkflows lint` to work with new module structure for nf-test ([#2494](https://github.com/nf-core/tools/pull/2494))
+- Add option `--migrate-pytest` to create a subworkflow with nf-test taking into account an existing subworkflow ([#2549](https://github.com/nf-core/tools/pull/2549))
 
 ### General
 
+- Update `schema build` functionality to automatically update defaults which have changed in the `nextflow.config`([#2479](https://github.com/nf-core/tools/pull/2479))
 - Change testing framework for modules and subworkflows from pytest to nf-test ([#2490](https://github.com/nf-core/tools/pull/2490))
 - `bump_version` keeps now the indentation level of the updated version entries ([#2514](https://github.com/nf-core/tools/pull/2514))
-- Run tests with Python 3.12 ([#2522](https://github.com/nf-core/tools/pull/2522)).
 - Add mypy to pre-commit config for the tools repo ([#2545](https://github.com/nf-core/tools/pull/2545))
+- Use Path objects for ComponentCreate and update the structure of components templates ([#2551](https://github.com/nf-core/tools/pull/2551)).
+- GitPod base image: swap tool installation back to `conda` from `mamba` ([#2566](https://github.com/nf-core/tools/pull/2566)).
+- Sort the `installed_by` list in `modules.json` ([#2570](https://github.com/nf-core/tools/pull/2570)).
+- Unset env variable JAVA_TOOL_OPTIONS in gitpod ([#2569](https://github.com/nf-core/tools/pull/2569))
 
 # [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]
 
@@ -51,7 +102,6 @@
 - Modified devcontainer permissions so that singularity can be run in Codespaces/VS Code devcontainers ([Commit a103f44](https://github.com/CarsonJM/tools/commit/a103f4484eca8c6d668e4653a4ed8d20faf1b41d))
 - Update Gitpod profile resources to reflect base environment settings.
 - ([#747](https://github.com/nf-core/tools/issues/747)) Add to the template the code to dump the selected pipeline parameters into a json file.
-- [#2161] Disable process selector warnings by default.
 
 ### Download
 
@@ -62,7 +112,6 @@
 ### Linting
 
 - Add new command `nf-core subworkflows lint` ([#2379](https://github.com/nf-core/tools/pull/2379))
-- Check for existence of test profile ([#2478](https://github.com/nf-core/tools/pull/2478))
 
 ### Modules
 

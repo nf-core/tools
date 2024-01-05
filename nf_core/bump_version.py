@@ -32,7 +32,8 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         new_version = new_version[1:]
     if not current_version:
         raise UserWarning("Could not find config variable 'manifest.version'")
-
+    if current_version == new_version:
+        raise UserWarning(f"Current version is already: {current_version}")
     log.info(f"Changing version number from '{current_version}' to '{new_version}'")
 
     # nextflow.config - workflow manifest version
@@ -48,17 +49,47 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
     )
     # multiqc_config.yaml
     multiqc_new_version = "dev" if "dev" in new_version else new_version
+    multiqc_current_version = "dev" if "dev" in current_version else current_version
+    if multiqc_current_version != "dev" and multiqc_new_version != "dev":
+        update_file_version(
+            Path("assets", "multiqc_config.yml"),
+            pipeline_obj,
+            [
+                (
+                    f"/releases/tag/{current_version}",
+                    f"/releases/tag/{new_version}",
+                )
+            ],
+        )
+    if multiqc_current_version != "dev" and multiqc_new_version == "dev":
+        update_file_version(
+            Path("assets", "multiqc_config.yml"),
+            pipeline_obj,
+            [
+                (
+                    f"/releases/tag/{current_version}",
+                    "/tree/dev",
+                )
+            ],
+        )
+    if multiqc_current_version == "dev" and multiqc_new_version != "dev":
+        update_file_version(
+            Path("assets", "multiqc_config.yml"),
+            pipeline_obj,
+            [
+                (
+                    "/tree/dev",
+                    f"/releases/tag/{multiqc_new_version}",
+                )
+            ],
+        )
     update_file_version(
         Path("assets", "multiqc_config.yml"),
         pipeline_obj,
         [
             (
-                "/dev",
-                f"/{multiqc_new_version}",
-            ),
-            (
-                rf"{re.escape(current_version)}",
-                f"{multiqc_new_version}",
+                f"/{multiqc_current_version}/",
+                f"/{multiqc_new_version}/",
             ),
         ],
     )
@@ -156,7 +187,7 @@ def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patt
     fn = pipeline_obj._fp(filename)
     content = ""
     try:
-        with open(fn, "r") as fh:
+        with open(fn) as fh:
             content = fh.read()
     except FileNotFoundError:
         log.warning(f"File not found: '{fn}'")
@@ -187,7 +218,7 @@ def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patt
         if found_match:
             content = "\n".join(newcontent) + "\n"
         else:
-            log.error(f"Could not find version number in {filename}: '{pattern}'")
+            log.error(f"Could not find version number in {filename}: `{pattern}`")
 
     log.info(f"Updated version in '{filename}'")
     for replacement in replacements:

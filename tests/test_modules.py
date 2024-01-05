@@ -46,16 +46,21 @@ def create_modules_repo_dummy(tmp_dir):
 
     # Remove doi from meta.yml which makes lint fail
     meta_yml_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "meta.yml")
-    Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap").touch()
-    with open(meta_yml_path, "r") as fh:
+
+    with open(meta_yml_path) as fh:
         meta_yml = yaml.safe_load(fh)
     del meta_yml["tools"][0]["bpipe"]["doi"]
     with open(meta_yml_path, "w") as fh:
         yaml.dump(meta_yml, fh)
+    # Add dummy content to main.nf.test.snap
+    test_snap_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
+    test_snap_path.touch()
+    with open(test_snap_path, "w") as fh:
+        fh.write('{\n    "my test": {}\n}')
 
     # remove "TODO" statements from main.nf
     main_nf_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "main.nf")
-    with open(main_nf_path, "r") as fh:
+    with open(main_nf_path) as fh:
         main_nf = fh.read()
     main_nf = main_nf.replace("TODO", "")
     with open(main_nf_path, "w") as fh:
@@ -63,7 +68,7 @@ def create_modules_repo_dummy(tmp_dir):
 
     # remove "TODO" statements from main.nf.test
     main_nf_test_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test")
-    with open(main_nf_test_path, "r") as fh:
+    with open(main_nf_test_path) as fh:
         main_nf_test = fh.read()
     main_nf_test = main_nf_test.replace("TODO", "")
     with open(main_nf_test_path, "w") as fh:
@@ -158,6 +163,8 @@ class TestModules(unittest.TestCase):
         test_modules_create_nfcore_modules,
         test_modules_create_nfcore_modules_subtool,
         test_modules_create_succeed,
+        test_modules_migrate,
+        test_modules_migrate_no_delete,
     )
     from .modules.info import (  # type: ignore[misc]
         test_modules_info_in_modules_repo,
@@ -206,6 +213,7 @@ class TestModules(unittest.TestCase):
         test_modules_missing_test_dir,
         test_modules_missing_test_main_nf,
         test_modules_unused_pytest_files,
+        test_nftest_failing_linting,
     )
     from .modules.list import (  # type: ignore[misc]
         test_modules_install_and_list_pipeline,

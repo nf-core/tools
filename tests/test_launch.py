@@ -86,7 +86,7 @@ class TestLaunch(TestCase):
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         assert len(self.launcher.schema_obj.input_params) > 0
-        assert self.launcher.schema_obj.input_params["validate_params"] == True
+        assert self.launcher.schema_obj.input_params["validate_params"] is True
 
     @with_temporary_file
     def test_get_pipeline_defaults_input_params(self, tmp_file):
@@ -119,12 +119,12 @@ class TestLaunch(TestCase):
     @mock.patch("questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Web based"}])
     def test_prompt_web_gui_true(self, mock_prompt):
         """Check the prompt to launch the web schema or use the cli"""
-        assert self.launcher.prompt_web_gui() == True
+        assert self.launcher.prompt_web_gui() is True
 
     @mock.patch("questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Command line"}])
     def test_prompt_web_gui_false(self, mock_prompt):
         """Check the prompt to launch the web schema or use the cli"""
-        assert self.launcher.prompt_web_gui() == False
+        assert self.launcher.prompt_web_gui() is False
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{}])
     def test_launch_web_gui_missing_keys(self, mock_poll_nfcore_web_api):
@@ -144,7 +144,7 @@ class TestLaunch(TestCase):
         """Check the code that opens the web browser"""
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
-        assert self.launcher.launch_web_gui() == None
+        assert self.launcher.launch_web_gui() is None
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "error", "message": "foo"}])
     def test_get_web_launch_response_error(self, mock_poll_nfcore_web_api):
@@ -163,7 +163,7 @@ class TestLaunch(TestCase):
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "waiting_for_user"}])
     def test_get_web_launch_response_waiting(self, mock_poll_nfcore_web_api):
         """Test polling the website for a launch response - status waiting_for_user"""
-        assert self.launcher.get_web_launch_response() == False
+        assert self.launcher.get_web_launch_response() is False
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "launch_params_complete"}])
     def test_get_web_launch_response_missing_keys(self, mock_poll_nfcore_web_api):
@@ -191,7 +191,7 @@ class TestLaunch(TestCase):
     def test_get_web_launch_response_valid(self, mock_poll_nfcore_web_api, mock_sanitise):
         """Test polling the website for a launch response - complete, valid response"""
         self.launcher.get_pipeline_schema()
-        assert self.launcher.get_web_launch_response() == True
+        assert self.launcher.get_web_launch_response() is True
 
     def test_sanitise_web_response(self):
         """Check that we can properly sanitise results from the web"""
@@ -201,7 +201,7 @@ class TestLaunch(TestCase):
         self.launcher.schema_obj.input_params["max_cpus"] = "12"
         self.launcher.sanitise_web_response()
         assert "-name" not in self.launcher.nxf_flags
-        assert self.launcher.schema_obj.input_params["igenomes_ignore"] == True
+        assert self.launcher.schema_obj.input_params["igenomes_ignore"] is True
         assert self.launcher.schema_obj.input_params["max_cpus"] == 12
 
     def test_ob_to_questionary_bool(self):
@@ -216,12 +216,12 @@ class TestLaunch(TestCase):
         assert result["message"] == ""
         assert result["choices"] == ["True", "False"]
         assert result["default"] == "True"
-        assert result["filter"]("True") == True
-        assert result["filter"]("true") == True
-        assert result["filter"](True) == True
-        assert result["filter"]("False") == False
-        assert result["filter"]("false") == False
-        assert result["filter"](False) == False
+        assert result["filter"]("True") is True
+        assert result["filter"]("true") is True
+        assert result["filter"](True) is True
+        assert result["filter"]("False") is False
+        assert result["filter"]("false") is False
+        assert result["filter"](False) is False
 
     def test_ob_to_questionary_number(self):
         """Check converting a python dict to a pyenquirer format - with enum"""
@@ -234,7 +234,7 @@ class TestLaunch(TestCase):
         assert result["validate"]("") is True
         assert result["validate"]("123.56.78") == "Must be a number"
         assert result["validate"]("123.56sdkfjb") == "Must be a number"
-        assert result["filter"]("123.456") == float(123.456)
+        assert result["filter"]("123.456") == 123.456
         assert result["filter"]("") == ""
 
     def test_ob_to_questionary_integer(self):
@@ -248,7 +248,7 @@ class TestLaunch(TestCase):
         assert result["validate"]("") is True
         assert result["validate"]("123.45") == "Must be an integer"
         assert result["validate"]("123.56sdkfjb") == "Must be an integer"
-        assert result["filter"]("123") == int(123)
+        assert result["filter"]("123") == 123
         assert result["filter"]("") == ""
 
     def test_ob_to_questionary_range(self):
@@ -321,7 +321,7 @@ class TestLaunch(TestCase):
             == f'nextflow run {self.pipeline_dir} -params-file "{os.path.relpath(self.nf_params_fn)}"'
         )
         # Check saved parameters file
-        with open(self.nf_params_fn, "r") as fh:
+        with open(self.nf_params_fn) as fh:
             try:
                 saved_json = json.load(fh)
             except json.JSONDecodeError as e:

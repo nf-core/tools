@@ -43,7 +43,7 @@ def setup_patch(pipeline_dir, modify_module):
 
 def modify_main_nf(path):
     """Modify a file to test patch creation"""
-    with open(path, "r") as fh:
+    with open(path) as fh:
         lines = fh.readlines()
     # We want a patch file that looks something like:
     # -    tuple val(meta), path(reads)
@@ -99,7 +99,7 @@ def test_create_patch_change(self):
     )
 
     # Check that the correct lines are in the patch file
-    with open(module_path / patch_fn, "r") as fh:
+    with open(module_path / patch_fn) as fh:
         patch_lines = fh.readlines()
     module_relpath = module_path.relative_to(self.pipeline_dir)
     assert f"--- {module_relpath / 'main.nf'}\n" in patch_lines, module_relpath / "main.nf"
@@ -157,7 +157,7 @@ def test_create_patch_try_apply_successful(self):
     )
 
     # Check that the correct lines are in the patch file
-    with open(module_path / patch_fn, "r") as fh:
+    with open(module_path / patch_fn) as fh:
         patch_lines = fh.readlines()
     module_relpath = module_path.relative_to(self.pipeline_dir)
     assert f"--- {module_relpath / 'main.nf'}\n" in patch_lines
@@ -167,7 +167,7 @@ def test_create_patch_try_apply_successful(self):
     assert "+    tuple val(meta), path(reads), path(index)\n" in patch_lines
 
     # Check that 'main.nf' is updated correctly
-    with open(module_path / "main.nf", "r") as fh:
+    with open(module_path / "main.nf") as fh:
         main_nf_lines = fh.readlines()
     # These lines should have been removed by the patch
     assert "    tuple val(meta), path(reads)\n" not in main_nf_lines
@@ -258,7 +258,7 @@ def test_create_patch_update_success(self):
     ), modules_json_obj.get_patch_fn(BISMARK_ALIGN, GITLAB_URL, REPO_NAME)
 
     # Check that the correct lines are in the patch file
-    with open(module_path / patch_fn, "r") as fh:
+    with open(module_path / patch_fn) as fh:
         patch_lines = fh.readlines()
     module_relpath = module_path.relative_to(self.pipeline_dir)
     assert f"--- {module_relpath / 'main.nf'}\n" in patch_lines
@@ -268,7 +268,7 @@ def test_create_patch_update_success(self):
     assert "+    tuple val(meta), path(reads), path(index)\n" in patch_lines
 
     # Check that 'main.nf' is updated correctly
-    with open(module_path / "main.nf", "r") as fh:
+    with open(module_path / "main.nf") as fh:
         main_nf_lines = fh.readlines()
     # These lines should have been removed by the patch
     assert "    tuple val(meta), path(reads)\n" not in main_nf_lines
@@ -300,7 +300,7 @@ def test_create_patch_update_fail(self):
     )
 
     # Save the file contents for downstream comparison
-    with open(module_path / patch_fn, "r") as fh:
+    with open(module_path / patch_fn) as fh:
         patch_contents = fh.read()
 
     update_obj = nf_core.modules.ModuleUpdate(
@@ -317,14 +317,14 @@ def test_create_patch_update_fail(self):
     temp_module_dir = temp_dir / BISMARK_ALIGN
     for file in os.listdir(temp_module_dir):
         assert file in os.listdir(module_path)
-        with open(module_path / file, "r") as fh:
+        with open(module_path / file) as fh:
             installed = fh.read()
-        with open(temp_module_dir / file, "r") as fh:
+        with open(temp_module_dir / file) as fh:
             shouldbe = fh.read()
         assert installed == shouldbe
 
     # Check that the patch file is unaffected
-    with open(module_path / patch_fn, "r") as fh:
+    with open(module_path / patch_fn) as fh:
         new_patch_contents = fh.read()
     assert patch_contents == new_patch_contents
 

@@ -29,10 +29,10 @@ jobs:
       - uses: actions/checkout@v4
         name: Check out source-code repository
 
-      - name: Set up Python 3.12
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: 3.12
+          python-version: 3.11
 
       - name: Install python dependencies
         run: |
@@ -46,6 +46,8 @@ jobs:
 
       - name: Run nf-core/tools
         run: |
+          mkdir create-test-wf && cd create-test-wf
+          export NXF_WORK=$(pwd)
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
           nextflow run nf-core-testpipeline -profile test,docker --outdir ./results
 
@@ -54,4 +56,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: nf-core-log-file
-          path: log.txt
+          path: create-test-wf/log.txt

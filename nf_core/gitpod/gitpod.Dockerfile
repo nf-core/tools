@@ -1,3 +1,6 @@
+# Test build locally before making a PR
+#   docker build -t gitpod:test -f nf_core/gitpod/gitpod.Dockerfile .
+
 FROM gitpod/workspace-base
 
 USER root
@@ -43,16 +46,17 @@ RUN conda config --add channels defaults && \
     conda config --add channels bioconda && \
     conda config --add channels conda-forge && \
     conda config --set channel_priority strict && \
-    conda install --quiet --yes --name base mamba && \
-    mamba install --quiet --yes --name base \
-        nextflow \
-        nf-core \
-        nf-test \
-        black \
-        prettier \
-        pre-commit \
-        pytest-workflow && \
-    mamba clean --all -f -y
+    conda install --quiet --yes --name base \
+    mamba \
+    nextflow \
+    nf-core \
+    nf-test \
+    prettier \
+    pre-commit \
+    ruff \
+    openjdk \
+    pytest-workflow && \
+    conda clean --all --force-pkgs-dirs --yes
 
 # Update Nextflow
 RUN nextflow self-update

@@ -1,6 +1,7 @@
 """
 Lint the tests of a module in nf-core/modules
 """
+import json
 import logging
 from pathlib import Path
 
@@ -43,7 +44,7 @@ def module_tests(_, module: NFCoreComponent):
 
     if module.nftest_main_nf.is_file():
         # Check if main.nf.test.snap file exists, if 'snap(' is inside main.nf.test
-        with open(module.nftest_main_nf, "r") as fh:
+        with open(module.nftest_main_nf) as fh:
             if "snapshot(" in fh.read():
                 snap_file = module.nftest_testdir / "main.nf.test.snap"
                 if snap_file.is_file():
@@ -51,37 +52,65 @@ def module_tests(_, module: NFCoreComponent):
                         ("test_snapshot_exists", "snapshot file `main.nf.test.snap` exists", snap_file)
                     )
                     # Validate no empty files
-                    with open(snap_file, "r") as snap_fh:
-                        snap_content = snap_fh.read()
-                        if "d41d8cd98f00b204e9800998ecf8427e" in snap_content:
+                    with open(snap_file) as snap_fh:
+                        try:
+                            snap_content = json.load(snap_fh)
+                            for test_name in snap_content.keys():
+                                if "d41d8cd98f00b204e9800998ecf8427e" in str(snap_content[test_name]):
+                                    if "stub" not in test_name:
+                                        module.failed.append(
+                                            (
+                                                "test_snap_md5sum",
+                                                "md5sum for empty file found: d41d8cd98f00b204e9800998ecf8427e",
+                                                snap_file,
+                                            )
+                                        )
+                                    else:
+                                        module.passed.append(
+                                            (
+                                                "test_snap_md5sum",
+                                                "md5sum for empty file found, but it is a stub test",
+                                                snap_file,
+                                            )
+                                        )
+                                else:
+                                    module.passed.append(
+                                        (
+                                            "test_snap_md5sum",
+                                            "no md5sum for empty file found",
+                                            snap_file,
+                                        )
+                                    )
+                                if "7029066c27ac6f5ef18d660d5741979a" in str(snap_content[test_name]):
+                                    if "stub" not in test_name:
+                                        module.failed.append(
+                                            (
+                                                "test_snap_md5sum",
+                                                "md5sum for compressed empty file found: 7029066c27ac6f5ef18d660d5741979a",
+                                                snap_file,
+                                            )
+                                        )
+                                    else:
+                                        module.passed.append(
+                                            (
+                                                "test_snap_md5sum",
+                                                "md5sum for compressed empty file found, but it is a stub test",
+                                                snap_file,
+                                            )
+                                        )
+                                else:
+                                    module.passed.append(
+                                        (
+                                            "test_snap_md5sum",
+                                            "no md5sum for compressed empty file found",
+                                            snap_file,
+                                        )
+                                    )
+                        except json.decoder.JSONDecodeError as e:
                             module.failed.append(
                                 (
-                                    "test_snap_md5sum",
-                                    "md5sum for empty file found: d41d8cd98f00b204e9800998ecf8427e",
-                                    snap_file,
-                                )
-                            )
-                        else:
-                            module.passed.append(
-                                (
-                                    "test_snap_md5sum",
-                                    "no md5sum for empty file found",
-                                    snap_file,
-                                )
-                            )
-                        if "7029066c27ac6f5ef18d660d5741979a" in snap_content:
-                            module.failed.append(
-                                (
-                                    "test_snap_md5sum",
-                                    "md5sum for compressed empty file found: 7029066c27ac6f5ef18d660d5741979a",
-                                    snap_file,
-                                )
-                            )
-                        else:
-                            module.passed.append(
-                                (
-                                    "test_snap_md5sum",
-                                    "no md5sum for compressed empty file found",
+                                    "test_snapshot_exists",
+                                    f"snapshot file `main.nf.test.snap` can't be read: {e}",
                                     snap_file,
                                 )
                             )
@@ -94,8 +123,11 @@ def module_tests(_, module: NFCoreComponent):
             required_tags = ["modules", "modules_nfcore", module.component_name]
             if module.component_name.count("/") == 1:
                 required_tags.append(module.component_name.split("/")[0])
+            chained_components_tags = module._get_included_components_in_chained_tests(module.nftest_main_nf)
             missing_tags = []
-            for tag in required_tags:
+            log.debug(f"Required tags: {required_tags}")
+            log.debug(f"Included components for chained nf-tests: {chained_components_tags}")
+            for tag in set(required_tags + chained_components_tags):
                 if tag not in main_nf_tags:
                     missing_tags.append(tag)
             if len(missing_tags) == 0:
@@ -113,7 +145,7 @@ def module_tests(_, module: NFCoreComponent):
     pytest_yml_path = module.base_dir / "tests" / "config" / "pytest_modules.yml"
     if pytest_yml_path.is_file() and not is_pytest:
         try:
-            with open(pytest_yml_path, "r") as fh:
+            with open(pytest_yml_path) as fh:
                 pytest_yml = yaml.safe_load(fh)
                 if module.component_name in pytest_yml.keys():
                     module.failed.append(
@@ -133,7 +165,7 @@ def module_tests(_, module: NFCoreComponent):
     if module.tags_yml.is_file():
         # Check that tags.yml exists and it has the correct entry
         module.passed.append(("test_tags_yml_exists", "file `tags.yml` exists", module.tags_yml))
-        with open(module.tags_yml, "r") as fh:
+        with open(module.tags_yml) as fh:
             tags_yml = yaml.safe_load(fh)
             if module.component_name in tags_yml.keys():
                 module.passed.append(("test_tags_yml", "correct entry in tags.yml", module.tags_yml))

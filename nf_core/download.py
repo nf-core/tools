@@ -1,6 +1,5 @@
 """Downloads a nf-core pipeline to the local file system."""
 
-from __future__ import print_function
 
 import concurrent.futures
 import io
@@ -21,7 +20,7 @@ import requests_cache
 import rich
 import rich.progress
 from git.exc import GitCommandError, InvalidGitRepositoryError
-from pkg_resources import parse_version as VersionParser
+from pkg_resources import parse_version as version_parser
 
 import nf_core
 import nf_core.list
@@ -493,7 +492,7 @@ class DownloadWorkflow:
         ):
             stderr.print(
                 "\nIf you are working on the same system where you will run Nextflow, you can amend the downloaded images to the ones in the"
-                "[blue not bold]$NXF_SINGULARITY_CACHEDIR[/] folder, Nextflow will automatically find them."
+                "[blue not bold]$NXF_SINGULARITY_CACHEDIR[/] folder, Nextflow will automatically find them. "
                 "However if you will transfer the downloaded files to a different system then they should be copied to the target folder."
             )
             self.container_cache_utilisation = questionary.select(
@@ -551,7 +550,7 @@ class DownloadWorkflow:
                     self.containers_remote = sorted(list(set(self.containers_remote)))
             except (FileNotFoundError, LookupError) as e:
                 log.error(f"[red]Issue with reading the specified remote $NXF_SINGULARITY_CACHE index:[/]\n{e}\n")
-                if stderr.is_interactive and rich.prompt.Confirm.ask(f"[blue]Specify a new index file and try again?"):
+                if stderr.is_interactive and rich.prompt.Confirm.ask("[blue]Specify a new index file and try again?"):
                     self.container_cache_index = None  # reset chosen path to index file.
                     self.prompt_singularity_cachedir_remote()
                 else:
@@ -640,7 +639,7 @@ class DownloadWorkflow:
         log.debug(f"Editing 'params.custom_config_base' in '{nfconfig_fn}'")
 
         # Load the nextflow.config file into memory
-        with open(nfconfig_fn, "r") as nfconfig_fh:
+        with open(nfconfig_fn) as nfconfig_fh:
             nfconfig = nfconfig_fh.read()
 
         # Replace the target string
@@ -700,7 +699,7 @@ class DownloadWorkflow:
                 if bool(config_findings_dsl2):
                     # finding fill always be a tuple of length 2, first the quote used and second the enquoted value.
                     for finding in config_findings_dsl2:
-                        config_findings.append((finding + (self.nf_config, "Nextflow configs")))
+                        config_findings.append(finding + (self.nf_config, "Nextflow configs"))
                 else:  # no regex match, likely just plain string
                     """
                     Append string also as finding-like tuple for consistency
@@ -719,7 +718,7 @@ class DownloadWorkflow:
             for file in files:
                 if file.endswith(".nf"):
                     file_path = os.path.join(subdir, file)
-                    with open(file_path, "r") as fh:
+                    with open(file_path) as fh:
                         # Look for any lines with container "xxx" or container 'xxx'
                         search_space = fh.read()
                         """
@@ -744,7 +743,7 @@ class DownloadWorkflow:
                         for finding in local_module_findings:
                             # append finding since we want to collect them from all modules
                             # also append search_space because we need to start over later if nothing was found.
-                            module_findings.append((finding + (search_space, file_path)))
+                            module_findings.append(finding + (search_space, file_path))
 
         # Not sure if there will ever be multiple container definitions per module, but beware DSL3.
         # Like above run on shallow copy, because length may change at runtime.
@@ -853,7 +852,7 @@ class DownloadWorkflow:
             ['https://depot.galaxyproject.org/singularity/scanpy:1.7.2--pyhdfd78af_0', 'biocontainers/scanpy:1.7.2--pyhdfd78af_0']
             """
             container_value_defs = [
-                capture for _, capture in container_value_defs[:] if not capture in ["singularity", "apptainer"]
+                capture for _, capture in container_value_defs[:] if capture not in ["singularity", "apptainer"]
             ]
 
             """
@@ -1066,10 +1065,10 @@ class DownloadWorkflow:
                                 self.singularity_pull_image(*container, library, progress)
                                 # Pulling the image was successful, no ContainerError was raised, break the library loop
                                 break
-                            except ContainerError.ImageExists as e:
+                            except ContainerError.ImageExistsError:
                                 # Pulling not required
                                 break
-                            except ContainerError.RegistryNotFound as e:
+                            except ContainerError.RegistryNotFoundError as e:
                                 self.container_library.remove(library)
                                 # The only library was removed
                                 if not self.container_library:
@@ -1079,20 +1078,20 @@ class DownloadWorkflow:
                                 else:
                                     # Other libraries can be used
                                     continue
-                            except ContainerError.ImageNotFound as e:
+                            except ContainerError.ImageNotFoundError as e:
                                 # Try other registries
-                                if e.error_log.absoluteURI:
+                                if e.error_log.absolute_URI:
                                     break  # there no point in trying other registries if absolute URI was specified.
                                 else:
                                     continue
-                            except ContainerError.InvalidTag as e:
+                            except ContainerError.InvalidTagError:
                                 # Try other registries
                                 continue
                             except ContainerError.OtherError as e:
                                 # Try other registries
                                 log.error(e.message)
                                 log.error(e.helpmessage)
-                                if e.error_log.absoluteURI:
+                                if e.error_log.absolute_URI:
                                     break  # there no point in trying other registries if absolute URI was specified.
                                 else:
                                     continue
@@ -1247,7 +1246,7 @@ class DownloadWorkflow:
         # Thus, if an explicit registry is specified, the provided -l value is ignored.
         container_parts = container.split("/")
         if len(container_parts) > 2:
-            address = container
+            address = f"docker://{container}"
             absolute_URI = True
         else:
             address = f"docker://{library}/{container.replace('docker://', '')}"
@@ -1524,7 +1523,7 @@ class WorkflowRepo(SyncedRepo):
                     else:
                         # desired revisions may contain arbitrary branch names that do not correspond to valid sematic versioning patterns.
                         valid_versions = [
-                            VersionParser(v)
+                            version_parser(v)
                             for v in desired_revisions
                             if re.match(r"\d+\.\d+(?:\.\d+)*(?:[\w\-_])*", v)
                         ]
@@ -1583,7 +1582,7 @@ class ContainerError(Exception):
 
         for line in error_msg:
             if re.search(r"dial\stcp.*no\ssuch\shost", line):
-                self.error_type = self.RegistryNotFound(self)
+                self.error_type = self.RegistryNotFoundError(self)
                 break
             elif (
                 re.search(r"requested\saccess\sto\sthe\sresource\sis\sdenied", line)
@@ -1595,13 +1594,13 @@ class ContainerError(Exception):
                 #                    unauthorized: authentication required
                 # Quay.io: StatusCode: 404,  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n']
                 # ghcr.io: Requesting bearer token: invalid status code from registry 400 (Bad Request)
-                self.error_type = self.ImageNotFound(self)
+                self.error_type = self.ImageNotFoundError(self)
                 break
             elif re.search(r"manifest\sunknown", line):
-                self.error_type = self.InvalidTag(self)
+                self.error_type = self.InvalidTagError(self)
                 break
             elif re.search(r"Image\sfile\salready\sexists", line):
-                self.error_type = self.ImageExists(self)
+                self.error_type = self.ImageExistsError(self)
                 break
             else:
                 continue
@@ -1615,7 +1614,7 @@ class ContainerError(Exception):
 
         raise self.error_type
 
-    class RegistryNotFound(ConnectionRefusedError):
+    class RegistryNotFoundError(ConnectionRefusedError):
         """The specified registry does not resolve to a valid IP address"""
 
         def __init__(self, error_log):
@@ -1628,7 +1627,7 @@ class ContainerError(Exception):
             )
             super().__init__(self.message, self.helpmessage, self.error_log)
 
-    class ImageNotFound(FileNotFoundError):
+    class ImageNotFoundError(FileNotFoundError):
         """The image can not be found in the registry"""
 
         def __init__(self, error_log):
@@ -1644,7 +1643,7 @@ class ContainerError(Exception):
 
             super().__init__(self.message)
 
-    class InvalidTag(AttributeError):
+    class InvalidTagError(AttributeError):
         """Image and registry are valid, but the (version) tag is not"""
 
         def __init__(self, error_log):
@@ -1653,7 +1652,7 @@ class ContainerError(Exception):
             self.helpmessage = f'Please chose a different library than {self.error_log.registry}\nor try to locate the "{self.error_log.address.split(":")[-1]}" version of "{self.error_log.container}" manually.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.\n'
             super().__init__(self.message)
 
-    class ImageExists(FileExistsError):
+    class ImageExistsError(FileExistsError):
         """Image already exists in cache/output directory."""
 
         def __init__(self, error_log):

@@ -28,39 +28,29 @@ jobs:
     runs-on: ["ubuntu-latest"]
     strategy:
       matrix:
-        python-version: ["3.8", "3.12"]
+        python-version: ["3.8", "3.11"]
         runner: ["ubuntu-latest"]
         include:
-          - runner: "ubuntu-20.04"
-            python-version: "3.8"
+          - python-version: "3.8"
+            runner: "ubuntu-20.04"
 
     steps:
       - name: Check conditions
         id: conditions
-        run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> $GITHUB_ENV
+        run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> "$GITHUB_OUTPUT"
 
-      - name: Check out source-code repository
-        uses: actions/checkout@v4
-        if: ${{ env.run-tests == 'true' }}
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "pip"
-        if: ${{ env.run-tests == 'true' }}
     outputs:
       python-version: ${{ matrix.python-version }}
       runner: ${{ matrix.runner }}
-      run-tests: ${{ env.run-tests }}
+      run-tests: ${{ steps.conditions.outputs.run-tests }}
 
   test:
     name: Test with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: setup
-    if: ${{ needs.setup.outputs.run-tests == 'true' }}
+    if: ${{ needs.setup.outputs.run-tests}}
     runs-on: ${{ needs.setup.outputs.runner }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         name: Check out source-code repository
 
       - name: Set up Python ${{ needs.setup.outputs.python-version }}
@@ -97,7 +87,7 @@ jobs:
           path: |
             /usr/local/bin/nf-test
             /home/runner/.nf-test/nf-test.jar
-          key: ${{ runner.os }}-${{ env.NFTEST_VER }}-nftest
+          key: ${{ runner.os }}-nftest-${{ env.date }}
 
       - name: Install nf-test
         if: steps.cache-software.outputs.cache-hit != 'true'
