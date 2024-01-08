@@ -82,14 +82,28 @@ class FinalDetails(Screen):
 
         pass
 
+    class PipelineExists(Message):
+        """Custom message to indicate that the pipeline already exists."""
+
+        pass
+
     @on(PipelineCreated)
     def stop_loading(self) -> None:
         self.screen.loading = False
         self.parent.switch_screen("github_repo_question")
 
+    @on(PipelineExists)
+    def stop_loading_error(self) -> None:
+        self.screen.loading = False
+        self.parent.switch_screen("error_screen")
+
     @work(thread=True, exclusive=True)
     def _create_pipeline(self) -> None:
         """Create the pipeline."""
         create_obj = PipelineCreate(template_config=self.parent.TEMPLATE_CONFIG)
-        create_obj.init_pipeline()
-        self.post_message(self.PipelineCreated())
+        try:
+            create_obj.init_pipeline()
+        except UserWarning:
+            self.post_message(self.PipelineExists())
+        else:
+            self.post_message(self.PipelineCreated())

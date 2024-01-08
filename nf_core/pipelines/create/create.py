@@ -7,7 +7,6 @@ import os
 import random
 import re
 import shutil
-import sys
 import time
 from pathlib import Path
 from typing import Optional, Union
@@ -279,7 +278,7 @@ class PipelineCreate:
             else:
                 log.error(f"Output directory '{self.outdir}' exists!")
                 log.info("Use -f / --force to overwrite existing files")
-                sys.exit(1)
+                raise UserWarning(f"Output directory '{self.outdir}' exists!")
         os.makedirs(self.outdir)
 
         # Run jinja2 for each file in the template folder

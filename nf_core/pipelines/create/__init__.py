@@ -5,6 +5,7 @@ from textual.widgets import Button
 from nf_core.pipelines.create.basicdetails import BasicDetails
 from nf_core.pipelines.create.completed import Completed
 from nf_core.pipelines.create.custompipeline import CustomPipeline
+from nf_core.pipelines.create.error import ExistError
 from nf_core.pipelines.create.finaldetails import FinalDetails
 from nf_core.pipelines.create.githubexit import GithubExit
 from nf_core.pipelines.create.githubrepo import GithubRepo
@@ -36,6 +37,7 @@ class PipelineCreateApp(App[CreateConfig]):
         "github_repo": GithubRepo(),
         "github_exit": GithubExit(),
         "completed_screen": Completed(),
+        "error_screen": ExistError(),
     }
 
     # Initialise config as empty
