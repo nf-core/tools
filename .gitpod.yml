@@ -9,6 +9,12 @@ tasks:
   - name: unset JAVA_TOOL_OPTIONS
     command: |
       unset JAVA_TOOL_OPTIONS
+
+  - name: Use pdiff for nf-test diff viewing
+    command: |
+      export NFT_DIFF="pdiff"
+      export NFT_DIFF_ARGS="--line-numbers --expand-tabs=2"
+
 vscode:
   extensions: # based on nf-core.nf-core-extensionpack
     - codezombiech.gitignore # Language support for .gitignore files
