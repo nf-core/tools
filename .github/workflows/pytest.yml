@@ -105,9 +105,15 @@ jobs:
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v1
 
-      - name: Cleanup previous nf-test installations
+      - name: Look if nf-test is already installed and write to env variable
+        id: check-nftest
         run: |
-          sudo rm -rf /usr/local/bin/nf-test
+          if [ -f /usr/local/bin/nf-test ]; then
+            echo "nftest_installed=true" >> $GITHUB_ENV
+          else
+            echo "nftest_installed=false" >> $GITHUB_ENV
+          fi
+
       - name: Cache nf-test installation
         id: cache-software
         uses: actions/cache@v3
@@ -118,7 +124,7 @@ jobs:
           key: ${{ runner.os }}-nftest-${{ env.date }}
 
       - name: Install nf-test
-        if: steps.cache-software.outputs.cache-hit != 'true'
+        if: steps.cache-software.outputs.cache-hit != 'true' && steps.check-nftest.outputs.nftest_installed != 'true'
         run: |
           wget -qO- https://code.askimed.com/install/nf-test | bash
           sudo mv nf-test /usr/local/bin/
