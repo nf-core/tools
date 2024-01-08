@@ -1,32 +1,18 @@
 """A Textual app to create a pipeline."""
-import logging
-
 from textual.app import App
 from textual.widgets import Button
 
 from nf_core.pipelines.create.basicdetails import BasicDetails
+from nf_core.pipelines.create.completed import Completed
 from nf_core.pipelines.create.custompipeline import CustomPipeline
 from nf_core.pipelines.create.finaldetails import FinalDetails
 from nf_core.pipelines.create.githubexit import GithubExit
 from nf_core.pipelines.create.githubrepo import GithubRepo
 from nf_core.pipelines.create.githubrepoquestion import GithubRepoQuestion
-from nf_core.pipelines.create.loggingscreen import LoggingScreen
 from nf_core.pipelines.create.nfcorepipeline import NfcorePipeline
 from nf_core.pipelines.create.pipelinetype import ChoosePipelineType
-from nf_core.pipelines.create.utils import (
-    CreateConfig,
-    CustomLogHandler,
-    LoggingConsole,
-)
+from nf_core.pipelines.create.utils import CreateConfig
 from nf_core.pipelines.create.welcome import WelcomeScreen
-
-log_handler = CustomLogHandler(console=LoggingConsole(), rich_tracebacks=True)
-logging.basicConfig(
-    level="INFO",
-    handlers=[log_handler],
-    format="%(message)s",
-)
-log_handler.setLevel("INFO")
 
 
 class PipelineCreateApp(App[CreateConfig]):
@@ -49,6 +35,7 @@ class PipelineCreateApp(App[CreateConfig]):
         "github_repo_question": GithubRepoQuestion(),
         "github_repo": GithubRepo(),
         "github_exit": GithubExit(),
+        "completed_screen": Completed(),
     }
 
     # Initialise config as empty
@@ -56,9 +43,6 @@ class PipelineCreateApp(App[CreateConfig]):
 
     # Initialise pipeline type
     PIPELINE_TYPE = None
-
-    # Log handler
-    LOG_HANDLER = log_handler
 
     def on_mount(self) -> None:
         self.push_screen("welcome")
@@ -79,8 +63,6 @@ class PipelineCreateApp(App[CreateConfig]):
             self.switch_screen("github_repo")
         elif event.button.id == "exit":
             self.switch_screen("github_exit")
-        elif event.button.id == "show_logging":
-            self.switch_screen(LoggingScreen())
         if event.button.id == "close_app":
             self.exit(return_code=0)
 

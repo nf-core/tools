@@ -13,7 +13,6 @@ from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
-from nf_core.pipelines.create.loggingscreen import LoggingScreen
 from nf_core.pipelines.create.utils import TextInput
 
 log = logging.getLogger(__name__)
@@ -159,7 +158,7 @@ class GithubRepo(Screen):
     @on(RepoCreated)
     def stop_loading(self) -> None:
         self.screen.loading = False
-        self.parent.switch_screen(LoggingScreen())
+        self.parent.switch_screen("completed_screen")
 
     @work(thread=True, exclusive=True)
     def _create_repo_and_push(self, org, pipeline_repo, private, push):
