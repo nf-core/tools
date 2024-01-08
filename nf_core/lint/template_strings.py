@@ -1,4 +1,3 @@
-import io
 import mimetypes
 import re
 
@@ -30,11 +29,11 @@ def template_strings(self):
         if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
             continue
 
-        with io.open(fn, "r", encoding="latin1") as fh:
+        with open(fn, encoding="latin1") as fh:
             lnum = 0
-            for l in fh:
+            for line in fh:
                 lnum += 1
-                cc_matches = re.findall(r"[^$]{{[^:}]*}}", l)
+                cc_matches = re.findall(r"[^$]{{[^:}]*}}", line)
                 if len(cc_matches) > 0:
                     for cc_match in cc_matches:
                         failed.append(f"Found a Jinja template string in `{fn}` L{lnum}: {cc_match}")

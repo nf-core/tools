@@ -27,7 +27,7 @@ def actions_awstest(self):
         return {"ignored": [f"'awstest.yml' workflow not found: `{fn}`"]}
 
     try:
-        with open(fn, "r") as fh:
+        with open(fn) as fh:
             wf = yaml.safe_load(fh)
     except Exception as e:
         return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}

@@ -300,7 +300,7 @@ def nextflow_config(self):
         ]
         path = os.path.join(self.wf_path, "nextflow.config")
         i = 0
-        with open(path, "r") as f:
+        with open(path) as f:
             for line in f:
                 if lines[i] in line:
                     i += 1
@@ -320,7 +320,7 @@ def nextflow_config(self):
             )
 
     # Check for the availability of the "test" configuration profile by parsing nextflow.config
-    with open(os.path.join(self.wf_path, "nextflow.config"), "r") as f:
+    with open(os.path.join(self.wf_path, "nextflow.config")) as f:
         content = f.read()
 
         # Remove comments

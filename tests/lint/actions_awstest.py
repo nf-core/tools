@@ -20,7 +20,7 @@ def test_actions_awstest_fail(self):
 
     # Edit .github/workflows/awsfulltest.yml to use -profile test_full
     new_pipeline = self._make_pipeline_copy()
-    with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "r") as fh:
+    with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml")) as fh:
         awstest_yml = yaml.safe_load(fh)
     awstest_yml[True]["push"] = ["master"]
     with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "w") as fh:

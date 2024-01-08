@@ -23,14 +23,14 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
     env_yml = None
     #  load the environment.yml file
     try:
-        with open(Path(module.component_dir, "environment.yml"), "r") as fh:
+        with open(Path(module.component_dir, "environment.yml")) as fh:
             env_yml = yaml.safe_load(fh)
 
         module.passed.append(("environment_yml_exists", "Module's `environment.yml` exists", module.environment_yml))
 
     except FileNotFoundError:
         # check if the module's main.nf requires a conda environment
-        with open(Path(module.component_dir, "main.nf"), "r") as fh:
+        with open(Path(module.component_dir, "main.nf")) as fh:
             main_nf = fh.read()
             if 'conda "${moduleDir}/environment.yml"' in main_nf:
                 module.failed.append(
@@ -49,9 +49,7 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
     if env_yml:
         valid_env_yml = False
         try:
-            with open(
-                Path(module_lint_object.modules_repo.local_repo_dir, "modules/environment-schema.json"), "r"
-            ) as fh:
+            with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/environment-schema.json")) as fh:
                 schema = json.load(fh)
             validators.validate(instance=env_yml, schema=schema)
             module.passed.append(
@@ -92,7 +90,7 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
                     yaml.dump(env_yml, fh, Dumper=custom_yaml_dumper())
 
             # Check that the name in the environment.yml file matches the name in the meta.yml file
-            with open(Path(module.component_dir, "meta.yml"), "r") as fh:
+            with open(Path(module.component_dir, "meta.yml")) as fh:
                 meta_yml = yaml.safe_load(fh)
 
             if env_yml["name"] == meta_yml["name"]:

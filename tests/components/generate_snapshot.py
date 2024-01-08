@@ -26,7 +26,7 @@ def test_generate_snapshot_module(self):
         snap_path = Path("modules", "nf-core-test", "fastqc", "tests", "main.nf.test.snap")
         assert snap_path.exists()
 
-        with open(snap_path, "r") as fh:
+        with open(snap_path) as fh:
             snap_content = json.load(fh)
         assert "versions" in snap_content
         assert "content" in snap_content["versions"]
@@ -48,7 +48,7 @@ def test_generate_snapshot_subworkflow(self):
         snap_path = Path("subworkflows", "nf-core-test", "bam_sort_stats_samtools", "tests", "main.nf.test.snap")
         assert snap_path.exists()
 
-        with open(snap_path, "r") as fh:
+        with open(snap_path) as fh:
             snap_content = json.load(fh)
         assert "test_bam_sort_stats_samtools_paired_end_flagstats" in snap_content
         assert (
@@ -86,7 +86,7 @@ def test_update_snapshot_module(self):
 
     with set_wd(self.nfcore_modules):
         snap_path = Path("modules", "nf-core-test", "bwa", "mem", "tests", "main.nf.test.snap")
-        with open(snap_path, "r") as fh:
+        with open(snap_path) as fh:
             snap_content = json.load(fh)
         original_timestamp = snap_content["Single-End"]["timestamp"]
         # delete the timestamp in json
@@ -103,7 +103,7 @@ def test_update_snapshot_module(self):
         )
         snap_generator.run()
 
-        with open(snap_path, "r") as fh:
+        with open(snap_path) as fh:
             snap_content = json.load(fh)
         assert "Single-End" in snap_content
         assert snap_content["Single-End"]["timestamp"] != original_timestamp

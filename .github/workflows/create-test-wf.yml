@@ -17,7 +17,7 @@ env:
 
 jobs:
   RunTestWorkflow:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     env:
       NXF_ANSI_LOG: false
     strategy:
@@ -26,11 +26,17 @@ jobs:
           - "23.04.0"
           - "latest-everything"
     steps:
+      - name: go to working directory
+        run: |
+          mkdir -p create-test-wf
+          cd create-test-wf
+          export NXF_WORK=$(pwd)
+
       - uses: actions/checkout@v4
         name: Check out source-code repository
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
 
@@ -49,11 +55,16 @@ jobs:
           mkdir create-test-wf && cd create-test-wf
           export NXF_WORK=$(pwd)
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
-          nextflow run nf-core-testpipeline -profile test,docker --outdir ./results
+          nextflow run nf-core-testpipeline -profile test,self_hosted_runner --outdir ./results
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: nf-core-log-file
+          name: nf-core-log-file-${{ matrix.NXF_VER }}
           path: create-test-wf/log.txt
+
+      - name: Cleanup work directory
+        # cleanup work directory
+        run: sudo rm -rf create-test-wf
+        if: always()

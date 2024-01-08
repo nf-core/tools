@@ -637,7 +637,7 @@ class ModulesJson:
             UserWarning: If the modules.json file is not found
         """
         try:
-            with open(self.modules_json_path, "r") as fh:
+            with open(self.modules_json_path) as fh:
                 try:
                     self.modules_json = json.load(fh)
                 except json.JSONDecodeError as e:

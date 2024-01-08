@@ -2,7 +2,6 @@
 The ComponentCreate class handles generating of module and subworkflow templates
 """
 
-from __future__ import print_function
 
 import glob
 import json
@@ -440,12 +439,13 @@ class ComponentCreate(ComponentCommand):
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
         nextflow_config = pytest_dir / "nextflow.config"
         if nextflow_config.is_file():
-            with open(nextflow_config, "r") as fh:
+            with open(nextflow_config) as fh:
                 config_lines = ""
                 for line in fh:
-                    if "publishDir" not in line:
+                    if "publishDir" not in line and line.strip() != "":
                         config_lines += line
-            if len(config_lines) > 0:
+            # if the nextflow.config file only contained publishDir, non_publish_dir_lines will be 11 characters long (`process {\n}`)
+            if len(config_lines) > 11:
                 log.debug("Copying nextflow.config file from pytest tests")
                 with open(
                     Path(self.directory, self.component_type, self.org, self.component_dir, "tests", "nextflow.config"),
@@ -460,7 +460,7 @@ class ComponentCreate(ComponentCommand):
             "[violet]Do you want to delete the pytest files?[/]\nPytest file 'main.nf' will be printed to standard output to allow migrating the tests manually to 'main.nf.test'.",
             default=False,
         ):
-            with open(pytest_dir / "main.nf", "r") as fh:
+            with open(pytest_dir / "main.nf") as fh:
                 log.info(fh.read())
             shutil.rmtree(pytest_dir)
             log.info(
@@ -475,7 +475,7 @@ class ComponentCreate(ComponentCommand):
             )
         # Delete tags from pytest_modules.yml
         modules_yml = Path(self.directory, "tests", "config", "pytest_modules.yml")
-        with open(modules_yml, "r") as fh:
+        with open(modules_yml) as fh:
             yml_file = yaml.safe_load(fh)
         yml_key = str(self.component_dir) if self.component_type == "modules" else f"subworkflows/{self.component_dir}"
         if yml_key in yml_file:

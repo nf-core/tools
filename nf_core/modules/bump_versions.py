@@ -4,8 +4,6 @@ or for a single module
 """
 
 
-from __future__ import print_function
-
 import logging
 import os
 import re
@@ -24,9 +22,8 @@ import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.utils import custom_yaml_dumper
+from nf_core.utils import custom_yaml_dumper, rich_force_colors
 from nf_core.utils import plural_s as _s
-from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
 
@@ -74,7 +71,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
 
         # Verify that this is not a pipeline
         if not self.repo_type == "modules":
-            raise nf_core.modules.modules_utils.ModuleException(
+            raise nf_core.modules.modules_utils.ModuleExceptionError(
                 "This command only works on the nf-core/modules repository, not on pipelines!"
             )
 
@@ -105,12 +102,14 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         if module:
             self.show_up_to_date = True
             if all_modules:
-                raise nf_core.modules.modules_utils.ModuleException(
+                raise nf_core.modules.modules_utils.ModuleExceptionError(
                     "You cannot specify a tool and request all tools to be bumped."
                 )
             nfcore_modules = [m for m in nfcore_modules if m.component_name == module]
             if len(nfcore_modules) == 0:
-                raise nf_core.modules.modules_utils.ModuleException(f"Could not find the specified module: '{module}'")
+                raise nf_core.modules.modules_utils.ModuleExceptionError(
+                    f"Could not find the specified module: '{module}'"
+                )
 
         progress_bar = Progress(
             "[bold blue]{task.description}",
@@ -146,10 +145,10 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         except FileNotFoundError:
             # try it in the main.nf instead
             try:
-                with open(module.main_nf, "r") as fh:
-                    for l in fh:
-                        if "bioconda::" in l:
-                            bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+                with open(module.main_nf) as fh:
+                    for line in fh:
+                        if "bioconda::" in line:
+                            bioconda_packages = [b for b in line.split() if "bioconda::" in b]
             except FileNotFoundError:
                 log.error(
                     f"Neither `environment.yml` nor `main.nf` of {module.component_name} module could be read to get bioconada version of used tools."
@@ -208,7 +207,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
                 ),
             ]
 
-            with open(module.main_nf, "r") as fh:
+            with open(module.main_nf) as fh:
                 content = fh.read()
 
             # Go over file content of main.nf and find replacements
@@ -241,7 +240,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
                 fh.write(content)
 
             # change version in environment.yml
-            with open(module.environment_yml, "r") as fh:
+            with open(module.environment_yml) as fh:
                 env_yml = yaml.safe_load(fh)
             re.sub(bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'", env_yml["dependencies"])
             with open(module.environment_yml, "w") as fh:
@@ -266,7 +265,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         # Check whether file exists and load it
         bioconda_packages = []
         try:
-            with open(module.environment_yml, "r") as fh:
+            with open(module.environment_yml) as fh:
                 env_yml = yaml.safe_load(fh)
             bioconda_packages = env_yml.get("dependencies", [])
         except FileNotFoundError:
@@ -289,7 +288,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         for m in [self.up_to_date, self.updated, self.failed]:
             try:
                 max_mod_name_len = max(len(m[2]), max_mod_name_len)
-            except:
+            except Exception:
                 pass
 
         def format_result(module_updates: List[Tuple[str, str]], table: Table) -> Table:
