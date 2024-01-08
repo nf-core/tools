@@ -113,7 +113,8 @@ jobs:
           else
             echo "nftest_installed=false" >> $GITHUB_ENV
           fi
-          echo "nftest_installed=$GITHUB_ENV.nftest_installed"
+          # show results
+          cat $GITHUB_ENV
 
       - name: Cache nf-test installation
         if: steps.check-nftest.outputs.nftest_installed != 'true'
