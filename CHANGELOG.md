@@ -5,7 +5,6 @@
 ### Template
 
 - Use `pre-commit` to lint files in GitHub CI ([#2635](https://github.com/nf-core/tools/pull/2635))
-- Use pdiff also on gitpod for nf-test ([#2640](https://github.com/nf-core/tools/pull/2640))
 
 ### Download
 
@@ -22,6 +21,7 @@
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.8.0 ([#2630](https://github.com/nf-core/tools/pull/2630))
 - Update mshick/add-pr-comment action to v2 ([#2632](https://github.com/nf-core/tools/pull/2632))
 - update python image version in docker file ([#2636](https://github.com/nf-core/tools/pull/2636))
+- Set pdiff as nf-test differ in Docker image for Gitpod ([#2642](https://github.com/nf-core/tools/pull/2642))
 
 # [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
