@@ -1,7 +1,7 @@
 import re
 from logging import LogRecord
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 from rich.logging import RichHandler
@@ -95,7 +95,7 @@ class TextInput(Static):
 
     @on(Input.Changed)
     @on(Input.Submitted)
-    def show_invalid_reasons(self, event: Input.Changed | Input.Submitted) -> None:
+    def show_invalid_reasons(self, event: Union[Input.Changed, Input.Submitted]) -> None:
         """Validate the text input and show errors if invalid."""
         if not event.validation_result.is_valid:
             self.query_one(".validation_msg").update("\n".join(event.validation_result.failure_descriptions))
