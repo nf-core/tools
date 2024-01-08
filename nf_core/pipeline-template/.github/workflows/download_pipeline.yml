@@ -2,7 +2,7 @@ name: Test successful pipeline download with 'nf-core download'
 
 # Run the workflow when:
 #  - dispatched manually
-#  - when a PR is opened or reopened to dev or master branches
+#  - when a PR is opened or reopened to master branch
 #  - the head branch of the pull request is updated, i.e. if fixes for a release are pushed last minute to dev.
 
 on:
@@ -28,7 +28,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           architecture: "x64"
       - uses: eWaterCycle/setup-singularity@v7
         with:
