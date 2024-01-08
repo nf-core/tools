@@ -113,11 +113,9 @@ jobs:
           else
             echo "nftest_installed=false" >> $GITHUB_ENV
           fi
-          # show results
-          cat $GITHUB_ENV
 
       - name: Cache nf-test installation
-        if: steps.check-nftest.outputs.nftest_installed != 'true'
+        if: env.nftest_installed != 'true'
         id: cache-software
         uses: actions/cache@v3
         with:
@@ -127,7 +125,7 @@ jobs:
           key: ${{ runner.os }}-nftest-${{ env.date }}
 
       - name: Install nf-test
-        if: steps.cache-software.outputs.cache-hit != 'true' && steps.check-nftest.outputs.nftest_installed != 'true'
+        if: steps.cache-software.outputs.cache-hit != 'true' && env.nftest_installed != 'true'
         run: |
           wget -qO- https://code.askimed.com/install/nf-test | bash
           sudo mv nf-test /usr/local/bin/
