@@ -62,6 +62,20 @@ jobs:
           git diff --exit-code ${GITHUB_WORKSPACE}/CHANGELOG.md || echo "changed=YES" >> $GITHUB_ENV
           echo "File changed: ${{ env.changed }}"
 
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+          cache: "pip"
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit checks
+        if: env.changed == 'YES'
+        run: |
+          pre-commit run --all-files
+
       - name: Commit and push changes
         if: env.changed == 'YES'
         run: |
@@ -70,5 +84,5 @@ jobs:
           git config push.default upstream
           git add ${GITHUB_WORKSPACE}/CHANGELOG.md
           git status
-          git commit -m "[automated] Update CHANGELOG.md"
+          git commit -m "[automated] Update CHANGELOG.md [no ci]"
           git push
