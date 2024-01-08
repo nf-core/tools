@@ -49,7 +49,7 @@ class PipelineCreate:
         name: Optional[str] = None,
         description: Optional[str] = None,
         author: Optional[str] = None,
-        version: str = "1.0dev",
+        version: str = "1.0.0dev",
         no_git: bool = False,
         force: bool = False,
         outdir: Optional[str] = None,

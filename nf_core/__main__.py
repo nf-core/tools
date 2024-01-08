@@ -470,14 +470,15 @@ def pipelines(ctx):
 )
 @click.option("-d", "--description", type=str, help="A short description of your pipeline")
 @click.option("-a", "--author", type=str, help="Name of the main author(s)")
-@click.option("--version", type=str, help="The initial version number to use")
+@click.option("--version", type=str, default="v1.0.0dev", help="The initial version number to use")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
 @click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 @click.option(
     "--organisation",
     type=str,
-    help="The name of the GitHub organisation where the pipeline will be hosted (default: nf-core",
+    default="nf-core",
+    help="The name of the GitHub organisation where the pipeline will be hosted (default: nf-core)",
 )
 def create_pipeline(ctx, name, description, author, version, force, outdir, template_yaml, organisation):
     """
