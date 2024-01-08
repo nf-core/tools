@@ -17,7 +17,6 @@
 ### General
 
 - Run CI-pytests for nf-core tools on self-hosted runners ([#2550](https://github.com/nf-core/tools/pull/2550))
-
 - Add Ruff linter and formatter replacing Black, isort and pyupgrade ([#2620](https://github.com/nf-core/tools/pull/2620))
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.8.0 ([#2630](https://github.com/nf-core/tools/pull/2630))
 - Update mshick/add-pr-comment action to v2 ([#2632](https://github.com/nf-core/tools/pull/2632))
