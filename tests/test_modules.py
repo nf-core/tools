@@ -20,6 +20,7 @@ from .utils import (
     GITLAB_URL,
     OLD_TRIMGALORE_BRANCH,
     OLD_TRIMGALORE_SHA,
+    create_tmp_pipeline,
     mock_anaconda_api_calls,
     mock_biocontainers_api_calls,
 )
@@ -84,13 +85,8 @@ class TestModules(unittest.TestCase):
         self.component_type = "modules"
 
         # Set up the schema
-        root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
-        self.pipeline_name = "mypipeline"
-        self.pipeline_dir = os.path.join(self.tmp_dir, self.pipeline_name)
-        nf_core.pipelines.create.create.PipelineCreate(
-            self.pipeline_name, "it is mine", "me", no_git=True, outdir=self.pipeline_dir
-        ).init_pipeline()
+        self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
+
         # Set up install objects
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
         self.mods_install_old = nf_core.modules.ModuleInstall(

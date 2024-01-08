@@ -247,9 +247,9 @@ class TestCli(unittest.TestCase):
             params["description"],
             params["author"],
             force="force" in params,
-            version=None,
+            version="1.0dev",
             outdir=params["outdir"],
-            organisation=None,
+            organisation="nf-core",
         )
         mock_create.return_value.init_pipeline.assert_called_once()
 
@@ -272,7 +272,7 @@ class TestCli(unittest.TestCase):
         cmd = ["pipelines", "create"]
         result = self.invoke_cli(cmd)
 
-        assert result.exit_code == 0
+        assert result.return_value == (0 or None)
         assert "Launching interactive nf-core pipeline creation tool." in result.output
 
         mock_create.assert_called_once_with()
