@@ -85,6 +85,9 @@ def _determine_change_type(pr_title) -> str:
 # Determine the type of the PR: new module, module update, or core update.
 section = _determine_change_type(pr_title)
 
+# Remove section indicator from the PR title.
+pr_title = re.sub(rf"{section}[:\s]*", "", pr_title, flags=re.IGNORECASE)
+
 # Prepare the change log entry.
 pr_link = f"([#{pr_number}]({REPO_URL}/pull/{pr_number}))"
 
@@ -175,7 +178,10 @@ while orig_lines:
 
     if inside_version_dev and line.lower().startswith(section.lower()):  # Section of interest header
         if already_added_entry:
-            print(f"Already added new lines into section {section}, is the section duplicated?", file=sys.stderr)
+            print(
+                f"Already added new lines into section {section}, is the section duplicated?",
+                file=sys.stderr,
+            )
             sys.exit(1)
         updated_lines.append(line)
         # Collecting lines until the next section.

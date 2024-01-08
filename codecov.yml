@@ -5,5 +5,5 @@ coverage:
         threshold: 5%
     patch: off
 comment:
-  layout: "condensed_header, condensed_files, condensed_footer" # add "condensed_" to "header", "files" and "footer"
-  hide_project_coverage: TRUE # set to true
+  layout: "condensed_header, condensed_files, condensed_footer"
+  require_changes: true

@@ -61,7 +61,7 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: nf-core-log-file
+          name: nf-core-log-file-${{ matrix.NXF_VER }}
           path: create-test-wf/log.txt
 
       - name: Cleanup work directory
