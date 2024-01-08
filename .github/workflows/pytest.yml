@@ -113,8 +113,10 @@ jobs:
           else
             echo "nftest_installed=false" >> $GITHUB_ENV
           fi
+          echo "nftest_installed=$GITHUB_ENV.nftest_installed"
 
       - name: Cache nf-test installation
+        if: steps.check-nftest.outputs.nftest_installed != 'true'
         id: cache-software
         uses: actions/cache@v3
         with:
