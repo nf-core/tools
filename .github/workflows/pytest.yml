@@ -105,6 +105,9 @@ jobs:
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v1
 
+      - name: Cleanup previous nf-test installations
+        run: |
+          sudo rm -rf /usr/local/bin/nf-test
       - name: Cache nf-test installation
         id: cache-software
         uses: actions/cache@v3
