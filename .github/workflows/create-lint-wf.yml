@@ -26,15 +26,22 @@ jobs:
           - "23.04.0"
           - "latest-everything"
     steps:
+      - name: go to subdirectory and change nextflow workdir
+        run: |
+          mkdir -p create-lint-wf
+          cd create-lint-wf
+          export NXF_WORK=$(pwd)
+
       # Get the repo code
       - uses: actions/checkout@v4
         name: Check out source-code repository
 
       # Set up nf-core/tools
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
+          cache: pip
 
       - name: Install python dependencies
         run: |
@@ -46,19 +53,6 @@ jobs:
         uses: nf-core/setup-nextflow@v1
         with:
           version: ${{ matrix.NXF_VER }}
-
-      # Install the Prettier linting tools
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install Prettier and editorconfig-checker
-        run: npm install -g prettier editorconfig-checker
-
-      - name: Install ruff
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff
 
       # Build a pipeline from the template
       - name: nf-core create
@@ -78,15 +72,8 @@ jobs:
         working-directory: create-lint-wf
 
       # Run code style linting
-      - name: Run Prettier --check
-        run: prettier --check create-lint-wf/nf-core-testpipeline
-
-      - name: Run Ruff check
-        run: ruff check create-lint-wf/nf-core-testpipeline
-      - name: Run Ruff format
-        run: ruff format create-lint-wf/nf-core-testpipeline
-      - name: Run ECLint check
-        run: editorconfig-checker -exclude README.md $(find nf-core-testpipeline/.* -type f | grep -v '.git\|.py\|md\|json\|yml\|yaml\|html\|css\|work\|.nextflow\|build\|nf_core.egg-info\|log.txt\|Makefile')
+      - name: run pre-commit
+        run: pre-commit run --all-files
         working-directory: create-lint-wf
 
       # Update modules to the latest version
@@ -151,7 +138,11 @@ jobs:
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: nf-core-log-file
+          name: nf-core-log-file-${{ matrix.NXF_VER }}
           path: create-lint-wf/log.txt
+
+      - name: Cleanup work directory
+        run: sudo rm -rf create-lint-wf
+        if: always()
