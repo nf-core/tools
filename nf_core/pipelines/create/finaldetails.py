@@ -74,7 +74,7 @@ class FinalDetails(Screen):
             pass
 
         # Create the new pipeline
-        self.create_pipeline()
+        self._create_pipeline()
         self.screen.loading = True
 
     class PipelineCreated(Message):
@@ -87,8 +87,8 @@ class FinalDetails(Screen):
         self.screen.loading = False
         self.parent.switch_screen("github_repo_question")
 
-    @work(thread=True)
-    def create_pipeline(self) -> None:
+    @work(thread=True, exclusive=True)
+    def _create_pipeline(self) -> None:
         """Create the pipeline."""
         create_obj = PipelineCreate(template_config=self.parent.TEMPLATE_CONFIG)
         create_obj.init_pipeline()

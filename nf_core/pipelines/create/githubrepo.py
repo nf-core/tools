@@ -161,7 +161,7 @@ class GithubRepo(Screen):
         self.screen.loading = False
         self.parent.switch_screen(LoggingScreen())
 
-    @work(thread=True)
+    @work(thread=True, exclusive=True)
     def _create_repo_and_push(self, org, pipeline_repo, private, push):
         """Create a GitHub repository and push all branches."""
         # Check if repo already exists

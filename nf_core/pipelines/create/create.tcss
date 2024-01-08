@@ -94,3 +94,5 @@ HorizontalScroll {
 .displayed #hide_password {
     display: block;
 }
+
+
