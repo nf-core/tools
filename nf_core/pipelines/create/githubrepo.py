@@ -11,7 +11,16 @@ from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
 from textual.message import Message
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
+from textual.widgets import (
+    Button,
+    Footer,
+    Header,
+    Input,
+    LoadingIndicator,
+    Markdown,
+    Static,
+    Switch,
+)
 
 from nf_core.pipelines.create.utils import TextInput
 
@@ -163,6 +172,7 @@ class GithubRepo(Screen):
     @work(thread=True, exclusive=True)
     def _create_repo_and_push(self, org, pipeline_repo, private, push):
         """Create a GitHub repository and push all branches."""
+        self.query_one(LoadingIndicator).border_title = "Creating GitHub repo..."
         # Check if repo already exists
         try:
             repo = org.get_repo(self.parent.TEMPLATE_CONFIG.name)

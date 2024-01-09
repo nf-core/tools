@@ -6,7 +6,16 @@ from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
 from textual.message import Message
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
+from textual.widgets import (
+    Button,
+    Footer,
+    Header,
+    Input,
+    LoadingIndicator,
+    Markdown,
+    Static,
+    Switch,
+)
 
 from nf_core.pipelines.create.create import PipelineCreate
 from nf_core.pipelines.create.utils import TextInput
@@ -102,6 +111,7 @@ class FinalDetails(Screen):
         """Create the pipeline."""
         create_obj = PipelineCreate(template_config=self.parent.TEMPLATE_CONFIG)
         try:
+            self.query_one(LoadingIndicator).border_title = "Creating pipeline..."
             create_obj.init_pipeline()
         except UserWarning:
             self.post_message(self.PipelineExists())

@@ -95,4 +95,7 @@ HorizontalScroll {
     display: block;
 }
 
-
+/* Loading message */
+LoadingIndicator {
+    border: solid white;
+}
