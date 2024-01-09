@@ -173,7 +173,9 @@ while orig_lines:
                     updated_lines.append(line)
             break
         continue
-
+    print(f"Found line: {line.strip()}")
+    print(f"inside_version_dev: {inside_version_dev}")
+    print(f"section_header: {section_header}")
     if inside_version_dev and line.lower().startswith(section_header.lower()):  # Section of interest header
         print(f"Found section header: {line.strip()}")
         if already_added_entry:
