@@ -1,6 +1,6 @@
 <h1><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/nfcore-tools_logo_dark.png">
-  <img alt="nf-core/tools logo" src="docs/images/nfcore-tools_logo_light.png">
+  <img alt="nf-core/tools" src="docs/images/nfcore-tools_logo_light.png">
 </picture></h1><!-- omit in toc -->
 
 [![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=master&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amaster)
