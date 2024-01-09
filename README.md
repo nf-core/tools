@@ -16,7 +16,7 @@ A python package with helper tools for the nf-core community.
 
 > **Read this documentation on the nf-core website: [https://nf-co.re/tools](https://nf-co.re/tools)**
 
-## Table of contents <!-- omit in toc -->
+# Table of contents <!-- omit in toc -->
 
 - [`nf-core` tools installation](#installation)
 - [`nf-core` tools update](#update-tools)
@@ -61,9 +61,9 @@ A python package with helper tools for the nf-core community.
 The nf-core tools package is written in Python and can be imported and used within other packages.
 For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools/docs/).
 
-## Installation
+# Installation
 
-### Bioconda
+## Bioconda
 
 You can install `nf-core/tools` from [bioconda](https://bioconda.github.io/recipes/nf-core/README.html).
 
@@ -82,7 +82,7 @@ conda create --name nf-core python=3.11 nf-core nextflow
 conda activate nf-core
 ```
 
-### Python Package Index
+## Python Package Index
 
 `nf-core/tools` can also be installed from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
 
@@ -90,7 +90,7 @@ conda activate nf-core
 pip install nf-core
 ```
 
-### Docker image
+## Docker image
 
 There is a docker image that you can use to run `nf-core/tools` that has all of the requirements packaged (including Nextflow) and so should work out of the box. It is called [`nfcore/tools`](https://hub.docker.com/r/nfcore/tools) _**(NB: no hyphen!)**_
 
@@ -118,7 +118,7 @@ If you use `$NXF_SINGULARITY_CACHEDIR` for downloads, you'll also need to make t
 docker run -itv `pwd`:`pwd` -w `pwd` -u $(id -u):$(id -g) -v $NXF_SINGULARITY_CACHEDIR:$NXF_SINGULARITY_CACHEDIR -e NXF_SINGULARITY_CACHEDIR nfcore/tools launch viralrecon -r 1.1.0
 ```
 
-#### Docker bash alias
+### Docker bash alias
 
 The above base command is a bit of a mouthful to type, to say the least.
 To make it easier to use, we highly recommend adding the following bash alias to your `~/.bashrc` file:
@@ -133,7 +133,7 @@ Once applied (you may need to reload your shell) you can just use the `nf-core` 
 nf-core list
 ```
 
-#### Docker versions
+### Docker versions
 
 You can use docker image tags to specify the version you would like to use. For example, `nfcore/tools:dev` for the latest development version of the code, or `nfcore/tools:1.14` for version `1.14` of tools.
 If you omit this, it will default to `:latest`, which should be the latest stable release.
@@ -146,7 +146,7 @@ Then build using the `--build-arg NXF_VER` flag as follows:
 docker build -t nfcore/tools:dev . --build-arg NXF_VER=20.04.0
 ```
 
-### Development version
+## Development version
 
 If you would like the latest development version of tools, the command is:
 
@@ -161,7 +161,7 @@ Go to the cloned directory and install with pip (also installs development requi
 pip install --upgrade -r requirements-dev.txt -e .
 ```
 
-### Using a specific Python interpreter
+## Using a specific Python interpreter
 
 If you prefer, you can also run tools with a specific Python interpreter.
 The command line usage and flags are then exactly the same as if you ran with the `nf-core` command.
@@ -175,7 +175,7 @@ python3 -m nf_core list
 ~/my_env/bin/python -m nf_core create --name mypipeline --description "This is a new skeleton pipeline"
 ```
 
-### Using with your own Python scripts
+## Using with your own Python scripts
 
 The tools functionality is written in such a way that you can import it into your own scripts.
 For example, if you would like to get a list of all available nf-core pipelines:
@@ -190,7 +190,7 @@ for wf in wfs.remote_workflows:
 
 Please see [https://nf-co.re/tools/docs/](https://nf-co.re/tools/docs/) for the function documentation.
 
-### Automatic version check
+## Automatic version check
 
 nf-core/tools automatically checks the web to see if there is a new version of nf-core/tools available.
 If you would prefer to skip this check, set the environment variable `NFCORE_NO_VERSION_CHECK`. For example:
@@ -199,7 +199,7 @@ If you would prefer to skip this check, set the environment variable `NFCORE_NO_
 export NFCORE_NO_VERSION_CHECK=1
 ```
 
-### Update tools
+## Update tools
 
 It is advisable to keep nf-core/tools updated to the most recent version. The command to update depends on the system used to install it, for example if you have installed it with conda you can use:
 
@@ -215,7 +215,7 @@ pip install --upgrade nf-core
 
 Please refer to the respective documentation for further details to manage packages, as for example [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-pkgs.html#updating-packages) or [pip](https://packaging.python.org/en/latest/tutorials/installing-packages/#upgrading-packages).
 
-### Activate shell completions for nf-core/tools
+## Activate shell completions for nf-core/tools
 
 Auto-completion for the `nf-core` command is available for bash, zsh and fish. To activate it, add the following lines to the respective shell config files.
 
@@ -234,7 +234,7 @@ After a restart of the shell session you should have auto-completion for the `nf
 > [!TIP]
 > If you see the error `command not found compdef` , be sure that your config file contains the line `autoload -Uz compinit && compinit` before the eval line.
 
-## Listing pipelines
+# Listing pipelines
 
 The command `nf-core list` shows all available nf-core pipelines along with their latest version, when that was published and how recently the pipeline code was pulled to your local system (if at all).
 
@@ -261,7 +261,7 @@ To return results as JSON output for downstream use, use the `--json` flag.
 
 Archived pipelines are not returned by default. To include them, use the `--show_archived` flag.
 
-## Launch a pipeline
+# Launch a pipeline
 
 Some nextflow pipelines have a considerable number of command line flags that can be used.
 To help with this, you can use the `nf-core launch` command.
@@ -293,7 +293,7 @@ INFO     Nextflow command:
 Do you want to run this command now?  [y/n]:
 ```
 
-### Launch tool options
+## Launch tool options
 
 - `-r`, `--revision`
   - Specify a pipeline release (or branch / git commit sha) of the project to run
@@ -315,7 +315,7 @@ Do you want to run this command now?  [y/n]:
 - `--url`
   - Change the URL used for the graphical interface, useful for development work on the website.
 
-## Create a parameter file
+# Create a parameter file
 
 Sometimes it is easier to manually edit a parameter file than to use the web interface or interactive commandline wizard
 provided by `nf-core launch`, for example when running a pipeline with many options on a remote server without a graphical interface.
@@ -331,7 +331,7 @@ This template can then be used by uncommenting and modifying the value of parame
 
 Hidden options are not included by default, but can be included using the `-x`/`--show-hidden` flag.
 
-## Downloading pipelines for offline use
+# Downloading pipelines for offline use
 
 Sometimes you may need to run an nf-core pipeline on a server or HPC system that has no internet connection.
 In this case you will need to fetch the pipeline files first, then manually transfer them to your system.
@@ -366,7 +366,7 @@ nextflow run /path/to/download/nf-core-rnaseq-dev/workflow/ --input mydata.csv -
 > [!NOTE]
 > If you downloaded Singularity container images, you will need to use `-profile singularity` or have it enabled in your config file.
 
-### Downloaded nf-core configs
+## Downloaded nf-core configs
 
 The pipeline files are automatically updated (`params.custom_config_base` is set to `../configs`), so that the local copy of institutional configs are available when running the pipeline.
 So using `-profile <NAME>` should work if available within [nf-core/configs](https://github.com/nf-core/configs).
@@ -374,7 +374,7 @@ So using `-profile <NAME>` should work if available within [nf-core/configs](htt
 > [!WARNING]
 > This option is not available when downloading a pipeline for use with [Nextflow Tower](#adapting-downloads-to-nextflow-tower) because the application manages all configurations separately.
 
-### Downloading Apptainer containers
+## Downloading Apptainer containers
 
 If you're using [Singularity](https://apptainer.org) (Apptainer), the `nf-core download` command can also fetch the required container images for you.
 To do this, select `singularity` in the prompt or specify `--container-system singularity` in the command.
@@ -389,7 +389,7 @@ singularity.cacheDir = "${projectDir}/../singularity-images/"
 This tells Nextflow to use the `singularity-containers` directory relative to the workflow for the singularity image cache directory.
 All images should be downloaded there, so Nextflow will use them instead of trying to pull from the internet.
 
-#### Singularity cache directory
+### Singularity cache directory
 
 We highly recommend setting the `$NXF_SINGULARITY_CACHEDIR` environment variable on your system, even if that is a different system to where you will be running Nextflow.
 
@@ -400,7 +400,7 @@ If you are running the download on the same system where you will be running the
 
 If you are downloading a workflow for a different system, you can provide information about the contents of its image cache to `nf-core download`. To avoid unnecessary container image downloads, choose `--container-cache-utilisation remote` and provide a list of already available images as plain text file to `--container-cache-index my_list_of_remotely_available_images.txt`. To generate this list on the remote system, run `find $NXF_SINGULARITY_CACHEDIR -name "*.img" > my_list_of_remotely_available_images.txt`. The tool will then only download and copy images into your output directory, which are missing on the remote system.
 
-#### How the Singularity image downloads work
+### How the Singularity image downloads work
 
 The Singularity image download finds containers using two methods:
 
@@ -424,7 +424,7 @@ Note that compressing many GBs of binary files can be slow, so specifying `--com
 
 If the download speeds are much slower than your internet connection is capable of, you can set `--parallel-downloads` to a large number to download loads of images at once.
 
-### Adapting downloads to Nextflow Tower
+## Adapting downloads to Nextflow Tower
 
 [seqeralabs® Nextflow Tower](https://cloud.tower.nf/) provides a graphical user interface to oversee pipeline runs, gather statistics and configure compute resources. While pipelines added to _Tower_ are preferably hosted at a Git service, providing them as disconnected, self-reliant repositories is also possible for premises with restricted network access. Choosing the `--tower` flag will download the pipeline in an appropriate form.
 
@@ -433,7 +433,7 @@ Subsequently, the `*.git` folder can be moved to it's final destination and link
 > [!TIP]
 > Also without access to Tower, pipelines downloaded with the `--tower` flag can be run if the _absolute_ path is specified: `nextflow run -r 2.5 file:/path/to/pipelinedownload.git`. Downloads in this format allow you to include multiple revisions of a pipeline in a single file, but require that the revision (e.g. `-r 2.5`) is always explicitly specified.
 
-## Pipeline software licences
+# Pipeline software licences
 
 Sometimes it's useful to see the software licences of the tools used in a pipeline.
 You can use the `licences` subcommand to fetch and print the software licence from each conda / PyPI package used in an nf-core pipeline.
@@ -447,7 +447,7 @@ timeout: 10
 
 ![`nf-core licences deepvariant`](docs/images/nf-core-licences.svg)
 
-## Creating a new pipeline
+# Creating a new pipeline
 
 The `create` subcommand makes a new pipeline using the nf-core base template.
 With a given pipeline name, description and author, it makes a starter pipeline which follows nf-core best practices.
@@ -473,7 +473,7 @@ Please see the [nf-core documentation](https://nf-co.re/developers/adding_pipeli
 
 Note that if the required arguments for `nf-core create` are not given, it will interactively prompt for them. If you prefer, you can supply them as command line arguments. See `nf-core create --help` for more information.
 
-### Customizing the creation of a pipeline
+## Customizing the creation of a pipeline
 
 The `nf-core create` command comes with a number of options that allow you to customize the creation of a pipeline if you intend to not publish it as an
 nf-core pipeline. This can be done in two ways: by using interactive prompts, or by supplying a `template.yml` file using the `--template-yaml <file>` option.
@@ -503,7 +503,7 @@ This will create a pipeline called `coolpipe` in the directory `myorg-coolpipe` 
 
 To run the pipeline creation silently (i.e. without any prompts) with the nf-core template, you can use the `--plain` option.
 
-## Linting a workflow
+# Linting a workflow
 
 The `lint` subcommand checks a given pipeline for all nf-core community guidelines.
 This is the same test that is used on the automated continuous integration tests.
@@ -522,7 +522,7 @@ fake_command: nf-core lint
 
 You can use the `-k` / `--key` flag to run only named tests for faster debugging, eg: `nf-core lint -k files_exist -k files_unchanged`. The `nf-core lint` command lints the current working directory by default, to specify another directory you can use `--dir <directory>`.
 
-### Linting documentation
+## Linting documentation
 
 Each test result name on the left is a terminal hyperlink.
 In most terminals you can <kbd>ctrl</kbd> + <kbd>click</kbd> ( <kbd>cmd</kbd> + <kbd>click</kbd>) these
@@ -530,7 +530,7 @@ links to open documentation specific to this test in your browser.
 
 Alternatively visit <https://nf-co.re/tools/docs/latest/pipeline_lint_tests/index.html> and find your test to read more.
 
-### Linting config
+## Linting config
 
 It's sometimes desirable to disable certain lint tests, especially if you're using nf-core/tools with your
 own pipeline that is outside of nf-core.
@@ -558,18 +558,18 @@ lint:
 
 Note that you have to list all configurations for the `nf-core lint` command under the `lint:` field in the `.nf-core.yml` file, as this file is also used for configuration of other commands.
 
-### Automatically fix errors
+## Automatically fix errors
 
 Some lint tests can try to automatically fix any issues they find. To enable this functionality, use the `--fix` flag.
 The pipeline must be a `git` repository with no uncommitted changes for this to work.
 This is so that any automated changes can then be reviewed and undone (`git checkout .`) if you disagree.
 
-### Lint results output
+## Lint results output
 
 The output from `nf-core lint` is designed to be viewed on the command line and is deliberately succinct.
 You can view all passed tests with `--show-passed` or generate JSON / markdown results with the `--json` and `--markdown` flags.
 
-## Pipeline schema
+# Pipeline schema
 
 nf-core pipelines have a `nextflow_schema.json` file in their root which describes the different parameters used by the workflow.
 These files allow automated validation of inputs when running the pipeline, are used to generate command line help and can be used to build interfaces to launch pipelines.
@@ -582,7 +582,7 @@ To help developers working with pipeline schema, nf-core tools has three `schema
 - `nf-core schema docs`
 - `nf-core schema lint`
 
-### Validate pipeline parameters
+## Validate pipeline parameters
 
 Nextflow can take input parameters in a JSON or YAML file when running a pipeline using the `-params-file` option.
 This command validates such a file against the pipeline schema.
@@ -600,7 +600,7 @@ after_command: rm nf-params.json
 
 The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).
 
-### Build a pipeline schema
+## Build a pipeline schema
 
 Manually building JSONSchema documents is not trivial and can be very error prone.
 Instead, the `nf-core schema build` command collects your pipeline parameters and gives interactive prompts about any missing or unexpected params.
@@ -626,7 +626,7 @@ There are four flags that you can use with this command:
 - `--web-only`: Skips comparison of the schema against the pipeline parameters and only launches the web tool.
 - `--url <web_address>`: Supply a custom URL for the online tool. Useful when testing locally.
 
-### Display the documentation for a pipeline schema
+## Display the documentation for a pipeline schema
 
 To get an impression about the current pipeline schema you can display the content of the `nextflow_schema.json` with `nf-core schema docs <pipeline-schema>`. This will print the content of your schema in Markdown format to the standard output.
 
@@ -637,7 +637,7 @@ There are four flags that you can use with this command:
 - `--force`: Overwrite existing files
 - `--columns <columns_list>`: CSV list of columns to include in the parameter tables
 
-### Add new parameters to the pipeline schema
+## Add new parameters to the pipeline schema
 
 If you want to add a parameter to the schema, you first have to add the parameter and its default value to the `nextflow.config` file with the `params` scope. Afterwards, you run the command `nf-core schema build` to add the parameters to your schema and open the graphical interface to easily modify the schema.
 
@@ -658,11 +658,11 @@ For the `string` type you have three different options in the settings (nut icon
 
 After filling the schema, click on the `Finished` button in the top right corner, this will automatically update your `nextflow_schema.json`. If this is not working, the schema can be copied from the graphical interface and pasted in your `nextflow_schema.json` file.
 
-### Update existing pipeline schema
+## Update existing pipeline schema
 
 It's important to change the default value of a parameter in the `nextflow.config` file first and then in the pipeline schema, because the value in the config file overwrites the value in the pipeline schema. To change any other parameter use `nf-core schema build --web-only` to open the graphical interface without rebuilding the pipeline schema. Now, the parameters can be changed as mentioned above but keep in mind that changing the parameter datatype depends on the default value specified in the `nextflow.config` file.
 
-### Linting a pipeline schema
+## Linting a pipeline schema
 
 The pipeline schema is linted as part of the main pipeline `nf-core lint` command,
 however sometimes it can be useful to quickly check the syntax of the JSONSchema without running a full lint run.
@@ -675,7 +675,7 @@ working_dir: tmp/nf-core-nextbigthing
 
 ![`nf-core schema lint`](docs/images/nf-core-schema-lint.svg)
 
-## Bumping a pipeline version number
+# Bumping a pipeline version number
 
 When releasing a new version of a nf-core pipeline, version numbers have to be updated in several different places. The helper command `nf-core bump-version` automates this for you to avoid manual errors (and frustration!).
 
@@ -691,7 +691,7 @@ working_dir: tmp/nf-core-nextbigthing
 
 You can change the directory from the current working directory by specifying `--dir <pipeline_dir>`. To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
 
-## Sync a pipeline with the template
+# Sync a pipeline with the template
 
 Over time, the main nf-core pipeline template is updated. To keep all nf-core pipelines up to date,
 we synchronise these updates automatically when new versions of nf-core/tools are released.
@@ -729,7 +729,7 @@ To create the pull request, a personal access token is required for API authenti
 These can be created at [https://github.com/settings/tokens](https://github.com/settings/tokens).
 Supply this using the `--auth-token` flag.
 
-## Modules
+# Modules
 
 With the advent of [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html), we are creating a centralised repository of modules.
 These are software tool process definitions that can be imported into any pipeline.
@@ -737,7 +737,7 @@ This allows multiple pipelines to use the same code for share tools and gives a 
 
 The nf-core DSL2 modules repository is at <https://github.com/nf-core/modules>
 
-### Custom remote modules
+## Custom remote modules
 
 The modules supercommand comes with two flags for specifying a custom remote:
 
@@ -764,16 +764,16 @@ The modules commands will during initalisation try to pull changes from the remo
 due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will
 still need to clone repositories that have previously not been used.
 
-### Private remote repositories
+## Private remote repositories
 
 You can use the modules command with private remote repositories. Make sure that your local `git` is correctly configured with your private remote
 and then specify the remote the same way you would do with a public remote repository.
 
-### List modules
+## List modules
 
 The `nf-core modules list` command provides the subcommands `remote` and `local` for listing modules installed in a remote repository and in the local pipeline respectively. Both subcommands allow to use a pattern for filtering the modules by keywords eg: `nf-core modules list <subcommand> <keyword>`.
 
-#### List remote modules
+### List remote modules
 
 To list all modules available on [nf-core/modules](https://github.com/nf-core/modules), you can use
 `nf-core modules list remote`, which will print all available modules to the terminal.
@@ -785,7 +785,7 @@ head: 25
 
 ![`nf-core modules list remote`](docs/images/nf-core-modules-list-remote.svg)
 
-#### List installed modules
+### List installed modules
 
 To list modules installed in a local pipeline directory you can use `nf-core modules list local`. This will list the modules install in the current working directory by default. If you want to specify another directory, use the `--dir <pipeline_dir>` flag.
 
@@ -796,7 +796,7 @@ head: 25
 
 ![`nf-core modules list local`](docs/images/nf-core-modules-list-local.svg)
 
-## Show information about a module
+# Show information about a module
 
 For quick help about how a module works, use `nf-core modules info <tool>`.
 This shows documentation about the module on the command line, similar to what's available on the
@@ -808,7 +808,7 @@ working_dir: tmp/nf-core-nextbigthing
 
 ![`nf-core modules info abacas`](docs/images/nf-core-modules-info.svg)
 
-### Install modules in a pipeline
+## Install modules in a pipeline
 
 You can install modules from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core modules install`.
 A module installed this way will be installed to the `./modules/nf-core/modules` directory.
@@ -827,7 +827,7 @@ There are three additional flags that you can use when installing a module:
 - `--prompt`: Select the module version using a cli prompt.
 - `--sha <commit_sha>`: Install the module at a specific commit.
 
-### Update modules in a pipeline
+## Update modules in a pipeline
 
 You can update modules installed from a remote repository in your pipeline using `nf-core modules update`.
 
@@ -884,7 +884,7 @@ update:
 
 Note that the module versions specified in the `.nf-core.yml` file has higher precedence than versions specified with the command line flags, thus aiding you in writing reproducible pipelines.
 
-### Remove a module from a pipeline
+## Remove a module from a pipeline
 
 To delete a module from your pipeline, run `nf-core modules remove`.
 
@@ -896,7 +896,7 @@ working_dir: tmp/nf-core-nextbigthing
 
 You can pass the module name as an optional argument to `nf-core modules remove` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
 
-### Create a patch file for a module
+## Create a patch file for a module
 
 If you want to make a minor change to a locally installed module but still keep it up date with the remote version, you can create a patch file using `nf-core modules patch`.
 
@@ -913,7 +913,7 @@ the patch new version is installed but the old patch file is preserved.
 
 When linting a patched module, the linting command will check the validity of the patch. When running other lint tests the patch is applied in reverse, and the original files are linted.
 
-### Create a new module
+## Create a new module
 
 This command creates a new nf-core module from the nf-core module template.
 This ensures that your module follows the nf-core guidelines.
@@ -940,7 +940,7 @@ fake_command: nf-core modules create fastqc --author @nf-core-bot  --label proce
 
 ![`cd modules && nf-core modules create fastqc --author @nf-core-bot  --label process_low --meta --force`](docs/images/nf-core-modules-create.svg)
 
-### Check a module against nf-core guidelines
+## Check a module against nf-core guidelines
 
 Run the `nf-core modules lint` command to check modules in the current working directory (pipeline or nf-core/modules clone) against nf-core guidelines.
 
@@ -953,7 +953,7 @@ before_command: sed 's/1.13a/1.10/g' modules/multiqc/main.nf > modules/multiqc/m
 
 ![`nf-core modules lint multiqc`](docs/images/nf-core-modules-lint.svg)
 
-### Create a test for a module
+## Create a test for a module
 
 All modules on [nf-core/modules](https://github.com/nf-core/modules) have a strict requirement of being unit tested using minimal test data. We use [nf-test](https://code.askimed.com/nf-test/) as our testing framework.
 Each module comes already with a template for the test file in `test/main.nf.test`. Replace the placeholder code in that file with your specific input, output and proces. In order to generate the corresponding snapshot after writing your test, you can use the `nf-core modules test` command. This command will run `nf-test test` twice, to also check for snapshot stability, i.e. that the same snapshot is generated on multiple runs.
@@ -977,7 +977,7 @@ nf-core modules test --update
 
 If you want to run the test only once without checking for snapshot stability, you can use the `--once` flag.
 
-### Bump bioconda and container versions of modules in
+## Bump bioconda and container versions of modules in
 
 If you are contributing to the `nf-core/modules` repository and want to bump bioconda and container versions of certain modules, you can use the `nf-core modules bump-versions` helper tool. This will bump the bioconda version of a single or all modules to the latest version and also fetch the correct Docker and Singularity container tags.
 
@@ -1001,7 +1001,7 @@ bump-versions:
   star/align: "2.6.1d"
 ```
 
-## Subworkflows
+# Subworkflows
 
 After the launch of nf-core modules, we can provide now also nf-core subworkflows to fully utilize the power of DSL2 modularization.
 Subworkflows are chains of multiple module definitions that can be imported into any pipeline.
@@ -1009,7 +1009,7 @@ This allows multiple pipelines to use the same code for a the same tasks, and gi
 
 To allow us to test modules and subworkflows together we put the nf-core DSL2 subworkflows into the `subworkflows` directory of the modules repository is at <https://github.com/nf-core/modules>.
 
-### Custom remote subworkflows
+## Custom remote subworkflows
 
 The subworkflows supercommand released in nf-core/tools version 2.7 comes with two flags for specifying a custom remote repository:
 
@@ -1034,16 +1034,16 @@ Please avoid installing the same tools from two different remotes, as this can l
 
 The subworkflows commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will still need to clone repositories that have previously not been used.
 
-### Private remote repositories
+## Private remote repositories
 
 You can use the subworkflows command with private remote repositories. Make sure that your local `git` is correctly configured with your private remote
 and then specify the remote the same way you would do with a public remote repository.
 
-### List subworkflows
+## List subworkflows
 
 The `nf-core subworkflows list` command provides the subcommands `remote` and `local` for listing subworkflows installed in a remote repository and in the local pipeline respectively. Both subcommands allow to use a pattern for filtering the subworkflows by keywords eg: `nf-core subworkflows list <subworkflow_name> <keyword>`.
 
-#### List remote subworkflows
+### List remote subworkflows
 
 To list all subworkflows available on [nf-core/modules](https://github.com/nf-core/modules), you can use
 `nf-core subworkflows list remote`, which will print all available subworkflows to the terminal.
@@ -1055,7 +1055,7 @@ head: 25
 
 ![`nf-core subworkflows list remote`](docs/images/nf-core-subworkflows-list-remote.svg)
 
-#### List installed subworkflows
+### List installed subworkflows
 
 To list subworkflows installed in a local pipeline directory you can use `nf-core subworkflows list local`. This will list the subworkflows install in the current working directory by default. If you want to specify another directory, use the `--dir <pipeline_dir>` flag.
 
@@ -1068,7 +1068,7 @@ head: 25
 
 ![`nf-core subworkflows list local`](docs/images/nf-core-subworkflows-list-local.svg)
 
-## Show information about a subworkflow
+# Show information about a subworkflow
 
 For quick help about how a subworkflow works, use `nf-core subworkflows info <subworkflow_name>`.
 This shows documentation about the subworkflow on the command line, similar to what's available on the
@@ -1085,7 +1085,7 @@ tail: 10
 
 ![`nf-core subworkflows info bam_rseqc`](docs/images/nf-core-subworkflows-info.svg)
 
-### Install subworkflows in a pipeline
+## Install subworkflows in a pipeline
 
 You can install subworkflows from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core subworkflows install`.
 A subworkflow installed this way will be installed to the `./subworkflows/nf-core` directory.
@@ -1107,7 +1107,7 @@ There are four additional flags that you can use when installing a subworkflow:
 - `--prompt`: Select the subworkflow version using a cli prompt.
 - `--sha <commit_sha>`: Install the subworkflow at a specific commit.
 
-### Update subworkflows in a pipeline
+## Update subworkflows in a pipeline
 
 You can update subworkflows installed from a remote repository in your pipeline using `nf-core subworkflows update`.
 
@@ -1168,7 +1168,7 @@ update:
 
 Note that the subworkflow versions specified in the `.nf-core.yml` file has higher precedence than versions specified with the command line flags, thus aiding you in writing reproducible pipelines.
 
-### Remove a subworkflow from a pipeline
+## Remove a subworkflow from a pipeline
 
 To delete a subworkflow from your pipeline, run `nf-core subworkflows remove`.
 
@@ -1182,7 +1182,7 @@ before_command: >
 
 You can pass the subworkflow name as an optional argument to `nf-core subworkflows remove` like above or select it from the list of available subworkflows by only running `nf-core subworkflows remove`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
 
-### Create a new subworkflow
+## Create a new subworkflow
 
 This command creates a new nf-core subworkflow from the nf-core subworkflow template.
 This ensures that your subworkflow follows the nf-core guidelines.
@@ -1208,7 +1208,7 @@ fake_command: nf-core subworkflows create bam_stats_samtools --author @nf-core-b
 
 ![`nf-core subworkflows create bam_stats_samtools --author @nf-core-bot --force`](docs/images/nf-core-subworkflows-create.svg)
 
-### Create a test for a subworkflow
+## Create a test for a subworkflow
 
 All subworkflows on [nf-core/modules](https://github.com/nf-core/modules) have a strict requirement of being unit tested using minimal test data. We use [nf-test](https://code.askimed.com/nf-test/) as our testing framework.
 Each subworkflow comes already with a template for the test file in `test/main.nf.test`. Replace the placeholder code in that file with your specific input, output and proces. In order to generate the corresponding snapshot after writing your test, you can use the `nf-core subworkflows test` command. This command will run `nf-test test` twice, to also check for snapshot stability, i.e. that the same snapshot is generated on multiple runs.
@@ -1232,7 +1232,7 @@ nf-core subworkflows test --update
 
 If you want to run the test only once without checking for snapshot stability, you can use the `--once` flag.
 
-### Check a subworkflow against nf-core guidelines
+## Check a subworkflow against nf-core guidelines
 
 Run the `nf-core subworkflows lint` command to check subworkflows in the current working directory (a pipeline or a clone of nf-core/modules) against nf-core guidelines.
 
@@ -1246,7 +1246,7 @@ extra_env:
 
 ![`nf-core subworkflows lint bam_stats_samtools`](docs/images/nf-core-subworkflows-lint.svg)
 
-## Citation
+# Citation
 
 If you use `nf-core tools` in your work, please cite the `nf-core` publication as follows:
 

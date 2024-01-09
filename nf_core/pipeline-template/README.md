@@ -26,7 +26,7 @@
 
 {% endif -%}
 
-## Introduction
+# Introduction
 
 **{{ name }}** is a bioinformatics pipeline that ...
 
@@ -43,7 +43,7 @@
 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
 2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
 
-## Usage
+# Usage
 
 > [!NOTE]
 > If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
@@ -83,7 +83,7 @@ nextflow run {{ name }} \
 
 For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/{{ short_name }}/usage) and the [parameter documentation](https://nf-co.re/{{ short_name }}/parameters).
 
-## Pipeline output
+# Pipeline output
 
 To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/{{ short_name }}/results) tab on the nf-core website pipeline page.
 For more details about the output files and reports, please refer to the
@@ -91,7 +91,7 @@ For more details about the output files and reports, please refer to the
 
 {% endif -%}
 
-## Credits
+# Credits
 
 {{ name }} was originally written by {{ author }}.
 
@@ -99,7 +99,7 @@ We thank the following people for their extensive assistance in the development 
 
 <!-- TODO nf-core: If applicable, make list of people who have also contributed -->
 
-## Contributions and Support
+# Contributions and Support
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
@@ -108,7 +108,7 @@ For further information or help, don't hesitate to get in touch on the [Slack `#
 
 {% endif -%}
 
-## Citations
+# Citations
 
 <!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
 <!-- If you use {{ name }} for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
