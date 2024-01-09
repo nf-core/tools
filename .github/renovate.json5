@@ -5,6 +5,11 @@
     packageRules: [
         {
             matchDatasources: ["docker"],
+            matchPackageNames: ["python"],
+            versioning: "pep440",
+        },
+        {
+            matchDatasources: ["docker"],
             registryUrls: ["docker.io"],
         },
     ],
