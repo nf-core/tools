@@ -104,6 +104,7 @@ updated_lines: List[str] = []
 
 def _skip_existing_entry_for_this_pr(line: str, same_section: bool = True) -> str:
     if line.strip().endswith(pr_link):
+        print(f"Found existing entry for this pull request #{pr_number}:")
         existing_lines = [line]
         if new_lines and new_lines == existing_lines and same_section:
             print(f"Found existing identical entry for this pull request #{pr_number} in the same section:")
@@ -119,7 +120,6 @@ def _skip_existing_entry_for_this_pr(line: str, same_section: bool = True) -> st
                     line = orig_lines.pop(0)
                 except IndexError:
                     break
-        print(f"Skipping line: {line.strip()}")
     return line
 
 
@@ -137,6 +137,7 @@ while orig_lines:
     line = _skip_existing_entry_for_this_pr(line, same_section=False)
 
     if line.startswith("# ") and not line.strip() == "# nf-core/tools: Changelog":  # Version header, e.g. "# v2.12dev"
+        print(f"Found version header: {line.strip()}")
         updated_lines.append(line)
 
         # Parse version from the line `# v2.12dev` or
