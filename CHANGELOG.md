@@ -27,6 +27,7 @@
 - update python image version in docker file ([#2636](https://github.com/nf-core/tools/pull/2636))
 - Set pdiff as nf-test differ in Docker image for Gitpod ([#2642](https://github.com/nf-core/tools/pull/2642))
 - Fix Renovate Dockerfile updating issues ([#2648](https://github.com/nf-core/tools/pull/2648))
+- chore(deps): update biocontainers/multiqc docker tag to v1.19 ([#2649](https://github.com/nf-core/tools/pull/2649))
 
 # [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
