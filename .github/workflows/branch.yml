@@ -13,12 +13,12 @@ jobs:
       - name: Check PRs
         if: github.repository == 'nf-core/tools'
         run: |
-          { [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/tools ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+          { [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/tools ]] && [[ $GITHUB_HEAD_REF == "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
 
       # If the above check failed, post a comment on the PR explaining the failure
       - name: Post PR comment
         if: failure()
-        uses: mshick/add-pr-comment@v1
+        uses: mshick/add-pr-comment@v2
         with:
           message: |
             ## This PR is against the `master` branch :x:

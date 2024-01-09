@@ -1,6 +1,5 @@
 """ Launch a pipeline, interactively collecting params """
 
-from __future__ import print_function
 
 import copy
 import json
@@ -216,7 +215,7 @@ class Launch:
                     log.error(e)
                     return False
 
-                self.pipeline_revision = nf_core.utils.prompt_pipeline_release_branch(wf_releases, wf_branches)
+                self.pipeline_revision, _ = nf_core.utils.prompt_pipeline_release_branch(wf_releases, wf_branches)
             self.nextflow_cmd += f" -r {self.pipeline_revision}"
 
         # Get schema from name, load it and lint it
@@ -428,7 +427,7 @@ class Launch:
         answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
 
         # If required and got an empty reponse, ask again
-        while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
+        while isinstance(answer[param_id], str) and answer[param_id].strip() == "" and is_required:
             log.error(f"'--{param_id}' is required")
             answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
 
@@ -546,14 +545,14 @@ class Launch:
         # Start with the default from the param object
         if "default" in param_obj:
             # Boolean default is cast back to a string later - this just normalises all inputs
-            if param_obj["type"] == "boolean" and type(param_obj["default"]) is str:
+            if param_obj["type"] == "boolean" and isinstance(param_obj["default"], str):
                 question["default"] = param_obj["default"].lower() == "true"
             else:
                 question["default"] = param_obj["default"]
 
         # Overwrite default with parsed schema, includes --params-in etc
         if self.schema_obj is not None and param_id in self.schema_obj.input_params:
-            if param_obj["type"] == "boolean" and type(self.schema_obj.input_params[param_id]) is str:
+            if param_obj["type"] == "boolean" and isinstance(self.schema_obj.input_params[param_id], str):
                 question["default"] = "true" == self.schema_obj.input_params[param_id].lower()
             else:
                 question["default"] = self.schema_obj.input_params[param_id]

@@ -19,11 +19,12 @@ class TestRefgenie(unittest.TestCase):
         self.NXF_HOME = os.path.join(self.tmp_dir, ".nextflow")
         self.NXF_REFGENIE_PATH = os.path.join(self.NXF_HOME, "nf-core", "refgenie_genomes.config")
         self.REFGENIE = os.path.join(self.tmp_dir, "genomes_config.yaml")
+        self.translation_file = os.path.join(self.tmp_dir, "alias_translations.yaml")
         # Set NXF_HOME environment variable
         # avoids adding includeConfig statement to config file outside the current tmpdir
         try:
             self.NXF_HOME_ORIGINAL = os.environ["NXF_HOME"]
-        except:
+        except Exception:
             self.NXF_HOME_ORIGINAL = None
         os.environ["NXF_HOME"] = self.NXF_HOME
 
@@ -36,6 +37,10 @@ class TestRefgenie(unittest.TestCase):
         # Add NXF_REFGENIE_PATH to refgenie config
         with open(self.REFGENIE, "a") as fh:
             fh.write(f"nextflow_config: {os.path.join(self.NXF_REFGENIE_PATH)}\n")
+
+        # Add an alias translation to YAML file
+        with open(self.translation_file, "a") as fh:
+            fh.write("ensembl_gtf: gtf\n")
 
     def tearDown(self) -> None:
         # Remove the tempdir again
@@ -53,3 +58,13 @@ class TestRefgenie(unittest.TestCase):
         out = subprocess.check_output(shlex.split(cmd), stderr=subprocess.STDOUT)
 
         assert "Updated nf-core genomes config" in str(out)
+
+    def test_asset_alias_translation(self):
+        """Test that asset aliases are translated correctly"""
+        # Populate the config with a genome
+        cmd = f"refgenie pull hg38/ensembl_gtf -c {self.REFGENIE}"
+        subprocess.check_output(shlex.split(cmd), stderr=subprocess.STDOUT)
+        cmd = f"cat {self.NXF_REFGENIE_PATH}"
+        out = subprocess.check_output(shlex.split(cmd), stderr=subprocess.STDOUT)
+        assert "      gtf                  = " in str(out)
+        assert "      ensembl_gtf          = " not in str(out)

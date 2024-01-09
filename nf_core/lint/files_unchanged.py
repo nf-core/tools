@@ -40,7 +40,6 @@ def files_unchanged(self):
         docs/images/nf-core-PIPELINE_logo_dark.png
         docs/README.md'
         lib/nfcore_external_java_deps.jar
-        lib/NfcoreSchema.groovy
         lib/NfcoreTemplate.groovy
         ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
 
@@ -105,7 +104,6 @@ def files_unchanged(self):
         [os.path.join("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
         [os.path.join("docs", "README.md")],
         [os.path.join("lib", "nfcore_external_java_deps.jar")],
-        [os.path.join("lib", "NfcoreSchema.groovy")],
         [os.path.join("lib", "NfcoreTemplate.groovy")],
     ]
     files_partial = [
@@ -189,16 +187,16 @@ def files_unchanged(self):
         else:
             for f in files:
                 try:
-                    with open(_pf(f), "r") as fh:
+                    with open(_pf(f)) as fh:
                         pipeline_file = fh.read()
-                    with open(_tf(f), "r") as fh:
+                    with open(_tf(f)) as fh:
                         template_file = fh.read()
                     if template_file in pipeline_file:
                         passed.append(f"`{f}` matches the template")
                     else:
                         if "files_unchanged" in self.fix:
                             # Try to fix the problem by overwriting the pipeline file
-                            with open(_tf(f), "r") as fh:
+                            with open(_tf(f)) as fh:
                                 template_file = fh.read()
                             with open(_pf(f), "w") as fh:
                                 fh.write(template_file)

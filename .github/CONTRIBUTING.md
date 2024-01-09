@@ -35,45 +35,28 @@ pip install -e .
 
 ## Code formatting
 
-### Black
+### Ruff
 
-All Python code in nf-core/tools must be passed through the [Black Python code formatter](https://black.readthedocs.io/en/stable/).
+All Python code in nf-core/tools must be passed through the [Ruff code linter and formatter](https://github.com/astral-sh/ruff).
 This ensures a harmonised code formatting style throughout the package, from all contributors.
 
-You can run Black on the command line (it's included in `requirements-dev.txt`) - eg. to run recursively on the whole repository:
+You can run Ruff on the command line (it's included in `requirements-dev.txt`) - eg. to run recursively on the whole repository:
 
 ```bash
-black .
+ruff format .
 ```
 
-Alternatively, Black has [integrations for most common editors](https://black.readthedocs.io/en/stable/editor_integration.html)
+Alternatively, Ruff has [integrations for most common editors](https://github.com/astral-sh/ruff-lsp) and VSCode(https://github.com/astral-sh/ruff-vscode)
 to automatically format code when you hit save.
-You can also set it up to run when you [make a commit](https://black.readthedocs.io/en/stable/version_control_integration.html).
 
 There is an automated CI check that runs when you open a pull-request to nf-core/tools that will fail if
-any code does not adhere to Black formatting.
+any code does not adhere to Ruff formatting.
 
-### isort
-
-All Python code must also be passed through [isort](https://pycqa.github.io/isort/index.html).
-This ensures a harmonised imports throughout the package, from all contributors.
-
-To run isort on the command line recursively on the whole repository you can use:
-
-```bash
-isort .
-```
-
-isort also has [plugins for most common editors](https://github.com/pycqa/isort/wiki/isort-Plugins)
-to automatically format code when you hit save.
-Or [version control integration](https://pycqa.github.io/isort/docs/configuration/pre-commit.html) to set it up to run when you make a commit.
-
-There is an automated CI check that runs when you open a pull-request to nf-core/tools that will fail if
-any code does not adhere to isort formatting.
+Ruff has been adopted for linting and formatting in replacement of Black, isort (for imports) and pyupgrade. It also includes Flake8.
 
 ### pre-commit hooks
 
-This repository comes with [pre-commit](https://pre-commit.com/) hooks for black, isort and Prettier. pre-commit automatically runs checks before a commit is committed into the git history. If all checks pass, the commit is made, if files are changed by the pre-commit hooks, the user is informed and has to stage the changes and attempt the commit again.
+This repository comes with [pre-commit](https://pre-commit.com/) hooks for ruff and Prettier. pre-commit automatically runs checks before a commit is committed into the git history. If all checks pass, the commit is made, if files are changed by the pre-commit hooks, the user is informed and has to stage the changes and attempt the commit again.
 
 You can use the pre-commit hooks if you like, but you don't have to. The CI on Github will run the same checks as the tools installed with pre-commit. If the pre-commit checks pass, then the same checks in the CI will pass, too.
 
@@ -92,7 +75,7 @@ pre-commit run --all
 ## API Documentation
 
 We aim to write function docstrings according to the [Google Python style-guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings). These are used to automatically generate package documentation on the nf-core website using Sphinx.
-You can find this documentation here: [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/)
+You can find this documentation here: [https://nf-co.re/tools/docs/](https://nf-co.re/tools/docs/)
 
 If you would like to test the documentation, you can install Sphinx locally by following Sphinx's [installation instruction](https://www.sphinx-doc.org/en/master/usage/installation.html).
 Once done, you can run `make clean` and then `make html` in the `docs/api` directory of `nf-core tools`.
@@ -142,4 +125,3 @@ To get started:
 Devcontainer specs:
 
 - [DevContainer config](.devcontainer/devcontainer.json)
-- [Dockerfile](.devcontainer/Dockerfile)

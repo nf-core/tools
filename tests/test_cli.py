@@ -21,7 +21,7 @@ def test_header(mock_cli):
 
 
 @mock.patch("nf_core.__main__.nf_core_cli")
-@mock.patch("nf_core.utils.check_if_outdated", return_value=(True, None, "dummy_version"))
+@mock.patch("nf_core.__main__.check_if_outdated", return_value=(True, None, "dummy_version"))
 def test_header_outdated(mock_check_outdated, mock_nf_core_cli, capsys):
     """Check cli notifies the user when nf_core is outdated"""
     nf_core.__main__.run_nf_core()
@@ -165,8 +165,12 @@ class TestCli(unittest.TestCase):
             "outdir": "/path/outdir",
             "compress": "tar.gz",
             "force": None,
-            "container": "singularity",
-            "singularity-cache-only": None,
+            "tower": None,
+            "download-configuration": None,
+            "container-system": "singularity",
+            "container-library": "quay.io",
+            "container-cache-utilisation": "copy",
+            "container-cache-index": "/path/index.txt",
             "parallel-downloads": 2,
         }
 
@@ -177,12 +181,16 @@ class TestCli(unittest.TestCase):
 
         mock_dl.assert_called_once_with(
             cmd[-1],
-            params["revision"],
+            (params["revision"],),
             params["outdir"],
             params["compress"],
             "force" in params,
-            params["container"],
-            "singularity-cache-only" in params,
+            "tower" in params,
+            "download-configuration" in params,
+            params["container-system"],
+            (params["container-library"],),
+            params["container-cache-utilisation"],
+            params["container-cache-index"],
             params["parallel-downloads"],
         )
 
@@ -228,7 +236,6 @@ class TestCli(unittest.TestCase):
             "description": "pipeline description",
             "author": "Kalle Anka",
             "version": "1.2.3",
-            "no-git": None,
             "force": None,
             "outdir": "/path/outdir",
             "template-yaml": "file.yaml",
@@ -243,12 +250,11 @@ class TestCli(unittest.TestCase):
             params["name"],
             params["description"],
             params["author"],
-            params["version"],
-            "no-git" in params,
-            "force" in params,
-            params["outdir"],
-            params["template-yaml"],
-            "plain" in params,
+            version=params["version"],
+            force="force" in params,
+            outdir=params["outdir"],
+            template_yaml_path=params["template-yaml"],
+            plain="plain" in params,
         )
         mock_create.return_value.init_pipeline.assert_called_once()
 
@@ -350,3 +356,20 @@ class TestCli(unittest.TestCase):
         assert result.exit_code == 1
         assert error_txt in captured_logs.output[-1]
         assert captured_logs.records[-1].levelname == "ERROR"
+
+    @mock.patch("nf_core.schema.PipelineSchema.get_schema_path")
+    def test_schema_lint(self, mock_get_schema_path):
+        """Test nf-core schema lint defaults to nextflow_schema.json"""
+        cmd = ["schema", "lint"]
+        result = self.invoke_cli(cmd)
+        assert mock_get_schema_path.called_with("nextflow_schema.json")
+        assert "nextflow_schema.json" in result.output
+
+    @mock.patch("nf_core.schema.PipelineSchema.get_schema_path")
+    def test_schema_lint_filename(self, mock_get_schema_path):
+        """Test nf-core schema lint accepts a filename"""
+        cmd = ["schema", "lint", "some_other_filename"]
+        result = self.invoke_cli(cmd)
+        assert mock_get_schema_path.called_with("some_other_filename")
+        assert "some_other_filename" in result.output
+        assert "nextflow_schema.json" not in result.output

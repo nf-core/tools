@@ -1,9 +1,13 @@
-black
-isort
 myst_parser
 pytest-cov
 pytest-datafiles
-requests-mock
+responses
 Sphinx
 sphinx-rtd-theme
-requests_mock
+mypy
+types-PyYAML
+types-requests
+types-jsonschema
+types-Markdown
+types-setuptools
+ruff

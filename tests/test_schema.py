@@ -47,7 +47,7 @@ class TestSchema(unittest.TestCase):
 
     def test_load_lint_schema_nofile(self):
         """Check that linting raises properly if a non-existant file is given"""
-        with pytest.raises(AssertionError):
+        with pytest.raises(RuntimeError):
             self.schema_obj.get_schema_path("fake_file")
 
     def test_load_lint_schema_notjson(self):
@@ -305,7 +305,7 @@ class TestSchema(unittest.TestCase):
         Build a new schema param from a pipeline
         Run code to ensure it doesn't crash. Individual functions tested separately.
         """
-        param = self.schema_obj.build_schema(self.template_dir, True, False, None)
+        self.schema_obj.build_schema(self.template_dir, True, False, None)
 
     @with_temporary_folder
     def test_build_schema_from_scratch(self, tmp_dir):
@@ -319,7 +319,7 @@ class TestSchema(unittest.TestCase):
         shutil.copytree(self.template_dir, test_pipeline_dir)
         os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
 
-        param = self.schema_obj.build_schema(test_pipeline_dir, True, False, None)
+        self.schema_obj.build_schema(test_pipeline_dir, True, False, None)
 
     @mock.patch("requests.post")
     def test_launch_web_builder_timeout(self, mock_post):

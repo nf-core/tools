@@ -62,11 +62,11 @@ def nextflow_config(self):
         * Should always be set to default value:
         ``https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}``
 
-    * ``params.show_hidden_params``
+    * ``params.validationShowHiddenParams``
 
         * Determines whether boilerplate params are showed by schema. Set to ``false`` by default
 
-    * ``params.schema_ignore_params``
+    * ``params.validationSchemaIgnoreParams``
 
         * A comma separated string of inputs the schema validation should ignore.
 
@@ -92,20 +92,27 @@ def nextflow_config(self):
     * Process-level configuration syntax still using the old Nextflow syntax, for example: ``process.$fastqc`` instead of ``process withName:'fastqc'``.
 
     .. tip:: You can choose to ignore tests for the presence or absence of specific config variables
-             by creating a file called ``.nf-core-lint.yml`` in the root of your pipeline and creating
+             by creating a file called ``.nf-core.yml`` in the root of your pipeline and creating
              a list the config variables that should be ignored. For example:
 
              .. code-block:: yaml
 
-                nextflow_config:
-                    - params.input
+                lint:
+                    nextflow_config:
+                        - params.input
 
              The other checks in this test (depreciated syntax etc) can not be individually identified,
              but you can skip the entire test block if you wish:
 
              .. code-block:: yaml
 
-                nextflow_config: False
+                lint:
+                    nextflow_config: False
+
+    **The configuration should contain the following or the test will fail:**
+
+    * A ``test`` configuration profile should exist.
+
     """
     passed = []
     warned = []
@@ -128,8 +135,8 @@ def nextflow_config(self):
         ["process.time"],
         ["params.outdir"],
         ["params.input"],
-        ["params.show_hidden_params"],
-        ["params.schema_ignore_params"],
+        ["params.validationShowHiddenParams"],
+        ["params.validationSchemaIgnoreParams"],
     ]
     # Throw a warning if these are missing
     config_warn = [
@@ -196,6 +203,8 @@ def nextflow_config(self):
 
     # Check the variables that should be set to 'true'
     for k in ["timeline.enabled", "report.enabled", "trace.enabled", "dag.enabled"]:
+        if k in ignore_configs:
+            continue
         if self.nf_config.get(k) == "true":
             passed.append(f"Config ``{k}`` had correct value: ``{self.nf_config.get(k)}``")
         else:
@@ -291,7 +300,7 @@ def nextflow_config(self):
         ]
         path = os.path.join(self.wf_path, "nextflow.config")
         i = 0
-        with open(path, "r") as f:
+        with open(path) as f:
             for line in f:
                 if lines[i] in line:
                     i += 1
@@ -309,5 +318,33 @@ def nextflow_config(self):
                     "\n".join(lines)
                 )
             )
+
+    # Check for the availability of the "test" configuration profile by parsing nextflow.config
+    with open(os.path.join(self.wf_path, "nextflow.config")) as f:
+        content = f.read()
+
+        # Remove comments
+        cleaned_content = re.sub(r"//.*", "", content)
+        cleaned_content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
+
+        match = re.search(r"\bprofiles\s*{", cleaned_content)
+        if not match:
+            failed.append("nextflow.config does not contain `profiles` scope, but `test` profile is required")
+        else:
+            # Extract profiles scope content and check for test profile
+            start = match.end()
+            end = start
+            brace_count = 1
+            while brace_count > 0 and end < len(content):
+                if cleaned_content[end] == "{":
+                    brace_count += 1
+                elif cleaned_content[end] == "}":
+                    brace_count -= 1
+                end += 1
+            profiles_content = cleaned_content[start : end - 1].strip()
+            if re.search(r"\btest\s*{", profiles_content):
+                passed.append("nextflow.config contains configuration profile `test`")
+            else:
+                failed.append("nextflow.config does not contain configuration profile `test`")
 
     return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}

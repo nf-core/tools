@@ -17,7 +17,7 @@ from nf_core.modules.patch import ModulePatch
 def test_get_modules_json(self):
     """Checks that the get_modules_json function returns the correct result"""
     mod_json_path = os.path.join(self.pipeline_dir, "modules.json")
-    with open(mod_json_path, "r") as fh:
+    with open(mod_json_path) as fh:
         try:
             mod_json_sb = json.load(fh)
         except json.JSONDecodeError as e:
@@ -73,7 +73,7 @@ def test_mod_json_create(self):
 
 def modify_main_nf(path):
     """Modify a file to test patch creation"""
-    with open(path, "r") as fh:
+    with open(path) as fh:
         lines = fh.readlines()
     # Modify $meta.id to $meta.single_end
     lines[1] = '    tag "$meta.single_end"\n'
@@ -112,7 +112,7 @@ def test_mod_json_create_with_patch(self):
     assert "branch" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["nf-core"]["fastqc"]
 
     # Check that fastqc/main.nf maintains the changes
-    with open(module_path / "main.nf", "r") as fh:
+    with open(module_path / "main.nf") as fh:
         lines = fh.readlines()
     assert lines[1] == '    tag "$meta.single_end"\n'
 
@@ -214,7 +214,7 @@ def test_mod_json_dump(self):
     assert os.path.exists(mod_json_path)
 
     # Check that the dump function writes the correct content
-    with open(mod_json_path, "r") as f:
+    with open(mod_json_path) as f:
         try:
             mod_json_new = json.load(f)
         except json.JSONDecodeError as e:

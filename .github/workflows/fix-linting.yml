@@ -10,10 +10,10 @@ jobs:
       contains(github.event.comment.html_url, '/pull/') &&
       contains(github.event.comment.body, '@nf-core-bot fix linting') &&
       github.repository == 'nf-core/tools'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       # Use the @nf-core-bot token to check out so we can push later
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.nf_core_bot_auth_token }}
 
@@ -24,29 +24,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
 
-      - uses: actions/setup-node@v3
-
-      - name: Install Prettier
-        run: npm install -g prettier @prettier/plugin-php
-
-      - name: Run 'prettier --write'
-        run: prettier --write ${GITHUB_WORKSPACE}
-
-      - name: Run Black
-        uses: psf/black@stable
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
-          # Override to remove the default --check flag so that we make changes
-          options: "--color"
+          python-version: 3.11
+          cache: "pip"
 
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.8
-      - name: python-isort
-        uses: isort/isort-action@v1.0.0
-        with:
-          isortVersion: "latest"
-          requirementsFiles: "requirements.txt requirements-dev.txt"
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files
 
       - name: Commit & push changes
         run: |

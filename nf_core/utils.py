@@ -1,6 +1,7 @@
 """
 Common utility functions for the nf-core python package.
 """
+import concurrent.futures
 import datetime
 import errno
 import hashlib
@@ -15,7 +16,9 @@ import shlex
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Generator, Tuple, Union
 
 import git
 import prompt_toolkit
@@ -52,10 +55,16 @@ nfcore_question_style = prompt_toolkit.styles.Style(
 )
 
 NFCORE_CACHE_DIR = os.path.join(
-    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME"), ".cache")),
+    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME") or "", ".cache")),
     "nfcore",
 )
-NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")), "nfcore")
+NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
+
+
+def fetch_remote_version(source_url):
+    response = requests.get(source_url, timeout=3)
+    remote_version = re.sub(r"[^0-9\.]", "", response.text)
+    return remote_version
 
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
@@ -64,7 +73,7 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     """
     # Exit immediately if disabled via ENV var
     if os.environ.get("NFCORE_NO_VERSION_CHECK", False):
-        return True
+        return (True, "", "")
     # Set and clean up the current version string
     if current_version is None:
         current_version = nf_core.__version__
@@ -72,12 +81,18 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     # Build the URL to check against
     source_url = os.environ.get("NFCORE_VERSION_URL", source_url)
     source_url = f"{source_url}?v={current_version}"
-    # Fetch and clean up the remote version
-    if remote_version is None:
-        response = requests.get(source_url, timeout=3)
-        remote_version = re.sub(r"[^0-9\.]", "", response.text)
-    # Check if we have an available update
-    is_outdated = Version(remote_version) > Version(current_version)
+    # check if we have a newer version without blocking the rest of the script
+    is_outdated = False
+    if remote_version is None:  # we set it manually for tests
+        try:
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(fetch_remote_version, source_url)
+                remote_version = future.result()
+        except Exception as e:
+            log.debug(f"Could not check for nf-core updates: {e}")
+    if remote_version is not None:
+        if Version(remote_version) > Version(current_version):
+            is_outdated = True
     return (is_outdated, current_version, remote_version)
 
 
@@ -124,7 +139,7 @@ class Pipeline:
         try:
             repo = git.Repo(self.wf_path)
             self.git_sha = repo.head.object.hexsha
-        except:
+        except Exception:
             log.debug(f"Could not find git hash for pipeline: {self.wf_path}")
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
@@ -166,14 +181,14 @@ class Pipeline:
 
         self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "").strip("'").split("/")
 
-        nextflowVersionMatch = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
-        if nextflowVersionMatch:
-            self.minNextflowVersion = nextflowVersionMatch.group(0)
+        nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
+        if nextflow_version_match:
+            self.minNextflowVersion = nextflow_version_match.group(0)
 
     def _load_conda_environment(self):
         """Try to load the pipeline environment.yml file, if it exists"""
         try:
-            with open(os.path.join(self.wf_path, "environment.yml"), "r") as fh:
+            with open(os.path.join(self.wf_path, "environment.yml")) as fh:
                 self.conda_config = yaml.safe_load(fh)
         except FileNotFoundError:
             log.debug("No conda `environment.yml` file found.")
@@ -245,9 +260,9 @@ def fetch_wf_config(wf_path, cache_config=True):
 
     if cache_basedir and cache_fn:
         cache_path = os.path.join(cache_basedir, cache_fn)
-        if os.path.isfile(cache_path):
+        if os.path.isfile(cache_path) and cache_config is True:
             log.debug(f"Found a config cache, loading: {cache_path}")
-            with open(cache_path, "r") as fh:
+            with open(cache_path) as fh:
                 try:
                     config = json.load(fh)
                 except json.JSONDecodeError as e:
@@ -256,22 +271,24 @@ def fetch_wf_config(wf_path, cache_config=True):
     log.debug("No config cache found")
 
     # Call `nextflow config`
-    nfconfig_raw = nextflow_cmd(f"nextflow config -flat {wf_path}")
-    for l in nfconfig_raw.splitlines():
-        ul = l.decode("utf-8")
-        try:
-            k, v = ul.split(" = ", 1)
-            config[k] = v
-        except ValueError:
-            log.debug(f"Couldn't find key=value config pair:\n  {ul}")
+    result = run_cmd("nextflow", f"config -flat {wf_path}")
+    if result is not None:
+        nfconfig_raw, _ = result
+        for line in nfconfig_raw.splitlines():
+            ul = line.decode("utf-8")
+            try:
+                k, v = ul.split(" = ", 1)
+                config[k] = v.strip("'\"")
+            except ValueError:
+                log.debug(f"Couldn't find key=value config pair:\n  {ul}")
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
     try:
         main_nf = os.path.join(wf_path, "main.nf")
-        with open(main_nf, "r") as fh:
-            for l in fh:
-                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", l)
+        with open(main_nf) as fh:
+            for line in fh:
+                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", line)
                 if match:
                     config[match.group(1)] = "null"
     except FileNotFoundError as e:
@@ -290,18 +307,28 @@ def fetch_wf_config(wf_path, cache_config=True):
     return config
 
 
-def nextflow_cmd(cmd):
-    """Run a Nextflow command and capture the output. Handle errors nicely"""
+def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
+    """Run a specified command and capture the output. Handle errors nicely."""
+    full_cmd = f"{executable} {cmd}"
+    log.debug(f"Running command: {full_cmd}")
     try:
-        nf_proc = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        return nf_proc.stdout
+        proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=True)
+        return (proc.stdout, proc.stderr)
     except OSError as e:
         if e.errno == errno.ENOENT:
-            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
+            raise RuntimeError(
+                f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
+            )
+        else:
+            return None
     except subprocess.CalledProcessError as e:
-        raise AssertionError(
-            f"Command '{cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
-        )
+        log.debug(f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}")
+        if executable == "nf-test":
+            return (e.stdout, e.stderr)
+        else:
+            raise RuntimeError(
+                f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
+            )
 
 
 def setup_nfcore_dir():
@@ -311,6 +338,7 @@ def setup_nfcore_dir():
     """
     if not os.path.exists(NFCORE_DIR):
         os.makedirs(NFCORE_DIR)
+        return True
 
 
 def setup_requests_cachedir():
@@ -405,7 +433,7 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 return web_response
 
 
-class GitHub_API_Session(requests_cache.CachedSession):
+class GitHubAPISession(requests_cache.CachedSession):
     """
     Class to provide a single session for interacting with the GitHub API for a run.
     Inherits the requests_cache.CachedSession and adds additional functionality,
@@ -452,7 +480,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
         gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
         if self.auth is None and os.path.exists(gh_cli_config_fn):
             try:
-                with open(gh_cli_config_fn, "r") as fh:
+                with open(gh_cli_config_fn) as fh:
                     gh_cli_config = yaml.safe_load(fh)
                     self.auth = requests.auth.HTTPBasicAuth(
                         gh_cli_config["github.com"]["user"], gh_cli_config["github.com"]["oauth_token"]
@@ -467,6 +495,8 @@ class GitHub_API_Session(requests_cache.CachedSession):
         if os.environ.get("GITHUB_TOKEN") is not None and self.auth is None:
             self.auth_mode = "Bearer token with GITHUB_TOKEN"
             self.auth = BearerAuth(os.environ["GITHUB_TOKEN"])
+        else:
+            log.warning("Could not find GitHub authentication token. Some API requests may fail.")
 
         log.debug(f"Using GitHub auth: {self.auth_mode}")
 
@@ -497,9 +527,16 @@ class GitHub_API_Session(requests_cache.CachedSession):
         if not self.has_init:
             self.lazy_init()
         request = self.get(url)
-        if request.status_code not in self.return_ok:
-            self.log_content_headers(request)
-            raise AssertionError(f"GitHub API PR failed - got return code {request.status_code} from {url}")
+        if request.status_code in self.return_retry:
+            stderr = rich.console.Console(stderr=True, force_terminal=rich_force_colors())
+            try:
+                r = self.request_retry(url)
+            except Exception as e:
+                stderr.print_exception()
+                raise e
+            else:
+                return r
+
         return request
 
     def get(self, url, **kwargs):
@@ -553,7 +590,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
 
 
 # Single session object to use for entire codebase. Not sure if there's a better way to do this?
-gh_api = GitHub_API_Session()
+gh_api = GitHubAPISession()
 
 
 def anaconda_package(dep, dep_channels=None):
@@ -629,18 +666,18 @@ def parse_anaconda_licence(anaconda_response, version=None):
 
     # Clean up / standardise licence names
     clean_licences = []
-    for l in licences:
-        l = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", l)
-        l = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", l, flags=re.IGNORECASE)
-        l = l.replace("GPL-", "GPLv")
-        l = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", l)  # Add v prefix to GPL version if none found
-        l = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", l)  # Remove superflous .0 from GPL version
-        l = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", l)
-        l = re.sub(r"GPL\s*v", "GPL v", l)  # Normalise whitespace to one space between GPL and v
-        l = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", l)  # Normalise whitespace around >= GPL versions
-        l = l.replace("Clause", "clause")  # BSD capitilisation
-        l = re.sub(r"-only$", "", l)  # Remove superflous GPL "only" version suffixes
-        clean_licences.append(l)
+    for license in licences:
+        license = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", license)
+        license = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", license, flags=re.IGNORECASE)
+        license = license.replace("GPL-", "GPLv")
+        license = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", license)  # Add v prefix to GPL version if none found
+        license = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", license)  # Remove superflous .0 from GPL version
+        license = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", license)
+        license = re.sub(r"GPL\s*v", "GPL v", license)  # Normalise whitespace to one space between GPL and v
+        license = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", license)  # Normalise whitespace around >= GPL versions
+        license = license.replace("Clause", "clause")  # BSD capitilisation
+        license = re.sub(r"-only$", "", license)  # Remove superflous GPL "only" version suffixes
+        clean_licences.append(license)
     return clean_licences
 
 
@@ -720,6 +757,7 @@ def get_biocontainer_tag(package, version):
                 # Obtain common builds from Docker and Singularity images
                 common_keys = list(all_docker.keys() & all_singularity.keys())
                 current_date = None
+                docker_image_name = docker_image["image_name"].lstrip("quay.io/") if docker_image is not None else None
                 for k in common_keys:
                     # Get the most recent common image
                     date = max(all_docker[k]["date"], all_docker[k]["date"])
@@ -727,7 +765,8 @@ def get_biocontainer_tag(package, version):
                         docker_image = all_docker[k]["image"]
                         singularity_image = all_singularity[k]["image"]
                         current_date = date
-                return docker_image["image_name"], singularity_image["image_name"]
+                        docker_image_name = docker_image["image_name"].lstrip("quay.io/")
+                return docker_image_name, singularity_image["image_name"]
             except TypeError:
                 raise LookupError(f"Could not find docker or singularity container for {package}")
         elif response.status_code != 404:
@@ -753,7 +792,7 @@ def custom_yaml_dumper():
 
             See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
             """
-            return super(CustomDumper, self).increase_indent(flow=flow, indentless=False)
+            return super().increase_indent(flow=flow, indentless=False)
 
         # HACK: insert blank lines between top-level objects
         # inspired by https://stackoverflow.com/a/44284819/3786245
@@ -811,7 +850,7 @@ def prompt_remote_pipeline_name(wfs):
     # Non nf-core repo on GitHub
     if pipeline.count("/") == 1:
         try:
-            gh_api.get(f"https://api.github.com/repos/{pipeline}")
+            gh_api.safe_get(f"https://api.github.com/repos/{pipeline}")
         except Exception:
             # No repo found - pass and raise error at the end
             pass
@@ -822,34 +861,65 @@ def prompt_remote_pipeline_name(wfs):
     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
 
 
-def prompt_pipeline_release_branch(wf_releases, wf_branches):
+def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
     """Prompt for pipeline release / branch
 
     Args:
         wf_releases (array): Array of repo releases as returned by the GitHub API
         wf_branches (array): Array of repo branches, as returned by the GitHub API
+        multiple (bool): Allow selection of multiple releases & branches (for Tower)
 
     Returns:
         choice (str): Selected release / branch name
     """
-    # Prompt user for release tag
+    # Prompt user for release tag, tag_set will contain all available.
     choices = []
+    tag_set = []
 
     # Releases
     if len(wf_releases) > 0:
         for tag in map(lambda release: release.get("tag_name"), wf_releases):
             tag_display = [("fg:ansiblue", f"{tag}  "), ("class:choice-default", "[release]")]
             choices.append(questionary.Choice(title=tag_display, value=tag))
+            tag_set.append(tag)
 
     # Branches
     for branch in wf_branches.keys():
         branch_display = [("fg:ansiyellow", f"{branch}  "), ("class:choice-default", "[branch]")]
         choices.append(questionary.Choice(title=branch_display, value=branch))
+        tag_set.append(branch)
 
     if len(choices) == 0:
         return False
 
-    return questionary.select("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask()
+    if multiple:
+        return (
+            questionary.checkbox("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask(),
+            tag_set,
+        )
+
+    else:
+        return (
+            questionary.select("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask(),
+            tag_set,
+        )
+
+
+class SingularityCacheFilePathValidator(questionary.Validator):
+    """
+    Validator for file path specified as --singularity-cache-index argument in nf-core download
+    """
+
+    def validate(self, value):
+        if len(value.text):
+            if os.path.isfile(value.text):
+                return True
+            else:
+                raise questionary.ValidationError(
+                    message="Invalid remote cache index file", cursor_position=len(value.text)
+                )
+        else:
+            return True
 
 
 def get_repo_releases_branches(pipeline, wfs):
@@ -929,7 +999,7 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-def load_tools_config(directory="."):
+def load_tools_config(directory: Union[str, Path] = "."):
     """
     Parse the nf-core.yml configuration file
 
@@ -955,7 +1025,7 @@ def load_tools_config(directory="."):
             log.debug(f"No tools config file found: {CONFIG_PATHS[0]}")
         return Path(directory, CONFIG_PATHS[0]), {}
 
-    with open(config_fn, "r") as fh:
+    with open(config_fn) as fh:
         tools_config = yaml.safe_load(fh)
 
     # If the file is empty
@@ -967,12 +1037,12 @@ def load_tools_config(directory="."):
 
 def determine_base_dir(directory="."):
     base_dir = start_dir = Path(directory).absolute()
-    while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
+    while base_dir != base_dir.parent:
         base_dir = base_dir.parent
         config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
         if config_fn:
-            break
-    return directory if base_dir == start_dir else base_dir
+            return directory if base_dir == start_dir else base_dir
+    return directory
 
 
 def get_first_available_path(directory, paths):
@@ -1075,6 +1145,51 @@ def validate_file_md5(file_name, expected_md5hex):
     if file_md5hex.upper() == expected_md5hex.upper():
         log.debug(f"md5 sum of image matches expected: {expected_md5hex}")
     else:
-        raise IOError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
+        raise OSError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
 
     return True
+
+
+def nested_setitem(d, keys, value):
+    """Sets the value in a nested dict using a list of keys to traverse
+
+    Args:
+        d (dict): the nested dictionary to traverse
+        keys (list[Any]): A list of keys to iteratively traverse
+        value (Any): The value to be set for the last key in the chain
+    """
+    current = d
+    for k in keys[:-1]:
+        current = current[k]
+    current[keys[-1]] = value
+
+
+def nested_delitem(d, keys):
+    """Deletes a key from a nested dictionary
+
+    Args:
+        d (dict): the nested dictionary to traverse
+        keys (list[Any]): A list of keys to iteratively traverse, deleting the final one
+    """
+    current = d
+    for k in keys[:-1]:
+        current = current[k]
+    del current[keys[-1]]
+
+
+@contextmanager
+def set_wd(path: Path) -> Generator[None, None, None]:
+    """Sets the working directory for this context.
+
+    Arguments
+    ---------
+
+    path : Path
+        Path to the working directory to be used inside this context.
+    """
+    start_wd = Path().absolute()
+    os.chdir(Path(path).resolve())
+    try:
+        yield
+    finally:
+        os.chdir(start_wd)

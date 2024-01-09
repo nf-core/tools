@@ -58,6 +58,12 @@ class ComponentInstall(ComponentCommand):
         if not silent:
             modules_json.check_up_to_date()
 
+        # Verify that the remote repo's org_path does not match the org_path of any alternate repo among the installed modules
+        if self.check_alternate_remotes(modules_json):
+            err_msg = f"You are trying to install {self.component_type} from different repositories with the same organization name '{self.modules_repo.repo_path}' (set in the `.nf-core.yml` file in the `org_path` field).\nThis is not supported, and will likely cause problems. org_path should be set to the github account/organization name."
+            log.error(err_msg)
+            return False
+
         # Verify SHA
         if not self.modules_repo.verify_sha(self.prompt, self.sha):
             return False
@@ -121,6 +127,8 @@ class ComponentInstall(ComponentCommand):
             self.install_included_components(component_dir)
 
         if not silent:
+            modules_json.load()
+            modules_json.dump(run_prettier=True)
             # Print include statement
             component_name = "_".join(component.upper().split("/"))
             log.info(f"Use the following statement to include this {self.component_type[:-1]}:")
@@ -264,3 +272,20 @@ class ComponentInstall(ComponentCommand):
                             self.component_type, component, repo_to_remove, modules_repo.repo_path
                         )
                         return component_values["installed_by"]
+
+    def check_alternate_remotes(self, modules_json):
+        """
+        Check whether there are previously installed components with the same org_path but different remote urls
+        Log error if multiple remotes exist.
+
+        Return:
+            True: if problematic components are found
+            False: if problematic components are not found
+        """
+        modules_json.load()
+        for repo_url, repo_content in modules_json.modules_json.get("repos", dict()).items():
+            for component_type in repo_content:
+                for dir in repo_content.get(component_type, dict()).keys():
+                    if dir == self.modules_repo.repo_path and repo_url != self.modules_repo.remote_url:
+                        return True
+        return False

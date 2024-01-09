@@ -288,34 +288,25 @@ class ComponentUpdate(ComponentCommand):
                 updated.append(component)
                 recursive_update = True
                 modules_to_update, subworkflows_to_update = self.get_components_to_update(component)
-                if not silent and not self.update_all and len(modules_to_update + subworkflows_to_update) > 0:
-                    log.warning(
-                        f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be {'asked for update' if self.show_diff else 'automatically updated'}.\n"
-                        "It is advised to keep all your modules and subworkflows up to date.\n"
-                        "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date.\n"
-                    )
-                    if self.update_deps:
-                        recursive_update = True
-                    else:
-                        recursive_update = questionary.confirm(
-                            "Would you like to continue updating all modules and subworkflows?",
-                            default=True,
-                            style=nf_core.utils.nfcore_question_style,
-                        ).unsafe_ask()
+                if not silent and len(modules_to_update + subworkflows_to_update) > 0:
+                    if not self.update_all:
+                        log.warning(
+                            f"All modules and subworkflows linked to the updated {self.component_type[:-1]} will be {'asked for update' if self.show_diff else 'automatically updated'}.\n"
+                            "It is advised to keep all your modules and subworkflows up to date.\n"
+                            "It is not guaranteed that a subworkflow will continue working as expected if all modules/subworkflows used in it are not up to date.\n"
+                        )
+                        if self.update_deps:
+                            recursive_update = True
+                        else:
+                            recursive_update = questionary.confirm(
+                                "Would you like to continue updating all modules and subworkflows?",
+                                default=True,
+                                style=nf_core.utils.nfcore_question_style,
+                            ).unsafe_ask()
                 if recursive_update and len(modules_to_update + subworkflows_to_update) > 0:
                     # Update linked components
                     self.update_linked_components(modules_to_update, subworkflows_to_update, updated)
                     self.manage_changes_in_linked_components(component, modules_to_update, subworkflows_to_update)
-            else:
-                # Don't save to a file, just iteratively update the variable
-                self.modules_json.update(
-                    self.component_type,
-                    modules_repo,
-                    component,
-                    version,
-                    installed_by=None,
-                    write_file=False,
-                )
 
         if self.save_diff_fn:
             # Write the modules.json diff to the file
@@ -333,8 +324,12 @@ class ComponentUpdate(ComponentCommand):
                 )
         elif not all_patches_successful and not silent:
             log.info(f"Updates complete. Please apply failed patch{plural_es(components_info)} manually.")
+            self.modules_json.load()
+            self.modules_json.dump(run_prettier=True)
         elif not silent:
             log.info("Updates complete :sparkles:")
+            self.modules_json.load()
+            self.modules_json.dump(run_prettier=True)
 
         return exit_value
 

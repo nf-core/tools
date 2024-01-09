@@ -1,4 +1,4 @@
-FROM python:3.8.9-slim
+FROM python:3.11-slim
 LABEL authors="phil.ewels@scilifelab.se,erik.danielsson@scilifelab.se" \
     description="Docker image containing requirements for the nfcore tools"
 
@@ -21,7 +21,7 @@ RUN apt-get update \
 # Create man dir required for Java installation
 # and install Java
 RUN mkdir -p /usr/share/man/man1 \
-    && apt-get install -y  openjdk-11-jre \
+    && apt-get install -y default-jre \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Setup ARG for NXF_VER ENV
@@ -31,6 +31,11 @@ ENV NXF_VER ${NXF_VER}
 RUN curl -s https://get.nextflow.io | bash \
     && mv nextflow /usr/local/bin \
     && chmod a+rx /usr/local/bin/nextflow
+# Install nf-test
+RUN curl -fsSL https://code.askimed.com/install/nf-test | bash \
+    && mv nf-test /usr/local/bin \
+    && chmod a+rx /usr/local/bin/nf-test
+
 # Add the nf-core source files to the image
 COPY . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
