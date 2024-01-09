@@ -50,7 +50,7 @@ if any(
     sys.exit(0)
 
 
-def _determine_change_type(pr_title) -> str:
+def _determine_change_type(pr_title) -> tuple[str, str]:
     """
     Determine the type of the PR: Template, Download, Linting, Modules, Subworkflows, or General
     Returns a tuple of the section name and the module info.
@@ -62,19 +62,21 @@ def _determine_change_type(pr_title) -> str:
         "Modules": "### Modules",
         "Subworkflows": "### Subworkflows",
     }
-    current_section = "### General"
+    current_section_header = "### General"
+    current_section = "General"
 
     # Check if the PR in any of the sections.
     for section, section_header in sections.items():
         # check if the PR title contains any of the section headers, with some loose matching, e.g. removing plural and suffixes
         if re.sub(r"s$", "", section.lower().replace("ing", "")) in pr_title.lower():
-            current_section = section_header
+            current_section_header = section_header
+            current_section = section
     print(f"Detected section: {current_section}")
-    return current_section
+    return current_section, current_section_header
 
 
 # Determine the type of the PR
-section = _determine_change_type(pr_title)
+section, section_header = _determine_change_type(pr_title)
 
 # Remove section indicator from the PR title.
 pr_title = re.sub(rf"{section}[:\s]*", "", pr_title, flags=re.IGNORECASE)
@@ -171,7 +173,7 @@ while orig_lines:
             break
         continue
 
-    if inside_version_dev and line.lower().startswith(section.lower()):  # Section of interest header
+    if inside_version_dev and line.lower().startswith(section_header.lower()):  # Section of interest header
         if already_added_entry:
             print(
                 f"Already added new lines into section {section}, is the section duplicated?",
