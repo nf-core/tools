@@ -33,7 +33,7 @@ class PipelineCreate:
         name (str): Name for the pipeline.
         description (str): Description for the pipeline.
         author (str): Authors name of the pipeline.
-        version (str): Version flag. Semantic versioning only. Defaults to `1.0dev`.
+        version (str): Version flag. Semantic versioning only. Defaults to `1.0.0dev`.
         no_git (bool): Prevents the creation of a local Git repository for the pipeline. Defaults to False.
         force (bool): Overwrites a given workflow directory with the same name. Defaults to False. Used for tests and sync command.
             May the force be with you.
@@ -49,7 +49,7 @@ class PipelineCreate:
         name: Optional[str] = None,
         description: Optional[str] = None,
         author: Optional[str] = None,
-        version: str = "1.0dev",
+        version: str = "1.0.0dev",
         no_git: bool = False,
         force: bool = False,
         outdir: Optional[str] = None,
@@ -167,7 +167,7 @@ class PipelineCreate:
         if self.config.org is None:
             self.config.org = organisation
         if self.config.version is None:
-            self.config.version = version if version else "1.0dev"
+            self.config.version = version if version else "1.0.0dev"
         if self.config.force is None:
             self.config.force = force if force else False
         if self.config.outdir is None:

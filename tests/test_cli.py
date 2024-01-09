@@ -247,7 +247,7 @@ class TestCli(unittest.TestCase):
             params["description"],
             params["author"],
             force="force" in params,
-            version="1.0dev",
+            version="1.0.0dev",
             outdir=params["outdir"],
             organisation="nf-core",
         )

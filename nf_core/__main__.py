@@ -470,7 +470,7 @@ def pipelines(ctx):
 )
 @click.option("-d", "--description", type=str, help="A short description of your pipeline")
 @click.option("-a", "--author", type=str, help="Name of the main author(s)")
-@click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
+@click.option("--version", type=str, default="1.0.0dev", help="The initial version number to use")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
 @click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
@@ -508,7 +508,7 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
         except UserWarning as e:
             log.error(e)
             sys.exit(1)
-    elif name or description or author or version != "1.0dev" or force or outdir or organisation != "nf-core":
+    elif name or description or author or version != "1.0.0dev" or force or outdir or organisation != "nf-core":
         log.error(
             "Command arguments are not accepted in interactive mode.\n"
             "Run with all command line arguments to avoid using an interactive interface"

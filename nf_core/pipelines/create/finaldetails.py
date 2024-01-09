@@ -40,7 +40,7 @@ class FinalDetails(Screen):
                 "version",
                 "Version",
                 "First version of the pipeline",
-                "1.0dev",
+                "1.0.0dev",
                 classes="column",
             )
             yield TextInput(
