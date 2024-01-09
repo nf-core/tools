@@ -6,6 +6,7 @@
 
 - Use `pre-commit` to lint files in GitHub CI ([#2635](https://github.com/nf-core/tools/pull/2635))
 - Use pdiff also on gitpod for nf-test ([#2640](https://github.com/nf-core/tools/pull/2640))
+- switch to new image syntax in readme ([#2645](https://github.com/nf-core/tools/pull/2645))
 
 ### Download
 
