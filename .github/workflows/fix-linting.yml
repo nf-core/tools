@@ -17,6 +17,13 @@ jobs:
         with:
           token: ${{ secrets.nf_core_bot_auth_token }}
 
+      # indication that the linting is being fixed
+      - name: React on comment
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: eyes
+
       # Action runs on the issue comment, so we don't get the PR by default
       # Use the gh cli to check out the PR
       - name: Checkout Pull Request
@@ -34,9 +41,21 @@ jobs:
         run: pip install pre-commit
 
       - name: Run pre-commit
+        id: pre-commit
         run: pre-commit run --all-files
+        continue-on-error: true
+
+      # indication that the linting has finished
+      - name: react if linting finished succesfully
+        if: ${{ steps.pre-commit.outcome }} == 'success'
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: green_check_mark
 
       - name: Commit & push changes
+        id: commit-and-push
+        if: ${{ steps.pre-commit.outcome }} == 'failure'
         run: |
           git config user.email "core@nf-co.re"
           git config user.name "nf-core-bot"
@@ -45,3 +64,19 @@ jobs:
           git status
           git commit -m "[automated] Fix code linting"
           git push
+
+      - name: react if linting errors were fixed
+        if: ${{ steps.commit-and-push.outcome }} == 'success'
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: pencil2
+
+      - name: react if linting errors were not fixed
+        if: ${{ steps.commit-and-push.outcome }} == 'failure'
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: x
+          body: |
+            @${{ github.actor }} I tried to fix the linting errors, but it didn't work. Please fix them manually.
