@@ -1,4 +1,7 @@
-# ![nf-core/tools](docs/images/nfcore-tools_logo_light.png#gh-light-mode-only) ![nf-core/tools](docs/images/nfcore-tools_logo_dark.png#gh-dark-mode-only) <!-- omit in toc -->
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/nfcore-tools_logo_dark.png">
+  <img alt="nf-core/tools logo" src="docs/images/nfcore-tools_logo_light.png">
+</picture><!-- omit in toc -->
 
 [![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=master&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amaster)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
