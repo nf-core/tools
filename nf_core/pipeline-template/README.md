@@ -1,10 +1,10 @@
 {% if branded -%}
 
 <h1>
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/{{ logo_dark }}">
-  <img alt="{{ name }}" src="docs/images/{{ logo_light }}">
-</picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/{{ logo_dark }}">
+    <img alt="{{ name }}" src="docs/images/{{ logo_light }}">
+  </picture>
 </h1>
 {% endif -%}
 {% if github_badges -%}
