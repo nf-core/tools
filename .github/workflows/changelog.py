@@ -117,6 +117,7 @@ def _skip_existing_entry_for_this_pr(line: str, same_section: bool = True) -> st
                     line = orig_lines.pop(0)
                 except IndexError:
                     break
+        print(f"Skipping line: {line.strip()}")
     return line
 
 
@@ -182,7 +183,7 @@ while orig_lines:
         section_lines: List[str] = []
         while True:
             line = orig_lines.pop(0)
-            if line.startswith("#"):
+            if line.startswith("###"):
                 # Found the next section header, so need to put all the lines we collected.
                 updated_lines.append("\n")
                 _updated_lines = [_l for _l in section_lines + new_lines if _l.strip()]
