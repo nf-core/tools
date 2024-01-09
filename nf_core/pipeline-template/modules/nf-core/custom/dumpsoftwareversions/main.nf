@@ -5,7 +5,7 @@ process CUSTOM_DUMPSOFTWAREVERSIONS {
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/multiqc:1.17--pyhdfd78af_0' :
-        'biocontainers/multiqc:1.17--pyhdfd78af_0' }"
+        'biocontainers/multiqc:1.19--pyhdfd78af_0' }"
 
     input:
     path versions
