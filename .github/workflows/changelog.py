@@ -56,9 +56,9 @@ def _determine_change_type(pr_title) -> tuple[str, str]:
     Returns a tuple of the section name and the module info.
     """
     sections = {
-        "Template": "### Template updates",
-        "Download": "### Download updates",
-        "Linting": "### Linting updates",
+        "Template": "### Template",
+        "Download": "### Download",
+        "Linting": "### Linting",
         "Modules": "### Modules",
         "Subworkflows": "### Subworkflows",
     }
