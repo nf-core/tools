@@ -62,4 +62,8 @@ RUN conda config --add channels defaults && \
 RUN nextflow self-update
 
 # Install nf-core
-RUN python -m pip install .
+RUN python -m pip install . --no-cache-dir
+
+# Setup pdiff for nf-test diffs
+RUN export NFT_DIFF="pdiff" && \
+    export NFT_DIFF_ARGS="--line-numbers --expand-tabs=2"
