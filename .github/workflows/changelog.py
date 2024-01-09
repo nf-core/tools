@@ -174,6 +174,7 @@ while orig_lines:
         continue
 
     if inside_version_dev and line.lower().startswith(section_header.lower()):  # Section of interest header
+        print(f"Found section header: {line.strip()}")
         if already_added_entry:
             print(
                 f"Already added new lines into section {section}, is the section duplicated?",
@@ -185,7 +186,8 @@ while orig_lines:
         section_lines: List[str] = []
         while True:
             line = orig_lines.pop(0)
-            if line.startswith("###"):
+            if line.startswith("#"):
+                print(f"Found the next section header: {line.strip()}")
                 # Found the next section header, so need to put all the lines we collected.
                 updated_lines.append("\n")
                 _updated_lines = [_l for _l in section_lines + new_lines if _l.strip()]
