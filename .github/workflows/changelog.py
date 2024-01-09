@@ -16,7 +16,6 @@ Other assumptions:
 
 import os
 import re
-import subprocess
 import sys
 from pathlib import Path
 from typing import List
@@ -51,14 +50,6 @@ if any(
     sys.exit(0)
 
 
-def _run_cmd(cmd):
-    print(cmd)
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"Error executing command: {result.stderr}")
-    return result
-
-
 def _determine_change_type(pr_title) -> str:
     """
     Determine the type of the PR: Template, Download, Linting, Modules, Subworkflows, or General
@@ -78,11 +69,11 @@ def _determine_change_type(pr_title) -> str:
         # check if the PR title contains any of the section headers, with some loose matching, e.g. removing plural and suffixes
         if re.sub(r"s$", "", section.lower().replace("ing", "")) in pr_title.lower():
             current_section = section_header
-
+    print(f"Detected section: {current_section}")
     return current_section
 
 
-# Determine the type of the PR: new module, module update, or core update.
+# Determine the type of the PR
 section = _determine_change_type(pr_title)
 
 # Remove section indicator from the PR title.
@@ -93,10 +84,13 @@ pr_link = f"([#{pr_number}]({REPO_URL}/pull/{pr_number}))"
 
 # Handle manual changelog entries through comments.
 if comment := comment.removeprefix("@nf-core-bot changelog").strip():
+    print(f"Adding manual changelog entry: {comment}")
     pr_title = comment
 new_lines = [
     f"- {pr_title} {pr_link}\n",
 ]
+
+print(f"Adding new lines into section '{section}':\n" + "".join(new_lines))
 
 # Finally, updating the changelog.
 # Read the current changelog lines. We will print them back as is, except for one new
@@ -126,7 +120,7 @@ def _skip_existing_entry_for_this_pr(line: str, same_section: bool = True) -> st
     return line
 
 
-# Find the next line in the change log that matches the pattern "## MultiQC v.*dev"
+# Find the next line in the change log that matches the pattern "# nf-core/tools v.*dev"
 # If it doesn't exist, exist with code 1 (let's assume that a new section is added
 # manually or by CI when a release is pushed).
 # Else, find the next line that matches the `section` variable, and insert a new line
