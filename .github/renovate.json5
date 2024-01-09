@@ -2,4 +2,10 @@
     $schema: "https://docs.renovatebot.com/renovate-schema.json",
     extends: ["github>nf-core/ops//.github/renovate/default.json5"],
     baseBranches: ["dev"],
+    packageRules: [
+        {
+            matchDatasources: ["docker"],
+            registryUrls: ["docker.io"],
+        },
+    ],
 }
