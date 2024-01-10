@@ -26,8 +26,7 @@
 - Update mshick/add-pr-comment action to v2 ([#2632](https://github.com/nf-core/tools/pull/2632))
 - update python image version in docker file ([#2636](https://github.com/nf-core/tools/pull/2636))
 - Set pdiff as nf-test differ in Docker image for Gitpod ([#2642](https://github.com/nf-core/tools/pull/2642))
-- Fix Renovate Dockerfile updating issues ([#2648](https://github.com/nf-core/tools/pull/2648))
-- fix ignorepath ([#2651](https://github.com/nf-core/tools/pull/2651))
+- Fix Renovate Dockerfile updating issues ([#2648](https://github.com/nf-core/tools/pull/2648) and [#2651](https://github.com/nf-core/tools/pull/2651))
 
 # [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
