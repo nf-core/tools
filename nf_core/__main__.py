@@ -111,6 +111,7 @@ def run_nf_core():
     # Launch the click cli
     nf_core_cli(auto_envvar_prefix="NFCORE")
 
+
 @tui()
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(__version__)
