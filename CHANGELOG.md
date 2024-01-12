@@ -28,6 +28,7 @@
 - Set pdiff as nf-test differ in Docker image for Gitpod ([#2642](https://github.com/nf-core/tools/pull/2642))
 - Fix Renovate Dockerfile updating issues ([#2648](https://github.com/nf-core/tools/pull/2648) and [#2651](https://github.com/nf-core/tools/pull/2651))
 - Add new subcommand `nf-core tui`, which launches a TUI (terminal user interface) to intuitively explore the command line flags, built using [Trogon](https://github.com/Textualize/trogon) ([#2655](https://github.com/nf-core/tools/pull/2655))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.1.13 ([#2660](https://github.com/nf-core/tools/pull/2660))
 
 # [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
