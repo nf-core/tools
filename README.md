@@ -32,6 +32,7 @@ A python package with helper tools for the nf-core community.
 - [`nf-core schema` - Work with pipeline schema files](#pipeline-schema)
 - [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
 - [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
+- [`nf-core tui` - Explore the nf-core command line graphically](#tools-cli-tui)
 - [`nf-core modules` - commands for dealing with DSL2 modules](#modules)
 
   - [`modules list` - List available modules](#list-modules)
@@ -730,6 +731,17 @@ The GitHub username and repository name will be fetched from the remote url (see
 To create the pull request, a personal access token is required for API authentication.
 These can be created at [https://github.com/settings/tokens](https://github.com/settings/tokens).
 Supply this using the `--auth-token` flag.
+
+## Tools CLI TUI
+
+_CLI:_ Command line interface
+_TUI:_ Terminal user interface
+
+The `nf-core` command line interface is fairly large, with a lot of commands and options.
+To make it easier to explore and use, run `nf-core tui` to launch a graphical terminal interface.
+
+This functionality works using [Textualize/trogon](https://github.com/Textualize/trogon)
+and is based on the underlying CLI implementation that uses [Click](https://click.palletsprojects.com/).
 
 ## Modules
 
