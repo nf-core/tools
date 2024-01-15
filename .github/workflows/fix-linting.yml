@@ -51,7 +51,7 @@ jobs:
         uses: peter-evans/create-or-update-comment@v3
         with:
           comment-id: ${{ github.event.comment.id }}
-          reactions: green_check_mark
+          reactions: +1
 
       - name: Commit & push changes
         id: commit-and-push
@@ -70,13 +70,19 @@ jobs:
         uses: peter-evans/create-or-update-comment@v3
         with:
           comment-id: ${{ github.event.comment.id }}
-          reactions: pencil2
+          reactions: hooray
 
       - name: react if linting errors were not fixed
         if: ${{ steps.commit-and-push.outcome }} == 'failure'
         uses: peter-evans/create-or-update-comment@v3
         with:
           comment-id: ${{ github.event.comment.id }}
-          reactions: x
+          reactions: confused
+
+      - name: react if linting errors were not fixed
+        if: ${{ steps.commit-and-push.outcome }} == 'failure'
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ github.event.issue.number }}
           body: |
             @${{ github.actor }} I tried to fix the linting errors, but it didn't work. Please fix them manually.
