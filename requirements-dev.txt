@@ -1,13 +1,13 @@
+mypy
 myst_parser
 pytest-cov
 pytest-datafiles
 responses
+ruff
 Sphinx
 sphinx-rtd-theme
-mypy
-types-PyYAML
-types-requests
 types-jsonschema
 types-Markdown
+types-PyYAML
+types-requests
 types-setuptools
-ruff

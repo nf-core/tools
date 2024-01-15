@@ -9,6 +9,7 @@ import rich.console
 import rich.logging
 import rich.traceback
 import rich_click as click
+from trogon import tui
 
 from nf_core import __version__
 from nf_core.download import DownloadError
@@ -30,7 +31,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core": [
         {
             "name": "Commands for users",
-            "commands": ["list", "launch", "create-params-file", "download", "licences"],
+            "commands": ["list", "launch", "create-params-file", "download", "licences", "tui"],
         },
         {
             "name": "Commands for developers",
@@ -111,6 +112,7 @@ def run_nf_core():
     nf_core_cli(auto_envvar_prefix="NFCORE")
 
 
+@tui()
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(__version__)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
