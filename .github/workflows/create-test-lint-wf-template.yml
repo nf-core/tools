@@ -142,7 +142,7 @@ jobs:
         working-directory: create-test-lint-wf
 
       - name: Upload log file artifact
-        if: ${{ always() }}
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: nf-core-log-file-${{ matrix.TEMPLATE }}

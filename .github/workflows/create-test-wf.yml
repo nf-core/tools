@@ -58,7 +58,7 @@ jobs:
           nextflow run nf-core-testpipeline -profile test,self_hosted_runner --outdir ./results
 
       - name: Upload log file artifact
-        if: ${{ always() }}
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: nf-core-log-file-${{ matrix.NXF_VER }}
