@@ -17,13 +17,13 @@ class Logo:
         self.no_prompts = no_prompts
 
     def create(
-        self,
+        self: object,
         text: str,
         dir: Union[Path, str],
-        theme="light",
+        theme: str = "light",
         width: int = 2300,
         format: str = "svg",
-        force=False,
+        force: bool = False,
     ) -> Path:
         """Create a logo for a pipeline."""
 
