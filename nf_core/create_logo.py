@@ -49,7 +49,9 @@ class Logo:
         log.debug(f"Creating logo for {text}")
 
         # make sure the figure fits the text
-        font_file = ImageFont.truetype("assets/logo/MavenPro-Bold.ttf", 400)
+        font_file = ImageFont.truetype(
+            str(Path(__file__).resolve().parent.parent / "assets/logo/MavenPro-Bold.ttf"), 400
+        )
         text_length = font_file.getmask(text).getbbox()[2]  # get the width of the text based on the font
 
         max_width = max(
