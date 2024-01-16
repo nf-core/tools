@@ -6,6 +6,7 @@ import svgutils.compose as sc
 import svgutils.transform as sg
 from cairosvg import svg2png
 from PIL import ImageFont
+from pkg_resources import resource_filename
 
 log = logging.getLogger(__name__)
 
@@ -37,9 +38,9 @@ class Logo:
         logo_path = Path(dir, logo_filename)
 
         if theme == "dark":
-            template_fn = str(Path(__file__).resolve().parent.parent / "assets/logo/nf-core-repo-logo-base-darkbg.svg")
+            template_fn = resource_filename(__name__, "assets/logo/nf-core-repo-logo-base-darkbg.svg")
         else:
-            template_fn = str(Path(__file__).resolve().parent.parent / "assets/logo/nf-core-repo-logo-base-lightbg.svg")
+            template_fn = resource_filename(__name__, "assets/logo/nf-core-repo-logo-base-lightbg.svg")
 
         # Check if we haven't already created this logo
         if logo_path.is_file() and not force:
@@ -47,12 +48,11 @@ class Logo:
             return logo_path
 
         log.debug(f"Creating logo for {text}")
-
+        # with open() as fh:
+        # font_file = fh.read(
         # make sure the figure fits the text
-        font_file = ImageFont.truetype(
-            str(Path(__file__).resolve().parent.parent / "assets/logo/MavenPro-Bold.ttf"), 400
-        )
-        text_length = font_file.getmask(text).getbbox()[2]  # get the width of the text based on the font
+        font = ImageFont.truetype(resource_filename(__name__, "assets/logo/MavenPro-Bold.ttf"), 400)
+        text_length = font.getmask(text).getbbox()[2]  # get the width of the text based on the font
 
         max_width = max(
             2300, text_length + len(text) * 20
