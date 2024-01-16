@@ -55,7 +55,6 @@ class Logo:
         max_width = max(
             2300, text_length + len(text) * 20
         )  # need to add some more space to the text length to make sure it fits
-        print(max_width)
         # Set size
         fig = sg.SVGFigure([str(max_width), str(1000)])
 
@@ -83,7 +82,8 @@ class Logo:
         fig = sc.Figure(
             str(width), str(1000 * (width / max_width)), fig.getroot().scale(width / max_width, width / max_width)
         )
-        fig = fig.tostr().decode("utf-8").removeprefix("<?xml version='1.0' encoding='ASCII' standalone='yes'?>\n")
+        # remove the xml header (otherwise affinity designer won't open the svg)
+        fig = fig.tostr().decode("utf-8").replace("<?xml version='1.0' encoding='ASCII' standalone='yes'?>\n", "")
 
         # Save svg
         if format == "svg":
