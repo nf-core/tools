@@ -215,7 +215,7 @@ def is_pipeline_directory(wf_path):
             raise UserWarning(f"'{wf_path}' is not a pipeline - '{fn}' is missing")
 
 
-def fetch_wf_config(wf_path, cache_config=True):
+def fetch_wf_config(wf_path: Union[Path, str], cache_config=True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
 
@@ -228,20 +228,19 @@ def fetch_wf_config(wf_path, cache_config=True):
     """
 
     log.debug(f"Got '{wf_path}' as path")
-
+    wf_path = Path(wf_path)
     config = {}
     cache_fn = None
     cache_basedir = None
     cache_path = None
 
     # Nextflow home directory - use env var if set, or default to ~/.nextflow
-    nxf_home = os.environ.get("NXF_HOME", os.path.join(os.getenv("HOME"), ".nextflow"))
+    nxf_home = Path(os.environ.get("NXF_HOME", Path(os.getenv("HOME", ""), ".nextflow")))
 
     # Build a cache directory if we can
-    if os.path.isdir(nxf_home):
-        cache_basedir = os.path.join(nxf_home, "nf-core")
-        if not os.path.isdir(cache_basedir):
-            os.mkdir(cache_basedir)
+    if (nxf_home).is_dir():
+        cache_basedir = nxf_home / "nf-core"
+        cache_basedir.mkdir(parents=True, exist_ok=True)
 
     # If we're given a workflow object with a commit, see if we have a cached copy
     cache_fn = None
@@ -249,7 +248,7 @@ def fetch_wf_config(wf_path, cache_config=True):
     concat_hash = ""
     for fn in ["nextflow.config", "main.nf"]:
         try:
-            with open(os.path.join(wf_path, fn), "rb") as fh:
+            with open(Path(wf_path, fn), "rb") as fh:
                 concat_hash += hashlib.sha256(fh.read()).hexdigest()
         except FileNotFoundError:
             pass
@@ -259,8 +258,8 @@ def fetch_wf_config(wf_path, cache_config=True):
         cache_fn = f"wf-config-cache-{bighash[:25]}.json"
 
     if cache_basedir and cache_fn:
-        cache_path = os.path.join(cache_basedir, cache_fn)
-        if os.path.isfile(cache_path) and cache_config is True:
+        cache_path = Path(cache_basedir, cache_fn)
+        if cache_path.is_file() and cache_config is True:
             log.debug(f"Found a config cache, loading: {cache_path}")
             with open(cache_path) as fh:
                 try:
