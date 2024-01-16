@@ -341,7 +341,7 @@ def setup_nfcore_dir():
         return True
 
 
-def setup_requests_cachedir():
+def setup_requests_cachedir() -> dict:
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
@@ -351,8 +351,7 @@ def setup_requests_cachedir():
     Also returns the config dict so that we can use the same setup with a Session.
     """
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = os.path.join(NFCORE_CACHE_DIR, f"cache_{pyversion}")
-
+    cachedir = setup_nfcore_cachedir(f"cache_{pyversion}")
     config = {
         "cache_name": os.path.join(cachedir, "github_info"),
         "expire_after": datetime.timedelta(hours=1),
@@ -360,14 +359,21 @@ def setup_requests_cachedir():
     }
 
     logging.getLogger("requests_cache").setLevel(logging.WARNING)
-    try:
-        if not os.path.exists(cachedir):
-            os.makedirs(cachedir)
-        requests_cache.install_cache(**config)
-    except PermissionError:
-        pass
-
     return config
+
+
+def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
+    """Sets up local caching for caching files between sessions."""
+
+    cachedir = Path(NFCORE_CACHE_DIR, cache_fn)
+
+    try:
+        if not Path(cachedir).exists():
+            Path(cachedir).mkdir(parents=True)
+    except PermissionError:
+        log.warn(f"Could not create cache directory: {cachedir}")
+
+    return cachedir
 
 
 def wait_cli_function(poll_func, refresh_per_second=20):

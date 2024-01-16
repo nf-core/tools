@@ -1622,6 +1622,30 @@ def bump_version(new_version, dir, nextflow):
         sys.exit(1)
 
 
+# nf-core create-logo
+
+
+@nf_core_cli.command("create-logo")
+@click.argument("pipeline", required=True, metavar="<pipeline name>")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
+def logo(pipeline, dir, force):
+    """
+    Generate a logo for your pipeline.
+
+    This command generates a logo for your pipeline based on the pipeline name.
+    It will also generate a logo for your pipeline's modules.
+    """
+    from nf_core.logo import Logo
+
+    try:
+        logo_obj = Logo(pipeline, force)
+        logo_obj.create()
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
+
+
 # nf-core sync
 @nf_core_cli.command("sync")
 @click.option(
