@@ -37,9 +37,9 @@ class Logo:
         logo_path = Path(dir, logo_filename)
 
         if theme == "dark":
-            template_fn = "assets/logo/nf-core-repo-logo-base-darkbg.svg"
+            template_fn = str(Path(__file__).resolve().parent.parent / "assets/logo/nf-core-repo-logo-base-darkbg.svg")
         else:
-            template_fn = "assets/logo/nf-core-repo-logo-base-lightbg.svg"
+            template_fn = str(Path(__file__).resolve().parent.parent / "assets/logo/nf-core-repo-logo-base-lightbg.svg")
 
         # Check if we haven't already created this logo
         if logo_path.is_file() and not force:
