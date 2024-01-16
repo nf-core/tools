@@ -30,7 +30,6 @@ class TestCreateLogo(unittest.TestCase):
         self.assertTrue(logo_fn.suffix == ".png")
         # Check that the file is the right size
         self.assertTrue(logo_fn.stat().st_size > 57000)
-        print(logo_fn.stat().st_size)
 
     def test_create_logo_default(self):
         """Test that the create-logo command works for SVGs"""
