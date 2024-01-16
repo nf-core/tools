@@ -254,7 +254,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     """
 
     log.debug(f"Got '{wf_path}' as path")
-
+    wf_path = Path(wf_path)
     config = {}
     cache_fn = None
     cache_basedir = None
