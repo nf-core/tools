@@ -5,10 +5,10 @@
 import logging
 import tempfile
 from pathlib import Path
+from typing import Union
 
 import rocrate.model.entity
 import rocrate.rocrate
-from typing import Union
 
 log = logging.getLogger(__name__)
 
