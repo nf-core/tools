@@ -505,13 +505,11 @@ class PipelineCreate:
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
         email_logo_path = Path(self.outdir / "assets")
-        Logo().create(text=self.template_params["name_noslash"], dir=email_logo_path, format="png", theme="light")
+        Logo().create(text=self.template_params["name_noslash"], dir=email_logo_path, theme="light")
         for theme in ["dark", "light"]:
             # readme_logo_url = f"{logo_url}?w=600&theme={theme}"
             readme_logo_path = Path(self.outdir / "docs" / "images")
-            Logo().create(
-                text=self.template_params["name_noslash"], dir=readme_logo_path, width=600, format="png", theme=theme
-            )
+            Logo().create(text=self.template_params["name_noslash"], dir=readme_logo_path, width=600, theme=theme)
 
     def git_init_pipeline(self):
         """Initialises the new pipeline as a Git repository and submits first commit.
