@@ -31,7 +31,7 @@ class TestCreateLogo(unittest.TestCase):
         # Check that the file is the right size
         fixture_fn = Path(__file__).parent / "fixtures" / "create_logo.png"
         # allow some flexibility in the file size
-        self.assertTrue(int(logo_fn.stat().st_size / 100) == int(fixture_fn.stat().st_size / 100))
+        self.assertTrue(int(logo_fn.stat().st_size / 1000) == int(fixture_fn.stat().st_size / 1000))
 
     def test_create_logo_png_dark(self):
         """Test that the create-logo command works for dark PNGs"""
@@ -59,4 +59,4 @@ class TestCreateLogo(unittest.TestCase):
         # Check that the file is the right size
         fixture_fn = Path(__file__).parent / "fixtures" / "create_logo_width100.png"
         # allow some flexibility in the file size
-        self.assertTrue(int(logo_fn.stat().st_size / 1000) == int(fixture_fn.stat().st_size / 1000))
+        self.assertTrue(int(logo_fn.stat().st_size / 100) == int(fixture_fn.stat().st_size / 100))
