@@ -73,6 +73,7 @@ class Logo:
         img = img.resize((width, int((width / max_width) * height)))
         # Save
         img.save(logo_path, "PNG")
+        log.debug(f"Saved logo to: {logo_path}")
 
         # Return the logo
         return logo_path
