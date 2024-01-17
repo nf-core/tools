@@ -31,7 +31,7 @@ class Logo:
         if not dir.is_dir():
             log.debug(f"Creating directory {dir}")
             dir.mkdir(parents=True, exist_ok=True)
-        logo_filename = f"nfcore-{text}_logo_{theme}.png"
+        logo_filename = f"{text}_logo_{theme}.png"
         logo_path = Path(dir, logo_filename)
 
         # Check if we haven't already created this logo
