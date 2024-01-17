@@ -49,9 +49,9 @@ jobs:
         env:
           NXF_SINGULARITY_CACHEDIR: ./
         run: |
-          nf-core download ${{ env.REPO_LOWERCASE }} \
-          --revision ${{ env.REPO_BRANCH }} \
-          --outdir ./${{ env.REPOTITLE_LOWERCASE }} \
+          nf-core download {% raw %}${{ env.REPO_LOWERCASE }}{% endraw %} \
+          --revision {% raw %}${{ env.REPO_BRANCH }}{% endraw %} \
+          --outdir ./{% raw %}${{ env.REPOTITLE_LOWERCASE }}{% endraw %} \
           --compress "none" \
           --container-system 'singularity' \
           --container-library "quay.io" -l "docker.io" -l "ghcr.io" \
@@ -59,10 +59,10 @@ jobs:
           --download-configuration
 
       - name: Inspect download
-        run: tree ./${{ env.REPOTITLE_LOWERCASE }}
+        run: tree ./{% raw %}${{ env.REPOTITLE_LOWERCASE }}{% endraw %}
 
       - name: Run the downloaded pipeline
         env:
           NXF_SINGULARITY_CACHEDIR: ./
           NXF_SINGULARITY_HOME_MOUNT: true
-        run: nextflow run ./${{ env.REPOTITLE_LOWERCASE }}/$( sed 's/\W/_/g' <<< ${{ env.REPO_BRANCH }}) -stub -profile test,singularity --outdir ./results
+        run: nextflow run ./{% raw %}${{ env.REPOTITLE_LOWERCASE }}{% endraw %}/$( sed 's/\W/_/g' <<< {% raw %}${{ env.REPO_BRANCH }}{% endraw %}) -stub -profile test,singularity --outdir ./results
