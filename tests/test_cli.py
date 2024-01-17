@@ -377,7 +377,6 @@ class TestCli(unittest.TestCase):
 
     @mock.patch("nf_core.create_logo.create_logo")
     def test_create_logo(self, mock_create_logo):
-        # Test code goes here
         """Test nf-core create-logo"""
         # Set up the mock to return a specific value
 
