@@ -377,11 +377,10 @@ class TestCli(unittest.TestCase):
 
     @mock.patch("nf_core.create_logo.create_logo")
     def test_create_logo(self, mock_create_logo):
-        """Test nf-core create-logo"""
         # Set up the mock to return a specific value
 
         cmd = ["create-logo", "test"]
         result = self.invoke_cli(cmd)
 
-        mock_create_logo.assert_called_with("test", Path.cwd(), "light", 2300, False)
+        mock_create_logo.assert_called_with("test", Path.cwd(), None, "light", 2300, False)
         assert result.exit_code == 0
