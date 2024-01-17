@@ -2019,7 +2019,7 @@ def bump_version(new_version, dir, nextflow):
 
 @nf_core_cli.command("create-logo")
 @click.argument("logo-text", metavar="<logo text>")
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
+@click.option("-d", "--dir", type=click.Path(), default=".", metavar="<directory>")
 @click.option(
     "--theme",
     type=click.Choice(["light", "dark"]),
@@ -2035,13 +2035,6 @@ def bump_version(new_version, dir, nextflow):
     show_default=True,
 )
 @click.option(
-    "--format",
-    type=click.Choice(["png", "svg"]),
-    default="svg",
-    help="Image format for the logo.",
-    show_default=True,
-)
-@click.option(
     "--no-prompts",
     is_flag=True,
     help="Do not confirm changes, just update parameters and exit",
@@ -2053,7 +2046,7 @@ def bump_version(new_version, dir, nextflow):
     default=False,
     help="Overwrite any files if they already exist",
 )
-def logo(logo_text, dir, theme, width, format, no_prompts, force):
+def logo(logo_text, dir, theme, width, no_prompts, force):
     """
     Generate a logo with the nf-core logo template.
 
@@ -2065,7 +2058,7 @@ def logo(logo_text, dir, theme, width, format, no_prompts, force):
         if dir == ".":
             dir = Path.cwd()
         logo_obj = Logo(no_prompts)
-        logo_obj.create(logo_text, dir, theme, width, format, force)
+        logo_obj.create(logo_text, dir, theme, width, force)
     except UserWarning as e:
         log.error(e)
         sys.exit(1)

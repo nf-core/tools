@@ -1,4 +1,3 @@
-cairosvg
 click
 filetype
 GitPython
@@ -19,6 +18,5 @@ requests
 requests_cache
 rich-click>=1.6.1
 rich>=13.3.1
-svgutils
 tabulate
 trogon
