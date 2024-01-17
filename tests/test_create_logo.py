@@ -29,7 +29,9 @@ class TestCreateLogo(unittest.TestCase):
         # Check that the file is a PNG
         self.assertTrue(logo_fn.suffix == ".png")
         # Check that the file is the right size
+        print(logo_fn.stat().st_size)
         fixture_fn = Path(__file__).parent / "fixtures" / "create_logo.png"
+        print(fixture_fn.stat().st_size)
         self.assertTrue(logo_fn.stat().st_size == fixture_fn.stat().st_size)
 
     def test_create_logo_png_dark(self):
@@ -42,7 +44,9 @@ class TestCreateLogo(unittest.TestCase):
         # Check that the file is a PNG
         self.assertTrue(logo_fn.suffix == ".png")
         # Check that the file is the right size
+        print(logo_fn.stat().st_size)
         fixture_fn = Path(__file__).parent / "fixtures" / "create_logo_dark.png"
+        print(fixture_fn.stat().st_size)
         self.assertTrue(logo_fn.stat().st_size == fixture_fn.stat().st_size)
 
     def test_create_log_png_width(self):
@@ -55,5 +59,7 @@ class TestCreateLogo(unittest.TestCase):
         # Check that the file is a PNG
         self.assertTrue(logo_fn.suffix == ".png")
         # Check that the file is the right size
+        print(logo_fn.stat().st_size)
         fixture_fn = Path(__file__).parent / "fixtures" / "create_logo_width100.png"
+        print(fixture_fn.stat().st_size)
         self.assertTrue(logo_fn.stat().st_size == fixture_fn.stat().st_size)
