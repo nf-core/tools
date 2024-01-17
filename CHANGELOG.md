@@ -9,6 +9,7 @@
 - Use pdiff also on gitpod for nf-test ([#2640](https://github.com/nf-core/tools/pull/2640))
 - switch to new image syntax in readme ([#2645](https://github.com/nf-core/tools/pull/2645))
 - Add conda channel order to nextflow.config ([#2094](https://github.com/nf-core/tools/pull/2094))
+- Fix tyop in pipeline nextflow.config ([#2664](https://github.com/nf-core/tools/pull/2664))
 
 ### Download
 
