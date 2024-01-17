@@ -38,7 +38,7 @@ class Logo:
             log.info(f"Logo already exists at: {logo_path}. Use `--force` to overwrite.")
             return logo_path
 
-        assets = resources.files("nf_core.assets.logo")
+        assets = resources.files("nf_core").joinpath("assets/logo")
         log.debug(f"Creating logo for {text}")
 
         # make sure the figure fits the text
