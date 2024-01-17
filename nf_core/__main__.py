@@ -357,7 +357,7 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     "--tower",
     is_flag=True,
     default=False,
-    help="Download for seqeralabs® Nextflow Tower",
+    help="Download for Seqera Platform (formerly Nextflow Tower)",
 )
 @click.option(
     "-d",
