@@ -25,7 +25,7 @@ def create_logo(
     if not dir.is_dir():
         log.debug(f"Creating directory {dir}")
         dir.mkdir(parents=True, exist_ok=True)
-    logo_filename = f"{text}_logo_{theme}.png" if not filename else filename
+    logo_filename = f"nf-core-{text}_logo_{theme}.png" if not filename else filename
     logo_filename = f"{logo_filename}.png" if not logo_filename.endswith(".png") else logo_filename
     logo_path = Path(dir, logo_filename)
 
