@@ -373,3 +373,12 @@ class TestCli(unittest.TestCase):
         assert mock_get_schema_path.called_with("some_other_filename")
         assert "some_other_filename" in result.output
         assert "nextflow_schema.json" not in result.output
+
+    # test nf-core create-logo
+    @mock.patch("nf_core.create_logo.Logo.create")
+    def test_create_logo(self, mock_create_logo):
+        """Test nf-core create-logo"""
+        cmd = ["create-logo", "test"]
+        result = self.invoke_cli(cmd)
+        assert mock_create_logo.called_with("test", ".", "light", 2300, False)
+        assert "test_logo_light.png" in result.output

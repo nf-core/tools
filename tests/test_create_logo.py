@@ -13,7 +13,7 @@ class TestCreateLogo(unittest.TestCase):
     # create tempdir in setup step
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
-        self.tempdir_path = self.tempdir.name
+        self.tempdir_path = Path(self.tempdir.name)
 
     # delete tempdir in teardown step
     def tearDown(self):
@@ -60,3 +60,23 @@ class TestCreateLogo(unittest.TestCase):
         fixture_fn = Path(__file__).parent / "fixtures" / "create_logo_width100.png"
         # allow some flexibility in the file size
         self.assertTrue(int(logo_fn.stat().st_size / 100) == int(fixture_fn.stat().st_size / 100))
+
+    def test_create_logo_twice(self):
+        """Test that the create-logo command returns an info message when run twice"""
+
+        # Create a logo
+        logo_fn = nf_core.create_logo.Logo().create("pipes", self.tempdir_path / "duplicates")
+        # Check that the file exists
+        self.assertTrue(logo_fn.is_file())
+        # Create the logo again and capture the log output
+        with self.assertLogs(level="INFO") as log:
+            nf_core.create_logo.Logo().create("pipes", self.tempdir_path / "duplicates")
+            # Check that the log message is correct
+            self.assertIn("Logo already exists", log.output[0])
+
+    def test_create_logo_without_text_fail(self):
+        """Test that the create-logo command fails without text"""
+
+        # Create a logo
+        with self.assertRaises(UserWarning):
+            nf_core.create_logo.Logo().create("", self.tempdir_path)
