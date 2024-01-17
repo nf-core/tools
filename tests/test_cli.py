@@ -6,6 +6,7 @@ taken.
 
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from click.testing import CliRunner
@@ -374,11 +375,14 @@ class TestCli(unittest.TestCase):
         assert "some_other_filename" in result.output
         assert "nextflow_schema.json" not in result.output
 
-    # test nf-core create-logo
     @mock.patch("nf_core.create_logo.Logo.create")
     def test_create_logo(self, mock_create_logo):
+        # Test code goes here
         """Test nf-core create-logo"""
+        # Set up the mock to return a specific value
+
         cmd = ["create-logo", "test"]
         result = self.invoke_cli(cmd)
-        assert mock_create_logo.called_with("test", ".", "light", 2300, False)
-        assert "test_logo_light.png" in result.output
+
+        mock_create_logo.assert_called_with("test", Path.cwd(), "light", 2300, False)
+        assert result.exit_code == 0
