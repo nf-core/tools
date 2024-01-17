@@ -1,9 +1,10 @@
-import importlib.resources as resources
 import logging
 from pathlib import Path
 from typing import Union
 
 from PIL import Image, ImageDraw, ImageFont
+
+import nf_core
 
 log = logging.getLogger(__name__)
 
@@ -38,11 +39,11 @@ class Logo:
             log.info(f"Logo already exists at: {logo_path}. Use `--force` to overwrite.")
             return logo_path
 
-        assets = resources.files("nf_core").joinpath("assets/logo")
+        assets = Path(nf_core.__file__).parent / "assets/logo"
         log.debug(f"Creating logo for {text}")
 
         # make sure the figure fits the text
-        font_path = assets.joinpath("MavenPro-Bold.ttf")
+        font_path = assets / "MavenPro-Bold.ttf"
         log.debug(f"Using font: {str(font_path)}")
         font = ImageFont.truetype(str(font_path), 400)
         text_length = font.getmask(text).getbbox()[2]  # get the width of the text based on the font
@@ -55,7 +56,7 @@ class Logo:
         if theme == "dark":
             template_fn = "nf-core-repo-logo-base-darkbg.png"
 
-        template_path = assets.joinpath(template_fn)
+        template_path = assets / template_fn
         img = Image.open(str(template_path))
         # get the height of the template image
         height = img.size[1]
