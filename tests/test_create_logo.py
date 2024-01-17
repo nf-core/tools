@@ -23,7 +23,7 @@ class TestCreateLogo(unittest.TestCase):
         """Test that the create-logo command works for PNGs"""
 
         # Create a logo
-        logo_fn = nf_core.create_logo.Logo().create("pipes", self.tempdir_path)
+        logo_fn = nf_core.create_logo.create_logo("pipes", self.tempdir_path)
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Check that the file is a PNG
@@ -37,7 +37,7 @@ class TestCreateLogo(unittest.TestCase):
         """Test that the create-logo command works for dark PNGs"""
 
         # Create a logo
-        logo_fn = nf_core.create_logo.Logo().create("pipes", self.tempdir_path, theme="dark")
+        logo_fn = nf_core.create_logo.create_logo("pipes", self.tempdir_path, theme="dark")
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Check that the file is a PNG
@@ -51,7 +51,7 @@ class TestCreateLogo(unittest.TestCase):
         """Test that the create-logo command works for PNGs with a custom width"""
 
         # Create a logo
-        logo_fn = nf_core.create_logo.Logo().create("pipes", self.tempdir_path, width=100)
+        logo_fn = nf_core.create_logo.create_logo("pipes", self.tempdir_path, width=100)
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Check that the file is a PNG
@@ -65,12 +65,12 @@ class TestCreateLogo(unittest.TestCase):
         """Test that the create-logo command returns an info message when run twice"""
 
         # Create a logo
-        logo_fn = nf_core.create_logo.Logo().create("pipes", self.tempdir_path / "duplicates")
+        logo_fn = nf_core.create_logo.create_logo("pipes", self.tempdir_path / "duplicates")
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Create the logo again and capture the log output
         with self.assertLogs(level="INFO") as log:
-            nf_core.create_logo.Logo().create("pipes", self.tempdir_path / "duplicates")
+            nf_core.create_logo.create_logo("pipes", self.tempdir_path / "duplicates")
             # Check that the log message is correct
             self.assertIn("Logo already exists", log.output[0])
 
@@ -79,4 +79,4 @@ class TestCreateLogo(unittest.TestCase):
 
         # Create a logo
         with self.assertRaises(UserWarning):
-            nf_core.create_logo.Logo().create("", self.tempdir_path)
+            nf_core.create_logo.create_logo("", self.tempdir_path)

@@ -17,7 +17,7 @@ import yaml
 import nf_core
 import nf_core.schema
 import nf_core.utils
-from nf_core.create_logo import Logo
+from nf_core.create_logo import create_logo
 from nf_core.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
@@ -504,12 +504,11 @@ class PipelineCreate:
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
-        email_logo_path = Path(self.outdir / "assets")
-        Logo().create(text=self.template_params["name_noslash"], dir=email_logo_path, theme="light")
+        email_logo_path = Path(self.outdir) / "assets"
+        create_logo(text=self.template_params["name_noslash"], dir=email_logo_path, theme="light")
         for theme in ["dark", "light"]:
-            # readme_logo_url = f"{logo_url}?w=600&theme={theme}"
-            readme_logo_path = Path(self.outdir / "docs" / "images")
-            Logo().create(text=self.template_params["name_noslash"], dir=readme_logo_path, width=600, theme=theme)
+            readme_logo_path = Path(self.outdir) / "docs" / "images"
+            create_logo(text=self.template_params["name_noslash"], dir=readme_logo_path, width=600, theme=theme)
 
     def git_init_pipeline(self):
         """Initialises the new pipeline as a Git repository and submits first commit.

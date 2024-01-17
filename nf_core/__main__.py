@@ -2019,7 +2019,7 @@ def bump_version(new_version, dir, nextflow):
 
 @nf_core_cli.command("create-logo")
 @click.argument("logo-text", metavar="<logo text>")
-@click.option("-d", "--dir", type=click.Path(), default=".", metavar="<directory>")
+@click.option("-d", "--dir", type=click.Path(), default=".", help="Directory to save the logo in.")
 @click.option(
     "--theme",
     type=click.Choice(["light", "dark"]),
@@ -2031,13 +2031,8 @@ def bump_version(new_version, dir, nextflow):
     "--width",
     type=int,
     default=2300,
-    help="Width of the logo in pixels. Will be overwritten if `logo-text` is longer than the given width.",
+    help="Width of the logo in pixels.",
     show_default=True,
-)
-@click.option(
-    "--no-prompts",
-    is_flag=True,
-    help="Do not confirm changes, just update parameters and exit",
 )
 @click.option(
     "-f",
@@ -2046,19 +2041,18 @@ def bump_version(new_version, dir, nextflow):
     default=False,
     help="Overwrite any files if they already exist",
 )
-def logo(logo_text, dir, theme, width, no_prompts, force):
+def logo(logo_text, dir, theme, width, force):
     """
     Generate a logo with the nf-core logo template.
 
     This command generates a logo for your a given text, e.g. for an nf-core pipeline.
     """
-    from nf_core.create_logo import Logo
+    from nf_core.create_logo import create_logo
 
     try:
         if dir == ".":
             dir = Path.cwd()
-        logo_obj = Logo(no_prompts)
-        logo_obj.create(logo_text, dir, theme, width, force)
+        create_logo(logo_text, dir, theme, width, force)
     except UserWarning as e:
         log.error(e)
         sys.exit(1)

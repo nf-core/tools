@@ -375,7 +375,7 @@ class TestCli(unittest.TestCase):
         assert "some_other_filename" in result.output
         assert "nextflow_schema.json" not in result.output
 
-    @mock.patch("nf_core.create_logo.Logo.create")
+    @mock.patch("nf_core.create_logo.create_logo")
     def test_create_logo(self, mock_create_logo):
         # Test code goes here
         """Test nf-core create-logo"""
