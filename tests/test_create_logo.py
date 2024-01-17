@@ -65,12 +65,12 @@ class TestCreateLogo(unittest.TestCase):
         """Test that the create-logo command returns an info message when run twice"""
 
         # Create a logo
-        logo_fn = nf_core.create_logo.create_logo("pipes", self.tempdir_path / "duplicates")
+        logo_fn = nf_core.create_logo.create_logo("pipes", self.tempdir_path)
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Create the logo again and capture the log output
         with self.assertLogs(level="INFO") as log:
-            nf_core.create_logo.create_logo("pipes", self.tempdir_path / "duplicates")
+            nf_core.create_logo.create_logo("pipes", self.tempdir_path)
             # Check that the log message is correct
             self.assertIn("Logo already exists", log.output[0])
 
@@ -80,3 +80,15 @@ class TestCreateLogo(unittest.TestCase):
         # Create a logo
         with self.assertRaises(UserWarning):
             nf_core.create_logo.create_logo("", self.tempdir_path)
+
+    def test_create_logo_with_filename(self):
+        """Test that the create-logo command works with a custom filename"""
+
+        # Create a logo
+        logo_fn = nf_core.create_logo.create_logo("pipes", Path(self.tempdir_path / "custom_dir"), filename="custom")
+        # Check that the file exists
+        self.assertTrue(logo_fn.is_file())
+        # Check that the parent directory name
+        self.assertTrue(logo_fn.parent.name == "custom_dir")
+        # Check that the file has correct name
+        self.assertTrue(logo_fn.name == "custom.png")
