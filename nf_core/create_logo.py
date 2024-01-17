@@ -43,6 +43,7 @@ class Logo:
 
         # make sure the figure fits the text
         font_path = assets.joinpath("MavenPro-Bold.ttf")
+        log.debug(f"Using font: {str(font_path)}")
         font = ImageFont.truetype(str(font_path), 400)
         text_length = font.getmask(text).getbbox()[2]  # get the width of the text based on the font
 
