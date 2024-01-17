@@ -2018,8 +2018,9 @@ def bump_version(new_version, dir, nextflow):
 
 
 @nf_core_cli.command("create-logo")
-@click.argument("logo-text", metavar="<logo text>")
+@click.argument("logo-text", metavar="<logo_text>")
 @click.option("-d", "--dir", type=click.Path(), default=".", help="Directory to save the logo in.")
+@click.option("-n", "--name", type=str, help="Name of the output file (with or without '.png' suffix).")
 @click.option(
     "--theme",
     type=click.Choice(["light", "dark"]),
@@ -2041,18 +2042,18 @@ def bump_version(new_version, dir, nextflow):
     default=False,
     help="Overwrite any files if they already exist",
 )
-def logo(logo_text, dir, theme, width, force):
+def logo(logo_text, dir, name, theme, width, force):
     """
     Generate a logo with the nf-core logo template.
 
-    This command generates a logo for your a given text, e.g. for an nf-core pipeline.
+    This command generates a logo for your a given text <logo_text> underneath the 'nf-core/'. The text is usually the name of a pipeline."
     """
     from nf_core.create_logo import create_logo
 
     try:
         if dir == ".":
             dir = Path.cwd()
-        create_logo(logo_text, dir, theme, width, force)
+        create_logo(logo_text, dir, name, theme, width, force)
     except UserWarning as e:
         log.error(e)
         sys.exit(1)

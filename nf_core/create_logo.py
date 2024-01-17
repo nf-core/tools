@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 def create_logo(
     text: str,
     dir: Union[Path, str],
+    filename: str = "",
     theme: str = "light",
     width: int = 2300,
     force: bool = False,
@@ -24,7 +25,8 @@ def create_logo(
     if not dir.is_dir():
         log.debug(f"Creating directory {dir}")
         dir.mkdir(parents=True, exist_ok=True)
-    logo_filename = f"{text}_logo_{theme}.png"
+    logo_filename = f"{text}_logo_{theme}.png" if not filename else filename
+    logo_filename = f"{logo_filename}.png" if not logo_filename.endswith(".png") else logo_filename
     logo_path = Path(dir, logo_filename)
 
     # Check if we haven't already created this logo
