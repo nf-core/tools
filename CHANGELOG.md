@@ -15,6 +15,8 @@
 
 ### Linting
 
+- Fix linting of a pipeline with patched custom module ([#2669](https://github.com/nf-core/tools/pull/2669))
+
 ### Modules
 
 - Fix empty json output for `nf-core list local` ([#2668](https://github.com/nf-core/tools/pull/2668))
