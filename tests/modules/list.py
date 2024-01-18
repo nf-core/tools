@@ -76,3 +76,23 @@ def test_modules_list_remote_json(self):
     listed_mods = json.loads(listed_mods)
     assert "fastqc" in listed_mods
     assert "multiqc" in listed_mods
+
+
+def test_modules_list_with_one_keyword(self):
+    """Test listing available modules with keywords"""
+    mods_list = nf_core.modules.ModuleList(None, remote=True)
+    listed_mods = mods_list.list_components(keywords=["qc"])
+    console = Console(record=True)
+    console.print(listed_mods)
+    output = console.export_text()
+    assert "multiqc" in output
+
+
+def test_modules_list_with_keywords(self):
+    """Test listing available modules with keywords"""
+    mods_list = nf_core.modules.ModuleList(None, remote=True)
+    listed_mods = mods_list.list_components(keywords=["fastq", "qc"])
+    console = Console(record=True)
+    console.print(listed_mods)
+    output = console.export_text()
+    assert "fastqc" in output

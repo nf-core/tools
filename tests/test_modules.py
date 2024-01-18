@@ -217,6 +217,8 @@ class TestModules(unittest.TestCase):
         test_modules_list_remote,
         test_modules_list_remote_gitlab,
         test_modules_list_remote_json,
+        test_modules_list_with_keywords,
+        test_modules_list_with_one_keyword,
     )
     from .modules.modules_json import (  # type: ignore[misc]
         test_get_modules_json,
