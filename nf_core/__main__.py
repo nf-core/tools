@@ -2016,12 +2016,15 @@ def bump_version(new_version, dir, nextflow):
 
 
 # nf-core create-logo
-
-
 @nf_core_cli.command("create-logo")
 @click.argument("logo-text", metavar="<logo_text>")
 @click.option("-d", "--dir", type=click.Path(), default=".", help="Directory to save the logo in.")
-@click.option("-n", "--name", type=str, help="Name of the output file (with or without '.png' suffix).")
+@click.option(
+    "-n",
+    "--name",
+    type=str,
+    help="Name of the output file (with or without '.png' suffix).",
+)
 @click.option(
     "--theme",
     type=click.Choice(["light", "dark"]),
@@ -2037,13 +2040,20 @@ def bump_version(new_version, dir, nextflow):
     show_default=True,
 )
 @click.option(
+    "--format",
+    type=click.Choice(["png", "svg"]),
+    default="png",
+    help="Image format of the logo, either PNG or SVG.",
+    show_default=True,
+)
+@click.option(
     "-f",
     "--force",
     is_flag=True,
     default=False,
     help="Overwrite any files if they already exist",
 )
-def logo(logo_text, dir, name, theme, width, force):
+def logo(logo_text, dir, name, theme, width, format, force):
     """
     Generate a logo with the nf-core logo template.
 
@@ -2054,7 +2064,7 @@ def logo(logo_text, dir, name, theme, width, force):
     try:
         if dir == ".":
             dir = Path.cwd()
-        logo_path = create_logo(logo_text, dir, name, theme, width, force)
+        logo_path = create_logo(logo_text, dir, name, theme, width, format, force)
         log.info(f"Created logo: [magenta]{logo_path}[/]")
     except UserWarning as e:
         log.error(e)
