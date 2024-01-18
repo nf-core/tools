@@ -17,6 +17,8 @@
 
 ### Modules
 
+- Fix empty json output for `nf-core list local` ([#2668](https://github.com/nf-core/tools/pull/2668))
+
 ### Subworkflows
 
 ### General
