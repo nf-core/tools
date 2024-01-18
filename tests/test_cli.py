@@ -382,5 +382,5 @@ class TestCli(unittest.TestCase):
         cmd = ["create-logo", "test"]
         result = self.invoke_cli(cmd)
 
-        mock_create_logo.assert_called_with("test", Path.cwd(), None, "light", 2300, False)
+        mock_create_logo.assert_called_with("test", Path.cwd(), None, "light", 2300, "png", False)
         assert result.exit_code == 0
