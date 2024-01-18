@@ -212,6 +212,7 @@ class TestModules(unittest.TestCase):
     from .modules.list import (  # type: ignore[misc]
         test_modules_install_and_list_pipeline,
         test_modules_install_gitlab_and_list_pipeline,
+        test_modules_list_in_wrong_repo_fail,
         test_modules_list_local_json,
         test_modules_list_pipeline,
         test_modules_list_remote,
@@ -219,6 +220,7 @@ class TestModules(unittest.TestCase):
         test_modules_list_remote_json,
         test_modules_list_with_keywords,
         test_modules_list_with_one_keyword,
+        test_modules_list_with_unused_keyword,
     )
     from .modules.modules_json import (  # type: ignore[misc]
         test_get_modules_json,
