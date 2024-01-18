@@ -92,3 +92,35 @@ class TestCreateLogo(unittest.TestCase):
         self.assertTrue(logo_fn.parent.name == "custom_dir")
         # Check that the file has correct name
         self.assertTrue(logo_fn.name == "custom.png")
+
+    def test_create_logo_svg(self):
+        """Test that the create-logo command works for SVGs"""
+
+        # Create a logo
+        logo_fn = nf_core.create_logo.create_logo("pipes", self.tempdir_path, format="svg")
+        # Check that the file exists
+        self.assertTrue(logo_fn.is_file())
+        # Check that the file is a SVG
+        self.assertTrue(logo_fn.suffix == ".svg")
+        # Check that the svg contains the correct text
+        with open(logo_fn) as fh:
+            svg = fh.read()
+        self.assertIn("pipes", svg)
+        # check that it is the light theme
+        self.assertIn("#050505", svg)
+
+    def test_create_logo_svg_dark(self):
+        """Test that the create-logo command works for svgs and dark theme"""
+
+        # Create a logo
+        logo_fn = nf_core.create_logo.create_logo("pipes", self.tempdir_path, format="svg", theme="dark")
+        # Check that the file exists
+        self.assertTrue(logo_fn.is_file())
+        # Check that the file is a SVG
+        self.assertTrue(logo_fn.suffix == ".svg")
+        # Check that the svg contains the correct text
+        with open(logo_fn) as fh:
+            svg = fh.read()
+        self.assertIn("pipes", svg)
+        # check that it is the dark theme
+        self.assertIn("#fafafa", svg)
