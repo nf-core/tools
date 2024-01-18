@@ -17,6 +17,8 @@
 
 ### Modules
 
+- Fix linting of a pipeline with patched custom module ([#2669](https://github.com/nf-core/tools/pull/2669))
+
 ### Subworkflows
 
 ### General
