@@ -4,23 +4,20 @@ organization's specification based on a template.
 import configparser
 import logging
 import os
-import random
 import re
 import shutil
 import sys
-import time
 from pathlib import Path
 
-import filetype  # type: ignore
 import git
 import jinja2
 import questionary
-import requests
 import yaml
 
 import nf_core
 import nf_core.schema
 import nf_core.utils
+from nf_core.create_logo import create_logo
 from nf_core.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
@@ -177,8 +174,8 @@ class PipelineCreate:
         param_dict["name_noslash"] = param_dict["name"].replace("/", "-")
         param_dict["prefix_nodash"] = param_dict["prefix"].replace("-", "")
         param_dict["name_docker"] = param_dict["name"].replace(param_dict["prefix"], param_dict["prefix_nodash"])
-        param_dict["logo_light"] = f"{param_dict['name_noslash']}_logo_light.png"
-        param_dict["logo_dark"] = f"{param_dict['name_noslash']}_logo_dark.png"
+        param_dict["logo_light"] = f"{param_dict['short_name']}_logo_light.png"
+        param_dict["logo_dark"] = f"{param_dict['short_name']}_logo_dark.png"
         param_dict["version"] = version
 
         if (
@@ -507,59 +504,11 @@ class PipelineCreate:
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
-
-        logo_url = f"https://nf-co.re/logo/{self.template_params['short_name']}?theme=light"
-        log.debug(f"Fetching logo from {logo_url}")
-
-        email_logo_path = self.outdir / "assets" / f"{self.template_params['name_noslash']}_logo_light.png"
-        self.download_pipeline_logo(f"{logo_url}?w=600&theme=light", email_logo_path)
+        email_logo_path = Path(self.outdir) / "assets"
+        create_logo(text=self.template_params["short_name"], dir=email_logo_path, theme="light")
         for theme in ["dark", "light"]:
-            readme_logo_url = f"{logo_url}?w=600&theme={theme}"
-            readme_logo_path = (
-                self.outdir / "docs" / "images" / f"{self.template_params['name_noslash']}_logo_{theme}.png"
-            )
-            self.download_pipeline_logo(readme_logo_url, readme_logo_path)
-
-    def download_pipeline_logo(self, url, img_fn):
-        """Attempt to download a logo from the website. Retry if it fails."""
-        os.makedirs(os.path.dirname(img_fn), exist_ok=True)
-        attempt = 0
-        max_attempts = 10
-        retry_delay = 0  # x up to 10 each time, so first delay will be 1-100 seconds
-        while attempt < max_attempts:
-            # If retrying, wait a while
-            if retry_delay > 0:
-                log.info(f"Waiting {retry_delay} seconds before next image fetch attempt")
-                time.sleep(retry_delay)
-
-            attempt += 1
-            # Use a random number to avoid the template sync hitting the website simultaneously for all pipelines
-            retry_delay = random.randint(1, 100) * attempt
-            log.debug(f"Fetching logo '{img_fn}' (attempt {attempt})")
-            try:
-                # Try to fetch the logo from the website
-                r = requests.get(url, timeout=180)
-                if r.status_code != 200:
-                    raise UserWarning(f"Got status code {r.status_code}")
-                # Check that the returned image looks right
-
-            except (ConnectionError, UserWarning) as e:
-                # Something went wrong - try again
-                log.warning(e)
-                log.error("Connection error - retrying")
-                continue
-
-            # Write the new logo to the file
-            with open(img_fn, "wb") as fh:
-                fh.write(r.content)
-            # Check that the file looks valid
-            image_type = filetype.guess(img_fn).extension
-            if image_type != "png":
-                log.error(f"Logo from the website didn't look like an image: '{image_type}'")
-                continue
-
-            # Got this far, presumably it's good - break the retry loop
-            break
+            readme_logo_path = Path(self.outdir) / "docs" / "images"
+            create_logo(text=self.template_params["short_name"], dir=readme_logo_path, width=600, theme=theme)
 
     def git_init_pipeline(self):
         """Initialises the new pipeline as a Git repository and submits first commit.
