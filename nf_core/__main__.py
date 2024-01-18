@@ -49,6 +49,7 @@ click.rich_click.COMMAND_GROUPS = {
                 "modules",
                 "subworkflows",
                 "schema",
+                "create-logo",
                 "bump-version",
                 "sync",
             ],
@@ -2046,14 +2047,15 @@ def logo(logo_text, dir, name, theme, width, force):
     """
     Generate a logo with the nf-core logo template.
 
-    This command generates a logo for your a given text <logo_text> underneath the 'nf-core/'. The text is usually the name of a pipeline."
+    This command generates an nf-core pipeline logo, using the supplied <logo_text>
     """
     from nf_core.create_logo import create_logo
 
     try:
         if dir == ".":
             dir = Path.cwd()
-        create_logo(logo_text, dir, name, theme, width, force)
+        logo_path = create_logo(logo_text, dir, name, theme, width, force)
+        log.info(f"Created logo: [magenta]{logo_path}[/]")
     except UserWarning as e:
         log.error(e)
         sys.exit(1)
