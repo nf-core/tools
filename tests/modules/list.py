@@ -1,3 +1,5 @@
+import json
+
 from rich.console import Console
 
 import nf_core.modules
@@ -56,3 +58,21 @@ def test_modules_install_gitlab_and_list_pipeline(self):
     console.print(listed_mods)
     output = console.export_text()
     assert "fastqc" in output
+
+
+def test_modules_list_local_json(self):
+    """Test listing locally installed modules as JSON"""
+    mods_list = nf_core.modules.ModuleList(self.pipeline_dir, remote=False)
+    listed_mods = mods_list.list_components(print_json=True)
+    listed_mods = json.loads(listed_mods)
+    assert "fastqc" in listed_mods
+    assert "multiqc" in listed_mods
+
+
+def test_modules_list_remote_json(self):
+    """Test listing available modules as JSON"""
+    mods_list = nf_core.modules.ModuleList(None, remote=True)
+    listed_mods = mods_list.list_components(print_json=True)
+    listed_mods = json.loads(listed_mods)
+    assert "fastqc" in listed_mods
+    assert "multiqc" in listed_mods
