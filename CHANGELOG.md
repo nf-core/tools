@@ -17,6 +17,8 @@
 
 ### Modules
 
+- Fix linting of a pipeline with patched custom module ([#2669](https://github.com/nf-core/tools/pull/2669))
+
 ### Subworkflows
 
 ### General
@@ -30,8 +32,10 @@
 - Fix Renovate Dockerfile updating issues ([#2648](https://github.com/nf-core/tools/pull/2648) and [#2651](https://github.com/nf-core/tools/pull/2651))
 - Add new subcommand `nf-core tui`, which launches a TUI (terminal user interface) to intuitively explore the command line flags, built using [Trogon](https://github.com/Textualize/trogon) ([#2655](https://github.com/nf-core/tools/pull/2655))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.1.13 ([#2660](https://github.com/nf-core/tools/pull/2660))
+- Add new subcommand: `nf-core logo-create` to output an nf-core logo for a pipeline (instead of going through the website) ([#2662](https://github.com/nf-core/tools/pull/2662))
 - Update actions/cache action to v4 ([#2666](https://github.com/nf-core/tools/pull/2666))
 - Handle api redirects from the old site ([#2672](https://github.com/nf-core/tools/pull/2672))
+- Remove redundanct v in pipeline version for emails ([#2667](https://github.com/nf-core/tools/pull/2667))
 
 # [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
