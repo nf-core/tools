@@ -94,8 +94,3 @@ HorizontalScroll {
 .displayed #hide_password {
     display: block;
 }
-
-/* Loading message */
-LoadingIndicator {
-    border: solid white;
-}

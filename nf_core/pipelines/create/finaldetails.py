@@ -6,19 +6,11 @@ from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
 from textual.message import Message
 from textual.screen import Screen
-from textual.widgets import (
-    Button,
-    Footer,
-    Header,
-    Input,
-    LoadingIndicator,
-    Markdown,
-    Static,
-    Switch,
-)
+from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
 from nf_core.pipelines.create.create import PipelineCreate
-from nf_core.pipelines.create.utils import TextInput
+from nf_core.pipelines.create.loggingscreen import LoggingScreen
+from nf_core.pipelines.create.utils import ShowLogs, TextInput
 
 
 class FinalDetails(Screen):
@@ -84,36 +76,24 @@ class FinalDetails(Screen):
 
         # Create the new pipeline
         self._create_pipeline()
-        self.screen.loading = True
-
-    class PipelineCreated(Message):
-        """Custom message to indicate that the pipeline has been created."""
-
-        pass
+        self.parent.LOGGING_STATE = "pipeline created"
+        self.parent.switch_screen(LoggingScreen())
 
     class PipelineExists(Message):
         """Custom message to indicate that the pipeline already exists."""
 
         pass
 
-    @on(PipelineCreated)
-    def stop_loading(self) -> None:
-        self.screen.loading = False
-        self.parent.switch_screen("github_repo_question")
-
     @on(PipelineExists)
-    def stop_loading_error(self) -> None:
-        self.screen.loading = False
+    def show_pipeline_error(self) -> None:
         self.parent.switch_screen("error_screen")
 
     @work(thread=True, exclusive=True)
     def _create_pipeline(self) -> None:
         """Create the pipeline."""
+        self.post_message(ShowLogs())
         create_obj = PipelineCreate(template_config=self.parent.TEMPLATE_CONFIG)
         try:
-            self.query_one(LoadingIndicator).border_title = "Creating pipeline..."
             create_obj.init_pipeline()
         except UserWarning:
             self.post_message(self.PipelineExists())
-        else:
-            self.post_message(self.PipelineCreated())

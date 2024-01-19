@@ -196,7 +196,7 @@ def test_github_question(mock_init_pipeline, snap_compare):
         screen choose_type > press nf-core >
         screen basic_details > enter pipeline details > press next >
         screen type_nfcore > press continue >
-        screen final_details > press finish >
+        screen final_details > press finish > close logging screen >
         screen github_repo_question
     """
 
@@ -212,6 +212,7 @@ def test_github_question(mock_init_pipeline, snap_compare):
         await pilot.click("#next")
         await pilot.click("#continue")
         await pilot.click("#finish")
+        await pilot.click("#close_screen")
 
     assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
 
@@ -224,7 +225,7 @@ def test_github_details(mock_init_pipeline, snap_compare):
         screen choose_type > press nf-core >
         screen basic_details > enter pipeline details > press next >
         screen type_nfcore > press continue >
-        screen final_details > press finish >
+        screen final_details > press finish > close logging screen >
         screen github_repo_question > press create repo >
         screen github_repo
     """
@@ -241,6 +242,7 @@ def test_github_details(mock_init_pipeline, snap_compare):
         await pilot.click("#next")
         await pilot.click("#continue")
         await pilot.click("#finish")
+        await pilot.click("#close_screen")
         await pilot.click("#github_repo")
 
     assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
@@ -254,7 +256,7 @@ def test_github_exit_message(mock_init_pipeline, snap_compare):
         screen choose_type > press nf-core >
         screen basic_details > enter pipeline details > press next >
         screen type_nfcore > press continue >
-        screen final_details > press finish >
+        screen final_details > press finish > close logging screen >
         screen github_repo_question > press create repo >
         screen github_repo > press exit (close without creating a repo) >
         screen github_exit
@@ -272,6 +274,7 @@ def test_github_exit_message(mock_init_pipeline, snap_compare):
         await pilot.click("#next")
         await pilot.click("#continue")
         await pilot.click("#finish")
+        await pilot.click("#close_screen")
         await pilot.click("#github_repo")
         await pilot.click("#exit")
 

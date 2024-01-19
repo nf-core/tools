@@ -1,9 +1,12 @@
+import logging
 from textwrap import dedent
 
 from textual.app import ComposeResult
 from textual.containers import Center
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown
+
+log = logging.getLogger(__name__)
 
 github_text_markdown = """
 # Create a GitHub repo

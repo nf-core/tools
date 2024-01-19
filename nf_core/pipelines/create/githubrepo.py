@@ -6,23 +6,14 @@ from textwrap import dedent
 import git
 import yaml
 from github import Github, GithubException, UnknownObjectException
-from textual import on, work
+from textual import work
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal
-from textual.message import Message
 from textual.screen import Screen
-from textual.widgets import (
-    Button,
-    Footer,
-    Header,
-    Input,
-    LoadingIndicator,
-    Markdown,
-    Static,
-    Switch,
-)
+from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
-from nf_core.pipelines.create.utils import TextInput
+from nf_core.pipelines.create.loggingscreen import LoggingScreen
+from nf_core.pipelines.create.utils import ShowLogs, TextInput
 
 log = logging.getLogger(__name__)
 
@@ -144,7 +135,6 @@ class GithubRepo(Screen):
                     self._create_repo_and_push(
                         org, pipeline_repo, github_variables["private"], github_variables["push"]
                     )
-                    self.screen.loading = True
                 else:
                     # Create the repo in the user's account
                     log.info(
@@ -153,26 +143,18 @@ class GithubRepo(Screen):
                     self._create_repo_and_push(
                         user, pipeline_repo, github_variables["private"], github_variables["push"]
                     )
-                    self.screen.loading = True
                 log.info(f"GitHub repository '{self.parent.TEMPLATE_CONFIG.name}' created successfully")
             except UserWarning as e:
                 log.info(f"There was an error with message: {e}")
                 self.parent.switch_screen("github_exit")
 
-    class RepoCreated(Message):
-        """Custom message to indicate that the GitHub repo has been created."""
-
-        pass
-
-    @on(RepoCreated)
-    def stop_loading(self) -> None:
-        self.screen.loading = False
-        self.parent.switch_screen("completed_screen")
+            self.parent.LOGGING_STATE = "repo created"
+            self.parent.switch_screen(LoggingScreen())
 
     @work(thread=True, exclusive=True)
     def _create_repo_and_push(self, org, pipeline_repo, private, push):
         """Create a GitHub repository and push all branches."""
-        self.query_one(LoadingIndicator).border_title = "Creating GitHub repo..."
+        self.post_message(ShowLogs())
         # Check if repo already exists
         try:
             repo = org.get_repo(self.parent.TEMPLATE_CONFIG.name)
@@ -185,7 +167,6 @@ class GithubRepo(Screen):
                 repo_exists = True
             except UserWarning as e:
                 # Repo already exists
-                self.post_message(self.RepoCreated())
                 log.info(e)
                 return
         except UnknownObjectException:
@@ -206,8 +187,6 @@ class GithubRepo(Screen):
             pass
         if push:
             pipeline_repo.remotes.origin.push(all=True).raise_if_error()
-
-        self.post_message(self.RepoCreated())
 
     def _github_authentication(self, gh_username, gh_token):
         """Authenticate to GitHub"""
