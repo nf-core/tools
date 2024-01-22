@@ -51,7 +51,6 @@ def files_exist(self):
         docs/output.md
         docs/README.md
         docs/usage.md
-        lib/nfcore_external_java_deps.jar
         lib/NfcoreTemplate.groovy
         lib/Utils.groovy
         lib/WorkflowMain.groovy
@@ -90,6 +89,7 @@ def files_exist(self):
         .yamllint.yml
         lib/Checks.groovy
         lib/Completion.groovy
+        lib/nfcore_external_java_deps.jar
         lib/Workflow.groovy
 
     Files that *should not* be present:

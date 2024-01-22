@@ -10,6 +10,9 @@
 - switch to new image syntax in readme ([#2645](https://github.com/nf-core/tools/pull/2645))
 - Add conda channel order to nextflow.config ([#2094](https://github.com/nf-core/tools/pull/2094))
 - Fix tyop in pipeline nextflow.config ([#2664](https://github.com/nf-core/tools/pull/2664))
+- Remove `nfcore_external_java_deps.jar` from lib directory in pipeline template ([#2675](https://github.com/nf-core/tools/pull/2675))
+
+### General
 
 ### Download
 
