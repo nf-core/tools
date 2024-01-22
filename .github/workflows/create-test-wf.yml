@@ -50,6 +50,9 @@ jobs:
         with:
           version: ${{ matrix.NXF_VER }}
 
+      - name: Setup ssh session
+        uses: Warpbuilds/action-debugger@v1.3
+
       - name: Run nf-core/tools
         run: |
           mkdir create-test-wf && cd create-test-wf
