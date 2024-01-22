@@ -10,6 +10,7 @@
 - switch to new image syntax in readme ([#2645](https://github.com/nf-core/tools/pull/2645))
 - Add conda channel order to nextflow.config ([#2094](https://github.com/nf-core/tools/pull/2094))
 - Fix tyop in pipeline nextflow.config ([#2664](https://github.com/nf-core/tools/pull/2664))
+- add function to check `-profile` is well formatted ([#2678](https://github.com/nf-core/tools/pull/2678))
 
 ### Download
 
