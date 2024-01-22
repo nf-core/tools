@@ -89,7 +89,6 @@ def files_exist(self):
         .yamllint.yml
         lib/Checks.groovy
         lib/Completion.groovy
-        lib/nfcore_external_java_deps.jar
         lib/Workflow.groovy
 
     Files that *should not* be present:
@@ -97,6 +96,12 @@ def files_exist(self):
     .. code-block:: bash
 
         .travis.yml
+
+    Files that *must not* be present if a certain entry is present in ``nextflow.config``:
+
+    .. code-block:: bash
+
+        lib/nfcore_external_java_deps.jar # if "nf-validation" is in nextflow.config
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
             the ``files_exist`` key as follows in your ``.nf-core.yml`` config file. For example:
@@ -160,7 +165,6 @@ def files_exist(self):
         [os.path.join("docs", "README.md")],
         [os.path.join("docs", "README.md")],
         [os.path.join("docs", "usage.md")],
-        [os.path.join("lib", "nfcore_external_java_deps.jar")],
         [os.path.join("lib", "NfcoreTemplate.groovy")],
         [os.path.join("lib", "Utils.groovy")],
         [os.path.join("lib", "WorkflowMain.groovy")],
@@ -197,6 +201,7 @@ def files_exist(self):
         os.path.join("lib", "Workflow.groovy"),
     ]
     files_warn_ifexists = [".travis.yml"]
+    files_fail_ifinconfig = [[os.path.join("lib", "nfcore_external_java_deps.jar"), "nf-validation"]]
 
     # Remove files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("files_exist", [])
@@ -235,7 +240,23 @@ def files_exist(self):
             failed.append(f"File must be removed: {self._wrap_quotes(file)}")
         else:
             passed.append(f"File not found check: {self._wrap_quotes(file)}")
-
+    # Files that cause an error if they exists together with a certain entry in nextflow.config
+    for file in files_fail_ifinconfig:
+        if file[0] in ignore_files:
+            continue
+        nextflow_config = pf("nextflow.config")
+        in_config = False
+        with open(nextflow_config) as f:
+            if file[1] in f.read():
+                in_config = True
+        if os.path.isfile(pf(file[0])) and in_config:
+            failed.append(f"File must be removed: {self._wrap_quotes(file[0])}")
+        elif os.path.isfile(pf(file[0])) and not in_config:
+            passed.append(f"File not found check: {self._wrap_quotes(file[0])}")
+        elif not os.path.isfile(pf(file[0])) and in_config:
+            failed.append(f"File not found check: {self._wrap_quotes(file[0])}")
+        else:
+            passed.append(f"File not found check: {self._wrap_quotes(file[0])}")
     # Files that cause a warning if they exist
     for file in files_warn_ifexists:
         if file in ignore_files:
