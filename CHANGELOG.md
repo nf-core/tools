@@ -15,6 +15,8 @@
 
 ### Linting
 
+- linting a pipeline also lints the installed subworkflows ([#2677](https://github.com/nf-core/tools/pull/2677))
+
 ### Modules
 
 - Fix linting of a pipeline with patched custom module ([#2669](https://github.com/nf-core/tools/pull/2669))
