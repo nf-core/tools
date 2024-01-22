@@ -20,6 +20,7 @@ from rich.table import Table
 
 import nf_core.lint_utils
 import nf_core.modules.lint
+import nf_core.subworkflows.lint
 import nf_core.utils
 from nf_core import __version__
 from nf_core.lint_utils import console
@@ -53,6 +54,8 @@ def run_linting(
 
     Returns:
         An object of type :class:`PipelineLint` that contains all the linting results.
+        An object of type :class:`ComponentLint` that contains all the linting results for the modules.
+        An object of type :class:`ComponentLint` that contains all the linting results for the subworkflows.
     """
 
     # Verify that the requested tests exist
@@ -87,6 +90,8 @@ def run_linting(
 
     # Create the modules lint object
     module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir, hide_progress=hide_progress)
+    # Create the subworkflows lint object
+    subworkflow_lint_obj = nf_core.subworkflows.lint.SubworkflowLint(pipeline_dir, hide_progress=hide_progress)
 
     # Verify that the pipeline is correctly configured and has  a modules.json file
     module_lint_obj.has_valid_directory()
@@ -98,10 +103,18 @@ def run_linting(
         module_lint_tests = list(
             set(key).intersection(set(nf_core.modules.lint.ModuleLint.get_all_module_lint_tests(is_pipeline=True)))
         )
+        # Select only the subworkflow lint tests
+        subworkflow_lint_tests = list(
+            set(key).intersection(
+                set(nf_core.subworkflows.lint.SubworkflowLint.get_all_subworkflow_lint_tests(is_pipeline=True))
+            )
+        )
     else:
         # If no key is supplied, run the default modules tests
         module_lint_tests = ("module_changes", "module_version")
+        subworkflow_lint_tests = ("subworkflow_changes", "subworkflow_version")
     module_lint_obj.filter_tests_by_key(module_lint_tests)
+    subworkflow_lint_obj.filter_tests_by_key(subworkflow_lint_tests)
 
     # Set up files for modules linting test
     module_lint_obj.set_up_pipeline_files()
@@ -119,11 +132,17 @@ def run_linting(
         module_lint_obj.lint_modules(module_lint_obj.all_local_components, local=True)
     if len(module_lint_obj.all_remote_components) > 0:
         module_lint_obj.lint_modules(module_lint_obj.all_remote_components, local=False)
+    # Run the subworkflows lint tests
+    if len(subworkflow_lint_obj.all_local_components) > 0:
+        subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_local_components, local=True)
+    if len(subworkflow_lint_obj.all_remote_components) > 0:
+        subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_remote_components, local=False)
 
     # Print the results
     lint_obj._print_results(show_passed)
     module_lint_obj._print_results(show_passed, sort_by=sort_by)
-    nf_core.lint_utils.print_joint_summary(lint_obj, module_lint_obj)
+    subworkflow_lint_obj._print_results(show_passed, sort_by=sort_by)
+    nf_core.lint_utils.print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj)
     nf_core.lint_utils.print_fixes(lint_obj)
 
     # Save results to Markdown file
@@ -142,7 +161,7 @@ def run_linting(
         if release_mode:
             log.info("Reminder: Lint tests were run in --release mode.")
 
-    return lint_obj, module_lint_obj
+    return lint_obj, module_lint_obj, subworkflow_lint_obj
 
 
 class PipelineLint(nf_core.utils.Pipeline):
