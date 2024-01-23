@@ -42,7 +42,7 @@ class PipelineSchema:
         self.schema_from_scratch = False
         self.no_prompts = False
         self.web_only = False
-        self.web_schema_build_url = "https://nf-co.re/pipeline_schema_builder"
+        self.web_schema_build_url = "https://oldsite.nf-co.re/pipeline_schema_builder"
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
 
@@ -633,7 +633,7 @@ class PipelineSchema:
                     # Extra help for people running offline
                     if "Could not connect" in e.args[0]:
                         log.info(
-                            "If you're working offline, now copy your schema ({}) and paste at https://nf-co.re/pipeline_schema_builder".format(
+                            "If you're working offline, now copy your schema ({}) and paste at https://oldsite.nf-co.re/pipeline_schema_builder".format(
                                 self.schema_filename
                             )
                         )
@@ -853,6 +853,7 @@ class PipelineSchema:
         """
         Send pipeline schema to web builder and wait for response
         """
+
         content = {
             "post_content": "json_schema",
             "api": "true",
@@ -861,6 +862,7 @@ class PipelineSchema:
             "schema": json.dumps(self.schema),
         }
         web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_build_url, content)
+
         try:
             if "api_url" not in web_response:
                 raise AssertionError('"api_url" not in web_response')
