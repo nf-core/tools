@@ -155,8 +155,8 @@ class Pipeline:
         self.git_sha = None
         self.minNextflowVersion = None
         self.wf_path = wf_path
-        self.pipeline_name = None
-        self.pipeline_prefix = None
+        self.pipeline_name = ""
+        self.pipeline_prefix = ""
         self.schema_obj = None
 
         try:
