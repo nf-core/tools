@@ -263,9 +263,10 @@ class TestCli(unittest.TestCase):
     @mock.patch("nf_core.lint.run_linting")
     def test_lint(self, mock_lint, mock_is_pipeline):
         """Test nf-core lint"""
-        mock_lint_results = (mock.MagicMock, mock.MagicMock)
+        mock_lint_results = (mock.MagicMock, mock.MagicMock, mock.MagicMock)
         mock_lint_results[0].failed = []
         mock_lint_results[1].failed = []
+        mock_lint_results[2].failed = []
         mock_lint.return_value = mock_lint_results
 
         temp_pipeline_dir = tempfile.NamedTemporaryFile()
