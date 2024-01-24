@@ -1,6 +1,7 @@
 import logging
 import os
 from pathlib import Path
+from typing import Union
 
 import questionary
 import yaml
@@ -65,7 +66,7 @@ class ComponentInfo(ComponentCommand):
         no_pull=False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
-        self.meta = None
+        self.meta = {}
         self.local_path = None
         self.remote_location = None
         self.local = None
@@ -162,7 +163,7 @@ class ComponentInfo(ComponentCommand):
 
         return self.generate_component_info_help()
 
-    def get_local_yaml(self):
+    def get_local_yaml(self) -> dict:
         """Attempt to get the meta.yml file from a locally installed module/subworkflow.
 
         Returns:
@@ -201,9 +202,9 @@ class ComponentInfo(ComponentCommand):
                         return yaml.safe_load(fh)
             log.debug(f"{self.component_type[:-1].title()} '{self.component}' meta.yml not found locally")
 
-        return None
+        return {}
 
-    def get_remote_yaml(self):
+    def get_remote_yaml(self) -> Union[dict, bool]:
         """Attempt to get the meta.yml file from a remote repo.
 
         Returns:
