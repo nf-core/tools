@@ -93,7 +93,7 @@ jobs:
 
       # Run nf-core linting
       - name: nf-core lint
-        run: nf-core --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned
+        run: nf-core --verbose --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned
         working-directory: create-lint-wf
 
       # Run the other nf-core commands
