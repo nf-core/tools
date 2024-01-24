@@ -4,7 +4,6 @@ Common utility functions for the nf-core python package.
 import concurrent.futures
 import datetime
 import errno
-import fnmatch
 import hashlib
 import io
 import json
@@ -1108,7 +1107,7 @@ def get_first_available_path(directory, paths):
     return None
 
 
-def sort_dictionary(d):
+def sort_dictionary(d: dict) -> dict:
     """Sorts a nested dictionary recursively"""
     result = {}
     for k, v in sorted(d.items()):
@@ -1253,17 +1252,13 @@ def set_wd(path: Path) -> Generator[None, None, None]:
 
 def get_wf_files(wf_path: Path):
     """Return a list of all files in a directory (ignores .gitigore files)"""
+    from git import InvalidGitRepositoryError, Repo
 
     wf_files = []
-
-    with open(Path(wf_path, ".gitignore")) as f:
-        lines = f.read().splitlines()
-    ignore = [line for line in lines if line and not line.startswith("#")]
-
-    for path in Path(wf_path).rglob("*"):
-        if any(fnmatch.fnmatch(str(path), pattern) for pattern in ignore):
-            continue
-        if path.is_file():
-            wf_files.append(str(path.relative_to(wf_path)))
+    try:
+        repo = Repo(wf_path)
+        wf_files = [str(f) for f in repo.git.ls_files().split("\n")]
+    except InvalidGitRepositoryError:
+        log.error(f"Could not find git repository at {wf_path}")
 
     return wf_files
