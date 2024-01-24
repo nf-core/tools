@@ -306,11 +306,12 @@ def fetch_wf_config(wf_path: Union[Path, str], cache_config=True) -> dict:
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
+    main_nf = None
     try:
-        main_nf = os.path.join(wf_path, "main.nf")
+        main_nf = Path(wf_path, "main.nf")
         with open(main_nf) as fh:
-            for line in fh:
-                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", line)
+            for main_nf_line in fh:
+                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", main_nf_line)
                 if match:
                     config[match.group(1)] = "null"
     except FileNotFoundError as e:
@@ -363,7 +364,7 @@ def setup_nfcore_dir():
         return True
 
 
-def setup_requests_cachedir():
+def setup_requests_cachedir() -> dict:
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
@@ -373,8 +374,7 @@ def setup_requests_cachedir():
     Also returns the config dict so that we can use the same setup with a Session.
     """
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = os.path.join(NFCORE_CACHE_DIR, f"cache_{pyversion}")
-
+    cachedir = setup_nfcore_cachedir(f"cache_{pyversion}")
     config = {
         "cache_name": os.path.join(cachedir, "github_info"),
         "expire_after": datetime.timedelta(hours=1),
@@ -382,14 +382,21 @@ def setup_requests_cachedir():
     }
 
     logging.getLogger("requests_cache").setLevel(logging.WARNING)
-    try:
-        if not os.path.exists(cachedir):
-            os.makedirs(cachedir)
-        requests_cache.install_cache(**config)
-    except PermissionError:
-        pass
-
     return config
+
+
+def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
+    """Sets up local caching for caching files between sessions."""
+
+    cachedir = Path(NFCORE_CACHE_DIR, cache_fn)
+
+    try:
+        if not Path(cachedir).exists():
+            Path(cachedir).mkdir(parents=True)
+    except PermissionError:
+        log.warn(f"Could not create cache directory: {cachedir}")
+
+    return cachedir
 
 
 def wait_cli_function(poll_func, refresh_per_second=20):
@@ -1257,6 +1264,6 @@ def get_wf_files(wf_path: Path):
         if any(fnmatch.fnmatch(str(path), pattern) for pattern in ignore):
             continue
         if path.is_file():
-            wf_files.append(str(path))
+            wf_files.append(str(path.relative_to(wf_path)))
 
     return wf_files

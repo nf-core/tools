@@ -52,6 +52,7 @@ click.rich_click.COMMAND_GROUPS = {
                 "bump-version",
                 "sync",
                 "rocrate",
+                "create-logo",
             ],
         },
     ],
@@ -358,7 +359,7 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     "--tower",
     is_flag=True,
     default=False,
-    help="Download for seqeralabs® Nextflow Tower",
+    help="Download for Seqera Platform (formerly Nextflow Tower)",
 )
 @click.option(
     "-d",
@@ -2015,6 +2016,62 @@ def bump_version(new_version, dir, nextflow):
         sys.exit(1)
 
 
+# nf-core create-logo
+@nf_core_cli.command("create-logo")
+@click.argument("logo-text", metavar="<logo_text>")
+@click.option("-d", "--dir", type=click.Path(), default=".", help="Directory to save the logo in.")
+@click.option(
+    "-n",
+    "--name",
+    type=str,
+    help="Name of the output file (with or without '.png' suffix).",
+)
+@click.option(
+    "--theme",
+    type=click.Choice(["light", "dark"]),
+    default="light",
+    help="Theme for the logo.",
+    show_default=True,
+)
+@click.option(
+    "--width",
+    type=int,
+    default=2300,
+    help="Width of the logo in pixels.",
+    show_default=True,
+)
+@click.option(
+    "--format",
+    type=click.Choice(["png", "svg"]),
+    default="png",
+    help="Image format of the logo, either PNG or SVG.",
+    show_default=True,
+)
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Overwrite any files if they already exist",
+)
+def logo(logo_text, dir, name, theme, width, format, force):
+    """
+    Generate a logo with the nf-core logo template.
+
+    This command generates an nf-core pipeline logo, using the supplied <logo_text>
+    """
+    from nf_core.create_logo import create_logo
+
+    try:
+        if dir == ".":
+            dir = Path.cwd()
+        logo_path = create_logo(logo_text, dir, name, theme, width, format, force)
+        log.info(f"Created logo: [magenta]{logo_path}[/]")
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
+
+
 # nf-core sync
 @nf_core_cli.command("sync")
 @click.option(
@@ -2089,13 +2146,13 @@ def rocrate(pipeline_dir, json, zip):
     """
     Make an Research Object Crate
     """
-    import nf_core.ro_crate
+    import nf_core.rocrate
 
     if json is None and zip is None:
         log.error("Either --json or --zip must be specified")
         sys.exit(1)
     pipeline_dir = Path(pipeline_dir)
-    rocrate_obj = nf_core.ro_crate.RoCrate(pipeline_dir)
+    rocrate_obj = nf_core.rocrate.RoCrate(pipeline_dir)
     rocrate_obj.create_ro_crate(pipeline_dir, metadata_fn=json, zip_fn=zip)
 
 

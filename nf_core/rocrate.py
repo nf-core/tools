@@ -3,6 +3,7 @@
 
 
 import logging
+import sys
 import tempfile
 from pathlib import Path
 from typing import Union
@@ -23,7 +24,12 @@ class RoCrate:
     def __init__(self, pipeline_dir: Path, version=""):
         from nf_core.utils import is_pipeline_directory
 
-        is_pipeline_directory(pipeline_dir)
+        try:
+            is_pipeline_directory(pipeline_dir)
+        except UserWarning as e:
+            log.error(e)
+            sys.exit(1)
+
         self.pipeline_dir = pipeline_dir
         self.version = version
         self.crate: rocrate.rocrate.ROCrate
@@ -139,7 +145,17 @@ class RoCrate:
                 log.debug(f"Adding workflow file: {fn}")
                 self.crate.add_file(fn)
 
-        # Add keywords from github topics
+        # get keywords from github topics
+        remote_workflows = requests.get("https://nf-co.re/pipelines.json").json()["remote_workflows"]
+        # go through all remote workflows and find the one that matches the pipeline name
+        topics = ["nf-core", "nextflow"]
+        for remote_wf in remote_workflows:
+            if remote_wf["name"] == self.pipeline_obj.pipeline_name.replace("nf-core/", ""):
+                topics = topics + remote_wf["topics"]
+                break
+
+        log.debug(f"Adding topics: {topics}")
+        wf_file.append_to("keywords", topics)
 
     def add_authors(self, wf_file):
         """
