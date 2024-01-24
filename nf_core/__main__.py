@@ -613,7 +613,10 @@ def lint(
             json,
             ctx.obj["hide_progress"],
         )
-        if len(lint_obj.failed) + len(module_lint_obj.failed) + len(subworkflow_lint_obj.failed) > 0:
+        swf_failed = 0
+        if subworkflow_lint_obj is not None:
+            swf_failed = len(subworkflow_lint_obj.failed)
+        if len(lint_obj.failed) + len(module_lint_obj.failed) + swf_failed > 0:
             sys.exit(1)
     except AssertionError as e:
         log.critical(e)

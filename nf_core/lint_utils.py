@@ -18,11 +18,18 @@ console = Console(force_terminal=nf_core.utils.rich_force_colors())
 
 def print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj):
     """Print a joint summary of the general pipe lint tests and the module and subworkflow lint tests"""
-    nbr_passed = len(lint_obj.passed) + len(module_lint_obj.passed) + len(subworkflow_lint_obj.passed)
+    swf_passed = 0
+    swf_warned = 0
+    swf_failed = 0
+    if subworkflow_lint_obj is not None:
+        swf_passed = len(subworkflow_lint_obj.passed)
+        swf_warned = len(subworkflow_lint_obj.warned)
+        swf_failed = len(subworkflow_lint_obj.failed)
+    nbr_passed = len(lint_obj.passed) + len(module_lint_obj.passed) + swf_passed
     nbr_ignored = len(lint_obj.ignored)
     nbr_fixed = len(lint_obj.fixed)
-    nbr_warned = len(lint_obj.warned) + len(module_lint_obj.warned) + len(subworkflow_lint_obj.warned)
-    nbr_failed = len(lint_obj.failed) + len(module_lint_obj.failed) + len(subworkflow_lint_obj.failed)
+    nbr_warned = len(lint_obj.warned) + len(module_lint_obj.warned) + swf_warned
+    nbr_failed = len(lint_obj.failed) + len(module_lint_obj.failed) + swf_failed
 
     summary_colour = "red" if nbr_failed > 0 else "green"
     table = Table(box=rich.box.ROUNDED, style=summary_colour)

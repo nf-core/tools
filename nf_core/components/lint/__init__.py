@@ -97,7 +97,9 @@ class ComponentLint(ComponentCommand):
                         )
                     )
             if not self.all_remote_components:
-                log.warning(f"No {self.component_type} from {self.modules_repo.remote_url} installed in pipeline.")
+                raise LookupError(
+                    f"No {self.component_type} from {self.modules_repo.remote_url} installed in pipeline."
+                )
             local_component_dir = Path(self.dir, self.component_type, "local")
             self.all_local_components = []
             if local_component_dir.exists():
