@@ -16,6 +16,7 @@
 ### Linting
 
 - linting a pipeline also lints the installed subworkflows ([#2677](https://github.com/nf-core/tools/pull/2677))
+- environment.yml name must be lowercase ([#2676](https://github.com/nf-core/tools/pull/2676))
 
 ### Modules
 
