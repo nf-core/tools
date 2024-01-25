@@ -1,11 +1,10 @@
 """Some tests covering the linting code.
 """
-import fnmatch
 import json
-import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 
 import yaml
 
@@ -25,11 +24,14 @@ class TestLint(unittest.TestCase):
         """
 
         self.tmp_dir = tempfile.mkdtemp()
-        self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
+        self.test_pipeline_dir = Path(self.tmp_dir, "nf-core-testpipeline")
         self.create_obj = nf_core.create.PipelineCreate(
             "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir, plain=True
         )
         self.create_obj.init_pipeline()
+
+        # Add a fake RO crate file
+        Path(self.test_pipeline_dir, "ro-crate-metadata.json").touch()
 
         # Base lint object on this directory
         self.lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
@@ -37,14 +39,14 @@ class TestLint(unittest.TestCase):
     def tearDown(self):
         """Clean up temporary files and folders"""
 
-        if os.path.exists(self.tmp_dir):
+        if Path(self.tmp_dir).exists():
             shutil.rmtree(self.tmp_dir)
 
     def _make_pipeline_copy(self):
         """Make a copy of the test pipeline that can be edited
 
         Returns: Path to new temp directory with pipeline"""
-        new_pipeline = os.path.join(self.tmp_dir, "nf-core-testpipeline-copy")
+        new_pipeline = Path(self.tmp_dir, "nf-core-testpipeline-copy")
         shutil.copytree(self.test_pipeline_dir, new_pipeline)
         return new_pipeline
 
@@ -70,7 +72,7 @@ class TestLint(unittest.TestCase):
         assert "version_consistency" in lint_obj.lint_tests
 
         # Tests that parent nf_core.utils.Pipeline class __init__() is working to find git hash
-        assert len(lint_obj.git_sha) > 0
+        assert len(lint_obj.git_sha or "") > 0
 
     def test_load_lint_config_not_found(self):
         """Try to load a linting config file that doesn't exist"""
@@ -86,7 +88,7 @@ class TestLint(unittest.TestCase):
 
         # Make a config file listing all test names
         config_dict = {"lint": {test_name: False for test_name in lint_obj.lint_tests}}
-        with open(os.path.join(new_pipeline, ".nf-core.yml"), "w") as fh:
+        with open(Path(new_pipeline, ".nf-core.yml"), "w") as fh:
             yaml.dump(config_dict, fh)
 
         # Load the new lint config file and check
@@ -130,7 +132,7 @@ class TestLint(unittest.TestCase):
         self.lint_obj.warned.append(("test_three", "This test gave a warning"))
 
         # Make a temp dir for the JSON output
-        json_fn = os.path.join(tmp_dir, "lint_results.json")
+        json_fn = Path(tmp_dir, "lint_results.json")
         self.lint_obj._save_json_results(json_fn)
 
         # Load created JSON file and check its contents
@@ -156,25 +158,23 @@ class TestLint(unittest.TestCase):
         """Check that we have .md files for all lint module code,
         and that there are no unexpected files (eg. deleted lint tests)"""
 
-        docs_basedir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "api", "_src", "pipeline_lint_tests"
-        )
+        docs_basedir = Path(Path(__file__).resolve().parent.parent.parent, "docs", "api", "_src", "pipeline_lint_tests")
 
         # Get list of existing .md files
-        existing_docs = []
-        for fn in os.listdir(docs_basedir):
-            if fnmatch.fnmatch(fn, "*.md") and not fnmatch.fnmatch(fn, "index.md"):
-                existing_docs.append(os.path.join(docs_basedir, fn))
+        existing_docs = list(docs_basedir.glob("*.md"))
+        existing_docs = [fn for fn in existing_docs if fn.name != "index.md"]
 
         # Check .md files against each test name
         lint_obj = nf_core.lint.PipelineLint("", True)
         for test_name in lint_obj.lint_tests:
-            fn = os.path.join(docs_basedir, f"{test_name}.md")
-            assert os.path.exists(fn), f"Could not find lint docs .md file: {fn}"
+            fn = docs_basedir / f"{test_name}.md"
+            assert fn.exists(), f"Could not find lint docs .md file: {fn}"
             existing_docs.remove(fn)
 
         # Check that we have no remaining .md files that we didn't expect
-        assert len(existing_docs) == 0, f"Unexpected lint docs .md files found: {', '.join(existing_docs)}"
+        assert (
+            len(existing_docs) == 0
+        ), f"Unexpected lint docs .md files found: {', '.join(str(fn) for fn in existing_docs)}"
 
     #######################
     # SPECIFIC LINT TESTS #
@@ -385,7 +385,7 @@ class TestLint(unittest.TestCase):
 #        """ Tests the conda environment config checks with a working example """
 #        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.files = ["environment.yml"]
-#        with open(os.path.join(PATH_WORKING_EXAMPLE, "environment.yml"), "r") as fh:
+#        with open(Path(PATH_WORKING_EXAMPLE, "environment.yml"), "r") as fh:
 #            lint_obj.conda_config = yaml.safe_load(fh)
 #        lint_obj.pipeline_name = "tools"
 #        lint_obj.config["manifest.version"] = "0.4"
@@ -397,7 +397,7 @@ class TestLint(unittest.TestCase):
 #        """ Tests the conda environment config fails with a bad example """
 #        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.files = ["environment.yml"]
-#        with open(os.path.join(PATH_WORKING_EXAMPLE, "environment.yml"), "r") as fh:
+#        with open(Path(PATH_WORKING_EXAMPLE, "environment.yml"), "r") as fh:
 #            lint_obj.conda_config = yaml.safe_load(fh)
 #        lint_obj.conda_config["dependencies"] = ["fastqc", "multiqc=0.9", "notapackaage=0.4"]
 #        lint_obj.pipeline_name = "not_tools"
@@ -429,7 +429,7 @@ class TestLint(unittest.TestCase):
 #        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.version = "1.11"
 #        lint_obj.files = ["environment.yml", "Dockerfile"]
-#        with open(os.path.join(PATH_WORKING_EXAMPLE, "Dockerfile"), "r") as fh:
+#        with open(Path(PATH_WORKING_EXAMPLE, "Dockerfile"), "r") as fh:
 #            lint_obj.dockerfile = fh.read().splitlines()
 #        lint_obj.conda_config["name"] = "nf-core-tools-0.4"
 #        lint_obj.check_conda_dockerfile()
