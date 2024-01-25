@@ -2152,7 +2152,7 @@ def rocrate(pipeline_dir, json_path, zip_path, pipeline_version):
     """
     Make an Research Object Crate
     """
-    import nf_core.rocrate
+    from nf_core.rocrate import RoCrate
 
     if json_path is None and zip_path is None:
         log.error("Either --json_path or --zip_path must be specified")
@@ -2164,7 +2164,7 @@ def rocrate(pipeline_dir, json_path, zip_path, pipeline_version):
         if zip_path is not None:
             zip_path = Path(zip_path)
         try:
-            rocrate_obj = nf_core.rocrate.RoCrate(pipeline_dir, pipeline_version)
+            rocrate_obj = RoCrate(pipeline_dir, pipeline_version)
             rocrate_obj.create_ro_crate(pipeline_dir, metadata_path=json_path, zip_path=zip_path)
         except (UserWarning, LookupError, FileNotFoundError) as e:
             log.error(e)

@@ -737,19 +737,19 @@ Supply this using the `--auth-token` flag.
 
 The [Research Object Crate (RO-Crate)](https://www.researchobject.org/ro-crate/) is a community-driven specification for packaging research data with associated metadata and their relationships. The RO-Crate metadata file is a JSON-LD file that describes the research data and its relationships. The RO-Crate metadata file can be used to generate a RO-Crate, which is a single file that contains the research data and its metadata. The RO-Crate can be used to share research data and its metadata with other researchers and to make research data FAIR (Findable, Accessible, Interoperable, and Reusable).
 
-The `nf-core crate` command creates a RO-Crate metadata file for a nf-core pipeline.
+The `nf-core rocrate` command creates a RO-Crate metadata file for a nf-core pipeline.
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
 -->
 
-![`nf-core crate`](docs/images/nf-core-crate.svg)
+![`nf-core rocrate`](docs/images/nf-core-rocrate.svg)
 
 > [!NOTE]
 > We make the following assumptions about the pipeline:
 >
 > - If the pipeline has one of the famous nf-core metro maps, we expect it to be a `.png` file stored in `docs/images`, with `metro_map` in its name, e.g., `nf-core-rnaseq_metro_map_grey.png`. This image will be set as the workflow graph in the RO-Crate.
-> - Based on the names in the `manifest.author` inside the `nextflow.config` file, we add the [ORCID](https://orcid.org/) IDs of the authors to the RO-Crate metadata file (based on very simple assumpations). Please double-check the ORCID IDs after creating the RO-Crate metadata file (see log) and add missing ORCID IDs manually.
+> - Based on the names in the `manifest.author` inside the `nextflow.config` file and the contributors to `main.nf` according to git, we add the [ORCID](https://orcid.org/) IDs of the authors to the RO-Crate metadata file (based on very simple assumpations). Please double-check the ORCID IDs after creating the RO-Crate metadata file (see log) and add missing ORCID IDs manually.
 
 ## Tools CLI TUI
 
