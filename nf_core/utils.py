@@ -159,8 +159,8 @@ class Pipeline:
             git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.wf_path).splitlines()
             self.files = []
             for fn in git_ls_files:
-                full_fn = os.path.join(self.wf_path, fn.decode("utf-8"))
-                if os.path.isfile(full_fn):
+                full_fn = Path(self.wf_path) / fn.decode("utf-8")
+                if full_fn.is_file():
                     self.files.append(full_fn)
                 else:
                     log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
@@ -170,7 +170,7 @@ class Pipeline:
             self.files = []
             for subdir, _, files in os.walk(self.wf_path):
                 for fn in files:
-                    self.files.append(os.path.join(subdir, fn))
+                    self.files.append(Path(subdir) / fn)
 
     def _load_pipeline_config(self):
         """Get the nextflow config for this pipeline
