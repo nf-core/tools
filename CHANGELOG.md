@@ -12,15 +12,17 @@
 - Fix tyop in pipeline nextflow.config ([#2664](https://github.com/nf-core/tools/pull/2664))
 - Remove `nfcore_external_java_deps.jar` from lib directory in pipeline template ([#2675](https://github.com/nf-core/tools/pull/2675))
 
-### General
-
 ### Download
 
 ### Linting
 
+- Fix linting of a pipeline with patched custom module ([#2669](https://github.com/nf-core/tools/pull/2669))
+- linting a pipeline also lints the installed subworkflows ([#2677](https://github.com/nf-core/tools/pull/2677))
+- environment.yml name must be lowercase ([#2676](https://github.com/nf-core/tools/pull/2676))
+
 ### Modules
 
-- Fix linting of a pipeline with patched custom module ([#2669](https://github.com/nf-core/tools/pull/2669))
+- Fix empty json output for `nf-core list local` ([#2668](https://github.com/nf-core/tools/pull/2668))
 
 ### Subworkflows
 
@@ -38,6 +40,7 @@
 - Add new subcommand: `nf-core logo-create` to output an nf-core logo for a pipeline (instead of going through the website) ([#2662](https://github.com/nf-core/tools/pull/2662))
 - Update actions/cache action to v4 ([#2666](https://github.com/nf-core/tools/pull/2666))
 - Remove redundanct v in pipeline version for emails ([#2667](https://github.com/nf-core/tools/pull/2667))
+- add function to check `-profile` is well formatted ([#2678](https://github.com/nf-core/tools/pull/2678))
 
 # [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
