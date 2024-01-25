@@ -112,6 +112,8 @@ jobs:
         run: |
           cd create-test-lint-wf
           nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
+          # fake ro-crate
+          touch nf-core-testpipeline.crate.json
 
       - name: run the pipeline
         run: |
