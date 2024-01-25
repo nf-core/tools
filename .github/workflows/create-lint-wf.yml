@@ -36,9 +36,15 @@ jobs:
       - uses: actions/checkout@v4
         name: Check out source-code repository
 
+      # Check if python is installed
+      - name: Check python version
+        id: python-version
+        run: python --version
+
       # Set up nf-core/tools
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
+        if: steps.python-version.outcome == 'failure'
         with:
           python-version: 3.11
           cache: pip
