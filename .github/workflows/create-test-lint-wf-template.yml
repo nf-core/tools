@@ -94,6 +94,7 @@ jobs:
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml ${{ matrix.TEMPLATE }}
           # fake ro-crate
           touch my-prefix-testpipeline/ro-crate-metadata.json
+          git commit -am "add ro-crate"
 
       - name: run the pipeline
         run: |

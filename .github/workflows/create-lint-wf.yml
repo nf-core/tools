@@ -60,8 +60,6 @@ jobs:
           mkdir create-lint-wf && cd create-lint-wf
           export NXF_WORK=$(pwd)
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
-          # fake ro-crate
-          touch nf-core-testpipeline/ro-crate-metadata.json
 
       # Try syncing it before we change anything
       - name: nf-core sync
@@ -91,6 +89,11 @@ jobs:
       # Replace zenodo.XXXXXX to pass readme linting
       - name: replace zenodo.XXXXXX
         run: find nf-core-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
+        working-directory: create-lint-wf
+
+      # Add empty ro-crate file
+      - name: add empty ro-crate file
+        run: touch nf-core-testpipeline/ro-crate-metadata.json
         working-directory: create-lint-wf
 
       # Run nf-core linting
