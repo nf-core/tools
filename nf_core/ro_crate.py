@@ -9,7 +9,7 @@ from typing import Union
 import requests
 import rocrate.model.entity
 import rocrate.rocrate
-from git import GitCommandError, InvalidGitRepositoryError, Repo
+from git import GitCommandError, InvalidGitRepositoryError
 from rocrate.model.person import Person
 
 from nf_core.utils import Pipeline
@@ -70,8 +70,7 @@ class RoCrate:
                 # using git checkout to get the requested version
                 log.info(f"Checking out pipeline version {self.version}")
                 try:
-                    self.repo = Repo(self.pipeline_dir)
-                    self.repo.git.checkout(self.version)
+                    self.pipeline_obj.repo.git.checkout(self.version)
                     self.pipeline_obj = Pipeline(str(self.pipeline_dir))
                     self.pipeline_obj._load()
                 except InvalidGitRepositoryError:
@@ -206,15 +205,36 @@ class RoCrate:
     def add_main_authors(self, wf_file):
         """
         Add workflow authors to the crate
-        NB: We don't have much metadata here - scope to improve in the future
         """
         # add author entity to crate
 
         try:
             authors = self.pipeline_obj.nf_config["manifest.author"].split(",")
+            # remove spaces
+            authors = [a.strip() for a in authors]
         except KeyError:
             log.error("No author field found in manifest of nextflow.config")
             return
+        # look at git contributors for author names
+        try:
+            contributors = set()
+
+            commits_touching_path = list(self.pipeline_obj.repo.iter_commits(paths="main.nf"))
+
+            for commit in commits_touching_path:
+                contributors.add(commit.author.name)
+            # exclude bots
+            contributors = [c for c in contributors if not c.endswith("bot") or c != "Travis CI User"]
+            # remove usernames (just keep names with spaces)
+            contributors = [c for c in contributors if " " in c]
+
+            log.debug(f"Found {len(contributors)} git authors")
+            for git_author in contributors:
+                if git_author not in authors:
+                    authors.append(git_author)
+        except AttributeError:
+            log.debug("Could not find git authors")
+
         for author in authors:
             log.debug(f"Adding author: {author}")
             orcid = get_orcid(author)
