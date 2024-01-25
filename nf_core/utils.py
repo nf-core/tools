@@ -159,8 +159,8 @@ class Pipeline:
         self.schema_obj = None
 
         try:
-            repo = git.Repo(self.wf_path)
-            self.git_sha = repo.head.object.hexsha
+            self.repo = git.Repo(self.wf_path)
+            self.git_sha = self.repo.head.object.hexsha
         except Exception:
             log.debug(f"Could not find git hash for pipeline: {self.wf_path}")
 
