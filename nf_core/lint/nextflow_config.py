@@ -125,8 +125,9 @@ def nextflow_config(self):
              .. code-block:: yaml
 
                 lint:
-                    config_defaults:
-                        - params.input
+                    nextflow_config:
+                        - config_defaults:
+                            - params.input
     """
     passed = []
     warned = []
@@ -362,7 +363,10 @@ def nextflow_config(self):
                 failed.append("nextflow.config does not contain configuration profile `test`")
 
     # Check that the default values in nextflow.config match the default values defined in the nextflow_schema.json
-    ignore_defaults = self.lint_config.get("config_defaults", [])  # Params to ignore
+    ignore_defaults = []
+    for item in ignore_configs:
+        if isinstance(item, dict) and "config_defaults" in item:
+            ignore_defaults = item.get("config_defaults", [])
     schema_path = Path(self.wf_path) / "nextflow_schema.json"
     schema = PipelineSchema()
     schema.schema_filename = schema_path
