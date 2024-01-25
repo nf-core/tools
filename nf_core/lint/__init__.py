@@ -382,7 +382,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
             console.print(
-                rich.panel.Panel(
+                Panel(
                     format_result(self.passed),
                     title=rf"[bold][✔] {len(self.passed)} Pipeline Test{_s(self.passed)} Passed",
                     title_align="left",
@@ -394,7 +394,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of fixed tests
         if len(self.fixed) > 0:
             console.print(
-                rich.panel.Panel(
+                Panel(
                     format_result(self.fixed),
                     title=rf"[bold][?] {len(self.fixed)} Pipeline Test{_s(self.fixed)} Fixed",
                     title_align="left",
@@ -406,7 +406,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of ignored tests
         if len(self.ignored) > 0:
             console.print(
-                rich.panel.Panel(
+                Panel(
                     format_result(self.ignored),
                     title=rf"[bold][?] {len(self.ignored)} Pipeline Test{_s(self.ignored)} Ignored",
                     title_align="left",
@@ -418,7 +418,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of warning tests
         if len(self.warned) > 0:
             console.print(
-                rich.panel.Panel(
+                Panel(
                     format_result(self.warned),
                     title=rf"[bold][!] {len(self.warned)} Pipeline Test Warning{_s(self.warned)}",
                     title_align="left",
@@ -430,7 +430,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of failing tests
         if len(self.failed) > 0:
             console.print(
-                rich.panel.Panel(
+                Panel(
                     format_result(self.failed),
                     title=rf"[bold][✗] {len(self.failed)} Pipeline Test{_s(self.failed)} Failed",
                     title_align="left",

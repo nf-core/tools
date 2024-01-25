@@ -19,7 +19,7 @@ from nf_core.utils import Pipeline
 log = logging.getLogger(__name__)
 
 
-class RoCrate:
+class ROCrate:
     """
     Class to generate an RO Crate for a pipeline
 

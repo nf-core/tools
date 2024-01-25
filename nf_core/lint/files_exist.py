@@ -257,7 +257,7 @@ def files_exist(self):
         else:
             passed.append(f"File not found check: {self._wrap_quotes(file)}")
 
-    # Files that are ignoed
+    # Files that are ignored
     for file in ignore_files:
         ignored.append(f"File is ignored: {self._wrap_quotes(file)}")
 
