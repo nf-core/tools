@@ -233,7 +233,7 @@ def files_exist(self):
             hint = ""
             for file_hint in files_hint:
                 if file_hint[0] == files:
-                    hint = +file_hint[1]
+                    hint = file_hint[1]
             warned.append(f"File not found: {self._wrap_quotes(files)} {hint}")
 
     # Files that cause an error if they exist
