@@ -40,14 +40,29 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     [
         ("qmark", "fg:ansiblue bold"),  # token in front of the question
         ("question", "bold"),  # question text
-        ("answer", "fg:ansigreen nobold bg:"),  # submitted answer text behind the question
-        ("pointer", "fg:ansiyellow bold"),  # pointer used in select and checkbox prompts
-        ("highlighted", "fg:ansiblue bold"),  # pointed-at choice in select and checkbox prompts
-        ("selected", "fg:ansiyellow noreverse bold"),  # style for a selected item of a checkbox
+        (
+            "answer",
+            "fg:ansigreen nobold bg:",
+        ),  # submitted answer text behind the question
+        (
+            "pointer",
+            "fg:ansiyellow bold",
+        ),  # pointer used in select and checkbox prompts
+        (
+            "highlighted",
+            "fg:ansiblue bold",
+        ),  # pointed-at choice in select and checkbox prompts
+        (
+            "selected",
+            "fg:ansiyellow noreverse bold",
+        ),  # style for a selected item of a checkbox
         ("separator", "fg:ansiblack"),  # separator in lists
         ("instruction", ""),  # user instructions for select, rawselect, checkbox
         ("text", ""),  # plain text
-        ("disabled", "fg:gray italic"),  # disabled choices for select and checkbox prompts
+        (
+            "disabled",
+            "fg:gray italic",
+        ),  # disabled choices for select and checkbox prompts
         ("choice-default", "fg:ansiblack"),
         ("choice-default-changed", "fg:ansiyellow"),
         ("choice-required", "fg:ansired"),
@@ -58,7 +73,10 @@ NFCORE_CACHE_DIR = os.path.join(
     os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME") or "", ".cache")),
     "nfcore",
 )
-NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
+NFCORE_DIR = os.path.join(
+    os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")),
+    "nfcore",
+)
 
 
 def fetch_remote_version(source_url):
@@ -67,7 +85,11 @@ def fetch_remote_version(source_url):
     return remote_version
 
 
-def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
+def check_if_outdated(
+    current_version=None,
+    remote_version=None,
+    source_url="https://nf-co.re/tools_version",
+):
     """
     Check if the current version of nf-core is outdated
     """
@@ -132,13 +154,13 @@ class Pipeline:
         self.git_sha = None
         self.minNextflowVersion = None
         self.wf_path = wf_path
-        self.pipeline_name = None
-        self.pipeline_prefix = None
+        self.pipeline_name = ""
+        self.pipeline_prefix = ""
         self.schema_obj = None
 
         try:
-            repo = git.Repo(self.wf_path)
-            self.git_sha = repo.head.object.hexsha
+            self.repo = git.Repo(self.wf_path)
+            self.git_sha = self.repo.head.object.hexsha
         except Exception:
             log.debug(f"Could not find git hash for pipeline: {self.wf_path}")
 
@@ -215,7 +237,7 @@ def is_pipeline_directory(wf_path):
             raise UserWarning(f"'{wf_path}' is not a pipeline - '{fn}' is missing")
 
 
-def fetch_wf_config(wf_path, cache_config=True):
+def fetch_wf_config(wf_path: Union[Path, str], cache_config=True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
 
@@ -228,20 +250,19 @@ def fetch_wf_config(wf_path, cache_config=True):
     """
 
     log.debug(f"Got '{wf_path}' as path")
-
+    wf_path = Path(wf_path)
     config = {}
     cache_fn = None
     cache_basedir = None
     cache_path = None
 
     # Nextflow home directory - use env var if set, or default to ~/.nextflow
-    nxf_home = os.environ.get("NXF_HOME", os.path.join(os.getenv("HOME"), ".nextflow"))
+    nxf_home = Path(os.environ.get("NXF_HOME", Path(os.getenv("HOME", ""), ".nextflow")))
 
     # Build a cache directory if we can
-    if os.path.isdir(nxf_home):
-        cache_basedir = os.path.join(nxf_home, "nf-core")
-        if not os.path.isdir(cache_basedir):
-            os.mkdir(cache_basedir)
+    if (nxf_home).is_dir():
+        cache_basedir = nxf_home / "nf-core"
+        cache_basedir.mkdir(parents=True, exist_ok=True)
 
     # If we're given a workflow object with a commit, see if we have a cached copy
     cache_fn = None
@@ -249,7 +270,7 @@ def fetch_wf_config(wf_path, cache_config=True):
     concat_hash = ""
     for fn in ["nextflow.config", "main.nf"]:
         try:
-            with open(os.path.join(wf_path, fn), "rb") as fh:
+            with open(Path(wf_path, fn), "rb") as fh:
                 concat_hash += hashlib.sha256(fh.read()).hexdigest()
         except FileNotFoundError:
             pass
@@ -259,8 +280,8 @@ def fetch_wf_config(wf_path, cache_config=True):
         cache_fn = f"wf-config-cache-{bighash[:25]}.json"
 
     if cache_basedir and cache_fn:
-        cache_path = os.path.join(cache_basedir, cache_fn)
-        if os.path.isfile(cache_path) and cache_config is True:
+        cache_path = Path(cache_basedir, cache_fn)
+        if cache_path.is_file() and cache_config is True:
             log.debug(f"Found a config cache, loading: {cache_path}")
             with open(cache_path) as fh:
                 try:
@@ -284,11 +305,12 @@ def fetch_wf_config(wf_path, cache_config=True):
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
+    main_nf = None
     try:
-        main_nf = os.path.join(wf_path, "main.nf")
+        main_nf = Path(wf_path, "main.nf")
         with open(main_nf) as fh:
-            for line in fh:
-                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", line)
+            for main_nf_line in fh:
+                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", main_nf_line)
                 if match:
                     config[match.group(1)] = "null"
     except FileNotFoundError as e:
@@ -414,6 +436,7 @@ def poll_nfcore_web_api(api_url, post_data=None):
             if post_data is None:
                 response = requests.get(api_url, headers={"Cache-Control": "no-cache"})
             else:
+                log.debug(f"requesting {api_url} with {post_data}")
                 response = requests.post(url=api_url, data=post_data)
         except requests.exceptions.Timeout:
             raise AssertionError(f"URL timed out: {api_url}")
@@ -489,7 +512,8 @@ class GitHubAPISession(requests_cache.CachedSession):
                 with open(gh_cli_config_fn) as fh:
                     gh_cli_config = yaml.safe_load(fh)
                     self.auth = requests.auth.HTTPBasicAuth(
-                        gh_cli_config["github.com"]["user"], gh_cli_config["github.com"]["oauth_token"]
+                        gh_cli_config["github.com"]["user"],
+                        gh_cli_config["github.com"]["oauth_token"],
                     )
                     self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
             except Exception:
@@ -754,12 +778,18 @@ def get_biocontainer_tag(package, version):
                         # Obtain version and build
                         match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
                         if match is not None:
-                            all_docker[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
+                            all_docker[match.group(1)] = {
+                                "date": get_tag_date(img["updated"]),
+                                "image": img,
+                            }
                     elif img["image_type"] == "Singularity":
                         # Obtain version and build
                         match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
                         if match is not None:
-                            all_singularity[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
+                            all_singularity[match.group(1)] = {
+                                "date": get_tag_date(img["updated"]),
+                                "image": img,
+                            }
                 # Obtain common builds from Docker and Singularity images
                 common_keys = list(all_docker.keys() & all_singularity.keys())
                 current_date = None
@@ -885,13 +915,19 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
     # Releases
     if len(wf_releases) > 0:
         for tag in map(lambda release: release.get("tag_name"), wf_releases):
-            tag_display = [("fg:ansiblue", f"{tag}  "), ("class:choice-default", "[release]")]
+            tag_display = [
+                ("fg:ansiblue", f"{tag}  "),
+                ("class:choice-default", "[release]"),
+            ]
             choices.append(questionary.Choice(title=tag_display, value=tag))
             tag_set.append(tag)
 
     # Branches
     for branch in wf_branches.keys():
-        branch_display = [("fg:ansiyellow", f"{branch}  "), ("class:choice-default", "[branch]")]
+        branch_display = [
+            ("fg:ansiyellow", f"{branch}  "),
+            ("class:choice-default", "[branch]"),
+        ]
         choices.append(questionary.Choice(title=branch_display, value=branch))
         tag_set.append(branch)
 
@@ -922,7 +958,8 @@ class SingularityCacheFilePathValidator(questionary.Validator):
                 return True
             else:
                 raise questionary.ValidationError(
-                    message="Invalid remote cache index file", cursor_position=len(value.text)
+                    message="Invalid remote cache index file",
+                    cursor_position=len(value.text),
                 )
         else:
             return True
@@ -952,7 +989,13 @@ def get_repo_releases_branches(pipeline, wfs):
             pipeline = wf.full_name
 
             # Store releases and stop loop
-            wf_releases = list(sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
+            wf_releases = list(
+                sorted(
+                    wf.releases,
+                    key=lambda k: k.get("published_at_timestamp", 0),
+                    reverse=True,
+                )
+            )
             break
 
     # Arbitrary GitHub repo
@@ -972,7 +1015,13 @@ def get_repo_releases_branches(pipeline, wfs):
                     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
             except AttributeError:
                 # Success! We have a list, which doesn't work with .get() which is looking for a dict key
-                wf_releases = list(sorted(rel_r.json(), key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
+                wf_releases = list(
+                    sorted(
+                        rel_r.json(),
+                        key=lambda k: k.get("published_at_timestamp", 0),
+                        reverse=True,
+                    )
+                )
 
                 # Get release tag commit hashes
                 if len(wf_releases) > 0:
@@ -1058,7 +1107,7 @@ def get_first_available_path(directory, paths):
     return None
 
 
-def sort_dictionary(d):
+def sort_dictionary(d: dict) -> dict:
     """Sorts a nested dictionary recursively"""
     result = {}
     for k, v in sorted(d.items()):
@@ -1199,3 +1248,17 @@ def set_wd(path: Path) -> Generator[None, None, None]:
         yield
     finally:
         os.chdir(start_wd)
+
+
+def get_wf_files(wf_path: Path):
+    """Return a list of all files in a directory (ignores .gitigore files)"""
+    from git import InvalidGitRepositoryError, Repo
+
+    wf_files = []
+    try:
+        repo = Repo(wf_path)
+        wf_files = [str(f) for f in repo.git.ls_files().split("\n")]
+    except InvalidGitRepositoryError:
+        log.error(f"Could not find git repository at {wf_path}")
+
+    return wf_files

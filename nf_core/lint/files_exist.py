@@ -71,6 +71,7 @@ def files_exist(self):
         .github/workflows/awsfulltest.yml
         lib/WorkflowPIPELINE.groovy
         pyproject.toml
+        ro-crate-metadata.json
 
     Files that *must not* be present, due to being renamed or removed in the template:
 
@@ -176,6 +177,7 @@ def files_exist(self):
         [os.path.join("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy")],
         ["modules.json"],
         ["pyproject.toml"],
+        ["ro-crate-metadata.json"],
     ]
 
     # List of strings. Fails / warns if any of the strings exist.
@@ -198,6 +200,12 @@ def files_exist(self):
     ]
     files_warn_ifexists = [".travis.yml"]
 
+    files_hint = [
+        [
+            ["ro-crate-metadata.json"],
+            ". Run `nf-core rocrate` to generate this file. Read more about RO-Crates in the [nf-core/tools docs](https://nf-co.re/tools#create-a-ro-crate-metadata-file).",
+        ],
+    ]
     # Remove files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("files_exist", [])
 
@@ -225,7 +233,11 @@ def files_exist(self):
         if any([os.path.isfile(pf(f)) for f in files]):
             passed.append(f"File found: {self._wrap_quotes(files)}")
         else:
-            warned.append(f"File not found: {self._wrap_quotes(files)}")
+            hint = ""
+            for file_hint in files_hint:
+                if file_hint[0] == files:
+                    hint = file_hint[1]
+            warned.append(f"File not found: {self._wrap_quotes(files)}{hint}")
 
     # Files that cause an error if they exist
     for file in files_fail_ifexists:
@@ -245,7 +257,7 @@ def files_exist(self):
         else:
             passed.append(f"File not found check: {self._wrap_quotes(file)}")
 
-    # Files that are ignoed
+    # Files that are ignored
     for file in ignore_files:
         ignored.append(f"File is ignored: {self._wrap_quotes(file)}")
 

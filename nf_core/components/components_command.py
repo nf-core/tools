@@ -246,10 +246,13 @@ class ComponentCommand:
                 modules_json = ModulesJson(self.dir)
                 modules_json.load()
                 if modules_json.has_git_url_and_modules():
-                    modules_json.modules_json["repos"][self.modules_repo.remote_url]["modules"][
-                        self.modules_repo.repo_path
-                    ][module_name]["patch"] = str(patch_path.relative_to(Path(self.dir).resolve()))
-                modules_json.dump()
+                    if modules_json.modules_json is not None:
+                        modules_json.modules_json["repos"][self.modules_repo.remote_url]["modules"][
+                            self.modules_repo.repo_path
+                        ][module_name]["patch"] = str(patch_path.relative_to(Path(self.dir).resolve()))
+                        modules_json.dump()
+                    else:
+                        log.error("Could not update modules.json file.")
 
     def check_if_in_include_stmts(self, component_path: str) -> Dict[str, List[Dict[str, Union[int, str]]]]:
         """

@@ -49,9 +49,10 @@ click.rich_click.COMMAND_GROUPS = {
                 "modules",
                 "subworkflows",
                 "schema",
-                "create-logo",
                 "bump-version",
                 "sync",
+                "rocrate",
+                "create-logo",
             ],
         },
     ],
@@ -1858,7 +1859,7 @@ def validate(pipeline, params):
 @click.option(
     "--url",
     type=str,
-    default="https://nf-co.re/pipeline_schema_builder",
+    default="https://oldsite.nf-co.re/pipeline_schema_builder",
     help="Customise the builder URL (for development work)",
 )
 def build(dir, no_prompts, web_only, url):
@@ -2125,6 +2126,52 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     except (SyncExceptionError, PullRequestExceptionError) as e:
         log.error(e)
         sys.exit(1)
+
+
+# nf-core rocrate
+@nf_core_cli.command("rocrate")
+@click.argument(
+    "pipeline_dir",
+    type=click.Path(exists=True),
+    default=Path.cwd(),
+    required=True,
+    metavar="<pipeline directory>",
+)
+@click.option(
+    "-j",
+    "--json_path",
+    default=Path.cwd(),
+    type=str,
+    help="Path to save RO Crate metadata json file to",
+)
+@click.option("-z", "--zip_path", type=str, help="Path to save RO Crate zip file to")
+@click.option(
+    "-pv",
+    "--pipeline_version",
+    type=str,
+    help="Version of pipeline to use for RO Crate",
+)
+def rocrate(pipeline_dir, json_path, zip_path, pipeline_version):
+    """
+    Make an Research Object Crate
+    """
+    from nf_core.rocrate import ROCrate
+
+    if json_path is None and zip_path is None:
+        log.error("Either `--json_path` or `--zip_path` must be specified.")
+        sys.exit(1)
+    else:
+        pipeline_dir = Path(pipeline_dir)
+        if json_path is not None:
+            json_path = Path(json_path)
+        if zip_path is not None:
+            zip_path = Path(zip_path)
+        try:
+            rocrate_obj = ROCrate(pipeline_dir, pipeline_version)
+            rocrate_obj.create_ro_crate(pipeline_dir, metadata_path=json_path, zip_path=zip_path)
+        except (UserWarning, LookupError, FileNotFoundError) as e:
+            log.error(e)
+            sys.exit(1)
 
 
 # Main script is being run - launch the CLI
