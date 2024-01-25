@@ -91,11 +91,11 @@ def test_default_values_fail(self):
     result = lint_obj.nextflow_config()
     assert len(result["failed"]) == 2
     assert (
-        "Config default value incorrect: `params.max_cpus` is set as `16` in `nextflow_schema.json` but is set as `0` in `nextflow.config`."
+        "Config default value incorrect: `params.max_cpus` is set as `16` in `nextflow_schema.json` but is `0` in `nextflow.config`."
         in result["failed"]
     )
     assert (
-        "Config default value incorrect: `params.max_memory` is set as `18.GB` in `nextflow_schema.json` but is set as `128.GB` in `nextflow.config`."
+        "Config default value incorrect: `params.max_memory` is set as `18.GB` in `nextflow_schema.json` but is `128.GB` in `nextflow.config`."
         in result["failed"]
     )
 

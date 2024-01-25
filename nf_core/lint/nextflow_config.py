@@ -120,7 +120,7 @@ def nextflow_config(self):
 
     .. tip:: You can choose to ignore tests for the default value of an specific parameter
              by creating a file called ``.nf-core.yml`` in the root of your pipeline and creating
-             a list the config parameters that should be ignored. For example:
+             a list the config parameters that should be ignored. For example to ignore the default value for the input parameter:
 
              .. code-block:: yaml
 
@@ -391,7 +391,7 @@ def nextflow_config(self):
                 passed.append(f"Config default value correct: {param}")
             else:
                 failed.append(
-                    f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is set as {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
+                    f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
                 )
         else:
             failed.append(
