@@ -32,6 +32,7 @@ A python package with helper tools for the nf-core community.
 - [`nf-core schema` - Work with pipeline schema files](#pipeline-schema)
 - [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
 - [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
+- [`nf-core rocrate` - Create a Research Object (RO) crate metadata file](#create-a-ro-crate-metadata-file)
 - [`nf-core tui` - Explore the nf-core command line graphically](#tools-cli-tui)
 - [`nf-core modules` - commands for dealing with DSL2 modules](#modules)
 
@@ -731,6 +732,24 @@ The GitHub username and repository name will be fetched from the remote url (see
 To create the pull request, a personal access token is required for API authentication.
 These can be created at [https://github.com/settings/tokens](https://github.com/settings/tokens).
 Supply this using the `--auth-token` flag.
+
+## Create a RO-Crate Metadata File
+
+The [Research Object Crate (RO-Crate)](https://www.researchobject.org/ro-crate/) is a community-driven specification for packaging research data with associated metadata and their relationships. The RO-Crate metadata file is a JSON-LD file that describes the research data and its relationships. The RO-Crate metadata file can be used to generate a RO-Crate, which is a single file that contains the research data and its metadata. The RO-Crate can be used to share research data and its metadata with other researchers and to make research data FAIR (Findable, Accessible, Interoperable, and Reusable).
+
+The `nf-core crate` command creates a RO-Crate metadata file for a nf-core pipeline.
+
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+-->
+
+![`nf-core crate`](docs/images/nf-core-crate.svg)
+
+> [!NOTE]
+> We make the following assumptions about the pipeline:
+>
+> - If the pipeline has one of the famous nf-core metro maps, we assume that it is located in `docs/images` and contains `metro-map` in its filename. This will be used as the workflow graph in the RO-Crate.
+> - Based on the names in the `manifest.author` inside the `nextflow.config` file, we add the [ORCID](https://orcid.org/) IDs of the authors to the RO-Crate metadata file (based on very simple assumpations). Please double check the ORCID IDs after creating the RO-Crate metadata file (see log) and add missing ORCID IDs manually.
 
 ## Tools CLI TUI
 
