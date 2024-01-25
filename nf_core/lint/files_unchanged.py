@@ -1,8 +1,9 @@
 import filecmp
 import logging
-import os
 import shutil
 import tempfile
+from pathlib import Path
+from typing import Union
 
 import yaml
 
@@ -90,29 +91,29 @@ def files_unchanged(self):
         [".prettierrc.yml"],
         ["CODE_OF_CONDUCT.md"],
         ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
-        [os.path.join(".github", ".dockstore.yml")],
-        [os.path.join(".github", "CONTRIBUTING.md")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
-        [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
-        [os.path.join(".github", "workflows", "branch.yml")],
-        [os.path.join(".github", "workflows", "linting_comment.yml")],
-        [os.path.join(".github", "workflows", "linting.yml")],
-        [os.path.join("assets", "email_template.html")],
-        [os.path.join("assets", "email_template.txt")],
-        [os.path.join("assets", "sendmail_template.txt")],
-        [os.path.join("assets", f"nf-core-{short_name}_logo_light.png")],
-        [os.path.join("docs", "images", f"nf-core-{short_name}_logo_light.png")],
-        [os.path.join("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
-        [os.path.join("docs", "README.md")],
-        [os.path.join("lib", "NfcoreTemplate.groovy")],
+        [Path(".github", ".dockstore.yml")],
+        [Path(".github", "CONTRIBUTING.md")],
+        [Path(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
+        [Path(".github", "ISSUE_TEMPLATE", "config.yml")],
+        [Path(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
+        [Path(".github", "PULL_REQUEST_TEMPLATE.md")],
+        [Path(".github", "workflows", "branch.yml")],
+        [Path(".github", "workflows", "linting_comment.yml")],
+        [Path(".github", "workflows", "linting.yml")],
+        [Path("assets", "email_template.html")],
+        [Path("assets", "email_template.txt")],
+        [Path("assets", "sendmail_template.txt")],
+        [Path("assets", f"nf-core-{short_name}_logo_light.png")],
+        [Path("docs", "images", f"nf-core-{short_name}_logo_light.png")],
+        [Path("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
+        [Path("docs", "README.md")],
+        [Path("lib", "NfcoreTemplate.groovy")],
     ]
     files_partial = [
         [".gitignore", ".prettierignore", "pyproject.toml"],
     ]
     files_conditional = [
-        [os.path.join("lib", "nfcore_external_java_deps.jar"), {"plugins": "nf_validation"}],
+        [Path("lib", "nfcore_external_java_deps.jar"), {"plugins": "nf_validation"}],
     ]
 
     # Only show error messages from pipeline creation
@@ -129,24 +130,24 @@ def files_unchanged(self):
         "prefix": prefix,
     }
 
-    template_yaml_path = os.path.join(tmp_dir, "template.yaml")
+    template_yaml_path = Path(tmp_dir, "template.yaml")
     with open(template_yaml_path, "w") as fh:
         yaml.dump(template_yaml, fh, default_flow_style=False)
 
-    test_pipeline_dir = os.path.join(tmp_dir, f"{prefix}-{short_name}")
+    test_pipeline_dir = Path(tmp_dir, f"{prefix}-{short_name}")
     create_obj = nf_core.create.PipelineCreate(
         None, None, None, no_git=True, outdir=test_pipeline_dir, template_yaml_path=template_yaml_path
     )
     create_obj.init_pipeline()
 
     # Helper functions for file paths
-    def _pf(file_path):
+    def _pf(file_path: Union[str, Path]) -> Path:
         """Helper function - get file path for pipeline file"""
-        return os.path.join(self.wf_path, file_path)
+        return Path(self.wf_path, file_path)
 
-    def _tf(file_path):
+    def _tf(file_path: Union[str, Path]) -> Path:
         """Helper function - get file path for template file"""
-        return os.path.join(test_pipeline_dir, file_path)
+        return Path(test_pipeline_dir, file_path)
 
     # Files that must be completely unchanged from template
     for files in files_exact:
@@ -156,7 +157,7 @@ def files_unchanged(self):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
-        elif not any([os.path.isfile(_pf(f)) for f in files]):
+        elif not any([_pf(f).is_file() for f in files]):
             ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file has an identical match
@@ -185,7 +186,7 @@ def files_unchanged(self):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
-        elif not any([os.path.isfile(_pf(f)) for f in files]):
+        elif not any([_pf(f).is_file() for f in files]):
             ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file contains the template file contents
@@ -217,12 +218,12 @@ def files_unchanged(self):
     for files in files_conditional:
         # Ignore if file specified in linting config
         ignore_files = self.lint_config.get("files_unchanged", [])
-        if any([f in ignore_files for f in files]):
+        if any([files[0] in ignore_files]):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
-        elif not any([os.path.isfile(_pf(f)) for f in files]):
-            ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
+        elif not any([_pf(files[0]).is_file()]):
+            ignored.append(f"File does not exist: {self._wrap_quotes(files[0])}")
 
         # Check that the file has an identical match
         else:
