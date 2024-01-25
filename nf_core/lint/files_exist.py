@@ -201,7 +201,7 @@ def files_exist(self):
     files_warn_ifexists = [".travis.yml"]
 
     files_hint = [
-        [["ro-crate-metadata.json"], "Run `nf-core rocrate to generate this file."],
+        [["ro-crate-metadata.json"], "Run `nf-core rocrate` to generate this file."],
     ]
     # Remove files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("files_exist", [])

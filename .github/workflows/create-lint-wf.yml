@@ -60,6 +60,8 @@ jobs:
           mkdir create-lint-wf && cd create-lint-wf
           export NXF_WORK=$(pwd)
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
+          # fake ro-crate
+          touch nf-core-testpipeline/nf-core-testpipeline.crate.json
 
       # Try syncing it before we change anything
       - name: nf-core sync
