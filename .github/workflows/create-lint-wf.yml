@@ -61,7 +61,7 @@ jobs:
           export NXF_WORK=$(pwd)
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
           # fake ro-crate
-          touch ro-crate-metadata.json
+          touch nf-core-testpipeline/ro-crate-metadata.json
 
       # Try syncing it before we change anything
       - name: nf-core sync
