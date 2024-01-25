@@ -40,15 +40,15 @@ class RoCrate:
         setup_requests_cachedir()
 
     def create_ro_crate(
-        self, outdir: Path, metadata_fn: Union[str, None, Path] = None, zip_fn: Union[str, None] = None
+        self, outdir: Path, metadata_path: Union[None, Path] = None, zip_path: Union[None, Path] = None
     ) -> None:
         """
         Create an RO Crate for a pipeline
 
         Args:
             outdir (Path): Path to the output directory
-            metadata_fn (str): Filename for the metadata file
-            zip_fn (str): Filename for the zip file
+            metadata_path (Path): Path to the metadata file
+            zip_path (Path): Path to the zip file
 
         """
         import os
@@ -81,26 +81,29 @@ class RoCrate:
                     log.error(f"Could not checkout version {self.version}")
                     sys.exit(1)
 
-        try:
-            self.make_workflow_ro_crate()
-        except Exception as e:
-            log.error(e)
-            sys.exit(1)
+        self.make_workflow_ro_crate()
 
         # Save just the JSON metadata file
-        if metadata_fn is not None:
-            log.info(f"Saving metadata file '{metadata_fn}'")
+        if metadata_path is not None:
+            log.info(f"Saving metadata file '{metadata_path}'")
             # Save the crate to a temporary directory
             tmpdir = Path(tempfile.mkdtemp(), "wf")
             self.crate.write(tmpdir)
             # Now save just the JSON file
             crate_json_fn = Path(tmpdir, "ro-crate-metadata.json")
-            crate_json_fn.rename(metadata_fn)
+            if metadata_path.name == "ro-crate-metadata.json":
+                crate_json_fn.rename(metadata_path)
+            else:
+                crate_json_fn.rename(metadata_path / "ro-crate-metadata.json")
 
         # Save the whole crate zip file
-        if zip_fn is not None:
-            log.info(f"Saving zip file '{zip_fn}'")
-            self.crate.write_zip(zip_fn)
+        if zip_path is not None:
+            if zip_path.name == "ro-crate.crate.zip":
+                log.info(f"Saving zip file '{zip_path}'")
+                self.crate.write_zip(zip_path)
+            else:
+                log.info(f"Saving zip file '{zip_path}/ro-crate.crate.zip;")
+                self.crate.write_zip(zip_path / "ro-crate.crate.zip")
 
         # Change back to the original directory
         os.chdir(current_path)
@@ -108,9 +111,6 @@ class RoCrate:
     def make_workflow_ro_crate(self) -> None:
         """
         Create an RO Crate for a pipeline
-
-        Args:
-            path (Path): Path to the pipeline directory
         """
         if self.pipeline_obj is None:
             raise ValueError("Pipeline object not loaded")
@@ -153,8 +153,18 @@ class RoCrate:
             self.crate.description = readme.read_text()
         except FileNotFoundError:
             log.error(f"Could not find README.md in {self.pipeline_dir}")
-
-        self.crate.license = "MIT"
+        # get license from LICENSE file
+        license_file = Path("LICENSE")
+        try:
+            license = license_file.read_text()
+            if license.startswith("MIT"):
+                self.crate.license = "MIT"
+            else:
+                # prompt for license
+                log.info("Could not determine license from LICENSE file")
+                self.crate.license = input("Please enter the license for this pipeline: ")
+        except FileNotFoundError:
+            log.error(f"Could not find LICENSE file in {self.pipeline_dir}")
 
         # add doi as identifier
         self.crate.name = f'Research Object Crate for {self.pipeline_obj.nf_config.get("manifest.name")}'
@@ -290,4 +300,5 @@ def get_orcid(name: str) -> Union[str, None]:
             log.debug(f"No exact ORCID found for {name}. See {response.url}")
             return None
     else:
-        return f"API request unsuccessful. Status code: {response.status_code}"
+        log.info(f"API request to ORCID unsuccessful. Status code: {response.status_code}")
+        return None
