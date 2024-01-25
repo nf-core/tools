@@ -2136,24 +2136,39 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
 )
 @click.option(
     "-j",
-    "--json",
-    default="ro-crate-metadata.json",
+    "--json_path",
+    default=Path.cwd(),
     type=str,
     help="Path to save RO Crate metadata json",
 )
-@click.option("-z", "--zip", type=str, help="Path to save RO Crate zip")
-def rocrate(pipeline_dir, json, zip):
+@click.option("-z", "--zip_path", type=str, help="Path to save RO Crate zip")
+@click.option(
+    "-pv",
+    "--pipeline_version",
+    type=str,
+    help="Version of pipeline to use for RO Crate",
+)
+def rocrate(pipeline_dir, json_path, zip_path, pipeline_version):
     """
     Make an Research Object Crate
     """
     import nf_core.rocrate
 
-    if json is None and zip is None:
-        log.error("Either --json or --zip must be specified")
+    if json_path is None and zip_path is None:
+        log.error("Either --json_path or --zip_path must be specified")
         sys.exit(1)
-    pipeline_dir = Path(pipeline_dir)
-    rocrate_obj = nf_core.rocrate.RoCrate(pipeline_dir)
-    rocrate_obj.create_ro_crate(pipeline_dir, metadata_fn=json, zip_fn=zip)
+    else:
+        pipeline_dir = Path(pipeline_dir)
+        if json_path is not None:
+            json_path = Path(json_path)
+        if zip_path is not None:
+            zip_path = Path(zip_path)
+        try:
+            rocrate_obj = nf_core.rocrate.RoCrate(pipeline_dir, pipeline_version)
+            rocrate_obj.create_ro_crate(pipeline_dir, metadata_path=json_path, zip_path=zip_path)
+        except (UserWarning, LookupError, FileNotFoundError) as e:
+            log.error(e)
+            sys.exit(1)
 
 
 # Main script is being run - launch the CLI

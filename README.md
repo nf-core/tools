@@ -748,8 +748,8 @@ working_dir: tmp/nf-core-nextbigthing
 > [!NOTE]
 > We make the following assumptions about the pipeline:
 >
-> - If the pipeline has one of the famous nf-core metro maps, we assume that it is located in `docs/images` and contains `metro-map` in its filename. This will be used as the workflow graph in the RO-Crate.
-> - Based on the names in the `manifest.author` inside the `nextflow.config` file, we add the [ORCID](https://orcid.org/) IDs of the authors to the RO-Crate metadata file (based on very simple assumpations). Please double check the ORCID IDs after creating the RO-Crate metadata file (see log) and add missing ORCID IDs manually.
+> - If the pipeline has one of the famous nf-core metro maps, we expect it to be a `.png` file stored in `docs/images`, with `metro_map` in its name, e.g., `nf-core-rnaseq_metro_map_grey.png`. This image will be set as the workflow graph in the RO-Crate.
+> - Based on the names in the `manifest.author` inside the `nextflow.config` file, we add the [ORCID](https://orcid.org/) IDs of the authors to the RO-Crate metadata file (based on very simple assumpations). Please double-check the ORCID IDs after creating the RO-Crate metadata file (see log) and add missing ORCID IDs manually.
 
 ## Tools CLI TUI
 
