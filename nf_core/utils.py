@@ -420,11 +420,14 @@ def poll_nfcore_web_api(api_url, post_data=None):
         except requests.exceptions.ConnectionError:
             raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
-            if response.status_code != 200:
+            if response.status_code != 200 and response.status_code != 301:
                 log.debug(f"Response content:\n{response.content}")
                 raise AssertionError(
                     f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )
+            # follow redirects
+            if response.status_code == 301:
+                return poll_nfcore_web_api(response.headers["Location"], post_data)
             try:
                 web_response = json.loads(response.content)
                 if "status" not in web_response:

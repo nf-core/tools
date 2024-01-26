@@ -13,6 +13,17 @@ def merge_markers(self):
     This test looks for remaining merge markers in the code, e.g.:
     >>>>>>> or <<<<<<<
 
+    .. tip:: You can choose to ignore this test tests by creating a file called
+        ``.nf-core.yml`` in the root of your pipeline and setting the test to false:
+        .. code-block:: yaml
+            lint:
+                merge_markers: False
+        To disable this test only for specific files, you can specify a list of file paths to ignore.
+        For example, to ignore a pdf you added to the docs:
+        .. code-block:: yaml
+            lint:
+                merge_markers:
+                    - docs/my_pdf.pdf
     """
     passed = []
     failed = []
