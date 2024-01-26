@@ -120,8 +120,10 @@ def run_linting(
     if subworkflow_lint_obj is not None:
         subworkflow_lint_obj.filter_tests_by_key(subworkflow_lint_tests)
 
-    # Set up files for modules linting test
+    # Set up files for component linting test
     module_lint_obj.set_up_pipeline_files()
+    if subworkflow_lint_obj is not None:
+        subworkflow_lint_obj.set_up_pipeline_files()
 
     # Run the pipeline linting tests
     try:
