@@ -138,7 +138,6 @@ def files_exist(self):
         ["CHANGELOG.md"],
         ["CITATIONS.md"],
         ["CODE_OF_CONDUCT.md"],
-        ["CODE_OF_CONDUCT.md"],
         ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
         ["nextflow_schema.json"],
         ["nextflow.config"],
@@ -206,6 +205,7 @@ def files_exist(self):
 
     # Remove files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("files_exist", [])
+    log.info(f"Files to ignore: {ignore_files}")
 
     def pf(file_path: Union[str, Path]) -> Path:
         return Path(self.wf_path, file_path)
@@ -217,7 +217,8 @@ def files_exist(self):
 
     # Files that cause an error if they don't exist
     for files in files_fail:
-        if any([f in ignore_files for f in files]):
+        print(files)
+        if any([str(f) in ignore_files for f in files]):
             continue
         if any([pf(f).is_file() for f in files]):
             passed.append(f"File found: {self._wrap_quotes(files)}")
@@ -226,7 +227,7 @@ def files_exist(self):
 
     # Files that cause a warning if they don't exist
     for files in files_warn:
-        if any([f in ignore_files for f in files]):
+        if any([str(f) in ignore_files for f in files]):
             continue
         if any([pf(f).is_file() for f in files]):
             passed.append(f"File found: {self._wrap_quotes(files)}")
@@ -243,7 +244,7 @@ def files_exist(self):
             passed.append(f"File not found check: {self._wrap_quotes(file)}")
     # Files that cause an error if they exists together with a certain entry in nextflow.config
     for file in files_fail_ifinconfig:
-        if file[0] in ignore_files:
+        if str(file[0]) in ignore_files:
             continue
         nextflow_config = pf("nextflow.config")
         in_config = False
@@ -253,7 +254,7 @@ def files_exist(self):
         if pf(file[0]).is_file() and in_config:
             failed.append(f"File must be removed: {self._wrap_quotes(file[0])}")
         elif pf(file[0]).is_file() and not in_config:
-            passed.append(f"File not found check: {self._wrap_quotes(file[0])}")
+            passed.append(f"File found check: {self._wrap_quotes(file[0])}")
         elif not pf(file[0]).is_file() and not in_config:
             failed.append(f"File not found check: {self._wrap_quotes(file[0])}")
         elif not pf(file[0]).is_file() and in_config:
