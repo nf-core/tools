@@ -21,6 +21,7 @@
 - Fix linting of a pipeline with patched custom module ([#2669](https://github.com/nf-core/tools/pull/2669))
 - linting a pipeline also lints the installed subworkflows ([#2677](https://github.com/nf-core/tools/pull/2677))
 - environment.yml name must be lowercase ([#2676](https://github.com/nf-core/tools/pull/2676))
+- lint `nextflow.config` default values match the ones specified in `nextflow_schema.json` ([#2684](https://github.com/nf-core/tools/pull/2684))
 
 ### Modules
 
