@@ -19,7 +19,6 @@ A python package with helper tools for the nf-core community.
 > **Read this documentation on the nf-core website: [https://nf-co.re/tools](https://nf-co.re/tools)**
 
 ## Table of contents <!-- omit in toc -->
-
 - [`nf-core` tools installation](#installation)
 - [`nf-core` tools update](#update-tools)
 - [`nf-core list` - List available pipelines](#listing-pipelines)
