@@ -10,7 +10,9 @@
 - switch to new image syntax in readme ([#2645](https://github.com/nf-core/tools/pull/2645))
 - Add conda channel order to nextflow.config ([#2094](https://github.com/nf-core/tools/pull/2094))
 - Fix tyop in pipeline nextflow.config ([#2664](https://github.com/nf-core/tools/pull/2664))
-- add function to check `-profile` is well formatted ([#2678](https://github.com/nf-core/tools/pull/2678))
+- Remove `nfcore_external_java_deps.jar` from lib directory in pipeline template ([#2675](https://github.com/nf-core/tools/pull/2675))
+- Add function to check `-profile` is well formatted ([#2678](https://github.com/nf-core/tools/pull/2678))
+- Add new pipeline error message pointing to docs when 'requirement exceeds available memory' error message ([#2680](https://github.com/nf-core/tools/pull/2680))
 
 ### Download
 
@@ -20,6 +22,7 @@
 - linting a pipeline also lints the installed subworkflows ([#2677](https://github.com/nf-core/tools/pull/2677))
 - environment.yml name must be lowercase ([#2676](https://github.com/nf-core/tools/pull/2676))
 - allow ignoring specific files when template_strings ([#2686](https://github.com/nf-core/tools/pull/2686))
+- lint `nextflow.config` default values match the ones specified in `nextflow_schema.json` ([#2684](https://github.com/nf-core/tools/pull/2684))
 
 ### Modules
 
@@ -42,6 +45,7 @@
 - Update actions/cache action to v4 ([#2666](https://github.com/nf-core/tools/pull/2666))
 - Handle api redirects from the old site ([#2672](https://github.com/nf-core/tools/pull/2672))
 - Remove redundanct v in pipeline version for emails ([#2667](https://github.com/nf-core/tools/pull/2667))
+- add function to check `-profile` is well formatted ([#2678](https://github.com/nf-core/tools/pull/2678))
 
 # [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
