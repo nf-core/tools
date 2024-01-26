@@ -24,7 +24,6 @@
 - environment.yml name must be lowercase ([#2676](https://github.com/nf-core/tools/pull/2676))
 - lint `nextflow.config` default values match the ones specified in `nextflow_schema.json` ([#2684](https://github.com/nf-core/tools/pull/2684))
 
-
 ### Modules
 
 - Fix empty json output for `nf-core list local` ([#2668](https://github.com/nf-core/tools/pull/2668))
