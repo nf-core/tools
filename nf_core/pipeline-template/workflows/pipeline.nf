@@ -130,7 +130,7 @@ workflow.onComplete {
 workflow.onError {
     if (workflow.errorReport.contains("Process requirement exceeds available memory")) {
         println("🛑 Default resources exceed availability 🛑 ")
-        println "💡 See here on how to configure pipeline: https://nf-co.re/docs/usage/configuration#tuning-workflow-resources 💡"
+        println("💡 See here on how to configure pipeline: https://nf-co.re/docs/usage/configuration#tuning-workflow-resources 💡")
     }
 }
 
