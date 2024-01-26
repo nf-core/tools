@@ -218,11 +218,11 @@ def files_unchanged(self):
     for files in files_conditional:
         # Ignore if file specified in linting config
         ignore_files = self.lint_config.get("files_unchanged", [])
-        if any([files[0] in ignore_files]):
+        if files[0] in ignore_files:
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
-        elif not any([_pf(files[0]).is_file()]):
+        elif _pf(files[0]).is_file():
             ignored.append(f"File does not exist: {self._wrap_quotes(files[0])}")
 
         # Check that the file has an identical match
@@ -232,21 +232,20 @@ def files_unchanged(self):
                 # Ignore if the config key is set to the expected value
                 ignored.append(f"File ignored due to config: {self._wrap_quotes(files)}")
             else:
-                for f in files:
-                    try:
-                        if filecmp.cmp(_pf(f), _tf(f), shallow=True):
-                            passed.append(f"`{f}` matches the template")
+                try:
+                    if filecmp.cmp(_pf(files[0]), _tf(files[0]), shallow=True):
+                        passed.append(f"`{files[0]}` matches the template")
+                    else:
+                        if "files_unchanged" in self.fix:
+                            # Try to fix the problem by overwriting the pipeline file
+                            shutil.copy(_tf(files[0]), _pf(files[0]))
+                            passed.append(f"`{files[0]}` matches the template")
+                            fixed.append(f"`{files[0]}` overwritten with template file")
                         else:
-                            if "files_unchanged" in self.fix:
-                                # Try to fix the problem by overwriting the pipeline file
-                                shutil.copy(_tf(f), _pf(f))
-                                passed.append(f"`{f}` matches the template")
-                                fixed.append(f"`{f}` overwritten with template file")
-                            else:
-                                failed.append(f"`{f}` does not match the template")
-                                could_fix = True
-                    except FileNotFoundError:
-                        pass
+                            failed.append(f"`{files[0]}` does not match the template")
+                            could_fix = True
+                except FileNotFoundError:
+                    pass
 
     # cleaning up temporary dir
     shutil.rmtree(tmp_dir)
