@@ -4,7 +4,7 @@ on:
     types: [created]
 
 jobs:
-  fix-linting:
+  deploy:
     # Only run if comment is on a PR with the main repo, and if it contains the magic keywords
     if: >
       contains(github.event.comment.html_url, '/pull/') &&
@@ -46,15 +46,15 @@ jobs:
 
       # indication that the linting has finished
       - name: react if linting finished succesfully
-        if: steps.pre-commit.outcome == 'success'
+        if: ${{ steps.pre-commit.outcome }} == 'success'
         uses: peter-evans/create-or-update-comment@23ff15729ef2fc348714a3bb66d2f655ca9066f2 # v3
         with:
           comment-id: ${{ github.event.comment.id }}
-          reactions: "+1"
+          reactions: +1
 
       - name: Commit & push changes
         id: commit-and-push
-        if: steps.pre-commit.outcome == 'failure'
+        if: ${{ steps.pre-commit.outcome }} == 'failure'
         run: |
           git config user.email "core@nf-co.re"
           git config user.name "nf-core-bot"
@@ -63,25 +63,30 @@ jobs:
           git status
           git commit -m "[automated] Fix code linting"
           git push
+      - name: debug outcome value
+        run: echo ${{ steps.commit-and-push.outcome }}
 
       - name: react if linting errors were fixed
         id: react-if-fixed
-        if: steps.commit-and-push.outcome == 'success'
+        if: ${{ steps.commit-and-push.outcome }} == 'success'
         uses: peter-evans/create-or-update-comment@23ff15729ef2fc348714a3bb66d2f655ca9066f2 # v3
         with:
           comment-id: ${{ github.event.comment.id }}
           reactions: hooray
 
+      - name: debug outcome value again
+        run: echo ${{ steps.commit-and-push.outcome }}
+
       - name: react if linting errors were not fixed
-        if: steps.commit-and-push.outcome == 'failure'
+        if: ${{ steps.commit-and-push.outcome }} == 'failure' && ${{ steps.react-if-fixed.outcome }} != 'success'
         uses: peter-evans/create-or-update-comment@23ff15729ef2fc348714a3bb66d2f655ca9066f2 # v3
         with:
           comment-id: ${{ github.event.comment.id }}
           reactions: confused
 
       - name: react if linting errors were not fixed
-        if: steps.commit-and-push.outcome  == 'failure'
-        uses: peter-evans/create-or-update-comment@23ff15729ef2fc348714a3bb66d2f655ca9066f2 # v3
+        if: ${{ steps.commit-and-push.outcome }} == 'failure' && ${{ steps.react-if-fixed.outcome }} != 'success'
+        uses: peter-evans/create-or-update-comment@v3
         with:
           issue-number: ${{ github.event.issue.number }}
           body: |

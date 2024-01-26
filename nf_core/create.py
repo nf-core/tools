@@ -505,12 +505,10 @@ class PipelineCreate:
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
         email_logo_path = Path(self.outdir) / "assets"
-        create_logo(text=self.template_params["short_name"], dir=email_logo_path, theme="light", force=self.force)
+        create_logo(text=self.template_params["short_name"], dir=email_logo_path, theme="light")
         for theme in ["dark", "light"]:
             readme_logo_path = Path(self.outdir) / "docs" / "images"
-            create_logo(
-                text=self.template_params["short_name"], dir=readme_logo_path, width=600, theme=theme, force=self.force
-            )
+            create_logo(text=self.template_params["short_name"], dir=readme_logo_path, width=600, theme=theme)
 
     def git_init_pipeline(self):
         """Initialises the new pipeline as a Git repository and submits first commit.
@@ -539,24 +537,8 @@ class PipelineCreate:
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
         if default_branch:
             repo.active_branch.rename(default_branch)
-        try:
-            repo.git.branch("TEMPLATE")
-            repo.git.branch("dev")
-
-        except git.GitCommandError as e:
-            if "already exists" in e.stderr:
-                log.debug("Branches 'TEMPLATE' and 'dev' already exist")
-                if self.force:
-                    log.debug("Force option set - deleting branches")
-                    repo.git.branch("-D", "TEMPLATE")
-                    repo.git.branch("-D", "dev")
-                    repo.git.branch("TEMPLATE")
-                    repo.git.branch("dev")
-                else:
-                    log.error(
-                        "Branches 'TEMPLATE' and 'dev' already exist. Use --force to overwrite existing branches."
-                    )
-                    sys.exit(1)
+        repo.git.branch("TEMPLATE")
+        repo.git.branch("dev")
         log.info(
             "Done. Remember to add a remote and push to GitHub:\n"
             f"[white on grey23] cd {self.outdir} \n"
