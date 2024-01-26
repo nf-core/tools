@@ -13,7 +13,7 @@ def merge_markers(self):
     This test looks for remaining merge markers in the code, e.g.:
     >>>>>>> or <<<<<<<
 
-    .. tip:: You can choose to ignore this test tests by creating a file called
+    .. tip:: You can choose to ignore this lint tests by editing the file called
         ``.nf-core.yml`` in the root of your pipeline and setting the test to false:
         .. code-block:: yaml
             lint:

@@ -17,7 +17,7 @@ def template_strings(self):
     This test ignores any double-brackets prefixed with a dollar sign, such as
     ``${{ secrets.AWS_ACCESS_KEY_ID }}`` as these placeholders are used in GitHub Actions workflows.
 
-    .. tip:: You can choose to ignore this test tests by creating a file called
+    .. tip:: You can choose to ignore lint test tests by editing the file called
         ``.nf-core.yml`` in the root of your pipeline and setting the test to false:
 
         .. code-block:: yaml
@@ -26,7 +26,7 @@ def template_strings(self):
                 template_strings: False
 
         To disable this test only for specific files, you can specify a list of file paths to ignore.
-        For exampke, to ignore a pdf you added to the docs:
+        For example, to ignore a pdf you added to the docs:
 
         .. code-block:: yaml
 
