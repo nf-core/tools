@@ -13,6 +13,7 @@
 - Remove `nfcore_external_java_deps.jar` from lib directory in pipeline template ([#2675](https://github.com/nf-core/tools/pull/2675))
 - Add function to check `-profile` is well formatted ([#2678](https://github.com/nf-core/tools/pull/2678))
 - Add new pipeline error message pointing to docs when 'requirement exceeds available memory' error message ([#2680](https://github.com/nf-core/tools/pull/2680))
+- add 👀👍🏻🎉😕 reactions to fix-linting-bot action ([#2692](https://github.com/nf-core/tools/pull/2692))
 
 ### Download
 
@@ -22,6 +23,7 @@
 - linting a pipeline also lints the installed subworkflows ([#2677](https://github.com/nf-core/tools/pull/2677))
 - environment.yml name must be lowercase ([#2676](https://github.com/nf-core/tools/pull/2676))
 - lint `nextflow.config` default values match the ones specified in `nextflow_schema.json` ([#2684](https://github.com/nf-core/tools/pull/2684))
+
 
 ### Modules
 
