@@ -43,7 +43,7 @@ def template_strings(self):
     # Loop through files, searching for string
     num_matches = 0
     for fn in self.files:
-        if str(fn).removeprefix(".") in ignore_files:
+        if str(fn.relative_to(self.wf_path)) in ignore_files:
             ignored.append(f"Ignoring Jinja template strings in file `{fn}`")
             continue
         # Skip binary files
