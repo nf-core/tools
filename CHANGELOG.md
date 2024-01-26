@@ -23,7 +23,6 @@
 - linting a pipeline also lints the installed subworkflows ([#2677](https://github.com/nf-core/tools/pull/2677))
 - environment.yml name must be lowercase ([#2676](https://github.com/nf-core/tools/pull/2676))
 - lint `nextflow.config` default values match the ones specified in `nextflow_schema.json` ([#2684](https://github.com/nf-core/tools/pull/2684))
-- Nicer lint bot comment again ([#2694](https://github.com/nf-core/tools/pull/2694))
 
 ### Modules
 
