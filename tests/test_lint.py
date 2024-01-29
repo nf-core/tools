@@ -219,6 +219,9 @@ class TestLint(unittest.TestCase):
         test_multiqc_incorrect_export_plots,
     )
     from .lint.nextflow_config import (  # type: ignore[misc]
+        test_default_values_fail,
+        test_default_values_ignored,
+        test_default_values_match,
         test_nextflow_config_bad_name_fail,
         test_nextflow_config_dev_in_release_mode_failed,
         test_nextflow_config_example_pass,

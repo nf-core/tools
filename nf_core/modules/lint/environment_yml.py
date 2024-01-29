@@ -109,3 +109,21 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
                         module.environment_yml,
                     )
                 )
+
+            # Check that the name is lowercase
+            if env_yml["name"] == env_yml["name"].lower():
+                module.passed.append(
+                    (
+                        "environment_yml_name_lowercase",
+                        "The module's `environment.yml` name is lowercase",
+                        module.environment_yml,
+                    )
+                )
+            else:
+                module.failed.append(
+                    (
+                        "environment_yml_name_lowercase",
+                        "The module's `environment.yml` name is not lowercase",
+                        module.environment_yml,
+                    )
+                )
