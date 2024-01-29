@@ -8,6 +8,13 @@ on:
         type: boolean
         description: Only run on nf-core/testpipeline?
         required: true
+      runners:
+        description: "Runners to test on"
+        type: choice
+        options:
+          - "ubuntu-latest"
+          - "self-hosted"
+        default: "self-hosted"
 
 # Cancel if a newer run is started
 concurrency:
@@ -16,7 +23,7 @@ concurrency:
 
 jobs:
   get-pipelines:
-    runs-on: self-hosted
+    runs-on: ${{ github.event.inputs.runners || 'self-hosted' }}
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -31,7 +38,7 @@ jobs:
 
   sync:
     needs: get-pipelines
-    runs-on: self-hosted
+    runs-on: ${{ github.event.inputs.runners || 'self-hosted' }}
     strategy:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false

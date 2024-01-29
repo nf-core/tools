@@ -8,6 +8,15 @@ on:
   pull_request:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      runners:
+        description: "Runners to test on"
+        type: choice
+        options:
+          - "ubuntu-latest"
+          - "self-hosted"
+        default: "self-hosted"
 
 # Cancel if a newer run is started
 concurrency:
@@ -29,7 +38,8 @@ jobs:
           - "template_skip_github_badges.yml"
           - "template_skip_igenomes.yml"
           - "template_skip_ci.yml"
-        runner: ["self-hosted"]
+        runner:
+          - ${{ github.event.inputs.runners || 'self-hosted' }}
         profile: ["self_hosted_runner"]
         include:
           - TEMPLATE: "template_skip_all.yml"
