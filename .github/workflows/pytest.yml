@@ -15,6 +15,14 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      runners:
+        description: "Runners to test on"
+        type: choice
+        options:
+          - "ubuntu-latest"
+          - "self-hosted"
+        default: "self-hosted"
 
 # Cancel if a newer run with the same workflow name is queued
 concurrency:
@@ -64,7 +72,7 @@ jobs:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: [setup, list_tests]
     if: ${{ needs.setup.outputs.run-tests }}
-    runs-on: self-hosted
+    runs-on: ${{ github.event.inputs.runners || 'self-hosted' }}
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
       fail-fast: false # run all tests even if one fails
@@ -154,7 +162,7 @@ jobs:
 
   coverage:
     needs: test
-    runs-on: self-hosted
+    runs-on: ${{ github.event.inputs.runners || 'self-hosted' }}
     steps:
       - name: go to subdirectory
         run: |
