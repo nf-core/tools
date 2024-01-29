@@ -32,6 +32,7 @@ A python package with helper tools for the nf-core community.
 - [`nf-core schema` - Work with pipeline schema files](#pipeline-schema)
 - [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
 - [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
+- [`nf-core create-logo` - Create an nf-core pipeline logo](#create-an-nf-core-pipeline-logo)
 - [`nf-core tui` - Explore the nf-core command line graphically](#tools-cli-tui)
 - [`nf-core modules` - commands for dealing with DSL2 modules](#modules)
 
@@ -731,6 +732,18 @@ The GitHub username and repository name will be fetched from the remote url (see
 To create the pull request, a personal access token is required for API authentication.
 These can be created at [https://github.com/settings/tokens](https://github.com/settings/tokens).
 Supply this using the `--auth-token` flag.
+
+## Create an nf-core pipeline logo
+
+The `nf-core create-logo` command creates a logo for your pipeline based on the nf-core template and the pipeline name. You can specify the width of the logo in pixels with the `--width` flag. Additionally, you can specify the output format to be either `png` or `svg` with the `--format` flag. The default format is `png`.
+
+Usage is `nf-core create-logo <text>`, eg:
+
+<!-- RICH-CODEX
+working_dir: tmp
+-->
+
+![`nf-core create-logo nextbigthing`](docs/images/nf-core-create-logo.svg)
 
 ## Tools CLI TUI
 
