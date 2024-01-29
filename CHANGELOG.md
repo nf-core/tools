@@ -48,6 +48,7 @@
 - Remove redundanct v in pipeline version for emails ([#2667](https://github.com/nf-core/tools/pull/2667))
 - add function to check `-profile` is well formatted ([#2678](https://github.com/nf-core/tools/pull/2678))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.1.14 ([#2674](https://github.com/nf-core/tools/pull/2674))
+- Update peter-evans/create-or-update-comment action to v4 ([#2683](https://github.com/nf-core/tools/pull/2683))
 
 # [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
