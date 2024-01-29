@@ -217,7 +217,6 @@ def files_exist(self):
 
     # Files that cause an error if they don't exist
     for files in files_fail:
-        print(files)
         if any([str(f) in ignore_files for f in files]):
             continue
         if any([pf(f).is_file() for f in files]):
