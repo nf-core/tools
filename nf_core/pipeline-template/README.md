@@ -1,7 +1,11 @@
 {% if branded -%}
 
-# ![{{ name }}](docs/images/{{ logo_light }}#gh-light-mode-only) ![{{ name }}](docs/images/{{ logo_dark }}#gh-dark-mode-only)
-
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/{{ logo_dark }}">
+    <img alt="{{ name }}" src="docs/images/{{ logo_light }}">
+  </picture>
+</h1>
 {% endif -%}
 {% if github_badges -%}
 [![GitHub Actions CI Status](https://github.com/{{ name }}/workflows/nf-core%20CI/badge.svg)](https://github.com/{{ name }}/actions?query=workflow%3A%22nf-core+CI%22)

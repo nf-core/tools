@@ -8,7 +8,7 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.x
           cache: pip
@@ -19,7 +19,7 @@ jobs:
 
       - name: Cache nf-test installation
         id: cache-software
-        uses: actions/cache@v3
+        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4
         with:
           path: |
             /usr/local/bin/nf-test

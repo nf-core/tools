@@ -8,6 +8,13 @@ on:
         type: boolean
         description: Only run on nf-core/testpipeline?
         required: true
+      runners:
+        description: "Runners to test on"
+        type: choice
+        options:
+          - "ubuntu-latest"
+          - "self-hosted"
+        default: "self-hosted"
 
 # Cancel if a newer run is started
 concurrency:
@@ -16,7 +23,7 @@ concurrency:
 
 jobs:
   get-pipelines:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.event.inputs.runners || 'self-hosted' }}
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -31,7 +38,7 @@ jobs:
 
   sync:
     needs: get-pipelines
-    runs-on: self-hosted
+    runs-on: ${{ github.event.inputs.runners || 'self-hosted' }}
     strategy:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
@@ -49,7 +56,7 @@ jobs:
           fetch-depth: "0"
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
 
@@ -78,7 +85,7 @@ jobs:
 
       - name: Upload sync log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sync_log_${{ matrix.pipeline }}
           path: sync_log_${{ matrix.pipeline }}.txt

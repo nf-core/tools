@@ -1,5 +1,4 @@
 import os
-import re
 
 import yaml
 
@@ -48,7 +47,7 @@ def actions_ci(self):
         return {"ignored": ["'.github/workflows/ci.yml' not found"]}
 
     try:
-        with open(fn, "r") as fh:
+        with open(fn) as fh:
             ciwf = yaml.safe_load(fh)
     except Exception as e:
         return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}
@@ -62,7 +61,7 @@ def actions_ci(self):
         if not (
             pr_subtree is None
             or ("branches" in pr_subtree and "dev" in pr_subtree["branches"])
-            or ("ignore_branches" in pr_subtree and not "dev" in pr_subtree["ignore_branches"])
+            or ("ignore_branches" in pr_subtree and "dev" not in pr_subtree["ignore_branches"])
         ):
             raise AssertionError()
         if "published" not in ciwf[True]["release"]["types"]:

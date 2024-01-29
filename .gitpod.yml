@@ -9,6 +9,7 @@ tasks:
   - name: unset JAVA_TOOL_OPTIONS
     command: |
       unset JAVA_TOOL_OPTIONS
+
 vscode:
   extensions: # based on nf-core.nf-core-extensionpack
     - codezombiech.gitignore # Language support for .gitignore files
@@ -21,3 +22,4 @@ vscode:
     # - nextflow.nextflow                    # Nextflow syntax highlighting
     - oderwat.indent-rainbow # Highlight indentation level
     - streetsidesoftware.code-spell-checker # Spelling checker for source code
+    - charliermarsh.ruff # Code linter Ruff

@@ -70,7 +70,7 @@ class ComponentList(ComponentCommand):
         # We have a pipeline - list what's installed
         else:
             # Check that we are in a pipeline directory
-
+            print(f"{self.repo_type=}")
             try:
                 if self.repo_type != "pipeline":
                     raise UserWarning(
@@ -141,6 +141,7 @@ class ComponentList(ComponentCommand):
                             date = "[red]Not Available"
                             message = "[red]Not Available"
                         table.add_row(component, repo_url, version_sha, message, date)
+                        components.append(component)
 
         if print_json:
             return json.dumps(components, sort_keys=True, indent=4)

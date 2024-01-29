@@ -1,5 +1,51 @@
 # nf-core/tools: Changelog
 
+# [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.11) - [2024-01-29]
+
+### Template
+
+- Add a Github Action Workflow to the pipeline template that tests a successful download with 'nf-core download' ([#2618](https://github.com/nf-core/tools/pull/2618))
+- Use `pre-commit` to lint files in GitHub CI ([#2635](https://github.com/nf-core/tools/pull/2635))
+- Use pdiff also on gitpod for nf-test ([#2640](https://github.com/nf-core/tools/pull/2640))
+- switch to new image syntax in readme ([#2645](https://github.com/nf-core/tools/pull/2645))
+- Add conda channel order to nextflow.config ([#2094](https://github.com/nf-core/tools/pull/2094))
+- Fix tyop in pipeline nextflow.config ([#2664](https://github.com/nf-core/tools/pull/2664))
+- Remove `nfcore_external_java_deps.jar` from lib directory in pipeline template ([#2675](https://github.com/nf-core/tools/pull/2675))
+- Add function to check `-profile` is well formatted ([#2678](https://github.com/nf-core/tools/pull/2678))
+- Add new pipeline error message pointing to docs when 'requirement exceeds available memory' error message ([#2680](https://github.com/nf-core/tools/pull/2680))
+- add 👀👍🏻🎉😕 reactions to fix-linting-bot action ([#2692](https://github.com/nf-core/tools/pull/2692))
+
+### Linting
+
+- Fix linting of a pipeline with patched custom module ([#2669](https://github.com/nf-core/tools/pull/2669))
+- linting a pipeline also lints the installed subworkflows ([#2677](https://github.com/nf-core/tools/pull/2677))
+- environment.yml name must be lowercase ([#2676](https://github.com/nf-core/tools/pull/2676))
+- allow ignoring specific files when template_strings ([#2686](https://github.com/nf-core/tools/pull/2686))
+- lint `nextflow.config` default values match the ones specified in `nextflow_schema.json` ([#2684](https://github.com/nf-core/tools/pull/2684))
+
+### Modules
+
+- Fix empty json output for `nf-core list local` ([#2668](https://github.com/nf-core/tools/pull/2668))
+
+### General
+
+- Run CI-pytests for nf-core tools on self-hosted runners ([#2550](https://github.com/nf-core/tools/pull/2550))
+- Add Ruff linter and formatter replacing Black, isort and pyupgrade ([#2620](https://github.com/nf-core/tools/pull/2620))
+- Set pdiff as nf-test differ in Docker image for Gitpod ([#2642](https://github.com/nf-core/tools/pull/2642))
+- Fix Renovate Dockerfile updating issues ([#2648](https://github.com/nf-core/tools/pull/2648) and [#2651](https://github.com/nf-core/tools/pull/2651))
+- Add new subcommand `nf-core tui`, which launches a TUI (terminal user interface) to intuitively explore the command line flags, built using [Trogon](https://github.com/Textualize/trogon) ([#2655](https://github.com/nf-core/tools/pull/2655))
+- Add new subcommand: `nf-core logo-create` to output an nf-core logo for a pipeline (instead of going through the website) ([#2662](https://github.com/nf-core/tools/pull/2662))
+- Handle api redirects from the old site ([#2672](https://github.com/nf-core/tools/pull/2672))
+- Remove redundanct v in pipeline version for emails ([#2667](https://github.com/nf-core/tools/pull/2667))
+- add function to check `-profile` is well formatted ([#2678](https://github.com/nf-core/tools/pull/2678))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.1.14 ([#2674](https://github.com/nf-core/tools/pull/2674))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.8.0 ([#2630](https://github.com/nf-core/tools/pull/2630))
+- Update mshick/add-pr-comment action to v2 ([#2632](https://github.com/nf-core/tools/pull/2632))
+- update python image version in docker file ([#2636](https://github.com/nf-core/tools/pull/2636))
+- Update actions/cache action to v4 ([#2666](https://github.com/nf-core/tools/pull/2666))
+- Update peter-evans/create-or-update-comment action to v4 ([#2683](https://github.com/nf-core/tools/pull/2683))
+- Update peter-evans/create-or-update-comment action to v4 ([#2695](https://github.com/nf-core/tools/pull/2695))
+
 # [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
 ### Template

@@ -345,7 +345,7 @@ def test_update_only_show_differences_when_patch(self, mock_prompt):
     # We modify fastqc because it's one of the modules that can be updated and there's another one before it (custom/dumpsoftwareversions)
     module_path = Path(self.pipeline_dir, "modules", "nf-core", "fastqc")
     main_path = Path(module_path, "main.nf")
-    with open(main_path, "r") as fh:
+    with open(main_path) as fh:
         lines = fh.readlines()
     for line_index in range(len(lines)):
         if lines[line_index] == "    label 'process_medium'\n":

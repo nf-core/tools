@@ -139,7 +139,7 @@ class Pipeline:
         try:
             repo = git.Repo(self.wf_path)
             self.git_sha = repo.head.object.hexsha
-        except:
+        except Exception:
             log.debug(f"Could not find git hash for pipeline: {self.wf_path}")
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
@@ -159,8 +159,8 @@ class Pipeline:
             git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.wf_path).splitlines()
             self.files = []
             for fn in git_ls_files:
-                full_fn = os.path.join(self.wf_path, fn.decode("utf-8"))
-                if os.path.isfile(full_fn):
+                full_fn = Path(self.wf_path) / fn.decode("utf-8")
+                if full_fn.is_file():
                     self.files.append(full_fn)
                 else:
                     log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
@@ -170,7 +170,7 @@ class Pipeline:
             self.files = []
             for subdir, _, files in os.walk(self.wf_path):
                 for fn in files:
-                    self.files.append(os.path.join(subdir, fn))
+                    self.files.append(Path(subdir) / fn)
 
     def _load_pipeline_config(self):
         """Get the nextflow config for this pipeline
@@ -181,14 +181,14 @@ class Pipeline:
 
         self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "").strip("'").split("/")
 
-        nextflowVersionMatch = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
-        if nextflowVersionMatch:
-            self.minNextflowVersion = nextflowVersionMatch.group(0)
+        nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
+        if nextflow_version_match:
+            self.minNextflowVersion = nextflow_version_match.group(0)
 
     def _load_conda_environment(self):
         """Try to load the pipeline environment.yml file, if it exists"""
         try:
-            with open(os.path.join(self.wf_path, "environment.yml"), "r") as fh:
+            with open(os.path.join(self.wf_path, "environment.yml")) as fh:
                 self.conda_config = yaml.safe_load(fh)
         except FileNotFoundError:
             log.debug("No conda `environment.yml` file found.")
@@ -262,7 +262,7 @@ def fetch_wf_config(wf_path, cache_config=True):
         cache_path = os.path.join(cache_basedir, cache_fn)
         if os.path.isfile(cache_path) and cache_config is True:
             log.debug(f"Found a config cache, loading: {cache_path}")
-            with open(cache_path, "r") as fh:
+            with open(cache_path) as fh:
                 try:
                     config = json.load(fh)
                 except json.JSONDecodeError as e:
@@ -274,8 +274,8 @@ def fetch_wf_config(wf_path, cache_config=True):
     result = run_cmd("nextflow", f"config -flat {wf_path}")
     if result is not None:
         nfconfig_raw, _ = result
-        for l in nfconfig_raw.splitlines():
-            ul = l.decode("utf-8")
+        for line in nfconfig_raw.splitlines():
+            ul = line.decode("utf-8")
             try:
                 k, v = ul.split(" = ", 1)
                 config[k] = v.strip("'\"")
@@ -286,9 +286,9 @@ def fetch_wf_config(wf_path, cache_config=True):
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
     try:
         main_nf = os.path.join(wf_path, "main.nf")
-        with open(main_nf, "r") as fh:
-            for l in fh:
-                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", l)
+        with open(main_nf) as fh:
+            for line in fh:
+                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", line)
                 if match:
                     config[match.group(1)] = "null"
     except FileNotFoundError as e:
@@ -312,7 +312,7 @@ def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
     full_cmd = f"{executable} {cmd}"
     log.debug(f"Running command: {full_cmd}")
     try:
-        proc = subprocess.run(shlex.split(full_cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=True)
         return (proc.stdout, proc.stderr)
     except OSError as e:
         if e.errno == errno.ENOENT:
@@ -341,7 +341,7 @@ def setup_nfcore_dir():
         return True
 
 
-def setup_requests_cachedir():
+def setup_requests_cachedir() -> dict:
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
@@ -351,8 +351,7 @@ def setup_requests_cachedir():
     Also returns the config dict so that we can use the same setup with a Session.
     """
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = os.path.join(NFCORE_CACHE_DIR, f"cache_{pyversion}")
-
+    cachedir = setup_nfcore_cachedir(f"cache_{pyversion}")
     config = {
         "cache_name": os.path.join(cachedir, "github_info"),
         "expire_after": datetime.timedelta(hours=1),
@@ -360,14 +359,21 @@ def setup_requests_cachedir():
     }
 
     logging.getLogger("requests_cache").setLevel(logging.WARNING)
-    try:
-        if not os.path.exists(cachedir):
-            os.makedirs(cachedir)
-        requests_cache.install_cache(**config)
-    except PermissionError:
-        pass
-
     return config
+
+
+def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
+    """Sets up local caching for caching files between sessions."""
+
+    cachedir = Path(NFCORE_CACHE_DIR, cache_fn)
+
+    try:
+        if not Path(cachedir).exists():
+            Path(cachedir).mkdir(parents=True)
+    except PermissionError:
+        log.warn(f"Could not create cache directory: {cachedir}")
+
+    return cachedir
 
 
 def wait_cli_function(poll_func, refresh_per_second=20):
@@ -414,11 +420,14 @@ def poll_nfcore_web_api(api_url, post_data=None):
         except requests.exceptions.ConnectionError:
             raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
-            if response.status_code != 200:
+            if response.status_code != 200 and response.status_code != 301:
                 log.debug(f"Response content:\n{response.content}")
                 raise AssertionError(
                     f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )
+            # follow redirects
+            if response.status_code == 301:
+                return poll_nfcore_web_api(response.headers["Location"], post_data)
             try:
                 web_response = json.loads(response.content)
                 if "status" not in web_response:
@@ -433,7 +442,7 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 return web_response
 
 
-class GitHub_API_Session(requests_cache.CachedSession):
+class GitHubAPISession(requests_cache.CachedSession):
     """
     Class to provide a single session for interacting with the GitHub API for a run.
     Inherits the requests_cache.CachedSession and adds additional functionality,
@@ -480,7 +489,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
         gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
         if self.auth is None and os.path.exists(gh_cli_config_fn):
             try:
-                with open(gh_cli_config_fn, "r") as fh:
+                with open(gh_cli_config_fn) as fh:
                     gh_cli_config = yaml.safe_load(fh)
                     self.auth = requests.auth.HTTPBasicAuth(
                         gh_cli_config["github.com"]["user"], gh_cli_config["github.com"]["oauth_token"]
@@ -590,7 +599,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
 
 
 # Single session object to use for entire codebase. Not sure if there's a better way to do this?
-gh_api = GitHub_API_Session()
+gh_api = GitHubAPISession()
 
 
 def anaconda_package(dep, dep_channels=None):
@@ -666,18 +675,18 @@ def parse_anaconda_licence(anaconda_response, version=None):
 
     # Clean up / standardise licence names
     clean_licences = []
-    for l in licences:
-        l = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", l)
-        l = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", l, flags=re.IGNORECASE)
-        l = l.replace("GPL-", "GPLv")
-        l = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", l)  # Add v prefix to GPL version if none found
-        l = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", l)  # Remove superflous .0 from GPL version
-        l = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", l)
-        l = re.sub(r"GPL\s*v", "GPL v", l)  # Normalise whitespace to one space between GPL and v
-        l = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", l)  # Normalise whitespace around >= GPL versions
-        l = l.replace("Clause", "clause")  # BSD capitilisation
-        l = re.sub(r"-only$", "", l)  # Remove superflous GPL "only" version suffixes
-        clean_licences.append(l)
+    for license in licences:
+        license = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", license)
+        license = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", license, flags=re.IGNORECASE)
+        license = license.replace("GPL-", "GPLv")
+        license = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", license)  # Add v prefix to GPL version if none found
+        license = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", license)  # Remove superflous .0 from GPL version
+        license = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", license)
+        license = re.sub(r"GPL\s*v", "GPL v", license)  # Normalise whitespace to one space between GPL and v
+        license = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", license)  # Normalise whitespace around >= GPL versions
+        license = license.replace("Clause", "clause")  # BSD capitilisation
+        license = re.sub(r"-only$", "", license)  # Remove superflous GPL "only" version suffixes
+        clean_licences.append(license)
     return clean_licences
 
 
@@ -792,7 +801,7 @@ def custom_yaml_dumper():
 
             See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
             """
-            return super(CustomDumper, self).increase_indent(flow=flow, indentless=False)
+            return super().increase_indent(flow=flow, indentless=False)
 
         # HACK: insert blank lines between top-level objects
         # inspired by https://stackoverflow.com/a/44284819/3786245
@@ -1025,7 +1034,7 @@ def load_tools_config(directory: Union[str, Path] = "."):
             log.debug(f"No tools config file found: {CONFIG_PATHS[0]}")
         return Path(directory, CONFIG_PATHS[0]), {}
 
-    with open(config_fn, "r") as fh:
+    with open(config_fn) as fh:
         tools_config = yaml.safe_load(fh)
 
     # If the file is empty
@@ -1145,7 +1154,7 @@ def validate_file_md5(file_name, expected_md5hex):
     if file_md5hex.upper() == expected_md5hex.upper():
         log.debug(f"md5 sum of image matches expected: {expected_md5hex}")
     else:
-        raise IOError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
+        raise OSError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
 
     return True
 
