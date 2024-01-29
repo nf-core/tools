@@ -227,6 +227,11 @@ class TestLint(unittest.TestCase):
         test_nextflow_config_example_pass,
         test_nextflow_config_missing_test_profile_failed,
     )
+    from .lint.template_strings import (  # type: ignore[misc]
+        test_template_strings,
+        test_template_strings_ignore_file,
+        test_template_strings_ignored,
+    )
     from .lint.version_consistency import test_version_consistency  # type: ignore[misc]
 
 
