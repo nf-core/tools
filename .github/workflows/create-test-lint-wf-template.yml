@@ -38,6 +38,7 @@ jobs:
           - TEMPLATE: "template_skip_nf_core_configs.yml"
             runner: ubuntu-latest
             profile: "docker"
+      fail-fast: false
 
     steps:
       - name: go to working directory
