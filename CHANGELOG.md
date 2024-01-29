@@ -1,5 +1,17 @@
 # nf-core/tools: Changelog
 
+# v2.13dev
+
+### Template
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### General
+
 # [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.11) - [2024-01-29]
 
 ### Template
