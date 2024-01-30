@@ -623,7 +623,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         with open(json_fn, "w") as fh:
             json.dump(results, fh, indent=4)
 
-    def _wrap_quotes(self, files: Union[List[str], List[Path]]) -> str:
+    def _wrap_quotes(self, files: Union[List[str], List[Path], Path]) -> str:
         """Helper function to take a list of filenames and format with markdown.
 
         Args:
