@@ -264,7 +264,7 @@ def files_exist(self) -> dict[str, Union[List[str], bool]]:
             passed.append(f"File not found check: {self._wrap_quotes(file_cond[0])}")
     # Files that cause a warning if they exist
     for file in files_warn_ifexists:
-        if file in ignore_files:
+        if str(file) in ignore_files:
             continue
         if pf(file).is_file():
             warned.append(f"File should be removed: {self._wrap_quotes(file)}")
