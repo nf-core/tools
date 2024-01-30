@@ -72,7 +72,7 @@ jobs:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: [setup, list_tests]
     if: ${{ needs.setup.outputs.run-tests }}
-    runs-on: ${{ github.event.inputs.runners || 'self-hosted' }}
+    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
       fail-fast: false # run all tests even if one fails
@@ -162,7 +162,7 @@ jobs:
 
   coverage:
     needs: test
-    runs-on: ${{ github.event.inputs.runners || 'self-hosted' }}
+    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     steps:
       - name: go to subdirectory
         run: |

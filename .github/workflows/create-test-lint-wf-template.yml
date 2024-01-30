@@ -39,7 +39,7 @@ jobs:
           - "template_skip_igenomes.yml"
           - "template_skip_ci.yml"
         runner:
-          - ${{ github.event.inputs.runners || 'self-hosted' }}
+          - ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
         profile: ["self_hosted_runner"]
         include:
           - TEMPLATE: "template_skip_all.yml"
