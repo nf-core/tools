@@ -153,7 +153,7 @@ def files_unchanged(self):
     for files in files_exact:
         # Ignore if file specified in linting config
         ignore_files = self.lint_config.get("files_unchanged", [])
-        if any([f in ignore_files for f in files]):
+        if any([str(f) in ignore_files for f in files]):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
@@ -218,7 +218,7 @@ def files_unchanged(self):
     for files in files_conditional:
         # Ignore if file specified in linting config
         ignore_files = self.lint_config.get("files_unchanged", [])
-        if files[0] in ignore_files:
+        if str(files[0]) in ignore_files:
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
