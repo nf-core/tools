@@ -8,6 +8,8 @@ import datetime
 import json
 import logging
 import os
+from pathlib import Path
+from typing import List, Union
 
 import git
 import rich
@@ -621,7 +623,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         with open(json_fn, "w") as fh:
             json.dump(results, fh, indent=4)
 
-    def _wrap_quotes(self, files):
+    def _wrap_quotes(self, files: Union[List[str], List[Path]]) -> str:
         """Helper function to take a list of filenames and format with markdown.
 
         Args:
@@ -636,5 +638,5 @@ class PipelineLint(nf_core.utils.Pipeline):
         """
         if not isinstance(files, list):
             files = [files]
-        bfiles = [f"`{f}`" for f in files]
+        bfiles = [f"`{str(f)}`" for f in files]
         return " or ".join(bfiles)
