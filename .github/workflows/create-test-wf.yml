@@ -26,6 +26,7 @@ env:
 
 jobs:
   RunTestWorkflow:
+    # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
     runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     env:
       NXF_ANSI_LOG: false

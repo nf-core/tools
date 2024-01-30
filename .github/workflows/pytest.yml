@@ -72,6 +72,7 @@ jobs:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: [setup, list_tests]
     if: ${{ needs.setup.outputs.run-tests }}
+    # run on self-hosted runners for test_components.py (because of the gitlab branch), based on the input if it is dispatched manually, on github if it is a rerun or on self-hosted by default
     runs-on: ${{ matrix.test == 'test_components.py' && 'self-hosted' || (github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted') }}
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
@@ -162,6 +163,7 @@ jobs:
 
   coverage:
     needs: test
+    # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
     runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     steps:
       - name: go to subdirectory
