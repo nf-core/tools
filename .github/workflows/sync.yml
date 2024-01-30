@@ -43,10 +43,10 @@ jobs:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         name: Check out nf-core/tools
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         name: Check out nf-core/${{ matrix.pipeline }}
         with:
           repository: nf-core/${{ matrix.pipeline }}
@@ -56,7 +56,7 @@ jobs:
           fetch-depth: "0"
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
         with:
           python-version: 3.11
 
@@ -66,7 +66,7 @@ jobs:
           pip install .
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v1
+        uses: nf-core/setup-nextflow@a2aef5d2363ccd4f99661d959a53dd0286010ddf # v1
         with:
           version: "latest-everything"
 
@@ -85,7 +85,7 @@ jobs:
 
       - name: Upload sync log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4
         with:
           name: sync_log_${{ matrix.pipeline }}
           path: sync_log_${{ matrix.pipeline }}.txt
