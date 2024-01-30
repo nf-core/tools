@@ -390,9 +390,13 @@ def nextflow_config(self):
             if str(self.nf_config[param]) == schema_default:
                 passed.append(f"Config default value correct: {param}")
             else:
-                failed.append(
-                    f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
-                )
+                # Handle "number" type
+                if schema_default.endswith(".0") and str(self.nf_config[param]) == schema_default[:-2]:
+                    passed.append(f"Config default value correct: {param}")
+                else:
+                    failed.append(
+                        f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
+                    )
         else:
             failed.append(
                 f"Default value from the Nextflow schema '{param} = {self._wrap_quotes(schema_default)}' not found in `nextflow.config`."
