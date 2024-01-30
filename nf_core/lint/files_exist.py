@@ -138,7 +138,7 @@ def files_exist(self) -> dict[str, Union[List[str], bool]]:
         [Path("CHANGELOG.md")],
         [Path("CITATIONS.md")],
         [Path("CODE_OF_CONDUCT.md")],
-        [Path("LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md")],  # NB: British / American spelling
+        [Path("LICENSE"), Path("LICENSE.md"), Path("LICENCE"), Path("LICENCE.md")],  # NB: British / American spelling
         [Path("nextflow_schema.json")],
         [Path("nextflow.config")],
         [Path("README.md")],
@@ -202,7 +202,7 @@ def files_exist(self) -> dict[str, Union[List[str], bool]]:
     ]
     files_warn_ifexists = [Path(".travis.yml")]
     files_fail_ifinconfig: List[Tuple[Path, Dict[str, str]]] = [
-        (Path("lib", "nfcore_external_java_deps.jar"), {"plugins": "nf_validation"}),
+        (Path("lib", "nfcore_external_java_deps.jar"), {"plugins": "nf-validation"}),
     ]
 
     # Remove files that should be ignored according to the linting config
@@ -245,11 +245,14 @@ def files_exist(self) -> dict[str, Union[List[str], bool]]:
             passed.append(f"File not found check: {self._wrap_quotes(file)}")
     # Files that cause an error if they exists together with a certain entry in nextflow.config
     for file_cond in files_fail_ifinconfig:
+        log.error(f"{self.nf_config=}")
         if str(file_cond[0]) in ignore_files:
             continue
         in_config = False
         config_key, config_value = list(file_cond[1].items())[0]
-        if config_key in self.nf_config and self.nf_config[config_key] == config_value:
+        if config_key in self.nf_config and config_value in self.nf_config[config_key]:
+            in_config = True
+            log.debug(f"Found {config_key} in nextflow.config with value {config_value}")
             in_config = True
         if pf(file_cond[0]).is_file() and in_config:
             failed.append(f"File must be removed: {self._wrap_quotes(file_cond[0])}")

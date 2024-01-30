@@ -113,7 +113,7 @@ def files_unchanged(self) -> dict[str, Union[List[str], bool]]:
         [Path(".gitignore"), Path(".prettierignore"), Path("pyproject.toml")],
     ]
     files_conditional: List[Tuple[List[Path], Dict[str, str]]] = [
-        ([Path("lib", "nfcore_external_java_deps.jar")], {"plugins": "nf_validation"}),
+        ([Path("lib", "nfcore_external_java_deps.jar")], {"plugins": "nf-validation"}),
     ]
 
     # Only show error messages from pipeline creation
@@ -229,7 +229,7 @@ def files_unchanged(self) -> dict[str, Union[List[str], bool]]:
         else:
             config_key, config_value = list(file_conditional[1].items())[0]
             for f in file_conditional[0]:
-                if config_key in self.nf_config and self.nf_config[config_key] == config_value:
+                if config_key in self.nf_config and config_value in self.nf_config[config_key]:
                     # Ignore if the config key is set to the expected value
                     ignored.append(f"File ignored due to config: {self._wrap_quotes(file_conditional[0])}")
                 else:
