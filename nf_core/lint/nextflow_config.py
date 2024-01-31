@@ -373,39 +373,43 @@ def nextflow_config(self):
     schema.no_prompts = True
     schema.load_schema()
     schema.get_schema_defaults()  # Get default values from schema
+    schema.get_schema_types()  # Get types from schema
     self.nf_config.keys()  # Params in nextflow.config
     for param_name in schema.schema_defaults.keys():
         param = "params." + param_name
-        # Convert booleans to strings if needed
-        schema_default = (
-            "true"
-            if str(schema.schema_defaults[param_name]) == "True"
-            else "false"
-            if str(schema.schema_defaults[param_name]) == "False"
-            else str(schema.schema_defaults[param_name])
-        )
         if param in ignore_defaults:
             ignored.append(f"Config default ignored: {param}")
         elif param in self.nf_config.keys():
-            if str(self.nf_config[param]) == schema_default:
+            config_default = None
+            schema_default = None
+            if schema.schema_types[param_name] == "boolean":
+                schema_default = str(schema.schema_defaults[param_name]).lower()
+                config_default = str(self.nf_config[param]).lower()
+            elif schema.schema_types[param_name] == "number":
+                try:
+                    schema_default = float(schema.schema_defaults[param_name])
+                    config_default = float(self.nf_config[param])
+                except ValueError:
+                    failed.append(
+                        f"Config default value incorrect: `{param}` is set as type `number` in nextflow_schema.json, but is not a number in `nextflow.config`."
+                    )
+            elif schema.schema_types[param_name] == "integer":
+                try:
+                    schema_default = int(schema.schema_defaults[param_name])
+                    config_default = int(self.nf_config[param])
+                except ValueError:
+                    failed.append(
+                        f"Config default value incorrect: `{param}` is set as type `integer` in nextflow_schema.json, but is not an integer in `nextflow.config`."
+                    )
+            else:
+                schema_default = str(schema.schema_defaults[param_name])
+                config_default = str(self.nf_config[param])
+            if config_default is not None and config_default == schema_default:
                 passed.append(f"Config default value correct: {param}= {schema_default}")
             else:
-                # Handle "number" type
-                if schema_default.endswith(".0") and str(self.nf_config[param]) == schema_default[:-2]:
-                    passed.append(f"Config default value correct: {param}= {schema_default}")
-                else:
-                    # try to convert to float
-                    try:
-                        if float(self.nf_config[param]) == float(schema_default):
-                            passed.append(f"Config default value correct: {param}= {schema_default}")
-                        else:
-                            failed.append(
-                                f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
-                            )
-                    except ValueError:
-                        failed.append(
-                            f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
-                        )
+                failed.append(
+                    f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
+                )
         else:
             failed.append(
                 f"Default value from the Nextflow schema `{param} = {self._wrap_quotes(schema_default)}` not found in `nextflow.config`."

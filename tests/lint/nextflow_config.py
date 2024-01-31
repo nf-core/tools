@@ -138,7 +138,7 @@ def test_default_values_float(self):
         content = f.read()
         fail_content = re.sub(
             r'"validate_params": {',
-            '    "dummy": {"type": "float","default":0.000000001},\n"validate_params": {',
+            '    "dummy": {"type": "number","default":0.000000001},\n"validate_params": {',
             content,
         )
     with open(nf_schema_file, "w") as f:
