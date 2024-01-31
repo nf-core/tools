@@ -76,7 +76,6 @@ def test_default_values_fail(self):
     with open(nf_conf_file) as f:
         content = f.read()
         fail_content = re.sub(r"\bmax_cpus\s*=\s*16\b", "max_cpus = 0", content)
-        print(fail_content)
     with open(nf_conf_file, "w") as f:
         f.write(fail_content)
     # Change the default value of max_memory in nextflow_schema.json
