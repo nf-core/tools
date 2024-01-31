@@ -149,10 +149,11 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         """Helper function - get file path for template file"""
         return Path(test_pipeline_dir, file_path)
 
+    ignore_files = self.lint_config.get("files_unchanged", [])
+
     # Files that must be completely unchanged from template
     for files in files_exact:
         # Ignore if file specified in linting config
-        ignore_files = self.lint_config.get("files_unchanged", [])
         if any([str(f) in ignore_files for f in files]):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
@@ -181,7 +182,6 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     # Files that can be added to, but that must contain the template contents
     for files in files_partial:
         # Ignore if file specified in linting config
-        ignore_files = self.lint_config.get("files_unchanged", [])
         if any([f in ignore_files for f in files]):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
@@ -217,8 +217,7 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     # Files that should be there only if an entry in nextflow config is not set
     for file_conditional in files_conditional:
         # Ignore if file specified in linting config
-        ignore_files = self.lint_config.get("files_unchanged", [])
-        if any(str(f) in ignore_files for f in files_conditional[0]):
+        if any([f in ignore_files for f in file_conditional[0]]):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(file_conditional[0])}")
 
         # Check that the file has an identical match
@@ -227,7 +226,7 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
             for f in file_conditional[0]:
                 if config_key in self.nf_config and config_value in self.nf_config[config_key]:
                     # Ignore if the config key is set to the expected value
-                    ignored.append(f"File ignored due to config: {self._wrap_quotes(file_conditional[0])}")
+                    log.debug(f"File ignored due to config: {self._wrap_quotes(file_conditional[0])}")
                 else:
                     try:
                         if filecmp.cmp(_pf(f), _tf(f), shallow=True):
