@@ -104,7 +104,7 @@ def create_logo(
         # Save
         img.save(logo_path, "PNG")
 
-    log.debug(f"Saved logo to: {logo_path}")
+    log.debug(f"Saved logo to: '{logo_path.relative_to(Path.cwd())}'")
 
     # Return the logo
     return logo_path
