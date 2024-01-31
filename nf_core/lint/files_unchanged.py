@@ -3,7 +3,7 @@ import logging
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Union
 
 import yaml
 
@@ -49,9 +49,6 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         .prettierignore
         pyproject.toml
 
-    Files that need to be there or not based on a entry in nextflow config::
-
-        lib/nfcore_external_java_deps.jar # if config doesn't mention nf-validation
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
              the ``files_unchanged`` key as follows in your ``.nf-core.yml`` config file. For example:
@@ -111,9 +108,6 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     ]
     files_partial = [
         [Path(".gitignore"), Path(".prettierignore"), Path("pyproject.toml")],
-    ]
-    files_conditional: List[Tuple[List[Path], Dict[str, str]]] = [
-        ([Path("lib", "nfcore_external_java_deps.jar")], {"plugins": "nf-validation"}),
     ]
 
     # Only show error messages from pipeline creation
@@ -213,37 +207,6 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
                             could_fix = True
                 except FileNotFoundError:
                     pass
-
-    # Files that should be there only if an entry in nextflow config is not set
-    for file_conditional in files_conditional:
-        # Ignore if file specified in linting config
-        if any([f in ignore_files for f in file_conditional[0]]):
-            ignored.append(f"File ignored due to lint config: {self._wrap_quotes(file_conditional[0])}")
-        # Ignore if we can't find the file
-        elif not any([_pf(f).is_file() for f in file_conditional[0]]):
-            log.debug(f"File does not exist: {self._wrap_quotes(file_conditional[0])}")
-        # Check that the file has an identical match
-        else:
-            config_key, config_value = list(file_conditional[1].items())[0]
-            for f in file_conditional[0]:
-                if config_key in self.nf_config and config_value in self.nf_config[config_key]:
-                    # Ignore if the config key is set to the expected value
-                    log.debug(f"File ignored due to config: {self._wrap_quotes(file_conditional[0])}")
-                else:
-                    try:
-                        if filecmp.cmp(_pf(f), _tf(f), shallow=True):
-                            passed.append(f"`{f}` matches the template")
-                        else:
-                            if "files_unchanged" in self.fix:
-                                # Try to fix the problem by overwriting the pipeline file
-                                shutil.copy(_tf(f), _pf(f))
-                                passed.append(f"`{f}` matches the template")
-                                fixed.append(f"`{f}` overwritten with template file")
-                            else:
-                                failed.append(f"`{f}` does not match the template")
-                                could_fix = True
-                    except FileNotFoundError:
-                        pass
 
     # cleaning up temporary dir
     shutil.rmtree(tmp_dir)
