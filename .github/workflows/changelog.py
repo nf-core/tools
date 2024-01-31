@@ -136,12 +136,14 @@ while orig_lines:
     # If the line already contains a link to the PR, don't add it again.
     line = _skip_existing_entry_for_this_pr(line, same_section=False)
 
-    if line.startswith("# ") and not line.strip() == "# nf-core/tools: Changelog":  # Version header, e.g. "# v2.12dev"
+    if (
+        line.startswith("## ") and not line.strip() == "# nf-core/tools: Changelog"
+    ):  # Version header, e.g. "## v2.12dev"
         print(f"Found version header: {line.strip()}")
         updated_lines.append(line)
 
-        # Parse version from the line `# v2.12dev` or
-        # `# [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]` ...
+        # Parse version from the line `## v2.12dev` or
+        # `## [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]` ...
         if not (m := re.match(r".*(v\d+\.\d+(dev)?).*", line)):
             print(f"Cannot parse version from line {line.strip()}.", file=sys.stderr)
             sys.exit(1)

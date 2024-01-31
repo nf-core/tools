@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-# v2.13dev
+## v2.13dev
 
 ### Template
 
@@ -17,8 +17,10 @@
 
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.1.15 ([#2705](https://github.com/nf-core/tools/pull/2705))
 - handle float values correctly in default value comparison ([#2711](https://github.com/nf-core/tools/pull/2711))
+- fix changelog titles ([#2708](https://github.com/nf-core/tools/pull/2708))
+- Print relative path not absolute path in logo cmd log output ([#2709](https://github.com/nf-core/tools/pull/2709))
 
-# [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.11) - [2024-01-29]
+## [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.11) - [2024-01-29]
 
 ### Template
 
@@ -64,7 +66,7 @@
 - Update peter-evans/create-or-update-comment action to v4 ([#2683](https://github.com/nf-core/tools/pull/2683))
 - Update peter-evans/create-or-update-comment action to v4 ([#2695](https://github.com/nf-core/tools/pull/2695))
 
-# [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
+## [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
 ### Template
 
@@ -75,7 +77,7 @@
 
 - Only dump `modules.json` when it is modified ([#2609](https://github.com/nf-core/tools/pull/2609))
 
-# [v2.11 - Magnesium Dragon](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-19]
+## [v2.11 - Magnesium Dragon](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-19]
 
 ### Template
 
@@ -131,7 +133,7 @@
 - Sort the `installed_by` list in `modules.json` ([#2570](https://github.com/nf-core/tools/pull/2570)).
 - Unset env variable JAVA_TOOL_OPTIONS in gitpod ([#2569](https://github.com/nf-core/tools/pull/2569))
 
-# [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]
+## [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]
 
 ### Template
 
@@ -175,7 +177,7 @@
 - Throw warning when custom workflow name contains special characters ([#2401](https://github.com/nf-core/tools/pull/2401))
 - Bump version of nf-test snapshot files with `nf-core bump-version` ([#2410](https://github.com/nf-core/tools/pull/2410))
 
-# [v2.9 - Chromium Falcon](https://github.com/nf-core/tools/releases/tag/2.9) + [2023-06-29]
+## [v2.9 - Chromium Falcon](https://github.com/nf-core/tools/releases/tag/2.9) + [2023-06-29]
 
 ### Template
 
@@ -243,7 +245,7 @@ _In addition, `-r` / `--revision` has been changed to a parameter that can be pr
 - Refgenie: Create `nxf_home/nf-core/refgenie_genomes.config` path if it doesn't exist ([#2312](https://github.com/nf-core/tools/pull/2312))
 - Add CI tests to test running a pipeline whe it's created from a template skipping different areas
 
-# [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
+## [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
 
 ### Template
 

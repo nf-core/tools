@@ -174,6 +174,10 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
         )
     )
 
+    # don't show rich debug logging in verbose mode
+    rich_logger = logging.getLogger("rich")
+    rich_logger.setLevel(logging.INFO)
+
     # Set up logs to a file if we asked for one
     if log_file:
         log_fh = logging.FileHandler(log_file, encoding="utf-8")
@@ -2068,6 +2072,11 @@ def logo(logo_text, dir, name, theme, width, format, force):
         if dir == ".":
             dir = Path.cwd()
         logo_path = create_logo(logo_text, dir, name, theme, width, format, force)
+        # Print path to logo relative to current working directory
+        try:
+            logo_path = Path(logo_path).relative_to(Path.cwd())
+        except ValueError:
+            logo_path = Path(logo_path)
         log.info(f"Created logo: [magenta]{logo_path}[/]")
     except UserWarning as e:
         log.error(e)
