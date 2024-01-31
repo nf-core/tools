@@ -388,18 +388,27 @@ def nextflow_config(self):
             ignored.append(f"Config default ignored: {param}")
         elif param in self.nf_config.keys():
             if str(self.nf_config[param]) == schema_default:
-                passed.append(f"Config default value correct: {param}")
+                passed.append(f"Config default value correct: {param}= {schema_default}")
             else:
                 # Handle "number" type
                 if schema_default.endswith(".0") and str(self.nf_config[param]) == schema_default[:-2]:
-                    passed.append(f"Config default value correct: {param}")
+                    passed.append(f"Config default value correct: {param}= {schema_default}")
                 else:
-                    failed.append(
-                        f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
-                    )
+                    # try to convert to float
+                    try:
+                        if float(self.nf_config[param]) == float(schema_default):
+                            passed.append(f"Config default value correct: {param}= {schema_default}")
+                        else:
+                            failed.append(
+                                f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
+                            )
+                    except ValueError:
+                        failed.append(
+                            f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
+                        )
         else:
             failed.append(
-                f"Default value from the Nextflow schema '{param} = {self._wrap_quotes(schema_default)}' not found in `nextflow.config`."
+                f"Default value from the Nextflow schema `{param} = {self._wrap_quotes(schema_default)}` not found in `nextflow.config`."
             )
 
     return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}

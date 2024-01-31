@@ -39,7 +39,7 @@ def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archiv
         return wfs.print_summary()
 
 
-def get_local_wf(workflow, revision=None):
+def get_local_wf(workflow, revision=None) -> str:
     """
     Check if this workflow has a local copy and use nextflow to pull it if not
     """
