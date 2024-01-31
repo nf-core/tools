@@ -12,7 +12,7 @@ import nf_core.create
 log = logging.getLogger(__name__)
 
 
-def files_unchanged(self) -> dict[str, Union[List[str], bool]]:
+def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     """Checks that certain pipeline files are not modified from template output.
 
     Iterates through the pipeline's directory content and compares specified files
