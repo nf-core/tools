@@ -200,6 +200,7 @@ class TestLint(unittest.TestCase):
     )
     from .lint.files_exist import (  # type: ignore[misc]
         test_files_exist_depreciated_file,
+        test_files_exist_fail_conditional,
         test_files_exist_missing_config,
         test_files_exist_missing_main,
         test_files_exist_pass,

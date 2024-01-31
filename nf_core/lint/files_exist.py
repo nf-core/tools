@@ -249,7 +249,6 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         in_config = False
         config_key, config_value = list(file_cond[1].items())[0]
         if config_key in self.nf_config and config_value in self.nf_config[config_key]:
-            in_config = True
             log.debug(f"Found {config_key} in nextflow.config with value {config_value}")
             in_config = True
         if pf(file_cond[0]).is_file() and in_config:
@@ -269,7 +268,7 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         else:
             passed.append(f"File not found check: {self._wrap_quotes(file)}")
 
-    # Files that are ignoed
+    # Files that are ignored
     for file in ignore_files:
         ignored.append(f"File is ignored: {self._wrap_quotes(file)}")
 
