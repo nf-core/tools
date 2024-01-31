@@ -207,7 +207,6 @@ def files_exist(self) -> dict[str, Union[List[str], bool]]:
 
     # Remove files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("files_exist", [])
-    log.info(f"Files to ignore: {ignore_files}")
 
     def pf(file_path: Union[str, Path]) -> Path:
         return Path(self.wf_path, file_path)
@@ -245,7 +244,6 @@ def files_exist(self) -> dict[str, Union[List[str], bool]]:
             passed.append(f"File not found check: {self._wrap_quotes(file)}")
     # Files that cause an error if they exists together with a certain entry in nextflow.config
     for file_cond in files_fail_ifinconfig:
-        log.error(f"{self.nf_config=}")
         if str(file_cond[0]) in ignore_files:
             continue
         in_config = False

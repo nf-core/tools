@@ -90,7 +90,7 @@ def files_unchanged(self) -> dict[str, Union[List[str], bool]]:
         [Path(".gitattributes")],
         [Path(".prettierrc.yml")],
         [Path("CODE_OF_CONDUCT.md")],
-        [Path("LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md")],  # NB: British / American spelling
+        [Path("LICENSE"), Path("LICENSE.md"), Path("LICENCE"), Path("LICENCE.md")],  # NB: British / American spelling
         [Path(".github", ".dockstore.yml")],
         [Path(".github", "CONTRIBUTING.md")],
         [Path(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
@@ -220,10 +220,6 @@ def files_unchanged(self) -> dict[str, Union[List[str], bool]]:
         ignore_files = self.lint_config.get("files_unchanged", [])
         if any(str(f) in ignore_files for f in files_conditional[0]):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(file_conditional[0])}")
-
-        # Ignore if we can't find the file
-        elif not any([_pf(f).is_file() for f in file_conditional[0]]):
-            ignored.append(f"File does not exist: {self._wrap_quotes(file_conditional[0])}")
 
         # Check that the file has an identical match
         else:
