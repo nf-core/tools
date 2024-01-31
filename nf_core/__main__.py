@@ -2072,7 +2072,12 @@ def logo(logo_text, dir, name, theme, width, format, force):
         if dir == ".":
             dir = Path.cwd()
         logo_path = create_logo(logo_text, dir, name, theme, width, format, force)
-        log.info(f"Created logo: [magenta]{logo_path.relative_to(Path.cwd())}[/]")
+        # Print path to logo relative to current working directory
+        try:
+            logo_path = Path(logo_path).relative_to(Path.cwd())
+        except ValueError:
+            logo_path = Path(logo_path)
+        log.info(f"Created logo: [magenta]{logo_path}[/]")
     except UserWarning as e:
         log.error(e)
         sys.exit(1)
