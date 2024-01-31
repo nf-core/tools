@@ -16,6 +16,7 @@
 
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.1.15 ([#2705](https://github.com/nf-core/tools/pull/2705))
 - fix changelog titles ([#2708](https://github.com/nf-core/tools/pull/2708))
+- Update codecov/codecov-action digest to ab904c4 ([#2714](https://github.com/nf-core/tools/pull/2714))
 
 ## [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.11) - [2024-01-29]
 
