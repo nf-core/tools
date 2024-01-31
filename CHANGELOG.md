@@ -7,6 +7,7 @@
 ### Linting
 
 - Handle default values of type number from nextflow schema ([#2703](https://github.com/nf-core/tools/pull/2703))
+- fix ignoring files_unchanged ([#2707](https://github.com/nf-core/tools/pull/2707))
 
 ### Modules
 

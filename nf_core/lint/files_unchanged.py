@@ -3,7 +3,7 @@ import logging
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Union
+from typing import Dict, List, Union
 
 import yaml
 
@@ -12,7 +12,7 @@ import nf_core.create
 log = logging.getLogger(__name__)
 
 
-def files_unchanged(self):
+def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     """Checks that certain pipeline files are not modified from template output.
 
     Iterates through the pipeline's directory content and compares specified files
@@ -49,9 +49,6 @@ def files_unchanged(self):
         .prettierignore
         pyproject.toml
 
-    Files that need to be there or not based on a entry in nextflow config::
-
-        lib/nfcore_external_java_deps.jar # if config doesn't mention nf-validation
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
              the ``files_unchanged`` key as follows in your ``.nf-core.yml`` config file. For example:
@@ -64,11 +61,11 @@ def files_unchanged(self):
 
     """
 
-    passed = []
-    failed = []
-    ignored = []
-    fixed = []
-    could_fix = False
+    passed: List[str] = []
+    failed: List[str] = []
+    ignored: List[str] = []
+    fixed: List[str] = []
+    could_fix: bool = False
 
     # Check that we have the minimum required config
     required_pipeline_config = {"manifest.name", "manifest.description", "manifest.author"}
@@ -87,10 +84,10 @@ def files_unchanged(self):
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
     files_exact = [
-        [".gitattributes"],
-        [".prettierrc.yml"],
-        ["CODE_OF_CONDUCT.md"],
-        ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
+        [Path(".gitattributes")],
+        [Path(".prettierrc.yml")],
+        [Path("CODE_OF_CONDUCT.md")],
+        [Path("LICENSE"), Path("LICENSE.md"), Path("LICENCE"), Path("LICENCE.md")],  # NB: British / American spelling
         [Path(".github", ".dockstore.yml")],
         [Path(".github", "CONTRIBUTING.md")],
         [Path(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
@@ -110,10 +107,7 @@ def files_unchanged(self):
         [Path("lib", "NfcoreTemplate.groovy")],
     ]
     files_partial = [
-        [".gitignore", ".prettierignore", "pyproject.toml"],
-    ]
-    files_conditional = [
-        [Path("lib", "nfcore_external_java_deps.jar"), {"plugins": "nf_validation"}],
+        [Path(".gitignore"), Path(".prettierignore"), Path("pyproject.toml")],
     ]
 
     # Only show error messages from pipeline creation
@@ -149,11 +143,12 @@ def files_unchanged(self):
         """Helper function - get file path for template file"""
         return Path(test_pipeline_dir, file_path)
 
+    ignore_files = self.lint_config.get("files_unchanged", [])
+
     # Files that must be completely unchanged from template
     for files in files_exact:
         # Ignore if file specified in linting config
-        ignore_files = self.lint_config.get("files_unchanged", [])
-        if any([f in ignore_files for f in files]):
+        if any([str(f) in ignore_files for f in files]):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
@@ -181,7 +176,6 @@ def files_unchanged(self):
     # Files that can be added to, but that must contain the template contents
     for files in files_partial:
         # Ignore if file specified in linting config
-        ignore_files = self.lint_config.get("files_unchanged", [])
         if any([f in ignore_files for f in files]):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
@@ -210,39 +204,6 @@ def files_unchanged(self):
                             fixed.append(f"`{f}` overwritten with template file")
                         else:
                             failed.append(f"`{f}` does not match the template")
-                            could_fix = True
-                except FileNotFoundError:
-                    pass
-
-    # Files that should be there only if an entry in nextflow config is not set
-    for files in files_conditional:
-        # Ignore if file specified in linting config
-        ignore_files = self.lint_config.get("files_unchanged", [])
-        if files[0] in ignore_files:
-            ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
-
-        # Ignore if we can't find the file
-        elif _pf(files[0]).is_file():
-            ignored.append(f"File does not exist: {self._wrap_quotes(files[0])}")
-
-        # Check that the file has an identical match
-        else:
-            config_key, config_value = list(files[1].items())[0]
-            if config_key in self.nf_config and self.nf_config[config_key] == config_value:
-                # Ignore if the config key is set to the expected value
-                ignored.append(f"File ignored due to config: {self._wrap_quotes(files)}")
-            else:
-                try:
-                    if filecmp.cmp(_pf(files[0]), _tf(files[0]), shallow=True):
-                        passed.append(f"`{files[0]}` matches the template")
-                    else:
-                        if "files_unchanged" in self.fix:
-                            # Try to fix the problem by overwriting the pipeline file
-                            shutil.copy(_tf(files[0]), _pf(files[0]))
-                            passed.append(f"`{files[0]}` matches the template")
-                            fixed.append(f"`{files[0]}` overwritten with template file")
-                        else:
-                            failed.append(f"`{files[0]}` does not match the template")
                             could_fix = True
                 except FileNotFoundError:
                     pass
