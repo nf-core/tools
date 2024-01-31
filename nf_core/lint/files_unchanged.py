@@ -219,7 +219,9 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         # Ignore if file specified in linting config
         if any([f in ignore_files for f in file_conditional[0]]):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(file_conditional[0])}")
-
+        # Ignore if we can't find the file
+        elif not any([_pf(f).is_file() for f in file_conditional[0]]):
+            log.debug(f"File does not exist: {self._wrap_quotes(file_conditional[0])}")
         # Check that the file has an identical match
         else:
             config_key, config_value = list(file_conditional[1].items())[0]
