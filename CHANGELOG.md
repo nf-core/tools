@@ -19,6 +19,7 @@
 - fix changelog titles ([#2708](https://github.com/nf-core/tools/pull/2708))
 - Print relative path not absolute path in logo cmd log output ([#2709](https://github.com/nf-core/tools/pull/2709))
 - Update codecov/codecov-action action to v4 ([#2713](https://github.com/nf-core/tools/pull/2713))
+- Revert pin dependency ([#2719](https://github.com/nf-core/tools/pull/2719))
 
 ## [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.11) - [2024-01-29]
 
