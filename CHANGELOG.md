@@ -7,6 +7,7 @@
 ### Linting
 
 - Handle default values of type number from nextflow schema ([#2703](https://github.com/nf-core/tools/pull/2703))
+- fix ignoring files_unchanged ([#2707](https://github.com/nf-core/tools/pull/2707))
 
 ### Modules
 
@@ -16,6 +17,9 @@
 
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.1.15 ([#2705](https://github.com/nf-core/tools/pull/2705))
 - fix changelog titles ([#2708](https://github.com/nf-core/tools/pull/2708))
+- Print relative path not absolute path in logo cmd log output ([#2709](https://github.com/nf-core/tools/pull/2709))
+- Update codecov/codecov-action action to v4 ([#2713](https://github.com/nf-core/tools/pull/2713))
+- Ignore nf-core-bot in renovate PRs ([#2716](https://github.com/nf-core/tools/pull/2716))
 - Update nf-core/setup-nextflow digest to dccbf84 ([#2715](https://github.com/nf-core/tools/pull/2715))
 
 ## [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.11) - [2024-01-29]

@@ -1,11 +1,11 @@
 import logging
 from pathlib import Path
-from typing import Union
+from typing import Dict, List, Tuple, Union
 
 log = logging.getLogger(__name__)
 
 
-def files_exist(self):
+def files_exist(self) -> Dict[str, Union[List[str], bool]]:
     """Checks a given pipeline directory for required files.
 
     Iterates through the pipeline's directory content and checks that specified
@@ -129,19 +129,19 @@ def files_exist(self):
         short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
 
     files_fail = [
-        [".gitattributes"],
-        [".gitignore"],
-        [".nf-core.yml"],
-        [".editorconfig"],
-        [".prettierignore"],
-        [".prettierrc.yml"],
-        ["CHANGELOG.md"],
-        ["CITATIONS.md"],
-        ["CODE_OF_CONDUCT.md"],
-        ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
-        ["nextflow_schema.json"],
-        ["nextflow.config"],
-        ["README.md"],
+        [Path(".gitattributes")],
+        [Path(".gitignore")],
+        [Path(".nf-core.yml")],
+        [Path(".editorconfig")],
+        [Path(".prettierignore")],
+        [Path(".prettierrc.yml")],
+        [Path("CHANGELOG.md")],
+        [Path("CITATIONS.md")],
+        [Path("CODE_OF_CONDUCT.md")],
+        [Path("LICENSE"), Path("LICENSE.md"), Path("LICENCE"), Path("LICENCE.md")],  # NB: British / American spelling
+        [Path("nextflow_schema.json")],
+        [Path("nextflow.config")],
+        [Path("README.md")],
         [Path(".github", ".dockstore.yml")],
         [Path(".github", "CONTRIBUTING.md")],
         [Path(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
@@ -171,41 +171,42 @@ def files_exist(self):
     ]
 
     files_warn = [
-        ["main.nf"],
+        [Path("main.nf")],
         [Path("assets", "multiqc_config.yml")],
         [Path("conf", "base.config")],
         [Path("conf", "igenomes.config")],
         [Path(".github", "workflows", "awstest.yml")],
         [Path(".github", "workflows", "awsfulltest.yml")],
         [Path("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy")],
-        ["modules.json"],
-        ["pyproject.toml"],
+        [Path("modules.json")],
+        [Path("pyproject.toml")],
     ]
 
     # List of strings. Fails / warns if any of the strings exist.
     files_fail_ifexists = [
-        "Singularity",
-        "parameters.settings.json",
-        "pipeline_template.yml",  # saving information in .nf-core.yml
-        ".nf-core.yaml",  # yml not yaml
+        Path("Singularity"),
+        Path("parameters.settings.json"),
+        Path("pipeline_template.yml"),  # saving information in .nf-core.yml
+        Path(".nf-core.yaml"),  # yml not yaml
         Path("bin", "markdown_to_html.r"),
         Path("conf", "aws.config"),
         Path(".github", "workflows", "push_dockerhub.yml"),
         Path(".github", "ISSUE_TEMPLATE", "bug_report.md"),
         Path(".github", "ISSUE_TEMPLATE", "feature_request.md"),
         Path("docs", "images", f"nf-core-{short_name}_logo.png"),
-        ".markdownlint.yml",
-        ".yamllint.yml",
+        Path(".markdownlint.yml"),
+        Path(".yamllint.yml"),
         Path("lib", "Checks.groovy"),
         Path("lib", "Completion.groovy"),
         Path("lib", "Workflow.groovy"),
     ]
-    files_warn_ifexists = [".travis.yml"]
-    files_fail_ifinconfig = [[Path("lib", "nfcore_external_java_deps.jar"), "nf-validation"]]
+    files_warn_ifexists = [Path(".travis.yml")]
+    files_fail_ifinconfig: List[Tuple[Path, Dict[str, str]]] = [
+        (Path("lib", "nfcore_external_java_deps.jar"), {"plugins": "nf-validation"}),
+    ]
 
     # Remove files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("files_exist", [])
-    log.info(f"Files to ignore: {ignore_files}")
 
     def pf(file_path: Union[str, Path]) -> Path:
         return Path(self.wf_path, file_path)
@@ -242,32 +243,32 @@ def files_exist(self):
         else:
             passed.append(f"File not found check: {self._wrap_quotes(file)}")
     # Files that cause an error if they exists together with a certain entry in nextflow.config
-    for file in files_fail_ifinconfig:
-        if str(file[0]) in ignore_files:
+    for file_cond in files_fail_ifinconfig:
+        if str(file_cond[0]) in ignore_files:
             continue
-        nextflow_config = pf("nextflow.config")
         in_config = False
-        with open(nextflow_config) as f:
-            if file[1] in f.read():
-                in_config = True
-        if pf(file[0]).is_file() and in_config:
-            failed.append(f"File must be removed: {self._wrap_quotes(file[0])}")
-        elif pf(file[0]).is_file() and not in_config:
-            passed.append(f"File found check: {self._wrap_quotes(file[0])}")
-        elif not pf(file[0]).is_file() and not in_config:
-            failed.append(f"File not found check: {self._wrap_quotes(file[0])}")
-        elif not pf(file[0]).is_file() and in_config:
-            passed.append(f"File not found check: {self._wrap_quotes(file[0])}")
+        config_key, config_value = list(file_cond[1].items())[0]
+        if config_key in self.nf_config and config_value in self.nf_config[config_key]:
+            log.debug(f"Found {config_key} in nextflow.config with value {config_value}")
+            in_config = True
+        if pf(file_cond[0]).is_file() and in_config:
+            failed.append(f"File must be removed: {self._wrap_quotes(file_cond[0])}")
+        elif pf(file_cond[0]).is_file() and not in_config:
+            passed.append(f"File found check: {self._wrap_quotes(file_cond[0])}")
+        elif not pf(file_cond[0]).is_file() and not in_config:
+            failed.append(f"File not found check: {self._wrap_quotes(file_cond[0])}")
+        elif not pf(file_cond[0]).is_file() and in_config:
+            passed.append(f"File not found check: {self._wrap_quotes(file_cond[0])}")
     # Files that cause a warning if they exist
     for file in files_warn_ifexists:
-        if file in ignore_files:
+        if str(file) in ignore_files:
             continue
         if pf(file).is_file():
             warned.append(f"File should be removed: {self._wrap_quotes(file)}")
         else:
             passed.append(f"File not found check: {self._wrap_quotes(file)}")
 
-    # Files that are ignoed
+    # Files that are ignored
     for file in ignore_files:
         ignored.append(f"File is ignored: {self._wrap_quotes(file)}")
 
