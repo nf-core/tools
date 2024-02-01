@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v2.13dev
+## [v2.12.1 - Aluminium Wolf - Patch](https://github.com/nf-core/tools/releases/tag/2.12.1) - [2024-02-01]
 
 ### Template
 
@@ -20,7 +20,7 @@
 - fix changelog titles ([#2708](https://github.com/nf-core/tools/pull/2708))
 - Print relative path not absolute path in logo cmd log output ([#2709](https://github.com/nf-core/tools/pull/2709))
 
-## [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.11) - [2024-01-29]
+## [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.12) - [2024-01-29]
 
 ### Template
 
