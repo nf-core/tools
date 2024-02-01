@@ -4,13 +4,13 @@
 
 ### Template
 
-- fix ignoring changes in partial files ([#2722](https://github.com/nf-core/tools/pull/2722))
-
 ### Linting
 
 ### Modules
 
 ### General
+
+- fix ignoring changes in partially templated files (e.g. `.gitignore`) ([#2722](https://github.com/nf-core/tools/pull/2722))
 
 ## [v2.12.1 - Aluminium Wolf - Patch](https://github.com/nf-core/tools/releases/tag/2.12.1) - [2024-02-01]
 
