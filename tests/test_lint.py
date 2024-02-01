@@ -222,6 +222,8 @@ class TestLint(unittest.TestCase):
     )
     from .lint.nextflow_config import (  # type: ignore[misc]
         test_default_values_fail,
+        test_default_values_float,
+        test_default_values_float_fail,
         test_default_values_ignored,
         test_default_values_match,
         test_nextflow_config_bad_name_fail,

@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v2.13dev
+## [v2.12.1 - Aluminium Wolf - Patch](https://github.com/nf-core/tools/releases/tag/2.12.1) - [2024-02-01]
 
 ### Template
 
@@ -16,12 +16,13 @@
 ### General
 
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.1.15 ([#2705](https://github.com/nf-core/tools/pull/2705))
+- use types for default value comparison ([#2712](https://github.com/nf-core/tools/pull/2712))
 - fix changelog titles ([#2708](https://github.com/nf-core/tools/pull/2708))
 - Print relative path not absolute path in logo cmd log output ([#2709](https://github.com/nf-core/tools/pull/2709))
 - Update codecov/codecov-action action to v4 ([#2713](https://github.com/nf-core/tools/pull/2713))
-- Revert pin dependency ([#2719](https://github.com/nf-core/tools/pull/2719))
+- Ignore nf-core-bot in renovate PRs ([#2716](https://github.com/nf-core/tools/pull/2716))
 
-## [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.11) - [2024-01-29]
+## [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.12) - [2024-01-29]
 
 ### Template
 
