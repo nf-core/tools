@@ -236,7 +236,7 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
 
     # Files that cause an error if they exist
     for file in files_fail_ifexists:
-        if file in ignore_files:
+        if str(file) in ignore_files:
             continue
         if pf(file).is_file():
             failed.append(f"File must be removed: {self._wrap_quotes(file)}")
