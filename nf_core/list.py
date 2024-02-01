@@ -6,6 +6,8 @@ import logging
 import os
 import re
 from datetime import datetime
+from pathlib import Path
+from typing import Union
 
 import git
 import requests
@@ -39,12 +41,12 @@ def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archiv
         return wfs.print_summary()
 
 
-def get_local_wf(workflow, revision=None) -> str:
+def get_local_wf(workflow: Union[str, Path], revision=None) -> Union[str, None]:
     """
     Check if this workflow has a local copy and use nextflow to pull it if not
     """
     # Assume nf-core if no org given
-    if workflow.count("/") == 0:
+    if str(workflow).count("/") == 0:
         workflow = f"nf-core/{workflow}"
 
     wfs = Workflows()
