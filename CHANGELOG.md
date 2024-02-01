@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v2.13dev
+## [v2.12.1 - Aluminium Wolf - Patch](https://github.com/nf-core/tools/releases/tag/2.12.1) - [2024-02-01]
 
 ### Template
 
@@ -22,7 +22,7 @@
 - Update codecov/codecov-action action to v4 ([#2713](https://github.com/nf-core/tools/pull/2713))
 - Ignore nf-core-bot in renovate PRs ([#2716](https://github.com/nf-core/tools/pull/2716))
 
-## [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.11) - [2024-01-29]
+## [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.12) - [2024-01-29]
 
 ### Template
 
