@@ -2,16 +2,10 @@
 
 ## [v2.12.1 - Aluminium Wolf - Patch](https://github.com/nf-core/tools/releases/tag/2.12.1) - [2024-02-01]
 
-### Template
-
 ### Linting
 
 - Handle default values of type number from nextflow schema ([#2703](https://github.com/nf-core/tools/pull/2703))
 - fix ignoring files_unchanged ([#2707](https://github.com/nf-core/tools/pull/2707))
-
-### Modules
-
-### Subworkflows
 
 ### General
 

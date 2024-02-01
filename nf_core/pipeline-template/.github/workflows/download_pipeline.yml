@@ -23,13 +23,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@a2aef5d2363ccd4f99661d959a53dd0286010ddf # v1
+        uses: nf-core/setup-nextflow@v1
 
-      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           architecture: "x64"
-      - uses: eWaterCycle/setup-singularity@931d4e31109e875b13309ae1d07c70ca8fbc8537 # v7
+      - uses: eWaterCycle/setup-singularity@v7
         with:
           singularity-version: 3.8.3
 
