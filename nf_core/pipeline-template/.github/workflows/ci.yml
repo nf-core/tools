@@ -28,10 +28,10 @@ jobs:
           - "latest-everything"
     steps:
       - name: Check out pipeline code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@v4
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@a2aef5d2363ccd4f99661d959a53dd0286010ddf # v1
+        uses: nf-core/setup-nextflow@v1
         with:
           version: "{% raw %}${{ matrix.NXF_VER }}{% endraw %}"
 
