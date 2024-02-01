@@ -4,6 +4,8 @@
 
 ### Template
 
+- fix ignoring changes in partial files ([#2722](https://github.com/nf-core/tools/pull/2722))
+
 ### Linting
 
 ### Modules
