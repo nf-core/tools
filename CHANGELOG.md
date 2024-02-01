@@ -1,5 +1,15 @@
 # nf-core/tools: Changelog
 
+## v2.13dev
+
+### Template
+
+### Linting
+
+### Modules
+
+### General
+
 ## [v2.12.1 - Aluminium Wolf - Patch](https://github.com/nf-core/tools/releases/tag/2.12.1) - [2024-02-01]
 
 ### Linting
