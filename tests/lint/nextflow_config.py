@@ -64,8 +64,8 @@ def test_default_values_match(self):
     result = lint_obj.nextflow_config()
     assert len(result["failed"]) == 0
     assert len(result["warned"]) == 0
-    assert "Config default value correct: params.max_cpus" in result["passed"]
-    assert "Config default value correct: params.validate_params" in result["passed"]
+    assert "Config default value correct: params.max_cpus" in str(result["passed"])
+    assert "Config default value correct: params.validate_params" in str(result["passed"])
 
 
 def test_default_values_fail(self):
@@ -75,7 +75,7 @@ def test_default_values_fail(self):
     nf_conf_file = Path(new_pipeline) / "nextflow.config"
     with open(nf_conf_file) as f:
         content = f.read()
-        fail_content = re.sub(r"\bmax_cpus                   = 16\b", "max_cpus                   = 0", content)
+        fail_content = re.sub(r"\bmax_cpus\s*=\s*16\b", "max_cpus = 0", content)
     with open(nf_conf_file, "w") as f:
         f.write(fail_content)
     # Change the default value of max_memory in nextflow_schema.json
@@ -115,5 +115,68 @@ def test_default_values_ignored(self):
     result = lint_obj.nextflow_config()
     assert len(result["failed"]) == 0
     assert len(result["ignored"]) == 1
-    assert "Config default value correct: params.max_cpus" not in result["passed"]
-    assert "Config default ignored: params.max_cpus" in result["ignored"]
+    assert "Config default value correct: params.max_cpu" not in str(result["passed"])
+    assert "Config default ignored: params.max_cpus" in str(result["ignored"])
+
+
+def test_default_values_float(self):
+    """Test comparing two float values."""
+    new_pipeline = self._make_pipeline_copy()
+    # Add a float value `dummy=0.0001` to the nextflow.config below `validate_params`
+    nf_conf_file = Path(new_pipeline) / "nextflow.config"
+    with open(nf_conf_file) as f:
+        content = f.read()
+        fail_content = re.sub(
+            r"validate_params\s*=\s*true", "params.validate_params = true\ndummy = 0.000000001", content
+        )
+    with open(nf_conf_file, "w") as f:
+        f.write(fail_content)
+    # Add a float value `dummy` to the nextflow_schema.json
+    nf_schema_file = Path(new_pipeline) / "nextflow_schema.json"
+    with open(nf_schema_file) as f:
+        content = f.read()
+        fail_content = re.sub(
+            r'"validate_params": {',
+            '    "dummy": {"type": "number","default":0.000000001},\n"validate_params": {',
+            content,
+        )
+    with open(nf_schema_file, "w") as f:
+        f.write(fail_content)
+
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj._load_pipeline_config()
+    result = lint_obj.nextflow_config()
+    assert len(result["failed"]) == 0
+    assert len(result["warned"]) == 0
+    assert "Config default value correct: params.dummy" in str(result["passed"])
+
+
+def test_default_values_float_fail(self):
+    """Test comparing two float values."""
+    new_pipeline = self._make_pipeline_copy()
+    # Add a float value `dummy=0.0001` to the nextflow.config below `validate_params`
+    nf_conf_file = Path(new_pipeline) / "nextflow.config"
+    with open(nf_conf_file) as f:
+        content = f.read()
+        fail_content = re.sub(
+            r"validate_params\s*=\s*true", "params.validate_params = true\ndummy = 0.000000001", content
+        )
+    with open(nf_conf_file, "w") as f:
+        f.write(fail_content)
+    # Add a float value `dummy` to the nextflow_schema.json
+    nf_schema_file = Path(new_pipeline) / "nextflow_schema.json"
+    with open(nf_schema_file) as f:
+        content = f.read()
+        fail_content = re.sub(
+            r'"validate_params": {', '    "dummy": {"type": "float","default":0.000001},\n"validate_params": {', content
+        )
+    with open(nf_schema_file, "w") as f:
+        f.write(fail_content)
+
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj._load_pipeline_config()
+    result = lint_obj.nextflow_config()
+
+    assert len(result["failed"]) == 1
+    assert len(result["warned"]) == 0
+    assert "Config default value incorrect: `params.dummy" in str(result["failed"])
