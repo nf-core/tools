@@ -200,9 +200,11 @@ class TestLint(unittest.TestCase):
     )
     from .lint.files_exist import (  # type: ignore[misc]
         test_files_exist_depreciated_file,
+        test_files_exist_fail_conditional,
         test_files_exist_missing_config,
         test_files_exist_missing_main,
         test_files_exist_pass,
+        test_files_exist_pass_conditional,
     )
     from .lint.files_unchanged import (  # type: ignore[misc]
         test_files_unchanged_fail,
@@ -220,6 +222,8 @@ class TestLint(unittest.TestCase):
     )
     from .lint.nextflow_config import (  # type: ignore[misc]
         test_default_values_fail,
+        test_default_values_float,
+        test_default_values_float_fail,
         test_default_values_ignored,
         test_default_values_match,
         test_nextflow_config_bad_name_fail,

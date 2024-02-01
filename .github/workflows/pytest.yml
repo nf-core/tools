@@ -195,7 +195,7 @@ jobs:
           coverage report
           coverage xml
 
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@f30e4959ba63075080d4f7f90cacc18d9f3fafd7 # v4
         with:
           files: coverage.xml
         env:

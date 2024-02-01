@@ -4,9 +4,9 @@
 import copy
 import json
 import logging
-import os
 import tempfile
 import webbrowser
+from pathlib import Path
 
 import jinja2
 import jsonschema
@@ -30,10 +30,11 @@ class PipelineSchema:
     def __init__(self):
         """Initialise the object"""
 
-        self.schema = None
-        self.pipeline_dir = None
-        self.schema_filename = None
+        self.schema = {}
+        self.pipeline_dir = ""
+        self.schema_filename = ""
         self.schema_defaults = {}
+        self.schema_types = {}
         self.schema_params = {}
         self.input_params = {}
         self.pipeline_params = {}
@@ -48,29 +49,29 @@ class PipelineSchema:
 
     def get_schema_path(self, path, local_only=False, revision=None):
         """Given a pipeline name, directory, or path, set self.schema_filename"""
-
+        path = Path(path)
         # Supplied path exists - assume a local pipeline directory or schema
-        if os.path.exists(path):
+        if path.exists():
             if revision is not None:
                 log.warning(f"Local workflow supplied, ignoring revision '{revision}'")
-            if os.path.isdir(path):
+            if path.is_dir():
                 self.pipeline_dir = path
-                self.schema_filename = os.path.join(path, "nextflow_schema.json")
+                self.schema_filename = path / "nextflow_schema.json"
             else:
-                self.pipeline_dir = os.path.dirname(path)
+                self.pipeline_dir = path.parent
                 self.schema_filename = path
 
         # Path does not exist - assume a name of a remote workflow
         elif not local_only:
             self.pipeline_dir = nf_core.list.get_local_wf(path, revision=revision)
-            self.schema_filename = os.path.join(self.pipeline_dir, "nextflow_schema.json")
+            self.schema_filename = Path(self.pipeline_dir, "nextflow_schema.json")
 
         # Only looking for local paths, overwrite with None to be safe
         else:
             self.schema_filename = None
 
         # Check that the schema file exists
-        if self.schema_filename is None or not os.path.exists(self.schema_filename):
+        if self.schema_filename is None or not Path(self.schema_filename).exists():
             error = f"Could not find pipeline schema for '{path}': {self.schema_filename}"
             log.error(error)
             raise AssertionError(error)
@@ -106,6 +107,9 @@ class PipelineSchema:
 
     def load_schema(self):
         """Load a pipeline schema from a file"""
+        if self.schema_filename is None:
+            raise AssertionError("Pipeline schema filename could not be found.")
+
         with open(self.schema_filename) as fh:
             self.schema = json.load(fh)
         self.schema_defaults = {}
@@ -147,7 +151,7 @@ class PipelineSchema:
         param["default"] = str(param["default"])
         return param
 
-    def get_schema_defaults(self):
+    def get_schema_defaults(self) -> None:
         """
         Generate set of default input parameters from schema.
 
@@ -170,6 +174,16 @@ class PipelineSchema:
                     param = self.sanitise_param_default(param)
                     if param["default"] is not None:
                         self.schema_defaults[p_key] = param["default"]
+
+    def get_schema_types(self) -> None:
+        """Get a list of all parameter types in the schema"""
+        for name, param in self.schema.get("properties", {}).items():
+            if "type" in param:
+                self.schema_types[name] = param["type"]
+        for _, definition in self.schema.get("definitions", {}).items():
+            for name, param in definition.get("properties", {}).items():
+                if "type" in param:
+                    self.schema_types[name] = param["type"]
 
     def save_schema(self, suppress_logging=False):
         """Save a pipeline schema to a file"""
@@ -486,7 +500,7 @@ class PipelineSchema:
             console = rich.console.Console()
             console.print("\n", Syntax(prettified_docs, format), "\n")
         else:
-            if os.path.exists(output_fn) and not force:
+            if Path(output_fn).exists() and not force:
                 log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")
                 return
             with open(output_fn, "w") as fh:
@@ -572,7 +586,7 @@ class PipelineSchema:
         )
         schema_template = env.get_template("nextflow_schema.json")
         template_vars = {
-            "name": self.pipeline_manifest.get("name", os.path.dirname(self.schema_filename)).strip("'"),
+            "name": self.pipeline_manifest.get("name", Path(self.schema_filename).parent).strip("'"),
             "description": self.pipeline_manifest.get("description", "").strip("'"),
         }
         self.schema = json.loads(schema_template.render(template_vars))
@@ -656,9 +670,11 @@ class PipelineSchema:
         if len(self.pipeline_params) > 0 and len(self.pipeline_manifest) > 0:
             log.debug("Skipping get_wf_params as we already have them")
             return
-
+        if self.schema_filename is None:
+            log.error("Cannot get workflow params without a schema file")
+            return
         log.debug("Collecting pipeline parameter defaults\n")
-        config = nf_core.utils.fetch_wf_config(os.path.dirname(self.schema_filename))
+        config = nf_core.utils.fetch_wf_config(Path(self.schema_filename).parent)
         skipped_params = []
         # Pull out just the params. values
         for ckey, cval in config.items():
