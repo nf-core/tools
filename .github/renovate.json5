@@ -14,4 +14,5 @@
             registryUrls: ["docker.io"],
         },
     ],
+    gitIgnoredAuthors: ["core@nf-co.re"],
 }
