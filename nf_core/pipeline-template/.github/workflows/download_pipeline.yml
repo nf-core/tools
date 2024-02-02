@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       testbranch:
-        description: "The branch to test the pipeline download."
+        description: "The specific branch you wish to utilize for the test execution of nf-core download."
         required: true
         default: "dev"
   pull_request:
