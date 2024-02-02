@@ -10,6 +10,8 @@
 
 ### General
 
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.2.0 ([#2723](https://github.com/nf-core/tools/pull/2723))
+
 ## [v2.12.1 - Aluminium Wolf - Patch](https://github.com/nf-core/tools/releases/tag/2.12.1) - [2024-02-01]
 
 ### Linting
