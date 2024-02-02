@@ -6,6 +6,11 @@ name: Test successful pipeline download with 'nf-core download'
 #  - the head branch of the pull request is updated, i.e. if fixes for a release are pushed last minute to dev.
 on:
   workflow_dispatch:
+    inputs:
+      testbranch:
+        description: "The branch to test the pipeline download."
+        required: true
+        default: "dev"
   pull_request:
     types:
       - opened
@@ -42,7 +47,7 @@ jobs:
         run: |
           echo "REPO_LOWERCASE=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
           echo "REPOTITLE_LOWERCASE=$(basename ${GITHUB_REPOSITORY,,})" >> ${GITHUB_ENV}
-          echo "REPO_BRANCH=${GITHUB_REF#refs/heads/}" >> ${GITHUB_ENV}
+          echo "REPO_BRANCH=${{ github.event.inputs.testbranch || 'dev' }}" >> ${GITHUB_ENV}
 
       - name: Download the pipeline
         env:
