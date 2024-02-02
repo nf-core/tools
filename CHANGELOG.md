@@ -10,6 +10,8 @@
 
 ### General
 
+- update ruff to 0.2.0 and add it to pre-commit step ([#2725](https://github.com/nf-core/tools/pull/2725))
+
 ## [v2.12.1 - Aluminium Wolf - Patch](https://github.com/nf-core/tools/releases/tag/2.12.1) - [2024-02-01]
 
 ### Linting
