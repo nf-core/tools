@@ -2,6 +2,7 @@ mypy
 myst_parser
 pytest-cov
 pytest-datafiles
+pytest-xdist
 responses
 ruff
 Sphinx
