@@ -4,6 +4,8 @@
 
 ### Template
 
+- Add empty line in README.md to fix badges. ([#2729](https://github.com/nf-core/tools/pull/2729))
+
 ### Linting
 
 ### Modules
