@@ -64,5 +64,4 @@ jobs:
         uses: ./.github/actions/create-lint-wf
         with:
           NXF_VER: ${{ matrix.NXF_VER }}
-          NXF_WORK: ${{ env.NXF_WORK }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
