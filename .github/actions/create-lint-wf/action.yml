@@ -25,7 +25,7 @@ runs:
     - name: nf-core create
       shell: bash
       run: |
-        mkdir create-lint-wf && cd create-lint-wf
+        mkdir -p create-lint-wf && cd create-lint-wf
         export NXF_WORK=$(pwd)
         nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
 
