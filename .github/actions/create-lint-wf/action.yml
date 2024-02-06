@@ -9,6 +9,7 @@ runs:
   using: "composite"
   steps:
     - name: go to subdirectory and change nextflow workdir
+      shell: bash
       run: |
         mkdir -p create-lint-wf
         cd create-lint-wf
@@ -22,6 +23,7 @@ runs:
 
     # Build a pipeline from the template
     - name: nf-core create
+      shell: bash
       run: |
         mkdir create-lint-wf && cd create-lint-wf
         export NXF_WORK=$(pwd)
@@ -35,25 +37,30 @@ runs:
 
     # Update modules to the latest version
     - name: nf-core modules update
+      shell: bash
       run: nf-core --log-file log.txt modules update --dir nf-core-testpipeline --all --no-preview
       working-directory: create-lint-wf
 
     # Remove TODO statements
     - name: remove TODO
+      shell: bash
       run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
       working-directory: create-lint-wf
 
     # Replace zenodo.XXXXXX to pass readme linting
     - name: replace zenodo.XXXXXX
+      shell: bash
       run: find nf-core-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
       working-directory: create-lint-wf
 
     # Run nf-core linting
     - name: nf-core lint
+      shell: bash
       run: nf-core --verbose --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned
       working-directory: create-lint-wf
 
     - name: nf-core lint in release mode
+      shell: bash
       run: nf-core --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
       working-directory: create-lint-wf
 
@@ -65,5 +72,6 @@ runs:
         path: create-lint-wf/log.txt
 
     - name: Cleanup work directory
+      shell: bash
       run: sudo rm -rf create-lint-wf
       if: always()
