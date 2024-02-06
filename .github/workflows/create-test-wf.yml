@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - "docs/**"
+      - "CHANGELOG.md"
   pull_request:
   release:
     types: [published]
