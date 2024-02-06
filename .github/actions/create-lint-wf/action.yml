@@ -59,6 +59,11 @@ runs:
       run: nf-core --verbose --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned
       working-directory: create-lint-wf
 
+    - name: nf-core bump-version to release
+      shell: bash
+      run: nf-core --log-file log.txt bump-version --dir nf-core-testpipeline/ 1.1
+      working-directory: create-lint-wf
+
     - name: nf-core lint in release mode
       shell: bash
       run: nf-core --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
