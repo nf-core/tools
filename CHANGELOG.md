@@ -13,6 +13,7 @@
 ### General
 
 - Update codecov/codecov-action digest to e0b68c6 ([#2728](https://github.com/nf-core/tools/pull/2728))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.2.1 ([#2730](https://github.com/nf-core/tools/pull/2730))
 
 ## [v2.12.1 - Aluminium Wolf - Patch](https://github.com/nf-core/tools/releases/tag/2.12.1) - [2024-02-01]
 
