@@ -208,7 +208,10 @@ class SyncedRepo:
         """
         Checks out the specified branch of the repository
         """
-        self.repo.git.checkout(self.branch)
+        try:
+            self.repo.git.checkout(self.branch)
+        except GitCommandError:
+            self.repo.git.checkout(self.branch, force=True)
 
     def checkout(self, commit):
         """
@@ -217,7 +220,10 @@ class SyncedRepo:
         Args:
             commit (str): Git SHA of the commit
         """
-        self.repo.git.checkout(commit)
+        try:
+            self.repo.git.checkout(commit)
+        except GitCommandError:
+            self.repo.git.checkout(commit, force=True)
 
     def component_exists(self, component_name, component_type, checkout=True, commit=None):
         """
