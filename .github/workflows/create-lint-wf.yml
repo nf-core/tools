@@ -42,12 +42,12 @@ jobs:
           export NXF_WORK=$(pwd)
 
       # Get the repo code
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         name: Check out source-code repository
 
       # Set up nf-core/tools
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
         with:
           python-version: 3.11
           cache: pip
@@ -59,7 +59,7 @@ jobs:
 
       # Set up Nextflow
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v1
+        uses: nf-core/setup-nextflow@dccbf847604cbc34610280d79644a02035d924ac # v1
         with:
           version: ${{ matrix.NXF_VER }}
 
@@ -147,7 +147,7 @@ jobs:
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
         with:
           name: nf-core-log-file-${{ matrix.NXF_VER }}
           path: create-lint-wf/log.txt

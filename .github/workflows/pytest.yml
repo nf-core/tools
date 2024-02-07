@@ -58,7 +58,7 @@ jobs:
     name: Get test file matrix
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         name: Check out source-code repository
 
       - name: List tests
@@ -84,11 +84,11 @@ jobs:
           cd pytest
           export NXF_WORK=$(pwd)
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         name: Check out source-code repository
 
       - name: Set up Python ${{ needs.setup.outputs.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
         with:
           python-version: ${{ needs.setup.outputs.python-version }}
           cache: "pip"
@@ -112,7 +112,7 @@ jobs:
         run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v1
+        uses: nf-core/setup-nextflow@dccbf847604cbc34610280d79644a02035d924ac # v1
 
       - name: Look if nf-test is already installed and write to env variable
         id: check-nftest
@@ -156,7 +156,7 @@ jobs:
           fi
 
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
         with:
           name: coverage_${{ matrix.test }}
           path: .coverage
@@ -171,9 +171,9 @@ jobs:
           mkdir -p pytest
           cd pytest
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
         env:
           AGENT_TOOLSDIRECTORY: /opt/actions-runner/_work/tools/tools/
         with:
@@ -190,14 +190,14 @@ jobs:
           mv .github/.coveragerc .
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe # v4
       - name: Run coverage
         run: |
           coverage combine --keep coverage*/.coverage*
           coverage report
           coverage xml
 
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@e0b68c6749509c5f83f984dd99a76a1c1a231044 # v4
         with:
           files: coverage.xml
         env:

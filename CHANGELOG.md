@@ -1,26 +1,43 @@
 # nf-core/tools: Changelog
 
-# v2.13dev
+## v2.13dev
 
 ### Template
+
+- Add empty line in README.md to fix badges. ([#2729](https://github.com/nf-core/tools/pull/2729))
+- Replace automatic branch detection in `nf-core download` CI test with hardcoded `dev` and input. ([#2727](https://github.com/nf-core/tools/pull/2727))
+
+### Linting
+
+### Modules
+
+### General
+
+- update ruff to 0.2.0 and add it to pre-commit step ([#2725](https://github.com/nf-core/tools/pull/2725))
+- Update codecov/codecov-action digest to e0b68c6 ([#2728](https://github.com/nf-core/tools/pull/2728))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.2.1 ([#2730](https://github.com/nf-core/tools/pull/2730))
+
+## [v2.12.1 - Aluminium Wolf - Patch](https://github.com/nf-core/tools/releases/tag/2.12.1) - [2024-02-01]
 
 ### Linting
 
 - Handle default values of type number from nextflow schema ([#2703](https://github.com/nf-core/tools/pull/2703))
-
-### Modules
-
-### Subworkflows
+- fix ignoring files_unchanged ([#2707](https://github.com/nf-core/tools/pull/2707))
 
 ### General
 
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.1.15 ([#2705](https://github.com/nf-core/tools/pull/2705))
+- use types for default value comparison ([#2712](https://github.com/nf-core/tools/pull/2712))
+- fix changelog titles ([#2708](https://github.com/nf-core/tools/pull/2708))
+- Print relative path not absolute path in logo cmd log output ([#2709](https://github.com/nf-core/tools/pull/2709))
+- Update codecov/codecov-action action to v4 ([#2713](https://github.com/nf-core/tools/pull/2713))
+- Ignore nf-core-bot in renovate PRs ([#2716](https://github.com/nf-core/tools/pull/2716))
 
-# [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.11) - [2024-01-29]
+## [v2.12 - Aluminium Wolf](https://github.com/nf-core/tools/releases/tag/2.12) - [2024-01-29]
 
 ### Template
 
-- Add a Github Action Workflow to the pipeline template that tests a successful download with 'nf-core download' ([#2618](https://github.com/nf-core/tools/pull/2618))
+- Add a Github Action Workflow to the pipeline template that tests a successful download with `nf-core download` ([#2618](https://github.com/nf-core/tools/pull/2618))
 - Use `pre-commit` to lint files in GitHub CI ([#2635](https://github.com/nf-core/tools/pull/2635))
 - Use pdiff also on gitpod for nf-test ([#2640](https://github.com/nf-core/tools/pull/2640))
 - switch to new image syntax in readme ([#2645](https://github.com/nf-core/tools/pull/2645))
@@ -62,7 +79,7 @@
 - Update peter-evans/create-or-update-comment action to v4 ([#2683](https://github.com/nf-core/tools/pull/2683))
 - Update peter-evans/create-or-update-comment action to v4 ([#2695](https://github.com/nf-core/tools/pull/2695))
 
-# [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
+## [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
 ### Template
 
@@ -73,7 +90,7 @@
 
 - Only dump `modules.json` when it is modified ([#2609](https://github.com/nf-core/tools/pull/2609))
 
-# [v2.11 - Magnesium Dragon](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-19]
+## [v2.11 - Magnesium Dragon](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-19]
 
 ### Template
 
@@ -129,7 +146,7 @@
 - Sort the `installed_by` list in `modules.json` ([#2570](https://github.com/nf-core/tools/pull/2570)).
 - Unset env variable JAVA_TOOL_OPTIONS in gitpod ([#2569](https://github.com/nf-core/tools/pull/2569))
 
-# [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]
+## [v2.10 - Nickel Ostrich](https://github.com/nf-core/tools/releases/tag/2.10) + [2023-09-25]
 
 ### Template
 
@@ -173,7 +190,7 @@
 - Throw warning when custom workflow name contains special characters ([#2401](https://github.com/nf-core/tools/pull/2401))
 - Bump version of nf-test snapshot files with `nf-core bump-version` ([#2410](https://github.com/nf-core/tools/pull/2410))
 
-# [v2.9 - Chromium Falcon](https://github.com/nf-core/tools/releases/tag/2.9) + [2023-06-29]
+## [v2.9 - Chromium Falcon](https://github.com/nf-core/tools/releases/tag/2.9) + [2023-06-29]
 
 ### Template
 
@@ -241,7 +258,7 @@ _In addition, `-r` / `--revision` has been changed to a parameter that can be pr
 - Refgenie: Create `nxf_home/nf-core/refgenie_genomes.config` path if it doesn't exist ([#2312](https://github.com/nf-core/tools/pull/2312))
 - Add CI tests to test running a pipeline whe it's created from a template skipping different areas
 
-# [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
+## [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
 
 ### Template
 
