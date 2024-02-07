@@ -176,7 +176,7 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     # Files that can be added to, but that must contain the template contents
     for files in files_partial:
         # Ignore if file specified in linting config
-        if any([f in ignore_files for f in files]):
+        if any([str(f) in ignore_files for f in files]):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
