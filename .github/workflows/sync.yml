@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   get-pipelines:
-    runs-on: ${{ github.event.inputs.runners || 'self-hosted' }}
+    runs-on: "ubuntu-latest"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -38,7 +38,8 @@ jobs:
 
   sync:
     needs: get-pipelines
-    runs-on: ${{ github.event.inputs.runners || 'self-hosted' }}
+    # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
+    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     strategy:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
