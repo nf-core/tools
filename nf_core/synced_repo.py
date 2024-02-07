@@ -214,6 +214,8 @@ class SyncedRepo:
             if "Your local changes to the following files would be overwritten by checkout" in str(e):
                 log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
                 self.repo.git.checkout(self.branch, force=True)
+            else:
+                raise e
 
     def checkout(self, commit):
         """
@@ -228,6 +230,8 @@ class SyncedRepo:
             if "Your local changes to the following files would be overwritten by checkout" in str(e):
                 log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
                 self.repo.git.checkout(self.branch, force=True)
+            else:
+                raise e
 
     def component_exists(self, component_name, component_type, checkout=True, commit=None):
         """
