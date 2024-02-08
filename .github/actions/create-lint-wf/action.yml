@@ -29,6 +29,11 @@ runs:
         export NXF_WORK=$(pwd)
         nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
 
+    # Try syncing it before we change anything
+    - name: nf-core sync
+      run: nf-core --log-file log.txt sync --dir nf-core-testpipeline/
+      working-directory: create-lint-wf
+
     # Run code style linting
     - name: run pre-commit
       shell: bash
@@ -75,6 +80,26 @@ runs:
       with:
         name: nf-core-log-file-${{ matrix.NXF_VER }}
         path: create-lint-wf/log.txt
+
+    - name: nf-core modules install
+      run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
+      working-directory: create-lint-wf
+
+    - name: nf-core modules install gitlab
+      run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git --branch branch-tester install fastp --dir nf-core-testpipeline/
+      working-directory: create-lint-wf
+
+    - name: nf-core modules list local
+      run: nf-core --log-file log.txt modules list local --dir nf-core-testpipeline/
+      working-directory: create-lint-wf
+
+    - name: nf-core modules list remote
+      run: nf-core --log-file log.txt modules list remote
+      working-directory: create-lint-wf
+
+    - name: nf-core modules list remote gitlab
+      run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git list remote
+      working-directory: create-lint-wf
 
     - name: Cleanup work directory
       shell: bash
