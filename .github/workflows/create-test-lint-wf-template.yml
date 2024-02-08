@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - "docs/**"
+      - "CHANGELOG.md"
     paths:
       - nf_core/pipeline-template/**
   pull_request:

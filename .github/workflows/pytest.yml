@@ -12,6 +12,7 @@ on:
     paths-ignore:
       - "docs/**"
       - "CHANGELOG.md"
+      - ".github/**"
   release:
     types: [published]
   workflow_dispatch:

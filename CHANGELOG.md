@@ -9,6 +9,8 @@
 
 ### Linting
 
+- make creat-lint-wf composable ([#2733](https://github.com/nf-core/tools/pull/2733))
+
 ### Modules
 
 ### General
