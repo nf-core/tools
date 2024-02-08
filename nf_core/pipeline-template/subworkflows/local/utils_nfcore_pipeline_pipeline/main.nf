@@ -29,12 +29,13 @@ include { INPUT_CHECK               } from '../../local/input_check'
 workflow PIPELINE_INITIALISATION {
 
     take:
-    version         // boolean: Display version and exit
-    help            // boolean: Display help text
-    validate_params // boolean: Boolean whether to validate parameters against the schema at runtime
-    monochrome_logs // boolean: Do not use coloured log outputs
-    outdir          //  string: The output directory where the results will be saved
-    input           //  string: Path to input samplesheet
+    version           // boolean: Display version and exit
+    help              // boolean: Display help text
+    validate_params   // boolean: Boolean whether to validate parameters against the schema at runtime
+    monochrome_logs   // boolean: Do not use coloured log outputs
+    nextflow_cli_args //   array: List of positional nextflow CLI args
+    outdir            //  string: The output directory where the results will be saved
+    input             //  string: Path to input samplesheet
 
     main:
 
@@ -68,7 +69,9 @@ workflow PIPELINE_INITIALISATION {
     //
     // Check config provided to the pipeline
     //
-    UTILS_NFCORE_PIPELINE ()
+    UTILS_NFCORE_PIPELINE (
+        nextflow_cli_args
+    )
 
     //
     // Custom validation for pipeline parameters
