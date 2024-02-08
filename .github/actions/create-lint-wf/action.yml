@@ -82,22 +82,27 @@ runs:
         path: create-lint-wf/log.txt
 
     - name: nf-core modules install
+      shell: bash
       run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
       working-directory: create-lint-wf
 
     - name: nf-core modules install gitlab
+      shell: bash
       run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git --branch branch-tester install fastp --dir nf-core-testpipeline/
       working-directory: create-lint-wf
 
     - name: nf-core modules list local
+      shell: bash
       run: nf-core --log-file log.txt modules list local --dir nf-core-testpipeline/
       working-directory: create-lint-wf
 
     - name: nf-core modules list remote
+      shell: bash
       run: nf-core --log-file log.txt modules list remote
       working-directory: create-lint-wf
 
     - name: nf-core modules list remote gitlab
+      shell: bash
       run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git list remote
       working-directory: create-lint-wf
 
