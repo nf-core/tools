@@ -67,6 +67,7 @@ jobs:
 
       # Build a module from the template
       - name: nf-core modules create
+        shell: bash
         run: nf-core --verbose --log-file log.txt modules create bpipe --dir nf-core-testpipeline --author @nf-core-bot --label process_low --meta
         working-directory: create-lint-wf
 
