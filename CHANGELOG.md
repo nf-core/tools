@@ -5,6 +5,7 @@
 ### Template
 
 - Add empty line in README.md to fix badges. ([#2729](https://github.com/nf-core/tools/pull/2729))
+- Replace automatic branch detection in `nf-core download` CI test with hardcoded `dev` and input. ([#2727](https://github.com/nf-core/tools/pull/2727))
 
 ### Linting
 
@@ -14,7 +15,10 @@
 
 ### General
 
+- fix ignoring changes in partially templated files (e.g. `.gitignore`) ([#2722](https://github.com/nf-core/tools/pull/2722))
+- update ruff to 0.2.0 and add it to pre-commit step ([#2725](https://github.com/nf-core/tools/pull/2725))
 - Update codecov/codecov-action digest to e0b68c6 ([#2728](https://github.com/nf-core/tools/pull/2728))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.2.1 ([#2730](https://github.com/nf-core/tools/pull/2730))
 
 ## [v2.12.1 - Aluminium Wolf - Patch](https://github.com/nf-core/tools/releases/tag/2.12.1) - [2024-02-01]
 
@@ -36,7 +40,7 @@
 
 ### Template
 
-- Add a Github Action Workflow to the pipeline template that tests a successful download with 'nf-core download' ([#2618](https://github.com/nf-core/tools/pull/2618))
+- Add a Github Action Workflow to the pipeline template that tests a successful download with `nf-core download` ([#2618](https://github.com/nf-core/tools/pull/2618))
 - Use `pre-commit` to lint files in GitHub CI ([#2635](https://github.com/nf-core/tools/pull/2635))
 - Use pdiff also on gitpod for nf-test ([#2640](https://github.com/nf-core/tools/pull/2640))
 - switch to new image syntax in readme ([#2645](https://github.com/nf-core/tools/pull/2645))
