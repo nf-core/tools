@@ -31,6 +31,7 @@ runs:
 
     # Try syncing it before we change anything
     - name: nf-core sync
+      shell: bash
       run: nf-core --log-file log.txt sync --dir nf-core-testpipeline/
       working-directory: create-lint-wf
 
