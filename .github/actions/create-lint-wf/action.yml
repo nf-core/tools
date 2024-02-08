@@ -106,8 +106,3 @@ runs:
       shell: bash
       run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git list remote
       working-directory: create-lint-wf
-
-    - name: Cleanup work directory
-      shell: bash
-      run: sudo rm -rf create-lint-wf
-      if: always()
