@@ -68,4 +68,3 @@ jobs:
       - name: Cleanup work directory
         run: sudo rm -rf create-lint-wf
         if: always()
-
