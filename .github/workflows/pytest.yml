@@ -113,7 +113,7 @@ jobs:
         run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@dccbf847604cbc34610280d79644a02035d924ac # v1
+        uses: nf-core/setup-nextflow@b9f764e8ba5c76b712ace14ecbfcef0e40ae2dd8 # v1
 
       - name: Look if nf-test is already installed and write to env variable
         id: check-nftest
