@@ -55,9 +55,12 @@ workflow {{ prefix_nodash|upper }}_{{ short_name|upper }} {
     //
     // WORKFLOW: Run pipeline
     //
-    {{ short_name|upper }} ( 
-        samplesheet 
+    {{ short_name|upper }} (
+        samplesheet
     )
+
+    emit:
+    multiqc_report = {{ short_name|upper }}.out.multiqc_report // channel: /path/to/multiqc_report.html
 
 }
 /*
@@ -99,7 +102,8 @@ workflow {
         params.plaintext_email,
         params.outdir,
         params.monochrome_logs,
-        params.hook_url
+        params.hook_url,
+        {{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report
     )
 }
 
