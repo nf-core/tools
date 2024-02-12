@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@dccbf847604cbc34610280d79644a02035d924ac # v1
+        uses: nf-core/setup-nextflow@b9f764e8ba5c76b712ace14ecbfcef0e40ae2dd8 # v1
 
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
         with:
@@ -47,13 +47,13 @@ jobs:
         run: |
           echo "REPO_LOWERCASE=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
           echo "REPOTITLE_LOWERCASE=$(basename ${GITHUB_REPOSITORY,,})" >> ${GITHUB_ENV}
-          echo "REPO_BRANCH=${{ github.event.inputs.testbranch || 'dev' }}" >> ${GITHUB_ENV}
+          echo "{% raw %}REPO_BRANCH=${{ github.event.inputs.testbranch || 'dev' }}" >> ${GITHUB_ENV}
 
       - name: Download the pipeline
         env:
           NXF_SINGULARITY_CACHEDIR: ./
         run: |
-          nf-core download {% raw %} ${{ env.REPO_LOWERCASE }} \
+          nf-core download ${{ env.REPO_LOWERCASE }} \
           --revision ${{ env.REPO_BRANCH }} \
           --outdir ./${{ env.REPOTITLE_LOWERCASE }} \
           --compress "none" \
