@@ -129,16 +129,6 @@ workflow PIPELINE_COMPLETION {
             imNotification(summary_params, hook_url)
         }
     }
-
-    //
-    // Log warning if exceeding resource requests
-    //
-    workflow.onError {
-        if (workflow.errorReport.contains("Process requirement exceeds available memory")) {
-            log.warning "🛑 Default resources exceed availability 🛑 "
-            log.warning "💡 See here on how to configure pipeline: https://nf-co.re/docs/usage/configuration#tuning-workflow-resources 💡"
-        }
-    }
 }
 
 /*
