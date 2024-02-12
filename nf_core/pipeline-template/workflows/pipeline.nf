@@ -53,9 +53,13 @@ workflow {{ short_name|upper }} {
     ch_workflow_summary                   = Channel.value(paramsSummaryMultiqc(summary_params))
     ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
     ch_methods_description                = Channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
+    methods_description_file              = new File('methods_description_mqc.yaml')
+    ch_methods_description.map{
+        methods_description_file << it
+    }
     ch_multiqc_files                      = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files                      = ch_multiqc_files.mix(ch_collated_versions)
-    ch_multiqc_files                      = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml'))
+    ch_multiqc_files                      = ch_multiqc_files.mix(Channel.fromPath(methods_description_file, checkIfExists: true))
 
     MULTIQC (
         ch_multiqc_files.collect(),
