@@ -26,7 +26,7 @@
                     },
                     "utils_nfcore_pipeline": {
                         "branch": "master",
-                        "git_sha": "db321a792c88d145afa0ae214fc7da70fcd7d591",
+                        "git_sha": "262b17ed2aad591039f914951659177e6c39a8d8",
                         "installed_by": ["subworkflows"]
                     },
                     "utils_nfvalidation_plugin": {
