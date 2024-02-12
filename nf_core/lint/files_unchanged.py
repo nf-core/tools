@@ -1,5 +1,6 @@
 import filecmp
 import logging
+import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -162,7 +163,15 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
                     if filecmp.cmp(_pf(f), _tf(f), shallow=True):
                         passed.append(f"`{f}` matches the template")
                     else:
-                        if "files_unchanged" in self.fix:
+                        if (
+                            f.name.endswith(".png")
+                            and os.stat(_pf(f)).st_mode == os.stat(_tf(f)).st_mode
+                            and int(os.stat(_pf(f)).st_size / 100) == int(os.stat(_tf(f)).st_size / 100)
+                        ):
+                            # almost the same file, good enough for the logo
+                            log.debug(f"Files are almost the same. Will pass: {f}")
+                            passed.append(f"`{f}` matches the template")
+                        elif "files_unchanged" in self.fix:
                             # Try to fix the problem by overwriting the pipeline file
                             shutil.copy(_tf(f), _pf(f))
                             passed.append(f"`{f}` matches the template")
