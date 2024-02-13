@@ -19,6 +19,9 @@ def test_subworkflows_lint(self):
 
 def test_subworkflows_lint_empty(self):
     """Test linting a pipeline with no subworkflows installed"""
+    self.subworkflow_remove.remove("utils_nextflow_pipeline", force=True)
+    self.subworkflow_remove.remove("utils_nfcore_pipeline", force=True)
+    self.subworkflow_remove.remove("utils_nfvalidation_plugin", force=True)
     with pytest.raises(LookupError):
         nf_core.subworkflows.SubworkflowLint(dir=self.pipeline_dir)
 
