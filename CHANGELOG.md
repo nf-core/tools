@@ -24,6 +24,7 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.2.1 ([#2730](https://github.com/nf-core/tools/pull/2730))
 - Update python:3.11-slim Docker digest to 2a746e2 ([#2743](https://github.com/nf-core/tools/pull/2743))
 - Update actions/setup-python action to v5 ([#2739](https://github.com/nf-core/tools/pull/2739))
+- Update gitpod/workspace-base Docker digest to 45e7617 ([#2747](https://github.com/nf-core/tools/pull/2747))
 
 ## [v2.12.1 - Aluminium Wolf - Patch](https://github.com/nf-core/tools/releases/tag/2.12.1) - [2024-02-01]
 
