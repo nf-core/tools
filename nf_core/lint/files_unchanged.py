@@ -40,7 +40,6 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         docs/images/nf-core-PIPELINE_logo_light.png
         docs/images/nf-core-PIPELINE_logo_dark.png
         docs/README.md'
-        lib/NfcoreTemplate.groovy
         ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
 
     Files that can have additional content but must include the template contents::
@@ -104,7 +103,6 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         [Path("docs", "images", f"nf-core-{short_name}_logo_light.png")],
         [Path("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
         [Path("docs", "README.md")],
-        [Path("lib", "NfcoreTemplate.groovy")],
     ]
     files_partial = [
         [Path(".gitignore"), Path(".prettierignore"), Path("pyproject.toml")],

@@ -52,9 +52,6 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         docs/output.md
         docs/README.md
         docs/usage.md
-        lib/NfcoreTemplate.groovy
-        lib/Utils.groovy
-        lib/WorkflowMain.groovy
         nextflow_schema.json
         nextflow.config
         README.md
@@ -165,9 +162,6 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         [Path("docs", "README.md")],
         [Path("docs", "README.md")],
         [Path("docs", "usage.md")],
-        [Path("lib", "NfcoreTemplate.groovy")],
-        [Path("lib", "Utils.groovy")],
-        [Path("lib", "WorkflowMain.groovy")],
     ]
 
     files_warn = [
@@ -200,7 +194,13 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         Path("lib", "Completion.groovy"),
         Path("lib", "Workflow.groovy"),
     ]
-    files_warn_ifexists = [Path(".travis.yml")]
+    files_warn_ifexists = [
+        Path(".travis.yml"),
+        Path("lib", "NfcoreTemplate.groovy"),
+        Path("lib", "Utils.groovy"),
+        Path("lib", "WorkflowMain.groovy"),
+        Path("lib", "NfcoreTemplate.groovy"),
+    ]
     files_fail_ifinconfig: List[Tuple[Path, Dict[str, str]]] = [
         (Path("lib", "nfcore_external_java_deps.jar"), {"plugins": "nf-validation"}),
     ]
