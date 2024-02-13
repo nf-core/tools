@@ -14,6 +14,8 @@
 
 ### Modules
 
+- Handle dirty local module repos by force checkout of commits and branches if needed ([#2734](https://github.com/nf-core/tools/pull/2734))
+
 ### General
 
 - fix ignoring changes in partially templated files (e.g. `.gitignore`) ([#2722](https://github.com/nf-core/tools/pull/2722))
