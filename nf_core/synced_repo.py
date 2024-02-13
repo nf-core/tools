@@ -211,7 +211,11 @@ class SyncedRepo:
         try:
             self.repo.git.checkout(self.branch)
         except GitCommandError as e:
-            if "Your local changes to the following files would be overwritten by checkout" in str(e):
+            if (
+                self.fullname
+                and "modules" in self.fullname
+                and "Your local changes to the following files would be overwritten by checkout" in str(e)
+            ):
                 log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
                 self.repo.git.checkout(self.branch, force=True)
             else:
@@ -227,7 +231,11 @@ class SyncedRepo:
         try:
             self.repo.git.checkout(commit)
         except GitCommandError as e:
-            if "Your local changes to the following files would be overwritten by checkout" in str(e):
+            if (
+                self.fullname
+                and "modules" in self.fullname
+                and "Your local changes to the following files would be overwritten by checkout" in str(e)
+            ):
                 log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
                 self.repo.git.checkout(self.branch, force=True)
             else:
