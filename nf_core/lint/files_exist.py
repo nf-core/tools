@@ -66,7 +66,6 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         conf/igenomes.config
         .github/workflows/awstest.yml
         .github/workflows/awsfulltest.yml
-        lib/WorkflowPIPELINE.groovy
         pyproject.toml
 
     Files that *must not* be present, due to being renamed or removed in the template:
@@ -88,6 +87,11 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         lib/Checks.groovy
         lib/Completion.groovy
         lib/Workflow.groovy
+        lib/WorkflowPIPELINE.groovy
+        lib/NfcoreTemplate.groovy
+        lib/Utils.groovy
+        lib/WorkflowMain.groovy
+
 
     Files that *should not* be present:
 
@@ -171,7 +175,6 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         [Path("conf", "igenomes.config")],
         [Path(".github", "workflows", "awstest.yml")],
         [Path(".github", "workflows", "awsfulltest.yml")],
-        [Path("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy")],
         [Path("modules.json")],
         [Path("pyproject.toml")],
     ]
@@ -200,6 +203,7 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         Path("lib", "Utils.groovy"),
         Path("lib", "WorkflowMain.groovy"),
         Path("lib", "NfcoreTemplate.groovy"),
+        Path("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy"),
     ]
     files_fail_ifinconfig: List[Tuple[Path, Dict[str, str]]] = [
         (Path("lib", "nfcore_external_java_deps.jar"), {"plugins": "nf-validation"}),
