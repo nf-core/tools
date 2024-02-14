@@ -256,5 +256,5 @@ def methodsDescriptionText(mqc_methods_yaml) {
     def engine =  new groovy.text.SimpleTemplateEngine()
     def description_html = engine.createTemplate(methods_text).make(meta)
 
-    return description_html
+    return description_html.toString()
 }
