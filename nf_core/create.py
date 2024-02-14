@@ -497,6 +497,7 @@ class PipelineCreate:
         # Add the lint content to the preexisting nf-core config
         config_fn, nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
         nf_core_yml["lint"] = lint_config
+        print("added linting config")
         with open(self.outdir / config_fn, "w") as fh:
             yaml.dump(nf_core_yml, fh, default_flow_style=False, sort_keys=False)
 

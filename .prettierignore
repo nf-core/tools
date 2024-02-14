@@ -6,6 +6,7 @@ testing
 nf_core/module-template/meta.yml
 nf_core/module-template/tests/tags.yml
 nf_core/subworkflow-template/tests/tags.yml
+nf_core/pipeline-template/nextflow_schema.json
 # don't run on things handled by ruff
 *.py
 *.pyc

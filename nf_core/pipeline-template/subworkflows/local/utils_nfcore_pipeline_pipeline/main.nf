@@ -73,10 +73,12 @@ workflow PIPELINE_INITIALISATION {
         nextflow_cli_args
     )
 
+    {%- if igenomes %}
     //
     // Custom validation for pipeline parameters
     //
     validateInputParameters()
+    {%- endif %}
 
     //
     // Create channel from input file provided through params.input
@@ -100,7 +102,6 @@ workflow PIPELINE_INITIALISATION {
                 return [ meta, fastqs.flatten() ]
         }
         .set { ch_samplesheet }
-        ch_samplesheet.view()
 
     emit:
     samplesheet = ch_samplesheet
@@ -150,12 +151,14 @@ workflow PIPELINE_COMPLETION {
 ========================================================================================
 */
 
+{%- if igenomes %}
 //
 // Check and validate pipeline parameters
 //
 def validateInputParameters() {
     genomeExistsError()
 }
+{%- endif -%}
 
 //
 // Validate channels from input samplesheet
@@ -172,6 +175,7 @@ def validateInputSamplesheet(input) {
     return [ metas[0], fastqs ]
 }
 
+{%- if igenomes %}
 //
 // Get attribute from genome config file e.g. fasta
 //
@@ -197,6 +201,7 @@ def genomeExistsError() {
         error(error_string)
     }
 }
+{%- endif -%}
 
 //
 // Generate methods description for MultiQC
