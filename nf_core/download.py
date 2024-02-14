@@ -759,6 +759,9 @@ class DownloadWorkflow:
         Example syntax:
 
         Early DSL2:
+
+        .. code-block:: groovy
+
             if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
                 container "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0"
             } else {
@@ -766,11 +769,17 @@ class DownloadWorkflow:
             }
 
         Later DSL2:
+
+        .. code-block:: groovy
+
             container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
                 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
                 'biocontainers/fastqc:0.11.9--0' }"
 
         Later DSL2, variable is being used:
+
+        .. code-block:: groovy
+
             container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
                 "https://depot.galaxyproject.org/singularity/${container_id}" :
                 "quay.io/biocontainers/${container_id}" }"
@@ -778,7 +787,11 @@ class DownloadWorkflow:
             container_id = 'mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:afaaa4c6f5b308b4b6aa2dd8e99e1466b2a6b0cd-0'
 
         DSL1 / Special case DSL2:
+
+        .. code-block:: groovy
+
             container "nfcore/cellranger:6.0.2"
+
         """
         cleaned_matches = []
 

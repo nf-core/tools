@@ -180,9 +180,7 @@ class ParamsFileBuilder:
 
         Returns:
             str: Section of a params-file.yml for given parameter
-            None:
-                If the parameter is skipped because it is hidden and
-                show_hidden is not set
+            None: If the parameter is skipped because it is hidden and show_hidden is not set
         """
         out = ""
         hidden = properties.get("hidden", False)
