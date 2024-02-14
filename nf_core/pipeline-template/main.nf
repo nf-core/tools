@@ -20,10 +20,10 @@ nextflow.enable.dsl = 2
 */
 
 include { {{ short_name|upper }}  } from './workflows/{{ short_name }}'
-include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_pipeline_pipeline'
-include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_pipeline_pipeline'
+include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
+include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 {% if igenomes %}
-include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_pipeline_pipeline'
+include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
