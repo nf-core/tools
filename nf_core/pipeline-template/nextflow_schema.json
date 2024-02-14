@@ -275,7 +275,7 @@
         {
             "$ref": "#/definitions/input_output_options"
         },
-        {%- if igenomes %}{
+        {% if igenomes %}{
             "$ref": "#/definitions/reference_genome_options"
         },{% endif %}
         {
