@@ -51,9 +51,9 @@ for release in "${releases[@]}"; do
     gsed -i 's/^extensions = \[/extensions = \[\n    "sphinx_markdown_builder",/' docs/api/_src/conf.py
 
     # run docs/api/make_lint_md.py if it exists
-    if [[ -f "docs/api/make_lint_md.py" ]]; then
-        python docs/api/make_lint_md.py
-    fi
+    # if [[ -f "docs/api/make_lint_md.py" ]]; then
+    #     python docs/api/make_lint_md.py
+    # fi
 
     find nf_core -name "*.py" | while IFS= read -r file; do
         # echo "Processing $file"
