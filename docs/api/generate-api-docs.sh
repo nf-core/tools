@@ -71,8 +71,13 @@ for release in "${releases[@]}"; do
         rm -rf "$output_dir/$release"
     fi
     sphinx-build -b markdown docs/api/_src "$output_dir/$release"
+
+    # undo all changes
+    git restore .
+
+    git checkout -
     # replace :::{seealso} with :::tip in the markdown files
-    find "$output_dir/$release" -name "*.md" -exec sed -i 's/:::{seealso}/:::tip/g' {} \;
+    find "$output_dir/$release" -name "*.md" -exec gsed -i 's/:::{seealso}/:::tip/g' {} \;
     i=1
     sp="/-\|" # spinner
     find "$output_dir/$release" -name "*.md" | while IFS= read -r file; do
@@ -86,6 +91,4 @@ for release in "${releases[@]}"; do
     rm -rf "$output_dir/$release/.doctrees"
     # run pre-commit to fix any formatting issues on the generated markdown files
     pre-commit run --files "$output_dir/$release"
-    # undo all changes
-    git restore .
 done
