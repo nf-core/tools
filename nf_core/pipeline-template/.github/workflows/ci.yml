@@ -35,6 +35,9 @@ jobs:
         with:
           version: "{% raw %}${{ matrix.NXF_VER }}{% endraw %}"
 
+      - name: Cleanup Runner
+        uses: jlumbroso/free-disk-space@v1.3.1
+
       - name: Run pipeline with test data
         # TODO nf-core: You can customise CI pipeline run tests as required
         # For example: adding multiple test runs with different parameters
