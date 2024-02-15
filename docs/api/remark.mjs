@@ -26,7 +26,6 @@ function remarkDirectives() {
                 }
                 parent.children[index].children.push({ type: "text", value: "\n:::" });
             } else if (node.children[0].type === "emphasis") {
-                console.log(node.children);
                 node.children[0].children.map((child) => {
                     if (child.type === "text") {
                         child.type = "inlineCode";
