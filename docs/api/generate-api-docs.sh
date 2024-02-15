@@ -48,7 +48,7 @@ for release in "${releases[@]}"; do
     git checkout docs/api
     pip install -r docs/api/requirements.txt --quiet
     # add the napoleon extension to the sphinx conf.py
-    sed -i 's/^extensions = \[/extensions = \[\n    "sphinx_markdown_builder",/' docs/api/_src/conf.py
+    gsed -i 's/^extensions = \[/extensions = \[\n    "sphinx_markdown_builder",/' docs/api/_src/conf.py
 
     # run docs/api/make_lint_md.py if it exists
     if [[ -f "docs/api/make_lint_md.py" ]]; then
@@ -59,12 +59,12 @@ for release in "${releases[@]}"; do
         # echo "Processing $file"
 
         # replace ..tip:: with note in the python docstrings due to missing directive in the markdown builder
-        sed -i 's/^\(\s*\)\.\. tip::/\1\.\. note::/g' "$file"
+        gsed -i 's/^\(\s*\)\.\. tip::/\1\.\. note::/g' "$file"ba
 
     done
 
     # fix syntax in lint/merge_markers.py
-    sed -i 's/>>>>>>> or <<<<<<</``>>>>>>>`` or ``<<<<<<<``/g' nf_core/lint/merge_markers.py
+    gsed -i 's/>>>>>>> or <<<<<<</``>>>>>>>`` or ``<<<<<<<``/g' nf_core/lint/merge_markers.py
     # remove markdown files if --force is set
     if [[ "$force" = true ]]; then
         echo -e "\n\e[31mRemoving $output_dir/$release because of '--force'\e[0m"
@@ -78,7 +78,7 @@ for release in "${releases[@]}"; do
     find "$output_dir/$release" -name "*.md" | while IFS= read -r file; do
         # echo "Processing $file"
         printf "\b${sp:i++%${#sp}:1}"
-        node remark.mjs "$file"
+        node docs/api/remark.mjs "$file"
     done
     # remove empty files
     find "$output_dir/$release" -name "*.md" -size 0 -delete
