@@ -32,6 +32,21 @@ function remarkDirectives() {
                         child.value = child.value?.trim() + "{:python}";
                     }
                 });
+                // convert the rest of the heading to inline code
+                node.children.slice(1).map((child) => {
+                    if (child.type === "text") {
+                        child.type = "inlineCode";
+                        child.value = child.value?.trim() + "{:python}";
+                    }
+                    if (child.type === "link") {
+                        child.children.map((child) => {
+                            if (child.type === "text") {
+                                child.type = "inlineCode";
+                                child.value = child.value?.trim() + "{:python}";
+                            }
+                        });
+                    }
+                });
             } else if (node.children[0].type !== "inlineCode") {
                 node.children[0] = {
                     type: "inlineCode",
