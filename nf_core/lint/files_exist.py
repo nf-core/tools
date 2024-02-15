@@ -196,15 +196,12 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         Path("lib", "Checks.groovy"),
         Path("lib", "Completion.groovy"),
         Path("lib", "Workflow.groovy"),
-    ]
-    files_warn_ifexists = [
-        Path(".travis.yml"),
-        Path("lib", "NfcoreTemplate.groovy"),
         Path("lib", "Utils.groovy"),
         Path("lib", "WorkflowMain.groovy"),
         Path("lib", "NfcoreTemplate.groovy"),
         Path("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy"),
     ]
+    files_warn_ifexists = [Path(".travis.yml")]
     files_fail_ifinconfig: List[Tuple[Path, Dict[str, str]]] = [
         (Path("lib", "nfcore_external_java_deps.jar"), {"plugins": "nf-validation"}),
     ]
