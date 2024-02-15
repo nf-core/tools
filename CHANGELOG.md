@@ -12,6 +12,7 @@
 
 - make creat-lint-wf composable ([#2733](https://github.com/nf-core/tools/pull/2733))
 - add looser comparison when pipeline logos ([#2744](https://github.com/nf-core/tools/pull/2744))
+- Template: Fix GitHub Actions CI and badges links ([#2757](https://github.com/nf-core/tools/pull/2757))
 
 ### Modules
 
