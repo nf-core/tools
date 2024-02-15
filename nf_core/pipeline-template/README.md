@@ -6,6 +6,7 @@
     <img alt="{{ name }}" src="docs/images/{{ logo_light }}">
   </picture>
 </h1>
+
 {% endif -%}
 {% if github_badges -%}
 [![GitHub Actions CI Status](https://github.com/{{ name }}/actions/workflows/ci.yml/badge.svg)](https://github.com/{{ name }}/actions?query=workflow%3A%22nf-core+CI%22)

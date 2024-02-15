@@ -25,7 +25,8 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
     If the module has inputs or outputs, they are expected to be
     formatted as:
 
-    ..code-block::
+    .. code-block:: groovy
+
         tuple val(foo) path(bar)
         val foo
         path foo

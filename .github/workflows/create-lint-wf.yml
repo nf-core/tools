@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - "docs/**"
+      - "CHANGELOG.md"
   pull_request:
   release:
     types: [published]
@@ -26,7 +29,7 @@ env:
 
 jobs:
   MakeTestWorkflow:
-    runs-on: ${{ github.event.inputs.runners || 'self-hosted' }}
+    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     env:
       NXF_ANSI_LOG: false
     strategy:
@@ -42,12 +45,12 @@ jobs:
           export NXF_WORK=$(pwd)
 
       # Get the repo code
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         name: Check out source-code repository
 
       # Set up nf-core/tools
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
         with:
           python-version: 3.11
           cache: pip
@@ -57,37 +60,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install .
 
-      # Set up Nextflow
-      - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v1
+      - name: run create-lint-wf
+        uses: ./.github/actions/create-lint-wf
         with:
-          version: ${{ matrix.NXF_VER }}
-
-      # Build a pipeline from the template
-      - name: nf-core create
-        run: |
-          mkdir create-lint-wf && cd create-lint-wf
-          export NXF_WORK=$(pwd)
-          nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
-
-      # Try syncing it before we change anything
-      - name: nf-core sync
-        run: nf-core --log-file log.txt sync --dir nf-core-testpipeline/
-        working-directory: create-lint-wf
+          NXF_VER: ${{ matrix.NXF_VER }}
 
       # Build a module from the template
       - name: nf-core modules create
-        run: nf-core --log-file log.txt modules create bpipe --dir nf-core-testpipeline --author @nf-core-bot --label process_low --meta
-        working-directory: create-lint-wf
-
-      # Run code style linting
-      - name: run pre-commit
-        run: pre-commit run --all-files
-        working-directory: create-lint-wf
-
-      # Update modules to the latest version
-      - name: nf-core modules update
-        run: nf-core --log-file log.txt modules update --dir nf-core-testpipeline --all --no-preview
+        run: nf-core --verbose --log-file log.txt modules create bpipe --dir nf-core-testpipeline --author @nf-core-bot --label process_low --meta
         working-directory: create-lint-wf
 
       # Remove TODO statements
@@ -95,62 +75,14 @@ jobs:
         run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
         working-directory: create-lint-wf
 
-      # Replace zenodo.XXXXXX to pass readme linting
-      - name: replace zenodo.XXXXXX
-        run: find nf-core-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
-        working-directory: create-lint-wf
-
-      # Run nf-core linting
-      - name: nf-core lint
-        run: nf-core --verbose --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned
-        working-directory: create-lint-wf
-
       # Run the other nf-core commands
       - name: nf-core list
         run: nf-core --log-file log.txt list
         working-directory: create-lint-wf
 
-      # - name: nf-core licences
-      #   run: nf-core --log-file log.txt licences nf-core-testpipeline
-
       - name: nf-core schema
         run: nf-core --log-file log.txt schema build --dir nf-core-testpipeline/ --no-prompts
         working-directory: create-lint-wf
-
-      - name: nf-core bump-version
-        run: nf-core --log-file log.txt bump-version --dir nf-core-testpipeline/ 1.1
-        working-directory: create-lint-wf
-
-      - name: nf-core lint in release mode
-        run: nf-core --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
-        working-directory: create-lint-wf
-
-      - name: nf-core modules install
-        run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
-        working-directory: create-lint-wf
-
-      - name: nf-core modules install gitlab
-        run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git --branch branch-tester install fastp --dir nf-core-testpipeline/
-        working-directory: create-lint-wf
-
-      - name: nf-core modules list local
-        run: nf-core --log-file log.txt modules list local --dir nf-core-testpipeline/
-        working-directory: create-lint-wf
-
-      - name: nf-core modules list remote
-        run: nf-core --log-file log.txt modules list remote
-        working-directory: create-lint-wf
-
-      - name: nf-core modules list remote gitlab
-        run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git list remote
-        working-directory: create-lint-wf
-
-      - name: Upload log file artifact
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: nf-core-log-file-${{ matrix.NXF_VER }}
-          path: create-lint-wf/log.txt
 
       - name: Cleanup work directory
         run: sudo rm -rf create-lint-wf
