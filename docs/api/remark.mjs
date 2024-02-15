@@ -30,6 +30,13 @@ function remarkDirectives() {
                     type: "inlineCode",
                     value: node.children[0].value?.trim() + "{:python}",
                 };
+            } else if (node.children[0].type === "emphasis") {
+                child.children.map((child) => {
+                    if (child.type === "text") {
+                        child.type = "inlineCode";
+                        child.value = child.value?.trim() + "{:python}";
+                    }
+                });
             }
         } else if (node.depth === 3) {
             node.children.map((child) => {
