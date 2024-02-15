@@ -31,6 +31,7 @@ function remarkDirectives() {
                     value: node.children[0].value?.trim() + "{:python}",
                 };
             } else if (node.children[0].type === "emphasis") {
+                console.log(node.children);
                 child.children.map((child) => {
                     if (child.type === "text") {
                         child.type = "inlineCode";
