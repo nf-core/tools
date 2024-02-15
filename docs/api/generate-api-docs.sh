@@ -1,6 +1,4 @@
 #!/bin/bash
-# Set the output directory
-output_dir="../src/content/tools/docs"
 
 # allow --force option and also a --release option (which takes a release name, or "all")
 force=false
@@ -15,6 +13,10 @@ while [[ $# -gt 0 ]]; do
             shift
             releases+=("$1")
             ;;
+        -o | --output )
+            shift
+            output_dir="$1"
+            ;;
         * )
             echo "Invalid argument: $1"
             exit 1
@@ -22,6 +24,12 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
+
+
+# Set the output directory if not set
+if [[ -z "$output_dir" ]]; then
+    output_dir="../src/content/tools/docs"
+fi
 
 # if no release is specified, use all releases
 if [[ ${#releases[@]} -eq 0 ]]; then
@@ -41,6 +49,11 @@ for release in "${releases[@]}"; do
     pip install -r docs/api/requirements.txt --quiet
     # add the napoleon extension to the sphinx conf.py
     sed -i 's/^extensions = \[/extensions = \[\n    "sphinx_markdown_builder",/' docs/api/_src/conf.py
+
+    # run docs/api/make_lint_md.py if it exists
+    if [[ -f "docs/api/make_lint_md.py" ]]; then
+        python docs/api/make_lint_md.py
+    fi
 
     find nf_core -name "*.py" | while IFS= read -r file; do
         # echo "Processing $file"
