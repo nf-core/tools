@@ -1,6 +1,6 @@
 #!/bin/bash
 # Set the output directory
-output_dir="${HOME}/nf-core.astro/src/content/tools/docs"
+output_dir="../src/content/tools/docs"
 
 # allow --force option and also a --release option (which takes a release name, or "all")
 force=false
