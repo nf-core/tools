@@ -59,7 +59,7 @@ for release in "${releases[@]}"; do
         # echo "Processing $file"
 
         # replace ..tip:: with note in the python docstrings due to missing directive in the markdown builder
-        gsed -i 's/^\(\s*\)\.\. tip::/\1\.\. note::/g' "$file"ba
+        gsed -i 's/^\(\s*\)\.\. tip::/\1\.\. note::/g' "$file"
 
     done
 
