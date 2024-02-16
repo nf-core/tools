@@ -1,6 +1,5 @@
 import copy
 import json
-import os
 import shutil
 from pathlib import Path
 
@@ -16,7 +15,7 @@ from nf_core.modules.patch import ModulePatch
 
 def test_get_modules_json(self):
     """Checks that the get_modules_json function returns the correct result"""
-    mod_json_path = os.path.join(self.pipeline_dir, "modules.json")
+    mod_json_path = Path(self.pipeline_dir, "modules.json")
     with open(mod_json_path) as fh:
         try:
             mod_json_sb = json.load(fh)
@@ -49,16 +48,16 @@ def test_mod_json_update(self):
 
 def test_mod_json_create(self):
     """Test creating a modules.json file from scratch"""
-    mod_json_path = os.path.join(self.pipeline_dir, "modules.json")
+    mod_json_path = Path(self.pipeline_dir, "modules.json")
     # Remove the existing modules.json file
-    os.remove(mod_json_path)
+    mod_json_path.unlink()
 
     # Create the new modules.json file
     # (There are no prompts as long as there are only nf-core modules)
     ModulesJson(self.pipeline_dir).create()
 
     # Check that the file exists
-    assert os.path.exists(mod_json_path)
+    assert (mod_json_path).exists()
 
     # Get the contents of the file
     mod_json_obj = ModulesJson(self.pipeline_dir)
@@ -94,7 +93,7 @@ def test_mod_json_create_with_patch(self):
     patch_obj.patch("fastqc")
 
     # Remove the existing modules.json file
-    os.remove(mod_json_path)
+    mod_json_path.unlink()
 
     # Create the new modules.json file
     ModulesJson(self.pipeline_dir).create()
@@ -137,7 +136,7 @@ def test_mod_json_up_to_date_module_removed(self):
     but is missing in the pipeline
     """
     # Remove the fastqc module
-    fastqc_path = os.path.join(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "fastqc")
+    fastqc_path = Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "fastqc")
     shutil.rmtree(fastqc_path)
 
     # Check that the modules.json file is up to date, and reinstall the module
@@ -146,9 +145,9 @@ def test_mod_json_up_to_date_module_removed(self):
 
     # Check that the module has been reinstalled
     files = ["main.nf", "meta.yml"]
-    assert os.path.exists(fastqc_path)
+    assert fastqc_path.exists()
     for f in files:
-        assert os.path.exists(os.path.join(fastqc_path, f))
+        assert Path(fastqc_path, f).exists()
 
 
 def test_mod_json_up_to_date_reinstall_fails(self):
@@ -161,7 +160,7 @@ def test_mod_json_up_to_date_reinstall_fails(self):
     mod_json_obj.update("modules", ModulesRepo(), "fastqc", "INVALID_GIT_SHA", "modules", write_file=True)
 
     # Remove the fastqc module
-    fastqc_path = os.path.join(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "fastqc")
+    fastqc_path = Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "fastqc")
     shutil.rmtree(fastqc_path)
 
     # Check that the modules.json file is up to date, and remove the fastqc module entry
@@ -206,12 +205,12 @@ def test_mod_json_dump(self):
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
     # Remove the modules.json file
-    mod_json_path = os.path.join(self.pipeline_dir, "modules.json")
-    os.remove(mod_json_path)
+    mod_json_path = Path(self.pipeline_dir, "modules.json")
+    mod_json_path.unlink()
 
     # Check that the dump function creates the file
     mod_json_obj.dump()
-    assert os.path.exists(mod_json_path)
+    assert mod_json_path.exists()
 
     # Check that the dump function writes the correct content
     with open(mod_json_path) as f:
