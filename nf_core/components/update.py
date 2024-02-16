@@ -5,7 +5,6 @@ import tempfile
 from pathlib import Path
 
 import questionary
-import rich.prompt
 
 import nf_core.modules.modules_utils
 import nf_core.utils
@@ -741,23 +740,18 @@ class ComponentUpdate(ComponentCommand):
         files = [f.name for f in temp_component_dir.iterdir() if f.is_file()]
         pipeline_path = Path(self.dir, self.component_type, repo_path, component)
 
-        log.debug(f"Removing old version of {self.component_type[:-1]} '{component}'")
         # check if both directories have the same file and warn if the compnent_dir has more files
         if pipeline_path.exists():
             pipeline_files = [f.name for f in pipeline_path.iterdir() if f.is_file()]
-            if pipeline_files:
-                # ask if the user wants to move the file from the current directory to the new one
-                for file in pipeline_files:
-                    if file not in files:
-                        # use prompt to ask the user if they want to move the file
-                        if rich.prompt.Confirm().ask(
-                            f"File '{file}' exists in the current {self.component_type[:-1]} '{component}' directory. Do you want to keep it in the updated version?"
-                        ):
-                            shutil.move(Path(pipeline_path, file), Path(temp_component_dir, file))
-                            files.append(file)
+            if "nextflow.config" in pipeline_files:
+                log.debug(f"Moving '{component}/nextflow.config' to updated component")
+                shutil.move(Path(pipeline_path, "nextflow.config"), Path(temp_component_dir, "nextflow.config"))
+                files.append("nextflow.config")
 
         else:
             log.debug(f"Creating new {self.component_type[:-1]} '{component}' in '{self.component_type}/{repo_path}'")
+
+        log.debug(f"Removing old version of {self.component_type[:-1]} '{component}'")
         self.clear_component_dir(component, str(pipeline_path))
 
         os.makedirs(pipeline_path)

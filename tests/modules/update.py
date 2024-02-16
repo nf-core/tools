@@ -376,3 +376,21 @@ def cmp_module(dir1, dir2):
     """Compare two versions of the same module"""
     files = ["main.nf", "meta.yml"]
     return all(filecmp.cmp(os.path.join(dir1, f), os.path.join(dir2, f), shallow=False) for f in files)
+
+
+def test_update_module_with_nextflow_config(self):
+    """Try updating a module with a nextflow.config file"""
+    # Install the module
+    assert self.mods_install.install("trimgalore")
+    # Add a nextflow.config file to the module
+    trimgalore_path = Path(self.pipeline_dir, "modules", "nf-core", "trimgalore")
+    Path(trimgalore_path, "nextflow.config").touch()
+    with open(Path(trimgalore_path, "nextflow.config"), "w") as fh:
+        fh.write("params.my_param = 'my_value'\n")
+    # Update the module
+    update_obj = ModuleUpdate(self.pipeline_dir, show_diff=False)
+    assert update_obj.update("trimgalore")
+    # Check that the nextflow.config file is still there
+    assert Path(trimgalore_path, "nextflow.config").exists()
+    with open(Path(trimgalore_path, "nextflow.config")) as fh:
+        assert "params.my_param = 'my_value'" in fh.read()
