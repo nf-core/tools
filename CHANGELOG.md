@@ -30,6 +30,7 @@
 - Update actions/setup-python action to v5 ([#2739](https://github.com/nf-core/tools/pull/2739))
 - Update gitpod/workspace-base Docker digest to 45e7617 ([#2747](https://github.com/nf-core/tools/pull/2747))
 - chore(deps): pin jlumbroso/free-disk-space action to 54081f1 ([#2756](https://github.com/nf-core/tools/pull/2756))
+- chore(deps): pin actions/github-script action to d7906e4 ([#2764](https://github.com/nf-core/tools/pull/2764))
 
 ## [v2.12.1 - Aluminium Wolf - Patch](https://github.com/nf-core/tools/releases/tag/2.12.1) - [2024-02-01]
 
