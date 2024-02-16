@@ -22,6 +22,7 @@ def multiqc_config(self) -> Dict[str, List[str]]:
         export_plots: true
 
     """
+
     passed: List[str] = []
     failed: List[str] = []
 
