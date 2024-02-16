@@ -135,9 +135,10 @@ def test_subworkflows_lint_include_multiple_alias(self):
     self.subworkflow_install.install("bam_stats_samtools")
     with open(Path(self.pipeline_dir, "subworkflows", "nf-core", "bam_stats_samtools", "main.nf")) as fh:
         content = fh.read()
-        new_content = content.replace(
-            "include { SAMTOOLS_STATS }",
-            "include { SAMTOOLS_STATS as SAMTOOLS_STATS_1; SAMTOOLS_STATS as SAMTOOLS_STATS_2 }",
+        new_content = content.replace("SAMTOOLS_STATS", "SAMTOOLS_STATS_1")
+        new_content = new_content.replace(
+            "include { SAMTOOLS_STATS_1 ",
+            "include { SAMTOOLS_STATS as SAMTOOLS_STATS_1; SAMTOOLS_STATS as SAMTOOLS_STATS_2 ",
         )
     with open(Path(self.pipeline_dir, "subworkflows", "nf-core", "bam_stats_samtools", "main.nf"), "w") as fh:
         fh.write(new_content)
@@ -146,25 +147,16 @@ def test_subworkflows_lint_include_multiple_alias(self):
     subworkflow_lint.lint(print_results=False, subworkflow="bam_stats_samtools")
     assert len(subworkflow_lint.failed) >= 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
     assert len(subworkflow_lint.passed) > 0
-    assert len(subworkflow_lint.warned) == 0
-    # assert that one message mentions SAMTOOLS_STATS but not SAMTOOLS_STATS_1 or SAMTOOLS_STATS_2
+    assert len(subworkflow_lint.warned) == 2
     assert any(
-        [
-            x.message == "Included component 'SAMTOOLS_STATS' versions are added in main.nf"
-            for x in subworkflow_lint.passed
-        ]
-    )
-    assert not any(
         [
             x.message == "Included component 'SAMTOOLS_STATS_1' versions are added in main.nf"
             for x in subworkflow_lint.passed
         ]
     )
-    assert not any(
-        [
-            x.message == "Included component 'SAMTOOLS_STATS_2' versions are added in main.nf"
-            for x in subworkflow_lint.passed
-        ]
+    assert any([x.message == "Included component 'SAMTOOLS_STATS_1' used in main.nf" for x in subworkflow_lint.passed])
+    assert any(
+        [x.message == "Included component 'SAMTOOLS_STATS_2' not used in main.nf" for x in subworkflow_lint.warned]
     )
 
     # cleanup
