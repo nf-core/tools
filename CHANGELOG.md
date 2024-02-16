@@ -6,6 +6,7 @@
 
 - Add empty line in README.md to fix badges. ([#2729](https://github.com/nf-core/tools/pull/2729))
 - Replace automatic branch detection in `nf-core download` CI test with hardcoded `dev` and input. ([#2727](https://github.com/nf-core/tools/pull/2727))
+- add hashtags to release announcement on mastodon ([#2761](https://github.com/nf-core/tools/pull/2761))
 
 ### Linting
 
