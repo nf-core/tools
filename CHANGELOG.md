@@ -8,12 +8,16 @@
 - Replace automatic branch detection in `nf-core download` CI test with hardcoded `dev` and input. ([#2727](https://github.com/nf-core/tools/pull/2727))
 - Add Github Action to automatically cleanup ubuntu-latest runners to fix runner running out of diskspace errors([#2755](https://github.com/nf-core/tools/issues/2755))
 - Fix GitHub Actions CI and Linting badges links ([#2757](https://github.com/nf-core/tools/pull/2757))
+- Add hashtags to release announcement on mastodon ([#2761](https://github.com/nf-core/tools/pull/2761))
 
 ### Linting
 
 - Make creat-lint-wf composable ([#2733](https://github.com/nf-core/tools/pull/2733))
 - Add looser comparison when pipeline logos ([#2744](https://github.com/nf-core/tools/pull/2744))
 - Handle multiple aliases in module imports correctly during linting ([#2762](https://github.com/nf-core/tools/pull/2762))
+- make creat-lint-wf composable ([#2733](https://github.com/nf-core/tools/pull/2733))
+- add looser comparison when pipeline logos ([#2744](https://github.com/nf-core/tools/pull/2744))
+- Switch to markdown based API and error docs ([#2758](https://github.com/nf-core/tools/pull/2758))
 
 ### Modules
 

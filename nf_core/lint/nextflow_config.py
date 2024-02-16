@@ -129,6 +129,7 @@ def nextflow_config(self):
                         - config_defaults:
                             - params.input
     """
+
     passed = []
     warned = []
     failed = []
