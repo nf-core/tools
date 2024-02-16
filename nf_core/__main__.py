@@ -1136,10 +1136,9 @@ def create_module(
 )
 @click.option(
     "--profile",
-    type=str,
+    type=click.Choice(["docker", "singularity", "conda"]),
     default=None,
     help="Run tests with a specific profile",
-    options=["docker", "singularity", "conda"],
 )
 def test_module(ctx, tool, dir, no_prompts, update, once, profile):
     """
