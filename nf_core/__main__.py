@@ -1134,7 +1134,14 @@ def create_module(
     default=False,
     help="Run tests only once. Don't check snapshot stability",
 )
-def test_module(ctx, tool, dir, no_prompts, update, once):
+@click.option(
+    "--profile",
+    type=str,
+    default=None,
+    help="Run tests with a specific profile",
+    options=["docker", "singularity", "conda"],
+)
+def test_module(ctx, tool, dir, no_prompts, update, once, profile):
     """
     Run nf-test for a module.
 
@@ -1153,6 +1160,7 @@ def test_module(ctx, tool, dir, no_prompts, update, once):
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
             verbose=ctx.obj["verbose"],
+            profile=profile,
         )
         module_tester.run()
     except (UserWarning, LookupError) as e:
@@ -1398,7 +1406,14 @@ def create_subworkflow(ctx, subworkflow, dir, author, force, migrate_pytest):
     default=False,
     help="Run tests only once. Don't check snapshot stability",
 )
-def test_subworkflow(ctx, subworkflow, dir, no_prompts, update, once):
+@click.option(
+    "--profile",
+    type=str,
+    default=None,
+    help="Run tests with a specific profile",
+    options=["docker", "singularity", "conda"],
+)
+def test_subworkflow(ctx, subworkflow, dir, no_prompts, update, once, profile):
     """
     Run nf-test for a subworkflow.
 
@@ -1417,6 +1432,7 @@ def test_subworkflow(ctx, subworkflow, dir, no_prompts, update, once):
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
             verbose=ctx.obj["verbose"],
+            profile=profile,
         )
         sw_tester.run()
     except (UserWarning, LookupError) as e:
