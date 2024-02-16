@@ -8,7 +8,7 @@
 - Replace automatic branch detection in `nf-core download` CI test with hardcoded `dev` and input. ([#2727](https://github.com/nf-core/tools/pull/2727))
 - Add Github Action to automatically cleanup ubuntu-latest runners to fix runner running out of diskspace errors([#2755](https://github.com/nf-core/tools/issues/2755))
 - Fix GitHub Actions CI and Linting badges links ([#2757](https://github.com/nf-core/tools/pull/2757))
-- add hashtags to release announcement on mastodon ([#2761](https://github.com/nf-core/tools/pull/2761))
+- Add hashtags to release announcement on mastodon ([#2761](https://github.com/nf-core/tools/pull/2761))
 
 ### Linting
 

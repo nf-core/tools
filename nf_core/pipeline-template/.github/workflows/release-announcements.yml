@@ -25,7 +25,7 @@ jobs:
 
             Please see the changelog: ${{ github.event.release.html_url }}
 
-            ${{ steps.get_topics.outputs.GITHUB_OUTPUT }} #nfcore #openscience
+            ${{ steps.get_topics.outputs.GITHUB_OUTPUT }} #nfcore #openscience #nextflow #bioinformatics
 
   send-tweet:
     runs-on: ubuntu-latest
