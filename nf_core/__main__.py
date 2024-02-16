@@ -1410,7 +1410,6 @@ def create_subworkflow(ctx, subworkflow, dir, author, force, migrate_pytest):
     type=click.Choice(["none", "singularity"]),
     default=None,
     help="Run tests with a specific profile",
-    options=["docker", "singularity", "conda"],
 )
 def test_subworkflow(ctx, subworkflow, dir, no_prompts, update, once, profile):
     """
