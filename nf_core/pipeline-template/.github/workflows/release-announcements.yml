@@ -9,6 +9,11 @@ jobs:
   toot:
     runs-on: ubuntu-latest
     steps:
+      - name: get topics and convert to hashtags
+        id: get_topics
+        run: |
+          curl -s https://nf-co.re/pipelines.json | jq -r '.remote_workflows[] | select(.name == "${{ github.repository }}") | .topics[]' | awk '{print "#"$0}' | tr '\n' ' ' > $GITHUB_OUTPUT
+
       - uses: rzr/fediverse-action@master
         with:
           access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
@@ -19,6 +24,8 @@ jobs:
             Pipeline release! ${{ github.repository }} v${{ github.event.release.tag_name }} - ${{ github.event.release.name }}!
 
             Please see the changelog: ${{ github.event.release.html_url }}
+
+            ${{ steps.get_topics.outputs.GITHUB_OUTPUT }} #nfcore #openscience
 
   send-tweet:
     runs-on: ubuntu-latest
