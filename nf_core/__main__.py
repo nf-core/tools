@@ -1407,7 +1407,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force, migrate_pytest):
 )
 @click.option(
     "--profile",
-    type=str,
+    type=click.Choice(["none", "singularity"]),
     default=None,
     help="Run tests with a specific profile",
     options=["docker", "singularity", "conda"],
