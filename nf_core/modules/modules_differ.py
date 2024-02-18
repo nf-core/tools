@@ -447,8 +447,12 @@ class ModulesDiffer:
             log.debug(f"Applying patch to {file}")
             fn = Path(file).relative_to(module_relpath)
             file_path = module_dir / fn
-            with open(file_path) as fh:
-                file_lines = fh.readlines()
+            try:
+                with open(file_path) as fh:
+                    file_lines = fh.readlines()
+            except FileNotFoundError:
+                # The file was added with the patch
+                file_lines = [""]
             patched_new_lines = ModulesDiffer.try_apply_single_patch(file_lines, patch, reverse=reverse)
             new_files[str(fn)] = patched_new_lines
         return new_files
