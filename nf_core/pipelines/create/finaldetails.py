@@ -10,7 +10,7 @@ from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Swi
 
 from nf_core.pipelines.create.create import PipelineCreate
 from nf_core.pipelines.create.loggingscreen import LoggingScreen
-from nf_core.pipelines.create.utils import ShowLogs, TextInput
+from nf_core.pipelines.create.utils import ShowLogs, TextInput, change_select_disabled
 
 
 class FinalDetails(Screen):
@@ -101,5 +101,6 @@ class FinalDetails(Screen):
         create_obj = PipelineCreate(template_config=self.parent.TEMPLATE_CONFIG)
         try:
             create_obj.init_pipeline()
+            self.parent.call_from_thread(change_select_disabled, self.parent, "close_screen", False)
         except UserWarning:
             self.post_message(self.PipelineExists())

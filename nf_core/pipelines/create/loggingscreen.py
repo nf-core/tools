@@ -39,7 +39,7 @@ class LoggingScreen(Screen):
             )
         else:
             yield Center(
-                Button("Close logging screen", id="close_screen", variant="success"),
+                Button("Close logging screen", id="close_screen", variant="success", disabled=True),
                 classes="cta",
             )
         yield Center(self.parent.LOG_HANDLER.console, classes="cta")

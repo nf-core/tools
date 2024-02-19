@@ -21,7 +21,7 @@ from nf_core.pipelines.create.utils import (
 )
 from nf_core.pipelines.create.welcome import WelcomeScreen
 
-log_handler = CustomLogHandler(console=LoggingConsole(highlight=True, markup=True), rich_tracebacks=True)
+log_handler = CustomLogHandler(console=LoggingConsole(), rich_tracebacks=True, markup=True)
 logging.basicConfig(
     level="INFO",
     handlers=[log_handler],

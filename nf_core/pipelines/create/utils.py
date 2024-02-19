@@ -200,6 +200,12 @@ class ShowLogs(Message):
     pass
 
 
+## Functions
+def change_select_disabled(app, widget_id: str, disabled: bool) -> None:
+    """Change the disabled state of a widget."""
+    app.get_widget_by_id(widget_id).disabled = disabled
+
+
 ## Markdown text to reuse in different screens
 markdown_genomes = """
 Nf-core pipelines are configured to use a copy of the most common reference genome files.
