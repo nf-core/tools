@@ -12,6 +12,9 @@
 
 ### Linting
 
+- Make creat-lint-wf composable ([#2733](https://github.com/nf-core/tools/pull/2733))
+- Add looser comparison when pipeline logos ([#2744](https://github.com/nf-core/tools/pull/2744))
+- Handle multiple aliases in module imports correctly during linting ([#2762](https://github.com/nf-core/tools/pull/2762))
 - make creat-lint-wf composable ([#2733](https://github.com/nf-core/tools/pull/2733))
 - add looser comparison when pipeline logos ([#2744](https://github.com/nf-core/tools/pull/2744))
 - Switch to markdown based API and error docs ([#2758](https://github.com/nf-core/tools/pull/2758))
@@ -20,6 +23,7 @@
 
 - Handle dirty local module repos by force checkout of commits and branches if needed ([#2734](https://github.com/nf-core/tools/pull/2734))
 - Patch: handle file not found when it is an added file to a module ([#2771](https://github.com/nf-core/tools/pull/2771))
+- Add `--profile` parameter to nf-test command ([#2767](https://github.com/nf-core/tools/pull/2767))
 
 ### General
 
