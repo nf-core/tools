@@ -25,6 +25,7 @@
 - Patch: handle file not found when it is an added file to a module ([#2771](https://github.com/nf-core/tools/pull/2771))
 - Handle symlinks when migrating pytest ([#2770](https://github.com/nf-core/tools/pull/2770))
 - Add `--profile` parameter to nf-test command ([#2767](https://github.com/nf-core/tools/pull/2767))
+- update in template ([#2776](https://github.com/nf-core/tools/pull/2776))
 
 ### General
 
