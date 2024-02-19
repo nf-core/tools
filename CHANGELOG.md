@@ -9,6 +9,7 @@
 - Add Github Action to automatically cleanup ubuntu-latest runners to fix runner running out of diskspace errors([#2755](https://github.com/nf-core/tools/issues/2755))
 - Fix GitHub Actions CI and Linting badges links ([#2757](https://github.com/nf-core/tools/pull/2757))
 - Add hashtags to release announcement on mastodon ([#2761](https://github.com/nf-core/tools/pull/2761))
+- update in fastqc and multiqc in template ([#2776](https://github.com/nf-core/tools/pull/2776))
 
 ### Linting
 
@@ -25,7 +26,6 @@
 - Patch: handle file not found when it is an added file to a module ([#2771](https://github.com/nf-core/tools/pull/2771))
 - Handle symlinks when migrating pytest ([#2770](https://github.com/nf-core/tools/pull/2770))
 - Add `--profile` parameter to nf-test command ([#2767](https://github.com/nf-core/tools/pull/2767))
-- update in template ([#2776](https://github.com/nf-core/tools/pull/2776))
 
 ### General
 
