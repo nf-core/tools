@@ -50,6 +50,7 @@ class BasicDetails(Screen):
             "Name of the main author / authors",
         )
         yield Center(
+            Button("Back", id="back", variant="default"),
             Button("Next", id="next", variant="success"),
             classes="cta",
         )
@@ -69,8 +70,8 @@ class BasicDetails(Screen):
         try:
             self.parent.TEMPLATE_CONFIG = CreateConfig(**config)
             if self.parent.PIPELINE_TYPE == "nfcore":
-                self.parent.switch_screen("type_nfcore")
+                self.parent.push_screen("type_nfcore")
             elif self.parent.PIPELINE_TYPE == "custom":
-                self.parent.switch_screen("type_custom")
+                self.parent.push_screen("type_custom")
         except ValueError:
             pass

@@ -32,6 +32,7 @@ class GithubRepoQuestion(Screen):
         )
         yield Markdown(dedent(github_text_markdown))
         yield Center(
+            Button("Back", id="back", variant="default"),
             Button("Create GitHub repo", id="github_repo", variant="success"),
             Button("Finish without creating a repo", id="exit", variant="primary"),
             classes="cta",

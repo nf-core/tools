@@ -82,6 +82,7 @@ class CustomPipeline(Screen):
             ),
         )
         yield Center(
+            Button("Back", id="back", variant="default"),
             Button("Continue", id="continue", variant="success"),
             classes="cta",
         )

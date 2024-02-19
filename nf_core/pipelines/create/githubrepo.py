@@ -75,6 +75,7 @@ class GithubRepo(Screen):
                     classes="feature_subtitle",
                 )
         yield Center(
+            Button("Back", id="back", variant="default"),
             Button("Create GitHub repo", id="create_github", variant="success"),
             Button("Finish without creating a repo", id="exit", variant="primary"),
             classes="cta",

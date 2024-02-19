@@ -52,6 +52,7 @@ class FinalDetails(Screen):
                 )
 
         yield Center(
+            Button("Back", id="back", variant="default"),
             Button("Finish", id="finish", variant="success"),
             classes="cta",
         )
