@@ -1,5 +1,4 @@
-name: nf-core/tools dev API docs
-# Run on push and PR to test that docs build
+name: generate nf-core/tools API docs
 on:
   push:
     branches:
@@ -34,8 +33,8 @@ jobs:
               owner: 'nf-core',
               repo: 'website',
               workflow_id: 'add-tools-api-docs.yml',
-              ref: 'main'
+              ref: 'main',
               inputs: {
-                "ref_name": ${{ inputs.ref_name || github.ref_name }}
-              }
+                "ref_name": "${{ inputs.ref_name || github.ref_name }}"
+              },
             })
