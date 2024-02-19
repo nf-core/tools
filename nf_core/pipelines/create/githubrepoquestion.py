@@ -23,6 +23,13 @@ class GithubRepoQuestion(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
+        yield Markdown(
+            dedent(
+                """
+                # Create GitHub repository
+                """
+            )
+        )
         yield Markdown(dedent(github_text_markdown))
         yield Center(
             Button("Create GitHub repo", id="github_repo", variant="success"),

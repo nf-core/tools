@@ -12,6 +12,13 @@ class ExistError(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
+        yield Markdown(
+            dedent(
+                """
+                # Pipeline exists
+                """
+            )
+        )
         yield Static(
             f"\n[green]{' ' * 40},--.[grey39]/[green],-."
             + "\n[blue]        ___     __   __   __   ___     [green]/,-._.--~\\"

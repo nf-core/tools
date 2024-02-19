@@ -52,6 +52,10 @@ HorizontalScroll {
     color: grey;
 }
 
+Vertical{
+    height: auto;
+}
+
 /* Display help messages */
 
 .help_box {

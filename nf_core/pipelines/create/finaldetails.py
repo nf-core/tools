@@ -3,7 +3,7 @@ from textwrap import dedent
 
 from textual import on, work
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal
+from textual.containers import Center, Horizontal, Vertical
 from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
@@ -44,7 +44,12 @@ class FinalDetails(Screen):
             )
         with Horizontal():
             yield Switch(value=False, id="force")
-            yield Static("If the pipeline output directory exists, remove it and continue.", classes="custom_grid")
+            with Vertical():
+                yield Static("Force", classes="custom_grid")
+                yield Static(
+                    "If the pipeline output directory exists, remove it and continue.",
+                    classes="feature_subtitle",
+                )
 
         yield Center(
             Button("Finish", id="finish", variant="success"),

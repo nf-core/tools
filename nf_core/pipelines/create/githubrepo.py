@@ -8,7 +8,7 @@ import yaml
 from github import Github, GithubException, UnknownObjectException
 from textual import work
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal
+from textual.containers import Center, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
@@ -33,6 +33,13 @@ class GithubRepo(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
+        yield Markdown(
+            dedent(
+                """
+                # Create GitHub repository
+                """
+            )
+        )
         yield Markdown(dedent(github_text_markdown))
         with Horizontal():
             gh_user, gh_token = self._get_github_credentials()
@@ -56,13 +63,17 @@ class GithubRepo(Screen):
         yield Markdown(dedent(repo_config_markdown))
         with Horizontal():
             yield Switch(value=False, id="private")
-            yield Static("Select if the new GitHub repo must be private.", classes="custom_grid")
+            with Vertical():
+                yield Static("Private", classes="")
+                yield Static("Select if the new GitHub repo must be private.", classes="feature_subtitle")
         with Horizontal():
             yield Switch(value=True, id="push")
-            yield Static(
-                "Select if you would like to push all the pipeline template files to your GitHub repo\nand all the branches required to keep the pipeline up to date with new releases of nf-core.",
-                classes="custom_grid",
-            )
+            with Vertical():
+                yield Static("Push files", classes="custom_grid")
+                yield Static(
+                    "Select if you would like to push all the pipeline template files to your GitHub repo\nand all the branches required to keep the pipeline up to date with new releases of nf-core.",
+                    classes="feature_subtitle",
+                )
         yield Center(
             Button("Create GitHub repo", id="create_github", variant="success"),
             Button("Finish without creating a repo", id="exit", variant="primary"),

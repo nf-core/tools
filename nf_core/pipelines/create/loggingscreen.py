@@ -1,11 +1,11 @@
+from textwrap import dedent
+
 from textual.app import ComposeResult
 from textual.containers import Center
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown, Static
 
 markdown = """
-# nf-core create
-
 Visualising logging output.
 """
 
@@ -16,6 +16,13 @@ class LoggingScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
+        yield Markdown(
+            dedent(
+                """
+                # Logging
+                """
+            )
+        )
         yield Static(
             f"\n[green]{' ' * 40},--.[grey39]/[green],-."
             + "\n[blue]        ___     __   __   __   ___     [green]/,-._.--~\\"

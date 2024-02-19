@@ -1,8 +1,10 @@
+from textwrap import dedent
+
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, ScrollableContainer
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Switch
+from textual.widgets import Button, Footer, Header, Markdown, Switch
 
 from nf_core.pipelines.create.utils import PipelineFeature, markdown_genomes
 
@@ -46,6 +48,13 @@ class CustomPipeline(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
+        yield Markdown(
+            dedent(
+                """
+                # Template features
+                """
+            )
+        )
         yield ScrollableContainer(
             PipelineFeature(
                 markdown_genomes,
