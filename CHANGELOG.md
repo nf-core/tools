@@ -22,6 +22,7 @@
 ### Modules
 
 - Handle dirty local module repos by force checkout of commits and branches if needed ([#2734](https://github.com/nf-core/tools/pull/2734))
+- Handle symlinks when migrating pytest ([#2770](https://github.com/nf-core/tools/pull/2770))
 - Add `--profile` parameter to nf-test command ([#2767](https://github.com/nf-core/tools/pull/2767))
 
 ### General
