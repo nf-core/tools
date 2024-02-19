@@ -133,7 +133,7 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
             )
 
         # Check container software to use
-        if os.environ.get("PROFILE") is None:
+        if os.environ.get("PROFILE") is None and self.profile is None:
             os.environ["PROFILE"] = ""
             if self.no_prompts:
                 log.info(
@@ -237,16 +237,18 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
             log.error("nf-test snapshot is not stable")
             self.errors.append("nf-test snapshot is not stable")
             return False
+
         else:
             if self.obsolete_snapshots:
                 # ask if the user wants to remove obsolete snapshots using nf-test --clean-snapshot
                 if self.no_prompts or Confirm.ask(
                     "nf-test found obsolete snapshots. Do you want to remove them?", default=True
                 ):
+                    profile = self.profile if self.profile else os.environ["PROFILE"]
                     log.info("Removing obsolete snapshots")
                     nf_core.utils.run_cmd(
                         "nf-test",
-                        f"test --tag {self.component_name} --profile {os.environ['PROFILE']} --clean-snapshot",
+                        f"test --tag {self.component_name} --profile {profile} --clean-snapshot",
                     )
                 else:
                     log.debug("Obsolete snapshots not removed")
