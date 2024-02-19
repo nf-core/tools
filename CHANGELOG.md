@@ -19,7 +19,7 @@
 ### Modules
 
 - Handle dirty local module repos by force checkout of commits and branches if needed ([#2734](https://github.com/nf-core/tools/pull/2734))
-- Moduels: patch: handle file not found when it is an added file to a module ([#2771](https://github.com/nf-core/tools/pull/2771))
+- Patch: handle file not found when it is an added file to a module ([#2771](https://github.com/nf-core/tools/pull/2771))
 
 ### General
 
