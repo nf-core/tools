@@ -1,5 +1,4 @@
-name: nf-core/tools dev API docs
-# Run on push and PR to test that docs build
+name: generate nf-core/tools API docs
 on:
   push:
     branches:
