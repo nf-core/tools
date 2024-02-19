@@ -737,15 +737,18 @@ class ComponentUpdate(ComponentCommand):
             new_version (str): The version of the module/subworkflow that was installed.
         """
         temp_component_dir = Path(install_folder, component)
-        files = [f.name for f in temp_component_dir.iterdir() if f.is_file()]
+        files = []
+        for file_path in Path(temp_component_dir).rglob("*"):
+            if file_path.is_file():
+                files.append(file_path)
         pipeline_path = Path(self.dir, self.component_type, repo_path, component)
 
         if pipeline_path.exists():
             pipeline_files = [f.name for f in pipeline_path.iterdir() if f.is_file()]
             # check if any *.config file exists in the pipeline
-            if any([f.endswith(".config") for f in pipeline_files]):
+            if any([str(f).endswith(".config") for f in pipeline_files]):
                 # move the *.config file to the temporary directory
-                config_files = [f for f in files if f.endswith(".config")]
+                config_files = [f for f in files if str(f).endswith(".config")]
                 for config_file in config_files:
                     log.debug(f"Moving '{component}/{config_file}' to updated component")
                     shutil.move(Path(pipeline_path, config_file), Path(temp_component_dir, config_file))
@@ -757,11 +760,16 @@ class ComponentUpdate(ComponentCommand):
         log.debug(f"Removing old version of {self.component_type[:-1]} '{component}'")
         self.clear_component_dir(component, str(pipeline_path))
 
-        os.makedirs(pipeline_path)
+        pipeline_path.mkdir(parents=True, exist_ok=True)
         for file in files:
+            file = file.relative_to(temp_component_dir)
             path = Path(temp_component_dir, file)
-            if os.path.exists(path):
-                shutil.move(path, Path(pipeline_path, file))
+            if path.exists():
+                log.debug(f"Moving '{file}' to updated component")
+                dest = Path(pipeline_path, file)
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(path, dest)
+                log.debug(f"{os.listdir(pipeline_path)}")
 
         log.info(f"Updating '{repo_path}/{component}'")
         log.debug(f"Updating {self.component_type[:-1]} '{component}' to {new_version} from {repo_path}")
