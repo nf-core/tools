@@ -12,6 +12,9 @@
 
 ### Linting
 
+- Make creat-lint-wf composable ([#2733](https://github.com/nf-core/tools/pull/2733))
+- Add looser comparison when pipeline logos ([#2744](https://github.com/nf-core/tools/pull/2744))
+- Handle multiple aliases in module imports correctly during linting ([#2762](https://github.com/nf-core/tools/pull/2762))
 - make creat-lint-wf composable ([#2733](https://github.com/nf-core/tools/pull/2733))
 - add looser comparison when pipeline logos ([#2744](https://github.com/nf-core/tools/pull/2744))
 - Switch to markdown based API and error docs ([#2758](https://github.com/nf-core/tools/pull/2758))
