@@ -159,6 +159,7 @@ class TestModules(unittest.TestCase):
         test_modules_create_succeed,
         test_modules_migrate,
         test_modules_migrate_no_delete,
+        test_modules_migrate_symlink,
     )
     from .modules.info import (  # type: ignore[misc]
         test_modules_info_in_modules_repo,
