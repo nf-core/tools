@@ -36,6 +36,6 @@ jobs:
               workflow_id: 'add-tools-api-docs.yml',
               ref: 'main'
               inputs: {
-                "ref_name": ${{ inputs.ref_name || github.ref_name }}
+                "ref_name": "${{ inputs.ref_name || github.ref_name }}"
               }
             })
