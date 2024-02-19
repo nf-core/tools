@@ -542,54 +542,14 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
 @click.option("--plain", is_flag=True, help="Use the standard nf-core template")
 def create(name, description, author, version, force, outdir, template_yaml, plain):
     """
+    DEPRECATED
     Create a new pipeline using the nf-core template.
 
     Uses the nf-core template to make a skeleton Nextflow pipeline with all required
     files, boilerplate code and best-practices.
     """
-    from nf_core.pipelines.create import PipelineCreateApp
-    from nf_core.pipelines.create.create import PipelineCreate
-
-    if (name and description and author) or (template_yaml):
-        # If all command arguments are used, run without the interactive interface
-        try:
-            create_obj = PipelineCreate(
-                name,
-                description,
-                author,
-                version=version,
-                force=force,
-                outdir=outdir,
-            )
-            create_obj.init_pipeline()
-        except UserWarning as e:
-            log.error(e)
-            sys.exit(1)
-    elif name or description or author or version or force or outdir or plain:
-        log.error(
-            "Command arguments are not accepted in interactive mode.\n"
-            "Run with all command line arguments to avoid using an interactive interface"
-            "or run without any command line arguments to use an interactive interface."
-        )
-        sys.exit(1)
-    else:
-        if rich.prompt.Confirm.ask(
-            "[blue bold]?[/] [bold] [green]nf-core create[/] command is deprecated in favor of [green]nf-core pipelines create[/].[/]\n"
-            "[bold]Will launch an interactive interface. Do you want to continue?[/]"
-        ):
-            log.info(
-                "Launching interactive nf-core pipeline creation tool."
-                "\nRun with all command line arguments to avoid using an interactive interface."
-            )
-            app = PipelineCreateApp()
-            try:
-                app.run()
-                sys.exit(app.return_code or 0)
-            except UserWarning as e:
-                log.error(e)
-                sys.exit(1)
-        else:
-            sys.exit(0)
+    log.error("[bold][green]nf-core create[/] command is deprecated. Use [green]nf-core pipelines create[/].[/]")
+    sys.exit(0)
 
 
 # nf-core modules subcommands
