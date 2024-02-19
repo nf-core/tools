@@ -133,6 +133,8 @@ class DownloadWorkflow:
             self.container_library = [*container_library]
         else:
             self.container_library = ["quay.io"]
+        # Create a new set and add all values from self.container_library (CLI arguments to --container-library)
+        self.registry_set = set(self.container_library) if hasattr(self, "container_library") else set()
         # if a container_cache_index is given, use the file and overrule choice.
         self.container_cache_utilisation = "remote" if container_cache_index else container_cache_utilisation
         self.container_cache_index = container_cache_index
@@ -985,9 +987,6 @@ class DownloadWorkflow:
         if not self.nf_config:
             self.nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
 
-        # Create a new set and add all values from self.container_library (CLI arguments to --container-library)
-        self.registry_set = set(self.container_library) if hasattr(self, "container_library") else set()
-
         # Select registries defined in pipeline config
         configured_registries = [
             "apptainer.registry",
@@ -999,6 +998,9 @@ class DownloadWorkflow:
         for registry in configured_registries:
             if registry in self.nf_config:
                 self.registry_set.add(self.nf_config[registry])
+
+        # add depot.galaxyproject.org to the set, because it is the default registry for singularity hardcoded in modules
+        self.registry_set.add("depot.galaxyproject.org")
 
     def symlink_singularity_images(self, image_out_path):
         """Create a symlink for each registry in the registry set that points to the image.
@@ -1014,35 +1016,31 @@ class DownloadWorkflow:
         """
 
         if self.registry_set:
-            # add depot.galaxyproject.org to the set, because it is the default registry for singularity hardcoded in modules
-            self.registry_set.add("depot.galaxyproject.org")
-
-            # Create a regex pattern from the set
+            # Create a regex pattern from the set, in case trimming is needed.
             trim_pattern = "|".join(f"{re.escape(registry)}-?" for registry in self.registry_set)
 
-            # Use the pattern to trim the string
-            trimmed_image_name = re.sub(f"^{trim_pattern}", "", os.path.basename(image_out_path))
-
             for registry in self.registry_set:
-                # avoid symlinking the same file to itself
                 if not os.path.basename(image_out_path).startswith(registry):
-                    symlink_name = f"./{registry}-{trimmed_image_name}"
+                    symlink_name = f"./{registry}-{os.path.basename(image_out_path)}"
+                else:
+                    trimmed_name = re.sub(f"^{trim_pattern}", "", os.path.basename(image_out_path))
+                    symlink_name = f"./{registry}-{trimmed_name}"
 
-                    symlink_full = os.path.join(os.path.dirname(image_out_path), symlink_name)
-                    target_name = os.path.join("./", os.path.basename(image_out_path))
+                symlink_full = os.path.join(os.path.dirname(image_out_path), symlink_name)
+                target_name = os.path.join("./", os.path.basename(image_out_path))
 
-                    if not os.path.exists(symlink_full):
-                        os.makedirs(os.path.dirname(symlink_full), exist_ok=True)
-                        image_dir = os.open(os.path.dirname(image_out_path), os.O_RDONLY)
-                        try:
-                            os.symlink(
-                                target_name,
-                                symlink_name,
-                                dir_fd=image_dir,
-                            )
-                            log.debug(f"Symlinked {target_name} as {symlink_name}.")
-                        finally:
-                            os.close(image_dir)
+                if not os.path.exists(symlink_full):
+                    os.makedirs(os.path.dirname(symlink_full), exist_ok=True)
+                    image_dir = os.open(os.path.dirname(image_out_path), os.O_RDONLY)
+                    try:
+                        os.symlink(
+                            target_name,
+                            symlink_name,
+                            dir_fd=image_dir,
+                        )
+                        log.debug(f"Symlinked {target_name} as {symlink_name}.")
+                    finally:
+                        os.close(image_dir)
 
     def get_singularity_images(self, current_revision=""):
         """Loop through container names and download Singularity images"""
@@ -1233,6 +1231,15 @@ class DownloadWorkflow:
         out_name = out_name.replace("/", "-").replace(":", "-")
         # Add file extension
         out_name = out_name + extension
+
+        # Trim potential registries from the name for consistency.
+        # This will allow pipelines to work offline without symlinked images,
+        # if docker.registry / singularity.registry are set to empty strings at runtime, which can be included in the HPC config profiles easily.
+        if self.registry_set:
+            # Create a regex pattern from the set of registries
+            trim_pattern = "|".join(f"{re.escape(registry)}-?" for registry in self.registry_set)
+            # Use the pattern to trim the string
+            out_name = re.sub(f"^{trim_pattern}", "", out_name)
 
         # Full destination and cache paths
         out_path = os.path.abspath(os.path.join(self.outdir, "singularity-images", out_name))
