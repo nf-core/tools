@@ -9,7 +9,7 @@
 - Add Github Action to automatically cleanup ubuntu-latest runners to fix runner running out of diskspace errors([#2755](https://github.com/nf-core/tools/issues/2755))
 - Fix GitHub Actions CI and Linting badges links ([#2757](https://github.com/nf-core/tools/pull/2757))
 - Add hashtags to release announcement on mastodon ([#2761](https://github.com/nf-core/tools/pull/2761))
-- update in fastqc and multiqc in template ([#2776](https://github.com/nf-core/tools/pull/2776))
+- update fastqc and multiqc in template ([#2776](https://github.com/nf-core/tools/pull/2776))
 
 ### Linting
 
