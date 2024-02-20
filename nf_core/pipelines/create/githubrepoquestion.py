@@ -9,8 +9,6 @@ from textual.widgets import Button, Footer, Header, Markdown
 log = logging.getLogger(__name__)
 
 github_text_markdown = """
-# Create a GitHub repo
-
 After creating the pipeline template locally, we can create a GitHub repository and push the code to it.
 
 Do you want to create a GitHub repository?
@@ -32,7 +30,6 @@ class GithubRepoQuestion(Screen):
         )
         yield Markdown(dedent(github_text_markdown))
         yield Center(
-            Button("Back", id="back", variant="default"),
             Button("Create GitHub repo", id="github_repo", variant="success"),
             Button("Finish without creating a repo", id="exit", variant="primary"),
             classes="cta",
