@@ -1,22 +1,29 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = [
-    "setuptools>=40.6.0",
-    "wheel"
-]
+requires = ["setuptools>=40.6.0", "wheel"]
 
 [tool.pytest.ini_options]
-markers = [
-    "datafiles: load datafiles"
-]
+markers = ["datafiles: load datafiles"]
 testpaths = ["tests"]
-norecursedirs = [ ".*", "build", "dist", "*.egg", "data", "__pycache__", ".github", "nf_core", "docs"]
+norecursedirs = [
+    ".*",
+    "build",
+    "dist",
+    "*.egg",
+    "data",
+    "__pycache__",
+    ".github",
+    "nf_core",
+    "docs",
+]
 
 [tool.ruff]
 line-length = 120
 target-version = "py38"
-select = ["I", "E1", "E4", "E7", "E9", "F", "UP", "N"]
 cache-dir = "~/.cache/ruff"
+
+[tool.ruff.lint]
+select = ["I", "E1", "E4", "E7", "E9", "F", "UP", "N"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["nf_core"]
@@ -26,4 +33,3 @@ known-first-party = ["nf_core"]
 
 [tool.ruff.lint.pep8-naming]
 extend-ignore-names = ["mocked_*", "*allOf", "*URI*"]
-

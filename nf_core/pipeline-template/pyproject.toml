@@ -3,8 +3,10 @@
 [tool.ruff]
 line-length = 120
 target-version = "py38"
-select = ["I", "E1", "E4", "E7", "E9", "F", "UP", "N"]
 cache-dir = "~/.cache/ruff"
+
+[tool.ruff.lint]
+select = ["I", "E1", "E4", "E7", "E9", "F", "UP", "N"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["nf_core"]
