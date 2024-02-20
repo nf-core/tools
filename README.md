@@ -1142,6 +1142,7 @@ You can update subworkflows installed from a remote repository in your pipeline 
 working_dir: tmp/nf-core-nextbigthing
 before_command: >
   echo "repository_type: pipeline" >> .nf-core.yml
+timeout: 30
 -->
 
 ![`nf-core subworkflows update --all --no-preview`](docs/images/nf-core-subworkflows-update.svg)
