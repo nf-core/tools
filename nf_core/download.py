@@ -1722,6 +1722,7 @@ class ContainerError(Exception):
             elif (
                 re.search(r"requested\saccess\sto\sthe\sresource\sis\sdenied", line)
                 or re.search(r"StatusCode:\s404", line)
+                or re.search(r"400|Bad\s?Request", line)
                 or re.search(r"invalid\sstatus\scode\sfrom\sregistry\s400", line)
             ):
                 # Unfortunately, every registry seems to return an individual error here:
