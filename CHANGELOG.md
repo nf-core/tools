@@ -10,14 +10,14 @@
 - Fix GitHub Actions CI and Linting badges links ([#2757](https://github.com/nf-core/tools/pull/2757))
 - Add hashtags to release announcement on mastodon ([#2761](https://github.com/nf-core/tools/pull/2761))
 - update fastqc and multiqc in template ([#2776](https://github.com/nf-core/tools/pull/2776))
+- template refactoring: remove the `lib` directory and use nf-core subworkflows ([#2736](https://github.com/nf-core/tools/pull/2736))
+- use nf-validation to create an input channel from a sample sheet ([#2736](https://github.com/nf-core/tools/pull/2736))
 
 ### Linting
 
 - Make creat-lint-wf composable ([#2733](https://github.com/nf-core/tools/pull/2733))
 - Add looser comparison when pipeline logos ([#2744](https://github.com/nf-core/tools/pull/2744))
 - Handle multiple aliases in module imports correctly during linting ([#2762](https://github.com/nf-core/tools/pull/2762))
-- make creat-lint-wf composable ([#2733](https://github.com/nf-core/tools/pull/2733))
-- add looser comparison when pipeline logos ([#2744](https://github.com/nf-core/tools/pull/2744))
 - Switch to markdown based API and error docs ([#2758](https://github.com/nf-core/tools/pull/2758))
 
 ### Modules
