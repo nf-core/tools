@@ -292,7 +292,7 @@ class PipelineCreate:
         short_name = self.template_params["short_name"]
         rename_files = {
             "workflows/pipeline.nf": f"workflows/{short_name}.nf",
-            "lib/WorkflowPipeline.groovy": f"lib/Workflow{short_name[0].upper()}{short_name[1:]}.groovy",
+            "subworkflows/local/utils_nfcore_pipeline_pipeline/main.nf": f"subworkflows/local/utils_nfcore_{short_name}_pipeline/main.nf",
         }
 
         # Set the paths to skip according to customization

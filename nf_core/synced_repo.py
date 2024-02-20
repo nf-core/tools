@@ -208,7 +208,18 @@ class SyncedRepo:
         """
         Checks out the specified branch of the repository
         """
-        self.repo.git.checkout(self.branch)
+        try:
+            self.repo.git.checkout(self.branch)
+        except GitCommandError as e:
+            if (
+                self.fullname
+                and "modules" in self.fullname
+                and "Your local changes to the following files would be overwritten by checkout" in str(e)
+            ):
+                log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
+                self.repo.git.checkout(self.branch, force=True)
+            else:
+                raise e
 
     def checkout(self, commit):
         """
@@ -217,7 +228,18 @@ class SyncedRepo:
         Args:
             commit (str): Git SHA of the commit
         """
-        self.repo.git.checkout(commit)
+        try:
+            self.repo.git.checkout(commit)
+        except GitCommandError as e:
+            if (
+                self.fullname
+                and "modules" in self.fullname
+                and "Your local changes to the following files would be overwritten by checkout" in str(e)
+            ):
+                log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
+                self.repo.git.checkout(self.branch, force=True)
+            else:
+                raise e
 
     def component_exists(self, component_name, component_type, checkout=True, commit=None):
         """

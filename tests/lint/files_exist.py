@@ -61,7 +61,9 @@ def test_files_exist_pass_conditional(self):
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     lint_obj.nf_config["plugins"] = []
-    Path(new_pipeline, "lib/nfcore_external_java_deps.jar").touch()
+    lib_dir = Path(new_pipeline, "lib")
+    lib_dir.mkdir()
+    (lib_dir / "nfcore_external_java_deps.jar").touch()
     results = lint_obj.files_exist()
     assert results["failed"] == []
     assert results["ignored"] == []
@@ -71,7 +73,9 @@ def test_files_exist_fail_conditional(self):
     new_pipeline = self._make_pipeline_copy()
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
-    Path(new_pipeline, "lib/nfcore_external_java_deps.jar").touch()
+    lib_dir = Path(new_pipeline, "lib")
+    lib_dir.mkdir()
+    (lib_dir / "nfcore_external_java_deps.jar").touch()
     results = lint_obj.files_exist()
     assert results["failed"] == ["File must be removed: `lib/nfcore_external_java_deps.jar`"]
     assert results["ignored"] == []

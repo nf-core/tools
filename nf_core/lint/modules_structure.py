@@ -8,9 +8,15 @@ log = logging.getLogger(__name__)
 def modules_structure(self):
     """
     Check that the structure of the modules directory in a pipeline is the correct one:
+
+    .. code-block:: bash
+
         modules/nf-core/TOOL/SUBTOOL
 
     Prior to nf-core/tools release 2.6 the directory structure had an additional level of nesting:
+
+    .. code-block:: bash
+
         modules/nf-core/modules/TOOL/SUBTOOL
     """
     wrong_location_modules = []

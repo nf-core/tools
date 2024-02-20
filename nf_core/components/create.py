@@ -462,7 +462,13 @@ class ComponentCreate(ComponentCommand):
         ):
             with open(pytest_dir / "main.nf") as fh:
                 log.info(fh.read())
-            shutil.rmtree(pytest_dir)
+            if pytest_dir.is_symlink():
+                resolved_dir = pytest_dir.resolve()
+                log.debug(f"Removing symlink: {resolved_dir}")
+                shutil.rmtree(resolved_dir)
+                pytest_dir.unlink()
+            else:
+                shutil.rmtree(pytest_dir)
             log.info(
                 "[yellow]Please convert the pytest tests to nf-test in 'main.nf.test'.[/]\n"
                 "You can find more information about nf-test [link=https://nf-co.re/docs/contributing/modules#migrating-from-pytest-to-nf-test]at the nf-core web[/link]. "

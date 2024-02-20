@@ -121,8 +121,11 @@ class TestSubworkflows(unittest.TestCase):
     )
     from .subworkflows.lint import (  # type: ignore[misc]
         test_subworkflows_lint,
+        test_subworkflows_lint_capitalization_fail,
         test_subworkflows_lint_empty,
         test_subworkflows_lint_gitlab_subworkflows,
+        test_subworkflows_lint_include_multiple_alias,
+        test_subworkflows_lint_less_than_two_modules_warning,
         test_subworkflows_lint_multiple_remotes,
         test_subworkflows_lint_new_subworkflow,
         test_subworkflows_lint_no_gitlab,

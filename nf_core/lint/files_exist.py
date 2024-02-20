@@ -52,9 +52,6 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         docs/output.md
         docs/README.md
         docs/usage.md
-        lib/NfcoreTemplate.groovy
-        lib/Utils.groovy
-        lib/WorkflowMain.groovy
         nextflow_schema.json
         nextflow.config
         README.md
@@ -69,7 +66,6 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         conf/igenomes.config
         .github/workflows/awstest.yml
         .github/workflows/awsfulltest.yml
-        lib/WorkflowPIPELINE.groovy
         pyproject.toml
 
     Files that *must not* be present, due to being renamed or removed in the template:
@@ -91,6 +87,11 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         lib/Checks.groovy
         lib/Completion.groovy
         lib/Workflow.groovy
+        lib/WorkflowPIPELINE.groovy
+        lib/NfcoreTemplate.groovy
+        lib/Utils.groovy
+        lib/WorkflowMain.groovy
+
 
     Files that *should not* be present:
 
@@ -165,9 +166,6 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         [Path("docs", "README.md")],
         [Path("docs", "README.md")],
         [Path("docs", "usage.md")],
-        [Path("lib", "NfcoreTemplate.groovy")],
-        [Path("lib", "Utils.groovy")],
-        [Path("lib", "WorkflowMain.groovy")],
     ]
 
     files_warn = [
@@ -177,7 +175,6 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         [Path("conf", "igenomes.config")],
         [Path(".github", "workflows", "awstest.yml")],
         [Path(".github", "workflows", "awsfulltest.yml")],
-        [Path("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy")],
         [Path("modules.json")],
         [Path("pyproject.toml")],
     ]
@@ -199,6 +196,10 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         Path("lib", "Checks.groovy"),
         Path("lib", "Completion.groovy"),
         Path("lib", "Workflow.groovy"),
+        Path("lib", "Utils.groovy"),
+        Path("lib", "WorkflowMain.groovy"),
+        Path("lib", "NfcoreTemplate.groovy"),
+        Path("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy"),
     ]
     files_warn_ifexists = [Path(".travis.yml")]
     files_fail_ifinconfig: List[Tuple[Path, Dict[str, str]]] = [
@@ -236,7 +237,7 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
 
     # Files that cause an error if they exist
     for file in files_fail_ifexists:
-        if file in ignore_files:
+        if str(file) in ignore_files:
             continue
         if pf(file).is_file():
             failed.append(f"File must be removed: {self._wrap_quotes(file)}")
