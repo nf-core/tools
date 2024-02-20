@@ -3,7 +3,6 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import List
 
 import questionary
 
@@ -738,10 +737,7 @@ class ComponentUpdate(ComponentCommand):
             new_version (str): The version of the module/subworkflow that was installed.
         """
         temp_component_dir = Path(install_folder, component)
-        files: List[Path] = []
-        for file_path in Path(temp_component_dir).rglob("*"):
-            if file_path.is_file():
-                files.append(file_path)
+        files = [file_path for file_path in temp_component_dir.rglob("*") if file_path.is_file()]
         pipeline_path = Path(self.dir, self.component_type, repo_path, component)
 
         if pipeline_path.exists():
@@ -750,8 +746,8 @@ class ComponentUpdate(ComponentCommand):
             config_files = [f for f in pipeline_files if str(f).endswith(".config")]
             for config_file in config_files:
                 log.debug(f"Moving '{component}/{config_file}' to updated component")
-                shutil.move(Path(pipeline_path, config_file), Path(temp_component_dir, config_file))
-                files.append(Path(config_file))
+                shutil.move(pipeline_path / config_file, temp_component_dir / config_file)
+                files.append(temp_component_dir / config_file)
 
         else:
             log.debug(f"Creating new {self.component_type[:-1]} '{component}' in '{self.component_type}/{repo_path}'")
