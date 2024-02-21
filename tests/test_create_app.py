@@ -231,6 +231,7 @@ def test_github_details(mock_init_pipeline, snap_compare):
     """
 
     async def run_before(pilot) -> None:
+        delete = ["backspace"] * 50
         await pilot.click("#start")
         await pilot.click("#type_nfcore")
         await pilot.click("#name")
@@ -244,6 +245,10 @@ def test_github_details(mock_init_pipeline, snap_compare):
         await pilot.click("#finish")
         await pilot.click("#close_screen")
         await pilot.click("#github_repo")
+        await pilot.click("#gh_username")
+        await pilot.press(*delete)  # delete field automatically filled using github CLI
+        await pilot.press("tab")
+        await pilot.press(*delete)
 
     assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
 

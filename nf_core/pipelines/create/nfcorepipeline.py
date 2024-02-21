@@ -18,7 +18,7 @@ class NfcorePipeline(Screen):
         yield Markdown(
             dedent(
                 """
-                # Pipeline features
+                # Template features
                 """
             )
         )
