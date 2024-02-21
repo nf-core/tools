@@ -16,7 +16,6 @@ Other assumptions:
 
 import os
 import re
-import subprocess
 import sys
 from pathlib import Path
 from typing import List
@@ -51,39 +50,33 @@ if any(
     sys.exit(0)
 
 
-def _run_cmd(cmd):
-    print(cmd)
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise RuntimeError(f"Error executing command: {result.stderr}")
-    return result
-
-
-def _determine_change_type(pr_title) -> str:
+def _determine_change_type(pr_title) -> tuple[str, str]:
     """
     Determine the type of the PR: Template, Download, Linting, Modules, Subworkflows, or General
     Returns a tuple of the section name and the module info.
     """
     sections = {
-        "Template": "### Template updates",
-        "Download": "### Download updates",
-        "Linting": "### Linting updates",
+        "Template": "### Template",
+        "Download": "### Download",
+        "Linting": "### Linting",
         "Modules": "### Modules",
         "Subworkflows": "### Subworkflows",
     }
-    current_section = "### General"
+    current_section_header = "### General"
+    current_section = "General"
 
     # Check if the PR in any of the sections.
     for section, section_header in sections.items():
         # check if the PR title contains any of the section headers, with some loose matching, e.g. removing plural and suffixes
         if re.sub(r"s$", "", section.lower().replace("ing", "")) in pr_title.lower():
-            current_section = section_header
+            current_section_header = section_header
+            current_section = section
+    print(f"Detected section: {current_section}")
+    return current_section, current_section_header
 
-    return current_section
 
-
-# Determine the type of the PR: new module, module update, or core update.
-section = _determine_change_type(pr_title)
+# Determine the type of the PR
+section, section_header = _determine_change_type(pr_title)
 
 # Remove section indicator from the PR title.
 pr_title = re.sub(rf"{section}[:\s]*", "", pr_title, flags=re.IGNORECASE)
@@ -93,10 +86,13 @@ pr_link = f"([#{pr_number}]({REPO_URL}/pull/{pr_number}))"
 
 # Handle manual changelog entries through comments.
 if comment := comment.removeprefix("@nf-core-bot changelog").strip():
+    print(f"Adding manual changelog entry: {comment}")
     pr_title = comment
 new_lines = [
     f"- {pr_title} {pr_link}\n",
 ]
+
+print(f"Adding new lines into section '{section}':\n" + "".join(new_lines))
 
 # Finally, updating the changelog.
 # Read the current changelog lines. We will print them back as is, except for one new
@@ -108,6 +104,7 @@ updated_lines: List[str] = []
 
 def _skip_existing_entry_for_this_pr(line: str, same_section: bool = True) -> str:
     if line.strip().endswith(pr_link):
+        print(f"Found existing entry for this pull request #{pr_number}:")
         existing_lines = [line]
         if new_lines and new_lines == existing_lines and same_section:
             print(f"Found existing identical entry for this pull request #{pr_number} in the same section:")
@@ -126,7 +123,7 @@ def _skip_existing_entry_for_this_pr(line: str, same_section: bool = True) -> st
     return line
 
 
-# Find the next line in the change log that matches the pattern "## MultiQC v.*dev"
+# Find the next line in the change log that matches the pattern "# nf-core/tools v.*dev"
 # If it doesn't exist, exist with code 1 (let's assume that a new section is added
 # manually or by CI when a release is pushed).
 # Else, find the next line that matches the `section` variable, and insert a new line
@@ -139,11 +136,14 @@ while orig_lines:
     # If the line already contains a link to the PR, don't add it again.
     line = _skip_existing_entry_for_this_pr(line, same_section=False)
 
-    if line.startswith("# ") and not line.strip() == "# nf-core/tools: Changelog":  # Version header, e.g. "# v2.12dev"
+    if (
+        line.startswith("## ") and not line.strip() == "# nf-core/tools: Changelog"
+    ):  # Version header, e.g. "## v2.12dev"
+        print(f"Found version header: {line.strip()}")
         updated_lines.append(line)
 
-        # Parse version from the line `# v2.12dev` or
-        # `# [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]` ...
+        # Parse version from the line `## v2.12dev` or
+        # `## [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]` ...
         if not (m := re.match(r".*(v\d+\.\d+(dev)?).*", line)):
             print(f"Cannot parse version from line {line.strip()}.", file=sys.stderr)
             sys.exit(1)
@@ -175,8 +175,11 @@ while orig_lines:
                     updated_lines.append(line)
             break
         continue
-
-    if inside_version_dev and line.lower().startswith(section.lower()):  # Section of interest header
+    print(f"Found line: {line.strip()}")
+    print(f"inside_version_dev: {inside_version_dev}")
+    print(f"section_header: {section_header}")
+    if inside_version_dev and line.lower().startswith(section_header.lower()):  # Section of interest header
+        print(f"Found section header: {line.strip()}")
         if already_added_entry:
             print(
                 f"Already added new lines into section {section}, is the section duplicated?",
@@ -189,6 +192,7 @@ while orig_lines:
         while True:
             line = orig_lines.pop(0)
             if line.startswith("#"):
+                print(f"Found the next section header: {line.strip()}")
                 # Found the next section header, so need to put all the lines we collected.
                 updated_lines.append("\n")
                 _updated_lines = [_l for _l in section_lines + new_lines if _l.strip()]

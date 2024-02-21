@@ -20,13 +20,15 @@ def test_subworkflows_remove_subworkflow(self):
     mod_json_before = ModulesJson(self.pipeline_dir).get_modules_json()
     assert self.subworkflow_remove.remove("bam_sort_stats_samtools")
     mod_json_after = ModulesJson(self.pipeline_dir).get_modules_json()
-    assert Path.exists(subworkflow_path) is False
     assert Path.exists(bam_sort_stats_samtools_path) is False
     assert Path.exists(bam_stats_samtools_path) is False
     assert Path.exists(samtools_index_path) is False
     assert mod_json_before != mod_json_after
     # assert subworkflows key is removed from modules.json
-    assert "subworkflows" not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"].keys()
+    assert (
+        "bam_sort_stats_samtools"
+        not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"].keys()
+    )
     assert "samtools/index" not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["modules"].keys()
 
 
@@ -44,13 +46,15 @@ def test_subworkflows_remove_subworkflow_keep_installed_module(self):
     assert self.subworkflow_remove.remove("bam_sort_stats_samtools")
     mod_json_after = ModulesJson(self.pipeline_dir).get_modules_json()
 
-    assert Path.exists(subworkflow_path) is False
     assert Path.exists(bam_sort_stats_samtools_path) is False
     assert Path.exists(bam_stats_samtools_path) is False
     assert Path.exists(samtools_index_path) is True
     assert mod_json_before != mod_json_after
     # assert subworkflows key is removed from modules.json
-    assert "subworkflows" not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"].keys()
+    assert (
+        "bam_sort_stats_samtools"
+        not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["subworkflows"].keys()
+    )
     assert (
         "samtools/index"
         in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"].keys()

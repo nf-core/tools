@@ -4,6 +4,7 @@ Lint the main.nf file of a subworkflow
 
 import logging
 import re
+from typing import List
 
 log = logging.getLogger(__name__)
 
@@ -120,7 +121,7 @@ def check_main_section(self, lines, included_components):
 
     # Check that all included components are used
     # Check that all included component versions are used
-    if included_components is not None:
+    if included_components:
         for component in included_components:
             if component in script:
                 self.passed.append(
@@ -152,7 +153,7 @@ def check_main_section(self, lines, included_components):
                 )
 
 
-def check_subworkflow_section(self, lines):
+def check_subworkflow_section(self, lines: List[str]) -> List[str]:
     """Lint the section of a subworkflow before the workflow definition
     Specifically checks if the subworkflow includes at least two modules or subworkflows
 
@@ -160,7 +161,7 @@ def check_subworkflow_section(self, lines):
         lines (List[str]): Content of subworkflow.
 
     Returns:
-        List: List of included component names. If subworkflow doesn't contain any lines, return None.
+        List[str]: List of included components.
     """
     # Check that we have subworkflow content
     if len(lines) == 0:
@@ -171,7 +172,7 @@ def check_subworkflow_section(self, lines):
                 self.main_nf,
             )
         )
-        return
+        return []
     self.passed.append(
         ("subworkflow_include", "Subworkflow does include modules before the workflow definition", self.main_nf)
     )
@@ -179,10 +180,17 @@ def check_subworkflow_section(self, lines):
     includes = []
     for line in lines:
         if line.strip().startswith("include"):
-            component_name = line.split("{")[1].split("}")[0].strip()
-            if " as " in component_name:
-                component_name = component_name.split(" as ")[1].strip()
-            includes.append(component_name)
+            component_name = [line.split("{")[1].split("}")[0].strip()]
+            # check if multiple components are included
+            if ";" in component_name[0]:
+                component_name = component_name[0].split(";")
+            for comp in component_name:
+                if " as " in comp:
+                    comp = comp.split(" as ")[1].strip()
+                includes.append(comp)
+            continue
+    # remove duplicated components
+    includes = list(set(includes))
     if len(includes) >= 2:
         self.passed.append(("main_nf_include", "Subworkflow includes two or more modules", self.main_nf))
     else:

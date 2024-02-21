@@ -138,3 +138,28 @@ def test_modules_migrate_no_delete(self, mock_rich_ask):
     with open(Path(self.nfcore_modules, "tests", "config", "pytest_modules.yml")) as fh:
         modules_yml = yaml.safe_load(fh)
     assert "samtools/sort" not in modules_yml.keys()
+
+
+@mock.patch("rich.prompt.Confirm.ask")
+def test_modules_migrate_symlink(self, mock_rich_ask):
+    """Create a module with the --migrate-pytest option to convert pytest with symlinks to nf-test.
+    Test that the symlink is deleted and the file is copied."""
+
+    pytest_dir = Path(self.nfcore_modules, "tests", "modules", "nf-core", "samtools", "sort")
+    module_dir = Path(self.nfcore_modules, "modules", "nf-core", "samtools", "sort")
+
+    # Clone modules repo with pytests
+    shutil.rmtree(self.nfcore_modules)
+    Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH)
+
+    # Create a symlinked file in the pytest directory
+    symlink_file = pytest_dir / "symlink_file.txt"
+    symlink_file.symlink_to(module_dir / "main.nf")
+
+    # Create a module with --migrate-pytest
+    mock_rich_ask.return_value = True
+    module_create = nf_core.modules.ModuleCreate(self.nfcore_modules, "samtools/sort", migrate_pytest=True)
+    module_create.create()
+
+    # Check that symlink is deleted
+    assert not symlink_file.is_symlink()

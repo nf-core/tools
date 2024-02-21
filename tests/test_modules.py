@@ -160,6 +160,7 @@ class TestModules(unittest.TestCase):
         test_modules_create_succeed,
         test_modules_migrate,
         test_modules_migrate_no_delete,
+        test_modules_migrate_symlink,
     )
     from .modules.info import (  # type: ignore[misc]
         test_modules_info_in_modules_repo,
@@ -213,9 +214,15 @@ class TestModules(unittest.TestCase):
     from .modules.list import (  # type: ignore[misc]
         test_modules_install_and_list_pipeline,
         test_modules_install_gitlab_and_list_pipeline,
+        test_modules_list_in_wrong_repo_fail,
+        test_modules_list_local_json,
         test_modules_list_pipeline,
         test_modules_list_remote,
         test_modules_list_remote_gitlab,
+        test_modules_list_remote_json,
+        test_modules_list_with_keywords,
+        test_modules_list_with_one_keyword,
+        test_modules_list_with_unused_keyword,
     )
     from .modules.modules_json import (  # type: ignore[misc]
         test_get_modules_json,
@@ -254,6 +261,7 @@ class TestModules(unittest.TestCase):
         test_update_different_branch_mix_modules_branch_test,
         test_update_different_branch_mixed_modules_main,
         test_update_different_branch_single_module,
+        test_update_module_with_extra_config_file,
         test_update_only_show_differences,
         test_update_only_show_differences_when_patch,
         test_update_with_config_dont_update,

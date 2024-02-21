@@ -5,3 +5,7 @@ graft nf_core/pipeline-template
 graft nf_core/subworkflow-template
 include requirements.txt
 include nf_core/.pre-commit-prettier-config.yaml
+include nf_core/assets/logo/nf-core-repo-logo-base-lightbg.png
+include nf_core/assets/logo/nf-core-repo-logo-base-darkbg.png
+include nf_core/assets/logo/placeholder_logo.svg
+include nf_core/assets/logo/MavenPro-Bold.ttf

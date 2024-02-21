@@ -16,13 +16,36 @@ def template_strings(self):
 
     This test ignores any double-brackets prefixed with a dollar sign, such as
     ``${{ secrets.AWS_ACCESS_KEY_ID }}`` as these placeholders are used in GitHub Actions workflows.
+
+    .. tip:: You can choose to ignore lint test tests by editing the file called
+        ``.nf-core.yml`` in the root of your pipeline and setting the test to false:
+
+        .. code-block:: yaml
+
+            lint:
+                template_strings: False
+
+        To disable this test only for specific files, you can specify a list of file paths to ignore.
+        For example, to ignore a pdf you added to the docs:
+
+        .. code-block:: yaml
+
+            lint:
+                template_strings:
+                    - docs/my_pdf.pdf
     """
     passed = []
     failed = []
+    ignored = []
+    # Files that should be ignored according to the linting config
+    ignore_files = self.lint_config.get("template_strings", [])
 
     # Loop through files, searching for string
     num_matches = 0
     for fn in self.files:
+        if str(fn.relative_to(self.wf_path)) in ignore_files:
+            ignored.append(f"Ignoring Jinja template strings in file `{fn}`")
+            continue
         # Skip binary files
         binary_ftypes = ["image", "application/java-archive"]
         (ftype, encoding) = mimetypes.guess_type(fn)
@@ -41,4 +64,4 @@ def template_strings(self):
     if num_matches == 0:
         passed.append(f"Did not find any Jinja template strings ({len(self.files)} files)")
 
-    return {"passed": passed, "failed": failed}
+    return {"passed": passed, "failed": failed, "ignored": ignored}

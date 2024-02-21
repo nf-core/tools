@@ -317,13 +317,13 @@ def test_update_only_show_differences(self, mock_prompt):
 
     mod_json = modules_json.get_modules_json()
     # Loop through all modules and check that they are NOT updated (according to the modules.json file)
-    # Modules that can be updated but shouldn't are custom/dumpsoftwareversions and fastqc
+    # A module that can be updated but shouldn't is fastqc
     # Module multiqc is already up to date so don't check
-    for mod in ["custom/dumpsoftwareversions", "fastqc"]:
-        correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
-        current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
-        assert correct_git_sha != current_git_sha
-        assert cmp_module(Path(tmpdir, mod), Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, mod)) is True
+    mod = "fastqc"
+    correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
+    current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
+    assert correct_git_sha != current_git_sha
+    assert cmp_module(Path(tmpdir, mod), Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, mod)) is True
 
 
 # Mock questionary answer: do not update module, only show diffs
@@ -357,22 +357,40 @@ def test_update_only_show_differences_when_patch(self, mock_prompt):
     patch_obj = ModulePatch(self.pipeline_dir)
     patch_obj.patch("fastqc")
     # Check that a patch file with the correct name has been created
-    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", "fastqc.diff"}
+    assert "fastqc.diff" in set(os.listdir(module_path))
 
     # Update all modules
     assert update_obj.update() is True
 
     mod_json = modules_json.get_modules_json()
     # Loop through all modules and check that they are NOT updated (according to the modules.json file)
-    # Modules that can be updated but shouldn't are custom/dumpsoftwareversions and fastqc
+    # A module that can be updated but shouldn't is fastqc
     # Module multiqc is already up to date so don't check
-    for mod in ["custom/dumpsoftwareversions", "fastqc"]:
-        correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
-        current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
-        assert correct_git_sha != current_git_sha
+    mod = "fastqc"
+    correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
+    current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
+    assert correct_git_sha != current_git_sha
 
 
 def cmp_module(dir1, dir2):
     """Compare two versions of the same module"""
     files = ["main.nf", "meta.yml"]
     return all(filecmp.cmp(os.path.join(dir1, f), os.path.join(dir2, f), shallow=False) for f in files)
+
+
+def test_update_module_with_extra_config_file(self):
+    """Try updating a module with a config file"""
+    # Install the module
+    assert self.mods_install.install("trimgalore")
+    # Add a nextflow_test.config file to the module
+    trimgalore_path = Path(self.pipeline_dir, "modules", "nf-core", "trimgalore")
+    Path(trimgalore_path, "nextflow_test.config").touch()
+    with open(Path(trimgalore_path, "nextflow_test.config"), "w") as fh:
+        fh.write("params.my_param = 'my_value'\n")
+    # Update the module
+    update_obj = ModuleUpdate(self.pipeline_dir, show_diff=False)
+    assert update_obj.update("trimgalore")
+    # Check that the nextflow_test.config file is still there
+    assert Path(trimgalore_path, "nextflow_test.config").exists()
+    with open(Path(trimgalore_path, "nextflow_test.config")) as fh:
+        assert "params.my_param = 'my_value'" in fh.read()

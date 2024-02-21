@@ -200,9 +200,11 @@ class TestLint(unittest.TestCase):
     )
     from .lint.files_exist import (  # type: ignore[misc]
         test_files_exist_depreciated_file,
+        test_files_exist_fail_conditional,
         test_files_exist_missing_config,
         test_files_exist_missing_main,
         test_files_exist_pass,
+        test_files_exist_pass_conditional,
     )
     from .lint.files_unchanged import (  # type: ignore[misc]
         test_files_unchanged_fail,
@@ -219,10 +221,20 @@ class TestLint(unittest.TestCase):
         test_multiqc_incorrect_export_plots,
     )
     from .lint.nextflow_config import (  # type: ignore[misc]
+        test_default_values_fail,
+        test_default_values_float,
+        test_default_values_float_fail,
+        test_default_values_ignored,
+        test_default_values_match,
         test_nextflow_config_bad_name_fail,
         test_nextflow_config_dev_in_release_mode_failed,
         test_nextflow_config_example_pass,
         test_nextflow_config_missing_test_profile_failed,
+    )
+    from .lint.template_strings import (  # type: ignore[misc]
+        test_template_strings,
+        test_template_strings_ignore_file,
+        test_template_strings_ignored,
     )
     from .lint.version_consistency import test_version_consistency  # type: ignore[misc]
 

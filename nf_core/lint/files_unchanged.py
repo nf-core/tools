@@ -3,6 +3,8 @@ import logging
 import os
 import shutil
 import tempfile
+from pathlib import Path
+from typing import Dict, List, Union
 
 import yaml
 
@@ -11,7 +13,7 @@ import nf_core.pipelines.create.create
 log = logging.getLogger(__name__)
 
 
-def files_unchanged(self):
+def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     """Checks that certain pipeline files are not modified from template output.
 
     Iterates through the pipeline's directory content and compares specified files
@@ -39,8 +41,6 @@ def files_unchanged(self):
         docs/images/nf-core-PIPELINE_logo_light.png
         docs/images/nf-core-PIPELINE_logo_dark.png
         docs/README.md'
-        lib/nfcore_external_java_deps.jar
-        lib/NfcoreTemplate.groovy
         ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
 
     Files that can have additional content but must include the template contents::
@@ -48,6 +48,7 @@ def files_unchanged(self):
         .gitignore
         .prettierignore
         pyproject.toml
+
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
              the ``files_unchanged`` key as follows in your ``.nf-core.yml`` config file. For example:
@@ -60,11 +61,11 @@ def files_unchanged(self):
 
     """
 
-    passed = []
-    failed = []
-    ignored = []
-    fixed = []
-    could_fix = False
+    passed: List[str] = []
+    failed: List[str] = []
+    ignored: List[str] = []
+    fixed: List[str] = []
+    could_fix: bool = False
 
     # Check that we have the minimum required config
     required_pipeline_config = {"manifest.name", "manifest.description", "manifest.author"}
@@ -83,31 +84,29 @@ def files_unchanged(self):
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
     files_exact = [
-        [".gitattributes"],
-        [".prettierrc.yml"],
-        ["CODE_OF_CONDUCT.md"],
-        ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
-        [os.path.join(".github", ".dockstore.yml")],
-        [os.path.join(".github", "CONTRIBUTING.md")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
-        [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
-        [os.path.join(".github", "workflows", "branch.yml")],
-        [os.path.join(".github", "workflows", "linting_comment.yml")],
-        [os.path.join(".github", "workflows", "linting.yml")],
-        [os.path.join("assets", "email_template.html")],
-        [os.path.join("assets", "email_template.txt")],
-        [os.path.join("assets", "sendmail_template.txt")],
-        [os.path.join("assets", f"nf-core-{short_name}_logo_light.png")],
-        [os.path.join("docs", "images", f"nf-core-{short_name}_logo_light.png")],
-        [os.path.join("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
-        [os.path.join("docs", "README.md")],
-        [os.path.join("lib", "nfcore_external_java_deps.jar")],
-        [os.path.join("lib", "NfcoreTemplate.groovy")],
+        [Path(".gitattributes")],
+        [Path(".prettierrc.yml")],
+        [Path("CODE_OF_CONDUCT.md")],
+        [Path("LICENSE"), Path("LICENSE.md"), Path("LICENCE"), Path("LICENCE.md")],  # NB: British / American spelling
+        [Path(".github", ".dockstore.yml")],
+        [Path(".github", "CONTRIBUTING.md")],
+        [Path(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
+        [Path(".github", "ISSUE_TEMPLATE", "config.yml")],
+        [Path(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
+        [Path(".github", "PULL_REQUEST_TEMPLATE.md")],
+        [Path(".github", "workflows", "branch.yml")],
+        [Path(".github", "workflows", "linting_comment.yml")],
+        [Path(".github", "workflows", "linting.yml")],
+        [Path("assets", "email_template.html")],
+        [Path("assets", "email_template.txt")],
+        [Path("assets", "sendmail_template.txt")],
+        [Path("assets", f"nf-core-{short_name}_logo_light.png")],
+        [Path("docs", "images", f"nf-core-{short_name}_logo_light.png")],
+        [Path("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
+        [Path("docs", "README.md")],
     ]
     files_partial = [
-        [".gitignore", ".prettierignore", "pyproject.toml"],
+        [Path(".gitignore"), Path(".prettierignore"), Path("pyproject.toml")],
     ]
 
     # Only show error messages from pipeline creation
@@ -124,7 +123,7 @@ def files_unchanged(self):
         "prefix": prefix,
     }
 
-    template_yaml_path = os.path.join(tmp_dir, "template.yaml")
+    template_yaml_path = Path(tmp_dir, "template.yaml")
     with open(template_yaml_path, "w") as fh:
         yaml.dump(template_yaml, fh, default_flow_style=False)
 
@@ -135,23 +134,24 @@ def files_unchanged(self):
     create_obj.init_pipeline()
 
     # Helper functions for file paths
-    def _pf(file_path):
+    def _pf(file_path: Union[str, Path]) -> Path:
         """Helper function - get file path for pipeline file"""
-        return os.path.join(self.wf_path, file_path)
+        return Path(self.wf_path, file_path)
 
-    def _tf(file_path):
+    def _tf(file_path: Union[str, Path]) -> Path:
         """Helper function - get file path for template file"""
-        return os.path.join(test_pipeline_dir, file_path)
+        return Path(test_pipeline_dir, file_path)
+
+    ignore_files = self.lint_config.get("files_unchanged", [])
 
     # Files that must be completely unchanged from template
     for files in files_exact:
         # Ignore if file specified in linting config
-        ignore_files = self.lint_config.get("files_unchanged", [])
-        if any([f in ignore_files for f in files]):
+        if any([str(f) in ignore_files for f in files]):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
-        elif not any([os.path.isfile(_pf(f)) for f in files]):
+        elif not any([_pf(f).is_file() for f in files]):
             ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file has an identical match
@@ -161,7 +161,15 @@ def files_unchanged(self):
                     if filecmp.cmp(_pf(f), _tf(f), shallow=True):
                         passed.append(f"`{f}` matches the template")
                     else:
-                        if "files_unchanged" in self.fix:
+                        if (
+                            f.name.endswith(".png")
+                            and os.stat(_pf(f)).st_mode == os.stat(_tf(f)).st_mode
+                            and int(os.stat(_pf(f)).st_size / 100) == int(os.stat(_tf(f)).st_size / 100)
+                        ):
+                            # almost the same file, good enough for the logo
+                            log.debug(f"Files are almost the same. Will pass: {f}")
+                            passed.append(f"`{f}` matches the template")
+                        elif "files_unchanged" in self.fix:
                             # Try to fix the problem by overwriting the pipeline file
                             shutil.copy(_tf(f), _pf(f))
                             passed.append(f"`{f}` matches the template")
@@ -175,12 +183,11 @@ def files_unchanged(self):
     # Files that can be added to, but that must contain the template contents
     for files in files_partial:
         # Ignore if file specified in linting config
-        ignore_files = self.lint_config.get("files_unchanged", [])
-        if any([f in ignore_files for f in files]):
+        if any([str(f) in ignore_files for f in files]):
             ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
-        elif not any([os.path.isfile(_pf(f)) for f in files]):
+        elif not any([_pf(f).is_file() for f in files]):
             ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file contains the template file contents

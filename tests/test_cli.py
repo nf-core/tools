@@ -6,6 +6,7 @@ taken.
 
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from click.testing import CliRunner
@@ -282,9 +283,10 @@ class TestCli(unittest.TestCase):
     @mock.patch("nf_core.lint.run_linting")
     def test_lint(self, mock_lint, mock_is_pipeline):
         """Test nf-core lint"""
-        mock_lint_results = (mock.MagicMock, mock.MagicMock)
+        mock_lint_results = (mock.MagicMock, mock.MagicMock, mock.MagicMock)
         mock_lint_results[0].failed = []
         mock_lint_results[1].failed = []
+        mock_lint_results[2].failed = []
         mock_lint.return_value = mock_lint_results
 
         temp_pipeline_dir = tempfile.NamedTemporaryFile()
@@ -393,3 +395,13 @@ class TestCli(unittest.TestCase):
         assert mock_get_schema_path.called_with("some_other_filename")
         assert "some_other_filename" in result.output
         assert "nextflow_schema.json" not in result.output
+
+    @mock.patch("nf_core.create_logo.create_logo")
+    def test_create_logo(self, mock_create_logo):
+        # Set up the mock to return a specific value
+
+        cmd = ["create-logo", "test"]
+        result = self.invoke_cli(cmd)
+
+        mock_create_logo.assert_called_with("test", Path.cwd(), None, "light", 2300, "png", False)
+        assert result.exit_code == 0

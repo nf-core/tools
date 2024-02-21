@@ -159,8 +159,8 @@ class Pipeline:
             git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.wf_path).splitlines()
             self.files = []
             for fn in git_ls_files:
-                full_fn = os.path.join(self.wf_path, fn.decode("utf-8"))
-                if os.path.isfile(full_fn):
+                full_fn = Path(self.wf_path) / fn.decode("utf-8")
+                if full_fn.is_file():
                     self.files.append(full_fn)
                 else:
                     log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
@@ -170,7 +170,7 @@ class Pipeline:
             self.files = []
             for subdir, _, files in os.walk(self.wf_path):
                 for fn in files:
-                    self.files.append(os.path.join(subdir, fn))
+                    self.files.append(Path(subdir) / fn)
 
     def _load_pipeline_config(self):
         """Get the nextflow config for this pipeline
@@ -341,7 +341,7 @@ def setup_nfcore_dir():
         return True
 
 
-def setup_requests_cachedir():
+def setup_requests_cachedir() -> dict:
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
@@ -351,8 +351,7 @@ def setup_requests_cachedir():
     Also returns the config dict so that we can use the same setup with a Session.
     """
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = os.path.join(NFCORE_CACHE_DIR, f"cache_{pyversion}")
-
+    cachedir = setup_nfcore_cachedir(f"cache_{pyversion}")
     config = {
         "cache_name": os.path.join(cachedir, "github_info"),
         "expire_after": datetime.timedelta(hours=1),
@@ -360,14 +359,21 @@ def setup_requests_cachedir():
     }
 
     logging.getLogger("requests_cache").setLevel(logging.WARNING)
-    try:
-        if not os.path.exists(cachedir):
-            os.makedirs(cachedir)
-        requests_cache.install_cache(**config)
-    except PermissionError:
-        pass
-
     return config
+
+
+def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
+    """Sets up local caching for caching files between sessions."""
+
+    cachedir = Path(NFCORE_CACHE_DIR, cache_fn)
+
+    try:
+        if not Path(cachedir).exists():
+            Path(cachedir).mkdir(parents=True)
+    except PermissionError:
+        log.warn(f"Could not create cache directory: {cachedir}")
+
+    return cachedir
 
 
 def wait_cli_function(poll_func, refresh_per_second=20):
@@ -414,11 +420,14 @@ def poll_nfcore_web_api(api_url, post_data=None):
         except requests.exceptions.ConnectionError:
             raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
-            if response.status_code != 200:
+            if response.status_code != 200 and response.status_code != 301:
                 log.debug(f"Response content:\n{response.content}")
                 raise AssertionError(
                     f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )
+            # follow redirects
+            if response.status_code == 301:
+                return poll_nfcore_web_api(response.headers["Location"], post_data)
             try:
                 web_response = json.loads(response.content)
                 if "status" not in web_response:

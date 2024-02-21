@@ -8,6 +8,8 @@ import datetime
 import json
 import logging
 import os
+from pathlib import Path
+from typing import List, Union
 
 import git
 import rich
@@ -20,6 +22,7 @@ from rich.table import Table
 
 import nf_core.lint_utils
 import nf_core.modules.lint
+import nf_core.subworkflows.lint
 import nf_core.utils
 from nf_core import __version__
 from nf_core.lint_utils import console
@@ -53,6 +56,8 @@ def run_linting(
 
     Returns:
         An object of type :class:`PipelineLint` that contains all the linting results.
+        An object of type :class:`ComponentLint` that contains all the linting results for the modules.
+        An object of type :class:`ComponentLint` that contains all the linting results for the subworkflows.
     """
 
     # Verify that the requested tests exist
@@ -87,6 +92,11 @@ def run_linting(
 
     # Create the modules lint object
     module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir, hide_progress=hide_progress)
+    # Create the subworkflows lint object
+    try:
+        subworkflow_lint_obj = nf_core.subworkflows.lint.SubworkflowLint(pipeline_dir, hide_progress=hide_progress)
+    except LookupError:
+        subworkflow_lint_obj = None
 
     # Verify that the pipeline is correctly configured and has  a modules.json file
     module_lint_obj.has_valid_directory()
@@ -98,13 +108,24 @@ def run_linting(
         module_lint_tests = list(
             set(key).intersection(set(nf_core.modules.lint.ModuleLint.get_all_module_lint_tests(is_pipeline=True)))
         )
+        # Select only the subworkflow lint tests
+        subworkflow_lint_tests = list(
+            set(key).intersection(
+                set(nf_core.subworkflows.lint.SubworkflowLint.get_all_subworkflow_lint_tests(is_pipeline=True))
+            )
+        )
     else:
         # If no key is supplied, run the default modules tests
         module_lint_tests = ("module_changes", "module_version")
+        subworkflow_lint_tests = ("subworkflow_changes", "subworkflow_version")
     module_lint_obj.filter_tests_by_key(module_lint_tests)
+    if subworkflow_lint_obj is not None:
+        subworkflow_lint_obj.filter_tests_by_key(subworkflow_lint_tests)
 
-    # Set up files for modules linting test
+    # Set up files for component linting test
     module_lint_obj.set_up_pipeline_files()
+    if subworkflow_lint_obj is not None:
+        subworkflow_lint_obj.set_up_pipeline_files()
 
     # Run the pipeline linting tests
     try:
@@ -119,11 +140,19 @@ def run_linting(
         module_lint_obj.lint_modules(module_lint_obj.all_local_components, local=True)
     if len(module_lint_obj.all_remote_components) > 0:
         module_lint_obj.lint_modules(module_lint_obj.all_remote_components, local=False)
+    # Run the subworkflows lint tests
+    if subworkflow_lint_obj is not None:
+        if len(subworkflow_lint_obj.all_local_components) > 0:
+            subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_local_components, local=True)
+        if len(subworkflow_lint_obj.all_remote_components) > 0:
+            subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_remote_components, local=False)
 
     # Print the results
     lint_obj._print_results(show_passed)
     module_lint_obj._print_results(show_passed, sort_by=sort_by)
-    nf_core.lint_utils.print_joint_summary(lint_obj, module_lint_obj)
+    if subworkflow_lint_obj is not None:
+        subworkflow_lint_obj._print_results(show_passed, sort_by=sort_by)
+    nf_core.lint_utils.print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj)
     nf_core.lint_utils.print_fixes(lint_obj)
 
     # Save results to Markdown file
@@ -142,7 +171,7 @@ def run_linting(
         if release_mode:
             log.info("Reminder: Lint tests were run in --release mode.")
 
-    return lint_obj, module_lint_obj
+    return lint_obj, module_lint_obj, subworkflow_lint_obj
 
 
 class PipelineLint(nf_core.utils.Pipeline):
@@ -375,9 +404,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             if "dev" in __version__:
                 tools_version = "latest"
             for eid, msg in test_results:
-                yield Markdown(
-                    f"[{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html): {msg}"
-                )
+                yield Markdown(f"[{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}): {msg}")
 
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
@@ -478,7 +505,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_failures = "### :x: Test failures:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html) - "
+                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.failed
                     ]
@@ -492,7 +519,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_ignored = "### :grey_question: Tests ignored:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html) - "
+                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.ignored
                     ]
@@ -506,7 +533,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_fixed = "### :grey_question: Tests fixed:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html) - "
+                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.fixed
                     ]
@@ -520,7 +547,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html) - "
+                        f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}) - "
                         f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.warned
                     ]
@@ -535,7 +562,7 @@ class PipelineLint(nf_core.utils.Pipeline):
                 "\n".join(
                     [
                         (
-                            f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html)"
+                            f"* [{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid})"
                             f" - {strip_ansi_codes(msg, '`')}"
                         )
                         for eid, msg in self.passed
@@ -594,7 +621,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         with open(json_fn, "w") as fh:
             json.dump(results, fh, indent=4)
 
-    def _wrap_quotes(self, files):
+    def _wrap_quotes(self, files: Union[List[str], List[Path], Path]) -> str:
         """Helper function to take a list of filenames and format with markdown.
 
         Args:
@@ -609,5 +636,5 @@ class PipelineLint(nf_core.utils.Pipeline):
         """
         if not isinstance(files, list):
             files = [files]
-        bfiles = [f"`{f}`" for f in files]
+        bfiles = [f"`{str(f)}`" for f in files]
         return " or ".join(bfiles)

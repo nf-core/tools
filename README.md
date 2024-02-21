@@ -1,4 +1,9 @@
-# ![nf-core/tools](docs/images/nfcore-tools_logo_light.png#gh-light-mode-only) ![nf-core/tools](docs/images/nfcore-tools_logo_dark.png#gh-dark-mode-only) <!-- omit in toc -->
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/nfcore-tools_logo_dark.png">
+    <img alt="nf-core/tools" src="docs/images/nfcore-tools_logo_light.png">
+  </picture>
+</h1><!-- omit in toc -->
 
 [![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=master&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amaster)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
@@ -27,6 +32,8 @@ A python package with helper tools for the nf-core community.
 - [`nf-core schema` - Work with pipeline schema files](#pipeline-schema)
 - [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
 - [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
+- [`nf-core create-logo` - Create an nf-core pipeline logo](#create-an-nf-core-pipeline-logo)
+- [`nf-core tui` - Explore the nf-core command line graphically](#tools-cli-tui)
 - [`nf-core modules` - commands for dealing with DSL2 modules](#modules)
 
   - [`modules list` - List available modules](#list-modules)
@@ -726,6 +733,29 @@ To create the pull request, a personal access token is required for API authenti
 These can be created at [https://github.com/settings/tokens](https://github.com/settings/tokens).
 Supply this using the `--auth-token` flag.
 
+## Create an nf-core pipeline logo
+
+The `nf-core create-logo` command creates a logo for your pipeline based on the nf-core template and the pipeline name. You can specify the width of the logo in pixels with the `--width` flag. Additionally, you can specify the output format to be either `png` or `svg` with the `--format` flag. The default format is `png`.
+
+Usage is `nf-core create-logo <text>`, eg:
+
+<!-- RICH-CODEX
+working_dir: tmp
+-->
+
+![`nf-core create-logo nextbigthing`](docs/images/nf-core-create-logo.svg)
+
+## Tools CLI TUI
+
+_CLI:_ Command line interface
+_TUI:_ Terminal user interface
+
+The `nf-core` command line interface is fairly large, with a lot of commands and options.
+To make it easier to explore and use, run `nf-core tui` to launch a graphical terminal interface.
+
+This functionality works using [Textualize/trogon](https://github.com/Textualize/trogon)
+and is based on the underlying CLI implementation that uses [Click](https://click.palletsprojects.com/).
+
 ## Modules
 
 With the advent of [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html), we are creating a centralised repository of modules.
@@ -1112,6 +1142,7 @@ You can update subworkflows installed from a remote repository in your pipeline 
 working_dir: tmp/nf-core-nextbigthing
 before_command: >
   echo "repository_type: pipeline" >> .nf-core.yml
+timeout: 30
 -->
 
 ![`nf-core subworkflows update --all --no-preview`](docs/images/nf-core-subworkflows-update.svg)
