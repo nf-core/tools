@@ -352,6 +352,60 @@ class DownloadTest(unittest.TestCase):
         # Test that they are all caught inside get_singularity_images().
         download_obj.get_singularity_images()
 
+    @with_temporary_folder
+    @mock.patch("os.makedirs")
+    @mock.patch("os.symlink")
+    @mock.patch("os.open")
+    @mock.patch("os.close")
+    @mock.patch("re.sub")
+    @mock.patch("os.path.basename")
+    @mock.patch("os.path.dirname")
+    def test_symlink_singularity_images(
+        self,
+        tmp_path,
+        mock_dirname,
+        mock_basename,
+        mock_resub,
+        mock_close,
+        mock_open,
+        mock_symlink,
+        mock_makedirs,
+    ):
+        # Setup
+        mock_resub.return_value = "singularity-image.img"
+        mock_dirname.return_value = f"{tmp_path}/path/to"
+        mock_basename.return_value = "quay.io-singularity-image.img"
+        mock_open.return_value = 12  # file descriptor
+        mock_close.return_value = 12  # file descriptor
+
+        download_obj = DownloadWorkflow(
+            pipeline="dummy",
+            outdir=tmp_path,
+            container_library=("mirage-the-imaginative-registry.io", "quay.io"),
+        )
+
+        # Call the method
+        download_obj.symlink_singularity_images(f"{tmp_path}/path/to/quay.io-singularity-image.img")
+        print(mock_resub.call_args)
+
+        # Check that os.makedirs was called with the correct arguments
+        mock_makedirs.assert_any_call(f"{tmp_path}/path/to", exist_ok=True)
+
+        # Check that os.open was called with the correct arguments
+        mock_open.assert_called_once_with(f"{tmp_path}/path/to", os.O_RDONLY)
+
+        # Check that os.symlink was called with the correct arguments
+        mock_symlink.assert_any_call(
+            "./quay.io-singularity-image.img",
+            "./mirage-the-imaginative-registry.io-quay.io-singularity-image.img",
+            dir_fd=12,
+        )
+        # Check that there is no attempt to symlink to itself (test parameters would result in that behavior if not checked in the function)
+        assert (
+            unittest.mock.call("./quay.io-singularity-image.img", "./quay.io-singularity-image.img", dir_fd=12)
+            not in mock_symlink.call_args_list
+        )
+
     #
     # Test for gather_registries'
     #
@@ -384,7 +438,9 @@ class DownloadTest(unittest.TestCase):
         # it should only pull the apptainer, docker, podman and singularity registry from the config, but not any registry.
         assert "fake-registry.io" not in download_obj.registry_set
 
+    #
     # If Singularity is not installed, it raises a OSError because the singularity command can't be found.
+    #
     @pytest.mark.skipif(
         shutil.which("singularity") is not None,
         reason="Can't test how the code behaves when singularity is not installed if it is.",

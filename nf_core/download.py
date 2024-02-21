@@ -1021,15 +1021,15 @@ class DownloadWorkflow:
 
             for registry in self.registry_set:
                 if not os.path.basename(image_out_path).startswith(registry):
-                    symlink_name = f"{registry}-{os.path.basename(image_out_path)}"
+                    symlink_name = os.path.join("./", f"{registry}-{os.path.basename(image_out_path)}")
                 else:
                     trimmed_name = re.sub(f"^{trim_pattern}", "", os.path.basename(image_out_path))
-                    symlink_name = f"{registry}-{trimmed_name}"
+                    symlink_name = os.path.join("./", f"{registry}-{trimmed_name}")
 
                 symlink_full = os.path.join(os.path.dirname(image_out_path), symlink_name)
                 target_name = os.path.join("./", os.path.basename(image_out_path))
 
-                if not os.path.exists(symlink_full):
+                if not os.path.exists(symlink_full) and target_name != symlink_name:
                     os.makedirs(os.path.dirname(symlink_full), exist_ok=True)
                     image_dir = os.open(os.path.dirname(image_out_path), os.O_RDONLY)
                     try:
