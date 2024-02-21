@@ -4,7 +4,7 @@
 
 ### Template
 
-- more update ([#2786](https://github.com/nf-core/tools/pull/2786))
+-  Rename Nextflow tower badge, fix pipeline name and white space errors in template  ([#2785](https://github.com/nf-core/tools/pull/2785)) and  ([#2786](https://github.com/nf-core/tools/pull/2786))
 
 ### Linting
 
