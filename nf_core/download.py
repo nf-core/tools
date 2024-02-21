@@ -713,7 +713,7 @@ class DownloadWorkflow:
                 config_findings_dsl2 = re.findall(config_regex, v)
 
                 if bool(config_findings_dsl2):
-                    # finding fill always be a tuple of length 2, first the quote used and second the enquoted value.
+                    # finding will always be a tuple of length 2, first the quote used and second the enquoted value.
                     for finding in config_findings_dsl2:
                         config_findings.append(finding + (self.nf_config, "Nextflow configs"))
                 else:  # no regex match, likely just plain string
@@ -1021,10 +1021,10 @@ class DownloadWorkflow:
 
             for registry in self.registry_set:
                 if not os.path.basename(image_out_path).startswith(registry):
-                    symlink_name = f"./{registry}-{os.path.basename(image_out_path)}"
+                    symlink_name = f"{registry}-{os.path.basename(image_out_path)}"
                 else:
                     trimmed_name = re.sub(f"^{trim_pattern}", "", os.path.basename(image_out_path))
-                    symlink_name = f"./{registry}-{trimmed_name}"
+                    symlink_name = f"{registry}-{trimmed_name}"
 
                 symlink_full = os.path.join(os.path.dirname(image_out_path), symlink_name)
                 target_name = os.path.join("./", os.path.basename(image_out_path))

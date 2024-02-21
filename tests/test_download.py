@@ -352,6 +352,38 @@ class DownloadTest(unittest.TestCase):
         # Test that they are all caught inside get_singularity_images().
         download_obj.get_singularity_images()
 
+    #
+    # Test for gather_registries'
+    #
+    @with_temporary_folder
+    @mock.patch("nf_core.utils.fetch_wf_config")
+    def test_gather_registries(self, tmp_path, mock_fetch_wf_config):
+        download_obj = DownloadWorkflow(
+            pipeline="dummy",
+            outdir=tmp_path,
+            container_library=None,
+        )
+        mock_fetch_wf_config.return_value = {
+            "apptainer.registry": "apptainer-registry.io",
+            "docker.registry": "docker.io",
+            "podman.registry": "podman-registry.io",
+            "singularity.registry": "singularity-registry.io",
+            "someother.registry": "fake-registry.io",
+        }
+        download_obj.gather_registries(tmp_path)
+        assert download_obj.registry_set
+        assert isinstance(download_obj.registry_set, set)
+        assert len(download_obj.registry_set) == 6
+
+        assert "quay.io" in download_obj.registry_set  # default registry, if no container library is provided.
+        assert "depot.galaxyproject.org" in download_obj.registry_set  # default registry, often hardcoded in modules
+        assert "apptainer-registry.io" in download_obj.registry_set
+        assert "docker.io" in download_obj.registry_set
+        assert "podman-registry.io" in download_obj.registry_set
+        assert "singularity-registry.io" in download_obj.registry_set
+        # it should only pull the apptainer, docker, podman and singularity registry from the config, but not any registry.
+        assert "fake-registry.io" not in download_obj.registry_set
+
     # If Singularity is not installed, it raises a OSError because the singularity command can't be found.
     @pytest.mark.skipif(
         shutil.which("singularity") is not None,
