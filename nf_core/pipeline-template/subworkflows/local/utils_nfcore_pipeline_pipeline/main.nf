@@ -1,5 +1,5 @@
 //
-// Subworkflow with functionality specific to the nf-core/pipeline pipeline
+// Subworkflow with functionality specific to the {{ name }} pipeline
 //
 
 /*
