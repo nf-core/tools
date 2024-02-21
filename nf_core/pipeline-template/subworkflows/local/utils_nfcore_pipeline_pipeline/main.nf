@@ -158,7 +158,7 @@ workflow PIPELINE_COMPLETION {
 def validateInputParameters() {
     genomeExistsError()
 }
-{%- endif -%}
+{%- endif %}
 
 //
 // Validate channels from input samplesheet
@@ -201,7 +201,7 @@ def genomeExistsError() {
         error(error_string)
     }
 }
-{%- endif -%}
+{%- endif %}
 
 //
 // Generate methods description for MultiQC
