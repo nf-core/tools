@@ -4,6 +4,8 @@
 
 ### Template
 
+- more update ([#2786](https://github.com/nf-core/tools/pull/2786))
+
 ### Linting
 
 ### Components
