@@ -40,6 +40,8 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
     """
 
     module.get_inputs_from_main_nf()
+    print(yaml.dump({"input": module.inputs}))
+    exit()
     module.get_outputs_from_main_nf()
     # Check if we have a patch file, get original file in that case
     meta_yaml = None
