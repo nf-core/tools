@@ -166,15 +166,27 @@ class NFCoreComponent:
             log.info(f"Could not find any inputs in {self.main_nf}")
             return inputs
         input_data = data.split("input:")[1].split("output:")[0]
-        regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
-        matches = re.finditer(regex, input_data, re.MULTILINE)
-        for _, match in enumerate(matches, start=1):
-            if match.group(3):
-                input_val = match.group(3).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
-                inputs.append(input_val)
-            elif match.group(4):
-                input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
-                inputs.append(input_val)
+        for line in input_data.split("\n"):
+            theseinputs = []
+            regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            matches = re.finditer(regex, line)
+            for _, match in enumerate(matches, start=1):
+                input_type = None
+                input_val = None
+                if match.group(1):
+                    input_type = match.group(1)
+                if match.group(3):
+                    input_val = match.group(3).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
+                elif match.group(4):
+                    input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
+                if input_type and input_val:
+                    theseinputs.append({
+                        input_val: {
+                            "type": input_type
+                        }
+                    })
+            if len(theseinputs) > 0:
+                inputs.append(theseinputs)
         log.info(f"Found {len(inputs)} inputs in {self.main_nf}")
         self.inputs = inputs
 
