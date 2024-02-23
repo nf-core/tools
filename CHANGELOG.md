@@ -10,6 +10,8 @@
 
 ### General
 
+- chore(deps): update seqeralabs/action-tower-launch digest to aa88624 ([#2793](https://github.com/nf-core/tools/pull/2793))
+
 ## [v2.13 - Tin Puppy](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-20]
 
 ### Template
