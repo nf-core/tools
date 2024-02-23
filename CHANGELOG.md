@@ -4,6 +4,8 @@
 
 ### Template
 
+- update comments in .editorconfig file ([#2790](https://github.com/nf-core/tools/pull/2790))
+
 ### Linting
 
 ### Components
