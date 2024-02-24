@@ -1,4 +1,4 @@
-FROM python:3.11.5-slim
+FROM python:3.11-slim@sha256:ce81dc539f0aedc9114cae640f8352fad83d37461c24a3615b01f081d0c0583a
 LABEL authors="phil.ewels@scilifelab.se,erik.danielsson@scilifelab.se" \
     description="Docker image containing requirements for the nfcore tools"
 
@@ -31,6 +31,11 @@ ENV NXF_VER ${NXF_VER}
 RUN curl -s https://get.nextflow.io | bash \
     && mv nextflow /usr/local/bin \
     && chmod a+rx /usr/local/bin/nextflow
+# Install nf-test
+RUN curl -fsSL https://code.askimed.com/install/nf-test | bash \
+    && mv nf-test /usr/local/bin \
+    && chmod a+rx /usr/local/bin/nf-test
+
 # Add the nf-core source files to the image
 COPY . /usr/src/nf_core
 WORKDIR /usr/src/nf_core

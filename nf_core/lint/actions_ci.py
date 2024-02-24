@@ -1,5 +1,4 @@
 import os
-import re
 
 import yaml
 
@@ -25,7 +24,7 @@ def actions_ci(self):
              release:
              types: [published]
 
-    * The minimum Nextflow version specified in the pipeline's ``nextflow.config`` matches that defined by ``nxf_ver`` in the test matrix:
+    * The minimum Nextflow version specified in the pipeline's ``nextflow.config`` matches that defined by ``NXF_VER`` in the test matrix:
 
       .. code-block:: yaml
          :emphasize-lines: 4
@@ -33,9 +32,9 @@ def actions_ci(self):
          strategy:
            matrix:
              # Nextflow versions: check pipeline minimum and current latest
-             nxf_ver: ['19.10.0', '']
+             NXF_VER: ['19.10.0', '']
 
-      .. note:: These ``matrix`` variables run the test workflow twice, varying the ``nxf_ver`` variable each time.
+      .. note:: These ``matrix`` variables run the test workflow twice, varying the ``NXF_VER`` variable each time.
                 This is used in the ``nextflow run`` commands to test the pipeline with both the latest available version
                 of the pipeline (``''``) and the stated minimum required version.
     """
@@ -48,7 +47,7 @@ def actions_ci(self):
         return {"ignored": ["'.github/workflows/ci.yml' not found"]}
 
     try:
-        with open(fn, "r") as fh:
+        with open(fn) as fh:
             ciwf = yaml.safe_load(fh)
     except Exception as e:
         return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}
@@ -62,7 +61,7 @@ def actions_ci(self):
         if not (
             pr_subtree is None
             or ("branches" in pr_subtree and "dev" in pr_subtree["branches"])
-            or ("ignore_branches" in pr_subtree and not "dev" in pr_subtree["ignore_branches"])
+            or ("ignore_branches" in pr_subtree and "dev" not in pr_subtree["ignore_branches"])
         ):
             raise AssertionError()
         if "published" not in ciwf[True]["release"]["types"]:

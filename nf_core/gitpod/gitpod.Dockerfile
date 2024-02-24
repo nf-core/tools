@@ -1,4 +1,7 @@
-FROM gitpod/workspace-base
+# Test build locally before making a PR
+#   docker build -t gitpod:test -f nf_core/gitpod/gitpod.Dockerfile .
+
+FROM gitpod/workspace-base@sha256:728e1fab64f6924128b987264603a6f277bd881de95feaf39129a1ffdde36e14
 
 USER root
 
@@ -43,19 +46,24 @@ RUN conda config --add channels defaults && \
     conda config --add channels bioconda && \
     conda config --add channels conda-forge && \
     conda config --set channel_priority strict && \
-    conda install --quiet --yes --name base mamba && \
-    mamba install --quiet --yes --name base \
-        nextflow \
-        nf-core \
-        nf-test \
-        black \
-        prettier \
-        pre-commit \
-        pytest-workflow && \
-    mamba clean --all -f -y
+    conda install --quiet --yes --name base \
+    mamba \
+    nextflow \
+    nf-core \
+    nf-test \
+    prettier \
+    pre-commit \
+    ruff \
+    openjdk \
+    pytest-workflow && \
+    conda clean --all --force-pkgs-dirs --yes
 
 # Update Nextflow
 RUN nextflow self-update
 
 # Install nf-core
-RUN python -m pip install .
+RUN python -m pip install . --no-cache-dir
+
+# Setup pdiff for nf-test diffs
+RUN export NFT_DIFF="pdiff" && \
+    export NFT_DIFF_ARGS="--line-numbers --expand-tabs=2"

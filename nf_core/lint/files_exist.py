@@ -1,10 +1,11 @@
 import logging
-import os
+from pathlib import Path
+from typing import Dict, List, Tuple, Union
 
 log = logging.getLogger(__name__)
 
 
-def files_exist(self):
+def files_exist(self) -> Dict[str, Union[List[str], bool]]:
     """Checks a given pipeline directory for required files.
 
     Iterates through the pipeline's directory content and checks that specified
@@ -51,10 +52,6 @@ def files_exist(self):
         docs/output.md
         docs/README.md
         docs/usage.md
-        lib/nfcore_external_java_deps.jar
-        lib/NfcoreTemplate.groovy
-        lib/Utils.groovy
-        lib/WorkflowMain.groovy
         nextflow_schema.json
         nextflow.config
         README.md
@@ -69,7 +66,6 @@ def files_exist(self):
         conf/igenomes.config
         .github/workflows/awstest.yml
         .github/workflows/awsfulltest.yml
-        lib/WorkflowPIPELINE.groovy
         pyproject.toml
 
     Files that *must not* be present, due to being renamed or removed in the template:
@@ -91,12 +87,23 @@ def files_exist(self):
         lib/Checks.groovy
         lib/Completion.groovy
         lib/Workflow.groovy
+        lib/WorkflowPIPELINE.groovy
+        lib/NfcoreTemplate.groovy
+        lib/Utils.groovy
+        lib/WorkflowMain.groovy
+
 
     Files that *should not* be present:
 
     .. code-block:: bash
 
         .travis.yml
+
+    Files that *must not* be present if a certain entry is present in ``nextflow.config``:
+
+    .. code-block:: bash
+
+        lib/nfcore_external_java_deps.jar # if "nf-validation" is in nextflow.config
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
             the ``files_exist`` key as follows in your ``.nf-core.yml`` config file. For example:
@@ -123,129 +130,146 @@ def files_exist(self):
         short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
 
     files_fail = [
-        [".gitattributes"],
-        [".gitignore"],
-        [".nf-core.yml"],
-        [".editorconfig"],
-        [".prettierignore"],
-        [".prettierrc.yml"],
-        ["CHANGELOG.md"],
-        ["CITATIONS.md"],
-        ["CODE_OF_CONDUCT.md"],
-        ["CODE_OF_CONDUCT.md"],
-        ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
-        ["nextflow_schema.json"],
-        ["nextflow.config"],
-        ["README.md"],
-        [os.path.join(".github", ".dockstore.yml")],
-        [os.path.join(".github", "CONTRIBUTING.md")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
-        [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
-        [os.path.join(".github", "workflows", "branch.yml")],
-        [os.path.join(".github", "workflows", "ci.yml")],
-        [os.path.join(".github", "workflows", "linting_comment.yml")],
-        [os.path.join(".github", "workflows", "linting.yml")],
-        [os.path.join("assets", "email_template.html")],
-        [os.path.join("assets", "email_template.txt")],
-        [os.path.join("assets", "sendmail_template.txt")],
-        [os.path.join("assets", f"nf-core-{short_name}_logo_light.png")],
-        [os.path.join("conf", "modules.config")],
-        [os.path.join("conf", "test.config")],
-        [os.path.join("conf", "test_full.config")],
-        [os.path.join("docs", "images", f"nf-core-{short_name}_logo_light.png")],
-        [os.path.join("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
-        [os.path.join("docs", "output.md")],
-        [os.path.join("docs", "README.md")],
-        [os.path.join("docs", "README.md")],
-        [os.path.join("docs", "usage.md")],
-        [os.path.join("lib", "nfcore_external_java_deps.jar")],
-        [os.path.join("lib", "NfcoreTemplate.groovy")],
-        [os.path.join("lib", "Utils.groovy")],
-        [os.path.join("lib", "WorkflowMain.groovy")],
+        [Path(".gitattributes")],
+        [Path(".gitignore")],
+        [Path(".nf-core.yml")],
+        [Path(".editorconfig")],
+        [Path(".prettierignore")],
+        [Path(".prettierrc.yml")],
+        [Path("CHANGELOG.md")],
+        [Path("CITATIONS.md")],
+        [Path("CODE_OF_CONDUCT.md")],
+        [Path("LICENSE"), Path("LICENSE.md"), Path("LICENCE"), Path("LICENCE.md")],  # NB: British / American spelling
+        [Path("nextflow_schema.json")],
+        [Path("nextflow.config")],
+        [Path("README.md")],
+        [Path(".github", ".dockstore.yml")],
+        [Path(".github", "CONTRIBUTING.md")],
+        [Path(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
+        [Path(".github", "ISSUE_TEMPLATE", "config.yml")],
+        [Path(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
+        [Path(".github", "PULL_REQUEST_TEMPLATE.md")],
+        [Path(".github", "workflows", "branch.yml")],
+        [Path(".github", "workflows", "ci.yml")],
+        [Path(".github", "workflows", "linting_comment.yml")],
+        [Path(".github", "workflows", "linting.yml")],
+        [Path("assets", "email_template.html")],
+        [Path("assets", "email_template.txt")],
+        [Path("assets", "sendmail_template.txt")],
+        [Path("assets", f"nf-core-{short_name}_logo_light.png")],
+        [Path("conf", "modules.config")],
+        [Path("conf", "test.config")],
+        [Path("conf", "test_full.config")],
+        [Path("docs", "images", f"nf-core-{short_name}_logo_light.png")],
+        [Path("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
+        [Path("docs", "output.md")],
+        [Path("docs", "README.md")],
+        [Path("docs", "README.md")],
+        [Path("docs", "usage.md")],
     ]
 
     files_warn = [
-        ["main.nf"],
-        [os.path.join("assets", "multiqc_config.yml")],
-        [os.path.join("conf", "base.config")],
-        [os.path.join("conf", "igenomes.config")],
-        [os.path.join(".github", "workflows", "awstest.yml")],
-        [os.path.join(".github", "workflows", "awsfulltest.yml")],
-        [os.path.join("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy")],
-        ["modules.json"],
-        ["pyproject.toml"],
+        [Path("main.nf")],
+        [Path("assets", "multiqc_config.yml")],
+        [Path("conf", "base.config")],
+        [Path("conf", "igenomes.config")],
+        [Path(".github", "workflows", "awstest.yml")],
+        [Path(".github", "workflows", "awsfulltest.yml")],
+        [Path("modules.json")],
+        [Path("pyproject.toml")],
     ]
 
     # List of strings. Fails / warns if any of the strings exist.
     files_fail_ifexists = [
-        "Singularity",
-        "parameters.settings.json",
-        "pipeline_template.yml",  # saving information in .nf-core.yml
-        ".nf-core.yaml",  # yml not yaml
-        os.path.join("bin", "markdown_to_html.r"),
-        os.path.join("conf", "aws.config"),
-        os.path.join(".github", "workflows", "push_dockerhub.yml"),
-        os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md"),
-        os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md"),
-        os.path.join("docs", "images", f"nf-core-{short_name}_logo.png"),
-        ".markdownlint.yml",
-        ".yamllint.yml",
-        os.path.join("lib", "Checks.groovy"),
-        os.path.join("lib", "Completion.groovy"),
-        os.path.join("lib", "Workflow.groovy"),
+        Path("Singularity"),
+        Path("parameters.settings.json"),
+        Path("pipeline_template.yml"),  # saving information in .nf-core.yml
+        Path(".nf-core.yaml"),  # yml not yaml
+        Path("bin", "markdown_to_html.r"),
+        Path("conf", "aws.config"),
+        Path(".github", "workflows", "push_dockerhub.yml"),
+        Path(".github", "ISSUE_TEMPLATE", "bug_report.md"),
+        Path(".github", "ISSUE_TEMPLATE", "feature_request.md"),
+        Path("docs", "images", f"nf-core-{short_name}_logo.png"),
+        Path(".markdownlint.yml"),
+        Path(".yamllint.yml"),
+        Path("lib", "Checks.groovy"),
+        Path("lib", "Completion.groovy"),
+        Path("lib", "Workflow.groovy"),
+        Path("lib", "Utils.groovy"),
+        Path("lib", "WorkflowMain.groovy"),
+        Path("lib", "NfcoreTemplate.groovy"),
+        Path("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy"),
     ]
-    files_warn_ifexists = [".travis.yml"]
+    files_warn_ifexists = [Path(".travis.yml")]
+    files_fail_ifinconfig: List[Tuple[Path, Dict[str, str]]] = [
+        (Path("lib", "nfcore_external_java_deps.jar"), {"plugins": "nf-validation"}),
+    ]
 
     # Remove files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("files_exist", [])
 
-    def pf(file_path):
-        return os.path.join(self.wf_path, file_path)
+    def pf(file_path: Union[str, Path]) -> Path:
+        return Path(self.wf_path, file_path)
 
     # First - critical files. Check that this is actually a Nextflow pipeline
-    if not os.path.isfile(pf("nextflow.config")) and not os.path.isfile(pf("main.nf")):
+    if not pf("nextflow.config").is_file() and not pf("main.nf").is_file():
         failed.append("File not found: nextflow.config or main.nf")
         raise AssertionError("Neither nextflow.config or main.nf found! Is this a Nextflow pipeline?")
 
     # Files that cause an error if they don't exist
     for files in files_fail:
-        if any([f in ignore_files for f in files]):
+        if any([str(f) in ignore_files for f in files]):
             continue
-        if any([os.path.isfile(pf(f)) for f in files]):
+        if any([pf(f).is_file() for f in files]):
             passed.append(f"File found: {self._wrap_quotes(files)}")
         else:
             failed.append(f"File not found: {self._wrap_quotes(files)}")
 
     # Files that cause a warning if they don't exist
     for files in files_warn:
-        if any([f in ignore_files for f in files]):
+        if any([str(f) in ignore_files for f in files]):
             continue
-        if any([os.path.isfile(pf(f)) for f in files]):
+        if any([pf(f).is_file() for f in files]):
             passed.append(f"File found: {self._wrap_quotes(files)}")
         else:
             warned.append(f"File not found: {self._wrap_quotes(files)}")
 
     # Files that cause an error if they exist
     for file in files_fail_ifexists:
-        if file in ignore_files:
+        if str(file) in ignore_files:
             continue
-        if os.path.isfile(pf(file)):
+        if pf(file).is_file():
             failed.append(f"File must be removed: {self._wrap_quotes(file)}")
         else:
             passed.append(f"File not found check: {self._wrap_quotes(file)}")
-
+    # Files that cause an error if they exists together with a certain entry in nextflow.config
+    for file_cond in files_fail_ifinconfig:
+        if str(file_cond[0]) in ignore_files:
+            continue
+        in_config = False
+        config_key, config_value = list(file_cond[1].items())[0]
+        if config_key in self.nf_config and config_value in self.nf_config[config_key]:
+            log.debug(f"Found {config_key} in nextflow.config with value {config_value}")
+            in_config = True
+        if pf(file_cond[0]).is_file() and in_config:
+            failed.append(f"File must be removed: {self._wrap_quotes(file_cond[0])}")
+        elif pf(file_cond[0]).is_file() and not in_config:
+            passed.append(f"File found check: {self._wrap_quotes(file_cond[0])}")
+        elif not pf(file_cond[0]).is_file() and not in_config:
+            failed.append(f"File not found check: {self._wrap_quotes(file_cond[0])}")
+        elif not pf(file_cond[0]).is_file() and in_config:
+            passed.append(f"File not found check: {self._wrap_quotes(file_cond[0])}")
     # Files that cause a warning if they exist
     for file in files_warn_ifexists:
-        if file in ignore_files:
+        if str(file) in ignore_files:
             continue
-        if os.path.isfile(pf(file)):
+        if pf(file).is_file():
             warned.append(f"File should be removed: {self._wrap_quotes(file)}")
         else:
             passed.append(f"File not found check: {self._wrap_quotes(file)}")
 
-    # Files that are ignoed
+    # Files that are ignored
     for file in ignore_files:
         ignored.append(f"File is ignored: {self._wrap_quotes(file)}")
 

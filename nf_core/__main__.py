@@ -3,12 +3,14 @@
 import logging
 import os
 import sys
+from pathlib import Path
 
 import rich
 import rich.console
 import rich.logging
 import rich.traceback
 import rich_click as click
+from trogon import tui
 
 from nf_core import __version__
 from nf_core.download import DownloadError
@@ -30,11 +32,27 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core": [
         {
             "name": "Commands for users",
-            "commands": ["list", "launch", "create-params-file", "download", "licences"],
+            "commands": [
+                "list",
+                "launch",
+                "create-params-file",
+                "download",
+                "licences",
+                "tui",
+            ],
         },
         {
             "name": "Commands for developers",
-            "commands": ["create", "lint", "modules", "subworkflows", "schema", "bump-version", "sync"],
+            "commands": [
+                "create",
+                "lint",
+                "modules",
+                "subworkflows",
+                "schema",
+                "create-logo",
+                "bump-version",
+                "sync",
+            ],
         },
     ],
     "nf-core modules": [
@@ -44,7 +62,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Developing new modules",
-            "commands": ["create", "create-test-yml", "lint", "bump-versions", "test"],
+            "commands": ["create", "lint", "bump-versions", "test"],
         },
     ],
     "nf-core subworkflows": [
@@ -54,7 +72,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Developing new subworkflows",
-            "commands": ["create", "create-test-yml"],
+            "commands": ["create", "test", "lint"],
         },
     ],
 }
@@ -89,10 +107,22 @@ def run_nf_core():
     if os.environ.get("_NF_CORE_COMPLETE") is None:
         # Print nf-core header
         stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
-        stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
-        stderr.print(r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
-        stderr.print(r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,", highlight=False)
-        stderr.print("[green]                                          `._,._,'\n", highlight=False)
+        stderr.print(
+            "[blue]          ___     __   __   __   ___     [green]/,-._.--~\\",
+            highlight=False,
+        )
+        stderr.print(
+            r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {",
+            highlight=False,
+        )
+        stderr.print(
+            r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,",
+            highlight=False,
+        )
+        stderr.print(
+            "[green]                                          `._,._,'\n",
+            highlight=False,
+        )
         stderr.print(
             f"[grey39]    nf-core/tools version {__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
             highlight=False,
@@ -111,9 +141,16 @@ def run_nf_core():
     nf_core_cli(auto_envvar_prefix="NFCORE")
 
 
+@tui()
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(__version__)
-@click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    default=False,
+    help="Print verbose output to the console.",
+)
 @click.option("--hide-progress", is_flag=True, default=False, help="Don't show progress bars.")
 @click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
 @click.pass_context
@@ -137,6 +174,10 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
         )
     )
 
+    # don't show rich debug logging in verbose mode
+    rich_logger = logging.getLogger("rich")
+    rich_logger.setLevel(logging.INFO)
+
     # Set up logs to a file if we asked for one
     if log_file:
         log_fh = logging.FileHandler(log_file, encoding="utf-8")
@@ -151,7 +192,7 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
 
 
 # nf-core list
-@nf_core_cli.command()
+@nf_core_cli.command("list")
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option(
     "-s",
@@ -162,7 +203,7 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
 )
 @click.option("--json", is_flag=True, default=False, help="Print full output as JSON")
 @click.option("--show-archived", is_flag=True, default=False, help="Print archived workflows")
-def list(keywords, sort, json, show_archived):
+def list_pipelines(keywords, sort, json, show_archived):
     """
     List available nf-core pipelines with local info.
 
@@ -180,7 +221,11 @@ def list(keywords, sort, json, show_archived):
 @click.option("-r", "--revision", help="Release/branch/SHA of the project to run (if remote)")
 @click.option("-i", "--id", help="ID for web-gui launch parameter set")
 @click.option(
-    "-c", "--command-only", is_flag=True, default=False, help="Create Nextflow command with params (no params file)"
+    "-c",
+    "--command-only",
+    is_flag=True,
+    default=False,
+    help="Create Nextflow command with params (no params file)",
 )
 @click.option(
     "-o",
@@ -190,18 +235,43 @@ def list(keywords, sort, json, show_archived):
     help="Path to save run parameters file",
 )
 @click.option(
-    "-p", "--params-in", type=click.Path(exists=True), help="Set of input run params to use from a previous run"
+    "-p",
+    "--params-in",
+    type=click.Path(exists=True),
+    help="Set of input run params to use from a previous run",
 )
 @click.option(
-    "-a", "--save-all", is_flag=True, default=False, help="Save all parameters, even if unchanged from default"
+    "-a",
+    "--save-all",
+    is_flag=True,
+    default=False,
+    help="Save all parameters, even if unchanged from default",
 )
 @click.option(
-    "-x", "--show-hidden", is_flag=True, default=False, help="Show hidden params which don't normally need changing"
+    "-x",
+    "--show-hidden",
+    is_flag=True,
+    default=False,
+    help="Show hidden params which don't normally need changing",
 )
 @click.option(
-    "-u", "--url", type=str, default="https://nf-co.re/launch", help="Customise the builder URL (for development work)"
+    "-u",
+    "--url",
+    type=str,
+    default="https://nf-co.re/launch",
+    help="Customise the builder URL (for development work)",
 )
-def launch(pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url):
+def launch(
+    pipeline,
+    id,
+    revision,
+    command_only,
+    params_in,
+    params_out,
+    save_all,
+    show_hidden,
+    url,
+):
     """
     Launch a pipeline using a web GUI or command line prompts.
 
@@ -217,7 +287,17 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     """
     from nf_core.launch import Launch
 
-    launcher = Launch(pipeline, revision, command_only, params_in, params_out, save_all, show_hidden, url, id)
+    launcher = Launch(
+        pipeline,
+        revision,
+        command_only,
+        params_in,
+        params_out,
+        save_all,
+        show_hidden,
+        url,
+        id,
+    )
     if not launcher.launch_pipeline():
         sys.exit(1)
 
@@ -236,7 +316,11 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 @click.option(
-    "-x", "--show-hidden", is_flag=True, default=False, help="Show hidden params which don't normally need changing"
+    "-x",
+    "--show-hidden",
+    is_flag=True,
+    default=False,
+    help="Show hidden params which don't normally need changing",
 )
 def create_params_file(pipeline, revision, output, force, show_hidden):
     """
@@ -267,10 +351,19 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
 )
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
-    "-x", "--compress", type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]), help="Archive compression type"
+    "-x",
+    "--compress",
+    type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]),
+    help="Archive compression type",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
-@click.option("-t", "--tower", is_flag=True, default=False, help="Download for seqeralabs® Nextflow Tower")
+@click.option(
+    "-t",
+    "--tower",
+    is_flag=True,
+    default=False,
+    help="Download for Seqera Platform (formerly Nextflow Tower)",
+)
 @click.option(
     "-d",
     "--download-configuration",
@@ -304,7 +397,13 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     type=str,
     help="List of images already available in a remote `singularity.cacheDir`.",
 )
-@click.option("-p", "--parallel-downloads", type=int, default=4, help="Number of parallel image downloads")
+@click.option(
+    "-p",
+    "--parallel-downloads",
+    type=int,
+    default=4,
+    help="Number of parallel image downloads",
+)
 def download(
     pipeline,
     revision,
@@ -378,7 +477,13 @@ def licences(pipeline, json):
 @click.option("-d", "--description", type=str, help="A short description of your pipeline")
 @click.option("-a", "--author", type=str, help="Name of the main author(s)")
 @click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
-@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Overwrite output directory if it already exists",
+)
 @click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 @click.option("--plain", is_flag=True, help="Use the standard nf-core template")
@@ -426,14 +531,36 @@ def create(name, description, author, version, force, outdir, template_yaml, pla
     help="Execute additional checks for release-ready workflows.",
 )
 @click.option(
-    "-f", "--fix", type=str, metavar="<test>", multiple=True, help="Attempt to automatically fix specified lint test"
+    "-f",
+    "--fix",
+    type=str,
+    metavar="<test>",
+    multiple=True,
+    help="Attempt to automatically fix specified lint test",
 )
-@click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
+@click.option(
+    "-k",
+    "--key",
+    type=str,
+    metavar="<test>",
+    multiple=True,
+    help="Run only these lint tests",
+)
 @click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line")
 @click.option("-i", "--fail-ignored", is_flag=True, help="Convert ignored tests to failures")
 @click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
-@click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
-@click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
+@click.option(
+    "--markdown",
+    type=str,
+    metavar="<filename>",
+    help="File to write linting results to (Markdown)",
+)
+@click.option(
+    "--json",
+    type=str,
+    metavar="<filename>",
+    help="File to write linting results to (JSON)",
+)
 @click.option(
     "--sort-by",
     type=click.Choice(["module", "test"]),
@@ -442,13 +569,25 @@ def create(name, description, author, version, force, outdir, template_yaml, pla
     show_default=True,
 )
 @click.pass_context
-def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, sort_by):
+def lint(
+    ctx,
+    dir,
+    release,
+    fix,
+    key,
+    show_passed,
+    fail_ignored,
+    fail_warned,
+    markdown,
+    json,
+    sort_by,
+):
     """
     Check pipeline code against nf-core guidelines.
 
     Runs a large number of automated tests to ensure that the supplied pipeline
     meets the nf-core guidelines. Documentation of all lint tests can be found
-    on the nf-core website: [link=https://nf-co.re/tools-docs/]https://nf-co.re/tools-docs/[/]
+    on the nf-core website: [link=https://nf-co.re/tools/docs/]https://nf-co.re/tools/docs/[/]
 
     You can ignore tests using a file called [blue].nf-core.yml[/] [i](if you have a good reason!)[/].
     See the documentation for details.
@@ -465,7 +604,7 @@ def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, ma
 
     # Run the lint tests!
     try:
-        lint_obj, module_lint_obj = run_linting(
+        lint_obj, module_lint_obj, subworkflow_lint_obj = run_linting(
             dir,
             release,
             fix,
@@ -478,7 +617,10 @@ def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, ma
             json,
             ctx.obj["hide_progress"],
         )
-        if len(lint_obj.failed) + len(module_lint_obj.failed) > 0:
+        swf_failed = 0
+        if subworkflow_lint_obj is not None:
+            swf_failed = len(subworkflow_lint_obj.failed)
+        if len(lint_obj.failed) + len(module_lint_obj.failed) + swf_failed > 0:
             sys.exit(1)
     except AssertionError as e:
         log.critical(e)
@@ -497,7 +639,13 @@ def lint(ctx, dir, release, fix, key, show_passed, fail_ignored, fail_warned, ma
     default=NF_CORE_MODULES_REMOTE,
     help="Remote git repo to fetch files from",
 )
-@click.option("-b", "--branch", type=str, default=None, help="Branch of git repository hosting modules.")
+@click.option(
+    "-b",
+    "--branch",
+    type=str,
+    default=None,
+    help="Branch of git repository hosting modules.",
+)
 @click.option(
     "-N",
     "--no-pull",
@@ -529,7 +677,13 @@ def modules(ctx, git_remote, branch, no_pull):
     default=NF_CORE_MODULES_REMOTE,
     help="Remote git repo to fetch files from",
 )
-@click.option("-b", "--branch", type=str, default=None, help="Branch of git repository hosting modules.")
+@click.option(
+    "-b",
+    "--branch",
+    type=str,
+    default=None,
+    help="Branch of git repository hosting modules.",
+)
 @click.option(
     "-N",
     "--no-pull",
@@ -553,9 +707,9 @@ def subworkflows(ctx, git_remote, branch, no_pull):
 
 
 # nf-core modules list subcommands
-@modules.group()
+@modules.group("list")
 @click.pass_context
-def list(ctx):
+def modules_list(ctx):
     """
     List modules in a local pipeline or remote repository.
     """
@@ -563,11 +717,11 @@ def list(ctx):
 
 
 # nf-core modules list remote
-@list.command()
+@modules_list.command("remote")
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def remote(ctx, keywords, json):
+def modules_list_remote(ctx, keywords, json):
     """
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
@@ -588,7 +742,7 @@ def remote(ctx, keywords, json):
 
 
 # nf-core modules list local
-@list.command()
+@modules_list.command("local")
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
@@ -599,7 +753,7 @@ def remote(ctx, keywords, json):
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
+def modules_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     """
     List modules installed locally in a pipeline
     """
@@ -620,7 +774,7 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
 
 
 # nf-core modules install
-@modules.command()
+@modules.command("install")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
@@ -630,10 +784,22 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-@click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
-@click.option("-f", "--force", is_flag=True, default=False, help="Force reinstallation of module if it already exists")
+@click.option(
+    "-p",
+    "--prompt",
+    is_flag=True,
+    default=False,
+    help="Prompt for the version of the module",
+)
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Force reinstallation of module if it already exists",
+)
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-def install(ctx, tool, dir, prompt, force, sha):
+def modules_install(ctx, tool, dir, prompt, force, sha):
     """
     Install DSL2 modules within a pipeline.
 
@@ -652,7 +818,7 @@ def install(ctx, tool, dir, prompt, force, sha):
             ctx.obj["modules_repo_no_pull"],
         )
         exit_status = module_install.install(tool)
-        if not exit_status and all:
+        if not exit_status:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
@@ -660,20 +826,34 @@ def install(ctx, tool, dir, prompt, force, sha):
 
 
 # nf-core modules update
-@modules.command()
+@modules.command("update")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Force update of module")
-@click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
+@click.option(
+    "-p",
+    "--prompt",
+    is_flag=True,
+    default=False,
+    help="Prompt for the version of the module",
+)
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-@click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
+@click.option(
+    "-a",
+    "--all",
+    "install_all",
+    is_flag=True,
+    default=False,
+    help="Update all modules installed in pipeline",
+)
 @click.option(
     "-x/-y",
     "--preview/--no-preview",
@@ -696,7 +876,18 @@ def install(ctx, tool, dir, prompt, force, sha):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
-def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, update_deps):
+def modules_update(
+    ctx,
+    tool,
+    directory,
+    force,
+    prompt,
+    sha,
+    install_all,
+    preview,
+    save_diff,
+    update_deps,
+):
     """
     Update DSL2 modules within a pipeline.
 
@@ -706,11 +897,11 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, update_d
 
     try:
         module_install = ModuleUpdate(
-            dir,
+            directory,
             force,
             prompt,
             sha,
-            all,
+            install_all,
             preview,
             save_diff,
             update_deps,
@@ -719,7 +910,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff, update_d
             ctx.obj["modules_repo_no_pull"],
         )
         exit_status = module_install.update(tool)
-        if not exit_status and all:
+        if not exit_status and install_all:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
@@ -764,7 +955,7 @@ def patch(ctx, tool, dir, remove):
 
 
 # nf-core modules remove
-@modules.command()
+@modules.command("remove")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
@@ -774,7 +965,7 @@ def patch(ctx, tool, dir, remove):
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-def remove(ctx, dir, tool):
+def modules_remove(ctx, dir, tool):
     """
     Remove a module from a pipeline.
     """
@@ -798,13 +989,55 @@ def remove(ctx, dir, tool):
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
-@click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username prefixed with '@'")
-@click.option("-l", "--label", type=str, metavar="<process label>", help="Standard resource label for process")
-@click.option("-m", "--meta", is_flag=True, default=False, help="Use Groovy meta map for sample information")
-@click.option("-n", "--no-meta", is_flag=True, default=False, help="Don't use meta map for sample information")
-@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
-@click.option("-c", "--conda-name", type=str, default=None, help="Name of the conda package to use")
-@click.option("-p", "--conda-package-version", type=str, default=None, help="Version of conda package to use")
+@click.option(
+    "-a",
+    "--author",
+    type=str,
+    metavar="<author>",
+    help="Module author's GitHub username prefixed with '@'",
+)
+@click.option(
+    "-l",
+    "--label",
+    type=str,
+    metavar="<process label>",
+    help="Standard resource label for process",
+)
+@click.option(
+    "-m",
+    "--meta",
+    is_flag=True,
+    default=False,
+    help="Use Groovy meta map for sample information",
+)
+@click.option(
+    "-n",
+    "--no-meta",
+    is_flag=True,
+    default=False,
+    help="Don't use meta map for sample information",
+)
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Overwrite any files if they already exist",
+)
+@click.option(
+    "-c",
+    "--conda-name",
+    type=str,
+    default=None,
+    help="Name of the conda package to use",
+)
+@click.option(
+    "-p",
+    "--conda-package-version",
+    type=str,
+    default=None,
+    help="Version of conda package to use",
+)
 @click.option(
     "-i",
     "--empty-template",
@@ -812,8 +1045,25 @@ def remove(ctx, dir, tool):
     default=False,
     help="Create a module from the template without TODOs or examples",
 )
+@click.option(
+    "--migrate-pytest",
+    is_flag=True,
+    default=False,
+    help="Migrate a module with pytest tests to nf-test",
+)
 def create_module(
-    ctx, tool, dir, author, label, meta, no_meta, force, conda_name, conda_package_version, empty_template
+    ctx,
+    tool,
+    dir,
+    author,
+    label,
+    meta,
+    no_meta,
+    force,
+    conda_name,
+    conda_package_version,
+    empty_template,
+    migrate_pytest,
 ):
     """
     Create a new DSL2 module from the nf-core template.
@@ -838,7 +1088,16 @@ def create_module(
     # Run function
     try:
         module_create = ModuleCreate(
-            dir, tool, author, label, has_meta, force, conda_name, conda_package_version, empty_template
+            dir,
+            tool,
+            author,
+            label,
+            has_meta,
+            force,
+            conda_name,
+            conda_package_version,
+            empty_template,
+            migrate_pytest,
         )
         module_create.create()
     except UserWarning as e:
@@ -849,44 +1108,76 @@ def create_module(
         sys.exit(1)
 
 
-# nf-core modules create-test-yml
-@modules.command("create-test-yml")
+# nf-core modules test
+@modules.command("test")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
-@click.option("-o", "--output", type=str, help="Path for output YAML file")
-@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
-@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    metavar="<nf-core/modules directory>",
+)
+@click.option(
+    "-p",
+    "--no-prompts",
+    is_flag=True,
+    default=False,
+    help="Use defaults without prompting",
+)
+@click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
+@click.option(
+    "-o",
+    "--once",
+    is_flag=True,
+    default=False,
+    help="Run tests only once. Don't check snapshot stability",
+)
+@click.option(
+    "--profile",
+    type=click.Choice(["docker", "singularity", "conda"]),
+    default=None,
+    help="Run tests with a specific profile",
+)
+def test_module(ctx, tool, dir, no_prompts, update, once, profile):
     """
-    Auto-generate a test.yml file for a new module.
+    Run nf-test for a module.
 
-    Given the name of a module, runs the Nextflow test command and automatically generate
-    the required `test.yml` file based on the output files.
+    Given the name of a module, runs the nf-test command to test the module and generate snapshots.
     """
-    from nf_core.modules import ModulesTestYmlBuilder
+    from nf_core.components.components_test import ComponentsTest
 
     try:
-        meta_builder = ModulesTestYmlBuilder(
-            module_name=tool,
-            run_tests=run_tests,
-            test_yml_output_path=output,
-            force_overwrite=force,
+        module_tester = ComponentsTest(
+            component_type="modules",
+            component_name=tool,
+            directory=dir,
             no_prompts=no_prompts,
+            update=update,
+            once=once,
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
+            verbose=ctx.obj["verbose"],
+            profile=profile,
         )
-        meta_builder.run()
+        module_tester.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
 
 
 # nf-core modules lint
-@modules.command()
+@modules.command("lint")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    metavar="<pipeline/modules directory>",
+)
 @click.option(
     "-r",
     "--registry",
@@ -895,7 +1186,14 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
     default=None,
     help="Registry to use for containers. If not specified it will use docker.registry value in the nextflow.config file",
 )
-@click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
+@click.option(
+    "-k",
+    "--key",
+    type=str,
+    metavar="<test>",
+    multiple=True,
+    help="Run only these lint tests",
+)
 @click.option("-a", "--all", is_flag=True, help="Run on all modules")
 @click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
@@ -907,10 +1205,12 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
     help="Sort lint output by module or test name.",
     show_default=True,
 )
-@click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
-def lint(
-    ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version
-):  # pylint: disable=redefined-outer-name
+@click.option(
+    "--fix-version",
+    is_flag=True,
+    help="Fix the module version if a newer version is available",
+)
+def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version):
     """
     Lint one or more modules in a directory.
 
@@ -920,7 +1220,7 @@ def lint(
     Test modules within a pipeline or a clone of the
     nf-core/modules repository.
     """
-    from nf_core.components.lint import LintException
+    from nf_core.components.lint import LintExceptionError
     from nf_core.modules import ModuleLint
 
     try:
@@ -946,7 +1246,7 @@ def lint(
         )
         if len(module_lint.failed) > 0:
             sys.exit(1)
-    except LintException as e:
+    except LintExceptionError as e:
         log.error(e)
         sys.exit(1)
     except (UserWarning, LookupError) as e:
@@ -955,7 +1255,7 @@ def lint(
 
 
 # nf-core modules info
-@modules.command()
+@modules.command("info")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
@@ -965,7 +1265,7 @@ def lint(
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def info(ctx, tool, dir):
+def modules_info(ctx, tool, dir):
     """
     Show developer usage information about a given module.
 
@@ -997,7 +1297,13 @@ def info(ctx, tool, dir):
 @modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    metavar="<nf-core/modules directory>",
+)
 @click.option("-a", "--all", is_flag=True, help="Run on all modules")
 @click.option("-s", "--show-all", is_flag=True, help="Show up-to-date modules in results too")
 def bump_versions(ctx, tool, dir, all, show_all):
@@ -1006,7 +1312,7 @@ def bump_versions(ctx, tool, dir, all, show_all):
     the nf-core/modules repo.
     """
     from nf_core.modules.bump_versions import ModuleVersionBumper
-    from nf_core.modules.modules_utils import ModuleException
+    from nf_core.modules.modules_utils import ModuleExceptionError
 
     try:
         version_bumper = ModuleVersionBumper(
@@ -1016,31 +1322,9 @@ def bump_versions(ctx, tool, dir, all, show_all):
             ctx.obj["modules_repo_no_pull"],
         )
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
-    except ModuleException as e:
+    except ModuleExceptionError as e:
         log.error(e)
         sys.exit(1)
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
-
-
-# nf-core modules test
-@modules.command("test")
-@click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-@click.option("-a", "--pytest_args", type=str, required=False, multiple=True, help="Additional pytest arguments")
-def test_module(ctx, tool, no_prompts, pytest_args):
-    """
-    Run module tests locally.
-
-    Given the name of a module, runs the Nextflow test command.
-    """
-    from nf_core.modules import ModulesTest
-
-    try:
-        meta_builder = ModulesTest(tool, no_prompts, pytest_args)
-        meta_builder.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
@@ -1051,9 +1335,27 @@ def test_module(ctx, tool, no_prompts, pytest_args):
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
-@click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username prefixed with '@'")
-@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
-def create_subworkflow(ctx, subworkflow, dir, author, force):
+@click.option(
+    "-a",
+    "--author",
+    type=str,
+    metavar="<author>",
+    help="Module author's GitHub username prefixed with '@'",
+)
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Overwrite any files if they already exist",
+)
+@click.option(
+    "--migrate-pytest",
+    is_flag=True,
+    default=False,
+    help="Migrate a module with pytest tests to nf-test",
+)
+def create_subworkflow(ctx, subworkflow, dir, author, force, migrate_pytest):
     """
     Create a new subworkflow from the nf-core template.
 
@@ -1067,7 +1369,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
 
     # Run function
     try:
-        subworkflow_create = SubworkflowCreate(dir, subworkflow, author, force)
+        subworkflow_create = SubworkflowCreate(dir, subworkflow, author, force, migrate_pytest)
         subworkflow_create.create()
     except UserWarning as e:
         log.critical(e)
@@ -1077,43 +1379,69 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
         sys.exit(1)
 
 
-# nf-core subworkflows create-test-yml
-@subworkflows.command("create-test-yml")
+# nf-core subworkflows test
+@subworkflows.command("test")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
-@click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
-@click.option("-o", "--output", type=str, help="Path for output YAML file")
-@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
-@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-def create_test_yml(ctx, subworkflow, run_tests, output, force, no_prompts):
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    metavar="<nf-core/modules directory>",
+)
+@click.option(
+    "-p",
+    "--no-prompts",
+    is_flag=True,
+    default=False,
+    help="Use defaults without prompting",
+)
+@click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
+@click.option(
+    "-o",
+    "--once",
+    is_flag=True,
+    default=False,
+    help="Run tests only once. Don't check snapshot stability",
+)
+@click.option(
+    "--profile",
+    type=click.Choice(["none", "singularity"]),
+    default=None,
+    help="Run tests with a specific profile",
+)
+def test_subworkflow(ctx, subworkflow, dir, no_prompts, update, once, profile):
     """
-    Auto-generate a test.yml file for a new subworkflow.
+    Run nf-test for a subworkflow.
 
-    Given the name of a module, runs the Nextflow test command and automatically generate
-    the required `test.yml` file based on the output files.
+    Given the name of a subworkflow, runs the nf-test command to test the subworkflow and generate snapshots.
     """
-    from nf_core.subworkflows import SubworkflowTestYmlBuilder
+    from nf_core.components.components_test import ComponentsTest
 
     try:
-        meta_builder = SubworkflowTestYmlBuilder(
-            subworkflow=subworkflow,
-            run_tests=run_tests,
-            test_yml_output_path=output,
-            force_overwrite=force,
+        sw_tester = ComponentsTest(
+            component_type="subworkflows",
+            component_name=subworkflow,
+            directory=dir,
             no_prompts=no_prompts,
+            update=update,
+            once=once,
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
+            verbose=ctx.obj["verbose"],
+            profile=profile,
         )
-        meta_builder.run()
+        sw_tester.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
 
 
 # nf-core subworkflows list subcommands
-@subworkflows.group()
+@subworkflows.group("list")
 @click.pass_context
-def list(ctx):
+def subworkflows_list(ctx):
     """
     List subworkflows in a local pipeline or remote repository.
     """
@@ -1121,11 +1449,11 @@ def list(ctx):
 
 
 # nf-core subworkflows list remote
-@list.command()
+@subworkflows_list.command("remote")
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def remote(ctx, keywords, json):
+def subworkflows_list_remote(ctx, keywords, json):
     """
     List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
@@ -1147,7 +1475,7 @@ def remote(ctx, keywords, json):
 
 
 # nf-core subworkflows list local
-@list.command()
+@subworkflows_list.command("local")
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
@@ -1158,7 +1486,7 @@ def remote(ctx, keywords, json):
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
+def subworkflows_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     """
     List subworkflows installed locally in a pipeline
     """
@@ -1179,10 +1507,16 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
 
 
 # nf-core subworkflows lint
-@subworkflows.command()
+@subworkflows.command("lint")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    metavar="<pipeline/modules directory>",
+)
 @click.option(
     "-r",
     "--registry",
@@ -1191,7 +1525,14 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     default=None,
     help="Registry to use for containers. If not specified it will use docker.registry value in the nextflow.config file",
 )
-@click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
+@click.option(
+    "-k",
+    "--key",
+    type=str,
+    metavar="<test>",
+    multiple=True,
+    help="Run only these lint tests",
+)
 @click.option("-a", "--all", is_flag=True, help="Run on all subworkflows")
 @click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local subworkflows")
@@ -1203,9 +1544,7 @@ def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     help="Sort lint output by subworkflow or test name.",
     show_default=True,
 )
-def lint(
-    ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by
-):  # pylint: disable=redefined-outer-name
+def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by):
     """
     Lint one or more subworkflows in a directory.
 
@@ -1215,7 +1554,7 @@ def lint(
     Test subworkflows within a pipeline or a clone of the
     nf-core/modules repository.
     """
-    from nf_core.components.lint import LintException
+    from nf_core.components.lint import LintExceptionError
     from nf_core.subworkflows import SubworkflowLint
 
     try:
@@ -1240,7 +1579,7 @@ def lint(
         )
         if len(subworkflow_lint.failed) > 0:
             sys.exit(1)
-    except LintException as e:
+    except LintExceptionError as e:
         log.error(e)
         sys.exit(1)
     except (UserWarning, LookupError) as e:
@@ -1249,7 +1588,7 @@ def lint(
 
 
 # nf-core subworkflows info
-@subworkflows.command()
+@subworkflows.command("info")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="subworkflow name")
 @click.option(
@@ -1259,7 +1598,7 @@ def lint(
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def info(ctx, tool, dir):
+def subworkflows_info(ctx, tool, dir):
     """
     Show developer usage information about a given subworkflow.
 
@@ -1287,30 +1626,8 @@ def info(ctx, tool, dir):
         sys.exit(1)
 
 
-# nf-core subworkflows test
-@subworkflows.command("test")
-@click.pass_context
-@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
-@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-@click.option("-a", "--pytest_args", type=str, required=False, multiple=True, help="Additional pytest arguments")
-def test_subworkflow(ctx, subworkflow, no_prompts, pytest_args):
-    """
-    Run subworkflow tests locally.
-
-    Given the name of a subworkflow, runs the Nextflow test command.
-    """
-    from nf_core.subworkflows import SubworkflowsTest
-
-    try:
-        meta_builder = SubworkflowsTest(subworkflow, no_prompts, pytest_args)
-        meta_builder.run()
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
-
-
 # nf-core subworkflows install
-@subworkflows.command()
+@subworkflows.command("install")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option(
@@ -1320,12 +1637,28 @@ def test_subworkflow(ctx, subworkflow, no_prompts, pytest_args):
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-@click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the subworkflow")
 @click.option(
-    "-f", "--force", is_flag=True, default=False, help="Force reinstallation of subworkflow if it already exists"
+    "-p",
+    "--prompt",
+    is_flag=True,
+    default=False,
+    help="Prompt for the version of the subworkflow",
 )
-@click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install subworkflow at commit SHA")
-def install(ctx, subworkflow, dir, prompt, force, sha):
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Force reinstallation of subworkflow if it already exists",
+)
+@click.option(
+    "-s",
+    "--sha",
+    type=str,
+    metavar="<commit sha>",
+    help="Install subworkflow at commit SHA",
+)
+def subworkflows_install(ctx, subworkflow, dir, prompt, force, sha):
     """
     Install DSL2 subworkflow within a pipeline.
 
@@ -1344,16 +1677,15 @@ def install(ctx, subworkflow, dir, prompt, force, sha):
             ctx.obj["modules_repo_no_pull"],
         )
         exit_status = subworkflow_install.install(subworkflow)
-        if not exit_status and all:
+        if not exit_status:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
-        raise
         sys.exit(1)
 
 
 # nf-core subworkflows remove
-@subworkflows.command()
+@subworkflows.command("remove")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option(
@@ -1363,7 +1695,7 @@ def install(ctx, subworkflow, dir, prompt, force, sha):
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-def remove(ctx, dir, subworkflow):
+def subworkflows_remove(ctx, dir, subworkflow):
     """
     Remove a subworkflow from a pipeline.
     """
@@ -1383,7 +1715,7 @@ def remove(ctx, dir, subworkflow):
 
 
 # nf-core subworkflows update
-@subworkflows.command()
+@subworkflows.command("update")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
 @click.option(
@@ -1394,9 +1726,28 @@ def remove(ctx, dir, subworkflow):
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Force update of subworkflow")
-@click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the subworkflow")
-@click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install subworkflow at commit SHA")
-@click.option("-a", "--all", is_flag=True, default=False, help="Update all subworkflow installed in pipeline")
+@click.option(
+    "-p",
+    "--prompt",
+    is_flag=True,
+    default=False,
+    help="Prompt for the version of the subworkflow",
+)
+@click.option(
+    "-s",
+    "--sha",
+    type=str,
+    metavar="<commit sha>",
+    help="Install subworkflow at commit SHA",
+)
+@click.option(
+    "-a",
+    "--all",
+    "install_all",
+    is_flag=True,
+    default=False,
+    help="Update all subworkflow installed in pipeline",
+)
 @click.option(
     "-x/-y",
     "--preview/--no-preview",
@@ -1419,7 +1770,18 @@ def remove(ctx, dir, subworkflow):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
-def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, update_deps):
+def subworkflows_update(
+    ctx,
+    subworkflow,
+    dir,
+    force,
+    prompt,
+    sha,
+    install_all,
+    preview,
+    save_diff,
+    update_deps,
+):
     """
     Update DSL2 subworkflow within a pipeline.
 
@@ -1433,7 +1795,7 @@ def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, u
             force,
             prompt,
             sha,
-            all,
+            install_all,
             preview,
             save_diff,
             update_deps,
@@ -1442,7 +1804,7 @@ def update(ctx, subworkflow, dir, force, prompt, sha, all, preview, save_diff, u
             ctx.obj["modules_repo_no_pull"],
         )
         exit_status = subworkflow_install.update(subworkflow)
-        if not exit_status and all:
+        if not exit_status and install_all:
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
@@ -1501,8 +1863,16 @@ def validate(pipeline, params):
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-@click.option("--no-prompts", is_flag=True, help="Do not confirm changes, just update parameters and exit")
-@click.option("--web-only", is_flag=True, help="Skip building using Nextflow config, just launch the web tool")
+@click.option(
+    "--no-prompts",
+    is_flag=True,
+    help="Do not confirm changes, just update parameters and exit",
+)
+@click.option(
+    "--web-only",
+    is_flag=True,
+    help="Skip building using Nextflow config, just launch the web tool",
+)
 @click.option(
     "--url",
     type=str,
@@ -1533,11 +1903,14 @@ def build(dir, no_prompts, web_only, url):
 
 
 # nf-core schema lint
-@schema.command()
+@schema.command("lint")
 @click.argument(
-    "schema_path", type=click.Path(exists=True), default="nextflow_schema.json", metavar="<pipeline schema>"
+    "schema_path",
+    type=click.Path(exists=True),
+    default="nextflow_schema.json",
+    metavar="<pipeline schema>",
 )
-def lint(schema_path):
+def schema_lint(schema_path):
     """
     Check that a given pipeline schema is valid.
 
@@ -1572,9 +1945,19 @@ def lint(schema_path):
     required=False,
     metavar="<pipeline schema>",
 )
-@click.option("-o", "--output", type=str, metavar="<filename>", help="Output filename. Defaults to standard out.")
 @click.option(
-    "-x", "--format", type=click.Choice(["markdown", "html"]), default="markdown", help="Format to output docs in."
+    "-o",
+    "--output",
+    type=str,
+    metavar="<filename>",
+    help="Output filename. Defaults to standard out.",
+)
+@click.option(
+    "-x",
+    "--format",
+    type=click.Choice(["markdown", "html"]),
+    default="markdown",
+    help="Format to output docs in.",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 @click.option(
@@ -1613,7 +1996,11 @@ def docs(schema_path, output, format, force, columns):
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option(
-    "-n", "--nextflow", is_flag=True, default=False, help="Bump required nextflow version instead of pipeline version"
+    "-n",
+    "--nextflow",
+    is_flag=True,
+    default=False,
+    help="Bump required nextflow version instead of pipeline version",
 )
 def bump_version(new_version, dir, nextflow):
     """
@@ -1649,6 +2036,67 @@ def bump_version(new_version, dir, nextflow):
         sys.exit(1)
 
 
+# nf-core create-logo
+@nf_core_cli.command("create-logo")
+@click.argument("logo-text", metavar="<logo_text>")
+@click.option("-d", "--dir", type=click.Path(), default=".", help="Directory to save the logo in.")
+@click.option(
+    "-n",
+    "--name",
+    type=str,
+    help="Name of the output file (with or without '.png' suffix).",
+)
+@click.option(
+    "--theme",
+    type=click.Choice(["light", "dark"]),
+    default="light",
+    help="Theme for the logo.",
+    show_default=True,
+)
+@click.option(
+    "--width",
+    type=int,
+    default=2300,
+    help="Width of the logo in pixels.",
+    show_default=True,
+)
+@click.option(
+    "--format",
+    type=click.Choice(["png", "svg"]),
+    default="png",
+    help="Image format of the logo, either PNG or SVG.",
+    show_default=True,
+)
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Overwrite any files if they already exist",
+)
+def logo(logo_text, dir, name, theme, width, format, force):
+    """
+    Generate a logo with the nf-core logo template.
+
+    This command generates an nf-core pipeline logo, using the supplied <logo_text>
+    """
+    from nf_core.create_logo import create_logo
+
+    try:
+        if dir == ".":
+            dir = Path.cwd()
+        logo_path = create_logo(logo_text, dir, name, theme, width, format, force)
+        # Print path to logo relative to current working directory
+        try:
+            logo_path = Path(logo_path).relative_to(Path.cwd())
+        except ValueError:
+            logo_path = Path(logo_path)
+        log.info(f"Created logo: [magenta]{logo_path}[/]")
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
+
+
 # nf-core sync
 @nf_core_cli.command("sync")
 @click.option(
@@ -1658,8 +2106,19 @@ def bump_version(new_version, dir, nextflow):
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-@click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow variables.")
-@click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
+@click.option(
+    "-b",
+    "--from-branch",
+    type=str,
+    help="The git branch to use to fetch workflow variables.",
+)
+@click.option(
+    "-p",
+    "--pull-request",
+    is_flag=True,
+    default=False,
+    help="Make a GitHub pull-request with the changes.",
+)
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
@@ -1676,7 +2135,7 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     the pipeline. It is run automatically for all pipelines when ever a
     new release of [link=https://github.com/nf-core/tools]nf-core/tools[/link] (and the included template) is made.
     """
-    from nf_core.sync import PipelineSync, PullRequestException, SyncException
+    from nf_core.sync import PipelineSync, PullRequestExceptionError, SyncExceptionError
     from nf_core.utils import is_pipeline_directory
 
     # Check if pipeline directory contains necessary files
@@ -1686,7 +2145,7 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     sync_obj = PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml)
     try:
         sync_obj.sync()
-    except (SyncException, PullRequestException) as e:
+    except (SyncExceptionError, PullRequestExceptionError) as e:
         log.error(e)
         sys.exit(1)
 

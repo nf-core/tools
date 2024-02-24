@@ -1,6 +1,9 @@
 import logging
 import os
 import re
+from pathlib import Path
+
+from nf_core.schema import PipelineSchema
 
 log = logging.getLogger(__name__)
 
@@ -108,7 +111,25 @@ def nextflow_config(self):
 
                 lint:
                     nextflow_config: False
+
+    **The configuration should contain the following or the test will fail:**
+
+    * A ``test`` configuration profile should exist.
+
+    **The default values in ``nextflow.config`` should match the default values defined in the ``nextflow_schema.json``.**
+
+    .. tip:: You can choose to ignore tests for the default value of an specific parameter
+             by creating a file called ``.nf-core.yml`` in the root of your pipeline and creating
+             a list the config parameters that should be ignored. For example to ignore the default value for the input parameter:
+
+             .. code-block:: yaml
+
+                lint:
+                    nextflow_config:
+                        - config_defaults:
+                            - params.input
     """
+
     passed = []
     warned = []
     failed = []
@@ -198,6 +219,8 @@ def nextflow_config(self):
 
     # Check the variables that should be set to 'true'
     for k in ["timeline.enabled", "report.enabled", "trace.enabled", "dag.enabled"]:
+        if k in ignore_configs:
+            continue
         if self.nf_config.get(k) == "true":
             passed.append(f"Config ``{k}`` had correct value: ``{self.nf_config.get(k)}``")
         else:
@@ -293,7 +316,7 @@ def nextflow_config(self):
         ]
         path = os.path.join(self.wf_path, "nextflow.config")
         i = 0
-        with open(path, "r") as f:
+        with open(path) as f:
             for line in f:
                 if lines[i] in line:
                     i += 1
@@ -310,6 +333,87 @@ def nextflow_config(self):
                 "Lines for loading custom profiles not found. File should contain: ```groovy\n{}".format(
                     "\n".join(lines)
                 )
+            )
+
+    # Check for the availability of the "test" configuration profile by parsing nextflow.config
+    with open(os.path.join(self.wf_path, "nextflow.config")) as f:
+        content = f.read()
+
+        # Remove comments
+        cleaned_content = re.sub(r"//.*", "", content)
+        cleaned_content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
+
+        match = re.search(r"\bprofiles\s*{", cleaned_content)
+        if not match:
+            failed.append("nextflow.config does not contain `profiles` scope, but `test` profile is required")
+        else:
+            # Extract profiles scope content and check for test profile
+            start = match.end()
+            end = start
+            brace_count = 1
+            while brace_count > 0 and end < len(content):
+                if cleaned_content[end] == "{":
+                    brace_count += 1
+                elif cleaned_content[end] == "}":
+                    brace_count -= 1
+                end += 1
+            profiles_content = cleaned_content[start : end - 1].strip()
+            if re.search(r"\btest\s*{", profiles_content):
+                passed.append("nextflow.config contains configuration profile `test`")
+            else:
+                failed.append("nextflow.config does not contain configuration profile `test`")
+
+    # Check that the default values in nextflow.config match the default values defined in the nextflow_schema.json
+    ignore_defaults = []
+    for item in ignore_configs:
+        if isinstance(item, dict) and "config_defaults" in item:
+            ignore_defaults = item.get("config_defaults", [])
+    schema_path = Path(self.wf_path) / "nextflow_schema.json"
+    schema = PipelineSchema()
+    schema.schema_filename = schema_path
+    schema.no_prompts = True
+    schema.load_schema()
+    schema.get_schema_defaults()  # Get default values from schema
+    schema.get_schema_types()  # Get types from schema
+    self.nf_config.keys()  # Params in nextflow.config
+    for param_name in schema.schema_defaults.keys():
+        param = "params." + param_name
+        if param in ignore_defaults:
+            ignored.append(f"Config default ignored: {param}")
+        elif param in self.nf_config.keys():
+            config_default = None
+            schema_default = None
+            if schema.schema_types[param_name] == "boolean":
+                schema_default = str(schema.schema_defaults[param_name]).lower()
+                config_default = str(self.nf_config[param]).lower()
+            elif schema.schema_types[param_name] == "number":
+                try:
+                    schema_default = float(schema.schema_defaults[param_name])
+                    config_default = float(self.nf_config[param])
+                except ValueError:
+                    failed.append(
+                        f"Config default value incorrect: `{param}` is set as type `number` in nextflow_schema.json, but is not a number in `nextflow.config`."
+                    )
+            elif schema.schema_types[param_name] == "integer":
+                try:
+                    schema_default = int(schema.schema_defaults[param_name])
+                    config_default = int(self.nf_config[param])
+                except ValueError:
+                    failed.append(
+                        f"Config default value incorrect: `{param}` is set as type `integer` in nextflow_schema.json, but is not an integer in `nextflow.config`."
+                    )
+            else:
+                schema_default = str(schema.schema_defaults[param_name])
+                config_default = str(self.nf_config[param])
+            if config_default is not None and config_default == schema_default:
+                passed.append(f"Config default value correct: {param}= {schema_default}")
+            else:
+                failed.append(
+                    f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
+                )
+        else:
+            failed.append(
+                f"Default value from the Nextflow schema `{param} = {self._wrap_quotes(schema_default)}` not found in `nextflow.config`."
             )
 
     return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}

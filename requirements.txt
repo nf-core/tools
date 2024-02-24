@@ -5,10 +5,12 @@ jinja2
 jsonschema>=3.0
 markdown>=3.3
 packaging
+pillow
+pdiff
 pre-commit
 prompt_toolkit>=3.0.3
-pytest>=7.0.0
 pytest-workflow>=1.6.0
+pytest>=7.0.0
 pyyaml
 questionary>=1.8.0
 refgenie
@@ -17,3 +19,4 @@ requests_cache
 rich-click>=1.6.1
 rich>=13.3.1
 tabulate
+trogon

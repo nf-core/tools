@@ -1,5 +1,4 @@
 import fnmatch
-import io
 import logging
 import os
 
@@ -41,9 +40,9 @@ def pipeline_todos(self, root_dir=None):
 
     ignore = [".git"]
     if os.path.isfile(os.path.join(root_dir, ".gitignore")):
-        with io.open(os.path.join(root_dir, ".gitignore"), "rt", encoding="latin1") as fh:
-            for l in fh:
-                ignore.append(os.path.basename(l.strip().rstrip("/")))
+        with open(os.path.join(root_dir, ".gitignore"), encoding="latin1") as fh:
+            for line in fh:
+                ignore.append(os.path.basename(line.strip().rstrip("/")))
     for root, dirs, files in os.walk(root_dir, topdown=True):
         # Ignore files
         for i_base in ignore:
@@ -52,18 +51,18 @@ def pipeline_todos(self, root_dir=None):
             files[:] = [f for f in files if not fnmatch.fnmatch(os.path.join(root, f), i)]
         for fname in files:
             try:
-                with io.open(os.path.join(root, fname), "rt", encoding="latin1") as fh:
-                    for l in fh:
-                        if "TODO nf-core" in l:
-                            l = (
-                                l.replace("<!--", "")
+                with open(os.path.join(root, fname), encoding="latin1") as fh:
+                    for line in fh:
+                        if "TODO nf-core" in line:
+                            line = (
+                                line.replace("<!--", "")
                                 .replace("-->", "")
                                 .replace("# TODO nf-core: ", "")
                                 .replace("// TODO nf-core: ", "")
                                 .replace("TODO nf-core: ", "")
                                 .strip()
                             )
-                            warned.append(f"TODO string in `{fname}`: _{l}_")
+                            warned.append(f"TODO string in `{fname}`: _{line}_")
                             file_paths.append(os.path.join(root, fname))
             except FileNotFoundError:
                 log.debug(f"Could not open file {fname} in pipeline_todos lint test")

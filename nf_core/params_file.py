@@ -1,6 +1,5 @@
 """ Create a YAML parameter file """
 
-from __future__ import print_function
 
 import json
 import logging
@@ -9,8 +8,6 @@ import textwrap
 from typing import Literal, Optional
 
 import questionary
-import rich
-import rich.columns
 
 import nf_core.list
 import nf_core.utils
@@ -89,7 +86,7 @@ class ParamsFileBuilder:
         self,
         pipeline=None,
         revision=None,
-    ):
+    ) -> None:
         """Initialise the ParamFileBuilder class
 
         Args:
@@ -183,9 +180,7 @@ class ParamsFileBuilder:
 
         Returns:
             str: Section of a params-file.yml for given parameter
-            None:
-                If the parameter is skipped because it is hidden and
-                show_hidden is not set
+            None: If the parameter is skipped because it is hidden and show_hidden is not set
         """
         out = ""
         hidden = properties.get("hidden", False)
@@ -196,7 +191,7 @@ class ParamsFileBuilder:
         description = properties.get("description", "")
         self.schema_obj.get_schema_defaults()
         default = properties.get("default")
-        typ = properties.get("type")
+        type = properties.get("type")
         required = name in required_properties
 
         out += _print_wrapped(name, "-", mode="both")
@@ -204,8 +199,11 @@ class ParamsFileBuilder:
         if description:
             out += _print_wrapped(description + "\n", mode="none", indent=4)
 
-        if typ:
-            out += _print_wrapped(f"Type: {typ}", mode="none", indent=4)
+        if type:
+            out += _print_wrapped(f"Type: {type}", mode="none", indent=4)
+
+        if required:
+            out += _print_wrapped("Required", mode="none", indent=4)
 
         out += _print_wrapped("\n", mode="end")
         out += f"# {name} = {json.dumps(default)}\n"

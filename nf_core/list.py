@@ -1,12 +1,13 @@
 """Lists available nf-core pipelines and versions."""
 
-from __future__ import print_function
 
 import json
 import logging
 import os
 import re
 from datetime import datetime
+from pathlib import Path
+from typing import Union
 
 import git
 import requests
@@ -40,12 +41,12 @@ def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archiv
         return wfs.print_summary()
 
 
-def get_local_wf(workflow, revision=None):
+def get_local_wf(workflow: Union[str, Path], revision=None) -> Union[str, None]:
     """
     Check if this workflow has a local copy and use nextflow to pull it if not
     """
     # Assume nf-core if no org given
-    if workflow.count("/") == 0:
+    if str(workflow).count("/") == 0:
         workflow = f"nf-core/{workflow}"
 
     wfs = Workflows()
@@ -64,10 +65,10 @@ def get_local_wf(workflow, revision=None):
 
     # Wasn't local, fetch it
     log.info(f"Downloading workflow: {workflow} ({revision})")
-    pull_cmd = f"nextflow pull {workflow}"
+    pull_cmd = f"pull {workflow}"
     if revision is not None:
         pull_cmd += f" -r {revision}"
-    nf_core.utils.nextflow_cmd(pull_cmd)
+    nf_core.utils.run_cmd("nextflow", pull_cmd)
     local_wf = LocalWorkflow(workflow)
     local_wf.get_local_nf_workflow_details()
     return local_wf.local_path
@@ -128,12 +129,14 @@ class Workflows:
         # Fetch details about local cached pipelines with `nextflow list`
         else:
             log.debug("Getting list of local nextflow workflows")
-            nflist_raw = nf_core.utils.nextflow_cmd("nextflow list")
-            for wf_name in nflist_raw.splitlines():
-                if not str(wf_name).startswith("nf-core/"):
-                    self.local_unmatched.append(wf_name)
-                else:
-                    self.local_workflows.append(LocalWorkflow(wf_name))
+            result = nf_core.utils.run_cmd("nextflow", "list")
+            if result is not None:
+                nflist_raw, _ = result
+                for wf_name in nflist_raw.splitlines():
+                    if not str(wf_name).startswith("nf-core/"):
+                        self.local_unmatched.append(wf_name)
+                    else:
+                        self.local_workflows.append(LocalWorkflow(wf_name))
 
         # Find additional information about each workflow by checking its git history
         log.debug(f"Fetching extra info about {len(self.local_workflows)} local workflows")
@@ -203,7 +206,7 @@ class Workflows:
             def sort_pulled_date(wf):
                 try:
                     return wf.local_wf.last_pull * -1
-                except:
+                except Exception:
                     return 0
 
             filtered_workflows.sort(key=sort_pulled_date)
@@ -225,9 +228,10 @@ class Workflows:
         for wf in filtered_workflows:
             wf_name = f"[bold][link=https://nf-co.re/{wf.name}]{wf.name}[/link]"
             version = "[yellow]dev"
+            published = "[dim]-"
             if len(wf.releases) > 0:
-                version = f"[blue]{wf.releases[-1]['tag_name']}"
-            published = wf.releases[-1]["published_at_pretty"] if len(wf.releases) > 0 else "[dim]-"
+                version = f"[blue]{wf.releases[0]['tag_name']}"
+                published = wf.releases[0]["published_at_pretty"]
             pulled = wf.local_wf.last_pull_pretty if wf.local_wf is not None else "[dim]-"
             if wf.local_wf is not None:
                 revision = ""
@@ -341,12 +345,14 @@ class LocalWorkflow:
 
             # Use `nextflow info` to get more details about the workflow
             else:
-                nfinfo_raw = str(nf_core.utils.nextflow_cmd(f"nextflow info -d {self.full_name}"))
-                re_patterns = {"repository": r"repository\s*: (.*)", "local_path": r"local path\s*: (.*)"}
-                for key, pattern in re_patterns.items():
-                    m = re.search(pattern, nfinfo_raw)
-                    if m:
-                        setattr(self, key, m.group(1))
+                result = nf_core.utils.run_cmd("nextflow", f"info -d {self.full_name}")
+                if result is not None:
+                    nfinfo_raw, _ = result
+                    re_patterns = {"repository": r"repository\s*: (.*)", "local_path": r"local path\s*: (.*)"}
+                    for key, pattern in re_patterns.items():
+                        m = re.search(pattern, str(nfinfo_raw))
+                        if m:
+                            setattr(self, key, m.group(1))
 
         # Pull information from the local git repository
         if self.local_path is not None:

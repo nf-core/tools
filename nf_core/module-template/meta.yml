@@ -1,0 +1,69 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "{{ component_name_underscore }}"
+{% if not_empty_template -%}
+## TODO nf-core: Add a description of the module and list keywords
+{% endif -%}
+description: write your description here
+keywords:
+  - sort
+  - example
+  - genomics
+tools:
+  - "{{ component }}":
+      {% if not_empty_template -%}
+      ## TODO nf-core: Add a description and other details for the software below
+      {% endif -%}
+      description: "{{ tool_description }}"
+      homepage: "{{ tool_doc_url }}"
+      documentation: "{{ tool_doc_url }}"
+      tool_dev_url: "{{ tool_dev_url }}"
+      doi: ""
+      licence: {{ tool_licence }}
+
+{% if not_empty_template -%}
+## TODO nf-core: Add a description of all of the variables used as input
+{% endif -%}
+input:
+  #{% if has_meta %} Only when we have meta
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  {% endif %}
+  {% if not_empty_template -%}
+  ## TODO nf-core: Delete / customise this example input
+  {%- endif %}
+  - {{ 'bam:' if not_empty_template else "input:" }}
+      type: file
+      description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
+      pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
+
+{% if not_empty_template -%}
+## TODO nf-core: Add a description of all of the variables used as output
+{% endif -%}
+output:
+  #{% if has_meta -%} Only when we have meta
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'sample1', single_end:false ]`
+  {% endif %}
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+  {% if not_empty_template -%}
+  ## TODO nf-core: Delete / customise this example output
+  {%- endif %}
+  - {{ 'bam:' if not_empty_template else "output:" }}
+      type: file
+      description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
+      pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
+
+authors:
+  - "{{ author }}"
+maintainers:
+  - "{{ author }}"

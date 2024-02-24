@@ -31,7 +31,7 @@ def test_actions_ci_fail_wrong_trigger(self):
 
     # Edit .github/workflows/actions_ci.yml to mess stuff up!
     new_pipeline = self._make_pipeline_copy()
-    with open(os.path.join(new_pipeline, ".github", "workflows", "ci.yml"), "r") as fh:
+    with open(os.path.join(new_pipeline, ".github", "workflows", "ci.yml")) as fh:
         ci_yml = yaml.safe_load(fh)
     ci_yml[True]["push"] = ["dev", "patch"]
     ci_yml["jobs"]["test"]["strategy"]["matrix"] = {"nxf_versionnn": ["foo", ""]}

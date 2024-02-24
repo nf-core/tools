@@ -112,14 +112,14 @@ class TestUtils(unittest.TestCase):
     def test_list_files_git(self):
         """Test listing pipeline files using `git ls`"""
         self.pipeline_obj._list_files()
-        assert os.path.join(self.test_pipeline_dir, "main.nf") in self.pipeline_obj.files
+        assert Path(self.test_pipeline_dir, "main.nf") in self.pipeline_obj.files
 
     @with_temporary_folder
     def test_list_files_no_git(self, tmpdir):
         """Test listing pipeline files without `git-ls`"""
         # Create a test file in a temporary directory
-        tmp_fn = os.path.join(tmpdir, "testfile")
-        Path(tmp_fn).touch()
+        tmp_fn = Path(tmpdir, "testfile")
+        tmp_fn.touch()
         pipeline_obj = nf_core.utils.Pipeline(tmpdir)
         pipeline_obj._list_files()
         assert tmp_fn in pipeline_obj.files
@@ -134,7 +134,7 @@ class TestUtils(unittest.TestCase):
 
     def test_pip_package_pass(self):
         result = nf_core.utils.pip_package("multiqc=1.10")
-        assert type(result) == dict
+        assert isinstance(result, dict)
 
     @mock.patch("requests.get")
     def test_pip_package_timeout(self, mock_get):
@@ -175,13 +175,13 @@ class TestUtils(unittest.TestCase):
     def test_get_repo_releases_branches_not_nf_core(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
-        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("ewels/MultiQC", wfs)
+        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("MultiQC/MultiQC", wfs)
         for r in wf_releases:
             if r.get("tag_name") == "v1.10":
                 break
         else:
             raise AssertionError("MultiQC release v1.10 not found")
-        assert "master" in wf_branches.keys()
+        assert "main" in wf_branches.keys()
 
     def test_get_repo_releases_branches_not_exists(self):
         wfs = nf_core.list.Workflows()
@@ -207,3 +207,34 @@ def test_validate_file_md5():
         nf_core.utils.validate_file_md5(test_file, different_md5)
     with pytest.raises(ValueError):
         nf_core.utils.validate_file_md5(test_file, non_hex_string)
+
+
+def test_nested_setitem():
+    d = {"a": {"b": {"c": "value"}}}
+    nf_core.utils.nested_setitem(d, ["a", "b", "c"], "value new")
+    assert d["a"]["b"]["c"] == "value new"
+    assert d == {"a": {"b": {"c": "value new"}}}
+
+
+def test_nested_delitem():
+    d = {"a": {"b": {"c": "value"}}}
+    nf_core.utils.nested_delitem(d, ["a", "b", "c"])
+    assert "c" not in d["a"]["b"]
+    assert d == {"a": {"b": {}}}
+
+
+def test_set_wd():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        with nf_core.utils.set_wd(tmpdirname):
+            context_wd = Path().resolve()
+        assert context_wd == Path(tmpdirname).resolve()
+        assert context_wd != Path().resolve()
+
+
+def test_set_wd_revert_on_raise():
+    wd_before_context = Path().resolve()
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        with pytest.raises(Exception):
+            with nf_core.utils.set_wd(tmpdirname):
+                raise Exception
+    assert wd_before_context == Path().resolve()

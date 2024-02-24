@@ -1,13 +1,12 @@
 """ Code to deal with pipeline JSON Schema """
 
-from __future__ import print_function
 
 import copy
 import json
 import logging
-import os
 import tempfile
 import webbrowser
+from pathlib import Path
 
 import jinja2
 import jsonschema
@@ -31,11 +30,12 @@ class PipelineSchema:
     def __init__(self):
         """Initialise the object"""
 
-        self.schema = None
-        self.pipeline_dir = None
-        self.schema_filename = None
+        self.schema = {}
+        self.pipeline_dir = ""
+        self.schema_filename = ""
         self.schema_defaults = {}
-        self.schema_params = []
+        self.schema_types = {}
+        self.schema_params = {}
         self.input_params = {}
         self.pipeline_params = {}
         self.invalid_nextflow_config_default_parameters = {}
@@ -49,29 +49,29 @@ class PipelineSchema:
 
     def get_schema_path(self, path, local_only=False, revision=None):
         """Given a pipeline name, directory, or path, set self.schema_filename"""
-
+        path = Path(path)
         # Supplied path exists - assume a local pipeline directory or schema
-        if os.path.exists(path):
+        if path.exists():
             if revision is not None:
                 log.warning(f"Local workflow supplied, ignoring revision '{revision}'")
-            if os.path.isdir(path):
+            if path.is_dir():
                 self.pipeline_dir = path
-                self.schema_filename = os.path.join(path, "nextflow_schema.json")
+                self.schema_filename = path / "nextflow_schema.json"
             else:
-                self.pipeline_dir = os.path.dirname(path)
+                self.pipeline_dir = path.parent
                 self.schema_filename = path
 
         # Path does not exist - assume a name of a remote workflow
         elif not local_only:
             self.pipeline_dir = nf_core.list.get_local_wf(path, revision=revision)
-            self.schema_filename = os.path.join(self.pipeline_dir, "nextflow_schema.json")
+            self.schema_filename = Path(self.pipeline_dir, "nextflow_schema.json")
 
         # Only looking for local paths, overwrite with None to be safe
         else:
             self.schema_filename = None
 
         # Check that the schema file exists
-        if self.schema_filename is None or not os.path.exists(self.schema_filename):
+        if self.schema_filename is None or not Path(self.schema_filename).exists():
             error = f"Could not find pipeline schema for '{path}': {self.schema_filename}"
             log.error(error)
             raise AssertionError(error)
@@ -107,10 +107,13 @@ class PipelineSchema:
 
     def load_schema(self):
         """Load a pipeline schema from a file"""
-        with open(self.schema_filename, "r") as fh:
+        if self.schema_filename is None:
+            raise AssertionError("Pipeline schema filename could not be found.")
+
+        with open(self.schema_filename) as fh:
             self.schema = json.load(fh)
         self.schema_defaults = {}
-        self.schema_params = []
+        self.schema_params = {}
         log.debug(f"JSON file loaded: {self.schema_filename}")
 
     def sanitise_param_default(self, param):
@@ -141,11 +144,14 @@ class PipelineSchema:
             param["default"] = float(param["default"])
             return param
 
+        if param["default"] is None:
+            return param
+
         # Strings
         param["default"] = str(param["default"])
         return param
 
-    def get_schema_defaults(self):
+    def get_schema_defaults(self) -> None:
         """
         Generate set of default input parameters from schema.
 
@@ -154,18 +160,30 @@ class PipelineSchema:
         """
         # Top level schema-properties (ungrouped)
         for p_key, param in self.schema.get("properties", {}).items():
-            self.schema_params.append(p_key)
+            self.schema_params[p_key] = ("properties", p_key)
             if "default" in param:
                 param = self.sanitise_param_default(param)
-                self.schema_defaults[p_key] = param["default"]
+                if param["default"] is not None:
+                    self.schema_defaults[p_key] = param["default"]
 
         # Grouped schema properties in subschema definitions
-        for _, definition in self.schema.get("definitions", {}).items():
+        for defn_name, definition in self.schema.get("definitions", {}).items():
             for p_key, param in definition.get("properties", {}).items():
-                self.schema_params.append(p_key)
+                self.schema_params[p_key] = ("definitions", defn_name, "properties", p_key)
                 if "default" in param:
                     param = self.sanitise_param_default(param)
-                    self.schema_defaults[p_key] = param["default"]
+                    if param["default"] is not None:
+                        self.schema_defaults[p_key] = param["default"]
+
+    def get_schema_types(self) -> None:
+        """Get a list of all parameter types in the schema"""
+        for name, param in self.schema.get("properties", {}).items():
+            if "type" in param:
+                self.schema_types[name] = param["type"]
+        for _, definition in self.schema.get("definitions", {}).items():
+            for name, param in definition.get("properties", {}).items():
+                if "type" in param:
+                    self.schema_types[name] = param["type"]
 
     def save_schema(self, suppress_logging=False):
         """Save a pipeline schema to a file"""
@@ -184,7 +202,7 @@ class PipelineSchema:
         """
         # First, try to load as JSON
         try:
-            with open(params_path, "r") as fh:
+            with open(params_path) as fh:
                 try:
                     params = json.load(fh)
                 except json.JSONDecodeError as e:
@@ -195,7 +213,7 @@ class PipelineSchema:
             log.debug(f"Could not load input params as JSON: {json_e}")
             # This failed, try to load as YAML
             try:
-                with open(params_path, "r") as fh:
+                with open(params_path) as fh:
                     params = yaml.safe_load(fh)
                     self.input_params.update(params)
                     log.debug(f"Loaded YAML input params: {params_path}")
@@ -239,9 +257,9 @@ class PipelineSchema:
         except jsonschema.exceptions.ValidationError as e:
             raise AssertionError(f"Default parameters are invalid: {e.message}")
         for param, default in self.schema_defaults.items():
-            if default in ("null", "", None, "None"):
+            if default in ("null", "", None, "None") or default is False:
                 log.warning(
-                    f"[yellow][!] Default parameter '{param}' is empty or null. It is advisable to remove the default from the schema"
+                    f"[yellow][!] Default parameter '{param}' is empty, null, or False. It is advisable to remove the default from the schema"
                 )
         log.info("[green][✓] Default parameters match schema validation")
 
@@ -312,7 +330,7 @@ class PipelineSchema:
                     param
                 ] = f"String should not be set to `{config_default}`"
         if schema_param["type"] == "boolean":
-            if not str(config_default) in ["false", "true"]:
+            if str(config_default) not in ["false", "true"]:
                 self.invalid_nextflow_config_default_parameters[
                     param
                 ] = f"Booleans should only be true or false, not `{config_default}`"
@@ -482,7 +500,7 @@ class PipelineSchema:
             console = rich.console.Console()
             console.print("\n", Syntax(prettified_docs, format), "\n")
         else:
-            if os.path.exists(output_fn) and not force:
+            if Path(output_fn).exists() and not force:
                 log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")
                 return
             with open(output_fn, "w") as fh:
@@ -568,7 +586,7 @@ class PipelineSchema:
         )
         schema_template = env.get_template("nextflow_schema.json")
         template_vars = {
-            "name": self.pipeline_manifest.get("name", os.path.dirname(self.schema_filename)).strip("'"),
+            "name": self.pipeline_manifest.get("name", Path(self.schema_filename).parent).strip("'"),
             "description": self.pipeline_manifest.get("description", "").strip("'"),
         }
         self.schema = json.loads(schema_template.render(template_vars))
@@ -652,9 +670,11 @@ class PipelineSchema:
         if len(self.pipeline_params) > 0 and len(self.pipeline_manifest) > 0:
             log.debug("Skipping get_wf_params as we already have them")
             return
-
+        if self.schema_filename is None:
+            log.error("Cannot get workflow params without a schema file")
+            return
         log.debug("Collecting pipeline parameter defaults\n")
-        config = nf_core.utils.fetch_wf_config(os.path.dirname(self.schema_filename))
+        config = nf_core.utils.fetch_wf_config(Path(self.schema_filename).parent)
         skipped_params = []
         # Pull out just the params. values
         for ckey, cval in config.items():
@@ -752,9 +772,7 @@ class PipelineSchema:
             if self.no_prompts or self.schema_from_scratch:
                 return True
             if Confirm.ask(
-                ":question: Unrecognised [bold]'params.{}'[/] found in the schema but not in the pipeline config! [yellow]Remove it?".format(
-                    p_key
-                )
+                f":question: Unrecognised [bold]'params.{p_key}'[/] found in the schema but not in the pipeline config! [yellow]Remove it?"
             ):
                 return True
         return False
@@ -762,12 +780,15 @@ class PipelineSchema:
     def add_schema_found_configs(self):
         """
         Add anything that's found in the Nextflow params that's missing in the pipeline schema
+        Update defaults if they have changed
         """
         params_added = []
         params_ignore = self.pipeline_params.get("validationSchemaIgnoreParams", "").strip("\"'").split(",")
         params_ignore.append("validationSchemaIgnoreParams")
         for p_key, p_val in self.pipeline_params.items():
+            s_key = self.schema_params.get(p_key)
             # Check if key is in schema parameters
+            # Key is in pipeline but not in schema or ignored from schema
             if p_key not in self.schema_params and p_key not in params_ignore:
                 if (
                     self.no_prompts
@@ -782,7 +803,35 @@ class PipelineSchema:
                     self.schema["properties"][p_key] = self.build_schema_param(p_val)
                     log.debug(f"Adding '{p_key}' to pipeline schema")
                     params_added.append(p_key)
-
+            # Param has a default that does not match the schema
+            elif p_key in self.schema_defaults and (s_def := self.schema_defaults[p_key]) != (
+                p_def := self.build_schema_param(p_val).get("default")
+            ):
+                if self.no_prompts or Confirm.ask(
+                    f":sparkles: Default for [bold]'params.{p_key}'[/] in the pipeline config does not match schema. (schema: '{s_def}' | config: '{p_def}'). "
+                    "[blue]Update pipeline schema?"
+                ):
+                    s_key_def = s_key + ("default",)
+                    if p_def is None:
+                        nf_core.utils.nested_delitem(self.schema, s_key_def)
+                        log.debug(f"Removed '{p_key}' default from pipeline schema")
+                    else:
+                        nf_core.utils.nested_setitem(self.schema, s_key_def, p_def)
+                        log.debug(f"Updating '{p_key}' default to '{p_def}' in pipeline schema")
+            # There is no default in schema but now there is a default to write
+            elif (
+                s_key
+                and (p_key not in self.schema_defaults)
+                and (p_key not in params_ignore)
+                and (p_def := self.build_schema_param(p_val).get("default"))
+            ):
+                if self.no_prompts or Confirm.ask(
+                    f":sparkles: Default for [bold]'params.{p_key}'[/] is not in schema (def='{p_def}'). "
+                    "[blue]Update pipeline schema?"
+                ):
+                    s_key_def = s_key + ("default",)
+                    nf_core.utils.nested_setitem(self.schema, s_key_def, p_def)
+                    log.debug(f"Updating '{p_key}' default to '{p_def}' in pipeline schema")
         return params_added
 
     def build_schema_param(self, p_val):
@@ -806,13 +855,15 @@ class PipelineSchema:
             p_val = None
 
         # Booleans
-        if p_val in ["True", "False"]:
-            p_val = p_val == "True"  # Convert to bool
+        if p_val in ["true", "false", "True", "False"]:
+            p_val = p_val in ["true", "True"]  # Convert to bool
             p_type = "boolean"
 
-        p_schema = {"type": p_type, "default": p_val}
+        # Don't return a default for anything false-y except 0
+        if not p_val and not (p_val == 0 and p_val is not False):
+            return {"type": p_type}
 
-        return p_schema
+        return {"type": p_type, "default": p_val}
 
     def launch_web_builder(self):
         """

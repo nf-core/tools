@@ -6,9 +6,11 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Union
 
 import git
 import questionary
+import rich.prompt
 from git.exc import GitCommandError
 
 import nf_core.utils
@@ -41,7 +43,7 @@ class ModulesJson:
         self.modules_dir = Path(self.dir, "modules")
         self.subworkflows_dir = Path(self.dir, "subworkflows")
         self.modules_json_path = Path(self.dir, "modules.json")
-        self.modules_json = None
+        self.modules_json: Union(dict, None) = None
         self.pipeline_modules = None
         self.pipeline_subworkflows = None
         self.pipeline_components = None
@@ -67,7 +69,13 @@ class ModulesJson:
         new_modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": {}}
 
         if not self.modules_dir.exists():
-            raise UserWarning("Can't find a ./modules directory. Is this a DSL2 pipeline?")
+            if rich.prompt.Confirm.ask(
+                "[bold][blue]?[/] Can't find a ./modules directory. Would you like me to create one?", default=True
+            ):
+                log.info(f"Creating ./modules directory in '{self.dir}'")
+                self.modules_dir.mkdir()
+            else:
+                raise UserWarning("Cannot proceed without a ./modules directory.")
 
         # Get repositories
         repos, _ = self.get_pipeline_module_repositories("modules", self.modules_dir)
@@ -545,6 +553,7 @@ class ModulesJson:
         Check that we have the "installed_by" value in 'modules.json', otherwise add it.
         Assume that the modules/subworkflows were installed by an nf-core command (don't track installed by subworkflows).
         """
+        dump_modules_json = False
         try:
             self.load()
             if not self.has_git_url_and_modules():
@@ -558,9 +567,11 @@ class ModulesJson:
                             for _, component in install_dir_entry.items():
                                 if "installed_by" in component and isinstance(component["installed_by"], str):
                                     log.debug(f"Updating {component} in modules.json")
+                                    dump_modules_json = True
                                     component["installed_by"] = [component["installed_by"]]
         except UserWarning:
             log.info("The 'modules.json' file is not up to date. Recreating the 'modules.json' file.")
+            dump_modules_json = True
             self.create()
 
         # Get unsynced components
@@ -585,8 +596,10 @@ class ModulesJson:
         # If some modules/subworkflows didn't have an entry in the 'modules.json' file
         # we try to determine the SHA from the commit log of the remote
         if len(modules_missing_from_modules_json) > 0:
+            dump_modules_json = True
             self.resolve_missing_from_modules_json(modules_missing_from_modules_json, "modules")
         if len(subworkflows_missing_from_modules_json) > 0:
+            dump_modules_json = True
             self.resolve_missing_from_modules_json(subworkflows_missing_from_modules_json, "subworkflows")
 
         # If the "installed_by" value is not present for modules/subworkflows, add it.
@@ -595,6 +608,7 @@ class ModulesJson:
                 for install_dir, installed_components in dir_content.items():
                     for component, component_features in installed_components.items():
                         if "installed_by" not in component_features:
+                            dump_modules_json = True
                             self.modules_json["repos"][repo][component_type][install_dir][component]["installed_by"] = [
                                 component_type
                             ]
@@ -604,12 +618,14 @@ class ModulesJson:
         self.pipeline_components = None
         subworkflows_dict = self.get_all_components("subworkflows")
         if subworkflows_dict:
+            dump_modules_json = True
             for repo, subworkflows in subworkflows_dict.items():
                 for org, subworkflow in subworkflows:
                     self.recreate_dependencies(repo, org, subworkflow)
         self.pipeline_components = original_pipeline_components
 
-        self.dump()
+        if dump_modules_json:
+            self.dump(run_prettier=True)
 
     def load(self):
         """
@@ -621,7 +637,7 @@ class ModulesJson:
             UserWarning: If the modules.json file is not found
         """
         try:
-            with open(self.modules_json_path, "r") as fh:
+            with open(self.modules_json_path) as fh:
                 try:
                     self.modules_json = json.load(fh)
                 except json.JSONDecodeError as e:
@@ -678,7 +694,7 @@ class ModulesJson:
             repo_component_entry[component_name]["installed_by"] = [installed_by]
         finally:
             new_installed_by = repo_component_entry[component_name]["installed_by"] + list(installed_by_log)
-            repo_component_entry[component_name]["installed_by"] = [*set(new_installed_by)]
+            repo_component_entry[component_name]["installed_by"] = sorted([*set(new_installed_by)])
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
@@ -1035,13 +1051,17 @@ class ModulesJson:
             )
         return branch
 
-    def dump(self):
+    def dump(self, run_prettier: bool = False):
         """
         Sort the modules.json, and write it to file
         """
         # Sort the modules.json
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
-        dump_json_with_prettier(self.modules_json_path, self.modules_json)
+        if run_prettier:
+            dump_json_with_prettier(self.modules_json_path, self.modules_json)
+        else:
+            with open(self.modules_json_path, "w") as fh:
+                json.dump(self.modules_json, fh, indent=4)
 
     def resolve_missing_installation(self, missing_installation, component_type):
         missing_but_in_mod_json = [

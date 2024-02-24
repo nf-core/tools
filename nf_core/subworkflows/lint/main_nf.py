@@ -4,6 +4,7 @@ Lint the main.nf file of a subworkflow
 
 import logging
 import re
+from typing import List
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ def main_nf(_, subworkflow):
     if lines is None:
         try:
             # Check whether file exists and load it
-            with open(subworkflow.main_nf, "r") as fh:
+            with open(subworkflow.main_nf) as fh:
                 lines = fh.readlines()
             subworkflow.passed.append(("main_nf_exists", "Subworkflow file exists", subworkflow.main_nf))
         except FileNotFoundError:
@@ -45,30 +46,30 @@ def main_nf(_, subworkflow):
     subworkflow_lines = []
     workflow_lines = []
     main_lines = []
-    for l in lines:
-        if re.search(r"^\s*workflow\s*\w*\s*{", l) and state == "subworkflow":
+    for line in lines:
+        if re.search(r"^\s*workflow\s*\w*\s*{", line) and state == "subworkflow":
             state = "workflow"
-        if re.search(r"take\s*:", l) and state in ["workflow"]:
+        if re.search(r"take\s*:", line) and state in ["workflow"]:
             state = "take"
             continue
-        if re.search(r"main\s*:", l) and state in ["take", "workflow"]:
+        if re.search(r"main\s*:", line) and state in ["take", "workflow"]:
             state = "main"
             continue
-        if re.search(r"emit\s*:", l) and state in ["take", "main", "workflow"]:
+        if re.search(r"emit\s*:", line) and state in ["take", "main", "workflow"]:
             state = "emit"
             continue
 
         # Perform state-specific linting checks
-        if state == "subworkflow" and not _is_empty(l):
-            subworkflow_lines.append(l)
-        if state == "workflow" and not _is_empty(l):
-            workflow_lines.append(l)
-        if state == "take" and not _is_empty(l):
-            inputs.extend(_parse_input(subworkflow, l))
-        if state == "emit" and not _is_empty(l):
-            outputs.extend(_parse_output(subworkflow, l))
-        if state == "main" and not _is_empty(l):
-            main_lines.append(l)
+        if state == "subworkflow" and not _is_empty(line):
+            subworkflow_lines.append(line)
+        if state == "workflow" and not _is_empty(line):
+            workflow_lines.append(line)
+        if state == "take" and not _is_empty(line):
+            inputs.extend(_parse_input(subworkflow, line))
+        if state == "emit" and not _is_empty(line):
+            outputs.extend(_parse_output(subworkflow, line))
+        if state == "main" and not _is_empty(line):
+            main_lines.append(line)
 
     # Check that we have required sections
     if not len(outputs):
@@ -120,7 +121,7 @@ def check_main_section(self, lines, included_components):
 
     # Check that all included components are used
     # Check that all included component versions are used
-    if included_components is not None:
+    if included_components:
         for component in included_components:
             if component in script:
                 self.passed.append(
@@ -134,7 +135,7 @@ def check_main_section(self, lines, included_components):
                         self.main_nf,
                     )
                 )
-            if component + ".out.versions" not in script:
+            if component + ".out.versions" in script:
                 self.passed.append(
                     (
                         "main_nf_include_versions",
@@ -152,7 +153,7 @@ def check_main_section(self, lines, included_components):
                 )
 
 
-def check_subworkflow_section(self, lines):
+def check_subworkflow_section(self, lines: List[str]) -> List[str]:
     """Lint the section of a subworkflow before the workflow definition
     Specifically checks if the subworkflow includes at least two modules or subworkflows
 
@@ -160,7 +161,7 @@ def check_subworkflow_section(self, lines):
         lines (List[str]): Content of subworkflow.
 
     Returns:
-        List: List of included component names. If subworkflow doesn't contain any lines, return None.
+        List[str]: List of included components.
     """
     # Check that we have subworkflow content
     if len(lines) == 0:
@@ -171,18 +172,25 @@ def check_subworkflow_section(self, lines):
                 self.main_nf,
             )
         )
-        return
+        return []
     self.passed.append(
         ("subworkflow_include", "Subworkflow does include modules before the workflow definition", self.main_nf)
     )
 
     includes = []
-    for l in lines:
-        if l.strip().startswith("include"):
-            component_name = l.split("{")[1].split("}")[0].strip()
-            if " as " in component_name:
-                component_name = component_name.split(" as ")[1].strip()
-            includes.append(component_name)
+    for line in lines:
+        if line.strip().startswith("include"):
+            component_name = [line.split("{")[1].split("}")[0].strip()]
+            # check if multiple components are included
+            if ";" in component_name[0]:
+                component_name = component_name[0].split(";")
+            for comp in component_name:
+                if " as " in comp:
+                    comp = comp.split(" as ")[1].strip()
+                includes.append(comp)
+            continue
+    # remove duplicated components
+    includes = list(set(includes))
     if len(includes) >= 2:
         self.passed.append(("main_nf_include", "Subworkflow includes two or more modules", self.main_nf))
     else:

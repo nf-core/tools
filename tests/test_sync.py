@@ -44,7 +44,7 @@ class TestModules(unittest.TestCase):
     def test_inspect_sync_dir_notgit(self, tmp_dir):
         """Try syncing an empty directory"""
         psync = nf_core.sync.PipelineSync(tmp_dir)
-        with pytest.raises(nf_core.sync.SyncException) as exc_info:
+        with pytest.raises(nf_core.sync.SyncExceptionError) as exc_info:
             psync.inspect_sync_dir()
         assert "does not appear to be a git repository" in exc_info.value.args[0]
 
@@ -56,7 +56,7 @@ class TestModules(unittest.TestCase):
         # Try to sync, check we halt with the right error
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         try:
-            with pytest.raises(nf_core.sync.SyncException) as exc_info:
+            with pytest.raises(nf_core.sync.SyncExceptionError) as exc_info:
                 psync.inspect_sync_dir()
             assert exc_info.value.args[0].startswith("Uncommitted changes found in pipeline directory!")
         finally:
@@ -66,7 +66,7 @@ class TestModules(unittest.TestCase):
         """Try getting a workflow config when the branch doesn't exist"""
         # Try to sync, check we halt with the right error
         psync = nf_core.sync.PipelineSync(self.pipeline_dir, from_branch="foo")
-        with pytest.raises(nf_core.sync.SyncException) as exc_info:
+        with pytest.raises(nf_core.sync.SyncExceptionError) as exc_info:
             psync.inspect_sync_dir()
             psync.get_wf_config()
         assert exc_info.value.args[0] == "Branch `foo` not found!"
@@ -76,7 +76,7 @@ class TestModules(unittest.TestCase):
         # Try to sync, check we halt with the right error
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.required_config_vars = ["fakethisdoesnotexist"]
-        with pytest.raises(nf_core.sync.SyncException) as exc_info:
+        with pytest.raises(nf_core.sync.SyncExceptionError) as exc_info:
             psync.inspect_sync_dir()
             psync.get_wf_config()
         # Check that we did actually get some config back
@@ -99,7 +99,7 @@ class TestModules(unittest.TestCase):
 
         psync.repo.delete_head("TEMPLATE")
 
-        with pytest.raises(nf_core.sync.SyncException) as exc_info:
+        with pytest.raises(nf_core.sync.SyncExceptionError) as exc_info:
             psync.checkout_template_branch()
         assert exc_info.value.args[0] == "Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'"
 
@@ -165,7 +165,7 @@ class TestModules(unittest.TestCase):
         test_fn.touch()
         psync.commit_template_changes()
         # Try to push changes
-        with pytest.raises(nf_core.sync.PullRequestException) as exc_info:
+        with pytest.raises(nf_core.sync.PullRequestExceptionError) as exc_info:
             psync.push_template_branch()
         assert exc_info.value.args[0].startswith("Could not push TEMPLATE branch")
 
@@ -220,7 +220,7 @@ class TestModules(unittest.TestCase):
         psync.get_wf_config()
         psync.repo.create_remote("origin", self.remote_path)
 
-        with pytest.raises(nf_core.sync.PullRequestException) as exc_info:
+        with pytest.raises(nf_core.sync.PullRequestExceptionError) as exc_info:
             psync.push_merge_branch()
         assert exc_info.value.args[0].startswith(f"Could not push branch '{psync.merge_branch}'")
 
@@ -329,7 +329,7 @@ class TestModules(unittest.TestCase):
         psync.gh_username = "bad_url"
         psync.gh_repo = "bad_url/response"
         os.environ["GITHUB_AUTH_TOKEN"] = "test"
-        with pytest.raises(nf_core.sync.PullRequestException) as exc_info:
+        with pytest.raises(nf_core.sync.PullRequestExceptionError) as exc_info:
             psync.make_pull_request()
         assert exc_info.value.args[0].startswith(
             "Something went badly wrong - GitHub API PR failed - got return code 404"
@@ -420,6 +420,6 @@ class TestModules(unittest.TestCase):
 
         psync.original_branch = "fake_branch"
 
-        with pytest.raises(nf_core.sync.SyncException) as exc_info:
+        with pytest.raises(nf_core.sync.SyncExceptionError) as exc_info:
             psync.reset_target_dir()
         assert exc_info.value.args[0].startswith("Could not reset to original branch `fake_branch`")

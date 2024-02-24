@@ -3,14 +3,15 @@ Code for linting modules and subworkflows in the nf-core/modules repository and
 in nf-core pipelines
 """
 
-from __future__ import print_function
 
 import logging
 import operator
 import os
 from pathlib import Path
 
-import rich
+import rich.box
+import rich.console
+import rich.panel
 from rich.markdown import Markdown
 from rich.table import Table
 
@@ -25,7 +26,7 @@ from nf_core.utils import plural_s as _s
 log = logging.getLogger(__name__)
 
 
-class LintException(Exception):
+class LintExceptionError(Exception):
     """Exception raised when there was an error with module or subworkflow linting"""
 
     pass
@@ -144,6 +145,7 @@ class ComponentLint(ComponentCommand):
     def get_all_module_lint_tests(is_pipeline):
         if is_pipeline:
             return [
+                "environment_yml",
                 "module_patch",
                 "module_version",
                 "main_nf",
@@ -153,7 +155,7 @@ class ComponentLint(ComponentCommand):
                 "module_changes",
             ]
         else:
-            return ["main_nf", "meta_yml", "module_todos", "module_deprecations", "module_tests"]
+            return ["environment_yml", "main_nf", "meta_yml", "module_todos", "module_deprecations", "module_tests"]
 
     @staticmethod
     def get_all_subworkflow_lint_tests(is_pipeline):
@@ -208,12 +210,12 @@ class ComponentLint(ComponentCommand):
         self.failed.sort(key=operator.attrgetter(*sort_order))
 
         # Find maximum module name length
-        max_name_len = 40
+        max_name_len = len(self.component_type[:-1] + " name")
         for tests in [self.passed, self.warned, self.failed]:
             try:
                 for lint_result in tests:
                     max_name_len = max(len(lint_result.component_name), max_name_len)
-            except:
+            except Exception:
                 pass
 
         # Helper function to format test links nicely
@@ -263,7 +265,7 @@ class ComponentLint(ComponentCommand):
             table = Table(style="yellow", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
             table.add_column(f"{self.component_type[:-1].title()} name", width=max_name_len)
             table.add_column("File path")
-            table.add_column("Test message")
+            table.add_column("Test message", overflow="fold")
             table = format_result(self.warned, table)
             console.print(
                 rich.panel.Panel(
@@ -277,10 +279,15 @@ class ComponentLint(ComponentCommand):
 
         # Table of failing tests
         if len(self.failed) > 0:
-            table = Table(style="red", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
+            table = Table(
+                style="red",
+                box=rich.box.MINIMAL,
+                pad_edge=False,
+                border_style="dim",
+            )
             table.add_column(f"{self.component_type[:-1].title()} name", width=max_name_len)
             table.add_column("File path")
-            table.add_column("Test message")
+            table.add_column("Test message", overflow="fold")
             table = format_result(self.failed, table)
             console.print(
                 rich.panel.Panel(

@@ -16,6 +16,7 @@
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
+                    "schema": "assets/schema_input.json",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
                     "description": "Path to comma-separated file containing information about the samples in the experiment.",
@@ -42,6 +43,7 @@
                 }
             }
         },
+        {%- if igenomes %}
         "reference_genome_options": {
             "title": "Reference genome options",
             "type": "object",
@@ -73,6 +75,7 @@
                 }
             }
         },
+        {%- endif %}
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -272,9 +275,9 @@
         {
             "$ref": "#/definitions/input_output_options"
         },
-        {
+        {% if igenomes %}{
             "$ref": "#/definitions/reference_genome_options"
-        },
+        },{% endif %}
         {
             "$ref": "#/definitions/institutional_config_options"
         },

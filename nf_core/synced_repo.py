@@ -3,10 +3,9 @@ import logging
 import os
 import shutil
 from pathlib import Path
+from typing import Dict
 
 import git
-import rich
-import rich.progress
 from git.exc import GitCommandError
 
 from nf_core.utils import load_tools_config
@@ -61,7 +60,7 @@ class SyncedRepo:
     An object to store details about a locally cached code repository.
     """
 
-    local_repo_statuses = {}
+    local_repo_statuses: Dict[str, bool] = {}
     no_pull_global = False
 
     @staticmethod
@@ -116,8 +115,6 @@ class SyncedRepo:
             remote_url = NF_CORE_MODULES_REMOTE
 
         self.remote_url = remote_url
-
-        self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, hide_progress)
 
@@ -211,7 +208,18 @@ class SyncedRepo:
         """
         Checks out the specified branch of the repository
         """
-        self.repo.git.checkout(self.branch)
+        try:
+            self.repo.git.checkout(self.branch)
+        except GitCommandError as e:
+            if (
+                self.fullname
+                and "modules" in self.fullname
+                and "Your local changes to the following files would be overwritten by checkout" in str(e)
+            ):
+                log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
+                self.repo.git.checkout(self.branch, force=True)
+            else:
+                raise e
 
     def checkout(self, commit):
         """
@@ -220,7 +228,18 @@ class SyncedRepo:
         Args:
             commit (str): Git SHA of the commit
         """
-        self.repo.git.checkout(commit)
+        try:
+            self.repo.git.checkout(commit)
+        except GitCommandError as e:
+            if (
+                self.fullname
+                and "modules" in self.fullname
+                and "Your local changes to the following files would be overwritten by checkout" in str(e)
+            ):
+                log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
+                self.repo.git.checkout(self.branch, force=True)
+            else:
+                raise e
 
     def component_exists(self, component_name, component_type, checkout=True, commit=None):
         """
