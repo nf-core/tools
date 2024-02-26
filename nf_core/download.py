@@ -1017,13 +1017,13 @@ class DownloadWorkflow:
 
         if self.registry_set:
             # Create a regex pattern from the set, in case trimming is needed.
-            trim_pattern = "|".join(f"{re.escape(registry)}-?" for registry in self.registry_set)
+            trim_pattern = "|".join(f"^{re.escape(registry)}-?" for registry in self.registry_set)
 
             for registry in self.registry_set:
                 if not os.path.basename(image_out_path).startswith(registry):
                     symlink_name = os.path.join("./", f"{registry}-{os.path.basename(image_out_path)}")
                 else:
-                    trimmed_name = re.sub(f"^({trim_pattern})", "", os.path.basename(image_out_path))
+                    trimmed_name = re.sub(f"{trim_pattern}", "", os.path.basename(image_out_path))
                     symlink_name = os.path.join("./", f"{registry}-{trimmed_name}")
 
                 symlink_full = os.path.join(os.path.dirname(image_out_path), symlink_name)
@@ -1209,8 +1209,11 @@ class DownloadWorkflow:
                                 or a Docker Hub repository ID.
 
         Returns:
-            results (bool, str):    Returns True if we have the image in the target location.
-                                    Returns a download path if not.
+            tuple (str, str):   Returns a tuple of (out_path, cache_path).
+                                out_path is the final target output path. it may point to the NXF_SINGULARITY_CACHEDIR, if cache utilisation was set to 'amend'.
+                                If cache utilisation was set to 'copy', it will point to the target folder, a subdirectory of the output directory. In the latter case,
+                                cache_path may either be None (image is not yet cached locally) or point to the image in the NXF_SINGULARITY_CACHEDIR, so it will not be
+                                downloaded from the web again, but directly copied from there. See get_singularity_images() for implementation.
         """
 
         # Generate file paths
@@ -1237,9 +1240,9 @@ class DownloadWorkflow:
         # if docker.registry / singularity.registry are set to empty strings at runtime, which can be included in the HPC config profiles easily.
         if self.registry_set:
             # Create a regex pattern from the set of registries
-            trim_pattern = "|".join(f"{re.escape(registry)}-?" for registry in self.registry_set)
+            trim_pattern = "|".join(f"^{re.escape(registry)}-?" for registry in self.registry_set)
             # Use the pattern to trim the string
-            out_name = re.sub(f"^({trim_pattern})", "", out_name)
+            out_name = re.sub(f"{trim_pattern}", "", out_name)
 
         # Full destination and cache paths
         out_path = os.path.abspath(os.path.join(self.outdir, "singularity-images", out_name))
