@@ -1023,7 +1023,7 @@ class DownloadWorkflow:
                 if not os.path.basename(image_out_path).startswith(registry):
                     symlink_name = os.path.join("./", f"{registry}-{os.path.basename(image_out_path)}")
                 else:
-                    trimmed_name = re.sub(f"^{trim_pattern}", "", os.path.basename(image_out_path))
+                    trimmed_name = re.sub(f"^({trim_pattern})", "", os.path.basename(image_out_path))
                     symlink_name = os.path.join("./", f"{registry}-{trimmed_name}")
 
                 symlink_full = os.path.join(os.path.dirname(image_out_path), symlink_name)
@@ -1239,7 +1239,7 @@ class DownloadWorkflow:
             # Create a regex pattern from the set of registries
             trim_pattern = "|".join(f"{re.escape(registry)}-?" for registry in self.registry_set)
             # Use the pattern to trim the string
-            out_name = re.sub(f"^{trim_pattern}", "", out_name)
+            out_name = re.sub(f"^({trim_pattern})", "", out_name)
 
         # Full destination and cache paths
         out_path = os.path.abspath(os.path.join(self.outdir, "singularity-images", out_name))
