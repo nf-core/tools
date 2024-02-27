@@ -455,6 +455,68 @@ class DownloadTest(unittest.TestCase):
             )
 
     #
+    # Test for 'singularity_image_filenames' function
+    #
+    @with_temporary_folder
+    def test_singularity_image_filenames(self, tmp_path):
+        os.environ["NXF_SINGULARITY_CACHEDIR"] = f"{tmp_path}/cachedir"
+
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
+        download_obj.outdir = tmp_path
+        download_obj.container_cache_utilisation = "amend"
+        download_obj.registry_set = {"docker.io", "quay.io", "depot.galaxyproject.org"}
+
+        ## Test phase I: Container not yet cached, should be amended to cache
+        # out_path: str, Path to cache
+        # cache_path: None
+
+        result = download_obj.singularity_image_filenames(
+            "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0"
+        )
+
+        # Assert that the result is a tuple of length 2
+        self.assertIsInstance(result, tuple)
+        self.assertEqual(len(result), 2)
+
+        # Assert that the types of the elements are (str, None)
+        self.assertTrue(all((isinstance(element, str), element is None) for element in result))
+
+        # assert that the correct out_path is returned that points to the cache
+        assert result[0].endswith("/cachedir/singularity-bbmap-38.93--he522d1c_0.img")
+
+        ## Test phase II: Test various container names
+        # out_path: str, Path to cache
+        # cache_path: None
+        result = download_obj.singularity_image_filenames(
+            "quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0"
+        )
+        assert result[0].endswith(
+            "/cachedir/biocontainers-mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2-59cdd445419f14abac76b31dd0d71217994cbcc9-0.img"
+        )
+
+        result = download_obj.singularity_image_filenames("nf-core/ubuntu:20.04")
+        assert result[0].endswith("/cachedir/nf-core-ubuntu-20.04.img")
+
+        ## Test phase III: Container wil lbe cached but also copied to out_path
+        # out_path: str, Path to cache
+        # cache_path: str, Path to cache
+        download_obj.container_cache_utilisation = "copy"
+        result = download_obj.singularity_image_filenames(
+            "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0"
+        )
+
+        self.assertTrue(all(isinstance(element, str) for element in result))
+        assert result[0].endswith("/singularity-images/singularity-bbmap-38.93--he522d1c_0.img")
+        assert result[1].endswith("/cachedir/singularity-bbmap-38.93--he522d1c_0.img")
+
+        ## Test phase IV: Expect an error if no NXF_SINGULARITY_CACHEDIR is defined
+        os.environ["NXF_SINGULARITY_CACHEDIR"] = ""
+        with self.assertRaises(FileNotFoundError):
+            download_obj.singularity_image_filenames(
+                "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0"
+            )
+
+    #
     # Test for '--singularity-cache remote --singularity-cache-index'. Provide a list of containers already available in a remote location.
     #
     @with_temporary_folder
