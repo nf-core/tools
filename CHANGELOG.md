@@ -118,6 +118,8 @@
 - Update actions/cache action to v4 ([#2666](https://github.com/nf-core/tools/pull/2666))
 - Update peter-evans/create-or-update-comment action to v4 ([#2683](https://github.com/nf-core/tools/pull/2683))
 - Update peter-evans/create-or-update-comment action to v4 ([#2695](https://github.com/nf-core/tools/pull/2695))
+- Set pdiff as nf-test differ in Docker image for Gitpod ([#2642](https://github.com/nf-core/tools/pull/2642))
+- Add config contacts ([#2800](https://github.com/nf-core/tools/pull/2800))
 
 ## [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]
 
