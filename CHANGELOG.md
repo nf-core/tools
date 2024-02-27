@@ -1,5 +1,20 @@
 # nf-core/tools: Changelog
 
+## v3.0dev
+
+### Template
+
+- Remove obsolete editor settings in `devcontainer.json` and `gitpod.yml` ([#2795](https://github.com/nf-core/tools/pull/2795))
+
+### Linting
+
+### Components
+
+### General
+
+- chore(deps): update seqeralabs/action-tower-launch digest to aa88624 ([#2793](https://github.com/nf-core/tools/pull/2793))
+- chore(deps): update codecov/codecov-action digest to 0cfda1d ([#2794](https://github.com/nf-core/tools/pull/2794))
+
 ## [v2.13 - Tin Puppy](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-20]
 
 ### Template
