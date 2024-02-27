@@ -4,6 +4,8 @@
 
 ### Template
 
+- Remove obsolete editor settings in `devcontainer.json` and `gitpod.yml` ([#2795](https://github.com/nf-core/tools/pull/2795))
+
 ### Linting
 
 ### Components
