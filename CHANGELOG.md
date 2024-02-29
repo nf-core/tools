@@ -7,6 +7,7 @@
 - Remove obsolete editor settings in `devcontainer.json` and `gitpod.yml` ([#2795](https://github.com/nf-core/tools/pull/2795))
 - Add nf-test test instructions to contributing and PR template ([#2807](https://github.com/nf-core/tools/pull/2807))
 - Update modules and subworkflows in the template ([#2811](https://github.com/nf-core/tools/pull/2811))
+- Unpin setup-nextflow and action-tower-launch ([#2806](https://github.com/nf-core/tools/pull/2806))
 
 ### Download
 
@@ -18,10 +19,8 @@
 
 ### General
 
-- chore(deps): update seqeralabs/action-tower-launch digest to aa88624 ([#2793](https://github.com/nf-core/tools/pull/2793))
 - chore(deps): update codecov/codecov-action digest to 0cfda1d ([#2794](https://github.com/nf-core/tools/pull/2794))
 - chore(deps): update gitpod/workspace-base docker digest to c15ee2f ([#2799](https://github.com/nf-core/tools/pull/2799))
-- Unpin dependencies ([#2806](https://github.com/nf-core/tools/pull/2806))
 
 ## [v2.13 - Tin Puppy](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-20]
 
