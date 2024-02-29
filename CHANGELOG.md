@@ -6,6 +6,7 @@
 
 - Remove obsolete editor settings in `devcontainer.json` and `gitpod.yml` ([#2795](https://github.com/nf-core/tools/pull/2795))
 - Add nf-test test instructions to contributing and PR template ([#2807](https://github.com/nf-core/tools/pull/2807))
+- Update modules and subworkflows in the template ([#2811](https://github.com/nf-core/tools/pull/2811))
 
 ### Download
 
