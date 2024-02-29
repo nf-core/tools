@@ -314,15 +314,25 @@ class SyncedRepo:
             self.checkout_branch()
         else:
             self.checkout(commit)
-        component_files = ["main.nf", "meta.yml"]
+        required_files = ["main.nf", "meta.yml"]
+        optional_files = ["environment.yml", "tests/main.nf.test", "tests/main.nf.test.snap", "tests/tags.yml"]
+        component_files = required_files + optional_files
         files_identical = {file: True for file in component_files}
         component_dir = self.get_component_dir(component_name, component_type)
         for file in component_files:
-            try:
-                files_identical[file] = filecmp.cmp(os.path.join(component_dir, file), os.path.join(base_path, file))
-            except FileNotFoundError:
-                log.debug(f"Could not open file: {os.path.join(component_dir, file)}")
+            component_file = os.path.join(component_dir, file)
+            base_file = os.path.join(base_path, file)
+            if (file in optional_files) and (not os.path.exists(component_file)) and (not os.path.exists(base_file)):
+                log.debug(f'The optional file "{file}" was not present.')
+                # TO-DO: Not sure we need to log this, but if we do what should the msg be?
+                # In this case, `files_identical[file]` will remain `True`. Is that what we want?
                 continue
+            try:
+                files_identical[file] = filecmp.cmp(component_file, base_file)
+            except FileNotFoundError:
+                errmsg = f"Could not open file: {os.path.join(component_dir, file)}"
+                log.error(errmsg)
+                raise UserWarning(errmsg)
         self.checkout_branch()
         return files_identical
 
