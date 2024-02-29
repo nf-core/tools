@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Launch workflow via tower
-        uses: seqeralabs/action-tower-launch@aa88624706d400097880b69f1204f7f25436e93f # v2
+        uses: seqeralabs/action-tower-launch@v2
         # TODO nf-core: You can customise AWS full pipeline tests as required
         # Add full size test data (but still relatively small datasets for few samples)
         # on the `test_full.config` test runs with only one set of parameters {%- raw %}
@@ -31,7 +31,7 @@ jobs:
             }
           profiles: test_full
 
-      - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
+      - uses: actions/upload-artifact@v4
         with:
           name: Tower debug log file
           path: |
