@@ -1,6 +1,5 @@
 """Downloads a nf-core pipeline to the local file system."""
 
-
 import concurrent.futures
 import io
 import logging
@@ -11,6 +10,7 @@ import subprocess
 import tarfile
 import textwrap
 from datetime import datetime
+from typing import List, Optional, Tuple
 from zipfile import ZipFile
 
 import git
@@ -34,13 +34,17 @@ from nf_core.utils import (
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
-    stderr=True, style="dim", highlight=False, force_terminal=nf_core.utils.rich_force_colors()
+    stderr=True,
+    style="dim",
+    highlight=False,
+    force_terminal=nf_core.utils.rich_force_colors(),
 )
 
 
 class DownloadError(RuntimeError):
     """A custom exception that is raised when nf-core download encounters a problem that we already took into consideration.
-    In this case, we do not want to print the traceback, but give the user some concise, helpful feedback instead."""
+    In this case, we do not want to print the traceback, but give the user some concise, helpful feedback instead.
+    """
 
 
 class DownloadProgress(rich.progress.Progress):
@@ -130,6 +134,8 @@ class DownloadWorkflow:
             self.container_library = [*container_library]
         else:
             self.container_library = ["quay.io"]
+        # Create a new set and add all values from self.container_library (CLI arguments to --container-library)
+        self.registry_set = set(self.container_library) if hasattr(self, "container_library") else set()
         # if a container_cache_index is given, use the file and overrule choice.
         self.container_cache_utilisation = "remote" if container_cache_index else container_cache_utilisation
         self.container_cache_index = container_cache_index
@@ -255,6 +261,7 @@ class DownloadWorkflow:
             # Collect all required singularity images
             if self.container_system == "singularity":
                 self.find_container_images(os.path.join(self.outdir, revision_dirname))
+                self.gather_registries(os.path.join(self.outdir, revision_dirname))
 
                 try:
                     self.get_singularity_images(current_revision=item[0])
@@ -275,7 +282,7 @@ class DownloadWorkflow:
             remote_url=f"https://github.com/{self.pipeline}.git",
             revision=self.revision if self.revision else None,
             commit=self.wf_sha.values() if bool(self.wf_sha) else None,
-            location=location if location else None,  # manual location is required for the tests to work
+            location=(location if location else None),  # manual location is required for the tests to work
             in_cache=False,
         )
 
@@ -292,6 +299,7 @@ class DownloadWorkflow:
                 self.workflow_repo.checkout(commit)
                 # Collect all required singularity images
                 self.find_container_images(self.workflow_repo.access())
+                self.gather_registries(self.workflow_repo.access())
 
                 try:
                     self.get_singularity_images(current_revision=revision)
@@ -335,7 +343,7 @@ class DownloadWorkflow:
 
             if bool(choice):
                 # have to make sure that self.revision is a list of strings, regardless if choice is str or list of strings.
-                self.revision.append(choice) if isinstance(choice, str) else self.revision.extend(choice)
+                (self.revision.append(choice) if isinstance(choice, str) else self.revision.extend(choice))
             else:
                 if bool(tag_set):
                     self.revision = tag_set
@@ -362,7 +370,8 @@ class DownloadWorkflow:
                 else:
                     log.info(
                         "Available {} revisions: '{}'".format(
-                            self.pipeline, "', '".join([r["tag_name"] for r in self.wf_revisions])
+                            self.pipeline,
+                            "', '".join([r["tag_name"] for r in self.wf_revisions]),
                         )
                     )
                     log.info("Available {} branches: '{}'".format(self.pipeline, "', '".join(self.wf_branches.keys())))
@@ -425,7 +434,9 @@ class DownloadWorkflow:
                 cachedir_path = None
                 while cachedir_path is None:
                     prompt_cachedir_path = questionary.path(
-                        "Specify the path:", only_directories=True, style=nf_core.utils.nfcore_question_style
+                        "Specify the path:",
+                        only_directories=True,
+                        style=nf_core.utils.nfcore_question_style,
                     ).unsafe_ask()
                     cachedir_path = os.path.abspath(os.path.expanduser(prompt_cachedir_path))
                     if prompt_cachedir_path == "":
@@ -603,7 +614,10 @@ class DownloadWorkflow:
 
         # Rename the internal directory name to be more friendly
         gh_name = f"{self.pipeline}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
-        os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, revision_dirname))
+        os.rename(
+            os.path.join(self.outdir, gh_name),
+            os.path.join(self.outdir, revision_dirname),
+        )
 
         # Make downloaded files executable
         for dirpath, _, filelist in os.walk(os.path.join(self.outdir, revision_dirname)):
@@ -624,7 +638,10 @@ class DownloadWorkflow:
             zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
-        os.rename(os.path.join(self.outdir, configs_local_dir), os.path.join(self.outdir, "configs"))
+        os.rename(
+            os.path.join(self.outdir, configs_local_dir),
+            os.path.join(self.outdir, "configs"),
+        )
 
         # Make downloaded files executable
         for dirpath, _, filelist in os.walk(os.path.join(self.outdir, "configs")):
@@ -697,7 +714,7 @@ class DownloadWorkflow:
                 config_findings_dsl2 = re.findall(config_regex, v)
 
                 if bool(config_findings_dsl2):
-                    # finding fill always be a tuple of length 2, first the quote used and second the enquoted value.
+                    # finding will always be a tuple of length 2, first the quote used and second the enquoted value.
                     for finding in config_findings_dsl2:
                         config_findings.append(finding + (self.nf_config, "Nextflow configs"))
                 else:  # no regex match, likely just plain string
@@ -734,7 +751,8 @@ class DownloadWorkflow:
                         re.DOTALL is used to account for the string to be spread out across multiple lines.
                         """
                         container_regex = re.compile(
-                            r"container\s+[\\s{}=$]*(?P<quote>[\'\"])(?P<param>(?:.(?!\1))*.?)\1[\\s}]*", re.DOTALL
+                            r"container\s+[\\s{}=$]*(?P<quote>[\'\"])(?P<param>(?:.(?!\1))*.?)\1[\\s}]*",
+                            re.DOTALL,
                         )
 
                         local_module_findings = re.findall(container_regex, search_space)
@@ -856,7 +874,8 @@ class DownloadWorkflow:
             """
 
             container_value_defs = re.findall(
-                r"[^\"\'](?P<quote>(?<![\\])[\'\"])(?P<param>(?:.(?!(?<![\\])\1))*.?)\1", container_value
+                r"[^\"\'](?P<quote>(?<![\\])[\'\"])(?P<param>(?:.(?!(?<![\\])\1))*.?)\1",
+                container_value,
             )
 
             """
@@ -960,7 +979,71 @@ class DownloadWorkflow:
                 d[k] = c
         return sorted(list(d.values()))
 
-    def get_singularity_images(self, current_revision=""):
+    def gather_registries(self, workflow_directory: str) -> None:
+        """Fetch the registries from the pipeline config and CLI arguments and store them in a set.
+        This is needed to symlink downloaded container images so Nextflow will find them.
+        """
+
+        # should exist, because find_container_images() is always called before
+        if not self.nf_config:
+            self.nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
+
+        # Select registries defined in pipeline config
+        configured_registries = [
+            "apptainer.registry",
+            "docker.registry",
+            "podman.registry",
+            "singularity.registry",
+        ]
+
+        for registry in configured_registries:
+            if registry in self.nf_config:
+                self.registry_set.add(self.nf_config[registry])
+
+        # add depot.galaxyproject.org to the set, because it is the default registry for singularity hardcoded in modules
+        self.registry_set.add("depot.galaxyproject.org")
+
+    def symlink_singularity_images(self, image_out_path: str) -> None:
+        """Create a symlink for each registry in the registry set that points to the image.
+        We have dropped the explicit registries from the modules in favor of the configurable registries.
+        Unfortunately, Nextflow still expects the registry to be part of the file name, so a symlink is needed.
+
+        The base image, e.g. ./nf-core-gatk-4.4.0.0.img will thus be symlinked as for example ./quay.io-nf-core-gatk-4.4.0.0.img
+        by prepending all registries in self.registry_set to the image name.
+
+        Unfortunately, out output image name may contain a registry definition (Singularity image pulled from depot.galaxyproject.org
+        or older pipeline version, where the docker registry was part of the image name in the modules). Hence, it must be stripped
+        before to ensure that it is really the base name.
+        """
+
+        if self.registry_set:
+            # Create a regex pattern from the set, in case trimming is needed.
+            trim_pattern = "|".join(f"^{re.escape(registry)}-?" for registry in self.registry_set)
+
+            for registry in self.registry_set:
+                if not os.path.basename(image_out_path).startswith(registry):
+                    symlink_name = os.path.join("./", f"{registry}-{os.path.basename(image_out_path)}")
+                else:
+                    trimmed_name = re.sub(f"{trim_pattern}", "", os.path.basename(image_out_path))
+                    symlink_name = os.path.join("./", f"{registry}-{trimmed_name}")
+
+                symlink_full = os.path.join(os.path.dirname(image_out_path), symlink_name)
+                target_name = os.path.join("./", os.path.basename(image_out_path))
+
+                if not os.path.exists(symlink_full) and target_name != symlink_name:
+                    os.makedirs(os.path.dirname(symlink_full), exist_ok=True)
+                    image_dir = os.open(os.path.dirname(image_out_path), os.O_RDONLY)
+                    try:
+                        os.symlink(
+                            target_name,
+                            symlink_name,
+                            dir_fd=image_dir,
+                        )
+                        log.debug(f"Symlinked {target_name} as {symlink_name}.")
+                    finally:
+                        os.close(image_dir)
+
+    def get_singularity_images(self, current_revision: str = "") -> None:
         """Loop through container names and download Singularity images"""
 
         if len(self.containers) == 0:
@@ -972,14 +1055,16 @@ class DownloadWorkflow:
 
             with DownloadProgress() as progress:
                 task = progress.add_task(
-                    "Collecting container images", total=len(self.containers), progress_type="summary"
+                    "Collecting container images",
+                    total=len(self.containers),
+                    progress_type="summary",
                 )
 
                 # Organise containers based on what we need to do with them
-                containers_exist = []
-                containers_cache = []
-                containers_download = []
-                containers_pull = []
+                containers_exist: List[str] = []
+                containers_cache: List[Tuple[str, str, Optional[str]]] = []
+                containers_download: List[Tuple[str, str, Optional[str]]] = []
+                containers_pull: List[Tuple[str, str, Optional[str]]] = []
                 for container in self.containers:
                     # Fetch the output and cached filenames for this container
                     out_path, cache_path = self.singularity_image_filenames(container)
@@ -1002,16 +1087,16 @@ class DownloadWorkflow:
 
                     # We have a copy of this in the NXF_SINGULARITY_CACHE dir
                     if cache_path and os.path.exists(cache_path):
-                        containers_cache.append([container, out_path, cache_path])
+                        containers_cache.append((container, out_path, cache_path))
                         continue
 
                     # Direct download within Python
                     if container.startswith("http"):
-                        containers_download.append([container, out_path, cache_path])
+                        containers_download.append((container, out_path, cache_path))
                         continue
 
                     # Pull using singularity
-                    containers_pull.append([container, out_path, cache_path])
+                    containers_pull.append((container, out_path, cache_path))
 
                 # Exit if we need to pull images and Singularity is not installed
                 if len(containers_pull) > 0:
@@ -1043,8 +1128,8 @@ class DownloadWorkflow:
 
                         # Kick off concurrent downloads
                         future_downloads = [
-                            pool.submit(self.singularity_download_image, *container, progress)
-                            for container in containers_download
+                            pool.submit(self.singularity_download_image, *containers, progress)
+                            for containers in containers_download
                         ]
 
                         # Make ctrl-c work with multi-threading
@@ -1069,13 +1154,13 @@ class DownloadWorkflow:
                             # Re-raise exception on the main thread
                             raise
 
-                    for container in containers_pull:
+                    for containers in containers_pull:
                         progress.update(task, description="Pulling singularity images")
                         # it is possible to try multiple registries / mirrors if multiple were specified.
                         # Iteration happens over a copy of self.container_library[:], as I want to be able to remove failing registries for subsequent images.
                         for library in self.container_library[:]:
                             try:
-                                self.singularity_pull_image(*container, library, progress)
+                                self.singularity_pull_image(*containers, library, progress)
                                 # Pulling the image was successful, no ContainerError was raised, break the library loop
                                 break
                             except ContainerError.ImageExistsError:
@@ -1112,12 +1197,12 @@ class DownloadWorkflow:
                             # The else clause executes after the loop completes normally.
                             # This means the library loop completed without breaking, indicating failure for all libraries (registries)
                             log.error(
-                                f"Not able to pull image of {container}. Service might be down or internet connection is dead."
+                                f"Not able to pull image of {containers}. Service might be down or internet connection is dead."
                             )
                         # Task should advance in any case. Failure to pull will not kill the download process.
                         progress.update(task, advance=1)
 
-    def singularity_image_filenames(self, container):
+    def singularity_image_filenames(self, container: str) -> Tuple[str, Optional[str]]:
         """Check Singularity cache for image, copy to destination folder if found.
 
         Args:
@@ -1125,8 +1210,11 @@ class DownloadWorkflow:
                                 or a Docker Hub repository ID.
 
         Returns:
-            results (bool, str):    Returns True if we have the image in the target location.
-                                    Returns a download path if not.
+            tuple (str, str):   Returns a tuple of (out_path, cache_path).
+                                out_path is the final target output path. it may point to the NXF_SINGULARITY_CACHEDIR, if cache utilisation was set to 'amend'.
+                                If cache utilisation was set to 'copy', it will point to the target folder, a subdirectory of the output directory. In the latter case,
+                                cache_path may either be None (image is not yet cached locally) or point to the image in the NXF_SINGULARITY_CACHEDIR, so it will not be
+                                downloaded from the web again, but directly copied from there. See get_singularity_images() for implementation.
         """
 
         # Generate file paths
@@ -1148,6 +1236,15 @@ class DownloadWorkflow:
         # Add file extension
         out_name = out_name + extension
 
+        # Trim potential registries from the name for consistency.
+        # This will allow pipelines to work offline without symlinked images,
+        # if docker.registry / singularity.registry are set to empty strings at runtime, which can be included in the HPC config profiles easily.
+        if self.registry_set:
+            # Create a regex pattern from the set of registries
+            trim_pattern = "|".join(f"^{re.escape(registry)}-?" for registry in self.registry_set)
+            # Use the pattern to trim the string
+            out_name = re.sub(f"{trim_pattern}", "", out_name)
+
         # Full destination and cache paths
         out_path = os.path.abspath(os.path.join(self.outdir, "singularity-images", out_name))
         cache_path = None
@@ -1162,14 +1259,18 @@ class DownloadWorkflow:
 
         return (out_path, cache_path)
 
-    def singularity_copy_cache_image(self, container, out_path, cache_path):
+    def singularity_copy_cache_image(self, container: str, out_path: str, cache_path: Optional[str]) -> None:
         """Copy Singularity image from NXF_SINGULARITY_CACHEDIR to target folder."""
         # Copy to destination folder if we have a cached version
         if cache_path and os.path.exists(cache_path):
             log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
             shutil.copyfile(cache_path, out_path)
+            # Create symlinks to ensure that the images are found even with different registries being used.
+            self.symlink_singularity_images(out_path)
 
-    def singularity_download_image(self, container, out_path, cache_path, progress):
+    def singularity_download_image(
+        self, container: str, out_path: str, cache_path: Optional[str], progress: DownloadProgress
+    ) -> None:
         """Download a singularity image from the web.
 
         Use native Python to download the file.
@@ -1216,13 +1317,15 @@ class DownloadWorkflow:
 
             # Rename partial filename to final filename
             os.rename(output_path_tmp, output_path)
-            output_path_tmp = None
 
             # Copy cached download if we are using the cache
             if cache_path:
                 log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
                 progress.update(task, description="Copying from cache to target directory")
                 shutil.copyfile(cache_path, out_path)
+
+            # Create symlinks to ensure that the images are found even with different registries being used.
+            self.symlink_singularity_images(output_path)
 
             progress.remove_task(task)
 
@@ -1238,8 +1341,12 @@ class DownloadWorkflow:
                 os.remove(output_path)
             # Re-raise the caught exception
             raise
+        finally:
+            del output_path_tmp
 
-    def singularity_pull_image(self, container, out_path, cache_path, library, progress):
+    def singularity_pull_image(
+        self, container: str, out_path: str, cache_path: Optional[str], library: List[str], progress: DownloadProgress
+    ) -> None:
         """Pull a singularity image using ``singularity pull``
 
         Attempt to use a local installation of singularity to pull the image.
@@ -1254,6 +1361,11 @@ class DownloadWorkflow:
         """
         output_path = cache_path or out_path
 
+        # where the output of 'singularity pull' is first generated before being copied to the NXF_SINGULARITY_CACHDIR.
+        # if not defined by the Singularity administrators, then use the temporary directory to avoid storing the images in the work directory.
+        if os.environ.get("SINGULARITY_CACHEDIR") is None:
+            os.environ["SINGULARITY_CACHEDIR"] = NFCORE_CACHE_DIR
+
         # Sometimes, container still contain an explicit library specification, which
         # resulted in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
         # Thus, if an explicit registry is specified, the provided -l value is ignored.
@@ -1266,7 +1378,13 @@ class DownloadWorkflow:
             absolute_URI = False
 
         if shutil.which("singularity"):
-            singularity_command = ["singularity", "pull", "--name", output_path, address]
+            singularity_command = [
+                "singularity",
+                "pull",
+                "--name",
+                output_path,
+                address,
+            ]
         elif shutil.which("apptainer"):
             singularity_command = ["apptainer", "pull", "--name", output_path, address]
         else:
@@ -1275,7 +1393,13 @@ class DownloadWorkflow:
         log.debug(f"Singularity command: {' '.join(singularity_command)}")
 
         # Progress bar to show that something is happening
-        task = progress.add_task(container, start=False, total=False, progress_type="singularity_pull", current_log="")
+        task = progress.add_task(
+            container,
+            start=False,
+            total=False,
+            progress_type="singularity_pull",
+            current_log="",
+        )
 
         # Run the singularity pull command
         with subprocess.Popen(
@@ -1286,9 +1410,10 @@ class DownloadWorkflow:
             bufsize=1,
         ) as proc:
             lines = []
-            for line in proc.stdout:
-                lines.append(line)
-                progress.update(task, current_log=line.strip())
+            if proc.stdout is not None:
+                for line in proc.stdout:
+                    lines.append(line)
+                    progress.update(task, current_log=line.strip())
 
         if lines:
             # something went wrong with the container retrieval
@@ -1310,9 +1435,12 @@ class DownloadWorkflow:
             progress.update(task, current_log="Copying from cache to target directory")
             shutil.copyfile(cache_path, out_path)
 
+        # Create symlinks to ensure that the images are found even with different registries being used.
+        self.symlink_singularity_images(output_path)
+
         progress.remove_task(task)
 
-    def compress_download(self):
+    def compress_download(self) -> None:
         """Take the downloaded files and make a compressed .tar.gz archive."""
         log.debug(f"Creating archive: {self.output_filename}")
 
@@ -1584,7 +1712,16 @@ class WorkflowRepo(SyncedRepo):
 class ContainerError(Exception):
     """A class of errors related to pulling containers with Singularity/Apptainer"""
 
-    def __init__(self, container, registry, address, absolute_URI, out_path, singularity_command, error_msg):
+    def __init__(
+        self,
+        container,
+        registry,
+        address,
+        absolute_URI,
+        out_path,
+        singularity_command,
+        error_msg,
+    ):
         self.container = container
         self.registry = registry
         self.address = address
@@ -1600,6 +1737,7 @@ class ContainerError(Exception):
             elif (
                 re.search(r"requested\saccess\sto\sthe\sresource\sis\sdenied", line)
                 or re.search(r"StatusCode:\s404", line)
+                or re.search(r"400|Bad\s?Request", line)
                 or re.search(r"invalid\sstatus\scode\sfrom\sregistry\s400", line)
             ):
                 # Unfortunately, every registry seems to return an individual error here:

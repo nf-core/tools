@@ -108,12 +108,18 @@ jobs:
           sudo add-apt-repository --remove ppa:git-core/ppa
           sudo apt install -y git
 
+      - name: Set up Singularity
+        if: ${{ matrix.test == 'test_download.py'}}
+        uses: eWaterCycle/setup-singularity@931d4e31109e875b13309ae1d07c70ca8fbc8537 # v7
+        with:
+          singularity-version: 3.8.3
+
       - name: Get current date
         id: date
         run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@b9f764e8ba5c76b712ace14ecbfcef0e40ae2dd8 # v1
+        uses: nf-core/setup-nextflow@v1
 
       - name: Look if nf-test is already installed and write to env variable
         id: check-nftest
@@ -191,14 +197,14 @@ jobs:
           mv .github/.coveragerc .
 
       - name: Download all artifacts
-        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe # v4
+        uses: actions/download-artifact@87c55149d96e628cc2ef7e6fc2aab372015aec85 # v4
       - name: Run coverage
         run: |
           coverage combine --keep coverage*/.coverage*
           coverage report
           coverage xml
 
-      - uses: codecov/codecov-action@e0b68c6749509c5f83f984dd99a76a1c1a231044 # v4
+      - uses: codecov/codecov-action@54bcd8715eee62d40e33596ef5e8f0f48dbbccab # v4
         with:
           files: coverage.xml
         env:
