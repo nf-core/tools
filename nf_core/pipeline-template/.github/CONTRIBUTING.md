@@ -11,9 +11,8 @@ Contributions to the code are even more welcome ;)
 
 {% if branded -%}
 
-:::info
-If you need help using or modifying {{ name }} then the best place to ask is on the nf-core Slack [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
-:::
+> [!NOTE]
+> If you need help using or modifying {{ name }} then the best place to ask is on the nf-core Slack [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
 
 {% endif -%}
 
@@ -33,7 +32,7 @@ If you're not used to this workflow with git, you can start with some [docs from
 
 You have the option to test your changes locally by running the pipeline. For receiving warnings about process selectors and other `debug` information, it is recommended to use the debug profile. Execute all the tests with the following command:
 
-```
+```bash
 nf-test test --profile debug,test,docker --verbose
 ```
 
