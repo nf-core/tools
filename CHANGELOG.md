@@ -8,6 +8,7 @@
 - Add nf-test test instructions to contributing and PR template ([#2807](https://github.com/nf-core/tools/pull/2807))
 - Fix topic extraction step for hashtags in toots ([#2810](https://github.com/nf-core/tools/pull/2810))
 - Update modules and subworkflows in the template ([#2811](https://github.com/nf-core/tools/pull/2811))
+- Unpin setup-nextflow and action-tower-launch ([#2806](https://github.com/nf-core/tools/pull/2806))
 
 ### Download
 
@@ -19,7 +20,6 @@
 
 ### General
 
-- chore(deps): update seqeralabs/action-tower-launch digest to aa88624 ([#2793](https://github.com/nf-core/tools/pull/2793))
 - chore(deps): update codecov/codecov-action digest to 0cfda1d ([#2794](https://github.com/nf-core/tools/pull/2794))
 - chore(deps): update gitpod/workspace-base docker digest to c15ee2f ([#2799](https://github.com/nf-core/tools/pull/2799))
 
