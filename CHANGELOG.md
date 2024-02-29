@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v3.0dev
+## [v2.13 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-20]
 
 ### Template
 
