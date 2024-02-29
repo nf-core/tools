@@ -352,7 +352,95 @@ class DownloadTest(unittest.TestCase):
         # Test that they are all caught inside get_singularity_images().
         download_obj.get_singularity_images()
 
+    @with_temporary_folder
+    @mock.patch("os.makedirs")
+    @mock.patch("os.symlink")
+    @mock.patch("os.open")
+    @mock.patch("os.close")
+    @mock.patch("re.sub")
+    @mock.patch("os.path.basename")
+    @mock.patch("os.path.dirname")
+    def test_symlink_singularity_images(
+        self,
+        tmp_path,
+        mock_dirname,
+        mock_basename,
+        mock_resub,
+        mock_close,
+        mock_open,
+        mock_symlink,
+        mock_makedirs,
+    ):
+        # Setup
+        mock_resub.return_value = "singularity-image.img"
+        mock_dirname.return_value = f"{tmp_path}/path/to"
+        mock_basename.return_value = "quay.io-singularity-image.img"
+        mock_open.return_value = 12  # file descriptor
+        mock_close.return_value = 12  # file descriptor
+
+        download_obj = DownloadWorkflow(
+            pipeline="dummy",
+            outdir=tmp_path,
+            container_library=("mirage-the-imaginative-registry.io", "quay.io"),
+        )
+
+        # Call the method
+        download_obj.symlink_singularity_images(f"{tmp_path}/path/to/quay.io-singularity-image.img")
+        print(mock_resub.call_args)
+
+        # Check that os.makedirs was called with the correct arguments
+        mock_makedirs.assert_any_call(f"{tmp_path}/path/to", exist_ok=True)
+
+        # Check that os.open was called with the correct arguments
+        mock_open.assert_called_once_with(f"{tmp_path}/path/to", os.O_RDONLY)
+
+        # Check that os.symlink was called with the correct arguments
+        mock_symlink.assert_any_call(
+            "./quay.io-singularity-image.img",
+            "./mirage-the-imaginative-registry.io-quay.io-singularity-image.img",
+            dir_fd=12,
+        )
+        # Check that there is no attempt to symlink to itself (test parameters would result in that behavior if not checked in the function)
+        assert (
+            unittest.mock.call("./quay.io-singularity-image.img", "./quay.io-singularity-image.img", dir_fd=12)
+            not in mock_symlink.call_args_list
+        )
+
+    #
+    # Test for gather_registries'
+    #
+    @with_temporary_folder
+    @mock.patch("nf_core.utils.fetch_wf_config")
+    def test_gather_registries(self, tmp_path, mock_fetch_wf_config):
+        download_obj = DownloadWorkflow(
+            pipeline="dummy",
+            outdir=tmp_path,
+            container_library=None,
+        )
+        mock_fetch_wf_config.return_value = {
+            "apptainer.registry": "apptainer-registry.io",
+            "docker.registry": "docker.io",
+            "podman.registry": "podman-registry.io",
+            "singularity.registry": "singularity-registry.io",
+            "someother.registry": "fake-registry.io",
+        }
+        download_obj.gather_registries(tmp_path)
+        assert download_obj.registry_set
+        assert isinstance(download_obj.registry_set, set)
+        assert len(download_obj.registry_set) == 6
+
+        assert "quay.io" in download_obj.registry_set  # default registry, if no container library is provided.
+        assert "depot.galaxyproject.org" in download_obj.registry_set  # default registry, often hardcoded in modules
+        assert "apptainer-registry.io" in download_obj.registry_set
+        assert "docker.io" in download_obj.registry_set
+        assert "podman-registry.io" in download_obj.registry_set
+        assert "singularity-registry.io" in download_obj.registry_set
+        # it should only pull the apptainer, docker, podman and singularity registry from the config, but not any registry.
+        assert "fake-registry.io" not in download_obj.registry_set
+
+    #
     # If Singularity is not installed, it raises a OSError because the singularity command can't be found.
+    #
     @pytest.mark.skipif(
         shutil.which("singularity") is not None,
         reason="Can't test how the code behaves when singularity is not installed if it is.",
@@ -364,6 +452,68 @@ class DownloadTest(unittest.TestCase):
         with pytest.raises(OSError):
             download_obj.singularity_pull_image(
                 "a-container", f"{tmp_dir}/anothercontainer.sif", None, "quay.io", mock_rich_progress
+            )
+
+    #
+    # Test for 'singularity_image_filenames' function
+    #
+    @with_temporary_folder
+    def test_singularity_image_filenames(self, tmp_path):
+        os.environ["NXF_SINGULARITY_CACHEDIR"] = f"{tmp_path}/cachedir"
+
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
+        download_obj.outdir = tmp_path
+        download_obj.container_cache_utilisation = "amend"
+        download_obj.registry_set = {"docker.io", "quay.io", "depot.galaxyproject.org"}
+
+        ## Test phase I: Container not yet cached, should be amended to cache
+        # out_path: str, Path to cache
+        # cache_path: None
+
+        result = download_obj.singularity_image_filenames(
+            "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0"
+        )
+
+        # Assert that the result is a tuple of length 2
+        self.assertIsInstance(result, tuple)
+        self.assertEqual(len(result), 2)
+
+        # Assert that the types of the elements are (str, None)
+        self.assertTrue(all((isinstance(element, str), element is None) for element in result))
+
+        # assert that the correct out_path is returned that points to the cache
+        assert result[0].endswith("/cachedir/singularity-bbmap-38.93--he522d1c_0.img")
+
+        ## Test phase II: Test various container names
+        # out_path: str, Path to cache
+        # cache_path: None
+        result = download_obj.singularity_image_filenames(
+            "quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0"
+        )
+        assert result[0].endswith(
+            "/cachedir/biocontainers-mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2-59cdd445419f14abac76b31dd0d71217994cbcc9-0.img"
+        )
+
+        result = download_obj.singularity_image_filenames("nf-core/ubuntu:20.04")
+        assert result[0].endswith("/cachedir/nf-core-ubuntu-20.04.img")
+
+        ## Test phase III: Container wil lbe cached but also copied to out_path
+        # out_path: str, Path to cache
+        # cache_path: str, Path to cache
+        download_obj.container_cache_utilisation = "copy"
+        result = download_obj.singularity_image_filenames(
+            "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0"
+        )
+
+        self.assertTrue(all(isinstance(element, str) for element in result))
+        assert result[0].endswith("/singularity-images/singularity-bbmap-38.93--he522d1c_0.img")
+        assert result[1].endswith("/cachedir/singularity-bbmap-38.93--he522d1c_0.img")
+
+        ## Test phase IV: Expect an error if no NXF_SINGULARITY_CACHEDIR is defined
+        os.environ["NXF_SINGULARITY_CACHEDIR"] = ""
+        with self.assertRaises(FileNotFoundError):
+            download_obj.singularity_image_filenames(
+                "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0"
             )
 
     #

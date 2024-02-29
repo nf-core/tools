@@ -7,6 +7,10 @@
 - Remove obsolete editor settings in `devcontainer.json` and `gitpod.yml` ([#2795](https://github.com/nf-core/tools/pull/2795))
 - Add nf-test test instructions to contributing and PR template ([#2807](https://github.com/nf-core/tools/pull/2807))
 
+### Download
+
+- Improved offline container image resolution by introducing symlinks, fixes issues [#2751](https://github.com/nf-core/tools/issues/2751), [#2644](https://github.com/nf-core/tools/issues/2644) and [demultiplex#164](https://github.com/nf-core/demultiplex/issues/164): ([#2768](https://github.com/nf-core/tools/pull/2768))
+
 ### Linting
 
 ### Components
