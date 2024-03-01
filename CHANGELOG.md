@@ -10,6 +10,8 @@
 
 ### General
 
+- Changelog bot: handle also patch version before dev suffix ([#2820](https://github.com/nf-core/tools/pull/2820))
+
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
 ### Template
