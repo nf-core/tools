@@ -1,5 +1,15 @@
 # nf-core/tools: Changelog
 
+## v2.13.2dev
+
+### Template
+
+### Linting
+
+### Components
+
+### General
+
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
 ### Template
