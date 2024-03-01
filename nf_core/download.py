@@ -20,7 +20,7 @@ import requests_cache
 import rich
 import rich.progress
 from git.exc import GitCommandError, InvalidGitRepositoryError
-from packaging.version import Version as Version_parser
+from packaging.version import Version
 
 import nf_core
 import nf_core.list
@@ -1664,9 +1664,7 @@ class WorkflowRepo(SyncedRepo):
                     else:
                         # desired revisions may contain arbitrary branch names that do not correspond to valid sematic versioning patterns.
                         valid_versions = [
-                            Version_parser(v)
-                            for v in desired_revisions
-                            if re.match(r"\d+\.\d+(?:\.\d+)*(?:[\w\-_])*", v)
+                            str(Version(v)) for v in desired_revisions if re.match(r"\d+\.\d+(?:\.\d+)*(?:[\w\-_])*", v)
                         ]
                         # valid versions sorted in ascending order, last will be aliased as "latest".
                         latest = sorted(valid_versions)[-1]
