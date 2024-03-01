@@ -12,6 +12,7 @@
 
 - Update CI to use nf-core/setup-nextflow v2
 - Changelog bot: handle also patch version before dev suffix ([#2820](https://github.com/nf-core/tools/pull/2820))
+- Fix path in component update script ([#2823](https://github.com/nf-core/tools/pull/2823))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
