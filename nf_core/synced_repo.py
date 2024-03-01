@@ -329,9 +329,8 @@ class SyncedRepo:
                 continue
             try:
                 files_identical[file] = filecmp.cmp(component_file, base_file)
-            except FileNotFoundError:
-                errmsg = f"Could not open file: {os.path.join(component_dir, file)}"
-                raise UserWarning(errmsg)
+            except FileNotFoundError as e:
+                raise UserWarning(f"Could not open file: {e.filename}")
         self.checkout_branch()
         return files_identical
 
