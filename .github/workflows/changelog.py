@@ -71,6 +71,11 @@ def _determine_change_type(pr_title) -> tuple[str, str]:
         if re.sub(r"s$", "", section.lower().replace("ing", "")) in pr_title.lower():
             current_section_header = section_header
             current_section = section
+    # Add new section type if PR title has a colon and the section is not in the list
+    if ": " in pr_title and current_section == "General":
+        section = pr_title.split(":")[0]
+        current_section_header = f"### {section}"
+        current_section = section
     print(f"Detected section: {current_section}")
     return current_section, current_section_header
 
@@ -79,7 +84,7 @@ def _determine_change_type(pr_title) -> tuple[str, str]:
 section, section_header = _determine_change_type(pr_title)
 
 # Remove section indicator from the PR title.
-pr_title = re.sub(rf"{section}[:\s]*", "", pr_title, flags=re.IGNORECASE)
+pr_title = re.sub(rf"{section}:[\s]*", "", pr_title, flags=re.IGNORECASE)
 
 # Prepare the change log entry.
 pr_link = f"([#{pr_number}]({REPO_URL}/pull/{pr_number}))"
@@ -91,8 +96,11 @@ if comment := comment.removeprefix("@nf-core-bot changelog").strip():
 new_lines = [
     f"- {pr_title} {pr_link}\n",
 ]
-
 print(f"Adding new lines into section '{section}':\n" + "".join(new_lines))
+# Add new section if it doesn't exist
+if section_header not in open(changelog_path).read():
+    print(f"Adding new section '{section}'")
+    new_lines = [f"{section_header}\n"] + new_lines
 
 # Finally, updating the changelog.
 # Read the current changelog lines. We will print them back as is, except for one new
@@ -179,37 +187,39 @@ while orig_lines:
     print(f"Found line: {line.strip()}")
     print(f"inside_version_dev: {inside_version_dev}")
     print(f"section_header: {section_header}")
-    if inside_version_dev and line.lower().startswith(section_header.lower()):  # Section of interest header
-        print(f"Found section header: {line.strip()}")
-        if already_added_entry:
-            print(
-                f"Already added new lines into section {section}, is the section duplicated?",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-        updated_lines.append(line)
-        # Collecting lines until the next section.
-        section_lines: List[str] = []
-        while True:
-            line = orig_lines.pop(0)
-            if line.startswith("#"):
-                print(f"Found the next section header: {line.strip()}")
-                # Found the next section header, so need to put all the lines we collected.
-                updated_lines.append("\n")
-                _updated_lines = [_l for _l in section_lines + new_lines if _l.strip()]
-                updated_lines.extend(_updated_lines)
-                updated_lines.append("\n")
-                if new_lines:
-                    print(f"Updated {changelog_path} section '{section}' with lines:\n" + "".join(new_lines))
-                else:
-                    print(f"Removed existing entry from {changelog_path} section '{section}'")
-                already_added_entry = True
-                # Pushing back the next section header line
-                orig_lines.insert(0, line)
-                break
-            # If the line already contains a link to the PR, don't add it again.
-            line = _skip_existing_entry_for_this_pr(line, same_section=True)
-            section_lines.append(line)
+    if inside_version_dev:
+        if line.lower().startswith(section_header.lower()):  # Section of interest header
+            print(f"Found section header: {line.strip()}")
+            if already_added_entry:
+                print(
+                    f"Already added new lines into section {section}, is the section duplicated?",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+            updated_lines.append(line)
+            # Collecting lines until the next section.
+            section_lines: List[str] = []
+            while True:
+                line = orig_lines.pop(0)
+                if line.startswith("#"):
+                    print(f"Found the next section header: {line.strip()}")
+                    # Found the next section header, so need to put all the lines we collected.
+                    updated_lines.append("\n")
+                    _updated_lines = [_l for _l in section_lines + new_lines if _l.strip()]
+                    updated_lines.extend(_updated_lines)
+                    updated_lines.append("\n")
+                    if new_lines:
+                        print(f"Updated {changelog_path} section '{section}' with lines:\n" + "".join(new_lines))
+                    else:
+                        print(f"Removed existing entry from {changelog_path} section '{section}'")
+                    already_added_entry = True
+                    # Pushing back the next section header line
+                    orig_lines.insert(0, line)
+                    break
+                # If the line already contains a link to the PR, don't add it again.
+                line = _skip_existing_entry_for_this_pr(line, same_section=True)
+                section_lines.append(line)
+
     else:
         updated_lines.append(line)
 
