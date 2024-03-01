@@ -4,6 +4,8 @@
 
 ### Template
 
+- Update templates to use nf-core/setup-nextflow v2
+
 ### Linting
 
 ### Components
