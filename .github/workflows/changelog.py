@@ -71,11 +71,6 @@ def _determine_change_type(pr_title) -> tuple[str, str]:
         if re.sub(r"s$", "", section.lower().replace("ing", "")) in pr_title.lower():
             current_section_header = section_header
             current_section = section
-    # Add new section type if PR title has a colon and the section is not in the list
-    if ": " in pr_title and current_section == "General":
-        section = pr_title.split(":")[0]
-        current_section_header = f"### {section}"
-        current_section = section
     print(f"Detected section: {current_section}")
     return current_section, current_section_header
 
@@ -97,10 +92,6 @@ new_lines = [
     f"- {pr_title} {pr_link}\n",
 ]
 print(f"Adding new lines into section '{section}':\n" + "".join(new_lines))
-# Add new section if it doesn't exist
-if section_header not in open(changelog_path).read():
-    print(f"Adding new section '{section}'")
-    new_lines = [f"{section_header}\n"] + new_lines
 
 # Finally, updating the changelog.
 # Read the current changelog lines. We will print them back as is, except for one new
