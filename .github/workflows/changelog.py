@@ -178,38 +178,37 @@ while orig_lines:
     print(f"Found line: {line.strip()}")
     print(f"inside_version_dev: {inside_version_dev}")
     print(f"section_header: {section_header}")
-    if inside_version_dev:
-        if line.lower().startswith(section_header.lower()):  # Section of interest header
-            print(f"Found section header: {line.strip()}")
-            if already_added_entry:
-                print(
-                    f"Already added new lines into section {section}, is the section duplicated?",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-            updated_lines.append(line)
-            # Collecting lines until the next section.
-            section_lines: List[str] = []
-            while True:
-                line = orig_lines.pop(0)
-                if line.startswith("#"):
-                    print(f"Found the next section header: {line.strip()}")
-                    # Found the next section header, so need to put all the lines we collected.
-                    updated_lines.append("\n")
-                    _updated_lines = [_l for _l in section_lines + new_lines if _l.strip()]
-                    updated_lines.extend(_updated_lines)
-                    updated_lines.append("\n")
-                    if new_lines:
-                        print(f"Updated {changelog_path} section '{section}' with lines:\n" + "".join(new_lines))
-                    else:
-                        print(f"Removed existing entry from {changelog_path} section '{section}'")
-                    already_added_entry = True
-                    # Pushing back the next section header line
-                    orig_lines.insert(0, line)
-                    break
-                # If the line already contains a link to the PR, don't add it again.
-                line = _skip_existing_entry_for_this_pr(line, same_section=True)
-                section_lines.append(line)
+    if inside_version_dev and line.lower().startswith(section_header.lower()):  # Section of interest header
+        print(f"Found section header: {line.strip()}")
+        if already_added_entry:
+            print(
+                f"Already added new lines into section {section}, is the section duplicated?",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        updated_lines.append(line)
+        # Collecting lines until the next section.
+        section_lines: List[str] = []
+        while True:
+            line = orig_lines.pop(0)
+            if line.startswith("#"):
+                print(f"Found the next section header: {line.strip()}")
+                # Found the next section header, so need to put all the lines we collected.
+                updated_lines.append("\n")
+                _updated_lines = [_l for _l in section_lines + new_lines if _l.strip()]
+                updated_lines.extend(_updated_lines)
+                updated_lines.append("\n")
+                if new_lines:
+                    print(f"Updated {changelog_path} section '{section}' with lines:\n" + "".join(new_lines))
+                else:
+                    print(f"Removed existing entry from {changelog_path} section '{section}'")
+                already_added_entry = True
+                # Pushing back the next section header line
+                orig_lines.insert(0, line)
+                break
+            # If the line already contains a link to the PR, don't add it again.
+            line = _skip_existing_entry_for_this_pr(line, same_section=True)
+            section_lines.append(line)
 
     else:
         updated_lines.append(line)
