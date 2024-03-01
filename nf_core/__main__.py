@@ -2119,10 +2119,16 @@ def logo(logo_text, dir, name, theme, width, format, force):
     default=False,
     help="Make a GitHub pull-request with the changes.",
 )
+@click.option(
+    "--force_pr",
+    is_flag=True,
+    default=False,
+    help="Force the creation of a pull-request, even if there are no changes.",
+)
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-def sync(dir, from_branch, pull_request, github_repository, username, template_yaml):
+def sync(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
@@ -2142,7 +2148,7 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     is_pipeline_directory(dir)
 
     # Sync the given pipeline dir
-    sync_obj = PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml)
+    sync_obj = PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
     try:
         sync_obj.sync()
     except (SyncExceptionError, PullRequestExceptionError) as e:
