@@ -322,7 +322,7 @@ class SyncedRepo:
         for file in component_files:
             component_file = Path(component_dir, file)
             base_file = Path(base_path, file)
-            if (file in optional_files) and (not os.path.exists(component_file)) and (not os.path.exists(base_file)):
+            if (file in optional_files) and (not component_file.exists()) and (not base_file.exists()):
                 log.debug(f'The optional file "{file}" was not present.')
                 # TO-DO: Not sure we need to log this, but if we do what should the msg be?
                 # In this case, `files_identical[file]` will remain `True`. Is that what we want?
