@@ -320,7 +320,7 @@ class SyncedRepo:
         files_identical = {file: True for file in component_files}
         component_dir = self.get_component_dir(component_name, component_type)
         for file in component_files:
-            component_file = os.path.join(component_dir, file)
+            component_file = Path(component_dir, file)
             base_file = os.path.join(base_path, file)
             if (file in optional_files) and (not os.path.exists(component_file)) and (not os.path.exists(base_file)):
                 log.debug(f'The optional file "{file}" was not present.')
