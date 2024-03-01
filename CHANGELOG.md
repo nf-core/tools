@@ -10,6 +10,8 @@
 
 ### General
 
+- Update ci to use nf-core/setup-nextflow v2
+
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
 ### Template
