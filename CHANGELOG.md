@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v3.0dev
+## v2.13.2dev
 
 ### Template
 
@@ -9,6 +9,33 @@
 ### Components
 
 ### General
+
+- Update CI to use nf-core/setup-nextflow v2
+- Changelog bot: handle also patch version before dev suffix ([#2820](https://github.com/nf-core/tools/pull/2820))
+- Update GitHub Actions ([#2827](https://github.com/nf-core/tools/pull/2827))
+
+## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
+
+### Template
+
+- Remove obsolete editor settings in `devcontainer.json` and `gitpod.yml` ([#2795](https://github.com/nf-core/tools/pull/2795))
+- Add nf-test test instructions to contributing and PR template ([#2807](https://github.com/nf-core/tools/pull/2807))
+- Fix topic extraction step for hashtags in toots ([#2810](https://github.com/nf-core/tools/pull/2810))
+- Update modules and subworkflows in the template ([#2811](https://github.com/nf-core/tools/pull/2811))
+- Unpin setup-nextflow and action-tower-launch ([#2806](https://github.com/nf-core/tools/pull/2806))
+
+### Download
+
+- Improved offline container image resolution by introducing symlinks, fixes issues [#2751](https://github.com/nf-core/tools/issues/2751), [#2644](https://github.com/nf-core/tools/issues/2644) and [demultiplex#164](https://github.com/nf-core/demultiplex/issues/164): ([#2768](https://github.com/nf-core/tools/pull/2768))
+
+### Linting
+
+### Components
+
+### General
+
+- chore(deps): update codecov/codecov-action digest to 0cfda1d ([#2794](https://github.com/nf-core/tools/pull/2794))
+- chore(deps): update gitpod/workspace-base docker digest to c15ee2f ([#2799](https://github.com/nf-core/tools/pull/2799))
 
 ## [v2.13 - Tin Puppy](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-20]
 
