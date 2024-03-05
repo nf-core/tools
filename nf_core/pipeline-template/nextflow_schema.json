@@ -112,9 +112,23 @@
                 },
                 "config_profile_contact": {
                     "type": "string",
-                    "description": "Institutional config contact information.",
+                    "description": "Institutional config contact name.",
                     "hidden": true,
                     "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_contact_github": {
+                    "type": "string",
+                    "description": "Institutional config contact GitHub username.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-github-alt",
+                    "pattern": "^@([A-Za-z0-9_]+)$"
+                },
+                "config_profile_contact_email ": {
+                    "type": "string",
+                    "description": "Email address for the institutional config contact.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-envelope",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
                 },
                 "config_profile_url": {
                     "type": "string",
