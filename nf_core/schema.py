@@ -1,5 +1,4 @@
-""" Code to deal with pipeline JSON Schema """
-
+"""Code to deal with pipeline JSON Schema"""
 
 import copy
 import json
@@ -282,9 +281,9 @@ class PipelineSchema:
                 if param in self.pipeline_params:
                     self.validate_config_default_parameter(param, group_properties[param], self.pipeline_params[param])
                 else:
-                    self.invalid_nextflow_config_default_parameters[
-                        param
-                    ] = "Not in pipeline parameters. Check `nextflow.config`."
+                    self.invalid_nextflow_config_default_parameters[param] = (
+                        "Not in pipeline parameters. Check `nextflow.config`."
+                    )
 
         # Go over ungrouped params if any exist
         ungrouped_properties = self.schema.get("properties")
@@ -297,9 +296,9 @@ class PipelineSchema:
                         param, ungrouped_properties[param], self.pipeline_params[param]
                     )
                 else:
-                    self.invalid_nextflow_config_default_parameters[
-                        param
-                    ] = "Not in pipeline parameters. Check `nextflow.config`."
+                    self.invalid_nextflow_config_default_parameters[param] = (
+                        "Not in pipeline parameters. Check `nextflow.config`."
+                    )
 
     def validate_config_default_parameter(self, param, schema_param, config_default):
         """
@@ -314,9 +313,9 @@ class PipelineSchema:
         ):
             # Check that we are not deferring the execution of this parameter in the schema default with squiggly brakcets
             if schema_param["type"] != "string" or "{" not in schema_param["default"]:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"Schema default (`{schema_param['default']}`) does not match the config default (`{config_default}`)"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"Schema default (`{schema_param['default']}`) does not match the config default (`{config_default}`)"
+                )
                 return
 
         # if default is null, we're good
@@ -326,28 +325,28 @@ class PipelineSchema:
         # Check variable types in nextflow.config
         if schema_param["type"] == "string":
             if str(config_default) in ["false", "true", "''"]:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"String should not be set to `{config_default}`"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"String should not be set to `{config_default}`"
+                )
         if schema_param["type"] == "boolean":
             if str(config_default) not in ["false", "true"]:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"Booleans should only be true or false, not `{config_default}`"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"Booleans should only be true or false, not `{config_default}`"
+                )
         if schema_param["type"] == "integer":
             try:
                 int(config_default)
             except ValueError:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"Does not look like an integer: `{config_default}`"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"Does not look like an integer: `{config_default}`"
+                )
         if schema_param["type"] == "number":
             try:
                 float(config_default)
             except ValueError:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"Does not look like a number (float): `{config_default}`"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"Does not look like a number (float): `{config_default}`"
+                )
 
     def validate_schema(self, schema=None):
         """

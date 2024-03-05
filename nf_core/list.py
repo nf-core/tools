@@ -1,6 +1,5 @@
 """Lists available nf-core pipelines and versions."""
 
-
 import json
 import logging
 import os
