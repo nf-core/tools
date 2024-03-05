@@ -4,6 +4,8 @@
 
 ### Template
 
+- Remove fasta default from nextflow.config ([#2828](https://github.com/nf-core/tools/pull/2828))
+
 ### Linting
 
 ### Components
