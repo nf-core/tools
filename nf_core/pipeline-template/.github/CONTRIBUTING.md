@@ -11,9 +11,8 @@ Contributions to the code are even more welcome ;)
 
 {% if branded -%}
 
-:::info
-If you need help using or modifying {{ name }} then the best place to ask is on the nf-core Slack [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
-:::
+> [!NOTE]
+> If you need help using or modifying {{ name }} then the best place to ask is on the nf-core Slack [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
 
 {% endif -%}
 
@@ -31,8 +30,11 @@ If you're not used to this workflow with git, you can start with some [docs from
 
 ## Tests
 
-You can optionally test your changes by running the pipeline locally. Then it is recommended to use the `debug` profile to
-receive warnings about process selectors and other debug info. Example: `nextflow run . -profile debug,test,docker --outdir <OUTDIR>`.
+You have the option to test your changes locally by running the pipeline. For receiving warnings about process selectors and other `debug` information, it is recommended to use the debug profile. Execute all the tests with the following command:
+
+```bash
+nf-test test --profile debug,test,docker --verbose
+```
 
 When you create a pull request with changes, [GitHub Actions](https://github.com/features/actions) will run automatic tests.
 Typically, pull-requests are only fully reviewed when these tests are passing, though of course we can help out before then.
@@ -98,7 +100,7 @@ Once there, use `nf-core schema build` to add to `nextflow_schema.json`.
 
 Sensible defaults for process resource requirements (CPUs / memory / time) for a process should be defined in `conf/base.config`. These should generally be specified generic with `withLabel:` selectors so they can be shared across multiple processes/steps of the pipeline. A nf-core standard set of labels that should be followed where possible can be seen in the [nf-core pipeline template](https://github.com/nf-core/tools/blob/master/nf_core/pipeline-template/conf/base.config), which has the default process as a single core-process, and then different levels of multi-core configurations for increasingly large memory requirements defined with standardised labels.
 
-The process resources can be passed on to the tool dynamically within the process with the `${task.cpu}` and `${task.memory}` variables in the `script:` block.
+The process resources can be passed on to the tool dynamically within the process with the `${task.cpus}` and `${task.memory}` variables in the `script:` block.
 
 ### Naming schemes
 
