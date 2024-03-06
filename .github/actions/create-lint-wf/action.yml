@@ -17,7 +17,7 @@ runs:
 
     # Set up Nextflow
     - name: Install Nextflow
-      uses: nf-core/setup-nextflow@v1
+      uses: nf-core/setup-nextflow@v2
       with:
         version: ${{ matrix.NXF_VER }}
 
