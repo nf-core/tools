@@ -1,8 +1,8 @@
 import subprocess
 from pathlib import Path
 
-import nf_core.create
 import nf_core.lint
+import nf_core.pipelines.create
 
 
 def test_template_strings(self):
@@ -16,7 +16,6 @@ def test_template_strings(self):
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.template_strings()
-    print(result["failed"])
     assert len(result["failed"]) == 1
     assert len(result["ignored"]) == 0
 
