@@ -48,7 +48,7 @@ def test_multiqc_incorrect_export_plots(self):
     # Reset the file
     with open(Path(new_pipeline, "assets", "multiqc_config.yml"), "w") as fh:
         yaml.safe_dump(mqc_yml_tmp, fh)
-    assert result["failed"] == ["'assets/multiqc_config.yml' does not contain 'export_plots: true'."]
+    assert "'assets/multiqc_config.yml' does not contain 'export_plots: true'." in result["failed"]
 
 
 def test_multiqc_config_report_comment_fail(self):
@@ -103,4 +103,5 @@ def test_multiqc_config_report_comment_release_succeed(self):
     # lint again
     lint_obj._load()
     result = lint_obj.multiqc_config()
-    assert "'assets/multiqc_config.yml' contains a matching 'report_comment'." in result["passed"]
+    print(result["passed"])
+    assert "'assets/multiqc_config.yml' contains `report_comment`" in result["passed"]

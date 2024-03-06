@@ -1,6 +1,6 @@
 # {{ name }}: Usage
 
-{% if branded -%}
+{% if is_nfcore -%}
 
 ## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/{{ short_name }}/usage](https://nf-co.re/{{ short_name }}/usage)
 
