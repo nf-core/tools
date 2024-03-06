@@ -1,5 +1,4 @@
-"""Synchronise a pipeline TEMPLATE branch with the template.
-"""
+"""Synchronise a pipeline TEMPLATE branch with the template."""
 
 import json
 import logging
@@ -141,7 +140,7 @@ class PipelineSync:
             self.made_changes = True
 
         # Push and make a pull request if we've been asked to
-        if self.made_changes and self.make_pr:
+        if self.made_changes and self.make_pr or self.force_pr:
             try:
                 # Check that we have an API auth token
                 if os.environ.get("GITHUB_AUTH_TOKEN", "") == "":
