@@ -83,16 +83,13 @@ class PipelineSchema:
             self.get_schema_defaults()
             self.validate_default_params()
             if len(self.invalid_nextflow_config_default_parameters) > 0:
-                log.info(
-                    "[red][✗] Invalid default parameters found:\n  --{}\n\nNOTE: Use null in config for no default.".format(
-                        "\n  --".join(
-                            [
-                                f"{param}: {msg}"
-                                for param, msg in self.invalid_nextflow_config_default_parameters.items()
-                            ]
-                        )
-                    )
+                params = "\n --".join(
+                    [f"{param}: {msg}" for param, msg in self.invalid_nextflow_config_default_parameters.items()]
                 )
+                log.info(
+                    f"[red][✗] Invalid default parameters found:\n {params} \n\nNOTE: Use null in config for no default."
+                )
+
             else:
                 log.info(f"[green][✓] Pipeline schema looks valid[/] [dim](found {num_params} params)")
         except json.decoder.JSONDecodeError as e:
@@ -646,17 +643,13 @@ class PipelineSchema:
                     # Extra help for people running offline
                     if "Could not connect" in e.args[0]:
                         log.info(
-                            "If you're working offline, now copy your schema ({}) and paste at https://nf-co.re/pipeline_schema_builder".format(
-                                self.schema_filename
-                            )
+                            f"If you're working offline, now copy your schema ({self.schema_filename}) and paste at https://nf-co.re/pipeline_schema_builder"
                         )
                         log.info("When you're finished, you can paste the edited schema back into the same file")
                     if self.web_schema_build_web_url:
                         log.info(
                             "To save your work, open {}\n"
-                            "Click the blue 'Finished' button, copy the schema and paste into this file: {}".format(
-                                self.web_schema_build_web_url, self.schema_filename
-                            )
+                            f"Click the blue 'Finished' button, copy the schema and paste into this file: { self.web_schema_build_web_url, self.schema_filename}"
                         )
                     return False
 
