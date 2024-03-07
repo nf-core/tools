@@ -14,6 +14,7 @@
 
 - Update CI to use nf-core/setup-nextflow v2
 - Changelog bot: handle also patch version before dev suffix ([#2820](https://github.com/nf-core/tools/pull/2820))
+- Add `force_pr` flag to sync, to force a PR even though there are no changes committed ([#2822](https://github.com/nf-core/tools/pull/2822))
 - update prettier to 3.2.5 ([#2830](https://github.com/nf-core/tools/pull/2830))
 - Update GitHub Actions ([#2827](https://github.com/nf-core/tools/pull/2827))
 
