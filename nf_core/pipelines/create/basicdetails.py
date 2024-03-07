@@ -69,9 +69,10 @@ class BasicDetails(Screen):
                 text_input.query_one(".validation_msg").update("")
         try:
             self.parent.TEMPLATE_CONFIG = CreateConfig(**config)
-            if self.parent.PIPELINE_TYPE == "nfcore":
-                self.parent.push_screen("type_nfcore")
-            elif self.parent.PIPELINE_TYPE == "custom":
-                self.parent.push_screen("type_custom")
+            if event.button.id == "next":
+                if self.parent.PIPELINE_TYPE == "nfcore":
+                    self.parent.push_screen("type_nfcore")
+                elif self.parent.PIPELINE_TYPE == "custom":
+                    self.parent.push_screen("type_custom")
         except ValueError:
             pass
