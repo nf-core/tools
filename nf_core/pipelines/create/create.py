@@ -4,22 +4,19 @@ organization's specification based on a template.
 import configparser
 import logging
 import os
-import random
 import re
 import shutil
-import time
 from pathlib import Path
 from typing import Optional, Union
 
-import filetype  # type: ignore
 import git
 import jinja2
-import requests
 import yaml
 
 import nf_core
 import nf_core.schema
 import nf_core.utils
+from nf_core.create_logo import create_logo
 from nf_core.lint_utils import run_prettier_on_file
 from nf_core.pipelines.create.utils import CreateConfig
 
@@ -271,15 +268,13 @@ class PipelineCreate:
         # Check if the output directory exists
         if self.outdir.exists():
             if self.force:
-                log.warning(
-                    f"Output directory '{self.outdir}' exists - removing the existing directory as --force specified"
-                )
-                shutil.rmtree(self.outdir)
+                log.warning(f"Output directory '{self.outdir}' exists - continuing as --force specified")
             else:
                 log.error(f"Output directory '{self.outdir}' exists!")
                 log.info("Use -f / --force to overwrite existing files")
                 raise UserWarning(f"Output directory '{self.outdir}' exists!")
-        os.makedirs(self.outdir)
+        else:
+            os.makedirs(self.outdir)
 
         # Run jinja2 for each file in the template folder
         env = jinja2.Environment(
@@ -296,7 +291,7 @@ class PipelineCreate:
         short_name = self.jinja_params["short_name"]
         rename_files = {
             "workflows/pipeline.nf": f"workflows/{short_name}.nf",
-            "lib/WorkflowPipeline.groovy": f"lib/Workflow{short_name.title()}.groovy",
+            "subworkflows/local/utils_nfcore_pipeline_pipeline/main.nf": f"subworkflows/local/utils_nfcore_{short_name}_pipeline/main.nf",
         }
 
         # Set the paths to skip according to customization
@@ -508,57 +503,13 @@ class PipelineCreate:
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
-
-        logo_url = f"https://nf-co.re/logo/{self.jinja_params['short_name']}?theme=light"
-        log.debug(f"Fetching logo from {logo_url}")
-
-        email_logo_path = self.outdir / "assets" / f"{self.jinja_params['name_noslash']}_logo_light.png"
-        self.download_pipeline_logo(f"{logo_url}?w=600&theme=light", email_logo_path)
+        email_logo_path = Path(self.outdir) / "assets"
+        create_logo(text=self.jinja_params["short_name"], dir=email_logo_path, theme="light", force=self.force)
         for theme in ["dark", "light"]:
-            readme_logo_url = f"{logo_url}?w=600&theme={theme}"
-            readme_logo_path = self.outdir / "docs" / "images" / f"{self.jinja_params['name_noslash']}_logo_{theme}.png"
-            self.download_pipeline_logo(readme_logo_url, readme_logo_path)
-
-    def download_pipeline_logo(self, url, img_fn):
-        """Attempt to download a logo from the website. Retry if it fails."""
-        os.makedirs(os.path.dirname(img_fn), exist_ok=True)
-        attempt = 0
-        max_attempts = 10
-        retry_delay = 0  # x up to 10 each time, so first delay will be 1-100 seconds
-        while attempt < max_attempts:
-            # If retrying, wait a while
-            if retry_delay > 0:
-                log.info(f"Waiting {retry_delay} seconds before next image fetch attempt")
-                time.sleep(retry_delay)
-
-            attempt += 1
-            # Use a random number to avoid the template sync hitting the website simultaneously for all pipelines
-            retry_delay = random.randint(1, 100) * attempt
-            log.debug(f"Fetching logo '{img_fn}' (attempt {attempt})")
-            try:
-                # Try to fetch the logo from the website
-                r = requests.get(url, timeout=180)
-                if r.status_code != 200:
-                    raise UserWarning(f"Got status code {r.status_code}")
-                # Check that the returned image looks right
-
-            except (ConnectionError, UserWarning) as e:
-                # Something went wrong - try again
-                log.warning(e)
-                log.error("Connection error - retrying")
-                continue
-
-            # Write the new logo to the file
-            with open(img_fn, "wb") as fh:
-                fh.write(r.content)
-            # Check that the file looks valid
-            image_type = filetype.guess(img_fn).extension
-            if image_type != "png":
-                log.error(f"Logo from the website didn't look like an image: '{image_type}'")
-                continue
-
-            # Got this far, presumably it's good - break the retry loop
-            break
+            readme_logo_path = Path(self.outdir) / "docs" / "images"
+            create_logo(
+                text=self.jinja_params["short_name"], dir=readme_logo_path, width=600, theme=theme, force=self.force
+            )
 
     def git_init_pipeline(self):
         """Initialises the new pipeline as a Git repository and submits first commit.
@@ -587,8 +538,23 @@ class PipelineCreate:
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
         if default_branch:
             repo.active_branch.rename(default_branch)
-        repo.git.branch("TEMPLATE")
-        repo.git.branch("dev")
+        try:
+            repo.git.branch("TEMPLATE")
+            repo.git.branch("dev")
+
+        except git.GitCommandError as e:
+            if "already exists" in e.stderr:
+                log.debug("Branches 'TEMPLATE' and 'dev' already exist")
+                if self.force:
+                    log.debug("Force option set - deleting branches")
+                    repo.git.branch("-D", "TEMPLATE")
+                    repo.git.branch("-D", "dev")
+                    repo.git.branch("TEMPLATE")
+                    repo.git.branch("dev")
+                else:
+                    raise UserWarning(
+                        "Branches 'TEMPLATE' and 'dev' already exist. Use --force to overwrite existing branches."
+                    )
         log.info(
             "Done. Remember to add a remote and push to GitHub:\n"
             f"[white on grey23] cd {self.outdir} \n"
