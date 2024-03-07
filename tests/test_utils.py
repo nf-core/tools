@@ -1,5 +1,4 @@
-""" Tests covering for utility functions.
-"""
+"""Tests covering for utility functions."""
 
 import os
 import shutil

@@ -1,5 +1,4 @@
-""" Tests covering the pipeline launch code.
-"""
+"""Tests covering the pipeline launch code."""
 
 import json
 import os

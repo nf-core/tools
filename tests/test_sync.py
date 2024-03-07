@@ -1,5 +1,4 @@
-""" Tests covering the sync command
-"""
+"""Tests covering the sync command"""
 
 import json
 import os

@@ -1,5 +1,4 @@
-"""Tests for the download subcommand of nf-core tools
-"""
+"""Tests for the download subcommand of nf-core tools"""
 
 import os
 import re

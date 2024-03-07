@@ -1,5 +1,5 @@
-"""Some tests covering the pipeline creation sub command.
-"""
+"""Some tests covering the pipeline creation sub command."""
+
 import os
 import unittest
 from pathlib import Path

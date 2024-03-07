@@ -1,5 +1,5 @@
-"""Some tests covering the linting code.
-"""
+"""Some tests covering the linting code."""
+
 import fnmatch
 import json
 import os

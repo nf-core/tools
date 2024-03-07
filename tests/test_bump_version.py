@@ -1,5 +1,5 @@
-"""Some tests covering the bump_version code.
-"""
+"""Some tests covering the bump_version code."""
+
 import os
 
 import yaml
