@@ -1,5 +1,4 @@
-"""Some tests covering the pipeline creation sub command.
-"""
+"""Some tests covering the pipeline creation sub command."""
 # import json
 # import os
 # import tempfile

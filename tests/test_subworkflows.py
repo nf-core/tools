@@ -1,5 +1,4 @@
-""" Tests covering the subworkflows commands
-"""
+"""Tests covering the subworkflows commands"""
 
 import os
 import shutil
