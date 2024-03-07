@@ -98,3 +98,9 @@ Vertical{
 .displayed #hide_password {
     display: block;
 }
+
+/* Logging console */
+
+.log_console {
+    height: auto;
+}
