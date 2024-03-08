@@ -16,6 +16,7 @@
 - Changelog bot: handle also patch version before dev suffix ([#2820](https://github.com/nf-core/tools/pull/2820))
 - update prettier to 3.2.5 ([#2830](https://github.com/nf-core/tools/pull/2830))
 - Update GitHub Actions ([#2827](https://github.com/nf-core/tools/pull/2827))
+- switch to setup-nf-test ([#2834](https://github.com/nf-core/tools/pull/2834))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
