@@ -121,30 +121,8 @@ jobs:
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v2
 
-      - name: Look if nf-test is already installed and write to env variable
-        id: check-nftest
-        run: |
-          if [ -f /usr/local/bin/nf-test ]; then
-            echo "nftest_installed=true" >> $GITHUB_ENV
-          else
-            echo "nftest_installed=false" >> $GITHUB_ENV
-          fi
-
-      - name: Cache nf-test installation
-        if: env.nftest_installed != 'true'
-        id: cache-software
-        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4
-        with:
-          path: |
-            /usr/local/bin/nf-test
-            /home/runner/.nf-test/nf-test.jar
-          key: ${{ runner.os }}-nftest-${{ env.date }}
-
       - name: Install nf-test
-        if: steps.cache-software.outputs.cache-hit != 'true' && env.nftest_installed != 'true'
-        run: |
-          wget -qO- https://code.askimed.com/install/nf-test | bash
-          sudo mv nf-test /usr/local/bin/
+        uses: nf-core/setup-nf-test@v0.0.1
 
       - name: move coveragerc file up
         run: |
