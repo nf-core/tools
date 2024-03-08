@@ -18,7 +18,7 @@ jobs:
         uses: nf-core/setup-nextflow@v2
 
       - name: Install nf-test
-        uses: nf-core/setup-nf-test@v0.0.3
+        uses: nf-core/setup-nf-test@v1
 
       - name: Install nf-core/tools
         run: pip install git+https://github.com/nf-core/tools.git@dev
