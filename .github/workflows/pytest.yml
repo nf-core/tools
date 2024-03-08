@@ -12,7 +12,9 @@ on:
     paths-ignore:
       - "docs/**"
       - "CHANGELOG.md"
+      # ignore github workflows except for the current one
       - ".github/**"
+      - "!.github/workflows/pytest.yml"
   release:
     types: [published]
   workflow_dispatch:
