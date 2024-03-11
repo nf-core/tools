@@ -9,6 +9,8 @@
 
 ### Linting
 
+- Only match assignments of params in `main.nf` and not references like `params.aligner == <something>` ([#2833](https://github.com/nf-core/tools/pull/2833))
+
 ### Components
 
 ### General
