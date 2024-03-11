@@ -9,7 +9,7 @@ pillow
 pdiff
 pre-commit
 prompt_toolkit>=3.0.3
-pytest-workflow>=1.6.0
+pytest-workflow>=2.0.0
 pytest>=7.0.0
 pyyaml
 questionary>=1.8.0
