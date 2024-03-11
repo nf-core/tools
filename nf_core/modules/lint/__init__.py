@@ -6,7 +6,6 @@ Command:
 nf-core modules lint
 """
 
-
 import logging
 import os
 

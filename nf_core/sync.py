@@ -1,5 +1,4 @@
-"""Synchronise a pipeline TEMPLATE branch with the template.
-"""
+"""Synchronise a pipeline TEMPLATE branch with the template."""
 
 import json
 import logging
