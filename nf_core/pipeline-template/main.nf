@@ -86,6 +86,8 @@ workflow {
         params.input
     )
 
+    params.max_time == 42
+
     //
     // WORKFLOW: Run main workflow
     //

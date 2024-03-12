@@ -221,6 +221,8 @@ class TestLint(unittest.TestCase):
         test_multiqc_incorrect_export_plots,
     )
     from .lint.nextflow_config import (  # type: ignore[misc]
+        test_allow_params_reference_in_main_nf,
+        test_catch_params_assignment_in_main_nf,
         test_default_values_fail,
         test_default_values_float,
         test_default_values_float_fail,

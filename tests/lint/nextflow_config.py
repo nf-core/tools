@@ -100,6 +100,36 @@ def test_default_values_fail(self):
     )
 
 
+def test_catch_params_assignment_in_main_nf(self):
+    """Test linting fails if main.nf contains an assignment to a parameter from nextflow_schema.json."""
+    new_pipeline = self._make_pipeline_copy()
+    # Change reference of params.max_time to assignment
+    main_nf_file = Path(new_pipeline) / "main.nf"
+    with open(main_nf_file) as f:
+        content = f.read()
+        fail_content = re.sub(r"params.max_time ==", "params.max_time =", content)
+        print(fail_content)
+    with open(main_nf_file, "w") as f:
+        f.write(fail_content)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj._load_pipeline_config()
+    result = lint_obj.nextflow_config()
+    assert len(result["failed"]) == 1
+    assert (
+        result["failed"][0]
+        == "Config default value incorrect: `params.max_time` is set as `240.h` in `nextflow_schema.json` but is `null` in `nextflow.config`."
+    )
+
+
+def test_allow_params_reference_in_main_nf(self):
+    """Test linting allows for references like `params.aligner == 'bwa'` in main.nf. The test will detect if the bug mentioned in GitHub-issue #2833 reemerges."""
+    new_pipeline = self._make_pipeline_copy()
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj._load_pipeline_config()
+    result = lint_obj.nextflow_config()
+    assert len(result["failed"]) == 0
+
+
 def test_default_values_ignored(self):
     """Test ignoring linting of default values."""
     new_pipeline = self._make_pipeline_copy()
