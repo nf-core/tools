@@ -8,7 +8,7 @@ USER root
 # Install util tools.
 # software-properties-common is needed to add ppa support for Apptainer installation
 RUN apt-get update --quiet && \
-    apt-get install --quiet --yes \
+    apt-get install --quiet --yes --no-install-recommends \
     apt-transport-https \
     apt-utils \
     sudo \
@@ -18,18 +18,17 @@ RUN apt-get update --quiet && \
     curl \
     tree \
     graphviz \
-    software-properties-common
-
-# Install Apptainer (Singularity)
-RUN add-apt-repository -y ppa:apptainer/ppa && \
+    software-properties-common && \
+    add-apt-repository -y ppa:apptainer/ppa && \
     apt-get update --quiet && \
-    apt install -y apptainer
-
-# Install Conda
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    apt-get install --quiet --yes apptainer && \
+    wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
     bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
-    rm Miniconda3-latest-Linux-x86_64.sh
+    rm Miniconda3-latest-Linux-x86_64.sh && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
+# Set PATH for Conda
 ENV PATH="/opt/conda/bin:$PATH"
 
 # Add the nf-core source files to the image
@@ -47,23 +46,20 @@ RUN conda config --add channels defaults && \
     conda config --add channels conda-forge && \
     conda config --set channel_priority strict && \
     conda install --quiet --yes --name base \
-    mamba \
     nextflow \
-    nf-core \
     nf-test \
     prettier \
     pre-commit \
     ruff \
+    mypy \
     openjdk \
     pytest-workflow && \
     conda clean --all --force-pkgs-dirs --yes
 
-# Update Nextflow
-RUN nextflow self-update
-
-# Install nf-core
-RUN python -m pip install . --no-cache-dir
+# Update Nextflow and Install nf-core
+RUN nextflow self-update && \
+    python -m pip install . --no-cache-dir
 
 # Setup pdiff for nf-test diffs
-RUN export NFT_DIFF="pdiff" && \
-    export NFT_DIFF_ARGS="--line-numbers --expand-tabs=2"
+ENV NFT_DIFF="pdiff"
+ENV NFT_DIFF_ARGS="--line-numbers --expand-tabs=2"
