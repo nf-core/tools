@@ -4,13 +4,23 @@
 
 ### Template
 
+- Remove fasta default from nextflow.config ([#2828](https://github.com/nf-core/tools/pull/2828))
+- Update templates to use nf-core/setup-nextflow v2
+
 ### Linting
+
+- Only match assignments of params in `main.nf` and not references like `params.aligner == <something>` ([#2833](https://github.com/nf-core/tools/pull/2833))
 
 ### Components
 
 ### General
 
+- Update CI to use nf-core/setup-nextflow v2
 - Changelog bot: handle also patch version before dev suffix ([#2820](https://github.com/nf-core/tools/pull/2820))
+- Update prettier to 3.2.5 ([#2830](https://github.com/nf-core/tools/pull/2830))
+- Update GitHub Actions ([#2827](https://github.com/nf-core/tools/pull/2827))
+- Switch to setup-nf-test ([#2834](https://github.com/nf-core/tools/pull/2834))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.2 ([#2836](https://github.com/nf-core/tools/pull/2836))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
