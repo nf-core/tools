@@ -21,6 +21,7 @@
 - Update GitHub Actions ([#2827](https://github.com/nf-core/tools/pull/2827))
 - Switch to setup-nf-test ([#2834](https://github.com/nf-core/tools/pull/2834))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.2 ([#2836](https://github.com/nf-core/tools/pull/2836))
+- Add tests for assignment and referencing of params in main.nf ([#2841](https://github.com/nf-core/tools/pull/2841))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
