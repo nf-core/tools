@@ -824,12 +824,7 @@ class ModulesJson:
             new_files = ModulesDiffer.try_apply_patch(module, repo_name, patch_path, module_dir, reverse=True)
         except LookupError as e:
             raise LookupError(f"Failed to apply patch in reverse for module '{module_fullname}' due to: {e}")
-        # get all files of the module
 
-        module_files = list(Path(module_dir).rglob("*"))
-        # exclude the patch file
-        log.info(f"Excluding patch file '{patch_path}' from the patched files")
-        unpatched_module_files = [f for f in module_files if f != patch_path]
         # Write the patched files and rest of the files to a temporary directory
         log.info("Writing patched files to tmpdir")
         temp_dir = Path(tempfile.mkdtemp())
@@ -840,13 +835,6 @@ class ModulesJson:
             fn = temp_module_dir / file
             with open(fn, "w") as fh:
                 fh.writelines(new_content)
-
-        # copy old files to the temp dir
-        for file in unpatched_module_files:
-            if file.is_file():
-                shutil.copy(file, temp_module_dir / file.relative_to(module_dir))
-            else:
-                shutil.copytree(file, temp_module_dir / file.relative_to(module_dir))
 
         return temp_module_dir
 

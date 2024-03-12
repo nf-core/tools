@@ -314,16 +314,14 @@ class SyncedRepo:
             self.checkout_branch()
         else:
             self.checkout(commit)
-        required_files = ["main.nf", "meta.yml"]
-        optional_files = ["environment.yml", "tests/main.nf.test", "tests/main.nf.test.snap", "tests/tags.yml"]
-        component_files = required_files + optional_files
         files_identical = {}
         component_dir = self.get_component_dir(component_name, component_type)
+        component_files = [file.relative_to(component_dir) for file in Path(component_dir).rglob("*") if file.is_file()]
         for file in component_files:
-            component_file = Path(component_dir, file)
-            base_file = Path(base_path, file)
-            if (file in optional_files) and (not component_file.exists()) and (not base_file.exists()):
-                log.debug(f'The optional file "{file}" was not present.')
+            component_file = component_dir / file
+            base_file = base_path / file
+            if not base_file.exists():
+                files_identical[file] = False
                 continue
             try:
                 files_identical[file] = filecmp.cmp(component_file, base_file)
