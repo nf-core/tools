@@ -23,6 +23,7 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.2 ([#2836](https://github.com/nf-core/tools/pull/2836))
 - optimize layers in dockerfile ([#2842](https://github.com/nf-core/tools/pull/2842))
 - Update gitpod/workspace-base Docker digest to 1e133e5 ([#2843](https://github.com/nf-core/tools/pull/2843))
+- Update python:3.11-slim Docker digest to a2eb07f ([#2847](https://github.com/nf-core/tools/pull/2847))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
