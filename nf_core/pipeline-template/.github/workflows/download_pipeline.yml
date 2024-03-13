@@ -69,13 +69,14 @@ jobs:
 
       - name: Run the downloaded pipeline (stub)
         id: stub_run_pipeline
+        continue-on-error: true
         env:
           NXF_SINGULARITY_CACHEDIR: ./
           NXF_SINGULARITY_HOME_MOUNT: true
         run: nextflow run ./${{ env.REPOTITLE_LOWERCASE }}/$( sed 's/\W/_/g' <<< ${{ env.REPO_BRANCH }}) -stub -profile test,singularity --outdir ./results
       - name: Run the downloaded pipeline (stub run not supported)
         id: run_pipeline
-        if: ${{ failure() && steps.stub_run_pipeline.conclusion == 'failure' }}
+        if: ${{ job.steps.stub_run_pipeline.status == failure() }}
         env:
           NXF_SINGULARITY_CACHEDIR: ./
           NXF_SINGULARITY_HOME_MOUNT: true
