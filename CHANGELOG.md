@@ -6,6 +6,7 @@
 
 - Remove fasta default from nextflow.config ([#2828](https://github.com/nf-core/tools/pull/2828))
 - Update templates to use nf-core/setup-nextflow v2
+- Link to troubleshooting docs when pipeline fails ([#2845](https://github.com/nf-core/tools/pull/2845))
 
 ### Linting
 
