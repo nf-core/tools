@@ -6,6 +6,7 @@
 
 - Remove fasta default from nextflow.config ([#2828](https://github.com/nf-core/tools/pull/2828))
 - Update templates to use nf-core/setup-nextflow v2
+- Link to troubleshooting docs when pipeline fails ([#2845](https://github.com/nf-core/tools/pull/2845))
 
 ### Linting
 
@@ -24,7 +25,6 @@
 - Add tests for assignment and referencing of params in main.nf ([#2841](https://github.com/nf-core/tools/pull/2841))
 - Optimize layers in dockerfile ([#2842](https://github.com/nf-core/tools/pull/2842))
 - Update gitpod/workspace-base Docker digest to 1e133e5 ([#2843](https://github.com/nf-core/tools/pull/2843))
-- Link to troubleshooting docs when pipeline fails ([#2845](https://github.com/nf-core/tools/pull/2845))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
