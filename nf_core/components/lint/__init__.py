@@ -3,7 +3,6 @@ Code for linting modules and subworkflows in the nf-core/modules repository and
 in nf-core pipelines
 """
 
-
 import logging
 import operator
 import os
