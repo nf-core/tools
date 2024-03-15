@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-""" nf-core: Helper tools for use with nf-core Nextflow pipelines. """
+"""nf-core: Helper tools for use with nf-core Nextflow pipelines."""
+
 import logging
 import os
 import sys

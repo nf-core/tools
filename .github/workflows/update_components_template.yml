@@ -23,11 +23,11 @@ jobs:
 
       - name: Update modules
         run: nf-core modules update --all
-        working-directory: nf-core/pipeline-template
+        working-directory: nf_core/pipeline-template
 
       - name: Update subworkflows
         run: nf-core subworkflows update --all
-        working-directory: nf-core/pipeline-template
+        working-directory: nf_core/pipeline-template
 
       # Commit the changes
       - name: Commit changes

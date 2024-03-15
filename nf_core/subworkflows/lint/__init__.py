@@ -6,7 +6,6 @@ Command:
 nf-core subworkflows lint
 """
 
-
 import logging
 import os
 

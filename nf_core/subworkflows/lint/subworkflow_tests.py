@@ -1,6 +1,7 @@
 """
 Lint the tests of a subworkflow in nf-core/modules
 """
+
 import json
 import logging
 from pathlib import Path
