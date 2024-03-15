@@ -1,5 +1,4 @@
-""" Code to deal with pipeline JSON Schema """
-
+"""Code to deal with pipeline JSON Schema"""
 
 import copy
 import json
@@ -84,16 +83,13 @@ class PipelineSchema:
             self.get_schema_defaults()
             self.validate_default_params()
             if len(self.invalid_nextflow_config_default_parameters) > 0:
-                log.info(
-                    "[red][✗] Invalid default parameters found:\n  --{}\n\nNOTE: Use null in config for no default.".format(
-                        "\n  --".join(
-                            [
-                                f"{param}: {msg}"
-                                for param, msg in self.invalid_nextflow_config_default_parameters.items()
-                            ]
-                        )
-                    )
+                params = "\n --".join(
+                    [f"{param}: {msg}" for param, msg in self.invalid_nextflow_config_default_parameters.items()]
                 )
+                log.info(
+                    f"[red][✗] Invalid default parameters found:\n {params} \n\nNOTE: Use null in config for no default."
+                )
+
             else:
                 log.info(f"[green][✓] Pipeline schema looks valid[/] [dim](found {num_params} params)")
         except json.decoder.JSONDecodeError as e:
@@ -282,9 +278,9 @@ class PipelineSchema:
                 if param in self.pipeline_params:
                     self.validate_config_default_parameter(param, group_properties[param], self.pipeline_params[param])
                 else:
-                    self.invalid_nextflow_config_default_parameters[
-                        param
-                    ] = "Not in pipeline parameters. Check `nextflow.config`."
+                    self.invalid_nextflow_config_default_parameters[param] = (
+                        "Not in pipeline parameters. Check `nextflow.config`."
+                    )
 
         # Go over ungrouped params if any exist
         ungrouped_properties = self.schema.get("properties")
@@ -297,9 +293,9 @@ class PipelineSchema:
                         param, ungrouped_properties[param], self.pipeline_params[param]
                     )
                 else:
-                    self.invalid_nextflow_config_default_parameters[
-                        param
-                    ] = "Not in pipeline parameters. Check `nextflow.config`."
+                    self.invalid_nextflow_config_default_parameters[param] = (
+                        "Not in pipeline parameters. Check `nextflow.config`."
+                    )
 
     def validate_config_default_parameter(self, param, schema_param, config_default):
         """
@@ -314,9 +310,9 @@ class PipelineSchema:
         ):
             # Check that we are not deferring the execution of this parameter in the schema default with squiggly brakcets
             if schema_param["type"] != "string" or "{" not in schema_param["default"]:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"Schema default (`{schema_param['default']}`) does not match the config default (`{config_default}`)"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"Schema default (`{schema_param['default']}`) does not match the config default (`{config_default}`)"
+                )
                 return
 
         # if default is null, we're good
@@ -326,28 +322,28 @@ class PipelineSchema:
         # Check variable types in nextflow.config
         if schema_param["type"] == "string":
             if str(config_default) in ["false", "true", "''"]:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"String should not be set to `{config_default}`"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"String should not be set to `{config_default}`"
+                )
         if schema_param["type"] == "boolean":
             if str(config_default) not in ["false", "true"]:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"Booleans should only be true or false, not `{config_default}`"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"Booleans should only be true or false, not `{config_default}`"
+                )
         if schema_param["type"] == "integer":
             try:
                 int(config_default)
             except ValueError:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"Does not look like an integer: `{config_default}`"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"Does not look like an integer: `{config_default}`"
+                )
         if schema_param["type"] == "number":
             try:
                 float(config_default)
             except ValueError:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"Does not look like a number (float): `{config_default}`"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"Does not look like a number (float): `{config_default}`"
+                )
 
     def validate_schema(self, schema=None):
         """
@@ -647,17 +643,13 @@ class PipelineSchema:
                     # Extra help for people running offline
                     if "Could not connect" in e.args[0]:
                         log.info(
-                            "If you're working offline, now copy your schema ({}) and paste at https://nf-co.re/pipeline_schema_builder".format(
-                                self.schema_filename
-                            )
+                            f"If you're working offline, now copy your schema ({self.schema_filename}) and paste at https://nf-co.re/pipeline_schema_builder"
                         )
                         log.info("When you're finished, you can paste the edited schema back into the same file")
                     if self.web_schema_build_web_url:
                         log.info(
                             "To save your work, open {}\n"
-                            "Click the blue 'Finished' button, copy the schema and paste into this file: {}".format(
-                                self.web_schema_build_web_url, self.schema_filename
-                            )
+                            f"Click the blue 'Finished' button, copy the schema and paste into this file: { self.web_schema_build_web_url, self.schema_filename}"
                         )
                     return False
 
