@@ -826,7 +826,7 @@ class ModulesJson:
             raise LookupError(f"Failed to apply patch in reverse for module '{module_fullname}' due to: {e}")
 
         # Write the patched files and rest of the files to a temporary directory
-        log.info("Writing patched files to tmpdir")
+        log.debug("Writing patched files to tmpdir")
         temp_dir = Path(tempfile.mkdtemp())
         temp_module_dir = temp_dir / module
         temp_module_dir.mkdir(parents=True, exist_ok=True)
