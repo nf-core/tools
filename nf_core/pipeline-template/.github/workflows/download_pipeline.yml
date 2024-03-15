@@ -30,6 +30,9 @@ jobs:
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v1
 
+      - name: Disk space cleanup
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
         with:
           python-version: "3.11"
