@@ -54,6 +54,13 @@ class BasicDetails(Screen):
         )
 
         yield TextInputWithHelp(
+            "handle",
+            "@OctoCat",
+            "Github handle of the main author / authors",
+            "Long form help text goes here",
+        )
+
+        yield TextInputWithHelp(
             "description",
             "Config built by nf-core/tools.",
             "A short description of your config.",
