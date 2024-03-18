@@ -1,5 +1,4 @@
-""" Tests covering the modules commands
-"""
+"""Tests covering the modules commands"""
 
 import os
 import shutil

@@ -2,7 +2,6 @@
 The ComponentCreate class handles generating of module and subworkflow templates
 """
 
-
 import glob
 import json
 import logging
