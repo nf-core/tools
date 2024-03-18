@@ -59,6 +59,7 @@ def test_create_patch_no_change(self):
     # Check that no patch file has been added to the directory
     assert set(os.listdir(subworkflow_path)) == {"main.nf", "meta.yml"}
 
+
 def test_create_patch_change(self):
     """Test creating a patch when there is no change to the subworkflow"""
     setup_patch(self.pipeline_dir, True)
@@ -107,7 +108,12 @@ def test_create_patch_try_apply_successful(self):
     # Try applying the patch
     subworkflow_install_dir = install_dir / "bam_sort_stats_samtools"
     patch_relpath = subworkflow_relpath / patch_fn
-    assert update_obj.try_apply_patch("bam_sort_stats_samtools", "nf-core", patch_relpath, subworkflow_path, subworkflow_install_dir) is True
+    assert (
+        update_obj.try_apply_patch(
+            "bam_sort_stats_samtools", "nf-core", patch_relpath, subworkflow_path, subworkflow_install_dir
+        )
+        is True
+    )
 
     # Move the files from the temporary directory
     update_obj.move_files_from_tmp_dir("bam_sort_stats_samtools", install_dir, "nf-core", SUCCEED_SHA)
@@ -128,6 +134,7 @@ def test_create_patch_try_apply_successful(self):
         main_nf_lines = fh.readlines()
     # These lines should have been removed by the patch
     assert "    ch_fasta // channel: [ val(meta), path(fasta) ]\n" not in main_nf_lines
+
 
 def test_create_patch_try_apply_failed(self):
     """Test creating a patch file and applying it to a new version of the the files"""
@@ -154,7 +161,13 @@ def test_create_patch_try_apply_failed(self):
     # Try applying the patch
     subworkflow_install_dir = install_dir / "bam_sort_stats_samtools"
     patch_relpath = subworkflow_relpath / patch_fn
-    assert update_obj.try_apply_patch("bam_sort_stats_samtools", "nf-core", patch_relpath, subworkflow_path, subworkflow_install_dir) is False
+    assert (
+        update_obj.try_apply_patch(
+            "bam_sort_stats_samtools", "nf-core", patch_relpath, subworkflow_path, subworkflow_install_dir
+        )
+        is False
+    )
+
 
 # TODO: create those two missing tests
 def test_create_patch_update_success(self):
@@ -189,4 +202,3 @@ def test_remove_patch(self):
         patch_obj.remove("bam_sort_stats_samtools")
     # Check that the diff file has been removed
     assert set(os.listdir(subworkflow_path)) == {"main.nf", "meta.yml"}
-
