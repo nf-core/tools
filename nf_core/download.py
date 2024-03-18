@@ -308,7 +308,9 @@ class DownloadWorkflow:
 
         # Justify why compression is skipped for Seqera Platform downloads (Prompt is not shown, but CLI argument could have been set)
         if self.compress_type is not None:
-            log.info("Compression choice is ignored for Seqera Platform downloads since nothing can be reasonably compressed.")
+            log.info(
+                "Compression choice is ignored for Seqera Platform downloads since nothing can be reasonably compressed."
+            )
 
     def prompt_pipeline_name(self):
         """Prompt for the pipeline name if not set with a flag"""
