@@ -72,7 +72,7 @@ class ModulesRepo(SyncedRepo):
     def gitless_repo(self):
         gitless_repo_url = self.remote_url
         if self.remote_url and ".git" in self.remote_url:
-            gitless_repo_url = gitless_repo_url[:-3]
+            gitless_repo_url = gitless_repo_url[:-4]
         return gitless_repo_url
 
     def setup_local_repo(self, remote, branch, hide_progress=True, in_cache=False):

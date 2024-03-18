@@ -70,7 +70,7 @@ class ComponentList(ComponentCommand):
         # We have a pipeline - list what's installed
         else:
             # Check that we are in a pipeline directory
-            print(f"{self.repo_type=}")
+            log.info(f"Repository type: [blue]{self.repo_type}")
             try:
                 if self.repo_type != "pipeline":
                     raise UserWarning(
@@ -141,9 +141,10 @@ class ComponentList(ComponentCommand):
                             version_sha = "[red]Not Available"
                             date = "[red]Not Available"
                             message = "[red]Not Available"
+                        nice_repo_name = repo_url.replace("https://github.com/", "").replace(".git", "")
                         table.add_row(
                             component,
-                            f"[link={repo_url}]{repo_url}[/link]",
+                            f"[link={repo_url}]{nice_repo_name}[/link]",
                             f"[link={module.gitless_repo()}/commit/{version_sha}]{version_sha[:7]}[/link]",
                             message,
                             date,
