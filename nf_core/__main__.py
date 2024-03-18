@@ -1684,6 +1684,7 @@ def subworkflows_install(ctx, subworkflow, dir, prompt, force, sha):
         log.error(e)
         sys.exit(1)
 
+
 # nf-core subworkflows patch
 @subworkflows.command("patch")
 @click.pass_context
@@ -1719,6 +1720,7 @@ def subworkflows_patch(ctx, tool, dir, remove):
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
+
 
 # nf-core subworkflows remove
 @subworkflows.command("remove")

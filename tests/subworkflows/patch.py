@@ -18,6 +18,7 @@ from ..utils import (
 Test the 'nf-core subworkflows patch' command
 """
 
+
 def setup_patch(self, pipeline_dir, modify_subworkflow):
     # Install the subworkflow bam_sort_stats_samtools
     subworkflow_path = os.path.join(self.subworkflow_install.dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
@@ -27,7 +28,6 @@ def setup_patch(self, pipeline_dir, modify_subworkflow):
     samtools_stats_path = os.path.join(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "stats")
     samtools_idxstats_path = os.path.join(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "idxstats")
     samtools_flagstat_path = os.path.join(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "flagstat")
-
 
     if modify_subworkflow:
         # Modify the subworkflow
@@ -48,30 +48,37 @@ def modify_subworkflow(path):
     with open(path, "w") as fh:
         fh.writelines(lines)
 
+
 def test_create_patch_change(self):
     """Test creating a patch when there is a change to the module"""
+
 
 def test_create_patch_no_change(self):
     """Test creating a patch when there is no change to the subworkflow"""
     # Try creating a patch file
     # Check that no patch file has been added to the directory
 
+
 def test_create_patch_try_apply_failed(self):
     """Test creating a patch file and applying it to a new version of the the files"""
+
 
 def test_create_patch_try_apply_successful(self):
     """Test creating a patch file and applying it to a new version of the the files"""
 
+
 def test_create_patch_update_fail(self):
     """Test creating a patch file and updating a subworkflow when there is a diff conflict"""
 
-def test_create_patch_update_success (self):
+
+def test_create_patch_update_success(self):
     """
     Test creating a patch file and the updating the subworkflow
 
     Should have the same effect as 'test_create_patch_try_apply_successful'
     but uses higher level api
     """
+
 
 def test_remove_patch(self):
     """Test creating a patch when there is no change to the subworkflow"""
