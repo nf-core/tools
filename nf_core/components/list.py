@@ -141,7 +141,13 @@ class ComponentList(ComponentCommand):
                             version_sha = "[red]Not Available"
                             date = "[red]Not Available"
                             message = "[red]Not Available"
-                        table.add_row(component, f'[link={repo_url}]{repo_url}[/link]', f'[link={module.gitless_repo()}/commit/{version_sha}]{version_sha[:7]}[/link]', message, date)
+                        table.add_row(
+                            component,
+                            f"[link={repo_url}]{repo_url}[/link]",
+                            f"[link={module.gitless_repo()}/commit/{version_sha}]{version_sha[:7]}[/link]",
+                            message,
+                            date,
+                        )
                         components.append(component)
 
         if print_json:
