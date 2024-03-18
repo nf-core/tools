@@ -1,5 +1,4 @@
-""" Tests covering the refgenie integration code
-"""
+"""Tests covering the refgenie integration code"""
 
 import os
 import shlex
