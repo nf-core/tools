@@ -68,7 +68,7 @@ class CreateConfig(BaseModel):
 class TextInput(Static):
     """Widget for text inputs.
 
-    Provides standard interface for a text input with help text
+    Provides standard interface for a text input with short help text
     and validation messages.
     """
 
@@ -93,6 +93,68 @@ class TextInput(Static):
             password=self.password,
         )
         yield Static(classes="validation_msg")
+
+    @on(Input.Changed)
+    @on(Input.Submitted)
+    def show_invalid_reasons(self, event: Union[Input.Changed, Input.Submitted]) -> None:
+        """Validate the text input and show errors if invalid."""
+        if not event.validation_result.is_valid:
+            self.query_one(".validation_msg").update("\n".join(event.validation_result.failure_descriptions))
+        else:
+            self.query_one(".validation_msg").update("")
+
+
+class TextInputWithHelp(Static):
+    """Widget for text inputs.
+
+    Provides standard interface for a text input with short and optiona long help text
+    and validation messages.
+    """
+
+    def __init__(
+        self,
+        field_id,
+        placeholder,
+        description,
+        markdown,
+        default=None,
+        password=None,
+        **kwargs,
+    ) -> None:
+        """Initialise the widget with our values.
+
+        Pass on kwargs upstream for standard usage."""
+        super().__init__(**kwargs)
+        self.field_id: str = field_id
+        self.id: str = field_id
+        self.placeholder: str = placeholder
+        self.description: str = description
+        self.markdown = markdown
+        self.default: str = default
+        self.password: bool = password
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """When the button is pressed, change the type of the button."""
+        if event.button.id == "show_help":
+            self.add_class("displayed")
+        elif event.button.id == "hide_help":
+            self.remove_class("displayed")
+
+    ## Define the layout of the question
+    def compose(self) -> ComposeResult:
+        yield Static(self.description, classes="field_help")
+        yield Container(
+            Input(
+                placeholder=self.placeholder,
+                validators=[ValidateConfig(self.field_id)],
+                value=self.default,
+                password=self.password,
+            ),
+            Button("Show help", id="show_help", variant="primary"),
+            Button("Hide help", id="hide_help"),
+        )
+        yield Static(classes="validation_msg")
+        yield HelpText(markdown=self.markdown, classes="help_box")
 
     @on(Input.Changed)
     @on(Input.Submitted)
@@ -138,7 +200,7 @@ class HelpText(Markdown):
         self.remove_class("displayed")
 
 
-class PipelineFeature(Static):
+class ConfigFeature(Static):
     """Widget for the selection of pipeline features."""
 
     def __init__(self, markdown: str, title: str, subtitle: str, field_id: str, **kwargs) -> None:
@@ -204,18 +266,3 @@ class ShowLogs(Message):
 def change_select_disabled(app, widget_id: str, disabled: bool) -> None:
     """Change the disabled state of a widget."""
     app.get_widget_by_id(widget_id).disabled = disabled
-
-
-## Markdown text to reuse in different screens
-markdown_genomes = """
-Nf-core pipelines are configured to use a copy of the most common reference genome files.
-
-By selecting this option, your pipeline will include a configuration file specifying the paths to these files.
-
-The required code to use these files will also be included in the template.
-When the pipeline user provides an appropriate genome key,
-the pipeline will automatically download the required reference files.
-
-For more information about reference genomes in nf-core pipelines,
-see the [nf-core docs](https://nf-co.re/docs/usage/reference_genomes).
-"""
