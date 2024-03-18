@@ -237,7 +237,8 @@ class ComponentLint(ComponentCommand):
 
                 # If this is an nf-core module, link to the nf-core webpage
                 if lint_result.component.repo_url == "https://github.com/nf-core/modules.git":
-                    module_name = f"[link=https://nf-co.re/modules/{lint_result.component_name.replace("/","_")}]{lint_result.component_name}[/link]"
+                    module_url = "https://nf-co.re/modules/" + lint_result.component_name.replace("/", "_")
+                    module_name = f"[link={module_url}]{lint_result.component_name}[/link]"
                 else:
                     module_name = lint_result.component_name
 
