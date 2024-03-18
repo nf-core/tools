@@ -359,8 +359,15 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 @click.option(
-    "-t",
     "--tower",
+    is_flag=True,
+    default=False,
+    hidden=True,
+    help="Download for Seqera Platform. DEPRECATED: Please use --platform instead.",
+)
+@click.option(
+    "-t",
+    "--platform",
     is_flag=True,
     default=False,
     help="Download for Seqera Platform (formerly Nextflow Tower)",
@@ -370,7 +377,7 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     "--download-configuration",
     is_flag=True,
     default=False,
-    help="Include configuration profiles in download. Not available with `--tower`",
+    help="Include configuration profiles in download. Not available with `--platform`",
 )
 # -c changed to -s for consistency with other --container arguments, where it is always the first letter of the last word.
 # Also -c might be used instead of -d for config in a later release, but reusing params for different options in two subsequent releases might be too error-prone.
@@ -412,6 +419,7 @@ def download(
     compress,
     force,
     tower,
+    platform,
     download_configuration,
     container_system,
     container_library,
@@ -433,7 +441,7 @@ def download(
         outdir,
         compress,
         force,
-        tower,
+        tower or platform,  # True if either specified
         download_configuration,
         container_system,
         container_library,

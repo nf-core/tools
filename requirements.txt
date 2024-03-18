@@ -1,4 +1,4 @@
-click
+click>=7.0
 filetype
 GitPython
 jinja2
