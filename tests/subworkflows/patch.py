@@ -1,18 +1,5 @@
 import os
-
-import pytest
-
-from nf_core.modules.modules_json import ModulesJson
-from nf_core.subworkflows.install import SubworkflowInstall
-
-from ..utils import (
-    GITLAB_BRANCH_TEST_BRANCH,
-    GITLAB_REPO,
-    GITLAB_SUBWORKFLOWS_BRANCH,
-    GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH,
-    GITLAB_URL,
-    with_temporary_folder,
-)
+from pathlib import Path
 
 """
 Test the 'nf-core subworkflows patch' command
@@ -22,12 +9,6 @@ Test the 'nf-core subworkflows patch' command
 def setup_patch(self, pipeline_dir, modify_subworkflow):
     # Install the subworkflow bam_sort_stats_samtools
     subworkflow_path = os.path.join(self.subworkflow_install.dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
-    sub_subworkflow_path = os.path.join(self.subworkflow_install.dir, "subworkflows", "nf-core", "bam_stats_samtools")
-    samtools_index_path = os.path.join(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "index")
-    samtools_sort_path = os.path.join(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "sort")
-    samtools_stats_path = os.path.join(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "stats")
-    samtools_idxstats_path = os.path.join(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "idxstats")
-    samtools_flagstat_path = os.path.join(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "flagstat")
 
     if modify_subworkflow:
         # Modify the subworkflow
