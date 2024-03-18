@@ -3,22 +3,14 @@ import tempfile
 from pathlib import Path
 from unittest import mock
 
-
 import pytest
 
-from nf_core.modules.modules_json import ModulesJson
-from nf_core.subworkflows.install import SubworkflowInstall
-import nf_core.subworkflows
 import nf_core.components.components_command
-
+import nf_core.subworkflows
 
 from ..utils import (
     GITLAB_BRANCH_TEST_BRANCH,
-    GITLAB_REPO,
-    GITLAB_SUBWORKFLOWS_BRANCH,
-    GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH,
     GITLAB_URL,
-    with_temporary_folder,
 )
 
 # TODO: #Change this for the correct SUCCEED_SHA
