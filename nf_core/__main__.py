@@ -36,7 +36,7 @@ click.rich_click.COMMAND_GROUPS = {
             "commands": [
                 "list",
                 "launch",
-                "config",
+                "configs",
                 "create-params-file",
                 "download",
                 "licences",
@@ -310,10 +310,10 @@ def launch(
         sys.exit(1)
 
 
-# nf-core config
+# nf-core configs
 @nf_core_cli.group()
 @click.pass_context
-def config():
+def configs():
     """
     Commands to manage nextflow and nf-core configs
     """
