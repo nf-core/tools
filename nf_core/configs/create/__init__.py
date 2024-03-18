@@ -5,13 +5,14 @@ import logging
 from textual.app import App
 from textual.widgets import Button
 
+# from nf_core.configs.create.nfcoreconfigs import NfcoreConfigs
+from nf_core.configs.create.configstype import ChooseConfigsType
+
 # from nf_core.configs.create.basicdetails import BasicDetails
 # from nf_core.configs.create.custompipeline import CustomPipeline
 # from nf_core.configs.create.error import ExistError
 # from nf_core.configs.create.finaldetails import FinalDetails
-# from nf_core.configs.create.loggingscreen import LoggingScreen
-# from nf_core.configs.create.nfcoreconfigs import NfcoreConfigs
-# from nf_core.configs.create.pipelinetype import ChoosePipelineType
+from nf_core.configs.create.loggingscreen import LoggingScreen
 from nf_core.configs.create.utils import (
     CreateConfig,
     CustomLogHandler,
@@ -38,8 +39,11 @@ class ConfigsCreateApp(App[CreateConfig]):
         ("d", "toggle_dark", "Toggle dark mode"),
         ("q", "quit", "Quit"),
     ]
+
+    ## New question sections go here
     SCREENS = {
         "welcome": WelcomeScreen(),
+        "choose_type": ChooseConfigsType(),
         # "basic_details": BasicDetails(),
     }
 
@@ -58,10 +62,10 @@ class ConfigsCreateApp(App[CreateConfig]):
         """Handle all button pressed events."""
         if event.button.id == "start":
             self.push_screen("choose_type")
-        elif event.button.id == "type_nfcore":
+        elif event.button.id == "type_infrastructure":
             self.CONFIGS_TYPE = "infrastructure"
             self.push_screen("basic_details")
-        elif event.button.id == "type_custom":
+        elif event.button.id == "type_pipeline":
             self.CONFIGS_TYPE = "pipeline"
             self.push_screen("basic_details")
         elif event.button.id == "show_logging":
