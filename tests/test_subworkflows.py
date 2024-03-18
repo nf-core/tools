@@ -138,6 +138,15 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_list_remote,
         test_subworkflows_list_remote_gitlab,
     )
+    from .subworkflows.patch import( # type: ignore[misc]
+        test_create_patch_change,
+        test_create_patch_no_change,
+        test_create_patch_try_apply_failed,
+        test_create_patch_try_apply_successful,
+        test_create_patch_update_fail,
+        test_create_patch_update_success,
+        test_remove_patch,
+    )
     from .subworkflows.remove import (  # type: ignore[misc]
         test_subworkflows_remove_included_subworkflow,
         test_subworkflows_remove_one_of_two_subworkflow,

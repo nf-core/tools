@@ -1684,6 +1684,41 @@ def subworkflows_install(ctx, subworkflow, dir, prompt, force, sha):
         log.error(e)
         sys.exit(1)
 
+# nf-core subworkflows patch
+@subworkflows.command("patch")
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+@click.option("-r", "--remove", is_flag=True, default=False)
+def subworkflows_patch(ctx, tool, dir, remove):
+    """
+    Create a patch file for minor changes in a subworkflow
+
+    Checks if a subworkflow has been modified locally and creates a patch file
+    describing how the module has changed from the remote version
+    """
+    from nf_core.subworkflows import SubworkflowPatch
+
+    try:
+        subworkflow_patch = SubworkflowPatch(
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        if remove:
+            subworkflow_patch.remove(tool)
+        else:
+            subworkflow_patch.patch(tool)
+    except (UserWarning, LookupError) as e:
+        log.error(e)
+        sys.exit(1)
 
 # nf-core subworkflows remove
 @subworkflows.command("remove")
