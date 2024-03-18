@@ -9,8 +9,8 @@ from nf_core.configs.create.basicdetails import BasicDetails
 
 # from nf_core.configs.create.nfcoreconfigs import NfcoreConfigs
 from nf_core.configs.create.configstype import ChooseConfigsType
+from nf_core.configs.create.infratype import ChooseInfraConfigType
 
-# from nf_core.configs.create.custompipeline import CustomPipeline
 # from nf_core.configs.create.error import ExistError
 # from nf_core.configs.create.finaldetails import FinalDetails
 from nf_core.configs.create.loggingscreen import LoggingScreen
@@ -45,11 +45,13 @@ class ConfigsCreateApp(App[CreateConfig]):
     SCREENS = {
         "welcome": WelcomeScreen(),
         "choose_type": ChooseConfigsType(),
+        "choose_infra": ChooseInfraConfigType(),
         "basic_details": BasicDetails(),
     }
 
     # Initialise configs type
     CONFIGS_TYPE = None
+    INFRA_TYPE = None
 
     # Log handler
     LOG_HANDLER = log_handler
@@ -65,10 +67,17 @@ class ConfigsCreateApp(App[CreateConfig]):
             self.push_screen("choose_type")
         elif event.button.id == "type_infrastructure":
             self.CONFIGS_TYPE = "infrastructure"
-            self.push_screen("basic_details")
+            self.push_screen("choose_infra")
         elif event.button.id == "type_pipeline":
             self.CONFIGS_TYPE = "pipeline"
+            self.push_screen("choose_infra")
+        elif event.button.id == "type_hpc":
+            self.INFRA_TYPE = "hpc"
             self.push_screen("basic_details")
+        elif event.button.id == "type_local":
+            self.INFRA_TYPE = "local"
+            self.push_screen("basic_details")
+
         elif event.button.id == "show_logging":
             # Set logging state to repo created to see the button for closing the logging screen
             self.LOGGING_STATE = "repo created"

@@ -8,7 +8,7 @@ from rich.logging import RichHandler
 from textual import on
 from textual._context import active_app
 from textual.app import ComposeResult
-from textual.containers import HorizontalScroll
+from textual.containers import Container, HorizontalScroll
 from textual.message import Message
 from textual.validation import ValidationResult, Validator
 from textual.widget import Widget
@@ -107,7 +107,7 @@ class TextInput(Static):
 class TextInputWithHelp(Static):
     """Widget for text inputs.
 
-    Provides standard interface for a text input with short and optiona long help text
+    Provides standard interface for a text input with short and optional long help text
     and validation messages.
     """
 
@@ -133,6 +133,7 @@ class TextInputWithHelp(Static):
         self.default: str = default
         self.password: bool = password
 
+    ## Dynamic updating of question contents
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """When the button is pressed, change the type of the button."""
         if event.button.id == "show_help":
@@ -152,9 +153,10 @@ class TextInputWithHelp(Static):
             ),
             Button("Show help", id="show_help", variant="primary"),
             Button("Hide help", id="hide_help"),
+            Static(classes="validation_msg"),
+            HelpText(markdown=self.markdown, classes="help_box"),
+            classes="custom_grid",
         )
-        yield Static(classes="validation_msg")
-        yield HelpText(markdown=self.markdown, classes="help_box")
 
     @on(Input.Changed)
     @on(Input.Submitted)
