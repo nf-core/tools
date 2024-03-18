@@ -1047,12 +1047,13 @@ def load_tools_config(directory: Union[str, Path] = "."):
 
 def determine_base_dir(directory="."):
     base_dir = start_dir = Path(directory).absolute()
-    while base_dir != base_dir.parent:
+    # Only iterate up the tree if the start dir doesn't have a config
+    while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
         base_dir = base_dir.parent
         config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
         if config_fn:
-            return directory if base_dir == start_dir else base_dir
-    return directory
+            break
+    return directory if base_dir == start_dir else base_dir
 
 
 def get_first_available_path(directory, paths):
