@@ -1,6 +1,7 @@
 """
 The NFCoreComponent class holds information and utility functions for a single module or subworkflow
 """
+
 import logging
 import re
 from pathlib import Path

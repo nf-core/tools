@@ -1,5 +1,4 @@
-""" Launch a pipeline, interactively collecting params """
-
+"""Launch a pipeline, interactively collecting params"""
 
 import copy
 import json

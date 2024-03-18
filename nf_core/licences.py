@@ -1,6 +1,5 @@
 """Lists software licences for a given workflow."""
 
-
 import json
 import logging
 import os

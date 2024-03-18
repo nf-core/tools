@@ -1,6 +1,7 @@
 """
 Check whether the content of a module has changed compared to the original repository
 """
+
 import shutil
 import tempfile
 from pathlib import Path

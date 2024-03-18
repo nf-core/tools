@@ -1,4 +1,4 @@
-""" Main nf_core module file.
+"""Main nf_core module file.
 
 Shouldn't do much, as everything is under subcommands.
 """

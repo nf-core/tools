@@ -79,7 +79,7 @@ def _determine_change_type(pr_title) -> tuple[str, str]:
 section, section_header = _determine_change_type(pr_title)
 
 # Remove section indicator from the PR title.
-pr_title = re.sub(rf"{section}[:\s]*", "", pr_title, flags=re.IGNORECASE)
+pr_title = re.sub(rf"{section}:[\s]*", "", pr_title, flags=re.IGNORECASE)
 
 # Prepare the change log entry.
 pr_link = f"([#{pr_number}]({REPO_URL}/pull/{pr_number}))"
@@ -91,7 +91,6 @@ if comment := comment.removeprefix("@nf-core-bot changelog").strip():
 new_lines = [
     f"- {pr_title} {pr_link}\n",
 ]
-
 print(f"Adding new lines into section '{section}':\n" + "".join(new_lines))
 
 # Finally, updating the changelog.
@@ -144,10 +143,11 @@ while orig_lines:
 
         # Parse version from the line `## v2.12dev` or
         # `## [v2.11.1 - Magnesium Dragon Patch](https://github.com/nf-core/tools/releases/tag/2.11) - [2023-12-20]` ...
-        if not (m := re.match(r".*(v\d+\.\d+(dev)?).*", line)):
+        if not (m := re.match(r".*(v\d+\.\d+.\d*(dev)?).*", line)):
             print(f"Cannot parse version from line {line.strip()}.", file=sys.stderr)
             sys.exit(1)
         version = m.group(1)
+        print(f"Found version: {version}")
 
         if not inside_version_dev:
             if not version.endswith("dev"):
@@ -209,6 +209,7 @@ while orig_lines:
             # If the line already contains a link to the PR, don't add it again.
             line = _skip_existing_entry_for_this_pr(line, same_section=True)
             section_lines.append(line)
+
     else:
         updated_lines.append(line)
 

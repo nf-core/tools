@@ -1,5 +1,4 @@
-""" Tests covering the sync command
-"""
+"""Tests covering the sync command"""
 
 import json
 import os
@@ -12,7 +11,7 @@ from unittest import mock
 import git
 import pytest
 
-import nf_core.create
+import nf_core.pipelines.create.create
 import nf_core.sync
 
 from .utils import with_temporary_folder
@@ -26,8 +25,8 @@ class TestModules(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         self.pipeline_dir = os.path.join(self.tmp_dir, "testpipeline")
         default_branch = "master"
-        self.create_obj = nf_core.create.PipelineCreate(
-            "testing", "test pipeline", "tester", outdir=self.pipeline_dir, plain=True, default_branch=default_branch
+        self.create_obj = nf_core.pipelines.create.create.PipelineCreate(
+            "testing", "test pipeline", "tester", outdir=self.pipeline_dir, default_branch=default_branch
         )
         self.create_obj.init_pipeline()
         self.remote_path = os.path.join(self.tmp_dir, "remote_repo")

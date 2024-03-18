@@ -1,5 +1,4 @@
-""" Tests covering the workflow listing code.
-"""
+"""Tests covering the workflow listing code."""
 
 import json
 import os

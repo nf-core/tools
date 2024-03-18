@@ -3,7 +3,6 @@ Bump versions for all modules on nf-core/modules
 or for a single module
 """
 
-
 import logging
 import os
 import re

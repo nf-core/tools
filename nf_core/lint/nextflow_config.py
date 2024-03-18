@@ -245,10 +245,9 @@ def nextflow_config(self):
                 raise AssertionError()
         except (AssertionError, IndexError):
             failed.append(
-                "Config variable ``manifest.homePage`` did not begin with https://github.com/nf-core/:\n    {}".format(
-                    manifest_homepage
-                )
+                f"Config variable ``manifest.homePage`` did not begin with https://github.com/nf-core/:\n    {manifest_homepage}"
             )
+
         else:
             passed.append("Config variable ``manifest.homePage`` began with https://github.com/nf-core/")
 
