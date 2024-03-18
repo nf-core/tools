@@ -8,6 +8,7 @@
 - Update templates to use nf-core/setup-nextflow v2
 - Link to troubleshooting docs when pipeline fails ([#2845](https://github.com/nf-core/tools/pull/2845))
 - Add fallback to `download_pipeline.yml` in case the pipeline does not support stub runs ([#2846](https://github.com/nf-core/tools/pull/2846))
+- Set topic variable correctly in the mastodon announcement ([#2848](https://github.com/nf-core/tools/pull/2848))
 - Add a cleanup action to `download_pipeline.yml` to fix failures caused by inadequate storage space on the runner ([#2849](https://github.com/nf-core/tools/pull/2849))
 
 ### Linting
@@ -34,6 +35,7 @@
 - Update gitpod/workspace-base Docker digest to 1e133e5 ([#2843](https://github.com/nf-core/tools/pull/2843))
 - Update python:3.11-slim Docker digest to a2eb07f ([#2847](https://github.com/nf-core/tools/pull/2847))
 - Strip out mention of "Nextflow Tower" and replace with "Seqera Platform" wherever possible
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.3 ([#2850](https://github.com/nf-core/tools/pull/2850))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
@@ -84,6 +86,8 @@
 - Patch: handle file not found when it is an added file to a module ([#2771](https://github.com/nf-core/tools/pull/2771))
 - Handle symlinks when migrating pytest ([#2770](https://github.com/nf-core/tools/pull/2770))
 - Add `--profile` parameter to nf-test command ([#2767](https://github.com/nf-core/tools/pull/2767))
+- Reduce the sha length in the `nf-core modules list local` and add links to the specific commit ([#2870](https://github.com/nf-core/tools/pull/2870))
+- Add links the nf-core module page and to open the local file in VSCode for module lint results ([#2870](https://github.com/nf-core/tools/pull/2870))
 
 ### General
 

@@ -12,7 +12,7 @@ jobs:
       - name: get topics and convert to hashtags
         id: get_topics
         run: |
-          curl -s https://nf-co.re/pipelines.json | jq -r '.remote_workflows[] | select(.full_name == "${{ github.repository }}") | .topics[]' | awk '{print "#"$0}' | tr '\n' ' ' >> $GITHUB_OUTPUT
+          echo "topics=$(curl -s https://nf-co.re/pipelines.json | jq -r '.remote_workflows[] | select(.full_name == "${{ github.repository }}") | .topics[]' | awk '{print "#"$0}' | tr '\n' ' ')"  >> $GITHUB_OUTPUT
 
       - uses: rzr/fediverse-action@master
         with:
@@ -25,7 +25,7 @@ jobs:
 
             Please see the changelog: ${{ github.event.release.html_url }}
 
-            ${{ steps.get_topics.outputs.GITHUB_OUTPUT }} #nfcore #openscience #nextflow #bioinformatics
+            ${{ steps.get_topics.outputs.topics }} #nfcore #openscience #nextflow #bioinformatics
 
   send-tweet:
     runs-on: ubuntu-latest
