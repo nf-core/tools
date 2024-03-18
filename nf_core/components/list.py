@@ -125,10 +125,11 @@ class ComponentList(ComponentCommand):
                             version_sha = component_entry["git_sha"]
                             try:
                                 # pass repo_name to get info on modules even outside nf-core/modules
-                                message, date = ModulesRepo(
+                                module = ModulesRepo(
                                     remote_url=repo_url,
                                     branch=component_entry["branch"],
-                                ).get_commit_info(version_sha)
+                                )
+                                message, date = module.get_commit_info(version_sha)
                             except LookupError as e:
                                 log.warning(e)
                                 date = "[red]Not Available"
@@ -140,7 +141,7 @@ class ComponentList(ComponentCommand):
                             version_sha = "[red]Not Available"
                             date = "[red]Not Available"
                             message = "[red]Not Available"
-                        table.add_row(component, repo_url, version_sha, message, date)
+                        table.add_row(component, f'[link={repo_url}]{repo_url}[/link]', f'[link={module.gitless_repo()}/commit/{version_sha}]{version_sha[:7]}[/link]', message, date)
                         components.append(component)
 
         if print_json:
