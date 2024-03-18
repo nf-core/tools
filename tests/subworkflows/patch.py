@@ -9,8 +9,9 @@ import nf_core.components.components_command
 import nf_core.subworkflows
 
 from ..utils import (
-    GITLAB_BRANCH_TEST_BRANCH,
+    GITLAB_SUBWORKFLOWS_BRANCH,
     GITLAB_URL,
+    GITLAB_REPO
 )
 
 # TODO: #Change this for the correct SUCCEED_SHA
@@ -26,7 +27,7 @@ Test the 'nf-core subworkflows patch' command
 def setup_patch(pipeline_dir, modify_subworkflow):
     # Install the subworkflow bam_sort_stats_samtools
     install_obj = nf_core.subworkflows.SubworkflowInstall(
-        pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH, sha=ORG_SHA
+        pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH, sha=ORG_SHA
     )
 
     # Install the module
@@ -34,7 +35,7 @@ def setup_patch(pipeline_dir, modify_subworkflow):
 
     if modify_subworkflow:
         # Modify the subworkflow
-        subworkflow_path = Path(pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
+        subworkflow_path = Path(pipeline_dir, "subworkflows", GITLAB_REPO, "bam_sort_stats_samtools")
         modify_main_nf(subworkflow_path / "main.nf")
 
 
@@ -57,11 +58,11 @@ def test_create_patch_no_change(self):
     setup_patch(self.pipeline_dir, False)
 
     # Try creating a patch file
-    patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_BRANCH_TEST_BRANCH)
+    patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_SUBWORKFLOWS_BRANCH)
     with pytest.raises(UserWarning):
         patch_obj.patch("bam_sort_stats_samtools")
 
-    subworkflow_path = Path(self.pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
+    subworkflow_path = Path(self.pipeline_dir, "subworkflows", GITLAB_REPO, "bam_sort_stats_samtools")
 
     # Check that no patch file has been added to the directory
     assert set(os.listdir(subworkflow_path)) == {"main.nf", "meta.yml"}
@@ -72,10 +73,10 @@ def test_create_patch_change(self):
     setup_patch(self.pipeline_dir, True)
 
     # Try creating a patch file
-    patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_BRANCH_TEST_BRANCH)
+    patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_SUBWORKFLOWS_BRANCH)
     patch_obj.patch("bam_sort_stats_samtools")
 
-    subworkflow_path = Path(self.pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
+    subworkflow_path = Path(self.pipeline_dir, "subworkflows", GITLAB_REPO, "bam_sort_stats_samtools")
 
     patch_fn = f"{'-'.join('bam_sort_stats_samtools')}.diff"
     # Check that a patch file with the correct name has been created
@@ -93,11 +94,11 @@ def test_create_patch_change(self):
 def test_create_patch_try_apply_successful(self):
     """Test creating a patch file and applying it to a new version of the the files"""
     setup_patch(self.pipeline_dir, True)
-    subworkflow_relpath = Path("subworkflows", "nf-core", "bam_sort_stats_samtools")
+    subworkflow_relpath = Path("subworkflows", GITLAB_REPO, "bam_sort_stats_samtools")
     subworkflow_path = Path(self.pipeline_dir, subworkflow_relpath)
 
     # Try creating a patch file
-    patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_BRANCH_TEST_BRANCH)
+    patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_SUBWORKFLOWS_BRANCH)
     patch_obj.patch("bam_sort_stats_samtools")
 
     patch_fn = f"{'-'.join('bam_sort_stats_samtools')}.diff"
@@ -105,7 +106,7 @@ def test_create_patch_try_apply_successful(self):
     assert set(os.listdir(subworkflow_path)) == {"main.nf", "meta.yml", patch_fn}
 
     update_obj = nf_core.subworkflows.SubworkflowUpdate(
-        self.pipeline_dir, sha=SUCCEED_SHA, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH
+        self.pipeline_dir, sha=SUCCEED_SHA, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
     )
 
     # Install the new files
@@ -117,13 +118,13 @@ def test_create_patch_try_apply_successful(self):
     patch_relpath = subworkflow_relpath / patch_fn
     assert (
         update_obj.try_apply_patch(
-            "bam_sort_stats_samtools", "nf-core", patch_relpath, subworkflow_path, subworkflow_install_dir
+            "bam_sort_stats_samtools", GITLAB_REPO, patch_relpath, subworkflow_path, subworkflow_install_dir
         )
         is True
     )
 
     # Move the files from the temporary directory
-    update_obj.move_files_from_tmp_dir("bam_sort_stats_samtools", install_dir, "nf-core", SUCCEED_SHA)
+    update_obj.move_files_from_tmp_dir("bam_sort_stats_samtools", install_dir, GITLAB_REPO, SUCCEED_SHA)
 
     # Check that a patch file with the correct name has been created
     assert set(os.listdir(subworkflow_path)) == {"main.nf", "meta.yml", patch_fn}
@@ -146,11 +147,11 @@ def test_create_patch_try_apply_successful(self):
 def test_create_patch_try_apply_failed(self):
     """Test creating a patch file and applying it to a new version of the the files"""
     setup_patch(self.pipeline_dir, True)
-    subworkflow_relpath = Path("subworkflows", "nf-core", "bam_sort_stats_samtools")
+    subworkflow_relpath = Path("subworkflows", GITLAB_REPO, "bam_sort_stats_samtools")
     subworkflow_path = Path(self.pipeline_dir, subworkflow_relpath)
 
     # Try creating a patch file
-    patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_BRANCH_TEST_BRANCH)
+    patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_SUBWORKFLOWS_BRANCH)
     patch_obj.patch("bam_sort_stats_samtools")
 
     patch_fn = f"{'-'.join('bam_sort_stats_samtools')}.diff"
@@ -158,7 +159,7 @@ def test_create_patch_try_apply_failed(self):
     assert set(os.listdir(subworkflow_path)) == {"main.nf", "meta.yml", patch_fn}
 
     update_obj = nf_core.subworkflows.SubworkflowUpdate(
-        self.pipeline_dir, sha=SUCCEED_SHA, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH
+        self.pipeline_dir, sha=SUCCEED_SHA, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
     )
 
     # Install the new files
@@ -170,7 +171,7 @@ def test_create_patch_try_apply_failed(self):
     patch_relpath = subworkflow_relpath / patch_fn
     assert (
         update_obj.try_apply_patch(
-            "bam_sort_stats_samtools", "nf-core", patch_relpath, subworkflow_path, subworkflow_install_dir
+            "bam_sort_stats_samtools", GITLAB_REPO, patch_relpath, subworkflow_path, subworkflow_install_dir
         )
         is False
     )
@@ -195,10 +196,10 @@ def test_remove_patch(self):
     setup_patch(self.pipeline_dir, True)
 
     # Try creating a patch file
-    patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_BRANCH_TEST_BRANCH)
+    patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_SUBWORKFLOWS_BRANCH)
     patch_obj.patch("bam_sort_stats_samtools")
 
-    subworkflow_path = Path(self.pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
+    subworkflow_path = Path(self.pipeline_dir, "subworkflows", GITLAB_REPO, "bam_sort_stats_samtools")
 
     patch_fn = f"{'-'.join('bam_sort_stats_samtools')}.diff"
     # Check that a patch file with the correct name has been created
