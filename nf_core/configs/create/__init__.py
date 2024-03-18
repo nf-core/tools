@@ -5,10 +5,11 @@ import logging
 from textual.app import App
 from textual.widgets import Button
 
+from nf_core.configs.create.basicdetails import BasicDetails
+
 # from nf_core.configs.create.nfcoreconfigs import NfcoreConfigs
 from nf_core.configs.create.configstype import ChooseConfigsType
 
-# from nf_core.configs.create.basicdetails import BasicDetails
 # from nf_core.configs.create.custompipeline import CustomPipeline
 # from nf_core.configs.create.error import ExistError
 # from nf_core.configs.create.finaldetails import FinalDetails
@@ -34,7 +35,7 @@ class ConfigsCreateApp(App[CreateConfig]):
 
     CSS_PATH = "create.tcss"
     TITLE = "nf-core configs create"
-    SUB_TITLE = "Create a new nextflow config with the nf-core configs create template"
+    SUB_TITLE = "Create a new nextflow config with an interactive interface"
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
         ("q", "quit", "Quit"),
@@ -44,7 +45,7 @@ class ConfigsCreateApp(App[CreateConfig]):
     SCREENS = {
         "welcome": WelcomeScreen(),
         "choose_type": ChooseConfigsType(),
-        # "basic_details": BasicDetails(),
+        "basic_details": BasicDetails(),
     }
 
     # Initialise configs type
@@ -72,10 +73,14 @@ class ConfigsCreateApp(App[CreateConfig]):
             # Set logging state to repo created to see the button for closing the logging screen
             self.LOGGING_STATE = "repo created"
             self.switch_screen(LoggingScreen())
+
         if event.button.id == "close_app":
             self.exit(return_code=0)
+
         if event.button.id == "back":
             self.pop_screen()
+
+        print(self.CONFIGS_TYPE)
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
