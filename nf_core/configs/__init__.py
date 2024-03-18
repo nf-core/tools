@@ -1,1 +1,1 @@
-from .create.create import ConfigsCreateApp
+from .create import ConfigsCreateApp

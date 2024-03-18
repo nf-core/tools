@@ -5,13 +5,13 @@ import logging
 from textual.app import App
 from textual.widgets import Button
 
-from nf_core.configs.create.basicdetails import BasicDetails
-from nf_core.configs.create.custompipeline import CustomPipeline
-from nf_core.configs.create.error import ExistError
-from nf_core.configs.create.finaldetails import FinalDetails
-from nf_core.configs.create.loggingscreen import LoggingScreen
-from nf_core.configs.create.nfcoreconfigs import NfcoreConfigs
-from nf_core.configs.create.pipelinetype import ChoosePipelineType
+# from nf_core.configs.create.basicdetails import BasicDetails
+# from nf_core.configs.create.custompipeline import CustomPipeline
+# from nf_core.configs.create.error import ExistError
+# from nf_core.configs.create.finaldetails import FinalDetails
+# from nf_core.configs.create.loggingscreen import LoggingScreen
+# from nf_core.configs.create.nfcoreconfigs import NfcoreConfigs
+# from nf_core.configs.create.pipelinetype import ChoosePipelineType
 from nf_core.configs.create.utils import (
     CreateConfig,
     CustomLogHandler,
@@ -40,7 +40,7 @@ class ConfigsCreateApp(App[CreateConfig]):
     ]
     SCREENS = {
         "welcome": WelcomeScreen(),
-        "basic_details": BasicDetails(),
+        # "basic_details": BasicDetails(),
     }
 
     # Initialise configs type
