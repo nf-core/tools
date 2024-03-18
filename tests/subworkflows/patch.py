@@ -15,15 +15,22 @@ from ..utils import (
 
 # TODO: #Change this for the correct SUCCEED_SHA
 SUCCEED_SHA = "????"
+ORG_SHA = "002623ccc88a3b0cb302c7d8f13792a95354d9f2"
+
 
 """
 Test the 'nf-core subworkflows patch' command
 """
 
 
-def setup_patch(self, pipeline_dir, modify_subworkflow):
+def setup_patch(pipeline_dir, modify_subworkflow):
     # Install the subworkflow bam_sort_stats_samtools
-    subworkflow_path = os.path.join(self.subworkflow_install.dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
+    install_obj = nf_core.subworkflows.SubworkflowInstall(
+        pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH, sha=ORG_SHA
+    )
+
+    # Install the module
+    install_obj.install("bam_sort_stats_samtools")
 
     if modify_subworkflow:
         # Modify the subworkflow
