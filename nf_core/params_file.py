@@ -1,5 +1,4 @@
-""" Create a YAML parameter file """
-
+"""Create a YAML parameter file"""
 
 import json
 import logging

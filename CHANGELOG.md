@@ -1,5 +1,35 @@
 # nf-core/tools: Changelog
 
+## v2.13.2dev
+
+### Template
+
+- Remove fasta default from nextflow.config ([#2828](https://github.com/nf-core/tools/pull/2828))
+- Update templates to use nf-core/setup-nextflow v2
+- Link to troubleshooting docs when pipeline fails ([#2845](https://github.com/nf-core/tools/pull/2845))
+- Add fallback to `download_pipeline.yml` in case the pipeline does not support stub runs ([#2846](https://github.com/nf-core/tools/pull/2846))
+- Add a cleanup action to `download_pipeline.yml` to fix failures caused by inadequate storage space on the runner ([#2849](https://github.com/nf-core/tools/pull/2849))
+
+### Linting
+
+- Only match assignments of params in `main.nf` and not references like `params.aligner == <something>` ([#2833](https://github.com/nf-core/tools/pull/2833))
+
+### Components
+
+### General
+
+- Update CI to use nf-core/setup-nextflow v2
+- Changelog bot: handle also patch version before dev suffix ([#2820](https://github.com/nf-core/tools/pull/2820))
+- Fix path in component update script ([#2823](https://github.com/nf-core/tools/pull/2823))
+- Update prettier to 3.2.5 ([#2830](https://github.com/nf-core/tools/pull/2830))
+- Update GitHub Actions ([#2827](https://github.com/nf-core/tools/pull/2827))
+- Switch to setup-nf-test ([#2834](https://github.com/nf-core/tools/pull/2834))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.2 ([#2836](https://github.com/nf-core/tools/pull/2836))
+- Add tests for assignment and referencing of params in main.nf ([#2841](https://github.com/nf-core/tools/pull/2841))
+- Optimize layers in dockerfile ([#2842](https://github.com/nf-core/tools/pull/2842))
+- Update gitpod/workspace-base Docker digest to 1e133e5 ([#2843](https://github.com/nf-core/tools/pull/2843))
+- Update python:3.11-slim Docker digest to a2eb07f ([#2847](https://github.com/nf-core/tools/pull/2847))
+
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
 ### Template
