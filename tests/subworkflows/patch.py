@@ -35,10 +35,10 @@ def setup_patch(pipeline_dir, modify_subworkflow):
     if modify_subworkflow:
         # Modify the subworkflow
         subworkflow_path = Path(pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
-        modify_subworkflow(subworkflow_path / "main.nf")
+        modify_main_nf(subworkflow_path / "main.nf")
 
 
-def modify_subworkflow(path):
+def modify_main_nf(path):
     """Modify a file to test patch creation"""
     with open(path) as fh:
         lines = fh.readlines()
