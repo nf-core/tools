@@ -331,7 +331,7 @@ def configs(ctx):
 @configs.command("create")
 def create_configs():
     """
-    Commands to manage nextflow and nf-core configs
+    Command to interactively create a nextflow config
     """
     from nf_core.configs.create import ConfigsCreateApp
 
