@@ -358,6 +358,7 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     help="Archive compression type",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
+# TODO: Remove this in a future release. Deprecated in March 2024.
 @click.option(
     "--tower",
     is_flag=True,
