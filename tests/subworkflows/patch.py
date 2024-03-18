@@ -70,7 +70,7 @@ def test_create_patch_change(self):
 
     subworkflow_path = Path(self.pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
 
-    patch_fn = f"{'-'.join("bam_sort_stats_samtools")}.diff"
+    patch_fn = f"{'-'.join('bam_sort_stats_samtools')}.diff"
     # Check that a patch file with the correct name has been created
     assert set(os.listdir(subworkflow_path)) == {"main.nf", "meta.yml", patch_fn}
 
@@ -93,7 +93,7 @@ def test_create_patch_try_apply_successful(self):
     patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_BRANCH_TEST_BRANCH)
     patch_obj.patch("bam_sort_stats_samtools")
 
-    patch_fn = f"{'-'.join("bam_sort_stats_samtools")}.diff"
+    patch_fn = f"{'-'.join('bam_sort_stats_samtools')}.diff"
     # Check that a patch file with the correct name has been created
     assert set(os.listdir(subworkflow_path)) == {"main.nf", "meta.yml", patch_fn}
 
@@ -146,7 +146,7 @@ def test_create_patch_try_apply_failed(self):
     patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_BRANCH_TEST_BRANCH)
     patch_obj.patch("bam_sort_stats_samtools")
 
-    patch_fn = f"{'-'.join("bam_sort_stats_samtools")}.diff"
+    patch_fn = f"{'-'.join('bam_sort_stats_samtools')}.diff"
     # Check that a patch file with the correct name has been created
     assert set(os.listdir(subworkflow_path)) == {"main.nf", "meta.yml", patch_fn}
 
@@ -193,7 +193,7 @@ def test_remove_patch(self):
 
     subworkflow_path = Path(self.pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools")
 
-    patch_fn = f"{'-'.join("bam_sort_stats_samtools")}.diff"
+    patch_fn = f"{'-'.join('bam_sort_stats_samtools')}.diff"
     # Check that a patch file with the correct name has been created
     assert set(os.listdir(subworkflow_path)) == {"main.nf", "meta.yml", patch_fn}
 
