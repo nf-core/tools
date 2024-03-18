@@ -12,7 +12,9 @@ on:
     paths-ignore:
       - "docs/**"
       - "CHANGELOG.md"
+      # ignore github workflows except for the current one
       - ".github/**"
+      - "!.github/workflows/pytest.yml"
   release:
     types: [published]
   workflow_dispatch:
@@ -108,37 +110,21 @@ jobs:
           sudo add-apt-repository --remove ppa:git-core/ppa
           sudo apt install -y git
 
+      - name: Set up Singularity
+        if: ${{ matrix.test == 'test_download.py'}}
+        uses: eWaterCycle/setup-singularity@931d4e31109e875b13309ae1d07c70ca8fbc8537 # v7
+        with:
+          singularity-version: 3.8.3
+
       - name: Get current date
         id: date
         run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@b9f764e8ba5c76b712ace14ecbfcef0e40ae2dd8 # v1
-
-      - name: Look if nf-test is already installed and write to env variable
-        id: check-nftest
-        run: |
-          if [ -f /usr/local/bin/nf-test ]; then
-            echo "nftest_installed=true" >> $GITHUB_ENV
-          else
-            echo "nftest_installed=false" >> $GITHUB_ENV
-          fi
-
-      - name: Cache nf-test installation
-        if: env.nftest_installed != 'true'
-        id: cache-software
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4
-        with:
-          path: |
-            /usr/local/bin/nf-test
-            /home/runner/.nf-test/nf-test.jar
-          key: ${{ runner.os }}-nftest-${{ env.date }}
+        uses: nf-core/setup-nextflow@v2
 
       - name: Install nf-test
-        if: steps.cache-software.outputs.cache-hit != 'true' && env.nftest_installed != 'true'
-        run: |
-          wget -qO- https://code.askimed.com/install/nf-test | bash
-          sudo mv nf-test /usr/local/bin/
+        uses: nf-core/setup-nf-test@v1
 
       - name: move coveragerc file up
         run: |
@@ -191,14 +177,14 @@ jobs:
           mv .github/.coveragerc .
 
       - name: Download all artifacts
-        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe # v4
+        uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4
       - name: Run coverage
         run: |
           coverage combine --keep coverage*/.coverage*
           coverage report
           coverage xml
 
-      - uses: codecov/codecov-action@0cfda1dd0a4ad9efc75517f399d859cd1ea4ced1 # v4
+      - uses: codecov/codecov-action@54bcd8715eee62d40e33596ef5e8f0f48dbbccab # v4
         with:
           files: coverage.xml
         env:

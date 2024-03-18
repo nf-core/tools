@@ -6,6 +6,9 @@ on:
     paths:
       - nf_core/pipeline-template/**
   pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "CHANGELOG.md"
   release:
     types: [published]
   workflow_dispatch:
@@ -72,7 +75,7 @@ jobs:
           pip install .
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@b9f764e8ba5c76b712ace14ecbfcef0e40ae2dd8 # v1
+        uses: nf-core/setup-nextflow@v2
         with:
           version: latest-everything
 
