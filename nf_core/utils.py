@@ -548,7 +548,7 @@ class GitHubAPISession(requests_cache.CachedSession):
             else:
                 return r
         elif request.status_code in self.return_unauthorised:
-            raise RuntimeError(f"GitHub API PR failed, probably due to an expired GITHUB_TOKEN")
+            raise RuntimeError(f"GitHub API PR failed, probably due to an expired GITHUB_TOKEN.")
 
         return request
 
