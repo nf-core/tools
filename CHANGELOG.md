@@ -10,7 +10,6 @@
 - Add fallback to `download_pipeline.yml` in case the pipeline does not support stub runs ([#2846](https://github.com/nf-core/tools/pull/2846))
 - Set topic variable correctly in the mastodon announcement ([#2848](https://github.com/nf-core/tools/pull/2848))
 - Add a cleanup action to `download_pipeline.yml` to fix failures caused by inadequate storage space on the runner ([#2849](https://github.com/nf-core/tools/pull/2849))
-- Module and subworkflow test data uses paths rather than config map ([#2877](https://github.com/nf-core/tools/pull/2877))
 
 ### Linting
 
@@ -38,7 +37,7 @@
 - Strip out mention of "Nextflow Tower" and replace with "Seqera Platform" wherever possible
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.3 ([#2850](https://github.com/nf-core/tools/pull/2850))
 - Fix issue with config resolution that was causing nested configs to behave unexpectedly ([#2862](https://github.com/nf-core/tools/pull/2862))
-- 2858 Test data uses paths instead of config map ([#2877](https://github.com/nf-core/tools/pull/2877))
+- Test data uses paths instead of config map ([#2877](https://github.com/nf-core/tools/pull/2877))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
