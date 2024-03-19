@@ -15,22 +15,10 @@ jobs:
           cache-dependency-path: setup.py
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v1
-
-      - name: Cache nf-test installation
-        id: cache-software
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4
-        with:
-          path: |
-            /usr/local/bin/nf-test
-            /home/runner/.nf-test/nf-test.jar
-          key: ${{ runner.os }}-nftest-${{ env.date }}
+        uses: nf-core/setup-nextflow@v2
 
       - name: Install nf-test
-        if: steps.cache-software.outputs.cache-hit != 'true'
-        run: |
-          wget -qO- https://code.askimed.com/install/nf-test | bash
-          sudo mv nf-test /usr/local/bin/
+        uses: nf-core/setup-nf-test@v1
 
       - name: Install nf-core/tools
         run: pip install git+https://github.com/nf-core/tools.git@dev
