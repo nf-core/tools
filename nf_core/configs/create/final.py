@@ -20,7 +20,7 @@ class FinalScreen(Screen):
         yield TextInput(
             "savelocation",
             ".",
-            "In which location would you like to save the config?",
+            "In which directory would you like to save the config?",
             ".",
             classes="row",
         )

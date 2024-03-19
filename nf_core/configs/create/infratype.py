@@ -20,13 +20,6 @@ The current options that are available to you:
 class ChooseInfraConfigType(Screen):
     """Choose whether this infrastructure config will be for a local machine or HPC clusters."""
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle all button pressed events."""
-        if event.button.id == "infratype_continue" and self.query_one("#infra_type").value == "type_hpc":
-            self.parent.push_screen("choose_hpcmodules")
-        elif event.button.id == "infratype_continue" and self.query_one("#infra_type").value == "type_local":
-            self.parent.push_screen("nfcore_details")
-
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()

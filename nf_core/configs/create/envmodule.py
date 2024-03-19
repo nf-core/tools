@@ -39,6 +39,6 @@ class ChooseHpcModuleFunctionality(Screen):
         )
         yield Center(
             Button("Back", id="back", variant="default"),
-            Button("Continue", id="envmodule_continue", variant="success"),
+            Button("Next", id="envmodule_continue", variant="success"),
             classes="cta",
         )
