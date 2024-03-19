@@ -587,10 +587,12 @@ class PipelineSchema:
             loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
         )
         schema_template = env.get_template("nextflow_schema.json")
+
         template_vars = {
-            "name": self.pipeline_manifest.get("name", str(Path(self.schema_filename).parent)).strip("'"),
+            "name": self.pipeline_manifest.get("name", Path(self.schema_filename).parent.name).strip("'"),
             "description": self.pipeline_manifest.get("description", "").strip("'"),
         }
+
         self.schema = json.loads(schema_template.render(template_vars))
         self.get_schema_defaults()
 
