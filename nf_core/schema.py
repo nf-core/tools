@@ -807,8 +807,11 @@ class PipelineSchema:
             elif p_key in self.schema_defaults and (s_def := self.schema_defaults[p_key]) != (
                 p_def := self.build_schema_param(p_val).get("default")
             ):
+                p_type = self.build_schema_param(p_val).get("type")
+                s_type = self.schema_types[p_key]
                 if self.no_prompts or Confirm.ask(
-                    f":sparkles: Default for [bold]'params.{p_key}'[/] in the pipeline config does not match schema. (schema: '{s_def}' | config: '{p_def}'). "
+                    f":sparkles: Default for [bold]'params.{p_key}'[/] in the pipeline config does not match schema. "
+                    f"(schema: '{s_def}' {s_type} | config: '{p_def}' {p_type}). "
                     "[blue]Update pipeline schema?"
                 ):
                     s_key_def = s_key + ("default",)
