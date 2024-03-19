@@ -66,31 +66,31 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         conf/igenomes.config
         .github/workflows/awstest.yml
         .github/workflows/awsfulltest.yml
-        pyproject.toml
 
     Files that *must not* be present, due to being renamed or removed in the template:
 
     .. code-block:: bash
 
-        Singularity
-        parameters.settings.json
-        pipeline_template.yml # saving information in .nf-core.yml
-        .nf-core.yaml  # NB: Should be yml, not yaml
-        bin/markdown_to_html.r
-        conf/aws.config
-        .github/workflows/push_dockerhub.yml
         .github/ISSUE_TEMPLATE/bug_report.md
         .github/ISSUE_TEMPLATE/feature_request.md
-        docs/images/nf-core-PIPELINE_logo.png
+        .github/workflows/push_dockerhub.yml
         .markdownlint.yml
+        .nf-core.yaml  # NB: Should be yml, not yaml
         .yamllint.yml
+        bin/markdown_to_html.r
+        conf/aws.config
+        docs/images/nf-core-PIPELINE_logo.png
         lib/Checks.groovy
         lib/Completion.groovy
-        lib/Workflow.groovy
-        lib/WorkflowPIPELINE.groovy
         lib/NfcoreTemplate.groovy
         lib/Utils.groovy
+        lib/Workflow.groovy
         lib/WorkflowMain.groovy
+        lib/WorkflowPIPELINE.groovy
+        parameters.settings.json
+        pipeline_template.yml # saving information in .nf-core.yml
+        pyproject.toml
+        Singularity
 
 
     Files that *should not* be present:
@@ -176,30 +176,30 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         [Path(".github", "workflows", "awstest.yml")],
         [Path(".github", "workflows", "awsfulltest.yml")],
         [Path("modules.json")],
-        [Path("pyproject.toml")],
     ]
 
     # List of strings. Fails / warns if any of the strings exist.
     files_fail_ifexists = [
-        Path("Singularity"),
-        Path("parameters.settings.json"),
-        Path("pipeline_template.yml"),  # saving information in .nf-core.yml
-        Path(".nf-core.yaml"),  # yml not yaml
-        Path("bin", "markdown_to_html.r"),
-        Path("conf", "aws.config"),
-        Path(".github", "workflows", "push_dockerhub.yml"),
         Path(".github", "ISSUE_TEMPLATE", "bug_report.md"),
         Path(".github", "ISSUE_TEMPLATE", "feature_request.md"),
-        Path("docs", "images", f"nf-core-{short_name}_logo.png"),
+        Path(".github", "workflows", "push_dockerhub.yml"),
         Path(".markdownlint.yml"),
+        Path(".nf-core.yaml"),  # yml not yaml
         Path(".yamllint.yml"),
+        Path("bin", "markdown_to_html.r"),
+        Path("conf", "aws.config"),
+        Path("docs", "images", f"nf-core-{short_name}_logo.png"),
         Path("lib", "Checks.groovy"),
         Path("lib", "Completion.groovy"),
-        Path("lib", "Workflow.groovy"),
-        Path("lib", "Utils.groovy"),
-        Path("lib", "WorkflowMain.groovy"),
         Path("lib", "NfcoreTemplate.groovy"),
+        Path("lib", "Utils.groovy"),
+        Path("lib", "Workflow.groovy"),
+        Path("lib", "WorkflowMain.groovy"),
         Path("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy"),
+        Path("parameters.settings.json"),
+        Path("pipeline_template.yml"),  # saving information in .nf-core.yml
+        Path("pyproject.toml"),
+        Path("Singularity"),
     ]
     files_warn_ifexists = [Path(".travis.yml")]
     files_fail_ifinconfig: List[Tuple[Path, Dict[str, str]]] = [
