@@ -453,6 +453,7 @@ class GitHubAPISession(requests_cache.CachedSession):
         self.auth_mode = None
         self.return_ok = [200, 201]
         self.return_retry = [403]
+        self.return_unauthorised = [401]
         self.has_init = False
 
     def lazy_init(self):
@@ -545,6 +546,8 @@ class GitHubAPISession(requests_cache.CachedSession):
                 raise e
             else:
                 return r
+        elif request.status_code in self.return_unauthorised:
+            raise RuntimeError(f"GitHub API PR failed, probably due to an expired GITHUB_TOKEN") 
 
         return request
 
