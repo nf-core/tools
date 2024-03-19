@@ -47,6 +47,7 @@
 - Update gitpod/workspace-base Docker digest to 168d78b ([#2899](https://github.com/nf-core/tools/pull/2899))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.4 ([#2894](https://github.com/nf-core/tools/pull/2894))
 - Update GitHub Actions ([#2902](https://github.com/nf-core/tools/pull/2902))
+- Get immediate parent path name for schema creation ([#2886](https://github.com/nf-core/tools/pull/2886))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
