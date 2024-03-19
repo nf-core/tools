@@ -10,7 +10,7 @@
 - Add fallback to `download_pipeline.yml` in case the pipeline does not support stub runs ([#2846](https://github.com/nf-core/tools/pull/2846))
 - Set topic variable correctly in the mastodon announcement ([#2848](https://github.com/nf-core/tools/pull/2848))
 - Add a cleanup action to `download_pipeline.yml` to fix failures caused by inadequate storage space on the runner ([#2849](https://github.com/nf-core/tools/pull/2849))
-- Module and subworkflow test data uses paths rather than config map ([#]())
+- Module and subworkflow test data uses paths rather than config map ([#2877](https://github.com/nf-core/tools/pull/2877))
 
 ### Linting
 
