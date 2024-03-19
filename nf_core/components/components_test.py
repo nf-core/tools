@@ -2,7 +2,6 @@
 The ComponentsTest class handles the generation and testing of nf-test snapshots.
 """
 
-
 import logging
 import os
 import re
@@ -91,9 +90,9 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         """Run build steps"""
         self.check_inputs()
         os.environ["NFT_DIFF"] = "pdiff"  # set nf-test differ to pdiff to get a better diff output
-        os.environ[
-            "NFT_DIFF_ARGS"
-        ] = "--line-numbers --expand-tabs=2"  # taken from https://code.askimed.com/nf-test/docs/assertions/snapshots/#snapshot-differences
+        os.environ["NFT_DIFF_ARGS"] = (
+            "--line-numbers --expand-tabs=2"  # taken from https://code.askimed.com/nf-test/docs/assertions/snapshots/#snapshot-differences
+        )
         with nf_core.utils.set_wd(Path(self.dir)):
             self.check_snapshot_stability()
         if len(self.errors) > 0:

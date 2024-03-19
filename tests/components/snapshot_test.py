@@ -1,4 +1,5 @@
 """Test the 'modules test' or 'subworkflows test' command which runs nf-test test."""
+
 import shutil
 from pathlib import Path
 

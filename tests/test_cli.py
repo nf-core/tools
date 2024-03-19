@@ -1,4 +1,4 @@
-""" Tests covering the command-line code.
+"""Tests covering the command-line code.
 
 Most tests check the cli arguments are passed along and that some action is
 taken.
@@ -166,7 +166,7 @@ class TestCli(unittest.TestCase):
             "outdir": "/path/outdir",
             "compress": "tar.gz",
             "force": None,
-            "tower": None,
+            "platform": None,
             "download-configuration": None,
             "container-system": "singularity",
             "container-library": "quay.io",
@@ -186,7 +186,7 @@ class TestCli(unittest.TestCase):
             params["outdir"],
             params["compress"],
             "force" in params,
-            "tower" in params,
+            "platform" in params,
             "download-configuration" in params,
             params["container-system"],
             (params["container-library"],),
