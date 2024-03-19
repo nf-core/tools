@@ -8,7 +8,7 @@ from rich.logging import RichHandler
 from textual import on
 from textual._context import active_app
 from textual.app import ComposeResult
-from textual.containers import Container, HorizontalScroll
+from textual.containers import HorizontalScroll
 from textual.message import Message
 from textual.validation import ValidationResult, Validator
 from textual.widget import Widget
@@ -144,7 +144,7 @@ class TextInputWithHelp(Static):
     ## Define the layout of the question
     def compose(self) -> ComposeResult:
         yield Static(self.description, classes="field_help")
-        yield Container(
+        yield HorizontalScroll(
             Input(
                 placeholder=self.placeholder,
                 validators=[ValidateConfig(self.field_id)],
@@ -203,14 +203,23 @@ class HelpText(Markdown):
 
 
 class ConfigFeature(Static):
-    """Widget for the selection of pipeline features."""
+    """Widget for the activation of config features."""
 
-    def __init__(self, markdown: str, title: str, subtitle: str, field_id: str, **kwargs) -> None:
+    def __init__(
+        self,
+        markdown: str,
+        title: str,
+        subtitle: str,
+        field_id: str,
+        default=bool,
+        **kwargs,
+    ) -> None:
         super().__init__(**kwargs)
         self.markdown = markdown
         self.title = title
         self.subtitle = subtitle
         self.field_id = field_id
+        self.default = False
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """When the button is pressed, change the type of the button."""
@@ -227,7 +236,7 @@ class ConfigFeature(Static):
         Hidden row with a help text box.
         """
         yield HorizontalScroll(
-            Switch(value=True, id=self.field_id),
+            Switch(value=self.default, id=self.field_id),
             Static(self.title, classes="feature_title"),
             Static(self.subtitle, classes="feature_subtitle"),
             Button("Show help", id="show_help", variant="primary"),

@@ -5,15 +5,12 @@ import logging
 from textual.app import App
 from textual.widgets import Button
 
-from nf_core.configs.create.basicdetails import BasicDetails
-
-# from nf_core.configs.create.nfcoreconfigs import NfcoreConfigs
 from nf_core.configs.create.configstype import ChooseConfigsType
+from nf_core.configs.create.envmodule import ChooseHpcModuleFunctionality
+from nf_core.configs.create.final import FinalScreen
 from nf_core.configs.create.infratype import ChooseInfraConfigType
-
-# from nf_core.configs.create.error import ExistError
-# from nf_core.configs.create.finaldetails import FinalDetails
 from nf_core.configs.create.loggingscreen import LoggingScreen
+from nf_core.configs.create.nfcoredetails import NfcoreDetails
 from nf_core.configs.create.utils import (
     CreateConfig,
     CustomLogHandler,
@@ -46,7 +43,9 @@ class ConfigsCreateApp(App[CreateConfig]):
         "welcome": WelcomeScreen(),
         "choose_type": ChooseConfigsType(),
         "choose_infra": ChooseInfraConfigType(),
-        "basic_details": BasicDetails(),
+        "choose_hpcmodules": ChooseHpcModuleFunctionality(),
+        "nfcore_details": NfcoreDetails(),
+        "final": FinalScreen(),
     }
 
     # Initialise configs type
@@ -68,15 +67,20 @@ class ConfigsCreateApp(App[CreateConfig]):
         elif event.button.id == "type_infrastructure":
             self.CONFIGS_TYPE = "infrastructure"
             self.push_screen("choose_infra")
+
         elif event.button.id == "type_pipeline":
             self.CONFIGS_TYPE = "pipeline"
             self.push_screen("choose_infra")
-        elif event.button.id == "type_hpc":
-            self.INFRA_TYPE = "hpc"
-            self.push_screen("basic_details")
-        elif event.button.id == "type_local":
-            self.INFRA_TYPE = "local"
-            self.push_screen("basic_details")
+
+        ## Routing from infra to nfcore details for `local` occurs inside infratype
+
+        elif event.button.id == "envmodule_continue":
+            self.push_screen("nfcore_details")
+
+        elif (
+            event.button.id == "nfcoredetails_continue"
+        ):  ## Update this to corresponding button, depending on what is the penultimate screen
+            self.push_screen("final")
 
         elif event.button.id == "show_logging":
             # Set logging state to repo created to see the button for closing the logging screen

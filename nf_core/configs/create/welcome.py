@@ -6,8 +6,6 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown, Static
 
 markdown = """
-# nf-core configs create
-
 This app will help you create a new nextflow configuration file.
 
 It allows you to create both nextflow configs for both infrastructure and pipelines.

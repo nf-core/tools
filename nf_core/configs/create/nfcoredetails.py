@@ -8,10 +8,10 @@ from textual.containers import Center, Horizontal
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown
 
-from nf_core.configs.create.utils import CreateConfig, TextInputWithHelp
+from nf_core.configs.create.utils import TextInputWithHelp
 
 
-class BasicDetails(Screen):
+class NfcoreDetails(Screen):
     """Name, description, author, etc."""
 
     ## This allows dynamic updating of different fields, to add additional 'live' updates:
@@ -67,9 +67,16 @@ class BasicDetails(Screen):
             "Long form help text goes here",
         )
 
+        yield TextInputWithHelp(
+            "institute_url",
+            "https://nf-co.re",
+            "URL to institution hosting the infrastructure (e.g. HPC)",
+            "Long form help text goes here",
+        )
+
         yield Center(
             Button("Back", id="back", variant="default"),
-            Button("Next", id="next", variant="success"),
+            Button("Next", id="nfcoredetails_continue", variant="success"),
             classes="cta",
         )
 
@@ -85,12 +92,12 @@ class BasicDetails(Screen):
                 text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
             else:
                 text_input.query_one(".validation_msg").update("")
-        try:
-            self.parent.TEMPLATE_CONFIG = CreateConfig(**config)
-            if event.button.id == "next":
-                if self.parent.CONFIGS_TYPE == "infrastructure":
-                    self.parent.push_screen("type_infrastructure")
-                elif self.parent.CONFIGS_TYPE == "pipeline":
-                    self.parent.push_screen("type_custom")
-        except ValueError:
-            pass
+        # try:
+        #     self.parent.TEMPLATE_CONFIG = CreateConfig(**config)
+        #     if event.button.id == "next":
+        #         if self.parent.CONFIGS_TYPE == "infrastructure":
+        #             self.parent.push_screen("type_infrastructure")
+        #         elif self.parent.CONFIGS_TYPE == "pipeline":
+        #             self.parent.push_screen("type_custom")
+        # except ValueError:
+        #     pass
