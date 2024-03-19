@@ -12,6 +12,7 @@ from nf_core.configs.create.final import FinalScreen
 from nf_core.configs.create.infratype import ChooseInfraConfigType
 from nf_core.configs.create.loggingscreen import LoggingScreen
 from nf_core.configs.create.maxparams import MaxparamsOptions
+from nf_core.configs.create.miscquestions import ChooseMiscOptions
 from nf_core.configs.create.nfcoredetails import NfcoreDetails
 from nf_core.configs.create.otherlocations import ChooseOtherLocations
 from nf_core.configs.create.utils import (
@@ -51,6 +52,7 @@ class ConfigsCreateApp(App[CreateConfig]):
         "choose_container": ChooseContainerType(),
         "choose_maxparams": MaxparamsOptions(),
         "choose_otherlocations": ChooseOtherLocations(),
+        "miscquestions": ChooseMiscOptions(),
         "final": FinalScreen(),
     }
 
@@ -100,6 +102,9 @@ class ConfigsCreateApp(App[CreateConfig]):
             self.push_screen("choose_otherlocations")
 
         elif event.button.id == "otherlocations_continue":
+            self.push_screen("miscquestions")
+
+        elif event.button.id == "miscquestions_continue":
             self.push_screen("final")
 
         ## PIPELINE CONFIGS
