@@ -8,11 +8,16 @@
 - Update templates to use nf-core/setup-nextflow v2
 - Link to troubleshooting docs when pipeline fails ([#2845](https://github.com/nf-core/tools/pull/2845))
 - Add fallback to `download_pipeline.yml` in case the pipeline does not support stub runs ([#2846](https://github.com/nf-core/tools/pull/2846))
+- Set topic variable correctly in the mastodon announcement ([#2848](https://github.com/nf-core/tools/pull/2848))
 - Add a cleanup action to `download_pipeline.yml` to fix failures caused by inadequate storage space on the runner ([#2849](https://github.com/nf-core/tools/pull/2849))
 
 ### Linting
 
 - Only match assignments of params in `main.nf` and not references like `params.aligner == <something>` ([#2833](https://github.com/nf-core/tools/pull/2833))
+
+### Download
+
+- Replace `--tower` with `--platform`. The former will remain for backwards compatability for now but will be removed in a future release.
 
 ### Components
 
@@ -29,6 +34,8 @@
 - Optimize layers in dockerfile ([#2842](https://github.com/nf-core/tools/pull/2842))
 - Update gitpod/workspace-base Docker digest to 1e133e5 ([#2843](https://github.com/nf-core/tools/pull/2843))
 - Update python:3.11-slim Docker digest to a2eb07f ([#2847](https://github.com/nf-core/tools/pull/2847))
+- Strip out mention of "Nextflow Tower" and replace with "Seqera Platform" wherever possible
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.3 ([#2850](https://github.com/nf-core/tools/pull/2850))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
