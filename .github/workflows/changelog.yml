@@ -38,7 +38,7 @@ jobs:
 
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install packages
         run: |
@@ -64,10 +64,10 @@ jobs:
           git diff --exit-code ${GITHUB_WORKSPACE}/CHANGELOG.md || echo "changed=YES" >> $GITHUB_ENV
           echo "File changed: ${{ env.changed }}"
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.12
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
         with:
-          python-version: 3.11
+          python-version: "3.12"
           cache: "pip"
 
       - name: Install pre-commit
