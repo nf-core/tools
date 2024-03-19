@@ -877,7 +877,7 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
     Args:
         wf_releases (array): Array of repo releases as returned by the GitHub API
         wf_branches (array): Array of repo branches, as returned by the GitHub API
-        multiple (bool): Allow selection of multiple releases & branches (for Tower)
+        multiple (bool): Allow selection of multiple releases & branches (for Seqera Platform)
 
     Returns:
         choice (str): Selected release / branch name

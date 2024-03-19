@@ -90,7 +90,7 @@ class DownloadWorkflow:
         pipeline (str): A nf-core pipeline name.
         revision (List[str]): The workflow revision to download, like `1.0`. Defaults to None.
         container (bool): Flag, if the Singularity container should be downloaded as well. Defaults to False.
-        tower (bool): Flag, to customize the download for Nextflow Tower (convert to git bare repo). Defaults to False.
+        platform (bool): Flag, to customize the download for Seqera Platform (convert to git bare repo). Defaults to False.
         outdir (str): Path to the local download directory. Defaults to None.
     """
 
@@ -101,7 +101,7 @@ class DownloadWorkflow:
         outdir=None,
         compress_type=None,
         force=False,
-        tower=False,
+        platform=False,
         download_configuration=None,
         container_system=None,
         container_library=None,
@@ -120,11 +120,11 @@ class DownloadWorkflow:
         self.output_filename = None
         self.compress_type = compress_type
         self.force = force
-        self.tower = tower
+        self.platform = platform
         # if flag is not specified, do not assume deliberate choice and prompt config inclusion interactively.
-        # this implies that non-interactive "no" choice is only possible implicitly (e.g. with --tower or if prompt is suppressed by !stderr.is_interactive).
+        # this implies that non-interactive "no" choice is only possible implicitly (e.g. with --platform or if prompt is suppressed by !stderr.is_interactive).
         # only alternative would have been to make it a parameter with argument, e.g. -d="yes" or -d="no".
-        self.include_configs = True if download_configuration else False if bool(tower) else None
+        self.include_configs = True if download_configuration else False if bool(platform) else None
         # Specifying a cache index or container library implies that containers should be downloaded.
         self.container_system = "singularity" if container_cache_index or bool(container_library) else container_system
         # Manually specified container library (registry)
@@ -165,8 +165,8 @@ class DownloadWorkflow:
             )
             self.prompt_revision()
             self.get_revision_hash()
-            # Inclusion of configs is unnecessary for Tower.
-            if not self.tower and self.include_configs is None:
+            # Inclusion of configs is unnecessary for Seqera Platform.
+            if not self.platform and self.include_configs is None:
                 self.prompt_config_inclusion()
             # If a remote cache is specified, it is safe to assume images should be downloaded.
             if not self.container_cache_utilisation == "remote":
@@ -177,7 +177,7 @@ class DownloadWorkflow:
             self.prompt_singularity_cachedir_utilization()
             self.prompt_singularity_cachedir_remote()
             # Nothing meaningful to compress here.
-            if not self.tower:
+            if not self.platform:
                 self.prompt_compression_type()
         except AssertionError as e:
             raise DownloadError(e) from e
@@ -196,7 +196,7 @@ class DownloadWorkflow:
                 )
 
         # Set an output filename now that we have the outdir
-        if self.tower:
+        if self.platform:
             self.output_filename = f"{self.outdir}.git"
             summary_log.append(f"Output file: '{self.output_filename}'")
         elif self.compress_type is not None:
@@ -205,11 +205,11 @@ class DownloadWorkflow:
         else:
             summary_log.append(f"Output directory: '{self.outdir}'")
 
-        if not self.tower:
+        if not self.platform:
             # Only show entry, if option was prompted.
             summary_log.append(f"Include default institutional configuration: '{self.include_configs}'")
         else:
-            summary_log.append(f"Enabled for seqeralabs® Nextflow Tower: '{self.tower}'")
+            summary_log.append(f"Enabled for Seqera Platform: '{self.platform}'")
 
         # Check that the outdir doesn't already exist
         if os.path.exists(self.outdir):
@@ -233,8 +233,8 @@ class DownloadWorkflow:
         log.info("Saving '{}'\n {}".format(self.pipeline, "\n ".join(summary_log)))
 
         # Perform the actual download
-        if self.tower:
-            self.download_workflow_tower()
+        if self.platform:
+            self.download_workflow_platform()
         else:
             self.download_workflow_static()
 
@@ -273,7 +273,7 @@ class DownloadWorkflow:
             log.info("Compressing output into archive")
             self.compress_download()
 
-    def download_workflow_tower(self, location=None):
+    def download_workflow_platform(self, location=None):
         """Create a bare-cloned git repository of the workflow, so it can be launched with `tw launch` as file:/ pipeline"""
 
         log.info("Collecting workflow from GitHub")
@@ -289,7 +289,7 @@ class DownloadWorkflow:
         # Remove tags for those revisions that had not been selected
         self.workflow_repo.tidy_tags_and_branches()
 
-        # create a bare clone of the modified repository needed for Tower
+        # create a bare clone of the modified repository needed for Seqera Platform
         self.workflow_repo.bare_clone(os.path.join(self.outdir, self.output_filename))
 
         # extract the required containers
@@ -306,9 +306,11 @@ class DownloadWorkflow:
                 except OSError as e:
                     raise DownloadError(f"[red]{e}[/]") from e
 
-        # Justify why compression is skipped for Tower downloads (Prompt is not shown, but CLI argument could have been set)
+        # Justify why compression is skipped for Seqera Platform downloads (Prompt is not shown, but CLI argument could have been set)
         if self.compress_type is not None:
-            log.info("Compression choice is ignored for Tower downloads since nothing can be reasonably compressed.")
+            log.info(
+                "Compression choice is ignored for Seqera Platform downloads since nothing can be reasonably compressed."
+            )
 
     def prompt_pipeline_name(self):
         """Prompt for the pipeline name if not set with a flag"""
@@ -321,13 +323,13 @@ class DownloadWorkflow:
         """
         Prompt for pipeline revision / branch
         Prompt user for revision tag if '--revision' was not set
-        If --tower is specified, allow to select multiple revisions
+        If --platform is specified, allow to select multiple revisions
         Also the static download allows for multiple revisions, but
         we do not prompt this option interactively.
         """
         if not bool(self.revision):
             (choice, tag_set) = nf_core.utils.prompt_pipeline_release_branch(
-                self.wf_revisions, self.wf_branches, multiple=self.tower
+                self.wf_revisions, self.wf_branches, multiple=self.platform
             )
             """
             The checkbox() prompt unfortunately does not support passing a Validator,
@@ -384,7 +386,7 @@ class DownloadWorkflow:
             else:
                 self.outdir = f"{self.pipeline.replace('/', '-').lower()}_{self.revision[0]}"
 
-        if not self.tower:
+        if not self.platform:
             for revision, wf_sha in self.wf_sha.items():
                 # Set the download URL and return - only applicable for classic downloads
                 self.wf_download_url = {
@@ -406,7 +408,7 @@ class DownloadWorkflow:
     def prompt_container_download(self):
         """Prompt whether to download container images or not"""
 
-        if self.container_system is None and stderr.is_interactive and not self.tower:
+        if self.container_system is None and stderr.is_interactive and not self.platform:
             stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
             self.container_system = questionary.select(
                 "Download software container images:",
@@ -1621,7 +1623,7 @@ class WorkflowRepo(SyncedRepo):
     def tidy_tags_and_branches(self):
         """
         Function to delete all tags and branches that are not of interest to the downloader.
-        This allows a clutter-free experience in Tower. The untagged commits are evidently still available.
+        This allows a clutter-free experience in Seqera Platform. The untagged commits are evidently still available.
 
         However, due to local caching, the downloader might also want access to revisions that had been deleted before.
         In that case, don't bother with re-adding the tags and rather download  anew from Github.
@@ -1655,7 +1657,7 @@ class WorkflowRepo(SyncedRepo):
                         if self.repo.head.is_detached:
                             self.repo.head.reset(index=True, working_tree=True)
 
-                # no branch exists, but one is required for Tower's UI to display revisions correctly). Thus, "latest" will be created.
+                # no branch exists, but one is required for Seqera Platform's UI to display revisions correctly). Thus, "latest" will be created.
                 if not bool(self.repo.heads):
                     if self.repo.is_valid_object("latest"):
                         # "latest" exists as tag but not as branch
