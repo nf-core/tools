@@ -1,6 +1,7 @@
 """
 Check whether the content of a subworkflow has changed compared to the original repository
 """
+
 from pathlib import Path
 
 import nf_core.modules.modules_repo

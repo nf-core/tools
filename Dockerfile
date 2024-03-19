@@ -1,4 +1,4 @@
-FROM python:3.11-slim@sha256:ce81dc539f0aedc9114cae640f8352fad83d37461c24a3615b01f081d0c0583a
+FROM python:3.11-slim@sha256:a2eb07f336e4f194358382611b4fea136c632b40baa6314cb27a366deeaf0144
 LABEL authors="phil.ewels@scilifelab.se,erik.danielsson@scilifelab.se" \
     description="Docker image containing requirements for the nfcore tools"
 

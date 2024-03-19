@@ -1,6 +1,7 @@
 """
 Common utility functions for the nf-core python package.
 """
+
 import concurrent.futures
 import datetime
 import errno
@@ -288,7 +289,7 @@ def fetch_wf_config(wf_path, cache_config=True):
         main_nf = os.path.join(wf_path, "main.nf")
         with open(main_nf) as fh:
             for line in fh:
-                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", line)
+                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=(?!=)", line)
                 if match:
                     config[match.group(1)] = "null"
     except FileNotFoundError as e:
@@ -876,7 +877,7 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
     Args:
         wf_releases (array): Array of repo releases as returned by the GitHub API
         wf_branches (array): Array of repo branches, as returned by the GitHub API
-        multiple (bool): Allow selection of multiple releases & branches (for Tower)
+        multiple (bool): Allow selection of multiple releases & branches (for Seqera Platform)
 
     Returns:
         choice (str): Selected release / branch name
