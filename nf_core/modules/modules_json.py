@@ -799,7 +799,9 @@ class ModulesJson:
         )
         return Path(path) if path is not None else None
 
-    def try_apply_patch_reverse(self, module, repo_name, patch_relpath, module_dir):
+    def try_apply_patch_reverse(
+        self, module: str, repo_name: str, patch_relpath: Union[Path, str], module_dir: Union[Path, str]
+    ) -> Path:
         """
         Try reverse applying a patch file to the modified module files
 
@@ -823,11 +825,12 @@ class ModulesJson:
         except LookupError as e:
             raise LookupError(f"Failed to apply patch in reverse for module '{module_fullname}' due to: {e}")
 
-        # Write the patched files to a temporary directory
+        # Write the patched files and rest of the files to a temporary directory
         log.debug("Writing patched files to tmpdir")
         temp_dir = Path(tempfile.mkdtemp())
         temp_module_dir = temp_dir / module
         temp_module_dir.mkdir(parents=True, exist_ok=True)
+
         for file, new_content in new_files.items():
             fn = temp_module_dir / file
             with open(fn, "w") as fh:

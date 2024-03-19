@@ -314,15 +314,19 @@ class SyncedRepo:
             self.checkout_branch()
         else:
             self.checkout(commit)
-        component_files = ["main.nf", "meta.yml"]
-        files_identical = {file: True for file in component_files}
+        files_identical = {}
         component_dir = self.get_component_dir(component_name, component_type)
+        component_files = [file.relative_to(component_dir) for file in Path(component_dir).rglob("*") if file.is_file()]
         for file in component_files:
-            try:
-                files_identical[file] = filecmp.cmp(os.path.join(component_dir, file), os.path.join(base_path, file))
-            except FileNotFoundError:
-                log.debug(f"Could not open file: {os.path.join(component_dir, file)}")
+            component_file = component_dir / file
+            base_file = base_path / file
+            if not base_file.exists():
+                files_identical[file] = False
                 continue
+            try:
+                files_identical[file] = filecmp.cmp(component_file, base_file)
+            except FileNotFoundError as e:
+                raise UserWarning(f"Could not open file: {e.filename}")
         self.checkout_branch()
         return files_identical
 
