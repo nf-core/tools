@@ -187,12 +187,12 @@ def test_subworkflows_absent_version(self):
     """Test linting a nf-test module if the versions is absent in the snapshot file `"""
     self.subworkflow_install.install("bam_sort_stats_samtools")
     with open(
-        Path(self.pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools", "test", "main.nf.test.snap")
+        Path(self.pipeline_dir, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap")
     ) as fh:
         content = fh.read()
         new_content = content.replace("versions", "foo")
     with open(
-        Path(self.pipeline_dir, "subworkflows", "nf-core", "bam_sort_stats_samtools", "test", "main.nf.test.snap"), "w"
+        Path(self.pipeline_dir, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap"), "w"
     ) as fh:
         fh.write(new_content)
 
