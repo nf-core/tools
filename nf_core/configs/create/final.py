@@ -1,4 +1,4 @@
-from textual import on, work
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center
 from textual.screen import Screen
@@ -32,14 +32,12 @@ class FinalScreen(Screen):
         )
         yield Center(Button("Save and close!", id="close_app", variant="success"), classes="cta")
 
-    @work(thread=True, exclusive=True)
     def _create_config(self) -> None:
         """Create the config."""
         create_obj = ConfigCreate(template_config=self.parent.TEMPLATE_CONFIG)
-        create_obj.WriteToFile()
+        create_obj.write_to_file()
 
     @on(Button.Pressed, "#close_app")
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
         self._create_config()
-        # self.close_app()
