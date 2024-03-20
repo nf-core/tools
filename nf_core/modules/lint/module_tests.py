@@ -107,6 +107,22 @@ def module_tests(_, module: NFCoreComponent):
                                             snap_file,
                                         )
                                     )
+                                if "versions" in str(snap_content[test_name]):
+                                    module.passed.append(
+                                        (
+                                            "test_snap_versions",
+                                            "versions found in snapshot file",
+                                            snap_file,
+                                        )
+                                    )
+                                else:
+                                    module.failed.append(
+                                        (
+                                            "test_snap_versions",
+                                            "versions not found in snapshot file",
+                                            snap_file,
+                                        )
+                                    )
                         except json.decoder.JSONDecodeError as e:
                             module.failed.append(
                                 (
