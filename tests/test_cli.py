@@ -364,7 +364,7 @@ class TestCli(unittest.TestCase):
         """Test nf-core schema lint defaults to nextflow_schema.json"""
         cmd = ["schema", "lint"]
         result = self.invoke_cli(cmd)
-        assert mock_get_schema_path.called_with("nextflow_schema.json")
+        mock_get_schema_path.assert_called_with("nextflow_schema.json")
         assert "nextflow_schema.json" in result.output
 
     @mock.patch("nf_core.schema.PipelineSchema.get_schema_path")
@@ -372,7 +372,7 @@ class TestCli(unittest.TestCase):
         """Test nf-core schema lint accepts a filename"""
         cmd = ["schema", "lint", "some_other_filename"]
         result = self.invoke_cli(cmd)
-        assert mock_get_schema_path.called_with("some_other_filename")
+        mock_get_schema_path.assert_called_with("some_other_filename")
         assert "some_other_filename" in result.output
         assert "nextflow_schema.json" not in result.output
 

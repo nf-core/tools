@@ -374,7 +374,7 @@ class TestModules(unittest.TestCase):
         }
 
         assert psync.close_open_pr(pr)
-        assert mock_patch.called_once_with("url_to_update_pr")
+        mock_patch.assert_called_once_with("url_to_update_pr")
 
     @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
     @mock.patch("nf_core.utils.gh_api.patch", side_effect=mocked_requests_patch)
@@ -397,7 +397,7 @@ class TestModules(unittest.TestCase):
         }
 
         assert not psync.close_open_pr(pr)
-        assert mock_patch.called_once_with("bad_url_to_update_pr")
+        mock_patch.assert_called_once_with("bad_url_to_update_pr")
 
     def test_reset_target_dir(self):
         """Try resetting target pipeline directory"""
