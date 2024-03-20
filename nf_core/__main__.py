@@ -1608,7 +1608,7 @@ def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, lo
 # nf-core subworkflows info
 @subworkflows.command("info")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",
@@ -1616,7 +1616,7 @@ def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, lo
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def subworkflows_info(ctx, tool, dir):
+def subworkflows_info(ctx, subworkflow, dir):
     """
     Show developer usage information about a given subworkflow.
 
@@ -1633,7 +1633,7 @@ def subworkflows_info(ctx, tool, dir):
     try:
         subworkflow_info = SubworkflowInfo(
             dir,
-            tool,
+            subworkflow,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
