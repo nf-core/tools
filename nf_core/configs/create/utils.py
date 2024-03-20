@@ -28,6 +28,13 @@ class CreateConfig(BaseModel):
     config_description: Optional[str] = None
     config_url: Optional[str] = None
     containercache_location: Optional[str] = None
+    igenomescache_location: Optional[str] = None
+    scratch_location: Optional[str] = None
+    savelocation: Optional[str] = None
+    max_cpus: Optional[str] = None
+    max_mem: Optional[str] = None
+    max_time: Optional[str] = None
+    noretries: Optional[str] = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -38,14 +45,6 @@ class CreateConfig(BaseModel):
         if not re.match(r"^[a-z]+$", v):
             raise ValueError("Must be lowercase without punctuation.")
         return v
-
-    # @field_validator("org", "description", "author", "version", "outdir")
-    # @classmethod
-    # def notempty(cls, v: str) -> str:
-    #     """Check that string values are not empty."""
-    #     if v.strip() == "":
-    #         raise ValueError("Cannot be left empty.")
-    #     return v
 
     @field_validator("config_handle")
     @classmethod
@@ -70,8 +69,11 @@ class CreateConfig(BaseModel):
         return v
 
     @field_validator(
-        "containercache_location"
-    )  ## TODO this should also include: "igenomescache_location", "scratch_location", "savelocation" but current get odd pyDantic error
+        "containercache_location",
+        "igenomescache_location",
+        "scratch_location",
+        "savelocation",
+    )
     @classmethod
     def valid_path(cls, v: str) -> str:
         """Check that a path is valid."""
@@ -79,7 +81,7 @@ class CreateConfig(BaseModel):
             raise ValueError("Must be a valid absolute path on your filesystem.")
         return v
 
-    @field_validator("max_cpus", "max_memory", "max_time", "noretries")
+    @field_validator("max_cpus", "max_mem", "max_time", "noretries")
     @classmethod
     def valid_number(cls, v: str) -> str:
         """Check that a number is valid."""
@@ -176,8 +178,8 @@ class TextInputWithHelp(Static):
             ),
             Button("Show help", id="show_help", variant="primary"),
             Button("Hide help", id="hide_help"),
-            Static(classes="validation_msg"),
             HelpText(markdown=self.markdown, classes="help_box"),
+            Static(classes="validation_msg"),
             classes="custom_grid",
         )
 

@@ -1,5 +1,6 @@
 """A Textual app to create a config."""
 
+import logging
 from textwrap import dedent
 
 from textual import on
@@ -9,6 +10,11 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown
 
 from nf_core.configs.create.utils import TextInputWithHelp
+from nf_core.pipelines.create.utils import (
+    CreateConfig,
+)
+
+log = logging.getLogger(__name__)
 
 
 class NfcoreDetails(Screen):
@@ -94,5 +100,12 @@ class NfcoreDetails(Screen):
             else:
                 text_input.query_one(".validation_msg").update("")
 
-        self.parent.TEMPLATE_CONFIG.__dict__.update({"config_name": self.query_one("#config_name", TextInputWithHelp)})
-        self.parent.LOGGING_STATE = "pipeline created"
+        self.parent.TEMPLATE_CONFIG.__dict__.update(
+            {"config_name": self.query_one("#config_name", TextInputWithHelp).query_one(Input).value}
+        )
+        print(self.parent.TEMPLATE_CONFIG)
+        try:
+            self.parent.TEMPLATE_CONFIG = CreateConfig(**config)
+
+        except ValueError:
+            pass

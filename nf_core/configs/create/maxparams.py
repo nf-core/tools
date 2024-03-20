@@ -32,7 +32,7 @@ class MaxparamsOptions(Screen):
             )
         )
         yield TextInputWithHelp(
-            "maxcpus",
+            "max_cpus",
             str(default_cpus),
             "Maximum CPUs",
             "Define the maximum number of CPUs that the computing infrastructure has. This is the maximum number of CPUs of a laptop or desktop, the number of CPUs on the largest node on a HPC cluster.",
@@ -40,7 +40,7 @@ class MaxparamsOptions(Screen):
             classes="row",
         )
         yield TextInputWithHelp(
-            "maxmem",
+            "max_mem",
             str(default_memory),
             "Maximum memory (GB)",
             "Define the maximum number of memory (RAM) that the computing infrastructure has. This is the RAM of a laptop or desktop, or the RAM on the largest node on a HPC cluster.",
@@ -48,7 +48,7 @@ class MaxparamsOptions(Screen):
             classes="row",
         )
         yield TextInputWithHelp(
-            "maxtime",
+            "max_time",
             str(default_time),
             "Maximum wall time (hours)",
             "Define the maximum length a step of a pipeline can run for. Set to something sensible for a laptop or desktop, set to value of the partition with the longest walltime on a HPC cluster.",
