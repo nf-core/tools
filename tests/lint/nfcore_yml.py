@@ -41,7 +41,7 @@ def test_nfcore_yml_fail_nfcore_version(self):
     nf_core_yml = Path(new_pipeline) / ".nf-core.yml"
     with open(nf_core_yml) as fh:
         content = fh.read()
-        new_content = re.sub(r"nf-core_version: [\s]*", "nf-core_version: foo", content)
+        new_content = re.sub(r"nf_core_version:.+", "nf_core_version: foo", content)
     with open(nf_core_yml, "w") as fh:
         fh.write(new_content)
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)

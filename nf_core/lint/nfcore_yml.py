@@ -44,7 +44,7 @@ def nfcore_yml(self):
             if repo_type not in REPOSITORY_TYPES:
                 failed.append(
                     f"Repository type in .nf-core.yml is not valid. "
-                    f"Should be one of {', '.join(REPOSITORY_TYPES)} but was {repo_type}"
+                    f"Should be one of [{', '.join(REPOSITORY_TYPES)}] but was {repo_type}"
                 )
             else:
                 passed.append(f"Repository type in .nf-core.yml is valid: {repo_type}")
@@ -58,8 +58,8 @@ def nfcore_yml(self):
         nf_core_version_re = r"nf_core_version: (.+)"
         match = re.search(nf_core_version_re, content)
         if match:
-            nf_core_version = match.group(1)
-            if nf_core_version != __version__ and "dev" not in __version__:
+            nf_core_version = match.group(1).strip('"')
+            if nf_core_version != __version__ and "dev" not in nf_core_version:
                 warned.append(
                     f"nf-core version in .nf-core.yml is not set to the latest version. "
                     f"Should be {__version__} but was {nf_core_version}"
@@ -71,4 +71,4 @@ def nfcore_yml(self):
     else:
         ignored.append(".nf-core.yml variable ignored 'nf_core_version'")
 
-    return {"passed": passed, "warned": warned, "failed": failed}
+    return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}
