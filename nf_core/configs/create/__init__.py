@@ -15,6 +15,7 @@ from nf_core.configs.create.maxparams import MaxparamsOptions
 from nf_core.configs.create.miscquestions import ChooseMiscOptions
 from nf_core.configs.create.nfcoredetails import NfcoreDetails
 from nf_core.configs.create.otherlocations import ChooseOtherLocations
+from nf_core.configs.create.schedulertype import ChooseSchedulerType
 from nf_core.configs.create.utils import (
     CreateConfig,
     CustomLogHandler,
@@ -47,6 +48,7 @@ class ConfigsCreateApp(App[CreateConfig]):
         "welcome": WelcomeScreen(),
         "choose_type": ChooseConfigsType(),
         "choose_infra": ChooseInfraConfigType(),
+        "choose_scheduler": ChooseSchedulerType(), 
         "choose_hpcenvmodules": ChooseHpcModuleFunctionality(),
         "nfcore_details": NfcoreDetails(),
         "choose_container": ChooseContainerType(),
@@ -90,10 +92,12 @@ class ConfigsCreateApp(App[CreateConfig]):
         elif event.button.id == "infratype_continue":
             self.push_screen("choose_hpcenvmodules")
 
+        elif event.button.id == "schedulertype_continue":
+            self.push_screen("nfcore_details")    
         ## nf-core specific questions
         ## TODO: only send to nfcore_details if `for_nfcore_pipelines` [use pydantic stored data]
         elif event.button.id == "envmodule_continue":
-            self.push_screen("nfcore_details")
+            self.push_screen("choose_scheduler")
 
         elif event.button.id == "nfcoredetails_continue":
             self.push_screen("choose_container")
