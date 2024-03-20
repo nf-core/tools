@@ -454,6 +454,7 @@ class GitHubAPISession(requests_cache.CachedSession):
         self.auth_mode = None
         self.return_ok = [200, 201]
         self.return_retry = [403]
+        self.return_unauthorised = [401]
         self.has_init = False
 
     def lazy_init(self):
@@ -546,6 +547,8 @@ class GitHubAPISession(requests_cache.CachedSession):
                 raise e
             else:
                 return r
+        elif request.status_code in self.return_unauthorised:
+            raise RuntimeError("GitHub API PR failed, probably due to an expired GITHUB_TOKEN.")
 
         return request
 
@@ -1047,12 +1050,13 @@ def load_tools_config(directory: Union[str, Path] = "."):
 
 def determine_base_dir(directory="."):
     base_dir = start_dir = Path(directory).absolute()
-    while base_dir != base_dir.parent:
+    # Only iterate up the tree if the start dir doesn't have a config
+    while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
         base_dir = base_dir.parent
         config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
         if config_fn:
-            return directory if base_dir == start_dir else base_dir
-    return directory
+            break
+    return directory if base_dir == start_dir else base_dir
 
 
 def get_first_available_path(directory, paths):

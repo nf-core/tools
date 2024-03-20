@@ -494,7 +494,7 @@ class PipelineSchema:
 
         if not output_fn:
             console = rich.console.Console()
-            console.print("\n", Syntax(prettified_docs, format), "\n")
+            console.print("\n", Syntax(prettified_docs, format, word_wrap=True), "\n")
         else:
             if Path(output_fn).exists() and not force:
                 log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")
@@ -582,7 +582,7 @@ class PipelineSchema:
         )
         schema_template = env.get_template("nextflow_schema.json")
         template_vars = {
-            "name": self.pipeline_manifest.get("name", Path(self.schema_filename).parent).strip("'"),
+            "name": self.pipeline_manifest.get("name", str(Path(self.schema_filename).parent)).strip("'"),
             "description": self.pipeline_manifest.get("description", "").strip("'"),
         }
         self.schema = json.loads(schema_template.render(template_vars))
@@ -800,7 +800,7 @@ class PipelineSchema:
                 p_def := self.build_schema_param(p_val).get("default")
             ):
                 if self.no_prompts or Confirm.ask(
-                    f":sparkles: Default for [bold]'params.{p_key}'[/] in the pipeline config does not match schema. (schema: '{s_def}' | config: '{p_def}'). "
+                    f":sparkles: Default for [bold]'params.{p_key}'[/] in the pipeline config does not match schema. (schema: '{type(s_def)}: {s_def}'  | config: '{type(p_def)}: {p_def}'). "
                     "[blue]Update pipeline schema?"
                 ):
                     s_key_def = s_key + ("default",)

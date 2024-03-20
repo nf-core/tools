@@ -10,6 +10,7 @@
 - Add fallback to `download_pipeline.yml` in case the pipeline does not support stub runs ([#2846](https://github.com/nf-core/tools/pull/2846))
 - Set topic variable correctly in the mastodon announcement ([#2848](https://github.com/nf-core/tools/pull/2848))
 - Add a cleanup action to `download_pipeline.yml` to fix failures caused by inadequate storage space on the runner ([#2849](https://github.com/nf-core/tools/pull/2849))
+- Update python to 3.12 ([#2805](https://github.com/nf-core/tools/pull/2805))
 
 ### Linting
 
@@ -18,6 +19,7 @@
 ### Download
 
 - Replace `--tower` with `--platform`. The former will remain for backwards compatability for now but will be removed in a future release.
+- Better error message when GITHUB_TOKEN exists but is wrong/outdated
 
 ### Components
 
@@ -36,6 +38,9 @@
 - Update python:3.11-slim Docker digest to a2eb07f ([#2847](https://github.com/nf-core/tools/pull/2847))
 - Strip out mention of "Nextflow Tower" and replace with "Seqera Platform" wherever possible
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.3 ([#2850](https://github.com/nf-core/tools/pull/2850))
+- Fix issue with config resolution that was causing nested configs to behave unexpectedly ([#2862](https://github.com/nf-core/tools/pull/2862))
+- Fix schema docs console output truncating ([#2880](https://github.com/nf-core/tools/pull/2880))
+- fix: ensure path object converted to string before stripping quotes ([#2878](https://github.com/nf-core/tools/pull/2878))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
