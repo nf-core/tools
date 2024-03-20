@@ -1,3 +1,11 @@
+import os
+import re
+
+from nf_core import __version__
+
+REPOSITORY_TYPES = ["pipeline", "modules"]
+
+
 def nfcore_yml(self):
     """Repository ``.nf-core.yml`` tests
 
@@ -15,47 +23,52 @@ def nfcore_yml(self):
     passed = []
     warned = []
     failed = []
+    ignored = []
 
     # Remove field that should be ignored according to the linting config
-    # ignore_configs = self.lint_config.get(".nf-core", [])
+    ignore_configs = self.lint_config.get(".nf-core", [])
 
-    # with open(os.path.join(self.wf_path, ".nf-core.yml")) as fh:
-    #     content = fh.read()
+    try:
+        with open(os.path.join(self.wf_path, ".nf-core.yml")) as fh:
+            content = fh.read()
+    except FileNotFoundError:
+        with open(os.path.join(self.wf_path, ".nf-core.yaml")) as fh:
+            content = fh.read()
 
-    # if "nextflow_badge" not in ignore_configs:
-    #     # Check that there is a readme badge showing the minimum required version of Nextflow
-    #     # [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A523.04.0-23aa62.svg)](https://www.nextflow.io/)
-    #     # and that it has the correct version
-    #     nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/nextflow%20DSL2-!?(?:%E2%89%A5|%3E%3D)([\d\.]+)-23aa62\.svg\)\]\(https://www\.nextflow\.io/\)"
-    #     match = re.search(nf_badge_re, content)
-    #     if match:
-    #         nf_badge_version = match.group(1).strip("'\"")
-    #         try:
-    #             if nf_badge_version != self.minNextflowVersion:
-    #                 raise AssertionError()
-    #         except (AssertionError, KeyError):
-    #             failed.append(
-    #                 f"README Nextflow minimum version badge does not match config. Badge: `{nf_badge_version}`, "
-    #                 f"Config: `{self.minNextflowVersion}`"
-    #             )
-    #         else:
-    #             passed.append(
-    #                 f"README Nextflow minimum version badge matched config. Badge: `{nf_badge_version}`, "
-    #                 f"Config: `{self.minNextflowVersion}`"
-    #             )
-    #     else:
-    #         warned.append("README did not have a Nextflow minimum version badge.")
+    if "repository_type" not in ignore_configs:
+        # Check that the repository type is set in the .nf-core.yml
+        repo_type_re = r"repository_type: (.+)"
+        match = re.search(repo_type_re, content)
+        if match:
+            repo_type = match.group(1)
+            if repo_type not in REPOSITORY_TYPES:
+                failed.append(
+                    f"Repository type in .nf-core.yml is not valid. "
+                    f"Should be one of {', '.join(REPOSITORY_TYPES)} but was {repo_type}"
+                )
+            else:
+                passed.append(f"Repository type in .nf-core.yml is valid: {repo_type}")
+        else:
+            warned.append("Repository type not set in .nf-core.yml")
+    else:
+        ignored.append(".nf-core.yml variable ignored 'repository_type'")
 
-    # if "zenodo_doi" not in ignore_configs:
-    #     # Check that zenodo.XXXXXXX has been replaced with the zendo.DOI
-    #     zenodo_re = r"/zenodo\.X+"
-    #     match = re.search(zenodo_re, content)
-    #     if match:
-    #         warned.append(
-    #             "README contains the placeholder `zenodo.XXXXXXX`. "
-    #             "This should be replaced with the zenodo doi (after the first release)."
-    #         )
-    #     else:
-    #         passed.append("README Zenodo placeholder was replaced with DOI.")
+    if "nf_core_version" not in ignore_configs:
+        # Check that the nf-core version is set in the .nf-core.yml
+        nf_core_version_re = r"nf_core_version: (.+)"
+        match = re.search(nf_core_version_re, content)
+        if match:
+            nf_core_version = match.group(1)
+            if nf_core_version != __version__ and "dev" not in __version__:
+                warned.append(
+                    f"nf-core version in .nf-core.yml is not set to the latest version. "
+                    f"Should be {__version__} but was {nf_core_version}"
+                )
+            else:
+                passed.append(f"nf-core version in .nf-core.yml is set to the latest version: {nf_core_version}")
+        else:
+            warned.append("nf-core version not set in .nf-core.yml")
+    else:
+        ignored.append(".nf-core.yml variable ignored 'nf_core_version'")
 
     return {"passed": passed, "warned": warned, "failed": failed}
