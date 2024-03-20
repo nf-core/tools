@@ -22,15 +22,42 @@ class CreateConfig(BaseModel):
     for_nfcore_pipelines: Optional[bool] = None
     use_modules: Optional[bool] = None
     config_name: Optional[str] = None
+    config_author: Optional[str] = None
+    config_handle: Optional[str] = None
+    config_description: Optional[str] = None
+    config_url: Optional[str] = None
 
     model_config = ConfigDict(extra="allow")
 
     @field_validator("config_name")
     @classmethod
     def name_nospecialchars(cls, v: str) -> str:
-        """Check that the pipeline name is simple."""
+        """Check that the config name is simple."""
         if not re.match(r"^[a-z]+$", v):
             raise ValueError("Must be lowercase without punctuation.")
+        return v
+
+    @field_validator("config_handle")
+    @classmethod
+    def handle_suffix(cls, v: str) -> str:
+        """Check that the config author's handle is in handle format ."""
+        ## regex taken from: https://github.com/shinnn/github-username-regex
+        if not re.match(r"^@[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$", v):
+            raise ValueError(
+                "Must be a valid GitHub user handle, starting with @, no punctuation, and max 39 characters."
+            )
+        return v
+
+    @field_validator("config_url")
+    @classmethod
+    def valid_url(cls, v: str) -> str:
+        """Check that the config institutional URL is valid ."""
+        ## regex taken from: https://github.com/shinnn/github-username-regex
+        if not re.match(
+            r"^https?:\/\/.*",
+            v,
+        ):
+            raise ValueError("Must be a valid URL")
         return v
 
 

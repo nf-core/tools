@@ -22,7 +22,7 @@ class NfcoreDetails(Screen):
         default_config = input_config.query_one(Input).value
 
         ## Extract existing field for updating, and modify update
-        description_to_populate = self.query_one("#description", TextInputWithHelp)
+        description_to_populate = self.query_one("#config_description", TextInputWithHelp)
         description_to_populate.query_one(Input).value = (
             default_config + " infrastructure config created with nf-core/tools."
         )
@@ -47,28 +47,28 @@ class NfcoreDetails(Screen):
             )
 
         yield TextInputWithHelp(
-            "author",
+            "config_author",
             "Author(s)",
             "Name of the main author / authors",
             "Long form help text goes here",
         )
 
         yield TextInputWithHelp(
-            "handle",
+            "config_handle",
             "@OctoCat",
             "Github handle of the main author / authors",
             "Long form help text goes here",
         )
 
         yield TextInputWithHelp(
-            "description",
+            "config_description",
             "Config built by nf-core/tools.",
             "A short description of your config.",
             "Long form help text goes here",
         )
 
         yield TextInputWithHelp(
-            "institute_url",
+            "config_url",
             "https://nf-co.re",
             "URL to institution hosting the infrastructure (e.g. HPC)",
             "Long form help text goes here",
