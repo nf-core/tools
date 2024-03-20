@@ -20,6 +20,7 @@
 ### Download
 
 - Replace `--tower` with `--platform`. The former will remain for backwards compatability for now but will be removed in a future release.
+- Better error message when GITHUB_TOKEN exists but is wrong/outdated
 
 ### Components
 
