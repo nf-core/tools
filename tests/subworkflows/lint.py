@@ -181,3 +181,22 @@ def test_subworkflows_lint_capitalization_fail(self):
 
     # cleanup
     self.subworkflow_remove.remove("bam_stats_samtools", force=True)
+
+
+def test_subworkflows_absent_version(self):
+    """Test linting a nf-test module if the versions is absent in the snapshot file `"""
+    self.subworkflow_install.install("fastq_align_dna")
+    with open(Path(self.pipeline_dir, "subworkflows", "nf-core", "fastq_align_dna", "test", "main.nf.test.snap")) as fh:
+        content = fh.read()
+        new_content = content.replace("versions", "foo")
+    with open(
+        Path(self.pipeline_dir, "subworkflows", "nf-core", "fastq_align_dna", "test", "main.nf.test.snap"), "w"
+    ) as fh:
+        fh.write(new_content)
+
+    subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.pipeline_dir)
+    subworkflow_lint.lint(print_results=False, subworkflow="fastq_align_dna")
+    assert len(subworkflow_lint.failed) == 0
+    assert len(subworkflow_lint.passed) > 0
+    assert len(subworkflow_lint.warned) >= 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
+    assert any([x.lint_test == "test_snap_versions" for x in subworkflow_lint.warned])

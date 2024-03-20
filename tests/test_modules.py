@@ -179,6 +179,7 @@ class TestModules(unittest.TestCase):
         test_modules_install_trimgalore_twice,
     )
     from .modules.lint import (  # type: ignore[misc]
+        test_modules_absent_version,
         test_modules_environment_yml_file_doesnt_exists,
         test_modules_environment_yml_file_name_mismatch,
         test_modules_environment_yml_file_not_array,
