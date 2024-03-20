@@ -80,6 +80,7 @@ class NfcoreDetails(Screen):
             classes="cta",
         )
 
+    ## TODO: is there a way to block pressing Center button if validation doesn't pass? Or do that right at the end?
     @on(Button.Pressed)
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""

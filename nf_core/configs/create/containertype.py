@@ -55,7 +55,7 @@ class ChooseContainerType(Screen):
             TextInputWithHelp(
                 field_id="containercache_location",
                 placeholder="",
-                description="Path to the container cache directory",
+                description="Absolute path to the container cache directory",
                 markdown="",
             ),
             classes="cta",

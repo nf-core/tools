@@ -19,7 +19,8 @@ class ChooseOtherLocations(Screen):
         yield Markdown(
             dedent(
                 """
-                # Basic details
+                # Additional locations
+                These are optional locations that can be specified in the Nextflow config to ensure pipelines read or write to the correct locations in different contexts.
                 """
             )
         )

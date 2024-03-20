@@ -1,5 +1,6 @@
 import re
 from logging import LogRecord
+from pathlib import Path
 from typing import Optional, Union
 
 from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
@@ -26,6 +27,7 @@ class CreateConfig(BaseModel):
     config_handle: Optional[str] = None
     config_description: Optional[str] = None
     config_url: Optional[str] = None
+    containercache_location: Optional[str] = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -36,6 +38,14 @@ class CreateConfig(BaseModel):
         if not re.match(r"^[a-z]+$", v):
             raise ValueError("Must be lowercase without punctuation.")
         return v
+
+    # @field_validator("org", "description", "author", "version", "outdir")
+    # @classmethod
+    # def notempty(cls, v: str) -> str:
+    #     """Check that string values are not empty."""
+    #     if v.strip() == "":
+    #         raise ValueError("Cannot be left empty.")
+    #     return v
 
     @field_validator("config_handle")
     @classmethod
@@ -52,12 +62,29 @@ class CreateConfig(BaseModel):
     @classmethod
     def valid_url(cls, v: str) -> str:
         """Check that the config institutional URL is valid ."""
-        ## regex taken from: https://github.com/shinnn/github-username-regex
         if not re.match(
             r"^https?:\/\/.*",
             v,
         ):
             raise ValueError("Must be a valid URL")
+        return v
+
+    @field_validator(
+        "containercache_location"
+    )  ## TODO this should also include: "igenomescache_location", "scratch_location", "savelocation" but current get odd pyDantic error
+    @classmethod
+    def valid_path(cls, v: str) -> str:
+        """Check that a path is valid."""
+        if not Path(v).is_dir():
+            raise ValueError("Must be a valid absolute path on your filesystem.")
+        return v
+
+    @field_validator("max_cpus", "max_memory", "max_time", "noretries")
+    @classmethod
+    def valid_number(cls, v: str) -> str:
+        """Check that a number is valid."""
+        if not re.match(r"^[0-9]+$", v):
+            raise ValueError("Must be a valid integer number.")
         return v
 
 
