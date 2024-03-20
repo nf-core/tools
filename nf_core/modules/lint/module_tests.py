@@ -107,7 +107,7 @@ def module_tests(_, module: NFCoreComponent):
                                             snap_file,
                                         )
                                     )
-                                if "versions" in str(snap_content[test_name]):
+                                if "versions" in str(snap_content[test_name]) or "versions" in str(snap_content.keys()):
                                     module.passed.append(
                                         (
                                             "test_snap_versions",

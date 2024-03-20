@@ -114,7 +114,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
                                             snap_file,
                                         )
                                     )
-                                if "versions" in str(snap_content[test_name]):
+                                if "versions" in str(snap_content[test_name]) or "versions" in str(snap_content.keys()):
                                     subworkflow.passed.append(
                                         (
                                             "test_snap_versions",
