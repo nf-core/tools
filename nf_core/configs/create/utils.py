@@ -1,6 +1,5 @@
 import re
 from logging import LogRecord
-from pathlib import Path
 from typing import Optional, Union
 
 from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
@@ -18,50 +17,20 @@ from textual.widgets import Button, Input, Markdown, RichLog, Static, Switch
 class CreateConfig(BaseModel):
     """Pydantic model for the nf-core create config."""
 
-    org: Optional[str] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
-    author: Optional[str] = None
-    version: Optional[str] = None
-    force: Optional[bool] = None
-    outdir: Optional[str] = None
-    skip_features: Optional[list] = None
-    is_nfcore: Optional[bool] = None
+    config_type: Optional[str] = None
+    infrastructure_type: Optional[str] = None
+    for_nfcore_pipelines: Optional[bool] = None
+    use_modules: Optional[bool] = None
+    config_name: Optional[str] = None
 
     model_config = ConfigDict(extra="allow")
 
-    @field_validator("name")
+    @field_validator("config_name")
     @classmethod
     def name_nospecialchars(cls, v: str) -> str:
         """Check that the pipeline name is simple."""
         if not re.match(r"^[a-z]+$", v):
             raise ValueError("Must be lowercase without punctuation.")
-        return v
-
-    @field_validator("org", "description", "author", "version", "outdir")
-    @classmethod
-    def notempty(cls, v: str) -> str:
-        """Check that string values are not empty."""
-        if v.strip() == "":
-            raise ValueError("Cannot be left empty.")
-        return v
-
-    @field_validator("version")
-    @classmethod
-    def version_nospecialchars(cls, v: str) -> str:
-        """Check that the pipeline version is simple."""
-        if not re.match(r"^([0-9]+)(\.?([0-9]+))*(dev)?$", v):
-            raise ValueError(
-                "Must contain at least one number, and can be prefixed by 'dev'. Do not use a 'v' prefix or spaces."
-            )
-        return v
-
-    @field_validator("outdir")
-    @classmethod
-    def path_valid(cls, v: str) -> str:
-        """Check that a path is valid."""
-        if not Path(v).is_dir():
-            raise ValueError("Must be a valid path.")
         return v
 
 

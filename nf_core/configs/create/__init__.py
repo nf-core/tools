@@ -56,6 +56,9 @@ class ConfigsCreateApp(App[CreateConfig]):
         "final": FinalScreen(),
     }
 
+    # Initialise config data as empty
+    TEMPLATE_CONFIG = CreateConfig()
+
     # Initialise configs type
     CONFIGS_TYPE = None
     INFRA_TYPE = None

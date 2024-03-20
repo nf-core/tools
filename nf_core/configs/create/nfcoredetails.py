@@ -1,4 +1,4 @@
-"""A Textual app to create a pipeline."""
+"""A Textual app to create a config."""
 
 from textwrap import dedent
 
@@ -18,7 +18,7 @@ class NfcoreDetails(Screen):
     ## extend function by copy updating `query_one` commands
     def on_input_changed(self, event: Input.Changed):
         ## Retrieve input keys
-        input_config = self.query_one("#configname", TextInputWithHelp)
+        input_config = self.query_one("#config_name", TextInputWithHelp)
         default_config = input_config.query_one(Input).value
 
         ## Extract existing field for updating, and modify update
@@ -33,13 +33,13 @@ class NfcoreDetails(Screen):
         yield Markdown(
             dedent(
                 """
-                # Basic details
+                # Details for nf-core configs
                 """
             )
         )
         with Horizontal():
             yield TextInputWithHelp(
-                "configname",
+                "config_name",
                 "The name of the config, as would be called from the Nextflow command-line `-profile`. Typically lower case, no spaces. E.g. uppmax.",
                 "Config Name",
                 "Long form help text goes here",
@@ -84,7 +84,7 @@ class NfcoreDetails(Screen):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
         config = {}
-        for text_input in self.query("TextInput"):
+        for text_input in self.query("TextInputWithHelp"):
             this_input = text_input.query_one(Input)
             validation_result = this_input.validate(this_input.value)
             config[text_input.field_id] = this_input.value
@@ -92,12 +92,6 @@ class NfcoreDetails(Screen):
                 text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
             else:
                 text_input.query_one(".validation_msg").update("")
-        # try:
-        #     self.parent.TEMPLATE_CONFIG = CreateConfig(**config)
-        #     if event.button.id == "next":
-        #         if self.parent.CONFIGS_TYPE == "infrastructure":
-        #             self.parent.push_screen("type_infrastructure")
-        #         elif self.parent.CONFIGS_TYPE == "pipeline":
-        #             self.parent.push_screen("type_custom")
-        # except ValueError:
-        #     pass
+
+        self.parent.TEMPLATE_CONFIG.__dict__.update({"config_name": self.query_one("#config_name", TextInputWithHelp)})
+        self.parent.LOGGING_STATE = "pipeline created"
