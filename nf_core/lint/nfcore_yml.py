@@ -1,12 +1,13 @@
 import re
 from pathlib import Path
+from typing import Dict, List
 
 from nf_core import __version__
 
 REPOSITORY_TYPES = ["pipeline", "modules"]
 
 
-def nfcore_yml(self):
+def nfcore_yml(self) -> Dict[str, List[str]]:
     """Repository ``.nf-core.yml`` tests
 
     The ``.nf-core.yml`` contains metadata for nf-core tools to correctly apply its features.
@@ -20,10 +21,10 @@ def nfcore_yml(self):
          * Check if the nf-core version is set to the latest version.
 
     """
-    passed = []
-    warned = []
-    failed = []
-    ignored = []
+    passed: List[str] = []
+    warned: List[str] = []
+    failed: List[str] = []
+    ignored: List[str] = []
 
     # Remove field that should be ignored according to the linting config
     ignore_configs = self.lint_config.get(".nf-core", [])
