@@ -10,8 +10,8 @@ def test_nfcore_yml_pass(self):
     self.lint_obj._load()
     results = self.lint_obj.nfcore_yml()
 
-    assert "Repository type in .nf-core.yml is valid" in str(results["passed"])
-    assert "nf-core version in .nf-core.yml is set to the latest version" in str(results["passed"])
+    assert "Repository type in `.nf-core.yml` is valid" in str(results["passed"])
+    assert "nf-core version in `.nf-core.yml` is set to the latest version" in str(results["passed"])
     assert len(results.get("warned", [])) == 0
     assert len(results.get("failed", [])) == 0
     assert len(results.get("ignored", [])) == 0
@@ -29,7 +29,7 @@ def test_nfcore_yml_fail_repo_type(self):
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     results = lint_obj.nfcore_yml()
-    assert "Repository type in .nf-core.yml is not valid." in str(results["failed"])
+    assert "Repository type in `.nf-core.yml` is not valid." in str(results["failed"])
     assert len(results.get("warned", [])) == 0
     assert len(results.get("passed", [])) >= 0
     assert len(results.get("ignored", [])) == 0

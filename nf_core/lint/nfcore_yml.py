@@ -44,15 +44,15 @@ def nfcore_yml(self) -> Dict[str, List[str]]:
             repo_type = match.group(1)
             if repo_type not in REPOSITORY_TYPES:
                 failed.append(
-                    f"Repository type in .nf-core.yml is not valid. "
-                    f"Should be one of [{', '.join(REPOSITORY_TYPES)}] but was {repo_type}"
+                    f"Repository type in `.nf-core.yml` is not valid. "
+                    f"Should be one of `[{', '.join(REPOSITORY_TYPES)}]` but was `{repo_type}`"
                 )
             else:
-                passed.append(f"Repository type in .nf-core.yml is valid: {repo_type}")
+                passed.append(f"Repository type in `.nf-core.yml` is valid: `{repo_type}`")
         else:
-            warned.append("Repository type not set in .nf-core.yml")
+            warned.append("Repository type not set in `.nf-core.yml`")
     else:
-        ignored.append(".nf-core.yml variable ignored 'repository_type'")
+        ignored.append("`.nf-core.yml` variable ignored 'repository_type'")
 
     if "nf_core_version" not in ignore_configs:
         # Check that the nf-core version is set in the .nf-core.yml
@@ -62,14 +62,14 @@ def nfcore_yml(self) -> Dict[str, List[str]]:
             nf_core_version = match.group(1).strip('"')
             if nf_core_version != __version__ and "dev" not in nf_core_version:
                 warned.append(
-                    f"nf-core version in .nf-core.yml is not set to the latest version. "
-                    f"Should be {__version__} but was {nf_core_version}"
+                    f"nf-core version in `.nf-core.yml` is not set to the latest version. "
+                    f"Should be `{__version__}` but was `{nf_core_version}`"
                 )
             else:
-                passed.append(f"nf-core version in .nf-core.yml is set to the latest version: {nf_core_version}")
+                passed.append(f"nf-core version in `.nf-core.yml` is set to the latest version: `{nf_core_version}`")
         else:
-            warned.append("nf-core version not set in .nf-core.yml")
+            warned.append("nf-core version not set in `.nf-core.yml`")
     else:
-        ignored.append(".nf-core.yml variable ignored 'nf_core_version'")
+        ignored.append("`.nf-core.yml` variable ignored 'nf_core_version'")
 
     return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}
