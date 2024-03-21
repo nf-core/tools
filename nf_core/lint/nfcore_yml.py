@@ -1,5 +1,5 @@
-import os
 import re
+from pathlib import Path
 
 from nf_core import __version__
 
@@ -29,10 +29,10 @@ def nfcore_yml(self):
     ignore_configs = self.lint_config.get(".nf-core", [])
 
     try:
-        with open(os.path.join(self.wf_path, ".nf-core.yml")) as fh:
+        with open(Path(self.wf_path, ".nf-core.yml")) as fh:
             content = fh.read()
     except FileNotFoundError:
-        with open(os.path.join(self.wf_path, ".nf-core.yaml")) as fh:
+        with open(Path(self.wf_path, ".nf-core.yaml")) as fh:
             content = fh.read()
 
     if "repository_type" not in ignore_configs:
