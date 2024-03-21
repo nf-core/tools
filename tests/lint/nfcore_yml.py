@@ -47,7 +47,7 @@ def test_nfcore_yml_fail_nfcore_version(self):
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     results = lint_obj.nfcore_yml()
-    assert "nf-core version in .nf-core.yml is not set to the latest version." in str(results["warned"])
+    assert "nf-core version in `.nf-core.yml` is not set to the latest version." in str(results["warned"])
     assert len(results.get("failed", [])) == 0
     assert len(results.get("passed", [])) >= 0
     assert len(results.get("ignored", [])) == 0
