@@ -42,6 +42,7 @@
 - Fix schema docs console output truncating ([#2880](https://github.com/nf-core/tools/pull/2880))
 - fix: ensure path object converted to string before stripping quotes ([#2878](https://github.com/nf-core/tools/pull/2878))
 - Make cli-provided module/subworkflow names case insensitive ([#2869](https://github.com/nf-core/tools/pull/2869))
+- Add plugin entrypoints for toolong ([#2895](https://github.com/nf-core/tools/pull/2895))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
