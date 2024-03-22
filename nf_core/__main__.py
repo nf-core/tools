@@ -103,6 +103,14 @@ def selective_traceback_hook(exctype, value, traceback):
 sys.excepthook = selective_traceback_hook
 
 
+# Define callback function to normalize the case of click arguments,
+# which is used to make the module/subworkflow names, provided by the
+# user on the cli, case insensitive.
+def normalize_case(ctx, param, component_name):
+    if component_name is not None:
+        return component_name.casefold()
+
+
 def run_nf_core():
     # print nf-core header if environment variable is not set
     if os.environ.get("_NF_CORE_COMPLETE") is None:
@@ -786,7 +794,7 @@ def modules_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-b
 # nf-core modules install
 @modules.command("install")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -838,7 +846,7 @@ def modules_install(ctx, tool, dir, prompt, force, sha):
 # nf-core modules update
 @modules.command("update")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -930,7 +938,7 @@ def modules_update(
 # nf-core modules patch
 @modules.command()
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -967,7 +975,7 @@ def patch(ctx, tool, dir, remove):
 # nf-core modules remove
 @modules.command("remove")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -1121,7 +1129,7 @@ def create_module(
 # nf-core modules test
 @modules.command("test")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -1180,7 +1188,7 @@ def test_module(ctx, tool, dir, no_prompts, update, once, profile):
 # nf-core modules lint
 @modules.command("lint")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -1267,7 +1275,7 @@ def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed,
 # nf-core modules info
 @modules.command("info")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -1306,7 +1314,7 @@ def modules_info(ctx, tool, dir):
 # nf-core modules bump-versions
 @modules.command()
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -1392,7 +1400,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force, migrate_pytest):
 # nf-core subworkflows test
 @subworkflows.command("test")
 @click.pass_context
-@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",
@@ -1519,7 +1527,7 @@ def subworkflows_list_local(ctx, keywords, json, dir):  # pylint: disable=redefi
 # nf-core subworkflows lint
 @subworkflows.command("lint")
 @click.pass_context
-@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",
@@ -1600,7 +1608,7 @@ def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, lo
 # nf-core subworkflows info
 @subworkflows.command("info")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",
@@ -1608,7 +1616,7 @@ def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, lo
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def subworkflows_info(ctx, tool, dir):
+def subworkflows_info(ctx, subworkflow, dir):
     """
     Show developer usage information about a given subworkflow.
 
@@ -1625,7 +1633,7 @@ def subworkflows_info(ctx, tool, dir):
     try:
         subworkflow_info = SubworkflowInfo(
             dir,
-            tool,
+            subworkflow,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
@@ -1639,7 +1647,7 @@ def subworkflows_info(ctx, tool, dir):
 # nf-core subworkflows install
 @subworkflows.command("install")
 @click.pass_context
-@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",
@@ -1697,7 +1705,7 @@ def subworkflows_install(ctx, subworkflow, dir, prompt, force, sha):
 # nf-core subworkflows remove
 @subworkflows.command("remove")
 @click.pass_context
-@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",
@@ -1727,7 +1735,7 @@ def subworkflows_remove(ctx, dir, subworkflow):
 # nf-core subworkflows update
 @subworkflows.command("update")
 @click.pass_context
-@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",
