@@ -11,6 +11,14 @@ from typing_extensions import TypeAlias
 
 ParseResult: TypeAlias = "tuple[Optional[datetime], str, Text]"
 
+MOVE_LOG_LEVEL_COL = True
+LOG_LEVELS = {
+    "DEBUG": ["dim white on black", "dim"],
+    "INFO": ["bold black on green", ""],
+    "WARN": ["bold black on yellow", "yellow"],
+    "ERROR": ["bold black on red", "red"],
+}
+
 
 class LogFormat:
     def parse(self, line: str) -> ParseResult | None:
@@ -19,12 +27,6 @@ class LogFormat:
 
 class NextflowRegexLogFormatOne(LogFormat):
     REGEX = re.compile(".*?")
-    LOG_LEVELS = {
-        "DEBUG": ["dim white on black", ""],
-        "INFO": ["bold black on green", "on #042C07"],
-        "WARN": ["bold black on yellow", "on #44450E"],
-        "ERROR": ["bold black on red", "on #470005"],
-    }
 
     highlighter = LogHighlighter()
 
@@ -41,8 +43,7 @@ class NextflowRegexLogFormatOne(LogFormat):
         if thread := groups.get("thread", None):
             text.highlight_words([thread], "blue")
         if log_level := groups.get("log_level", None):
-            text.highlight_words([f" {log_level} "], self.LOG_LEVELS[log_level][0])
-            text.stylize_before(self.LOG_LEVELS[log_level][1])
+            text.highlight_words([f" {log_level} "], LOG_LEVELS[log_level][0])
         if logger_name := groups.get("logger_name", None):
             text.highlight_words([logger_name], "cyan")
         if process_name := groups.get("process_name", None):
@@ -186,18 +187,37 @@ def nextflow_format_parser(format_parser):
         def parse(self, line: str) -> ParseResult:
             """Parse a line."""
 
-            for logtype in ["DEBUG", "INFO", "WARN", "ERROR"]:
+            # Use the toolong parser with custom formatters
+            _, line, text = super().parse(line)
+
+            # Custom formatting with log levels
+            for logtype in LOG_LEVELS.keys():
                 if logtype in line:
+                    # Set log status for next lines, if multi-line
                     self._log_status = logtype
-                    return super().parse(line)
+                    # Set the base stlying for this line
+                    text.stylize_before(LOG_LEVELS[logtype][1])
+                    # Move the "INFO" log level to the start of the line
+                    if MOVE_LOG_LEVEL_COL:
+                        line = "{} {}".format(
+                            logtype,
+                            line.replace(f" {logtype} ", ""),
+                        )
+                        logtype_str = f"[{LOG_LEVELS[logtype][0]}] {logtype: <5} [/] "
+                        text = Text.from_markup(
+                            logtype_str + text.markup.replace(f" {logtype} ", "[reset] [/]"),
+                        )
+                    # Return - on to next line
+                    return _, line, text
+
+            # Multi-line log message
+            # Strip automatic formatting, which does weird stuff
             text = Text(line)
-            if text.plain == text.markup:
-                if self._log_status == "DEBUG":
-                    text.stylize("dim")
-                if self._log_status == "WARN":
-                    text.stylize("yellow")
-                if self._log_status == "ERROR":
-                    text.stylize("red")
-            return None, line, text
+            for logtype in LOG_LEVELS.keys():
+                if self._log_status == logtype:
+                    text = Text.from_markup(f"[{LOG_LEVELS[logtype][0]}] [/] " + text.markup)
+                    text.stylize_before(LOG_LEVELS[logtype][1])
+
+            return _, line, text
 
     return FormatParser
