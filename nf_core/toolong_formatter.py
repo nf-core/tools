@@ -25,8 +25,10 @@ class LogFormat:
         raise NotImplementedError()
 
 
-class NextflowRegexLogFormatOne(LogFormat):
-    REGEX = re.compile(".*?")
+class NextflowLogFormat(LogFormat):
+    REGEX = re.compile(
+        r"(?P<date>\w+-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) (?P<thread>\[.*\]?) (?P<log_level>\w+)\s+(?P<logger_name>[\w\.]+) - (?P<message>.*?)$"
+    )
 
     highlighter = LogHighlighter()
 
@@ -51,11 +53,11 @@ class NextflowRegexLogFormatOne(LogFormat):
         if message := groups.get("message", None):
             text.highlight_words([message], "dim" if log_level == "DEBUG" else "")
 
-        return None, line, text
+        return timestamp, line, text
 
 
-class NextflowRegexLogFormatTwo(LogFormat):
-    REGEX = re.compile(".*?")
+class NextflowLogFormatActiveProcess(LogFormat):
+    REGEX = re.compile(r"^(?P<marker>\[process\]) (?P<process>.*?)(?P<process_name>[^:]+?)?$")
     highlighter = LogHighlighter()
 
     def parse(self, line: str) -> ParseResult | None:
@@ -74,8 +76,10 @@ class NextflowRegexLogFormatTwo(LogFormat):
         return None, line, text
 
 
-class NextflowRegexLogFormatThree(LogFormat):
-    REGEX = re.compile(".*?")
+class NextflowLogFormatActiveProcessDetails(LogFormat):
+    REGEX = re.compile(
+        r"  (?P<port>port \d+): (?P<channel_type>\((value|queue|cntrl)\)) (?P<channel_state>\S+)\s+; channel: (?P<channel_name>.*?)$"
+    )
     CHANNEL_TYPES = {
         "(value)": "green",
         "(cntrl)": "yellow",
@@ -103,8 +107,8 @@ class NextflowRegexLogFormatThree(LogFormat):
         return None, line, text
 
 
-class NextflowRegexLogFormatFour(LogFormat):
-    REGEX = re.compile(".*?")
+class NextflowLogFormatActiveProcessStatus(LogFormat):
+    REGEX = re.compile(r"^  status=(?P<status>.*?)?$")
     highlighter = LogHighlighter()
 
     def parse(self, line: str) -> ParseResult | None:
@@ -122,8 +126,8 @@ class NextflowRegexLogFormatFour(LogFormat):
         return None, line, text
 
 
-class NextflowRegexLogFormatFive(LogFormat):
-    REGEX = re.compile(".*?")
+class NextflowLogFormatScriptParse(LogFormat):
+    REGEX = re.compile(r"^  (?P<script_id>Script_\w+:) (?P<script_path>.*?)$")
     highlighter = LogHighlighter()
 
     def parse(self, line: str) -> ParseResult | None:
@@ -140,30 +144,6 @@ class NextflowRegexLogFormatFive(LogFormat):
             text.highlight_words([script_path], "magenta")
 
         return None, line, text
-
-
-class NextflowLogFormat(NextflowRegexLogFormatOne):
-    REGEX = re.compile(
-        r"(?P<date>\w+-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) (?P<thread>\[.*\]?) (?P<log_level>\w+)\s+(?P<logger_name>[\w\.]+) - (?P<message>.*?)$"
-    )
-
-
-class NextflowLogFormatActiveProcess(NextflowRegexLogFormatTwo):
-    REGEX = re.compile(r"^(?P<marker>\[process\]) (?P<process>.*?)(?P<process_name>[^:]+?)?$")
-
-
-class NextflowLogFormatActiveProcessDetails(NextflowRegexLogFormatThree):
-    REGEX = re.compile(
-        r"  (?P<port>port \d+): (?P<channel_type>\((value|queue|cntrl)\)) (?P<channel_state>\S+)\s+; channel: (?P<channel_name>.*?)$"
-    )
-
-
-class NextflowLogFormatActiveProcessStatus(NextflowRegexLogFormatFour):
-    REGEX = re.compile(r"^  status=(?P<status>.*?)?$")
-
-
-class NextflowLogFormatScriptParse(NextflowRegexLogFormatFive):
-    REGEX = re.compile(r"^  (?P<script_id>Script_\w+:) (?P<script_path>.*?)$")
 
 
 def nextflow_formatters(formats):
@@ -188,7 +168,7 @@ def nextflow_format_parser(format_parser):
             """Parse a line."""
 
             # Use the toolong parser with custom formatters
-            _, line, text = super().parse(line)
+            timestamp, line, text = super().parse(line)
 
             # Custom formatting with log levels
             for logtype in LOG_LEVELS.keys():
@@ -208,7 +188,7 @@ def nextflow_format_parser(format_parser):
                             logtype_str + text.markup.replace(f" {logtype} ", "[reset] [/]"),
                         )
                     # Return - on to next line
-                    return _, line, text
+                    return timestamp, line, text
 
             # Multi-line log message
             # Strip automatic formatting, which does weird stuff
@@ -218,6 +198,6 @@ def nextflow_format_parser(format_parser):
                     text = Text.from_markup(f"[{LOG_LEVELS[logtype][0]}] [/] " + text.markup)
                     text.stylize_before(LOG_LEVELS[logtype][1])
 
-            return _, line, text
+            return timestamp, line, text
 
     return FormatParser
