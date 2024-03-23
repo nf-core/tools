@@ -22,4 +22,4 @@ tabulate
 trogon
 # Remove dev brach dep when merged: https://github.com/Textualize/toolong/pull/47
 # toolong
-git+https://github.com/ewels/toolong.git@add-entry-points#egg=toolong
+toolong @ git+https://github.com/ewels/toolong.git@add-entry-points#egg=toolong
