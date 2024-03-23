@@ -40,6 +40,9 @@ setup(
         "toolong.application.format_parsers": [
             "nextflow_format_parser = nf_core.toolong_formatter:nextflow_format_parser",
         ],
+        "toolong.application.on_init": [
+            "nf_toolong_on_init = nf_core.toolong_formatter:nf_toolong_on_init",
+        ],
     },
     python_requires=">=3.8, <4",
     install_requires=required,

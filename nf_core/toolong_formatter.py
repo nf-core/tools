@@ -5,11 +5,11 @@ from datetime import datetime
 from typing import Optional
 
 from rich.text import Text
-from toolong import timestamps
 from toolong.highlighter import LogHighlighter
 from typing_extensions import TypeAlias
 
 ParseResult: TypeAlias = "tuple[Optional[datetime], str, Text]"
+
 
 MOVE_LOG_LEVEL_COL = True
 LOG_LEVELS = {
@@ -18,6 +18,16 @@ LOG_LEVELS = {
     "WARN": ["bold black on yellow", "yellow"],
     "ERROR": ["bold black on red", "red"],
 }
+
+IS_NEXTFLOW = False
+
+
+def nf_toolong_on_init(scan):
+    import nf_core.toolong_formatter
+
+    for file_path in scan.file_paths:
+        if file_path.startswith(".nextflow.log"):
+            nf_core.toolong_formatter.IS_NEXTFLOW = True
 
 
 class LogFormat:
@@ -40,7 +50,7 @@ class NextflowLogFormat(LogFormat):
         text = Text.from_ansi(line)
         groups = match.groupdict()
         if date := groups.get("date", None):
-            _, timestamp = timestamps.parse(groups["date"])
+            timestamp = datetime.strptime(groups["date"], "%b-%d %H:%M:%S.%f")
             text.highlight_words([date], "not bold magenta")
         if thread := groups.get("thread", None):
             text.highlight_words([thread], "blue")
@@ -147,16 +157,22 @@ class NextflowLogFormatScriptParse(LogFormat):
 
 
 def nextflow_formatters(formats):
-    return [
-        NextflowLogFormat(),
-        NextflowLogFormatActiveProcess(),
-        NextflowLogFormatActiveProcessDetails(),
-        NextflowLogFormatActiveProcessStatus(),
-        NextflowLogFormatScriptParse(),
-    ]
+    import nf_core.toolong_formatter
+
+    if nf_core.toolong_formatter.IS_NEXTFLOW:
+        return [
+            NextflowLogFormat(),
+            NextflowLogFormatActiveProcess(),
+            NextflowLogFormatActiveProcessDetails(),
+            NextflowLogFormatActiveProcessStatus(),
+            NextflowLogFormatScriptParse(),
+        ]
+    return formats
 
 
 def nextflow_format_parser(format_parser):
+    import nf_core.toolong_formatter
+
     class FormatParser(format_parser):
         """Parses a log line."""
 
@@ -169,6 +185,10 @@ def nextflow_format_parser(format_parser):
 
             # Use the toolong parser with custom formatters
             timestamp, line, text = super().parse(line)
+
+            # Return if not a netflow log file
+            if not nf_core.toolong_formatter.IS_NEXTFLOW:
+                return timestamp, line, text
 
             # Custom formatting with log levels
             for logtype in LOG_LEVELS.keys():
