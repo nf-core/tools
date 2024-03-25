@@ -36,6 +36,15 @@ class LogFormat:
 
 
 class NextflowLogFormat(LogFormat):
+    """
+    Formatter for regular Nextflow log files.
+
+    Examples:
+
+    Mar-24 00:11:47.302 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 11; maxThreads: 1000
+    Mar-24 00:12:04.942 [Task monitor] INFO  nextflow.Session - Execution cancelled -- Finishing pending tasks before exit
+    """
+
     REGEX = re.compile(
         r"(?P<date>\w+-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}) (?P<thread>\[.*\]?) (?P<log_level>\w+)\s+(?P<logger_name>[\w\.]+) - (?P<message>.*?)$"
     )
@@ -66,7 +75,36 @@ class NextflowLogFormat(LogFormat):
         return timestamp, line, text
 
 
-class NextflowLogFormatActiveProcess(LogFormat):
+class NextflowLogAbortedProcessNames(LogFormat):
+    """
+    Formatter for process names when a pipeline is aborted.
+
+    Example:
+
+    The following lines:
+    [process] NFCORE_RNASEQ:RNASEQ:ALIGN_STAR:STAR_ALIGN
+    [process] NFCORE_RNASEQ:RNASEQ:ALIGN_STAR:BAM_SORT_STATS_SAMTOOLS:SAMTOOLS_SORT
+
+    In blocks that look like this:
+
+    Mar-12 23:56:10.538 [SIGINT handler] DEBUG nextflow.Session - Session aborted -- Cause: SIGINT
+    Mar-12 23:56:10.572 [SIGINT handler] DEBUG nextflow.Session - The following nodes are still active:
+    [process] NFCORE_RNASEQ:RNASEQ:ALIGN_STAR:STAR_ALIGN
+      status=ACTIVE
+      port 0: (queue) OPEN  ; channel: -
+      port 1: (value) bound ; channel: -
+      port 2: (value) bound ; channel: -
+      port 3: (value) bound ; channel: star_ignore_sjdbgtf
+      port 4: (value) bound ; channel: seq_platform
+      port 5: (value) bound ; channel: seq_center
+      port 6: (cntrl) -     ; channel: $
+
+    [process] NFCORE_RNASEQ:RNASEQ:ALIGN_STAR:BAM_SORT_STATS_SAMTOOLS:SAMTOOLS_SORT
+      status=ACTIVE
+      port 0: (queue) OPEN  ; channel: -
+      port 1: (cntrl) -     ; channel: $
+    """
+
     REGEX = re.compile(r"^(?P<marker>\[process\]) (?P<process>.*?)(?P<process_name>[^:]+?)?$")
     highlighter = LogHighlighter()
 
@@ -86,7 +124,38 @@ class NextflowLogFormatActiveProcess(LogFormat):
         return None, line, text
 
 
-class NextflowLogFormatActiveProcessDetails(LogFormat):
+class NextflowLogAbortedProcessPorts(LogFormat):
+    """
+    Formatter for process names when a pipeline is aborted.
+
+    Example:
+
+    The following lines:
+      port 0: (queue) OPEN  ; channel: -
+      port 1: (value) bound ; channel: -
+      port 2: (value) bound ; channel: -
+      port 3: (value) bound ; channel: star_ignore_sjdbgtf
+
+    In blocks that look like this:
+
+    Mar-12 23:56:10.538 [SIGINT handler] DEBUG nextflow.Session - Session aborted -- Cause: SIGINT
+    Mar-12 23:56:10.572 [SIGINT handler] DEBUG nextflow.Session - The following nodes are still active:
+    [process] NFCORE_RNASEQ:RNASEQ:ALIGN_STAR:STAR_ALIGN
+      status=ACTIVE
+      port 0: (queue) OPEN  ; channel: -
+      port 1: (value) bound ; channel: -
+      port 2: (value) bound ; channel: -
+      port 3: (value) bound ; channel: star_ignore_sjdbgtf
+      port 4: (value) bound ; channel: seq_platform
+      port 5: (value) bound ; channel: seq_center
+      port 6: (cntrl) -     ; channel: $
+
+    [process] NFCORE_RNASEQ:RNASEQ:ALIGN_STAR:BAM_SORT_STATS_SAMTOOLS:SAMTOOLS_SORT
+      status=ACTIVE
+      port 0: (queue) OPEN  ; channel: -
+      port 1: (cntrl) -     ; channel: $
+    """
+
     REGEX = re.compile(
         r"  (?P<port>port \d+): (?P<channel_type>\((value|queue|cntrl)\)) (?P<channel_state>\S+)\s+; channel: (?P<channel_name>.*?)$"
     )
@@ -117,7 +186,35 @@ class NextflowLogFormatActiveProcessDetails(LogFormat):
         return None, line, text
 
 
-class NextflowLogFormatActiveProcessStatus(LogFormat):
+class NextflowLogAbortedProcessStatus(LogFormat):
+    """
+    Formatter for process names when a pipeline is aborted.
+
+    Example:
+
+    The following lines:
+      status=ACTIVE
+
+    In blocks that look like this:
+
+    Mar-12 23:56:10.538 [SIGINT handler] DEBUG nextflow.Session - Session aborted -- Cause: SIGINT
+    Mar-12 23:56:10.572 [SIGINT handler] DEBUG nextflow.Session - The following nodes are still active:
+    [process] NFCORE_RNASEQ:RNASEQ:ALIGN_STAR:STAR_ALIGN
+      status=ACTIVE
+      port 0: (queue) OPEN  ; channel: -
+      port 1: (value) bound ; channel: -
+      port 2: (value) bound ; channel: -
+      port 3: (value) bound ; channel: star_ignore_sjdbgtf
+      port 4: (value) bound ; channel: seq_platform
+      port 5: (value) bound ; channel: seq_center
+      port 6: (cntrl) -     ; channel: $
+
+    [process] NFCORE_RNASEQ:RNASEQ:ALIGN_STAR:BAM_SORT_STATS_SAMTOOLS:SAMTOOLS_SORT
+      status=ACTIVE
+      port 0: (queue) OPEN  ; channel: -
+      port 1: (cntrl) -     ; channel: $
+    """
+
     REGEX = re.compile(r"^  status=(?P<status>.*?)?$")
     highlighter = LogHighlighter()
 
@@ -136,7 +233,17 @@ class NextflowLogFormatActiveProcessStatus(LogFormat):
         return None, line, text
 
 
-class NextflowLogFormatScriptParse(LogFormat):
+class NextflowLogParsedScripts(LogFormat):
+    """
+    Formatter for parsed scriptp names.
+
+    For example:
+
+    Mar-24 00:12:03.547 [main] DEBUG nextflow.script.ScriptRunner - Parsed script files:
+      Script_e2630658c898fe40: /Users/ewels/GitHub/nf-core/rnaseq/./workflows/rnaseq/../../modules/local/deseq2_qc/main.nf
+      Script_56c7c9e8363ee20a: /Users/ewels/GitHub/nf-core/rnaseq/./workflows/rnaseq/../../subworkflows/local/quantify_pseudo_alignment/../../../modules/nf-core/custom/tx2gene/main.nf
+    """
+
     REGEX = re.compile(r"^  (?P<script_id>Script_\w+:) (?P<script_path>.*?)$")
     highlighter = LogHighlighter()
 
@@ -162,10 +269,10 @@ def nextflow_formatters(formats):
     if nf_core.toolong_formatter.IS_NEXTFLOW:
         return [
             NextflowLogFormat(),
-            NextflowLogFormatActiveProcess(),
-            NextflowLogFormatActiveProcessDetails(),
-            NextflowLogFormatActiveProcessStatus(),
-            NextflowLogFormatScriptParse(),
+            NextflowLogAbortedProcessNames(),
+            NextflowLogAbortedProcessPorts(),
+            NextflowLogAbortedProcessStatus(),
+            NextflowLogParsedScripts(),
         ]
     return formats
 
