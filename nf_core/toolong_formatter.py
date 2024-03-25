@@ -271,14 +271,29 @@ def nextflow_format_parser(logfile_obj):
             self._log_status = ""
 
         def parse(self, line: str) -> ParseResult:
-            """Parse a line."""
-
-            # Use the toolong parser with custom formatters
-            timestamp, line, text = super().parse(line)
+            """Use the toolong parser with custom formatters."""
 
             # Return if not a netflow log file
             if not is_nextflow:
-                return timestamp, line, text
+                return super().parse(line)
+
+            # Copied from toolong source, but without the default log parser
+            if len(line) > 10_000:
+                line = line[:10_000]
+            parse_result = None
+            if line.strip():
+                for index, format in enumerate(self._formats):
+                    parse_result = format.parse(line)
+                    if parse_result is not None:
+                        if index:
+                            self._formats = [*self._formats[index:], *self._formats[:index]]
+                        timestamp, line, text = parse_result
+                        break
+
+            if parse_result is None:
+                timestamp = None
+                line = line
+                text = Text(line)
 
             # Custom formatting with log levels
             for logtype in LOG_LEVELS.keys():
@@ -300,8 +315,7 @@ def nextflow_format_parser(logfile_obj):
                     # Return - on to next line
                     return timestamp, line, text
 
-            # Multi-line log message
-            # Strip automatic formatting, which does weird stuff
+            # Multi-line log message - add colour character at start of line
             for logtype in LOG_LEVELS.keys():
                 if self._log_status == logtype:
                     text = Text.from_markup(f"[{LOG_LEVELS[logtype][0]}] [/] " + text.markup)
