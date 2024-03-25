@@ -11,7 +11,6 @@ from typing_extensions import TypeAlias
 
 ParseResult: TypeAlias = "tuple[Optional[datetime], str, Text]"
 
-
 MOVE_LOG_LEVEL_COL = True
 LOG_LEVELS = {
     "DEBUG": ["dim white on black", "dim"],
@@ -244,7 +243,6 @@ class NextflowLogParsedScripts(LogFormat):
             return None
 
         text = Text.from_ansi(line)
-        text.stylize_before("dim")
         groups = match.groupdict()
         if script_id := groups.get("script_id", None):
             text.highlight_words([script_id], "blue")
@@ -304,7 +302,6 @@ def nextflow_format_parser(logfile_obj):
 
             # Multi-line log message
             # Strip automatic formatting, which does weird stuff
-            text = Text(line)
             for logtype in LOG_LEVELS.keys():
                 if self._log_status == logtype:
                     text = Text.from_markup(f"[{LOG_LEVELS[logtype][0]}] [/] " + text.markup)
