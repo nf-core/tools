@@ -6,6 +6,7 @@ import logging
 import tempfile
 import webbrowser
 from pathlib import Path
+from typing import Union
 
 import jinja2
 import jsonschema
@@ -46,11 +47,14 @@ class PipelineSchema:
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
 
-    def get_schema_path(self, path, local_only=False, revision=None):
+    def get_schema_path(
+        self, path: Union[str, Path], local_only: bool = False, revision: Union[str, None] = None
+    ) -> None:
         """Given a pipeline name, directory, or path, set self.schema_filename"""
         path = Path(path)
         # Supplied path exists - assume a local pipeline directory or schema
         if path.exists():
+            log.debug(f"Path exists: {path}. Assuming local pipeline directory or schema")
             if revision is not None:
                 log.warning(f"Local workflow supplied, ignoring revision '{revision}'")
             if path.is_dir():
@@ -62,17 +66,20 @@ class PipelineSchema:
 
         # Path does not exist - assume a name of a remote workflow
         elif not local_only:
-            if self.pipeline_dir is not None:
-                self.schema_filename = Path(self.pipeline_dir, "nextflow_schema.json")
+            self.schema_filename = path / "nextflow_schema.json"
+            if revision is not None:
+                self.load_remote_schema(
+                    f"https://raw.githubusercontent.com/nf-core/{path}/{revision}/nextflow_schema.json"
+                )
             else:
-                self.schema_filename = None
+                self.load_remote_schema(f"https://raw.githubusercontent.com/nf-core/{path}/master/nextflow_schema.json")
 
         # Only looking for local paths, overwrite with None to be safe
         else:
             self.schema_filename = None
 
         # Check that the schema file exists
-        if self.schema_filename is None or not Path(self.schema_filename).exists():
+        if self.schema_filename is None or not Path(self.schema_filename).exists() and local_only:
             error = f"Could not find pipeline schema for '{path}': {self.schema_filename}"
             log.error(error)
             raise AssertionError(error)
@@ -105,11 +112,24 @@ class PipelineSchema:
 
     def load_schema(self):
         """Load a pipeline schema from a file"""
-        if self.schema_filename is None:
+        if self.schema_filename is None or not Path(self.schema_filename).exists():
             raise AssertionError("Pipeline schema filename could not be found.")
 
         with open(self.schema_filename) as fh:
             self.schema = json.load(fh)
+        self.schema_defaults = {}
+        self.schema_params = {}
+        log.debug(f"JSON file loaded: {self.schema_filename}")
+
+    def load_remote_schema(self, url):
+        """Load a pipeline schema from a remote URL"""
+        import requests
+
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise AssertionError(f"Could not load schema from {url}")
+        self.schema = response.json()
+        self.schema_filename = url
         self.schema_defaults = {}
         self.schema_params = {}
         log.debug(f"JSON file loaded: {self.schema_filename}")

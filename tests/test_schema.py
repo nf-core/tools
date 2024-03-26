@@ -5,6 +5,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -46,7 +47,7 @@ class TestSchema(unittest.TestCase):
 
     def test_load_lint_schema_nofile(self):
         """Check that linting raises properly if a non-existant file is given"""
-        with pytest.raises(RuntimeError):
+        with pytest.raises(AssertionError):
             self.schema_obj.get_schema_path("fake_file")
 
     def test_load_lint_schema_notjson(self):
@@ -314,9 +315,9 @@ class TestSchema(unittest.TestCase):
 
         Pretty much a copy of test_launch.py test_make_pipeline_schema
         """
-        test_pipeline_dir = os.path.join(tmp_dir, "wf")
+        test_pipeline_dir = Path(tmp_dir, "wf")
         shutil.copytree(self.template_dir, test_pipeline_dir)
-        os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
+        Path(test_pipeline_dir, "nextflow_schema.json").unlink()
 
         self.schema_obj.build_schema(test_pipeline_dir, True, False, None)
 
