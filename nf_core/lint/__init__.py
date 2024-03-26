@@ -207,6 +207,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .modules_structure import modules_structure  # type: ignore[misc]
     from .multiqc_config import multiqc_config  # type: ignore[misc]
     from .nextflow_config import nextflow_config  # type: ignore[misc]
+    from .nfcore_yml import nfcore_yml  # type: ignore[misc]
     from .pipeline_name_conventions import (  # type: ignore[misc]
         pipeline_name_conventions,
     )
@@ -267,6 +268,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "modules_structure",
             "base_config",
             "modules_config",
+            "nfcore_yml",
         ] + (["version_consistency"] if release_mode else [])
 
     def _load(self):
