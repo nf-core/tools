@@ -199,9 +199,11 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .actions_schema_validation import (  # type: ignore[misc]
         actions_schema_validation,
     )
+    from .base_config import base_config  # type: ignore[misc]
     from .files_exist import files_exist  # type: ignore[misc]
     from .files_unchanged import files_unchanged  # type: ignore[misc]
     from .merge_markers import merge_markers  # type: ignore[misc]
+    from .modules_config import modules_config  # type: ignore[misc]
     from .modules_json import modules_json  # type: ignore[misc]
     from .modules_structure import modules_structure  # type: ignore[misc]
     from .multiqc_config import multiqc_config  # type: ignore[misc]
@@ -264,6 +266,8 @@ class PipelineLint(nf_core.utils.Pipeline):
             "modules_json",
             "multiqc_config",
             "modules_structure",
+            "base_config",
+            "modules_config",
         ] + (["version_consistency"] if release_mode else [])
 
     def _load(self):

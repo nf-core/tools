@@ -2,6 +2,7 @@ import json
 import logging
 import subprocess
 from pathlib import Path
+from typing import Dict, List, Tuple
 
 import rich
 from rich.console import Console
@@ -14,6 +15,42 @@ log = logging.getLogger(__name__)
 
 # Create a console used by all lint tests
 console = Console(force_terminal=nf_core.utils.rich_force_colors())
+
+
+class LintFile:
+    def __init__(self, wf_path: str, lint_config: Dict[str, List[str]]):
+        self.wf_path = wf_path
+        self.lint_config = lint_config
+
+    def lint_file(self, lint_name: str, file_path: Path, removed_sections: List[str]) -> Dict[str, List[str]]:
+        """Lint a file and add the result to the passed or failed list."""
+
+        fn = Path(self.wf_path, file_path)
+        passed: List[str] = []
+        failed: List[str] = []
+
+        ignore_configs = self.lint_config.get(lint_name, [])
+
+        # Return a failed status if we can't find the file
+        if not fn.is_file():
+            return {"ignored": [f"`${file_path}` not found"]}
+
+        try:
+            with open(fn) as fh:
+                modules_config = fh.read()
+        except Exception as e:
+            return {"failed": [f"Could not parse file: {fn}, {e}"]}
+
+        # check if removed sections are absent
+
+        for section in removed_sections:
+            if section in modules_config and section not in ignore_configs:
+                failed.append(f"`${file_path}` contains `{section}`")
+                return {"passed": passed, "failed": failed}
+            else:
+                passed.append(f"`${file_path}` does not contain `{section}`")
+
+        return {"passed": passed, "failed": failed}
 
 
 def print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj):
@@ -101,3 +138,34 @@ def dump_json_with_prettier(file_name, file_content):
     with open(file_name, "w") as fh:
         json.dump(file_content, fh, indent=4)
     run_prettier_on_file(file_name)
+
+
+def parse_config_file(self, lint_name: str, file_path: Path) -> Tuple[dict, dict]:
+    """Parse different kind of config files and return a dict."""
+
+    # Remove field that should be ignored according to the linting config
+    ignore_configs = self.lint_config.get(lint_name, [])
+
+    fn = Path(self.wf_path, file_path)
+
+    # Return a failed status if we can't find the file
+    if not fn.is_file():
+        return {"ignored": [f"`${file_path}` not found"]}, ignore_configs
+
+    try:
+        if fn.suffix == ".json":
+            import json
+
+            with open(fn) as fh:
+                config = json.load(fh)
+                return config, ignore_configs
+        elif fn.suffix == ".yml" or fn.suffix == ".yaml":
+            import yaml
+
+            with open(fn) as fh:
+                config = yaml.safe_load(fh)
+                return config, ignore_configs
+        else:
+            return {"failed": [f"Could not parse file: {fn}, unknown file type"]}, ignore_configs
+    except Exception as e:
+        return {"failed": [f"Could not parse file: {fn}, {e}"]}, ignore_configs
