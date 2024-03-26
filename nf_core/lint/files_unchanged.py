@@ -47,7 +47,6 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
 
         .gitignore
         .prettierignore
-        pyproject.toml
 
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
@@ -106,7 +105,7 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         [Path("docs", "README.md")],
     ]
     files_partial = [
-        [Path(".gitignore"), Path(".prettierignore"), Path("pyproject.toml")],
+        [Path(".gitignore"), Path(".prettierignore")],
     ]
 
     # Only show error messages from pipeline creation
