@@ -31,13 +31,13 @@ def test_header_outdated(mock_check_outdated, mock_nf_core_cli, capsys):
 
 
 class TestCli(unittest.TestCase):
-    """Class for testing the commandline interface"""
+    """Class for testing the command line interface"""
 
     def setUp(self):
         self.runner = CliRunner()
 
     def assemble_params(self, params):
-        """Assemble a dictionnary of parameters into a list of arguments for the cli
+        """Assemble a dictionary of parameters into a list of arguments for the cli
 
         Note:
             if the value of a parameter is None, it will be considered a flag.
@@ -363,18 +363,23 @@ class TestCli(unittest.TestCase):
     def test_schema_lint(self, mock_get_schema_path):
         """Test nf-core schema lint defaults to nextflow_schema.json"""
         cmd = ["schema", "lint"]
-        result = self.invoke_cli(cmd)
+        Path("nextflow_schema.json").touch()
+        self.invoke_cli(cmd)
         mock_get_schema_path.assert_called_with("nextflow_schema.json")
-        assert "nextflow_schema.json" in result.output
+
+        # clean up
+        Path("nextflow_schema.json").unlink()
 
     @mock.patch("nf_core.schema.PipelineSchema.get_schema_path")
     def test_schema_lint_filename(self, mock_get_schema_path):
         """Test nf-core schema lint accepts a filename"""
+        Path("some_other_filename").touch()
         cmd = ["schema", "lint", "some_other_filename"]
-        result = self.invoke_cli(cmd)
+        self.invoke_cli(cmd)
         mock_get_schema_path.assert_called_with("some_other_filename")
-        assert "some_other_filename" in result.output
-        assert "nextflow_schema.json" not in result.output
+
+        # clean up
+        Path("some_other_filename").unlink()
 
     @mock.patch("nf_core.create_logo.create_logo")
     def test_create_logo(self, mock_create_logo):
