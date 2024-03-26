@@ -66,13 +66,8 @@ class PipelineSchema:
 
         # Path does not exist - assume a name of a remote workflow
         elif not local_only:
-            self.schema_filename = path / "nextflow_schema.json"
-            if revision is not None:
-                self.load_remote_schema(
-                    f"https://raw.githubusercontent.com/nf-core/{path}/{revision}/nextflow_schema.json"
-                )
-            else:
-                self.load_remote_schema(f"https://raw.githubusercontent.com/nf-core/{path}/master/nextflow_schema.json")
+            self.pipeline_dir = nf_core.list.get_local_wf(path, revision=revision)
+            self.schema_filename = Path(self.pipeline_dir or "", "nextflow_schema.json")
 
         # Only looking for local paths, overwrite with None to be safe
         else:
@@ -117,19 +112,6 @@ class PipelineSchema:
 
         with open(self.schema_filename) as fh:
             self.schema = json.load(fh)
-        self.schema_defaults = {}
-        self.schema_params = {}
-        log.debug(f"JSON file loaded: {self.schema_filename}")
-
-    def load_remote_schema(self, url):
-        """Load a pipeline schema from a remote URL"""
-        import requests
-
-        response = requests.get(url)
-        if response.status_code != 200:
-            raise AssertionError(f"Could not load schema from {url}")
-        self.schema = response.json()
-        self.schema_filename = url
         self.schema_defaults = {}
         self.schema_params = {}
         log.debug(f"JSON file loaded: {self.schema_filename}")
