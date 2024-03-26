@@ -2,7 +2,7 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Tuple
 
 import rich
 from rich.console import Console
@@ -15,42 +15,6 @@ log = logging.getLogger(__name__)
 
 # Create a console used by all lint tests
 console = Console(force_terminal=nf_core.utils.rich_force_colors())
-
-
-class LintFile:
-    def __init__(self, wf_path: str, lint_config: Dict[str, List[str]]):
-        self.wf_path = wf_path
-        self.lint_config = lint_config
-
-    def lint_file(self, lint_name: str, file_path: Path, removed_sections: List[str]) -> Dict[str, List[str]]:
-        """Lint a file and add the result to the passed or failed list."""
-
-        fn = Path(self.wf_path, file_path)
-        passed: List[str] = []
-        failed: List[str] = []
-
-        ignore_configs = self.lint_config.get(lint_name, [])
-
-        # Return a failed status if we can't find the file
-        if not fn.is_file():
-            return {"ignored": [f"`${file_path}` not found"]}
-
-        try:
-            with open(fn) as fh:
-                modules_config = fh.read()
-        except Exception as e:
-            return {"failed": [f"Could not parse file: {fn}, {e}"]}
-
-        # check if removed sections are absent
-
-        for section in removed_sections:
-            if section in modules_config and section not in ignore_configs:
-                failed.append(f"`${file_path}` contains `{section}`")
-                return {"passed": passed, "failed": failed}
-            else:
-                passed.append(f"`${file_path}` does not contain `{section}`")
-
-        return {"passed": passed, "failed": failed}
 
 
 def print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj):
