@@ -62,8 +62,10 @@ class PipelineSchema:
 
         # Path does not exist - assume a name of a remote workflow
         elif not local_only:
-            self.pipeline_dir = nf_core.list.get_local_wf(path, revision=revision)
-            self.schema_filename = Path(self.pipeline_dir, "nextflow_schema.json")
+            if self.pipeline_dir is not None:
+                self.schema_filename = Path(self.pipeline_dir, "nextflow_schema.json")
+            else:
+                self.schema_filename = None
 
         # Only looking for local paths, overwrite with None to be safe
         else:
