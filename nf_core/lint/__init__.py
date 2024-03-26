@@ -513,7 +513,7 @@ def run_linting(
     md_fn=None,
     json_fn=None,
     hide_progress: bool = False,
-) -> Tuple[PipelineLint, ComponentLint, ComponentLint | None]:
+) -> Tuple[PipelineLint, ComponentLint, Union[ComponentLint, None]]:
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.
