@@ -233,6 +233,11 @@ class TestLint(unittest.TestCase):
         test_nextflow_config_example_pass,
         test_nextflow_config_missing_test_profile_failed,
     )
+    from .lint.nfcore_yml import (  # type: ignore[misc]
+        test_nfcore_yml_fail_nfcore_version,
+        test_nfcore_yml_fail_repo_type,
+        test_nfcore_yml_pass,
+    )
     from .lint.template_strings import (  # type: ignore[misc]
         test_template_strings,
         test_template_strings_ignore_file,
