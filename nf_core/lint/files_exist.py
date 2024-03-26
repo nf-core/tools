@@ -89,7 +89,6 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         lib/WorkflowPIPELINE.groovy
         parameters.settings.json
         pipeline_template.yml # saving information in .nf-core.yml
-        pyproject.toml
         Singularity
 
 
@@ -198,7 +197,6 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         Path("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy"),
         Path("parameters.settings.json"),
         Path("pipeline_template.yml"),  # saving information in .nf-core.yml
-        Path("pyproject.toml"),
         Path("Singularity"),
     ]
     files_warn_ifexists = [Path(".travis.yml")]
