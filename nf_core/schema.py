@@ -68,7 +68,9 @@ class PipelineSchema:
         elif not local_only:
             self.pipeline_dir = nf_core.list.get_local_wf(path, revision=revision)
             self.schema_filename = Path(self.pipeline_dir or "", "nextflow_schema.json")
-
+            # check if the schema file exists
+            if not self.schema_filename.exists():
+                self.schema_filename = None
         # Only looking for local paths, overwrite with None to be safe
         else:
             self.schema_filename = None
