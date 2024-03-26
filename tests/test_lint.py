@@ -198,6 +198,11 @@ class TestLint(unittest.TestCase):
         test_actions_schema_validation_missing_jobs,
         test_actions_schema_validation_missing_on,
     )
+    from .lint.configs import (  # type: ignore[misc]
+        test_superfluous_withname_in_base_config_fails,
+        test_superfluous_withname_in_modules_config_fails,
+        test_withname_in_modules_config,
+    )
     from .lint.files_exist import (  # type: ignore[misc]
         test_files_exist_depreciated_file,
         test_files_exist_fail_conditional,

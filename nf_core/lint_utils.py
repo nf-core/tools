@@ -2,6 +2,7 @@ import json
 import logging
 import subprocess
 from pathlib import Path
+from typing import Tuple
 
 import rich
 from rich.console import Console
@@ -101,3 +102,34 @@ def dump_json_with_prettier(file_name, file_content):
     with open(file_name, "w") as fh:
         json.dump(file_content, fh, indent=4)
     run_prettier_on_file(file_name)
+
+
+def parse_config_file(self, lint_name: str, file_path: Path) -> Tuple[dict, dict]:
+    """Parse different kind of config files and return a dict."""
+
+    # Remove field that should be ignored according to the linting config
+    ignore_configs = self.lint_config.get(lint_name, [])
+
+    fn = Path(self.wf_path, file_path)
+
+    # Return a failed status if we can't find the file
+    if not fn.is_file():
+        return {"ignored": [f"`${file_path}` not found"]}, ignore_configs
+
+    try:
+        if fn.suffix == ".json":
+            import json
+
+            with open(fn) as fh:
+                config = json.load(fh)
+                return config, ignore_configs
+        elif fn.suffix == ".yml" or fn.suffix == ".yaml":
+            import yaml
+
+            with open(fn) as fh:
+                config = yaml.safe_load(fh)
+                return config, ignore_configs
+        else:
+            return {"failed": [f"Could not parse file: {fn}, unknown file type"]}, ignore_configs
+    except Exception as e:
+        return {"failed": [f"Could not parse file: {fn}, {e}"]}, ignore_configs
