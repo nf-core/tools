@@ -26,7 +26,12 @@ class TestModules(unittest.TestCase):
         self.pipeline_dir = os.path.join(self.tmp_dir, "testpipeline")
         default_branch = "master"
         self.create_obj = nf_core.create.PipelineCreate(
-            "testing", "test pipeline", "tester", outdir=self.pipeline_dir, plain=True, default_branch=default_branch
+            "testing",
+            "test pipeline",
+            "tester",
+            outdir=self.pipeline_dir,
+            plain=True,
+            default_branch=default_branch,
         )
         self.create_obj.init_pipeline()
         self.remote_path = os.path.join(self.tmp_dir, "remote_repo")
@@ -374,7 +379,7 @@ class TestModules(unittest.TestCase):
         }
 
         assert psync.close_open_pr(pr)
-        assert mock_patch.called_once_with("url_to_update_pr")
+        mock_patch.assert_called_once_with(url="url_to_update_pr", data='{"state": "closed"}')
 
     @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
     @mock.patch("nf_core.utils.gh_api.patch", side_effect=mocked_requests_patch)
@@ -397,7 +402,7 @@ class TestModules(unittest.TestCase):
         }
 
         assert not psync.close_open_pr(pr)
-        assert mock_patch.called_once_with("bad_url_to_update_pr")
+        mock_patch.assert_called_once_with(url="bad_url_to_update_pr", data='{"state": "closed"}')
 
     def test_reset_target_dir(self):
         """Try resetting target pipeline directory"""
