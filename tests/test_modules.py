@@ -55,7 +55,8 @@ def create_modules_repo_dummy(tmp_dir):
     test_snap_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
     test_snap_path.touch()
     with open(test_snap_path, "w") as fh:
-        fh.write('{\n    "my test": {}\n}')
+        fh.write('{\n    "my test": {}\n')
+        fh.write('    "versions": {}\n}')
 
     # remove "TODO" statements from main.nf
     main_nf_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "main.nf")
@@ -179,6 +180,7 @@ class TestModules(unittest.TestCase):
         test_modules_install_trimgalore_twice,
     )
     from .modules.lint import (  # type: ignore[misc]
+        test_modules_absent_version,
         test_modules_environment_yml_file_doesnt_exists,
         test_modules_environment_yml_file_name_mismatch,
         test_modules_environment_yml_file_not_array,

@@ -119,6 +119,7 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_install_tracking_added_super_subworkflow,
     )
     from .subworkflows.lint import (  # type: ignore[misc]
+        test_subworkflows_absent_version,
         test_subworkflows_lint,
         test_subworkflows_lint_capitalization_fail,
         test_subworkflows_lint_empty,
