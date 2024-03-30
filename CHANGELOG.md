@@ -11,6 +11,7 @@
 - Set topic variable correctly in the mastodon announcement ([#2848](https://github.com/nf-core/tools/pull/2848))
 - Add a cleanup action to `download_pipeline.yml` to fix failures caused by inadequate storage space on the runner ([#2849](https://github.com/nf-core/tools/pull/2849))
 - Update python to 3.12 ([#2805](https://github.com/nf-core/tools/pull/2805))
+- Remove `pyproject.toml` from template root
 
 ### Linting
 
