@@ -11,6 +11,7 @@
 - Set topic variable correctly in the mastodon announcement ([#2848](https://github.com/nf-core/tools/pull/2848))
 - Add a cleanup action to `download_pipeline.yml` to fix failures caused by inadequate storage space on the runner ([#2849](https://github.com/nf-core/tools/pull/2849))
 - Update python to 3.12 ([#2805](https://github.com/nf-core/tools/pull/2805))
+- Remove `pyproject.toml` from template root
 
 ### Linting
 
@@ -41,9 +42,13 @@
 - Fix issue with config resolution that was causing nested configs to behave unexpectedly ([#2862](https://github.com/nf-core/tools/pull/2862))
 - Fix schema docs console output truncating ([#2880](https://github.com/nf-core/tools/pull/2880))
 - fix: ensure path object converted to string before stripping quotes ([#2878](https://github.com/nf-core/tools/pull/2878))
+- Fix incorrect assertions for called_with on mocks ([#2891](https://github.com/nf-core/tools/pull/2891))
 - Make cli-provided module/subworkflow names case insensitive ([#2869](https://github.com/nf-core/tools/pull/2869))
+- Update gitpod/workspace-base Docker digest to 168d78b ([#2899](https://github.com/nf-core/tools/pull/2899))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.4 ([#2894](https://github.com/nf-core/tools/pull/2894))
-- Remove old references to CUSTOMDUMPSOFTWAREVERSIONS ([#2897](https://github.com/nf-core/tools/pull/2897))
+- Update GitHub Actions ([#2902](https://github.com/nf-core/tools/pull/2902))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.5 ([#2903](https://github.com/nf-core/tools/pull/2903))
+- Remove old references to CUSTOMDUMPSOFTWAREVERSIONS and add linting checks ([#2897](https://github.com/nf-core/tools/pull/2897))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
@@ -54,6 +59,7 @@
 - Fix topic extraction step for hashtags in toots ([#2810](https://github.com/nf-core/tools/pull/2810))
 - Update modules and subworkflows in the template ([#2811](https://github.com/nf-core/tools/pull/2811))
 - Unpin setup-nextflow and action-tower-launch ([#2806](https://github.com/nf-core/tools/pull/2806))
+- Add nf-core-version to `.nf-core.yml` ([#2874](https://github.com/nf-core/tools/pull/2874))
 
 ### Download
 
