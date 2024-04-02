@@ -3,6 +3,8 @@ import re
 from pathlib import Path
 from typing import Dict, List
 
+from nf_core.lint_utils import ignore_file
+
 log = logging.getLogger(__name__)
 
 
@@ -14,44 +16,43 @@ class LintConfig:
     def lint_file(self, lint_name: str, file_path: Path) -> Dict[str, List[str]]:
         """Lint a file and add the result to the passed or failed list."""
 
-        fn = Path(self.wf_path, file_path)
         passed: List[str] = []
         failed: List[str] = []
         ignored: List[str] = []
+        ignore_configs: List[str] = []
 
-        ignore_configs = self.lint_config.get(lint_name, [])
+        fn = Path(self.wf_path, file_path)
 
-        # Return a failed status if we can't find the file
-        if not fn.is_file():
-            if ignore_configs:
-                return {"ignored": [f"`{file_path}` not found, but it is ignored."]}
-            else:
-                return {"failed": [f"`${file_path}` not found"]}
+        passed, failed, ignored, ignore_configs = ignore_file(lint_name, file_path, Path(self.wf_path))
 
-        try:
-            with open(fn) as fh:
-                config = fh.read()
-        except Exception as e:
-            return {"failed": [f"Could not parse file: {fn}, {e}"]}
+        error_message = f"`{file_path}` not found"
+        # check for partial match in failed or ignored
+        if not any(f.startswith(error_message) for f in (failed + ignored)):
+            try:
+                with open(fn) as fh:
+                    config = fh.read()
+            except Exception as e:
+                return {"failed": [f"Could not parse file: {fn}, {e}"]}
 
-        # find sections with a withName: prefix
-        sections = re.findall(r"['\"](.*)['\"]", config)
+            # find sections with a withName: prefix
+            sections = re.findall(r"withName:\s*['\"]?(\w+)['\"]?", config)
+            log.debug(f"found sections: {sections}")
 
-        # find all .nf files in the workflow directory
-        nf_files = list(Path(self.wf_path).rglob("*.nf"))
-        log.debug(f"found nf_files: {nf_files}")
+            # find all .nf files in the workflow directory
+            nf_files = list(Path(self.wf_path).rglob("*.nf"))
+            log.debug(f"found nf_files: {[str(f) for f in nf_files]}")
 
-        # check if withName sections are present in config, but not in workflow files
-        for section in sections:
-            if section not in ignore_configs or section.lower() not in ignore_configs:
-                if not any(section in nf_file.read_text() for nf_file in nf_files):
-                    failed.append(
-                        f"`{file_path}` contains `withName:{section}`, but the corresponding process is not present in any of the following workflow files: `{nf_files}`."
-                    )
+            # check if withName sections are present in config, but not in workflow files
+            for section in sections:
+                if section not in ignore_configs or section.lower() not in ignore_configs:
+                    if not any(section in nf_file.read_text() for nf_file in nf_files):
+                        failed.append(
+                            f"`{file_path}` contains `withName:{section}`, but the corresponding process is not present in any of the Nextflow scripts."
+                        )
+                    else:
+                        passed.append(f"`{section}` found in `{file_path}` and Nextflow scripts.")
                 else:
-                    passed.append(f"both `{file_path}` and `{[str(f) for f in nf_files]} contain `{section}`.")
-            else:
-                ignored.append(f"``{section}` is ignored")
+                    ignored.append(f"``{section}` is ignored.")
 
         return {"passed": passed, "failed": failed, "ignored": ignored}
 

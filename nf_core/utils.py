@@ -213,7 +213,11 @@ def is_pipeline_directory(wf_path):
     for fn in ["main.nf", "nextflow.config"]:
         path = os.path.join(wf_path, fn)
         if not os.path.isfile(path):
-            raise UserWarning(f"'{wf_path}' is not a pipeline - '{fn}' is missing")
+            if wf_path == ".":
+                warning = f"Current directory is not a pipeline - '{fn}' is missing."
+            else:
+                warning = f"'{wf_path}' is not a pipeline - '{fn}' is missing."
+            raise UserWarning(warning)
 
 
 def fetch_wf_config(wf_path: str, cache_config: bool = True) -> dict:
@@ -1013,7 +1017,7 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-def load_tools_config(directory: Union[str, Path] = "."):
+def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Path, dict]:
     """
     Parse the nf-core.yml configuration file
 
@@ -1041,7 +1045,6 @@ def load_tools_config(directory: Union[str, Path] = "."):
 
     with open(config_fn) as fh:
         tools_config = yaml.safe_load(fh)
-
     # If the file is empty
     tools_config = tools_config or {}
 
