@@ -12,7 +12,6 @@
 - Add a cleanup action to `download_pipeline.yml` to fix failures caused by inadequate storage space on the runner ([#2849](https://github.com/nf-core/tools/pull/2849))
 - Update python to 3.12 ([#2805](https://github.com/nf-core/tools/pull/2805))
 - Remove `pyproject.toml` from template root
-- Update templates to use nf-core/setup-nextflow v2
 
 ### Linting
 
@@ -31,7 +30,6 @@
 - Changelog bot: handle also patch version before dev suffix ([#2820](https://github.com/nf-core/tools/pull/2820))
 - Fix path in component update script ([#2823](https://github.com/nf-core/tools/pull/2823))
 - Update prettier to 3.2.5 ([#2830](https://github.com/nf-core/tools/pull/2830))
-- update prettier to 3.2.5 ([#2830](https://github.com/nf-core/tools/pull/2830))
 - Update GitHub Actions ([#2827](https://github.com/nf-core/tools/pull/2827))
 - Switch to setup-nf-test ([#2834](https://github.com/nf-core/tools/pull/2834))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.2 ([#2836](https://github.com/nf-core/tools/pull/2836))
