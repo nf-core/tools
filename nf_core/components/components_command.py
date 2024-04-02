@@ -245,7 +245,7 @@ class ComponentCommand:
                 # Update path in modules.json if the file is in the correct format
                 modules_json = ModulesJson(self.dir)
                 modules_json.load()
-                if modules_json.has_git_url_and_modules():
+                if modules_json.has_git_url_and_modules() and modules_json.modules_json is not None:
                     modules_json.modules_json["repos"][self.modules_repo.remote_url]["modules"][
                         self.modules_repo.repo_path
                     ][module_name]["patch"] = str(patch_path.relative_to(Path(self.dir).resolve()))
