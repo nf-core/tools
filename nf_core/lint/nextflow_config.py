@@ -374,7 +374,6 @@ def nextflow_config(self):
     schema.load_schema()
     schema.get_schema_defaults()  # Get default values from schema
     schema.get_schema_types()  # Get types from schema
-    self.nf_config.keys()  # Params in nextflow.config
     for param_name in schema.schema_defaults.keys():
         param = "params." + param_name
         if param in ignore_defaults:

@@ -82,7 +82,7 @@ conda install nf-core
 Alternatively, you can create a new environment with both nf-core/tools and nextflow:
 
 ```bash
-conda create --name nf-core python=3.11 nf-core nextflow
+conda create --name nf-core python=3.12 nf-core nextflow
 conda activate nf-core
 ```
 
@@ -376,7 +376,7 @@ The pipeline files are automatically updated (`params.custom_config_base` is set
 So using `-profile <NAME>` should work if available within [nf-core/configs](https://github.com/nf-core/configs).
 
 > [!WARNING]
-> This option is not available when downloading a pipeline for use with [Nextflow Tower](#adapting-downloads-to-nextflow-tower) because the application manages all configurations separately.
+> This option is not available when downloading a pipeline for use with [Seqera Platform](#adapting-downloads-to-seqera-platform) because the application manages all configurations separately.
 
 ### Downloading Apptainer containers
 
@@ -428,14 +428,14 @@ Note that compressing many GBs of binary files can be slow, so specifying `--com
 
 If the download speeds are much slower than your internet connection is capable of, you can set `--parallel-downloads` to a large number to download loads of images at once.
 
-### Adapting downloads to Nextflow Tower
+### Adapting downloads to Seqera Platform
 
-[seqeralabs® Nextflow Tower](https://cloud.tower.nf/) provides a graphical user interface to oversee pipeline runs, gather statistics and configure compute resources. While pipelines added to _Tower_ are preferably hosted at a Git service, providing them as disconnected, self-reliant repositories is also possible for premises with restricted network access. Choosing the `--tower` flag will download the pipeline in an appropriate form.
+[Seqera Platform](https://seqera.io/platform/) (formerly _"Nextflow Tower"_) provides a graphical user interface to oversee pipeline runs, gather statistics and configure compute resources. While pipelines added to _Seqera Platform_ are preferably hosted at a Git service, providing them as disconnected, self-reliant repositories is also possible for premises with restricted network access. Choosing the `--platform` flag will download the pipeline in an appropriate form.
 
-Subsequently, the `*.git` folder can be moved to it's final destination and linked with a pipeline in _Tower_ using the `file:/` prefix.
+Subsequently, the `*.git` folder can be moved to it's final destination and linked with a pipeline in _Seqera Platform_ using the `file:/` prefix.
 
 > [!TIP]
-> Also without access to Tower, pipelines downloaded with the `--tower` flag can be run if the _absolute_ path is specified: `nextflow run -r 2.5 file:/path/to/pipelinedownload.git`. Downloads in this format allow you to include multiple revisions of a pipeline in a single file, but require that the revision (e.g. `-r 2.5`) is always explicitly specified.
+> Also without access to Seqera Platform, pipelines downloaded with the `--platform` flag can be run if the _absolute_ path is specified: `nextflow run -r 2.5 file:/path/to/pipelinedownload.git`. Downloads in this format allow you to include multiple revisions of a pipeline in a single file, but require that the revision (e.g. `-r 2.5`) is always explicitly specified.
 
 ## Pipeline software licences
 

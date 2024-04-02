@@ -8,7 +8,7 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Set up Python
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
         with:
           python-version: 3.x
           cache: pip
@@ -17,20 +17,8 @@ jobs:
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v2
 
-      - name: Cache nf-test installation
-        id: cache-software
-        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4
-        with:
-          path: |
-            /usr/local/bin/nf-test
-            /home/runner/.nf-test/nf-test.jar
-          key: ${{ runner.os }}-nftest-${{ env.date }}
-
       - name: Install nf-test
-        if: steps.cache-software.outputs.cache-hit != 'true'
-        run: |
-          wget -qO- https://code.askimed.com/install/nf-test | bash
-          sudo mv nf-test /usr/local/bin/
+        uses: nf-core/setup-nf-test@v1
 
       - name: Install nf-core/tools
         run: pip install git+https://github.com/nf-core/tools.git@dev

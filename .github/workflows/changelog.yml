@@ -36,9 +36,9 @@ jobs:
           fi
           gh pr checkout $PR_NUMBER
 
-      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install packages
         run: |
@@ -64,10 +64,10 @@ jobs:
           git diff --exit-code ${GITHUB_WORKSPACE}/CHANGELOG.md || echo "changed=YES" >> $GITHUB_ENV
           echo "File changed: ${{ env.changed }}"
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+      - name: Set up Python 3.12
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
         with:
-          python-version: 3.11
+          python-version: "3.12"
           cache: "pip"
 
       - name: Install pre-commit
