@@ -36,6 +36,15 @@ import nf_core
 
 log = logging.getLogger(__name__)
 
+# ASCII nf-core logo
+nfcore_logo = [
+    r"[green]                                          ,--.[grey39]/[green],-.",
+    r"[blue]          ___     __   __   __   ___     [green]/,-._.--~\ ",
+    r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {",
+    r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,",
+    r"[green]                                          `._,._,'",
+]
+
 # Custom style for questionary
 nfcore_question_style = prompt_toolkit.styles.Style(
     [

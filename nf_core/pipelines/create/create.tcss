@@ -1,5 +1,7 @@
 #logo {
-    text-align:center;
+    width: 100%;
+    content-align-horizontal: center;
+    content-align-vertical: middle;
 }
 .cta {
     layout: horizontal;

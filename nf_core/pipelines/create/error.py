@@ -5,6 +5,8 @@ from textual.containers import Center
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown, Static
 
+from nf_core.utils import nfcore_logo
+
 
 class ExistError(Screen):
     """A screen to show the final text and exit the app - when an error ocurred."""
@@ -20,11 +22,7 @@ class ExistError(Screen):
             )
         )
         yield Static(
-            rf"\n[green]{' ' * 40},--.[grey39]/[green],-."
-            + r"\n[blue]        ___     __   __   __   ___     [green]/,-._.--~\\"
-            + r"\n[blue]|\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {"
-            + r"\n[blue]   | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,"
-            + r"\n[green]                                       `._,._,'\n",
+            "\n" + "\n".join(nfcore_logo) + "\n",
             id="logo",
         )
 

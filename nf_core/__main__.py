@@ -17,7 +17,7 @@ from nf_core import __version__
 from nf_core.download import DownloadError
 from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE
 from nf_core.params_file import ParamsFileBuilder
-from nf_core.utils import check_if_outdated, rich_force_colors, setup_nfcore_dir
+from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 
 # Set up logging as the root logger
 # Submodules should all traverse back to this
@@ -121,25 +121,11 @@ def run_nf_core():
     # print nf-core header if environment variable is not set
     if os.environ.get("_NF_CORE_COMPLETE") is None:
         # Print nf-core header
-        stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
+        stderr.print("\n")
+        for line in nfcore_logo:
+            stderr.print(line, highlight=False)
         stderr.print(
-            "[blue]          ___     __   __   __   ___     [green]/,-._.--~\\",
-            highlight=False,
-        )
-        stderr.print(
-            r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {",
-            highlight=False,
-        )
-        stderr.print(
-            r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,",
-            highlight=False,
-        )
-        stderr.print(
-            "[green]                                          `._,._,'\n",
-            highlight=False,
-        )
-        stderr.print(
-            f"[grey39]    nf-core/tools version {__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
+            f"\n[grey39]    nf-core/tools version {__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
             highlight=False,
         )
         try:
