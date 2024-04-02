@@ -670,16 +670,13 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
             sys.exit(1)
     elif name or description or author or version != "1.0.0dev" or force or outdir or organisation != "nf-core":
         log.error(
-            "Command arguments are not accepted in interactive mode.\n"
-            "Run with all command line arguments to avoid using an interactive interface"
-            "or run without any command line arguments to use an interactive interface."
+            "[red]Partial arguments supplied.[/] "
+            "Run without [i]any[/] arguments for an interactive interface, "
+            "or with at least name + description + author to use non-interactively."
         )
         sys.exit(1)
     else:
-        log.info(
-            "Launching interactive nf-core pipeline creation tool."
-            "\nRun with all command line arguments to avoid using an interactive interface."
-        )
+        log.info("Launching interactive nf-core pipeline creation tool.")
         app = PipelineCreateApp()
         app.run()
         sys.exit(app.return_code or 0)
