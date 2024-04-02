@@ -20,11 +20,11 @@ class ExistError(Screen):
             )
         )
         yield Static(
-            f"\n[green]{' ' * 40},--.[grey39]/[green],-."
-            + "\n[blue]        ___     __   __   __   ___     [green]/,-._.--~\\"
-            + "\n[blue]|\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {"
-            + "\n[blue]   | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,"
-            + "\n[green]                                       `._,._,'\n",
+            rf"\n[green]{' ' * 40},--.[grey39]/[green],-."
+            + r"\n[blue]        ___     __   __   __   ___     [green]/,-._.--~\\"
+            + r"\n[blue]|\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {"
+            + r"\n[blue]   | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,"
+            + r"\n[green]                                       `._,._,'\n",
             id="logo",
         )
 
