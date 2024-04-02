@@ -11,15 +11,16 @@ exit_help_text_markdown = """
 If you would like to create the GitHub repository later, you can do it manually by following these steps:
 
 1. Create a new GitHub repository
-2. Add the remote to your local repository
-```bash
-cd <pipeline_directory>
-git remote add origin git@github.com:<username>/<repo_name>.git
-```
-3. Push the code to the remote
-```bash
-git push --all origin
-```
+2. Add the remote to your local repository:
+    ```bash
+    cd <pipeline_directory>
+    git remote add origin git@github.com:<username>/<repo_name>.git
+    ```
+3. Push the code to the remote:
+    ```bash
+    git push --all origin
+    ```
+    * Note the `--all` flag: this is needed to push all branches to the remote.
 """
 
 
@@ -42,7 +43,7 @@ class GithubExit(Screen):
         )
         yield Markdown(exit_help_text_markdown)
         yield Center(
-            Button("Close App", id="close_app", variant="success"),
-            Button("Show Logging", id="show_logging", variant="primary"),
+            Button("Close", id="close_app", variant="success"),
+            Button("Show pipeline creation log", id="show_logging", variant="primary"),
             classes="cta",
         )

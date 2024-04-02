@@ -691,7 +691,9 @@ def create(name, description, author, version, force, outdir, template_yaml, pla
     Uses the nf-core template to make a skeleton Nextflow pipeline with all required
     files, boilerplate code and best-practices.
     """
-    log.error("[bold][green]nf-core create[/] command is deprecated. Use [green]nf-core pipelines create[/].[/]")
+    log.error(
+        "The `[magenta]nf-core create[/]` command is deprecated. Use `[magenta]nf-core pipelines create[/]` instead."
+    )
     sys.exit(0)
 
 

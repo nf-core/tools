@@ -122,3 +122,10 @@ Vertical{
 .col-2 {
     grid-size: 2 1;
 }
+
+.ghrepo-cols {
+    margin: 0 4;
+}
+.ghrepo-cols Button {
+    margin-top: 2;
+}

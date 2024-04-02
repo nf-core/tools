@@ -18,12 +18,8 @@ from nf_core.pipelines.create.utils import ShowLogs, TextInput
 log = logging.getLogger(__name__)
 
 github_text_markdown = """
-# Create a GitHub repo
-
-After creating the pipeline template locally, we can create a GitHub repository and push the code to it.
-"""
-repo_config_markdown = """
-Please select the the GitHub repository settings:
+Now that we have created a new pipeline locally, we can create a new
+GitHub repository using the GitHub API and push the code to it.
 """
 
 
@@ -41,7 +37,7 @@ class GithubRepo(Screen):
             )
         )
         yield Markdown(dedent(github_text_markdown))
-        with Horizontal():
+        with Horizontal(classes="ghrepo-cols"):
             gh_user, gh_token = self._get_github_credentials()
             yield TextInput(
                 "gh_username",
@@ -53,25 +49,24 @@ class GithubRepo(Screen):
             yield TextInput(
                 "token",
                 "GitHub token",
-                "Your GitHub personal access token for login.",
+                "Your GitHub [link=https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens]personal access token[/link] for login.",
                 default=gh_token if gh_token is not None else "GitHub token",
                 password=True,
                 classes="column",
             )
             yield Button("Show", id="show_password")
             yield Button("Hide", id="hide_password")
-        yield Markdown(dedent(repo_config_markdown))
-        with Horizontal():
+        with Horizontal(classes="ghrepo-cols"):
             yield Switch(value=False, id="private")
             with Vertical():
                 yield Static("Private", classes="")
-                yield Static("Select if the new GitHub repo must be private.", classes="feature_subtitle")
-        with Horizontal():
+                yield Static("Select to make the new GitHub repo private.", classes="feature_subtitle")
+        with Horizontal(classes="ghrepo-cols"):
             yield Switch(value=True, id="push")
             with Vertical():
                 yield Static("Push files", classes="custom_grid")
                 yield Static(
-                    "Select if you would like to push all the pipeline template files to your GitHub repo\nand all the branches required to keep the pipeline up to date with new releases of nf-core.",
+                    "Select to push pipeline files and branches to your GitHub repo.",
                     classes="feature_subtitle",
                 )
         yield Center(
