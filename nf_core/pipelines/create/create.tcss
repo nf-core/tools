@@ -3,9 +3,12 @@
     content-align-horizontal: center;
     content-align-vertical: middle;
 }
-
-.mb-0 {
-    margin: 0 2;
+.cta {
+    layout: horizontal;
+    margin-bottom: 1;
+}
+.cta Button {
+    margin: 0 3;
 }
 
 .pipeline-type-grid {
@@ -59,12 +62,16 @@ Vertical{
     height: auto;
 }
 
+.features-container {
+    padding: 0 4 1 4;
+}
+
 /* Display help messages */
 
 .help_box {
     background: #333333;
-    padding: 1 5;
-    margin: 1 10;
+    padding: 1 3 0 3;
+    margin: 0 5 2 5;
     overflow-y: auto;
     transition: height 50ms;
     display: none;
@@ -106,6 +113,9 @@ Vertical{
 
 .log_console {
     height: auto;
+    background: #333333;
+    padding: 1 3;
+    margin: 0 4 2 4;
 }
 
 /* Layouts */

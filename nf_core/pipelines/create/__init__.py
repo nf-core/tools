@@ -1,4 +1,5 @@
 """A Textual app to create a pipeline."""
+
 import logging
 
 from textual.app import App
@@ -21,7 +22,13 @@ from nf_core.pipelines.create.utils import (
 )
 from nf_core.pipelines.create.welcome import WelcomeScreen
 
-log_handler = CustomLogHandler(console=LoggingConsole(classes="log_console"), rich_tracebacks=True, markup=True)
+log_handler = CustomLogHandler(
+    console=LoggingConsole(classes="log_console"),
+    rich_tracebacks=True,
+    show_time=False,
+    show_path=False,
+    markup=True,
+)
 logging.basicConfig(
     level="INFO",
     handlers=[log_handler],

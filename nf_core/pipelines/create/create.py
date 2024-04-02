@@ -55,6 +55,7 @@ class PipelineCreate:
         organisation: str = "nf-core",
         from_config_file: bool = False,
         default_branch: Optional[str] = None,
+        is_interactive: bool = False,
     ):
         if isinstance(template_config, CreateConfig):
             self.config = template_config
@@ -102,6 +103,7 @@ class PipelineCreate:
         # Set fields used by the class methods
         self.no_git = no_git
         self.default_branch = default_branch
+        self.is_interactive = is_interactive
         self.force = self.config.force
         if outdir is None:
             outdir = os.path.join(os.getcwd(), self.jinja_params["name_noslash"])
@@ -253,7 +255,7 @@ class PipelineCreate:
         if not self.no_git:
             self.git_init_pipeline()
 
-        if self.config.is_nfcore:
+        if self.config.is_nfcore and not self.is_interactive:
             log.info(
                 "[green bold]!!!!!! IMPORTANT !!!!!!\n\n"
                 "[green not bold]If you are interested in adding your pipeline to the nf-core community,\n"
@@ -556,10 +558,13 @@ class PipelineCreate:
                     raise UserWarning(
                         "Branches 'TEMPLATE' and 'dev' already exist. Use --force to overwrite existing branches."
                     )
-        log.info(
-            "Done. Remember to add a remote and push to GitHub:\n"
-            f"[white on grey23] cd {self.outdir} \n"
-            " git remote add origin git@github.com:USERNAME/REPO_NAME.git \n"
-            " git push --all origin                                       "
-        )
-        log.info("This will also push your newly created dev branch and the TEMPLATE branch for syncing.")
+        if self.is_interactive:
+            log.info(f"Pipeline created: ./{self.outdir.relative_to(Path.cwd())}")
+        else:
+            log.info(
+                "Done. Remember to add a remote and push to GitHub:\n"
+                f"[white on grey23] cd {self.outdir} \n"
+                " git remote add origin git@github.com:USERNAME/REPO_NAME.git \n"
+                " git push --all origin                                       "
+            )
+            log.info("This will also push your newly created dev branch and the TEMPLATE branch for syncing.")

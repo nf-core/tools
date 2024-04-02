@@ -29,6 +29,7 @@ class NfcorePipeline(Screen):
                 "The pipeline will be configured to use a copy of the most common reference genome files from iGenomes",
                 "igenomes",
             ),
+            classes="features-container",
         )
         yield Center(
             Button("Back", id="back", variant="default"),

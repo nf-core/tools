@@ -7,10 +7,6 @@ from textual.widgets import Button, Footer, Header, Markdown, Static
 
 from nf_core.utils import nfcore_logo
 
-markdown = """
-Visualising logging output.
-"""
-
 
 class LoggingScreen(Screen):
     """A screen to show the final logs."""
@@ -29,7 +25,7 @@ class LoggingScreen(Screen):
             "\n" + "\n".join(nfcore_logo) + "\n",
             id="logo",
         )
-        yield Markdown(markdown)
+        yield Markdown("Creating pipeline..")
         yield Center(self.parent.LOG_HANDLER.console)
         if self.parent.LOGGING_STATE == "repo created":
             yield Center(

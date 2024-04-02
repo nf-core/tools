@@ -80,6 +80,7 @@ class CustomPipeline(Screen):
                 "The pipeline will include configuration profiles containing custom parameters requried to run nf-core pipelines at different institutions",
                 "nf_core_configs",
             ),
+            classes="features-container",
         )
         yield Center(
             Button("Back", id="back", variant="default"),

@@ -1,4 +1,5 @@
 """A Textual app to create a pipeline."""
+
 from textwrap import dedent
 
 from textual import on, work
@@ -45,9 +46,9 @@ class FinalDetails(Screen):
         with Horizontal():
             yield Switch(value=False, id="force")
             with Vertical():
-                yield Static("Force", classes="custom_grid")
+                yield Static("Force creation", classes="custom_grid")
                 yield Static(
-                    "If the pipeline output directory exists, remove it and continue.",
+                    "Overwrite any existing pipeline output directories.",
                     classes="feature_subtitle",
                 )
 
@@ -98,7 +99,10 @@ class FinalDetails(Screen):
     def _create_pipeline(self) -> None:
         """Create the pipeline."""
         self.post_message(ShowLogs())
-        create_obj = PipelineCreate(template_config=self.parent.TEMPLATE_CONFIG)
+        create_obj = PipelineCreate(
+            template_config=self.parent.TEMPLATE_CONFIG,
+            is_interactive=True,
+        )
         try:
             create_obj.init_pipeline()
             self.parent.call_from_thread(change_select_disabled, self.parent, "close_screen", False)
