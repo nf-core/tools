@@ -9,7 +9,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import git
 import rich
@@ -25,153 +25,12 @@ import nf_core.modules.lint
 import nf_core.subworkflows.lint
 import nf_core.utils
 from nf_core import __version__
+from nf_core.components.lint import ComponentLint
 from nf_core.lint_utils import console
 from nf_core.utils import plural_s as _s
 from nf_core.utils import strip_ansi_codes
 
 log = logging.getLogger(__name__)
-
-
-def run_linting(
-    pipeline_dir,
-    release_mode=False,
-    fix=(),
-    key=(),
-    show_passed=False,
-    fail_ignored=False,
-    fail_warned=False,
-    sort_by="test",
-    md_fn=None,
-    json_fn=None,
-    hide_progress=False,
-):
-    """Runs all nf-core linting checks on a given Nextflow pipeline project
-    in either `release` mode or `normal` mode (default). Returns an object
-    of type :class:`PipelineLint` after finished.
-
-    Args:
-        pipeline_dir (str): The path to the Nextflow pipeline root directory
-        release_mode (bool): Set this to `True`, if the linting should be run in the `release` mode.
-                             See :class:`PipelineLint` for more information.
-
-    Returns:
-        An object of type :class:`PipelineLint` that contains all the linting results.
-        An object of type :class:`ComponentLint` that contains all the linting results for the modules.
-        An object of type :class:`ComponentLint` that contains all the linting results for the subworkflows.
-    """
-
-    # Verify that the requested tests exist
-    if key:
-        all_tests = set(PipelineLint._get_all_lint_tests(release_mode)).union(
-            set(nf_core.modules.lint.ModuleLint.get_all_module_lint_tests(is_pipeline=True))
-        )
-        bad_keys = [k for k in key if k not in all_tests]
-        if len(bad_keys) > 0:
-            raise AssertionError(
-                "Test name{} not recognised: '{}'".format(
-                    _s(bad_keys),
-                    "', '".join(bad_keys),
-                )
-            )
-        log.info("Only running tests: '{}'".format("', '".join(key)))
-
-    # Check if we were given any keys, and if they match any pipeline tests
-    if key:
-        pipeline_keys = list(set(key).intersection(set(PipelineLint._get_all_lint_tests(release_mode))))
-    else:
-        # If no key is supplied, run all tests
-        pipeline_keys = None
-
-    # Create the lint object
-    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, pipeline_keys, fail_ignored, fail_warned, hide_progress)
-
-    # Load the various pipeline configs
-    lint_obj._load_lint_config()
-    lint_obj._load_pipeline_config()
-    lint_obj._list_files()
-
-    # Create the modules lint object
-    module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir, hide_progress=hide_progress)
-    # Create the subworkflows lint object
-    try:
-        subworkflow_lint_obj = nf_core.subworkflows.lint.SubworkflowLint(pipeline_dir, hide_progress=hide_progress)
-    except LookupError:
-        subworkflow_lint_obj = None
-
-    # Verify that the pipeline is correctly configured and has  a modules.json file
-    module_lint_obj.has_valid_directory()
-    module_lint_obj.has_modules_file()
-
-    # Run only the tests we want
-    if key:
-        # Select only the module lint tests
-        module_lint_tests = list(
-            set(key).intersection(set(nf_core.modules.lint.ModuleLint.get_all_module_lint_tests(is_pipeline=True)))
-        )
-        # Select only the subworkflow lint tests
-        subworkflow_lint_tests = list(
-            set(key).intersection(
-                set(nf_core.subworkflows.lint.SubworkflowLint.get_all_subworkflow_lint_tests(is_pipeline=True))
-            )
-        )
-    else:
-        # If no key is supplied, run the default modules tests
-        module_lint_tests = ("module_changes", "module_version")
-        subworkflow_lint_tests = ("subworkflow_changes", "subworkflow_version")
-    module_lint_obj.filter_tests_by_key(module_lint_tests)
-    if subworkflow_lint_obj is not None:
-        subworkflow_lint_obj.filter_tests_by_key(subworkflow_lint_tests)
-
-    # Set up files for component linting test
-    module_lint_obj.set_up_pipeline_files()
-    if subworkflow_lint_obj is not None:
-        subworkflow_lint_obj.set_up_pipeline_files()
-
-    # Run the pipeline linting tests
-    try:
-        lint_obj._lint_pipeline()
-    except AssertionError as e:
-        log.critical(f"Critical error: {e}")
-        log.info("Stopping tests...")
-        return lint_obj, module_lint_obj
-
-    # Run the module lint tests
-    if len(module_lint_obj.all_local_components) > 0:
-        module_lint_obj.lint_modules(module_lint_obj.all_local_components, local=True)
-    if len(module_lint_obj.all_remote_components) > 0:
-        module_lint_obj.lint_modules(module_lint_obj.all_remote_components, local=False)
-    # Run the subworkflows lint tests
-    if subworkflow_lint_obj is not None:
-        if len(subworkflow_lint_obj.all_local_components) > 0:
-            subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_local_components, local=True)
-        if len(subworkflow_lint_obj.all_remote_components) > 0:
-            subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_remote_components, local=False)
-
-    # Print the results
-    lint_obj._print_results(show_passed)
-    module_lint_obj._print_results(show_passed, sort_by=sort_by)
-    if subworkflow_lint_obj is not None:
-        subworkflow_lint_obj._print_results(show_passed, sort_by=sort_by)
-    nf_core.lint_utils.print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj)
-    nf_core.lint_utils.print_fixes(lint_obj)
-
-    # Save results to Markdown file
-    if md_fn is not None:
-        log.info(f"Writing lint results to {md_fn}")
-        markdown = lint_obj._get_results_md()
-        with open(md_fn, "w") as fh:
-            fh.write(markdown)
-
-    # Save results to JSON file
-    if json_fn is not None:
-        lint_obj._save_json_results(json_fn)
-
-    # Reminder about --release mode flag if we had failures
-    if len(lint_obj.failed) > 0:
-        if release_mode:
-            log.info("Reminder: Lint tests were run in --release mode.")
-
-    return lint_obj, module_lint_obj, subworkflow_lint_obj
 
 
 class PipelineLint(nf_core.utils.Pipeline):
@@ -414,7 +273,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
             console.print(
-                rich.panel.Panel(
+                Panel(
                     format_result(self.passed),
                     title=rf"[bold][✔] {len(self.passed)} Pipeline Test{_s(self.passed)} Passed",
                     title_align="left",
@@ -426,7 +285,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of fixed tests
         if len(self.fixed) > 0:
             console.print(
-                rich.panel.Panel(
+                Panel(
                     format_result(self.fixed),
                     title=rf"[bold][?] {len(self.fixed)} Pipeline Test{_s(self.fixed)} Fixed",
                     title_align="left",
@@ -438,7 +297,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of ignored tests
         if len(self.ignored) > 0:
             console.print(
-                rich.panel.Panel(
+                Panel(
                     format_result(self.ignored),
                     title=rf"[bold][?] {len(self.ignored)} Pipeline Test{_s(self.ignored)} Ignored",
                     title_align="left",
@@ -450,7 +309,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of warning tests
         if len(self.warned) > 0:
             console.print(
-                rich.panel.Panel(
+                Panel(
                     format_result(self.warned),
                     title=rf"[bold][!] {len(self.warned)} Pipeline Test Warning{_s(self.warned)}",
                     title_align="left",
@@ -462,7 +321,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of failing tests
         if len(self.failed) > 0:
             console.print(
-                rich.panel.Panel(
+                Panel(
                     format_result(self.failed),
                     title=rf"[bold][✗] {len(self.failed)} Pipeline Test{_s(self.failed)} Failed",
                     title_align="left",
@@ -643,3 +502,144 @@ class PipelineLint(nf_core.utils.Pipeline):
             files = [files]
         bfiles = [f"`{str(f)}`" for f in files]
         return " or ".join(bfiles)
+
+
+def run_linting(
+    pipeline_dir,
+    release_mode: bool = False,
+    fix=(),
+    key=(),
+    show_passed: bool = False,
+    fail_ignored: bool = False,
+    fail_warned: bool = False,
+    sort_by: str = "test",
+    md_fn=None,
+    json_fn=None,
+    hide_progress: bool = False,
+) -> Tuple[PipelineLint, ComponentLint, Union[ComponentLint, None]]:
+    """Runs all nf-core linting checks on a given Nextflow pipeline project
+    in either `release` mode or `normal` mode (default). Returns an object
+    of type :class:`PipelineLint` after finished.
+
+    Args:
+        pipeline_dir (str): The path to the Nextflow pipeline root directory
+        release_mode (bool): Set this to `True`, if the linting should be run in the `release` mode.
+                             See :class:`PipelineLint` for more information.
+
+    Returns:
+        An object of type :class:`PipelineLint` that contains all the linting results.
+        An object of type :class:`ComponentLint` that contains all the linting results for the modules.
+        An object of type :class:`ComponentLint` that contains all the linting results for the subworkflows.
+    """
+
+    # Verify that the requested tests exist
+    if key:
+        all_tests = set(PipelineLint._get_all_lint_tests(release_mode)).union(
+            set(nf_core.modules.lint.ModuleLint.get_all_module_lint_tests(is_pipeline=True))
+        )
+        bad_keys = [k for k in key if k not in all_tests]
+        if len(bad_keys) > 0:
+            raise AssertionError(
+                "Test name{} not recognised: '{}'".format(
+                    _s(bad_keys),
+                    "', '".join(bad_keys),
+                )
+            )
+        log.info("Only running tests: '{}'".format("', '".join(key)))
+
+    # Check if we were given any keys, and if they match any pipeline tests
+    if key:
+        pipeline_keys = list(set(key).intersection(set(PipelineLint._get_all_lint_tests(release_mode))))
+    else:
+        # If no key is supplied, run all tests
+        pipeline_keys = None
+
+    # Create the lint object
+    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, pipeline_keys, fail_ignored, fail_warned, hide_progress)
+
+    # Load the various pipeline configs
+    lint_obj._load_lint_config()
+    lint_obj._load_pipeline_config()
+    lint_obj._list_files()
+
+    # Create the modules lint object
+    module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir, hide_progress=hide_progress)
+    # Create the subworkflows lint object
+    try:
+        subworkflow_lint_obj = nf_core.subworkflows.lint.SubworkflowLint(pipeline_dir, hide_progress=hide_progress)
+    except LookupError:
+        subworkflow_lint_obj = None
+
+    # Verify that the pipeline is correctly configured and has  a modules.json file
+    module_lint_obj.has_valid_directory()
+    module_lint_obj.has_modules_file()
+    # Run only the tests we want
+    if key:
+        # Select only the module lint tests
+        module_lint_tests = list(
+            set(key).intersection(set(nf_core.modules.lint.ModuleLint.get_all_module_lint_tests(is_pipeline=True)))
+        )
+        # Select only the subworkflow lint tests
+        subworkflow_lint_tests = list(
+            set(key).intersection(
+                set(nf_core.subworkflows.lint.SubworkflowLint.get_all_subworkflow_lint_tests(is_pipeline=True))
+            )
+        )
+    else:
+        # If no key is supplied, run the default modules tests
+        module_lint_tests = list(("module_changes", "module_version"))
+        subworkflow_lint_tests = list(("subworkflow_changes", "subworkflow_version"))
+    module_lint_obj.filter_tests_by_key(module_lint_tests)
+    if subworkflow_lint_obj is not None:
+        subworkflow_lint_obj.filter_tests_by_key(subworkflow_lint_tests)
+
+    # Set up files for component linting test
+    module_lint_obj.set_up_pipeline_files()
+    if subworkflow_lint_obj is not None:
+        subworkflow_lint_obj.set_up_pipeline_files()
+
+    # Run the pipeline linting tests
+    try:
+        lint_obj._lint_pipeline()
+    except AssertionError as e:
+        log.critical(f"Critical error: {e}")
+        log.info("Stopping tests...")
+        return lint_obj, module_lint_obj, subworkflow_lint_obj
+
+    # Run the module lint tests
+    if len(module_lint_obj.all_local_components) > 0:
+        module_lint_obj.lint_modules(module_lint_obj.all_local_components, local=True)
+    if len(module_lint_obj.all_remote_components) > 0:
+        module_lint_obj.lint_modules(module_lint_obj.all_remote_components, local=False)
+    # Run the subworkflows lint tests
+    if subworkflow_lint_obj is not None:
+        if len(subworkflow_lint_obj.all_local_components) > 0:
+            subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_local_components, local=True)
+        if len(subworkflow_lint_obj.all_remote_components) > 0:
+            subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_remote_components, local=False)
+
+    # Print the results
+    lint_obj._print_results(show_passed)
+    module_lint_obj._print_results(show_passed, sort_by=sort_by)
+    if subworkflow_lint_obj is not None:
+        subworkflow_lint_obj._print_results(show_passed, sort_by=sort_by)
+    nf_core.lint_utils.print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj)
+    nf_core.lint_utils.print_fixes(lint_obj)
+
+    # Save results to Markdown file
+    if md_fn is not None:
+        log.info(f"Writing lint results to {md_fn}")
+        markdown = lint_obj._get_results_md()
+        with open(md_fn, "w") as fh:
+            fh.write(markdown)
+
+    # Save results to JSON file
+    if json_fn is not None:
+        lint_obj._save_json_results(json_fn)
+
+    # Reminder about --release mode flag if we had failures
+    if len(lint_obj.failed) > 0:
+        if release_mode:
+            log.info("Reminder: Lint tests were run in --release mode.")
+
+    return lint_obj, module_lint_obj, subworkflow_lint_obj
