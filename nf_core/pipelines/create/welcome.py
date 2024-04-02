@@ -1,5 +1,3 @@
-from textwrap import dedent
-
 from textual.app import ComposeResult
 from textual.containers import Center
 from textual.screen import Screen
@@ -8,25 +6,21 @@ from textual.widgets import Button, Footer, Header, Markdown, Static
 from nf_core.utils import nfcore_logo
 
 markdown = """
-# nf-core create
+# Welcome to the nf-core pipeline creation wizard
 
-This app will help you create a new nf-core pipeline.
-It uses the nf-core pipeline template, which is kept
-within the [nf-core/tools repository](https://github.com/nf-core/tools).
+This app will help you create a new Nextflow pipeline
+from the nf-core pipeline template, part of the
+[nf-core/tools repository](https://github.com/nf-core/tools).
 
-Using this tool is mandatory when making a pipeline that may
-be part of the nf-core community collection at some point.
-However, this tool can also be used to create pipelines that will
-never be part of nf-core. You can still benefit from the community
-best practices for your own workflow.
+The template _must_ be used for nf-core pipelines, but hopefully
+helps all Nextflow developers benefit from nf-core best practices.
 
-If you are planning to add a pipeline to the nf-core community, you need to be part of that community!
-Please join us on Slack [https://nf-co.re/join](https://nf-co.re/join),
-and ask to be added to the GitHub association through the #github-invitations channel.
-
-Come and discuss your plans with the nf-core community as early as possible.
-Ideally before you make a start on your pipeline!
-These topics are specifically discussed in the [#new-pipelines](https://nfcore.slack.com/channels/new-pipelines) channel.
+If you want to add a pipeline to nf-core, please
+[join on Slack](https://nf-co.re/join) and discuss your plans with the
+community as early as possible; _**ideally before you start on your pipeline!**_
+See the [nf-core guidelines](https://nf-co.re/docs/contributing/guidelines)
+and the [#new-pipelines](https://nfcore.slack.com/channels/new-pipelines)
+Slack channel for more information.
 """
 
 
@@ -36,13 +30,6 @@ class WelcomeScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        yield Markdown(
-            dedent(
-                """
-                # Create a pipeline from the nf-core template
-                """
-            )
-        )
         yield Static(
             "\n" + "\n".join(nfcore_logo) + "\n",
             id="logo",

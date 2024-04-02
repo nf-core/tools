@@ -3,13 +3,14 @@
     content-align-horizontal: center;
     content-align-vertical: middle;
 }
-.cta {
-    layout: horizontal;
-    margin-bottom: 1;
+
+.mb-0 {
+    margin: 0 2;
 }
-.cta Button {
-    margin-left: 3;
-    margin-right: 3;
+
+.pipeline-type-grid {
+    height: auto;
+    margin-bottom: 2;
 }
 
 .custom_grid {
@@ -105,4 +106,9 @@ Vertical{
 
 .log_console {
     height: auto;
+}
+
+/* Layouts */
+.col-2 {
+    grid-size: 2 1;
 }
