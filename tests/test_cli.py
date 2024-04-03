@@ -265,7 +265,7 @@ class TestCli(unittest.TestCase):
         result = self.invoke_cli(cmd)
 
         assert result.exit_code == 1
-        assert "Command arguments are not accepted in interactive mode." in result.output
+        assert "Partial arguments supplied." in result.output
 
     @mock.patch("nf_core.pipelines.create.PipelineCreateApp")
     def test_create_app(self, mock_create):
