@@ -150,7 +150,6 @@ class GithubRepo(Screen):
                     self._create_repo_and_push(
                         user, pipeline_repo, github_variables["private"], github_variables["push"]
                     )
-                log.info(f"GitHub repository '{self.parent.TEMPLATE_CONFIG.name}' created successfully")
             except UserWarning as e:
                 log.info(f"There was an error with message: {e}")
                 self.parent.switch_screen("github_exit")
@@ -174,7 +173,7 @@ class GithubRepo(Screen):
                 repo_exists = True
             except UserWarning as e:
                 # Repo already exists
-                log.info(e)
+                log.error(e)
                 return
         except UnknownObjectException:
             # Repo doesn't exist
@@ -185,6 +184,7 @@ class GithubRepo(Screen):
             repo = org.create_repo(
                 self.parent.TEMPLATE_CONFIG.name, description=self.parent.TEMPLATE_CONFIG.description, private=private
             )
+            log.info(f"GitHub repository '{self.parent.TEMPLATE_CONFIG.name}' created successfully")
 
         # Add the remote and push
         try:

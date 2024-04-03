@@ -25,7 +25,11 @@ class LoggingScreen(Screen):
             "\n" + "\n".join(nfcore_logo) + "\n",
             id="logo",
         )
-        yield Markdown("Creating pipeline..")
+        if self.parent.LOGGING_STATE == "repo created":
+            yield Markdown("Creating GitHub repository..")
+        else:
+            yield Markdown("Creating pipeline..")
+        self.parent.LOG_HANDLER.console.clear()
         yield Center(self.parent.LOG_HANDLER.console)
         if self.parent.LOGGING_STATE == "repo created":
             yield Center(

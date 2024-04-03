@@ -44,6 +44,5 @@ class GithubExit(Screen):
         yield Markdown(exit_help_text_markdown)
         yield Center(
             Button("Close", id="close_app", variant="success"),
-            Button("Show pipeline creation log", id="show_logging", variant="primary"),
             classes="cta",
         )
