@@ -40,9 +40,7 @@ def multiqc_config(self) -> Dict[str, List[str]]:
     fn = Path(self.wf_path, "assets", "multiqc_config.yml")
     file_path = fn.relative_to(self.wf_path)
     passed, failed, ignored, ignore_configs = ignore_file("multiqc_config", file_path, self.wf_path)
-    print(f"passed: {passed}")
-    print(f"failed: {failed}")
-    print(f"ignored: {ignored}")
+
     # skip other tests if the file is not found
     error_message = f"`{file_path}` not found"
     # check for partial match in failed or ignored

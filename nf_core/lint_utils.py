@@ -112,9 +112,7 @@ def ignore_file(lint_name: str, file_path: Path, dir_path: Path) -> List[List[st
     ignored: List[str] = []
     _, lint_conf = nf_core.utils.load_tools_config(dir_path)
     lint_conf = lint_conf.get("lint", {})
-    print(f"lint_conf: {lint_conf}")
     ignore_entry: List[str] | bool = lint_conf.get(lint_name, [])
-    print(f"ignore_entry: {ignore_entry}")
     full_path = dir_path / file_path
     # Return a failed status if we can't find the file
     if not full_path.is_file():

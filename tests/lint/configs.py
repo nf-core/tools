@@ -43,6 +43,7 @@ def test_ignore_modules_config(self):
         content["lint"] = {"modules_config": False}
     with open(Path(new_pipeline) / ".nf-core.yml", "w") as f:
         yaml.dump(content, f)
+    Path(new_pipeline, "conf", "modules.config").unlink()
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.modules_config()
@@ -77,6 +78,7 @@ def test_ignore_base_config(self):
         content["lint"] = {"base_config": False}
     with open(Path(new_pipeline) / ".nf-core.yml", "w") as f:
         yaml.dump(content, f)
+    Path(new_pipeline, "conf", "base.config").unlink()
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.base_config()

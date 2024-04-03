@@ -199,6 +199,7 @@ class TestLint(unittest.TestCase):
         test_actions_schema_validation_missing_on,
     )
     from .lint.configs import (  # type: ignore[misc]
+        test_ignore_base_config,
         test_ignore_modules_config,
         test_superfluous_withname_in_base_config_fails,
         test_superfluous_withname_in_modules_config_fails,
