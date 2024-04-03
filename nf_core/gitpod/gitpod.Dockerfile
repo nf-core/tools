@@ -1,7 +1,7 @@
 # Test build locally before making a PR
 #   docker build -t gitpod:test -f nf_core/gitpod/gitpod.Dockerfile .
 
-FROM gitpod/workspace-base@sha256:168d78bc249332f9437b11a1844819308ac7ec1bc6bab61bf5adf8cbe53bf8e6
+FROM gitpod/workspace-base@sha256:450d764c8575345b32e3e22d197b5150152eff9f9a14482003f70f05d03f726a
 
 USER root
 
