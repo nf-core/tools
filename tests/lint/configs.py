@@ -2,8 +2,8 @@ from pathlib import Path
 
 import yaml
 
-import nf_core.create
 import nf_core.lint
+import nf_core.pipelines.create
 
 
 def test_withname_in_modules_config(self):
