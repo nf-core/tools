@@ -114,22 +114,22 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
                                             snap_file,
                                         )
                                     )
-                                if "versions" in str(snap_content[test_name]) or "versions" in str(snap_content.keys()):
-                                    subworkflow.passed.append(
-                                        (
-                                            "test_snap_versions",
-                                            "versions found in snapshot file",
-                                            snap_file,
-                                        )
+                            if "versions" in str(snap_content[test_name]) or "versions" in str(snap_content.keys()):
+                                subworkflow.passed.append(
+                                    (
+                                        "test_snap_versions",
+                                        "versions found in snapshot file",
+                                        snap_file,
                                     )
-                                else:
-                                    subworkflow.warned.append(
-                                        (
-                                            "test_snap_versions",
-                                            "versions not found in snapshot file",
-                                            snap_file,
-                                        )
+                                )
+                            else:
+                                subworkflow.warned.append(
+                                    (
+                                        "test_snap_versions",
+                                        "versions not found in snapshot file",
+                                        snap_file,
                                     )
+                                )
                         except json.decoder.JSONDecodeError as e:
                             subworkflow.failed.append(
                                 (

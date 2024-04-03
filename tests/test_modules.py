@@ -55,7 +55,7 @@ def create_modules_repo_dummy(tmp_dir):
     test_snap_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
     test_snap_path.touch()
     with open(test_snap_path, "w") as fh:
-        fh.write('{\n    "my test": {}\n')
+        fh.write('{\n    "my test": {},\n')
         fh.write('    "versions": {}\n}')
 
     # remove "TODO" statements from main.nf
