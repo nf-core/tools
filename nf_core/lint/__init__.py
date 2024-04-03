@@ -58,6 +58,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .actions_schema_validation import (  # type: ignore[misc]
         actions_schema_validation,
     )
+    from .configs import base_config, modules_config  # type: ignore[misc]
     from .files_exist import files_exist  # type: ignore[misc]
     from .files_unchanged import files_unchanged  # type: ignore[misc]
     from .merge_markers import merge_markers  # type: ignore[misc]
@@ -124,6 +125,8 @@ class PipelineLint(nf_core.utils.Pipeline):
             "modules_json",
             "multiqc_config",
             "modules_structure",
+            "base_config",
+            "modules_config",
             "nfcore_yml",
         ] + (["version_consistency"] if release_mode else [])
 
