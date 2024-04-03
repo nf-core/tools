@@ -132,9 +132,6 @@ class PipelineCreate:
                 with open(template_yaml) as f:
                     template_yaml = yaml.safe_load(f)
                     config = CreateConfig(**template_yaml)
-                    # Allow giving a prefix through a template
-                    if "prefix" in template_yaml and config.org is None:
-                        config.org = template_yaml["prefix"]
             except FileNotFoundError:
                 raise UserWarning(f"Template YAML file '{template_yaml}' not found.")
 
@@ -177,7 +174,7 @@ class PipelineCreate:
         if self.config.outdir is None:
             self.config.outdir = outdir if outdir else "."
         if self.config.is_nfcore is None:
-            self.config.is_nfcore = organisation == "nf-core"
+            self.config.is_nfcore = self.config.org == "nf-core"
 
     def obtain_jinja_params_dict(self, features_to_skip, pipeline_dir):
         """Creates a dictionary of parameters for the new pipeline.

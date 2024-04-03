@@ -119,7 +119,7 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         "name": short_name,
         "description": self.nf_config["manifest.description"].strip("\"'"),
         "author": self.nf_config["manifest.author"].strip("\"'"),
-        "prefix": prefix,
+        "org": prefix,
     }
 
     template_yaml_path = Path(tmp_dir, "template.yaml")
