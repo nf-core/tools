@@ -648,6 +648,7 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
                 version=version,
                 force=force,
                 outdir=outdir,
+                template_config=template_yaml,
                 organisation=organisation,
             )
             create_obj.init_pipeline()
