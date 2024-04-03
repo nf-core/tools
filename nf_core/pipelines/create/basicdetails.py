@@ -1,4 +1,5 @@
 """A Textual app to create a pipeline."""
+
 from textwrap import dedent
 
 from textual import on

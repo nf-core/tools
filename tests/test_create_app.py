@@ -1,4 +1,5 @@
-""" Test Pipeline Create App """
+"""Test Pipeline Create App"""
+
 from unittest import mock
 
 import pytest
