@@ -133,7 +133,7 @@ class PipelineCreate:
                     template_yaml = yaml.safe_load(f)
                     config = CreateConfig(**template_yaml)
                     # Allow giving a prefix through a template
-                    if template_yaml["prefix"] is not None and config.org is None:
+                    if "prefix" in template_yaml and config.org is None:
                         config.org = template_yaml["prefix"]
             except FileNotFoundError:
                 raise UserWarning(f"Template YAML file '{template_yaml}' not found.")

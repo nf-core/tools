@@ -250,6 +250,7 @@ class TestCli(unittest.TestCase):
             force="force" in params,
             version="1.0.0dev",
             outdir=params["outdir"],
+            template_config=None,
             organisation="nf-core",
         )
         mock_create.return_value.init_pipeline.assert_called_once()
