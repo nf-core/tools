@@ -573,7 +573,7 @@ def test_modules_missing_tags_yml(self):
     assert len(module_lint.warned) >= 0
     assert module_lint.failed[0].lint_test == "test_tags_yml_exists"
     # cleanup
-    Path(tags_path.parent / "tags.yml").rename(tags_path.parent / "tags.yml")
+    Path(tags_path.parent / "tags.yml.bak").rename(tags_path.parent / "tags.yml")
 
 
 def test_modules_incorrect_tags_yml_key(self):
