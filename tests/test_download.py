@@ -617,7 +617,7 @@ class DownloadTest(unittest.TestCase):
     def test_download_workflow_for_platform(self, tmp_dir, _):
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
-            revision=("3.7", "3.9"),
+            revision=("3.7", "3.9", "1817d14"),
             compress_type="none",
             platform=True,
             container_system="singularity",
@@ -625,7 +625,7 @@ class DownloadTest(unittest.TestCase):
 
         download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.
 
-        assert isinstance(download_obj.revision, list) and len(download_obj.revision) == 2
+        assert isinstance(download_obj.revision, list) and len(download_obj.revision) == 3
         assert isinstance(download_obj.wf_sha, dict) and len(download_obj.wf_sha) == 0
         assert isinstance(download_obj.wf_download_url, dict) and len(download_obj.wf_download_url) == 0
 
@@ -635,13 +635,12 @@ class DownloadTest(unittest.TestCase):
             download_obj.pipeline,
             download_obj.wf_revisions,
             download_obj.wf_branches,
-            _
+            download_obj.wf_commits
         ) = nf_core.utils.get_repo_releases_branches_commits(download_obj.pipeline, wfs)
 
         download_obj.get_revision_hash()
-
-        # download_obj.wf_download_url is not set for Seqera Platform downloads, but the sha values are
-        assert isinstance(download_obj.wf_sha, dict) and len(download_obj.wf_sha) == 2
+        # download_obj.wf_download_url is not set for tower downloads, but the sha values are
+        assert isinstance(download_obj.wf_sha, dict) and len(download_obj.wf_sha) == 3
         assert isinstance(download_obj.wf_download_url, dict) and len(download_obj.wf_download_url) == 0
 
         # The outdir for multiple revisions is the pipeline name and date: e.g. nf-core-rnaseq_2023-04-27_18-54
