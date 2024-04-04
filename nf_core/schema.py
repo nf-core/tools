@@ -6,6 +6,7 @@ import logging
 import tempfile
 import webbrowser
 from pathlib import Path
+from typing import Union
 
 import jinja2
 import jsonschema
@@ -46,11 +47,14 @@ class PipelineSchema:
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
 
-    def get_schema_path(self, path, local_only=False, revision=None):
+    def get_schema_path(
+        self, path: Union[str, Path], local_only: bool = False, revision: Union[str, None] = None
+    ) -> None:
         """Given a pipeline name, directory, or path, set self.schema_filename"""
         path = Path(path)
         # Supplied path exists - assume a local pipeline directory or schema
         if path.exists():
+            log.debug(f"Path exists: {path}. Assuming local pipeline directory or schema")
             if revision is not None:
                 log.warning(f"Local workflow supplied, ignoring revision '{revision}'")
             if path.is_dir():
@@ -63,14 +67,16 @@ class PipelineSchema:
         # Path does not exist - assume a name of a remote workflow
         elif not local_only:
             self.pipeline_dir = nf_core.list.get_local_wf(path, revision=revision)
-            self.schema_filename = Path(self.pipeline_dir, "nextflow_schema.json")
-
+            self.schema_filename = Path(self.pipeline_dir or "", "nextflow_schema.json")
+            # check if the schema file exists
+            if not self.schema_filename.exists():
+                self.schema_filename = None
         # Only looking for local paths, overwrite with None to be safe
         else:
             self.schema_filename = None
 
         # Check that the schema file exists
-        if self.schema_filename is None or not Path(self.schema_filename).exists():
+        if self.schema_filename is None or not Path(self.schema_filename).exists() and local_only:
             error = f"Could not find pipeline schema for '{path}': {self.schema_filename}"
             log.error(error)
             raise AssertionError(error)
@@ -103,7 +109,7 @@ class PipelineSchema:
 
     def load_schema(self):
         """Load a pipeline schema from a file"""
-        if self.schema_filename is None:
+        if self.schema_filename is None or not Path(self.schema_filename).exists():
             raise AssertionError("Pipeline schema filename could not be found.")
 
         with open(self.schema_filename) as fh:

@@ -53,7 +53,7 @@ jobs:
 
       # Set up nf-core/tools
       - name: Set up Python 3.12
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
         with:
           python-version: "3.12"
           cache: pip

@@ -5,6 +5,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -314,9 +315,9 @@ class TestSchema(unittest.TestCase):
 
         Pretty much a copy of test_launch.py test_make_pipeline_schema
         """
-        test_pipeline_dir = os.path.join(tmp_dir, "wf")
+        test_pipeline_dir = Path(tmp_dir, "wf")
         shutil.copytree(self.template_dir, test_pipeline_dir)
-        os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
+        Path(test_pipeline_dir, "nextflow_schema.json").unlink()
 
         self.schema_obj.build_schema(test_pipeline_dir, True, False, None)
 
