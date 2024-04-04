@@ -160,39 +160,41 @@ class TestUtils(unittest.TestCase):
         with pytest.raises(ValueError):
             nf_core.utils.pip_package("not_a_package=1.0")
 
-    def test_get_repo_releases_branches_nf_core(self):
+    def test_get_repo_releases_branches_commits_nf_core(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
-        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("methylseq", wfs)
+        pipeline, wf_releases, wf_branches, wf_commits = nf_core.utils.get_repo_releases_branches_commits("methylseq", wfs)
         for r in wf_releases:
             if r.get("tag_name") == "1.6":
                 break
         else:
             raise AssertionError("Release 1.6 not found")
         assert "dev" in wf_branches.keys()
+        assert "54f823e102ef3d04077cc091a5ae435519f9923a" in wf_commits
 
-    def test_get_repo_releases_branches_not_nf_core(self):
+    def test_get_repo_releases_branches_commits_not_nf_core(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
-        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("MultiQC/MultiQC", wfs)
+        pipeline, wf_releases, wf_branches, wf_commits  = nf_core.utils.get_repo_releases_branches_commits("MultiQC/MultiQC", wfs)
         for r in wf_releases:
             if r.get("tag_name") == "v1.10":
                 break
         else:
             raise AssertionError("MultiQC release v1.10 not found")
         assert "main" in wf_branches.keys()
+        assert "6764be5a6874f6601765e70316b404c01f6407fc" in wf_commits
 
-    def test_get_repo_releases_branches_not_exists(self):
+    def test_get_repo_releases_branches_commits_not_exists(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
         with pytest.raises(AssertionError):
-            nf_core.utils.get_repo_releases_branches("made_up_pipeline", wfs)
+            nf_core.utils.get_repo_releases_branches_commits("made_up_pipeline", wfs)
 
-    def test_get_repo_releases_branches_not_exists_slash(self):
+    def test_get_repo_releases_branches_commits_not_exists_slash(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
         with pytest.raises(AssertionError):
-            nf_core.utils.get_repo_releases_branches("made-up/pipeline", wfs)
+            nf_core.utils.get_repo_releases_branches_commits("made-up/pipeline", wfs)
 
 
 def test_validate_file_md5():
