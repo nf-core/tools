@@ -135,6 +135,8 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_absent_version,
         test_subworkflows_empty_file_in_snapshot,
         test_subworkflows_empty_file_in_stub_snapshot,
+        test_subworkflows_incorrect_tags_yml_key,
+        test_subworkflows_incorrect_tags_yml_values,
         test_subworkflows_lint,
         test_subworkflows_lint_capitalization_fail,
         test_subworkflows_lint_empty,
@@ -147,6 +149,7 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_lint_snapshot_file,
         test_subworkflows_lint_snapshot_file_missing_fail,
         test_subworkflows_lint_snapshot_file_not_needed,
+        test_subworkflows_missing_tags_yml,
     )
     from .subworkflows.list import (  # type: ignore[misc]
         test_subworkflows_install_and_list_subworkflows,

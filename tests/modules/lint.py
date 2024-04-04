@@ -564,30 +564,29 @@ def test_modules_missing_required_tag(self):
 
 def test_modules_missing_tags_yml(self):
     """Test linting a module with a missing tags.yml file"""
-    Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml").rename(
-        Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml.bak")
-    )
+    tags_path = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")
+    tags_path.rename(tags_path.parent / "tags.yml.bak")
     module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
     module_lint.lint(print_results=False, module="bpipe/test")
-    Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml.bak").rename(
-        Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")
-    )
     assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
     assert len(module_lint.passed) >= 0
     assert len(module_lint.warned) >= 0
     assert module_lint.failed[0].lint_test == "test_tags_yml_exists"
+    # cleanup
+    Path(tags_path.parent / "tags.yml").rename(tags_path.parent / "tags.yml")
 
 
 def test_modules_incorrect_tags_yml_key(self):
     """Test linting a module with an incorrect key in tags.yml file"""
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")) as fh:
+    tags_path = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")
+    with open(tags_path) as fh:
         content = fh.read()
         new_content = content.replace("bpipe/test:", "bpipe_test:")
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml"), "w") as fh:
+    with open(tags_path, "w") as fh:
         fh.write(new_content)
     module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
     module_lint.lint(print_results=True, module="bpipe/test")
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml"), "w") as fh:
+    with open(tags_path, "w") as fh:
         fh.write(content)
     assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
     assert len(module_lint.passed) >= 0
@@ -597,14 +596,15 @@ def test_modules_incorrect_tags_yml_key(self):
 
 def test_modules_incorrect_tags_yml_values(self):
     """Test linting a module with an incorrect path in tags.yml file"""
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")) as fh:
+    tags_path = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")
+    with open(tags_path) as fh:
         content = fh.read()
         new_content = content.replace("modules/nf-core/bpipe/test/**", "foo")
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml"), "w") as fh:
+    with open(tags_path, "w") as fh:
         fh.write(new_content)
     module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
     module_lint.lint(print_results=False, module="bpipe/test")
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml"), "w") as fh:
+    with open(tags_path, "w") as fh:
         fh.write(content)
     assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
     assert len(module_lint.passed) >= 0
