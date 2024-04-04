@@ -23,7 +23,6 @@ def create_modules_repo_dummy(tmp_dir):
 
     root_dir = Path(tmp_dir, "modules")
     Path(root_dir, "modules").mkdir(parents=True, exist_ok=True)
-    Path(root_dir, "subworkflows").mkdir(parents=True, exist_ok=True)
     Path(root_dir, "subworkflows", "nf-core").mkdir(parents=True, exist_ok=True)
     Path(root_dir, "tests", "config").mkdir(parents=True, exist_ok=True)
     with open(Path(root_dir, ".nf-core.yml"), "w") as fh:
@@ -34,9 +33,11 @@ def create_modules_repo_dummy(tmp_dir):
 
     # Add dummy content to main.nf.test.snap
     test_snap_path = Path(root_dir, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap")
+    test_snap_path.parent.mkdir(parents=True, exist_ok=True)
     test_snap_path.touch()
     with open(test_snap_path, "w") as fh:
-        fh.write('{\n    "my test": {}\n}')
+        fh.write('{\n    "my test": {},\n')
+        fh.write('    "versions": {}\n}')
 
     return root_dir
 
