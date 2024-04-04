@@ -163,7 +163,9 @@ class TestUtils(unittest.TestCase):
     def test_get_repo_releases_branches_commits_nf_core(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
-        pipeline, wf_releases, wf_branches, wf_commits = nf_core.utils.get_repo_releases_branches_commits("methylseq", wfs)
+        pipeline, wf_releases, wf_branches, wf_commits = nf_core.utils.get_repo_releases_branches_commits(
+            "methylseq", wfs
+        )
         for r in wf_releases:
             if r.get("tag_name") == "1.6":
                 break
@@ -175,7 +177,9 @@ class TestUtils(unittest.TestCase):
     def test_get_repo_releases_branches_commits_not_nf_core(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
-        pipeline, wf_releases, wf_branches, wf_commits  = nf_core.utils.get_repo_releases_branches_commits("MultiQC/MultiQC", wfs)
+        pipeline, wf_releases, wf_branches, wf_commits = nf_core.utils.get_repo_releases_branches_commits(
+            "MultiQC/MultiQC", wfs
+        )
         for r in wf_releases:
             if r.get("tag_name") == "v1.10":
                 break

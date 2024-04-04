@@ -161,8 +161,8 @@ class DownloadWorkflow:
         # Get workflow details
         try:
             self.prompt_pipeline_name()
-            self.pipeline, self.wf_revisions, self.wf_branches, self.wf_commits = nf_core.utils.get_repo_releases_branches_commits(
-                self.pipeline, self.wfs
+            self.pipeline, self.wf_revisions, self.wf_branches, self.wf_commits = (
+                nf_core.utils.get_repo_releases_branches_commits(self.pipeline, self.wfs)
             )
             self.prompt_revision()
             self.get_revision_hash()
@@ -358,7 +358,6 @@ class DownloadWorkflow:
         """Find specified revision / branch / commit hash"""
 
         for revision in self.revision:  # revision is a list of strings, but may be of length 1
-
             # Branch
             if revision in self.wf_branches.keys():
                 self.wf_sha = {**self.wf_sha, revision: self.wf_branches[revision]}
@@ -375,7 +374,7 @@ class DownloadWorkflow:
                         self.wf_sha = {**self.wf_sha, revision: r["tag_sha"]}
                         break
 
-            # Can't find the revisions or branch - throw an error
+                # Can't find the revisions or branch - throw an error
                 else:
                     log.info(
                         "Available {} revisions: '{}'".format(
