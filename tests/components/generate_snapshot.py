@@ -1,7 +1,6 @@
 """Test generate a snapshot"""
 
 import json
-import shutil
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -122,11 +121,11 @@ def test_test_not_found(self):
             branch=GITLAB_NFTEST_BRANCH,
         )
         test_file = Path("modules", "nf-core-test", "fastp", "tests", "main.nf.test")
-        shutil.move(test_file, test_file.parent / "main.nf.test.bak")
+        test_file.rename(test_file.parent / "main.nf.test.bak")
         with pytest.raises(UserWarning) as e:
             snap_generator.run()
         assert "Test file 'main.nf.test' not found" in str(e.value)
-        shutil.move(test_file.parent / "main.nf.test.bak", test_file)
+        Path(test_file.parent / "main.nf.test.bak").rename(test_file)
 
 
 def test_unstable_snapshot(self):

@@ -1,3 +1,5 @@
+import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -202,3 +204,101 @@ def test_subworkflows_absent_version(self):
     # cleanup
     with open(snap_file, "w") as fh:
         fh.write(content)
+
+
+def test_subworkflows_missing_test_dir(self):
+    """Test linting a nf-test subworkflow if the tests directory is missing"""
+    test_dir = Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "tests")
+    test_dir_copy = shutil.copytree(test_dir, test_dir.parent / "tests_copy")
+    shutil.rmtree(test_dir)
+
+    subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+    subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
+    assert len(subworkflow_lint.failed) == 0
+    assert len(subworkflow_lint.passed) > 0
+    assert len(subworkflow_lint.warned) >= 0, f"Linting warned with {[x.__dict__ for x in subworkflow_lint.warned]}"
+    assert any([x.lint_test == "test_dir_versions" for x in subworkflow_lint.warned])
+
+    # cleanup
+    shutil.copytree(test_dir_copy, test_dir)
+
+
+def test_subworkflows_missing_main_nf(self):
+    """Test linting a nf-test subworkflow if the main.nf file is missing"""
+    main_nf = Path(self.nfcore_modules, "subworkflows", "nf-core", "test_subworkflow", "main.nf")
+    main_nf_copy = shutil.copy(main_nf, main_nf.parent / "main_nf_copy")
+    main_nf.unlink()
+
+    subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+    subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
+    assert len(subworkflow_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
+    assert len(subworkflow_lint.passed) > 0
+    assert len(subworkflow_lint.warned) >= 0
+    assert subworkflow_lint.failed[0].lint_test == "main_nf_exists"
+
+    # cleanup
+    shutil.copy(main_nf_copy, main_nf)
+
+
+def test_subworkflows_empty_file_in_snapshot(self):
+    """Test linting a nf-test subworkflow with an empty file sha sum in the test snapshot, which should make it fail (if it is not a stub)"""
+    snap_file = Path(
+        self.nfcore_subworkflows, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap"
+    )
+    snap = json.load(snap_file.open())
+    content = snap_file.read_text()
+    snap["my test"]["content"][0]["0"] = "test:md5,d41d8cd98f00b204e9800998ecf8427e"
+
+    with open(snap_file, "w") as fh:
+        json.dump(snap, fh)
+
+    subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_subworkflows)
+    subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
+    assert len(subworkflow_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
+    assert len(subworkflow_lint.passed) > 0
+    assert len(subworkflow_lint.warned) >= 0
+    assert subworkflow_lint.failed[0].lint_test == "test_snap_md5sum"
+
+    # reset the file
+    with open(snap_file, "w") as fh:
+        fh.write(content)
+
+
+def test_subworkflows_empty_file_in_stub_snapshot(self):
+    """Test linting a nf-test subworkflow with an empty file sha sum in the stub test snapshot, which should make it not fail"""
+    snap_file = Path(
+        self.nfcore_subworkflows, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap"
+    )
+    snap = json.load(snap_file.open())
+    content = snap_file.read_text()
+    snap["my_test_stub"] = {"content": [{"0": "test:md5,d41d8cd98f00b204e9800998ecf8427e", "versions": {}}]}
+
+    with open(snap_file, "w") as fh:
+        json.dump(snap, fh)
+
+    subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_subworkflows)
+    subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
+    assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
+    assert len(subworkflow_lint.passed) > 0
+    assert len(subworkflow_lint.warned) >= 0
+    assert any(x.lint_test == "test_snap_md5sum" for x in subworkflow_lint.passed)
+
+    # reset the file
+    with open(snap_file, "w") as fh:
+        fh.write(content)
+
+
+def test_subworkflows_missing_tags_yml(self):
+    """Test linting a subworkflow with a missing tags.yml file"""
+    tags_path = Path(self.nfcore_subworkflows, "subworkflows", "nf-core", "test_subworkflow", "tests", "tags.yml")
+    tags_path.rename(tags_path.parent / "tags.yml.bak")
+    subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_subworkflows)
+    subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
+
+    assert len(subworkflow_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
+    assert len(subworkflow_lint.passed) >= 0
+    assert len(subworkflow_lint.warned) >= 0
+    assert subworkflow_lint.failed[0].lint_test == "test_tags_yml_exists"
+
+    # cleanup
+    tags_path.rename(tags_path.parent / "tags.yml")

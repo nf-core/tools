@@ -1,5 +1,6 @@
 """Tests covering the subworkflows commands"""
 
+import json
 import os
 import shutil
 import unittest
@@ -34,10 +35,21 @@ def create_modules_repo_dummy(tmp_dir):
     # Add dummy content to main.nf.test.snap
     test_snap_path = Path(root_dir, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap")
     test_snap_path.parent.mkdir(parents=True, exist_ok=True)
-    test_snap_path.touch()
     with open(test_snap_path, "w") as fh:
-        fh.write('{\n    "my test": {},\n')
-        fh.write('    "versions": {}\n}')
+        json.dump(
+            {
+                "my test": {
+                    "content": [
+                        {
+                            "0": [],
+                            "versions": {},
+                        }
+                    ]
+                }
+            },
+            fh,
+            indent=4,
+        )
 
     return root_dir
 
@@ -121,6 +133,8 @@ class TestSubworkflows(unittest.TestCase):
     )
     from .subworkflows.lint import (  # type: ignore[misc]
         test_subworkflows_absent_version,
+        test_subworkflows_empty_file_in_snapshot,
+        test_subworkflows_empty_file_in_stub_snapshot,
         test_subworkflows_lint,
         test_subworkflows_lint_capitalization_fail,
         test_subworkflows_lint_empty,

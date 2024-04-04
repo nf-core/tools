@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -663,3 +664,47 @@ def test_modules_absent_version(self):
     assert len(module_lint.passed) >= 0
     assert len(module_lint.warned) >= 0
     assert module_lint.failed[0].lint_test == "test_snap_versions"
+
+
+def test_modules_empty_file_in_snapshot(self):
+    """Test linting a nf-test module with an empty file sha sum in the test snapshot, which should make it fail (if it is not a stub)"""
+    snap_file = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
+    snap = json.load(snap_file.open())
+    content = snap_file.read_text()
+    snap["my test"]["content"][0]["0"] = "test:md5,d41d8cd98f00b204e9800998ecf8427e"
+
+    with open(snap_file, "w") as fh:
+        json.dump(snap, fh)
+
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+    assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+    assert module_lint.failed[0].lint_test == "test_snap_md5sum"
+
+    # reset the file
+    with open(snap_file, "w") as fh:
+        fh.write(content)
+
+
+def test_modules_empty_file_in_stub_snapshot(self):
+    """Test linting a nf-test module with an empty file sha sum in the stub test snapshot, which should make it not fail"""
+    snap_file = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
+    snap = json.load(snap_file.open())
+    content = snap_file.read_text()
+    snap["my_test_stub"] = {"content": [{"0": "test:md5,d41d8cd98f00b204e9800998ecf8427e", "versions": {}}]}
+
+    with open(snap_file, "w") as fh:
+        json.dump(snap, fh)
+
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+    assert any(x.lint_test == "test_snap_md5sum" for x in module_lint.passed)
+
+    # reset the file
+    with open(snap_file, "w") as fh:
+        fh.write(content)

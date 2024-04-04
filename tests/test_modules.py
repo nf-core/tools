@@ -1,5 +1,6 @@
 """Tests covering the modules commands"""
 
+import json
 import os
 import shutil
 import unittest
@@ -53,10 +54,22 @@ def create_modules_repo_dummy(tmp_dir):
         yaml.dump(meta_yml, fh)
     # Add dummy content to main.nf.test.snap
     test_snap_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
-    test_snap_path.touch()
+
     with open(test_snap_path, "w") as fh:
-        fh.write('{\n    "my test": {},\n')
-        fh.write('    "versions": {}\n}')
+        json.dump(
+            {
+                "my test": {
+                    "content": [
+                        {
+                            "0": [],
+                            "versions": {},
+                        }
+                    ]
+                }
+            },
+            fh,
+            indent=4,
+        )
 
     # remove "TODO" statements from main.nf
     main_nf_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "main.nf")
@@ -181,6 +194,8 @@ class TestModules(unittest.TestCase):
     )
     from .modules.lint import (  # type: ignore[misc]
         test_modules_absent_version,
+        test_modules_empty_file_in_snapshot,
+        test_modules_empty_file_in_stub_snapshot,
         test_modules_environment_yml_file_doesnt_exists,
         test_modules_environment_yml_file_name_mismatch,
         test_modules_environment_yml_file_not_array,
