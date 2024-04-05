@@ -91,6 +91,11 @@ class FinalDetails(Screen):
 
         pass
 
+    @on(PipelineExists)
+    def show_back_button(self) -> None:
+        change_select_disabled(self.parent, "back", False)
+        add_hide_class(self.parent, "close_screen")
+
     @work(thread=True, exclusive=True)
     def _create_pipeline(self) -> None:
         """Create the pipeline."""
@@ -105,5 +110,3 @@ class FinalDetails(Screen):
             add_hide_class(self.parent, "back")
         except UserWarning:
             self.post_message(self.PipelineExists())
-            self.parent.call_from_thread(change_select_disabled, self.parent, "back", False)
-            add_hide_class(self.parent, "close_screen")

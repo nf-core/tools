@@ -6,7 +6,7 @@ from textwrap import dedent
 import git
 import yaml
 from github import Github, GithubException, UnknownObjectException
-from textual import work
+from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal, Vertical
 from textual.message import Message
@@ -179,6 +179,11 @@ class GithubRepo(Screen):
 
         pass
 
+    @on(RepoExists)
+    def show_github_info_button(self) -> None:
+        change_select_disabled(self.parent, "exit", False)
+        add_hide_class(self.parent, "close_app")
+
     @work(thread=True, exclusive=True)
     def _create_repo_and_push(self, org, repo_name, pipeline_repo, private, push):
         """Create a GitHub repository and push all branches."""
@@ -196,9 +201,7 @@ class GithubRepo(Screen):
             except UserWarning as e:
                 # Repo already exists
                 log.error(e)
-                self.parent.call_from_thread(self.post_message, self.RepoExists())
-                self.parent.call_from_thread(change_select_disabled, self.parent, "exit", False)
-                add_hide_class(self.parent, "close_app")
+                self.post_message(self.RepoExists())
                 return
         except UnknownObjectException:
             # Repo doesn't exist
