@@ -14,7 +14,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
 from nf_core.pipelines.create.loggingscreen import LoggingScreen
-from nf_core.pipelines.create.utils import ShowLogs, TextInput, change_select_disabled
+from nf_core.pipelines.create.utils import ShowLogs, TextInput, add_hide_class, change_select_disabled
 
 log = logging.getLogger(__name__)
 
@@ -198,6 +198,7 @@ class GithubRepo(Screen):
                 log.error(e)
                 self.parent.call_from_thread(self.post_message, self.RepoExists())
                 self.parent.call_from_thread(change_select_disabled, self.parent, "exit", False)
+                add_hide_class(self.parent, "close_app")
                 return
         except UnknownObjectException:
             # Repo doesn't exist
@@ -208,6 +209,7 @@ class GithubRepo(Screen):
             repo = org.create_repo(repo_name, description=self.parent.TEMPLATE_CONFIG.description, private=private)
             log.info(f"GitHub repository '{repo_name}' created successfully")
             self.parent.call_from_thread(change_select_disabled, self.parent, "close_app", False)
+            add_hide_class(self.parent, "exit")
 
         # Add the remote and push
         try:

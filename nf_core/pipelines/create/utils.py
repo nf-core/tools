@@ -206,6 +206,11 @@ def change_select_disabled(app, widget_id: str, disabled: bool) -> None:
     app.get_widget_by_id(widget_id).disabled = disabled
 
 
+def add_hide_class(app, widget_id: str) -> None:
+    """Add class 'hide' to a widget. Not display widget."""
+    app.get_widget_by_id(widget_id).add_class("hide")
+
+
 ## Markdown text to reuse in different screens
 markdown_genomes = """
 Nf-core pipelines are configured to use a copy of the most common reference genome files.
