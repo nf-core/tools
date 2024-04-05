@@ -33,7 +33,8 @@ class LoggingScreen(Screen):
         yield Center(self.parent.LOG_HANDLER.console)
         if self.parent.LOGGING_STATE == "repo created":
             yield Center(
-                Button("Close App", id="close_app", variant="success"),
+                Button("Continue", id="exit", variant="success", disabled=True),
+                Button("Close App", id="close_app", variant="success", disabled=True),
                 classes="cta",
             )
         else:

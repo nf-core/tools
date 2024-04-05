@@ -9,11 +9,12 @@ from github import Github, GithubException, UnknownObjectException
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal, Vertical
+from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
 from nf_core.pipelines.create.loggingscreen import LoggingScreen
-from nf_core.pipelines.create.utils import ShowLogs, TextInput
+from nf_core.pipelines.create.utils import ShowLogs, TextInput, change_select_disabled
 
 log = logging.getLogger(__name__)
 
@@ -167,11 +168,16 @@ class GithubRepo(Screen):
                         github_variables["push"],
                     )
             except UserWarning as e:
-                log.info(f"There was an error with message: {e}")
+                log.error(f"There was an error with message: {e}")
                 self.parent.switch_screen("github_exit")
 
             self.parent.LOGGING_STATE = "repo created"
             self.parent.switch_screen(LoggingScreen())
+
+    class RepoExists(Message):
+        """Custom message to indicate that the GitHub repo already exists."""
+
+        pass
 
     @work(thread=True, exclusive=True)
     def _create_repo_and_push(self, org, repo_name, pipeline_repo, private, push):
@@ -190,6 +196,8 @@ class GithubRepo(Screen):
             except UserWarning as e:
                 # Repo already exists
                 log.error(e)
+                self.parent.call_from_thread(self.post_message, self.RepoExists())
+                self.parent.call_from_thread(change_select_disabled, self.parent, "exit", False)
                 return
         except UnknownObjectException:
             # Repo doesn't exist
@@ -199,6 +207,7 @@ class GithubRepo(Screen):
         if not repo_exists:
             repo = org.create_repo(repo_name, description=self.parent.TEMPLATE_CONFIG.description, private=private)
             log.info(f"GitHub repository '{repo_name}' created successfully")
+            self.parent.call_from_thread(change_select_disabled, self.parent, "close_app", False)
 
         # Add the remote and push
         try:
