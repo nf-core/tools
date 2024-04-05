@@ -38,6 +38,7 @@ class LoggingScreen(Screen):
             )
         else:
             yield Center(
+                Button("Back", id="back", variant="default", disabled=True),
                 Button("Continue", id="close_screen", variant="success", disabled=True),
                 classes="cta",
             )

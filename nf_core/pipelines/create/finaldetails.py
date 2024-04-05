@@ -91,10 +91,6 @@ class FinalDetails(Screen):
 
         pass
 
-    @on(PipelineExists)
-    def show_pipeline_error(self) -> None:
-        self.parent.switch_screen("error_screen")
-
     @work(thread=True, exclusive=True)
     def _create_pipeline(self) -> None:
         """Create the pipeline."""
@@ -108,3 +104,4 @@ class FinalDetails(Screen):
             self.parent.call_from_thread(change_select_disabled, self.parent, "close_screen", False)
         except UserWarning:
             self.post_message(self.PipelineExists())
+            self.parent.call_from_thread(change_select_disabled, self.parent, "back", False)
