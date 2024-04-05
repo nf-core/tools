@@ -22,6 +22,12 @@ github_text_markdown = """
 Now that we have created a new pipeline locally, we can create a new
 GitHub repository using the GitHub API and push the code to it.
 """
+github_org_help = """
+You can't create a repository to the nf-core organisation.
+Please create the pipeline repo to an organisation where you have access or use your user account.
+A core-team member will be able to transfer the repo to nf-core once the development has started.
+You user account will be used by default if 'nf-core' is provided.
+"""
 
 
 class GithubRepo(Screen):
@@ -59,12 +65,21 @@ class GithubRepo(Screen):
             yield Button("Hide", id="hide_password")
         with Horizontal(classes="ghrepo-cols"):
             yield TextInput(
+                "repo_org",
+                "Organisation name",
+                "The name of the organisation where the GitHub repo will be cretaed",
+                default=self.parent.TEMPLATE_CONFIG.org,
+                classes="column",
+            )
+            yield TextInput(
                 "repo_name",
                 "Repository name",
                 "The name of the new GitHub repository",
                 default=self.parent.TEMPLATE_CONFIG.name,
                 classes="column",
             )
+        if self.parent.TEMPLATE_CONFIG.is_nfcore:
+            yield Markdown(dedent(github_org_help))
         with Horizontal(classes="ghrepo-cols"):
             yield Switch(value=False, id="private")
             with Vertical():
@@ -110,7 +125,7 @@ class GithubRepo(Screen):
             # Pipeline git repo
             pipeline_repo = git.Repo.init(
                 Path(self.parent.TEMPLATE_CONFIG.outdir)
-                / Path(self.parent.TEMPLATE_CONFIG.org + "-" + github_variables["repo_name"])
+                / Path(self.parent.TEMPLATE_CONFIG.org + "-" + self.parent.TEMPLATE_CONFIG.name)
             )
 
             # GitHub authentication
@@ -136,11 +151,11 @@ class GithubRepo(Screen):
 
             # Check if organisation exists
             # If the organisation is nf-core or it doesn't exist, the repo will be created in the user account
-            if self.parent.TEMPLATE_CONFIG.org != "nf-core":
+            if github_variables["repo_org"] != "nf-core":
                 try:
-                    org = github_auth.get_organization(self.parent.TEMPLATE_CONFIG.org)
+                    org = github_auth.get_organization(github_variables["repo_org"])
                     log.info(
-                        f"Repo will be created in the GitHub organisation account '{self.parent.TEMPLATE_CONFIG.org}'"
+                        f"Repo will be created in the GitHub organisation account '{github_variables['repo_org']}'"
                     )
                 except UnknownObjectException:
                     pass
