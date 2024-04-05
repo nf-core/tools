@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -563,30 +564,29 @@ def test_modules_missing_required_tag(self):
 
 def test_modules_missing_tags_yml(self):
     """Test linting a module with a missing tags.yml file"""
-    Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml").rename(
-        Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml.bak")
-    )
+    tags_path = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")
+    tags_path.rename(tags_path.parent / "tags.yml.bak")
     module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
     module_lint.lint(print_results=False, module="bpipe/test")
-    Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml.bak").rename(
-        Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")
-    )
     assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
     assert len(module_lint.passed) >= 0
     assert len(module_lint.warned) >= 0
     assert module_lint.failed[0].lint_test == "test_tags_yml_exists"
+    # cleanup
+    Path(tags_path.parent / "tags.yml.bak").rename(tags_path.parent / "tags.yml")
 
 
 def test_modules_incorrect_tags_yml_key(self):
     """Test linting a module with an incorrect key in tags.yml file"""
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")) as fh:
+    tags_path = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")
+    with open(tags_path) as fh:
         content = fh.read()
         new_content = content.replace("bpipe/test:", "bpipe_test:")
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml"), "w") as fh:
+    with open(tags_path, "w") as fh:
         fh.write(new_content)
     module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
     module_lint.lint(print_results=True, module="bpipe/test")
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml"), "w") as fh:
+    with open(tags_path, "w") as fh:
         fh.write(content)
     assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
     assert len(module_lint.passed) >= 0
@@ -596,14 +596,15 @@ def test_modules_incorrect_tags_yml_key(self):
 
 def test_modules_incorrect_tags_yml_values(self):
     """Test linting a module with an incorrect path in tags.yml file"""
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")) as fh:
+    tags_path = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml")
+    with open(tags_path) as fh:
         content = fh.read()
         new_content = content.replace("modules/nf-core/bpipe/test/**", "foo")
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml"), "w") as fh:
+    with open(tags_path, "w") as fh:
         fh.write(new_content)
     module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
     module_lint.lint(print_results=False, module="bpipe/test")
-    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "tags.yml"), "w") as fh:
+    with open(tags_path, "w") as fh:
         fh.write(content)
     assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
     assert len(module_lint.passed) >= 0
@@ -642,3 +643,68 @@ def test_nftest_failing_linting(self):
     assert module_lint.failed[2].lint_test == "test_main_tags"
     assert "kallisto/index" in module_lint.failed[2].message
     assert module_lint.failed[3].lint_test == "test_tags_yml"
+
+
+def test_modules_absent_version(self):
+    """Test linting a nf-test module if the versions is absent in the snapshot file `"""
+    with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")) as fh:
+        content = fh.read()
+        new_content = content.replace("versions", "foo")
+    with open(
+        Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap"), "w"
+    ) as fh:
+        fh.write(new_content)
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+    with open(
+        Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap"), "w"
+    ) as fh:
+        fh.write(content)
+    assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) >= 0
+    assert len(module_lint.warned) >= 0
+    assert module_lint.failed[0].lint_test == "test_snap_versions"
+
+
+def test_modules_empty_file_in_snapshot(self):
+    """Test linting a nf-test module with an empty file sha sum in the test snapshot, which should make it fail (if it is not a stub)"""
+    snap_file = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
+    snap = json.load(snap_file.open())
+    content = snap_file.read_text()
+    snap["my test"]["content"][0]["0"] = "test:md5,d41d8cd98f00b204e9800998ecf8427e"
+
+    with open(snap_file, "w") as fh:
+        json.dump(snap, fh)
+
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+    assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+    assert module_lint.failed[0].lint_test == "test_snap_md5sum"
+
+    # reset the file
+    with open(snap_file, "w") as fh:
+        fh.write(content)
+
+
+def test_modules_empty_file_in_stub_snapshot(self):
+    """Test linting a nf-test module with an empty file sha sum in the stub test snapshot, which should make it not fail"""
+    snap_file = Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
+    snap = json.load(snap_file.open())
+    content = snap_file.read_text()
+    snap["my_test_stub"] = {"content": [{"0": "test:md5,d41d8cd98f00b204e9800998ecf8427e", "versions": {}}]}
+
+    with open(snap_file, "w") as fh:
+        json.dump(snap, fh)
+
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+    module_lint.lint(print_results=False, module="bpipe/test")
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+    assert any(x.lint_test == "test_snap_md5sum" for x in module_lint.passed)
+
+    # reset the file
+    with open(snap_file, "w") as fh:
+        fh.write(content)
