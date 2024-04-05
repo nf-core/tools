@@ -57,6 +57,14 @@ class GithubRepo(Screen):
             yield Button("Show", id="show_password")
             yield Button("Hide", id="hide_password")
         with Horizontal(classes="ghrepo-cols"):
+            yield TextInput(
+                "repo_name",
+                "Repository name",
+                "The name of the new GitHub repository",
+                default=self.parent.TEMPLATE_CONFIG.name,
+                classes="column",
+            )
+        with Horizontal(classes="ghrepo-cols"):
             yield Switch(value=False, id="private")
             with Vertical():
                 yield Static("Private", classes="")
@@ -89,7 +97,7 @@ class GithubRepo(Screen):
         elif event.button.id == "create_github":
             # Create a GitHub repo
 
-            # Save GitHub username and token
+            # Save GitHub username, token and repo name
             github_variables = {}
             for text_input in self.query("TextInput"):
                 this_input = text_input.query_one(Input)
@@ -101,7 +109,7 @@ class GithubRepo(Screen):
             # Pipeline git repo
             pipeline_repo = git.Repo.init(
                 Path(self.parent.TEMPLATE_CONFIG.outdir)
-                / Path(self.parent.TEMPLATE_CONFIG.org + "-" + self.parent.TEMPLATE_CONFIG.name)
+                / Path(self.parent.TEMPLATE_CONFIG.org + "-" + github_variables["repo_name"])
             )
 
             # GitHub authentication
@@ -140,7 +148,11 @@ class GithubRepo(Screen):
             try:
                 if org:
                     self._create_repo_and_push(
-                        org, pipeline_repo, github_variables["private"], github_variables["push"]
+                        org,
+                        github_variables["repo_name"],
+                        pipeline_repo,
+                        github_variables["private"],
+                        github_variables["push"],
                     )
                 else:
                     # Create the repo in the user's account
@@ -148,7 +160,11 @@ class GithubRepo(Screen):
                         f"Repo will be created in the GitHub organisation account '{github_variables['gh_username']}'"
                     )
                     self._create_repo_and_push(
-                        user, pipeline_repo, github_variables["private"], github_variables["push"]
+                        user,
+                        github_variables["repo_name"],
+                        pipeline_repo,
+                        github_variables["private"],
+                        github_variables["push"],
                     )
             except UserWarning as e:
                 log.info(f"There was an error with message: {e}")
@@ -158,16 +174,16 @@ class GithubRepo(Screen):
             self.parent.switch_screen(LoggingScreen())
 
     @work(thread=True, exclusive=True)
-    def _create_repo_and_push(self, org, pipeline_repo, private, push):
+    def _create_repo_and_push(self, org, repo_name, pipeline_repo, private, push):
         """Create a GitHub repository and push all branches."""
         self.post_message(ShowLogs())
         # Check if repo already exists
         try:
-            repo = org.get_repo(self.parent.TEMPLATE_CONFIG.name)
+            repo = org.get_repo(repo_name)
             # Check if it has a commit history
             try:
                 repo.get_commits().totalCount
-                raise UserWarning(f"GitHub repository '{self.parent.TEMPLATE_CONFIG.name}' already exists")
+                raise UserWarning(f"GitHub repository '{repo_name}' already exists")
             except GithubException:
                 # Repo is empty
                 repo_exists = True
@@ -181,10 +197,8 @@ class GithubRepo(Screen):
 
         # Create the repo
         if not repo_exists:
-            repo = org.create_repo(
-                self.parent.TEMPLATE_CONFIG.name, description=self.parent.TEMPLATE_CONFIG.description, private=private
-            )
-            log.info(f"GitHub repository '{self.parent.TEMPLATE_CONFIG.name}' created successfully")
+            repo = org.create_repo(repo_name, description=self.parent.TEMPLATE_CONFIG.description, private=private)
+            log.info(f"GitHub repository '{repo_name}' created successfully")
 
         # Add the remote and push
         try:
