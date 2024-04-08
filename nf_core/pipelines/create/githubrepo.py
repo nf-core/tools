@@ -6,17 +6,26 @@ from textwrap import dedent
 import git
 import yaml
 from github import Github, GithubException, UnknownObjectException
-from textual import work
+from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal, Vertical
+from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
 from nf_core.pipelines.create.loggingscreen import LoggingScreen
-from nf_core.pipelines.create.utils import ShowLogs, TextInput
+from nf_core.pipelines.create.utils import ShowLogs, TextInput, add_hide_class, change_select_disabled
 
 log = logging.getLogger(__name__)
 
+github_org_help = """
+> ⚠️ **You can't create a repository directly in the nf-core organisation.**
+>
+> Please create the pipeline repo to an organisation where you have access or use your user account.
+> A core-team member will be able to transfer the repo to nf-core once the development has started.
+
+> 💡 Your GitHub user account will be used by default if 'nf-core' is given as the org name.
+"""
 
 class GithubRepo(Screen):
     """Create a GitHub repository and push all branches."""
@@ -29,8 +38,8 @@ class GithubRepo(Screen):
             """
             # Create GitHub repository
 
-            You can optionally create a new GitHub repository and push your
-            newly created pipeline to it.
+            Now that we have created a new pipeline locally, we can
+            create a new GitHub repository and push the code to it.
             """
         )
         if gh_user:
@@ -54,6 +63,23 @@ class GithubRepo(Screen):
             )
             yield Button("Show", id="show_password")
             yield Button("Hide", id="hide_password")
+        with Horizontal(classes="ghrepo-cols"):
+            yield TextInput(
+                "repo_org",
+                "Organisation name",
+                "The name of the organisation where the GitHub repo will be cretaed",
+                default=self.parent.TEMPLATE_CONFIG.org,
+                classes="column",
+            )
+            yield TextInput(
+                "repo_name",
+                "Repository name",
+                "The name of the new GitHub repository",
+                default=self.parent.TEMPLATE_CONFIG.name,
+                classes="column",
+            )
+        if self.parent.TEMPLATE_CONFIG.is_nfcore:
+            yield Markdown(dedent(github_org_help))
         with Horizontal(classes="ghrepo-cols"):
             yield Switch(value=False, id="private")
             with Vertical():
@@ -87,7 +113,7 @@ class GithubRepo(Screen):
         elif event.button.id == "create_github":
             # Create a GitHub repo
 
-            # Save GitHub username and token
+            # Save GitHub username, token and repo name
             github_variables = {}
             for text_input in self.query("TextInput"):
                 this_input = text_input.query_one(Input)
@@ -125,11 +151,11 @@ class GithubRepo(Screen):
 
             # Check if organisation exists
             # If the organisation is nf-core or it doesn't exist, the repo will be created in the user account
-            if self.parent.TEMPLATE_CONFIG.org != "nf-core":
+            if github_variables["repo_org"] != "nf-core":
                 try:
-                    org = github_auth.get_organization(self.parent.TEMPLATE_CONFIG.org)
+                    org = github_auth.get_organization(github_variables["repo_org"])
                     log.info(
-                        f"Repo will be created in the GitHub organisation account '{self.parent.TEMPLATE_CONFIG.org}'"
+                        f"Repo will be created in the GitHub organisation account '{github_variables['repo_org']}'"
                     )
                 except UnknownObjectException:
                     pass
@@ -138,7 +164,11 @@ class GithubRepo(Screen):
             try:
                 if org:
                     self._create_repo_and_push(
-                        org, pipeline_repo, github_variables["private"], github_variables["push"]
+                        org,
+                        github_variables["repo_name"],
+                        pipeline_repo,
+                        github_variables["private"],
+                        github_variables["push"],
                     )
                 else:
                     # Create the repo in the user's account
@@ -146,32 +176,47 @@ class GithubRepo(Screen):
                         f"Repo will be created in the GitHub organisation account '{github_variables['gh_username']}'"
                     )
                     self._create_repo_and_push(
-                        user, pipeline_repo, github_variables["private"], github_variables["push"]
+                        user,
+                        github_variables["repo_name"],
+                        pipeline_repo,
+                        github_variables["private"],
+                        github_variables["push"],
                     )
             except UserWarning as e:
-                log.info(f"There was an error with message: {e}")
+                log.error(f"There was an error with message: {e}")
                 self.parent.switch_screen("github_exit")
 
             self.parent.LOGGING_STATE = "repo created"
             self.parent.switch_screen(LoggingScreen())
 
+    class RepoExists(Message):
+        """Custom message to indicate that the GitHub repo already exists."""
+
+        pass
+
+    @on(RepoExists)
+    def show_github_info_button(self) -> None:
+        change_select_disabled(self.parent, "exit", False)
+        add_hide_class(self.parent, "close_app")
+
     @work(thread=True, exclusive=True)
-    def _create_repo_and_push(self, org, pipeline_repo, private, push):
+    def _create_repo_and_push(self, org, repo_name, pipeline_repo, private, push):
         """Create a GitHub repository and push all branches."""
         self.post_message(ShowLogs())
         # Check if repo already exists
         try:
-            repo = org.get_repo(self.parent.TEMPLATE_CONFIG.name)
+            repo = org.get_repo(repo_name)
             # Check if it has a commit history
             try:
                 repo.get_commits().totalCount
-                raise UserWarning(f"GitHub repository '{self.parent.TEMPLATE_CONFIG.name}' already exists")
+                raise UserWarning(f"GitHub repository '{repo_name}' already exists")
             except GithubException:
                 # Repo is empty
                 repo_exists = True
             except UserWarning as e:
                 # Repo already exists
                 log.error(e)
+                self.post_message(self.RepoExists())
                 return
         except UnknownObjectException:
             # Repo doesn't exist
@@ -179,10 +224,10 @@ class GithubRepo(Screen):
 
         # Create the repo
         if not repo_exists:
-            repo = org.create_repo(
-                self.parent.TEMPLATE_CONFIG.name, description=self.parent.TEMPLATE_CONFIG.description, private=private
-            )
-            log.info(f"GitHub repository '{self.parent.TEMPLATE_CONFIG.name}' created successfully")
+            repo = org.create_repo(repo_name, description=self.parent.TEMPLATE_CONFIG.description, private=private)
+            log.info(f"GitHub repository '{repo_name}' created successfully")
+            self.parent.call_from_thread(change_select_disabled, self.parent, "close_app", False)
+            add_hide_class(self.parent, "exit")
 
         # Add the remote and push
         try:

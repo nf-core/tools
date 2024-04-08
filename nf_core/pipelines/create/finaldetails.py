@@ -11,7 +11,7 @@ from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Swi
 
 from nf_core.pipelines.create.create import PipelineCreate
 from nf_core.pipelines.create.loggingscreen import LoggingScreen
-from nf_core.pipelines.create.utils import ShowLogs, TextInput, change_select_disabled
+from nf_core.pipelines.create.utils import ShowLogs, TextInput, add_hide_class, change_select_disabled
 
 
 class FinalDetails(Screen):
@@ -92,8 +92,9 @@ class FinalDetails(Screen):
         pass
 
     @on(PipelineExists)
-    def show_pipeline_error(self) -> None:
-        self.parent.switch_screen("error_screen")
+    def show_back_button(self) -> None:
+        change_select_disabled(self.parent, "back", False)
+        add_hide_class(self.parent, "close_screen")
 
     @work(thread=True, exclusive=True)
     def _create_pipeline(self) -> None:
@@ -106,5 +107,6 @@ class FinalDetails(Screen):
         try:
             create_obj.init_pipeline()
             self.parent.call_from_thread(change_select_disabled, self.parent, "close_screen", False)
+            add_hide_class(self.parent, "back")
         except UserWarning:
             self.post_message(self.PipelineExists())

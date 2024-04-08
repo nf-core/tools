@@ -118,6 +118,10 @@ Vertical{
     margin: 0 4 2 4;
 }
 
+.hide {
+    display: none;
+}
+
 /* Layouts */
 .col-2 {
     grid-size: 2 1;
