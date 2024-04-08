@@ -267,7 +267,7 @@ class PipelineCreate:
 
     def render_template(self):
         """Runs Jinja to create a new nf-core pipeline."""
-        log.info(f"Creating new nf-core pipeline: '{self.name}'")
+        log.info(f"Creating new pipeline: '{self.name}'")
 
         # Check if the output directory exists
         if self.outdir.exists():
@@ -536,7 +536,7 @@ class PipelineCreate:
                 "Pipeline git repository will not be initialised."
             )
 
-        log.info("Initialising pipeline git repository")
+        log.info("Initialising local pipeline git repository")
         repo = git.Repo.init(self.outdir)
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")

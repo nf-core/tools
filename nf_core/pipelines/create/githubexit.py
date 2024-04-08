@@ -20,7 +20,7 @@ If you would like to create the GitHub repository later, you can do it manually 
     ```bash
     git push --all origin
     ```
-    * Note the `--all` flag: this is needed to push all branches to the remote.
+    > 💡 Note the `--all` flag: this is needed to push all branches to the remote.
 """
 
 

@@ -17,11 +17,6 @@ from nf_core.pipelines.create.utils import ShowLogs, TextInput
 
 log = logging.getLogger(__name__)
 
-github_text_markdown = """
-Now that we have created a new pipeline locally, we can create a new
-GitHub repository using the GitHub API and push the code to it.
-"""
-
 
 class GithubRepo(Screen):
     """Create a GitHub repository and push all branches."""
@@ -29,16 +24,19 @@ class GithubRepo(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        yield Markdown(
-            dedent(
-                """
-                # Create GitHub repository
-                """
-            )
+        gh_user, gh_token = self._get_github_credentials()
+        github_text_markdown = dedent(
+            """
+            # Create GitHub repository
+
+            You can optionally create a new GitHub repository and push your
+            newly created pipeline to it.
+            """
         )
-        yield Markdown(dedent(github_text_markdown))
+        if gh_user:
+            github_text_markdown += f">\n> 💡 _Found GitHub username {'and token ' if gh_token else ''}in local [GitHub CLI](https://cli.github.com/) config_\n>\n"
+        yield Markdown(github_text_markdown)
         with Horizontal(classes="ghrepo-cols"):
-            gh_user, gh_token = self._get_github_credentials()
             yield TextInput(
                 "gh_username",
                 "GitHub username",

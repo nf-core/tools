@@ -9,18 +9,17 @@ markdown = """
 # Welcome to the nf-core pipeline creation wizard
 
 This app will help you create a new Nextflow pipeline
-from the nf-core pipeline template, part of the
-[nf-core/tools repository](https://github.com/nf-core/tools).
+from the [nf-core/tools pipeline template](https://github.com/nf-core/tools).
 
-The template _must_ be used for nf-core pipelines, but hopefully
-helps all Nextflow developers benefit from nf-core best practices.
+The template helps anyone benefit from nf-core best practices,
+and is a requirement for nf-core pipelines.
 
-If you want to add a pipeline to nf-core, please
-[join on Slack](https://nf-co.re/join) and discuss your plans with the
-community as early as possible; _**ideally before you start on your pipeline!**_
-See the [nf-core guidelines](https://nf-co.re/docs/contributing/guidelines)
-and the [#new-pipelines](https://nfcore.slack.com/channels/new-pipelines)
-Slack channel for more information.
+> 💡 If you want to add a pipeline to nf-core, please
+> [join on Slack](https://nf-co.re/join) and discuss your plans with the
+> community as early as possible; _**ideally before you start on your pipeline!**_
+> See the [nf-core guidelines](https://nf-co.re/docs/contributing/guidelines)
+> and the [#new-pipelines](https://nfcore.slack.com/channels/new-pipelines)
+> Slack channel for more information.
 """
 
 
