@@ -19,13 +19,14 @@ from nf_core.pipelines.create.utils import ShowLogs, TextInput, add_hide_class, 
 log = logging.getLogger(__name__)
 
 github_org_help = """
-> ⚠️ **You can't create a repository directly in the nf-core organisation.**
+> ⚠️  **You can't create a repository directly in the nf-core organisation.**
 >
 > Please create the pipeline repo to an organisation where you have access or use your user account.
 > A core-team member will be able to transfer the repo to nf-core once the development has started.
 
-> 💡 Your GitHub user account will be used by default if 'nf-core' is given as the org name.
+> 💡 Your GitHub user account will be used by default if `nf-core` is given as the org name.
 """
+
 
 class GithubRepo(Screen):
     """Create a GitHub repository and push all branches."""
