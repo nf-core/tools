@@ -18,17 +18,14 @@ from nf_core.pipelines.create.utils import ShowLogs, TextInput, add_hide_class, 
 
 log = logging.getLogger(__name__)
 
-github_text_markdown = """
-Now that we have created a new pipeline locally, we can create a new
-GitHub repository using the GitHub API and push the code to it.
-"""
 github_org_help = """
-You can't create a repository to the nf-core organisation.
-Please create the pipeline repo to an organisation where you have access or use your user account.
-A core-team member will be able to transfer the repo to nf-core once the development has started.
-You user account will be used by default if 'nf-core' is provided.
-"""
+> ⚠️ **You can't create a repository directly in the nf-core organisation.**
+>
+> Please create the pipeline repo to an organisation where you have access or use your user account.
+> A core-team member will be able to transfer the repo to nf-core once the development has started.
 
+> 💡 Your GitHub user account will be used by default if 'nf-core' is given as the org name.
+"""
 
 class GithubRepo(Screen):
     """Create a GitHub repository and push all branches."""
@@ -36,16 +33,19 @@ class GithubRepo(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
-        yield Markdown(
-            dedent(
-                """
-                # Create GitHub repository
-                """
-            )
+        gh_user, gh_token = self._get_github_credentials()
+        github_text_markdown = dedent(
+            """
+            # Create GitHub repository
+
+            Now that we have created a new pipeline locally, we can
+            create a new GitHub repository and push the code to it.
+            """
         )
-        yield Markdown(dedent(github_text_markdown))
+        if gh_user:
+            github_text_markdown += f">\n> 💡 _Found GitHub username {'and token ' if gh_token else ''}in local [GitHub CLI](https://cli.github.com/) config_\n>\n"
+        yield Markdown(github_text_markdown)
         with Horizontal(classes="ghrepo-cols"):
-            gh_user, gh_token = self._get_github_credentials()
             yield TextInput(
                 "gh_username",
                 "GitHub username",
