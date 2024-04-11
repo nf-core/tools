@@ -84,7 +84,7 @@ class FinalDetails(Screen):
         # Create the new pipeline
         self._create_pipeline()
         self.parent.LOGGING_STATE = "pipeline created"
-        self.parent.switch_screen(LoggingScreen())
+        self.parent.push_screen(LoggingScreen())
 
     class PipelineExists(Message):
         """Custom message to indicate that the pipeline already exists."""

@@ -87,8 +87,7 @@ class PipelineCreateApp(App[CreateConfig]):
         elif event.button.id == "github_repo":
             self.push_screen("github_repo")
         elif event.button.id == "close_screen":
-            # Switch screen (not push) to allow viewing old logging messages
-            self.switch_screen("github_repo_question")
+            self.push_screen("github_repo_question")
         elif event.button.id == "exit":
             self.push_screen("github_exit")
         if event.button.id == "close_app":

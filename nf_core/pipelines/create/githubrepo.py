@@ -185,10 +185,10 @@ class GithubRepo(Screen):
                     )
             except UserWarning as e:
                 log.error(f"There was an error with message: {e}")
-                self.parent.switch_screen("github_exit")
+                self.parent.push_screen("github_exit")
 
             self.parent.LOGGING_STATE = "repo created"
-            self.parent.switch_screen(LoggingScreen())
+            self.parent.push_screen(LoggingScreen())
 
     class RepoExists(Message):
         """Custom message to indicate that the GitHub repo already exists."""
