@@ -86,14 +86,6 @@ class GithubRepo(Screen):
             with Vertical():
                 yield Static("Private", classes="")
                 yield Static("Select to make the new GitHub repo private.", classes="feature_subtitle")
-        with Horizontal(classes="ghrepo-cols"):
-            yield Switch(value=True, id="push")
-            with Vertical():
-                yield Static("Push files", classes="custom_grid")
-                yield Static(
-                    "Select to push pipeline files and branches to your GitHub repo.",
-                    classes="feature_subtitle",
-                )
         yield Center(
             Button("Back", id="back", variant="default"),
             Button("Create GitHub repo", id="create_github", variant="success"),
@@ -169,7 +161,6 @@ class GithubRepo(Screen):
                         github_variables["repo_name"],
                         pipeline_repo,
                         github_variables["private"],
-                        github_variables["push"],
                     )
                 else:
                     # Create the repo in the user's account
@@ -181,7 +172,6 @@ class GithubRepo(Screen):
                         github_variables["repo_name"],
                         pipeline_repo,
                         github_variables["private"],
-                        github_variables["push"],
                     )
             except UserWarning as e:
                 log.error(f"There was an error with message: {e}")
@@ -201,7 +191,7 @@ class GithubRepo(Screen):
         add_hide_class(self.parent, "close_app")
 
     @work(thread=True, exclusive=True)
-    def _create_repo_and_push(self, org, repo_name, pipeline_repo, private, push):
+    def _create_repo_and_push(self, org, repo_name, pipeline_repo, private):
         """Create a GitHub repository and push all branches."""
         self.post_message(ShowLogs())
         # Check if repo already exists
@@ -230,14 +220,14 @@ class GithubRepo(Screen):
             self.parent.call_from_thread(change_select_disabled, self.parent, "close_app", False)
             add_hide_class(self.parent, "exit")
 
-        # Add the remote and push
+        # Add the remote
         try:
             pipeline_repo.create_remote("origin", repo.clone_url)
         except git.exc.GitCommandError:
             # Remote already exists
             pass
-        if push:
-            pipeline_repo.remotes.origin.push(all=True).raise_if_error()
+        # Push all branches
+        pipeline_repo.remotes.origin.push(all=True).raise_if_error()
 
     def _github_authentication(self, gh_username, gh_token):
         """Authenticate to GitHub"""
