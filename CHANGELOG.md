@@ -54,6 +54,7 @@
 - Remove old references to CUSTOMDUMPSOFTWAREVERSIONS and add linting checks ([#2897](https://github.com/nf-core/tools/pull/2897))
 - Update codecov/codecov-action digest to 7afa10e ([#2909](https://github.com/nf-core/tools/pull/2909))
 - Update codecov/codecov-action digest to 8450866 ([#2913](https://github.com/nf-core/tools/pull/2913))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.3.6 ([#2915](https://github.com/nf-core/tools/pull/2915))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
