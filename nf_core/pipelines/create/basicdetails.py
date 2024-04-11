@@ -77,3 +77,9 @@ class BasicDetails(Screen):
                     self.parent.push_screen("type_custom")
         except ValueError:
             pass
+
+    def on_screen_resume(self):
+        """Update displayed value on screen resume"""
+        for text_input in self.query("TextInput"):
+            if text_input.field_id == "org":
+                text_input.disabled = self.parent.PIPELINE_TYPE == "nfcore"
