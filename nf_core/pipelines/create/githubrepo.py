@@ -13,8 +13,7 @@ from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
-from nf_core.pipelines.create.loggingscreen import LoggingScreen
-from nf_core.pipelines.create.utils import ShowLogs, TextInput, add_hide_class, change_select_disabled
+from nf_core.pipelines.create.utils import ShowLogs, TextInput, remove_hide_class
 
 log = logging.getLogger(__name__)
 
@@ -178,7 +177,7 @@ class GithubRepo(Screen):
                 self.parent.push_screen("github_exit")
 
             self.parent.LOGGING_STATE = "repo created"
-            self.parent.push_screen(LoggingScreen())
+            self.parent.push_screen("logging")
 
     class RepoExists(Message):
         """Custom message to indicate that the GitHub repo already exists."""
@@ -187,8 +186,8 @@ class GithubRepo(Screen):
 
     @on(RepoExists)
     def show_github_info_button(self) -> None:
-        change_select_disabled(self.parent, "exit", False)
-        add_hide_class(self.parent, "close_app")
+        remove_hide_class(self.parent, "exit")
+        remove_hide_class(self.parent, "back")
 
     @work(thread=True, exclusive=True)
     def _create_repo_and_push(self, org, repo_name, pipeline_repo, private):
@@ -217,8 +216,7 @@ class GithubRepo(Screen):
         if not repo_exists:
             repo = org.create_repo(repo_name, description=self.parent.TEMPLATE_CONFIG.description, private=private)
             log.info(f"GitHub repository '{repo_name}' created successfully")
-            self.parent.call_from_thread(change_select_disabled, self.parent, "close_app", False)
-            add_hide_class(self.parent, "exit")
+            remove_hide_class(self.parent, "close_app")
 
         # Add the remote
         try:

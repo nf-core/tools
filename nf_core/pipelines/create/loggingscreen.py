@@ -5,6 +5,7 @@ from textual.containers import Center
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown, Static
 
+from nf_core.pipelines.create.utils import add_hide_class
 from nf_core.utils import nfcore_logo
 
 
@@ -25,21 +26,21 @@ class LoggingScreen(Screen):
             "\n" + "\n".join(nfcore_logo) + "\n",
             id="logo",
         )
-        if self.parent.LOGGING_STATE == "repo created":
-            yield Markdown("Creating GitHub repository..")
-        else:
-            yield Markdown("Creating pipeline..")
-        self.parent.LOG_HANDLER.console.clear()
+        yield Markdown("Creating...")
         yield Center(self.parent.LOG_HANDLER.console)
-        if self.parent.LOGGING_STATE == "repo created":
-            yield Center(
-                Button("Continue", id="exit", variant="success", disabled=True),
-                Button("Close App", id="close_app", variant="success", disabled=True),
-                classes="cta",
-            )
-        else:
-            yield Center(
-                Button("Back", id="back", variant="default", disabled=True),
-                Button("Continue", id="close_screen", variant="success", disabled=True),
-                classes="cta",
-            )
+        yield Center(
+            Button("Back", id="back", variant="default", classes="hide"),
+            Button("Continue", id="close_screen", variant="success", classes="hide"),
+            Button("Continue", id="exit", variant="success", classes="hide"),
+            Button("Close App", id="close_app", variant="success", classes="hide"),
+            classes="cta",
+        )
+
+    def on_screen_resume(self):
+        """Clear console on screen resume.
+        Hide all buttons as disabled on screen resume."""
+        self.parent.LOG_HANDLER.console.clear()
+        button_ids = ["back", "close_screen", "exit", "close_app"]
+        for button in self.query("Button"):
+            if button.id in button_ids:
+                add_hide_class(self.parent, button.id)

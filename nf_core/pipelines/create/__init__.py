@@ -53,6 +53,7 @@ class PipelineCreateApp(App[CreateConfig]):
         "type_custom": CustomPipeline(),
         "type_nfcore": NfcorePipeline(),
         "final_details": FinalDetails(),
+        "logging": LoggingScreen(),
         "github_repo_question": GithubRepoQuestion(),
         "github_repo": GithubRepo(),
         "github_exit": GithubExit(),

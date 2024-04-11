@@ -10,8 +10,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
 from nf_core.pipelines.create.create import PipelineCreate
-from nf_core.pipelines.create.loggingscreen import LoggingScreen
-from nf_core.pipelines.create.utils import ShowLogs, TextInput, add_hide_class, change_select_disabled
+from nf_core.pipelines.create.utils import ShowLogs, TextInput, remove_hide_class
 
 
 class FinalDetails(Screen):
@@ -84,7 +83,7 @@ class FinalDetails(Screen):
         # Create the new pipeline
         self._create_pipeline()
         self.parent.LOGGING_STATE = "pipeline created"
-        self.parent.push_screen(LoggingScreen())
+        self.parent.push_screen("logging")
 
     class PipelineExists(Message):
         """Custom message to indicate that the pipeline already exists."""
@@ -93,8 +92,7 @@ class FinalDetails(Screen):
 
     @on(PipelineExists)
     def show_back_button(self) -> None:
-        change_select_disabled(self.parent, "back", False)
-        add_hide_class(self.parent, "close_screen")
+        remove_hide_class(self.parent, "back")
 
     @work(thread=True, exclusive=True)
     def _create_pipeline(self) -> None:
@@ -106,7 +104,6 @@ class FinalDetails(Screen):
         )
         try:
             create_obj.init_pipeline()
-            self.parent.call_from_thread(change_select_disabled, self.parent, "close_screen", False)
-            add_hide_class(self.parent, "back")
+            remove_hide_class(self.parent, "close_screen")
         except UserWarning:
             self.post_message(self.PipelineExists())
