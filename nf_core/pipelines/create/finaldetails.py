@@ -1,16 +1,24 @@
 """A Textual app to create a pipeline."""
 
+from pathlib import Path
 from textwrap import dedent
 
 from textual import on, work
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal, Vertical
-from textual.message import Message
+from textual.containers import Center, Horizontal
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
+from textual.widgets import Button, Footer, Header, Input, Markdown
 
 from nf_core.pipelines.create.create import PipelineCreate
-from nf_core.pipelines.create.utils import ShowLogs, TextInput, remove_hide_class
+from nf_core.pipelines.create.utils import ShowLogs, TextInput, add_hide_class, remove_hide_class
+
+pipeline_exists_warn = """
+> ⚠️  **The pipeline you are trying to create already exists.**
+>
+> If you continue, you will **override** the existing pipeline.
+> Please change the pipeline or organisation name to create a different pipeline.
+> Alternatively, provide a different output directory.
+"""
 
 
 class FinalDetails(Screen):
@@ -42,14 +50,8 @@ class FinalDetails(Screen):
                 ".",
                 classes="column",
             )
-        with Horizontal():
-            yield Switch(value=False, id="force")
-            with Vertical():
-                yield Static("Force creation", classes="custom_grid")
-                yield Static(
-                    "Overwrite any existing pipeline output directories.",
-                    classes="feature_subtitle",
-                )
+
+        yield Markdown(dedent(pipeline_exists_warn), id="exist_warn", classes="hide")
 
         yield Center(
             Button("Back", id="back", variant="default"),
@@ -74,25 +76,27 @@ class FinalDetails(Screen):
         except ValueError:
             pass
 
-        this_switch = self.query_one(Switch)
-        try:
-            self.parent.TEMPLATE_CONFIG.__dict__.update({"force": this_switch.value})
-        except ValueError:
-            pass
-
         # Create the new pipeline
         self._create_pipeline()
         self.parent.LOGGING_STATE = "pipeline created"
         self.parent.push_screen("logging")
 
-    class PipelineExists(Message):
-        """Custom message to indicate that the pipeline already exists."""
+    @on(Input.Changed)
+    @on(Input.Submitted)
+    def show_exists_warn(self):
+        """Check if the pipeline exists on every input change or submitted.
+        If the pipeline exists, show warning message saying that it will be overriden."""
+        outdir = ""
+        for text_input in self.query("TextInput"):
+            this_input = text_input.query_one(Input)
+            if text_input.field_id == "outdir":
+                outdir = this_input.value
+        if Path(outdir, self.parent.TEMPLATE_CONFIG.org + "-" + self.parent.TEMPLATE_CONFIG.name).is_dir():
+            remove_hide_class(self.parent, "exist_warn")
 
-        pass
-
-    @on(PipelineExists)
-    def show_back_button(self) -> None:
-        remove_hide_class(self.parent, "back")
+    def on_screen_resume(self):
+        """Hide warn message on screen resume."""
+        add_hide_class(self.parent, "exist_warn")
 
     @work(thread=True, exclusive=True)
     def _create_pipeline(self) -> None:
@@ -102,8 +106,5 @@ class FinalDetails(Screen):
             template_config=self.parent.TEMPLATE_CONFIG,
             is_interactive=True,
         )
-        try:
-            create_obj.init_pipeline()
-            remove_hide_class(self.parent, "close_screen")
-        except UserWarning:
-            self.post_message(self.PipelineExists())
+        create_obj.init_pipeline()
+        remove_hide_class(self.parent, "close_screen")

@@ -23,7 +23,7 @@ class CreateConfig(BaseModel):
     description: Optional[str] = None
     author: Optional[str] = None
     version: Optional[str] = None
-    force: Optional[bool] = None
+    force: Optional[bool] = True
     outdir: Optional[str] = None
     skip_features: Optional[list] = None
     is_nfcore: Optional[bool] = None

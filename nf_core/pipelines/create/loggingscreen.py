@@ -37,10 +37,12 @@ class LoggingScreen(Screen):
         )
 
     def on_screen_resume(self):
-        """Clear console on screen resume.
-        Hide all buttons as disabled on screen resume."""
-        self.parent.LOG_HANDLER.console.clear()
+        """Hide all buttons as disabled on screen resume."""
         button_ids = ["back", "close_screen", "exit", "close_app"]
         for button in self.query("Button"):
             if button.id in button_ids:
                 add_hide_class(self.parent, button.id)
+
+    def on_screen_suspend(self):
+        """Clear console on screen suspend."""
+        self.parent.LOG_HANDLER.console.clear()
