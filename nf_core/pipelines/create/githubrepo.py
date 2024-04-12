@@ -150,7 +150,7 @@ class GithubRepo(Screen):
                         f"Repo will be created in the GitHub organisation account '{github_variables['repo_org']}'"
                     )
                 except UnknownObjectException:
-                    pass
+                    log.warn(f"Provided organisation '{github_variables['repo_org']}' not found. ")
 
             # Create the repo
             try:
