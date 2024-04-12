@@ -20,7 +20,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
     It verifies that the test directory exists
     and contains a ``main.nf.test`` a ``main.nf.test.snap`` and ``tags.yml``.
 
-    Additionally, hecks that all included components in test ``main.nf`` are specified in ``test.yml``
+    Additionally, checks that all included components in test ``main.nf`` are specified in ``test.yml``
     """
 
     repo_dir = subworkflow.component_dir.parts[
@@ -114,6 +114,22 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
                                             snap_file,
                                         )
                                     )
+                            if "versions" in str(snap_content[test_name]) or "versions" in str(snap_content.keys()):
+                                subworkflow.passed.append(
+                                    (
+                                        "test_snap_versions",
+                                        "versions found in snapshot file",
+                                        snap_file,
+                                    )
+                                )
+                            else:
+                                subworkflow.warned.append(
+                                    (
+                                        "test_snap_versions",
+                                        "versions not found in snapshot file",
+                                        snap_file,
+                                    )
+                                )
                         except json.decoder.JSONDecodeError as e:
                             subworkflow.failed.append(
                                 (

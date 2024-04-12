@@ -12,10 +12,12 @@
 - Add a cleanup action to `download_pipeline.yml` to fix failures caused by inadequate storage space on the runner ([#2849](https://github.com/nf-core/tools/pull/2849))
 - Update python to 3.12 ([#2805](https://github.com/nf-core/tools/pull/2805))
 - Remove `pyproject.toml` from template root
+- Shorten lines in pipeline template ([#2908](https://github.com/nf-core/tools/pull/2908))
 
 ### Linting
 
 - Only match assignments of params in `main.nf` and not references like `params.aligner == <something>` ([#2833](https://github.com/nf-core/tools/pull/2833))
+- Include test for presence of versions in snapshot ([#2888](https://github.com/nf-core/tools/pull/2888))
 
 ### Download
 
@@ -47,8 +49,13 @@
 - Update gitpod/workspace-base Docker digest to 168d78b ([#2899](https://github.com/nf-core/tools/pull/2899))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.4 ([#2894](https://github.com/nf-core/tools/pull/2894))
 - Update GitHub Actions ([#2902](https://github.com/nf-core/tools/pull/2902))
+- Get immediate parent path name for schema creation ([#2886](https://github.com/nf-core/tools/pull/2886))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.5 ([#2903](https://github.com/nf-core/tools/pull/2903))
 - Remove old references to CUSTOMDUMPSOFTWAREVERSIONS and add linting checks ([#2897](https://github.com/nf-core/tools/pull/2897))
+- Update codecov/codecov-action digest to 7afa10e ([#2909](https://github.com/nf-core/tools/pull/2909))
+- Update codecov/codecov-action digest to 8450866 ([#2913](https://github.com/nf-core/tools/pull/2913))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.3.6 ([#2915](https://github.com/nf-core/tools/pull/2915))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.3.7 ([#2917](https://github.com/nf-core/tools/pull/2917))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 

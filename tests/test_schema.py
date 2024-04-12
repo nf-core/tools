@@ -217,6 +217,15 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.pipeline_manifest["description"] = "Test pipeline"
         self.schema_obj.make_skeleton_schema()
         self.schema_obj.validate_schema(self.schema_obj.schema)
+        assert self.schema_obj.schema["title"] == "nf-core/test pipeline parameters"
+
+    def test_make_skeleton_schema_absent_name(self):
+        """Test making a new schema skeleton"""
+        self.schema_obj.schema_filename = self.template_schema
+        self.schema_obj.pipeline_manifest["description"] = "Test pipeline"
+        self.schema_obj.make_skeleton_schema()
+        self.schema_obj.validate_schema(self.schema_obj.schema)
+        assert self.schema_obj.schema["title"] == "wf pipeline parameters"
 
     def test_get_wf_params(self):
         """Test getting the workflow parameters from a pipeline"""
