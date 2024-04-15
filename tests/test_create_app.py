@@ -1,7 +1,5 @@
 """Test Pipeline Create App"""
 
-from unittest import mock
-
 import pytest
 
 from nf_core.pipelines.create import PipelineCreateApp
@@ -189,8 +187,7 @@ def test_customisation_help(snap_compare):
     assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
 
 
-@mock.patch("nf_core.pipelines.create.create.PipelineCreate.init_pipeline", return_value=None)
-def test_github_question(mock_init_pipeline, snap_compare):
+def test_github_question(tmpdir, snap_compare):
     """Test snapshot for the github_repo_question screen.
     Steps to get to this screen:
         screen welcome > press start >
@@ -212,14 +209,18 @@ def test_github_question(mock_init_pipeline, snap_compare):
         await pilot.press("M", "e")
         await pilot.click("#next")
         await pilot.click("#continue")
+        await pilot.press("backspace")
+        await pilot.press("tab")
+        await pilot.press(*str(tmpdir))
         await pilot.click("#finish")
+        pilot.app.get_widget_by_id("close_screen").remove_class("hide")
+        await pilot.pause()
         await pilot.click("#close_screen")
 
     assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
 
 
-@mock.patch("nf_core.pipelines.create.create.PipelineCreate.init_pipeline", return_value=None)
-def test_github_details(mock_init_pipeline, snap_compare):
+def test_github_details(tmpdir, snap_compare):
     """Test snapshot for the github_repo screen.
     Steps to get to this screen:
         screen welcome > press start >
@@ -243,7 +244,12 @@ def test_github_details(mock_init_pipeline, snap_compare):
         await pilot.press("M", "e")
         await pilot.click("#next")
         await pilot.click("#continue")
+        await pilot.press("backspace")
+        await pilot.press("tab")
+        await pilot.press(*str(tmpdir))
         await pilot.click("#finish")
+        pilot.app.get_widget_by_id("close_screen").remove_class("hide")
+        await pilot.pause()
         await pilot.click("#close_screen")
         await pilot.click("#github_repo")
         await pilot.click("#gh_username")
@@ -254,8 +260,7 @@ def test_github_details(mock_init_pipeline, snap_compare):
     assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
 
 
-@mock.patch("nf_core.pipelines.create.create.PipelineCreate.init_pipeline", return_value=None)
-def test_github_exit_message(mock_init_pipeline, snap_compare):
+def test_github_exit_message(tmpdir, snap_compare):
     """Test snapshot for the github_exit screen.
     Steps to get to this screen:
         screen welcome > press start >
@@ -279,7 +284,12 @@ def test_github_exit_message(mock_init_pipeline, snap_compare):
         await pilot.press("M", "e")
         await pilot.click("#next")
         await pilot.click("#continue")
+        await pilot.press("backspace")
+        await pilot.press("tab")
+        await pilot.press(*str(tmpdir))
         await pilot.click("#finish")
+        pilot.app.get_widget_by_id("close_screen").remove_class("hide")
+        await pilot.pause()
         await pilot.click("#close_screen")
         await pilot.click("#github_repo")
         await pilot.click("#exit")
