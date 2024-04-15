@@ -105,9 +105,9 @@ class PipelineCreate:
         self.default_branch = default_branch
         self.is_interactive = is_interactive
         self.force = self.config.force
-        if outdir is None:
-            outdir = os.path.join(os.getcwd(), self.jinja_params["name_noslash"])
-        self.outdir = Path(outdir)
+        if self.config.outdir is None:
+            self.config.outdir = os.getcwd()
+        self.outdir = Path(self.config.outdir, self.jinja_params["name_noslash"]).absolute()
 
     def check_template_yaml_info(self, template_yaml, name, description, author):
         """Ensure that the provided template yaml file contains the necessary information.
@@ -367,7 +367,7 @@ class PipelineCreate:
 
         if self.config:
             config_fn, config_yml = nf_core.utils.load_tools_config(self.outdir)
-            with open(self.outdir / config_fn, "w") as fh:
+            with open(config_fn, "w") as fh:
                 config_yml.update(template=self.config.model_dump())
                 yaml.safe_dump(config_yml, fh)
                 log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
