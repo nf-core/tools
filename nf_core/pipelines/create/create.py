@@ -107,7 +107,10 @@ class PipelineCreate:
         self.force = self.config.force
         if self.config.outdir is None:
             self.config.outdir = os.getcwd()
-        self.outdir = Path(self.config.outdir).absolute()
+        if self.config.outdir == ".":
+            self.outdir = Path(self.config.outdir, self.jinja_params["name_noslash"]).absolute()
+        else:
+            self.outdir = Path(self.config.outdir).absolute()
 
     def check_template_yaml_info(self, template_yaml, name, description, author):
         """Ensure that the provided template yaml file contains the necessary information.
