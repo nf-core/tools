@@ -88,10 +88,17 @@ class DownloadWorkflow:
 
     Args:
         pipeline (str): A nf-core pipeline name.
-        revision (List[str]): The workflow revision to download, like `1.0`. Defaults to None.
-        container (bool): Flag, if the Singularity container should be downloaded as well. Defaults to False.
-        platform (bool): Flag, to customize the download for Seqera Platform (convert to git bare repo). Defaults to False.
+        revision (List[str]): The workflow revision(s) to download, like `1.0` or `dev` . Defaults to None.
         outdir (str): Path to the local download directory. Defaults to None.
+        compress_type (str): Type of compression for the downloaded files. Defaults to None.
+        force (bool): Flag to force download even if files already exist (overwrite existing files). Defaults to False.
+        platform (bool): Flag to customize the download for Seqera Platform (convert to git bare repo). Defaults to False.
+        download_configuration (str): Download the configuration files from nf-core/configs. Defaults to None.
+        container_system (str): The container system to use (e.g., "singularity"). Defaults to None.
+        container_library (str): The container libraries (registries) to use. Defaults to None.
+        container_cache_utilisation (str): If a local or remote cache of already existing container images should be considered. Defaults to None.
+        container_cache_index (str): An index for the remote container cache. Defaults to None.
+        parallel_downloads (int): The number of parallel downloads to use. Defaults to 4.
     """
 
     def __init__(
