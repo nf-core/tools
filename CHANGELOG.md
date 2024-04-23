@@ -58,6 +58,7 @@
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.3.7 ([#2917](https://github.com/nf-core/tools/pull/2917))
 - Update gitpod/workspace-base Docker digest to 0af257e ([#2919](https://github.com/nf-core/tools/pull/2919))
 - Update GitHub Actions ([#2927](https://github.com/nf-core/tools/pull/2927))
+- Update gitpod/workspace-base Docker digest to 5aeb24f ([#2929](https://github.com/nf-core/tools/pull/2929))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
