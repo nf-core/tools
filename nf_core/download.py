@@ -94,8 +94,9 @@ class DownloadWorkflow:
         force (bool): Flag to force download even if files already exist (overwrite existing files). Defaults to False.
         platform (bool): Flag to customize the download for Seqera Platform (convert to git bare repo). Defaults to False.
         download_configuration (str): Download the configuration files from nf-core/configs. Defaults to None.
+        additional_tags (List[str]): Specify additional tags to add to the downloaded pipeline. Defaults to None.
         container_system (str): The container system to use (e.g., "singularity"). Defaults to None.
-        container_library (str): The container libraries (registries) to use. Defaults to None.
+        container_library (List[str]): The container libraries (registries) to use. Defaults to None.
         container_cache_utilisation (str): If a local or remote cache of already existing container images should be considered. Defaults to None.
         container_cache_index (str): An index for the remote container cache. Defaults to None.
         parallel_downloads (int): The number of parallel downloads to use. Defaults to 4.
@@ -110,6 +111,7 @@ class DownloadWorkflow:
         force=False,
         platform=False,
         download_configuration=None,
+        additional_tags=None,
         container_system=None,
         container_library=None,
         container_cache_utilisation=None,
@@ -132,6 +134,15 @@ class DownloadWorkflow:
         # this implies that non-interactive "no" choice is only possible implicitly (e.g. with --platform or if prompt is suppressed by !stderr.is_interactive).
         # only alternative would have been to make it a parameter with argument, e.g. -d="yes" or -d="no".
         self.include_configs = True if download_configuration else False if bool(platform) else None
+        # Additional tags to add to the downloaded pipeline. This enables to mark particular commits or revisions with
+        # additional tags, e.g. "stable", "testing", "validated", "production" etc. Since this requires a git-repo, it is only
+        # available for the bare / Seqera Platform download.
+        if isinstance(additional_tags, str) and bool(len(additional_tags)) and self.platform:
+            self.additional_tags = [additional_tags]
+        elif isinstance(additional_tags, tuple) and bool(len(additional_tags)) and self.platform:
+            self.additional_tags = [*additional_tags]
+        else:
+            self.additional_tags = None
         # Specifying a cache index or container library implies that containers should be downloaded.
         self.container_system = "singularity" if container_cache_index or bool(container_library) else container_system
         # Manually specified container library (registry)
@@ -289,6 +300,7 @@ class DownloadWorkflow:
             remote_url=f"https://github.com/{self.pipeline}.git",
             revision=self.revision if self.revision else None,
             commit=self.wf_sha.values() if bool(self.wf_sha) else None,
+            additional_tags=self.additional_tags if self.additional_tags else None,
             location=(location if location else None),  # manual location is required for the tests to work
             in_cache=False,
         )
@@ -1496,6 +1508,7 @@ class WorkflowRepo(SyncedRepo):
         remote_url,
         revision,
         commit,
+        additional_tags,
         location=None,
         hide_progress=False,
         in_cache=True,
@@ -1532,6 +1545,9 @@ class WorkflowRepo(SyncedRepo):
 
         # expose some instance attributes
         self.tags = self.repo.tags
+
+        # additional tags to be added to the repository
+        self.additional_tags = additional_tags
 
     def __repr__(self):
         """Called by print, creates representation of object"""
