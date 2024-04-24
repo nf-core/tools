@@ -13,6 +13,7 @@
 - Update python to 3.12 ([#2805](https://github.com/nf-core/tools/pull/2805))
 - Remove `pyproject.toml` from template root
 - Shorten lines in pipeline template ([#2908](https://github.com/nf-core/tools/pull/2908))
+- Add a new hidden `--test_data_base_path` parameter to more easily switch locations of test data in test configs (#2900)[]
 
 ### Linting
 
