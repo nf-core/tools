@@ -268,10 +268,10 @@
                     "hidden": true,
                     "help_text": "Allows string values that are parseable as numbers or booleans. For further information see [JSONSchema docs](https://github.com/everit-org/json-schema#lenient-mode)."
                 },
-                "test_data_base_path":{
+                "test_data_base_path": {
                     "type": "string",
                     "fa_icon": "far fa-check-circle",
-                    "description": "Base URL to location of pipeline test dataset files",
+                    "description": "Base URL or local path to location of pipeline test dataset files",
                     "hidden": true,
                 }
             }
