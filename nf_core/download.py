@@ -308,6 +308,8 @@ class DownloadWorkflow:
         # Remove tags for those revisions that had not been selected
         self.workflow_repo.tidy_tags_and_branches()
 
+        import pdb; pdb.set_trace()
+
         # create a bare clone of the modified repository needed for Seqera Platform
         self.workflow_repo.bare_clone(os.path.join(self.outdir, self.output_filename))
 
@@ -1543,15 +1545,20 @@ class WorkflowRepo(SyncedRepo):
 
         self.setup_local_repo(remote=remote_url, location=location, in_cache=in_cache)
 
-        # expose some instance attributes
-        self.tags = self.repo.tags
-
         # additional tags to be added to the repository
-        self.additional_tags = additional_tags
+        self.additional_tags = additional_tags if additional_tags else None
 
     def __repr__(self):
         """Called by print, creates representation of object"""
         return f"<Locally cached repository: {self.fullname}, revisions {', '.join(self.revision)}\n cached at: {self.local_repo_dir}>"
+
+    @property
+    def heads(self):
+        return self.repo.heads
+
+    @property
+    def tags(self):
+        return self.repo.tags
 
     def access(self):
         if os.path.exists(self.local_repo_dir):
@@ -1663,7 +1670,6 @@ class WorkflowRepo(SyncedRepo):
                 # delete unwanted tags from repository
                 for tag in tags_to_remove:
                     self.repo.delete_tag(tag)
-                self.tags = self.repo.tags
 
                 # switch to a revision that should be kept, because deleting heads fails, if they are checked out (e.g. "master")
                 self.checkout(self.revision[0])
@@ -1700,7 +1706,8 @@ class WorkflowRepo(SyncedRepo):
                     if self.repo.head.is_detached:
                         self.repo.head.reset(index=True, working_tree=True)
 
-                self.heads = self.repo.heads
+                # Apply the custom additional tags to the repository
+                self.__add_additional_tags()
 
                 # get all tags and available remote_branches
                 completed_revisions = {revision.name for revision in self.repo.heads + self.repo.tags}
@@ -1717,6 +1724,25 @@ class WorkflowRepo(SyncedRepo):
                 log.error(f"[red]Adapting your pipeline download unfortunately failed:[/]\n{e}\n")
                 self.retry_setup_local_repo(skip_confirm=True)
                 raise DownloadError(e) from e
+
+    # "Private" method to add the additional custom tags to the repository.
+    def __add_additional_tags(self) -> None:
+        if self.additional_tags:
+            for additional_tag in self.additional_tags:
+                # A valid git branch or tag name can contain alphanumeric characters, underscores, hyphens, and dots.
+                # But it must not start with a dot, hyphen or underscore and also cannot contain two consecutive dots.
+                if re.match(r"^\w[\w_.-]+={1}\w[\w_.-]+$",additional_tag) and '..' not in additional_tag:
+                    anchor, tag = additional_tag.split("=")
+                    if self.repo.is_valid_object(anchor) and not self.repo.is_valid_object(tag):
+                        try:
+                            self.repo.create_tag(tag,ref=anchor,message=f"Synonynmous tag to {anchor}; added by 'nf-core download'.")
+                            self.repo.create_head(tag,anchor)
+                        except (GitCommandError, InvalidGitRepositoryError) as e:
+                            log.error(f"[red]Additional tag(s) could not be applied:[/]\n{e}\n")
+                    else:
+                        log.error(f"[red]Adding the additional tag '{tag}' to '{anchor}' failed.[/]\n Mind that '{anchor}' must be a valid git reference that resolves to a commit, while '{tag}' must not exist hitherto.")
+                else:
+                    log.error(f"[red]Could not apply invalid '-a' / '--additional-tag' specification[/]: '{additional_tag}'")
 
     def bare_clone(self, destination):
         if self.repo:
