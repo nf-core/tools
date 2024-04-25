@@ -308,8 +308,6 @@ class DownloadWorkflow:
         # Remove tags for those revisions that had not been selected
         self.workflow_repo.tidy_tags_and_branches()
 
-        import pdb; pdb.set_trace()
-
         # create a bare clone of the modified repository needed for Seqera Platform
         self.workflow_repo.bare_clone(os.path.join(self.outdir, self.output_filename))
 
@@ -1736,7 +1734,7 @@ class WorkflowRepo(SyncedRepo):
                     if self.repo.is_valid_object(anchor) and not self.repo.is_valid_object(tag):
                         try:
                             self.repo.create_tag(tag,ref=anchor,message=f"Synonynmous tag to {anchor}; added by 'nf-core download'.")
-                            self.repo.create_head(tag,anchor)
+                            self.repo.create_head(tag,anchor)  # should heads be created as well?
                         except (GitCommandError, InvalidGitRepositoryError) as e:
                             log.error(f"[red]Additional tag(s) could not be applied:[/]\n{e}\n")
                     else:
