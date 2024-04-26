@@ -1,5 +1,4 @@
-"""Tests for the download subcommand of nf-core tools
-"""
+"""Tests for the download subcommand of nf-core tools"""
 
 import os
 import re
@@ -564,16 +563,16 @@ class DownloadTest(unittest.TestCase):
         download_obj.download_workflow()
 
     #
-    # Test Download for Tower
+    # Test Download for Seqera Platform
     #
     @with_temporary_folder
     @mock.patch("nf_core.download.DownloadWorkflow.get_singularity_images")
-    def test_download_workflow_for_tower(self, tmp_dir, _):
+    def test_download_workflow_for_platform(self, tmp_dir, _):
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
             revision=("3.7", "3.9"),
             compress_type="none",
-            tower=True,
+            platform=True,
             container_system="singularity",
         )
 
@@ -593,7 +592,7 @@ class DownloadTest(unittest.TestCase):
 
         download_obj.get_revision_hash()
 
-        # download_obj.wf_download_url is not set for tower downloads, but the sha values are
+        # download_obj.wf_download_url is not set for Seqera Platform downloads, but the sha values are
         assert isinstance(download_obj.wf_sha, dict) and len(download_obj.wf_sha) == 2
         assert isinstance(download_obj.wf_download_url, dict) and len(download_obj.wf_download_url) == 0
 
@@ -601,7 +600,7 @@ class DownloadTest(unittest.TestCase):
         assert bool(re.search(r"nf-core-rnaseq_\d{4}-\d{2}-\d{1,2}_\d{1,2}-\d{1,2}", download_obj.outdir, re.S))
 
         download_obj.output_filename = f"{download_obj.outdir}.git"
-        download_obj.download_workflow_tower(location=tmp_dir)
+        download_obj.download_workflow_platform(location=tmp_dir)
 
         assert download_obj.workflow_repo
         assert isinstance(download_obj.workflow_repo, WorkflowRepo)
@@ -615,7 +614,7 @@ class DownloadTest(unittest.TestCase):
         # assert that the download has a "latest" branch.
         assert "latest" in all_heads
 
-        # download_obj.download_workflow_tower(location=tmp_dir) will run container image detection for all requested revisions
+        # download_obj.download_workflow_platform(location=tmp_dir) will run container image detection for all requested revisions
         assert isinstance(download_obj.containers, list) and len(download_obj.containers) == 33
         assert (
             "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0" in download_obj.containers
