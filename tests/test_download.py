@@ -21,22 +21,21 @@ from .utils import with_temporary_folder
 
 
 class DownloadTest(unittest.TestCase):
-
     @pytest.fixture(autouse=True)
     def use_caplog(self, caplog):
         self._caplog = caplog
 
     @property
-    def logged_levels(self) -> list[str]:
+    def logged_levels(self) -> list:
         return [record.levelname for record in self._caplog.records]
 
     @property
-    def logged_messages(self) -> list[str]:
+    def logged_messages(self) -> list:
         return [record.message for record in self._caplog.records]
 
     def __contains__(self, item: str) -> bool:
         """Allows to check for log messages easily using the in operator inside a test:
-            assert 'my log message' in self
+        assert 'my log message' in self
         """
         return any(record.message == item for record in self._caplog.records if self._caplog)
 
@@ -644,15 +643,13 @@ class DownloadTest(unittest.TestCase):
             in download_obj.containers
         )  # indirect definition via $container variable.
 
-
     #
     # Test adding custom tags to Seqera Platform download
     #
     @mock.patch("nf_core.download.DownloadWorkflow.get_singularity_images")
     @with_temporary_folder
-    def test_download_workflow_for_platform_with_custom_tags(self,_, tmp_dir):
+    def test_download_workflow_for_platform_with_custom_tags(self, _, tmp_dir):
         with self._caplog.at_level(logging.INFO):
-            from git.refs.head import Head
             from git.refs.tag import TagReference
 
             download_obj = DownloadWorkflow(
@@ -661,7 +658,13 @@ class DownloadTest(unittest.TestCase):
                 compress_type="none",
                 platform=True,
                 container_system=None,
-                additional_tags=("3.7=a.tad.outdated", "3.9=cool_revision", "3.9=invalid tag","3.14.0=not_included","What is this?"),
+                additional_tags=(
+                    "3.7=a.tad.outdated",
+                    "3.9=cool_revision",
+                    "3.9=invalid tag",
+                    "3.14.0=not_included",
+                    "What is this?",
+                ),
             )
 
             download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.
@@ -696,8 +699,14 @@ class DownloadTest(unittest.TestCase):
             workflow_repo_tags = {tag.name for tag in download_obj.workflow_repo.tags}
             assert len(workflow_repo_tags) == 4
             # the invalid/malformed additional_tags should not have been added.
-            assert all(tag in workflow_repo_tags for tag in {'3.7', 'a.tad.outdated', 'cool_revision', '3.9'})
-            assert not any(tag in workflow_repo_tags for tag in {'invalid tag','not_included','What is this?'})
+            assert all(tag in workflow_repo_tags for tag in {"3.7", "a.tad.outdated", "cool_revision", "3.9"})
+            assert not any(tag in workflow_repo_tags for tag in {"invalid tag", "not_included", "What is this?"})
 
-            assert all(log in self.logged_messages for log in {"[red]Could not apply invalid '-a' / '--additional-tag' specification[/]: '3.9=invalid tag'", "[red]Adding the additional tag 'not_included' to '3.14.0' failed.[/]\n Mind that '3.14.0' must be a valid git reference that resolves to a commit, while 'not_included' must not exist hitherto.", "[red]Could not apply invalid '-a' / '--additional-tag' specification[/]: 'What is this?'"})
-
+            assert all(
+                log in self.logged_messages
+                for log in {
+                    "[red]Could not apply invalid '-a' / '--additional-tag' specification[/]: '3.9=invalid tag'",
+                    "[red]Adding the additional tag 'not_included' to '3.14.0' failed.[/]\n Mind that '3.14.0' must be a valid git reference that resolves to a commit, while 'not_included' must not exist hitherto.",
+                    "[red]Could not apply invalid '-a' / '--additional-tag' specification[/]: 'What is this?'",
+                }
+            )

@@ -116,6 +116,10 @@ class SyncedRepo:
 
         self.remote_url = remote_url
 
+        self.repo = None
+        # ToDo: SyncedRepo doesn't have this method and both the ModulesRepo and
+        # the WorkflowRepo define their own including custom init methods. This needs
+        # fixing, but is beyond the scope of this PR.
         self.setup_local_repo(remote_url, branch, hide_progress)
 
         config_fn, repo_config = load_tools_config(self.local_repo_dir)
@@ -325,6 +329,18 @@ class SyncedRepo:
                 continue
         self.checkout_branch()
         return files_identical
+
+    def ensure_git_user_config(self, default_name: str, default_email: str) -> None:
+        with self.repo.config_reader() as git_config:
+            user_name = git_config.get_value("user", "name", default=None)
+            user_email = git_config.get_value("user", "email", default=None)
+
+        if not user_name or not user_email:
+            with self.repo.config_writer() as git_config:
+                if not user_name:
+                    git_config.set_value("user", "name", default_name)
+                if not user_email:
+                    git_config.set_value("user", "email", default_email)
 
     def get_component_git_log(self, component_name, component_type, depth=None):
         """

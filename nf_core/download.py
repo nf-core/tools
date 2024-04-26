@@ -1726,21 +1726,29 @@ class WorkflowRepo(SyncedRepo):
     # "Private" method to add the additional custom tags to the repository.
     def __add_additional_tags(self) -> None:
         if self.additional_tags:
+            self.ensure_git_user_config(f"nf-core download v{nf_core.__version__}", "core@nf-co.re")
+
             for additional_tag in self.additional_tags:
                 # A valid git branch or tag name can contain alphanumeric characters, underscores, hyphens, and dots.
                 # But it must not start with a dot, hyphen or underscore and also cannot contain two consecutive dots.
-                if re.match(r"^\w[\w_.-]+={1}\w[\w_.-]+$",additional_tag) and '..' not in additional_tag:
+                if re.match(r"^\w[\w_.-]+={1}\w[\w_.-]+$", additional_tag) and ".." not in additional_tag:
                     anchor, tag = additional_tag.split("=")
                     if self.repo.is_valid_object(anchor) and not self.repo.is_valid_object(tag):
                         try:
-                            self.repo.create_tag(tag,ref=anchor,message=f"Synonynmous tag to {anchor}; added by 'nf-core download'.")
-                            self.repo.create_head(tag,anchor)  # should heads be created as well?
+                            self.repo.create_tag(
+                                tag, ref=anchor, message=f"Synonynmous tag to {anchor}; added by 'nf-core download'."
+                            )
+                            self.repo.create_head(tag, anchor)  # should heads be created as well?
                         except (GitCommandError, InvalidGitRepositoryError) as e:
                             log.error(f"[red]Additional tag(s) could not be applied:[/]\n{e}\n")
                     else:
-                        log.error(f"[red]Adding the additional tag '{tag}' to '{anchor}' failed.[/]\n Mind that '{anchor}' must be a valid git reference that resolves to a commit, while '{tag}' must not exist hitherto.")
+                        log.error(
+                            f"[red]Adding the additional tag '{tag}' to '{anchor}' failed.[/]\n Mind that '{anchor}' must be a valid git reference that resolves to a commit, while '{tag}' must not exist hitherto."
+                        )
                 else:
-                    log.error(f"[red]Could not apply invalid '-a' / '--additional-tag' specification[/]: '{additional_tag}'")
+                    log.error(
+                        f"[red]Could not apply invalid '-a' / '--additional-tag' specification[/]: '{additional_tag}'"
+                    )
 
     def bare_clone(self, destination):
         if self.repo:
