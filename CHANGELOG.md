@@ -13,7 +13,7 @@
 - Update python to 3.12 ([#2805](https://github.com/nf-core/tools/pull/2805))
 - Remove `pyproject.toml` from template root
 - Shorten lines in pipeline template ([#2908](https://github.com/nf-core/tools/pull/2908))
-- Permanently activated pipeline-specific institutional configs support for all pipelines without need  for manual intervention ([#2936](https://github.com/nf-core/tools/pull/2936))
+- Permanently activated pipeline-specific institutional configs support for all pipelines without need for manual intervention ([#2936](https://github.com/nf-core/tools/pull/2936))
 
 ### Linting
 
