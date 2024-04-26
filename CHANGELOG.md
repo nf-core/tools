@@ -46,6 +46,7 @@
 - fix: ensure path object converted to string before stripping quotes ([#2878](https://github.com/nf-core/tools/pull/2878))
 - Fix incorrect assertions for called_with on mocks ([#2891](https://github.com/nf-core/tools/pull/2891))
 - Make cli-provided module/subworkflow names case insensitive ([#2869](https://github.com/nf-core/tools/pull/2869))
+- Add plugin entrypoints for toolong ([#2895](https://github.com/nf-core/tools/pull/2895))
 - Update gitpod/workspace-base Docker digest to 168d78b ([#2899](https://github.com/nf-core/tools/pull/2899))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.4 ([#2894](https://github.com/nf-core/tools/pull/2894))
 - Update GitHub Actions ([#2902](https://github.com/nf-core/tools/pull/2902))

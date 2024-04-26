@@ -34,6 +34,9 @@ setup(
     entry_points={
         "console_scripts": ["nf-core=nf_core.__main__:run_nf_core"],
         "refgenie.hooks.post_update": ["nf-core-refgenie=nf_core.refgenie:update_config"],
+        "toolong.application.format_parsers": [
+            "nextflow_format_parser = nf_core.toolong_formatter:nextflow_format_parser",
+        ],
     },
     python_requires=">=3.8, <4",
     install_requires=required,

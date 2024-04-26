@@ -3,6 +3,7 @@
 
 import logging
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -36,6 +37,7 @@ click.rich_click.COMMAND_GROUPS = {
             "commands": [
                 "list",
                 "launch",
+                "log",
                 "create-params-file",
                 "download",
                 "licences",
@@ -309,6 +311,34 @@ def launch(
     )
     if not launcher.launch_pipeline():
         sys.exit(1)
+
+
+# nf-core log
+@nf_core_cli.command("log")
+@click.argument("filenames", required=False, nargs=-1, metavar="<filenames>")
+def view_logs(filenames):
+    """
+    Render .nextflow.log files nicely.
+
+    Uses [link=https://github.com/textualize/toolong/]Toolong[/] with the included nf-core extension.
+    Shows files globbed with `.nextflow.log*` by default, or supplied filenames.
+    """
+    filenames = list(filenames)
+    if len(filenames) == 0:
+        p = Path(".")
+        p.glob(".nextflow.log*")
+        filenames = [str(f) for f in p.glob(".nextflow.log*")]
+
+    if len(filenames) == 0:
+        log.error("No .nextflow.log files found.")
+        sys.exit(1)
+
+    filenames.sort()
+    log.info(f"Launching log viewer for: [green]{", ".join(filenames)}")
+    log.info(
+        "This uses the [link=https://github.com/textualize/toolong/]Toolong[/] log viewer - you can view any file with it using the `[magenta]tl[/]` command!"
+    )
+    subprocess.run(["tl", *filenames])
 
 
 # nf-core create-params-file
