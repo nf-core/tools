@@ -56,6 +56,7 @@ def with_temporary_file(func: Callable[..., Any]) -> Callable[..., Any]:
 
     return wrapper
 
+
 def mock_anaconda_api_calls(rsps: responses.RequestsMock, module: str, version: str) -> None:
     """Mock anaconda api calls for module"""
     anaconda_api_url = f"https://api.anaconda.org/package/bioconda/{module}"
