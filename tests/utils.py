@@ -1,7 +1,7 @@
 """
 Helper functions for tests
 """
-from logging import getLogger, Logger, LogRecord, Handler
+
 import functools
 import os
 import tempfile
@@ -53,57 +53,6 @@ def with_temporary_file(func: Callable[..., Any]) -> Callable[..., Any]:
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         with tempfile.NamedTemporaryFile() as tmpfile:
             return func(*args, tmpfile, **kwargs)
-
-    return wrapper
-
-class FirstHandlerProxy:
-    """
-    A proxy so the in operator can be used directly on the logger for convenience in asserting the test log messages.
-    """
-    def __init__(self, logger: Logger) -> None:
-        self.logger = logger
-
-    def __contains__(self, message: str) -> bool:
-        return message in self.logger.handlers[0]
-
-    def get_log_messages(self) -> list[str]:
-        return self.logger.handlers[0].log_messages
-
-class LogToList(Handler):
-    """
-    A logging handler that appends log messages to a list for simple log message capturing.
-    """
-    def __init__(self) -> None:
-        super().__init__()
-        self.log_messages = []
-
-    def __repr__(self) -> str:
-        return str(self.log_messages)
-
-    # enable using the in operator directly on the handler
-    def __contains__(self, message: str) -> bool:
-        return message in self.log_messages
-
-    def emit(self, record: LogRecord) -> None:
-        self.log_messages.append(self.format(record))
-
-def with_logger(func: Callable[..., Any]) -> Callable[..., Any]:
-    """
-    Captures the log messages from a decorated test into a dictionary.
-    Pass the logger to the decorated function and assert with the _in_ operator.
-
-    assert 'This is a log message' in test_logger
-    """
-
-    @functools.wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        logger = getLogger(func.__name__)
-        list_handler = LogToList()
-        logger.addHandler(list_handler)
-        try:
-            return func(*args, FirstHandlerProxy(logger), **kwargs)
-        finally:
-            logger.removeHandler(list_handler)
 
     return wrapper
 

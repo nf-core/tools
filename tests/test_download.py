@@ -1,5 +1,6 @@
 """Tests for the download subcommand of nf-core tools"""
 
+import logging
 import os
 import re
 import shutil
@@ -16,10 +17,29 @@ from nf_core.download import ContainerError, DownloadWorkflow, WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import run_cmd
 
-from .utils import with_logger, with_temporary_folder
+from .utils import with_temporary_folder
 
 
 class DownloadTest(unittest.TestCase):
+
+    @pytest.fixture(autouse=True)
+    def use_caplog(self, caplog):
+        self._caplog = caplog
+
+    @property
+    def logged_levels(self) -> list[str]:
+        return [record.levelname for record in self._caplog.records]
+
+    @property
+    def logged_messages(self) -> list[str]:
+        return [record.message for record in self._caplog.records]
+
+    def __contains__(self, item: str) -> bool:
+        """Allows to check for log messages easily using the in operator inside a test:
+            assert 'my log message' in self
+        """
+        return any(record.message == item for record in self._caplog.records if self._caplog)
+
     #
     # Tests for 'get_release_hash'
     #
@@ -628,57 +648,56 @@ class DownloadTest(unittest.TestCase):
     #
     # Test adding custom tags to Seqera Platform download
     #
-    @with_temporary_folder
     @mock.patch("nf_core.download.DownloadWorkflow.get_singularity_images")
-    @with_logger
-    def test_download_workflow_for_platform_with_custom_tags(self, tmp_dir, _, logger):
+    @with_temporary_folder
+    def test_download_workflow_for_platform_with_custom_tags(self,_, tmp_dir):
+        with self._caplog.at_level(logging.INFO):
+            from git.refs.head import Head
+            from git.refs.tag import TagReference
 
-        from git.refs.head import Head
-        from git.refs.tag import TagReference
+            download_obj = DownloadWorkflow(
+                pipeline="nf-core/rnaseq",
+                revision=("3.7", "3.9"),
+                compress_type="none",
+                platform=True,
+                container_system=None,
+                additional_tags=("3.7=a.tad.outdated", "3.9=cool_revision", "3.9=invalid tag","3.14.0=not_included","What is this?"),
+            )
 
-        download_obj = DownloadWorkflow(
-            pipeline="nf-core/rnaseq",
-            revision=("3.7", "3.9"),
-            compress_type="none",
-            platform=True,
-            container_system=None,
-            additional_tags=("3.7=a.tad.outdated", "3.9=cool_revision", "3.9=invalid tag","3.14.0=not_included","What is this?"),
-        )
+            download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.
 
-        download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.
+            assert isinstance(download_obj.revision, list) and len(download_obj.revision) == 2
+            assert isinstance(download_obj.wf_sha, dict) and len(download_obj.wf_sha) == 0
+            assert isinstance(download_obj.wf_download_url, dict) and len(download_obj.wf_download_url) == 0
+            assert isinstance(download_obj.additional_tags, list) and len(download_obj.additional_tags) == 5
 
-        assert isinstance(download_obj.revision, list) and len(download_obj.revision) == 2
-        assert isinstance(download_obj.wf_sha, dict) and len(download_obj.wf_sha) == 0
-        assert isinstance(download_obj.wf_download_url, dict) and len(download_obj.wf_download_url) == 0
-        assert isinstance(download_obj.additional_tags, list) and len(download_obj.additional_tags) == 5
+            wfs = nf_core.list.Workflows()
+            wfs.get_remote_workflows()
+            (
+                download_obj.pipeline,
+                download_obj.wf_revisions,
+                download_obj.wf_branches,
+            ) = nf_core.utils.get_repo_releases_branches(download_obj.pipeline, wfs)
 
-        wfs = nf_core.list.Workflows()
-        wfs.get_remote_workflows()
-        (
-            download_obj.pipeline,
-            download_obj.wf_revisions,
-            download_obj.wf_branches,
-        ) = nf_core.utils.get_repo_releases_branches(download_obj.pipeline, wfs)
+            download_obj.get_revision_hash()
+            download_obj.output_filename = f"{download_obj.outdir}.git"
+            download_obj.download_workflow_platform(location=tmp_dir)
 
-        download_obj.get_revision_hash()
-        download_obj.output_filename = f"{download_obj.outdir}.git"
-        download_obj.download_workflow_platform(location=tmp_dir)
+            assert download_obj.workflow_repo
+            assert isinstance(download_obj.workflow_repo, WorkflowRepo)
+            assert issubclass(type(download_obj.workflow_repo), SyncedRepo)
 
-        assert download_obj.workflow_repo
-        assert isinstance(download_obj.workflow_repo, WorkflowRepo)
-        assert issubclass(type(download_obj.workflow_repo), SyncedRepo)
+            # assert that every additional tag has been passed on to the WorkflowRepo instance
+            assert download_obj.additional_tags == download_obj.workflow_repo.additional_tags
 
-        # assert that every additional tag has been passed on to the WorkflowRepo instance
-        assert download_obj.additional_tags == download_obj.workflow_repo.additional_tags
+            # assert that the additional tags are all TagReference objects
+            assert all(isinstance(tag, TagReference) for tag in download_obj.workflow_repo.tags)
 
-        # assert that the additional tags are all TagReference objects
-        assert all(isinstance(tag, TagReference) for tag in download_obj.workflow_repo.tags)
+            workflow_repo_tags = {tag.name for tag in download_obj.workflow_repo.tags}
+            assert len(workflow_repo_tags) == 4
+            # the invalid/malformed additional_tags should not have been added.
+            assert all(tag in workflow_repo_tags for tag in {'3.7', 'a.tad.outdated', 'cool_revision', '3.9'})
+            assert not any(tag in workflow_repo_tags for tag in {'invalid tag','not_included','What is this?'})
 
-        workflow_repo_tags = {tag.name for tag in download_obj.workflow_repo.tags}
-        assert len(workflow_repo_tags) == 4
-        # the invalid/malformed additional_tags should not have been added.
-        assert all(tag in workflow_repo_tags for tag in {'3.7', 'a.tad.outdated', 'cool_revision', '3.9'})
-        assert not any(tag in workflow_repo_tags for tag in {'invalid tag','not_included','What is this?'})
-
-        import pdb; pdb.set_trace()
+            assert all(log in self.logged_messages for log in {"[red]Could not apply invalid '-a' / '--additional-tag' specification[/]: '3.9=invalid tag'", "[red]Adding the additional tag 'not_included' to '3.14.0' failed.[/]\n Mind that '3.14.0' must be a valid git reference that resolves to a commit, while 'not_included' must not exist hitherto.", "[red]Could not apply invalid '-a' / '--additional-tag' specification[/]: 'What is this?'"})
 
