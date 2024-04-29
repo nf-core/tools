@@ -2,6 +2,7 @@ import filecmp
 import logging
 import os
 import shutil
+from configparser import NoOptionError, NoSectionError
 from pathlib import Path
 from typing import Dict
 
@@ -331,9 +332,12 @@ class SyncedRepo:
         return files_identical
 
     def ensure_git_user_config(self, default_name: str, default_email: str) -> None:
-        with self.repo.config_reader() as git_config:
-            user_name = git_config.get_value("user", "name", default=None)
-            user_email = git_config.get_value("user", "email", default=None)
+        try:
+            with self.repo.config_reader() as git_config:
+                user_name = git_config.get_value("user", "name", default=None)
+                user_email = git_config.get_value("user", "email", default=None)
+        except (NoOptionError, NoSectionError):
+            user_name = user_email = None
 
         if not user_name or not user_email:
             with self.repo.config_writer() as git_config:

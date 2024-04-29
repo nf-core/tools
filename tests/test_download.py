@@ -7,6 +7,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from typing import List
 from unittest import mock
 
 import pytest
@@ -26,11 +27,11 @@ class DownloadTest(unittest.TestCase):
         self._caplog = caplog
 
     @property
-    def logged_levels(self) -> list:
+    def logged_levels(self) -> List[str]:
         return [record.levelname for record in self._caplog.records]
 
     @property
-    def logged_messages(self) -> list:
+    def logged_messages(self) -> List[str]:
         return [record.message for record in self._caplog.records]
 
     def __contains__(self, item: str) -> bool:
@@ -689,6 +690,7 @@ class DownloadTest(unittest.TestCase):
             assert download_obj.workflow_repo
             assert isinstance(download_obj.workflow_repo, WorkflowRepo)
             assert issubclass(type(download_obj.workflow_repo), SyncedRepo)
+            assert "Locally cached repository: nf-core/rnaseq, revisions 3.7, 3.9" in repr(download_obj.workflow_repo)
 
             # assert that every additional tag has been passed on to the WorkflowRepo instance
             assert download_obj.additional_tags == download_obj.workflow_repo.additional_tags
@@ -710,3 +712,19 @@ class DownloadTest(unittest.TestCase):
                     "[red]Could not apply invalid '-a' / '--additional-tag' specification[/]: 'What is this?'",
                 }
             )
+
+    #
+    # Test adding a single custom tags to Seqera Platform download so CodeCov is happy.
+    #
+    @mock.patch("nf_core.download.DownloadWorkflow.get_singularity_images")
+    @with_temporary_folder
+    def test_download_workflow_for_platform_with_one_custom_tag(self, _, tmp_dir):
+        download_obj = DownloadWorkflow(
+            pipeline="nf-core/rnaseq",
+            revision=("3.9"),
+            compress_type="none",
+            platform=True,
+            container_system=None,
+            additional_tags=("3.9=cool_revision",),
+        )
+        assert isinstance(download_obj.additional_tags, list) and len(download_obj.additional_tags) == 1
