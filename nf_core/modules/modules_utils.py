@@ -20,22 +20,20 @@ def repo_full_name_from_remote(remote_url: str) -> str:
     Extracts the path from the remote URL
     See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
     """
-    # Check whether we have a https or ssh url
-    if remote_url.startswith("https"):
-        path = urlparse(remote_url).path
-        # Remove the intial '/'
-        path = path[1:]
-        # Remove extension
-        path = os.path.splitext(path)[0]
-    else:
-        # Remove the initial `git@``
-        split_path: list = remote_url.split("@")
-        path = split_path[-1] if len(split_path) > 1 else split_path[0]
-        path = urlparse(path).path
-        # Remove extension
-        path = os.path.splitext(path)[0]
-    return path
 
+    if remote_url.startswith(("https://", "http://", "ftps://", "ftp://", "ssh://")):
+        # Parse URL and remove the initial '/'
+        path = urlparse(remote_url).path.lstrip('/') 
+    elif 'git@' in remote_url:
+        # Extract the part after 'git@' and parse it
+        path = urlparse(remote_url.split('git@')[-1]).path
+    else:
+        path = urlparse(remote_url).path
+
+    # Remove the file extension from the path
+    path, _ = os.path.splitext(path)
+
+    return path
 
 def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], List[NFCoreComponent]]:
     """
