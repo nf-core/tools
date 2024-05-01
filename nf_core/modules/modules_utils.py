@@ -23,10 +23,10 @@ def repo_full_name_from_remote(remote_url: str) -> str:
 
     if remote_url.startswith(("https://", "http://", "ftps://", "ftp://", "ssh://")):
         # Parse URL and remove the initial '/'
-        path = urlparse(remote_url).path.lstrip('/') 
-    elif 'git@' in remote_url:
+        path = urlparse(remote_url).path.lstrip("/")
+    elif "git@" in remote_url:
         # Extract the part after 'git@' and parse it
-        path = urlparse(remote_url.split('git@')[-1]).path
+        path = urlparse(remote_url.split("git@")[-1]).path
     else:
         path = urlparse(remote_url).path
 
@@ -34,6 +34,7 @@ def repo_full_name_from_remote(remote_url: str) -> str:
     path, _ = os.path.splitext(path)
 
     return path
+
 
 def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], List[NFCoreComponent]]:
     """
