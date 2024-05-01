@@ -2,6 +2,8 @@
 
 ## v2.13.2dev
 
+- Handle more complete list of possible git URL forms (ssh:// and ftp:// prefixes specifically)
+
 ### Template
 
 - Remove fasta default from nextflow.config ([#2828](https://github.com/nf-core/tools/pull/2828))
