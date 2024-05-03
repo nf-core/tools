@@ -14,6 +14,7 @@
 - Remove `pyproject.toml` from template root
 - Shorten lines in pipeline template ([#2908](https://github.com/nf-core/tools/pull/2908))
 - Permanently activated pipeline-specific institutional configs support for all pipelines without need for manual intervention ([#2936](https://github.com/nf-core/tools/pull/2936))
+- Update included components ([#2949](https://github.com/nf-core/tools/pull/2949))
 
 ### Linting
 
