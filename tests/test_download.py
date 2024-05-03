@@ -645,7 +645,23 @@ class DownloadTest(unittest.TestCase):
         )  # indirect definition via $container variable.
 
     #
-    # Test adding custom tags to Seqera Platform download
+    # Brief test adding a single custom tag to Seqera Platform download
+    #
+    @mock.patch("nf_core.download.DownloadWorkflow.get_singularity_images")
+    @with_temporary_folder
+    def test_download_workflow_for_platform_with_one_custom_tag(self, _, tmp_dir):
+        download_obj = DownloadWorkflow(
+            pipeline="nf-core/rnaseq",
+            revision=("3.9"),
+            compress_type="none",
+            platform=True,
+            container_system=None,
+            additional_tags=("3.9=cool_revision",),
+        )
+        assert isinstance(download_obj.additional_tags, list) and len(download_obj.additional_tags) == 1
+
+    #
+    # Test adding custom tags to Seqera Platform download (full test)
     #
     @mock.patch("nf_core.download.DownloadWorkflow.get_singularity_images")
     @with_temporary_folder
@@ -707,21 +723,8 @@ class DownloadTest(unittest.TestCase):
             assert all(
                 log in self.logged_messages
                 for log in {
-                    "[red]Could not apply invalid '-a' / '--additional-tag' specification[/]: '3.9=invalid tag'",
-                    "[red]Adding the additional tag 'not_included' to '3.14.0' failed.[/]\n Mind that '3.14.0' must be a valid git reference that resolves to a commit, while 'not_included' must not exist hitherto.",
-                    "[red]Could not apply invalid '-a' / '--additional-tag' specification[/]: 'What is this?'",
+                    "[red]Could not apply invalid `--tag` specification[/]: '3.9=invalid tag'",
+                    "[red]Adding tag 'not_included' to '3.14.0' failed.[/]\n Mind that '3.14.0' must be a valid git reference that resolves to a commit.",
+                    "[red]Could not apply invalid `--tag` specification[/]: 'What is this?'",
                 }
             )
-
-    @mock.patch("nf_core.download.DownloadWorkflow.get_singularity_images")
-    @with_temporary_folder
-    def test_download_workflow_for_platform_with_one_custom_tag(self, _, tmp_dir):
-        download_obj = DownloadWorkflow(
-            pipeline="nf-core/rnaseq",
-            revision=("3.9"),
-            compress_type="none",
-            platform=True,
-            container_system=None,
-            additional_tags=("3.9=cool_revision",),
-        )
-        assert isinstance(download_obj.additional_tags, list) and len(download_obj.additional_tags) == 1

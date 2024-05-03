@@ -27,7 +27,7 @@
 
 - Replace `--tower` with `--platform`. The former will remain for backwards compatability for now but will be removed in a future release. ([#2853](https://github.com/nf-core/tools/pull/2853))
 - Better error message when GITHUB_TOKEN exists but is wrong/outdated
-- New `-a` / `--additional-tag` argument to add custom tags during a pipeline download ([#2938](https://github.com/nf-core/tools/pull/2938))
+- New `--tag` argument to add custom tags during a pipeline download ([#2938](https://github.com/nf-core/tools/pull/2938))
 
 ### Components
 

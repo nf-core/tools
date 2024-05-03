@@ -368,6 +368,7 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 # TODO: Remove this in a future release. Deprecated in March 2024.
 @click.option(
+    "-t",
     "--tower",
     is_flag=True,
     default=False,
@@ -375,7 +376,6 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     help="Download for Seqera Platform. DEPRECATED: Please use `--platform` instead.",
 )
 @click.option(
-    "-t",
     "--platform",
     is_flag=True,
     default=False,
@@ -389,10 +389,9 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     help="Include configuration profiles in download. Not available with `--platform`",
 )
 @click.option(
-    "-a",
-    "--additional-tags",
+    "--tag",
     multiple=True,
-    help="Add custom alias tags to `--platform` downloads. For example, '-a \"3.10=validated\"' adds the custom 'validated' tag to the 3.10 release.",
+    help="Add custom alias tags to `--platform` downloads. For example, `--tag \"3.10=validated\"` adds the custom 'validated' tag to the 3.10 release.",
 )
 # -c changed to -s for consistency with other --container arguments, where it is always the first letter of the last word.
 # Also -c might be used instead of -d for config in a later release, but reusing params for different options in two subsequent releases might be too error-prone.
@@ -436,7 +435,7 @@ def download(
     tower,
     platform,
     download_configuration,
-    additional_tags,
+    tag,
     container_system,
     container_library,
     container_cache_utilisation,
@@ -459,7 +458,7 @@ def download(
         force,
         tower or platform,  # True if either specified
         download_configuration,
-        additional_tags,
+        tag,
         container_system,
         container_library,
         container_cache_utilisation,

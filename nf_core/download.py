@@ -94,7 +94,7 @@ class DownloadWorkflow:
         force (bool): Flag to force download even if files already exist (overwrite existing files). Defaults to False.
         platform (bool): Flag to customize the download for Seqera Platform (convert to git bare repo). Defaults to False.
         download_configuration (str): Download the configuration files from nf-core/configs. Defaults to None.
-        additional_tags (List[str]): Specify additional tags to add to the downloaded pipeline. Defaults to None.
+        tag (List[str]): Specify additional tags to add to the downloaded pipeline. Defaults to None.
         container_system (str): The container system to use (e.g., "singularity"). Defaults to None.
         container_library (List[str]): The container libraries (registries) to use. Defaults to None.
         container_cache_utilisation (str): If a local or remote cache of already existing container images should be considered. Defaults to None.
@@ -1736,19 +1736,22 @@ class WorkflowRepo(SyncedRepo):
                     if self.repo.is_valid_object(anchor) and not self.repo.is_valid_object(tag):
                         try:
                             self.repo.create_tag(
-                                tag, ref=anchor, message=f"Synonynmous tag to {anchor}; added by 'nf-core download'."
+                                tag, ref=anchor, message=f"Synonynmous tag to {anchor}; added by `nf-core download`."
                             )
                             self.repo.create_head(tag, anchor)  # should heads be created as well?
                         except (GitCommandError, InvalidGitRepositoryError) as e:
                             log.error(f"[red]Additional tag(s) could not be applied:[/]\n{e}\n")
                     else:
-                        log.error(
-                            f"[red]Adding the additional tag '{tag}' to '{anchor}' failed.[/]\n Mind that '{anchor}' must be a valid git reference that resolves to a commit, while '{tag}' must not exist hitherto."
-                        )
+                        if not self.repo.is_valid_object(anchor):
+                            log.error(
+                                f"[red]Adding tag '{tag}' to '{anchor}' failed.[/]\n Mind that '{anchor}' must be a valid git reference that resolves to a commit."
+                            )
+                        if self.repo.is_valid_object(tag):
+                            log.error(
+                                f"[red]Adding tag '{tag}' to '{anchor}' failed.[/]\n Mind that '{tag}' must not exist hitherto."
+                            )
                 else:
-                    log.error(
-                        f"[red]Could not apply invalid '-a' / '--additional-tag' specification[/]: '{additional_tag}'"
-                    )
+                    log.error(f"[red]Could not apply invalid `--tag` specification[/]: '{additional_tag}'")
 
     def bare_clone(self, destination):
         if self.repo:
