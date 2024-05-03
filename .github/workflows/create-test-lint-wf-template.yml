@@ -61,7 +61,7 @@ jobs:
           cd create-lint-wf-template
           export NXF_WORK=$(pwd)
 
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
         name: Check out source-code repository
 
       - name: Set up Python 3.12
@@ -158,7 +158,7 @@ jobs:
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
         with:
           name: nf-core-log-file-${{ matrix.TEMPLATE }}
           path: create-test-lint-wf/artifact_files.tar

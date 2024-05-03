@@ -13,6 +13,7 @@
 - Update python to 3.12 ([#2805](https://github.com/nf-core/tools/pull/2805))
 - Remove `pyproject.toml` from template root
 - Shorten lines in pipeline template ([#2908](https://github.com/nf-core/tools/pull/2908))
+- Permanently activated pipeline-specific institutional configs support for all pipelines without need for manual intervention ([#2936](https://github.com/nf-core/tools/pull/2936))
 
 ### Linting
 
@@ -58,6 +59,12 @@
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.3.7 ([#2917](https://github.com/nf-core/tools/pull/2917))
 - Update gitpod/workspace-base Docker digest to 0af257e ([#2919](https://github.com/nf-core/tools/pull/2919))
 - update components to fix CI testing ([#2949](https://github.com/nf-core/tools/pull/2949))
+- Update GitHub Actions ([#2927](https://github.com/nf-core/tools/pull/2927))
+- Update gitpod/workspace-base Docker digest to 5aeb24f ([#2929](https://github.com/nf-core/tools/pull/2929))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.10.0 ([#2933](https://github.com/nf-core/tools/pull/2933))
+- Update GitHub Actions ([#2939](https://github.com/nf-core/tools/pull/2939))
+- Update codecov/codecov-action digest to 5ecb98a ([#2948](https://github.com/nf-core/tools/pull/2948))
+- Update gitpod/workspace-base Docker digest to 124f2b8 ([#2943](https://github.com/nf-core/tools/pull/2943))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
