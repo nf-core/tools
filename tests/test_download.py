@@ -713,9 +713,6 @@ class DownloadTest(unittest.TestCase):
                 }
             )
 
-    #
-    # Test adding a single custom tags to Seqera Platform download so CodeCov is happy.
-    #
     @mock.patch("nf_core.download.DownloadWorkflow.get_singularity_images")
     @with_temporary_folder
     def test_download_workflow_for_platform_with_one_custom_tag(self, _, tmp_dir):

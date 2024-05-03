@@ -300,7 +300,7 @@ class DownloadWorkflow:
             remote_url=f"https://github.com/{self.pipeline}.git",
             revision=self.revision if self.revision else None,
             commit=self.wf_sha.values() if bool(self.wf_sha) else None,
-            additional_tags=self.additional_tags if self.additional_tags else None,
+            additional_tags=self.additional_tags,
             location=(location if location else None),  # manual location is required for the tests to work
             in_cache=False,
         )

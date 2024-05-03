@@ -118,9 +118,9 @@ class SyncedRepo:
         self.remote_url = remote_url
 
         self.repo = None
-        # ToDo: SyncedRepo doesn't have this method and both the ModulesRepo and
+        # TODO: SyncedRepo doesn't have this method and both the ModulesRepo and
         # the WorkflowRepo define their own including custom init methods. This needs
-        # fixing, but is beyond the scope of this PR.
+        # fixing.
         self.setup_local_repo(remote_url, branch, hide_progress)
 
         config_fn, repo_config = load_tools_config(self.local_repo_dir)
