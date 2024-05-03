@@ -66,6 +66,7 @@
 - Update GitHub Actions ([#2939](https://github.com/nf-core/tools/pull/2939))
 - Update codecov/codecov-action digest to 5ecb98a ([#2948](https://github.com/nf-core/tools/pull/2948))
 - Update gitpod/workspace-base Docker digest to 124f2b8 ([#2943](https://github.com/nf-core/tools/pull/2943))
+- fix(collectfile): sort true for methods_description_mqc.yaml ([#2947](https://github.com/nf-core/tools/pull/2947))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
