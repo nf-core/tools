@@ -63,6 +63,7 @@
 - Update gitpod/workspace-base Docker digest to 5aeb24f ([#2929](https://github.com/nf-core/tools/pull/2929))
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.10.0 ([#2933](https://github.com/nf-core/tools/pull/2933))
 - Update GitHub Actions ([#2939](https://github.com/nf-core/tools/pull/2939))
+- Components: Handle extended set of git path prefixes ([#2945](https://github.com/nf-core/tools/pull/2945))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
