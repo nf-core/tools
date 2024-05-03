@@ -14,6 +14,7 @@
 - Remove `pyproject.toml` from template root
 - Shorten lines in pipeline template ([#2908](https://github.com/nf-core/tools/pull/2908))
 - Permanently activated pipeline-specific institutional configs support for all pipelines without need for manual intervention ([#2936](https://github.com/nf-core/tools/pull/2936))
+- Update included components ([#2949](https://github.com/nf-core/tools/pull/2949))
 
 ### Linting
 
@@ -64,7 +65,6 @@
 - Update GitHub Actions ([#2939](https://github.com/nf-core/tools/pull/2939))
 - Update codecov/codecov-action digest to 5ecb98a ([#2948](https://github.com/nf-core/tools/pull/2948))
 - Update gitpod/workspace-base Docker digest to 124f2b8 ([#2943](https://github.com/nf-core/tools/pull/2943))
-- Template: Update included components ([#2949](https://github.com/nf-core/tools/pull/2949))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
