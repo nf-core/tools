@@ -1726,7 +1726,11 @@ class WorkflowRepo(SyncedRepo):
     # "Private" method to add the additional custom tags to the repository.
     def __add_additional_tags(self) -> None:
         if self.additional_tags:
-            self.ensure_git_user_config(f"nf-core download v{nf_core.__version__}", "core@nf-co.re")
+            # example.com is reserved by the Internet Assigned Numbers Authority (IANA)  as special-use domain names for documentation purposes.
+            # Although "dev-null" is a syntactically-valid local-part that is equally valid for delivery,
+            # and only the receiving MTA can decide whether to accept it, it is to my best knowledge configured with
+            # a Postfix discard mail delivery agent (https://www.postfix.org/discard.8.html), so incoming mails should be sinkholed.
+            self.ensure_git_user_config(f"nf-core download v{nf_core.__version__}", "dev-null@example.com")
 
             for additional_tag in self.additional_tags:
                 # A valid git branch or tag name can contain alphanumeric characters, underscores, hyphens, and dots.
