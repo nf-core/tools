@@ -925,7 +925,7 @@ class DownloadWorkflow:
             if bool(container_definition) and bool(container_definition.group(1)):
                 pattern = re.escape(container_definition.group(1))
                 # extract the quoted string(s) following the variable assignment
-                container_names = re.findall(r"%s\s*=\s*[\"\']([^\"\']+)[\"\']" % pattern, search_space)
+                container_names = re.findall(rf"{pattern}\s*=\s*[\"\']([^\"\']+)[\"\']", search_space)
 
                 if bool(container_names):
                     if isinstance(container_names, str):
