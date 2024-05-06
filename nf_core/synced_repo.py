@@ -319,9 +319,9 @@ class SyncedRepo:
         component_dir = self.get_component_dir(component_name, component_type)
         for file in component_files:
             try:
-                files_identical[file] = filecmp.cmp(os.path.join(component_dir, file), os.path.join(base_path, file))
+                files_identical[file] = filecmp.cmp(Path(component_dir, file), Path(base_path, file))
             except FileNotFoundError:
-                log.debug(f"Could not open file: {os.path.join(component_dir, file)}")
+                log.debug(f"Could not open file: {Path(component_dir, file)}")
                 continue
         self.checkout_branch()
         return files_identical
