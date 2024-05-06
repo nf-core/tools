@@ -213,9 +213,10 @@ class ModuleLint(ComponentLint):
 
         # Otherwise run all the lint tests
         else:
-            # Set correct sha
-            version = self.modules_json.get_module_version(mod.component_name, mod.repo_url, mod.org)
-            mod.git_sha = version
+            if self.repo_type == "pipeline":
+                # Set correct sha
+                version = self.modules_json.get_module_version(mod.component_name, mod.repo_url, mod.org)
+                mod.git_sha = version
 
             for test_name in self.lint_tests:
                 if test_name == "main_nf":
