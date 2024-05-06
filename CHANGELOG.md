@@ -30,6 +30,8 @@
 
 ### Components
 
+- Handle more complete list of possible git URL forms (ssh:// and ftp:// prefixes specifically) ([#2945](https://github.com/nf-core/tools/pull/2945))
+
 ### General
 
 - Update CI to use nf-core/setup-nextflow v2
