@@ -17,6 +17,7 @@
 - Template config: `conda.channels`, not `channels` ([#2950](https://github.com/nf-core/tools/pull/2950))
 - Handles multiple DOIs + doi.org resolver from manifest.doi ([#2946](https://github.com/nf-core/tools/pull/2946))
 - Update included components ([#2949](https://github.com/nf-core/tools/pull/2949))
+- Template - Update .editorconfig ([#2953](https://github.com/nf-core/tools/pull/2953))
 
 ### Linting
 
