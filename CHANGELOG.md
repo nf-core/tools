@@ -2,8 +2,6 @@
 
 ## v2.13.2dev
 
-- Handle more complete list of possible git URL forms (ssh:// and ftp:// prefixes specifically)
-
 ### Template
 
 - Remove fasta default from nextflow.config ([#2828](https://github.com/nf-core/tools/pull/2828))
@@ -15,6 +13,10 @@
 - Update python to 3.12 ([#2805](https://github.com/nf-core/tools/pull/2805))
 - Remove `pyproject.toml` from template root
 - Shorten lines in pipeline template ([#2908](https://github.com/nf-core/tools/pull/2908))
+- Permanently activated pipeline-specific institutional configs support for all pipelines without need for manual intervention ([#2936](https://github.com/nf-core/tools/pull/2936))
+- Template config: `conda.channels`, not `channels` ([#2950](https://github.com/nf-core/tools/pull/2950))
+- Handles multiple DOIs + doi.org resolver from manifest.doi ([#2946](https://github.com/nf-core/tools/pull/2946))
+- Update included components ([#2949](https://github.com/nf-core/tools/pull/2949))
 
 ### Linting
 
@@ -27,6 +29,8 @@
 - Better error message when GITHUB_TOKEN exists but is wrong/outdated
 
 ### Components
+
+- Handle more complete list of possible git URL forms (ssh:// and ftp:// prefixes specifically) ([#2945](https://github.com/nf-core/tools/pull/2945))
 
 ### General
 
@@ -63,7 +67,9 @@
 - Update gitpod/workspace-base Docker digest to 5aeb24f ([#2929](https://github.com/nf-core/tools/pull/2929))
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.10.0 ([#2933](https://github.com/nf-core/tools/pull/2933))
 - Update GitHub Actions ([#2939](https://github.com/nf-core/tools/pull/2939))
-- Components: Handle extended set of git path prefixes ([#2945](https://github.com/nf-core/tools/pull/2945))
+- Update codecov/codecov-action digest to 5ecb98a ([#2948](https://github.com/nf-core/tools/pull/2948))
+- Update gitpod/workspace-base Docker digest to 124f2b8 ([#2943](https://github.com/nf-core/tools/pull/2943))
+- fix(collectfile): sort true for methods_description_mqc.yaml ([#2947](https://github.com/nf-core/tools/pull/2947))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
