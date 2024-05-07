@@ -450,6 +450,9 @@ def download(
     """
     from nf_core.download import DownloadWorkflow
 
+    if tower:
+        log.warning("[red]The `-t` / `--tower` flag is deprecated. Please use `--platform` instead.[/]")
+
     dl = DownloadWorkflow(
         pipeline,
         revision,
