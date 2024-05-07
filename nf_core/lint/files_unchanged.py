@@ -47,7 +47,6 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
 
         .gitignore
         .prettierignore
-        pyproject.toml
 
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
@@ -106,7 +105,7 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         [Path("docs", "README.md")],
     ]
     files_partial = [
-        [Path(".gitignore"), Path(".prettierignore"), Path("pyproject.toml")],
+        [Path(".gitignore"), Path(".prettierignore")],
     ]
 
     # Only show error messages from pipeline creation
@@ -161,10 +160,8 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
                     if filecmp.cmp(_pf(f), _tf(f), shallow=True):
                         passed.append(f"`{f}` matches the template")
                     else:
-                        if (
-                            f.name.endswith(".png")
-                            and os.stat(_pf(f)).st_mode == os.stat(_tf(f)).st_mode
-                            and int(os.stat(_pf(f)).st_size / 100) == int(os.stat(_tf(f)).st_size / 100)
+                        if f.name.endswith(".png") and int(os.stat(_pf(f)).st_size / 500) == int(
+                            os.stat(_tf(f)).st_size / 500
                         ):
                             # almost the same file, good enough for the logo
                             log.debug(f"Files are almost the same. Will pass: {f}")

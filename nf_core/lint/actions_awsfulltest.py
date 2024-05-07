@@ -17,7 +17,7 @@ def actions_awsfulltest(self):
     .. note::  You can manually trigger the AWS tests by going to the `Actions` tab on the pipeline GitHub repository and selecting the
                   `nf-core AWS full size tests` workflow on the left.
 
-    .. tip::  For tests on full data prior to release, `Nextflow Tower <https://tower.nf>`_ launch feature can be employed.
+    .. tip::  For tests on full data prior to release, `Seqera Platform <https://seqera.io/platform/>`_ launch feature can be employed.
 
     The ``.github/workflows/awsfulltest.yml`` file is tested for the following:
 
@@ -52,7 +52,7 @@ def actions_awsfulltest(self):
 
         # Warn if `-profile test` is still unchanged
         try:
-            steps = wf["jobs"]["run-tower"]["steps"]
+            steps = wf["jobs"]["run-platform"]["steps"]
             if not any(aws_profile in step["run"] for step in steps if "run" in step.keys()):
                 raise AssertionError()
         except (AssertionError, KeyError, TypeError):
