@@ -1742,7 +1742,6 @@ class WorkflowRepo(SyncedRepo):
                             self.repo.create_tag(
                                 tag, ref=anchor, message=f"Synonynmous tag to {anchor}; added by `nf-core download`."
                             )
-                            self.repo.create_head(tag, anchor)  # should heads be created as well?
                         except (GitCommandError, InvalidGitRepositoryError) as e:
                             log.error(f"[red]Additional tag(s) could not be applied:[/]\n{e}\n")
                     else:
