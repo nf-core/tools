@@ -88,10 +88,18 @@ class DownloadWorkflow:
 
     Args:
         pipeline (str): A nf-core pipeline name.
-        revision (List[str]): The workflow revision to download, like `1.0`. Defaults to None.
-        container (bool): Flag, if the Singularity container should be downloaded as well. Defaults to False.
-        platform (bool): Flag, to customize the download for Seqera Platform (convert to git bare repo). Defaults to False.
+        revision (List[str]): The workflow revision(s) to download, like `1.0` or `dev` . Defaults to None.
         outdir (str): Path to the local download directory. Defaults to None.
+        compress_type (str): Type of compression for the downloaded files. Defaults to None.
+        force (bool): Flag to force download even if files already exist (overwrite existing files). Defaults to False.
+        platform (bool): Flag to customize the download for Seqera Platform (convert to git bare repo). Defaults to False.
+        download_configuration (str): Download the configuration files from nf-core/configs. Defaults to None.
+        tag (List[str]): Specify additional tags to add to the downloaded pipeline. Defaults to None.
+        container_system (str): The container system to use (e.g., "singularity"). Defaults to None.
+        container_library (List[str]): The container libraries (registries) to use. Defaults to None.
+        container_cache_utilisation (str): If a local or remote cache of already existing container images should be considered. Defaults to None.
+        container_cache_index (str): An index for the remote container cache. Defaults to None.
+        parallel_downloads (int): The number of parallel downloads to use. Defaults to 4.
     """
 
     def __init__(
@@ -103,6 +111,7 @@ class DownloadWorkflow:
         force=False,
         platform=False,
         download_configuration=None,
+        additional_tags=None,
         container_system=None,
         container_library=None,
         container_cache_utilisation=None,
@@ -125,6 +134,15 @@ class DownloadWorkflow:
         # this implies that non-interactive "no" choice is only possible implicitly (e.g. with --platform or if prompt is suppressed by !stderr.is_interactive).
         # only alternative would have been to make it a parameter with argument, e.g. -d="yes" or -d="no".
         self.include_configs = True if download_configuration else False if bool(platform) else None
+        # Additional tags to add to the downloaded pipeline. This enables to mark particular commits or revisions with
+        # additional tags, e.g. "stable", "testing", "validated", "production" etc. Since this requires a git-repo, it is only
+        # available for the bare / Seqera Platform download.
+        if isinstance(additional_tags, str) and bool(len(additional_tags)) and self.platform:
+            self.additional_tags = [additional_tags]
+        elif isinstance(additional_tags, tuple) and bool(len(additional_tags)) and self.platform:
+            self.additional_tags = [*additional_tags]
+        else:
+            self.additional_tags = None
         # Specifying a cache index or container library implies that containers should be downloaded.
         self.container_system = "singularity" if container_cache_index or bool(container_library) else container_system
         # Manually specified container library (registry)
@@ -282,6 +300,7 @@ class DownloadWorkflow:
             remote_url=f"https://github.com/{self.pipeline}.git",
             revision=self.revision if self.revision else None,
             commit=self.wf_sha.values() if bool(self.wf_sha) else None,
+            additional_tags=self.additional_tags,
             location=(location if location else None),  # manual location is required for the tests to work
             in_cache=False,
         )
@@ -1489,6 +1508,7 @@ class WorkflowRepo(SyncedRepo):
         remote_url,
         revision,
         commit,
+        additional_tags,
         location=None,
         hide_progress=False,
         in_cache=True,
@@ -1523,12 +1543,20 @@ class WorkflowRepo(SyncedRepo):
 
         self.setup_local_repo(remote=remote_url, location=location, in_cache=in_cache)
 
-        # expose some instance attributes
-        self.tags = self.repo.tags
+        # additional tags to be added to the repository
+        self.additional_tags = additional_tags if additional_tags else None
 
     def __repr__(self):
         """Called by print, creates representation of object"""
         return f"<Locally cached repository: {self.fullname}, revisions {', '.join(self.revision)}\n cached at: {self.local_repo_dir}>"
+
+    @property
+    def heads(self):
+        return self.repo.heads
+
+    @property
+    def tags(self):
+        return self.repo.tags
 
     def access(self):
         if os.path.exists(self.local_repo_dir):
@@ -1640,7 +1668,6 @@ class WorkflowRepo(SyncedRepo):
                 # delete unwanted tags from repository
                 for tag in tags_to_remove:
                     self.repo.delete_tag(tag)
-                self.tags = self.repo.tags
 
                 # switch to a revision that should be kept, because deleting heads fails, if they are checked out (e.g. "master")
                 self.checkout(self.revision[0])
@@ -1677,7 +1704,8 @@ class WorkflowRepo(SyncedRepo):
                     if self.repo.head.is_detached:
                         self.repo.head.reset(index=True, working_tree=True)
 
-                self.heads = self.repo.heads
+                # Apply the custom additional tags to the repository
+                self.__add_additional_tags()
 
                 # get all tags and available remote_branches
                 completed_revisions = {revision.name for revision in self.repo.heads + self.repo.tags}
@@ -1694,6 +1722,39 @@ class WorkflowRepo(SyncedRepo):
                 log.error(f"[red]Adapting your pipeline download unfortunately failed:[/]\n{e}\n")
                 self.retry_setup_local_repo(skip_confirm=True)
                 raise DownloadError(e) from e
+
+    # "Private" method to add the additional custom tags to the repository.
+    def __add_additional_tags(self) -> None:
+        if self.additional_tags:
+            # example.com is reserved by the Internet Assigned Numbers Authority (IANA)  as special-use domain names for documentation purposes.
+            # Although "dev-null" is a syntactically-valid local-part that is equally valid for delivery,
+            # and only the receiving MTA can decide whether to accept it, it is to my best knowledge configured with
+            # a Postfix discard mail delivery agent (https://www.postfix.org/discard.8.html), so incoming mails should be sinkholed.
+            self.ensure_git_user_config(f"nf-core download v{nf_core.__version__}", "dev-null@example.com")
+
+            for additional_tag in self.additional_tags:
+                # A valid git branch or tag name can contain alphanumeric characters, underscores, hyphens, and dots.
+                # But it must not start with a dot, hyphen or underscore and also cannot contain two consecutive dots.
+                if re.match(r"^\w[\w_.-]+={1}\w[\w_.-]+$", additional_tag) and ".." not in additional_tag:
+                    anchor, tag = additional_tag.split("=")
+                    if self.repo.is_valid_object(anchor) and not self.repo.is_valid_object(tag):
+                        try:
+                            self.repo.create_tag(
+                                tag, ref=anchor, message=f"Synonynmous tag to {anchor}; added by `nf-core download`."
+                            )
+                        except (GitCommandError, InvalidGitRepositoryError) as e:
+                            log.error(f"[red]Additional tag(s) could not be applied:[/]\n{e}\n")
+                    else:
+                        if not self.repo.is_valid_object(anchor):
+                            log.error(
+                                f"[red]Adding tag '{tag}' to '{anchor}' failed.[/]\n Mind that '{anchor}' must be a valid git reference that resolves to a commit."
+                            )
+                        if self.repo.is_valid_object(tag):
+                            log.error(
+                                f"[red]Adding tag '{tag}' to '{anchor}' failed.[/]\n Mind that '{tag}' must not exist hitherto."
+                            )
+                else:
+                    log.error(f"[red]Could not apply invalid `--tag` specification[/]: '{additional_tag}'")
 
     def bare_clone(self, destination):
         if self.repo:
