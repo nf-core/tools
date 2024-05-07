@@ -24,6 +24,7 @@
 - Only match assignments of params in `main.nf` and not references like `params.aligner == <something>` ([#2833](https://github.com/nf-core/tools/pull/2833))
 - Include test for presence of versions in snapshot ([#2888](https://github.com/nf-core/tools/pull/2888))
 - Components: set correct sha before running component lint tests ([#2952](https://github.com/nf-core/tools/pull/2952))
+- Less strict logo comparison ([#2956](https://github.com/nf-core/tools/pull/2956))
 
 ### Download
 
@@ -49,7 +50,7 @@
 - Strip out mention of "Nextflow Tower" and replace with "Seqera Platform" wherever possible
 - Fix issue with config resolution that was causing nested configs to behave unexpectedly ([#2862](https://github.com/nf-core/tools/pull/2862))
 - Fix schema docs console output truncating ([#2880](https://github.com/nf-core/tools/pull/2880))
-- fix: ensure path object converted to string before stripping quotes ([#2878](https://github.com/nf-core/tools/pull/2878))
+- Ensure path object converted to string before stripping quotes ([#2878](https://github.com/nf-core/tools/pull/2878))
 - Fix incorrect assertions for called_with on mocks ([#2891](https://github.com/nf-core/tools/pull/2891))
 - Make cli-provided module/subworkflow names case insensitive ([#2869](https://github.com/nf-core/tools/pull/2869))
 - Get immediate parent path name for schema creation ([#2886](https://github.com/nf-core/tools/pull/2886))
@@ -60,7 +61,6 @@
 - fix(collectfile): sort true for methods_description_mqc.yaml ([#2947](https://github.com/nf-core/tools/pull/2947))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.4.3 ([#2951](https://github.com/nf-core/tools/pull/2951))
 - Restructure CHANGELOG.md ([#2954](https://github.com/nf-core/tools/pull/2954))
-- Remove-premature-mention-nftest ([#2955](https://github.com/nf-core/tools/pull/2955))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
