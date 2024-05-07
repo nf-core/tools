@@ -61,6 +61,7 @@
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.4.3 ([#2951](https://github.com/nf-core/tools/pull/2951))
 - Restructure CHANGELOG.md ([#2954](https://github.com/nf-core/tools/pull/2954))
 - Remove-premature-mention-nftest ([#2955](https://github.com/nf-core/tools/pull/2955))
+- Less strict logo comparison ([#2956](https://github.com/nf-core/tools/pull/2956))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 
