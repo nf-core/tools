@@ -5,7 +5,7 @@
 ### Template
 
 - Remove fasta default from nextflow.config ([#2828](https://github.com/nf-core/tools/pull/2828))
-- Update templates to use nf-core/setup-nextflow v2
+- Update templates to use nf-core/setup-nextflow v2 ([#2818](https://github.com/nf-core/tools/pull/2818))
 - Link to troubleshooting docs when pipeline fails ([#2845](https://github.com/nf-core/tools/pull/2845))
 - Add fallback to `download_pipeline.yml` in case the pipeline does not support stub runs ([#2846](https://github.com/nf-core/tools/pull/2846))
 - Set topic variable correctly in the mastodon announcement ([#2848](https://github.com/nf-core/tools/pull/2848))
@@ -17,7 +17,7 @@
 - Template config: `conda.channels`, not `channels` ([#2950](https://github.com/nf-core/tools/pull/2950))
 - Handles multiple DOIs + doi.org resolver from manifest.doi ([#2946](https://github.com/nf-core/tools/pull/2946))
 - Update included components ([#2949](https://github.com/nf-core/tools/pull/2949))
-- Template - Update .editorconfig ([#2953](https://github.com/nf-core/tools/pull/2953))
+- Update .editorconfig ([#2953](https://github.com/nf-core/tools/pull/2953))
 
 ### Linting
 
@@ -33,46 +33,32 @@
 ### Components
 
 - Handle more complete list of possible git URL forms (ssh:// and ftp:// prefixes specifically) ([#2945](https://github.com/nf-core/tools/pull/2945))
+- Fix path in component update script ([#2823](https://github.com/nf-core/tools/pull/2823))
 
 ### General
 
-- Update CI to use nf-core/setup-nextflow v2
+- Update CI to use nf-core/setup-nextflow v2 ([#2819](https://github.com/nf-core/tools/pull/2819))
 - Changelog bot: handle also patch version before dev suffix ([#2820](https://github.com/nf-core/tools/pull/2820))
-- Fix path in component update script ([#2823](https://github.com/nf-core/tools/pull/2823))
 - Update prettier to 3.2.5 ([#2830](https://github.com/nf-core/tools/pull/2830))
-- Update GitHub Actions ([#2827](https://github.com/nf-core/tools/pull/2827))
+- Update GitHub Actions ([#2827](https://github.com/nf-core/tools/pull/2827)), ([#2902](https://github.com/nf-core/tools/pull/2902)), ([#2927](https://github.com/nf-core/tools/pull/2927)), ([#2939](https://github.com/nf-core/tools/pull/2939))
 - Switch to setup-nf-test ([#2834](https://github.com/nf-core/tools/pull/2834))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.2 ([#2836](https://github.com/nf-core/tools/pull/2836))
 - Add tests for assignment and referencing of params in main.nf ([#2841](https://github.com/nf-core/tools/pull/2841))
 - Optimize layers in dockerfile ([#2842](https://github.com/nf-core/tools/pull/2842))
-- Update gitpod/workspace-base Docker digest to 1e133e5 ([#2843](https://github.com/nf-core/tools/pull/2843))
 - Update python:3.11-slim Docker digest to a2eb07f ([#2847](https://github.com/nf-core/tools/pull/2847))
 - Strip out mention of "Nextflow Tower" and replace with "Seqera Platform" wherever possible
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.3 ([#2850](https://github.com/nf-core/tools/pull/2850))
 - Fix issue with config resolution that was causing nested configs to behave unexpectedly ([#2862](https://github.com/nf-core/tools/pull/2862))
 - Fix schema docs console output truncating ([#2880](https://github.com/nf-core/tools/pull/2880))
 - fix: ensure path object converted to string before stripping quotes ([#2878](https://github.com/nf-core/tools/pull/2878))
 - Fix incorrect assertions for called_with on mocks ([#2891](https://github.com/nf-core/tools/pull/2891))
 - Make cli-provided module/subworkflow names case insensitive ([#2869](https://github.com/nf-core/tools/pull/2869))
-- Update gitpod/workspace-base Docker digest to 168d78b ([#2899](https://github.com/nf-core/tools/pull/2899))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.4 ([#2894](https://github.com/nf-core/tools/pull/2894))
-- Update GitHub Actions ([#2902](https://github.com/nf-core/tools/pull/2902))
 - Get immediate parent path name for schema creation ([#2886](https://github.com/nf-core/tools/pull/2886))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.3.5 ([#2903](https://github.com/nf-core/tools/pull/2903))
 - Remove old references to CUSTOMDUMPSOFTWAREVERSIONS and add linting checks ([#2897](https://github.com/nf-core/tools/pull/2897))
-- Update codecov/codecov-action digest to 7afa10e ([#2909](https://github.com/nf-core/tools/pull/2909))
-- Update codecov/codecov-action digest to 8450866 ([#2913](https://github.com/nf-core/tools/pull/2913))
-- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.3.6 ([#2915](https://github.com/nf-core/tools/pull/2915))
-- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.3.7 ([#2917](https://github.com/nf-core/tools/pull/2917))
-- Update gitpod/workspace-base Docker digest to 0af257e ([#2919](https://github.com/nf-core/tools/pull/2919))
-- Update GitHub Actions ([#2927](https://github.com/nf-core/tools/pull/2927))
-- Update gitpod/workspace-base Docker digest to 5aeb24f ([#2929](https://github.com/nf-core/tools/pull/2929))
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.10.0 ([#2933](https://github.com/nf-core/tools/pull/2933))
-- Update GitHub Actions ([#2939](https://github.com/nf-core/tools/pull/2939))
 - Update codecov/codecov-action digest to 5ecb98a ([#2948](https://github.com/nf-core/tools/pull/2948))
 - Update gitpod/workspace-base Docker digest to 124f2b8 ([#2943](https://github.com/nf-core/tools/pull/2943))
 - fix(collectfile): sort true for methods_description_mqc.yaml ([#2947](https://github.com/nf-core/tools/pull/2947))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.4.3 ([#2951](https://github.com/nf-core/tools/pull/2951))
+- Restructure CHANGELOG.md ([#2954](https://github.com/nf-core/tools/pull/2954))
 - Remove-premature-mention-nftest ([#2955](https://github.com/nf-core/tools/pull/2955))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
