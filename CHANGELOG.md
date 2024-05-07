@@ -50,7 +50,7 @@
 - Strip out mention of "Nextflow Tower" and replace with "Seqera Platform" wherever possible
 - Fix issue with config resolution that was causing nested configs to behave unexpectedly ([#2862](https://github.com/nf-core/tools/pull/2862))
 - Fix schema docs console output truncating ([#2880](https://github.com/nf-core/tools/pull/2880))
-- fix: ensure path object converted to string before stripping quotes ([#2878](https://github.com/nf-core/tools/pull/2878))
+- Ensure path object converted to string before stripping quotes ([#2878](https://github.com/nf-core/tools/pull/2878))
 - Fix incorrect assertions for called_with on mocks ([#2891](https://github.com/nf-core/tools/pull/2891))
 - Make cli-provided module/subworkflow names case insensitive ([#2869](https://github.com/nf-core/tools/pull/2869))
 - Get immediate parent path name for schema creation ([#2886](https://github.com/nf-core/tools/pull/2886))
