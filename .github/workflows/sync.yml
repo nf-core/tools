@@ -15,6 +15,10 @@ on:
           - "ubuntu-latest"
           - "self-hosted"
         default: "self-hosted"
+      force_pr:
+        description: "Force a PR to be created"
+        type: boolean
+        default: false
 
 # Cancel if a newer run is started
 concurrency:
