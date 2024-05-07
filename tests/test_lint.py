@@ -1,5 +1,5 @@
-"""Some tests covering the linting code.
-"""
+"""Some tests covering the linting code."""
+
 import fnmatch
 import json
 import os
@@ -198,6 +198,13 @@ class TestLint(unittest.TestCase):
         test_actions_schema_validation_missing_jobs,
         test_actions_schema_validation_missing_on,
     )
+    from .lint.configs import (  # type: ignore[misc]
+        test_ignore_base_config,
+        test_ignore_modules_config,
+        test_superfluous_withname_in_base_config_fails,
+        test_superfluous_withname_in_modules_config_fails,
+        test_withname_in_modules_config,
+    )
     from .lint.files_exist import (  # type: ignore[misc]
         test_files_exist_depreciated_file,
         test_files_exist_fail_conditional,
@@ -213,7 +220,8 @@ class TestLint(unittest.TestCase):
     from .lint.merge_markers import test_merge_markers_found  # type: ignore[misc]
     from .lint.modules_json import test_modules_json_pass  # type: ignore[misc]
     from .lint.multiqc_config import (  # type: ignore[misc]
-        test_multiqc_config_exists_ignore,
+        test_multiqc_config_exists,
+        test_multiqc_config_ignore,
         test_multiqc_config_missing_report_section_order,
         test_multiqc_config_report_comment_fail,
         test_multiqc_config_report_comment_release_fail,
@@ -221,6 +229,8 @@ class TestLint(unittest.TestCase):
         test_multiqc_incorrect_export_plots,
     )
     from .lint.nextflow_config import (  # type: ignore[misc]
+        test_allow_params_reference_in_main_nf,
+        test_catch_params_assignment_in_main_nf,
         test_default_values_fail,
         test_default_values_float,
         test_default_values_float_fail,
@@ -230,6 +240,11 @@ class TestLint(unittest.TestCase):
         test_nextflow_config_dev_in_release_mode_failed,
         test_nextflow_config_example_pass,
         test_nextflow_config_missing_test_profile_failed,
+    )
+    from .lint.nfcore_yml import (  # type: ignore[misc]
+        test_nfcore_yml_fail_nfcore_version,
+        test_nfcore_yml_fail_repo_type,
+        test_nfcore_yml_pass,
     )
     from .lint.template_strings import (  # type: ignore[misc]
         test_template_strings,

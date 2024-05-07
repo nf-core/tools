@@ -2,7 +2,6 @@
 The ComponentCreate class handles generating of module and subworkflow templates
 """
 
-
 import glob
 import json
 import logging
@@ -395,7 +394,7 @@ class ComponentCreate(ComponentCommand):
             if self.component_type == "modules":
                 file_paths["environment.yml"] = component_dir / "environment.yml"
             file_paths["tests/tags.yml"] = component_dir / "tests" / "tags.yml"
-            file_paths["tests/main.nf.test"] = component_dir / "tests" / "main.nf.test"
+            file_paths["tests/main.nf.test.j2"] = component_dir / "tests" / "main.nf.test"
 
         return file_paths
 
