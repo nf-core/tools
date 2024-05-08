@@ -19,6 +19,7 @@ def actions_schema_validation(self):
     """
     passed = []
     failed = []
+    warned = []
 
     # Only show error messages from schema
     logging.getLogger("nf_core.schema").setLevel(logging.ERROR)
@@ -28,6 +29,12 @@ def actions_schema_validation(self):
 
     # Load the GitHub workflow schema
     r = requests.get("https://json.schemastore.org/github-workflow", allow_redirects=True)
+    # handle "Service Unavailable" error
+    if r.status_code not in [200, 301]:
+        warned.append(
+            f"Failed to fetch schema: Response code for `https://json.schemastore.org/github-workflow` was {r.status_code}"
+        )
+        return {"passed": passed, "failed": failed, "warned": warned}
     schema = r.json()
 
     # Validate all workflows against the schema
@@ -55,4 +62,4 @@ def actions_schema_validation(self):
         except Exception as e:
             failed.append(f"Workflow validation failed for {wf}: {e}")
 
-    return {"passed": passed, "failed": failed}
+    return {"passed": passed, "failed": failed, "warned": warned}
