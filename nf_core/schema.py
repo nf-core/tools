@@ -1,5 +1,4 @@
-""" Code to deal with pipeline JSON Schema """
-
+"""Code to deal with pipeline JSON Schema"""
 
 import copy
 import json
@@ -7,6 +6,7 @@ import logging
 import tempfile
 import webbrowser
 from pathlib import Path
+from typing import Union
 
 import jinja2
 import jsonschema
@@ -47,11 +47,14 @@ class PipelineSchema:
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
 
-    def get_schema_path(self, path, local_only=False, revision=None):
+    def get_schema_path(
+        self, path: Union[str, Path], local_only: bool = False, revision: Union[str, None] = None
+    ) -> None:
         """Given a pipeline name, directory, or path, set self.schema_filename"""
         path = Path(path)
         # Supplied path exists - assume a local pipeline directory or schema
         if path.exists():
+            log.debug(f"Path exists: {path}. Assuming local pipeline directory or schema")
             if revision is not None:
                 log.warning(f"Local workflow supplied, ignoring revision '{revision}'")
             if path.is_dir():
@@ -64,14 +67,16 @@ class PipelineSchema:
         # Path does not exist - assume a name of a remote workflow
         elif not local_only:
             self.pipeline_dir = nf_core.list.get_local_wf(path, revision=revision)
-            self.schema_filename = Path(self.pipeline_dir, "nextflow_schema.json")
-
+            self.schema_filename = Path(self.pipeline_dir or "", "nextflow_schema.json")
+            # check if the schema file exists
+            if not self.schema_filename.exists():
+                self.schema_filename = None
         # Only looking for local paths, overwrite with None to be safe
         else:
             self.schema_filename = None
 
         # Check that the schema file exists
-        if self.schema_filename is None or not Path(self.schema_filename).exists():
+        if self.schema_filename is None or not Path(self.schema_filename).exists() and local_only:
             error = f"Could not find pipeline schema for '{path}': {self.schema_filename}"
             log.error(error)
             raise AssertionError(error)
@@ -84,16 +89,13 @@ class PipelineSchema:
             self.get_schema_defaults()
             self.validate_default_params()
             if len(self.invalid_nextflow_config_default_parameters) > 0:
-                log.info(
-                    "[red][✗] Invalid default parameters found:\n  --{}\n\nNOTE: Use null in config for no default.".format(
-                        "\n  --".join(
-                            [
-                                f"{param}: {msg}"
-                                for param, msg in self.invalid_nextflow_config_default_parameters.items()
-                            ]
-                        )
-                    )
+                params = "\n --".join(
+                    [f"{param}: {msg}" for param, msg in self.invalid_nextflow_config_default_parameters.items()]
                 )
+                log.info(
+                    f"[red][✗] Invalid default parameters found:\n {params} \n\nNOTE: Use null in config for no default."
+                )
+
             else:
                 log.info(f"[green][✓] Pipeline schema looks valid[/] [dim](found {num_params} params)")
         except json.decoder.JSONDecodeError as e:
@@ -107,7 +109,7 @@ class PipelineSchema:
 
     def load_schema(self):
         """Load a pipeline schema from a file"""
-        if self.schema_filename is None:
+        if self.schema_filename is None or not Path(self.schema_filename).exists():
             raise AssertionError("Pipeline schema filename could not be found.")
 
         with open(self.schema_filename) as fh:
@@ -282,9 +284,9 @@ class PipelineSchema:
                 if param in self.pipeline_params:
                     self.validate_config_default_parameter(param, group_properties[param], self.pipeline_params[param])
                 else:
-                    self.invalid_nextflow_config_default_parameters[
-                        param
-                    ] = "Not in pipeline parameters. Check `nextflow.config`."
+                    self.invalid_nextflow_config_default_parameters[param] = (
+                        "Not in pipeline parameters. Check `nextflow.config`."
+                    )
 
         # Go over ungrouped params if any exist
         ungrouped_properties = self.schema.get("properties")
@@ -297,9 +299,9 @@ class PipelineSchema:
                         param, ungrouped_properties[param], self.pipeline_params[param]
                     )
                 else:
-                    self.invalid_nextflow_config_default_parameters[
-                        param
-                    ] = "Not in pipeline parameters. Check `nextflow.config`."
+                    self.invalid_nextflow_config_default_parameters[param] = (
+                        "Not in pipeline parameters. Check `nextflow.config`."
+                    )
 
     def validate_config_default_parameter(self, param, schema_param, config_default):
         """
@@ -314,9 +316,9 @@ class PipelineSchema:
         ):
             # Check that we are not deferring the execution of this parameter in the schema default with squiggly brakcets
             if schema_param["type"] != "string" or "{" not in schema_param["default"]:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"Schema default (`{schema_param['default']}`) does not match the config default (`{config_default}`)"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"Schema default (`{schema_param['default']}`) does not match the config default (`{config_default}`)"
+                )
                 return
 
         # if default is null, we're good
@@ -326,28 +328,28 @@ class PipelineSchema:
         # Check variable types in nextflow.config
         if schema_param["type"] == "string":
             if str(config_default) in ["false", "true", "''"]:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"String should not be set to `{config_default}`"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"String should not be set to `{config_default}`"
+                )
         if schema_param["type"] == "boolean":
             if str(config_default) not in ["false", "true"]:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"Booleans should only be true or false, not `{config_default}`"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"Booleans should only be true or false, not `{config_default}`"
+                )
         if schema_param["type"] == "integer":
             try:
                 int(config_default)
             except ValueError:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"Does not look like an integer: `{config_default}`"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"Does not look like an integer: `{config_default}`"
+                )
         if schema_param["type"] == "number":
             try:
                 float(config_default)
             except ValueError:
-                self.invalid_nextflow_config_default_parameters[
-                    param
-                ] = f"Does not look like a number (float): `{config_default}`"
+                self.invalid_nextflow_config_default_parameters[param] = (
+                    f"Does not look like a number (float): `{config_default}`"
+                )
 
     def validate_schema(self, schema=None):
         """
@@ -498,7 +500,7 @@ class PipelineSchema:
 
         if not output_fn:
             console = rich.console.Console()
-            console.print("\n", Syntax(prettified_docs, format), "\n")
+            console.print("\n", Syntax(prettified_docs, format, word_wrap=True), "\n")
         else:
             if Path(output_fn).exists() and not force:
                 log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")
@@ -585,10 +587,12 @@ class PipelineSchema:
             loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
         )
         schema_template = env.get_template("nextflow_schema.json")
+
         template_vars = {
-            "name": self.pipeline_manifest.get("name", Path(self.schema_filename).parent).strip("'"),
+            "name": self.pipeline_manifest.get("name", Path(self.schema_filename).parent.name).strip("'"),
             "description": self.pipeline_manifest.get("description", "").strip("'"),
         }
+
         self.schema = json.loads(schema_template.render(template_vars))
         self.get_schema_defaults()
 
@@ -647,17 +651,13 @@ class PipelineSchema:
                     # Extra help for people running offline
                     if "Could not connect" in e.args[0]:
                         log.info(
-                            "If you're working offline, now copy your schema ({}) and paste at https://nf-co.re/pipeline_schema_builder".format(
-                                self.schema_filename
-                            )
+                            f"If you're working offline, now copy your schema ({self.schema_filename}) and paste at https://nf-co.re/pipeline_schema_builder"
                         )
                         log.info("When you're finished, you can paste the edited schema back into the same file")
                     if self.web_schema_build_web_url:
                         log.info(
                             "To save your work, open {}\n"
-                            "Click the blue 'Finished' button, copy the schema and paste into this file: {}".format(
-                                self.web_schema_build_web_url, self.schema_filename
-                            )
+                            f"Click the blue 'Finished' button, copy the schema and paste into this file: { self.web_schema_build_web_url, self.schema_filename}"
                         )
                     return False
 
@@ -808,7 +808,7 @@ class PipelineSchema:
                 p_def := self.build_schema_param(p_val).get("default")
             ):
                 if self.no_prompts or Confirm.ask(
-                    f":sparkles: Default for [bold]'params.{p_key}'[/] in the pipeline config does not match schema. (schema: '{s_def}' | config: '{p_def}'). "
+                    f":sparkles: Default for [bold]'params.{p_key}'[/] in the pipeline config does not match schema. (schema: '{type(s_def)}: {s_def}'  | config: '{type(p_def)}: {p_def}'). "
                     "[blue]Update pipeline schema?"
                 ):
                     s_key_def = s_key + ("default",)

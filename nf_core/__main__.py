@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-""" nf-core: Helper tools for use with nf-core Nextflow pipelines. """
+"""nf-core: Helper tools for use with nf-core Nextflow pipelines."""
+
 import logging
 import os
 import sys
@@ -100,6 +101,14 @@ def selective_traceback_hook(exctype, value, traceback):
 
 
 sys.excepthook = selective_traceback_hook
+
+
+# Define callback function to normalize the case of click arguments,
+# which is used to make the module/subworkflow names, provided by the
+# user on the cli, case insensitive.
+def normalize_case(ctx, param, component_name):
+    if component_name is not None:
+        return component_name.casefold()
 
 
 def run_nf_core():
@@ -357,9 +366,17 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     help="Archive compression type",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
+# TODO: Remove this in a future release. Deprecated in March 2024.
 @click.option(
     "-t",
     "--tower",
+    is_flag=True,
+    default=False,
+    hidden=True,
+    help="Download for Seqera Platform. DEPRECATED: Please use `--platform` instead.",
+)
+@click.option(
+    "--platform",
     is_flag=True,
     default=False,
     help="Download for Seqera Platform (formerly Nextflow Tower)",
@@ -369,7 +386,12 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     "--download-configuration",
     is_flag=True,
     default=False,
-    help="Include configuration profiles in download. Not available with `--tower`",
+    help="Include configuration profiles in download. Not available with `--platform`",
+)
+@click.option(
+    "--tag",
+    multiple=True,
+    help="Add custom alias tags to `--platform` downloads. For example, `--tag \"3.10=validated\"` adds the custom 'validated' tag to the 3.10 release.",
 )
 # -c changed to -s for consistency with other --container arguments, where it is always the first letter of the last word.
 # Also -c might be used instead of -d for config in a later release, but reusing params for different options in two subsequent releases might be too error-prone.
@@ -411,7 +433,9 @@ def download(
     compress,
     force,
     tower,
+    platform,
     download_configuration,
+    tag,
     container_system,
     container_library,
     container_cache_utilisation,
@@ -426,14 +450,18 @@ def download(
     """
     from nf_core.download import DownloadWorkflow
 
+    if tower:
+        log.warning("[red]The `-t` / `--tower` flag is deprecated. Please use `--platform` instead.[/]")
+
     dl = DownloadWorkflow(
         pipeline,
         revision,
         outdir,
         compress,
         force,
-        tower,
+        tower or platform,  # True if either specified
         download_configuration,
+        tag,
         container_system,
         container_library,
         container_cache_utilisation,
@@ -776,7 +804,7 @@ def modules_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-b
 # nf-core modules install
 @modules.command("install")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -828,7 +856,7 @@ def modules_install(ctx, tool, dir, prompt, force, sha):
 # nf-core modules update
 @modules.command("update")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -920,7 +948,7 @@ def modules_update(
 # nf-core modules patch
 @modules.command()
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -957,7 +985,7 @@ def patch(ctx, tool, dir, remove):
 # nf-core modules remove
 @modules.command("remove")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -1111,7 +1139,7 @@ def create_module(
 # nf-core modules test
 @modules.command("test")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -1170,7 +1198,7 @@ def test_module(ctx, tool, dir, no_prompts, update, once, profile):
 # nf-core modules lint
 @modules.command("lint")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -1257,7 +1285,7 @@ def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed,
 # nf-core modules info
 @modules.command("info")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -1296,7 +1324,7 @@ def modules_info(ctx, tool, dir):
 # nf-core modules bump-versions
 @modules.command()
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
     "-d",
     "--dir",
@@ -1382,7 +1410,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force, migrate_pytest):
 # nf-core subworkflows test
 @subworkflows.command("test")
 @click.pass_context
-@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",
@@ -1509,7 +1537,7 @@ def subworkflows_list_local(ctx, keywords, json, dir):  # pylint: disable=redefi
 # nf-core subworkflows lint
 @subworkflows.command("lint")
 @click.pass_context
-@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",
@@ -1590,7 +1618,7 @@ def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, lo
 # nf-core subworkflows info
 @subworkflows.command("info")
 @click.pass_context
-@click.argument("tool", type=str, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",
@@ -1598,7 +1626,7 @@ def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, lo
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def subworkflows_info(ctx, tool, dir):
+def subworkflows_info(ctx, subworkflow, dir):
     """
     Show developer usage information about a given subworkflow.
 
@@ -1615,7 +1643,7 @@ def subworkflows_info(ctx, tool, dir):
     try:
         subworkflow_info = SubworkflowInfo(
             dir,
-            tool,
+            subworkflow,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
@@ -1629,7 +1657,7 @@ def subworkflows_info(ctx, tool, dir):
 # nf-core subworkflows install
 @subworkflows.command("install")
 @click.pass_context
-@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",
@@ -1687,7 +1715,7 @@ def subworkflows_install(ctx, subworkflow, dir, prompt, force, sha):
 # nf-core subworkflows remove
 @subworkflows.command("remove")
 @click.pass_context
-@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",
@@ -1717,7 +1745,7 @@ def subworkflows_remove(ctx, dir, subworkflow):
 # nf-core subworkflows update
 @subworkflows.command("update")
 @click.pass_context
-@click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
+@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
 @click.option(
     "-d",
     "--dir",
@@ -2119,10 +2147,16 @@ def logo(logo_text, dir, name, theme, width, format, force):
     default=False,
     help="Make a GitHub pull-request with the changes.",
 )
+@click.option(
+    "--force_pr",
+    is_flag=True,
+    default=False,
+    help="Force the creation of a pull-request, even if there are no changes.",
+)
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-def sync(dir, from_branch, pull_request, github_repository, username, template_yaml):
+def sync(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
@@ -2142,7 +2176,7 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     is_pipeline_directory(dir)
 
     # Sync the given pipeline dir
-    sync_obj = PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml)
+    sync_obj = PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
     try:
         sync_obj.sync()
     except (SyncExceptionError, PullRequestExceptionError) as e:

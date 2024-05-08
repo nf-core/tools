@@ -2,6 +2,7 @@ import json
 import logging
 import subprocess
 from pathlib import Path
+from typing import List
 
 import rich
 from rich.console import Console
@@ -101,3 +102,30 @@ def dump_json_with_prettier(file_name, file_content):
     with open(file_name, "w") as fh:
         json.dump(file_content, fh, indent=4)
     run_prettier_on_file(file_name)
+
+
+def ignore_file(lint_name: str, file_path: Path, dir_path: Path) -> List[List[str]]:
+    """Ignore a file and add the result to the ignored list. Return the passed, failed, ignored and ignore_configs lists."""
+
+    passed: List[str] = []
+    failed: List[str] = []
+    ignored: List[str] = []
+    _, lint_conf = nf_core.utils.load_tools_config(dir_path)
+    lint_conf = lint_conf.get("lint", {})
+    ignore_entry: List[str] | bool = lint_conf.get(lint_name, [])
+    full_path = dir_path / file_path
+    # Return a failed status if we can't find the file
+    if not full_path.is_file():
+        if isinstance(ignore_entry, bool) and not ignore_entry:
+            ignored.append(f"`{file_path}` not found, but it is ignored.")
+            ignore_entry = []
+        else:
+            failed.append(f"`{file_path}` not found.")
+    else:
+        passed.append(f"`{file_path}` found and not ignored.")
+
+    # we handled the only case where ignore_entry should be a bool, convert it to a list, to make downstream code easier
+    if isinstance(ignore_entry, bool):
+        ignore_entry = []
+
+    return [passed, failed, ignored, ignore_entry]

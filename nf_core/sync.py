@@ -1,5 +1,4 @@
-"""Synchronise a pipeline TEMPLATE branch with the template.
-"""
+"""Synchronise a pipeline TEMPLATE branch with the template."""
 
 import json
 import logging
@@ -45,6 +44,7 @@ class PipelineSync:
         gh_username (str): GitHub username
         gh_repo (str): GitHub repository name
         template_yaml_path (str): Path to template.yml file for pipeline creation settings. DEPRECATED
+        force_pr (bool): Force the creation of a pull request, even if there are no changes to the template
 
     Attributes:
         pipeline_dir (str): Path to target pipeline directory
@@ -65,6 +65,7 @@ class PipelineSync:
         gh_repo=None,
         gh_username=None,
         template_yaml_path=None,
+        force_pr=False,
     ):
         """Initialise syncing object"""
 
@@ -77,6 +78,7 @@ class PipelineSync:
         self.make_pr = make_pr
         self.gh_pr_returned_data = {}
         self.required_config_vars = ["manifest.name", "manifest.description", "manifest.version", "manifest.author"]
+        self.force_pr = force_pr
 
         self.gh_username = gh_username
         self.gh_repo = gh_repo
@@ -133,8 +135,12 @@ class PipelineSync:
         self.make_template_pipeline()
         self.commit_template_changes()
 
+        if not self.made_changes and self.force_pr:
+            log.info("No changes made to TEMPLATE, but PR forced")
+            self.made_changes = True
+
         # Push and make a pull request if we've been asked to
-        if self.made_changes and self.make_pr:
+        if self.made_changes and self.make_pr or self.force_pr:
             try:
                 # Check that we have an API auth token
                 if os.environ.get("GITHUB_AUTH_TOKEN", "") == "":

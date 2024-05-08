@@ -6,7 +6,6 @@ Command:
 nf-core modules lint
 """
 
-
 import logging
 import os
 
@@ -214,6 +213,11 @@ class ModuleLint(ComponentLint):
 
         # Otherwise run all the lint tests
         else:
+            if self.repo_type == "pipeline" and self.modules_json:
+                # Set correct sha
+                version = self.modules_json.get_module_version(mod.component_name, mod.repo_url, mod.org)
+                mod.git_sha = version
+
             for test_name in self.lint_tests:
                 if test_name == "main_nf":
                     getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
