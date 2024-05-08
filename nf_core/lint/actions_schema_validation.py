@@ -1,13 +1,14 @@
 import glob
 import logging
 import os
+from typing import Any, Dict, List
 
 import jsonschema
 import requests
 import yaml
 
 
-def actions_schema_validation(self):
+def actions_schema_validation(self) -> Dict[str, List[str]]:
     """Checks that the GitHub Action workflow yml/yaml files adhere to the correct schema
 
     nf-core pipelines use GitHub actions workflows to run CI tests, check formatting and also linting, among others.
@@ -17,9 +18,9 @@ def actions_schema_validation(self):
     To pass this test, make sure that all your workflows contain the required properties ``on`` and ``jobs`` and that
     all other properties are of the correct type, as specified in the schema (link above).
     """
-    passed = []
-    failed = []
-    warned = []
+    passed: List[str] = []
+    failed: List[str] = []
+    warned: List[str] = []
 
     # Only show error messages from schema
     logging.getLogger("nf_core.schema").setLevel(logging.ERROR)
@@ -35,7 +36,7 @@ def actions_schema_validation(self):
             f"Failed to fetch schema: Response code for `https://json.schemastore.org/github-workflow` was {r.status_code}"
         )
         return {"passed": passed, "failed": failed, "warned": warned}
-    schema = r.json()
+    schema: Dict[str, Any] = r.json()
 
     # Validate all workflows against the schema
     for wf_path in action_workflows:
@@ -53,7 +54,7 @@ def actions_schema_validation(self):
         try:
             wf_json["on"] = wf_json.pop(True)
         except Exception:
-            failed.append("Missing 'on' keyword in {}.format(wf)")
+            failed.append(f"Missing 'on' keyword in {wf}")
 
         # Validate the workflow
         try:
