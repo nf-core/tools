@@ -4,6 +4,8 @@
 
 ### Template
 
+- Don't cache pip in `linting.yml` ([#2961](https://github.com/nf-core/tools/pull/2961))
+
 ### Linting
 
 ### Download
