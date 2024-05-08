@@ -26,6 +26,7 @@
 - Include test for presence of versions in snapshot ([#2888](https://github.com/nf-core/tools/pull/2888))
 - Components: set correct sha before running component lint tests ([#2952](https://github.com/nf-core/tools/pull/2952))
 - Less strict logo comparison ([#2956](https://github.com/nf-core/tools/pull/2956))
+- Handle request errors more gracefully for actions validation ([#2959](https://github.com/nf-core/tools/pull/2959))
 
 ### Download
 
