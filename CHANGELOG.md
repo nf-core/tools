@@ -12,7 +12,6 @@
 
 ### General
 
-- bump to 2.14.1dev ([#2960](https://github.com/nf-core/tools/pull/2960))
 
 ## [v2.14.0 - Tantalum Toad](https://github.com/nf-core/tools/releases/tag/2.14) - [2024-05-07]
 
