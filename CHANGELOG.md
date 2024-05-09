@@ -12,6 +12,8 @@
 
 ### General
 
+- Pin nfcore/gitpod Docker tag to a12706d ([#2973](https://github.com/nf-core/tools/pull/2973))
+
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
 ### Template
