@@ -22,11 +22,11 @@ jobs:
         run: pip install nf-core
 
       - name: Update modules
-        run: nf-core modules update --all
+        run: nf-core modules update --all --no-preview
         working-directory: nf_core/pipeline-template
 
       - name: Update subworkflows
-        run: nf-core subworkflows update --all
+        run: nf-core subworkflows update --all --no-preview
         working-directory: nf_core/pipeline-template
 
       # Commit the changes
