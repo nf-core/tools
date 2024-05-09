@@ -240,10 +240,13 @@ class GithubRepo(Screen):
         # Use gh CLI config if installed
         gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
         if os.path.exists(gh_cli_config_fn):
-            with open(gh_cli_config_fn) as fh:
-                gh_cli_config = yaml.safe_load(fh)
-                gh_user = (gh_cli_config["github.com"]["user"],)
-                gh_token = gh_cli_config["github.com"]["oauth_token"]
+            try:
+                with open(gh_cli_config_fn) as fh:
+                    gh_cli_config = yaml.safe_load(fh)
+                    gh_user = (gh_cli_config["github.com"]["user"],)
+                    gh_token = gh_cli_config["github.com"]["oauth_token"]
+            except KeyError:
+                pass
         # If gh CLI not installed, try to get credentials from environment variables
         elif os.environ.get("GITHUB_TOKEN") is not None:
             gh_token = self.auth = os.environ["GITHUB_TOKEN"]
