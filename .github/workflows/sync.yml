@@ -42,8 +42,8 @@ jobs:
 
   sync:
     needs: get-pipelines
-    # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
-    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' || github.event_name == 'release' && 'self-hosted' }}
+    # use the github runner on release otherwise use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
+    runs-on: ${{github.event_name == 'release' && 'self-hosted' || github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     strategy:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
