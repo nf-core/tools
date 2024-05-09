@@ -6,12 +6,6 @@
 
 - Don't cache pip in `linting.yml` ([#2961](https://github.com/nf-core/tools/pull/2961))
 
-### Linting
-
-### Download
-
-### Components
-
 ### General
 
 - Fix update github action for components in pipeline template ([#2968](https://github.com/nf-core/tools/pull/2968))
