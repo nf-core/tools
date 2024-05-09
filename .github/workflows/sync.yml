@@ -15,6 +15,10 @@ on:
           - "ubuntu-latest"
           - "self-hosted"
         default: "self-hosted"
+      force_pr:
+        description: "Force a PR to be created"
+        type: boolean
+        default: false
 
 # Cancel if a newer run is started
 concurrency:
@@ -44,10 +48,10 @@ jobs:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
         name: Check out nf-core/tools
 
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
         name: Check out nf-core/${{ matrix.pipeline }}
         with:
           repository: nf-core/${{ matrix.pipeline }}
@@ -86,7 +90,7 @@ jobs:
 
       - name: Upload sync log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
         with:
           name: sync_log_${{ matrix.pipeline }}
           path: sync_log_${{ matrix.pipeline }}.txt

@@ -360,14 +360,14 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 # TODO: Remove this in a future release. Deprecated in March 2024.
 @click.option(
+    "-t",
     "--tower",
     is_flag=True,
     default=False,
     hidden=True,
-    help="Download for Seqera Platform. DEPRECATED: Please use --platform instead.",
+    help="Download for Seqera Platform. DEPRECATED: Please use `--platform` instead.",
 )
 @click.option(
-    "-t",
     "--platform",
     is_flag=True,
     default=False,
@@ -379,6 +379,11 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     is_flag=True,
     default=False,
     help="Include configuration profiles in download. Not available with `--platform`",
+)
+@click.option(
+    "--tag",
+    multiple=True,
+    help="Add custom alias tags to `--platform` downloads. For example, `--tag \"3.10=validated\"` adds the custom 'validated' tag to the 3.10 release.",
 )
 # -c changed to -s for consistency with other --container arguments, where it is always the first letter of the last word.
 # Also -c might be used instead of -d for config in a later release, but reusing params for different options in two subsequent releases might be too error-prone.
@@ -422,6 +427,7 @@ def download(
     tower,
     platform,
     download_configuration,
+    tag,
     container_system,
     container_library,
     container_cache_utilisation,
@@ -436,6 +442,9 @@ def download(
     """
     from nf_core.download import DownloadWorkflow
 
+    if tower:
+        log.warning("[red]The `-t` / `--tower` flag is deprecated. Please use `--platform` instead.[/]")
+
     dl = DownloadWorkflow(
         pipeline,
         revision,
@@ -444,6 +453,7 @@ def download(
         force,
         tower or platform,  # True if either specified
         download_configuration,
+        tag,
         container_system,
         container_library,
         container_cache_utilisation,
@@ -2187,10 +2197,16 @@ def logo(logo_text, dir, name, theme, width, format, force):
     default=False,
     help="Make a GitHub pull-request with the changes.",
 )
+@click.option(
+    "--force_pr",
+    is_flag=True,
+    default=False,
+    help="Force the creation of a pull-request, even if there are no changes.",
+)
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-def sync(dir, from_branch, pull_request, github_repository, username, template_yaml):
+def sync(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
@@ -2210,7 +2226,7 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     is_pipeline_directory(dir)
 
     # Sync the given pipeline dir
-    sync_obj = PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml)
+    sync_obj = PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
     try:
         sync_obj.sync()
     except (SyncExceptionError, PullRequestExceptionError) as e:
