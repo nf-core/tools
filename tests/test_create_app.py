@@ -24,7 +24,7 @@ async def test_app_bindings():
 
 def test_welcome(snap_compare):
     """Test snapshot for the first screen in the app. The welcome screen."""
-    assert snap_compare("../nf_core/pipelines/create/__init__.py")
+    assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50))
 
 
 def test_choose_type(snap_compare):
