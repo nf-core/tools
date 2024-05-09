@@ -1,6 +1,5 @@
 # nf-core/tools: Changelog
 
-
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
 ### Template
