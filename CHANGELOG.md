@@ -1,6 +1,20 @@
 # nf-core/tools: Changelog
 
-## [v2.14.0 - Tantalum Toad](https://github.com/nf-core/tools/releases/tag/2.14) - [2024-05-07]
+## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
+
+### Template
+
+- Don't cache pip in `linting.yml` ([#2961](https://github.com/nf-core/tools/pull/2961))
+
+### Linting
+
+### Download
+
+### Components
+
+### General
+
+## [v2.14.0 - Tantalum Toad](https://github.com/nf-core/tools/releases/tag/2.14.0) - [2024-05-08]
 
 ### Template
 
