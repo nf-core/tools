@@ -5,7 +5,6 @@
 ### Template
 
 - Don't cache pip in `linting.yml` ([#2961](https://github.com/nf-core/tools/pull/2961))
-- Fix template componenents update script in github action ([#2968](https://github.com/nf-core/tools/pull/2968))
 
 ### Linting
 
@@ -14,6 +13,8 @@
 ### Components
 
 ### General
+
+- Fix update github action for components in pipeline template ([#2968](https://github.com/nf-core/tools/pull/2968))
 
 ## [v2.14.0 - Tantalum Toad](https://github.com/nf-core/tools/releases/tag/2.14) - [2024-05-07]
 
