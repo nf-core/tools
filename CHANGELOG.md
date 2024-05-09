@@ -14,6 +14,8 @@
 
 ### General
 
+- fix update script ([#2968](https://github.com/nf-core/tools/pull/2968))
+
 ## [v2.14.0 - Tantalum Toad](https://github.com/nf-core/tools/releases/tag/2.14) - [2024-05-07]
 
 ### Template
