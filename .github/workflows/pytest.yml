@@ -148,6 +148,13 @@ jobs:
           name: coverage_${{ matrix.test }}
           path: .coverage
 
+      - name: Store snapshot report on failure
+        uses: actions/upload-artifact@v4
+        if: ${{matrix.test}} == "test_create_app.py" && failure()
+        with:
+          name: Snapshot Report ${{ matrix.test }}
+          path: ./snapshot_report.html
+
   coverage:
     needs: test
     # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default

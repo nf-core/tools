@@ -1,11 +1,8 @@
 """Test Pipeline Create App"""
 
-import pytest
-
 from nf_core.pipelines.create import PipelineCreateApp
 
 
-@pytest.mark.asyncio
 async def test_app_bindings():
     """Test that the app bindings work."""
     app = PipelineCreateApp()
