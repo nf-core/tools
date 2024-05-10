@@ -1,5 +1,19 @@
 # nf-core/tools: Changelog
 
+## v2.14.2dev
+
+### Template
+
+### Linting
+
+### Download
+
+### Components
+
+### General
+
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.4 ([#2974](https://github.com/nf-core/tools/pull/2974))
+
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
 ### Template
