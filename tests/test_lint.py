@@ -212,6 +212,7 @@ class TestLint(unittest.TestCase):
         test_files_exist_missing_main,
         test_files_exist_pass,
         test_files_exist_pass_conditional,
+        test_files_exist_pass_conditional_nfschema,
     )
     from .lint.files_unchanged import (  # type: ignore[misc]
         test_files_unchanged_fail,
