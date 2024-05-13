@@ -6,6 +6,8 @@
 
 ### Linting
 
+- Template: Lint pipelines with the nf-core template version and post comment if it is outdated ([#2978](https://github.com/nf-core/tools/pull/2978))
+
 ### Download
 
 ### Components
