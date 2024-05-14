@@ -17,7 +17,7 @@ from nf_core import __version__
 from nf_core.download import DownloadError
 from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE
 from nf_core.params_file import ParamsFileBuilder
-from nf_core.utils import check_if_outdated, rich_force_colors, setup_nfcore_dir
+from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 
 # Set up logging as the root logger
 # Submodules should all traverse back to this
@@ -45,7 +45,7 @@ click.rich_click.COMMAND_GROUPS = {
         {
             "name": "Commands for developers",
             "commands": [
-                "create",
+                "pipelines",
                 "lint",
                 "modules",
                 "subworkflows",
@@ -54,6 +54,12 @@ click.rich_click.COMMAND_GROUPS = {
                 "bump-version",
                 "sync",
             ],
+        },
+    ],
+    "nf-core pipelines": [
+        {
+            "name": "Pipeline commands",
+            "commands": ["create"],
         },
     ],
     "nf-core modules": [
@@ -115,25 +121,11 @@ def run_nf_core():
     # print nf-core header if environment variable is not set
     if os.environ.get("_NF_CORE_COMPLETE") is None:
         # Print nf-core header
-        stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
+        stderr.print("\n")
+        for line in nfcore_logo:
+            stderr.print(line, highlight=False)
         stderr.print(
-            "[blue]          ___     __   __   __   ___     [green]/,-._.--~\\",
-            highlight=False,
-        )
-        stderr.print(
-            r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {",
-            highlight=False,
-        )
-        stderr.print(
-            r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,",
-            highlight=False,
-        )
-        stderr.print(
-            "[green]                                          `._,._,'\n",
-            highlight=False,
-        )
-        stderr.print(
-            f"[grey39]    nf-core/tools version {__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
+            f"\n[grey39]    nf-core/tools version {__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
             highlight=False,
         )
         try:
@@ -494,53 +486,6 @@ def licences(pipeline, json):
         sys.exit(1)
 
 
-# nf-core create
-@nf_core_cli.command()
-@click.option(
-    "-n",
-    "--name",
-    type=str,
-    help="The name of your new pipeline",
-)
-@click.option("-d", "--description", type=str, help="A short description of your pipeline")
-@click.option("-a", "--author", type=str, help="Name of the main author(s)")
-@click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
-@click.option(
-    "-f",
-    "--force",
-    is_flag=True,
-    default=False,
-    help="Overwrite output directory if it already exists",
-)
-@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
-@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-@click.option("--plain", is_flag=True, help="Use the standard nf-core template")
-def create(name, description, author, version, force, outdir, template_yaml, plain):
-    """
-    Create a new pipeline using the nf-core template.
-
-    Uses the nf-core template to make a skeleton Nextflow pipeline with all required
-    files, boilerplate code and best-practices.
-    """
-    from nf_core.create import PipelineCreate
-
-    try:
-        create_obj = PipelineCreate(
-            name,
-            description,
-            author,
-            version=version,
-            force=force,
-            outdir=outdir,
-            template_yaml_path=template_yaml,
-            plain=plain,
-        )
-        create_obj.init_pipeline()
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
-
-
 # nf-core lint
 @nf_core_cli.command()
 @click.option(
@@ -656,6 +601,111 @@ def lint(
     except UserWarning as e:
         log.error(e)
         sys.exit(1)
+
+
+# nf-core pipelines subcommands
+@nf_core_cli.group()
+@click.pass_context
+def pipelines(ctx):
+    """
+    Commands to manage nf-core pipelines.
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
+
+# nf-core pipelines create
+@pipelines.command("create")
+@click.pass_context
+@click.option(
+    "-n",
+    "--name",
+    type=str,
+    help="The name of your new pipeline",
+)
+@click.option("-d", "--description", type=str, help="A short description of your pipeline")
+@click.option("-a", "--author", type=str, help="Name of the main author(s)")
+@click.option("--version", type=str, default="1.0.0dev", help="The initial version number to use")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
+@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+@click.option(
+    "--organisation",
+    type=str,
+    default="nf-core",
+    help="The name of the GitHub organisation where the pipeline will be hosted (default: nf-core)",
+)
+def create_pipeline(ctx, name, description, author, version, force, outdir, template_yaml, organisation):
+    """
+    Create a new pipeline using the nf-core template.
+
+    Uses the nf-core template to make a skeleton Nextflow pipeline with all required
+    files, boilerplate code and best-practices.
+    \n\n
+    Run without any command line arguments to use an interactive interface.
+    """
+    from nf_core.pipelines.create import PipelineCreateApp
+    from nf_core.pipelines.create.create import PipelineCreate
+
+    if (name and description and author) or (template_yaml):
+        # If all command arguments are used, run without the interactive interface
+        try:
+            create_obj = PipelineCreate(
+                name,
+                description,
+                author,
+                version=version,
+                force=force,
+                outdir=outdir,
+                template_config=template_yaml,
+                organisation=organisation,
+            )
+            create_obj.init_pipeline()
+        except UserWarning as e:
+            log.error(e)
+            sys.exit(1)
+    elif name or description or author or version != "1.0.0dev" or force or outdir or organisation != "nf-core":
+        log.error(
+            "[red]Partial arguments supplied.[/] "
+            "Run without [i]any[/] arguments for an interactive interface, "
+            "or with at least name + description + author to use non-interactively."
+        )
+        sys.exit(1)
+    else:
+        log.info("Launching interactive nf-core pipeline creation tool.")
+        app = PipelineCreateApp()
+        app.run()
+        sys.exit(app.return_code or 0)
+
+
+# nf-core create (deprecated)
+@nf_core_cli.command(hidden=True, deprecated=True)
+@click.option(
+    "-n",
+    "--name",
+    type=str,
+    help="The name of your new pipeline",
+)
+@click.option("-d", "--description", type=str, help="A short description of your pipeline")
+@click.option("-a", "--author", type=str, help="Name of the main author(s)")
+@click.option("--version", type=str, help="The initial version number to use")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
+@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+@click.option("--plain", is_flag=True, help="Use the standard nf-core template")
+def create(name, description, author, version, force, outdir, template_yaml, plain):
+    """
+    DEPRECATED
+    Create a new pipeline using the nf-core template.
+
+    Uses the nf-core template to make a skeleton Nextflow pipeline with all required
+    files, boilerplate code and best-practices.
+    """
+    log.error(
+        "The `[magenta]nf-core create[/]` command is deprecated. Use `[magenta]nf-core pipelines create[/]` instead."
+    )
+    sys.exit(0)
 
 
 # nf-core modules subcommands

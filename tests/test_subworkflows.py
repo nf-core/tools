@@ -6,8 +6,8 @@ import shutil
 import unittest
 from pathlib import Path
 
-import nf_core.create
 import nf_core.modules
+import nf_core.pipelines.create.create
 import nf_core.subworkflows
 
 from .utils import (
@@ -63,6 +63,7 @@ class TestSubworkflows(unittest.TestCase):
 
         # Set up the pipeline structure
         self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
+
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
 

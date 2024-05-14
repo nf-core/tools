@@ -10,8 +10,8 @@ import requests_cache
 import responses
 import yaml
 
-import nf_core.create
 import nf_core.modules
+import nf_core.pipelines.create.create
 
 from .utils import (
     GITLAB_BRANCH_TEST_BRANCH,
@@ -99,6 +99,7 @@ class TestModules(unittest.TestCase):
 
         # Set up the schema
         self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
+
         # Set up install objects
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
         self.mods_install_old = nf_core.modules.ModuleInstall(
