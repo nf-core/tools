@@ -21,6 +21,7 @@
 - Update output of generation script for API docs to new structure ([#2988](https://github.com/nf-core/tools/pull/2988))
 - Add no clobber and put bash options on their own line ([#2991](https://github.com/nf-core/tools/pull/2991))
 - update minimal textual version and snapshots ([#2998](https://github.com/nf-core/tools/pull/2998))
+- move pipeline subcommands for v3.0 ([#2983](https://github.com/nf-core/tools/pull/2983))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
