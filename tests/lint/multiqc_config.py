@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 
-import nf_core.lint
+import nf_core.pipelines.lint
 
 
 def test_multiqc_config_exists(self):
@@ -10,7 +10,7 @@ def test_multiqc_config_exists(self):
     # Delete the file
     new_pipeline = self._make_pipeline_copy()
     Path(Path(new_pipeline, "assets", "multiqc_config.yml")).unlink()
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.multiqc_config()
     assert result["failed"] == ["`assets/multiqc_config.yml` not found."]
@@ -28,7 +28,7 @@ def test_multiqc_config_ignore(self):
     with open(Path(new_pipeline, ".nf-core.yml"), "w") as f:
         yaml.dump(content, f)
 
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.multiqc_config()
     assert result["ignored"] == ["`assets/multiqc_config.yml` not found, but it is ignored."]
@@ -47,7 +47,7 @@ def test_multiqc_config_missing_report_section_order(self):
     mqc_yml.pop("report_section_order")
     with open(Path(new_pipeline, "assets", "multiqc_config.yml"), "w") as fh:
         yaml.safe_dump(mqc_yml, fh)
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.multiqc_config()
     # Reset the file
@@ -65,7 +65,7 @@ def test_multiqc_incorrect_export_plots(self):
     mqc_yml["export_plots"] = False
     with open(Path(new_pipeline, "assets", "multiqc_config.yml"), "w") as fh:
         yaml.safe_dump(mqc_yml, fh)
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.multiqc_config()
     # Reset the file
@@ -83,7 +83,7 @@ def test_multiqc_config_report_comment_fail(self):
     mqc_yml["report_comment"] = "This is a test"
     with open(Path(new_pipeline, "assets", "multiqc_config.yml"), "w") as fh:
         yaml.safe_dump(mqc_yml, fh)
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.multiqc_config()
     # Reset the file
@@ -101,7 +101,7 @@ def test_multiqc_config_report_comment_release_fail(self):
     mqc_yml_tmp = mqc_yml.copy()
     with open(Path(new_pipeline, "assets", "multiqc_config.yml"), "w") as fh:
         yaml.safe_dump(mqc_yml, fh)
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     # bump version
     lint_obj.nf_config["manifest.version"] = "1.0"
@@ -116,13 +116,13 @@ def test_multiqc_config_report_comment_release_fail(self):
 def test_multiqc_config_report_comment_release_succeed(self):
     """Test that linting fails if the multiqc_config.yml file has a correct report_comment for a release version"""
 
-    import nf_core.bump_version
+    import nf_core.pipelines.bump_version.bump_version
 
     new_pipeline = self._make_pipeline_copy()
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     # bump version using the bump_version function
-    nf_core.bump_version.bump_pipeline_version(lint_obj, "1.0")
+    nf_core.pipelines.bump_version.bump_version.bump_pipeline_version(lint_obj, "1.0")
     # lint again
     lint_obj._load()
     result = lint_obj.multiqc_config()

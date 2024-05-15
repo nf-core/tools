@@ -15,7 +15,7 @@ from rich.prompt import Confirm
 
 import nf_core.schema
 import nf_core.utils
-from nf_core.lint_utils import dump_json_with_prettier
+from nf_core.pipelines.lint_utils import dump_json_with_prettier
 
 log = logging.getLogger(__name__)
 

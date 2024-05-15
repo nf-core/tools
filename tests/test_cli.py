@@ -283,7 +283,7 @@ class TestCli(unittest.TestCase):
         mock_create.return_value.run.assert_called_once()
 
     @mock.patch("nf_core.utils.is_pipeline_directory")
-    @mock.patch("nf_core.lint.run_linting")
+    @mock.patch("nf_core.pipelines.lint.run_linting")
     def test_lint(self, mock_lint, mock_is_pipeline):
         """Test nf-core lint"""
         mock_lint_results = (mock.MagicMock, mock.MagicMock, mock.MagicMock)
@@ -353,7 +353,7 @@ class TestCli(unittest.TestCase):
         assert captured_logs.records[-1].levelname == "ERROR"
 
     @mock.patch("nf_core.utils.is_pipeline_directory")
-    @mock.patch("nf_core.lint.run_linting")
+    @mock.patch("nf_core.pipelines.lint.run_linting")
     def test_lint_log_assert_error(self, mock_lint, mock_is_pipeline):
         """Test nf-core lint logs assertion errors"""
         error_txt = "AssertionError has been raised"
@@ -368,7 +368,7 @@ class TestCli(unittest.TestCase):
         assert captured_logs.records[-1].levelname == "CRITICAL"
 
     @mock.patch("nf_core.utils.is_pipeline_directory")
-    @mock.patch("nf_core.lint.run_linting")
+    @mock.patch("nf_core.pipelines.lint.run_linting")
     def test_lint_log_user_warning(self, mock_lint, mock_is_pipeline):
         """Test nf-core lint logs assertion errors"""
         error_txt = "AssertionError has been raised"

@@ -46,20 +46,17 @@ click.rich_click.COMMAND_GROUPS = {
             "name": "Commands for developers",
             "commands": [
                 "pipelines",
-                "lint",
                 "modules",
                 "subworkflows",
                 "schema",
                 "create-logo",
-                "bump-version",
-                "sync",
             ],
         },
     ],
     "nf-core pipelines": [
         {
             "name": "Pipeline commands",
-            "commands": ["create"],
+            "commands": ["create", "lint", "bump-version", "sync"],
         },
     ],
     "nf-core modules": [
@@ -486,8 +483,8 @@ def licences(pipeline, json):
         sys.exit(1)
 
 
-# nf-core lint
-@nf_core_cli.command()
+# nf-core lint (deprecated)
+@nf_core_cli.command(hidden=True, deprecated=True)
 @click.option(
     "-d",
     "--dir",
@@ -556,6 +553,7 @@ def lint(
     sort_by,
 ):
     """
+    DEPRECATED
     Check pipeline code against nf-core guidelines.
 
     Runs a large number of automated tests to ensure that the supplied pipeline
@@ -565,42 +563,8 @@ def lint(
     You can ignore tests using a file called [blue].nf-core.yml[/] [i](if you have a good reason!)[/].
     See the documentation for details.
     """
-    from nf_core.lint import run_linting
-    from nf_core.utils import is_pipeline_directory
-
-    # Check if pipeline directory is a pipeline
-    try:
-        is_pipeline_directory(dir)
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
-
-    # Run the lint tests!
-    try:
-        lint_obj, module_lint_obj, subworkflow_lint_obj = run_linting(
-            dir,
-            release,
-            fix,
-            key,
-            show_passed,
-            fail_ignored,
-            fail_warned,
-            sort_by,
-            markdown,
-            json,
-            ctx.obj["hide_progress"],
-        )
-        swf_failed = 0
-        if subworkflow_lint_obj is not None:
-            swf_failed = len(subworkflow_lint_obj.failed)
-        if len(lint_obj.failed) + len(module_lint_obj.failed) + swf_failed > 0:
-            sys.exit(1)
-    except AssertionError as e:
-        log.critical(e)
-        sys.exit(1)
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
+    log.error("The `[magenta]nf-core lint[/]` command is deprecated. Use `[magenta]nf-core pipelines lint[/]` instead.")
+    sys.exit(0)
 
 
 # nf-core pipelines subcommands
@@ -677,6 +641,124 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
         app = PipelineCreateApp()
         app.run()
         sys.exit(app.return_code or 0)
+
+
+# nf-core pipelines lint
+@pipelines.command("lint")
+@click.pass_context
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory [dim]\[default: current working directory][/]",
+)
+@click.option(
+    "--release",
+    is_flag=True,
+    default=os.path.basename(os.path.dirname(os.environ.get("GITHUB_REF", "").strip(" '\""))) == "master"
+    and os.environ.get("GITHUB_REPOSITORY", "").startswith("nf-core/")
+    and not os.environ.get("GITHUB_REPOSITORY", "") == "nf-core/tools",
+    help="Execute additional checks for release-ready workflows.",
+)
+@click.option(
+    "-f",
+    "--fix",
+    type=str,
+    metavar="<test>",
+    multiple=True,
+    help="Attempt to automatically fix specified lint test",
+)
+@click.option(
+    "-k",
+    "--key",
+    type=str,
+    metavar="<test>",
+    multiple=True,
+    help="Run only these lint tests",
+)
+@click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line")
+@click.option("-i", "--fail-ignored", is_flag=True, help="Convert ignored tests to failures")
+@click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
+@click.option(
+    "--markdown",
+    type=str,
+    metavar="<filename>",
+    help="File to write linting results to (Markdown)",
+)
+@click.option(
+    "--json",
+    type=str,
+    metavar="<filename>",
+    help="File to write linting results to (JSON)",
+)
+@click.option(
+    "--sort-by",
+    type=click.Choice(["module", "test"]),
+    default="test",
+    help="Sort lint output by module or test name.",
+    show_default=True,
+)
+@click.pass_context
+def lint_pipeline(
+    ctx,
+    dir,
+    release,
+    fix,
+    key,
+    show_passed,
+    fail_ignored,
+    fail_warned,
+    markdown,
+    json,
+    sort_by,
+):
+    """
+    Check pipeline code against nf-core guidelines.
+
+    Runs a large number of automated tests to ensure that the supplied pipeline
+    meets the nf-core guidelines. Documentation of all lint tests can be found
+    on the nf-core website: [link=https://nf-co.re/tools/docs/]https://nf-co.re/tools/docs/[/]
+
+    You can ignore tests using a file called [blue].nf-core.yml[/] [i](if you have a good reason!)[/].
+    See the documentation for details.
+    """
+    from nf_core.pipelines.lint import run_linting
+    from nf_core.utils import is_pipeline_directory
+
+    # Check if pipeline directory is a pipeline
+    try:
+        is_pipeline_directory(dir)
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
+
+    # Run the lint tests!
+    try:
+        lint_obj, module_lint_obj, subworkflow_lint_obj = run_linting(
+            dir,
+            release,
+            fix,
+            key,
+            show_passed,
+            fail_ignored,
+            fail_warned,
+            sort_by,
+            markdown,
+            json,
+            ctx.obj["hide_progress"],
+        )
+        swf_failed = 0
+        if subworkflow_lint_obj is not None:
+            swf_failed = len(subworkflow_lint_obj.failed)
+        if len(lint_obj.failed) + len(module_lint_obj.failed) + swf_failed > 0:
+            sys.exit(1)
+    except AssertionError as e:
+        log.critical(e)
+        sys.exit(1)
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
 
 
 # nf-core create (deprecated)
@@ -2063,9 +2145,9 @@ def docs(schema_path, output, format, force, columns):
     schema_obj.print_documentation(output, format, force, columns.split(","))
 
 
-# nf-core bump-version
-@nf_core_cli.command("bump-version")
-@click.argument("new_version", required=True, metavar="<new version>")
+# nf-core bump-version (deprecated)
+@nf_core_cli.command(hidden=True, deprecated=True)
+@click.argument("new_version", default="")
 @click.option(
     "-d",
     "--dir",
@@ -2082,6 +2164,7 @@ def docs(schema_path, output, format, force, columns):
 )
 def bump_version(new_version, dir, nextflow):
     """
+    DEPRECATED
     Update nf-core pipeline version number.
 
     The pipeline version number is mentioned in a lot of different places
@@ -2093,7 +2176,44 @@ def bump_version(new_version, dir, nextflow):
 
     As well as the pipeline version, you can also change the required version of Nextflow.
     """
-    from nf_core.bump_version import bump_nextflow_version, bump_pipeline_version
+    log.error(
+        "The `[magenta]nf-core bump-version[/]` command is deprecated. Use `[magenta]nf-core pipelines bump-version[/]` instead."
+    )
+    sys.exit(0)
+
+
+# nf-core pipelines bump-version
+@pipelines.command("bump-version")
+@click.pass_context
+@click.argument("new_version", required=True, metavar="<new version>")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+@click.option(
+    "-n",
+    "--nextflow",
+    is_flag=True,
+    default=False,
+    help="Bump required nextflow version instead of pipeline version",
+)
+def bump_version_pipeline(new_version, dir, nextflow):
+    """
+    Update nf-core pipeline version number.
+
+    The pipeline version number is mentioned in a lot of different places
+    in nf-core pipelines. This tool updates the version for you automatically,
+    so that you don't accidentally miss any.
+
+    Should be used for each pipeline release, and again for the next
+    development version after release.
+
+    As well as the pipeline version, you can also change the required version of Nextflow.
+    """
+    from nf_core.pipelines.bump_version.bump_version import bump_nextflow_version, bump_pipeline_version
     from nf_core.utils import Pipeline, is_pipeline_directory
 
     try:
@@ -2175,8 +2295,8 @@ def logo(logo_text, dir, name, theme, width, format, force):
         sys.exit(1)
 
 
-# nf-core sync
-@nf_core_cli.command("sync")
+# nf-core sync (deprecated)
+@nf_core_cli.command(hidden=True, deprecated=True)
 @click.option(
     "-d",
     "--dir",
@@ -2208,6 +2328,7 @@ def logo(logo_text, dir, name, theme, width, format, force):
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 def sync(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
     """
+    DEPRECATED
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
     To keep nf-core pipelines up to date with improvements in the main
@@ -2219,7 +2340,56 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     the pipeline. It is run automatically for all pipelines when ever a
     new release of [link=https://github.com/nf-core/tools]nf-core/tools[/link] (and the included template) is made.
     """
-    from nf_core.sync import PipelineSync, PullRequestExceptionError, SyncExceptionError
+    log.error("The `[magenta]nf-core sync[/]` command is deprecated. Use `[magenta]nf-core pipelines sync[/]` instead.")
+    sys.exit(0)
+
+
+# nf-core pipelines sync
+@pipelines.command("sync")
+@click.pass_context
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+@click.option(
+    "-b",
+    "--from-branch",
+    type=str,
+    help="The git branch to use to fetch workflow variables.",
+)
+@click.option(
+    "-p",
+    "--pull-request",
+    is_flag=True,
+    default=False,
+    help="Make a GitHub pull-request with the changes.",
+)
+@click.option(
+    "--force_pr",
+    is_flag=True,
+    default=False,
+    help="Force the creation of a pull-request, even if there are no changes.",
+)
+@click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
+@click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+def sync_pipeline(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
+    """
+    Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
+
+    To keep nf-core pipelines up to date with improvements in the main
+    template, we use a method of synchronisation that uses a special
+    git branch called [cyan i]TEMPLATE[/].
+
+    This command updates the [cyan i]TEMPLATE[/] branch with the latest version of
+    the nf-core template, so that these updates can be synchronised with
+    the pipeline. It is run automatically for all pipelines when ever a
+    new release of [link=https://github.com/nf-core/tools]nf-core/tools[/link] (and the included template) is made.
+    """
+    from nf_core.pipelines.sync.sync import PipelineSync, PullRequestExceptionError, SyncExceptionError
     from nf_core.utils import is_pipeline_directory
 
     # Check if pipeline directory contains necessary files

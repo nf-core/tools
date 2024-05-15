@@ -18,8 +18,8 @@ import nf_core
 import nf_core.schema
 import nf_core.utils
 from nf_core.create_logo import create_logo
-from nf_core.lint_utils import run_prettier_on_file
 from nf_core.pipelines.create.utils import CreateConfig
+from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
 

@@ -18,7 +18,7 @@ from rich.syntax import Syntax
 
 import nf_core.list
 import nf_core.utils
-from nf_core.lint_utils import dump_json_with_prettier, run_prettier_on_file
+from nf_core.pipelines.lint_utils import dump_json_with_prettier, run_prettier_on_file
 
 log = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@ import os
 
 import yaml
 
-import nf_core.lint
+import nf_core.pipelines.lint
 
 
 def test_actions_ci_pass(self):
@@ -39,7 +39,7 @@ def test_actions_ci_fail_wrong_trigger(self):
         yaml.dump(ci_yml, fh)
 
     # Make lint object
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
 
     results = lint_obj.actions_ci()

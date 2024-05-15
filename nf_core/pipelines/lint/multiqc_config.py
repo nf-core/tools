@@ -3,7 +3,7 @@ from typing import Dict, List
 
 import yaml
 
-from nf_core.lint_utils import ignore_file
+from nf_core.pipelines.lint_utils import ignore_file
 
 
 def multiqc_config(self) -> Dict[str, List[str]]:

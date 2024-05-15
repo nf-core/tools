@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 
-import nf_core.lint
+import nf_core.pipelines.lint
 
 
 def test_actions_schema_validation_missing_jobs(self):
@@ -16,7 +16,7 @@ def test_actions_schema_validation_missing_jobs(self):
     with open(awstest_yml_path, "w") as fh:
         yaml.dump(awstest_yml, fh)
 
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
 
     results = lint_obj.actions_schema_validation()
@@ -35,7 +35,7 @@ def test_actions_schema_validation_missing_on(self):
     with open(awstest_yml_path, "w") as fh:
         yaml.dump(awstest_yml, fh)
 
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
 
     results = lint_obj.actions_schema_validation()
@@ -55,7 +55,7 @@ def test_actions_schema_validation_fails_for_additional_property(self):
     with open(awstest_yml_path, "w") as fh:
         yaml.dump(awstest_yml, fh)
 
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
 
     results = lint_obj.actions_schema_validation()
