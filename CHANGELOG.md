@@ -1,5 +1,9 @@
 # nf-core/tools: Changelog
 
+### Template
+
+- Change paths to test data ([#2985](https://github.com/nf-core/tools/pull/2985))
+
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
 ### Template
