@@ -645,7 +645,6 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
 
 # nf-core pipelines lint
 @pipelines.command("lint")
-@click.pass_context
 @click.option(
     "-d",
     "--dir",

@@ -349,7 +349,7 @@ class TestModules(unittest.TestCase):
         psync.gh_repo = "list_prs/response"
         os.environ["GITHUB_AUTH_TOKEN"] = "test"
 
-        with mock.patch("nf_core.sync.PipelineSync.close_open_pr") as mock_close_open_pr:
+        with mock.patch("nf_core.pipelines.sync.sync.PipelineSync.close_open_pr") as mock_close_open_pr:
             psync.close_open_template_merge_prs()
 
             prs = mock_get(f"https://api.github.com/repos/{psync.gh_repo}/pulls").data

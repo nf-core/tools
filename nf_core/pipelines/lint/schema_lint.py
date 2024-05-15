@@ -58,7 +58,7 @@ def schema_lint(self):
        }
 
     .. tip:: You can check your pipeline schema without having to run the entire pipeline lint
-             by running ``nf-core schema lint`` instead of ``nf-core lint``
+             by running ``nf-core schema lint`` instead of ``nf-core pipelines lint``
     """
     passed = []
     warned = []

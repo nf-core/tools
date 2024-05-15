@@ -578,7 +578,7 @@ class GitHubAPISession(requests_cache.CachedSession):
         """
         Try to fetch a URL, keep retrying if we get a certain return code.
 
-        Used in nf-core sync code because we get 403 errors: too many simultaneous requests
+        Used in nf-core pipelines sync code because we get 403 errors: too many simultaneous requests
         See https://github.com/nf-core/tools/issues/911
         """
         if not self.has_init:

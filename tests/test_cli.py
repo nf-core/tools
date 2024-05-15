@@ -285,7 +285,7 @@ class TestCli(unittest.TestCase):
     @mock.patch("nf_core.utils.is_pipeline_directory")
     @mock.patch("nf_core.pipelines.lint.run_linting")
     def test_lint(self, mock_lint, mock_is_pipeline):
-        """Test nf-core lint"""
+        """Test nf-core pipelines lint"""
         mock_lint_results = (mock.MagicMock, mock.MagicMock, mock.MagicMock)
         mock_lint_results[0].failed = []
         mock_lint_results[1].failed = []
@@ -305,7 +305,7 @@ class TestCli(unittest.TestCase):
             "json": "output_file.json",
         }
 
-        cmd = ["lint"] + self.assemble_params(params)
+        cmd = ["pipelines", "lint"] + self.assemble_params(params)
         result = self.invoke_cli(cmd)
 
         assert result.exit_code == 0
@@ -324,12 +324,12 @@ class TestCli(unittest.TestCase):
         )
 
     def test_lint_no_dir(self):
-        """Test nf-core lint fails if --dir does not exist"""
+        """Test nf-core pipelines lint fails if --dir does not exist"""
         params = {
             "dir": "/bad/path",
         }
 
-        cmd = ["lint"] + self.assemble_params(params)
+        cmd = ["pipelines", "lint"] + self.assemble_params(params)
         result = self.invoke_cli(cmd)
 
         assert result.exit_code == 2
@@ -340,11 +340,11 @@ class TestCli(unittest.TestCase):
 
     @mock.patch("nf_core.utils.is_pipeline_directory")
     def test_lint_dir_is_not_pipeline(self, mock_is_pipeline):
-        """Test nf-core lint logs an error if not called from a pipeline directory."""
+        """Test nf-core pipelines lint logs an error if not called from a pipeline directory."""
         error_txt = "UserWarning has been raised"
         mock_is_pipeline.side_effect = UserWarning(error_txt)
 
-        cmd = ["lint"]
+        cmd = ["pipelines", "lint"]
         with self.assertLogs() as captured_logs:
             result = self.invoke_cli(cmd)
 
@@ -355,11 +355,11 @@ class TestCli(unittest.TestCase):
     @mock.patch("nf_core.utils.is_pipeline_directory")
     @mock.patch("nf_core.pipelines.lint.run_linting")
     def test_lint_log_assert_error(self, mock_lint, mock_is_pipeline):
-        """Test nf-core lint logs assertion errors"""
+        """Test nf-core pipelines lint logs assertion errors"""
         error_txt = "AssertionError has been raised"
         mock_lint.side_effect = AssertionError(error_txt)
 
-        cmd = ["lint"]
+        cmd = ["pipelines", "lint"]
         with self.assertLogs() as captured_logs:
             result = self.invoke_cli(cmd)
 
@@ -370,11 +370,11 @@ class TestCli(unittest.TestCase):
     @mock.patch("nf_core.utils.is_pipeline_directory")
     @mock.patch("nf_core.pipelines.lint.run_linting")
     def test_lint_log_user_warning(self, mock_lint, mock_is_pipeline):
-        """Test nf-core lint logs assertion errors"""
+        """Test nf-core pipelines lint logs assertion errors"""
         error_txt = "AssertionError has been raised"
         mock_lint.side_effect = UserWarning(error_txt)
 
-        cmd = ["lint"]
+        cmd = ["pipelines", "lint"]
         with self.assertLogs() as captured_logs:
             result = self.invoke_cli(cmd)
 
