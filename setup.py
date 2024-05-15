@@ -2,7 +2,7 @@
 
 from setuptools import find_packages, setup
 
-version = "2.14.1"
+version = "2.14.2dev"
 
 with open("README.md") as f:
     readme = f.read()

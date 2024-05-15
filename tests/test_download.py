@@ -12,7 +12,7 @@ from unittest import mock
 
 import pytest
 
-import nf_core.create
+import nf_core.pipelines.create.create
 import nf_core.utils
 from nf_core.download import ContainerError, DownloadWorkflow, WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
@@ -128,13 +128,12 @@ class DownloadTest(unittest.TestCase):
     def test_wf_use_local_configs(self, tmp_path):
         # Get a workflow and configs
         test_pipeline_dir = os.path.join(tmp_path, "nf-core-testpipeline")
-        create_obj = nf_core.create.PipelineCreate(
+        create_obj = nf_core.pipelines.create.create.PipelineCreate(
             "testpipeline",
             "This is a test pipeline",
             "Test McTestFace",
             no_git=True,
             outdir=test_pipeline_dir,
-            plain=True,
         )
         create_obj.init_pipeline()
 
