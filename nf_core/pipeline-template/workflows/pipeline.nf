@@ -75,7 +75,7 @@ workflow {{ short_name|upper }} {
     ch_multiqc_files = ch_multiqc_files.mix(
         ch_methods_description.collectFile(
             name: 'methods_description_mqc.yaml',
-            sort: false
+            sort: true
         )
     )
 

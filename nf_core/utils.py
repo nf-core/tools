@@ -36,6 +36,15 @@ import nf_core
 
 log = logging.getLogger(__name__)
 
+# ASCII nf-core logo
+nfcore_logo = [
+    r"[green]                                          ,--.[grey39]/[green],-.",
+    r"[blue]          ___     __   __   __   ___     [green]/,-._.--~\ ",
+    r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {",
+    r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,",
+    r"[green]                                          `._,._,'",
+]
+
 # Custom style for questionary
 nfcore_question_style = prompt_toolkit.styles.Style(
     [
@@ -180,7 +189,7 @@ class Pipeline:
         """
         self.nf_config = fetch_wf_config(self.wf_path)
 
-        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "").strip("'").split("/")
+        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "/").strip("'").split("/")
 
         nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
         if nextflow_version_match:

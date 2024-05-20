@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.5
+    rev: v0.4.4
     hooks:
       - id: ruff # linter
         args: [--fix, --exit-non-zero-on-fix] # sort imports and fix
@@ -19,7 +19,7 @@ repos:
         alias: ec
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.9.0"
+    rev: "v1.10.0"
     hooks:
       - id: mypy
         additional_dependencies:

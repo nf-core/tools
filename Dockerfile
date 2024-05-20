@@ -1,4 +1,4 @@
-FROM python:3.12-slim@sha256:5dc6f84b5e97bfb0c90abfb7c55f3cacc2cb6687c8f920b64a833a2219875997
+FROM python:3.12-slim@sha256:2be8daddbb82756f7d1f2c7ece706aadcb284bf6ab6d769ea695cc3ed6016743
 LABEL authors="phil.ewels@seqera.io,erik.danielsson@scilifelab.se" \
     description="Docker image containing requirements for nf-core/tools"
 

@@ -2,8 +2,8 @@ import os
 import re
 from pathlib import Path
 
-import nf_core.create
 import nf_core.lint
+import nf_core.pipelines.create.create
 
 
 def test_nextflow_config_example_pass(self):

@@ -207,6 +207,11 @@ class SubworkflowLint(ComponentLint):
 
         # Otherwise run all the lint tests
         else:
+            if self.repo_type == "pipeline" and self.modules_json:
+                # Set correct sha
+                version = self.modules_json.get_subworkflow_version(swf.component_name, swf.repo_url, swf.org)
+                swf.git_sha = version
+
             for test_name in self.lint_tests:
                 getattr(self, test_name)(swf)
 
