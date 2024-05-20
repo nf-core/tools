@@ -61,7 +61,7 @@ pip install --upgrade -r requirements-dev.txt -e .
 
 ## Contributions and Support
 
-If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
+If you would like to contribute to this package, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
 For further information or help, don't hesitate to get in touch on the [Slack `#tools` channel](https://nfcore.slack.com/channels/tools) (you can join with [this invite](https://nf-co.re/join/slack)).
 
