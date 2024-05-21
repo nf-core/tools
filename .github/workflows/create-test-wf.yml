@@ -67,7 +67,7 @@ jobs:
           version: ${{ matrix.NXF_VER }}
 
       - name: install nf-test
-        uses: nf-core/setup-nf-test
+        uses: nf-core/setup-nf-test@v1.1
 
       - name: Run nf-core/tools
         run: |

@@ -80,7 +80,7 @@ jobs:
           version: latest-everything
 
       - name: install nf-test
-        uses: nf-core/setup-nf-test
+        uses: nf-core/setup-nf-test@v1.1
 
       # Create template files
       - name: Create template skip all (except github)
