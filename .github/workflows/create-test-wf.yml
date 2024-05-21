@@ -81,7 +81,9 @@ jobs:
 
       - name: Run nf-test
         run: |
-          cd nf-core-testpipeline && nf-test test --verbose --profile "+self_hosted_runner" --junitxml=../test.xml --tap=../test.tap . && cd .
+          cd create-test-lint-wf
+          ls -1
+          nf-test test --verbose --profile "+self_hosted_runner" --junitxml=../test.xml --tap=../test.tap .
 
       - name: Upload log file artifact
         if: ${{ always() }}
