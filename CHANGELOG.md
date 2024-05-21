@@ -4,6 +4,8 @@
 
 ### Template
 
+- Add pipeline level nf-tests for template ([#2992](https://github.com/nf-core/tools/pull/2992))
+
 ### Linting
 
 - Fix linting fail on nfcore_external_java_deps if nf_schema is used ([#2976](https://github.com/nf-core/tools/pull/2976))
