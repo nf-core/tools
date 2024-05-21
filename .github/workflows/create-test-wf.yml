@@ -81,7 +81,7 @@ jobs:
 
       - name: Run nf-test
         run: |
-          cd create-test-lint-wf
+          cd create-test-wf/create-test-lint-wf
           ls -1
           nf-test test --verbose --profile "+self_hosted_runner" --junitxml=../test.xml --tap=../test.tap .
 
