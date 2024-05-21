@@ -66,6 +66,21 @@ jobs:
         with:
           version: ${{ matrix.NXF_VER }}
 
+      - name: Cache nf-test installation
+        id: cache-software
+        uses: actions/cache@v3
+        with:
+          path: |
+            /usr/local/bin/nf-test
+            /home/runner/.nf-test/nf-test.jar
+          key: ${{ runner.os }}-${{ env.NFT_VER }}-nftest
+
+      - name: Install nf-test
+        if: steps.cache-software.outputs.cache-hit != 'true'
+        run: |
+          wget -qO- https://code.askimed.com/install/nf-test | bash
+          sudo mv nf-test /usr/local/bin/
+
       - name: Run nf-core/tools
         run: |
           mkdir create-test-wf && cd create-test-wf
@@ -75,7 +90,10 @@ jobs:
           pwd
           # echo content of current directory
           ls -la
-          nextflow run nf-core-testpipeline -profile test,self_hosted_runner --outdir ./results
+
+      - name: Run nf-test
+        run: |
+          nf-test test --verbose --profile "+self_hosted_runner" --junitxml=test.xml --tap=test.tap
 
       - name: Upload log file artifact
         if: ${{ always() }}
