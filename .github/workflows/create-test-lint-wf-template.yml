@@ -119,7 +119,7 @@ jobs:
       - name: run nf-test
         run: |
           ls -1
-          cd my-prefix-testpipeline && nf-test test --verbose --profile "+self_hosted_runner" --junitxml=test.xml --tap=test.tap . && cd ..
+          nf-test test --verbose --profile "+self_hosted_runner" --junitxml=test.xml --tap=test.tap .
 
       # Remove results folder before linting
       - name: remove results folder
