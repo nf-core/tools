@@ -91,7 +91,7 @@ def test_update_snapshot_module(self):
             snap_content = json.load(fh)
         original_timestamp = snap_content["Single-End"]["timestamp"]
         # delete the timestamp in json
-        snap_content["Single-End"]["content"][0]["0"][0][1] = ""
+        snap_content["Single-End"]["timestamp"] = ""
         with open(snap_path, "w") as fh:
             json.dump(snap_content, fh)
         snap_generator = ComponentsTest(
