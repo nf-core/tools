@@ -66,20 +66,8 @@ jobs:
         with:
           version: ${{ matrix.NXF_VER }}
 
-      - name: Cache nf-test installation
-        id: cache-software
-        uses: actions/cache@v3
-        with:
-          path: |
-            /usr/local/bin/nf-test
-            /home/runner/.nf-test/nf-test.jar
-          key: ${{ runner.os }}-${{ env.NFT_VER }}-nftest
-
-      - name: Install nf-test
-        if: steps.cache-software.outputs.cache-hit != 'true'
-        run: |
-          wget -qO- https://code.askimed.com/install/nf-test | bash
-          sudo mv nf-test /usr/local/bin/
+      - name: install nf-test
+        uses: nf-core/setup-nf-test
 
       - name: Run nf-core/tools
         run: |
