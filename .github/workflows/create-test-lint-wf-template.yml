@@ -79,6 +79,9 @@ jobs:
         with:
           version: latest-everything
 
+      - name: install nf-test
+        uses: nf-core/setup-nf-test
+
       # Create template files
       - name: Create template skip all (except github)
         run: |
@@ -112,6 +115,10 @@ jobs:
         run: |
           cd create-test-lint-wf
           nextflow run my-prefix-testpipeline -profile test,${{matrix.profile}} --outdir ./results
+
+      - name: run nf-test
+        run: |
+          cd my-prefix-testpipeline && nf-test test --verbose --profile "+self_hosted_runner" --junitxml=test.xml --tap=test.tap . && cd ..
 
       # Remove results folder before linting
       - name: remove results folder

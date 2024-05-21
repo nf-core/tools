@@ -81,7 +81,7 @@ jobs:
 
       - name: Run nf-test
         run: |
-          nf-test test --verbose --profile "+self_hosted_runner" --junitxml=test.xml --tap=test.tap
+          nf-test test --verbose --profile "+self_hosted_runner" --junitxml=test.xml --tap=test.tap .
 
       - name: Upload log file artifact
         if: ${{ always() }}
