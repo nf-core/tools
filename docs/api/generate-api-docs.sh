@@ -28,7 +28,7 @@ done
 
 # Set the output directory if not set
 if [[ -z "$output_dir" ]]; then
-    output_dir="../src/content/tools/docs"
+    output_dir="../src/content/api_reference"
 fi
 
 # if no release is specified, use all releases
