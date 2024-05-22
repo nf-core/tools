@@ -120,7 +120,7 @@ jobs:
         run: |
           cd create-test-lint-wf/my-prefix-testpipeline
           nf-test test --verbose --profile "+self_hosted_runner" --junitxml=../test.xml --tap=../test.tap .
-          mv -r .nf-test* ..
+          mv .nf-test* ..
 
       # Remove results folder before linting
       - name: remove results folder
