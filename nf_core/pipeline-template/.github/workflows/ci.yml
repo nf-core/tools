@@ -26,29 +26,17 @@ jobs:
     outputs:
       nf_test_files: "{% raw %}${{ steps.list.outputs.nf_test_files }}{% endraw %}"
     steps:
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-          architecture: "x64"
-
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Install gitpython find changed files
-        run: |
-          python -m pip install --upgrade pip
-          pip install gitpython pyyaml
-
       - name: List nf-test files
         id: list
-        run: |
-          echo nf_test_files=$(python \
-            .github/python/find_changed_files.py \
-            -t pipeline workflow process \
-            --head_ref {% raw %}${{ github.sha }}{% endraw %} \
-            --base_ref {% raw %}origin/${{ github.base_ref }}{% endraw %} \
-          ) >> $GITHUB_OUTPUT
+        uses: adamrtalbot/detect-nf-test-changes@v0.0.2
+        with:
+          head: ${{ github.sha }}
+          base: origin/${{ github.base_ref }}
+          include: .github/include.yaml
 
   test:
     name: "{% raw %}${{ matrix.nf_test_files }} ${{ matrix.profile }} NF-${{ matrix.NXF_VER }}{% endraw %}"
