@@ -4,6 +4,7 @@
 
 ### Template
 
+- Change paths to test data ([#2985](https://github.com/nf-core/tools/pull/2985))
 - Add pipeline level nf-tests for template ([#2992](https://github.com/nf-core/tools/pull/2992))
 
 ### Linting
