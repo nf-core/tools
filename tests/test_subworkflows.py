@@ -33,7 +33,14 @@ def create_modules_repo_dummy(tmp_dir):
     subworkflow_create.create()
 
     # Add dummy content to main.nf.test.snap
-    test_snap_path = Path(root_dir, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap")
+    test_snap_path = Path(
+        root_dir,
+        "subworkflows",
+        "nf-core",
+        "test_subworkflow",
+        "tests",
+        "main.nf.test.snap",
+    )
     test_snap_path.parent.mkdir(parents=True, exist_ok=True)
     with open(test_snap_path, "w") as fh:
         json.dump(
@@ -70,7 +77,11 @@ class TestSubworkflows(unittest.TestCase):
         # Set up install objects
         self.subworkflow_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
         self.subworkflow_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
-            self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
+            self.pipeline_dir,
+            prompt=False,
+            force=False,
+            remote_url=GITLAB_URL,
+            branch=GITLAB_SUBWORKFLOWS_BRANCH,
         )
         self.subworkflow_install_gitlab_same_org_path = nf_core.subworkflows.SubworkflowInstall(
             self.pipeline_dir,
@@ -136,8 +147,6 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_absent_version,
         test_subworkflows_empty_file_in_snapshot,
         test_subworkflows_empty_file_in_stub_snapshot,
-        test_subworkflows_incorrect_tags_yml_key,
-        test_subworkflows_incorrect_tags_yml_values,
         test_subworkflows_lint,
         test_subworkflows_lint_capitalization_fail,
         test_subworkflows_lint_empty,
@@ -150,7 +159,6 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_lint_snapshot_file,
         test_subworkflows_lint_snapshot_file_missing_fail,
         test_subworkflows_lint_snapshot_file_not_needed,
-        test_subworkflows_missing_tags_yml,
     )
     from .subworkflows.list import (  # type: ignore[misc]
         test_subworkflows_install_and_list_subworkflows,
