@@ -4,6 +4,8 @@
 
 ### Template
 
+- Change paths to test data ([#2985](https://github.com/nf-core/tools/pull/2985))
+
 ### Linting
 
 - Fix linting fail on nfcore_external_java_deps if nf_schema is used ([#2976](https://github.com/nf-core/tools/pull/2976))
