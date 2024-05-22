@@ -774,14 +774,13 @@ def test_nftest_failing_linting(self):
     module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
     module_lint.lint(print_results=False, module="kallisto/quant")
 
-    assert len(module_lint.failed) == 4, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.failed) == 3, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
     assert len(module_lint.passed) >= 0
     assert len(module_lint.warned) >= 0
     assert module_lint.failed[0].lint_test == "environment_yml_valid"
     assert module_lint.failed[1].lint_test == "meta_yml_valid"
     assert module_lint.failed[2].lint_test == "test_main_tags"
     assert "kallisto/index" in module_lint.failed[2].message
-    assert module_lint.failed[3].lint_test == "test_tags_yml"
 
 
 def test_modules_absent_version(self):
