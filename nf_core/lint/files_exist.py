@@ -66,6 +66,8 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         conf/igenomes.config
         .github/workflows/awstest.yml
         .github/workflows/awsfulltest.yml
+        nf-test.config
+        tests/nextflow.config
 
     Files that *must not* be present, due to being renamed or removed in the template:
 
@@ -175,6 +177,7 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         [Path(".github", "workflows", "awstest.yml")],
         [Path(".github", "workflows", "awsfulltest.yml")],
         [Path("modules.json")],
+        [Path("nf-test.config", "tests/nextflow.config")],
     ]
 
     # List of strings. Fails / warns if any of the strings exist.
