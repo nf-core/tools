@@ -14,6 +14,8 @@ nextflow_pipeline {
         }
 
         then {
+            // TODO nf-core: Add more testing assertions here to make sure your pipeline is valid.
+            // See https://nf-co.re/docs/contributing/nf-test/assertions for guidance.
             assertAll(
                 { assert workflow.success }
             )
