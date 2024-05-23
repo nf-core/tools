@@ -8,7 +8,7 @@ from typing import Dict, List, Union
 
 import yaml
 
-import nf_core.create
+import nf_core.pipelines.create.create
 
 log = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     ]
 
     # Only show error messages from pipeline creation
-    logging.getLogger("nf_core.create").setLevel(logging.ERROR)
+    logging.getLogger("nf_core.pipelines.create").setLevel(logging.ERROR)
 
     # Generate a new pipeline with nf-core create that we can compare to
     tmp_dir = tempfile.mkdtemp()
@@ -119,16 +119,16 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         "name": short_name,
         "description": self.nf_config["manifest.description"].strip("\"'"),
         "author": self.nf_config["manifest.author"].strip("\"'"),
-        "prefix": prefix,
+        "org": prefix,
     }
 
     template_yaml_path = Path(tmp_dir, "template.yaml")
     with open(template_yaml_path, "w") as fh:
         yaml.dump(template_yaml, fh, default_flow_style=False)
 
-    test_pipeline_dir = Path(tmp_dir, f"{prefix}-{short_name}")
-    create_obj = nf_core.create.PipelineCreate(
-        None, None, None, no_git=True, outdir=test_pipeline_dir, template_yaml_path=template_yaml_path
+    test_pipeline_dir = os.path.join(tmp_dir, f"{prefix}-{short_name}")
+    create_obj = nf_core.pipelines.create.create.PipelineCreate(
+        None, None, None, no_git=True, outdir=test_pipeline_dir, template_config=template_yaml_path
     )
     create_obj.init_pipeline()
 
@@ -160,10 +160,8 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
                     if filecmp.cmp(_pf(f), _tf(f), shallow=True):
                         passed.append(f"`{f}` matches the template")
                     else:
-                        if (
-                            f.name.endswith(".png")
-                            and os.stat(_pf(f)).st_mode == os.stat(_tf(f)).st_mode
-                            and int(os.stat(_pf(f)).st_size / 100) == int(os.stat(_tf(f)).st_size / 100)
+                        if f.name.endswith(".png") and int(os.stat(_pf(f)).st_size / 500) == int(
+                            os.stat(_tf(f)).st_size / 500
                         ):
                             # almost the same file, good enough for the logo
                             log.debug(f"Files are almost the same. Will pass: {f}")

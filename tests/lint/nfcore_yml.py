@@ -1,8 +1,8 @@
 import re
 from pathlib import Path
 
-import nf_core.create
 import nf_core.lint
+import nf_core.pipelines.create
 
 
 def test_nfcore_yml_pass(self):

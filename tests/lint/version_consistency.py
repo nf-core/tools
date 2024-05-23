@@ -1,5 +1,5 @@
-import nf_core.create
 import nf_core.lint
+import nf_core.pipelines.create.create
 
 
 def test_version_consistency(self):
@@ -11,4 +11,4 @@ def test_version_consistency(self):
 
     result = lint_obj.version_consistency()
     assert result["passed"] == ["Version tags are numeric and consistent between container, release tag and config."]
-    assert result["failed"] == ["manifest.version was not numeric: 1.0dev!"]
+    assert result["failed"] == ["manifest.version was not numeric: 1.0.0dev!"]

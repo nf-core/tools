@@ -17,7 +17,7 @@ from nf_core import __version__
 from nf_core.download import DownloadError
 from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE
 from nf_core.params_file import ParamsFileBuilder
-from nf_core.utils import check_if_outdated, rich_force_colors, setup_nfcore_dir
+from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 
 # Set up logging as the root logger
 # Submodules should all traverse back to this
@@ -45,7 +45,7 @@ click.rich_click.COMMAND_GROUPS = {
         {
             "name": "Commands for developers",
             "commands": [
-                "create",
+                "pipelines",
                 "lint",
                 "modules",
                 "subworkflows",
@@ -54,6 +54,12 @@ click.rich_click.COMMAND_GROUPS = {
                 "bump-version",
                 "sync",
             ],
+        },
+    ],
+    "nf-core pipelines": [
+        {
+            "name": "Pipeline commands",
+            "commands": ["create"],
         },
     ],
     "nf-core modules": [
@@ -115,25 +121,11 @@ def run_nf_core():
     # print nf-core header if environment variable is not set
     if os.environ.get("_NF_CORE_COMPLETE") is None:
         # Print nf-core header
-        stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
+        stderr.print("\n")
+        for line in nfcore_logo:
+            stderr.print(line, highlight=False)
         stderr.print(
-            "[blue]          ___     __   __   __   ___     [green]/,-._.--~\\",
-            highlight=False,
-        )
-        stderr.print(
-            r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {",
-            highlight=False,
-        )
-        stderr.print(
-            r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,",
-            highlight=False,
-        )
-        stderr.print(
-            "[green]                                          `._,._,'\n",
-            highlight=False,
-        )
-        stderr.print(
-            f"[grey39]    nf-core/tools version {__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
+            f"\n[grey39]    nf-core/tools version {__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
             highlight=False,
         )
         try:
@@ -368,14 +360,14 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 # TODO: Remove this in a future release. Deprecated in March 2024.
 @click.option(
+    "-t",
     "--tower",
     is_flag=True,
     default=False,
     hidden=True,
-    help="Download for Seqera Platform. DEPRECATED: Please use --platform instead.",
+    help="Download for Seqera Platform. DEPRECATED: Please use `--platform` instead.",
 )
 @click.option(
-    "-t",
     "--platform",
     is_flag=True,
     default=False,
@@ -387,6 +379,11 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     is_flag=True,
     default=False,
     help="Include configuration profiles in download. Not available with `--platform`",
+)
+@click.option(
+    "--tag",
+    multiple=True,
+    help="Add custom alias tags to `--platform` downloads. For example, `--tag \"3.10=validated\"` adds the custom 'validated' tag to the 3.10 release.",
 )
 # -c changed to -s for consistency with other --container arguments, where it is always the first letter of the last word.
 # Also -c might be used instead of -d for config in a later release, but reusing params for different options in two subsequent releases might be too error-prone.
@@ -430,6 +427,7 @@ def download(
     tower,
     platform,
     download_configuration,
+    tag,
     container_system,
     container_library,
     container_cache_utilisation,
@@ -444,6 +442,9 @@ def download(
     """
     from nf_core.download import DownloadWorkflow
 
+    if tower:
+        log.warning("[red]The `-t` / `--tower` flag is deprecated. Please use `--platform` instead.[/]")
+
     dl = DownloadWorkflow(
         pipeline,
         revision,
@@ -452,6 +453,7 @@ def download(
         force,
         tower or platform,  # True if either specified
         download_configuration,
+        tag,
         container_system,
         container_library,
         container_cache_utilisation,
@@ -480,53 +482,6 @@ def licences(pipeline, json):
     try:
         stdout.print(lic.run_licences())
     except LookupError as e:
-        log.error(e)
-        sys.exit(1)
-
-
-# nf-core create
-@nf_core_cli.command()
-@click.option(
-    "-n",
-    "--name",
-    type=str,
-    help="The name of your new pipeline",
-)
-@click.option("-d", "--description", type=str, help="A short description of your pipeline")
-@click.option("-a", "--author", type=str, help="Name of the main author(s)")
-@click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
-@click.option(
-    "-f",
-    "--force",
-    is_flag=True,
-    default=False,
-    help="Overwrite output directory if it already exists",
-)
-@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
-@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-@click.option("--plain", is_flag=True, help="Use the standard nf-core template")
-def create(name, description, author, version, force, outdir, template_yaml, plain):
-    """
-    Create a new pipeline using the nf-core template.
-
-    Uses the nf-core template to make a skeleton Nextflow pipeline with all required
-    files, boilerplate code and best-practices.
-    """
-    from nf_core.create import PipelineCreate
-
-    try:
-        create_obj = PipelineCreate(
-            name,
-            description,
-            author,
-            version=version,
-            force=force,
-            outdir=outdir,
-            template_yaml_path=template_yaml,
-            plain=plain,
-        )
-        create_obj.init_pipeline()
-    except UserWarning as e:
         log.error(e)
         sys.exit(1)
 
@@ -646,6 +601,111 @@ def lint(
     except UserWarning as e:
         log.error(e)
         sys.exit(1)
+
+
+# nf-core pipelines subcommands
+@nf_core_cli.group()
+@click.pass_context
+def pipelines(ctx):
+    """
+    Commands to manage nf-core pipelines.
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
+
+# nf-core pipelines create
+@pipelines.command("create")
+@click.pass_context
+@click.option(
+    "-n",
+    "--name",
+    type=str,
+    help="The name of your new pipeline",
+)
+@click.option("-d", "--description", type=str, help="A short description of your pipeline")
+@click.option("-a", "--author", type=str, help="Name of the main author(s)")
+@click.option("--version", type=str, default="1.0.0dev", help="The initial version number to use")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
+@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+@click.option(
+    "--organisation",
+    type=str,
+    default="nf-core",
+    help="The name of the GitHub organisation where the pipeline will be hosted (default: nf-core)",
+)
+def create_pipeline(ctx, name, description, author, version, force, outdir, template_yaml, organisation):
+    """
+    Create a new pipeline using the nf-core template.
+
+    Uses the nf-core template to make a skeleton Nextflow pipeline with all required
+    files, boilerplate code and best-practices.
+    \n\n
+    Run without any command line arguments to use an interactive interface.
+    """
+    from nf_core.pipelines.create import PipelineCreateApp
+    from nf_core.pipelines.create.create import PipelineCreate
+
+    if (name and description and author) or (template_yaml):
+        # If all command arguments are used, run without the interactive interface
+        try:
+            create_obj = PipelineCreate(
+                name,
+                description,
+                author,
+                version=version,
+                force=force,
+                outdir=outdir,
+                template_config=template_yaml,
+                organisation=organisation,
+            )
+            create_obj.init_pipeline()
+        except UserWarning as e:
+            log.error(e)
+            sys.exit(1)
+    elif name or description or author or version != "1.0.0dev" or force or outdir or organisation != "nf-core":
+        log.error(
+            "[red]Partial arguments supplied.[/] "
+            "Run without [i]any[/] arguments for an interactive interface, "
+            "or with at least name + description + author to use non-interactively."
+        )
+        sys.exit(1)
+    else:
+        log.info("Launching interactive nf-core pipeline creation tool.")
+        app = PipelineCreateApp()
+        app.run()
+        sys.exit(app.return_code or 0)
+
+
+# nf-core create (deprecated)
+@nf_core_cli.command(hidden=True, deprecated=True)
+@click.option(
+    "-n",
+    "--name",
+    type=str,
+    help="The name of your new pipeline",
+)
+@click.option("-d", "--description", type=str, help="A short description of your pipeline")
+@click.option("-a", "--author", type=str, help="Name of the main author(s)")
+@click.option("--version", type=str, help="The initial version number to use")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
+@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+@click.option("--plain", is_flag=True, help="Use the standard nf-core template")
+def create(name, description, author, version, force, outdir, template_yaml, plain):
+    """
+    DEPRECATED
+    Create a new pipeline using the nf-core template.
+
+    Uses the nf-core template to make a skeleton Nextflow pipeline with all required
+    files, boilerplate code and best-practices.
+    """
+    log.error(
+        "The `[magenta]nf-core create[/]` command is deprecated. Use `[magenta]nf-core pipelines create[/]` instead."
+    )
+    sys.exit(0)
 
 
 # nf-core modules subcommands
@@ -2137,10 +2197,16 @@ def logo(logo_text, dir, name, theme, width, format, force):
     default=False,
     help="Make a GitHub pull-request with the changes.",
 )
+@click.option(
+    "--force_pr",
+    is_flag=True,
+    default=False,
+    help="Force the creation of a pull-request, even if there are no changes.",
+)
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-def sync(dir, from_branch, pull_request, github_repository, username, template_yaml):
+def sync(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
@@ -2160,7 +2226,7 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     is_pipeline_directory(dir)
 
     # Sync the given pipeline dir
-    sync_obj = PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml)
+    sync_obj = PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
     try:
         sync_obj.sync()
     except (SyncExceptionError, PullRequestExceptionError) as e:

@@ -200,8 +200,8 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         Path("Singularity"),
     ]
     files_warn_ifexists = [Path(".travis.yml")]
-    files_fail_ifinconfig: List[Tuple[Path, Dict[str, str]]] = [
-        (Path("lib", "nfcore_external_java_deps.jar"), {"plugins": "nf-validation"}),
+    files_fail_ifinconfig: List[Tuple[Path, List[Dict[str, str]]]] = [
+        (Path("lib", "nfcore_external_java_deps.jar"), [{"plugins": "nf-validation"}, {"plugins": "nf-schema"}]),
     ]
 
     # Remove files that should be ignored according to the linting config
@@ -246,10 +246,11 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         if str(file_cond[0]) in ignore_files:
             continue
         in_config = False
-        config_key, config_value = list(file_cond[1].items())[0]
-        if config_key in self.nf_config and config_value in self.nf_config[config_key]:
-            log.debug(f"Found {config_key} in nextflow.config with value {config_value}")
-            in_config = True
+        for condition in file_cond[1]:
+            config_key, config_value = list(condition.items())[0]
+            if config_key in self.nf_config and config_value in self.nf_config[config_key]:
+                log.debug(f"Found {config_key} in nextflow.config with value {config_value}")
+                in_config = True
         if pf(file_cond[0]).is_file() and in_config:
             failed.append(f"File must be removed: {self._wrap_quotes(file_cond[0])}")
         elif pf(file_cond[0]).is_file() and not in_config:

@@ -79,3 +79,20 @@ def test_files_exist_fail_conditional(self):
     results = lint_obj.files_exist()
     assert results["failed"] == ["File must be removed: `lib/nfcore_external_java_deps.jar`"]
     assert results["ignored"] == []
+
+
+def test_files_exist_pass_conditional_nfschema(self):
+    new_pipeline = self._make_pipeline_copy()
+    # replace nf-validation with nf-schema in nextflow.config
+    with open(Path(new_pipeline, "nextflow.config")) as f:
+        config = f.read()
+    config = config.replace("nf-validation", "nf-schema")
+    with open(Path(new_pipeline, "nextflow.config"), "w") as f:
+        f.write(config)
+
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj._load()
+    lint_obj.nf_config["manifest.schema"] = "nf-core"
+    results = lint_obj.files_exist()
+    assert results["failed"] == []
+    assert results["ignored"] == []
