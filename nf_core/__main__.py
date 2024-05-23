@@ -2375,7 +2375,7 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-def sync_pipeline(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
+def sync_pipeline(ctx, dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
