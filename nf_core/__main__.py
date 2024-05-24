@@ -2199,7 +2199,7 @@ def bump_version(new_version, dir, nextflow):
     default=False,
     help="Bump required nextflow version instead of pipeline version",
 )
-def bump_version_pipeline(new_version, dir, nextflow):
+def bump_version_pipeline(ctx, new_version, dir, nextflow):
     """
     Update nf-core pipeline version number.
 
