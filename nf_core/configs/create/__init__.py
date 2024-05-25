@@ -31,6 +31,7 @@ logging.basicConfig(
 )
 log_handler.setLevel("INFO")
 
+
 ## Main workflow
 class ConfigsCreateApp(App[CreateConfig]):
     """A Textual app to create nf-core configs."""
@@ -44,9 +45,7 @@ class ConfigsCreateApp(App[CreateConfig]):
     ]
 
     ## New question screens (sections) loaded here
-    SCREENS = {
-        "welcome": WelcomeScreen()
-    }
+    SCREENS = {"welcome": WelcomeScreen()}
 
     # Log handler
     LOG_HANDLER = log_handler

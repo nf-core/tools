@@ -309,6 +309,7 @@ def launch(
     if not launcher.launch_pipeline():
         sys.exit(1)
 
+
 # nf-core configs
 @nf_core_cli.group()
 @click.pass_context
@@ -336,6 +337,7 @@ def create_configs():
     except UserWarning as e:
         log.error(e)
         sys.exit(1)
+
 
 # nf-core create-params-file
 @nf_core_cli.command()
