@@ -14,6 +14,10 @@
 
 ### Components
 
+### Configs
+
+- New command: `nf-core configs create wizard` for generating configs for nf-core pipelines ([#3001](https://github.com/nf-core/tools/pull/3001))
+
 ### General
 
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.4 ([#2974](https://github.com/nf-core/tools/pull/2974))
