@@ -3,6 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 from rich.logging import RichHandler
+from textual._context import active_app
 from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import RichLog
