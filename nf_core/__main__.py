@@ -36,6 +36,7 @@ click.rich_click.COMMAND_GROUPS = {
             "commands": [
                 "list",
                 "launch",
+                "configs",
                 "create-params-file",
                 "download",
                 "licences",
@@ -80,6 +81,12 @@ click.rich_click.COMMAND_GROUPS = {
         {
             "name": "Developing new subworkflows",
             "commands": ["create", "test", "lint"],
+        },
+    ],
+    "nf-core configs": [
+        {
+            "name": "Config commands",
+            "commands": ["create"],
         },
     ],
 }
@@ -302,6 +309,33 @@ def launch(
     if not launcher.launch_pipeline():
         sys.exit(1)
 
+# nf-core configs
+@nf_core_cli.group()
+@click.pass_context
+def configs(ctx):
+    """
+    Commands to create and manage nf-core configs.
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
+
+@configs.command("create")
+def create_configs():
+    """
+    Command to interactively create a nextflow or nf-core config
+    """
+    from nf_core.configs.create import ConfigsCreateApp
+
+    try:
+        log.info("Launching interactive nf-core configs creation tool.")
+        app = ConfigsCreateApp()
+        app.run()
+        sys.exit(app.return_code or 0)
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
 
 # nf-core create-params-file
 @nf_core_cli.command()
