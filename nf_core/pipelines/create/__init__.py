@@ -14,12 +14,9 @@ from nf_core.pipelines.create.githubrepoquestion import GithubRepoQuestion
 from nf_core.pipelines.create.loggingscreen import LoggingScreen
 from nf_core.pipelines.create.nfcorepipeline import NfcorePipeline
 from nf_core.pipelines.create.pipelinetype import ChoosePipelineType
-from nf_core.pipelines.create.utils import (
-    CreateConfig,
-    CustomLogHandler,
-    LoggingConsole,
-)
+from nf_core.pipelines.create.utils import CreateConfig
 from nf_core.pipelines.create.welcome import WelcomeScreen
+from nf_core.utils import CustomLogHandler, LoggingConsole
 
 log_handler = CustomLogHandler(
     console=LoggingConsole(classes="log_console"),

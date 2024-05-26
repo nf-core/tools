@@ -13,7 +13,8 @@ from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown, Static, Switch
 
-from nf_core.pipelines.create.utils import ShowLogs, TextInput, remove_hide_class
+from nf_core.pipelines.create.utils import TextInput
+from nf_core.utils import ShowLogs, remove_hide_class
 
 log = logging.getLogger(__name__)
 

@@ -6,15 +6,16 @@ import logging
 from textual.app import App
 from textual.widgets import Button
 
-## General utilities
-from nf_core.configs.create.utils import (
-    CreateConfig,
-    CustomLogHandler,
-    LoggingConsole,
-)
+from nf_core.configs.create.utils import CreateConfig
 
 ## nf-core question page imports
 from nf_core.configs.create.welcome import WelcomeScreen
+
+## General utilities
+from nf_core.utils import (
+    CustomLogHandler,
+    LoggingConsole,
+)
 
 ## Logging
 log_handler = CustomLogHandler(
