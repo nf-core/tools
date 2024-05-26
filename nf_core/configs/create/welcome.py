@@ -1,3 +1,5 @@
+"""Intro information to help inform user what we are about to do"""
+
 from textual.app import ComposeResult
 from textual.containers import Center
 from textual.screen import Screen

@@ -1,3 +1,5 @@
+"""Config creation specific functions and classes"""
+
 from typing import Optional
 
 from pydantic import BaseModel

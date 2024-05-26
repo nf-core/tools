@@ -6,7 +6,8 @@ import logging
 from textual.app import App
 from textual.widgets import Button
 
-## nf-core question page imports
+## nf-core question page (screen) imports
+from nf_core.configs.create.basicdetails import BasicDetails
 from nf_core.configs.create.configtype import ChooseConfigType
 from nf_core.configs.create.utils import CreateConfig
 from nf_core.configs.create.welcome import WelcomeScreen
@@ -46,10 +47,10 @@ class ConfigsCreateApp(App[CreateConfig]):
     ]
 
     ## New question screens (sections) loaded here
-    SCREENS = {
-        "welcome": WelcomeScreen(),
-        "choose_type": ChooseConfigType(),
-    }
+    SCREENS = {"welcome": WelcomeScreen(), "choose_type": ChooseConfigType(), "basic_details": BasicDetails()}
+
+    # Tracking variables
+    CONFIG_TYPE = None
 
     # Log handler
     LOG_HANDLER = log_handler
@@ -64,6 +65,17 @@ class ConfigsCreateApp(App[CreateConfig]):
         """Handle all button pressed events."""
         if event.button.id == "lets_go":
             self.push_screen("choose_type")
+        elif event.button.id == "type_infrastructure":
+            self.CONFIG_TYPE = "infrastructure"
+            self.push_screen("basic_details")
+        elif event.button.id == "type_pipeline":
+            self.CONFIG_TYPE = "pipeline"
+            self.push_screen("basic_details")
+        ## General options
+        if event.button.id == "close_app":
+            self.exit(return_code=0)
+        if event.button.id == "back":
+            self.pop_screen()
 
     ## User theme options
     def action_toggle_dark(self) -> None:

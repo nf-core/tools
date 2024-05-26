@@ -1,3 +1,5 @@
+"""Select which type of config to create to guide questions and order"""
+
 from textual.app import ComposeResult
 from textual.containers import Center, Grid
 from textual.screen import Screen
