@@ -6,9 +6,9 @@ import logging
 from textual.app import App
 from textual.widgets import Button
 
-from nf_core.configs.create.utils import CreateConfig
-
 ## nf-core question page imports
+from nf_core.configs.create.configtype import ChooseConfigType
+from nf_core.configs.create.utils import CreateConfig
 from nf_core.configs.create.welcome import WelcomeScreen
 
 ## General utilities
@@ -46,7 +46,10 @@ class ConfigsCreateApp(App[CreateConfig]):
     ]
 
     ## New question screens (sections) loaded here
-    SCREENS = {"welcome": WelcomeScreen()}
+    SCREENS = {
+        "welcome": WelcomeScreen(),
+        "choose_type": ChooseConfigType(),
+    }
 
     # Log handler
     LOG_HANDLER = log_handler
@@ -56,6 +59,11 @@ class ConfigsCreateApp(App[CreateConfig]):
     ## Question dialogue order defined here
     def on_mount(self) -> None:
         self.push_screen("welcome")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle all button pressed events."""
+        if event.button.id == "lets_go":
+            self.push_screen("choose_type")
 
     ## User theme options
     def action_toggle_dark(self) -> None:

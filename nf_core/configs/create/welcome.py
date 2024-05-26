@@ -9,24 +9,21 @@ markdown = """
 # Welcome to the nf-core config creation wizard
 
 This app will help you create **Nextflow configuration files**
-for both **infrastructure** and **pipeline-specific** configs.
+for both:
 
-## Config Types
-
-- **Infrastructure configs** allow you to define the computational environment you
-will run the pipelines on (memory, CPUs, scheduling system, container engine
-etc.).
-- **Pipeline configs** allow you to tweak resources of a particular step of a
-pipeline. For example process X should request 8.GB of memory.
+- **Infrastructure** configs for defining computing environment for all
+  pipelines, and
+- **Pipeline** configs for defining pipeline-specific resource requirements
 
 ## Using Configs
 
-The resulting config file can be used with a pipeline with `-c <filename>.conf`.
+The resulting config file can be used with a pipeline with adding `-c
+<filename>.conf` to a `nextflow run` command.
 
 They can also be added to the centralised
 [nf-core/configs](https://github.com/nf-core/configs) repository, where they
-can be used by anyone running nf-core pipelines on your infrastructure directly
-using `-profile <configname>`.
+can be used directly by anyone running nf-core pipelines on your infrastructure
+specifying `nextflow run -profile <configname>`.
 """
 
 
@@ -41,4 +38,4 @@ class WelcomeScreen(Screen):
             id="logo",
         )
         yield Markdown(markdown)
-        yield Center(Button("Let's go!", id="start", variant="success"), classes="cta")
+        yield Center(Button("Let's go!", id="lets_go", variant="success"), classes="cta")
