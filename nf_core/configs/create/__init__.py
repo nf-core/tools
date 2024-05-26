@@ -37,7 +37,7 @@ log_handler.setLevel("INFO")
 class ConfigsCreateApp(App[CreateConfig]):
     """A Textual app to create nf-core configs."""
 
-    CSS_PATH = "create.tcss"
+    CSS_PATH = "../../textual.tcss"
     TITLE = "nf-core configs create"
     SUB_TITLE = "Create a new nextflow config with an interactive interface"
     BINDINGS = [
