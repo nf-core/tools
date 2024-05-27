@@ -77,6 +77,9 @@ jobs:
           ls -la
           nextflow run nf-core-testpipeline -profile test,docker --outdir ./results
 
+      - name: Setup ssh session
+        uses: Warpbuilds/action-debugger@v1.3
+
       - name: Upload log file artifact
         if: ${{ always() }}
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
