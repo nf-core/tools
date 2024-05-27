@@ -130,6 +130,9 @@ jobs:
         run: |
           mv .github/.coveragerc .
 
+      - name: Setup ssh session
+        uses: Warpbuilds/action-debugger@v1.3
+
       - name: Test with pytest
         run: |
           python3 -m pytest tests/${{matrix.test}} --color=yes --cov --durations=0 && exit_code=0|| exit_code=$?
