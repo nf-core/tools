@@ -75,7 +75,10 @@ jobs:
           pwd
           # echo content of current directory
           ls -la
-          nextflow run nf-core-testpipeline -profile test,self_hosted_runner --outdir ./results
+          nextflow run nf-core-testpipeline -profile test,docker --outdir ./results
+
+      - name: Setup ssh session
+        uses: Warpbuilds/action-debugger@v1.3
 
       - name: Upload log file artifact
         if: ${{ always() }}
