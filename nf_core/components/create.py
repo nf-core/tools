@@ -158,8 +158,8 @@ class ComponentCreate(ComponentCommand):
                 self._get_module_structure_components()
 
         # Add a valid organization name for nf-test tags
-        not_alphabet = re.compile(r'[^a-zA-Z]')
-        self.org_alphabet = not_alphabet.sub('', self.org)
+        not_alphabet = re.compile(r"[^a-zA-Z]")
+        self.org_alphabet = not_alphabet.sub("", self.org)
 
         # Create component template with jinja2
         self._render_template()

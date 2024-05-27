@@ -138,8 +138,8 @@ def module_tests(_, module: NFCoreComponent):
                     )
             # Verify that tags are correct.
             main_nf_tags = module._get_main_nf_tags(module.nftest_main_nf)
-            not_alphabet = re.compile(r'[^a-zA-Z]')
-            org_alp = not_alphabet.sub('', module.org)
+            not_alphabet = re.compile(r"[^a-zA-Z]")
+            org_alp = not_alphabet.sub("", module.org)
             org_alphabet = org_alp if org_alp != "" else "nfcore"
             required_tags = ["modules", f"modules_{org_alphabet}", module.component_name]
             if module.component_name.count("/") == 1:

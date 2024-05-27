@@ -145,8 +145,8 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
                     )
             # Verify that tags are correct.
             main_nf_tags = subworkflow._get_main_nf_tags(subworkflow.nftest_main_nf)
-            not_alphabet = re.compile(r'[^a-zA-Z]')
-            org_alp = not_alphabet.sub('', subworkflow.org)
+            not_alphabet = re.compile(r"[^a-zA-Z]")
+            org_alp = not_alphabet.sub("", subworkflow.org)
             org_alphabet = org_alp if org_alp != "" else "nfcore"
             required_tags = [
                 "subworkflows",
