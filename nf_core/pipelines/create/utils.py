@@ -1,9 +1,11 @@
 import re
+from contextlib import contextmanager
+from contextvars import ContextVar
 from logging import LogRecord
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Dict, Iterator, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, ValidationError, ValidationInfo, field_validator
 from rich.logging import RichHandler
 from textual import on
 from textual._context import active_app
@@ -13,6 +15,22 @@ from textual.message import Message
 from textual.validation import ValidationResult, Validator
 from textual.widget import Widget
 from textual.widgets import Button, Input, Markdown, RichLog, Static, Switch
+
+# Use ContextVar to define a context on the model initialization
+_init_context_var: ContextVar = ContextVar("_init_context_var", default={})
+
+
+@contextmanager
+def init_context(value: Dict[str, Any]) -> Iterator[None]:
+    token = _init_context_var.set(value)
+    try:
+        yield
+    finally:
+        _init_context_var.reset(token)
+
+
+# Define a global variable to store the pipeline type
+PIPELINE_TYPE_GLOBAL: str | None = None
 
 
 class CreateConfig(BaseModel):
@@ -30,12 +48,25 @@ class CreateConfig(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+    def __init__(self, /, **data: Any) -> None:
+        """Custom init method to allow using a context on the model initialization."""
+        self.__pydantic_validator__.validate_python(
+            data,
+            self_instance=self,
+            context=_init_context_var.get(),
+        )
+
     @field_validator("name")
     @classmethod
-    def name_nospecialchars(cls, v: str) -> str:
+    def name_nospecialchars(cls, v: str, info: ValidationInfo) -> str:
         """Check that the pipeline name is simple."""
-        if not re.match(r"^[a-z]+$", v):
-            raise ValueError("Must be lowercase without punctuation.")
+        context = info.context
+        if context and context["is_nfcore"]:
+            if not re.match(r"^[a-z]+$", v):
+                raise ValueError("Must be lowercase without punctuation.")
+        else:
+            if not re.match(r"^[a-zA-Z-_]+$", v):
+                raise ValueError("Must not contain special characters. Only '-' or '_' are allowed.")
         return v
 
     @field_validator("org", "description", "author", "version", "outdir")
@@ -117,8 +148,9 @@ class ValidateConfig(Validator):
 
         If it fails, return the error messages."""
         try:
-            CreateConfig(**{f"{self.key}": value})
-            return self.success()
+            with init_context({"is_nfcore": PIPELINE_TYPE_GLOBAL == "nfcore"}):
+                CreateConfig(**{f"{self.key}": value})
+                return self.success()
         except ValidationError as e:
             return self.failure(", ".join([err["msg"] for err in e.errors()]))
 

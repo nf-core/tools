@@ -5,6 +5,7 @@ import logging
 from textual.app import App
 from textual.widgets import Button
 
+from nf_core.pipelines.create import utils
 from nf_core.pipelines.create.basicdetails import BasicDetails
 from nf_core.pipelines.create.custompipeline import CustomPipeline
 from nf_core.pipelines.create.finaldetails import FinalDetails
@@ -14,15 +15,10 @@ from nf_core.pipelines.create.githubrepoquestion import GithubRepoQuestion
 from nf_core.pipelines.create.loggingscreen import LoggingScreen
 from nf_core.pipelines.create.nfcorepipeline import NfcorePipeline
 from nf_core.pipelines.create.pipelinetype import ChoosePipelineType
-from nf_core.pipelines.create.utils import (
-    CreateConfig,
-    CustomLogHandler,
-    LoggingConsole,
-)
 from nf_core.pipelines.create.welcome import WelcomeScreen
 
-log_handler = CustomLogHandler(
-    console=LoggingConsole(classes="log_console"),
+log_handler = utils.CustomLogHandler(
+    console=utils.LoggingConsole(classes="log_console"),
     rich_tracebacks=True,
     show_time=False,
     show_path=False,
@@ -36,7 +32,7 @@ logging.basicConfig(
 log_handler.setLevel("INFO")
 
 
-class PipelineCreateApp(App[CreateConfig]):
+class PipelineCreateApp(App[utils.CreateConfig]):
     """A Textual app to manage stopwatches."""
 
     CSS_PATH = "create.tcss"
@@ -60,7 +56,7 @@ class PipelineCreateApp(App[CreateConfig]):
     }
 
     # Initialise config as empty
-    TEMPLATE_CONFIG = CreateConfig()
+    TEMPLATE_CONFIG = utils.CreateConfig()
 
     # Initialise pipeline type
     PIPELINE_TYPE = None
@@ -79,9 +75,11 @@ class PipelineCreateApp(App[CreateConfig]):
             self.push_screen("choose_type")
         elif event.button.id == "type_nfcore":
             self.PIPELINE_TYPE = "nfcore"
+            utils.PIPELINE_TYPE_GLOBAL = "nfcore"
             self.push_screen("basic_details")
         elif event.button.id == "type_custom":
             self.PIPELINE_TYPE = "custom"
+            utils.PIPELINE_TYPE_GLOBAL = "custom"
             self.push_screen("basic_details")
         elif event.button.id == "continue":
             self.push_screen("final_details")
