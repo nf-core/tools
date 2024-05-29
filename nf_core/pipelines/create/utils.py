@@ -30,7 +30,7 @@ def init_context(value: Dict[str, Any]) -> Iterator[None]:
 
 
 # Define a global variable to store the pipeline type
-PIPELINE_TYPE_GLOBAL: str | None = None
+PIPELINE_TYPE_GLOBAL: Union[str, None] = None
 
 
 class CreateConfig(BaseModel):
