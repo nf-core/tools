@@ -30,7 +30,7 @@ def init_context(value: Dict[str, Any]) -> Iterator[None]:
 
 
 # Define a global variable to store the pipeline type
-PIPELINE_TYPE_GLOBAL: Union[str, None] = None
+NFCORE_PIPELINE_GLOBAL: bool = True
 
 
 class CreateConfig(BaseModel):
@@ -148,7 +148,7 @@ class ValidateConfig(Validator):
 
         If it fails, return the error messages."""
         try:
-            with init_context({"is_nfcore": PIPELINE_TYPE_GLOBAL == "nfcore"}):
+            with init_context({"is_nfcore": NFCORE_PIPELINE_GLOBAL}):
                 CreateConfig(**{f"{self.key}": value})
                 return self.success()
         except ValidationError as e:

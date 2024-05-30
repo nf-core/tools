@@ -59,7 +59,7 @@ class PipelineCreateApp(App[utils.CreateConfig]):
     TEMPLATE_CONFIG = utils.CreateConfig()
 
     # Initialise pipeline type
-    PIPELINE_TYPE = None
+    NFCORE_PIPELINE = True
 
     # Log handler
     LOG_HANDLER = log_handler
@@ -74,12 +74,12 @@ class PipelineCreateApp(App[utils.CreateConfig]):
         if event.button.id == "start":
             self.push_screen("choose_type")
         elif event.button.id == "type_nfcore":
-            self.PIPELINE_TYPE = "nfcore"
-            utils.PIPELINE_TYPE_GLOBAL = "nfcore"
+            self.NFCORE_PIPELINE = True
+            utils.NFCORE_PIPELINE_GLOBAL = True
             self.push_screen("basic_details")
         elif event.button.id == "type_custom":
-            self.PIPELINE_TYPE = "custom"
-            utils.PIPELINE_TYPE_GLOBAL = "custom"
+            self.NFCORE_PIPELINE = False
+            utils.NFCORE_PIPELINE_GLOBAL = False
             self.push_screen("basic_details")
         elif event.button.id == "continue":
             self.push_screen("final_details")
