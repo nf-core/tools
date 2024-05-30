@@ -31,6 +31,7 @@
 ### Template
 
 - Don't cache pip in `linting.yml` ([#2961](https://github.com/nf-core/tools/pull/2961))
+- Lint pipelines with the nf-core template version and post comment if it is outdated ([#2978](https://github.com/nf-core/tools/pull/2978))
 
 ### General
 
