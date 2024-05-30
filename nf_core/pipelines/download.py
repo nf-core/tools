@@ -23,7 +23,7 @@ from git.exc import GitCommandError, InvalidGitRepositoryError
 from pkg_resources import parse_version as version_parser
 
 import nf_core
-import nf_core.list
+import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
 from nf_core.utils import (
@@ -169,7 +169,7 @@ class DownloadWorkflow:
         self.containers_remote = []  # stores the remote images provided in the file.
 
         # Fetch remote workflows
-        self.wfs = nf_core.list.Workflows()
+        self.wfs = nf_core.pipelines.list.Workflows()
         self.wfs.get_remote_workflows()
 
     def download_workflow(self):

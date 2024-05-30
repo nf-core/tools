@@ -1,6 +1,6 @@
 import logging
 
-import nf_core.schema
+import nf_core.pipelines.schema
 
 
 def schema_lint(self):
@@ -68,7 +68,7 @@ def schema_lint(self):
     logging.getLogger("nf_core.schema").setLevel(logging.ERROR)
 
     # Lint the schema
-    self.schema_obj = nf_core.schema.PipelineSchema()
+    self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
     self.schema_obj.get_schema_path(self.wf_path)
 
     try:

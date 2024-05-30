@@ -13,7 +13,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Confirm
 
-import nf_core.schema
+import nf_core.pipelines.schema
 import nf_core.utils
 from nf_core.pipelines.lint_utils import dump_json_with_prettier
 
@@ -138,7 +138,7 @@ class Launch:
 
         # Check if we have a web ID
         if self.web_id is not None:
-            self.schema_obj = nf_core.schema.PipelineSchema()
+            self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
             try:
                 if not self.get_web_launch_response():
                     log.info(
@@ -191,7 +191,7 @@ class Launch:
         """Load and validate the schema from the supplied pipeline"""
 
         # Set up the schema
-        self.schema_obj = nf_core.schema.PipelineSchema()
+        self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
 
         # Check if this is a local directory
         localpath = os.path.abspath(os.path.expanduser(self.pipeline))

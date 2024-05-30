@@ -16,7 +16,7 @@ import yaml
 from rich.prompt import Confirm
 from rich.syntax import Syntax
 
-import nf_core.list
+import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.lint_utils import dump_json_with_prettier, run_prettier_on_file
 
@@ -66,7 +66,7 @@ class PipelineSchema:
 
         # Path does not exist - assume a name of a remote workflow
         elif not local_only:
-            self.pipeline_dir = nf_core.list.get_local_wf(path, revision=revision)
+            self.pipeline_dir = nf_core.pipelines.list.get_local_wf(path, revision=revision)
             self.schema_filename = Path(self.pipeline_dir or "", "nextflow_schema.json")
             # check if the schema file exists
             if not self.schema_filename.exists():

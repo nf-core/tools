@@ -15,8 +15,8 @@ import yaml
 from git import GitCommandError, InvalidGitRepositoryError
 
 import nf_core
-import nf_core.list
 import nf_core.pipelines.create.create
+import nf_core.pipelines.list
 import nf_core.utils
 
 log = logging.getLogger(__name__)

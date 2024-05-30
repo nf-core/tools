@@ -12,7 +12,7 @@ from unittest import mock
 import pytest
 from rich.console import Console
 
-import nf_core.list
+import nf_core.pipelines.list
 
 # create a temporary directory that can be used by the tests in this file
 tmp = Path(tempfile.mkdtemp())
@@ -26,7 +26,7 @@ class TestList(unittest.TestCase):
     @mock.patch("subprocess.check_output")
     def test_working_listcall(self, mock_subprocess):
         """Test that listing pipelines works"""
-        wf_table = nf_core.list.list_workflows()
+        wf_table = nf_core.pipelines.list.list_workflows()
         console = Console(record=True)
         console.print(wf_table)
         output = console.export_text()
@@ -36,7 +36,7 @@ class TestList(unittest.TestCase):
     @mock.patch("subprocess.check_output")
     def test_working_listcall_archived(self, mock_subprocess):
         """Test that listing pipelines works, showing archived pipelines"""
-        wf_table = nf_core.list.list_workflows(show_archived=True)
+        wf_table = nf_core.pipelines.list.list_workflows(show_archived=True)
         console = Console(record=True)
         console.print(wf_table)
         output = console.export_text()
@@ -45,7 +45,7 @@ class TestList(unittest.TestCase):
     @mock.patch("subprocess.check_output")
     def test_working_listcall_json(self, mock_subprocess):
         """Test that listing pipelines with JSON works"""
-        wf_json_str = nf_core.list.list_workflows(as_json=True)
+        wf_json_str = nf_core.pipelines.list.list_workflows(as_json=True)
         wf_json = json.loads(wf_json_str)
         for wf in wf_json["remote_workflows"]:
             if wf["name"] == "ampliseq":
@@ -56,22 +56,22 @@ class TestList(unittest.TestCase):
     def test_pretty_datetime(self):
         """Test that the pretty datetime function works"""
         now = datetime.now()
-        nf_core.list.pretty_date(now)
+        nf_core.pipelines.list.pretty_date(now)
         now_ts = time.mktime(now.timetuple())
-        nf_core.list.pretty_date(now_ts)
+        nf_core.pipelines.list.pretty_date(now_ts)
 
     def test_local_workflows_and_fail(self):
         """Test the local workflow class and try to get local
         Nextflow workflow information"""
-        loc_wf = nf_core.list.LocalWorkflow("myWF")
+        loc_wf = nf_core.pipelines.list.LocalWorkflow("myWF")
         with pytest.raises(RuntimeError):
             loc_wf.get_local_nf_workflow_details()
 
     def test_local_workflows_compare_and_fail_silently(self):
         """Test the workflow class and try to compare local
         and remote workflows"""
-        wfs = nf_core.list.Workflows()
-        lwf_ex = nf_core.list.LocalWorkflow("myWF")
+        wfs = nf_core.pipelines.list.Workflows()
+        lwf_ex = nf_core.pipelines.list.LocalWorkflow("myWF")
         lwf_ex.full_name = "my Workflow"
         lwf_ex.commit_sha = "aw3s0meh1sh"
 
@@ -86,7 +86,7 @@ class TestList(unittest.TestCase):
             "releases": [],
         }
 
-        rwf_ex = nf_core.list.RemoteWorkflow(remote)
+        rwf_ex = nf_core.pipelines.list.RemoteWorkflow(remote)
         rwf_ex.commit_sha = "aw3s0meh1sh"
         rwf_ex.releases = [{"tag_sha": "aw3s0meh1sh"}]
 
@@ -114,7 +114,7 @@ class TestList(unittest.TestCase):
         assert os.environ["NXF_ASSETS"] == tmp_nxf_str
         with open(tmp_nxf / "nf-core/dummy-wf", "w") as f:
             f.write("dummy")
-        workflows_obj = nf_core.list.Workflows()
+        workflows_obj = nf_core.pipelines.list.Workflows()
         workflows_obj.get_local_nf_workflows()
         assert len(workflows_obj.local_workflows) == 1
 
@@ -128,20 +128,20 @@ class TestList(unittest.TestCase):
         assert os.environ["NXF_ASSETS"] == tmp_nxf_str
         with open(tmp_nxf / "nf-core/dummy-wf", "w") as f:
             f.write("dummy")
-        workflows_obj = nf_core.list.Workflows()
+        workflows_obj = nf_core.pipelines.list.Workflows()
         workflows_obj.get_local_nf_workflows()
 
     @mock.patch("os.stat")
     @mock.patch("git.Repo")
     def test_local_workflow_investigation(self, mock_repo, mock_stat):
-        local_wf = nf_core.list.LocalWorkflow("dummy")
+        local_wf = nf_core.pipelines.list.LocalWorkflow("dummy")
         local_wf.local_path = tmp
         mock_repo.head.commit.hexsha = "h00r4y"
         mock_stat.st_mode = 1
         local_wf.get_local_nf_workflow_details()
 
     def test_worflow_filter(self):
-        workflows_obj = nf_core.list.Workflows(["rna", "myWF"])
+        workflows_obj = nf_core.pipelines.list.Workflows(["rna", "myWF"])
 
         remote = {
             "name": "myWF",
@@ -154,7 +154,7 @@ class TestList(unittest.TestCase):
             "releases": [],
         }
 
-        rwf_ex = nf_core.list.RemoteWorkflow(remote)
+        rwf_ex = nf_core.pipelines.list.RemoteWorkflow(remote)
         rwf_ex.commit_sha = "aw3s0meh1sh"
         rwf_ex.releases = [{"tag_sha": "aw3s0meh1sh"}]
 
@@ -169,7 +169,7 @@ class TestList(unittest.TestCase):
             "releases": [],
         }
 
-        rwf_ex2 = nf_core.list.RemoteWorkflow(remote2)
+        rwf_ex2 = nf_core.pipelines.list.RemoteWorkflow(remote2)
         rwf_ex2.commit_sha = "aw3s0meh1sh"
         rwf_ex2.releases = [{"tag_sha": "aw3s0meh1sh"}]
 
@@ -182,11 +182,11 @@ class TestList(unittest.TestCase):
         """
         Test that archived workflows are not shown by default
         """
-        workflows_obj = nf_core.list.Workflows()
+        workflows_obj = nf_core.pipelines.list.Workflows()
         remote1 = {"name": "myWF", "full_name": "my Workflow", "archived": True, "releases": []}
-        rwf_ex1 = nf_core.list.RemoteWorkflow(remote1)
+        rwf_ex1 = nf_core.pipelines.list.RemoteWorkflow(remote1)
         remote2 = {"name": "myWF", "full_name": "my Workflow", "archived": False, "releases": []}
-        rwf_ex2 = nf_core.list.RemoteWorkflow(remote2)
+        rwf_ex2 = nf_core.pipelines.list.RemoteWorkflow(remote2)
 
         workflows_obj.remote_workflows.append(rwf_ex1)
         workflows_obj.remote_workflows.append(rwf_ex2)
@@ -200,11 +200,11 @@ class TestList(unittest.TestCase):
         """
         Test that archived workflows can be shown optionally
         """
-        workflows_obj = nf_core.list.Workflows(show_archived=True)
+        workflows_obj = nf_core.pipelines.list.Workflows(show_archived=True)
         remote1 = {"name": "myWF", "full_name": "my Workflow", "archived": True, "releases": []}
-        rwf_ex1 = nf_core.list.RemoteWorkflow(remote1)
+        rwf_ex1 = nf_core.pipelines.list.RemoteWorkflow(remote1)
         remote2 = {"name": "myWF", "full_name": "my Workflow", "archived": False, "releases": []}
-        rwf_ex2 = nf_core.list.RemoteWorkflow(remote2)
+        rwf_ex2 = nf_core.pipelines.list.RemoteWorkflow(remote2)
 
         workflows_obj.remote_workflows.append(rwf_ex1)
         workflows_obj.remote_workflows.append(rwf_ex2)

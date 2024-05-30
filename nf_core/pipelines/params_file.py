@@ -8,9 +8,9 @@ from typing import Literal, Optional
 
 import questionary
 
-import nf_core.list
+import nf_core.pipelines.list
 import nf_core.utils
-from nf_core.schema import PipelineSchema
+from nf_core.pipelines.schema import PipelineSchema
 
 log = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ class ParamsFileBuilder:
         self.schema_obj: Optional[PipelineSchema] = None
 
         # Fetch remote workflows
-        self.wfs = nf_core.list.Workflows()
+        self.wfs = nf_core.pipelines.list.Workflows()
         self.wfs.get_remote_workflows()
 
     def get_pipeline(self):

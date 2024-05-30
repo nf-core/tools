@@ -3,7 +3,7 @@ import os
 import re
 from pathlib import Path
 
-from nf_core.schema import PipelineSchema
+from nf_core.pipelines.schema import PipelineSchema
 
 log = logging.getLogger(__name__)
 
