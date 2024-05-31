@@ -37,7 +37,7 @@ click.rich_click.COMMAND_GROUPS = {
                 "pipelines",
                 "modules",
                 "subworkflows",
-                "tui",
+                "interface",
             ],
         },
     ],
@@ -143,7 +143,10 @@ def run_nf_core():
     nf_core_cli(auto_envvar_prefix="NFCORE")
 
 
-@tui()
+@tui(
+    command="interface",
+    help="Launch the nf-core interface",
+)
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]), cls=CustomRichGroup)
 @click.version_option(__version__)
 @click.option(
