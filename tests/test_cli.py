@@ -199,38 +199,6 @@ class TestCli(unittest.TestCase):
 
         mock_dl.return_value.download_workflow.assert_called_once()
 
-    @mock.patch("nf_core.licences.WorkflowLicences")
-    def test_licences(self, mock_lic):
-        """Test nf-core pipeline licence is printed out and cli parameters are passed on."""
-        licence_text = "dummy licence text"
-        mock_lic.return_value.run_licences.return_value = licence_text
-
-        params = {
-            "json": None,
-        }
-
-        cmd = ["licences"] + self.assemble_params(params) + ["pipeline_name"]
-        result = self.invoke_cli(cmd)
-
-        assert result.exit_code == 0
-        assert licence_text in result.output
-
-        mock_lic.assert_called_once_with(cmd[-1])
-
-    @mock.patch("nf_core.licences.WorkflowLicences")
-    def test_licences_log_error(self, mock_lic):
-        """Test LookupError is logged"""
-        error_txt = "LookupError has been raised"
-        mock_lic.return_value.run_licences.side_effect = LookupError(error_txt)
-
-        cmd = ["licences", "pipeline_name"]
-        with self.assertLogs() as captured_logs:
-            result = self.invoke_cli(cmd)
-
-        assert result.exit_code == 1
-        assert error_txt in captured_logs.output[-1]
-        assert captured_logs.records[-1].levelname == "ERROR"
-
     @mock.patch("nf_core.pipelines.create.create.PipelineCreate")
     def test_create(self, mock_create):
         """Test nf-core pipeline is created and cli parameters are passed on."""

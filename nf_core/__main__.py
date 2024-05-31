@@ -38,7 +38,6 @@ click.rich_click.COMMAND_GROUPS = {
                 "launch",
                 "create-params-file",
                 "download",
-                "licences",
                 "tui",
             ],
         },
@@ -461,29 +460,6 @@ def download(
         parallel_downloads,
     )
     dl.download_workflow()
-
-
-# nf-core licences
-@nf_core_cli.command()
-@click.argument("pipeline", required=True, metavar="<pipeline name>")
-@click.option("--json", is_flag=True, default=False, help="Print output in JSON")
-def licences(pipeline, json):
-    """
-    List software licences for a given workflow (DSL1 only).
-
-    Checks the pipeline environment.yml file which lists all conda software packages, which is not available for DSL2 workflows. Therefore, this command only supports DSL1 workflows (for now).
-    Each of these is queried against the anaconda.org API to find the licence.
-    Package name, version and licence is printed to the command line.
-    """
-    from nf_core.licences import WorkflowLicences
-
-    lic = WorkflowLicences(pipeline)
-    lic.as_json = json
-    try:
-        stdout.print(lic.run_licences())
-    except LookupError as e:
-        log.error(e)
-        sys.exit(1)
 
 
 # nf-core lint
