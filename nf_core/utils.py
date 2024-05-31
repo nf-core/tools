@@ -854,7 +854,7 @@ def prompt_remote_pipeline_name(wfs):
     """Prompt for the pipeline name with questionary
 
     Args:
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         pipeline (str): GitHub repo - username/repo
@@ -934,7 +934,7 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
 
 class SingularityCacheFilePathValidator(questionary.Validator):
     """
-    Validator for file path specified as --singularity-cache-index argument in nf-core download
+    Validator for file path specified as --singularity-cache-index argument in nf-core pipelines download
     """
 
     def validate(self, value):
@@ -954,7 +954,7 @@ def get_repo_releases_branches(pipeline, wfs):
 
     Args:
         pipeline (str): GitHub repo username/repo
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         wf_releases, wf_branches (tuple): Array of releases, Array of branches

@@ -42,7 +42,7 @@ stderr = rich.console.Console(
 
 
 class DownloadError(RuntimeError):
-    """A custom exception that is raised when nf-core download encounters a problem that we already took into consideration.
+    """A custom exception that is raised when nf-core pipelines download encounters a problem that we already took into consideration.
     In this case, we do not want to print the traceback, but give the user some concise, helpful feedback instead.
     """
 
@@ -505,7 +505,7 @@ class DownloadWorkflow:
                             with open(os.path.expanduser(shellprofile_path), "a") as f:
                                 f.write(
                                     "\n\n#######################################\n"
-                                    f"## Added by `nf-core download` v{nf_core.__version__} ##\n"
+                                    f"## Added by `nf-core pipelines download` v{nf_core.__version__} ##\n"
                                     + f'export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"'
                                     + "\n#######################################\n"
                                 )
@@ -687,7 +687,7 @@ class DownloadWorkflow:
         # Append the singularity.cacheDir to the end if we need it
         if self.container_system == "singularity" and self.container_cache_utilisation == "copy":
             nfconfig += (
-                f"\n\n// Added by `nf-core download` v{nf_core.__version__} //\n"
+                f"\n\n// Added by `nf-core pipelines download` v{nf_core.__version__} //\n"
                 + 'singularity.cacheDir = "${projectDir}/../singularity-images/"'
                 + "\n///////////////////////////////////////"
             )
@@ -1730,7 +1730,7 @@ class WorkflowRepo(SyncedRepo):
             # Although "dev-null" is a syntactically-valid local-part that is equally valid for delivery,
             # and only the receiving MTA can decide whether to accept it, it is to my best knowledge configured with
             # a Postfix discard mail delivery agent (https://www.postfix.org/discard.8.html), so incoming mails should be sinkholed.
-            self.ensure_git_user_config(f"nf-core download v{nf_core.__version__}", "dev-null@example.com")
+            self.ensure_git_user_config(f"nf-core pipelines download v{nf_core.__version__}", "dev-null@example.com")
 
             for additional_tag in self.additional_tags:
                 # A valid git branch or tag name can contain alphanumeric characters, underscores, hyphens, and dots.
@@ -1740,7 +1740,9 @@ class WorkflowRepo(SyncedRepo):
                     if self.repo.is_valid_object(anchor) and not self.repo.is_valid_object(tag):
                         try:
                             self.repo.create_tag(
-                                tag, ref=anchor, message=f"Synonynmous tag to {anchor}; added by `nf-core download`."
+                                tag,
+                                ref=anchor,
+                                message=f"Synonynmous tag to {anchor}; added by `nf-core pipelines download`.",
                             )
                         except (GitCommandError, InvalidGitRepositoryError) as e:
                             log.error(f"[red]Additional tag(s) could not be applied:[/]\n{e}\n")

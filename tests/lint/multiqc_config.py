@@ -116,13 +116,13 @@ def test_multiqc_config_report_comment_release_fail(self):
 def test_multiqc_config_report_comment_release_succeed(self):
     """Test that linting fails if the multiqc_config.yml file has a correct report_comment for a release version"""
 
-    import nf_core.pipelines.bump_version.bump_version
+    import nf_core.pipelines.bump_version
 
     new_pipeline = self._make_pipeline_copy()
     lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     # bump version using the bump_version function
-    nf_core.pipelines.bump_version.bump_version.bump_pipeline_version(lint_obj, "1.0")
+    nf_core.pipelines.bump_version.bump_pipeline_version(lint_obj, "1.0")
     # lint again
     lint_obj._load()
     result = lint_obj.multiqc_config()

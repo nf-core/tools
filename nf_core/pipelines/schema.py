@@ -912,7 +912,7 @@ class PipelineSchema:
         if web_response["status"] == "waiting_for_user":
             return False
         if web_response["status"] == "web_builder_edited":
-            log.info("Found saved status from nf-core schema builder")
+            log.info("Found saved status from nf-core pipelines schema builder")
             try:
                 self.schema = web_response["schema"]
                 self.remove_schema_empty_definitions()

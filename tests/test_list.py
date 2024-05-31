@@ -106,7 +106,7 @@ class TestList(unittest.TestCase):
         rwf_ex.releases = None
 
     @mock.patch.dict(os.environ, {"NXF_ASSETS": tmp_nxf_str})
-    @mock.patch("nf_core.list.LocalWorkflow")
+    @mock.patch("nf_core.pipelines.list.LocalWorkflow")
     def test_parse_local_workflow_and_succeed(self, mock_local_wf):
         test_path = tmp_nxf / "nf-core"
         if not os.path.isdir(test_path):
@@ -119,7 +119,7 @@ class TestList(unittest.TestCase):
         assert len(workflows_obj.local_workflows) == 1
 
     @mock.patch.dict(os.environ, {"NXF_ASSETS": tmp_nxf_str})
-    @mock.patch("nf_core.list.LocalWorkflow")
+    @mock.patch("nf_core.pipelines.list.LocalWorkflow")
     @mock.patch("subprocess.check_output")
     def test_parse_local_workflow_home(self, mock_local_wf, mock_subprocess):
         test_path = tmp_nxf / "nf-core"

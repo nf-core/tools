@@ -124,7 +124,7 @@ class ParamsFileBuilder:
                 ).unsafe_ask()
 
         # Get the schema
-        self.schema_obj = nf_core.schema.PipelineSchema()
+        self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
         self.schema_obj.get_schema_path(self.pipeline, local_only=False, revision=self.pipeline_revision)
         self.schema_obj.get_wf_params()
 

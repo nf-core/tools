@@ -38,7 +38,7 @@ class Launch:
         """Initialise the Launcher class
 
         Args:
-          schema: An nf_core.schema.PipelineSchema() object
+          schema: An nf_core.pipelines.schema.PipelineSchema() object
         """
 
         self.pipeline = pipeline
@@ -59,7 +59,7 @@ class Launch:
         self.nextflow_cmd = None
 
         # Fetch remote workflows
-        self.wfs = nf_core.list.Workflows()
+        self.wfs = nf_core.pipelines.list.Workflows()
         self.wfs.get_remote_workflows()
 
         # Prepend property names with a single hyphen in case we have parameters with the same ID
@@ -340,7 +340,7 @@ class Launch:
         elif web_response["status"] == "waiting_for_user":
             return False
         elif web_response["status"] == "launch_params_complete":
-            log.info("Found completed parameters from nf-core launch GUI")
+            log.info("Found completed parameters from nf-core pipelines launch GUI")
             try:
                 # Set everything that we can with the cache results
                 # NB: If using web builder, may have only run with --id and nothing else

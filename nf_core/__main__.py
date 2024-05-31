@@ -697,7 +697,7 @@ def sync_pipeline(ctx, dir, from_branch, pull_request, github_repository, userna
     the pipeline. It is run automatically for all pipelines when ever a
     new release of [link=https://github.com/nf-core/tools]nf-core/tools[/link] (and the included template) is made.
     """
-    from nf_core.pipelines.sync.sync import PipelineSync, PullRequestExceptionError, SyncExceptionError
+    from nf_core.pipelines.sync import PipelineSync, PullRequestExceptionError, SyncExceptionError
     from nf_core.utils import is_pipeline_directory
 
     # Check if pipeline directory contains necessary files
@@ -743,7 +743,7 @@ def bump_version_pipeline(ctx, new_version, dir, nextflow):
 
     As well as the pipeline version, you can also change the required version of Nextflow.
     """
-    from nf_core.pipelines.bump_version.bump_version import bump_nextflow_version, bump_pipeline_version
+    from nf_core.pipelines.bump_version import bump_nextflow_version, bump_pipeline_version
     from nf_core.utils import Pipeline, is_pipeline_directory
 
     try:
@@ -952,9 +952,9 @@ def lint_schema(schema_path):
     Check that a given pipeline schema is valid.
 
     Checks whether the pipeline schema validates as JSON Schema Draft 7
-    and adheres to the additional nf-core schema requirements.
+    and adheres to the additional nf-core pipelines schema requirements.
 
-    This function runs as part of the nf-core lint command, this is a convenience
+    This function runs as part of the nf-core pipelines lint command, this is a convenience
     command that does just the schema linting nice and quickly.
 
     If no schema path is provided, "nextflow_schema.json" will be used (if it exists).
