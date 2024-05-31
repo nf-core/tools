@@ -107,6 +107,17 @@ def normalize_case(ctx, param, component_name):
         return component_name.casefold()
 
 
+# Define a custom click group class to sort options and commands in the help message
+# TODO: Remove this class and use COMMANDS_BEFORE_OPTIONS when rich-click is updated
+# See https://github.com/ewels/rich-click/issues/200 for more information
+class CustomRichGroup(click.RichGroup):
+    def format_options(self, ctx, formatter) -> None:
+        from rich_click.rich_help_rendering import get_rich_options
+
+        self.format_commands(ctx, formatter)
+        get_rich_options(self, ctx, formatter)
+
+
 def run_nf_core():
     # print nf-core header if environment variable is not set
     if os.environ.get("_NF_CORE_COMPLETE") is None:
@@ -133,7 +144,7 @@ def run_nf_core():
 
 
 @tui()
-@click.group(context_settings=dict(help_option_names=["-h", "--help"]))
+@click.group(context_settings=dict(help_option_names=["-h", "--help"]), cls=CustomRichGroup)
 @click.version_option(__version__)
 @click.option(
     "-v",
