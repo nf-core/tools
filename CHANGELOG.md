@@ -25,6 +25,7 @@
 - update minimal textual version and snapshots ([#2998](https://github.com/nf-core/tools/pull/2998))
 - return directory if base_dir is the root directory ([#3003](https://github.com/nf-core/tools/pull/3003))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.6 ([#3006](https://github.com/nf-core/tools/pull/3006))
+- Create: allow more special characters on the pipeline name for non-nf-core pipelines ([#3008](https://github.com/nf-core/tools/pull/3008))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
