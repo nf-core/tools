@@ -5,6 +5,7 @@ import logging
 from textual.app import App
 from textual.widgets import Button
 
+from nf_core.pipelines.create import utils
 from nf_core.pipelines.create.basicdetails import BasicDetails
 from nf_core.pipelines.create.custompipeline import CustomPipeline
 from nf_core.pipelines.create.finaldetails import FinalDetails
@@ -18,8 +19,8 @@ from nf_core.pipelines.create.utils import CreateConfig
 from nf_core.pipelines.create.welcome import WelcomeScreen
 from nf_core.utils import CustomLogHandler, LoggingConsole
 
-log_handler = CustomLogHandler(
-    console=LoggingConsole(classes="log_console"),
+log_handler = utils.CustomLogHandler(
+    console=utils.LoggingConsole(classes="log_console"),
     rich_tracebacks=True,
     show_time=False,
     show_path=False,
@@ -33,7 +34,7 @@ logging.basicConfig(
 log_handler.setLevel("INFO")
 
 
-class PipelineCreateApp(App[CreateConfig]):
+class PipelineCreateApp(App[utils.CreateConfig]):
     """A Textual app to manage stopwatches."""
 
     CSS_PATH = "../../textual.tcss"
@@ -57,10 +58,10 @@ class PipelineCreateApp(App[CreateConfig]):
     }
 
     # Initialise config as empty
-    TEMPLATE_CONFIG = CreateConfig()
+    TEMPLATE_CONFIG = utils.CreateConfig()
 
     # Initialise pipeline type
-    PIPELINE_TYPE = None
+    NFCORE_PIPELINE = True
 
     # Log handler
     LOG_HANDLER = log_handler
@@ -75,10 +76,12 @@ class PipelineCreateApp(App[CreateConfig]):
         if event.button.id == "start":
             self.push_screen("choose_type")
         elif event.button.id == "type_nfcore":
-            self.PIPELINE_TYPE = "nfcore"
+            self.NFCORE_PIPELINE = True
+            utils.NFCORE_PIPELINE_GLOBAL = True
             self.push_screen("basic_details")
         elif event.button.id == "type_custom":
-            self.PIPELINE_TYPE = "custom"
+            self.NFCORE_PIPELINE = False
+            utils.NFCORE_PIPELINE_GLOBAL = False
             self.push_screen("basic_details")
         elif event.button.id == "continue":
             self.push_screen("final_details")

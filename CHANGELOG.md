@@ -14,6 +14,8 @@
 
 ### Components
 
+- The `modules_nfcore` tag in the `main.nf.test` file of modules/subworkflows now displays the organization name in custom modules repositories ([#3005](https://github.com/nf-core/tools/pull/3005))
+
 ### Configs
 
 - New command: `nf-core configs create wizard` for generating configs for nf-core pipelines ([#3001](https://github.com/nf-core/tools/pull/3001))
@@ -25,12 +27,17 @@
 - Update output of generation script for API docs to new structure ([#2988](https://github.com/nf-core/tools/pull/2988))
 - Add no clobber and put bash options on their own line ([#2991](https://github.com/nf-core/tools/pull/2991))
 - update minimal textual version and snapshots ([#2998](https://github.com/nf-core/tools/pull/2998))
+- return directory if base_dir is the root directory ([#3003](https://github.com/nf-core/tools/pull/3003))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.6 ([#3006](https://github.com/nf-core/tools/pull/3006))
+- Create: allow more special characters on the pipeline name for non-nf-core pipelines ([#3008](https://github.com/nf-core/tools/pull/3008))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.7 ([#3015](https://github.com/nf-core/tools/pull/3015))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
 ### Template
 
 - Don't cache pip in `linting.yml` ([#2961](https://github.com/nf-core/tools/pull/2961))
+- Lint pipelines with the nf-core template version and post comment if it is outdated ([#2978](https://github.com/nf-core/tools/pull/2978))
 
 ### General
 

@@ -40,7 +40,7 @@ class BasicDetails(Screen):
                 "GitHub organisation",
                 "nf-core",
                 classes="column",
-                disabled=self.parent.PIPELINE_TYPE == "nfcore",
+                disabled=self.parent.NFCORE_PIPELINE,
             )
             yield TextInput(
                 "name",
@@ -86,7 +86,7 @@ class BasicDetails(Screen):
         add_hide_class(self.parent, "exist_warn")
         for text_input in self.query("TextInput"):
             if text_input.field_id == "org":
-                text_input.disabled = self.parent.PIPELINE_TYPE == "nfcore"
+                text_input.disabled = self.parent.NFCORE_PIPELINE
 
     @on(Button.Pressed)
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -103,9 +103,9 @@ class BasicDetails(Screen):
         try:
             self.parent.TEMPLATE_CONFIG = CreateConfig(**config)
             if event.button.id == "next":
-                if self.parent.PIPELINE_TYPE == "nfcore":
+                if self.parent.NFCORE_PIPELINE:
                     self.parent.push_screen("type_nfcore")
-                elif self.parent.PIPELINE_TYPE == "custom":
+                else:
                     self.parent.push_screen("type_custom")
         except ValueError:
             pass

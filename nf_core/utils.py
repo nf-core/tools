@@ -1075,7 +1075,7 @@ def determine_base_dir(directory="."):
         config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
         if config_fn:
             break
-    return directory if base_dir == start_dir else base_dir
+    return directory if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
 
 
 def get_first_available_path(directory, paths):
