@@ -58,7 +58,7 @@ class PipelineCreateApp(App[utils.CreateConfig]):
     }
 
     # Initialise config as empty
-    TEMPLATE_CONFIG = utils.CreateConfig()
+    TEMPLATE_CONFIG = CreateConfig()
 
     # Initialise pipeline type
     NFCORE_PIPELINE = True

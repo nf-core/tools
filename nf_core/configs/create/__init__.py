@@ -9,6 +9,7 @@ from textual.widgets import Button
 ## nf-core question page (screen) imports
 from nf_core.configs.create.basicdetails import BasicDetails
 from nf_core.configs.create.configtype import ChooseConfigType
+from nf_core.configs.create.final import FinalScreen
 from nf_core.configs.create.utils import CreateConfig
 from nf_core.configs.create.welcome import WelcomeScreen
 
@@ -47,7 +48,15 @@ class ConfigsCreateApp(App[CreateConfig]):
     ]
 
     ## New question screens (sections) loaded here
-    SCREENS = {"welcome": WelcomeScreen(), "choose_type": ChooseConfigType(), "basic_details": BasicDetails()}
+    SCREENS = {
+        "welcome": WelcomeScreen(),
+        "choose_type": ChooseConfigType(),
+        "basic_details": BasicDetails(),
+        "final": FinalScreen(),
+    }
+
+    # Initialise config as empty
+    TEMPLATE_CONFIG = CreateConfig()
 
     # Tracking variables
     CONFIG_TYPE = None
@@ -71,6 +80,8 @@ class ConfigsCreateApp(App[CreateConfig]):
         elif event.button.id == "type_pipeline":
             self.CONFIG_TYPE = "pipeline"
             self.push_screen("basic_details")
+        elif event.button.id == "next":
+            self.push_screen("final")
         ## General options
         if event.button.id == "close_app":
             self.exit(return_code=0)

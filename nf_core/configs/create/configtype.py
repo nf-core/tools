@@ -65,11 +65,19 @@ class ChooseConfigType(Screen):
         yield Grid(
             Center(
                 Markdown(markdown_type_nfcore),
-                Center(Button("Pipeline config", id="type_infrastructure", variant="success")),
+                Center(
+                    Button(
+                        "Infrastructure config",
+                        id="type_infrastructure",
+                        variant="success",
+                    )
+                ),
             ),
             Center(
                 Markdown(markdown_type_custom),
-                Center(Button("Infrastructure config", id="type_pipeline", variant="primary")),
+                Center(
+                    Button("Pipeline config", id="type_pipeline", variant="primary")
+                ),
             ),
             classes="col-2 pipeline-type-grid",
         )
