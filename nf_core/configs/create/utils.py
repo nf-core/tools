@@ -32,10 +32,10 @@ class CreateConfig(BaseModel):
 
     general_config_type: str = None
     general_config_name: str = None
-    param_profilecontact: str = None
-    param_profilecontacthandle: str = None
-    param_configprofiledescription: str = None
-    param_configprofileurl: Optional[str] = None
+    config_profile_contact: str = None
+    config_profile_handle: str = None
+    config_profile_description: str = None
+    config_profile_url: Optional[str] = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -115,3 +115,9 @@ class ValidateConfig(Validator):
                 return self.success()
         except ValidationError as e:
             return self.failure(", ".join([err["msg"] for err in e.errors()]))
+
+
+def generate_config_entry(self, key, value):
+    parsed_entry = key + ' = "' + value + '"\n'
+    print(parsed_entry)
+    return parsed_entry

@@ -45,26 +45,26 @@ class BasicDetails(Screen):
         )
         with Horizontal():
             yield TextInput(
-                "param_profilecontact",
+                "profile_contact",
                 "Boaty McBoatFace",
                 "Author full name.",
                 classes="column",
             )
 
             yield TextInput(
-                "param_profilecontacthandle",
+                "profile_contact_handle",
                 "@BoatyMcBoatFace",
                 "Author Git(Hub) handle.",
                 classes="column",
             )
 
         yield TextInput(
-            "param_configprofiledescription",
+            "config_profile_description",
             "Description",
             "A short description of your config.",
         )
         yield TextInput(
-            "param_configprofileurl",
+            "config_profile_url",
             "https://nf-co.re",
             "URL of infrastructure website or owning institution (only for infrastructure configs).",
             disabled=(
