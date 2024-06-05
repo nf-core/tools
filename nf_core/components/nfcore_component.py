@@ -216,10 +216,11 @@ class NFCoreComponent:
                 if match_element.group(1):
                     output_type = match_element.group(1)
                 if match_element.group(3):
-                    output_val = match_element.group(3).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
+                    output_val = match_element.group(3)
                 elif match_element.group(4):
-                    output_val = match_element.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
+                    output_val = match_element.group(4)
                 if output_type and output_val:
+                    output_val = output_val.strip("'").strip('"')  # remove quotes
                     output_channel[match_emit.group(1)].append({output_val: {"type": output_type}})
             outputs.append(output_channel)
         log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")

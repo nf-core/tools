@@ -40,8 +40,6 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
     """
 
     module.get_inputs_from_main_nf()
-    print(yaml.dump({"input": module.inputs}))
-    exit()
     module.get_outputs_from_main_nf()
     # Check if we have a patch file, get original file in that case
     meta_yaml = None
@@ -93,93 +91,114 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
             )
         )
 
-    # Confirm that all input and output channels are specified
+    # Confirm that all input and output channels are correctly specified
     if valid_meta_yml:
-        if "input" in meta_yaml:
-            meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
-            for input in module.inputs:
-                if input in meta_input:
-                    module.passed.append(("meta_input_main_only", f"`{input}` specified", module.meta_yml))
-                else:
-                    module.warned.append(
-                        (
-                            "meta_input_main_only",
-                            f"`{input}` is present as an input in the `main.nf`, but missing in `meta.yml`",
-                            module.meta_yml,
-                        )
-                    )
-            # check if there are any inputs in meta.yml that are not in main.nf
-            for input in meta_input:
-                if input in module.inputs:
-                    module.passed.append(
-                        (
-                            "meta_input_meta_only",
-                            f"`{input}` is present as an input in `meta.yml` and `main.nf`",
-                            module.meta_yml,
-                        )
-                    )
-                else:
-                    module.warned.append(
-                        (
-                            "meta_input_meta_only",
-                            f"`{input}` is present as an input in `meta.yml` but not in `main.nf`",
-                            module.meta_yml,
-                        )
-                    )
-
-        if "output" in meta_yaml and meta_yaml["output"] is not None:
-            meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
-            for output in module.outputs:
-                if output in meta_output:
-                    module.passed.append(("meta_output_main_only", f"`{output}` specified", module.meta_yml))
-                else:
-                    module.warned.append(
-                        (
-                            "meta_output_main_only",
-                            f"`{output}`  is present as an output in the `main.nf`, but missing in `meta.yml`",
-                            module.meta_yml,
-                        )
-                    )
-            # check if there are any outputs in meta.yml that are not in main.nf
-            for output in meta_output:
-                if output in module.outputs:
-                    module.passed.append(
-                        (
-                            "meta_output_meta_only",
-                            f"`{output}` is present as an output in `meta.yml` and `main.nf`",
-                            module.meta_yml,
-                        )
-                    )
-                elif output == "meta":
-                    module.passed.append(
-                        (
-                            "meta_output_meta_only",
-                            f"`{output}` is skipped for `meta.yml` outputs",
-                            module.meta_yml,
-                        )
-                    )
-                else:
-                    module.warned.append(
-                        (
-                            "meta_output_meta_only",
-                            f"`{output}` is present as an output in `meta.yml` but not in `main.nf`",
-                            module.meta_yml,
-                        )
-                    )
-        # confirm that the name matches the process name in main.nf
-        if meta_yaml["name"].upper() == module.process_name:
-            module.passed.append(
-                (
-                    "meta_name",
-                    "Correct name specified in `meta.yml`.",
-                    module.meta_yml,
-                )
-            )
-        else:
+        # Check that inputs are specified in meta.yml
+        if len(module.inputs) > 0 and "input" not in meta_yaml:
             module.failed.append(
                 (
-                    "meta_name",
-                    f"Conflicting `process` name between meta.yml (`{meta_yaml['name']}`) and main.nf (`{module.process_name}`)",
+                    "meta_input",
+                    "Inputs not specified in module `meta.yml`",
                     module.meta_yml,
                 )
             )
+        elif len(module.inputs) > 0:
+            module.passed.append(
+                (
+                    "meta_input",
+                    "Inputs specified in module `meta.yml`",
+                    module.meta_yml,
+                )
+            )
+        # Check that all inputs are correctly specified
+        if "input" in meta_yaml:
+            # Obtain list of correct inputs and elements of each input channel
+            correct_inputs = []
+            for input_channel in module.inputs:
+                channel_elements = []
+                for element in input_channel:
+                    channel_elements.append(list(element.keys())[0])
+                correct_inputs.append(channel_elements)
+            # Obtain list of inputs specified in meta.yml
+            meta_inputs = []
+            for input_channel in meta_yaml["input"]:
+                if isinstance(input_channel, list):  # Correct format
+                    channel_elements = []
+                    for element in input_channel:
+                        channel_elements.append(list(element.keys())[0])
+                    meta_inputs.append(channel_elements)
+                elif isinstance(input_channel, dict):  # Old format
+                    meta_inputs.append(list(input_channel.keys())[0])
+
+            if correct_inputs == meta_inputs:
+                module.passed.append(
+                    (
+                        "correct_meta_inputs",
+                        "Correct inputs specified in module `meta.yml`",
+                        module.meta_yml,
+                    )
+                )
+            else:
+                module.failed.append(
+                    (
+                        "correct_meta_inputs",
+                        f"Incorrect inputs specified in module `meta.yml`. Inputs should contain: {correct_inputs}\nRun `nf-core modules lint --update-meta-yml` to update the `meta.yml` file.",
+                        module.meta_yml,
+                    )
+                )
+
+        # Check that outputs are specified in meta.yml
+        if len(module.outputs) > 0 and "output" not in meta_yaml:
+            module.failed.append(
+                (
+                    "meta_output",
+                    "Outputs not specified in module `meta.yml`",
+                    module.meta_yml,
+                )
+            )
+        elif len(module.outputs) > 0:
+            module.passed.append(
+                (
+                    "meta_output",
+                    "Outputs specified in module `meta.yml`",
+                    module.meta_yml,
+                )
+            )
+        # Check that all outputs are correctly specified
+        if "output" in meta_yaml:
+            # Obtain dictionary of correct outputs and elements of each output channel
+            correct_outputs = {}
+            for output_channel in module.outputs:
+                channel_name = list(output_channel.keys())[0]
+                channel_elements = []
+                for element in output_channel[channel_name]:
+                    channel_elements.append(list(element.keys())[0])
+                correct_outputs[channel_name] = channel_elements
+            # Obtain dictionary of outputs specified in meta.yml
+            meta_outputs = {}
+            for output_channel in meta_yaml["output"]:
+                channel_name = list(output_channel.keys())[0]
+                if isinstance(output_channel[channel_name], list):  # Correct format
+                    channel_elements = []
+                    for element in output_channel[channel_name]:
+                        channel_elements.append(list(element.keys())[0])
+                    meta_outputs[channel_name] = channel_elements
+                elif isinstance(output_channel[channel_name], dict):  # Old format
+                    meta_outputs[channel_name] = []
+
+            if correct_outputs == meta_outputs:
+                module.passed.append(
+                    (
+                        "correct_meta_outputs",
+                        "Correct outputs specified in module `meta.yml`",
+                        module.meta_yml,
+                    )
+                )
+            else:
+                module.failed.append(
+                    (
+                        "correct_meta_outputs",
+                        f"Incorrect outputs specified in module `meta.yml`. Outputs should contain: {correct_outputs}\nRun `nf-core modules lint --update-meta-yml` to update the `meta.yml` file.",
+                        module.meta_yml,
+                    )
+                )
