@@ -30,6 +30,7 @@
 - README - absolute image paths ([#3013](https://github.com/nf-core/tools/pull/3013))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.7 ([#3015](https://github.com/nf-core/tools/pull/3015))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.8 ([#3017](https://github.com/nf-core/tools/pull/3017))
+- ci: Run checks on renovate branches to avoid creating and merging PRs ([#3018](https://github.com/nf-core/tools/pull/3018))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
