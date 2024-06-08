@@ -7,28 +7,40 @@ class ConfigCreate:
     def __init__(self, template_config: CreateConfig):
         self.template_config = template_config
 
-    def construct_contents(self):
-        parsed_contents = {
-            "params": {
-                "config_profile_description": self.template_config.config_profile_description,
-                "config_profile_contact": "Boaty McBoatFace (@BoatyMcBoatFace)",
-            }
-        }
+    def construct_params(self, contact, handle, description, url):
+        final_params = {}
 
-        return parsed_contents
+        if contact != "" or not None:
+            if handle != "" or not None:
+                config_contact = contact + " (" + handle + ")"
+            else:
+                config_contact = contact
+            final_params["config_profile_contact"] = config_contact
+        elif handle != "" or not None:
+            final_params["config_contact"] = handle
+        else:
+            pass
+
+        if description != "" or not None:
+            final_params["config_profile_description"] = description
+
+        if url != "" or not None:
+            final_params["config_profile_url"] = url
+
+        return final_params
 
     def write_to_file(self):
         ## File name option
+        print(self.template_config)
         filename = self.template_config.general_config_name + ".conf"
 
         ## Collect all config entries per scope, for later checking scope needs to be written
-        validparams = {
-            "config_profile_contact": self.template_config.config_profile_contact,
-            "config_profile_handle": self.template_config.config_profile_handle,
-            "config_profile_description": self.template_config.config_profile_description,
-        }
-
-        print(validparams)
+        validparams = self.construct_params(
+            self.template_config.config_profile_contact,
+            self.template_config.config_profile_handle,
+            self.template_config.config_profile_description,
+            self.template_config.config_profile_url,
+        )
 
         with open(filename, "w+") as file:
 
@@ -36,31 +48,8 @@ class ConfigCreate:
             if any(validparams):
                 file.write("params {\n")
                 for entry_key, entry_value in validparams.items():
-                    print(entry_key)
                     if entry_value is not None:
                         file.write(generate_config_entry(self, entry_key, entry_value))
                     else:
                         continue
                 file.write("}\n")
-
-
-# (
-#                     file.write(
-#                         '  config_profile_contact = "'
-#                         + self.template_config.param_profilecontact
-#                         + " (@"
-#                         + self.template_config.param_profilecontacthandle
-#                         + ')"\n'
-#                     )
-#                     if self.template_config.param_profilecontact
-#                     else None
-#                 ),
-#                 (
-#                     file.write(
-#                         '  config_profile_description = "'
-#                         + self.template_config.param_configprofiledescription
-#                         + '"\n'
-#                     )
-#                     if self.template_config.param_configprofiledescription
-#                     else None
-#                 ),

@@ -45,14 +45,14 @@ class BasicDetails(Screen):
         )
         with Horizontal():
             yield TextInput(
-                "profile_contact",
+                "config_profile_contact",
                 "Boaty McBoatFace",
                 "Author full name.",
                 classes="column",
             )
 
             yield TextInput(
-                "profile_contact_handle",
+                "config_profile_handle",
                 "@BoatyMcBoatFace",
                 "Author Git(Hub) handle.",
                 classes="column",
@@ -66,41 +66,16 @@ class BasicDetails(Screen):
         yield TextInput(
             "config_profile_url",
             "https://nf-co.re",
-            "URL of infrastructure website or owning institution (only for infrastructure configs).",
+            "URL of infrastructure website or owning institution (infrastructure configs only).",
             disabled=(
                 self.parent.CONFIG_TYPE == "pipeline"
             ),  ## TODO update TextInput to accept replace with visibility: https://textual.textualize.io/styles/visibility/
         )
-        ## TODO: reactivate once validation ready
-        # yield Markdown(dedent(config_exists_warn), id="exist_warn", classes="hide")
         yield Center(
             Button("Back", id="back", variant="default"),
             Button("Next", id="next", variant="success"),
             classes="cta",
         )
-
-    ## TODO: update functions
-    # @on(Input.Changed)
-    # @on(Input.Submitted)
-    # def show_exists_warn(self):
-    #     """Check if the pipeline exists on every input change or submitted.
-    #     If the pipeline exists, show warning message saying that it will be overriden."""
-    #     config = {}
-    #     for text_input in self.query("TextInput"):
-    #         this_input = text_input.query_one(Input)
-    #         config[text_input.field_id] = this_input.value
-    #     if Path(config["org"] + "-" + config["name"]).is_dir():
-    #         remove_hide_class(self.parent, "exist_warn")
-    #     else:
-    #         add_hide_class(self.parent, "exist_warn")
-
-    # def on_screen_resume(self):
-    #     """Hide warn message on screen resume.
-    #     Update displayed value on screen resume."""
-    #     add_hide_class(self.parent, "exist_warn")
-    #     for text_input in self.query("TextInput"):
-    #         if text_input.field_id == "org":
-    #             text_input.disabled = self.parent.CONFIG_TYPE == "infrastructure"
 
     ## Updates the __init__ initialised TEMPLATE_CONFIG object (which is built from the CreateConfig class) with the values from the text inputs
     @on(Button.Pressed)
