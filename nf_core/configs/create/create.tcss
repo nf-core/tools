@@ -1,0 +1,106 @@
+#logo {
+    text-align:center;
+}
+.cta {
+    layout: horizontal;
+    margin-bottom: 1;
+}
+.cta Button {
+    margin-left: 3;
+    margin-right: 3;
+}
+
+.custom_grid {
+    height: auto;
+}
+.custom_grid Switch {
+    width: auto;
+}
+.custom_grid Static {
+    width: 1fr;
+    margin: 1 8;
+}
+.custom_grid Button {
+    width: auto;
+}
+
+.field_help {
+    padding: 1 1 0 1;
+    color: $text-muted;
+    text-style: italic;
+}
+.validation_msg {
+    padding: 0 1;
+    color: $error;
+}
+.-valid {
+    border: tall $success-darken-3;
+}
+
+Horizontal{
+    width: 100%;
+    height: auto;
+}
+.column {
+    width: 1fr;
+}
+
+HorizontalScroll {
+    width: 100%;
+}
+.feature_subtitle {
+    color: grey;
+}
+
+Vertical{
+    height: auto;
+}
+
+/* Display help messages */
+
+.help_box {
+    background: #333333;
+    padding: 1 5;
+    margin: 1 10;
+    overflow-y: auto;
+    transition: height 50ms;
+    display: none;
+    height: 0;
+}
+.displayed .help_box {
+    display: block;
+    height: 12;
+}
+#show_help {
+    display: block;
+}
+#hide_help {
+    display: none;
+}
+.displayed #show_help {
+    display: none;
+}
+.displayed #hide_help {
+    display: block;
+}
+
+/* Show password */
+
+#show_password {
+    display: block;
+}
+#hide_password {
+    display: none;
+}
+.displayed #show_password {
+    display: none;
+}
+.displayed #hide_password {
+    display: block;
+}
+
+/* Logging console */
+
+.log_console {
+    height: auto;
+}

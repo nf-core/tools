@@ -36,6 +36,7 @@ click.rich_click.COMMAND_GROUPS = {
             "commands": [
                 "list",
                 "launch",
+                "configs",
                 "create-params-file",
                 "download",
                 "licences",
@@ -54,6 +55,12 @@ click.rich_click.COMMAND_GROUPS = {
                 "bump-version",
                 "sync",
             ],
+        },
+    ],
+    "nf-core configs": [
+        {
+            "name": "Config commands",
+            "commands": ["create"],
         },
     ],
     "nf-core pipelines": [
@@ -300,6 +307,35 @@ def launch(
         id,
     )
     if not launcher.launch_pipeline():
+        sys.exit(1)
+
+
+# nf-core configs
+@nf_core_cli.group()
+@click.pass_context
+def configs(ctx):
+    """
+    Commands to manage nf-core pipelines.
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
+
+@configs.command("create")
+def create_configs():
+    """
+    Command to interactively create a nextflow config
+    """
+    from nf_core.configs.create import ConfigsCreateApp
+
+    try:
+        log.info("Launching interactive nf-core configs creation tool.")
+        app = ConfigsCreateApp()
+        app.run()
+        sys.exit(app.return_code or 0)
+    except UserWarning as e:
+        log.error(e)
         sys.exit(1)
 
 
@@ -627,7 +663,13 @@ def pipelines(ctx):
 @click.option("-d", "--description", type=str, help="A short description of your pipeline")
 @click.option("-a", "--author", type=str, help="Name of the main author(s)")
 @click.option("--version", type=str, default="1.0.0dev", help="The initial version number to use")
-@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Overwrite output directory if it already exists",
+)
 @click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 @click.option(
@@ -690,7 +732,13 @@ def create_pipeline(ctx, name, description, author, version, force, outdir, temp
 @click.option("-d", "--description", type=str, help="A short description of your pipeline")
 @click.option("-a", "--author", type=str, help="Name of the main author(s)")
 @click.option("--version", type=str, help="The initial version number to use")
-@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Overwrite output directory if it already exists",
+)
 @click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 @click.option("--plain", is_flag=True, help="Use the standard nf-core template")
