@@ -31,6 +31,7 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.7 ([#3015](https://github.com/nf-core/tools/pull/3015))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.8 ([#3017](https://github.com/nf-core/tools/pull/3017))
 - Update python:3.12-slim Docker digest to e3ae8cf ([#3020](https://github.com/nf-core/tools/pull/3020))
+- Update python:3.12-slim Docker digest to 2fba8e7 ([#3023](https://github.com/nf-core/tools/pull/3023))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
