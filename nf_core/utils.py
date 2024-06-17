@@ -949,7 +949,7 @@ class SingularityCacheFilePathValidator(questionary.Validator):
             return True
 
 
-def get_repo_releases_branches(pipeline, wfs):
+def get_repo_releases_branches_commits(pipeline, wfs):
     """Fetches details of a nf-core workflow to download.
 
     Args:
@@ -965,6 +965,7 @@ def get_repo_releases_branches(pipeline, wfs):
 
     wf_releases = []
     wf_branches = {}
+    wf_commits = []
 
     # Repo is a nf-core pipeline
     for wf in wfs.remote_workflows:
@@ -1018,8 +1019,12 @@ def get_repo_releases_branches(pipeline, wfs):
         ):
             wf_branches[branch["name"]] = branch["commit"]["sha"]
 
+        # Get commit information from github api
+        commit_response = gh_api.safe_get(f"https://api.github.com/repos/{pipeline}/commits?sha={branch['name']}")
+        for commit in commit_response.json():
+            wf_commits.append(commit["sha"])
     # Return pipeline again in case we added the nf-core/ prefix
-    return pipeline, wf_releases, wf_branches
+    return pipeline, wf_releases, wf_branches, wf_commits
 
 
 CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]

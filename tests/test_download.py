@@ -48,11 +48,9 @@ class DownloadTest(unittest.TestCase):
         wfs.get_remote_workflows()
         pipeline = "methylseq"
         download_obj = DownloadWorkflow(pipeline=pipeline, revision="1.6")
-        (
-            download_obj.pipeline,
-            download_obj.wf_revisions,
-            download_obj.wf_branches,
-        ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
+        (download_obj.pipeline, download_obj.wf_revisions, download_obj.wf_branches, _) = (
+            nf_core.utils.get_repo_releases_branches_commits(pipeline, wfs)
+        )
         download_obj.get_revision_hash()
         assert download_obj.wf_sha[download_obj.revision[0]] == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
         assert download_obj.outdir == "nf-core-methylseq_1.6"
@@ -67,14 +65,56 @@ class DownloadTest(unittest.TestCase):
         # Exoseq pipeline is archived, so `dev` branch should be stable
         pipeline = "exoseq"
         download_obj = DownloadWorkflow(pipeline=pipeline, revision="dev")
+        (download_obj.pipeline, download_obj.wf_revisions, download_obj.wf_branches, _) = (
+            nf_core.utils.get_repo_releases_branches_commits(pipeline, wfs)
+        )
+        download_obj.get_revision_hash()
+        assert download_obj.wf_sha[download_obj.revision[0]] == "819cbac792b76cf66c840b567ed0ee9a2f620db7"
+        assert download_obj.outdir == "nf-core-exoseq_dev"
+        assert (
+            download_obj.wf_download_url[download_obj.revision[0]]
+            == "https://github.com/nf-core/exoseq/archive/819cbac792b76cf66c840b567ed0ee9a2f620db7.zip"
+        )
+
+    def test_get_release_hash_long_commit(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        # Exoseq pipeline is archived, so `dev` branch should be stable
+        pipeline = "exoseq"
+
+        download_obj = DownloadWorkflow(pipeline="exoseq", revision="819cbac792b76cf66c840b567ed0ee9a2f620db7")
         (
             download_obj.pipeline,
             download_obj.wf_revisions,
             download_obj.wf_branches,
-        ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
+            download_obj.wf_commits,
+        ) = nf_core.utils.get_repo_releases_branches_commits(pipeline, wfs)
         download_obj.get_revision_hash()
+        print(download_obj)
         assert download_obj.wf_sha[download_obj.revision[0]] == "819cbac792b76cf66c840b567ed0ee9a2f620db7"
-        assert download_obj.outdir == "nf-core-exoseq_dev"
+        assert download_obj.outdir == "nf-core-exoseq_819cbac792b76cf66c840b567ed0ee9a2f620db7"
+        assert (
+            download_obj.wf_download_url[download_obj.revision[0]]
+            == "https://github.com/nf-core/exoseq/archive/819cbac792b76cf66c840b567ed0ee9a2f620db7.zip"
+        )
+
+    def test_get_release_hash_short_commit(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        # Exoseq pipeline is archived, so `dev` branch should be stable
+        pipeline = "exoseq"
+
+        download_obj = DownloadWorkflow(pipeline="exoseq", revision="819cbac")
+        (
+            download_obj.pipeline,
+            download_obj.wf_revisions,
+            download_obj.wf_branches,
+            download_obj.wf_commits,
+        ) = nf_core.utils.get_repo_releases_branches_commits(pipeline, wfs)
+        download_obj.get_revision_hash()
+        print(download_obj)
+        assert download_obj.wf_sha[download_obj.revision[0]] == "819cbac792b76cf66c840b567ed0ee9a2f620db7"
+        assert download_obj.outdir == "nf-core-exoseq_819cbac"
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
             == "https://github.com/nf-core/exoseq/archive/819cbac792b76cf66c840b567ed0ee9a2f620db7.zip"
@@ -85,11 +125,9 @@ class DownloadTest(unittest.TestCase):
         wfs.get_remote_workflows()
         pipeline = "methylseq"
         download_obj = DownloadWorkflow(pipeline=pipeline, revision="thisisfake")
-        (
-            download_obj.pipeline,
-            download_obj.wf_revisions,
-            download_obj.wf_branches,
-        ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
+        (download_obj.pipeline, download_obj.wf_revisions, download_obj.wf_branches, _) = (
+            nf_core.utils.get_repo_releases_branches_commits(pipeline, wfs)
+        )
         with pytest.raises(AssertionError):
             download_obj.get_revision_hash()
 
@@ -589,7 +627,7 @@ class DownloadTest(unittest.TestCase):
     def test_download_workflow_for_platform(self, tmp_dir, _):
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
-            revision=("3.7", "3.9"),
+            revision=("3.7", "3.9", "1817d14"),
             compress_type="none",
             platform=True,
             container_system="singularity",
@@ -597,22 +635,19 @@ class DownloadTest(unittest.TestCase):
 
         download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.
 
-        assert isinstance(download_obj.revision, list) and len(download_obj.revision) == 2
+        assert isinstance(download_obj.revision, list) and len(download_obj.revision) == 3
         assert isinstance(download_obj.wf_sha, dict) and len(download_obj.wf_sha) == 0
         assert isinstance(download_obj.wf_download_url, dict) and len(download_obj.wf_download_url) == 0
 
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
-        (
-            download_obj.pipeline,
-            download_obj.wf_revisions,
-            download_obj.wf_branches,
-        ) = nf_core.utils.get_repo_releases_branches(download_obj.pipeline, wfs)
+        (download_obj.pipeline, download_obj.wf_revisions, download_obj.wf_branches, download_obj.wf_commits) = (
+            nf_core.utils.get_repo_releases_branches_commits(download_obj.pipeline, wfs)
+        )
 
         download_obj.get_revision_hash()
-
-        # download_obj.wf_download_url is not set for Seqera Platform downloads, but the sha values are
-        assert isinstance(download_obj.wf_sha, dict) and len(download_obj.wf_sha) == 2
+        # download_obj.wf_download_url is not set for tower downloads, but the sha values are
+        assert isinstance(download_obj.wf_sha, dict) and len(download_obj.wf_sha) == 3
         assert isinstance(download_obj.wf_download_url, dict) and len(download_obj.wf_download_url) == 0
 
         # The outdir for multiple revisions is the pipeline name and date: e.g. nf-core-rnaseq_2023-04-27_18-54

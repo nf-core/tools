@@ -162,6 +162,7 @@ class DownloadWorkflow:
 
         self.wf_revisions = {}
         self.wf_branches = {}
+        self.wf_commits = {}
         self.wf_sha = {}
         self.wf_download_url = {}
         self.nf_config = {}
@@ -178,8 +179,8 @@ class DownloadWorkflow:
         # Get workflow details
         try:
             self.prompt_pipeline_name()
-            self.pipeline, self.wf_revisions, self.wf_branches = nf_core.utils.get_repo_releases_branches(
-                self.pipeline, self.wfs
+            self.pipeline, self.wf_revisions, self.wf_branches, self.wf_commits = (
+                nf_core.utils.get_repo_releases_branches_commits(self.pipeline, self.wfs)
             )
             self.prompt_revision()
             self.get_revision_hash()
@@ -373,13 +374,18 @@ class DownloadWorkflow:
                     raise AssertionError(f"No revisions of {self.pipeline} available for download.")
 
     def get_revision_hash(self):
-        """Find specified revision / branch hash"""
+        """Find specified revision / branch / commit hash"""
 
         for revision in self.revision:  # revision is a list of strings, but may be of length 1
             # Branch
             if revision in self.wf_branches.keys():
                 self.wf_sha = {**self.wf_sha, revision: self.wf_branches[revision]}
-
+            # Commit - full or short hash
+            elif revision in self.wf_commits or any(full_hash[:7] == revision for full_hash in self.wf_commits):
+                for full_hash in self.wf_commits:
+                    if full_hash[:7] == revision or full_hash == revision:
+                        self.wf_sha = {**self.wf_sha, revision: full_hash}
+                        break
             # Revision
             else:
                 for r in self.wf_revisions:
@@ -635,6 +641,7 @@ class DownloadWorkflow:
 
         # Rename the internal directory name to be more friendly
         gh_name = f"{self.pipeline}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
+
         os.rename(
             os.path.join(self.outdir, gh_name),
             os.path.join(self.outdir, revision_dirname),
