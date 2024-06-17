@@ -11,6 +11,7 @@ import os
 
 import questionary
 import rich
+import yaml
 
 import nf_core.modules.modules_utils
 import nf_core.utils
@@ -29,7 +30,12 @@ class ModuleLint(ComponentLint):
     # Import lint functions
     from .environment_yml import environment_yml  # type: ignore[misc]
     from .main_nf import main_nf  # type: ignore[misc]
-    from .meta_yml import meta_yml  # type: ignore[misc]
+    from .meta_yml import (  # type: ignore[misc]
+        meta_yml,
+        obtain_correct_and_specified_inputs,
+        obtain_correct_and_specified_outputs,
+        read_meta_yml,
+    )
     from .module_changes import module_changes  # type: ignore[misc]
     from .module_deprecations import module_deprecations  # type: ignore[misc]
     from .module_patch import module_patch  # type: ignore[misc]
@@ -41,6 +47,7 @@ class ModuleLint(ComponentLint):
         self,
         dir,
         fail_warned=False,
+        update_meta_yml=False,
         remote_url=None,
         branch=None,
         no_pull=False,
@@ -51,6 +58,7 @@ class ModuleLint(ComponentLint):
             component_type="modules",
             dir=dir,
             fail_warned=fail_warned,
+            update_meta_yml=update_meta_yml,
             remote_url=remote_url,
             branch=branch,
             no_pull=no_pull,
@@ -213,6 +221,12 @@ class ModuleLint(ComponentLint):
 
         # Otherwise run all the lint tests
         else:
+            mod.get_inputs_from_main_nf()
+            mod.get_outputs_from_main_nf()
+            # Update meta.yml file if requested
+            if self.update_meta_yml:
+                self.update_meta_yml_file(mod)
+
             if self.repo_type == "pipeline" and self.modules_json:
                 # Set correct sha
                 version = self.modules_json.get_module_version(mod.component_name, mod.repo_url, mod.org)
@@ -232,3 +246,92 @@ class ModuleLint(ComponentLint):
                 self.failed += warned
 
             self.failed += [LintResult(mod, *m) for m in mod.failed]
+
+    def update_meta_yml_file(self, mod):
+        """
+        Update the meta.yml file with the correct inputs and outputs
+        """
+        meta_yml = self.read_meta_yml(mod)
+        corrected_meta_yml = meta_yml.copy()
+
+        # Obtain inputs and outputs from main.nf and meta.yml
+        # Used to compare only the structure of channels and elements
+        # Do not compare features to allow for custom features in meta.yml (i.e. pattern)
+        if "input" in meta_yml:
+            correct_inputs, meta_inputs = self.obtain_correct_and_specified_inputs(mod, meta_yml)
+        if "output" in meta_yml:
+            correct_outputs, meta_outputs = self.obtain_correct_and_specified_outputs(mod, meta_yml)
+
+        if correct_inputs != meta_inputs:
+            log.debug(
+                f"Correct inputs: '{correct_inputs}' differ from current inputs: '{meta_inputs}' in '{mod.meta_yml}'"
+            )
+            corrected_meta_yml["input"] = mod.inputs.copy()  # list of lists (channels) of dicts (elements)
+            for i, channel in enumerate(corrected_meta_yml["input"]):
+                for j, element in enumerate(channel):
+                    element_name = list(element.keys())[0]
+                    for k, meta_element in enumerate(meta_yml["input"]):
+                        try:
+                            # Handle old format of meta.yml: list of dicts (channels)
+                            if element_name in meta_element.keys():
+                                # Copy current features of that input element form meta.yml
+                                for feature in meta_element[element_name].keys():
+                                    if feature not in element[element_name].keys():
+                                        corrected_meta_yml["input"][i][j][element_name][feature] = meta_element[
+                                            element_name
+                                        ][feature]
+                                break
+                        except AttributeError:
+                            # Handle new format of meta.yml: list of lists (channels) of elements (dicts)
+                            for x, meta_ch_element in enumerate(meta_element):
+                                if element_name in meta_ch_element.keys():
+                                    # Copy current features of that input element form meta.yml
+                                    for feature in meta_element[x][element_name].keys():
+                                        if feature not in element[element_name].keys():
+                                            corrected_meta_yml["input"][i][j][element_name][feature] = meta_element[x][
+                                                element_name
+                                            ][feature]
+                                    break
+
+        if correct_outputs != meta_outputs:
+            log.debug(
+                f"Correct outputs: '{correct_outputs}' differ from current outputs: '{meta_outputs}' in '{mod.meta_yml}'"
+            )
+            corrected_meta_yml["output"] = mod.outputs.copy()  # list of dicts (channels) with list of dicts (elements)
+            for i, channel in enumerate(corrected_meta_yml["output"]):
+                ch_name = list(channel.keys())[0]
+                for j, element in enumerate(channel[ch_name]):
+                    element_name = list(element.keys())[0]
+                    for k, meta_element in enumerate(meta_yml["output"]):
+                        if element_name in meta_element.keys():
+                            # Copy current features of that output element form meta.yml
+                            for feature in meta_element[element_name].keys():
+                                if feature not in element[element_name].keys():
+                                    corrected_meta_yml["output"][i][ch_name][j][element_name][feature] = meta_element[
+                                        element_name
+                                    ][feature]
+                            break
+                        elif ch_name in meta_element.keys():
+                            # When the previous output element was using the name of the channel
+                            # Copy current features of that output element form meta.yml
+                            try:
+                                # Handle old format of meta.yml
+                                for feature in meta_element[ch_name].keys():
+                                    if feature not in element[element_name].keys():
+                                        corrected_meta_yml["output"][i][ch_name][j][element_name][feature] = (
+                                            meta_element[ch_name][feature]
+                                        )
+                            except AttributeError:
+                                # Handle new format of meta.yml
+                                for x, meta_ch_element in enumerate(meta_element[ch_name]):
+                                    for meta_ch_element_name in meta_ch_element.keys():
+                                        for feature in meta_ch_element[meta_ch_element_name].keys():
+                                            if feature not in element[element_name].keys():
+                                                corrected_meta_yml["output"][i][ch_name][j][element_name][feature] = (
+                                                    meta_ch_element[meta_ch_element_name][feature]
+                                                )
+                            break
+
+        with open(mod.meta_yml, "w") as fh:
+            log.info(f"Updating {mod.meta_yml}")
+            yaml.dump(corrected_meta_yml, fh, sort_keys=False, Dumper=nf_core.utils.custom_yaml_dumper())

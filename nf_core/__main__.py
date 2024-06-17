@@ -1196,7 +1196,10 @@ def command_modules_test(ctx, tool, dir, no_prompts, update, once, profile):
     is_flag=True,
     help="Fix the module version if a newer version is available",
 )
-def command_modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version):
+@click.option(
+    "--update-meta-yml", is_flag=True, help="Update the meta.yml file with the correct format of input and outputs"
+)
+def command_modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version, update_meta_yml):
     """
     Lint one or more modules in a directory.
     """
