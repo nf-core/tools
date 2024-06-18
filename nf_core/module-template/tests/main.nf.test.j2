@@ -7,7 +7,7 @@ nextflow_process {
     process "{{ component_name_underscore|upper }}"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_{{ org_alphabet }}"
     {%- if subtool %}
     tag "{{ component }}"
     {%- endif %}

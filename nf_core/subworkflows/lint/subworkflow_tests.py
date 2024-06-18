@@ -4,6 +4,7 @@ Lint the tests of a subworkflow in nf-core/modules
 
 import json
 import logging
+import re
 from pathlib import Path
 
 import yaml
@@ -192,10 +193,13 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
                     )
             # Verify that tags are correct.
             main_nf_tags = subworkflow._get_main_nf_tags(subworkflow.nftest_main_nf)
+            not_alphabet = re.compile(r"[^a-zA-Z]")
+            org_alp = not_alphabet.sub("", subworkflow.org)
+            org_alphabet = org_alp if org_alp != "" else "nfcore"
             required_tags = [
                 "subworkflows",
                 f"subworkflows/{subworkflow.component_name}",
-                "subworkflows_nfcore",
+                f"subworkflows_{org_alphabet}",
             ]
             included_components = []
             if subworkflow.main_nf.is_file():

@@ -4,6 +4,7 @@ Lint the tests of a module in nf-core/modules
 
 import json
 import logging
+import re
 from pathlib import Path
 
 import yaml
@@ -169,7 +170,10 @@ def module_tests(_, module: NFCoreComponent):
                     )
             # Verify that tags are correct.
             main_nf_tags = module._get_main_nf_tags(module.nftest_main_nf)
-            required_tags = ["modules", "modules_nfcore", module.component_name]
+            not_alphabet = re.compile(r"[^a-zA-Z]")
+            org_alp = not_alphabet.sub("", module.org)
+            org_alphabet = org_alp if org_alp != "" else "nfcore"
+            required_tags = ["modules", f"modules_{org_alphabet}", module.component_name]
             if module.component_name.count("/") == 1:
                 required_tags.append(module.component_name.split("/")[0])
             chained_components_tags = module._get_included_components_in_chained_tests(module.nftest_main_nf)
