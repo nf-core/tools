@@ -10,6 +10,7 @@
 
 - Fix linting fail on nfcore_external_java_deps if nf_schema is used ([#2976](https://github.com/nf-core/tools/pull/2976))
 - Conda module linting: Include package name in log file ([#3014](https://github.com/nf-core/tools/pull/3014))
+- Remove defaults from conda environment.yml file. ([#3029](https://github.com/nf-core/tools/pull/3029))
 
 ### Download
 
