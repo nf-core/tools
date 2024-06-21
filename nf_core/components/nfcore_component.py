@@ -17,7 +17,14 @@ class NFCoreComponent:
     """
 
     def __init__(
-        self, component_name, repo_url, component_dir, repo_type, base_dir, component_type, remote_component=True
+        self,
+        component_name,
+        repo_url,
+        component_dir,
+        repo_type,
+        base_dir,
+        component_type,
+        remote_component=True,
     ):
         """
         Initialize the object
@@ -59,7 +66,6 @@ class NFCoreComponent:
             self.org = repo_dir
             self.nftest_testdir = Path(self.component_dir, "tests")
             self.nftest_main_nf = Path(self.nftest_testdir, "main.nf.test")
-            self.tags_yml = Path(self.nftest_testdir, "tags.yml")
 
             if self.repo_type == "pipeline":
                 patch_fn = f"{self.component_name.replace('/', '-')}.diff"

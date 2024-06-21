@@ -19,7 +19,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
     Lint the tests of a subworkflow in ``nf-core/modules``
 
     It verifies that the test directory exists
-    and contains a ``main.nf.test`` a ``main.nf.test.snap`` and ``tags.yml``.
+    and contains a ``main.nf.test`` and a ``main.nf.test.snap``
 
     Additionally, checks that all included components in test ``main.nf`` are specified in ``test.yml``
     """
@@ -27,30 +27,68 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
     repo_dir = subworkflow.component_dir.parts[
         : subworkflow.component_dir.parts.index(subworkflow.component_name.split("/")[0])
     ][-1]
-    test_dir = Path(subworkflow.base_dir, "tests", "subworkflows", repo_dir, subworkflow.component_name)
+    test_dir = Path(
+        subworkflow.base_dir,
+        "tests",
+        "subworkflows",
+        repo_dir,
+        subworkflow.component_name,
+    )
     pytest_main_nf = Path(test_dir, "main.nf")
     is_pytest = pytest_main_nf.is_file()
     log.debug(f"{pytest_main_nf} is pytest: {is_pytest}")
     if subworkflow.nftest_testdir.is_dir():
-        subworkflow.passed.append(("test_dir_exists", "nf-test test directory exists", subworkflow.nftest_testdir))
+        subworkflow.passed.append(
+            (
+                "test_dir_exists",
+                "nf-test test directory exists",
+                subworkflow.nftest_testdir,
+            )
+        )
     else:
         if is_pytest:
-            subworkflow.warned.append(("test_dir_exists", "nf-test directory is missing", subworkflow.nftest_testdir))
+            subworkflow.warned.append(
+                (
+                    "test_dir_exists",
+                    "nf-test directory is missing",
+                    subworkflow.nftest_testdir,
+                )
+            )
         else:
-            subworkflow.failed.append(("test_dir_exists", "nf-test directory is missing", subworkflow.nftest_testdir))
+            subworkflow.failed.append(
+                (
+                    "test_dir_exists",
+                    "nf-test directory is missing",
+                    subworkflow.nftest_testdir,
+                )
+            )
         return
 
     # Lint the test main.nf file
     if subworkflow.nftest_main_nf.is_file():
-        subworkflow.passed.append(("test_main_nf_exists", "test `main.nf.test` exists", subworkflow.nftest_main_nf))
+        subworkflow.passed.append(
+            (
+                "test_main_nf_exists",
+                "test `main.nf.test` exists",
+                subworkflow.nftest_main_nf,
+            )
+        )
     else:
         if is_pytest:
             subworkflow.warned.append(
-                ("test_main_nf_exists", "test `main.nf.test` does not exist", subworkflow.nftest_main_nf)
+                (
+                    "test_main_nf_exists",
+                    "test `main.nf.test` does not exist",
+                    subworkflow.nftest_main_nf,
+                )
             )
         else:
             subworkflow.failed.append(
-                ("test_main_nf_exists", "test `main.nf.test` does not exist", subworkflow.nftest_main_nf)
+                (
+                    "test_main_nf_exists",
+                    "test `main.nf.test` does not exist",
+                    subworkflow.nftest_main_nf,
+                )
             )
 
     if subworkflow.nftest_main_nf.is_file():
@@ -59,7 +97,13 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
             if "snapshot(" in fh.read():
                 snap_file = subworkflow.nftest_testdir / "main.nf.test.snap"
                 if snap_file.is_file():
-                    subworkflow.passed.append(("test_snapshot_exists", "test `main.nf.test.snap` exists", snap_file))
+                    subworkflow.passed.append(
+                        (
+                            "test_snapshot_exists",
+                            "test `main.nf.test.snap` exists",
+                            snap_file,
+                        )
+                    )
                     # Validate no empty files
                     with open(snap_file) as snap_fh:
                         try:
@@ -141,7 +185,11 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
                             )
                 else:
                     subworkflow.failed.append(
-                        ("test_snapshot_exists", "test `main.nf.test.snap` does not exist", snap_file)
+                        (
+                            "test_snapshot_exists",
+                            "test `main.nf.test.snap` does not exist",
+                            snap_file,
+                        )
                     )
             # Verify that tags are correct.
             main_nf_tags = subworkflow._get_main_nf_tags(subworkflow.nftest_main_nf)
@@ -165,7 +213,13 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
                 if tag not in main_nf_tags:
                     missing_tags.append(tag)
             if len(missing_tags) == 0:
-                subworkflow.passed.append(("test_main_tags", "Tags adhere to guidelines", subworkflow.nftest_main_nf))
+                subworkflow.passed.append(
+                    (
+                        "test_main_tags",
+                        "Tags adhere to guidelines",
+                        subworkflow.nftest_main_nf,
+                    )
+                )
             else:
                 subworkflow.failed.append(
                     (
@@ -191,38 +245,20 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
                     )
                 else:
                     subworkflow.passed.append(
-                        ("test_pytest_yml", "subworkflow with  nf-test not in pytest_modules.yml", pytest_yml_path)
+                        (
+                            "test_pytest_yml",
+                            "subworkflow with  nf-test not in pytest_modules.yml",
+                            pytest_yml_path,
+                        )
                     )
         except FileNotFoundError:
-            subworkflow.warned.append(("test_pytest_yml", "Could not open pytest_modules.yml file", pytest_yml_path))
-
-    if subworkflow.tags_yml.is_file():
-        # Check tags.yml exists and it has the correct entry
-        subworkflow.passed.append(("test_tags_yml_exists", "file `tags.yml` exists", subworkflow.tags_yml))
-        with open(subworkflow.tags_yml) as fh:
-            tags_yml = yaml.safe_load(fh)
-            if "subworkflows/" + subworkflow.component_name in tags_yml.keys():
-                subworkflow.passed.append(("test_tags_yml", "correct entry in tags.yml", subworkflow.tags_yml))
-                if (
-                    f"subworkflows/{subworkflow.org}/{subworkflow.component_name}/**"
-                    in tags_yml["subworkflows/" + subworkflow.component_name]
-                ):
-                    subworkflow.passed.append(("test_tags_yml", "correct path in tags.yml", subworkflow.tags_yml))
-                else:
-                    subworkflow.failed.append(("test_tags_yml", "incorrect path in tags.yml", subworkflow.tags_yml))
-            else:
-                subworkflow.failed.append(
-                    (
-                        "test_tags_yml",
-                        "incorrect entry in tags.yml, should be 'subworkflows/<SUBWORKFLOW_NAME>'",
-                        subworkflow.tags_yml,
-                    )
+            subworkflow.warned.append(
+                (
+                    "test_pytest_yml",
+                    "Could not open pytest_modules.yml file",
+                    pytest_yml_path,
                 )
-    else:
-        if is_pytest:
-            subworkflow.warned.append(("test_tags_yml_exists", "file `tags.yml` does not exist", subworkflow.tags_yml))
-        else:
-            subworkflow.failed.append(("test_tags_yml_exists", "file `tags.yml` does not exist", subworkflow.tags_yml))
+            )
 
     # Check that the old test directory does not exist
     if not is_pytest:
