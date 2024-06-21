@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from typing import Union
 
-import yaml
+import ruamel.yaml
 from jsonschema import exceptions, validators
 
 from nf_core.components.lint import ComponentLint
@@ -173,6 +173,8 @@ def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) ->
         dict: The `meta.yml` file as a dictionary
     """
     meta_yaml = None
+    yaml = ruamel.yaml.YAML()
+    yaml.preserve_quotes = True
     # Check if we have a patch file, get original file in that case
     if module.is_patched:
         lines = ModulesDiffer.try_apply_patch(
@@ -183,11 +185,11 @@ def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) ->
             reverse=True,
         ).get("meta.yml")
         if lines is not None:
-            meta_yaml = yaml.safe_load("".join(lines))
+            meta_yaml = yaml.load("".join(lines))
     if meta_yaml is None:
         try:
             with open(module.meta_yml) as fh:
-                meta_yaml = yaml.safe_load(fh)
+                meta_yaml = yaml.load(fh)
         except FileNotFoundError:
             return None
     return meta_yaml

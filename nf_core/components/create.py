@@ -20,6 +20,7 @@ from packaging.version import parse as parse_version
 import nf_core
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
+from nf_core.components.components_utils import get_biotools_id
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
@@ -60,6 +61,7 @@ class ComponentCreate(ComponentCommand):
         self.file_paths: Dict[str, Path] = {}
         self.not_empty_template = not empty_template
         self.migrate_pytest = migrate_pytest
+        self.tool_identifier = ""
 
     def create(self):
         """
@@ -148,6 +150,8 @@ class ComponentCreate(ComponentCommand):
             if self.component_type == "modules":
                 # Try to find a bioconda package for 'component'
                 self._get_bioconda_tool()
+                # Try to find a biotools entry for 'component'
+                self.tool_identifier = get_biotools_id(self.component)
 
             # Prompt for GitHub username
             self._get_username()

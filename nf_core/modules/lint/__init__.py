@@ -11,10 +11,11 @@ import os
 
 import questionary
 import rich
-import yaml
+import ruamel.yaml
 
 import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components.components_utils import get_biotools_id
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
 from nf_core.pipelines.lint_utils import console
 
@@ -253,6 +254,9 @@ class ModuleLint(ComponentLint):
         """
         meta_yml = self.read_meta_yml(mod)
         corrected_meta_yml = meta_yml.copy()
+        yaml = ruamel.yaml.YAML()
+        yaml.preserve_quotes = True
+        yaml.indent(mapping=2, sequence=2, offset=2)
 
         # Obtain inputs and outputs from main.nf and meta.yml
         # Used to compare only the structure of channels and elements
@@ -332,6 +336,14 @@ class ModuleLint(ComponentLint):
                                                 )
                             break
 
+        # Add bio.tools identifier
+        for i, tool in enumerate(corrected_meta_yml["tools"]):
+            tool_name = list(tool.keys())[0]
+            if "identifier" not in tool[tool_name]:
+                corrected_meta_yml["tools"][i][tool_name]["identifier"] = get_biotools_id(
+                    mod.component_name if "/" not in mod.component_name else mod.component_name.split("/")[0]
+                )
+
         with open(mod.meta_yml, "w") as fh:
             log.info(f"Updating {mod.meta_yml}")
-            yaml.dump(corrected_meta_yml, fh, sort_keys=False, Dumper=nf_core.utils.custom_yaml_dumper())
+            yaml.dump(corrected_meta_yml, fh)
