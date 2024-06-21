@@ -6,7 +6,9 @@ from nf_core.modules.modules_json import ModulesJson
 from nf_core.subworkflows.install import SubworkflowInstall
 
 from ..utils import (
+    CROSS_ORGANIZATION_URL,
     GITLAB_BRANCH_TEST_BRANCH,
+    GITLAB_DEFAULT_BRANCH,
     GITLAB_REPO,
     GITLAB_SUBWORKFLOWS_BRANCH,
     GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH,
@@ -77,6 +79,13 @@ def test_subworkflows_install_different_branch_fail(self):
     install_obj = SubworkflowInstall(self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH)
     # The bam_stats_samtools subworkflow does not exists in the branch-test branch
     assert install_obj.install("bam_stats_samtools") is False
+
+
+def test_subworkflows_install_across_organizations(self):
+    """Test installing a subworkflow with modules from different organizations"""
+    install_obj = SubworkflowInstall(self.pipeline_dir, remote_url=CROSS_ORGANIZATION_URL, branch=GITLAB_DEFAULT_BRANCH)
+    # The hic_bwamem2 subworkflow contains modules from different organizations
+    assert install_obj.install("hic_bwamem2") is True
 
 
 def test_subworkflows_install_tracking(self):
