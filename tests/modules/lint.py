@@ -59,6 +59,15 @@ def test_modules_lint_new_modules(self):
     assert len(module_lint.warned) >= 0
 
 
+def test_modules_lint_update_meta_yml(self):
+    """update the meta.yml of a module"""
+    module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules, update_meta_yml=True)
+    module_lint.lint(print_results=False, all_modules="fastqc")
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+
+
 def test_modules_lint_no_gitlab(self):
     """Test linting a pipeline with no modules installed"""
     self.mods_remove.remove("fastqc", force=True)

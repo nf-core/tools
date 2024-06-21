@@ -214,6 +214,7 @@ class TestModules(unittest.TestCase):
         test_modules_lint_snapshot_file_missing_fail,
         test_modules_lint_snapshot_file_not_needed,
         test_modules_lint_trimgalore,
+        test_modules_lint_update_meta_yml,
         test_modules_meta_yml_incorrect_licence_field,
         test_modules_meta_yml_incorrect_name,
         test_modules_meta_yml_input_mismatch,
