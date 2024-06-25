@@ -17,7 +17,7 @@ import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_utils import get_biotools_id
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
-from nf_core.pipelines.lint_utils import console
+from nf_core.pipelines.lint_utils import console, run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
@@ -256,7 +256,7 @@ class ModuleLint(ComponentLint):
         corrected_meta_yml = meta_yml.copy()
         yaml = ruamel.yaml.YAML()
         yaml.preserve_quotes = True
-        yaml.indent(mapping=2, sequence=2, offset=2)
+        yaml.indent(mapping=2, sequence=2, offset=0)
 
         # Obtain inputs and outputs from main.nf and meta.yml
         # Used to compare only the structure of channels and elements
@@ -347,3 +347,4 @@ class ModuleLint(ComponentLint):
         with open(mod.meta_yml, "w") as fh:
             log.info(f"Updating {mod.meta_yml}")
             yaml.dump(corrected_meta_yml, fh)
+            run_prettier_on_file(fh.name)
