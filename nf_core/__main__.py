@@ -641,7 +641,7 @@ def launch_pipeline(
         sys.exit(1)
 
 
-# nf-core pipelnies list
+# nf-core pipelines list
 @pipelines.command("list")
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option(
@@ -2248,10 +2248,24 @@ def validate(pipeline, params):
     This command takes such a file and validates it against the pipeline
     schema, checking whether all schema rules are satisfied.
     """
-    log.error(
+    log.warning(
         "The `[magenta]nf-core schema validate[/]` command is deprecated. Use `[magenta]nf-core pipelines schema validate[/]` instead."
     )
-    sys.exit(0)
+    from nf_core.pipelines.schema import PipelineSchema
+
+    schema_obj = PipelineSchema()
+    try:
+        schema_obj.get_schema_path(pipeline)
+        # Load and check schema
+        schema_obj.load_lint_schema()
+    except AssertionError as e:
+        log.error(e)
+        sys.exit(1)
+    schema_obj.load_input_params(params)
+    try:
+        schema_obj.validate_params()
+    except AssertionError:
+        sys.exit(1)
 
 
 # nf-core schema build (deprecated)
@@ -2292,10 +2306,18 @@ def build(dir, no_prompts, web_only, url):
     https://nf-co.re website where you can annotate and organise parameters.
     Listens for this to be completed and saves the updated schema.
     """
-    log.error(
+    log.warning(
         "The `[magenta]nf-core schema build[/]` command is deprecated. Use `[magenta]nf-core pipelines schema build[/]` instead."
     )
-    sys.exit(0)
+    from nf_core.pipelines.schema import PipelineSchema
+
+    try:
+        schema_obj = PipelineSchema()
+        if schema_obj.build_schema(dir, no_prompts, web_only, url) is False:
+            sys.exit(1)
+    except (UserWarning, AssertionError) as e:
+        log.error(e)
+        sys.exit(1)
 
 
 # nf-core schema lint (deprecated)
@@ -2319,10 +2341,22 @@ def schema_lint(schema_path):
 
     If no schema path is provided, "nextflow_schema.json" will be used (if it exists).
     """
-    log.error(
+    log.warning(
         "The `[magenta]nf-core schema lint[/]` command is deprecated. Use `[magenta]nf-core pipelines schema lint[/]` instead."
     )
-    sys.exit(0)
+    from nf_core.pipelines.schema import PipelineSchema
+
+    schema_obj = PipelineSchema()
+    try:
+        schema_obj.get_schema_path(schema_path)
+        schema_obj.load_lint_schema()
+        # Validate title and description - just warnings as schema should still work fine
+        try:
+            schema_obj.validate_schema_title_description()
+        except AssertionError as e:
+            log.warning(e)
+    except AssertionError:
+        sys.exit(1)
 
 
 # nf-core schema docs (deprecated)
@@ -2362,10 +2396,20 @@ def docs(schema_path, output, format, force, columns):
     DEPRECATED
     Outputs parameter documentation for a pipeline schema.
     """
-    log.error(
+    log.warning(
         "The `[magenta]nf-core schema docs[/]` command is deprecated. Use `[magenta]nf-core pipelines schema docs[/]` instead."
     )
-    sys.exit(0)
+    if not os.path.exists(schema_path):
+        log.error("Could not find 'nextflow_schema.json' in current directory. Please specify a path.")
+        sys.exit(1)
+
+    from nf_core.pipelines.schema import PipelineSchema
+
+    schema_obj = PipelineSchema()
+    # Assume we're in a pipeline dir root if schema path not set
+    schema_obj.get_schema_path(schema_path)
+    schema_obj.load_schema()
+    schema_obj.print_documentation(output, format, force, columns.split(","))
 
 
 # nf-core create-logo (deprecated)
@@ -2413,10 +2457,24 @@ def logo(logo_text, dir, name, theme, width, format, force):
 
     This command generates an nf-core pipeline logo, using the supplied <logo_text>
     """
-    log.error(
+    log.warning(
         "The `[magenta]nf-core create-logo[/]` command is deprecated. Use `[magenta]nf-core pipelines screate-logo[/]` instead."
     )
-    sys.exit(0)
+    from nf_core.pipelines.create_logo import create_logo
+
+    try:
+        if dir == ".":
+            dir = Path.cwd()
+        logo_path = create_logo(logo_text, dir, name, theme, width, format, force)
+        # Print path to logo relative to current working directory
+        try:
+            logo_path = Path(logo_path).relative_to(Path.cwd())
+        except ValueError:
+            logo_path = Path(logo_path)
+        log.info(f"Created logo: [magenta]{logo_path}[/]")
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
 
 
 # nf-core sync (deprecated)
@@ -2464,8 +2522,22 @@ def sync(dir, from_branch, pull_request, github_repository, username, template_y
     the pipeline. It is run automatically for all pipelines when ever a
     new release of [link=https://github.com/nf-core/tools]nf-core/tools[/link] (and the included template) is made.
     """
-    log.error("The `[magenta]nf-core sync[/]` command is deprecated. Use `[magenta]nf-core pipelines sync[/]` instead.")
-    sys.exit(0)
+    log.warning(
+        "The `[magenta]nf-core sync[/]` command is deprecated. Use `[magenta]nf-core pipelines sync[/]` instead."
+    )
+    from nf_core.pipelines.sync import PipelineSync, PullRequestExceptionError, SyncExceptionError
+    from nf_core.utils import is_pipeline_directory
+
+    # Check if pipeline directory contains necessary files
+    is_pipeline_directory(dir)
+
+    # Sync the given pipeline dir
+    sync_obj = PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
+    try:
+        sync_obj.sync()
+    except (SyncExceptionError, PullRequestExceptionError) as e:
+        log.error(e)
+        sys.exit(1)
 
 
 # nf-core bump-version (deprecated)
@@ -2499,10 +2571,28 @@ def bump_version(new_version, dir, nextflow):
 
     As well as the pipeline version, you can also change the required version of Nextflow.
     """
-    log.error(
+    log.warning(
         "The `[magenta]nf-core bump-version[/]` command is deprecated. Use `[magenta]nf-core pipelines bump-version[/]` instead."
     )
-    sys.exit(0)
+    from nf_core.pipelines.bump_version import bump_nextflow_version, bump_pipeline_version
+    from nf_core.utils import Pipeline, is_pipeline_directory
+
+    try:
+        # Check if pipeline directory contains necessary files
+        is_pipeline_directory(dir)
+
+        # Make a pipeline object and load config etc
+        pipeline_obj = Pipeline(dir)
+        pipeline_obj._load()
+
+        # Bump the pipeline version number
+        if not nextflow:
+            bump_pipeline_version(pipeline_obj, new_version)
+        else:
+            bump_nextflow_version(pipeline_obj, new_version)
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
 
 
 # nf-core list (deprecated)
@@ -2525,8 +2615,12 @@ def list(keywords, sort, json, show_archived):
     Checks the web for a list of nf-core pipelines with their latest releases.
     Shows which nf-core pipelines you have pulled locally and whether they are up to date.
     """
-    log.error("The `[magenta]nf-core list[/]` command is deprecated. Use `[magenta]nf-core pipelines list[/]` instead.")
-    sys.exit(0)
+    log.warning(
+        "The `[magenta]nf-core list[/]` command is deprecated. Use `[magenta]nf-core pipelines list[/]` instead."
+    )
+    from nf_core.pipelines.list import list_workflows
+
+    stdout.print(list_workflows(keywords, sort, json, show_archived))
 
 
 # nf-core launch (deprecated)
@@ -2600,10 +2694,24 @@ def launch(
     Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
     a local pipeline directory or an ID from the nf-core web launch tool.
     """
-    log.error(
+    log.warning(
         "The `[magenta]nf-core launch[/]` command is deprecated. Use `[magenta]nf-core pipelines launch[/]` instead."
     )
-    sys.exit(0)
+    from nf_core.pipelines.launch import Launch
+
+    launcher = Launch(
+        pipeline,
+        revision,
+        command_only,
+        params_in,
+        params_out,
+        save_all,
+        show_hidden,
+        url,
+        id,
+    )
+    if not launcher.launch_pipeline():
+        sys.exit(1)
 
 
 # nf-core create-params-file (deprecated)
@@ -2639,10 +2747,13 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
     a local pipeline directory.
     """
-    log.error(
+    log.warning(
         "The `[magenta]nf-core create-params-file[/]` command is deprecated. Use `[magenta]nf-core pipelines create-params-file[/]` instead."
     )
-    sys.exit(0)
+    builder = ParamsFileBuilder(pipeline, revision)
+
+    if not builder.write_params_file(output, show_hidden=show_hidden, force=force):
+        sys.exit(1)
 
 
 # nf-core download (deprecated)
@@ -2742,10 +2853,30 @@ def download(
     Collects all files in a single archive and configures the downloaded
     workflow to use relative paths to the configs and singularity images.
     """
-    log.error(
+    log.warning(
         "The `[magenta]nf-core download[/]` command is deprecated. Use `[magenta]nf-core pipelines download[/]` instead."
     )
-    sys.exit(0)
+    from nf_core.pipelines.download import DownloadWorkflow
+
+    if tower:
+        log.warning("[red]The `-t` / `--tower` flag is deprecated. Please use `--platform` instead.[/]")
+
+    dl = DownloadWorkflow(
+        pipeline,
+        revision,
+        outdir,
+        compress,
+        force,
+        tower or platform,  # True if either specified
+        download_configuration,
+        tag,
+        container_system,
+        container_library,
+        container_cache_utilisation,
+        container_cache_index,
+        parallel_downloads,
+    )
+    dl.download_workflow()
 
 
 # nf-core lint (deprecated)
@@ -2828,8 +2959,45 @@ def lint(
     You can ignore tests using a file called [blue].nf-core.yml[/] [i](if you have a good reason!)[/].
     See the documentation for details.
     """
-    log.error("The `[magenta]nf-core lint[/]` command is deprecated. Use `[magenta]nf-core pipelines lint[/]` instead.")
-    sys.exit(0)
+    log.warning(
+        "The `[magenta]nf-core lint[/]` command is deprecated. Use `[magenta]nf-core pipelines lint[/]` instead."
+    )
+    from nf_core.pipelines.lint import run_linting
+    from nf_core.utils import is_pipeline_directory
+
+    # Check if pipeline directory is a pipeline
+    try:
+        is_pipeline_directory(dir)
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
+
+    # Run the lint tests!
+    try:
+        lint_obj, module_lint_obj, subworkflow_lint_obj = run_linting(
+            dir,
+            release,
+            fix,
+            key,
+            show_passed,
+            fail_ignored,
+            fail_warned,
+            sort_by,
+            markdown,
+            json,
+            ctx.obj["hide_progress"],
+        )
+        swf_failed = 0
+        if subworkflow_lint_obj is not None:
+            swf_failed = len(subworkflow_lint_obj.failed)
+        if len(lint_obj.failed) + len(module_lint_obj.failed) + swf_failed > 0:
+            sys.exit(1)
+    except AssertionError as e:
+        log.critical(e)
+        sys.exit(1)
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
 
 
 # nf-core create (deprecated)
@@ -2847,7 +3015,13 @@ def lint(
 @click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 @click.option("--plain", is_flag=True, help="Use the standard nf-core template")
-def create(name, description, author, version, force, outdir, template_yaml, plain):
+@click.option(
+    "--organisation",
+    type=str,
+    default="nf-core",
+    help="The name of the GitHub organisation where the pipeline will be hosted (default: nf-core)",
+)
+def create(name, description, author, version, force, outdir, template_yaml, plain, organisation):
     """
     DEPRECATED
     Create a new pipeline using the nf-core template.
@@ -2855,10 +3029,41 @@ def create(name, description, author, version, force, outdir, template_yaml, pla
     Uses the nf-core template to make a skeleton Nextflow pipeline with all required
     files, boilerplate code and best-practices.
     """
-    log.error(
+    log.warning(
         "The `[magenta]nf-core create[/]` command is deprecated. Use `[magenta]nf-core pipelines create[/]` instead."
     )
-    sys.exit(0)
+    from nf_core.pipelines.create import PipelineCreateApp
+    from nf_core.pipelines.create.create import PipelineCreate
+
+    if (name and description and author) or (template_yaml):
+        # If all command arguments are used, run without the interactive interface
+        try:
+            create_obj = PipelineCreate(
+                name,
+                description,
+                author,
+                version=version,
+                force=force,
+                outdir=outdir,
+                template_config=template_yaml,
+                organisation=organisation,
+            )
+            create_obj.init_pipeline()
+        except UserWarning as e:
+            log.error(e)
+            sys.exit(1)
+    elif name or description or author or version != "1.0.0dev" or force or outdir or organisation != "nf-core":
+        log.error(
+            "[red]Partial arguments supplied.[/] "
+            "Run without [i]any[/] arguments for an interactive interface, "
+            "or with at least name + description + author to use non-interactively."
+        )
+        sys.exit(1)
+    else:
+        log.info("Launching interactive nf-core pipeline creation tool.")
+        app = PipelineCreateApp()
+        app.run()
+        sys.exit(app.return_code or 0)
 
 
 # Main script is being run - launch the CLI
