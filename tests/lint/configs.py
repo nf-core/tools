@@ -2,15 +2,15 @@ from pathlib import Path
 
 import yaml
 
+import nf_core.lint
 import nf_core.pipelines.create
-import nf_core.pipelines.lint
 
 
 def test_withname_in_modules_config(self):
     """Tests finding withName in modules.config passes linting."""
 
     new_pipeline = self._make_pipeline_copy()
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.modules_config()
     assert len(result["failed"]) == 0
@@ -26,7 +26,7 @@ def test_superfluous_withname_in_modules_config_fails(self):
     modules_config = Path(new_pipeline) / "conf" / "modules.config"
     with open(modules_config, "a") as f:
         f.write("\nwithName: 'BPIPE' {\n cache = false \n}")
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline, hide_progress=False)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline, hide_progress=False)
     lint_obj._load()
     result = lint_obj.modules_config()
     assert len(result["failed"]) == 1
@@ -44,7 +44,7 @@ def test_ignore_modules_config(self):
     with open(Path(new_pipeline) / ".nf-core.yml", "w") as f:
         yaml.dump(content, f)
     Path(new_pipeline, "conf", "modules.config").unlink()
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.modules_config()
     assert len(result["ignored"]) == 1
@@ -61,7 +61,7 @@ def test_superfluous_withname_in_base_config_fails(self):
     base_config = Path(new_pipeline) / "conf" / "base.config"
     with open(base_config, "a") as f:
         f.write("\nwithName:CUSTOM_DUMPSOFTWAREVERSIONS {\n cache = false \n}")
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.base_config()
     assert len(result["failed"]) == 1
@@ -79,7 +79,7 @@ def test_ignore_base_config(self):
     with open(Path(new_pipeline) / ".nf-core.yml", "w") as f:
         yaml.dump(content, f)
     Path(new_pipeline, "conf", "base.config").unlink()
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.base_config()
     assert len(result["ignored"]) == 1

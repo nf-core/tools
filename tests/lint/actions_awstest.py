@@ -2,7 +2,7 @@ import os
 
 import yaml
 
-import nf_core.pipelines.lint
+import nf_core.lint
 
 
 def test_actions_awstest_pass(self):
@@ -27,7 +27,7 @@ def test_actions_awstest_fail(self):
         yaml.dump(awstest_yml, fh)
 
     # Make lint object
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
 
     results = lint_obj.actions_awstest()

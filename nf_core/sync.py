@@ -15,8 +15,8 @@ import yaml
 from git import GitCommandError, InvalidGitRepositoryError
 
 import nf_core
+import nf_core.list
 import nf_core.pipelines.create.create
-import nf_core.pipelines.list
 import nf_core.utils
 
 log = logging.getLogger(__name__)
@@ -185,7 +185,7 @@ class PipelineSync:
         # Check to see if there are uncommitted changes on current branch
         if self.repo.is_dirty(untracked_files=True):
             raise SyncExceptionError(
-                "Uncommitted changes found in pipeline directory!\nPlease commit these before running nf-core pipelines sync"
+                "Uncommitted changes found in pipeline directory!\nPlease commit these before running nf-core sync"
             )
 
     def get_wf_config(self):

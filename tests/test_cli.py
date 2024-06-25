@@ -79,7 +79,7 @@ class TestCli(unittest.TestCase):
         # Checks that -v was considered valid
         assert "No such option: -v" not in nf_core.utils.strip_ansi_codes(result.output)
 
-    @mock.patch("nf_core.pipelines.list.list_workflows", return_value="pipeline test list")
+    @mock.patch("nf_core.list.list_workflows", return_value="pipeline test list")
     def test_cli_list(self, mock_list_workflows):
         """Test nf-core pipelines are listed and cli parameters are passed on."""
         params = {
@@ -87,7 +87,7 @@ class TestCli(unittest.TestCase):
             "json": None,
             "show-archived": None,
         }
-        cmd = ["pipelines", "list"] + self.assemble_params(params) + ["kw1", "kw2"]
+        cmd = ["list"] + self.assemble_params(params) + ["kw1", "kw2"]
         result = self.invoke_cli(cmd)
 
         mock_list_workflows.assert_called_once_with(
@@ -96,7 +96,7 @@ class TestCli(unittest.TestCase):
         assert result.exit_code == 0
         assert "pipeline test list" in result.output
 
-    @mock.patch("nf_core.pipelines.launch.Launch")
+    @mock.patch("nf_core.launch.Launch")
     def test_cli_launch(self, mock_launcher):
         """Test nf-core pipeline is launched and cli parameters are passed on."""
         mock_launcher.return_value.launch_pipeline.return_value = True
@@ -112,7 +112,7 @@ class TestCli(unittest.TestCase):
             "show-hidden": None,
             "url": "builder_url",
         }
-        cmd = ["pipelines", "launch"] + self.assemble_params(params) + ["pipeline_name"]
+        cmd = ["launch"] + self.assemble_params(params) + ["pipeline_name"]
         result = self.invoke_cli(cmd)
 
         assert result.exit_code == 0
@@ -131,7 +131,7 @@ class TestCli(unittest.TestCase):
 
         mock_launcher.return_value.launch_pipeline.assert_called_once()
 
-    @mock.patch("nf_core.pipelines.launch.Launch")
+    @mock.patch("nf_core.launch.Launch")
     def test_cli_launch_no_params_in(self, mock_launcher):
         """Test nf-core pipeline fails when params-in does not exist"""
         mock_launcher.return_value.launch_pipeline.return_value = True
@@ -139,7 +139,7 @@ class TestCli(unittest.TestCase):
         params = {
             "params-in": "/fake/path",
         }
-        cmd = ["pipelines", "launch"] + self.assemble_params(params) + ["pipeline_name"]
+        cmd = ["launch"] + self.assemble_params(params) + ["pipeline_name"]
         result = self.invoke_cli(cmd)
 
         assert result.exit_code == 2
@@ -150,15 +150,15 @@ class TestCli(unittest.TestCase):
 
         mock_launcher.assert_not_called()
 
-    @mock.patch("nf_core.pipelines.launch.Launch")
+    @mock.patch("nf_core.launch.Launch")
     def test_cli_launch_fail(self, mock_launcher):
         """Test nf-core pipeline fails with exit code 1 when pipeline fails."""
         mock_launcher.return_value.launch_pipeline.return_value = False
-        cmd = ["pipelines", "launch", "pipeline_name"]
+        cmd = ["launch", "pipeline_name"]
         result = self.invoke_cli(cmd)
         assert result.exit_code == 1
 
-    @mock.patch("nf_core.pipelines.download.DownloadWorkflow")
+    @mock.patch("nf_core.download.DownloadWorkflow")
     def test_cli_download(self, mock_dl):
         """Test nf-core pipeline is downloaded and cli parameters are passed on."""
         params = {
@@ -176,7 +176,7 @@ class TestCli(unittest.TestCase):
             "parallel-downloads": 2,
         }
 
-        cmd = ["pipelines", "download"] + self.assemble_params(params) + ["pipeline_name"]
+        cmd = ["download"] + self.assemble_params(params) + ["pipeline_name"]
         result = self.invoke_cli(cmd)
 
         assert result.exit_code == 0
@@ -283,9 +283,9 @@ class TestCli(unittest.TestCase):
         mock_create.return_value.run.assert_called_once()
 
     @mock.patch("nf_core.utils.is_pipeline_directory")
-    @mock.patch("nf_core.pipelines.lint.run_linting")
+    @mock.patch("nf_core.lint.run_linting")
     def test_lint(self, mock_lint, mock_is_pipeline):
-        """Test nf-core pipelines lint"""
+        """Test nf-core lint"""
         mock_lint_results = (mock.MagicMock, mock.MagicMock, mock.MagicMock)
         mock_lint_results[0].failed = []
         mock_lint_results[1].failed = []
@@ -305,7 +305,7 @@ class TestCli(unittest.TestCase):
             "json": "output_file.json",
         }
 
-        cmd = ["pipelines", "lint"] + self.assemble_params(params)
+        cmd = ["lint"] + self.assemble_params(params)
         result = self.invoke_cli(cmd)
 
         assert result.exit_code == 0
@@ -324,12 +324,12 @@ class TestCli(unittest.TestCase):
         )
 
     def test_lint_no_dir(self):
-        """Test nf-core pipelines lint fails if --dir does not exist"""
+        """Test nf-core lint fails if --dir does not exist"""
         params = {
             "dir": "/bad/path",
         }
 
-        cmd = ["pipelines", "lint"] + self.assemble_params(params)
+        cmd = ["lint"] + self.assemble_params(params)
         result = self.invoke_cli(cmd)
 
         assert result.exit_code == 2
@@ -340,11 +340,11 @@ class TestCli(unittest.TestCase):
 
     @mock.patch("nf_core.utils.is_pipeline_directory")
     def test_lint_dir_is_not_pipeline(self, mock_is_pipeline):
-        """Test nf-core pipelines lint logs an error if not called from a pipeline directory."""
+        """Test nf-core lint logs an error if not called from a pipeline directory."""
         error_txt = "UserWarning has been raised"
         mock_is_pipeline.side_effect = UserWarning(error_txt)
 
-        cmd = ["pipelines", "lint"]
+        cmd = ["lint"]
         with self.assertLogs() as captured_logs:
             result = self.invoke_cli(cmd)
 
@@ -353,13 +353,13 @@ class TestCli(unittest.TestCase):
         assert captured_logs.records[-1].levelname == "ERROR"
 
     @mock.patch("nf_core.utils.is_pipeline_directory")
-    @mock.patch("nf_core.pipelines.lint.run_linting")
+    @mock.patch("nf_core.lint.run_linting")
     def test_lint_log_assert_error(self, mock_lint, mock_is_pipeline):
-        """Test nf-core pipelines lint logs assertion errors"""
+        """Test nf-core lint logs assertion errors"""
         error_txt = "AssertionError has been raised"
         mock_lint.side_effect = AssertionError(error_txt)
 
-        cmd = ["pipelines", "lint"]
+        cmd = ["lint"]
         with self.assertLogs() as captured_logs:
             result = self.invoke_cli(cmd)
 
@@ -368,13 +368,13 @@ class TestCli(unittest.TestCase):
         assert captured_logs.records[-1].levelname == "CRITICAL"
 
     @mock.patch("nf_core.utils.is_pipeline_directory")
-    @mock.patch("nf_core.pipelines.lint.run_linting")
+    @mock.patch("nf_core.lint.run_linting")
     def test_lint_log_user_warning(self, mock_lint, mock_is_pipeline):
-        """Test nf-core pipelines lint logs assertion errors"""
+        """Test nf-core lint logs assertion errors"""
         error_txt = "AssertionError has been raised"
         mock_lint.side_effect = UserWarning(error_txt)
 
-        cmd = ["pipelines", "lint"]
+        cmd = ["lint"]
         with self.assertLogs() as captured_logs:
             result = self.invoke_cli(cmd)
 
@@ -382,31 +382,31 @@ class TestCli(unittest.TestCase):
         assert error_txt in captured_logs.output[-1]
         assert captured_logs.records[-1].levelname == "ERROR"
 
-    @mock.patch("nf_core.pipelines.schema.PipelineSchema.get_schema_path")
+    @mock.patch("nf_core.schema.PipelineSchema.get_schema_path")
     def test_schema_lint(self, mock_get_schema_path):
-        """Test nf-core pipelines schema lint defaults to nextflow_schema.json"""
-        cmd = ["pipelines", "schema", "lint"]
+        """Test nf-core schema lint defaults to nextflow_schema.json"""
+        cmd = ["schema", "lint"]
         with self.runner.isolated_filesystem():
             with open("nextflow_schema.json", "w") as f:
                 f.write("{}")
             self.invoke_cli(cmd)
             mock_get_schema_path.assert_called_with("nextflow_schema.json")
 
-    @mock.patch("nf_core.pipelines.schema.PipelineSchema.get_schema_path")
+    @mock.patch("nf_core.schema.PipelineSchema.get_schema_path")
     def test_schema_lint_filename(self, mock_get_schema_path):
-        """Test nf-core pipelines schema lint accepts a filename"""
-        cmd = ["pipelines", "schema", "lint", "some_other_filename"]
+        """Test nf-core schema lint accepts a filename"""
+        cmd = ["schema", "lint", "some_other_filename"]
         with self.runner.isolated_filesystem():
             with open("some_other_filename", "w") as f:
                 f.write("{}")
             self.invoke_cli(cmd)
             mock_get_schema_path.assert_called_with("some_other_filename")
 
-    @mock.patch("nf_core.pipelines.create_logo.create_logo")
+    @mock.patch("nf_core.create_logo.create_logo")
     def test_create_logo(self, mock_create_logo):
         # Set up the mock to return a specific value
 
-        cmd = ["pipelines", "create-logo", "test"]
+        cmd = ["create-logo", "test"]
         result = self.invoke_cli(cmd)
 
         mock_create_logo.assert_called_with("test", Path.cwd(), None, "light", 2300, "png", False)

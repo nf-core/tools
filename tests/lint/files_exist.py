@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-import nf_core.pipelines.lint
+import nf_core.lint
 
 
 def test_files_exist_missing_config(self):
@@ -10,7 +10,7 @@ def test_files_exist_missing_config(self):
 
     Path(new_pipeline, "CHANGELOG.md").unlink()
 
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     lint_obj.nf_config["manifest.name"] = "nf-core/testpipeline"
 
@@ -24,7 +24,7 @@ def test_files_exist_missing_main(self):
 
     Path(new_pipeline, "main.nf").unlink()
 
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
 
     results = lint_obj.files_exist()
@@ -38,7 +38,7 @@ def test_files_exist_depreciated_file(self):
     nf = Path(new_pipeline, "parameters.settings.json")
     os.system(f"touch {nf}")
 
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
 
     results = lint_obj.files_exist()
@@ -49,7 +49,7 @@ def test_files_exist_pass(self):
     """Lint check should pass if all files are there"""
 
     new_pipeline = self._make_pipeline_copy()
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
 
     results = lint_obj.files_exist()
@@ -58,7 +58,7 @@ def test_files_exist_pass(self):
 
 def test_files_exist_pass_conditional(self):
     new_pipeline = self._make_pipeline_copy()
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     lint_obj.nf_config["plugins"] = []
     lib_dir = Path(new_pipeline, "lib")
@@ -71,7 +71,7 @@ def test_files_exist_pass_conditional(self):
 
 def test_files_exist_fail_conditional(self):
     new_pipeline = self._make_pipeline_copy()
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     lib_dir = Path(new_pipeline, "lib")
     lib_dir.mkdir()
@@ -90,7 +90,7 @@ def test_files_exist_pass_conditional_nfschema(self):
     with open(Path(new_pipeline, "nextflow.config"), "w") as f:
         f.write(config)
 
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     lint_obj.nf_config["manifest.schema"] = "nf-core"
     results = lint_obj.files_exist()

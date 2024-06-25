@@ -107,8 +107,8 @@ This ensures that any changes we make to either the linting or the template stay
 You can replicate this process locally with the following commands:
 
 ```bash
-nf-core pipelines create -n testpipeline -d "This pipeline is for testing"
-nf-core pipelines lint nf-core-testpipeline
+nf-core create -n testpipeline -d "This pipeline is for testing"
+nf-core lint nf-core-testpipeline
 ```
 
 ## GitHub Codespaces

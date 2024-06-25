@@ -15,7 +15,7 @@ import rich
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
-from nf_core.pipelines.lint_utils import console
+from nf_core.lint_utils import console
 
 log = logging.getLogger(__name__)
 

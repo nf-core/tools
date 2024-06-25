@@ -1,6 +1,6 @@
 import logging
 
-import nf_core.pipelines.schema
+import nf_core.schema
 
 
 def schema_lint(self):
@@ -10,7 +10,7 @@ def schema_lint(self):
     pipeline parameters (eg. ``params.something``, ``--something``).
 
     .. tip:: Reminder: you should generally never need to edit this JSON file by hand.
-             The ``nf-core pipelines schema build`` command can create *and edit* the file for you
+             The ``nf-core schema build`` command can create *and edit* the file for you
              to keep it up to date, with a friendly user-interface for customisation.
 
     The lint test checks the schema for the following:
@@ -58,17 +58,17 @@ def schema_lint(self):
        }
 
     .. tip:: You can check your pipeline schema without having to run the entire pipeline lint
-             by running ``nf-core pipelines schema lint`` instead of ``nf-core pipelines lint``
+             by running ``nf-core schema lint`` instead of ``nf-core lint``
     """
     passed = []
     warned = []
     failed = []
 
     # Only show error messages from schema
-    logging.getLogger("nf_core.pipelines.schema").setLevel(logging.ERROR)
+    logging.getLogger("nf_core.schema").setLevel(logging.ERROR)
 
     # Lint the schema
-    self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
+    self.schema_obj = nf_core.schema.PipelineSchema()
     self.schema_obj.get_schema_path(self.wf_path)
 
     try:

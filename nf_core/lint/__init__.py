@@ -20,13 +20,13 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 
+import nf_core.lint_utils
 import nf_core.modules.lint
-import nf_core.pipelines.lint_utils
 import nf_core.subworkflows.lint
 import nf_core.utils
 from nf_core import __version__
 from nf_core.components.lint import ComponentLint
-from nf_core.pipelines.lint_utils import console
+from nf_core.lint_utils import console
 from nf_core.utils import plural_s as _s
 from nf_core.utils import strip_ansi_codes
 
@@ -439,7 +439,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         comment_body_text = f"Posted for pipeline commit {self.git_sha[:7]}" if self.git_sha is not None else ""
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         markdown = (
-            f"## `nf-core pipelines lint` overall result: {overall_result}\n\n"
+            f"## `nf-core lint` overall result: {overall_result}\n\n"
             f"{comment_body_text}\n\n"
             f"```diff{test_passed_count}{test_ignored_count}{test_fixed_count}{test_warning_count}{test_failure_count}"
             "\n```\n\n"
@@ -623,8 +623,8 @@ def run_linting(
     module_lint_obj._print_results(show_passed, sort_by=sort_by)
     if subworkflow_lint_obj is not None:
         subworkflow_lint_obj._print_results(show_passed, sort_by=sort_by)
-    nf_core.pipelines.lint_utils.print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj)
-    nf_core.pipelines.lint_utils.print_fixes(lint_obj)
+    nf_core.lint_utils.print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj)
+    nf_core.lint_utils.print_fixes(lint_obj)
 
     # Save results to Markdown file
     if md_fn is not None:

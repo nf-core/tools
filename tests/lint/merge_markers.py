@@ -1,6 +1,6 @@
 import os
 
-import nf_core.pipelines.lint
+import nf_core.lint
 
 
 def test_merge_markers_found(self):
@@ -13,7 +13,7 @@ def test_merge_markers_found(self):
     with open(os.path.join(new_pipeline, "main.nf"), "w") as fh:
         fh.write(main_nf_content)
 
-    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
 
     results = lint_obj.merge_markers()

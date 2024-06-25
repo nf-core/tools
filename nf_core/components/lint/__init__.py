@@ -19,8 +19,8 @@ import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.lint_utils import console
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.pipelines.lint_utils import console
 from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)

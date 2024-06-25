@@ -4,7 +4,7 @@ import os
 def version_consistency(self):
     """Pipeline and container version number consistency.
 
-    .. note:: This test only runs when the ``--release`` flag is set for ``nf-core pipelines lint``,
+    .. note:: This test only runs when the ``--release`` flag is set for ``nf-core lint``,
               or ``$GITHUB_REF`` is equal to ``master``.
 
     This lint fetches the pipeline version number from three possible locations:
