@@ -2,8 +2,8 @@ import os
 import re
 from pathlib import Path
 
-import nf_core.lint
 import nf_core.pipelines.create.create
+import nf_core.pipelines.lint
 
 
 def test_nextflow_config_example_pass(self):
@@ -17,7 +17,7 @@ def test_nextflow_config_example_pass(self):
 def test_nextflow_config_bad_name_fail(self):
     """Tests that config variable existence test fails with bad pipeline name"""
     new_pipeline = self._make_pipeline_copy()
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load_pipeline_config()
 
     lint_obj.nf_config["manifest.name"] = "bad_name"
@@ -29,7 +29,7 @@ def test_nextflow_config_bad_name_fail(self):
 def test_nextflow_config_dev_in_release_mode_failed(self):
     """Tests that config variable existence test fails with dev version in release mode"""
     new_pipeline = self._make_pipeline_copy()
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load_pipeline_config()
 
     lint_obj.release_mode = True
@@ -49,7 +49,7 @@ def test_nextflow_config_missing_test_profile_failed(self):
         fail_content = re.sub(r"\btest\b", "testfail", content)
     with open(nf_conf_file, "w") as f:
         f.write(fail_content)
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load_pipeline_config()
     result = lint_obj.nextflow_config()
     assert len(result["failed"]) > 0
@@ -59,7 +59,7 @@ def test_nextflow_config_missing_test_profile_failed(self):
 def test_default_values_match(self):
     """Test that the default values in nextflow.config match the default values defined in the nextflow_schema.json."""
     new_pipeline = self._make_pipeline_copy()
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load_pipeline_config()
     result = lint_obj.nextflow_config()
     assert len(result["failed"]) == 0
@@ -85,7 +85,7 @@ def test_default_values_fail(self):
         fail_content = re.sub(r'"default": "128.GB"', '"default": "18.GB"', content)
     with open(nf_schema_file, "w") as f:
         f.write(fail_content)
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load_pipeline_config()
     result = lint_obj.nextflow_config()
     assert len(result["failed"]) == 2
@@ -106,7 +106,7 @@ def test_catch_params_assignment_in_main_nf(self):
     main_nf_file = Path(new_pipeline) / "main.nf"
     with open(main_nf_file, "a") as f:
         f.write("params.max_time = 42")
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load_pipeline_config()
     result = lint_obj.nextflow_config()
     assert len(result["failed"]) == 1
@@ -123,7 +123,7 @@ def test_allow_params_reference_in_main_nf(self):
     main_nf_file = Path(new_pipeline) / "main.nf"
     with open(main_nf_file, "a") as f:
         f.write("params.max_time == 42")
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load_pipeline_config()
     result = lint_obj.nextflow_config()
     assert len(result["failed"]) == 0
@@ -138,7 +138,7 @@ def test_default_values_ignored(self):
         f.write(
             "repository_type: pipeline\nlint:\n  nextflow_config:\n    - config_defaults:\n      - params.max_cpus\n"
         )
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load_pipeline_config()
     lint_obj._load_lint_config()
     result = lint_obj.nextflow_config()
@@ -172,7 +172,7 @@ def test_default_values_float(self):
     with open(nf_schema_file, "w") as f:
         f.write(fail_content)
 
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load_pipeline_config()
     result = lint_obj.nextflow_config()
     assert len(result["failed"]) == 0
@@ -202,7 +202,7 @@ def test_default_values_float_fail(self):
     with open(nf_schema_file, "w") as f:
         f.write(fail_content)
 
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load_pipeline_config()
     result = lint_obj.nextflow_config()
 

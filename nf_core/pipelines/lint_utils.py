@@ -50,7 +50,7 @@ def print_fixes(lint_obj):
     if lint_obj.could_fix:
         fix_flags = "".join([f" --fix {fix}" for fix in lint_obj.could_fix])
         wf_dir = "" if lint_obj.wf_path == "." else f"--dir {lint_obj.wf_path}"
-        fix_cmd = f"nf-core lint {wf_dir} {fix_flags}"
+        fix_cmd = f"nf-core pipelines lint {wf_dir} {fix_flags}"
         console.print(
             "\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n"
             f"[blue]    {fix_cmd}\n"

@@ -13,9 +13,9 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Confirm
 
-import nf_core.schema
+import nf_core.pipelines.schema
 import nf_core.utils
-from nf_core.lint_utils import dump_json_with_prettier
+from nf_core.pipelines.lint_utils import dump_json_with_prettier
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class Launch:
         """Initialise the Launcher class
 
         Args:
-          schema: An nf_core.schema.PipelineSchema() object
+          schema: An nf_core.pipelines.schema.PipelineSchema() object
         """
 
         self.pipeline = pipeline
@@ -59,7 +59,7 @@ class Launch:
         self.nextflow_cmd = None
 
         # Fetch remote workflows
-        self.wfs = nf_core.list.Workflows()
+        self.wfs = nf_core.pipelines.list.Workflows()
         self.wfs.get_remote_workflows()
 
         # Prepend property names with a single hyphen in case we have parameters with the same ID
@@ -138,7 +138,7 @@ class Launch:
 
         # Check if we have a web ID
         if self.web_id is not None:
-            self.schema_obj = nf_core.schema.PipelineSchema()
+            self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
             try:
                 if not self.get_web_launch_response():
                     log.info(
@@ -191,7 +191,7 @@ class Launch:
         """Load and validate the schema from the supplied pipeline"""
 
         # Set up the schema
-        self.schema_obj = nf_core.schema.PipelineSchema()
+        self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
 
         # Check if this is a local directory
         localpath = os.path.abspath(os.path.expanduser(self.pipeline))
@@ -340,7 +340,7 @@ class Launch:
         elif web_response["status"] == "waiting_for_user":
             return False
         elif web_response["status"] == "launch_params_complete":
-            log.info("Found completed parameters from nf-core launch GUI")
+            log.info("Found completed parameters from nf-core pipelines launch GUI")
             try:
                 # Set everything that we can with the cache results
                 # NB: If using web builder, may have only run with --id and nothing else

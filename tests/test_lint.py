@@ -9,8 +9,8 @@ import unittest
 
 import yaml
 
-import nf_core.lint
 import nf_core.pipelines.create.create
+import nf_core.pipelines.lint
 
 from .utils import with_temporary_folder
 
@@ -32,7 +32,7 @@ class TestLint(unittest.TestCase):
         self.create_obj.init_pipeline()
 
         # Base lint object on this directory
-        self.lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
+        self.lint_obj = nf_core.pipelines.lint.PipelineLint(self.test_pipeline_dir)
 
     def tearDown(self):
         """Clean up temporary files and folders"""
@@ -56,7 +56,7 @@ class TestLint(unittest.TestCase):
 
         We don't really check any of this code as it's just a series of function calls
         and we're testing each of those individually. This is mostly to check for syntax errors."""
-        nf_core.lint.run_linting(self.test_pipeline_dir, False)
+        nf_core.pipelines.lint.run_linting(self.test_pipeline_dir, False)
 
     def test_init_pipeline_lint(self):
         """Simply create a PipelineLint object.
@@ -64,7 +64,7 @@ class TestLint(unittest.TestCase):
         This checks that all of the lint test imports are working properly,
         we also check that the git sha was found and that the release flag works properly
         """
-        lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir, True)
+        lint_obj = nf_core.pipelines.lint.PipelineLint(self.test_pipeline_dir, True)
 
         # Tests that extra test is added for release mode
         assert "version_consistency" in lint_obj.lint_tests
@@ -82,7 +82,7 @@ class TestLint(unittest.TestCase):
 
         # Make a copy of the test pipeline and create a lint object
         new_pipeline = self._make_pipeline_copy()
-        lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+        lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
 
         # Make a config file listing all test names
         config_dict = {"lint": {test_name: False for test_name in lint_obj.lint_tests}}
@@ -167,7 +167,7 @@ class TestLint(unittest.TestCase):
                 existing_docs.append(os.path.join(docs_basedir, fn))
 
         # Check .md files against each test name
-        lint_obj = nf_core.lint.PipelineLint("", True)
+        lint_obj = nf_core.pipelines.lint.PipelineLint("", True)
         for test_name in lint_obj.lint_tests:
             fn = os.path.join(docs_basedir, f"{test_name}.md")
             assert os.path.exists(fn), f"Could not find lint docs .md file: {fn}"
@@ -259,40 +259,40 @@ class TestLint(unittest.TestCase):
 
 #    def test_critical_missingfiles_example(self):
 #        """Tests for missing nextflow config and main.nf files"""
-#        lint_obj = nf_core.lint.run_linting(PATH_CRITICAL_EXAMPLE, False)
+#        lint_obj = nf_core.pipelines.lint.run_linting(PATH_CRITICAL_EXAMPLE, False)
 #        assert len(lint_obj.failed) > 0
 #
 #    def test_failing_missingfiles_example(self):
 #        """Tests for missing files like Dockerfile or LICENSE"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_FAILING_EXAMPLE)
 #        lint_obj.check_files_exist()
 #        expectations = {"failed": 6, "warned": 2, "passed": 14}
 #        self.assess_lint_status(lint_obj, **expectations)
 #
 #    def test_mit_licence_example_pass(self):
 #        """Tests that MIT test works with good MIT licences"""
-#        good_lint_obj = nf_core.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
+#        good_lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
 #        good_lint_obj.check_licence()
 #        expectations = {"failed": 0, "warned": 0, "passed": 1}
 #        self.assess_lint_status(good_lint_obj, **expectations)
 #
 #    def test_mit_license_example_with_failed(self):
 #        """Tests that MIT test works with bad MIT licences"""
-#        bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+#        bad_lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_FAILING_EXAMPLE)
 #        bad_lint_obj.check_licence()
 #        expectations = {"failed": 1, "warned": 0, "passed": 0}
 #        self.assess_lint_status(bad_lint_obj, **expectations)
 #
 #    def test_config_variable_example_pass(self):
 #        """Tests that config variable existence test works with good pipeline example"""
-#        good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        good_lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        good_lint_obj.check_nextflow_config()
 #        expectations = {"failed": 0, "warned": 1, "passed": 34}
 #        self.assess_lint_status(good_lint_obj, **expectations)
 #
 #    def test_config_variable_example_with_failed(self):
 #        """Tests that config variable existence test fails with bad pipeline example"""
-#        bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+#        bad_lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_FAILING_EXAMPLE)
 #        bad_lint_obj.check_nextflow_config()
 #        expectations = {"failed": 19, "warned": 6, "passed": 10}
 #        self.assess_lint_status(bad_lint_obj, **expectations)
@@ -300,28 +300,28 @@ class TestLint(unittest.TestCase):
 #    @pytest.mark.xfail(raises=AssertionError, strict=True)
 #    def test_config_variable_error(self):
 #        """Tests that config variable existence test falls over nicely with nextflow can't run"""
-#        bad_lint_obj = nf_core.lint.PipelineLint("/non/existant/path")
+#        bad_lint_obj = nf_core.pipelines.lint.PipelineLint("/non/existant/path")
 #        bad_lint_obj.check_nextflow_config()
 #
 #
 #    def test_wrong_license_examples_with_failed(self):
 #        """Tests for checking the license test behavior"""
 #        for example in PATHS_WRONG_LICENSE_EXAMPLE:
-#            lint_obj = nf_core.lint.PipelineLint(example)
+#            lint_obj = nf_core.pipelines.lint.PipelineLint(example)
 #            lint_obj.check_licence()
 #            expectations = {"failed": 1, "warned": 0, "passed": 0}
 #            self.assess_lint_status(lint_obj, **expectations)
 #
 #    def test_missing_license_example(self):
 #        """Tests for missing license behavior"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_MISSING_LICENSE_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_MISSING_LICENSE_EXAMPLE)
 #        lint_obj.check_licence()
 #        expectations = {"failed": 1, "warned": 0, "passed": 0}
 #        self.assess_lint_status(lint_obj, **expectations)
 #
 #    def test_readme_pass(self):
 #        """Tests that the pipeline README file checks work with a good example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.minNextflowVersion = "20.04.0"
 #        lint_obj.files = ["environment.yml"]
 #        lint_obj.check_readme()
@@ -330,7 +330,7 @@ class TestLint(unittest.TestCase):
 #
 #    def test_readme_warn(self):
 #        """Tests that the pipeline README file checks fail  """
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.minNextflowVersion = "0.28.0"
 #        lint_obj.check_readme()
 #        expectations = {"failed": 1, "warned": 0, "passed": 0}
@@ -338,7 +338,7 @@ class TestLint(unittest.TestCase):
 #
 #    def test_readme_fail(self):
 #        """Tests that the pipeline README file checks give warnings with a bad example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_FAILING_EXAMPLE)
 #        lint_obj.files = ["environment.yml"]
 #        lint_obj.check_readme()
 #        expectations = {"failed": 0, "warned": 2, "passed": 0}
@@ -346,7 +346,7 @@ class TestLint(unittest.TestCase):
 #
 #    def test_dockerfile_pass(self):
 #        """Tests if a valid Dockerfile passes the lint checks"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.files = ["Dockerfile"]
 #        lint_obj.check_docker()
 #        expectations = {"failed": 0, "warned": 0, "passed": 1}
@@ -354,7 +354,7 @@ class TestLint(unittest.TestCase):
 #
 #    def test_version_consistency_pass(self):
 #        """Tests the workflow version and container version sucessfully"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.config["manifest.version"] = "0.4"
 #        lint_obj.config["process.container"] = "nfcore/tools:0.4"
 #        lint_obj.check_version_consistency()
@@ -366,7 +366,7 @@ class TestLint(unittest.TestCase):
 #        and simulate wrong release tag"""
 #        os.environ["GITHUB_REF"] = "refs/tags/0.5"
 #        os.environ["GITHUB_REPOSITORY"] = "nf-core/testpipeline"
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.config["manifest.version"] = "0.4"
 #        lint_obj.config["process.container"] = "nfcore/tools:0.4"
 #        lint_obj.check_version_consistency()
@@ -378,7 +378,7 @@ class TestLint(unittest.TestCase):
 #        and simulate wrong release tag"""
 #        os.environ["GITHUB_REF"] = "refs/tags/0.5dev"
 #        os.environ["GITHUB_REPOSITORY"] = "nf-core/testpipeline"
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.config["manifest.version"] = "0.4"
 #        lint_obj.config["process.container"] = "nfcore/tools:0.4"
 #        lint_obj.check_version_consistency()
@@ -390,7 +390,7 @@ class TestLint(unittest.TestCase):
 #        and simulate wrong missing docker version tag"""
 #        os.environ["GITHUB_REF"] = "refs/tags/0.4"
 #        os.environ["GITHUB_REPOSITORY"] = "nf-core/testpipeline"
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.config["manifest.version"] = "0.4"
 #        lint_obj.config["process.container"] = "nfcore/tools"
 #        lint_obj.check_version_consistency()
@@ -402,7 +402,7 @@ class TestLint(unittest.TestCase):
 #        and simulate correct release tag"""
 #        os.environ["GITHUB_REF"] = "refs/tags/0.4"
 #        os.environ["GITHUB_REPOSITORY"] = "nf-core/testpipeline"
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.config["manifest.version"] = "0.4"
 #        lint_obj.config["process.container"] = "nfcore/tools:0.4"
 #        lint_obj.check_version_consistency()
@@ -411,7 +411,7 @@ class TestLint(unittest.TestCase):
 #
 #    def test_conda_env_pass(self):
 #        """ Tests the conda environment config checks with a working example """
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.files = ["environment.yml"]
 #        with open(os.path.join(PATH_WORKING_EXAMPLE, "environment.yml"), "r") as fh:
 #            lint_obj.conda_config = yaml.safe_load(fh)
@@ -423,7 +423,7 @@ class TestLint(unittest.TestCase):
 #
 #    def test_conda_env_fail(self):
 #        """ Tests the conda environment config fails with a bad example """
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.files = ["environment.yml"]
 #        with open(os.path.join(PATH_WORKING_EXAMPLE, "environment.yml"), "r") as fh:
 #            lint_obj.conda_config = yaml.safe_load(fh)
@@ -441,20 +441,20 @@ class TestLint(unittest.TestCase):
 #        # Define the behaviour of the request get mock
 #        mock_get.side_effect = requests.exceptions.Timeout()
 #        # Now do the test
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.conda_config["channels"] = ["bioconda"]
 #        lint_obj.check_anaconda_package("multiqc=1.6")
 #
 #    def test_conda_env_skip(self):
 #        """ Tests the conda environment config is skipped when not needed """
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.check_conda_env_yaml()
 #        expectations = {"failed": 0, "warned": 0, "passed": 0}
 #        self.assess_lint_status(lint_obj, **expectations)
 #
 #    def test_conda_dockerfile_pass(self):
 #        """ Tests the conda Dockerfile test works with a working example """
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.version = "1.11"
 #        lint_obj.files = ["environment.yml", "Dockerfile"]
 #        with open(os.path.join(PATH_WORKING_EXAMPLE, "Dockerfile"), "r") as fh:
@@ -466,7 +466,7 @@ class TestLint(unittest.TestCase):
 #
 #    def test_conda_dockerfile_fail(self):
 #        """ Tests the conda Dockerfile test fails with a bad example """
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.version = "1.11"
 #        lint_obj.files = ["environment.yml", "Dockerfile"]
 #        lint_obj.conda_config["name"] = "nf-core-tools-0.4"
@@ -477,14 +477,14 @@ class TestLint(unittest.TestCase):
 #
 #    def test_conda_dockerfile_skip(self):
 #        """ Tests the conda Dockerfile test is skipped when not needed """
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.check_conda_dockerfile()
 #        expectations = {"failed": 0, "warned": 0, "passed": 0}
 #        self.assess_lint_status(lint_obj, **expectations)
 #
 #    def test_pip_no_version_fail(self):
 #        """ Tests the pip dependency version definition is present """
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.files = ["environment.yml"]
 #        lint_obj.pipeline_name = "tools"
 #        lint_obj.config["manifest.version"] = "0.4"
@@ -495,7 +495,7 @@ class TestLint(unittest.TestCase):
 #
 #    def test_pip_package_not_latest_warn(self):
 #        """ Tests the pip dependency version definition is present """
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.files = ["environment.yml"]
 #        lint_obj.pipeline_name = "tools"
 #        lint_obj.config["manifest.version"] = "0.4"
@@ -511,7 +511,7 @@ class TestLint(unittest.TestCase):
 #        # Define the behaviour of the request get mock
 #        mock_get.side_effect = requests.exceptions.Timeout()
 #        # Now do the test
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.files = ["environment.yml"]
 #        lint_obj.pipeline_name = "tools"
 #        lint_obj.config["manifest.version"] = "0.4"
@@ -527,7 +527,7 @@ class TestLint(unittest.TestCase):
 #        # Define the behaviour of the request get mock
 #        mock_get.side_effect = requests.exceptions.ConnectionError()
 #        # Now do the test
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.files = ["environment.yml"]
 #        lint_obj.pipeline_name = "tools"
 #        lint_obj.config["manifest.version"] = "0.4"
@@ -538,7 +538,7 @@ class TestLint(unittest.TestCase):
 #
 #    def test_pip_dependency_fail(self):
 #        """ Tests the PyPi API package information query """
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.files = ["environment.yml"]
 #        lint_obj.pipeline_name = "tools"
 #        lint_obj.config["manifest.version"] = "0.4"
@@ -551,7 +551,7 @@ class TestLint(unittest.TestCase):
 #        """Tests that linting fails, if conda dependency
 #        package version is not available on Anaconda.
 #        """
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.files = ["environment.yml"]
 #        lint_obj.pipeline_name = "tools"
 #        lint_obj.config["manifest.version"] = "0.4"
@@ -564,7 +564,7 @@ class TestLint(unittest.TestCase):
 #        """Tests that linting fails, if conda dependency
 #        package version is not available on Anaconda.
 #        """
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        lint_obj.files = ["environment.yml"]
 #        lint_obj.pipeline_name = "tools"
 #        lint_obj.config["manifest.version"] = "0.4"
@@ -575,8 +575,8 @@ class TestLint(unittest.TestCase):
 #
 #    def test_pipeline_name_pass(self):
 #        """Tests pipeline name good pipeline example: lower case, no punctuation"""
-#        # good_lint_obj = nf_core.lint.run_linting(PATH_WORKING_EXAMPLE)
-#        good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        # good_lint_obj = nf_core.pipelines.lint.run_linting(PATH_WORKING_EXAMPLE)
+#        good_lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        good_lint_obj.pipeline_name = "tools"
 #        good_lint_obj.check_pipeline_name()
 #        expectations = {"failed": 0, "warned": 0, "passed": 1}
@@ -584,7 +584,7 @@ class TestLint(unittest.TestCase):
 #
 #    def test_pipeline_name_critical(self):
 #        """Tests that warning is returned for pipeline not adhering to naming convention"""
-#        critical_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        critical_lint_obj = nf_core.pipelines.lint.PipelineLint(PATH_WORKING_EXAMPLE)
 #        critical_lint_obj.pipeline_name = "Tools123"
 #        critical_lint_obj.check_pipeline_name()
 #        expectations = {"failed": 0, "warned": 1, "passed": 0}

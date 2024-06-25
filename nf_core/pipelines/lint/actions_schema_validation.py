@@ -23,7 +23,7 @@ def actions_schema_validation(self) -> Dict[str, List[str]]:
     warned: List[str] = []
 
     # Only show error messages from schema
-    logging.getLogger("nf_core.schema").setLevel(logging.ERROR)
+    logging.getLogger("nf_core.pipelines.schema").setLevel(logging.ERROR)
 
     # Get all workflow files
     action_workflows = glob.glob(os.path.join(self.wf_path, ".github/workflows/*.y*ml"))
