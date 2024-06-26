@@ -184,7 +184,7 @@ class ComponentInfo(ComponentCommand):
                 meta_fn = Path(comp_dir, "meta.yml")
                 if meta_fn.exists():
                     log.debug(f"Found local file: {meta_fn}")
-                    with open(meta_fn, "r") as fh:
+                    with open(meta_fn) as fh:
                         self.local_path = comp_dir
                         return yaml.safe_load(fh)
 
@@ -196,7 +196,7 @@ class ComponentInfo(ComponentCommand):
                 meta_fn = Path(comp_dir, "meta.yml")
                 if meta_fn.exists():
                     log.debug(f"Found local file: {meta_fn}")
-                    with open(meta_fn, "r") as fh:
+                    with open(meta_fn) as fh:
                         self.local_path = comp_dir
                         return yaml.safe_load(fh)
             log.debug(f"{self.component_type[:-1].title()} '{self.component}' meta.yml not found locally")

@@ -1,50 +1,44 @@
-""" Tests covering the pipeline launch code.
-"""
+"""Tests covering the pipeline launch code."""
 
 import json
 import os
-import tempfile
-import unittest
-from unittest import mock
+import shutil
+from pathlib import Path
+from unittest import TestCase, mock
 
 import pytest
 
-import nf_core.create
-import nf_core.launch
+import nf_core.pipelines.create.create
+import nf_core.pipelines.launch
 
-from .utils import with_temporary_file, with_temporary_folder
+from .utils import create_tmp_pipeline, with_temporary_file, with_temporary_folder
 
 
-class TestLaunch(unittest.TestCase):
+class TestLaunch(TestCase):
     """Class for launch tests"""
 
     def setUp(self):
         """Create a new PipelineSchema and Launch objects"""
-        # Set up the schema
-        root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
-        # cannot use a context manager here, since outside setUp the temporary
-        # file will never exists
-        self.tmp_dir = tempfile.mkdtemp()
+        self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
         self.nf_params_fn = os.path.join(self.tmp_dir, "nf-params.json")
-        self.launcher = nf_core.launch.Launch(self.template_dir, params_out=self.nf_params_fn)
+        self.launcher = nf_core.pipelines.launch.Launch(self.pipeline_dir, params_out=self.nf_params_fn)
 
     def tearDown(self):
         """Clean up temporary files and folders"""
 
-        if os.path.exists(self.nf_params_fn):
-            os.remove(self.nf_params_fn)
+        if Path(self.nf_params_fn).exists():
+            Path(self.nf_params_fn).unlink()
 
-        if os.path.exists(self.tmp_dir):
-            os.rmdir(self.tmp_dir)
+        if Path(self.tmp_dir).exists():
+            shutil.rmtree(self.tmp_dir)
 
-    @mock.patch.object(nf_core.launch.Launch, "prompt_web_gui", side_effect=[True])
-    @mock.patch.object(nf_core.launch.Launch, "launch_web_gui")
+    @mock.patch.object(nf_core.pipelines.launch.Launch, "prompt_web_gui", side_effect=[True])
+    @mock.patch.object(nf_core.pipelines.launch.Launch, "launch_web_gui")
     def test_launch_pipeline(self, mock_webbrowser, mock_lauch_web_gui):
         """Test the main launch function"""
         self.launcher.launch_pipeline()
 
-    @mock.patch.object(nf_core.launch.Confirm, "ask", side_effect=[False])
+    @mock.patch.object(nf_core.pipelines.launch.Confirm, "ask", side_effect=[False])
     def test_launch_file_exists(self, mock_confirm):
         """Test that we detect an existing params file and return"""
         # Make an empty params file to be overwritten
@@ -52,9 +46,9 @@ class TestLaunch(unittest.TestCase):
         # Try and to launch, return with error
         assert self.launcher.launch_pipeline() is False
 
-    @mock.patch.object(nf_core.launch.Launch, "prompt_web_gui", side_effect=[True])
-    @mock.patch.object(nf_core.launch.Launch, "launch_web_gui")
-    @mock.patch.object(nf_core.launch.Confirm, "ask", side_effect=[False])
+    @mock.patch.object(nf_core.pipelines.launch.Launch, "prompt_web_gui", side_effect=[True])
+    @mock.patch.object(nf_core.pipelines.launch.Launch, "launch_web_gui")
+    @mock.patch.object(nf_core.pipelines.launch.Confirm, "ask", side_effect=[False])
     def test_launch_file_exists_overwrite(self, mock_webbrowser, mock_lauch_web_gui, mock_confirm):
         """Test that we detect an existing params file and we overwrite it"""
         # Make an empty params file to be overwritten
@@ -71,12 +65,12 @@ class TestLaunch(unittest.TestCase):
     def test_make_pipeline_schema(self, tmp_path):
         """Create a workflow, but delete the schema file, then try to load it"""
         test_pipeline_dir = os.path.join(tmp_path, "wf")
-        create_obj = nf_core.create.PipelineCreate(
-            "testpipeline", "", "", outdir=test_pipeline_dir, no_git=True, plain=True
+        create_obj = nf_core.pipelines.create.create.PipelineCreate(
+            "testpipeline", "a description", "Me", outdir=test_pipeline_dir, no_git=True
         )
         create_obj.init_pipeline()
         os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
-        self.launcher = nf_core.launch.Launch(test_pipeline_dir, params_out=self.nf_params_fn)
+        self.launcher = nf_core.pipelines.launch.Launch(test_pipeline_dir, params_out=self.nf_params_fn)
         self.launcher.get_pipeline_schema()
         assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
         assert self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]["outdir"] == {
@@ -91,7 +85,7 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         assert len(self.launcher.schema_obj.input_params) > 0
-        assert self.launcher.schema_obj.input_params["validate_params"] == True
+        assert self.launcher.schema_obj.input_params["validate_params"] is True
 
     @with_temporary_file
     def test_get_pipeline_defaults_input_params(self, tmp_file):
@@ -124,12 +118,12 @@ class TestLaunch(unittest.TestCase):
     @mock.patch("questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Web based"}])
     def test_prompt_web_gui_true(self, mock_prompt):
         """Check the prompt to launch the web schema or use the cli"""
-        assert self.launcher.prompt_web_gui() == True
+        assert self.launcher.prompt_web_gui() is True
 
     @mock.patch("questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Command line"}])
     def test_prompt_web_gui_false(self, mock_prompt):
         """Check the prompt to launch the web schema or use the cli"""
-        assert self.launcher.prompt_web_gui() == False
+        assert self.launcher.prompt_web_gui() is False
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{}])
     def test_launch_web_gui_missing_keys(self, mock_poll_nfcore_web_api):
@@ -149,7 +143,7 @@ class TestLaunch(unittest.TestCase):
         """Check the code that opens the web browser"""
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
-        assert self.launcher.launch_web_gui() == None
+        assert self.launcher.launch_web_gui() is None
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "error", "message": "foo"}])
     def test_get_web_launch_response_error(self, mock_poll_nfcore_web_api):
@@ -168,7 +162,7 @@ class TestLaunch(unittest.TestCase):
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "waiting_for_user"}])
     def test_get_web_launch_response_waiting(self, mock_poll_nfcore_web_api):
         """Test polling the website for a launch response - status waiting_for_user"""
-        assert self.launcher.get_web_launch_response() == False
+        assert self.launcher.get_web_launch_response() is False
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "launch_params_complete"}])
     def test_get_web_launch_response_missing_keys(self, mock_poll_nfcore_web_api):
@@ -192,11 +186,11 @@ class TestLaunch(unittest.TestCase):
             }
         ],
     )
-    @mock.patch.object(nf_core.launch.Launch, "sanitise_web_response")
+    @mock.patch.object(nf_core.pipelines.launch.Launch, "sanitise_web_response")
     def test_get_web_launch_response_valid(self, mock_poll_nfcore_web_api, mock_sanitise):
         """Test polling the website for a launch response - complete, valid response"""
         self.launcher.get_pipeline_schema()
-        assert self.launcher.get_web_launch_response() == True
+        assert self.launcher.get_web_launch_response() is True
 
     def test_sanitise_web_response(self):
         """Check that we can properly sanitise results from the web"""
@@ -206,7 +200,7 @@ class TestLaunch(unittest.TestCase):
         self.launcher.schema_obj.input_params["max_cpus"] = "12"
         self.launcher.sanitise_web_response()
         assert "-name" not in self.launcher.nxf_flags
-        assert self.launcher.schema_obj.input_params["igenomes_ignore"] == True
+        assert self.launcher.schema_obj.input_params["igenomes_ignore"] is True
         assert self.launcher.schema_obj.input_params["max_cpus"] == 12
 
     def test_ob_to_questionary_bool(self):
@@ -221,12 +215,12 @@ class TestLaunch(unittest.TestCase):
         assert result["message"] == ""
         assert result["choices"] == ["True", "False"]
         assert result["default"] == "True"
-        assert result["filter"]("True") == True
-        assert result["filter"]("true") == True
-        assert result["filter"](True) == True
-        assert result["filter"]("False") == False
-        assert result["filter"]("false") == False
-        assert result["filter"](False) == False
+        assert result["filter"]("True") is True
+        assert result["filter"]("true") is True
+        assert result["filter"](True) is True
+        assert result["filter"]("False") is False
+        assert result["filter"]("false") is False
+        assert result["filter"](False) is False
 
     def test_ob_to_questionary_number(self):
         """Check converting a python dict to a pyenquirer format - with enum"""
@@ -239,7 +233,7 @@ class TestLaunch(unittest.TestCase):
         assert result["validate"]("") is True
         assert result["validate"]("123.56.78") == "Must be a number"
         assert result["validate"]("123.56sdkfjb") == "Must be a number"
-        assert result["filter"]("123.456") == float(123.456)
+        assert result["filter"]("123.456") == 123.456
         assert result["filter"]("") == ""
 
     def test_ob_to_questionary_integer(self):
@@ -253,7 +247,7 @@ class TestLaunch(unittest.TestCase):
         assert result["validate"]("") is True
         assert result["validate"]("123.45") == "Must be an integer"
         assert result["validate"]("123.56sdkfjb") == "Must be an integer"
-        assert result["filter"]("123") == int(123)
+        assert result["filter"]("123") == 123
         assert result["filter"]("") == ""
 
     def test_ob_to_questionary_range(self):
@@ -304,7 +298,7 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == f"nextflow run {self.template_dir}"
+        assert self.launcher.nextflow_cmd == f"nextflow run {self.pipeline_dir}"
 
     def test_build_command_nf(self):
         """Test the functionality to build a nextflow command - core nf customised"""
@@ -313,7 +307,7 @@ class TestLaunch(unittest.TestCase):
         self.launcher.nxf_flags["-name"] = "Test_Workflow"
         self.launcher.nxf_flags["-resume"] = True
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == f'nextflow run {self.template_dir} -name "Test_Workflow" -resume'
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir} -name "Test_Workflow" -resume'
 
     def test_build_command_params(self):
         """Test the functionality to build a nextflow command - params supplied"""
@@ -323,10 +317,10 @@ class TestLaunch(unittest.TestCase):
         # Check command
         assert (
             self.launcher.nextflow_cmd
-            == f'nextflow run {self.template_dir} -params-file "{os.path.relpath(self.nf_params_fn)}"'
+            == f'nextflow run {self.pipeline_dir} -params-file "{os.path.relpath(self.nf_params_fn)}"'
         )
         # Check saved parameters file
-        with open(self.nf_params_fn, "r") as fh:
+        with open(self.nf_params_fn) as fh:
             try:
                 saved_json = json.load(fh)
             except json.JSONDecodeError as e:
@@ -340,4 +334,4 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == f'nextflow run {self.template_dir} --input "custom_input"'
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir} --input "custom_input"'

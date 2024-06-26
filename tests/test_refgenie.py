@@ -1,13 +1,10 @@
-""" Tests covering the refgenie integration code
-"""
+"""Tests covering the refgenie integration code"""
 
 import os
 import shlex
 import subprocess
 import tempfile
 import unittest
-
-import yaml
 
 
 class TestRefgenie(unittest.TestCase):
@@ -26,7 +23,7 @@ class TestRefgenie(unittest.TestCase):
         # avoids adding includeConfig statement to config file outside the current tmpdir
         try:
             self.NXF_HOME_ORIGINAL = os.environ["NXF_HOME"]
-        except:
+        except Exception:
             self.NXF_HOME_ORIGINAL = None
         os.environ["NXF_HOME"] = self.NXF_HOME
 

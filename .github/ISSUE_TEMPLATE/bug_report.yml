@@ -24,7 +24,7 @@ body:
       description: Steps to reproduce the behaviour. Please paste the command and output from your terminal.
       render: console
       placeholder: |
-        $ nf-core lint ...
+        $ nf-core pipelines lint ...
 
         Some output where something broke
 
@@ -37,5 +37,5 @@ body:
         * Hardware _(eg. HPC, Desktop, Cloud)_
         * Executor _(eg. slurm, local, awsbatch)_
         * OS _(eg. CentOS Linux, macOS, Linux Mint)_
-        * Version of nf-core/tools _(eg. 1.1, 1.5, 1.8.2)_
-        * Python version _(eg. 3.10, 3.11)_
+        * Version of nf-core/tools _(eg. 1.10, 1.12.1, 1.13)_
+        * Python version _(eg. 3.11, 3.12)_

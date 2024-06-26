@@ -1,6 +1,7 @@
 """
 Check whether the content of a module has changed compared to the original repository
 """
+
 import shutil
 import tempfile
 from pathlib import Path
@@ -31,7 +32,7 @@ def module_changes(module_lint_object, module):
         try:
             new_lines = ModulesDiffer.try_apply_patch(
                 module.component_name,
-                module_lint_object.modules_repo.repo_path,
+                module.org,
                 module.patch_path,
                 tempdir,
                 reverse=True,

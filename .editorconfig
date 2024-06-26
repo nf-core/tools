@@ -10,3 +10,21 @@ indent_style = space
 
 [*.{md,yml,yaml,html,css,scss,js,cff}]
 indent_size = 2
+
+# ignore python and markdown files
+[*.py]
+indent_style = unset
+
+[**/{CONTRIBUTING,README}.md]
+indent_style = unset
+
+[**/Makefile]
+indent_style = unset
+
+[tests/__snapshots__/*]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+indent_style = unset
+indent_size = unset

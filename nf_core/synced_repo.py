@@ -2,11 +2,11 @@ import filecmp
 import logging
 import os
 import shutil
+from configparser import NoOptionError, NoSectionError
 from pathlib import Path
+from typing import Dict
 
 import git
-import rich
-import rich.progress
 from git.exc import GitCommandError
 
 from nf_core.components.components_utils import get_repo_info
@@ -62,7 +62,7 @@ class SyncedRepo:
     An object to store details about a locally cached code repository.
     """
 
-    local_repo_statuses = {}
+    local_repo_statuses: Dict[str, bool] = {}
     no_pull_global = False
 
     @staticmethod
@@ -118,8 +118,10 @@ class SyncedRepo:
 
         self.remote_url = remote_url
 
-        self.fullname = nf_core.modules.modules_utils.repo_full_name_from_remote(self.remote_url)
-
+        self.repo = None
+        # TODO: SyncedRepo doesn't have this method and both the ModulesRepo and
+        # the WorkflowRepo define their own including custom init methods. This needs
+        # fixing.
         self.setup_local_repo(remote_url, branch, hide_progress)
 
         config_fn, repo_config = load_tools_config(self.local_repo_dir)
@@ -209,7 +211,18 @@ class SyncedRepo:
         """
         Checks out the specified branch of the repository
         """
-        self.repo.git.checkout(self.branch)
+        try:
+            self.repo.git.checkout(self.branch)
+        except GitCommandError as e:
+            if (
+                self.fullname
+                and "modules" in self.fullname
+                and "Your local changes to the following files would be overwritten by checkout" in str(e)
+            ):
+                log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
+                self.repo.git.checkout(self.branch, force=True)
+            else:
+                raise e
 
     def checkout(self, commit):
         """
@@ -218,7 +231,18 @@ class SyncedRepo:
         Args:
             commit (str): Git SHA of the commit
         """
-        self.repo.git.checkout(commit)
+        try:
+            self.repo.git.checkout(commit)
+        except GitCommandError as e:
+            if (
+                self.fullname
+                and "modules" in self.fullname
+                and "Your local changes to the following files would be overwritten by checkout" in str(e)
+            ):
+                log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
+                self.repo.git.checkout(self.branch, force=True)
+            else:
+                raise e
 
     def component_exists(self, component_name, component_type, checkout=True, commit=None):
         """
@@ -298,12 +322,27 @@ class SyncedRepo:
         component_dir = self.get_component_dir(component_name, component_type)
         for file in component_files:
             try:
-                files_identical[file] = filecmp.cmp(os.path.join(component_dir, file), os.path.join(base_path, file))
+                files_identical[file] = filecmp.cmp(Path(component_dir, file), Path(base_path, file))
             except FileNotFoundError:
-                log.debug(f"Could not open file: {os.path.join(component_dir, file)}")
+                log.debug(f"Could not open file: {Path(component_dir, file)}")
                 continue
         self.checkout_branch()
         return files_identical
+
+    def ensure_git_user_config(self, default_name: str, default_email: str) -> None:
+        try:
+            with self.repo.config_reader() as git_config:
+                user_name = git_config.get_value("user", "name", default=None)
+                user_email = git_config.get_value("user", "email", default=None)
+        except (NoOptionError, NoSectionError):
+            user_name = user_email = None
+
+        if not user_name or not user_email:
+            with self.repo.config_writer() as git_config:
+                if not user_name:
+                    git_config.set_value("user", "name", default_name)
+                if not user_email:
+                    git_config.set_value("user", "email", default_email)
 
     def get_component_git_log(self, component_name, component_type, depth=None):
         """

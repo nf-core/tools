@@ -1,5 +1,4 @@
-""" Tests covering for utility functions.
-"""
+"""Tests covering for utility functions."""
 
 import os
 import shutil
@@ -11,8 +10,8 @@ from unittest import mock
 import pytest
 import requests
 
-import nf_core.create
-import nf_core.list
+import nf_core.pipelines.create.create
+import nf_core.pipelines.list
 import nf_core.utils
 
 from .utils import with_temporary_folder
@@ -35,17 +34,16 @@ class TestUtils(unittest.TestCase):
     def setUp(self):
         """Function that runs at start of tests for common resources
 
-        Use nf_core.create() to make a pipeline that we can use for testing
+        Use nf_core.pipelines.create() to make a pipeline that we can use for testing
         """
         self.tmp_dir = tempfile.mkdtemp()
         self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
-        self.create_obj = nf_core.create.PipelineCreate(
+        self.create_obj = nf_core.pipelines.create.create.PipelineCreate(
             "testpipeline",
             "This is a test pipeline",
             "Test McTestFace",
             no_git=True,
             outdir=self.test_pipeline_dir,
-            plain=True,
         )
         self.create_obj.init_pipeline()
         # Base Pipeline object on this directory
@@ -112,14 +110,14 @@ class TestUtils(unittest.TestCase):
     def test_list_files_git(self):
         """Test listing pipeline files using `git ls`"""
         self.pipeline_obj._list_files()
-        assert os.path.join(self.test_pipeline_dir, "main.nf") in self.pipeline_obj.files
+        assert Path(self.test_pipeline_dir, "main.nf") in self.pipeline_obj.files
 
     @with_temporary_folder
     def test_list_files_no_git(self, tmpdir):
         """Test listing pipeline files without `git-ls`"""
         # Create a test file in a temporary directory
-        tmp_fn = os.path.join(tmpdir, "testfile")
-        Path(tmp_fn).touch()
+        tmp_fn = Path(tmpdir, "testfile")
+        tmp_fn.touch()
         pipeline_obj = nf_core.utils.Pipeline(tmpdir)
         pipeline_obj._list_files()
         assert tmp_fn in pipeline_obj.files
@@ -134,7 +132,7 @@ class TestUtils(unittest.TestCase):
 
     def test_pip_package_pass(self):
         result = nf_core.utils.pip_package("multiqc=1.10")
-        assert type(result) == dict
+        assert isinstance(result, dict)
 
     @mock.patch("requests.get")
     def test_pip_package_timeout(self, mock_get):
@@ -162,7 +160,7 @@ class TestUtils(unittest.TestCase):
             nf_core.utils.pip_package("not_a_package=1.0")
 
     def test_get_repo_releases_branches_nf_core(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("methylseq", wfs)
         for r in wf_releases:
@@ -173,24 +171,24 @@ class TestUtils(unittest.TestCase):
         assert "dev" in wf_branches.keys()
 
     def test_get_repo_releases_branches_not_nf_core(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
-        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("ewels/MultiQC", wfs)
+        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("MultiQC/MultiQC", wfs)
         for r in wf_releases:
             if r.get("tag_name") == "v1.10":
                 break
         else:
             raise AssertionError("MultiQC release v1.10 not found")
-        assert "master" in wf_branches.keys()
+        assert "main" in wf_branches.keys()
 
     def test_get_repo_releases_branches_not_exists(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         with pytest.raises(AssertionError):
             nf_core.utils.get_repo_releases_branches("made_up_pipeline", wfs)
 
     def test_get_repo_releases_branches_not_exists_slash(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         with pytest.raises(AssertionError):
             nf_core.utils.get_repo_releases_branches("made-up/pipeline", wfs)
@@ -207,3 +205,34 @@ def test_validate_file_md5():
         nf_core.utils.validate_file_md5(test_file, different_md5)
     with pytest.raises(ValueError):
         nf_core.utils.validate_file_md5(test_file, non_hex_string)
+
+
+def test_nested_setitem():
+    d = {"a": {"b": {"c": "value"}}}
+    nf_core.utils.nested_setitem(d, ["a", "b", "c"], "value new")
+    assert d["a"]["b"]["c"] == "value new"
+    assert d == {"a": {"b": {"c": "value new"}}}
+
+
+def test_nested_delitem():
+    d = {"a": {"b": {"c": "value"}}}
+    nf_core.utils.nested_delitem(d, ["a", "b", "c"])
+    assert "c" not in d["a"]["b"]
+    assert d == {"a": {"b": {}}}
+
+
+def test_set_wd():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        with nf_core.utils.set_wd(tmpdirname):
+            context_wd = Path().resolve()
+        assert context_wd == Path(tmpdirname).resolve()
+        assert context_wd != Path().resolve()
+
+
+def test_set_wd_revert_on_raise():
+    wd_before_context = Path().resolve()
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        with pytest.raises(Exception):
+            with nf_core.utils.set_wd(tmpdirname):
+                raise Exception
+    assert wd_before_context == Path().resolve()

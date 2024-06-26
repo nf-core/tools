@@ -1,0 +1,40 @@
+name: generate nf-core/tools API docs
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - nf_core/**/*.py
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      ref_name:
+        description: "The branch or tag to build the API docs for"
+        required: true
+        default: "dev"
+
+# Cancel if a newer run is started
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api-docs:
+    name: trigger API docs build on website repo
+    runs-on: ubuntu-latest
+    steps:
+      - name: trigger API docs build
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          github-token: ${{ secrets.nf_core_bot_auth_token }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: 'nf-core',
+              repo: 'website',
+              workflow_id: 'add-tools-api-docs.yml',
+              ref: 'main',
+              inputs: {
+                "ref_name": "${{ inputs.ref_name || github.ref_name }}"
+              },
+            })

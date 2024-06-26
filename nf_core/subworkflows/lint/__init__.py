@@ -6,8 +6,6 @@ Command:
 nf-core subworkflows lint
 """
 
-from __future__ import print_function
-
 import logging
 import os
 
@@ -16,8 +14,8 @@ import rich
 
 import nf_core.modules.modules_utils
 import nf_core.utils
-from nf_core.components.lint import ComponentLint, LintException, LintResult
-from nf_core.lint_utils import console
+from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
+from nf_core.pipelines.lint_utils import console
 
 log = logging.getLogger(__name__)
 
@@ -29,12 +27,12 @@ class SubworkflowLint(ComponentLint):
     """
 
     # Import lint functions
-    from .main_nf import main_nf
-    from .meta_yml import meta_yml
-    from .subworkflow_changes import subworkflow_changes
-    from .subworkflow_tests import subworkflow_tests
-    from .subworkflow_todos import subworkflow_todos
-    from .subworkflow_version import subworkflow_version
+    from .main_nf import main_nf  # type: ignore[misc]
+    from .meta_yml import meta_yml  # type: ignore[misc]
+    from .subworkflow_changes import subworkflow_changes  # type: ignore[misc]
+    from .subworkflow_tests import subworkflow_tests  # type: ignore[misc]
+    from .subworkflow_todos import subworkflow_todos  # type: ignore[misc]
+    from .subworkflow_version import subworkflow_version  # type: ignore[misc]
 
     def __init__(
         self,
@@ -114,11 +112,11 @@ class SubworkflowLint(ComponentLint):
         # Only lint the given module
         if subworkflow:
             if all_subworkflows:
-                raise LintException("You cannot specify a tool and request all tools to be linted.")
+                raise LintExceptionError("You cannot specify a tool and request all tools to be linted.")
             local_subworkflows = []
             remote_subworkflows = [s for s in self.all_remote_components if s.component_name == subworkflow]
             if len(remote_subworkflows) == 0:
-                raise LintException(f"Could not find the specified subworkflow: '{subworkflow}'")
+                raise LintExceptionError(f"Could not find the specified subworkflow: '{subworkflow}'")
         else:
             local_subworkflows = self.all_local_components
             remote_subworkflows = self.all_remote_components
@@ -209,6 +207,11 @@ class SubworkflowLint(ComponentLint):
 
         # Otherwise run all the lint tests
         else:
+            if self.repo_type == "pipeline" and self.modules_json:
+                # Set correct sha
+                version = self.modules_json.get_subworkflow_version(swf.component_name, swf.repo_url, swf.org)
+                swf.git_sha = version
+
             for test_name in self.lint_tests:
                 getattr(self, test_name)(swf)
 

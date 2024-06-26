@@ -6,8 +6,6 @@ Command:
 nf-core modules lint
 """
 
-from __future__ import print_function
-
 import logging
 import os
 
@@ -16,8 +14,8 @@ import rich
 
 import nf_core.modules.modules_utils
 import nf_core.utils
-from nf_core.components.lint import ComponentLint, LintException, LintResult
-from nf_core.lint_utils import console
+from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
+from nf_core.pipelines.lint_utils import console
 
 log = logging.getLogger(__name__)
 
@@ -29,14 +27,15 @@ class ModuleLint(ComponentLint):
     """
 
     # Import lint functions
-    from .main_nf import main_nf
-    from .meta_yml import meta_yml
-    from .module_changes import module_changes
-    from .module_deprecations import module_deprecations
-    from .module_patch import module_patch
-    from .module_tests import module_tests
-    from .module_todos import module_todos
-    from .module_version import module_version
+    from .environment_yml import environment_yml  # type: ignore[misc]
+    from .main_nf import main_nf  # type: ignore[misc]
+    from .meta_yml import meta_yml  # type: ignore[misc]
+    from .module_changes import module_changes  # type: ignore[misc]
+    from .module_deprecations import module_deprecations  # type: ignore[misc]
+    from .module_patch import module_patch  # type: ignore[misc]
+    from .module_tests import module_tests  # type: ignore[misc]
+    from .module_todos import module_todos  # type: ignore[misc]
+    from .module_version import module_version  # type: ignore[misc]
 
     def __init__(
         self,
@@ -118,11 +117,11 @@ class ModuleLint(ComponentLint):
         # Only lint the given module
         if module:
             if all_modules:
-                raise LintException("You cannot specify a tool and request all tools to be linted.")
+                raise LintExceptionError("You cannot specify a tool and request all tools to be linted.")
             local_modules = []
             remote_modules = [m for m in self.all_remote_components if m.component_name == module]
             if len(remote_modules) == 0:
-                raise LintException(f"Could not find the specified module: '{module}'")
+                raise LintExceptionError(f"Could not find the specified module: '{module}'")
         else:
             local_modules = self.all_local_components
             remote_modules = self.all_remote_components
@@ -214,6 +213,11 @@ class ModuleLint(ComponentLint):
 
         # Otherwise run all the lint tests
         else:
+            if self.repo_type == "pipeline" and self.modules_json:
+                # Set correct sha
+                version = self.modules_json.get_module_version(mod.component_name, mod.repo_url, mod.org)
+                mod.git_sha = version
+
             for test_name in self.lint_tests:
                 if test_name == "main_nf":
                     getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)

@@ -2,7 +2,7 @@ import os
 
 import yaml
 
-import nf_core.lint
+import nf_core.pipelines.lint
 
 
 def test_actions_ci_pass(self):
@@ -31,7 +31,7 @@ def test_actions_ci_fail_wrong_trigger(self):
 
     # Edit .github/workflows/actions_ci.yml to mess stuff up!
     new_pipeline = self._make_pipeline_copy()
-    with open(os.path.join(new_pipeline, ".github", "workflows", "ci.yml"), "r") as fh:
+    with open(os.path.join(new_pipeline, ".github", "workflows", "ci.yml")) as fh:
         ci_yml = yaml.safe_load(fh)
     ci_yml[True]["push"] = ["dev", "patch"]
     ci_yml["jobs"]["test"]["strategy"]["matrix"] = {"nxf_versionnn": ["foo", ""]}
@@ -39,7 +39,7 @@ def test_actions_ci_fail_wrong_trigger(self):
         yaml.dump(ci_yml, fh)
 
     # Make lint object
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
 
     results = lint_obj.actions_ci()

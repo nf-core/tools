@@ -8,7 +8,6 @@ import yaml
 import nf_core.utils
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
-from nf_core.modules.remove import ModuleRemove
 from nf_core.modules.update import ModuleUpdate
 from nf_core.subworkflows.update import SubworkflowUpdate
 
@@ -73,7 +72,7 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
     assert update_obj.update("fastq_align_bowtie2") is True
     assert cmp_component(tmpdir, sw_path) is True
 
-    with open(patch_path, "r") as fh:
+    with open(patch_path) as fh:
         line = fh.readline()
         assert line.startswith(
             "Changes in module 'nf-core/fastq_align_bowtie2' between (f3c078809a2513f1c95de14f6633fe1f03572fdb) and"
@@ -172,9 +171,9 @@ def test_update_with_config_fix_all(self):
     with open(Path(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
-    # Update all subworkflows in the pipeline
-    update_obj = SubworkflowUpdate(self.pipeline_dir, update_all=True, show_diff=False)
-    assert update_obj.update() is True
+    # Update fastq_align_bowtie2
+    update_obj = SubworkflowUpdate(self.pipeline_dir, update_all=False, update_deps=True, show_diff=False)
+    assert update_obj.update("fastq_align_bowtie2") is True
 
     # Check that the git sha for fastq_align_bowtie2 is correctly downgraded
     mod_json = ModulesJson(self.pipeline_dir).get_modules_json()

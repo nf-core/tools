@@ -1,44 +1,42 @@
 import logging
 import os
-import urllib
 from pathlib import Path
+from typing import List, Optional, Tuple
+from urllib.parse import urlparse
 
 from ..components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
 
 
-class ModuleException(Exception):
+class ModuleExceptionError(Exception):
     """Exception raised when there was an error with module commands"""
 
     pass
 
 
-def repo_full_name_from_remote(remote_url):
+def repo_full_name_from_remote(remote_url: str) -> str:
     """
     Extracts the path from the remote URL
     See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
     """
-    # Check whether we have a https or ssh url
-    if remote_url.startswith("https"):
-        path = urllib.parse.urlparse(remote_url)
-        path = path.path
-        # Remove the intial '/'
-        path = path[1:]
-        # Remove extension
-        path = os.path.splitext(path)[0]
+
+    if remote_url.startswith(("https://", "http://", "ftps://", "ftp://", "ssh://")):
+        # Parse URL and remove the initial '/'
+        path = urlparse(remote_url).path.lstrip("/")
+    elif "git@" in remote_url:
+        # Extract the part after 'git@' and parse it
+        path = urlparse(remote_url.split("git@")[-1]).path
     else:
-        # Remove the initial `git@``
-        path = remote_url.split("@")
-        path = path[-1] if len(path) > 1 else path[0]
-        path = urllib.parse.urlparse(path)
-        path = path.path
-        # Remove extension
-        path = os.path.splitext(path)[0]
+        path = urlparse(remote_url).path
+
+    # Remove the file extension from the path
+    path, _ = os.path.splitext(path)
+
     return path
 
 
-def get_installed_modules(dir, repo_type="modules"):
+def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], List[NFCoreComponent]]:
     """
     Make a list of all modules installed in this repository
 
@@ -52,9 +50,9 @@ def get_installed_modules(dir, repo_type="modules"):
     returns (local_modules, nfcore_modules)
     """
     # initialize lists
-    local_modules = []
-    nfcore_modules = []
-    local_modules_dir = None
+    local_modules: List[str] = []
+    nfcore_modules_names: List[str] = []
+    local_modules_dir: Optional[str] = None
     nfcore_modules_dir = os.path.join(dir, "modules", "nf-core")
 
     # Get local modules
@@ -70,19 +68,21 @@ def get_installed_modules(dir, repo_type="modules"):
     if os.path.exists(nfcore_modules_dir):
         for m in sorted([m for m in os.listdir(nfcore_modules_dir) if not m == "lib"]):
             if not os.path.isdir(os.path.join(nfcore_modules_dir, m)):
-                raise ModuleException(
+                raise ModuleExceptionError(
                     f"File found in '{nfcore_modules_dir}': '{m}'! This directory should only contain module directories."
                 )
             m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
             # Not a module, but contains sub-modules
-            if not "main.nf" in m_content:
+            if "main.nf" not in m_content:
                 for tool in m_content:
-                    nfcore_modules.append(os.path.join(m, tool))
+                    nfcore_modules_names.append(os.path.join(m, tool))
             else:
-                nfcore_modules.append(m)
+                nfcore_modules_names.append(m)
 
     # Make full (relative) file paths and create NFCoreComponent objects
-    local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
+    if local_modules_dir:
+        local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
+
     nfcore_modules = [
         NFCoreComponent(
             m,
@@ -92,7 +92,7 @@ def get_installed_modules(dir, repo_type="modules"):
             base_dir=Path(dir),
             component_type="modules",
         )
-        for m in nfcore_modules
+        for m in nfcore_modules_names
     ]
 
     return local_modules, nfcore_modules

@@ -74,9 +74,9 @@ class ModulesDiffer:
             temp_path = Path(to_dir, file)
             curr_path = Path(from_dir, file)
             if temp_path.exists() and curr_path.exists() and temp_path.is_file():
-                with open(temp_path, "r") as fh:
+                with open(temp_path) as fh:
                     new_lines = fh.readlines()
-                with open(curr_path, "r") as fh:
+                with open(curr_path) as fh:
                     old_lines = fh.readlines()
 
                 if new_lines == old_lines:
@@ -93,7 +93,7 @@ class ModulesDiffer:
                     diffs[file] = (ModulesDiffer.DiffEnum.CHANGED, diff)
 
             elif temp_path.exists():
-                with open(temp_path, "r") as fh:
+                with open(temp_path) as fh:
                     new_lines = fh.readlines()
                 # The file was created
                 # Show file against /dev/null
@@ -108,7 +108,7 @@ class ModulesDiffer:
             elif curr_path.exists():
                 # The file was removed
                 # Show file against /dev/null
-                with open(curr_path, "r") as fh:
+                with open(curr_path) as fh:
                     old_lines = fh.readlines()
                 diff = difflib.unified_diff(
                     old_lines,
@@ -279,7 +279,7 @@ class ModulesDiffer:
             dict[str, str]: A dictionary indexed by the filenames with the
                             file patches as values
         """
-        with open(patch_fn, "r") as fh:
+        with open(patch_fn) as fh:
             lines = fh.readlines()
 
         patches = {}
@@ -447,8 +447,12 @@ class ModulesDiffer:
             log.debug(f"Applying patch to {file}")
             fn = Path(file).relative_to(module_relpath)
             file_path = module_dir / fn
-            with open(file_path, "r") as fh:
-                file_lines = fh.readlines()
+            try:
+                with open(file_path) as fh:
+                    file_lines = fh.readlines()
+            except FileNotFoundError:
+                # The file was added with the patch
+                file_lines = [""]
             patched_new_lines = ModulesDiffer.try_apply_single_patch(file_lines, patch, reverse=reverse)
             new_files[str(fn)] = patched_new_lines
         return new_files

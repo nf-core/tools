@@ -4,9 +4,9 @@ import shutil
 import tempfile
 from pathlib import Path
 
-import nf_core.create
-import nf_core.schema
-from nf_core.params_file import ParamsFileBuilder
+import nf_core.pipelines.create.create
+import nf_core.pipelines.schema
+from nf_core.pipelines.params_file import ParamsFileBuilder
 
 
 class TestParamsFileBuilder:
@@ -15,14 +15,14 @@ class TestParamsFileBuilder:
     @classmethod
     def setup_class(cls):
         """Create a new PipelineSchema object"""
-        cls.schema_obj = nf_core.schema.PipelineSchema()
+        cls.schema_obj = nf_core.pipelines.schema.PipelineSchema()
         cls.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
         # Create a test pipeline in temp directory
         cls.tmp_dir = tempfile.mkdtemp()
         cls.template_dir = os.path.join(cls.tmp_dir, "wf")
-        create_obj = nf_core.create.PipelineCreate(
-            "testpipeline", "", "", outdir=cls.template_dir, no_git=True, plain=True
+        create_obj = nf_core.pipelines.create.create.PipelineCreate(
+            "testpipeline", "a description", "Me", outdir=cls.template_dir, no_git=True
         )
         create_obj.init_pipeline()
 
@@ -31,7 +31,7 @@ class TestParamsFileBuilder:
         cls.invalid_template_schema = os.path.join(cls.template_dir, "nextflow_schema_invalid.json")
 
         # Remove the allOf section to make the schema invalid
-        with open(cls.template_schema, "r") as fh:
+        with open(cls.template_schema) as fh:
             o = json.load(fh)
             del o["allOf"]
 
@@ -49,7 +49,7 @@ class TestParamsFileBuilder:
 
         assert os.path.exists(outfile)
 
-        with open(outfile, "r") as fh:
+        with open(outfile) as fh:
             out = fh.read()
 
         assert "nf-core/testpipeline" in out
@@ -68,7 +68,7 @@ class TestParamsFileBuilder:
 
         # Creates a new empty file
         outfile = Path(self.tmp_dir) / "params-file.yml"
-        with open(outfile, "w") as fp:
+        with open(outfile, "w"):
             pass
 
         res = self.params_template_builder.write_params_file(outfile)

@@ -8,6 +8,17 @@ on:
         type: boolean
         description: Only run on nf-core/testpipeline?
         required: true
+      runners:
+        description: "Runners to test on"
+        type: choice
+        options:
+          - "ubuntu-latest"
+          - "self-hosted"
+        default: "self-hosted"
+      force_pr:
+        description: "Force a PR to be created"
+        type: boolean
+        default: false
 
 # Cancel if a newer run is started
 concurrency:
@@ -16,7 +27,7 @@ concurrency:
 
 jobs:
   get-pipelines:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -31,15 +42,16 @@ jobs:
 
   sync:
     needs: get-pipelines
-    runs-on: ubuntu-latest
+    # use the github runner on release otherwise use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
+    runs-on: ${{github.event_name == 'release' && 'self-hosted' || github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     strategy:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
         name: Check out nf-core/tools
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
         name: Check out nf-core/${{ matrix.pipeline }}
         with:
           repository: nf-core/${{ matrix.pipeline }}
@@ -48,10 +60,10 @@ jobs:
           path: nf-core/${{ matrix.pipeline }}
           fetch-depth: "0"
 
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
         with:
-          python-version: 3.8
+          python-version: "3.12"
 
       - name: Install python dependencies
         run: |
@@ -59,7 +71,7 @@ jobs:
           pip install .
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v1
+        uses: nf-core/setup-nextflow@v2
         with:
           version: "latest-everything"
 
@@ -78,7 +90,7 @@ jobs:
 
       - name: Upload sync log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
         with:
           name: sync_log_${{ matrix.pipeline }}
           path: sync_log_${{ matrix.pipeline }}.txt

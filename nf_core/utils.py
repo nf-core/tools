@@ -1,6 +1,7 @@
 """
 Common utility functions for the nf-core python package.
 """
+
 import concurrent.futures
 import datetime
 import errno
@@ -16,7 +17,9 @@ import shlex
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Generator, Tuple, Union
 
 import git
 import prompt_toolkit
@@ -32,6 +35,15 @@ from rich.spinner import Spinner
 import nf_core
 
 log = logging.getLogger(__name__)
+
+# ASCII nf-core logo
+nfcore_logo = [
+    r"[green]                                          ,--.[grey39]/[green],-.",
+    r"[blue]          ___     __   __   __   ___     [green]/,-._.--~\ ",
+    r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {",
+    r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,",
+    r"[green]                                          `._,._,'",
+]
 
 # Custom style for questionary
 nfcore_question_style = prompt_toolkit.styles.Style(
@@ -53,10 +65,10 @@ nfcore_question_style = prompt_toolkit.styles.Style(
 )
 
 NFCORE_CACHE_DIR = os.path.join(
-    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME"), ".cache")),
+    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME") or "", ".cache")),
     "nfcore",
 )
-NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")), "nfcore")
+NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
 
 
 def fetch_remote_version(source_url):
@@ -137,7 +149,7 @@ class Pipeline:
         try:
             repo = git.Repo(self.wf_path)
             self.git_sha = repo.head.object.hexsha
-        except:
+        except Exception:
             log.debug(f"Could not find git hash for pipeline: {self.wf_path}")
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
@@ -157,8 +169,8 @@ class Pipeline:
             git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.wf_path).splitlines()
             self.files = []
             for fn in git_ls_files:
-                full_fn = os.path.join(self.wf_path, fn.decode("utf-8"))
-                if os.path.isfile(full_fn):
+                full_fn = Path(self.wf_path) / fn.decode("utf-8")
+                if full_fn.is_file():
                     self.files.append(full_fn)
                 else:
                     log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
@@ -168,7 +180,7 @@ class Pipeline:
             self.files = []
             for subdir, _, files in os.walk(self.wf_path):
                 for fn in files:
-                    self.files.append(os.path.join(subdir, fn))
+                    self.files.append(Path(subdir) / fn)
 
     def _load_pipeline_config(self):
         """Get the nextflow config for this pipeline
@@ -177,16 +189,16 @@ class Pipeline:
         """
         self.nf_config = fetch_wf_config(self.wf_path)
 
-        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "").strip("'").split("/")
+        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "/").strip("'").split("/")
 
-        nextflowVersionMatch = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
-        if nextflowVersionMatch:
-            self.minNextflowVersion = nextflowVersionMatch.group(0)
+        nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
+        if nextflow_version_match:
+            self.minNextflowVersion = nextflow_version_match.group(0)
 
     def _load_conda_environment(self):
         """Try to load the pipeline environment.yml file, if it exists"""
         try:
-            with open(os.path.join(self.wf_path, "environment.yml"), "r") as fh:
+            with open(os.path.join(self.wf_path, "environment.yml")) as fh:
                 self.conda_config = yaml.safe_load(fh)
         except FileNotFoundError:
             log.debug("No conda `environment.yml` file found.")
@@ -210,10 +222,14 @@ def is_pipeline_directory(wf_path):
     for fn in ["main.nf", "nextflow.config"]:
         path = os.path.join(wf_path, fn)
         if not os.path.isfile(path):
-            raise UserWarning(f"'{wf_path}' is not a pipeline - '{fn}' is missing")
+            if wf_path == ".":
+                warning = f"Current directory is not a pipeline - '{fn}' is missing."
+            else:
+                warning = f"'{wf_path}' is not a pipeline - '{fn}' is missing."
+            raise UserWarning(warning)
 
 
-def fetch_wf_config(wf_path, cache_config=True):
+def fetch_wf_config(wf_path: str, cache_config: bool = True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
 
@@ -233,13 +249,13 @@ def fetch_wf_config(wf_path, cache_config=True):
     cache_path = None
 
     # Nextflow home directory - use env var if set, or default to ~/.nextflow
-    nxf_home = os.environ.get("NXF_HOME", os.path.join(os.getenv("HOME"), ".nextflow"))
+    nxf_home = Path(os.environ.get("NXF_HOME", Path(os.getenv("HOME") or "", ".nextflow")))
 
     # Build a cache directory if we can
-    if os.path.isdir(nxf_home):
-        cache_basedir = os.path.join(nxf_home, "nf-core")
-        if not os.path.isdir(cache_basedir):
-            os.mkdir(cache_basedir)
+    if nxf_home.is_dir():
+        cache_basedir = Path(nxf_home, "nf-core")
+        if not cache_basedir.is_dir():
+            cache_basedir.mkdir(parents=True, exist_ok=True)
 
     # If we're given a workflow object with a commit, see if we have a cached copy
     cache_fn = None
@@ -247,7 +263,7 @@ def fetch_wf_config(wf_path, cache_config=True):
     concat_hash = ""
     for fn in ["nextflow.config", "main.nf"]:
         try:
-            with open(os.path.join(wf_path, fn), "rb") as fh:
+            with open(Path(wf_path, fn), "rb") as fh:
                 concat_hash += hashlib.sha256(fh.read()).hexdigest()
         except FileNotFoundError:
             pass
@@ -257,10 +273,10 @@ def fetch_wf_config(wf_path, cache_config=True):
         cache_fn = f"wf-config-cache-{bighash[:25]}.json"
 
     if cache_basedir and cache_fn:
-        cache_path = os.path.join(cache_basedir, cache_fn)
-        if os.path.isfile(cache_path) and cache_config is True:
+        cache_path = Path(cache_basedir, cache_fn)
+        if cache_path.is_file() and cache_config is True:
             log.debug(f"Found a config cache, loading: {cache_path}")
-            with open(cache_path, "r") as fh:
+            with open(cache_path) as fh:
                 try:
                     config = json.load(fh)
                 except json.JSONDecodeError as e:
@@ -269,22 +285,25 @@ def fetch_wf_config(wf_path, cache_config=True):
     log.debug("No config cache found")
 
     # Call `nextflow config`
-    nfconfig_raw = nextflow_cmd(f"nextflow config -flat {wf_path}")
-    for l in nfconfig_raw.splitlines():
-        ul = l.decode("utf-8")
-        try:
-            k, v = ul.split(" = ", 1)
-            config[k] = v.strip("'\"")
-        except ValueError:
-            log.debug(f"Couldn't find key=value config pair:\n  {ul}")
+    result = run_cmd("nextflow", f"config -flat {wf_path}")
+    if result is not None:
+        nfconfig_raw, _ = result
+        for line in nfconfig_raw.splitlines():
+            ul = line.decode("utf-8")
+            try:
+                k, v = ul.split(" = ", 1)
+                config[k] = v.strip("'\"")
+            except ValueError:
+                log.debug(f"Couldn't find key=value config pair:\n  {ul}")
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
     try:
-        main_nf = os.path.join(wf_path, "main.nf")
-        with open(main_nf, "r") as fh:
-            for l in fh:
-                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", l)
+        main_nf = Path(wf_path, "main.nf")
+        with open(main_nf, "rb") as fh:
+            for line in fh:
+                line_str = line.decode("utf-8")
+                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=(?!=)", line_str)
                 if match:
                     config[match.group(1)] = "null"
     except FileNotFoundError as e:
@@ -303,18 +322,28 @@ def fetch_wf_config(wf_path, cache_config=True):
     return config
 
 
-def nextflow_cmd(cmd):
-    """Run a Nextflow command and capture the output. Handle errors nicely"""
+def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
+    """Run a specified command and capture the output. Handle errors nicely."""
+    full_cmd = f"{executable} {cmd}"
+    log.debug(f"Running command: {full_cmd}")
     try:
-        nf_proc = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        return nf_proc.stdout
+        proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=True)
+        return (proc.stdout, proc.stderr)
     except OSError as e:
         if e.errno == errno.ENOENT:
-            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
+            raise RuntimeError(
+                f"It looks like {executable} is not installed. Please ensure it is available in your PATH."
+            )
+        else:
+            return None
     except subprocess.CalledProcessError as e:
-        raise AssertionError(
-            f"Command '{cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
-        )
+        log.debug(f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}")
+        if executable == "nf-test":
+            return (e.stdout, e.stderr)
+        else:
+            raise RuntimeError(
+                f"Command '{full_cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
+            )
 
 
 def setup_nfcore_dir():
@@ -324,9 +353,10 @@ def setup_nfcore_dir():
     """
     if not os.path.exists(NFCORE_DIR):
         os.makedirs(NFCORE_DIR)
+        return True
 
 
-def setup_requests_cachedir():
+def setup_requests_cachedir() -> dict:
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
@@ -336,8 +366,7 @@ def setup_requests_cachedir():
     Also returns the config dict so that we can use the same setup with a Session.
     """
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = os.path.join(NFCORE_CACHE_DIR, f"cache_{pyversion}")
-
+    cachedir = setup_nfcore_cachedir(f"cache_{pyversion}")
     config = {
         "cache_name": os.path.join(cachedir, "github_info"),
         "expire_after": datetime.timedelta(hours=1),
@@ -345,14 +374,21 @@ def setup_requests_cachedir():
     }
 
     logging.getLogger("requests_cache").setLevel(logging.WARNING)
-    try:
-        if not os.path.exists(cachedir):
-            os.makedirs(cachedir)
-        requests_cache.install_cache(**config)
-    except PermissionError:
-        pass
-
     return config
+
+
+def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
+    """Sets up local caching for caching files between sessions."""
+
+    cachedir = Path(NFCORE_CACHE_DIR, cache_fn)
+
+    try:
+        if not Path(cachedir).exists():
+            Path(cachedir).mkdir(parents=True)
+    except PermissionError:
+        log.warn(f"Could not create cache directory: {cachedir}")
+
+    return cachedir
 
 
 def wait_cli_function(poll_func, refresh_per_second=20):
@@ -399,11 +435,14 @@ def poll_nfcore_web_api(api_url, post_data=None):
         except requests.exceptions.ConnectionError:
             raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
-            if response.status_code != 200:
+            if response.status_code != 200 and response.status_code != 301:
                 log.debug(f"Response content:\n{response.content}")
                 raise AssertionError(
                     f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )
+            # follow redirects
+            if response.status_code == 301:
+                return poll_nfcore_web_api(response.headers["Location"], post_data)
             try:
                 web_response = json.loads(response.content)
                 if "status" not in web_response:
@@ -418,7 +457,7 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 return web_response
 
 
-class GitHub_API_Session(requests_cache.CachedSession):
+class GitHubAPISession(requests_cache.CachedSession):
     """
     Class to provide a single session for interacting with the GitHub API for a run.
     Inherits the requests_cache.CachedSession and adds additional functionality,
@@ -429,6 +468,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
         self.auth_mode = None
         self.return_ok = [200, 201]
         self.return_retry = [403]
+        self.return_unauthorised = [401]
         self.has_init = False
 
     def lazy_init(self):
@@ -465,7 +505,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
         gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
         if self.auth is None and os.path.exists(gh_cli_config_fn):
             try:
-                with open(gh_cli_config_fn, "r") as fh:
+                with open(gh_cli_config_fn) as fh:
                     gh_cli_config = yaml.safe_load(fh)
                     self.auth = requests.auth.HTTPBasicAuth(
                         gh_cli_config["github.com"]["user"], gh_cli_config["github.com"]["oauth_token"]
@@ -480,6 +520,8 @@ class GitHub_API_Session(requests_cache.CachedSession):
         if os.environ.get("GITHUB_TOKEN") is not None and self.auth is None:
             self.auth_mode = "Bearer token with GITHUB_TOKEN"
             self.auth = BearerAuth(os.environ["GITHUB_TOKEN"])
+        else:
+            log.warning("Could not find GitHub authentication token. Some API requests may fail.")
 
         log.debug(f"Using GitHub auth: {self.auth_mode}")
 
@@ -510,9 +552,18 @@ class GitHub_API_Session(requests_cache.CachedSession):
         if not self.has_init:
             self.lazy_init()
         request = self.get(url)
-        if request.status_code not in self.return_ok:
-            self.log_content_headers(request)
-            raise AssertionError(f"GitHub API PR failed - got return code {request.status_code} from {url}")
+        if request.status_code in self.return_retry:
+            stderr = rich.console.Console(stderr=True, force_terminal=rich_force_colors())
+            try:
+                r = self.request_retry(url)
+            except Exception as e:
+                stderr.print_exception()
+                raise e
+            else:
+                return r
+        elif request.status_code in self.return_unauthorised:
+            raise RuntimeError("GitHub API PR failed, probably due to an expired GITHUB_TOKEN.")
+
         return request
 
     def get(self, url, **kwargs):
@@ -527,7 +578,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
         """
         Try to fetch a URL, keep retrying if we get a certain return code.
 
-        Used in nf-core sync code because we get 403 errors: too many simultaneous requests
+        Used in nf-core pipelines sync code because we get 403 errors: too many simultaneous requests
         See https://github.com/nf-core/tools/issues/911
         """
         if not self.has_init:
@@ -566,7 +617,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
 
 
 # Single session object to use for entire codebase. Not sure if there's a better way to do this?
-gh_api = GitHub_API_Session()
+gh_api = GitHubAPISession()
 
 
 def anaconda_package(dep, dep_channels=None):
@@ -642,18 +693,18 @@ def parse_anaconda_licence(anaconda_response, version=None):
 
     # Clean up / standardise licence names
     clean_licences = []
-    for l in licences:
-        l = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", l)
-        l = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", l, flags=re.IGNORECASE)
-        l = l.replace("GPL-", "GPLv")
-        l = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", l)  # Add v prefix to GPL version if none found
-        l = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", l)  # Remove superflous .0 from GPL version
-        l = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", l)
-        l = re.sub(r"GPL\s*v", "GPL v", l)  # Normalise whitespace to one space between GPL and v
-        l = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", l)  # Normalise whitespace around >= GPL versions
-        l = l.replace("Clause", "clause")  # BSD capitilisation
-        l = re.sub(r"-only$", "", l)  # Remove superflous GPL "only" version suffixes
-        clean_licences.append(l)
+    for license in licences:
+        license = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", license)
+        license = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", license, flags=re.IGNORECASE)
+        license = license.replace("GPL-", "GPLv")
+        license = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", license)  # Add v prefix to GPL version if none found
+        license = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", license)  # Remove superflous .0 from GPL version
+        license = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", license)
+        license = re.sub(r"GPL\s*v", "GPL v", license)  # Normalise whitespace to one space between GPL and v
+        license = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", license)  # Normalise whitespace around >= GPL versions
+        license = license.replace("Clause", "clause")  # BSD capitilisation
+        license = re.sub(r"-only$", "", license)  # Remove superflous GPL "only" version suffixes
+        clean_licences.append(license)
     return clean_licences
 
 
@@ -768,7 +819,7 @@ def custom_yaml_dumper():
 
             See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
             """
-            return super(CustomDumper, self).increase_indent(flow=flow, indentless=False)
+            return super().increase_indent(flow=flow, indentless=False)
 
         # HACK: insert blank lines between top-level objects
         # inspired by https://stackoverflow.com/a/44284819/3786245
@@ -803,7 +854,7 @@ def prompt_remote_pipeline_name(wfs):
     """Prompt for the pipeline name with questionary
 
     Args:
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         pipeline (str): GitHub repo - username/repo
@@ -826,7 +877,7 @@ def prompt_remote_pipeline_name(wfs):
     # Non nf-core repo on GitHub
     if pipeline.count("/") == 1:
         try:
-            gh_api.get(f"https://api.github.com/repos/{pipeline}")
+            gh_api.safe_get(f"https://api.github.com/repos/{pipeline}")
         except Exception:
             # No repo found - pass and raise error at the end
             pass
@@ -843,7 +894,7 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
     Args:
         wf_releases (array): Array of repo releases as returned by the GitHub API
         wf_branches (array): Array of repo branches, as returned by the GitHub API
-        multiple (bool): Allow selection of multiple releases & branches (for Tower)
+        multiple (bool): Allow selection of multiple releases & branches (for Seqera Platform)
 
     Returns:
         choice (str): Selected release / branch name
@@ -883,7 +934,7 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
 
 class SingularityCacheFilePathValidator(questionary.Validator):
     """
-    Validator for file path specified as --singularity-cache-index argument in nf-core download
+    Validator for file path specified as --singularity-cache-index argument in nf-core pipelines download
     """
 
     def validate(self, value):
@@ -903,7 +954,7 @@ def get_repo_releases_branches(pipeline, wfs):
 
     Args:
         pipeline (str): GitHub repo username/repo
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         wf_releases, wf_branches (tuple): Array of releases, Array of branches
@@ -975,7 +1026,7 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-def load_tools_config(directory="."):
+def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Path, dict]:
     """
     Parse the nf-core.yml configuration file
 
@@ -1001,9 +1052,8 @@ def load_tools_config(directory="."):
             log.debug(f"No tools config file found: {CONFIG_PATHS[0]}")
         return Path(directory, CONFIG_PATHS[0]), {}
 
-    with open(config_fn, "r") as fh:
+    with open(config_fn) as fh:
         tools_config = yaml.safe_load(fh)
-
     # If the file is empty
     tools_config = tools_config or {}
 
@@ -1013,12 +1063,13 @@ def load_tools_config(directory="."):
 
 def determine_base_dir(directory="."):
     base_dir = start_dir = Path(directory).absolute()
+    # Only iterate up the tree if the start dir doesn't have a config
     while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
         base_dir = base_dir.parent
         config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
         if config_fn:
             break
-    return directory if base_dir == start_dir else base_dir
+    return directory if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
 
 
 def get_first_available_path(directory, paths):
@@ -1121,6 +1172,51 @@ def validate_file_md5(file_name, expected_md5hex):
     if file_md5hex.upper() == expected_md5hex.upper():
         log.debug(f"md5 sum of image matches expected: {expected_md5hex}")
     else:
-        raise IOError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
+        raise OSError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
 
     return True
+
+
+def nested_setitem(d, keys, value):
+    """Sets the value in a nested dict using a list of keys to traverse
+
+    Args:
+        d (dict): the nested dictionary to traverse
+        keys (list[Any]): A list of keys to iteratively traverse
+        value (Any): The value to be set for the last key in the chain
+    """
+    current = d
+    for k in keys[:-1]:
+        current = current[k]
+    current[keys[-1]] = value
+
+
+def nested_delitem(d, keys):
+    """Deletes a key from a nested dictionary
+
+    Args:
+        d (dict): the nested dictionary to traverse
+        keys (list[Any]): A list of keys to iteratively traverse, deleting the final one
+    """
+    current = d
+    for k in keys[:-1]:
+        current = current[k]
+    del current[keys[-1]]
+
+
+@contextmanager
+def set_wd(path: Path) -> Generator[None, None, None]:
+    """Sets the working directory for this context.
+
+    Arguments
+    ---------
+
+    path : Path
+        Path to the working directory to be used inside this context.
+    """
+    start_wd = Path().absolute()
+    os.chdir(Path(path).resolve())
+    try:
+        yield
+    finally:
+        os.chdir(start_wd)
