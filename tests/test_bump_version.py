@@ -4,7 +4,7 @@ import os
 
 import yaml
 
-import nf_core.bump_version
+import nf_core.pipelines.bump_version
 import nf_core.pipelines.create.create
 import nf_core.utils
 
@@ -24,7 +24,7 @@ def test_bump_pipeline_version(datafiles, tmp_path):
     pipeline_obj._load()
 
     # Bump the version number
-    nf_core.bump_version.bump_pipeline_version(pipeline_obj, "1.1")
+    nf_core.pipelines.bump_version.bump_pipeline_version(pipeline_obj, "1.1")
     new_pipeline_obj = nf_core.utils.Pipeline(test_pipeline_dir)
 
     # Check nextflow.config
@@ -44,7 +44,7 @@ def test_dev_bump_pipeline_version(datafiles, tmp_path):
     pipeline_obj._load()
 
     # Bump the version number
-    nf_core.bump_version.bump_pipeline_version(pipeline_obj, "v1.2dev")
+    nf_core.pipelines.bump_version.bump_pipeline_version(pipeline_obj, "v1.2dev")
     new_pipeline_obj = nf_core.utils.Pipeline(test_pipeline_dir)
 
     # Check the pipeline config
@@ -65,7 +65,7 @@ def test_bump_nextflow_version(datafiles, tmp_path):
     # Bump the version number to a specific version, preferably one
     # we're not already on
     version = "22.04.3"
-    nf_core.bump_version.bump_nextflow_version(pipeline_obj, version)
+    nf_core.pipelines.bump_version.bump_nextflow_version(pipeline_obj, version)
     new_pipeline_obj = nf_core.utils.Pipeline(test_pipeline_dir)
 
     # Check nextflow.config

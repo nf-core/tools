@@ -3,8 +3,8 @@
 import fnmatch
 import os
 
-import nf_core.lint
 import nf_core.modules.lint
+import nf_core.pipelines.lint
 import nf_core.subworkflows.lint
 
 
@@ -31,11 +31,11 @@ def make_docs(docs_basedir, lint_tests, md_template):
 pipeline_docs_basedir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_src", "pipeline_lint_tests")
 make_docs(
     pipeline_docs_basedir,
-    nf_core.lint.PipelineLint._get_all_lint_tests(True),
+    nf_core.pipelines.lint.PipelineLint._get_all_lint_tests(True),
     """# {0}
 
 ```{{eval-rst}}
-.. automethod:: nf_core.lint.PipelineLint.{0}
+.. automethod:: nf_core.pipelines.lint.PipelineLint.{0}
 ```
 """,
 )

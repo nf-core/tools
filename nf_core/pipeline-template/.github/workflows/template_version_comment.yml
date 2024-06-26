@@ -1,6 +1,6 @@
 name: nf-core template version comment
 # This workflow is triggered on PRs to check if the pipeline template version matches the latest nf-core version.
-# It posts a comment to the PR, even if it comes from a fork.
+# It posts a comment to the PR, even if it comes from a fork.{%- raw %}
 
 on: pull_request_target
 
@@ -40,3 +40,4 @@ jobs:
             Please update your pipeline to the latest version.
 
             For more documentation on how to update your pipeline, please see the [nf-core documentation](https://github.com/nf-core/tools?tab=readme-ov-file#sync-a-pipeline-with-the-template) and [Synchronisation documentation](https://nf-co.re/docs/contributing/sync).
+          #{%- endraw %}

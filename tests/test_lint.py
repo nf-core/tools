@@ -9,8 +9,8 @@ import unittest
 
 import yaml
 
-import nf_core.lint
 import nf_core.pipelines.create.create
+import nf_core.pipelines.lint
 
 from .utils import with_temporary_folder
 
@@ -32,7 +32,7 @@ class TestLint(unittest.TestCase):
         self.create_obj.init_pipeline()
 
         # Base lint object on this directory
-        self.lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
+        self.lint_obj = nf_core.pipelines.lint.PipelineLint(self.test_pipeline_dir)
 
     def tearDown(self):
         """Clean up temporary files and folders"""
@@ -56,7 +56,7 @@ class TestLint(unittest.TestCase):
 
         We don't really check any of this code as it's just a series of function calls
         and we're testing each of those individually. This is mostly to check for syntax errors."""
-        nf_core.lint.run_linting(self.test_pipeline_dir, False)
+        nf_core.pipelines.lint.run_linting(self.test_pipeline_dir, False)
 
     def test_init_pipeline_lint(self):
         """Simply create a PipelineLint object.
@@ -64,7 +64,7 @@ class TestLint(unittest.TestCase):
         This checks that all of the lint test imports are working properly,
         we also check that the git sha was found and that the release flag works properly
         """
-        lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir, True)
+        lint_obj = nf_core.pipelines.lint.PipelineLint(self.test_pipeline_dir, True)
 
         # Tests that extra test is added for release mode
         assert "version_consistency" in lint_obj.lint_tests
@@ -82,7 +82,7 @@ class TestLint(unittest.TestCase):
 
         # Make a copy of the test pipeline and create a lint object
         new_pipeline = self._make_pipeline_copy()
-        lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+        lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
 
         # Make a config file listing all test names
         config_dict = {"lint": {test_name: False for test_name in lint_obj.lint_tests}}
@@ -167,7 +167,7 @@ class TestLint(unittest.TestCase):
                 existing_docs.append(os.path.join(docs_basedir, fn))
 
         # Check .md files against each test name
-        lint_obj = nf_core.lint.PipelineLint("", True)
+        lint_obj = nf_core.pipelines.lint.PipelineLint("", True)
         for test_name in lint_obj.lint_tests:
             fn = os.path.join(docs_basedir, f"{test_name}.md")
             assert os.path.exists(fn), f"Could not find lint docs .md file: {fn}"

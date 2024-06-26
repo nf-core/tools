@@ -3,7 +3,7 @@ import os
 import re
 from pathlib import Path
 
-from nf_core.schema import PipelineSchema
+from nf_core.pipelines.schema import PipelineSchema
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def nextflow_config(self):
     * ``manifest.version``
 
       * The version of this pipeline. This should correspond to a `GitHub release <https://help.github.com/articles/creating-releases/>`_.
-      * If ``--release`` is set when running ``nf-core lint``, the version number must not contain the string ``dev``
+      * If ``--release`` is set when running ``nf-core pipelines lint``, the version number must not contain the string ``dev``
       * If ``--release`` is _not_ set, the version should end in ``dev`` (warning triggered if not)
 
     * ``manifest.nextflowVersion``

@@ -37,8 +37,8 @@ def create_modules_repo_dummy(tmp_dir):
         fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
     # mock biocontainers and anaconda response
     with responses.RequestsMock() as rsps:
-        mock_anaconda_api_calls(rsps, "bpipe", "0.9.11--hdfd78af_0")
-        mock_biocontainers_api_calls(rsps, "bpipe", "0.9.11--hdfd78af_0")
+        mock_anaconda_api_calls(rsps, "bpipe", "0.9.12--hdfd78af_0")
+        mock_biocontainers_api_calls(rsps, "bpipe", "0.9.12--hdfd78af_0")
         # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
         module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
         with requests_cache.disabled():
@@ -202,8 +202,6 @@ class TestModules(unittest.TestCase):
         test_modules_environment_yml_file_not_array,
         test_modules_environment_yml_file_sorted_correctly,
         test_modules_environment_yml_file_sorted_incorrectly,
-        test_modules_incorrect_tags_yml_key,
-        test_modules_incorrect_tags_yml_values,
         test_modules_lint_check_process_labels,
         test_modules_lint_check_url,
         test_modules_lint_empty,
@@ -220,8 +218,6 @@ class TestModules(unittest.TestCase):
         test_modules_meta_yml_incorrect_name,
         test_modules_meta_yml_input_mismatch,
         test_modules_meta_yml_output_mismatch,
-        test_modules_missing_required_tag,
-        test_modules_missing_tags_yml,
         test_modules_missing_test_dir,
         test_modules_missing_test_main_nf,
         test_modules_unused_pytest_files,

@@ -18,7 +18,7 @@ questionary>=1.8.0
 refgenie
 requests
 requests_cache
-rich-click>=1.6.1
+rich-click==1.8.*
 rich>=13.3.1
 tabulate
 textual>=0.63.1
