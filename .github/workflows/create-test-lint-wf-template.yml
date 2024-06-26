@@ -128,8 +128,8 @@ jobs:
           rm -rf create-test-lint-wf/results
 
       # Try syncing it before we change anything
-      - name: nf-core sync
-        run: nf-core --log-file log.txt sync --dir create-test-lint-wf/my-prefix-testpipeline/
+      - name: nf-core pipelines sync
+        run: nf-core --log-file log.txt pipelines sync --dir create-test-lint-wf/my-prefix-testpipeline/
 
       # Run code style linting
       - name: Run pre-commit
@@ -147,18 +147,18 @@ jobs:
         working-directory: create-test-lint-wf
 
       # Run nf-core linting
-      - name: nf-core lint
-        run: nf-core --log-file log.txt --hide-progress lint --dir my-prefix-testpipeline --fail-warned
+      - name: nf-core pipelines lint
+        run: nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned
         working-directory: create-test-lint-wf
 
       # Run bump-version
-      - name: nf-core bump-version
-        run: nf-core --log-file log.txt bump-version --dir my-prefix-testpipeline/ 1.1
+      - name: nf-core pipelines bump-version
+        run: nf-core --log-file log.txt pipelines bump-version --dir my-prefix-testpipeline/ 1.1
         working-directory: create-test-lint-wf
 
       # Run nf-core linting in release mode
-      - name: nf-core lint in release mode
-        run: nf-core --log-file log.txt --hide-progress lint --dir my-prefix-testpipeline --fail-warned --release
+      - name: nf-core pipelines lint in release mode
+        run: nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned --release
         working-directory: create-test-lint-wf
 
       - name: Tar files

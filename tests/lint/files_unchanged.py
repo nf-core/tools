@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import nf_core.lint
+import nf_core.pipelines.lint
 
 
 def test_files_unchanged_pass(self):
@@ -18,7 +18,7 @@ def test_files_unchanged_fail(self):
     with open(Path(new_pipeline, failing_file), "a") as fh:
         fh.write("THIS SHOULD NOT BE HERE")
 
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     results = lint_obj.files_unchanged()
     assert len(results["failed"]) > 0

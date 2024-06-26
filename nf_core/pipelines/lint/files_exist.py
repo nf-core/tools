@@ -106,7 +106,7 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
 
         lib/nfcore_external_java_deps.jar # if "nf-validation" is in nextflow.config
 
-    .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
+    .. tip:: You can configure the ``nf-core pipelines lint`` tests to ignore any of these checks by setting
             the ``files_exist`` key as follows in your ``.nf-core.yml`` config file. For example:
 
             .. code-block:: yaml

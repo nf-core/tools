@@ -14,7 +14,7 @@ import pytest
 
 import nf_core.pipelines.create.create
 import nf_core.utils
-from nf_core.download import ContainerError, DownloadWorkflow, WorkflowRepo
+from nf_core.pipelines.download import ContainerError, DownloadWorkflow, WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import run_cmd
 
@@ -44,7 +44,7 @@ class DownloadTest(unittest.TestCase):
     # Tests for 'get_release_hash'
     #
     def test_get_release_hash_release(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         pipeline = "methylseq"
         download_obj = DownloadWorkflow(pipeline=pipeline, revision="1.6")
@@ -62,7 +62,7 @@ class DownloadTest(unittest.TestCase):
         )
 
     def test_get_release_hash_branch(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         # Exoseq pipeline is archived, so `dev` branch should be stable
         pipeline = "exoseq"
@@ -81,7 +81,7 @@ class DownloadTest(unittest.TestCase):
         )
 
     def test_get_release_hash_non_existent_release(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         pipeline = "methylseq"
         download_obj = DownloadWorkflow(pipeline=pipeline, revision="thisisfake")
@@ -564,7 +564,7 @@ class DownloadTest(unittest.TestCase):
     # Tests for the main entry method 'download_workflow'
     #
     @with_temporary_folder
-    @mock.patch("nf_core.download.DownloadWorkflow.singularity_pull_image")
+    @mock.patch("nf_core.pipelines.download.DownloadWorkflow.singularity_pull_image")
     @mock.patch("shutil.which")
     def test_download_workflow_with_success(self, tmp_dir, mock_download_image, mock_singularity_installed):
         os.environ["NXF_SINGULARITY_CACHEDIR"] = "foo"
@@ -585,7 +585,7 @@ class DownloadTest(unittest.TestCase):
     # Test Download for Seqera Platform
     #
     @with_temporary_folder
-    @mock.patch("nf_core.download.DownloadWorkflow.get_singularity_images")
+    @mock.patch("nf_core.pipelines.download.DownloadWorkflow.get_singularity_images")
     def test_download_workflow_for_platform(self, tmp_dir, _):
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
@@ -601,7 +601,7 @@ class DownloadTest(unittest.TestCase):
         assert isinstance(download_obj.wf_sha, dict) and len(download_obj.wf_sha) == 0
         assert isinstance(download_obj.wf_download_url, dict) and len(download_obj.wf_download_url) == 0
 
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         (
             download_obj.pipeline,
@@ -646,7 +646,7 @@ class DownloadTest(unittest.TestCase):
     #
     # Brief test adding a single custom tag to Seqera Platform download
     #
-    @mock.patch("nf_core.download.DownloadWorkflow.get_singularity_images")
+    @mock.patch("nf_core.pipelines.download.DownloadWorkflow.get_singularity_images")
     @with_temporary_folder
     def test_download_workflow_for_platform_with_one_custom_tag(self, _, tmp_dir):
         download_obj = DownloadWorkflow(
@@ -662,7 +662,7 @@ class DownloadTest(unittest.TestCase):
     #
     # Test adding custom tags to Seqera Platform download (full test)
     #
-    @mock.patch("nf_core.download.DownloadWorkflow.get_singularity_images")
+    @mock.patch("nf_core.pipelines.download.DownloadWorkflow.get_singularity_images")
     @with_temporary_folder
     def test_download_workflow_for_platform_with_custom_tags(self, _, tmp_dir):
         with self._caplog.at_level(logging.INFO):
@@ -690,7 +690,7 @@ class DownloadTest(unittest.TestCase):
             assert isinstance(download_obj.wf_download_url, dict) and len(download_obj.wf_download_url) == 0
             assert isinstance(download_obj.additional_tags, list) and len(download_obj.additional_tags) == 5
 
-            wfs = nf_core.list.Workflows()
+            wfs = nf_core.pipelines.list.Workflows()
             wfs.get_remote_workflows()
             (
                 download_obj.pipeline,
