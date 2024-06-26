@@ -106,6 +106,7 @@ def test_type_nfcore_validation(snap_compare):
         await pilot.click("#start")
         await pilot.click("#type_nfcore")
         await pilot.click("#next")
+        await pilot.pause()
 
     assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
 
