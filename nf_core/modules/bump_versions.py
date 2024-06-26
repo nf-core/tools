@@ -241,7 +241,9 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
             # change version in environment.yml
             with open(module.environment_yml) as fh:
                 env_yml = yaml.safe_load(fh)
-            re.sub(bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'", env_yml["dependencies"])
+            env_yml["dependencies"][0] = re.sub(
+                bioconda_packages[0], f"bioconda::{bioconda_tool_name}={last_ver}", env_yml["dependencies"][0]
+            )
             with open(module.environment_yml, "w") as fh:
                 yaml.dump(env_yml, fh, default_flow_style=False, Dumper=custom_yaml_dumper())
 
