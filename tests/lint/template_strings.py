@@ -1,8 +1,8 @@
 import subprocess
 from pathlib import Path
 
-import nf_core.create
-import nf_core.lint
+import nf_core.pipelines.create
+import nf_core.pipelines.lint
 
 
 def test_template_strings(self):
@@ -13,10 +13,9 @@ def test_template_strings(self):
     with open(txt_file, "w") as f:
         f.write("my {{ template_string }}")
     subprocess.check_output(["git", "add", "docs"], cwd=new_pipeline)
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.template_strings()
-    print(result["failed"])
     assert len(result["failed"]) == 1
     assert len(result["ignored"]) == 0
 
@@ -28,7 +27,7 @@ def test_template_strings_ignored(self):
     nf_core_yml = Path(new_pipeline) / ".nf-core.yml"
     with open(nf_core_yml, "w") as f:
         f.write("repository_type: pipeline\nlint:\n  template_strings: False")
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     lint_obj._lint_pipeline()
     assert len(lint_obj.failed) == 0
@@ -47,7 +46,7 @@ def test_template_strings_ignore_file(self):
     nf_core_yml = Path(new_pipeline) / ".nf-core.yml"
     with open(nf_core_yml, "w") as f:
         f.write("repository_type: pipeline\nlint:\n  template_strings:\n    - docs/test.txt")
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     result = lint_obj.template_strings()
     assert len(result["failed"]) == 0

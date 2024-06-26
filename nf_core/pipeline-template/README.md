@@ -1,4 +1,4 @@
-{% if branded -%}
+{% if is_nfcore -%}
 
 <h1>
   <picture>
@@ -11,7 +11,7 @@
 {% if github_badges -%}
 [![GitHub Actions CI Status](https://github.com/{{ name }}/actions/workflows/ci.yml/badge.svg)](https://github.com/{{ name }}/actions/workflows/ci.yml)
 [![GitHub Actions Linting Status](https://github.com/{{ name }}/actions/workflows/linting.yml/badge.svg)](https://github.com/{{ name }}/actions/workflows/linting.yml){% endif -%}
-{% if branded -%}[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/{{ short_name }}/results){% endif -%}
+{% if is_nfcore -%}[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/{{ short_name }}/results){% endif -%}
 {%- if github_badges -%}
 [![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
 [![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
@@ -23,10 +23,10 @@
 [![Launch on Seqera Platform](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Seqera%20Platform-%234256e7)](https://cloud.seqera.io/launch?pipeline=https://github.com/{{ name }})
 
 {% endif -%}
-{%- if branded -%}[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23{{ short_name }}-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/{{ short_name }}){% endif -%}
-{%- if branded -%}[![Follow on Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?labelColor=000000&logo=twitter)](https://twitter.com/nf_core){% endif -%}
-{%- if branded -%}[![Follow on Mastodon](https://img.shields.io/badge/mastodon-nf__core-6364ff?labelColor=FFFFFF&logo=mastodon)](https://mstdn.science/@nf_core){% endif -%}
-{%- if branded -%}[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)
+{%- if is_nfcore -%}[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23{{ short_name }}-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/{{ short_name }}){% endif -%}
+{%- if is_nfcore -%}[![Follow on Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?labelColor=000000&logo=twitter)](https://twitter.com/nf_core){% endif -%}
+{%- if is_nfcore -%}[![Follow on Mastodon](https://img.shields.io/badge/mastodon-nf__core-6364ff?labelColor=FFFFFF&logo=mastodon)](https://mstdn.science/@nf_core){% endif -%}
+{%- if is_nfcore -%}[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)
 
 {% endif -%}
 
@@ -80,10 +80,9 @@ nextflow run {{ name }} \
 ```
 
 > [!WARNING]
-> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
-> see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
+> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/usage/getting_started/configuration#custom-configuration-files).
 
-{% if branded -%}
+{% if is_nfcore -%}
 
 For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/{{ short_name }}/usage) and the [parameter documentation](https://nf-co.re/{{ short_name }}/parameters).
 
@@ -107,7 +106,7 @@ We thank the following people for their extensive assistance in the development 
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
-{% if branded -%}
+{% if is_nfcore -%}
 For further information or help, don't hesitate to get in touch on the [Slack `#{{ short_name }}` channel](https://nfcore.slack.com/channels/{{ short_name }}) (you can join with [this invite](https://nf-co.re/join/slack)).
 
 {% endif -%}
@@ -121,7 +120,7 @@ For further information or help, don't hesitate to get in touch on the [Slack `#
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 
-{% if branded -%}
+{% if is_nfcore -%}
 You can cite the `nf-core` publication as follows:
 
 {% else -%}

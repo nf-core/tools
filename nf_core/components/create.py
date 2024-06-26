@@ -20,7 +20,7 @@ from packaging.version import parse as parse_version
 import nf_core
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.lint_utils import run_prettier_on_file
+from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
@@ -88,8 +88,7 @@ class ComponentCreate(ComponentCommand):
         ├── meta.yml
         ├── environment.yml
         └── tests
-            ├── main.nf.test
-            └── tags.yml
+            └── main.nf.test
         ```
 
         The function will attempt to automatically find a Bioconda package called <component>
@@ -102,8 +101,7 @@ class ComponentCreate(ComponentCommand):
         ├── main.nf
         ├── meta.yml
         └── tests
-            ├── main.nf.test
-            └── tags.yml
+            └── main.nf.test
         ```
 
         """
@@ -156,6 +154,10 @@ class ComponentCreate(ComponentCommand):
 
             if self.component_type == "modules":
                 self._get_module_structure_components()
+
+        # Add a valid organization name for nf-test tags
+        not_alphabet = re.compile(r"[^a-zA-Z]")
+        self.org_alphabet = not_alphabet.sub("", self.org)
 
         # Create component template with jinja2
         self._render_template()
@@ -228,7 +230,13 @@ class ComponentCreate(ComponentCommand):
                 log.info(f"Could not find a Docker/Singularity container ({e})")
 
     def _get_module_structure_components(self):
-        process_label_defaults = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
+        process_label_defaults = [
+            "process_single",
+            "process_low",
+            "process_medium",
+            "process_high",
+            "process_long",
+        ]
         if self.process_label is None:
             log.info(
                 "Provide an appropriate resource label for the process, taken from the "
@@ -252,7 +260,8 @@ class ComponentCreate(ComponentCommand):
             )
         while self.has_meta is None:
             self.has_meta = rich.prompt.Confirm.ask(
-                "[violet]Will the module require a meta map of sample information?", default=True
+                "[violet]Will the module require a meta map of sample information?",
+                default=True,
             )
 
     def _render_template(self):
@@ -262,7 +271,8 @@ class ComponentCreate(ComponentCommand):
         object_attrs = vars(self)
         # Run jinja2 for each file in the template folder
         env = jinja2.Environment(
-            loader=jinja2.PackageLoader("nf_core", f"{self.component_type[:-1]}-template"), keep_trailing_newline=True
+            loader=jinja2.PackageLoader("nf_core", f"{self.component_type[:-1]}-template"),
+            keep_trailing_newline=True,
         )
         for template_fn, dest_fn in self.file_paths.items():
             log.debug(f"Rendering template file: '{template_fn}'")
@@ -372,7 +382,13 @@ class ComponentCreate(ComponentCommand):
 
             if self.component_type == "modules":
                 # If a subtool, check if there is a module called the base tool name already
-                parent_tool_main_nf = Path(self.directory, self.component_type, self.org, self.component, "main.nf")
+                parent_tool_main_nf = Path(
+                    self.directory,
+                    self.component_type,
+                    self.org,
+                    self.component,
+                    "main.nf",
+                )
                 if self.subtool and parent_tool_main_nf.exists() and not self.migrate_pytest:
                     raise UserWarning(
                         f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.component_name}'"
@@ -393,8 +409,7 @@ class ComponentCreate(ComponentCommand):
             file_paths["meta.yml"] = component_dir / "meta.yml"
             if self.component_type == "modules":
                 file_paths["environment.yml"] = component_dir / "environment.yml"
-            file_paths["tests/tags.yml"] = component_dir / "tests" / "tags.yml"
-            file_paths["tests/main.nf.test"] = component_dir / "tests" / "main.nf.test"
+            file_paths["tests/main.nf.test.j2"] = component_dir / "tests" / "main.nf.test"
 
         return file_paths
 
@@ -428,11 +443,15 @@ class ComponentCreate(ComponentCommand):
         shutil.copyfile(component_old_path / "meta.yml", self.file_paths["meta.yml"])
         if self.component_type == "modules":
             log.debug("Copying original environment.yml file")
-            shutil.copyfile(component_old_path / "environment.yml", self.file_paths["environment.yml"])
+            shutil.copyfile(
+                component_old_path / "environment.yml",
+                self.file_paths["environment.yml"],
+            )
             if (component_old_path / "templates").is_dir():
                 log.debug("Copying original templates directory")
                 shutil.copytree(
-                    component_old_path / "templates", self.file_paths["environment.yml"].parent / "templates"
+                    component_old_path / "templates",
+                    self.file_paths["environment.yml"].parent / "templates",
                 )
         # Create a nextflow.config file if it contains information other than publishDir
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
@@ -447,7 +466,14 @@ class ComponentCreate(ComponentCommand):
             if len(config_lines) > 11:
                 log.debug("Copying nextflow.config file from pytest tests")
                 with open(
-                    Path(self.directory, self.component_type, self.org, self.component_dir, "tests", "nextflow.config"),
+                    Path(
+                        self.directory,
+                        self.component_type,
+                        self.org,
+                        self.component_dir,
+                        "tests",
+                        "nextflow.config",
+                    ),
                     "w+",
                 ) as ofh:
                     ofh.write(config_lines)

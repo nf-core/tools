@@ -36,6 +36,15 @@ import nf_core
 
 log = logging.getLogger(__name__)
 
+# ASCII nf-core logo
+nfcore_logo = [
+    r"[green]                                          ,--.[grey39]/[green],-.",
+    r"[blue]          ___     __   __   __   ___     [green]/,-._.--~\ ",
+    r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {",
+    r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,",
+    r"[green]                                          `._,._,'",
+]
+
 # Custom style for questionary
 nfcore_question_style = prompt_toolkit.styles.Style(
     [
@@ -180,7 +189,7 @@ class Pipeline:
         """
         self.nf_config = fetch_wf_config(self.wf_path)
 
-        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "").strip("'").split("/")
+        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "/").strip("'").split("/")
 
         nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
         if nextflow_version_match:
@@ -213,10 +222,14 @@ def is_pipeline_directory(wf_path):
     for fn in ["main.nf", "nextflow.config"]:
         path = os.path.join(wf_path, fn)
         if not os.path.isfile(path):
-            raise UserWarning(f"'{wf_path}' is not a pipeline - '{fn}' is missing")
+            if wf_path == ".":
+                warning = f"Current directory is not a pipeline - '{fn}' is missing."
+            else:
+                warning = f"'{wf_path}' is not a pipeline - '{fn}' is missing."
+            raise UserWarning(warning)
 
 
-def fetch_wf_config(wf_path, cache_config=True):
+def fetch_wf_config(wf_path: str, cache_config: bool = True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
 
@@ -236,13 +249,13 @@ def fetch_wf_config(wf_path, cache_config=True):
     cache_path = None
 
     # Nextflow home directory - use env var if set, or default to ~/.nextflow
-    nxf_home = os.environ.get("NXF_HOME", os.path.join(os.getenv("HOME"), ".nextflow"))
+    nxf_home = Path(os.environ.get("NXF_HOME", Path(os.getenv("HOME") or "", ".nextflow")))
 
     # Build a cache directory if we can
-    if os.path.isdir(nxf_home):
-        cache_basedir = os.path.join(nxf_home, "nf-core")
-        if not os.path.isdir(cache_basedir):
-            os.mkdir(cache_basedir)
+    if nxf_home.is_dir():
+        cache_basedir = Path(nxf_home, "nf-core")
+        if not cache_basedir.is_dir():
+            cache_basedir.mkdir(parents=True, exist_ok=True)
 
     # If we're given a workflow object with a commit, see if we have a cached copy
     cache_fn = None
@@ -250,7 +263,7 @@ def fetch_wf_config(wf_path, cache_config=True):
     concat_hash = ""
     for fn in ["nextflow.config", "main.nf"]:
         try:
-            with open(os.path.join(wf_path, fn), "rb") as fh:
+            with open(Path(wf_path, fn), "rb") as fh:
                 concat_hash += hashlib.sha256(fh.read()).hexdigest()
         except FileNotFoundError:
             pass
@@ -260,8 +273,8 @@ def fetch_wf_config(wf_path, cache_config=True):
         cache_fn = f"wf-config-cache-{bighash[:25]}.json"
 
     if cache_basedir and cache_fn:
-        cache_path = os.path.join(cache_basedir, cache_fn)
-        if os.path.isfile(cache_path) and cache_config is True:
+        cache_path = Path(cache_basedir, cache_fn)
+        if cache_path.is_file() and cache_config is True:
             log.debug(f"Found a config cache, loading: {cache_path}")
             with open(cache_path) as fh:
                 try:
@@ -286,10 +299,11 @@ def fetch_wf_config(wf_path, cache_config=True):
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
     try:
-        main_nf = os.path.join(wf_path, "main.nf")
-        with open(main_nf) as fh:
+        main_nf = Path(wf_path, "main.nf")
+        with open(main_nf, "rb") as fh:
             for line in fh:
-                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=(?!=)", line)
+                line_str = line.decode("utf-8")
+                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=(?!=)", line_str)
                 if match:
                     config[match.group(1)] = "null"
     except FileNotFoundError as e:
@@ -454,6 +468,7 @@ class GitHubAPISession(requests_cache.CachedSession):
         self.auth_mode = None
         self.return_ok = [200, 201]
         self.return_retry = [403]
+        self.return_unauthorised = [401]
         self.has_init = False
 
     def lazy_init(self):
@@ -546,6 +561,8 @@ class GitHubAPISession(requests_cache.CachedSession):
                 raise e
             else:
                 return r
+        elif request.status_code in self.return_unauthorised:
+            raise RuntimeError("GitHub API PR failed, probably due to an expired GITHUB_TOKEN.")
 
         return request
 
@@ -561,7 +578,7 @@ class GitHubAPISession(requests_cache.CachedSession):
         """
         Try to fetch a URL, keep retrying if we get a certain return code.
 
-        Used in nf-core sync code because we get 403 errors: too many simultaneous requests
+        Used in nf-core pipelines sync code because we get 403 errors: too many simultaneous requests
         See https://github.com/nf-core/tools/issues/911
         """
         if not self.has_init:
@@ -837,7 +854,7 @@ def prompt_remote_pipeline_name(wfs):
     """Prompt for the pipeline name with questionary
 
     Args:
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         pipeline (str): GitHub repo - username/repo
@@ -917,7 +934,7 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
 
 class SingularityCacheFilePathValidator(questionary.Validator):
     """
-    Validator for file path specified as --singularity-cache-index argument in nf-core download
+    Validator for file path specified as --singularity-cache-index argument in nf-core pipelines download
     """
 
     def validate(self, value):
@@ -937,7 +954,7 @@ def get_repo_releases_branches(pipeline, wfs):
 
     Args:
         pipeline (str): GitHub repo username/repo
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         wf_releases, wf_branches (tuple): Array of releases, Array of branches
@@ -1009,7 +1026,7 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-def load_tools_config(directory: Union[str, Path] = "."):
+def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Path, dict]:
     """
     Parse the nf-core.yml configuration file
 
@@ -1037,7 +1054,6 @@ def load_tools_config(directory: Union[str, Path] = "."):
 
     with open(config_fn) as fh:
         tools_config = yaml.safe_load(fh)
-
     # If the file is empty
     tools_config = tools_config or {}
 
@@ -1053,7 +1069,7 @@ def determine_base_dir(directory="."):
         config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
         if config_fn:
             break
-    return directory if base_dir == start_dir else base_dir
+    return directory if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
 
 
 def get_first_available_path(directory, paths):

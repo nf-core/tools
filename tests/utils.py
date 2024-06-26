@@ -9,8 +9,8 @@ from typing import Any, Callable, Tuple
 
 import responses
 
-import nf_core.create
 import nf_core.modules
+import nf_core.pipelines.create.create
 
 OLD_TRIMGALORE_SHA = "9b7a3bdefeaad5d42324aa7dd50f87bea1b04386"
 OLD_TRIMGALORE_BRANCH = "mimic-old-trimgalore"
@@ -102,8 +102,8 @@ def create_tmp_pipeline() -> Tuple[str, str, str, str]:
     pipeline_name = "mypipeline"
     pipeline_dir = os.path.join(tmp_dir, pipeline_name)
 
-    nf_core.create.PipelineCreate(
-        pipeline_name, "it is mine", "me", no_git=True, outdir=pipeline_dir, plain=True
+    nf_core.pipelines.create.create.PipelineCreate(
+        pipeline_name, "it is mine", "me", no_git=True, outdir=pipeline_dir
     ).init_pipeline()
 
     # return values to instance variables for later use in test methods

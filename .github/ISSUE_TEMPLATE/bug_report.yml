@@ -24,7 +24,7 @@ body:
       description: Steps to reproduce the behaviour. Please paste the command and output from your terminal.
       render: console
       placeholder: |
-        $ nf-core lint ...
+        $ nf-core pipelines lint ...
 
         Some output where something broke
 
