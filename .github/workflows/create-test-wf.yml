@@ -48,11 +48,11 @@ jobs:
           cd create-test-wf
           export NXF_WORK=$(pwd)
 
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
         name: Check out source-code repository
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
         with:
           python-version: "3.12"
 
@@ -70,12 +70,16 @@ jobs:
         run: |
           mkdir create-test-wf && cd create-test-wf
           export NXF_WORK=$(pwd)
-          nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
+          nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+          # echo current directory
+          pwd
+          # echo content of current directory
+          ls -la
           nextflow run nf-core-testpipeline -profile test,self_hosted_runner --outdir ./results
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
         with:
           name: nf-core-log-file-${{ matrix.NXF_VER }}
           path: create-test-wf/log.txt

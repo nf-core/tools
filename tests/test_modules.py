@@ -1,5 +1,6 @@
 """Tests covering the modules commands"""
 
+import json
 import os
 import shutil
 import unittest
@@ -9,8 +10,8 @@ import requests_cache
 import responses
 import yaml
 
-import nf_core.create
 import nf_core.modules
+import nf_core.pipelines.create.create
 
 from .utils import (
     GITLAB_BRANCH_TEST_BRANCH,
@@ -36,8 +37,8 @@ def create_modules_repo_dummy(tmp_dir):
         fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
     # mock biocontainers and anaconda response
     with responses.RequestsMock() as rsps:
-        mock_anaconda_api_calls(rsps, "bpipe", "0.9.11--hdfd78af_0")
-        mock_biocontainers_api_calls(rsps, "bpipe", "0.9.11--hdfd78af_0")
+        mock_anaconda_api_calls(rsps, "bpipe", "0.9.12--hdfd78af_0")
+        mock_biocontainers_api_calls(rsps, "bpipe", "0.9.12--hdfd78af_0")
         # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
         module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
         with requests_cache.disabled():
@@ -53,9 +54,22 @@ def create_modules_repo_dummy(tmp_dir):
         yaml.dump(meta_yml, fh)
     # Add dummy content to main.nf.test.snap
     test_snap_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
-    test_snap_path.touch()
+
     with open(test_snap_path, "w") as fh:
-        fh.write('{\n    "my test": {}\n}')
+        json.dump(
+            {
+                "my test": {
+                    "content": [
+                        {
+                            "0": [],
+                            "versions": {},
+                        }
+                    ]
+                }
+            },
+            fh,
+            indent=4,
+        )
 
     # remove "TODO" statements from main.nf
     main_nf_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "main.nf")
@@ -85,6 +99,7 @@ class TestModules(unittest.TestCase):
 
         # Set up the schema
         self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
+
         # Set up install objects
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
         self.mods_install_old = nf_core.modules.ModuleInstall(
@@ -179,13 +194,14 @@ class TestModules(unittest.TestCase):
         test_modules_install_trimgalore_twice,
     )
     from .modules.lint import (  # type: ignore[misc]
+        test_modules_absent_version,
+        test_modules_empty_file_in_snapshot,
+        test_modules_empty_file_in_stub_snapshot,
         test_modules_environment_yml_file_doesnt_exists,
         test_modules_environment_yml_file_name_mismatch,
         test_modules_environment_yml_file_not_array,
         test_modules_environment_yml_file_sorted_correctly,
         test_modules_environment_yml_file_sorted_incorrectly,
-        test_modules_incorrect_tags_yml_key,
-        test_modules_incorrect_tags_yml_values,
         test_modules_lint_check_process_labels,
         test_modules_lint_check_url,
         test_modules_lint_empty,
@@ -202,8 +218,6 @@ class TestModules(unittest.TestCase):
         test_modules_meta_yml_incorrect_name,
         test_modules_meta_yml_input_mismatch,
         test_modules_meta_yml_output_mismatch,
-        test_modules_missing_required_tag,
-        test_modules_missing_tags_yml,
         test_modules_missing_test_dir,
         test_modules_missing_test_main_nf,
         test_modules_unused_pytest_files,

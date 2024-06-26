@@ -1,12 +1,13 @@
 """Tests covering the subworkflows commands"""
 
+import json
 import os
 import shutil
 import unittest
 from pathlib import Path
 
-import nf_core.create
 import nf_core.modules
+import nf_core.pipelines.create.create
 import nf_core.subworkflows
 
 from .utils import (
@@ -23,7 +24,6 @@ def create_modules_repo_dummy(tmp_dir):
 
     root_dir = Path(tmp_dir, "modules")
     Path(root_dir, "modules").mkdir(parents=True, exist_ok=True)
-    Path(root_dir, "subworkflows").mkdir(parents=True, exist_ok=True)
     Path(root_dir, "subworkflows", "nf-core").mkdir(parents=True, exist_ok=True)
     Path(root_dir, "tests", "config").mkdir(parents=True, exist_ok=True)
     with open(Path(root_dir, ".nf-core.yml"), "w") as fh:
@@ -33,10 +33,30 @@ def create_modules_repo_dummy(tmp_dir):
     subworkflow_create.create()
 
     # Add dummy content to main.nf.test.snap
-    test_snap_path = Path(root_dir, "subworkflows", "nf-core", "test_subworkflow", "tests", "main.nf.test.snap")
-    test_snap_path.touch()
+    test_snap_path = Path(
+        root_dir,
+        "subworkflows",
+        "nf-core",
+        "test_subworkflow",
+        "tests",
+        "main.nf.test.snap",
+    )
+    test_snap_path.parent.mkdir(parents=True, exist_ok=True)
     with open(test_snap_path, "w") as fh:
-        fh.write('{\n    "my test": {}\n}')
+        json.dump(
+            {
+                "my test": {
+                    "content": [
+                        {
+                            "0": [],
+                            "versions": {},
+                        }
+                    ]
+                }
+            },
+            fh,
+            indent=4,
+        )
 
     return root_dir
 
@@ -50,13 +70,18 @@ class TestSubworkflows(unittest.TestCase):
 
         # Set up the pipeline structure
         self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
+
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
 
         # Set up install objects
         self.subworkflow_install = nf_core.subworkflows.SubworkflowInstall(self.pipeline_dir, prompt=False, force=False)
         self.subworkflow_install_gitlab = nf_core.subworkflows.SubworkflowInstall(
-            self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
+            self.pipeline_dir,
+            prompt=False,
+            force=False,
+            remote_url=GITLAB_URL,
+            branch=GITLAB_SUBWORKFLOWS_BRANCH,
         )
         self.subworkflow_install_gitlab_same_org_path = nf_core.subworkflows.SubworkflowInstall(
             self.pipeline_dir,
@@ -119,6 +144,9 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_install_tracking_added_super_subworkflow,
     )
     from .subworkflows.lint import (  # type: ignore[misc]
+        test_subworkflows_absent_version,
+        test_subworkflows_empty_file_in_snapshot,
+        test_subworkflows_empty_file_in_stub_snapshot,
         test_subworkflows_lint,
         test_subworkflows_lint_capitalization_fail,
         test_subworkflows_lint_empty,
