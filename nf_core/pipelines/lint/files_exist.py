@@ -177,7 +177,8 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
         [Path(".github", "workflows", "awstest.yml")],
         [Path(".github", "workflows", "awsfulltest.yml")],
         [Path("modules.json")],
-        [Path("nf-test.config", "tests/nextflow.config")],
+        [Path("nf-test.config")],
+        [Path("tests", "nextflow.config")],
     ]
 
     # List of strings. Fails / warns if any of the strings exist.
