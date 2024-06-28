@@ -85,7 +85,13 @@ def test_subworkflows_install_across_organizations(self):
     """Test installing a subworkflow with modules from different organizations"""
     install_obj = SubworkflowInstall(self.pipeline_dir, remote_url=CROSS_ORGANIZATION_URL, branch=GITLAB_DEFAULT_BRANCH)
     # The hic_bwamem2 subworkflow contains modules from different organizations
-    assert install_obj.install("hic_bwamem2") is True
+    install_obj.install("hic_bwamem2")
+    # Verify that the installed_by entry was added correctly
+    modules_json = ModulesJson(self.pipeline_dir)
+    mod_json = modules_json.get_modules_json()
+    assert mod_json["repos"][CROSS_ORGANIZATION_URL]["modules"]["jvfe"]["samtools/merge"]["installed_by"] == [
+        "hic_bwamem2"
+    ]
 
 
 def test_subworkflows_install_tracking(self):
