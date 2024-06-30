@@ -35,8 +35,8 @@ class CreateConfig(BaseModel):
     general_config_type: str = None
     general_config_name: str = None
     config_profile_contact: str = None
-    config_profile_handle: str = None
-    config_profile_description: str = None
+    config_profile_handle: Optional[str] = None
+    config_profile_description: Optional[str] = None
     config_profile_url: Optional[str] = None
 
     model_config = ConfigDict(extra="allow")

@@ -23,10 +23,14 @@ class ConfigCreate:
 
         if description != "" or not None:
             final_params["config_profile_description"] = description
+        else:
+            pass
 
         if url != "" or not None:
             final_params["config_profile_url"] = url
 
+        print("final_params")
+        print(final_params)
         return final_params
 
     def write_to_file(self):
