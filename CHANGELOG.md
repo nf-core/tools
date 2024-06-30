@@ -32,6 +32,7 @@
 - return directory if base_dir is the root directory ([#3003](https://github.com/nf-core/tools/pull/3003))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.6 ([#3006](https://github.com/nf-core/tools/pull/3006))
 - Create: allow more special characters on the pipeline name for non-nf-core pipelines ([#3008](https://github.com/nf-core/tools/pull/3008))
+- Remove nf-core licences command ([#3012](https://github.com/nf-core/tools/pull/3012))
 - README - absolute image paths ([#3013](https://github.com/nf-core/tools/pull/3013))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.7 ([#3015](https://github.com/nf-core/tools/pull/3015))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.8 ([#3017](https://github.com/nf-core/tools/pull/3017))
@@ -39,6 +40,8 @@
 - Update python:3.12-slim Docker digest to 2fba8e7 ([#3023](https://github.com/nf-core/tools/pull/3023))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.10 ([#3031](https://github.com/nf-core/tools/pull/3031))
 - Add warning deprecation message to top-level commands ([#3036](https://github.com/nf-core/tools/pull/3036))
+- Create: Mock git cretentials to generate stable textual snapshots ([#3007](https://github.com/nf-core/tools/pull/3007))
+- Update python:3.12-slim Docker digest to da2d7af ([#3041](https://github.com/nf-core/tools/pull/3041))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
@@ -116,6 +119,8 @@
 - fix(collectfile): sort true for methods_description_mqc.yaml ([#2947](https://github.com/nf-core/tools/pull/2947))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.4.3 ([#2951](https://github.com/nf-core/tools/pull/2951))
 - Restructure CHANGELOG.md ([#2954](https://github.com/nf-core/tools/pull/2954))
+- fix: ensure path object converted to string before stripping quotes ([#2878](https://github.com/nf-core/tools/pull/2878))
+- Test data uses paths instead of config map ([#2877](https://github.com/nf-core/tools/pull/2877))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 

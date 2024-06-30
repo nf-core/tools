@@ -50,13 +50,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core pipelines": [
         {
             "name": "For users",
-            "commands": [
-                "list",
-                "launch",
-                "download",
-                "create-params-file",
-                "licences",
-            ],
+            "commands": ["list", "launch", "download", "create-params-file"],
         },
         {
             "name": "For developers",
