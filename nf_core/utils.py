@@ -18,6 +18,7 @@ import subprocess
 import sys
 import time
 from contextlib import contextmanager
+from logging import LogRecord
 from pathlib import Path
 from typing import Generator, Tuple, Union
 
@@ -30,7 +31,12 @@ import rich
 import yaml
 from packaging.version import Version
 from rich.live import Live
+from rich.logging import RichHandler
 from rich.spinner import Spinner
+from textual._context import active_app
+from textual.message import Message
+from textual.widget import Widget
+from textual.widgets import Markdown, RichLog
 
 import nf_core
 
@@ -1220,3 +1226,59 @@ def set_wd(path: Path) -> Generator[None, None, None]:
         yield
     finally:
         os.chdir(start_wd)
+
+
+# General textual-related functions and objects
+
+
+class HelpText(Markdown):
+    """A class to show a text box with help text."""
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+    def show(self) -> None:
+        """Method to show the help text box."""
+        self.add_class("displayed")
+
+    def hide(self) -> None:
+        """Method to hide the help text box."""
+        self.remove_class("displayed")
+
+
+class LoggingConsole(RichLog):
+    file = False
+    console: Widget
+
+    def print(self, content):
+        self.write(content)
+
+
+class CustomLogHandler(RichHandler):
+    """A Logging handler which extends RichHandler to write to a Widget and handle a Textual App."""
+
+    def emit(self, record: LogRecord) -> None:
+        """Invoked by logging."""
+        try:
+            _app = active_app.get()
+        except LookupError:
+            pass
+        else:
+            super().emit(record)
+
+
+class ShowLogs(Message):
+    """Custom message to show the logging messages."""
+
+    pass
+
+
+# Functions
+def add_hide_class(app, widget_id: str) -> None:
+    """Add class 'hide' to a widget. Not display widget."""
+    app.get_widget_by_id(widget_id).add_class("hide")
+
+
+def remove_hide_class(app, widget_id: str) -> None:
+    """Remove class 'hide' to a widget. Display widget."""
+    app.get_widget_by_id(widget_id).remove_class("hide")

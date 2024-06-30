@@ -15,10 +15,12 @@ from nf_core.pipelines.create.githubrepoquestion import GithubRepoQuestion
 from nf_core.pipelines.create.loggingscreen import LoggingScreen
 from nf_core.pipelines.create.nfcorepipeline import NfcorePipeline
 from nf_core.pipelines.create.pipelinetype import ChoosePipelineType
+from nf_core.pipelines.create.utils import CreateConfig
 from nf_core.pipelines.create.welcome import WelcomeScreen
+from nf_core.utils import CustomLogHandler, LoggingConsole
 
-log_handler = utils.CustomLogHandler(
-    console=utils.LoggingConsole(classes="log_console"),
+log_handler = CustomLogHandler(
+    console=LoggingConsole(classes="log_console"),
     rich_tracebacks=True,
     show_time=False,
     show_path=False,
@@ -35,7 +37,7 @@ log_handler.setLevel("INFO")
 class PipelineCreateApp(App[utils.CreateConfig]):
     """A Textual app to manage stopwatches."""
 
-    CSS_PATH = "create.tcss"
+    CSS_PATH = "../../textual.tcss"
     TITLE = "nf-core create"
     SUB_TITLE = "Create a new pipeline with the nf-core pipeline template"
     BINDINGS = [
@@ -56,7 +58,7 @@ class PipelineCreateApp(App[utils.CreateConfig]):
     }
 
     # Initialise config as empty
-    TEMPLATE_CONFIG = utils.CreateConfig()
+    TEMPLATE_CONFIG = CreateConfig()
 
     # Initialise pipeline type
     NFCORE_PIPELINE = True
