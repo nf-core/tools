@@ -10,23 +10,22 @@ class ConfigCreate:
     def construct_params(self, contact, handle, description, url):
         final_params = {}
 
-        if contact != "" or not None:
-            if handle != "" or not None:
+        print("c:" + contact)
+        print("h: " + handle)
+
+        if contact != "":
+            if handle != "":
                 config_contact = contact + " (" + handle + ")"
             else:
                 config_contact = contact
             final_params["config_profile_contact"] = config_contact
-        elif handle != "" or not None:
-            final_params["config_contact"] = handle
-        else:
-            pass
+        elif handle != "":
+            final_params["config_profile_contact"] = handle
 
-        if description != "" or not None:
+        if description != "":
             final_params["config_profile_description"] = description
-        else:
-            pass
 
-        if url != "" or not None:
+        if url != "":
             final_params["config_profile_url"] = url
 
         print("final_params")
@@ -46,13 +45,16 @@ class ConfigCreate:
             self.template_config.config_profile_url,
         )
 
+        print("validparams")
+        print(validparams)
+
         with open(filename, "w+") as file:
 
             ## Write params
             if any(validparams):
                 file.write("params {\n")
                 for entry_key, entry_value in validparams.items():
-                    if entry_value is not None:
+                    if entry_value != "":
                         file.write(generate_config_entry(self, entry_key, entry_value))
                     else:
                         continue

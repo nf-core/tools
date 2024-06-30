@@ -59,32 +59,32 @@ class CreateConfig(BaseModel):
             raise ValueError("Cannot be left empty.")
         return v
 
-    @field_validator(
-        "config_profile_handle",
-    )
-    @classmethod
-    def handle_prefix(cls, v: str) -> str:
-        """Check that GitHub handles start with '@'."""
-        if not re.match(
-            r"^@[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$", v
-        ):  ## Regex from: https://github.com/shinnn/github-username-regex
-            raise ValueError("Handle must start with '@'.")
-        return v
+    # @field_validator(
+    #     "config_profile_handle",
+    # )
+    # @classmethod
+    # def handle_prefix(cls, v: str) -> str:
+    #     """Check that GitHub handles start with '@'."""
+    #     if not re.match(
+    #         r"^@[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$", v
+    #     ):  ## Regex from: https://github.com/shinnn/github-username-regex
+    #         raise ValueError("Handle must start with '@'.")
+    #     return v
 
-    @field_validator(
-        "config_profile_url",
-    )
-    @classmethod
-    def url_prefix(cls, v: str) -> str:
-        """Check that institutional web links start with valid URL prefix."""
-        if not re.match(
-            r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)",
-            v,
-        ):  ## Regex from: https://stackoverflow.com/a/3809435
-            raise ValueError(
-                "Handle must be a valid URL starting with 'https://' or 'http://' and include the domain (e.g. .com)."
-            )
-        return v
+    # @field_validator(
+    #     "config_profile_url",
+    # )
+    # @classmethod
+    # def url_prefix(cls, v: str) -> str:
+    #     """Check that institutional web links start with valid URL prefix."""
+    #     if not re.match(
+    #         r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)",
+    #         v,
+    #     ):  ## Regex from: https://stackoverflow.com/a/3809435
+    #         raise ValueError(
+    #             "Handle must be a valid URL starting with 'https://' or 'http://' and include the domain (e.g. .com)."
+    #         )
+    #     return v
 
 
 ## TODO Duplicated from pipelines utils - move to common location if possible (validation seems to be context specific so possibly not)
