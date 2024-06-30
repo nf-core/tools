@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 from typing import Dict, List
 
-from nf_core.lint_utils import ignore_file
+from nf_core.pipelines.lint_utils import ignore_file
 
 log = logging.getLogger(__name__)
 

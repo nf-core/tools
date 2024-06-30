@@ -13,7 +13,7 @@ import requests
 import yaml
 
 import nf_core.pipelines.create.create
-import nf_core.schema
+import nf_core.pipelines.schema
 
 from .utils import with_temporary_file, with_temporary_folder
 
@@ -23,7 +23,7 @@ class TestSchema(unittest.TestCase):
 
     def setUp(self):
         """Create a new PipelineSchema object"""
-        self.schema_obj = nf_core.schema.PipelineSchema()
+        self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
         self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
         # Create a test pipeline in temp directory

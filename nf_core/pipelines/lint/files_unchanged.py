@@ -49,7 +49,7 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         .prettierignore
 
 
-    .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
+    .. tip:: You can configure the ``nf-core pipelines lint`` tests to ignore any of these checks by setting
              the ``files_unchanged`` key as follows in your ``.nf-core.yml`` config file. For example:
 
              .. code-block:: yaml

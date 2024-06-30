@@ -19,7 +19,7 @@ Learn more about contributing: [CONTRIBUTING.md](https://github.com/{{ name }}/t
       {%- if is_nfcore %}
 - [ ] If necessary, also make a PR on the {{ name }} _branch_ on the [nf-core/test-datasets](https://github.com/nf-core/test-datasets) repository.
       {%- endif %}
-- [ ] Make sure your code lints (`nf-core lint`).
+- [ ] Make sure your code lints (`nf-core pipelines lint`).
 - [ ] Ensure the test suite passes (`nextflow run . -profile test,docker --outdir <OUTDIR>`).
 - [ ] Check for unexpected warnings in debug mode (`nextflow run . -profile debug,test,docker --outdir <OUTDIR>`).
 - [ ] Usage Documentation in `docs/usage.md` is updated.

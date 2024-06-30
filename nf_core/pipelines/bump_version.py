@@ -176,7 +176,7 @@ def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patt
 
     Args:
         filename (str): File to scan.
-        pipeline_obj (nf_core.lint.PipelineLint): A PipelineLint object that holds information
+        pipeline_obj (nf_core.pipelines.lint.PipelineLint): A PipelineLint object that holds information
             about the pipeline contents and build files.
         pattern (str): Regex pattern to apply.
 
