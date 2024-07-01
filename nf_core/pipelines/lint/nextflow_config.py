@@ -87,6 +87,9 @@ def nextflow_config(self):
     * ``params.nf_required_version``: The old method for specifying the minimum Nextflow version. Replaced by ``manifest.nextflowVersion``
     * ``params.container``: The old method for specifying the dockerhub container address. Replaced by ``process.container``
     * ``igenomesIgnore``: Changed to ``igenomes_ignore``
+    * ``params.max_cpus``: Old method of specifying the maximum number of CPUs a process can request. Replaced by native Nextflow `resourceLimits`directive.
+    * ``params.max_memory``: Old method of specifying the maximum number of memory can request. Replaced by native Nextflow `resourceLimits`directive.
+    * ``params.max_time``: Old method of specifying the maximum number of CPUs can request. Replaced by native Nextflow `resourceLimits`directive.
 
         .. tip:: The ``snake_case`` convention should now be used when defining pipeline parameters
 
@@ -170,6 +173,9 @@ def nextflow_config(self):
         "params.igenomesIgnore",
         "params.name",
         "params.enable_conda",
+        "params.max_cpus",
+        "params.max_memory",
+        "params.max_time",
     ]
 
     # Remove field that should be ignored according to the linting config
@@ -200,9 +206,13 @@ def nextflow_config(self):
             ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
             break
         if cf not in self.nf_config.keys():
-            passed.append(f"Config variable (correctly) not found: {self._wrap_quotes(cf)}")
+            passed.append(
+                f"Config variable (correctly) not found: {self._wrap_quotes(cf)}"
+            )
         else:
-            failed.append(f"Config variable (incorrectly) found: {self._wrap_quotes(cf)}")
+            failed.append(
+                f"Config variable (incorrectly) found: {self._wrap_quotes(cf)}"
+            )
 
     # Check and warn if the process configuration is done with deprecated syntax
     process_with_deprecated_syntax = list(
@@ -222,9 +232,13 @@ def nextflow_config(self):
         if k in ignore_configs:
             continue
         if self.nf_config.get(k) == "true":
-            passed.append(f"Config ``{k}`` had correct value: ``{self.nf_config.get(k)}``")
+            passed.append(
+                f"Config ``{k}`` had correct value: ``{self.nf_config.get(k)}``"
+            )
         else:
-            failed.append(f"Config ``{k}`` did not have correct value: ``{self.nf_config.get(k)}``")
+            failed.append(
+                f"Config ``{k}`` did not have correct value: ``{self.nf_config.get(k)}``"
+            )
 
     if "manifest.name" not in ignore_configs:
         # Check that the pipeline name starts with nf-core
@@ -233,7 +247,9 @@ def nextflow_config(self):
             if not manifest_name.startswith("nf-core/"):
                 raise AssertionError()
         except (AssertionError, IndexError):
-            failed.append(f"Config ``manifest.name`` did not begin with ``nf-core/``:\n    {manifest_name}")
+            failed.append(
+                f"Config ``manifest.name`` did not begin with ``nf-core/``:\n    {manifest_name}"
+            )
         else:
             passed.append("Config ``manifest.name`` began with ``nf-core/``")
 
@@ -249,7 +265,9 @@ def nextflow_config(self):
             )
 
         else:
-            passed.append("Config variable ``manifest.homePage`` began with https://github.com/nf-core/")
+            passed.append(
+                "Config variable ``manifest.homePage`` began with https://github.com/nf-core/"
+            )
 
     # Check that the DAG filename ends in ``.svg``
     if "dag.file" in self.nf_config:
@@ -257,12 +275,21 @@ def nextflow_config(self):
         if self.nf_config["dag.file"].strip("'\"").endswith(default_dag_format):
             passed.append(f"Config ``dag.file`` ended with ``{default_dag_format}``")
         else:
-            failed.append(f"Config ``dag.file`` did not end with ``{default_dag_format}``")
+            failed.append(
+                f"Config ``dag.file`` did not end with ``{default_dag_format}``"
+            )
 
     # Check that the minimum nextflowVersion is set properly
     if "manifest.nextflowVersion" in self.nf_config:
-        if self.nf_config.get("manifest.nextflowVersion", "").strip("\"'").lstrip("!").startswith(">="):
-            passed.append("Config variable ``manifest.nextflowVersion`` started with >= or !>=")
+        if (
+            self.nf_config.get("manifest.nextflowVersion", "")
+            .strip("\"'")
+            .lstrip("!")
+            .startswith(">=")
+        ):
+            passed.append(
+                "Config variable ``manifest.nextflowVersion`` started with >= or !>="
+            )
         else:
             failed.append(
                 "Config ``manifest.nextflowVersion`` did not start with ``>=`` or ``!>=`` : "
@@ -272,7 +299,9 @@ def nextflow_config(self):
     # Check that the pipeline version contains ``dev``
     if not self.release_mode and "manifest.version" in self.nf_config:
         if self.nf_config["manifest.version"].strip(" '\"").endswith("dev"):
-            passed.append(f"Config ``manifest.version`` ends in ``dev``: ``{self.nf_config['manifest.version']}``")
+            passed.append(
+                f"Config ``manifest.version`` ends in ``dev``: ``{self.nf_config['manifest.version']}``"
+            )
         else:
             warned.append(
                 f"Config ``manifest.version`` should end in ``dev``: ``{self.nf_config['manifest.version']}``"
@@ -291,18 +320,32 @@ def nextflow_config(self):
 
     if "custom_config" not in ignore_configs:
         # Check if custom profile params are set correctly
-        if self.nf_config.get("params.custom_config_version", "").strip("'") == "master":
+        if (
+            self.nf_config.get("params.custom_config_version", "").strip("'")
+            == "master"
+        ):
             passed.append("Config `params.custom_config_version` is set to `master`")
         else:
-            failed.append("Config `params.custom_config_version` is not set to `master`")
+            failed.append(
+                "Config `params.custom_config_version` is not set to `master`"
+            )
 
-        custom_config_base = "https://raw.githubusercontent.com/nf-core/configs/{}".format(
-            self.nf_config.get("params.custom_config_version", "").strip("'")
+        custom_config_base = (
+            "https://raw.githubusercontent.com/nf-core/configs/{}".format(
+                self.nf_config.get("params.custom_config_version", "").strip("'")
+            )
         )
-        if self.nf_config.get("params.custom_config_base", "").strip("'") == custom_config_base:
-            passed.append(f"Config `params.custom_config_base` is set to `{custom_config_base}`")
+        if (
+            self.nf_config.get("params.custom_config_base", "").strip("'")
+            == custom_config_base
+        ):
+            passed.append(
+                f"Config `params.custom_config_base` is set to `{custom_config_base}`"
+            )
         else:
-            failed.append(f"Config `params.custom_config_base` is not set to `{custom_config_base}`")
+            failed.append(
+                f"Config `params.custom_config_base` is not set to `{custom_config_base}`"
+            )
 
         # Check that lines for loading custom profiles exist
         lines = [
@@ -344,7 +387,9 @@ def nextflow_config(self):
 
         match = re.search(r"\bprofiles\s*{", cleaned_content)
         if not match:
-            failed.append("nextflow.config does not contain `profiles` scope, but `test` profile is required")
+            failed.append(
+                "nextflow.config does not contain `profiles` scope, but `test` profile is required"
+            )
         else:
             # Extract profiles scope content and check for test profile
             start = match.end()
@@ -360,7 +405,9 @@ def nextflow_config(self):
             if re.search(r"\btest\s*{", profiles_content):
                 passed.append("nextflow.config contains configuration profile `test`")
             else:
-                failed.append("nextflow.config does not contain configuration profile `test`")
+                failed.append(
+                    "nextflow.config does not contain configuration profile `test`"
+                )
 
     # Check that the default values in nextflow.config match the default values defined in the nextflow_schema.json
     ignore_defaults = []
@@ -404,7 +451,9 @@ def nextflow_config(self):
                 schema_default = str(schema.schema_defaults[param_name])
                 config_default = str(self.nf_config[param])
             if config_default is not None and config_default == schema_default:
-                passed.append(f"Config default value correct: {param}= {schema_default}")
+                passed.append(
+                    f"Config default value correct: {param}= {schema_default}"
+                )
             else:
                 failed.append(
                     f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
