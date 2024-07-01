@@ -89,6 +89,7 @@ def test_subworkflows_install_across_organizations(self):
     # Verify that the installed_by entry was added correctly
     modules_json = ModulesJson(self.pipeline_dir)
     mod_json = modules_json.get_modules_json()
+    # Dummy comment
     assert mod_json["repos"][CROSS_ORGANIZATION_URL]["modules"]["jvfe"]["samtools/merge"]["installed_by"] == [
         "hic_bwamem2"
     ]
