@@ -179,7 +179,7 @@ class ModulesDiffer:
                 if diff_status == ModulesDiffer.DiffEnum.UNCHANGED:
                     # The files are identical
                     fh.write(f"'{Path(dsp_from_dir, file)}' is unchanged\n")
-                elif limit_output and file != "main.nf":
+                elif limit_output and not (file.endswith(".nf")):
                     # Skip printing the diff for files other than main.nf
                     fh.write(f"Changes in '{Path(module, file)}' not shown\n")
                 else:
@@ -276,7 +276,7 @@ class ModulesDiffer:
             elif diff_status == ModulesDiffer.DiffEnum.REMOVED:
                 # The file was removed between the commits
                 log.info(f"'{Path(dsp_from_dir, file)}' was removed")
-            elif limit_output and file != "main.nf":
+            elif limit_output and not (file.endswith(".nf")):
                 # Skip printing the diff for files other than main.nf
                 log.info(f"Changes in '{Path(module, file)}' not shown")
             else:

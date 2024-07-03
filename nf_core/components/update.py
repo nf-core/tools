@@ -53,7 +53,6 @@ class ComponentUpdate(ComponentCommand):
         self.update_config = None
         self.modules_json = ModulesJson(self.dir)
         self.branch = branch
-        log.info(f"init component limit_output ={self.limit_output}")
 
     def _parameter_checks(self):
         """Checks the compatibilty of the supplied parameters.
@@ -266,7 +265,6 @@ class ComponentUpdate(ComponentCommand):
                         self.manage_changes_in_linked_components(component, modules_to_update, subworkflows_to_update)
 
                 elif self.show_diff:
-                    log.info(f"limit_output ModulesDiffer: {self.limit_output}")
                     ModulesDiffer.print_diff(
                         component,
                         modules_repo.repo_path,
