@@ -2158,6 +2158,14 @@ def subworkflows_remove(ctx, dir, subworkflow):
     help="Install subworkflow at commit SHA",
 )
 @click.option(
+    "-l",
+    "--limit-output",
+    "limit_output",
+    is_flag=True,
+    default=False,
+    help="Limit ouput to only the difference in main.nf",
+)
+@click.option(
     "-a",
     "--all",
     "install_all",
@@ -2198,6 +2206,7 @@ def subworkflows_update(
     preview,
     save_diff,
     update_deps,
+    limit_output,
 ):
     """
     Update DSL2 subworkflow within a pipeline.
@@ -2219,6 +2228,7 @@ def subworkflows_update(
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
+            limit_output,
         )
         exit_status = subworkflow_install.update(subworkflow)
         if not exit_status and install_all:

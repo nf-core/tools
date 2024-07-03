@@ -40,7 +40,7 @@ class ComponentUpdate(ComponentCommand):
         no_pull=False,
         limit_output=False,
     ):
-        super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
+        super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull, limit_output)
         self.force = force
         self.prompt = prompt
         self.sha = sha
