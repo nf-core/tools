@@ -269,6 +269,8 @@ class TestModules(unittest.TestCase):
         test_install_and_update,
         test_install_at_hash_and_update,
         test_install_at_hash_and_update_and_save_diff_to_file,
+        test_install_at_hash_and_update_and_save_diff_to_file_limit_output,
+        test_install_at_hash_and_update_limit_output,
         test_update_all,
         test_update_different_branch_mix_modules_branch_test,
         test_update_different_branch_mixed_modules_main,

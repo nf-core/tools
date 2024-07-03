@@ -1,5 +1,8 @@
 import filecmp
+import io
+import logging
 import os
+import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -67,6 +70,71 @@ def test_install_at_hash_and_update(self):
     assert correct_git_sha == current_git_sha
 
 
+def test_install_at_hash_and_update_limit_output(self):
+    """Installs an old version of a module in the pipeline and updates it with limited output reporting"""
+    assert self.mods_install_old.install("trimgalore")
+
+    # Capture the logger output
+    log_capture = io.StringIO()
+    ch = logging.StreamHandler(log_capture)
+    logger = logging.getLogger()
+    logger.addHandler(ch)
+
+    update_obj = ModuleUpdate(
+        self.pipeline_dir,
+        show_diff=False,
+        update_deps=True,
+        remote_url=GITLAB_URL,
+        branch=OLD_TRIMGALORE_BRANCH,
+        limit_output=True,
+    )
+
+    # Copy the module files and check that they are affected by the update
+    tmpdir = tempfile.mkdtemp()
+    trimgalore_tmpdir = os.path.join(tmpdir, "trimgalore")
+    trimgalore_path = os.path.join(self.pipeline_dir, "modules", GITLAB_REPO, "trimgalore")
+    shutil.copytree(trimgalore_path, trimgalore_tmpdir)
+
+    assert update_obj.update("trimgalore") is True
+    assert cmp_module(trimgalore_tmpdir, trimgalore_path) is False
+
+    # Check that the modules.json is correctly updated
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json = mod_json_obj.get_modules_json()
+    # Get the up-to-date git_sha for the module from the ModuleRepo object
+    correct_git_sha = update_obj.modules_repo.get_latest_component_version("trimgalore", "modules")
+    current_git_sha = mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]["git_sha"]
+    assert correct_git_sha == current_git_sha
+
+    # Get the captured log output
+    log_output = log_capture.getvalue()
+    log_lines = log_output.split("\n")
+
+    # Check for various scenarios
+    for line in log_lines:
+        if re.match(r"'.+' is unchanged", line):
+            # Unchanged files should be reported for both .nf and non-.nf files
+            assert True
+        elif re.match(r"'.+' was created", line):
+            # Created files should be reported for both .nf and non-.nf files
+            assert True
+        elif re.match(r"'.+' was removed", line):
+            # Removed files should be reported for both .nf and non-.nf files
+            assert True
+        elif re.match(r"Changes in '.+' but not shown", line):
+            # Changes not shown should only be for non-.nf files
+            file_path = re.search(r"'(.+)'", line).group(1)
+            assert Path(file_path).suffix != ".nf", f"Changes in .nf file were not shown: {line}"
+        elif re.match(r"Changes in '.+':$", line):
+            # Changes shown should only be for .nf files
+            file_path = re.search(r"'(.+)'", line).group(1)
+            assert Path(file_path).suffix == ".nf", f"Changes in non-.nf file were shown: {line}"
+
+    # Clean up
+    logger.removeHandler(ch)
+    log_capture.close()
+
+
 def test_install_at_hash_and_update_and_save_diff_to_file(self):
     """Installs an old version of a module in the pipeline and updates it"""
     self.mods_install_old.install("trimgalore")
@@ -89,6 +157,51 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
     assert cmp_module(trimgalore_tmpdir, trimgalore_path) is True
 
     # TODO: Apply the patch to the module
+
+
+def test_install_at_hash_and_update_and_save_diff_to_file_limit_output(self):
+    """Installs an old version of a module in the pipeline and updates it"""
+    self.mods_install_old.install("trimgalore")
+    patch_path = os.path.join(self.pipeline_dir, "trimgalore.patch")
+    update_obj = ModuleUpdate(
+        self.pipeline_dir,
+        save_diff_fn=patch_path,
+        sha=OLD_TRIMGALORE_SHA,
+        remote_url=GITLAB_URL,
+        branch=OLD_TRIMGALORE_BRANCH,
+        limit_output=True,
+    )
+
+    # Copy the module files and check that they are affected by the update
+    tmpdir = tempfile.mkdtemp()
+    trimgalore_tmpdir = os.path.join(tmpdir, "trimgalore")
+    trimgalore_path = os.path.join(self.pipeline_dir, "modules", GITLAB_REPO, "trimgalore")
+    shutil.copytree(trimgalore_path, trimgalore_tmpdir)
+
+    assert update_obj.update("trimgalore") is True
+    assert cmp_module(trimgalore_tmpdir, trimgalore_path) is True
+
+    # Check that the patch file was created
+    assert os.path.exists(patch_path), f"Patch file was not created at {patch_path}"
+
+    # Read the contents of the patch file
+    with open(patch_path) as f:
+        patch_content = f.read()
+
+    # Check the content of the patch file
+    patch_lines = patch_content.split("\n")
+    for line in patch_lines:
+        if re.match(r"'.+' is unchanged", line):
+            # Unchanged files should be reported for both .nf and non-.nf files
+            assert True
+        elif re.match(r"Changes in '.+' but not shown", line):
+            # Changes not shown should only be for non-.nf files
+            file_path = re.search(r"'(.+)'", line).group(1)
+            assert Path(file_path).suffix != ".nf", f"Changes in .nf file were not shown: {line}"
+        elif re.match("diff --git", line):
+            # Diff should only be shown for .nf files
+            file_path = re.search(r"b/(.+)$", line).group(1)
+            assert Path(file_path).suffix == ".nf", f"Diff shown for non-.nf file: {line}"
 
 
 def test_update_all(self):

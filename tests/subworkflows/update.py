@@ -1,4 +1,7 @@
 import filecmp
+import io
+import logging
+import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -57,6 +60,73 @@ def test_install_at_hash_and_update(self):
     )
 
 
+def test_install_at_hash_and_update_limit_output(self):
+    """Installs an old version of a subworkflow in the pipeline and updates it with limit_output=True"""
+    assert self.subworkflow_install_old.install("fastq_align_bowtie2")
+
+    # Capture the logger output
+    log_capture = io.StringIO()
+    ch = logging.StreamHandler(log_capture)
+    logger = logging.getLogger()
+    logger.addHandler(ch)
+
+    update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, update_deps=True, limit_output=True)
+    old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
+
+    # Copy the subworkflow files and check that they are affected by the update
+    tmpdir = tempfile.mkdtemp()
+    sw_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME, "fastq_align_bowtie2")
+    shutil.copytree(sw_path, tmpdir)
+
+    assert update_obj.update("fastq_align_bowtie2") is True
+    assert cmp_component(tmpdir, sw_path) is False
+
+    # Check that the modules.json is correctly updated
+    mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
+    assert (
+        old_mod_json["repos"][NF_CORE_MODULES_REMOTE]["subworkflows"][NF_CORE_MODULES_NAME]["fastq_align_bowtie2"][
+            "git_sha"
+        ]
+        != mod_json["repos"][NF_CORE_MODULES_REMOTE]["subworkflows"][NF_CORE_MODULES_NAME]["fastq_align_bowtie2"][
+            "git_sha"
+        ]
+    )
+
+    # Get the captured log output
+    log_output = log_capture.getvalue()
+    log_lines = log_output.split("\n")
+
+    # Check for various scenarios
+    nf_changes_shown = False
+    for line in log_lines:
+        if re.match(r"'.+' is unchanged", line):
+            # Unchanged files should be reported for both .nf and non-.nf files
+            assert True
+        elif re.match(r"'.+' was created", line):
+            # Created files should be reported for both .nf and non-.nf files
+            assert True
+        elif re.match(r"'.+' was removed", line):
+            # Removed files should be reported for both .nf and non-.nf files
+            assert True
+        elif re.match(r"Changes in '.+' but not shown", line):
+            # Changes not shown should only be for non-.nf files
+            file_path = re.search(r"'(.+)'", line).group(1)
+            assert Path(file_path).suffix != ".nf", f"Changes in .nf file were not shown: {line}"
+        elif re.match(r"Changes in '.+':$", line):
+            # Changes shown should only be for .nf files
+            file_path = re.search(r"'(.+)'", line).group(1)
+            assert Path(file_path).suffix == ".nf", f"Changes in non-.nf file were shown: {line}"
+            nf_changes_shown = True
+
+    # Ensure that changes in at least one .nf file were shown
+    assert nf_changes_shown, "No changes in .nf files were shown"
+
+    # Clean up
+    logger.removeHandler(ch)
+    log_capture.close()
+    shutil.rmtree(tmpdir)
+
+
 def test_install_at_hash_and_update_and_save_diff_to_file(self):
     """Installs an old version of a sw in the pipeline and updates it. Save differences to a file."""
     assert self.subworkflow_install_old.install("fastq_align_bowtie2")
@@ -77,6 +147,56 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
         assert line.startswith(
             "Changes in module 'nf-core/fastq_align_bowtie2' between (f3c078809a2513f1c95de14f6633fe1f03572fdb) and"
         )
+
+
+def test_install_at_hash_and_update_and_save_diff_limit_output(self):
+    """Installs an old version of a sw in the pipeline and updates it. Save differences to a file."""
+    assert self.subworkflow_install_old.install("fastq_align_bowtie2")
+    patch_path = Path(self.pipeline_dir, "fastq_align_bowtie2.patch")
+    update_obj = SubworkflowUpdate(self.pipeline_dir, save_diff_fn=patch_path, update_deps=True, limit_output=True)
+
+    # Copy the sw files and check that they are affected by the update
+    tmpdir = tempfile.mkdtemp()
+    shutil.rmtree(tmpdir)
+    sw_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME, "fastq_align_bowtie2")
+    shutil.copytree(sw_path, tmpdir)
+
+    assert update_obj.update("fastq_align_bowtie2") is True
+    assert cmp_component(tmpdir, sw_path) is True
+
+    # Check that the patch file was created
+    assert patch_path.exists(), f"Patch file was not created at {patch_path}"
+
+    nf_changes_shown = False
+    non_nf_changes_not_shown = False
+
+    with open(patch_path) as fh:
+        content = fh.read()
+
+        # Check the first line
+        assert re.match(
+            r"Changes in module 'nf-core/fastq_align_bowtie2' between \([a-f0-9]+\) and \([a-f0-9]+\)",
+            content.split("\n")[0],
+        ), "Unexpected first line in patch file"
+
+        # Check for .nf file changes shown
+        nf_changes_shown = bool(re.search(r"Changes in '.*\.nf':\n", content))
+
+        # Check for non-.nf file changes not shown
+        non_nf_changes_not_shown = bool(re.search(r"Changes in '.*[^.nf]' but not shown", content))
+
+        # Check that diff content is only for .nf files
+        diff_lines = re.findall(r"diff --git.*", content)
+        for line in diff_lines:
+            assert re.search(r"\.nf$", line), f"Diff shown for non-.nf file: {line}"
+
+    # Ensure that changes in .nf files were shown and non-.nf files were not shown
+    assert nf_changes_shown, "No changes in .nf files were shown in the patch file"
+    assert non_nf_changes_not_shown, "Changes in non-.nf files were not properly limited in the patch file"
+
+    # Clean up
+    patch_path.unlink()
+    shutil.rmtree(tmpdir)
 
 
 def test_update_all(self):
