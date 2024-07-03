@@ -1214,6 +1214,14 @@ def modules_install(ctx, tool, dir, prompt, force, sha):
     default=False,
     help="Prompt for the version of the module",
 )
+@click.option(
+    "-l",
+    "--limit-output",
+    "limit_output",
+    is_flag=True,
+    default=False,
+    help="Limit ouput to only the difference in main.nf",
+)
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
 @click.option(
     "-a",
@@ -1256,6 +1264,7 @@ def modules_update(
     preview,
     save_diff,
     update_deps,
+    limit_output,
 ):
     """
     Update DSL2 modules within a pipeline.
@@ -1277,6 +1286,7 @@ def modules_update(
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
+            limit_output,
         )
         exit_status = module_install.update(tool)
         if not exit_status and install_all:

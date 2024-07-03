@@ -38,6 +38,7 @@ class ComponentUpdate(ComponentCommand):
         remote_url=None,
         branch=None,
         no_pull=False,
+        limit_output=False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.force = force
@@ -76,7 +77,7 @@ class ComponentUpdate(ComponentCommand):
         if not self.has_valid_directory():
             raise UserWarning("The command was not run in a valid pipeline directory.")
 
-    def update(self, component=None, silent=False, updated=None, check_diff_exist=True) -> bool:
+    def update(self, component=None, silent=False, updated=None, check_diff_exist=True, limit_output=False) -> bool:
         """Updates a specified module/subworkflow or all modules/subworkflows in a pipeline.
 
         If updating a subworkflow: updates all modules used in that subworkflow.
@@ -231,6 +232,7 @@ class ComponentUpdate(ComponentCommand):
                             version,
                             dsp_from_dir=component_dir,
                             dsp_to_dir=component_dir,
+                            limit_output=limit_output,
                         )
                         updated.append(component)
                     except UserWarning as e:
@@ -271,6 +273,7 @@ class ComponentUpdate(ComponentCommand):
                         version,
                         dsp_from_dir=component_dir,
                         dsp_to_dir=component_dir,
+                        limit_output=limit_output,
                     )
 
                     # Ask the user if they want to install the component
@@ -875,7 +878,9 @@ class ComponentUpdate(ComponentCommand):
 
         return modules_to_update, subworkflows_to_update
 
-    def update_linked_components(self, modules_to_update, subworkflows_to_update, updated=None, check_diff_exist=True):
+    def update_linked_components(
+        self, modules_to_update, subworkflows_to_update, updated=None, check_diff_exist=True, limit_output=False
+    ):
         """
         Update modules and subworkflows linked to the component being updated.
         """
@@ -883,7 +888,9 @@ class ComponentUpdate(ComponentCommand):
             if s_update in updated:
                 continue
             original_component_type, original_update_all = self._change_component_type("subworkflows")
-            self.update(s_update, silent=True, updated=updated, check_diff_exist=check_diff_exist)
+            self.update(
+                s_update, silent=True, updated=updated, check_diff_exist=check_diff_exist, limit_output=limit_output
+            )
             self._reset_component_type(original_component_type, original_update_all)
 
         for m_update in modules_to_update:
@@ -891,7 +898,9 @@ class ComponentUpdate(ComponentCommand):
                 continue
             original_component_type, original_update_all = self._change_component_type("modules")
             try:
-                self.update(m_update, silent=True, updated=updated, check_diff_exist=check_diff_exist)
+                self.update(
+                    m_update, silent=True, updated=updated, check_diff_exist=check_diff_exist, limit_output=limit_output
+                )
             except LookupError as e:
                 # If the module to be updated is not available, check if there has been a name change
                 if "not found in list of available" in str(e):
