@@ -38,6 +38,7 @@
 - Add warning deprecation message to top-level commands ([#3036](https://github.com/nf-core/tools/pull/3036))
 - Create: Mock git cretentials to generate stable textual snapshots ([#3007](https://github.com/nf-core/tools/pull/3007))
 - Update python:3.12-slim Docker digest to da2d7af ([#3041](https://github.com/nf-core/tools/pull/3041))
+- add default limit_output argument for write_diff_file & print_diff ([#3047](https://github.com/nf-core/tools/pull/3047))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
