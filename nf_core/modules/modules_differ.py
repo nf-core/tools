@@ -155,6 +155,7 @@ class ModulesDiffer:
                             adds a/ and b/ prefixes to the file paths
             dsp_from_dir (str | Path): The 'from' directory displayed in the diff
             dsp_to_dir (str | Path): The 'to' directory displayed in the diff
+            limit_output (bool): If true, don't write the diff for files other than main.nf
         """
         if dsp_from_dir is None:
             dsp_from_dir = from_dir
@@ -181,7 +182,7 @@ class ModulesDiffer:
                     fh.write(f"'{Path(dsp_from_dir, file)}' is unchanged\n")
                 elif limit_output and not file.suffix == ".nf":
                     # Skip printing the diff for files other than main.nf
-                    fh.write(f"Changes in '{Path(module, file)}' not shown\n")
+                    fh.write(f"Changes in '{Path(module, file)}' but not shown\n")
                 else:
                     # The file has changed write the diff lines to the file
                     for line in diff:
@@ -249,6 +250,7 @@ class ModulesDiffer:
             new_version (str): The version of the module the diff is computed against
             dsp_from_dir (str | Path): The 'from' directory displayed in the diff
             dsp_to_dir (str | Path): The 'to' directory displayed in the diff
+            limit_output (bool): If true, don't print the diff for files other than main.nf
         """
         if dsp_from_dir is None:
             dsp_from_dir = from_dir
@@ -278,7 +280,7 @@ class ModulesDiffer:
                 log.info(f"'{Path(dsp_from_dir, file)}' was removed")
             elif limit_output and not file.suffix == ".nf":
                 # Skip printing the diff for files other than main.nf
-                log.info(f"Changes in '{Path(module, file)}' not shown")
+                log.info(f"Changes in '{Path(module, file)}' but not shown")
             else:
                 # The file has changed
                 log.info(f"Changes in '{Path(module, file)}':")
