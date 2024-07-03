@@ -5,6 +5,7 @@
 ### Template
 
 - Change paths to test data ([#2985](https://github.com/nf-core/tools/pull/2985))
+- Remove deprecated syntax ([#3046](https://github.com/nf-core/tools/pull/3046))
 
 ### Linting
 
