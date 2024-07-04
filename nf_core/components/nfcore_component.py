@@ -178,16 +178,13 @@ class NFCoreComponent:
             regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
             matches = re.finditer(regex, line)
             for _, match in enumerate(matches, start=1):
-                input_type = None
                 input_val = None
-                if match.group(1):
-                    input_type = match.group(1)
                 if match.group(3):
                     input_val = match.group(3).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
                 elif match.group(4):
                     input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
-                if input_type and input_val:
-                    channel_elements.append({input_val: {"qualifier": input_type}})
+                if input_val:
+                    channel_elements.append({input_val: {}})
             if len(channel_elements) > 0:
                 inputs.append(channel_elements)
         log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
@@ -211,17 +208,14 @@ class NFCoreComponent:
                 continue
             output_channel = {match_emit.group(1): []}
             for _, match_element in enumerate(matches_elements, start=1):
-                output_type = None
                 output_val = None
-                if match_element.group(1):
-                    output_type = match_element.group(1)
                 if match_element.group(3):
                     output_val = match_element.group(3)
                 elif match_element.group(4):
                     output_val = match_element.group(4)
-                if output_type and output_val:
+                if output_val:
                     output_val = output_val.strip("'").strip('"')  # remove quotes
-                    output_channel[match_emit.group(1)].append({output_val: {"qualifier": output_type}})
+                    output_channel[match_emit.group(1)].append({output_val: {}})
             outputs.append(output_channel)
         log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")
         self.outputs = outputs
