@@ -117,7 +117,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
                 module.failed.append(
                     (
                         "correct_meta_inputs",
-                        f"Incorrect inputs specified in module `meta.yml`. Inputs should contain: {correct_inputs}\nRun `nf-core modules lint --update-meta-yml` to update the `meta.yml` file.",
+                        f"Incorrect inputs specified in module `meta.yml`. Inputs should contain: {correct_inputs}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
                         module.meta_yml,
                     )
                 )
@@ -155,7 +155,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
                 module.failed.append(
                     (
                         "correct_meta_outputs",
-                        f"Incorrect outputs specified in module `meta.yml`. Outputs should contain: {correct_outputs}\nRun `nf-core modules lint --update-meta-yml` to update the `meta.yml` file.",
+                        f"Incorrect outputs specified in module `meta.yml`. Outputs should contain: {correct_outputs}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
                         module.meta_yml,
                     )
                 )

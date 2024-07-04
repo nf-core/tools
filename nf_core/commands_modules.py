@@ -244,7 +244,7 @@ def modules_test(ctx, tool, dir, no_prompts, update, once, profile):
         sys.exit(1)
 
 
-def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version, update_meta_yml):
+def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix):
     """
     Lint one or more modules in a directory.
 
@@ -261,6 +261,7 @@ def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed,
         module_lint = ModuleLint(
             dir,
             fail_warned=fail_warned,
+            fix=fix,
             registry=ctx.params["registry"],
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
@@ -277,7 +278,6 @@ def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed,
             show_passed=passed,
             sort_by=sort_by,
             fix_version=fix_version,
-            update_meta_yml=update_meta_yml,
         )
         if len(module_lint.failed) > 0:
             sys.exit(1)

@@ -56,7 +56,7 @@ class ComponentLint(ComponentCommand):
         component_type,
         dir,
         fail_warned=False,
-        update_meta_yml=False,
+        fix=False,
         remote_url=None,
         branch=None,
         no_pull=False,
@@ -73,7 +73,7 @@ class ComponentLint(ComponentCommand):
         )
 
         self.fail_warned = fail_warned
-        self.update_meta_yml = update_meta_yml
+        self.fix = fix
         self.passed = []
         self.warned = []
         self.failed = []

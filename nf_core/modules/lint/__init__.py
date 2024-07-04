@@ -47,7 +47,7 @@ class ModuleLint(ComponentLint):
         self,
         dir,
         fail_warned=False,
-        update_meta_yml=False,
+        fix=False,
         remote_url=None,
         branch=None,
         no_pull=False,
@@ -58,7 +58,7 @@ class ModuleLint(ComponentLint):
             component_type="modules",
             dir=dir,
             fail_warned=fail_warned,
-            update_meta_yml=update_meta_yml,
+            fix=fix,
             remote_url=remote_url,
             branch=branch,
             no_pull=no_pull,
@@ -224,7 +224,7 @@ class ModuleLint(ComponentLint):
             mod.get_inputs_from_main_nf()
             mod.get_outputs_from_main_nf()
             # Update meta.yml file if requested
-            if self.update_meta_yml:
+            if self.fix:
                 self.update_meta_yml_file(mod)
 
             if self.repo_type == "pipeline" and self.modules_json:
