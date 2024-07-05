@@ -24,4 +24,4 @@ tabulate
 textual==0.71.0
 trogon
 pdiff
-ruamel
+ruamel.yaml
