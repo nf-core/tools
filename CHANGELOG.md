@@ -38,6 +38,7 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.10 ([#3031](https://github.com/nf-core/tools/pull/3031))
 - Add warning deprecation message to top-level commands ([#3036](https://github.com/nf-core/tools/pull/3036))
 - Create: Mock git cretentials to generate stable textual snapshots ([#3007](https://github.com/nf-core/tools/pull/3007))
+- move pipeline commands to functions to avoid duplication ([#3039](https://github.com/nf-core/tools/pull/3039))
 - Create app: display input textbox with equally spaced grid ([#3038](https://github.com/nf-core/tools/pull/3038))
 - Update python:3.12-slim Docker digest to da2d7af ([#3041](https://github.com/nf-core/tools/pull/3041))
 - Update gitpod/workspace-base Docker digest to 0f38224 ([#3048](https://github.com/nf-core/tools/pull/3048))
