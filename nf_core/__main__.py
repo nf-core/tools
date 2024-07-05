@@ -1201,7 +1201,7 @@ def command_modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local,
     """
     Lint one or more modules in a directory.
     """
-    modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version)
+    modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix)
 
 
 # nf-core modules info
