@@ -42,6 +42,8 @@
 - Create app: display input textbox with equally spaced grid ([#3038](https://github.com/nf-core/tools/pull/3038))
 - Update python:3.12-slim Docker digest to da2d7af ([#3041](https://github.com/nf-core/tools/pull/3041))
 - Update gitpod/workspace-base Docker digest to 0f38224 ([#3048](https://github.com/nf-core/tools/pull/3048))
+- update output_dir for api docs to new website structure ([#3051](https://github.com/nf-core/tools/pull/3051))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.5.1 ([#3052](https://github.com/nf-core/tools/pull/3052))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
