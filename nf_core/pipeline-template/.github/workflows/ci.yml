@@ -109,10 +109,11 @@ jobs:
     if: always()
     steps:
       - name: All tests ok
-        if: {% raw %}${{ !contains(needs.*.result, 'failure') }}{% endraw %}
+        if: "{% raw %}${{ !contains(needs.*.result, 'failure') }}{% endraw %}"
         run: exit 0
+
       - name: One or more tests failed
-        if: {% raw %}${{ contains(needs.*.result, 'failure') }}{% endraw %}
+        if: "{% raw %}${{ contains(needs.*.result, 'failure') }}{% endraw %}"
         run: exit 1
 
       - name: debug-print
