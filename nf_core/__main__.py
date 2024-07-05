@@ -1593,7 +1593,7 @@ def command_subworkflows_update(
 @nf_core_cli.group(deprecated=True, hidden=True)
 def schema():
     """
-    DEPRECATED
+    Use `nf-core pipelines schema <command>` instead.
     """
     pass
 
@@ -1604,7 +1604,7 @@ def schema():
 @click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
 def command_schema_validate(pipeline, params):
     """
-    DEPRECATED
+    Use `nf-core pipelines schema validate` instead.
     """
     log.warning(
         "The `[magenta]nf-core schema validate[/]` command is deprecated. Use `[magenta]nf-core pipelines schema validate[/]` instead."
@@ -1639,7 +1639,7 @@ def command_schema_validate(pipeline, params):
 )
 def command_schema_build(dir, no_prompts, web_only, url):
     """
-    DEPRECATED
+    Use `nf-core pipelines schema build` instead.
     """
     log.warning(
         "The `[magenta]nf-core schema build[/]` command is deprecated. Use `[magenta]nf-core pipelines schema build[/]` instead."
@@ -1657,7 +1657,7 @@ def command_schema_build(dir, no_prompts, web_only, url):
 )
 def command_schema_lint(schema_path):
     """
-    DEPRECATED
+    Use `nf-core pipelines schema lint` instead.
     """
     log.warning(
         "The `[magenta]nf-core schema lint[/]` command is deprecated. Use `[magenta]nf-core pipelines schema lint[/]` instead."
@@ -1699,7 +1699,7 @@ def command_schema_lint(schema_path):
 )
 def command_schema_docs(schema_path, output, format, force, columns):
     """
-    DEPRECATED
+    Use `nf-core pipelines schema docs` instead.
     """
     log.warning(
         "The `[magenta]nf-core schema docs[/]` command is deprecated. Use `[magenta]nf-core pipelines schema docs[/]` instead."
@@ -1747,7 +1747,7 @@ def command_schema_docs(schema_path, output, format, force, columns):
 )
 def command_create_logo(logo_text, dir, name, theme, width, format, force):
     """
-    DEPRECATED
+    Use `nf-core pipelines create-logo` instead.
     """
     log.warning(
         "The `[magenta]nf-core create-logo[/]` command is deprecated. Use `[magenta]nf-core pipelines screate-logo[/]` instead."
@@ -1788,7 +1788,7 @@ def command_create_logo(logo_text, dir, name, theme, width, format, force):
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 def command_sync(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
     """
-    DEPRECATED
+    Use `nf-core pipelines sync` instead.
     """
     log.warning(
         "The `[magenta]nf-core sync[/]` command is deprecated. Use `[magenta]nf-core pipelines sync[/]` instead."
@@ -1816,7 +1816,7 @@ def command_sync(dir, from_branch, pull_request, github_repository, username, te
 )
 def command_bump_version(ctx, new_version, dir, nextflow):
     """
-    DEPRECATED
+    Use `nf-core pipelines bump-version` instead.
     """
     log.warning(
         "The `[magenta]nf-core bump-version[/]` command is deprecated. Use `[magenta]nf-core pipelines bump-version[/]` instead."
@@ -1839,7 +1839,7 @@ def command_bump_version(ctx, new_version, dir, nextflow):
 @click.pass_context
 def command_list(ctx, keywords, sort, json, show_archived):
     """
-    DEPRECATED
+    DEPREUse `nf-core pipelines list` instead.CATED
     """
     log.warning(
         "The `[magenta]nf-core list[/]` command is deprecated. Use `[magenta]nf-core pipelines list[/]` instead."
@@ -1907,7 +1907,7 @@ def command_launch(
     url,
 ):
     """
-    DEPRECATED
+    Use `nf-core pipelines launch` instead.
     """
     log.warning(
         "The `[magenta]nf-core launch[/]` command is deprecated. Use `[magenta]nf-core pipelines launch[/]` instead."
@@ -1937,7 +1937,7 @@ def command_launch(
 )
 def command_create_params_file(pipeline, revision, output, force, show_hidden):
     """
-    DEPRECATED
+    Use `nf-core pipelines create-params-file` instead.
     """
     log.warning(
         "The `[magenta]nf-core create-params-file[/]` command is deprecated. Use `[magenta]nf-core pipelines create-params-file[/]` instead."
@@ -2038,7 +2038,7 @@ def command_download(
     parallel_downloads,
 ):
     """
-    DEPRECATED
+    Use `nf-core pipelines download` instead.
     """
     log.warning(
         "The `[magenta]nf-core download[/]` command is deprecated. Use `[magenta]nf-core pipelines download[/]` instead."
@@ -2132,7 +2132,7 @@ def command_lint(
     sort_by,
 ):
     """
-    DEPRECATED
+    Use `nf-core pipelines lint` instead.
     """
     log.warning(
         "The `[magenta]nf-core lint[/]` command is deprecated. Use `[magenta]nf-core pipelines lint[/]` instead."
@@ -2164,7 +2164,7 @@ def command_lint(
 @click.pass_context
 def command_create(ctx, name, description, author, version, force, outdir, template_yaml, plain, organisation):
     """
-    DEPRECATED
+    Use `nf-core pipelines create` instead.
     """
     log.warning(
         "The `[magenta]nf-core create[/]` command is deprecated. Use `[magenta]nf-core pipelines create[/]` instead."
