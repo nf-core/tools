@@ -14,7 +14,7 @@ from nf_core.components.components_utils import (
     prompt_component_version_sha,
 )
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
+from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME, ModulesRepo
 
 log = logging.getLogger(__name__)
 
@@ -52,6 +52,11 @@ class ComponentInstall(ComponentCommand):
         if self.component_type == "modules":
             # Check modules directory structure
             self.check_modules_structure()
+
+        if isinstance(component, dict):
+            component_name = list(component.keys())[0]
+            self.modules_repo = ModulesRepo(component[component_name]["git_remote"])
+            component = component_name
 
         # Verify that 'modules.json' is consistent with the installed modules and subworkflows
         modules_json = ModulesJson(self.dir)

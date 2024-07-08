@@ -5,6 +5,7 @@ from typing import List, Optional, Tuple
 
 import questionary
 import rich.prompt
+import yaml
 
 import nf_core.utils
 from nf_core.modules.modules_repo import ModulesRepo
@@ -146,9 +147,10 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[str], List[str
             match = regex.match(line)
             if match and len(match.groups()) == 2:
                 name, link = match.groups()
-                if link.startswith("../../../"):
-                    name_split = name.lower().split("_")
-                    modules.append("/".join(name_split))
-                elif link.startswith("../"):
+                if link.startswith("../"):
                     subworkflows.append(name.lower())
+    with open(Path(subworkflow_dir, "meta.yml")) as fh:
+        meta = yaml.safe_load(fh)
+        components = meta.get("components")
+        modules.extend(components)
     return modules, subworkflows

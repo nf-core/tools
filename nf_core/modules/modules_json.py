@@ -1186,6 +1186,11 @@ class ModulesJson:
         dep_mods, dep_subwfs = get_components_to_install(sw_path)
 
         for dep_mod in dep_mods:
+            if isinstance(dep_mod, dict):
+                component_name = list(dep_mod.keys())[0]
+                repo = dep_mod[component_name]["git_remote"]
+                org = dep_mod[component_name]["org_path"]
+                dep_mod = component_name
             installed_by = self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"]
             if installed_by == ["modules"]:
                 self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"] = []
