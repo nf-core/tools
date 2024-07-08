@@ -120,6 +120,7 @@ class TestSubworkflows(unittest.TestCase):
     )
     from .subworkflows.install import (  # type: ignore[misc]
         test_subworkflow_install_nopipeline,
+        test_subworkflows_install_across_organizations,
         test_subworkflows_install_alternate_remote,
         test_subworkflows_install_bam_sort_stats_samtools,
         test_subworkflows_install_bam_sort_stats_samtools_twice,
