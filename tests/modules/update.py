@@ -436,7 +436,6 @@ def test_update_only_show_differences(self, mock_prompt):
     update_old.update()
 
     tmpdir = Path(tempfile.TemporaryDirectory().name)
-    shutil.rmtree(tmpdir)
     shutil.copytree(Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME), tmpdir)
 
     assert update_obj.update() is True
