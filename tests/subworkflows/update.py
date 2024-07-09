@@ -1,4 +1,3 @@
-import filecmp
 import io
 import logging
 import re
@@ -14,7 +13,7 @@ from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME, NF_CORE_MODULES_R
 from nf_core.modules.update import ModuleUpdate
 from nf_core.subworkflows.update import SubworkflowUpdate
 
-from ..utils import OLD_SUBWORKFLOWS_SHA
+from ..utils import OLD_SUBWORKFLOWS_SHA, cmp_component
 
 
 def test_install_and_update(self):
@@ -23,8 +22,7 @@ def test_install_and_update(self):
     update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False)
 
     # Copy the sw files and check that they are unaffected by the update
-    tmpdir = tempfile.mkdtemp()
-    shutil.rmtree(tmpdir)
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     sw_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME, "bam_stats_samtools")
     shutil.copytree(sw_path, tmpdir)
 
@@ -39,8 +37,8 @@ def test_install_at_hash_and_update(self):
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Copy the sw files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    shutil.rmtree(tmpdir)
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
+
     sw_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME, "fastq_align_bowtie2")
     shutil.copytree(sw_path, tmpdir)
 
@@ -69,12 +67,13 @@ def test_install_at_hash_and_update_limit_output(self):
     ch = logging.StreamHandler(log_capture)
     logger = logging.getLogger()
     logger.addHandler(ch)
+    logger.setLevel(logging.INFO)
 
     update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, update_deps=True, limit_output=True)
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Copy the subworkflow files and check that they are affected by the update
-    tmpdir = Path(tempfile.mkdtemp())
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     sw_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME, "fastq_align_bowtie2")
     shutil.copytree(sw_path, tmpdir)
 
@@ -124,7 +123,6 @@ def test_install_at_hash_and_update_limit_output(self):
     # Clean up
     logger.removeHandler(ch)
     log_capture.close()
-    shutil.rmtree(tmpdir)
 
 
 def test_install_at_hash_and_update_and_save_diff_to_file(self):
@@ -134,8 +132,8 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
     update_obj = SubworkflowUpdate(self.pipeline_dir, save_diff_fn=patch_path, update_deps=True)
 
     # Copy the sw files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    shutil.rmtree(tmpdir)
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
+
     sw_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME, "fastq_align_bowtie2")
     shutil.copytree(sw_path, tmpdir)
 
@@ -156,8 +154,7 @@ def test_install_at_hash_and_update_and_save_diff_limit_output(self):
     update_obj = SubworkflowUpdate(self.pipeline_dir, save_diff_fn=patch_path, update_deps=True, limit_output=True)
 
     # Copy the sw files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    shutil.rmtree(tmpdir)
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     sw_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME, "fastq_align_bowtie2")
     shutil.copytree(sw_path, tmpdir)
 
@@ -196,7 +193,6 @@ def test_install_at_hash_and_update_and_save_diff_limit_output(self):
 
     # Clean up
     patch_path.unlink()
-    shutil.rmtree(tmpdir)
 
 
 def test_update_all(self):
@@ -343,8 +339,7 @@ def test_update_all_linked_components_from_subworkflow(self):
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Copy the sw files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    shutil.rmtree(tmpdir)
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     subworkflows_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME)
     modules_path = Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME)
     shutil.copytree(subworkflows_path, Path(tmpdir, "subworkflows"))
@@ -390,8 +385,7 @@ def test_update_all_subworkflows_from_module(self):
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Copy the sw files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    shutil.rmtree(tmpdir)
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     sw_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME, "fastq_align_bowtie2")
     shutil.copytree(sw_path, Path(tmpdir, "fastq_align_bowtie2"))
 
@@ -445,9 +439,3 @@ def test_update_change_of_included_modules(self):
     assert "ensemblvep" not in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
     assert "ensemblvep/vep" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
     assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "ensemblvep/vep").is_dir()
-
-
-def cmp_component(dir1, dir2):
-    """Compare two versions of the same component"""
-    files = ["main.nf", "meta.yml"]
-    return all(filecmp.cmp(Path(dir1, f), Path(dir2, f), shallow=False) for f in files)

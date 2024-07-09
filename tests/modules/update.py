@@ -1,4 +1,3 @@
-import filecmp
 import io
 import logging
 import re
@@ -26,13 +25,8 @@ from ..utils import (
     GITLAB_URL,
     OLD_TRIMGALORE_BRANCH,
     OLD_TRIMGALORE_SHA,
+    cmp_component,
 )
-
-
-def cmp_module(dir1: Path, dir2: Path) -> bool:
-    """Compare two versions of the same module"""
-    files = ["main.nf", "meta.yml"]
-    return all(filecmp.cmp(dir1 / f, dir2 / f, shallow=False) for f in files)
 
 
 def test_install_and_update(self):
@@ -41,13 +35,13 @@ def test_install_and_update(self):
     update_obj = ModuleUpdate(self.pipeline_dir, show_diff=False)
 
     # Copy the module files and check that they are unaffected by the update
-    tmpdir = Path(tempfile.mkdtemp())
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     trimgalore_tmpdir = tmpdir / "trimgalore"
     trimgalore_path = Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "trimgalore")
     shutil.copytree(trimgalore_path, trimgalore_tmpdir)
 
     assert update_obj.update("trimgalore") is True
-    assert cmp_module(trimgalore_tmpdir, trimgalore_path) is True
+    assert cmp_component(trimgalore_tmpdir, trimgalore_path) is True
 
 
 def test_install_at_hash_and_update(self):
@@ -58,13 +52,13 @@ def test_install_at_hash_and_update(self):
     )
 
     # Copy the module files and check that they are affected by the update
-    tmpdir = Path(tempfile.mkdtemp())
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     trimgalore_tmpdir = tmpdir / "trimgalore"
     trimgalore_path = Path(self.pipeline_dir, "modules", GITLAB_REPO, "trimgalore")
     shutil.copytree(trimgalore_path, trimgalore_tmpdir)
 
     assert update_obj.update("trimgalore") is True
-    assert cmp_module(trimgalore_tmpdir, trimgalore_path) is False
+    assert cmp_component(trimgalore_tmpdir, trimgalore_path) is False
 
     # Check that the modules.json is correctly updated
     mod_json_obj = ModulesJson(self.pipeline_dir)
@@ -95,13 +89,13 @@ def test_install_at_hash_and_update_limit_output(self):
     )
 
     # Copy the module files and check that they are affected by the update
-    tmpdir = Path(tempfile.mkdtemp())
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     trimgalore_tmpdir = tmpdir / "trimgalore"
     trimgalore_path = Path(self.pipeline_dir, "modules", GITLAB_REPO, "trimgalore")
     shutil.copytree(trimgalore_path, trimgalore_tmpdir)
 
     assert update_obj.update("trimgalore") is True
-    assert cmp_module(trimgalore_tmpdir, trimgalore_path) is False
+    assert cmp_component(trimgalore_tmpdir, trimgalore_path) is False
 
     # Check that the modules.json is correctly updated
     mod_json_obj = ModulesJson(self.pipeline_dir)
@@ -159,13 +153,13 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
     )
 
     # Copy the module files and check that they are affected by the update
-    tmpdir = Path(tempfile.mkdtemp())
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     trimgalore_tmpdir = tmpdir / "trimgalore"
     trimgalore_path = Path(self.pipeline_dir, "modules", GITLAB_REPO, "trimgalore")
     shutil.copytree(trimgalore_path, trimgalore_tmpdir)
 
     assert update_obj.update("trimgalore") is True
-    assert cmp_module(trimgalore_tmpdir, trimgalore_path) is True
+    assert cmp_component(trimgalore_tmpdir, trimgalore_path) is True
 
     # TODO: Apply the patch to the module
 
@@ -184,13 +178,13 @@ def test_install_at_hash_and_update_and_save_diff_to_file_limit_output(self):
     )
 
     # Copy the module files and check that they are affected by the update
-    tmpdir = Path(tempfile.mkdtemp())
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     trimgalore_tmpdir = tmpdir / "trimgalore"
     trimgalore_path = Path(self.pipeline_dir, "modules", GITLAB_REPO, "trimgalore")
     shutil.copytree(trimgalore_path, trimgalore_tmpdir)
 
     assert update_obj.update("trimgalore") is True
-    assert cmp_module(trimgalore_tmpdir, trimgalore_path) is True
+    assert cmp_component(trimgalore_tmpdir, trimgalore_path) is True
 
     # Check that the patch file was created
     assert patch_path.exists(), f"Patch file was not created at {patch_path}"
@@ -441,7 +435,7 @@ def test_update_only_show_differences(self, mock_prompt):
     )
     update_old.update()
 
-    tmpdir = Path(tempfile.mkdtemp())
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     shutil.rmtree(tmpdir)
     shutil.copytree(Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME), tmpdir)
 
@@ -455,7 +449,7 @@ def test_update_only_show_differences(self, mock_prompt):
     correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
     current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
     assert correct_git_sha != current_git_sha
-    assert cmp_module(Path(tmpdir, mod), Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, mod)) is True
+    assert cmp_component(Path(tmpdir, mod), Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, mod)) is True
 
 
 # Mock questionary answer: do not update module, only show diffs

@@ -278,11 +278,14 @@ class ComponentUpdate(ComponentCommand):
                     )
 
                     # Ask the user if they want to install the component
-                    dry_run = not questionary.confirm(
-                        f"Update {self.component_type[:-1]} '{component}'?",
-                        default=False,
-                        style=nf_core.utils.nfcore_question_style,
-                    ).unsafe_ask()
+                    if not self.prompt:
+                        dry_run = False
+                    else:
+                        dry_run = not questionary.confirm(
+                            f"Update {self.component_type[:-1]} '{component}'?",
+                            default=False,
+                            style=nf_core.utils.nfcore_question_style,
+                        ).unsafe_ask()
 
             if not dry_run:
                 # Clear the component directory and move the installed files there
@@ -833,6 +836,7 @@ class ComponentUpdate(ComponentCommand):
             for_git=False,
             dsp_from_dir=component_relpath,
             dsp_to_dir=component_relpath,
+            limit_output=self.limit_output,
         )
 
         # Move the patched files to the install dir
