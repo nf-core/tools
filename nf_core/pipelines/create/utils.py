@@ -10,7 +10,7 @@ from rich.logging import RichHandler
 from textual import on
 from textual._context import active_app
 from textual.app import ComposeResult
-from textual.containers import HorizontalScroll
+from textual.containers import Grid, HorizontalScroll
 from textual.message import Message
 from textual.validation import ValidationResult, Validator
 from textual.widget import Widget
@@ -116,14 +116,17 @@ class TextInput(Static):
         self.password: bool = password
 
     def compose(self) -> ComposeResult:
-        yield Static(self.description, classes="field_help")
-        yield Input(
-            placeholder=self.placeholder,
-            validators=[ValidateConfig(self.field_id)],
-            value=self.default,
-            password=self.password,
+        yield Grid(
+            Static(self.description, classes="field_help"),
+            Input(
+                placeholder=self.placeholder,
+                validators=[ValidateConfig(self.field_id)],
+                value=self.default,
+                password=self.password,
+            ),
+            Static(classes="validation_msg"),
+            classes="text-input-grid",
         )
-        yield Static(classes="validation_msg")
 
     @on(Input.Changed)
     @on(Input.Submitted)
