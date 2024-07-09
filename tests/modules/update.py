@@ -1,7 +1,6 @@
 import filecmp
 import io
 import logging
-import os
 import re
 import shutil
 import tempfile
@@ -30,15 +29,21 @@ from ..utils import (
 )
 
 
+def cmp_module(dir1: Path, dir2: Path) -> bool:
+    """Compare two versions of the same module"""
+    files = ["main.nf", "meta.yml"]
+    return all(filecmp.cmp(dir1 / f, dir2 / f, shallow=False) for f in files)
+
+
 def test_install_and_update(self):
     """Installs a module in the pipeline and updates it (no change)"""
     self.mods_install.install("trimgalore")
     update_obj = ModuleUpdate(self.pipeline_dir, show_diff=False)
 
     # Copy the module files and check that they are unaffected by the update
-    tmpdir = tempfile.mkdtemp()
-    trimgalore_tmpdir = os.path.join(tmpdir, "trimgalore")
-    trimgalore_path = os.path.join(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "trimgalore")
+    tmpdir = Path(tempfile.mkdtemp())
+    trimgalore_tmpdir = tmpdir / "trimgalore"
+    trimgalore_path = Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "trimgalore")
     shutil.copytree(trimgalore_path, trimgalore_tmpdir)
 
     assert update_obj.update("trimgalore") is True
@@ -53,9 +58,9 @@ def test_install_at_hash_and_update(self):
     )
 
     # Copy the module files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    trimgalore_tmpdir = os.path.join(tmpdir, "trimgalore")
-    trimgalore_path = os.path.join(self.pipeline_dir, "modules", GITLAB_REPO, "trimgalore")
+    tmpdir = Path(tempfile.mkdtemp())
+    trimgalore_tmpdir = tmpdir / "trimgalore"
+    trimgalore_path = Path(self.pipeline_dir, "modules", GITLAB_REPO, "trimgalore")
     shutil.copytree(trimgalore_path, trimgalore_tmpdir)
 
     assert update_obj.update("trimgalore") is True
@@ -144,7 +149,7 @@ def test_install_at_hash_and_update_limit_output(self):
 def test_install_at_hash_and_update_and_save_diff_to_file(self):
     """Installs an old version of a module in the pipeline and updates it"""
     self.mods_install_old.install("trimgalore")
-    patch_path = os.path.join(self.pipeline_dir, "trimgalore.patch")
+    patch_path = Path(self.pipeline_dir, "trimgalore.patch")
     update_obj = ModuleUpdate(
         self.pipeline_dir,
         save_diff_fn=patch_path,
@@ -154,9 +159,9 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
     )
 
     # Copy the module files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    trimgalore_tmpdir = os.path.join(tmpdir, "trimgalore")
-    trimgalore_path = os.path.join(self.pipeline_dir, "modules", GITLAB_REPO, "trimgalore")
+    tmpdir = Path(tempfile.mkdtemp())
+    trimgalore_tmpdir = tmpdir / "trimgalore"
+    trimgalore_path = Path(self.pipeline_dir, "modules", GITLAB_REPO, "trimgalore")
     shutil.copytree(trimgalore_path, trimgalore_tmpdir)
 
     assert update_obj.update("trimgalore") is True
@@ -168,7 +173,7 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
 def test_install_at_hash_and_update_and_save_diff_to_file_limit_output(self):
     """Installs an old version of a module in the pipeline and updates it"""
     self.mods_install_old.install("trimgalore")
-    patch_path = os.path.join(self.pipeline_dir, "trimgalore.patch")
+    patch_path = Path(self.pipeline_dir, "trimgalore.patch")
     update_obj = ModuleUpdate(
         self.pipeline_dir,
         save_diff_fn=patch_path,
@@ -179,16 +184,16 @@ def test_install_at_hash_and_update_and_save_diff_to_file_limit_output(self):
     )
 
     # Copy the module files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    trimgalore_tmpdir = os.path.join(tmpdir, "trimgalore")
-    trimgalore_path = os.path.join(self.pipeline_dir, "modules", GITLAB_REPO, "trimgalore")
+    tmpdir = Path(tempfile.mkdtemp())
+    trimgalore_tmpdir = tmpdir / "trimgalore"
+    trimgalore_path = Path(self.pipeline_dir, "modules", GITLAB_REPO, "trimgalore")
     shutil.copytree(trimgalore_path, trimgalore_tmpdir)
 
     assert update_obj.update("trimgalore") is True
     assert cmp_module(trimgalore_tmpdir, trimgalore_path) is True
 
     # Check that the patch file was created
-    assert os.path.exists(patch_path), f"Patch file was not created at {patch_path}"
+    assert patch_path.exists(), f"Patch file was not created at {patch_path}"
 
     # Read the contents of the patch file
     with open(patch_path) as f:
@@ -202,11 +207,19 @@ def test_install_at_hash_and_update_and_save_diff_to_file_limit_output(self):
             assert True
         elif re.match(r"Changes in '.+' but not shown", line):
             # Changes not shown should only be for non-.nf files
-            file_path = re.search(r"'(.+)'", line).group(1)
+            match = re.search(r"'(.+)'", line)
+            if match:
+                file_path = match.group(1)
+            else:
+                raise AssertionError("Changes not shown message did not contain a file path.")
             assert Path(file_path).suffix != ".nf", f"Changes in .nf file were not shown: {line}"
         elif re.match("diff --git", line):
             # Diff should only be shown for .nf files
-            file_path = re.search(r"b/(.+)$", line).group(1)
+            match = re.search(r"'(.+)'", line)
+            if match:
+                file_path = match.group(1)
+            else:
+                raise AssertionError("Changes shown message did not contain a file path.")
             assert Path(file_path).suffix == ".nf", f"Diff shown for non-.nf file: {line}"
 
 
@@ -235,7 +248,7 @@ def test_update_with_config_fixed_version(self):
     update_config = {GITLAB_URL: {GITLAB_REPO: {"trimgalore": OLD_TRIMGALORE_SHA}}}
     config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(os.path.join(self.pipeline_dir, config_fn), "w") as f:
+    with open(Path(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
@@ -260,7 +273,7 @@ def test_update_with_config_dont_update(self):
     update_config = {GITLAB_URL: {GITLAB_REPO: {"trimgalore": False}}}
     config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(os.path.join(self.pipeline_dir, config_fn), "w") as f:
+    with open(Path(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
@@ -289,7 +302,7 @@ def test_update_with_config_fix_all(self):
     update_config = {GITLAB_URL: OLD_TRIMGALORE_SHA}
     config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(os.path.join(self.pipeline_dir, config_fn), "w") as f:
+    with open(Path(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
@@ -313,7 +326,7 @@ def test_update_with_config_no_updates(self):
     update_config = {GITLAB_URL: False}
     config_fn, tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(os.path.join(self.pipeline_dir, config_fn), "w") as f:
+    with open(Path(self.pipeline_dir, config_fn), "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
@@ -428,7 +441,7 @@ def test_update_only_show_differences(self, mock_prompt):
     )
     update_old.update()
 
-    tmpdir = tempfile.mkdtemp()
+    tmpdir = Path(tempfile.mkdtemp())
     shutil.rmtree(tmpdir)
     shutil.copytree(Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME), tmpdir)
 
@@ -476,7 +489,7 @@ def test_update_only_show_differences_when_patch(self, mock_prompt):
     patch_obj = ModulePatch(self.pipeline_dir)
     patch_obj.patch("fastqc")
     # Check that a patch file with the correct name has been created
-    assert "fastqc.diff" in set(os.listdir(module_path))
+    assert "fastqc.diff" in set(Path(module_path).iterdir())
 
     # Update all modules
     assert update_obj.update() is True
@@ -489,12 +502,6 @@ def test_update_only_show_differences_when_patch(self, mock_prompt):
     correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
     current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
     assert correct_git_sha != current_git_sha
-
-
-def cmp_module(dir1, dir2):
-    """Compare two versions of the same module"""
-    files = ["main.nf", "meta.yml"]
-    return all(filecmp.cmp(os.path.join(dir1, f), os.path.join(dir2, f), shallow=False) for f in files)
 
 
 def test_update_module_with_extra_config_file(self):
