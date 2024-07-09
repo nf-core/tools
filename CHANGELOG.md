@@ -7,6 +7,7 @@
 - Change paths to test data ([#2985](https://github.com/nf-core/tools/pull/2985))
 - Run awsfulltest on PRs to `master` with two PR approvals ([#3042](https://github.com/nf-core/tools/pull/3042))
 - Remove deprecated syntax ([#3046](https://github.com/nf-core/tools/pull/3046))
+- Use filename in code block for `params.yml` ([#3055](https://github.com/nf-core/tools/pull/3055))
 
 ### Linting
 
