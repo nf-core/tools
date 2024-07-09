@@ -1,11 +1,11 @@
 # nf_core.lint
 
 :::{seealso}
-See the [Lint Tests](../pipeline_lint_tests/index.md) docs for information about specific linting functions.
+See the [Lint Tests](/docs/nf-core-tools/api_reference/dev/pipeline_lint_tests) docs for information about specific linting functions.
 :::
 
 ```{eval-rst}
-.. automodule:: nf_core.lint
+.. automodule:: nf_core.pipelines.lint
     :members: run_linting
     :undoc-members:
     :show-inheritance:

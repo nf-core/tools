@@ -1,5 +1,5 @@
 # pipeline_todos
 
 ```{eval-rst}
-.. automethod:: nf_core.lint.PipelineLint.pipeline_todos
+.. automethod:: nf_core.pipelines.lint.PipelineLint.pipeline_todos
 ```
