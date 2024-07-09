@@ -1,7 +1,7 @@
-# nf_core.bump_version
+# nf_core.list
 
 ```{eval-rst}
-.. automodule:: nf_core.bump_version
+.. automodule:: nf_core.pipelines.list
     :members:
     :undoc-members:
     :show-inheritance:
