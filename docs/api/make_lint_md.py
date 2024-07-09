@@ -1,7 +1,6 @@
+#!/usr/bin/env python
 from pathlib import Path
 
-#!/usr/bin/env python
-import nf_core.commands_pipelines
 import nf_core.modules.lint
 import nf_core.pipelines.lint
 import nf_core.subworkflows.lint
