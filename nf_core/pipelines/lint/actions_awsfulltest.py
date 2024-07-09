@@ -41,7 +41,9 @@ def actions_awsfulltest(self):
 
         # Check that the action is only turned on for published releases
         try:
-            if wf[True]["release"]["types"] != ["published"]:
+            if wf[True]["pull_request"]["branches"] != ["master"]:
+                raise AssertionError()
+            if wf[True]["pull_request_review"]["types"] != ["submitted"]:
                 raise AssertionError()
             if "workflow_dispatch" not in wf[True]:
                 raise AssertionError()
