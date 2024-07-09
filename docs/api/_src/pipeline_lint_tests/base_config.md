@@ -1,5 +1,5 @@
 # base_config
 
 ```{eval-rst}
-.. automethod:: nf_core.lint.PipelineLint.base_config
+.. automethod:: nf_core.pipelines.lint.PipelineLint.base_config
 ```

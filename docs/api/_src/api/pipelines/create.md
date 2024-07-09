@@ -1,7 +1,7 @@
-# nf_core.subworkflows
+# nf_core.create
 
 ```{eval-rst}
-.. automodule:: nf_core.subworkflows
+.. automodule:: nf_core.pipelines.create
     :members:
     :undoc-members:
     :show-inheritance:

@@ -5,7 +5,9 @@
 ### Template
 
 - Change paths to test data ([#2985](https://github.com/nf-core/tools/pull/2985))
+- Run awsfulltest on PRs to `master` with two PR approvals ([#3042](https://github.com/nf-core/tools/pull/3042))
 - Remove deprecated syntax ([#3046](https://github.com/nf-core/tools/pull/3046))
+- Use filename in code block for `params.yml` ([#3055](https://github.com/nf-core/tools/pull/3055))
 
 ### Linting
 
@@ -44,6 +46,7 @@
 - Update gitpod/workspace-base Docker digest to 0f38224 ([#3048](https://github.com/nf-core/tools/pull/3048))
 - update output_dir for api docs to new website structure ([#3051](https://github.com/nf-core/tools/pull/3051))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.5.1 ([#3052](https://github.com/nf-core/tools/pull/3052))
+- update api docs to new structure ([#3054](https://github.com/nf-core/tools/pull/3054))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
