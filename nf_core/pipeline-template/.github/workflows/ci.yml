@@ -42,8 +42,8 @@ jobs:
       fail-fast: false
       matrix:
         NXF_VER:
-          - "latest-everything"
           - "23.04"
+          - "latest-everything"
         nf_test_files: ["{% raw %}${{ fromJson(needs.changes.outputs.nf_test_files) }}{% endraw %}"]
         profile:
           - "docker"
