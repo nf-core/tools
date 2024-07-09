@@ -1,12 +1,7 @@
 name: nf-core CI
 # This workflow runs the pipeline with the minimal test dataset to check that it completes without any syntax errors
 on:
-  push:
-    branches:
-      - dev
   pull_request:
-  release:
-    types: [published]
 
 env:
   NXF_ANSI_LOG: false
@@ -47,8 +42,8 @@ jobs:
       fail-fast: false
       matrix:
         NXF_VER:
-          - "23.04.0"
           - "latest-everything"
+          - "23.04"
         nf_test_files: ["{% raw %}${{ fromJson(needs.changes.outputs.nf_test_files) }}{% endraw %}"]
         profile:
           - "docker"
