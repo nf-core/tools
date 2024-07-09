@@ -20,12 +20,12 @@ jobs:
       - uses: octokit/request-action@v2.x
         id: check_approvals
         with:
-          route: GET /repos/${{ github.repository }}/pulls/${{ github.event.review.number }}/reviews
+          route: GET /repos/{%- raw -%}${{ github.repository }}/pulls/${{ github.event.review.number }}/reviews
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - id: test_variables
         run: |
-          JSON_RESPONSE='${{ steps.check_approvals.outputs.data }}'
+          JSON_RESPONSE='${{ steps.check_approvals.outputs.data }}'{% endraw %}
           CURRENT_APPROVALS_COUNT=$(echo $JSON_RESPONSE | jq -c '[.[] | select(.state | contains("APPROVED")) ] | length')
           test $CURRENT_APPROVALS_COUNT -ge 2 || exit 1 # At least 2 approvals are required
       - name: Launch workflow via Seqera Platform
