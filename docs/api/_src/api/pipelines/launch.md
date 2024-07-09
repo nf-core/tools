@@ -1,7 +1,7 @@
-# nf_core.download
+# nf_core.launch
 
 ```{eval-rst}
-.. automodule:: nf_core.download
+.. automodule:: nf_core.pipelines.launch
     :members:
     :undoc-members:
     :show-inheritance:
