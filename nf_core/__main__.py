@@ -1601,7 +1601,9 @@ def command_subworkflows_update(
     """
     Update DSL2 subworkflow within a pipeline.
     """
-    subworkflows_update(ctx, subworkflow, dir, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output)
+    subworkflows_update(
+        ctx, subworkflow, dir, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output
+    )
 
 
 ## DEPRECATED commands since v3.0.0

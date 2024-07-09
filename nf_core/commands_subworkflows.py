@@ -251,7 +251,7 @@ def subworkflows_update(
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            limit_output
+            limit_output,
         )
         exit_status = subworkflow_install.update(subworkflow)
         if not exit_status and install_all:
