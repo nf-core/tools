@@ -489,7 +489,7 @@ def test_update_only_show_differences_when_patch(self, mock_prompt):
     patch_obj = ModulePatch(self.pipeline_dir)
     patch_obj.patch("fastqc")
     # Check that a patch file with the correct name has been created
-    assert "fastqc.diff" in set(Path(module_path).iterdir())
+    assert "fastqc.diff" in [f.name for f in module_path.glob("*.diff")]
 
     # Update all modules
     assert update_obj.update() is True

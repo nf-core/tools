@@ -74,7 +74,7 @@ def test_install_at_hash_and_update_limit_output(self):
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Copy the subworkflow files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
+    tmpdir = Path(tempfile.mkdtemp())
     sw_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME, "fastq_align_bowtie2")
     shutil.copytree(sw_path, tmpdir)
 
