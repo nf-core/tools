@@ -31,7 +31,7 @@ jobs:
         with:
           head: ${{ github.sha }}
           base: origin/${{ github.base_ref }}
-          include: .github/include.yaml
+          include: .github/include.yml
 
   test:
     name: "{% raw %}${{ matrix.nf_test_files }} ${{ matrix.profile }} NF-${{ matrix.NXF_VER }}{% endraw %}"
