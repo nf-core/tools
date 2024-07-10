@@ -278,14 +278,11 @@ class ComponentUpdate(ComponentCommand):
                     )
 
                     # Ask the user if they want to install the component
-                    if not self.prompt:
-                        dry_run = False
-                    else:
-                        dry_run = not questionary.confirm(
-                            f"Update {self.component_type[:-1]} '{component}'?",
-                            default=False,
-                            style=nf_core.utils.nfcore_question_style,
-                        ).unsafe_ask()
+                    dry_run = not questionary.confirm(
+                        f"Update {self.component_type[:-1]} '{component}'?",
+                        default=False,
+                        style=nf_core.utils.nfcore_question_style,
+                    ).unsafe_ask()
 
             if not dry_run:
                 # Clear the component directory and move the installed files there
