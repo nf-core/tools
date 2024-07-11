@@ -20,7 +20,7 @@ import requests_cache
 import rich
 import rich.progress
 from git.exc import GitCommandError, InvalidGitRepositoryError
-from pkg_resources import parse_version as version_parser
+from setuptools._distutils.version import LooseVersion as VersionParser
 
 import nf_core
 import nf_core.pipelines.list
@@ -1693,7 +1693,7 @@ class WorkflowRepo(SyncedRepo):
                     else:
                         # desired revisions may contain arbitrary branch names that do not correspond to valid sematic versioning patterns.
                         valid_versions = [
-                            version_parser(v)
+                            VersionParser(v)
                             for v in desired_revisions
                             if re.match(r"\d+\.\d+(?:\.\d+)*(?:[\w\-_])*", v)
                         ]
