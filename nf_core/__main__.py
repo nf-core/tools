@@ -929,12 +929,11 @@ def command_modules_install(ctx, tool, dir, prompt, force, sha):
     help="Prompt for the version of the module",
 )
 @click.option(
-    "-l",
     "--limit-output",
     "limit_output",
     is_flag=True,
     default=False,
-    help="Limit ouput to only the difference in main.nf",
+    help="Limit output to only the difference in main.nf",
 )
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
 @click.option(
