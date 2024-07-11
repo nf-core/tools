@@ -276,13 +276,15 @@ class ComponentUpdate(ComponentCommand):
                         dsp_to_dir=component_dir,
                         limit_output=self.limit_output,
                     )
-
-                    # Ask the user if they want to install the component
-                    dry_run = not questionary.confirm(
-                        f"Update {self.component_type[:-1]} '{component}'?",
-                        default=False,
-                        style=nf_core.utils.nfcore_question_style,
-                    ).unsafe_ask()
+                    if self.prompt:
+                        # Ask the user if they want to install the component
+                        dry_run = not questionary.confirm(
+                            f"Update {self.component_type[:-1]} '{component}'?",
+                            default=False,
+                            style=nf_core.utils.nfcore_question_style,
+                        ).unsafe_ask()
+                    else:
+                        dry_run = False
 
             if not dry_run:
                 # Clear the component directory and move the installed files there

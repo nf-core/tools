@@ -69,7 +69,7 @@ def test_install_at_hash_and_update_limit_output(self):
     logger.addHandler(ch)
     logger.setLevel(logging.INFO)
 
-    update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False, update_deps=True, limit_output=True)
+    update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=True, update_deps=True, limit_output=True)
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Copy the subworkflow files and check that they are affected by the update
@@ -98,18 +98,20 @@ def test_install_at_hash_and_update_limit_output(self):
     # Check for various scenarios
     nf_changes_shown = False
     for line in log_lines:
-        if re.match(r"'.+' is unchanged", line):
-            # Unchanged files should be reported for both .nf and non-.nf files
-            assert True
-        elif re.match(r"'.+' was created", line):
-            # Created files should be reported for both .nf and non-.nf files
-            assert True
-        elif re.match(r"'.+' was removed", line):
-            # Removed files should be reported for both .nf and non-.nf files
+        if (
+            re.match(r"'.+' is unchanged", line)
+            or re.match(r"'.+' was created", line)
+            or re.match(r"'.+' was removed", line)
+        ):
+            # Unchanged, created, and removed files should be reported for both .nf and non-.nf files
             assert True
         elif re.match(r"Changes in '.+' but not shown", line):
             # Changes not shown should only be for non-.nf files
-            file_path = re.search(r"'(.+)'", line).group(1)
+            match = re.search(r"'(.+)'", line)
+            if match:
+                file_path = match.group(1)
+            else:
+                raise AssertionError("Changes not shown message did not contain a file path")
             assert Path(file_path).suffix != ".nf", f"Changes in .nf file were not shown: {line}"
         elif re.match(r"Changes in '.+':$", line):
             # Changes shown should only be for .nf files

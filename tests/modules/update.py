@@ -78,10 +78,11 @@ def test_install_at_hash_and_update_limit_output(self):
     ch = logging.StreamHandler(log_capture)
     logger = logging.getLogger()
     logger.addHandler(ch)
+    logger.setLevel(logging.INFO)
 
     update_obj = ModuleUpdate(
         self.pipeline_dir,
-        show_diff=False,
+        show_diff=True,
         update_deps=True,
         remote_url=GITLAB_URL,
         branch=OLD_TRIMGALORE_BRANCH,
@@ -98,8 +99,7 @@ def test_install_at_hash_and_update_limit_output(self):
     assert cmp_component(trimgalore_tmpdir, trimgalore_path) is False
 
     # Check that the modules.json is correctly updated
-    mod_json_obj = ModulesJson(self.pipeline_dir)
-    mod_json = mod_json_obj.get_modules_json()
+    mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
     # Get the up-to-date git_sha for the module from the ModuleRepo object
     correct_git_sha = update_obj.modules_repo.get_latest_component_version("trimgalore", "modules")
     current_git_sha = mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]["git_sha"]
@@ -110,6 +110,7 @@ def test_install_at_hash_and_update_limit_output(self):
     log_lines = log_output.split("\n")
 
     # Check for various scenarios
+    nf_changes_shown = False
     for line in log_lines:
         if (
             re.match(r"'.+' is unchanged", line)
@@ -134,6 +135,10 @@ def test_install_at_hash_and_update_limit_output(self):
             else:
                 raise AssertionError("Changes shown message did not contain a file path")
             assert Path(file_path).suffix == ".nf", f"Changes in non-.nf file were shown: {line}"
+            nf_changes_shown = True
+
+    # Ensure that changes in at least one .nf file were shown
+    assert nf_changes_shown, "No changes in .nf files were shown"
 
     # Clean up
     logger.removeHandler(ch)
