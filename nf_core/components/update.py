@@ -77,6 +77,8 @@ class ComponentUpdate(ComponentCommand):
 
         if not self.has_valid_directory():
             raise UserWarning("The command was not run in a valid pipeline directory.")
+        if self.limit_output and not (self.save_diff_fn or self.show_diff):
+            raise UserWarning("The '--limit-output' flag can only be used with '--preview' or '--save-diff'.")
 
     def update(self, component=None, silent=False, updated=None, check_diff_exist=True) -> bool:
         """Updates a specified module/subworkflow or all modules/subworkflows in a pipeline.
