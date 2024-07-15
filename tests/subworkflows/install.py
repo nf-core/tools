@@ -8,7 +8,6 @@ from nf_core.subworkflows.install import SubworkflowInstall
 from ..utils import (
     CROSS_ORGANIZATION_URL,
     GITLAB_BRANCH_TEST_BRANCH,
-    GITLAB_DEFAULT_BRANCH,
     GITLAB_REPO,
     GITLAB_SUBWORKFLOWS_BRANCH,
     GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH,
@@ -83,13 +82,13 @@ def test_subworkflows_install_different_branch_fail(self):
 
 def test_subworkflows_install_across_organizations(self):
     """Test installing a subworkflow with modules from different organizations"""
-    install_obj = SubworkflowInstall(self.pipeline_dir, remote_url=CROSS_ORGANIZATION_URL, branch=GITLAB_DEFAULT_BRANCH)
+    install_obj = SubworkflowInstall(self.pipeline_dir, remote_url=CROSS_ORGANIZATION_URL)
     # The hic_bwamem2 subworkflow contains modules from different organizations
     install_obj.install("get_genome_annotation")
     # Verify that the installed_by entry was added correctly
     modules_json = ModulesJson(self.pipeline_dir)
     mod_json = modules_json.get_modules_json()
-    assert mod_json["repos"][CROSS_ORGANIZATION_URL]["modules"]["jvfe"]["prokka"]["installed_by"] == [
+    assert mod_json["repos"][CROSS_ORGANIZATION_URL]["modules"]["jvfe"]["wget"]["installed_by"] == [
         "get_genome_annotation"
     ]
 
