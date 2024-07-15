@@ -60,7 +60,7 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
             hint = ""
             if len(e.path) > 0:
                 hint = f"\nCheck the entry for `{e.path[0]}`."
-            if e.schema.get("message"):
+            if e.schema and isinstance(e.schema, dict) and "message" in e.schema:
                 e.message = e.schema["message"]
             module.failed.append(
                 (
