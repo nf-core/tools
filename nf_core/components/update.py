@@ -128,7 +128,6 @@ class ComponentUpdate(ComponentCommand):
         components_info = (
             self.get_all_components_info() if self.update_all else [self.get_single_component_info(component)]
         )
-
         # Save the current state of the modules.json
         old_modules_json = self.modules_json.get_modules_json()
 
@@ -278,15 +277,12 @@ class ComponentUpdate(ComponentCommand):
                         dsp_to_dir=component_dir,
                         limit_output=self.limit_output,
                     )
-                    if self.prompt:
-                        # Ask the user if they want to install the component
-                        dry_run = not questionary.confirm(
-                            f"Update {self.component_type[:-1]} '{component}'?",
-                            default=False,
-                            style=nf_core.utils.nfcore_question_style,
-                        ).unsafe_ask()
-                    else:
-                        dry_run = False
+                    # Ask the user if they want to install the component
+                    dry_run = not questionary.confirm(
+                        f"Update {self.component_type[:-1]} '{component}'?",
+                        default=False,
+                        style=nf_core.utils.nfcore_question_style,
+                    ).unsafe_ask()
 
             if not dry_run:
                 # Clear the component directory and move the installed files there
@@ -397,6 +393,8 @@ class ComponentUpdate(ComponentCommand):
 
         sha = self.sha
         config_entry = None
+        if self.update_config is None:
+            raise UserWarning("Could not find '.nf-core.yml' file in pipeline directory")
         if any(
             [
                 entry.count("/") == 1

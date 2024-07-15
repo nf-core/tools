@@ -4,7 +4,9 @@ import re
 import shutil
 import tempfile
 from pathlib import Path
+from unittest import mock
 
+import questionary
 import yaml
 
 import nf_core.utils
@@ -58,7 +60,9 @@ def test_install_at_hash_and_update(self):
     )
 
 
-def test_install_at_hash_and_update_limit_output(self):
+# Mock questionary answer: update components
+@mock.patch.object(questionary.Question, "unsafe_ask", return_value=True)
+def test_install_at_hash_and_update_limit_output(self, mock_prompt):
     """Installs an old version of a subworkflow in the pipeline and updates it with limit_output=True"""
     assert self.subworkflow_install_old.install("fastq_align_bowtie2")
 

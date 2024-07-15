@@ -69,7 +69,9 @@ def test_install_at_hash_and_update(self):
     assert correct_git_sha == current_git_sha
 
 
-def test_install_at_hash_and_update_limit_output(self):
+# Mock questionary answer: do not update module, only show diffs
+@mock.patch.object(questionary.Question, "unsafe_ask", return_value=True)
+def test_install_at_hash_and_update_limit_output(self, mock_prompt):
     """Installs an old version of a module in the pipeline and updates it with limited output reporting"""
     assert self.mods_install_old.install("trimgalore")
 
@@ -429,10 +431,8 @@ def test_update_different_branch_mix_modules_branch_test(self):
 @mock.patch.object(questionary.Question, "unsafe_ask", return_value=False)
 def test_update_only_show_differences(self, mock_prompt):
     """Try updating all modules showing differences.
-    Don't update some of them.
+    Only show diffs, don't actually save any updated files.
     Check that the sha in modules.json is not changed."""
-    modules_json = ModulesJson(self.pipeline_dir)
-    update_obj = ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=True)
 
     # Update modules to a fixed old SHA
     update_old = ModuleUpdate(
@@ -443,16 +443,17 @@ def test_update_only_show_differences(self, mock_prompt):
     tmpdir = Path(tempfile.TemporaryDirectory().name)
     shutil.copytree(Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME), tmpdir)
 
-    assert update_obj.update() is True
+    update_obj = ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=True)
+    assert ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=True).update()
 
-    mod_json = modules_json.get_modules_json()
+    mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
     # Loop through all modules and check that they are NOT updated (according to the modules.json file)
     # A module that can be updated but shouldn't is fastqc
     # Module multiqc is already up to date so don't check
     mod = "fastqc"
-    correct_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
+    non_updated_git_sha = list(update_obj.modules_repo.get_component_git_log(mod, "modules", depth=1))[0]["git_sha"]
     current_git_sha = mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME][mod]["git_sha"]
-    assert correct_git_sha != current_git_sha
+    assert non_updated_git_sha != current_git_sha
     assert cmp_component(Path(tmpdir, mod), Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, mod)) is True
 
 
@@ -469,7 +470,7 @@ def test_update_only_show_differences_when_patch(self, mock_prompt):
     update_old = ModuleUpdate(
         self.pipeline_dir, update_all=True, show_diff=False, sha="5e34754d42cd2d5d248ca8673c0a53cdf5624905"
     )
-    update_old.update()
+    assert update_old.update()
 
     # Modify fastqc module, it will have a patch which will be applied during update
     # We modify fastqc because it's one of the modules that can be updated and there's another one before it (custom/dumpsoftwareversions)
