@@ -133,7 +133,7 @@ def prompt_component_version_sha(
     return git_sha
 
 
-def get_components_to_install(subworkflow_dir: str) -> Tuple[List[str], List[str]]:
+def get_components_to_install(subworkflow_dir: str) -> Tuple[List[dict], List[str]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """
@@ -147,10 +147,22 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[str], List[str
             match = regex.match(line)
             if match and len(match.groups()) == 2:
                 name, link = match.groups()
-                if link.startswith("../"):
+                if link.startswith("../") and not link.startswith("../../"):
                     subworkflows.append(name.lower())
     with open(Path(subworkflow_dir, "meta.yml")) as fh:
         meta = yaml.safe_load(fh)
         components = meta.get("components")
-        modules.extend(components)
+        component_list = []
+        for component in components:
+            if isinstance(component, str):
+                comp_dict = {"name": component, "org_path": None, "git_remote": None}
+            else:
+                name = list(component.keys())[0]
+                comp_dict = {
+                    "name": name,
+                    "org_path": component[name]["org_path"],
+                    "git_remote": component[name]["git_remote"],
+                }
+            component_list.append(comp_dict)
+        modules.extend(component_list)
     return modules, subworkflows

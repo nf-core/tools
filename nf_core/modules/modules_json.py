@@ -1187,10 +1187,10 @@ class ModulesJson:
 
         for dep_mod in dep_mods:
             if isinstance(dep_mod, dict):
-                component_name = list(dep_mod.keys())[0]
-                repo = dep_mod[component_name]["git_remote"]
-                org = dep_mod[component_name]["org_path"]
-                dep_mod = component_name
+                if dep_mod["git_remote"] is not None:
+                    repo = dep_mod["git_remote"]
+                    org = dep_mod["org_path"]
+                dep_mod = dep_mod["name"]
             installed_by = self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"]
             if installed_by == ["modules"]:
                 self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"] = []
