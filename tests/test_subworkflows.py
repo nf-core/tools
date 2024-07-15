@@ -5,6 +5,7 @@ import os
 import shutil
 import unittest
 from pathlib import Path
+import pytest
 
 import nf_core.modules
 import nf_core.pipelines.create.create
@@ -112,6 +113,10 @@ class TestSubworkflows(unittest.TestCase):
 
         if os.path.exists(self.tmp_dir):
             shutil.rmtree(self.tmp_dir)
+
+    @pytest.fixture(autouse=True)
+    def _use_caplog(self, caplog):
+        self.caplog = caplog
 
     ################################################
     # Test of the individual subworkflow commands. #

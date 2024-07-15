@@ -5,6 +5,7 @@ import os
 import shutil
 import unittest
 from pathlib import Path
+import pytest
 
 import requests_cache
 import responses
@@ -155,6 +156,10 @@ class TestModules(unittest.TestCase):
         modrepo = nf_core.modules.ModulesRepo()
         assert modrepo.repo_path == "nf-core"
         assert modrepo.branch == "master"
+
+    @pytest.fixture(autouse=True)
+    def _use_caplog(self, caplog):
+        self.caplog = caplog
 
     ############################################
     # Test of the individual modules commands. #
