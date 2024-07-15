@@ -81,6 +81,7 @@
 - Handles multiple DOIs + doi.org resolver from manifest.doi ([#2946](https://github.com/nf-core/tools/pull/2946))
 - Update included components ([#2949](https://github.com/nf-core/tools/pull/2949))
 - Update .editorconfig ([#2953](https://github.com/nf-core/tools/pull/2953))
+- Add nf-test to pipeline template CI workflow ([#2881](https://github.com/nf-core/tools/pull/2881))
 
 ### Linting
 

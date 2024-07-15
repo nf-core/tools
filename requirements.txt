@@ -1,16 +1,16 @@
 click
 filetype
 GitPython
-PyGithub
 jinja2
 jsonschema>=3.0
 markdown>=3.3
 packaging
-pillow
 pdiff
+pillow
 pre-commit
 prompt_toolkit>=3.0.3
 pydantic>=2.2.1
+PyGithub
 pyyaml
 questionary>=1.8.0
 refgenie
@@ -21,4 +21,3 @@ rich>=13.3.1
 tabulate
 textual==0.71.0
 trogon
-pdiff

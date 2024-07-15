@@ -17,12 +17,7 @@ def actions_ci(self):
       .. code-block:: yaml
 
          on:
-             push:
-             branches:
-                 - dev
              pull_request:
-             release:
-             types: [published]
 
     * The minimum Nextflow version specified in the pipeline's ``nextflow.config`` matches that defined by ``NXF_VER`` in the test matrix:
 
@@ -54,17 +49,12 @@ def actions_ci(self):
 
     # Check that the action is turned on for the correct events
     try:
-        # NB: YAML dict key 'on' is evaluated to a Python dict key True
-        if "dev" not in ciwf[True]["push"]["branches"]:
-            raise AssertionError()
         pr_subtree = ciwf[True]["pull_request"]
         if not (
             pr_subtree is None
             or ("branches" in pr_subtree and "dev" in pr_subtree["branches"])
             or ("ignore_branches" in pr_subtree and "dev" not in pr_subtree["ignore_branches"])
         ):
-            raise AssertionError()
-        if "published" not in ciwf[True]["release"]["types"]:
             raise AssertionError()
     except (AssertionError, KeyError, TypeError):
         failed.append("'.github/workflows/ci.yml' is not triggered on expected events")
