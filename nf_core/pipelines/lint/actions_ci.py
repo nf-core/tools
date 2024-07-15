@@ -17,12 +17,7 @@ def actions_ci(self):
       .. code-block:: yaml
 
          on:
-             push:
-             branches:
-                 - dev
              pull_request:
-             release:
-             types: [published]
 
     * The minimum Nextflow version specified in the pipeline's ``nextflow.config`` matches that defined by ``NXF_VER`` in the test matrix:
 

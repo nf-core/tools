@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import yaml
 
@@ -31,18 +31,18 @@ def test_actions_ci_fail_wrong_trigger(self):
 
     # Edit .github/workflows/actions_ci.yml to mess stuff up!
     new_pipeline = self._make_pipeline_copy()
-    with open(os.path.join(new_pipeline, ".github", "workflows", "ci.yml")) as fh:
+    with open(Path(new_pipeline, ".github", "workflows", "ci.yml")) as fh:
         ci_yml = yaml.safe_load(fh)
-    ci_yml[True]["push"] = ["dev", "patch"]
+    ci_yml[True] = []
     ci_yml["jobs"]["test"]["strategy"]["matrix"] = {"nxf_versionnn": ["foo", ""]}
-    with open(os.path.join(new_pipeline, ".github", "workflows", "ci.yml"), "w") as fh:
+    with open(Path(new_pipeline, ".github", "workflows", "ci.yml"), "w") as fh:
         yaml.dump(ci_yml, fh)
 
     # Make lint object
     lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
 
-    results = lint_obj.actions_ci()
+    results = lint_obj.actions_ci()  # type: ignore
     assert results["failed"] == [
         "'.github/workflows/ci.yml' is not triggered on expected events",
         "'.github/workflows/ci.yml' does not check minimum NF version",
