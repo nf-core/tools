@@ -147,22 +147,29 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Any]
             match = regex.match(line)
             if match and len(match.groups()) == 2:
                 name, link = match.groups()
-                if link.startswith("../") and not link.startswith("../../"):
+                if link.startswith("../../../"):
+                    name_split = name.lower().split("_")
+                    modules.append({"name": "/".join(name_split), "org_path": None, "git_remote": None})
+                elif link.startswith("../"):
                     subworkflows.append(name.lower())
-    with open(Path(subworkflow_dir, "meta.yml")) as fh:
-        meta = yaml.safe_load(fh)
-        components = meta.get("components")
-        component_list = []
-        for component in components:
-            if isinstance(component, str):
-                comp_dict = {"name": component, "org_path": None, "git_remote": None}
-            else:
-                name = list(component.keys())[0]
-                comp_dict = {
-                    "name": name,
-                    "org_path": component[name]["org_path"],
-                    "git_remote": component[name]["git_remote"],
-                }
-            component_list.append(comp_dict)
-        modules.extend(component_list)
+
+    if Path(subworkflow_dir, "meta.yml").exists():
+        with open(Path(subworkflow_dir, "meta.yml")) as fh:
+            meta = yaml.safe_load(fh)
+            if "components" not in meta:
+                return modules, subworkflows
+            components = meta.get("components")
+            component_list = []
+            for component in components:
+                if isinstance(component, str):
+                    comp_dict = {"name": component, "org_path": None, "git_remote": None}
+                else:
+                    name = list(component.keys())[0]
+                    comp_dict = {
+                        "name": name,
+                        "org_path": component[name]["org_path"],
+                        "git_remote": component[name]["git_remote"],
+                    }
+                component_list.append(comp_dict)
+            modules.extend(component_list)
     return modules, subworkflows
