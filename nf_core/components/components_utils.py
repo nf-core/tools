@@ -1,7 +1,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import questionary
 import rich.prompt
@@ -133,7 +133,7 @@ def prompt_component_version_sha(
     return git_sha
 
 
-def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, str | None]], List[str]]:
+def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Any]], List[str]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """
