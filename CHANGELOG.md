@@ -48,6 +48,8 @@
 - update output_dir for api docs to new website structure ([#3051](https://github.com/nf-core/tools/pull/3051))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.5.1 ([#3052](https://github.com/nf-core/tools/pull/3052))
 - update api docs to new structure ([#3054](https://github.com/nf-core/tools/pull/3054))
+- Update to pytest v8 and move it to dev dependencies ([#3058](https://github.com/nf-core/tools/pull/3058))
+- handle new jsonschema error type ([#3061](https://github.com/nf-core/tools/pull/3061))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
@@ -80,6 +82,7 @@
 - Handles multiple DOIs + doi.org resolver from manifest.doi ([#2946](https://github.com/nf-core/tools/pull/2946))
 - Update included components ([#2949](https://github.com/nf-core/tools/pull/2949))
 - Update .editorconfig ([#2953](https://github.com/nf-core/tools/pull/2953))
+- Add nf-test to pipeline template CI workflow ([#2881](https://github.com/nf-core/tools/pull/2881))
 
 ### Linting
 
