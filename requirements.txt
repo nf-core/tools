@@ -11,8 +11,6 @@ pre-commit
 prompt_toolkit>=3.0.3
 pydantic>=2.2.1
 PyGithub
-pytest-workflow>=2.0.0
-pytest>=7.0.0
 pyyaml
 questionary>=1.8.0
 refgenie
