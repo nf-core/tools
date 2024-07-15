@@ -53,12 +53,12 @@ class ComponentInstall(ComponentCommand):
             # Check modules directory structure
             self.check_modules_structure()
 
-        repo_path = self.modules_repo.repo_path
-        remote_url = self.modules_repo.remote_url
         if isinstance(component, dict):
             if component["git_remote"] is not None:
-                repo_path = component["org_path"]
                 remote_url = component["git_remote"]
+                self.modules_repo = ModulesRepo(remote_url)
+            else:
+                self.modules_repo = ModulesRepo()
             component = component["name"]
 
         # Verify that 'modules.json' is consistent with the installed modules and subworkflows
@@ -73,59 +73,61 @@ class ComponentInstall(ComponentCommand):
             return False
 
         # Verify SHA
-        if not ModulesRepo(remote_url).verify_sha(self.prompt, self.sha):
+        if not self.modules_repo.verify_sha(self.prompt, self.sha):
             return False
 
         # Check and verify component name
-        component = self.collect_and_verify_name(component, ModulesRepo(remote_url))
+        component = self.collect_and_verify_name(component, self.modules_repo)
         if not component:
             return False
 
         # Get current version
-        current_version = modules_json.get_component_version(self.component_type, component, remote_url, repo_path)
+        current_version = modules_json.get_component_version(
+            self.component_type, component, self.modules_repo.remote_url, self.modules_repo.repo_path
+        )
 
         # Set the install folder based on the repository name
-        install_folder = Path(self.dir, self.component_type, repo_path)
+        install_folder = Path(self.dir, self.component_type, self.modules_repo.repo_path)
 
         # Compute the component directory
         component_dir = Path(install_folder, component)
 
         # Check that the component is not already installed
         component_not_installed = self.check_component_installed(
-            component, current_version, component_dir, ModulesRepo(remote_url), self.force, self.prompt, silent
+            component, current_version, component_dir, self.modules_repo, self.force, self.prompt, silent
         )
         if not component_not_installed:
             log.debug(
                 f"{self.component_type[:-1].title()} is already installed and force is not set.\nAdding the new installation source {self.installed_by} for {self.component_type[:-1]} {component} to 'modules.json' without installing the {self.component_type}."
             )
             modules_json.load()
-            modules_json.update(
-                self.component_type, ModulesRepo(remote_url), component, current_version, self.installed_by
-            )
+            modules_json.update(self.component_type, self.modules_repo, component, current_version, self.installed_by)
             return False
 
-        version = self.get_version(component, self.sha, self.prompt, current_version, ModulesRepo(remote_url))
+        version = self.get_version(component, self.sha, self.prompt, current_version, self.modules_repo)
         if not version:
             return False
 
         # Remove component if force is set and component is installed
         install_track = None
         if self.force:
-            log.debug(f"Removing installed version of '{repo_path}/{component}'")
+            log.debug(f"Removing installed version of '{self.modules_repo.repo_path}/{component}'")
             self.clear_component_dir(component, component_dir)
-            install_track = self.clean_modules_json(component, ModulesRepo(remote_url), modules_json)
+            install_track = self.clean_modules_json(component, self.modules_repo, modules_json)
         if not silent:
             log.info(f"{'Rei' if self.force else 'I'}nstalling '{component}'")
-        log.debug(f"Installing {self.component_type} '{component}' at modules hash {version} from {remote_url}")
+        log.debug(
+            f"Installing {self.component_type} '{component}' at modules hash {version} from {self.modules_repo.remote_url}"
+        )
 
         # Download component files
-        if not self.install_component_files(component, version, ModulesRepo(remote_url), install_folder):
+        if not self.install_component_files(component, version, self.modules_repo, install_folder):
             return False
 
         # Update module.json with newly installed subworkflow
         modules_json.load()
         modules_json.update(
-            self.component_type, ModulesRepo(remote_url), component, version, self.installed_by, install_track
+            self.component_type, self.modules_repo, component, version, self.installed_by, install_track
         )
 
         if self.component_type == "subworkflows":
