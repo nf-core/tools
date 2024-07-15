@@ -161,15 +161,16 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Any]
             components = meta.get("components")
             component_list = []
             for component in components:
-                if isinstance(component, str):
-                    comp_dict = {"name": component, "org_path": None, "git_remote": None}
-                else:
-                    name = list(component.keys())[0]
-                    comp_dict = {
-                        "name": name,
-                        "org_path": component[name]["org_path"],
-                        "git_remote": component[name]["git_remote"],
-                    }
-                component_list.append(comp_dict)
+                if component not in subworkflows:
+                    if isinstance(component, str):
+                        comp_dict = {"name": component, "org_path": None, "git_remote": None}
+                    else:
+                        name = list(component.keys())[0]
+                        comp_dict = {
+                            "name": name,
+                            "org_path": component[name]["org_path"],
+                            "git_remote": component[name]["git_remote"],
+                        }
+                    component_list.append(comp_dict)
             modules.extend(component_list)
     return modules, subworkflows
