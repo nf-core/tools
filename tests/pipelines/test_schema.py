@@ -15,7 +15,7 @@ import yaml
 import nf_core.pipelines.create.create
 import nf_core.pipelines.schema
 
-from .utils import with_temporary_file, with_temporary_folder
+from ..utils import with_temporary_file, with_temporary_folder
 
 
 class TestSchema(unittest.TestCase):

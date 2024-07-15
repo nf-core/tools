@@ -9,7 +9,7 @@ import yaml
 
 import nf_core.pipelines.create.create
 
-from .utils import with_temporary_folder
+from ..utils import with_temporary_folder
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
 PIPELINE_TEMPLATE_YML = TEST_DATA_DIR / "pipeline_create_template.yml"

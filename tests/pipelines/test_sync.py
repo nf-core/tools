@@ -14,7 +14,7 @@ import pytest
 import nf_core.pipelines.create.create
 import nf_core.pipelines.sync
 
-from .utils import with_temporary_folder
+from ..utils import with_temporary_folder
 
 
 class TestModules(unittest.TestCase):

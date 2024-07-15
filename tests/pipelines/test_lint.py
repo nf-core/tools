@@ -12,7 +12,7 @@ import yaml
 import nf_core.pipelines.create.create
 import nf_core.pipelines.lint
 
-from .utils import with_temporary_folder
+from ..utils import with_temporary_folder
 
 
 class TestLint(unittest.TestCase):
@@ -179,33 +179,33 @@ class TestLint(unittest.TestCase):
     #######################
     # SPECIFIC LINT TESTS #
     #######################
-    from .lint.actions_awsfulltest import (  # type: ignore[misc]
+    from ..lint.actions_awsfulltest import (  # type: ignore[misc]
         test_actions_awsfulltest_fail,
         test_actions_awsfulltest_pass,
         test_actions_awsfulltest_warn,
     )
-    from .lint.actions_awstest import (  # type: ignore[misc]
+    from ..lint.actions_awstest import (  # type: ignore[misc]
         test_actions_awstest_fail,
         test_actions_awstest_pass,
     )
-    from .lint.actions_ci import (  # type: ignore[misc]
+    from ..lint.actions_ci import (  # type: ignore[misc]
         test_actions_ci_fail_wrong_nf,
         test_actions_ci_fail_wrong_trigger,
         test_actions_ci_pass,
     )
-    from .lint.actions_schema_validation import (  # type: ignore[misc]
+    from ..lint.actions_schema_validation import (  # type: ignore[misc]
         test_actions_schema_validation_fails_for_additional_property,
         test_actions_schema_validation_missing_jobs,
         test_actions_schema_validation_missing_on,
     )
-    from .lint.configs import (  # type: ignore[misc]
+    from ..lint.configs import (  # type: ignore[misc]
         test_ignore_base_config,
         test_ignore_modules_config,
         test_superfluous_withname_in_base_config_fails,
         test_superfluous_withname_in_modules_config_fails,
         test_withname_in_modules_config,
     )
-    from .lint.files_exist import (  # type: ignore[misc]
+    from ..lint.files_exist import (  # type: ignore[misc]
         test_files_exist_depreciated_file,
         test_files_exist_fail_conditional,
         test_files_exist_missing_config,
@@ -214,13 +214,13 @@ class TestLint(unittest.TestCase):
         test_files_exist_pass_conditional,
         test_files_exist_pass_conditional_nfschema,
     )
-    from .lint.files_unchanged import (  # type: ignore[misc]
+    from ..lint.files_unchanged import (  # type: ignore[misc]
         test_files_unchanged_fail,
         test_files_unchanged_pass,
     )
-    from .lint.merge_markers import test_merge_markers_found  # type: ignore[misc]
-    from .lint.modules_json import test_modules_json_pass  # type: ignore[misc]
-    from .lint.multiqc_config import (  # type: ignore[misc]
+    from ..lint.merge_markers import test_merge_markers_found  # type: ignore[misc]
+    from ..lint.modules_json import test_modules_json_pass  # type: ignore[misc]
+    from ..lint.multiqc_config import (  # type: ignore[misc]
         test_multiqc_config_exists,
         test_multiqc_config_ignore,
         test_multiqc_config_missing_report_section_order,
@@ -229,7 +229,7 @@ class TestLint(unittest.TestCase):
         test_multiqc_config_report_comment_release_succeed,
         test_multiqc_incorrect_export_plots,
     )
-    from .lint.nextflow_config import (  # type: ignore[misc]
+    from ..lint.nextflow_config import (  # type: ignore[misc]
         test_allow_params_reference_in_main_nf,
         test_catch_params_assignment_in_main_nf,
         test_default_values_fail,
@@ -242,14 +242,14 @@ class TestLint(unittest.TestCase):
         test_nextflow_config_example_pass,
         test_nextflow_config_missing_test_profile_failed,
     )
-    from .lint.nfcore_yml import (  # type: ignore[misc]
+    from ..lint.nfcore_yml import (  # type: ignore[misc]
         test_nfcore_yml_fail_nfcore_version,
         test_nfcore_yml_fail_repo_type,
         test_nfcore_yml_pass,
     )
-    from .lint.template_strings import (  # type: ignore[misc]
+    from ..lint.template_strings import (  # type: ignore[misc]
         test_template_strings,
         test_template_strings_ignore_file,
         test_template_strings_ignored,
     )
-    from .lint.version_consistency import test_version_consistency  # type: ignore[misc]
+    from ..lint.version_consistency import test_version_consistency  # type: ignore[misc]

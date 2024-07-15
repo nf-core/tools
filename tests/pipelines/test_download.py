@@ -18,7 +18,7 @@ from nf_core.pipelines.download import ContainerError, DownloadWorkflow, Workflo
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import run_cmd
 
-from .utils import with_temporary_folder
+from ..utils import with_temporary_folder
 
 
 class DownloadTest(unittest.TestCase):

@@ -11,7 +11,7 @@ import pytest
 import nf_core.pipelines.create.create
 import nf_core.pipelines.launch
 
-from .utils import create_tmp_pipeline, with_temporary_file, with_temporary_folder
+from ..utils import create_tmp_pipeline, with_temporary_file, with_temporary_folder
 
 
 class TestLaunch(TestCase):
