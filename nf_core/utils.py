@@ -19,7 +19,7 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, Tuple, Union
+from typing import Dict, Generator, List, Optional, Tuple, Union
 
 import git
 import prompt_toolkit
@@ -135,22 +135,22 @@ class Pipeline:
 
     def __init__(self, wf_path):
         """Initialise pipeline object"""
-        self.conda_config = {}
-        self.conda_package_info = {}
-        self.nf_config = {}
-        self.files = []
-        self.git_sha = None
-        self.minNextflowVersion = None
+        self.conda_config: Dict = {}
+        self.conda_package_info: Dict = {}
+        self.nf_config: Dict = {}
+        self.files: List[Path] = []
+        self.git_sha: Optional[str] = None
+        self.minNextflowVersion: Optional[str] = None
         self.wf_path = Path(wf_path)
-        self.pipeline_name = None
-        self.pipeline_prefix = None
-        self.schema_obj = None
+        self.pipeline_name: Optional[str] = None
+        self.pipeline_prefix: Optional[str] = None
+        self.schema_obj: Optional[Dict] = None
 
         try:
             repo = git.Repo(self.wf_path)
             self.git_sha = repo.head.object.hexsha
-        except Exception:
-            log.debug(f"Could not find git hash for pipeline: {self.wf_path}")
+        except Exception as e:
+            log.debug(f"Could not find git hash for pipeline: {self.wf_path}. {e}")
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
         if os.environ.get("GITHUB_PR_COMMIT", "") != "":

@@ -125,9 +125,7 @@ class TestLint(TestPipelines):
         """Check that we have .md files for all lint module code,
         and that there are no unexpected files (eg. deleted lint tests)"""
 
-        docs_basedir = Path(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "api", "_src", "pipeline_lint_tests"
-        )
+        docs_basedir = Path(Path(__file__).parent.parent.parent, "docs", "api", "_src", "pipeline_lint_tests")
 
         # Get list of existing .md files
         existing_docs = []

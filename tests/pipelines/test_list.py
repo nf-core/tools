@@ -14,14 +14,16 @@ from rich.console import Console
 
 import nf_core.pipelines.list
 
-# create a temporary directory that can be used by the tests in this file
-tmp = Path(tempfile.mkdtemp())
-tmp_nxf = tmp / "nxf"
-tmp_nxf_str = str(tmp_nxf)
-
 
 class TestList(unittest.TestCase):
     """Class for list tests"""
+
+    def setUp(self) -> None:
+        # create a temporary directory that can be used by the tests in this file
+        tmp = Path(tempfile.TemporaryDirectory().name)
+        self.tmp_nxf = tmp / "nxf"
+        self.tmp_nxf_str = str(self.tmp_nxf)
+        os.environ["NXF_ASSETS"] = self.tmp_nxf_str
 
     @mock.patch("subprocess.check_output")
     def test_working_listcall(self, mock_subprocess):
@@ -105,28 +107,26 @@ class TestList(unittest.TestCase):
 
         rwf_ex.releases = None
 
-    @mock.patch.dict(os.environ, {"NXF_ASSETS": tmp_nxf_str})
     @mock.patch("nf_core.pipelines.list.LocalWorkflow")
     def test_parse_local_workflow_and_succeed(self, mock_local_wf):
-        test_path = tmp_nxf / "nf-core"
+        test_path = self.tmp_nxf / "nf-core"
         if not os.path.isdir(test_path):
             os.makedirs(test_path)
-        assert os.environ["NXF_ASSETS"] == tmp_nxf_str
-        with open(tmp_nxf / "nf-core/dummy-wf", "w") as f:
+        assert os.environ["NXF_ASSETS"] == self.tmp_nxf_str
+        with open(self.tmp_nxf / "nf-core/dummy-wf", "w") as f:
             f.write("dummy")
         workflows_obj = nf_core.pipelines.list.Workflows()
         workflows_obj.get_local_nf_workflows()
         assert len(workflows_obj.local_workflows) == 1
 
-    @mock.patch.dict(os.environ, {"NXF_ASSETS": tmp_nxf_str})
     @mock.patch("nf_core.pipelines.list.LocalWorkflow")
     @mock.patch("subprocess.check_output")
     def test_parse_local_workflow_home(self, mock_local_wf, mock_subprocess):
-        test_path = tmp_nxf / "nf-core"
+        test_path = self.tmp_nxf / "nf-core"
         if not os.path.isdir(test_path):
             os.makedirs(test_path)
-        assert os.environ["NXF_ASSETS"] == tmp_nxf_str
-        with open(tmp_nxf / "nf-core/dummy-wf", "w") as f:
+        assert os.environ["NXF_ASSETS"] == self.tmp_nxf_str
+        with open(self.tmp_nxf / "nf-core/dummy-wf", "w") as f:
             f.write("dummy")
         workflows_obj = nf_core.pipelines.list.Workflows()
         workflows_obj.get_local_nf_workflows()
@@ -135,7 +135,7 @@ class TestList(unittest.TestCase):
     @mock.patch("git.Repo")
     def test_local_workflow_investigation(self, mock_repo, mock_stat):
         local_wf = nf_core.pipelines.list.LocalWorkflow("dummy")
-        local_wf.local_path = tmp
+        local_wf.local_path = self.tmp_nxf.parent
         mock_repo.head.commit.hexsha = "h00r4y"
         mock_stat.st_mode = 1
         local_wf.get_local_nf_workflow_details()

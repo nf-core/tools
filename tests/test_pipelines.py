@@ -2,8 +2,6 @@ import shutil
 from pathlib import Path
 from unittest import TestCase
 
-from git import Repo
-
 import nf_core.pipelines.launch
 import nf_core.pipelines.lint
 from nf_core.utils import Pipeline
@@ -16,7 +14,6 @@ class TestPipelines(TestCase):
         """Create a new Pipeline for testing"""
         self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
         self.pipeline_obj = Pipeline(self.pipeline_dir)
-        Repo.init(self.pipeline_dir)
         self.pipeline_obj._load()
 
         self.nf_params_fn = Path(self.pipeline_dir, "nf-params.json")

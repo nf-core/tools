@@ -203,7 +203,7 @@ class DownloadTest(unittest.TestCase):
     def test_find_container_images_modules(self, tmp_path, mock_fetch_wf_config):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
         mock_fetch_wf_config.return_value = {}
-        download_obj.find_container_images(TEST_DATA_DIR / "mock_module_containers")
+        download_obj.find_container_images(str(Path(TEST_DATA_DIR, "mock_module_containers")))
 
         # mock_docker_single_quay_io.nf
         assert "quay.io/biocontainers/singlequay:1.9--pyh9f0ad1d_0" in download_obj.containers
@@ -546,7 +546,7 @@ class DownloadTest(unittest.TestCase):
             outdir=os.path.join(tmp_dir, "new"),
             revision="3.9",
             compress_type="none",
-            container_cache_index=TEST_DATA_DIR / "data/testdata_remote_containers.txt",
+            container_cache_index=str(Path(TEST_DATA_DIR, "testdata_remote_containers.txt")),
         )
 
         download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.
