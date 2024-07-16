@@ -2,36 +2,18 @@
 
 import json
 import os
-import shutil
-from pathlib import Path
-from unittest import TestCase, mock
+from unittest import mock
 
 import pytest
 
 import nf_core.pipelines.create.create
 import nf_core.pipelines.launch
 
-from ..utils import create_tmp_pipeline, with_temporary_file, with_temporary_folder
+from ..test_pipelines import TestPipelines
+from ..utils import with_temporary_file, with_temporary_folder
 
 
-class TestLaunch(TestCase):
-    """Class for launch tests"""
-
-    def setUp(self):
-        """Create a new PipelineSchema and Launch objects"""
-        self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
-        self.nf_params_fn = os.path.join(self.tmp_dir, "nf-params.json")
-        self.launcher = nf_core.pipelines.launch.Launch(self.pipeline_dir, params_out=self.nf_params_fn)
-
-    def tearDown(self):
-        """Clean up temporary files and folders"""
-
-        if Path(self.nf_params_fn).exists():
-            Path(self.nf_params_fn).unlink()
-
-        if Path(self.tmp_dir).exists():
-            shutil.rmtree(self.tmp_dir)
-
+class TestLaunch(TestPipelines):
     @mock.patch.object(nf_core.pipelines.launch.Launch, "prompt_web_gui", side_effect=[True])
     @mock.patch.object(nf_core.pipelines.launch.Launch, "launch_web_gui")
     def test_launch_pipeline(self, mock_webbrowser, mock_lauch_web_gui):
@@ -43,6 +25,7 @@ class TestLaunch(TestCase):
         """Test that we detect an existing params file and return"""
         # Make an empty params file to be overwritten
         open(self.nf_params_fn, "a").close()
+
         # Try and to launch, return with error
         assert self.launcher.launch_pipeline() is False
 

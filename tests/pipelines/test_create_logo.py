@@ -1,35 +1,24 @@
 """Test covering the create-logo command."""
 
-import tempfile
-import unittest
 from pathlib import Path
 
 import nf_core.pipelines.create_logo
 
+from ..test_pipelines import TestPipelines
 
-class TestCreateLogo(unittest.TestCase):
-    """Class for create-logo tests"""
 
-    # create tempdir in setup step
-    def setUp(self):
-        self.tempdir = tempfile.TemporaryDirectory()
-        self.tempdir_path = Path(self.tempdir.name)
-
-    # delete tempdir in teardown step
-    def tearDown(self):
-        self.tempdir.cleanup()
-
+class TestCreateLogo(TestPipelines):
     def test_create_logo_png(self):
         """Test that the create-logo command works for PNGs"""
 
         # Create a logo
-        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.tempdir_path)
+        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir)
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Check that the file is a PNG
         self.assertTrue(logo_fn.suffix == ".png")
         # Check that the file is the right size
-        fixture_fn = Path(__file__).parent / "fixtures" / "create_logo.png"
+        fixture_fn = Path(__file__).parent.parent / "fixtures" / "create_logo.png"
         # allow some flexibility in the file size
         self.assertTrue(int(logo_fn.stat().st_size / 1000) == int(fixture_fn.stat().st_size / 1000))
 
@@ -37,13 +26,13 @@ class TestCreateLogo(unittest.TestCase):
         """Test that the create-logo command works for dark PNGs"""
 
         # Create a logo
-        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.tempdir_path, theme="dark")
+        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir, theme="dark")
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Check that the file is a PNG
         self.assertTrue(logo_fn.suffix == ".png")
         # Check that the file is the right size
-        fixture_fn = Path(__file__).parent / "fixtures" / "create_logo_dark.png"
+        fixture_fn = Path(__file__).parent.parent / "fixtures" / "create_logo_dark.png"
         # allow some flexibility in the file size
         self.assertTrue(int(logo_fn.stat().st_size / 1000) == int(fixture_fn.stat().st_size / 1000))
 
@@ -51,13 +40,13 @@ class TestCreateLogo(unittest.TestCase):
         """Test that the create-logo command works for PNGs with a custom width"""
 
         # Create a logo
-        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.tempdir_path, width=100)
+        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir, width=100)
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Check that the file is a PNG
         self.assertTrue(logo_fn.suffix == ".png")
         # Check that the file is the right size
-        fixture_fn = Path(__file__).parent / "fixtures" / "create_logo_width100.png"
+        fixture_fn = Path(__file__).parent.parent / "fixtures" / "create_logo_width100.png"
         # allow some flexibility in the file size
         self.assertTrue(int(logo_fn.stat().st_size / 100) == int(fixture_fn.stat().st_size / 100))
 
@@ -65,12 +54,12 @@ class TestCreateLogo(unittest.TestCase):
         """Test that the create-logo command returns an info message when run twice"""
 
         # Create a logo
-        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.tempdir_path)
+        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir)
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Create the logo again and capture the log output
         with self.assertLogs(level="INFO") as log:
-            nf_core.pipelines.create_logo.create_logo("pipes", self.tempdir_path)
+            nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir)
             # Check that the log message is correct
             self.assertIn("Logo already exists", log.output[0])
 
@@ -79,14 +68,14 @@ class TestCreateLogo(unittest.TestCase):
 
         # Create a logo
         with self.assertRaises(UserWarning):
-            nf_core.pipelines.create_logo.create_logo("", self.tempdir_path)
+            nf_core.pipelines.create_logo.create_logo("", self.pipeline_dir)
 
     def test_create_logo_with_filename(self):
         """Test that the create-logo command works with a custom filename"""
 
         # Create a logo
         logo_fn = nf_core.pipelines.create_logo.create_logo(
-            "pipes", Path(self.tempdir_path / "custom_dir"), filename="custom"
+            "pipes", Path(self.pipeline_dir / "custom_dir"), filename="custom"
         )
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
@@ -99,7 +88,7 @@ class TestCreateLogo(unittest.TestCase):
         """Test that the create-logo command works for SVGs"""
 
         # Create a logo
-        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.tempdir_path, format="svg")
+        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir, format="svg")
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Check that the file is a SVG
@@ -115,7 +104,7 @@ class TestCreateLogo(unittest.TestCase):
         """Test that the create-logo command works for svgs and dark theme"""
 
         # Create a logo
-        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.tempdir_path, format="svg", theme="dark")
+        logo_fn = nf_core.pipelines.create_logo.create_logo("pipes", self.pipeline_dir, format="svg", theme="dark")
         # Check that the file exists
         self.assertTrue(logo_fn.is_file())
         # Check that the file is a SVG
