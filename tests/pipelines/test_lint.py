@@ -3,50 +3,19 @@
 import fnmatch
 import json
 import os
-import shutil
-import tempfile
-import unittest
+from pathlib import Path
 
 import yaml
 
 import nf_core.pipelines.create.create
 import nf_core.pipelines.lint
 
+from ..test_pipelines import TestPipelines
 from ..utils import with_temporary_folder
 
 
-class TestLint(unittest.TestCase):
+class TestLint(TestPipelines):
     """Class for lint tests"""
-
-    def setUp(self):
-        """Function that runs at start of tests for common resources
-
-        Use nf_core.pipelines.create() to make a pipeline that we can use for testing
-        """
-
-        self.tmp_dir = tempfile.mkdtemp()
-        self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
-        self.create_obj = nf_core.pipelines.create.create.PipelineCreate(
-            "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir
-        )
-        self.create_obj.init_pipeline()
-
-        # Base lint object on this directory
-        self.lint_obj = nf_core.pipelines.lint.PipelineLint(self.test_pipeline_dir)
-
-    def tearDown(self):
-        """Clean up temporary files and folders"""
-
-        if os.path.exists(self.tmp_dir):
-            shutil.rmtree(self.tmp_dir)
-
-    def _make_pipeline_copy(self):
-        """Make a copy of the test pipeline that can be edited
-
-        Returns: Path to new temp directory with pipeline"""
-        new_pipeline = os.path.join(self.tmp_dir, "nf-core-testpipeline-copy")
-        shutil.copytree(self.test_pipeline_dir, new_pipeline)
-        return new_pipeline
 
     ##########################
     # CORE lint.py FUNCTIONS #
@@ -56,7 +25,7 @@ class TestLint(unittest.TestCase):
 
         We don't really check any of this code as it's just a series of function calls
         and we're testing each of those individually. This is mostly to check for syntax errors."""
-        nf_core.pipelines.lint.run_linting(self.test_pipeline_dir, False)
+        nf_core.pipelines.lint.run_linting(self.pipeline_dir, False)
 
     def test_init_pipeline_lint(self):
         """Simply create a PipelineLint object.
@@ -64,11 +33,11 @@ class TestLint(unittest.TestCase):
         This checks that all of the lint test imports are working properly,
         we also check that the git sha was found and that the release flag works properly
         """
-        lint_obj = nf_core.pipelines.lint.PipelineLint(self.test_pipeline_dir, True)
+        lint_obj = nf_core.pipelines.lint.PipelineLint(self.pipeline_dir, True)
 
         # Tests that extra test is added for release mode
         assert "version_consistency" in lint_obj.lint_tests
-
+        assert lint_obj.git_sha
         # Tests that parent nf_core.utils.Pipeline class __init__() is working to find git hash
         assert len(lint_obj.git_sha) > 0
 
@@ -86,7 +55,7 @@ class TestLint(unittest.TestCase):
 
         # Make a config file listing all test names
         config_dict = {"lint": {test_name: False for test_name in lint_obj.lint_tests}}
-        with open(os.path.join(new_pipeline, ".nf-core.yml"), "w") as fh:
+        with open(Path(new_pipeline, ".nf-core.yml"), "w") as fh:
             yaml.dump(config_dict, fh)
 
         # Load the new lint config file and check
@@ -130,7 +99,7 @@ class TestLint(unittest.TestCase):
         self.lint_obj.warned.append(("test_three", "This test gave a warning"))
 
         # Make a temp dir for the JSON output
-        json_fn = os.path.join(tmp_dir, "lint_results.json")
+        json_fn = Path(tmp_dir, "lint_results.json")
         self.lint_obj._save_json_results(json_fn)
 
         # Load created JSON file and check its contents
@@ -156,7 +125,7 @@ class TestLint(unittest.TestCase):
         """Check that we have .md files for all lint module code,
         and that there are no unexpected files (eg. deleted lint tests)"""
 
-        docs_basedir = os.path.join(
+        docs_basedir = Path(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "api", "_src", "pipeline_lint_tests"
         )
 
@@ -164,12 +133,12 @@ class TestLint(unittest.TestCase):
         existing_docs = []
         for fn in os.listdir(docs_basedir):
             if fnmatch.fnmatch(fn, "*.md") and not fnmatch.fnmatch(fn, "index.md"):
-                existing_docs.append(os.path.join(docs_basedir, fn))
+                existing_docs.append(Path(docs_basedir, fn))
 
         # Check .md files against each test name
         lint_obj = nf_core.pipelines.lint.PipelineLint("", True)
         for test_name in lint_obj.lint_tests:
-            fn = os.path.join(docs_basedir, f"{test_name}.md")
+            fn = Path(docs_basedir, f"{test_name}.md")
             assert os.path.exists(fn), f"Could not find lint docs .md file: {fn}"
             existing_docs.remove(fn)
 
@@ -179,34 +148,34 @@ class TestLint(unittest.TestCase):
     #######################
     # SPECIFIC LINT TESTS #
     #######################
-    from ..lint.actions_awsfulltest import (  # type: ignore[misc]
+    from .lint.actions_awsfulltest import (  # type: ignore[misc]
         test_actions_awsfulltest_fail,
         test_actions_awsfulltest_pass,
         test_actions_awsfulltest_warn,
     )
-    from ..lint.actions_awstest import (  # type: ignore[misc]
+    from .lint.actions_awstest import (  # type: ignore[misc]
         test_actions_awstest_fail,
         test_actions_awstest_pass,
     )
-    from ..lint.actions_ci import (  # type: ignore[misc]
+    from .lint.actions_ci import (  # type: ignore[misc]
         test_actions_ci_fail_wrong_nf,
         test_actions_ci_fail_wrong_trigger,
         test_actions_ci_pass,
     )
-    from ..lint.actions_schema_validation import (  # type: ignore[misc]
+    from .lint.actions_schema_validation import (  # type: ignore[misc]
         test_actions_schema_validation_fails_for_additional_property,
         test_actions_schema_validation_missing_jobs,
         test_actions_schema_validation_missing_on,
     )
-    from ..lint.configs import (  # type: ignore[misc]
+    from .lint.configs import (  # type: ignore[misc]
         test_ignore_base_config,
         test_ignore_modules_config,
         test_superfluous_withname_in_base_config_fails,
         test_superfluous_withname_in_modules_config_fails,
         test_withname_in_modules_config,
     )
-    from ..lint.files_exist import (  # type: ignore[misc]
-        test_files_exist_depreciated_file,
+    from .lint.files_exist import (  # type: ignore[misc]
+        test_files_exist_deprecated_file,
         test_files_exist_fail_conditional,
         test_files_exist_missing_config,
         test_files_exist_missing_main,
@@ -214,13 +183,13 @@ class TestLint(unittest.TestCase):
         test_files_exist_pass_conditional,
         test_files_exist_pass_conditional_nfschema,
     )
-    from ..lint.files_unchanged import (  # type: ignore[misc]
+    from .lint.files_unchanged import (  # type: ignore[misc]
         test_files_unchanged_fail,
         test_files_unchanged_pass,
     )
-    from ..lint.merge_markers import test_merge_markers_found  # type: ignore[misc]
-    from ..lint.modules_json import test_modules_json_pass  # type: ignore[misc]
-    from ..lint.multiqc_config import (  # type: ignore[misc]
+    from .lint.merge_markers import test_merge_markers_found  # type: ignore[misc]
+    from .lint.modules_json import test_modules_json_pass  # type: ignore[misc]
+    from .lint.multiqc_config import (  # type: ignore[misc]
         test_multiqc_config_exists,
         test_multiqc_config_ignore,
         test_multiqc_config_missing_report_section_order,
@@ -229,7 +198,7 @@ class TestLint(unittest.TestCase):
         test_multiqc_config_report_comment_release_succeed,
         test_multiqc_incorrect_export_plots,
     )
-    from ..lint.nextflow_config import (  # type: ignore[misc]
+    from .lint.nextflow_config import (  # type: ignore[misc]
         test_allow_params_reference_in_main_nf,
         test_catch_params_assignment_in_main_nf,
         test_default_values_fail,
@@ -242,14 +211,14 @@ class TestLint(unittest.TestCase):
         test_nextflow_config_example_pass,
         test_nextflow_config_missing_test_profile_failed,
     )
-    from ..lint.nfcore_yml import (  # type: ignore[misc]
+    from .lint.nfcore_yml import (  # type: ignore[misc]
         test_nfcore_yml_fail_nfcore_version,
         test_nfcore_yml_fail_repo_type,
         test_nfcore_yml_pass,
     )
-    from ..lint.template_strings import (  # type: ignore[misc]
+    from .lint.template_strings import (  # type: ignore[misc]
         test_template_strings,
         test_template_strings_ignore_file,
         test_template_strings_ignored,
     )
-    from ..lint.version_consistency import test_version_consistency  # type: ignore[misc]
+    from .lint.version_consistency import test_version_consistency  # type: ignore[misc]
