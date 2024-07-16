@@ -1,6 +1,4 @@
-import io
 import logging
-import re
 import shutil
 import tempfile
 from pathlib import Path

@@ -5,6 +5,7 @@ import os
 import shutil
 import unittest
 from pathlib import Path
+
 import pytest
 
 import nf_core.modules

@@ -5,8 +5,8 @@ import os
 import shutil
 import unittest
 from pathlib import Path
-import pytest
 
+import pytest
 import requests_cache
 import responses
 import yaml
