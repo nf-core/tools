@@ -862,7 +862,7 @@ class ModulesJson:
             install_dir, {}
         )
 
-    def get_modules_json(self):
+    def get_modules_json(self) -> dict:
         """
         Returns a copy of the loaded modules.json
 
@@ -871,7 +871,8 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
-        return copy.deepcopy(self.modules_json)
+
+        return copy.deepcopy(self.modules_json)  # type: ignore
 
     def get_component_version(self, component_type, component_name, repo_url, install_dir):
         """

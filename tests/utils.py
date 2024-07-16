@@ -2,6 +2,7 @@
 Helper functions for tests
 """
 
+import filecmp
 import functools
 import tempfile
 from pathlib import Path
@@ -99,13 +100,19 @@ def create_tmp_pipeline() -> Tuple[Path, Path, str, Path]:
 
     tmp_dir = Path(tempfile.TemporaryDirectory().name)
     root_repo_dir = Path(__file__).resolve().parent.parent
-    template_dir = Path(root_repo_dir, "nf_core", "pipeline-template")
+    template_dir = root_repo_dir / "nf_core" / "pipeline-template"
     pipeline_name = "mypipeline"
-    pipeline_dir = Path(tmp_dir, pipeline_name)
+    pipeline_dir = tmp_dir / pipeline_name
 
     nf_core.pipelines.create.create.PipelineCreate(
-        pipeline_name, "it is mine", "me", no_git=True, outdir=pipeline_dir
+        pipeline_name, "it is mine", "me", no_git=True, outdir=str(pipeline_dir)
     ).init_pipeline()
 
     # return values to instance variables for later use in test methods
     return tmp_dir, template_dir, pipeline_name, pipeline_dir
+
+
+def cmp_component(dir1: Path, dir2: Path) -> bool:
+    """Compare two versions of the same component"""
+    files = ["main.nf", "meta.yml"]
+    return all(filecmp.cmp(dir1 / f, dir2 / f, shallow=False) for f in files)

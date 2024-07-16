@@ -38,6 +38,7 @@ class ComponentUpdate(ComponentCommand):
         remote_url=None,
         branch=None,
         no_pull=False,
+        limit_output=False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.force = force
@@ -46,6 +47,7 @@ class ComponentUpdate(ComponentCommand):
         self.update_all = update_all
         self.show_diff = show_diff
         self.save_diff_fn = save_diff_fn
+        self.limit_output = limit_output
         self.update_deps = update_deps
         self.component = None
         self.update_config = None
@@ -75,6 +77,8 @@ class ComponentUpdate(ComponentCommand):
 
         if not self.has_valid_directory():
             raise UserWarning("The command was not run in a valid pipeline directory.")
+        if self.limit_output and not (self.save_diff_fn or self.show_diff):
+            raise UserWarning("The '--limit-output' flag can only be used with '--preview' or '--save-diff'.")
 
     def update(self, component=None, silent=False, updated=None, check_diff_exist=True) -> bool:
         """Updates a specified module/subworkflow or all modules/subworkflows in a pipeline.
@@ -124,7 +128,6 @@ class ComponentUpdate(ComponentCommand):
         components_info = (
             self.get_all_components_info() if self.update_all else [self.get_single_component_info(component)]
         )
-
         # Save the current state of the modules.json
         old_modules_json = self.modules_json.get_modules_json()
 
@@ -231,6 +234,7 @@ class ComponentUpdate(ComponentCommand):
                             version,
                             dsp_from_dir=component_dir,
                             dsp_to_dir=component_dir,
+                            limit_output=self.limit_output,
                         )
                         updated.append(component)
                     except UserWarning as e:
@@ -271,8 +275,8 @@ class ComponentUpdate(ComponentCommand):
                         version,
                         dsp_from_dir=component_dir,
                         dsp_to_dir=component_dir,
+                        limit_output=self.limit_output,
                     )
-
                     # Ask the user if they want to install the component
                     dry_run = not questionary.confirm(
                         f"Update {self.component_type[:-1]} '{component}'?",
@@ -389,6 +393,8 @@ class ComponentUpdate(ComponentCommand):
 
         sha = self.sha
         config_entry = None
+        if self.update_config is None:
+            raise UserWarning("Could not find '.nf-core.yml' file in pipeline directory")
         if any(
             [
                 entry.count("/") == 1
@@ -829,6 +835,7 @@ class ComponentUpdate(ComponentCommand):
             for_git=False,
             dsp_from_dir=component_relpath,
             dsp_to_dir=component_relpath,
+            limit_output=self.limit_output,
         )
 
         # Move the patched files to the install dir
@@ -875,7 +882,13 @@ class ComponentUpdate(ComponentCommand):
 
         return modules_to_update, subworkflows_to_update
 
-    def update_linked_components(self, modules_to_update, subworkflows_to_update, updated=None, check_diff_exist=True):
+    def update_linked_components(
+        self,
+        modules_to_update,
+        subworkflows_to_update,
+        updated=None,
+        check_diff_exist=True,
+    ):
         """
         Update modules and subworkflows linked to the component being updated.
         """
@@ -883,7 +896,12 @@ class ComponentUpdate(ComponentCommand):
             if s_update in updated:
                 continue
             original_component_type, original_update_all = self._change_component_type("subworkflows")
-            self.update(s_update, silent=True, updated=updated, check_diff_exist=check_diff_exist)
+            self.update(
+                s_update,
+                silent=True,
+                updated=updated,
+                check_diff_exist=check_diff_exist,
+            )
             self._reset_component_type(original_component_type, original_update_all)
 
         for m_update in modules_to_update:
@@ -891,7 +909,12 @@ class ComponentUpdate(ComponentCommand):
                 continue
             original_component_type, original_update_all = self._change_component_type("modules")
             try:
-                self.update(m_update, silent=True, updated=updated, check_diff_exist=check_diff_exist)
+                self.update(
+                    m_update,
+                    silent=True,
+                    updated=updated,
+                    check_diff_exist=check_diff_exist,
+                )
             except LookupError as e:
                 # If the module to be updated is not available, check if there has been a name change
                 if "not found in list of available" in str(e):
