@@ -928,6 +928,13 @@ def command_modules_install(ctx, tool, dir, prompt, force, sha):
     default=False,
     help="Prompt for the version of the module",
 )
+@click.option(
+    "--limit-output",
+    "limit_output",
+    is_flag=True,
+    default=False,
+    help="Limit output to only the difference in main.nf",
+)
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
 @click.option(
     "-a",
@@ -970,11 +977,12 @@ def command_modules_update(
     preview,
     save_diff,
     update_deps,
+    limit_output,
 ):
     """
     Update DSL2 modules within a pipeline.
     """
-    modules_update(ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps)
+    modules_update(ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output)
 
 
 # nf-core modules patch
@@ -1539,6 +1547,14 @@ def command_subworkflows_remove(ctx, dir, subworkflow):
     help="Install subworkflow at commit SHA",
 )
 @click.option(
+    "-l",
+    "--limit-output",
+    "limit_output",
+    is_flag=True,
+    default=False,
+    help="Limit ouput to only the difference in main.nf",
+)
+@click.option(
     "-a",
     "--all",
     "install_all",
@@ -1579,11 +1595,14 @@ def command_subworkflows_update(
     preview,
     save_diff,
     update_deps,
+    limit_output,
 ):
     """
     Update DSL2 subworkflow within a pipeline.
     """
-    subworkflows_update(ctx, subworkflow, dir, force, prompt, sha, install_all, preview, save_diff, update_deps)
+    subworkflows_update(
+        ctx, subworkflow, dir, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output
+    )
 
 
 ## DEPRECATED commands since v3.0.0
