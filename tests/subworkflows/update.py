@@ -1,8 +1,10 @@
-import filecmp
+import logging
 import shutil
 import tempfile
 from pathlib import Path
+from unittest import mock
 
+import questionary
 import yaml
 
 import nf_core.utils
@@ -11,7 +13,7 @@ from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME, NF_CORE_MODULES_R
 from nf_core.modules.update import ModuleUpdate
 from nf_core.subworkflows.update import SubworkflowUpdate
 
-from ..utils import OLD_SUBWORKFLOWS_SHA
+from ..utils import OLD_SUBWORKFLOWS_SHA, cmp_component
 
 
 def test_install_and_update(self):
@@ -20,8 +22,7 @@ def test_install_and_update(self):
     update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=False)
 
     # Copy the sw files and check that they are unaffected by the update
-    tmpdir = tempfile.mkdtemp()
-    shutil.rmtree(tmpdir)
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     sw_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME, "bam_stats_samtools")
     shutil.copytree(sw_path, tmpdir)
 
@@ -36,8 +37,8 @@ def test_install_at_hash_and_update(self):
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Copy the sw files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    shutil.rmtree(tmpdir)
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
+
     sw_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME, "fastq_align_bowtie2")
     shutil.copytree(sw_path, tmpdir)
 
@@ -57,6 +58,29 @@ def test_install_at_hash_and_update(self):
     )
 
 
+# Mock questionary answer: update components
+@mock.patch.object(questionary.Question, "unsafe_ask", return_value=True)
+def test_install_at_hash_and_update_limit_output(self, mock_prompt):
+    """Installs an old version of a subworkflow in the pipeline and updates it with limit_output=True"""
+    self.caplog.set_level(logging.INFO)
+    assert self.subworkflow_install_old.install("fastq_align_bowtie2")
+
+    update_obj = SubworkflowUpdate(self.pipeline_dir, show_diff=True, update_deps=True, limit_output=True)
+
+    assert update_obj.update("fastq_align_bowtie2")
+
+    # Check changes not shown for non-.nf files
+    assert "Changes in 'fastq_align_bowtie2/meta.yml' but not shown" in self.caplog.text
+    assert "Changes in 'bam_sort_stats_samtools/meta.yml' but not shown" in self.caplog.text
+    assert "Changes in 'bam_stats_samtools/meta.yml' but not shown" in self.caplog.text
+    assert "Changes in 'samtools/flagstat/meta.yml' but not shown" in self.caplog.text
+    # Check changes only shown for main.nf files
+    assert "Changes in 'fastq_align_bowtie2/main.nf'" in self.caplog.text
+    for line in self.caplog.text.split("\n"):
+        if line.startswith("---"):
+            assert line.endswith("main.nf")
+
+
 def test_install_at_hash_and_update_and_save_diff_to_file(self):
     """Installs an old version of a sw in the pipeline and updates it. Save differences to a file."""
     assert self.subworkflow_install_old.install("fastq_align_bowtie2")
@@ -64,8 +88,8 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
     update_obj = SubworkflowUpdate(self.pipeline_dir, save_diff_fn=patch_path, update_deps=True)
 
     # Copy the sw files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    shutil.rmtree(tmpdir)
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
+
     sw_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME, "fastq_align_bowtie2")
     shutil.copytree(sw_path, tmpdir)
 
@@ -77,6 +101,33 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
         assert line.startswith(
             "Changes in module 'nf-core/fastq_align_bowtie2' between (f3c078809a2513f1c95de14f6633fe1f03572fdb) and"
         )
+
+
+def test_install_at_hash_and_update_and_save_diff_limit_output(self):
+    """Installs an old version of a sw in the pipeline and updates it. Save differences to a file."""
+    # Install old version of fastq_align_bowtie2
+    self.subworkflow_install_old.install("fastq_align_bowtie2")
+    patch_path = Path(self.pipeline_dir, "fastq_align_bowtie2.patch")
+    # Update saving the differences to a patch file and with `limit_output`
+    update_obj = SubworkflowUpdate(self.pipeline_dir, save_diff_fn=patch_path, update_deps=True, limit_output=True)
+    assert update_obj.update("fastq_align_bowtie2")
+
+    # Check that the patch file was created
+    assert patch_path.exists(), f"Patch file was not created at {patch_path}"
+
+    # Read the contents of the patch file
+    with open(patch_path) as fh:
+        content = fh.read()
+        # Check changes not shown for non-.nf files
+        assert "Changes in 'fastq_align_bowtie2/meta.yml' but not shown" in content
+        assert "Changes in 'bam_sort_stats_samtools/meta.yml' but not shown" in content
+        assert "Changes in 'bam_stats_samtools/meta.yml' but not shown" in content
+        assert "Changes in 'samtools/flagstat/meta.yml' but not shown" in content
+        # Check changes only shown for main.nf files
+        assert "Changes in 'fastq_align_bowtie2/main.nf'" in content
+        for line in content:
+            if line.startswith("---"):
+                assert line.endswith("main.nf")
 
 
 def test_update_all(self):
@@ -223,8 +274,7 @@ def test_update_all_linked_components_from_subworkflow(self):
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Copy the sw files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    shutil.rmtree(tmpdir)
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     subworkflows_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME)
     modules_path = Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME)
     shutil.copytree(subworkflows_path, Path(tmpdir, "subworkflows"))
@@ -270,8 +320,7 @@ def test_update_all_subworkflows_from_module(self):
     old_mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
 
     # Copy the sw files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    shutil.rmtree(tmpdir)
+    tmpdir = Path(tempfile.TemporaryDirectory().name)
     sw_path = Path(self.pipeline_dir, "subworkflows", NF_CORE_MODULES_NAME, "fastq_align_bowtie2")
     shutil.copytree(sw_path, Path(tmpdir, "fastq_align_bowtie2"))
 
@@ -325,9 +374,3 @@ def test_update_change_of_included_modules(self):
     assert "ensemblvep" not in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
     assert "ensemblvep/vep" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
     assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "ensemblvep/vep").is_dir()
-
-
-def cmp_component(dir1, dir2):
-    """Compare two versions of the same component"""
-    files = ["main.nf", "meta.yml"]
-    return all(filecmp.cmp(Path(dir1, f), Path(dir2, f), shallow=False) for f in files)
