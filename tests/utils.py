@@ -3,8 +3,8 @@ Helper functions for tests
 """
 
 import functools
-import os
 import tempfile
+from pathlib import Path
 from typing import Any, Callable, Tuple
 
 import responses
@@ -12,6 +12,7 @@ import responses
 import nf_core.modules
 import nf_core.pipelines.create.create
 
+TEST_DATA_DIR = Path(__file__).parent / "data"
 OLD_TRIMGALORE_SHA = "9b7a3bdefeaad5d42324aa7dd50f87bea1b04386"
 OLD_TRIMGALORE_BRANCH = "mimic-old-trimgalore"
 GITLAB_URL = "https://gitlab.com/nf-core/modules-test.git"
@@ -93,14 +94,14 @@ def mock_biocontainers_api_calls(rsps: responses.RequestsMock, module: str, vers
     rsps.get(biocontainers_api_url, json=biocontainers_mock, status=200)
 
 
-def create_tmp_pipeline() -> Tuple[str, str, str, str]:
+def create_tmp_pipeline() -> Tuple[Path, Path, str, Path]:
     """Create a new Pipeline for testing"""
 
-    tmp_dir = tempfile.mkdtemp()
-    root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
+    tmp_dir = Path(tempfile.TemporaryDirectory().name)
+    root_repo_dir = Path(__file__).resolve().parent.parent
+    template_dir = Path(root_repo_dir, "nf_core", "pipeline-template")
     pipeline_name = "mypipeline"
-    pipeline_dir = os.path.join(tmp_dir, pipeline_name)
+    pipeline_dir = Path(tmp_dir, pipeline_name)
 
     nf_core.pipelines.create.create.PipelineCreate(
         pipeline_name, "it is mine", "me", no_git=True, outdir=pipeline_dir

@@ -10,6 +10,7 @@ import subprocess
 import tarfile
 import textwrap
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional, Tuple
 from zipfile import ZipFile
 
@@ -697,7 +698,7 @@ class DownloadWorkflow:
         with open(nfconfig_fn, "w") as nfconfig_fh:
             nfconfig_fh.write(nfconfig)
 
-    def find_container_images(self, workflow_directory):
+    def find_container_images(self, workflow_directory: str) -> None:
         """Find container image names for workflow.
 
         Starts by using `nextflow config` to pull out any process.container
@@ -716,7 +717,7 @@ class DownloadWorkflow:
         module_findings = []
 
         # Use linting code to parse the pipeline nextflow config
-        self.nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
+        self.nf_config = nf_core.utils.fetch_wf_config(Path(workflow_directory))
 
         # Find any config variables that look like a container
         for k, v in self.nf_config.items():
@@ -1007,7 +1008,7 @@ class DownloadWorkflow:
 
         # should exist, because find_container_images() is always called before
         if not self.nf_config:
-            self.nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
+            self.nf_config = nf_core.utils.fetch_wf_config(Path(workflow_directory))
 
         # Select registries defined in pipeline config
         configured_registries = [

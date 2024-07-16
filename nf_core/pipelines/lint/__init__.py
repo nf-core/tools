@@ -559,7 +559,7 @@ def run_linting(
 
     # Load the various pipeline configs
     lint_obj._load_lint_config()
-    lint_obj._load_pipeline_config()
+    lint_obj.load_pipeline_config()
     lint_obj._list_files()
 
     # Create the modules lint object

@@ -141,7 +141,7 @@ class Pipeline:
         self.files = []
         self.git_sha = None
         self.minNextflowVersion = None
-        self.wf_path = wf_path
+        self.wf_path = Path(wf_path)
         self.pipeline_name = None
         self.pipeline_prefix = None
         self.schema_obj = None
@@ -156,13 +156,15 @@ class Pipeline:
         if os.environ.get("GITHUB_PR_COMMIT", "") != "":
             self.git_sha = os.environ["GITHUB_PR_COMMIT"]
 
-    def _load(self):
-        """Run core load functions"""
-        self._list_files()
-        self._load_pipeline_config()
-        self._load_conda_environment()
+    def __repr__(self) -> str:
+        return f"<Pipeline '{self.pipeline_name}' at {self.wf_path}>"
 
-    def _list_files(self):
+    def _load(self) -> bool:
+        """Run core load functions"""
+
+        return self._list_files() and self.load_pipeline_config() and self._load_conda_environment()
+
+    def _list_files(self) -> bool:
         """Get a list of all files in the pipeline"""
         try:
             # First, try to get the list of files using git
@@ -174,18 +176,36 @@ class Pipeline:
                     self.files.append(full_fn)
                 else:
                     log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
+            return True
         except subprocess.CalledProcessError as e:
             # Failed, so probably not initialised as a git repository - just a list of all files
             log.debug(f"Couldn't call 'git ls-files': {e}")
             self.files = []
             for subdir, _, files in os.walk(self.wf_path):
                 for fn in files:
-                    self.files.append(Path(subdir) / fn)
+                    self.files.append(Path(subdir, str(fn)))
+            if len(self.files) > 0:
+                return True
+            return False
 
-    def _load_pipeline_config(self):
+    def _load_conda_environment(self) -> bool:
+        """Try to load the pipeline environment.yml file, if it exists"""
+        try:
+            with open(Path(self.wf_path, "environment.yml")) as fh:
+                self.conda_config = yaml.safe_load(fh)
+            return True
+        except FileNotFoundError:
+            log.debug("No conda `environment.yml` file found.")
+            return False
+
+    def _fp(self, fn):
+        """Convenience function to get full path to a file in the pipeline"""
+        return os.path.join(self.wf_path, fn)
+
+    def load_pipeline_config(self) -> bool:
         """Get the nextflow config for this pipeline
 
-        Once loaded, set a few convienence reference class attributes
+        Once loaded, set a few convenience reference class attributes
         """
         self.nf_config = fetch_wf_config(self.wf_path)
 
@@ -194,18 +214,8 @@ class Pipeline:
         nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
         if nextflow_version_match:
             self.minNextflowVersion = nextflow_version_match.group(0)
-
-    def _load_conda_environment(self):
-        """Try to load the pipeline environment.yml file, if it exists"""
-        try:
-            with open(os.path.join(self.wf_path, "environment.yml")) as fh:
-                self.conda_config = yaml.safe_load(fh)
-        except FileNotFoundError:
-            log.debug("No conda `environment.yml` file found.")
-
-    def _fp(self, fn):
-        """Convenience function to get full path to a file in the pipeline"""
-        return os.path.join(self.wf_path, fn)
+            return True
+        return False
 
 
 def is_pipeline_directory(wf_path):
@@ -229,7 +239,7 @@ def is_pipeline_directory(wf_path):
             raise UserWarning(warning)
 
 
-def fetch_wf_config(wf_path: str, cache_config: bool = True) -> dict:
+def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
 
@@ -263,7 +273,7 @@ def fetch_wf_config(wf_path: str, cache_config: bool = True) -> dict:
     concat_hash = ""
     for fn in ["nextflow.config", "main.nf"]:
         try:
-            with open(Path(wf_path, fn), "rb") as fh:
+            with open(wf_path / fn, "rb") as fh:
                 concat_hash += hashlib.sha256(fh.read()).hexdigest()
         except FileNotFoundError:
             pass

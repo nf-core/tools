@@ -38,10 +38,10 @@ class ModulesJson:
         Args:
             pipeline_dir (str): The pipeline directory
         """
-        self.dir = pipeline_dir
-        self.modules_dir = Path(self.dir, "modules")
-        self.subworkflows_dir = Path(self.dir, "subworkflows")
-        self.modules_json_path = Path(self.dir, "modules.json")
+        self.dir = Path(pipeline_dir)
+        self.modules_dir = self.dir / "modules"
+        self.subworkflows_dir = self.dir / "subworkflows"
+        self.modules_json_path = self.dir / "modules.json"
         self.modules_json = None
         self.pipeline_modules = None
         self.pipeline_subworkflows = None

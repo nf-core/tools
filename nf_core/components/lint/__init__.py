@@ -117,7 +117,7 @@ class ComponentLint(ComponentCommand):
                     )
                     for comp in self.get_local_components()
                 ]
-            self.config = nf_core.utils.fetch_wf_config(self.dir, cache_config=True)
+            self.config = nf_core.utils.fetch_wf_config(Path(self.dir), cache_config=True)
         else:
             component_dir = Path(
                 self.dir,

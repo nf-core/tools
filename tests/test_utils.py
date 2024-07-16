@@ -95,9 +95,9 @@ class TestUtils(unittest.TestCase):
         os.environ.pop("PY_COLORS", None)
         assert nf_core.utils.rich_force_colors() is True
 
-    def test_load_pipeline_config(self):
+    def testload_pipeline_config(self):
         """Load the pipeline Nextflow config"""
-        self.pipeline_obj._load_pipeline_config()
+        self.pipeline_obj.load_pipeline_config()
         assert self.pipeline_obj.nf_config["dag.enabled"] == "true"
 
     # TODO nf-core: Assess and strip out if no longer required for DSL2

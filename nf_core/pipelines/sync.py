@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import shutil
+from pathlib import Path
 
 import git
 import questionary
@@ -69,7 +70,7 @@ class PipelineSync:
     ):
         """Initialise syncing object"""
 
-        self.pipeline_dir = os.path.abspath(pipeline_dir)
+        self.pipeline_dir = Path(pipeline_dir).resolve()
         self.from_branch = from_branch
         self.original_branch = None
         self.original_merge_branch = f"nf-core-template-merge-{nf_core.__version__}"
@@ -209,7 +210,7 @@ class PipelineSync:
 
         # Fetch workflow variables
         log.debug("Fetching workflow config variables")
-        self.wf_config = nf_core.utils.fetch_wf_config(self.pipeline_dir)
+        self.wf_config = nf_core.utils.fetch_wf_config(Path(self.pipeline_dir))
 
         # Check that we have the required variables
         for rvar in self.required_config_vars:

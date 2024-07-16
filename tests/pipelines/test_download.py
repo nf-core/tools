@@ -18,7 +18,7 @@ from nf_core.pipelines.download import ContainerError, DownloadWorkflow, Workflo
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import run_cmd
 
-from ..utils import with_temporary_folder
+from ..utils import TEST_DATA_DIR, with_temporary_folder
 
 
 class DownloadTest(unittest.TestCase):
@@ -139,12 +139,12 @@ class DownloadTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as test_outdir:
             download_obj = DownloadWorkflow(pipeline="dummy", revision="1.2.0", outdir=test_outdir)
-            shutil.copytree(test_pipeline_dir, os.path.join(test_outdir, "workflow"))
+            shutil.copytree(test_pipeline_dir, Path(test_outdir, "workflow"))
             download_obj.download_configs()
 
             # Test the function
             download_obj.wf_use_local_configs("workflow")
-            wf_config = nf_core.utils.fetch_wf_config(os.path.join(test_outdir, "workflow"), cache_config=False)
+            wf_config = nf_core.utils.fetch_wf_config(Path(test_outdir, "workflow"), cache_config=False)
             assert wf_config["params.custom_config_base"] == f"{test_outdir}/workflow/../configs/"
 
     #
@@ -173,7 +173,7 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("nf_core.utils.fetch_wf_config")
     def test__find_container_images_config_nextflow(self, tmp_path, mock_fetch_wf_config):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
-        result = run_cmd("nextflow", f"config -flat {Path(__file__).resolve().parent / 'data/mock_config_containers'}")
+        result = run_cmd("nextflow", f"config -flat {TEST_DATA_DIR}'/mock_config_containers'")
         if result is not None:
             nfconfig_raw, _ = result
             config = {}
@@ -203,7 +203,7 @@ class DownloadTest(unittest.TestCase):
     def test_find_container_images_modules(self, tmp_path, mock_fetch_wf_config):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
         mock_fetch_wf_config.return_value = {}
-        download_obj.find_container_images(Path(__file__).resolve().parent / "data/mock_module_containers")
+        download_obj.find_container_images(TEST_DATA_DIR / "mock_module_containers")
 
         # mock_docker_single_quay_io.nf
         assert "quay.io/biocontainers/singlequay:1.9--pyh9f0ad1d_0" in download_obj.containers
@@ -546,7 +546,7 @@ class DownloadTest(unittest.TestCase):
             outdir=os.path.join(tmp_dir, "new"),
             revision="3.9",
             compress_type="none",
-            container_cache_index=Path(__file__).resolve().parent / "data/testdata_remote_containers.txt",
+            container_cache_index=TEST_DATA_DIR / "data/testdata_remote_containers.txt",
         )
 
         download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.

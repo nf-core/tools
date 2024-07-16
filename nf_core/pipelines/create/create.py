@@ -50,7 +50,7 @@ class PipelineCreate:
         version: str = "1.0.0dev",
         no_git: bool = False,
         force: bool = False,
-        outdir: Optional[str] = None,
+        outdir: Optional[Union[Path, str]] = None,
         template_config: Optional[Union[str, CreateConfig, Path]] = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
@@ -61,7 +61,7 @@ class PipelineCreate:
             self.config = template_config
         elif from_config_file:
             # Try reading config file
-            _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else ".")
+            _, config_yml = nf_core.utils.load_tools_config(str(outdir) if outdir else ".")
             # Obtain a CreateConfig object from `.nf-core.yml` config file
             if "template" in config_yml:
                 self.config = CreateConfig(**config_yml["template"])
@@ -372,6 +372,8 @@ class PipelineCreate:
             config_fn, config_yml = nf_core.utils.load_tools_config(self.outdir)
             with open(config_fn, "w") as fh:
                 config_yml.update(template=self.config.model_dump())
+                # convert posix path to string for yaml dump
+                config_yml["template"]["outdir"] = str(config_yml["template"]["outdir"])
                 yaml.safe_dump(config_yml, fh)
                 log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
                 run_prettier_on_file(self.outdir / config_fn)

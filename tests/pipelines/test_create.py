@@ -2,16 +2,14 @@
 
 import os
 import unittest
-from pathlib import Path
 
 import git
 import yaml
 
 import nf_core.pipelines.create.create
 
-from ..utils import with_temporary_folder
+from ..utils import TEST_DATA_DIR, with_temporary_folder
 
-TEST_DATA_DIR = Path(__file__).parent / "data"
 PIPELINE_TEMPLATE_YML = TEST_DATA_DIR / "pipeline_create_template.yml"
 PIPELINE_TEMPLATE_YML_SKIP = TEST_DATA_DIR / "pipeline_create_template_skip.yml"
 
