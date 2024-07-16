@@ -5,6 +5,9 @@ requires = ["setuptools>=40.6.0", "wheel"]
 [tool.pytest.ini_options]
 markers = ["datafiles: load datafiles"]
 testpaths = ["tests"]
+python_files = ["test_*.py"]
+# automatically run coroutine tests with asyncio
+asyncio_mode = ["auto"]
 norecursedirs = [
     ".*",
     "build",
