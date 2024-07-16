@@ -6,7 +6,7 @@ def test_version_consistency(self):
     """Tests that config variable existence test fails with bad pipeline name"""
     new_pipeline = self._make_pipeline_copy()
     lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
-    lint_obj._load_pipeline_config()
+    lint_obj.load_pipeline_config()
     lint_obj.nextflow_config()
 
     result = lint_obj.version_consistency()

@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import nf_core.pipelines.lint
@@ -31,12 +30,12 @@ def test_files_exist_missing_main(self):
     assert "File not found: `main.nf`" in results["warned"]
 
 
-def test_files_exist_depreciated_file(self):
-    """Check whether depreciated file issues warning"""
+def test_files_exist_deprecated_file(self):
+    """Check whether deprecated file issues warning"""
     new_pipeline = self._make_pipeline_copy()
 
     nf = Path(new_pipeline, "parameters.settings.json")
-    os.system(f"touch {nf}")
+    nf.touch()
 
     lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
