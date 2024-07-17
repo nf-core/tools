@@ -30,6 +30,29 @@ from nf_core.pipelines.lint_utils import console
 from nf_core.utils import plural_s as _s
 from nf_core.utils import strip_ansi_codes
 
+from .actions_awsfulltest import actions_awsfulltest
+from .actions_awstest import actions_awstest
+from .actions_ci import actions_ci
+from .actions_schema_validation import actions_schema_validation
+from .configs import base_config, modules_config
+from .files_exist import files_exist
+from .files_unchanged import files_unchanged
+from .merge_markers import merge_markers
+from .modules_json import modules_json
+from .modules_structure import modules_structure
+from .multiqc_config import multiqc_config
+from .nextflow_config import nextflow_config
+from .nfcore_yml import nfcore_yml
+from .pipeline_name_conventions import pipeline_name_conventions
+from .pipeline_todos import pipeline_todos
+from .readme import readme
+from .schema_description import schema_description
+from .schema_lint import schema_lint
+from .schema_params import schema_params
+from .system_exit import system_exit
+from .template_strings import template_strings
+from .version_consistency import version_consistency
+
 log = logging.getLogger(__name__)
 
 
@@ -52,32 +75,30 @@ class PipelineLint(nf_core.utils.Pipeline):
         warned (list): A list of tuples of the form: ``(<warned no>, <reason>)``
     """
 
-    from .actions_awsfulltest import actions_awsfulltest  # type: ignore[misc]
-    from .actions_awstest import actions_awstest  # type: ignore[misc]
-    from .actions_ci import actions_ci  # type: ignore[misc]
-    from .actions_schema_validation import (  # type: ignore[misc]
-        actions_schema_validation,
-    )
-    from .configs import base_config, modules_config  # type: ignore[misc]
-    from .files_exist import files_exist  # type: ignore[misc]
-    from .files_unchanged import files_unchanged  # type: ignore[misc]
-    from .merge_markers import merge_markers  # type: ignore[misc]
-    from .modules_json import modules_json  # type: ignore[misc]
-    from .modules_structure import modules_structure  # type: ignore[misc]
-    from .multiqc_config import multiqc_config  # type: ignore[misc]
-    from .nextflow_config import nextflow_config  # type: ignore[misc]
-    from .nfcore_yml import nfcore_yml  # type: ignore[misc]
-    from .pipeline_name_conventions import (  # type: ignore[misc]
-        pipeline_name_conventions,
-    )
-    from .pipeline_todos import pipeline_todos  # type: ignore[misc]
-    from .readme import readme  # type: ignore[misc]
-    from .schema_description import schema_description  # type: ignore[misc]
-    from .schema_lint import schema_lint  # type: ignore[misc]
-    from .schema_params import schema_params  # type: ignore[misc]
-    from .system_exit import system_exit  # type: ignore[misc]
-    from .template_strings import template_strings  # type: ignore[misc]
-    from .version_consistency import version_consistency  # type: ignore[misc]
+    # Import all linting tests as methods for this class
+    actions_awsfulltest = actions_awsfulltest
+    actions_awstest = actions_awstest
+    actions_ci = actions_ci
+    actions_schema_validation = actions_schema_validation
+    base_config = base_config
+    modules_config = modules_config
+    files_exist = files_exist
+    files_unchanged = files_unchanged
+    merge_markers = merge_markers
+    modules_json = modules_json
+    modules_structure = modules_structure
+    multiqc_config = multiqc_config
+    nextflow_config = nextflow_config
+    nfcore_yml = nfcore_yml
+    pipeline_name_conventions = pipeline_name_conventions
+    pipeline_todos = pipeline_todos
+    readme = readme
+    schema_description = schema_description
+    schema_lint = schema_lint
+    schema_params = schema_params
+    system_exit = system_exit
+    template_strings = template_strings
+    version_consistency = version_consistency
 
     def __init__(
         self, wf_path, release_mode=False, fix=(), key=None, fail_ignored=False, fail_warned=False, hide_progress=False
