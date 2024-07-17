@@ -39,10 +39,11 @@ def template_strings(self):
     ignored = []
     # Files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("template_strings", [])
+    files = self.list_files()
 
     # Loop through files, searching for string
     num_matches = 0
-    for fn in self.files:
+    for fn in files:
         if str(fn.relative_to(self.wf_path)) in ignore_files:
             ignored.append(f"Ignoring Jinja template strings in file `{fn}`")
             continue

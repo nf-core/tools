@@ -162,31 +162,7 @@ class Pipeline:
     def _load(self) -> bool:
         """Run core load functions"""
 
-        return self._list_files() and self.load_pipeline_config() and self._load_conda_environment()
-
-    def _list_files(self) -> bool:
-        """Get a list of all files in the pipeline"""
-        try:
-            # First, try to get the list of files using git
-            git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.wf_path).splitlines()
-            self.files = []
-            for fn in git_ls_files:
-                full_fn = Path(self.wf_path) / fn.decode("utf-8")
-                if full_fn.is_file():
-                    self.files.append(full_fn)
-                else:
-                    log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
-            return True
-        except subprocess.CalledProcessError as e:
-            # Failed, so probably not initialised as a git repository - just a list of all files
-            log.debug(f"Couldn't call 'git ls-files': {e}")
-            self.files = []
-            for subdir, _, files in os.walk(self.wf_path):
-                for fn in files:
-                    self.files.append(Path(subdir, str(fn)))
-            if len(self.files) > 0:
-                return True
-            return False
+        return self.load_pipeline_config() and self._load_conda_environment()
 
     def _load_conda_environment(self) -> bool:
         """Try to load the pipeline environment.yml file, if it exists"""
@@ -201,6 +177,31 @@ class Pipeline:
     def _fp(self, fn):
         """Convenience function to get full path to a file in the pipeline"""
         return os.path.join(self.wf_path, fn)
+
+    def list_files(self) -> List[Path]:
+        """Get a list of all files in the pipeline"""
+        files = []
+        try:
+            # First, try to get the list of files using git
+            git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.wf_path).splitlines()
+            for fn in git_ls_files:
+                full_fn = Path(self.wf_path) / fn.decode("utf-8")
+                if full_fn.is_file():
+                    files.append(full_fn)
+                else:
+                    log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
+        except subprocess.CalledProcessError as e:
+            # Failed, so probably not initialised as a git repository - just a list of all files
+            log.debug(f"Couldn't call 'git ls-files': {e}")
+            files = []
+            for file_path in self.wf_path.rglob("*"):
+                if file_path.is_file():
+                    # Append the file path to the list
+                    files.append(file_path.relative_to(self.wf_path))
+            if len(files) == 0:
+                log.debug(f"No files found in pipeline: {self.wf_path}")
+
+        return files
 
     def load_pipeline_config(self) -> bool:
         """Get the nextflow config for this pipeline
@@ -1082,7 +1083,7 @@ def determine_base_dir(directory="."):
     return directory if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
 
 
-def get_first_available_path(directory, paths):
+def get_first_available_path(directory: Union[Path, str], paths: List[str]) -> Union[Path, None]:
     for p in paths:
         if Path(directory, p).is_file():
             return Path(directory, p)
