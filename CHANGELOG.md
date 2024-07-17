@@ -50,6 +50,7 @@
 - update api docs to new structure ([#3054](https://github.com/nf-core/tools/pull/3054))
 - Update to pytest v8 and move it to dev dependencies ([#3058](https://github.com/nf-core/tools/pull/3058))
 - handle new jsonschema error type ([#3061](https://github.com/nf-core/tools/pull/3061))
+- Update python:3.12-slim Docker digest to f11725a ([#3071](https://github.com/nf-core/tools/pull/3071))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
