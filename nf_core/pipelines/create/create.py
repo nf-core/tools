@@ -92,7 +92,7 @@ class PipelineCreate:
                 "CODE_OF_CONDUCT.md",
                 ".github/workflows/awsfulltest.yml",
                 ".github/workflows/awstest.yml",
-                ".github/workflows/release-announcements.yml"
+                ".github/workflows/release-announcements.yml",
             ],
         }
         # Get list of files we're skipping with the supplied skip keys
