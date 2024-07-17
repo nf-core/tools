@@ -6,8 +6,6 @@ requires = ["setuptools>=40.6.0", "wheel"]
 markers = ["datafiles: load datafiles"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-# automatically run coroutine tests with asyncio
-asyncio_mode = ["auto"]
 norecursedirs = [
     ".*",
     "build",
