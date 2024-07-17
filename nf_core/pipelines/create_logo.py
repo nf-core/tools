@@ -90,11 +90,14 @@ def create_logo(
             color = theme == "dark" and (250, 250, 250) or (5, 5, 5)
             draw.text((110, 465), text, color, font=font)
 
-            # Crop to max width
-            img = img.crop((0, 0, max_width, height))
+            if img is not None:
+                # Crop to max width
+                img = img.crop((0, 0, max_width, height))
 
-            # Resize
-            img = img.resize((width, int((width / max_width) * height)))
+                # Resize
+                img = img.resize((width, int((width / max_width) * height)))
+            else:
+                log.error("Failed to create logo, no image object created.")
 
             # Save to cache
             Path(cache_path.parent).mkdir(parents=True, exist_ok=True)

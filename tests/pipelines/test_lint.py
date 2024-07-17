@@ -1,8 +1,6 @@
 """Some tests covering the linting code."""
 
-import fnmatch
 import json
-import os
 from pathlib import Path
 
 import yaml
@@ -133,16 +131,18 @@ class TestLint(TestPipelines):
 
         # Get list of existing .md files
         existing_docs = []
-        for fn in os.listdir(docs_basedir):
-            if fnmatch.fnmatch(fn, "*.md") and not fnmatch.fnmatch(fn, "index.md"):
-                existing_docs.append(Path(docs_basedir, fn))
+        existing_docs = [
+            str(Path(docs_basedir, fn))
+            for fn in Path(docs_basedir).iterdir()
+            if fn.match("*.md") and not fn.match("index.md")
+        ]
 
         # Check .md files against each test name
         lint_obj = nf_core.pipelines.lint.PipelineLint("", True)
         for test_name in lint_obj.lint_tests:
             fn = Path(docs_basedir, f"{test_name}.md")
-            assert os.path.exists(fn), f"Could not find lint docs .md file: {fn}"
-            existing_docs.remove(fn)
+            assert fn.exists(), f"Could not find lint docs .md file: {fn}"
+            existing_docs.remove(str(fn))
 
         # Check that we have no remaining .md files that we didn't expect
         assert len(existing_docs) == 0, f"Unexpected lint docs .md files found: {', '.join(existing_docs)}"
@@ -150,11 +150,7 @@ class TestLint(TestPipelines):
     #######################
     # SPECIFIC LINT TESTS #
     #######################
-    from .lint.actions_awsfulltest import (  # type: ignore[misc]
-        test_actions_awsfulltest_fail,
-        test_actions_awsfulltest_pass,
-        test_actions_awsfulltest_warn,
-    )
+
     from .lint.actions_awstest import (  # type: ignore[misc]
         test_actions_awstest_fail,
         test_actions_awstest_pass,
