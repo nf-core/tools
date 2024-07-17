@@ -2181,14 +2181,14 @@ def command_lint(
     help="The name of the GitHub organisation where the pipeline will be hosted (default: nf-core)",
 )
 @click.pass_context
-def command_create(ctx, name, description, author, version, force, outdir, template_yaml, plain, organisation):
+def command_create(ctx, name, description, author, version, force, outdir, template_yaml, organisation):
     """
     Use `nf-core pipelines create` instead.
     """
     log.warning(
         "The `[magenta]nf-core create[/]` command is deprecated. Use `[magenta]nf-core pipelines create[/]` instead."
     )
-    pipelines_create(ctx, name, description, author, version, force, outdir, template_yaml, plain, organisation)
+    pipelines_create(ctx, name, description, author, version, force, outdir, template_yaml, organisation)
 
 
 # Main script is being run - launch the CLI
