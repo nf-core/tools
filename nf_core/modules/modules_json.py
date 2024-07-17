@@ -6,6 +6,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Union
 
 import git
 import questionary
@@ -31,7 +32,7 @@ class ModulesJson:
     An object for handling a 'modules.json' file in a pipeline
     """
 
-    def __init__(self, pipeline_dir: str):
+    def __init__(self, pipeline_dir: Union[str, Path]):
         """
         Initialise the object.
 
