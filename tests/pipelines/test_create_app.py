@@ -4,6 +4,8 @@ from unittest import mock
 
 from nf_core.pipelines.create import PipelineCreateApp
 
+INIT_FILE = "../../nf_core/pipelines/create/__init__.py"
+
 
 async def test_app_bindings():
     """Test that the app bindings work."""
@@ -23,7 +25,7 @@ async def test_app_bindings():
 
 def test_welcome(snap_compare):
     """Test snapshot for the first screen in the app. The welcome screen."""
-    assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50))
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50))
 
 
 def test_choose_type(snap_compare):
@@ -36,7 +38,7 @@ def test_choose_type(snap_compare):
     async def run_before(pilot) -> None:
         await pilot.click("#start")
 
-    assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
 def test_basic_details_nfcore(snap_compare):
@@ -51,7 +53,7 @@ def test_basic_details_nfcore(snap_compare):
         await pilot.click("#start")
         await pilot.click("#type_nfcore")
 
-    assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
 def test_basic_details_custom(snap_compare):
@@ -66,7 +68,7 @@ def test_basic_details_custom(snap_compare):
         await pilot.click("#start")
         await pilot.click("#type_custom")
 
-    assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
 def test_type_nfcore(snap_compare):
@@ -89,7 +91,7 @@ def test_type_nfcore(snap_compare):
         await pilot.press("M", "e")
         await pilot.click("#next")
 
-    assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
 def test_type_nfcore_validation(snap_compare):
@@ -108,7 +110,7 @@ def test_type_nfcore_validation(snap_compare):
         await pilot.click("#next")
         await pilot.pause()
 
-    assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
 def test_type_custom(snap_compare):
@@ -132,7 +134,7 @@ def test_type_custom(snap_compare):
         await pilot.press("M", "e")
         await pilot.click("#next")
 
-    assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
 def test_final_details(snap_compare):
@@ -157,7 +159,7 @@ def test_final_details(snap_compare):
         await pilot.click("#next")
         await pilot.click("#continue")
 
-    assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
 def test_customisation_help(snap_compare):
@@ -184,7 +186,7 @@ def test_customisation_help(snap_compare):
         await pilot.press("tab")
         await pilot.press("enter")
 
-    assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
 def test_github_question(tmpdir, snap_compare):
@@ -216,7 +218,7 @@ def test_github_question(tmpdir, snap_compare):
         await pilot.app.workers.wait_for_complete()
         await pilot.click("#close_screen")
 
-    assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
 @mock.patch("nf_core.pipelines.create.githubrepo.GithubRepo._get_github_credentials")
@@ -255,7 +257,7 @@ def test_github_details(mock_get_github_credentials, tmpdir, snap_compare):
         await pilot.click("#close_screen")
         await pilot.click("#github_repo")
 
-    assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
 def test_github_exit_message(tmpdir, snap_compare):
@@ -291,4 +293,4 @@ def test_github_exit_message(tmpdir, snap_compare):
         await pilot.click("#github_repo")
         await pilot.click("#exit")
 
-    assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
+    assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
