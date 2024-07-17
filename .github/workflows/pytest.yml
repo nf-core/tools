@@ -67,7 +67,7 @@ jobs:
       - name: List tests
         id: list_tests
         run: |
-          echo "tests=$(find tests/**/test_* | tac | sed 's/tests\///g'  | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_OUTPUT
+          echo "tests=$(find tests -type f -name "test_*.py" | tac | sed 's/tests\///g'  | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_OUTPUT
     outputs:
       tests: ${{ steps.list_tests.outputs.tests }}
 
