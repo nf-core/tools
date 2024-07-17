@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple, Union
 log = logging.getLogger(__name__)
 
 
-def files_exist(self) -> Dict[str, Union[List[str], bool]]:
+def files_exist(self) -> Dict[str, List[str]]:
     """Checks a given pipeline directory for required files.
 
     Iterates through the pipeline's directory content and checks that specified

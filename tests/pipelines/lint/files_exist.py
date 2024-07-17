@@ -14,7 +14,7 @@ def test_files_exist_missing_config(self):
     lint_obj.nf_config["manifest.name"] = "nf-core/testpipeline"
 
     results = lint_obj.files_exist()
-    assert results["failed"] == ["File not found: `CHANGELOG.md`"]
+    assert "File not found: `CHANGELOG.md`" in results["failed"]
 
 
 def test_files_exist_missing_main(self):

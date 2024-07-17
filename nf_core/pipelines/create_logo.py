@@ -20,7 +20,6 @@ def create_logo(
     force: bool = False,
 ) -> Path:
     """Create a logo for a pipeline."""
-
     if not text:
         raise UserWarning("Please provide the name of the text to put on the logo.")
     dir = Path(dir)

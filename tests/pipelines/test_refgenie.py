@@ -5,6 +5,7 @@ import shlex
 import subprocess
 import tempfile
 import unittest
+from pathlib import Path
 
 
 class TestRefgenie(unittest.TestCase):
@@ -14,36 +15,35 @@ class TestRefgenie(unittest.TestCase):
         """
         Prepare a refgenie config file
         """
-        self.tmp_dir = tempfile.mkdtemp()
-        self.NXF_HOME = os.path.join(self.tmp_dir, ".nextflow")
-        self.NXF_REFGENIE_PATH = os.path.join(self.NXF_HOME, "nf-core", "refgenie_genomes.config")
-        self.REFGENIE = os.path.join(self.tmp_dir, "genomes_config.yaml")
-        self.translation_file = os.path.join(self.tmp_dir, "alias_translations.yaml")
+        self.tmp_dir = Path(tempfile.TemporaryDirectory().name)
+        self.NXF_HOME = self.tmp_dir / ".nextflow"
+        self.NXF_REFGENIE_PATH = self.NXF_HOME / "nf-core" / "refgenie_genomes.config"
+        self.REFGENIE = self.tmp_dir / "genomes_config.yaml"
+        self.translation_file = self.tmp_dir / "alias_translations.yaml"
         # Set NXF_HOME environment variable
         # avoids adding includeConfig statement to config file outside the current tmpdir
         try:
             self.NXF_HOME_ORIGINAL = os.environ["NXF_HOME"]
         except Exception:
             self.NXF_HOME_ORIGINAL = None
-        os.environ["NXF_HOME"] = self.NXF_HOME
+        os.environ["NXF_HOME"] = str(self.NXF_HOME)
 
         # create NXF_HOME and nf-core directories
-        os.makedirs(os.path.join(self.NXF_HOME, "nf-core"), exist_ok=True)
+        nf_core_dir = self.NXF_HOME / "nf-core"
+        nf_core_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize a refgenie config
         os.system(f"refgenie init -c {self.REFGENIE}")
 
         # Add NXF_REFGENIE_PATH to refgenie config
         with open(self.REFGENIE, "a") as fh:
-            fh.write(f"nextflow_config: {os.path.join(self.NXF_REFGENIE_PATH)}\n")
+            fh.write(f"nextflow_config: {self.NXF_REFGENIE_PATH}\n")
 
         # Add an alias translation to YAML file
         with open(self.translation_file, "a") as fh:
             fh.write("ensembl_gtf: gtf\n")
 
     def tearDown(self) -> None:
-        # Remove the tempdir again
-        os.system(f"rm -rf {self.tmp_dir}")
         # Reset NXF_HOME environment variable
         if self.NXF_HOME_ORIGINAL is None:
             del os.environ["NXF_HOME"]

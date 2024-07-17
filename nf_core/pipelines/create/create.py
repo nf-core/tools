@@ -355,7 +355,6 @@ class PipelineCreate:
         # Remove all unused parameters in the nextflow schema
         if not self.jinja_params["igenomes"] or not self.jinja_params["nf_core_configs"]:
             self.update_nextflow_schema()
-
         if self.config.is_nfcore:
             # Make a logo and save it, if it is a nf-core pipeline
             self.make_pipeline_logo()
@@ -513,11 +512,15 @@ class PipelineCreate:
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
         email_logo_path = Path(self.outdir) / "assets"
-        create_logo(text=self.jinja_params["short_name"], dir=email_logo_path, theme="light", force=self.force)
+        create_logo(text=self.jinja_params["short_name"], dir=email_logo_path, theme="light", force=bool(self.force))
         for theme in ["dark", "light"]:
             readme_logo_path = Path(self.outdir) / "docs" / "images"
             create_logo(
-                text=self.jinja_params["short_name"], dir=readme_logo_path, width=600, theme=theme, force=self.force
+                text=self.jinja_params["short_name"],
+                dir=readme_logo_path,
+                width=600,
+                theme=theme,
+                force=bool(self.force),
             )
 
     def git_init_pipeline(self):
