@@ -197,7 +197,7 @@ class Pipeline:
             for file_path in self.wf_path.rglob("*"):
                 if file_path.is_file():
                     # Append the file path to the list
-                    files.append(file_path.relative_to(self.wf_path))
+                    files.append(file_path)
             if len(files) == 0:
                 log.debug(f"No files found in pipeline: {self.wf_path}")
 

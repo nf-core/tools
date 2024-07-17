@@ -303,10 +303,7 @@ class TestLaunch(TestPipelines):
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
         # Check command
-        assert (
-            self.launcher.nextflow_cmd
-            == f'nextflow run {self.pipeline_dir} -params-file "{Path(self.nf_params_fn).relative_to(Path.cwd())}"'
-        )
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir} -params-file "{self.nf_params_fn}"'
         # Check saved parameters file
         with open(self.nf_params_fn) as fh:
             try:

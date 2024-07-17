@@ -109,8 +109,8 @@ class TestUtils(unittest.TestCase):
 
     def test_list_files_git(self):
         """Test listing pipeline files using `git ls`"""
-        self.pipeline_obj.list_files()
-        assert Path(self.test_pipeline_dir, "main.nf") in self.pipeline_obj.files
+        files = self.pipeline_obj.list_files()
+        assert Path(self.test_pipeline_dir, "main.nf") in files
 
     @with_temporary_folder
     def test_list_files_no_git(self, tmpdir):
@@ -119,8 +119,8 @@ class TestUtils(unittest.TestCase):
         tmp_fn = Path(tmpdir, "testfile")
         tmp_fn.touch()
         pipeline_obj = nf_core.utils.Pipeline(tmpdir)
-        pipeline_obj.list_files()
-        assert tmp_fn in pipeline_obj.files
+        files = pipeline_obj.list_files()
+        assert tmp_fn in files
 
     @mock.patch("os.path.exists")
     @mock.patch("os.makedirs")

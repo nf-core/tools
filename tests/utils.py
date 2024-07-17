@@ -105,7 +105,7 @@ def create_tmp_pipeline() -> Tuple[Path, Path, str, Path]:
     pipeline_dir = tmp_dir / pipeline_name
 
     nf_core.pipelines.create.create.PipelineCreate(
-        pipeline_name, "it is mine", "me", no_git=False, outdir=str(pipeline_dir)
+        pipeline_name, "it is mine", "me", no_git=False, outdir=pipeline_dir
     ).init_pipeline()
 
     # return values to instance variables for later use in test methods
