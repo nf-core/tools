@@ -231,7 +231,7 @@ class DownloadWorkflow:
             summary_log.append(f"Enabled for Seqera Platform: '{self.platform}'")
 
         # Check that the outdir doesn't already exist
-        if os.path.exists(self.outdir):
+        if self.outdir is not None and os.path.exists(self.outdir):
             if not self.force:
                 raise DownloadError(
                     f"Output directory '{self.outdir}' already exists (use [red]--force[/] to overwrite)"

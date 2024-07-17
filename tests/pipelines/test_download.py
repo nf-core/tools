@@ -13,6 +13,7 @@ from unittest import mock
 import pytest
 
 import nf_core.pipelines.create.create
+import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.download import ContainerError, DownloadWorkflow, WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
@@ -643,6 +644,11 @@ class DownloadTest(unittest.TestCase):
             in download_obj.containers
         )  # indirect definition via $container variable.
 
+        # clean-up
+        # remove "nf-core-rnaseq*" directories
+        for path in Path().cwd().glob("nf-core-rnaseq*"):
+            shutil.rmtree(path)
+
     #
     # Brief test adding a single custom tag to Seqera Platform download
     #
@@ -658,6 +664,11 @@ class DownloadTest(unittest.TestCase):
             additional_tags=("3.9=cool_revision",),
         )
         assert isinstance(download_obj.additional_tags, list) and len(download_obj.additional_tags) == 1
+
+        # clean-up
+        # remove "nf-core-rnaseq*" directories
+        for path in Path().cwd().glob("nf-core-rnaseq*"):
+            shutil.rmtree(path)
 
     #
     # Test adding custom tags to Seqera Platform download (full test)
@@ -727,3 +738,8 @@ class DownloadTest(unittest.TestCase):
                     "[red]Could not apply invalid `--tag` specification[/]: 'What is this?'",
                 }
             )
+
+            # clean-up
+            # remove "nf-core-rnaseq*" directories
+            for path in Path().cwd().glob("nf-core-rnaseq*"):
+                shutil.rmtree(path)
