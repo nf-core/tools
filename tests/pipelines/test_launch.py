@@ -1,7 +1,7 @@
 """Tests covering the pipeline launch code."""
 
 import json
-import os
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -14,6 +14,11 @@ from ..utils import with_temporary_file, with_temporary_folder
 
 
 class TestLaunch(TestPipelines):
+    def setUp(self) -> None:
+        super().setUp()
+        self.nf_params_fn = Path(self.pipeline_dir, "nf-params.json")
+        self.launcher = nf_core.pipelines.launch.Launch(self.pipeline_dir, params_out=self.nf_params_fn)
+
     @mock.patch.object(nf_core.pipelines.launch.Launch, "prompt_web_gui", side_effect=[True])
     @mock.patch.object(nf_core.pipelines.launch.Launch, "launch_web_gui")
     def test_launch_pipeline(self, mock_webbrowser, mock_lauch_web_gui):
@@ -47,12 +52,12 @@ class TestLaunch(TestPipelines):
     @with_temporary_folder
     def test_make_pipeline_schema(self, tmp_path):
         """Create a workflow, but delete the schema file, then try to load it"""
-        test_pipeline_dir = os.path.join(tmp_path, "wf")
+        test_pipeline_dir = Path(tmp_path, "wf")
         create_obj = nf_core.pipelines.create.create.PipelineCreate(
             "testpipeline", "a description", "Me", outdir=test_pipeline_dir, no_git=True
         )
         create_obj.init_pipeline()
-        os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
+        Path(test_pipeline_dir, "nextflow_schema.json").unlink()
         self.launcher = nf_core.pipelines.launch.Launch(test_pipeline_dir, params_out=self.nf_params_fn)
         self.launcher.get_pipeline_schema()
         assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
@@ -300,7 +305,7 @@ class TestLaunch(TestPipelines):
         # Check command
         assert (
             self.launcher.nextflow_cmd
-            == f'nextflow run {self.pipeline_dir} -params-file "{os.path.relpath(self.nf_params_fn)}"'
+            == f'nextflow run {self.pipeline_dir} -params-file "{Path(self.nf_params_fn).relative_to(Path.cwd())}"'
         )
         # Check saved parameters file
         with open(self.nf_params_fn) as fh:

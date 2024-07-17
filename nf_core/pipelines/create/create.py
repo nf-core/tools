@@ -61,7 +61,7 @@ class PipelineCreate:
             self.config = template_config
         elif from_config_file:
             # Try reading config file
-            _, config_yml = nf_core.utils.load_tools_config(str(outdir) if outdir else ".")
+            _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else ".")
             # Obtain a CreateConfig object from `.nf-core.yml` config file
             if "template" in config_yml:
                 self.config = CreateConfig(**config_yml["template"])

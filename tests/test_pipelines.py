@@ -1,9 +1,6 @@
 import shutil
-from pathlib import Path
 from unittest import TestCase
 
-import nf_core.pipelines.launch
-import nf_core.pipelines.lint
 from nf_core.utils import Pipeline
 
 from .utils import create_tmp_pipeline
@@ -15,11 +12,6 @@ class TestPipelines(TestCase):
         self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
         self.pipeline_obj = Pipeline(self.pipeline_dir)
         self.pipeline_obj._load()
-
-        self.nf_params_fn = Path(self.pipeline_dir, "nf-params.json")
-        self.launcher = nf_core.pipelines.launch.Launch(self.pipeline_dir, params_out=self.nf_params_fn)
-
-        self.lint_obj = nf_core.pipelines.lint.PipelineLint(self.pipeline_dir)
 
     def tearDown(self) -> None:
         """Remove the test pipeline directory"""

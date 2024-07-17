@@ -17,6 +17,10 @@ from ..utils import with_temporary_folder
 class TestLint(TestPipelines):
     """Class for lint tests"""
 
+    def setUp(self) -> None:
+        super().setUp()
+        self.lint_obj = nf_core.pipelines.lint.PipelineLint(self.pipeline_dir)
+
     ##########################
     # CORE lint.py FUNCTIONS #
     ##########################

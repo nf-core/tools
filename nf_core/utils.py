@@ -133,7 +133,7 @@ class Pipeline:
         schema_obj (obj): A :class:`PipelineSchema` object
     """
 
-    def __init__(self, wf_path):
+    def __init__(self, wf_path: Path) -> None:
         """Initialise pipeline object"""
         self.conda_config: Dict = {}
         self.conda_package_info: Dict = {}

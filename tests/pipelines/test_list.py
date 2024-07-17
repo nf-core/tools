@@ -4,10 +4,9 @@ import json
 import os
 import tempfile
 import time
-import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest import mock
+from unittest import TestCase, mock
 
 import pytest
 from rich.console import Console
@@ -15,7 +14,7 @@ from rich.console import Console
 import nf_core.pipelines.list
 
 
-class TestList(unittest.TestCase):
+class TestList(TestCase):
     """Class for list tests"""
 
     def setUp(self) -> None:
