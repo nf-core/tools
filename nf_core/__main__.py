@@ -2181,7 +2181,7 @@ def command_lint(
     help="The name of the GitHub organisation where the pipeline will be hosted (default: nf-core)",
 )
 @click.pass_context
-def command_create(ctx, name, description, author, version, force, outdir, template_yaml, organisation):
+def command_create(ctx, name, description, author, version, force, outdir, template_yaml, plain, organisation):
     """
     Use `nf-core pipelines create` instead.
     """
