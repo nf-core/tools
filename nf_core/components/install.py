@@ -54,7 +54,7 @@ class ComponentInstall(ComponentCommand):
             self.check_modules_structure()
 
         # Verify that 'modules.json' is consistent with the installed modules and subworkflows
-        modules_json = ModulesJson(self.dir)
+        modules_json = ModulesJson(self.directory)
         if not silent:
             modules_json.check_up_to_date()
 
@@ -79,7 +79,7 @@ class ComponentInstall(ComponentCommand):
         )
 
         # Set the install folder based on the repository name
-        install_folder = Path(self.dir, self.component_type, self.modules_repo.repo_path)
+        install_folder = Path(self.directory, self.component_type, self.modules_repo.repo_path)
 
         # Compute the component directory
         component_dir = Path(install_folder, component)
@@ -134,14 +134,14 @@ class ComponentInstall(ComponentCommand):
             log.info(f"Use the following statement to include this {self.component_type[:-1]}:")
             Console().print(
                 Syntax(
-                    f"include {{ {component_name} }} from '../{Path(install_folder, component).relative_to(self.dir)}/main'",
+                    f"include {{ {component_name} }} from '../{Path(install_folder, component).relative_to(self.directory)}/main'",
                     "groovy",
                     theme="ansi_dark",
                     padding=1,
                 )
             )
             if self.component_type == "subworkflows":
-                subworkflow_config = Path(install_folder, component, "nextflow.config").relative_to(self.dir)
+                subworkflow_config = Path(install_folder, component, "nextflow.config").relative_to(self.directory)
                 if os.path.isfile(subworkflow_config):
                     log.info("Add the following config statement to use this subworkflow:")
                     Console().print(
@@ -261,9 +261,9 @@ class ComponentInstall(ComponentCommand):
         Remove installed version of module/subworkflow from modules.json
         """
         for repo_url, repo_content in modules_json.modules_json["repos"].items():
-            for dir, dir_components in repo_content[self.component_type].items():
+            for directory, dir_components in repo_content[self.component_type].items():
                 for name, component_values in dir_components.items():
-                    if name == component and dir == modules_repo.repo_path:
+                    if name == component and directory == modules_repo.repo_path:
                         repo_to_remove = repo_url
                         log.debug(
                             f"Removing {self.component_type[:-1]} '{modules_repo.repo_path}/{component}' from repo '{repo_to_remove}' from modules.json."
@@ -285,7 +285,7 @@ class ComponentInstall(ComponentCommand):
         modules_json.load()
         for repo_url, repo_content in modules_json.modules_json.get("repos", dict()).items():
             for component_type in repo_content:
-                for dir in repo_content.get(component_type, dict()).keys():
-                    if dir == self.modules_repo.repo_path and repo_url != self.modules_repo.remote_url:
+                for directory in repo_content.get(component_type, dict()).keys():
+                    if directory == self.modules_repo.repo_path and repo_url != self.modules_repo.remote_url:
                         return True
         return False

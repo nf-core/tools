@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 def create_logo(
     text: str,
-    dir: Union[Path, str],
+    directory: Union[Path, str],
     filename: str = "",
     theme: str = "light",
     width: int = 2300,
@@ -22,10 +22,10 @@ def create_logo(
     """Create a logo for a pipeline."""
     if not text:
         raise UserWarning("Please provide the name of the text to put on the logo.")
-    dir = Path(dir)
-    if not dir.is_dir():
-        log.debug(f"Creating directory {dir}")
-        dir.mkdir(parents=True, exist_ok=True)
+    directory = Path(directory)
+    if not directory.is_dir():
+        log.debug(f"Creating directory {directory}")
+        directory.mkdir(parents=True, exist_ok=True)
     assets = Path(nf_core.__file__).parent / "assets/logo"
 
     if format == "svg":
@@ -43,7 +43,7 @@ def create_logo(
         # save the svg
         logo_filename = f"nf-core-{text}_logo_{theme}.svg" if not filename else filename
         logo_filename = f"{logo_filename}.svg" if not logo_filename.lower().endswith(".svg") else logo_filename
-        logo_path = Path(dir, logo_filename)
+        logo_path = Path(directory, logo_filename)
         with open(logo_path, "w") as fh:
             fh.write(svg)
 
@@ -51,7 +51,7 @@ def create_logo(
         logo_filename = f"nf-core-{text}_logo_{theme}.png" if not filename else filename
         logo_filename = f"{logo_filename}.png" if not logo_filename.lower().endswith(".png") else logo_filename
         cache_name = f"nf-core-{text}_logo_{theme}_{width}.png"
-        logo_path = Path(dir, logo_filename)
+        logo_path = Path(directory, logo_filename)
 
         # Check if we haven't already created this logo
         if logo_path.is_file() and not force:

@@ -39,10 +39,10 @@ class ModulesJson:
         Args:
             pipeline_dir (str): The pipeline directory
         """
-        self.dir = Path(pipeline_dir)
-        self.modules_dir = self.dir / "modules"
-        self.subworkflows_dir = self.dir / "subworkflows"
-        self.modules_json_path = self.dir / "modules.json"
+        self.directory = Path(pipeline_dir)
+        self.modules_dir = self.directory / "modules"
+        self.subworkflows_dir = self.directory / "subworkflows"
+        self.modules_json_path = self.directory / "modules.json"
         self.modules_json = None
         self.pipeline_modules = None
         self.pipeline_subworkflows = None
@@ -63,7 +63,7 @@ class ModulesJson:
         Raises:
             UserWarning: If the creation fails
         """
-        pipeline_config = nf_core.utils.fetch_wf_config(self.dir)
+        pipeline_config = nf_core.utils.fetch_wf_config(self.directory)
         pipeline_name = pipeline_config.get("manifest.name", "")
         pipeline_url = pipeline_config.get("manifest.homePage", "")
         new_modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": {}}
@@ -72,7 +72,7 @@ class ModulesJson:
             if rich.prompt.Confirm.ask(
                 "[bold][blue]?[/] Can't find a ./modules directory. Would you like me to create one?", default=True
             ):
-                log.info(f"Creating ./modules directory in '{self.dir}'")
+                log.info(f"Creating ./modules directory in '{self.directory}'")
                 self.modules_dir.mkdir()
             else:
                 raise UserWarning("Cannot proceed without a ./modules directory.")
@@ -153,7 +153,7 @@ class ModulesJson:
         # The function might rename some directories, keep track of them
         renamed_dirs = {}
         # Check if there are any untracked repositories
-        dirs_not_covered = self.dir_tree_uncovered(directory, [Path(ModulesRepo(url).repo_path) for url in repos])
+        dirs_not_covered = self.directory_tree_uncovered(directory, [Path(ModulesRepo(url).repo_path) for url in repos])
         if len(dirs_not_covered) > 0:
             log.info(f"Found custom {component_type[:-1]} repositories when creating 'modules.json'")
             # Loop until all directories in the base directory are covered by a remote
@@ -203,7 +203,7 @@ class ModulesJson:
                 if component_type not in repos[nrepo_remote]:
                     repos[nrepo_remote][component_type] = {}
                 repos[nrepo_remote][component_type][nrepo_name] = {}
-                dirs_not_covered = self.dir_tree_uncovered(
+                dirs_not_covered = self.directory_tree_uncovered(
                     directory, [Path(name) for url in repos for name in repos[url][component_type]]
                 )
 
@@ -816,7 +816,7 @@ class ModulesJson:
             LookupError: If patch was not applied
         """
         module_fullname = str(Path(repo_name, module))
-        patch_path = Path(self.dir / patch_relpath)
+        patch_path = Path(self.directory / patch_relpath)
 
         try:
             new_files = ModulesDiffer.try_apply_patch(module, repo_name, patch_path, module_dir, reverse=True)

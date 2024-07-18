@@ -11,6 +11,7 @@ import os
 
 import questionary
 import rich
+import rich.progress
 
 import nf_core.modules.modules_utils
 import nf_core.utils
@@ -39,7 +40,7 @@ class ModuleLint(ComponentLint):
 
     def __init__(
         self,
-        dir,
+        directory,
         fail_warned=False,
         remote_url=None,
         branch=None,
@@ -49,7 +50,7 @@ class ModuleLint(ComponentLint):
     ):
         super().__init__(
             component_type="modules",
-            dir=dir,
+            directory=directory,
             fail_warned=fail_warned,
             remote_url=remote_url,
             branch=branch,
@@ -127,9 +128,9 @@ class ModuleLint(ComponentLint):
             remote_modules = self.all_remote_components
 
         if self.repo_type == "modules":
-            log.info(f"Linting modules repo: [magenta]'{self.dir}'")
+            log.info(f"Linting modules repo: [magenta]'{self.directory}'")
         else:
-            log.info(f"Linting pipeline: [magenta]'{self.dir}'")
+            log.info(f"Linting pipeline: [magenta]'{self.directory}'")
         if module:
             log.info(f"Linting module: [magenta]'{module}'")
 

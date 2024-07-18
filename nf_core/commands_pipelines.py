@@ -308,7 +308,7 @@ def pipelines_sync(ctx, dir, from_branch, pull_request, github_repository, usern
 
 
 # nf-core pipelines create-logo
-def pipelines_create_logo(logo_text, dir, name, theme, width, format, force):
+def pipelines_create_logo(logo_text, directory, name, theme, width, format, force):
     """
     Generate a logo with the nf-core logo template.
 
@@ -317,9 +317,9 @@ def pipelines_create_logo(logo_text, dir, name, theme, width, format, force):
     from nf_core.pipelines.create_logo import create_logo
 
     try:
-        if dir == ".":
-            dir = Path.cwd()
-        logo_path = create_logo(logo_text, dir, name, theme, width, format, force)
+        if directory == ".":
+            directory = Path.cwd()
+        logo_path = create_logo(logo_text, directory, name, theme, width, format, force)
         # Print path to logo relative to current working directory
         try:
             logo_path = Path(logo_path).relative_to(Path.cwd())

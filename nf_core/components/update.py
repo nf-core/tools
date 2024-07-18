@@ -51,7 +51,7 @@ class ComponentUpdate(ComponentCommand):
         self.update_deps = update_deps
         self.component = None
         self.update_config = None
-        self.modules_json = ModulesJson(self.dir)
+        self.modules_json = ModulesJson(self.directory)
         self.branch = branch
 
     def _parameter_checks(self):
@@ -96,8 +96,11 @@ class ComponentUpdate(ComponentCommand):
         if updated is None:
             updated = []
 
-        _, tool_config = nf_core.utils.load_tools_config(self.dir)
+        _, tool_config = nf_core.utils.load_tools_config(self.directory)
         self.update_config = tool_config.get("update", {})
+
+        if self.update_config is None:
+            raise UserWarning("Could not find '.nf-core.yml' file in pipeline directory")
 
         self._parameter_checks()
 
@@ -171,7 +174,7 @@ class ComponentUpdate(ComponentCommand):
             component_install_dir = install_tmp_dir / component
 
             # Compute the component directory
-            component_dir = os.path.join(self.dir, self.component_type, modules_repo.repo_path, component)
+            component_dir = Path(self.directory, self.component_type, modules_repo.repo_path, component)
 
             if sha is not None:
                 version = sha
@@ -318,7 +321,7 @@ class ComponentUpdate(ComponentCommand):
                 self.save_diff_fn,
                 old_modules_json,
                 self.modules_json.get_modules_json(),
-                Path(self.dir, "modules.json"),
+                Path(self.directory, "modules.json"),
             )
             if exit_value and not silent:
                 log.info(
@@ -479,7 +482,9 @@ class ComponentUpdate(ComponentCommand):
         # Loop through all the modules/subworkflows in the pipeline
         # and check if they have an entry in the '.nf-core.yml' file
         for repo_name, components in self.modules_json.get_all_components(self.component_type).items():
-            if repo_name not in self.update_config or self.update_config[repo_name] is True:
+            if isinstance(self.update_config, dict) and (
+                repo_name not in self.update_config or self.update_config[repo_name] is True
+            ):
                 # There aren't restrictions for the repository in .nf-core.yml file
                 components_info[repo_name] = {}
                 for component_dir, component in components:
@@ -503,7 +508,7 @@ class ComponentUpdate(ComponentCommand):
                                 ),
                             )
                         ]
-            elif isinstance(self.update_config[repo_name], dict):
+            elif isinstance(self.update_config, dict) and isinstance(self.update_config[repo_name], dict):
                 # If it is a dict, then there are entries for individual components or component directories
                 for component_dir in set([dir for dir, _ in components]):
                     if isinstance(self.update_config[repo_name][component_dir], str):
@@ -535,8 +540,8 @@ class ComponentUpdate(ComponentCommand):
                         if self.sha is not None:
                             overridden_repos.append(repo_name)
                     elif self.update_config[repo_name][component_dir] is False:
-                        for dir, component in components:
-                            if dir == component_dir:
+                        for directory, component in components:
+                            if directory == component_dir:
                                 skipped_components.append(f"{component_dir}/{components}")
                     elif isinstance(self.update_config[repo_name][component_dir], dict):
                         # If it's a dict, there are entries for individual components
@@ -596,7 +601,7 @@ class ComponentUpdate(ComponentCommand):
                                 raise UserWarning(
                                     f"{self.component_type[:-1].title()} '{component}' in '{component_dir}' has an invalid entry in '.nf-core.yml'"
                                 )
-            elif isinstance(self.update_config[repo_name], str):
+            elif isinstance(self.update_config, dict) and isinstance(self.update_config[repo_name], str):
                 # If a string is given it is the commit SHA to which we should update to
                 custom_sha = self.update_config[repo_name]
                 components_info[repo_name] = {}
@@ -623,8 +628,10 @@ class ComponentUpdate(ComponentCommand):
                         ]
                 if self.sha is not None:
                     overridden_repos.append(repo_name)
-            elif self.update_config[repo_name] is False:
+            elif isinstance(self.update_config, dict) and self.update_config[repo_name] is False:
                 skipped_repos.append(repo_name)
+            elif not isinstance(self.update_config, dict):
+                raise UserWarning("`.nf-core.yml` is not correctly formatted.")
             else:
                 raise UserWarning(f"Repo '{repo_name}' has an invalid entry in '.nf-core.yml'")
 
@@ -712,8 +719,10 @@ class ComponentUpdate(ComponentCommand):
             self.save_diff_fn = questionary.path(
                 "Enter the filename: ", style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
-
-        self.save_diff_fn = Path(self.save_diff_fn)
+        if self.save_diff_fn is not None:
+            self.save_diff_fn = Path(self.save_diff_fn)
+        else:
+            raise UserWarning("No filename provided for saving the diff file")
 
         if not check_diff_exist:
             # This guarantees that the file exists after calling the function
@@ -744,7 +753,7 @@ class ComponentUpdate(ComponentCommand):
         """
         temp_component_dir = Path(install_folder, component)
         files = [file_path for file_path in temp_component_dir.rglob("*") if file_path.is_file()]
-        pipeline_path = Path(self.dir, self.component_type, repo_path, component)
+        pipeline_path = Path(self.directory, self.component_type, repo_path, component)
 
         if pipeline_path.exists():
             pipeline_files = [f.name for f in pipeline_path.iterdir() if f.is_file()]
@@ -795,7 +804,7 @@ class ComponentUpdate(ComponentCommand):
         component_fullname = str(Path(repo_path, component))
         log.info(f"Found patch for  {self.component_type[:-1]} '{component_fullname}'. Trying to apply it to new files")
 
-        patch_path = Path(self.dir / patch_relpath)
+        patch_path = Path(self.directory / patch_relpath)
         component_relpath = Path(self.component_type, repo_path, component)
 
         # Check that paths in patch file are updated
@@ -928,29 +937,31 @@ class ComponentUpdate(ComponentCommand):
     def manage_changes_in_linked_components(self, component, modules_to_update, subworkflows_to_update):
         """Check for linked components added or removed in the new subworkflow version"""
         if self.component_type == "subworkflows":
-            subworkflow_directory = Path(self.dir, self.component_type, self.modules_repo.repo_path, component)
+            subworkflow_directory = Path(self.directory, self.component_type, self.modules_repo.repo_path, component)
             included_modules, included_subworkflows = get_components_to_install(subworkflow_directory)
             # If a module/subworkflow has been removed from the subworkflow
             for module in modules_to_update:
                 if module not in included_modules:
                     log.info(f"Removing module '{module}' which is not included in '{component}' anymore.")
-                    remove_module_object = ComponentRemove("modules", self.dir)
+                    remove_module_object = ComponentRemove("modules", self.directory)
                     remove_module_object.remove(module, removed_by=component)
             for subworkflow in subworkflows_to_update:
                 if subworkflow not in included_subworkflows:
                     log.info(f"Removing subworkflow '{subworkflow}' which is not included in '{component}' anymore.")
-                    remove_subworkflow_object = ComponentRemove("subworkflows", self.dir)
+                    remove_subworkflow_object = ComponentRemove("subworkflows", self.directory)
                     remove_subworkflow_object.remove(subworkflow, removed_by=component)
             # If a new module/subworkflow is included in the subworklfow and wasn't included before
             for module in included_modules:
                 if module not in modules_to_update:
                     log.info(f"Installing newly included module '{module}' for '{component}'")
-                    install_module_object = ComponentInstall(self.dir, "modules", installed_by=component)
+                    install_module_object = ComponentInstall(self.directory, "modules", installed_by=component)
                     install_module_object.install(module, silent=True)
             for subworkflow in included_subworkflows:
                 if subworkflow not in subworkflows_to_update:
                     log.info(f"Installing newly included subworkflow '{subworkflow}' for '{component}'")
-                    install_subworkflow_object = ComponentInstall(self.dir, "subworkflows", installed_by=component)
+                    install_subworkflow_object = ComponentInstall(
+                        self.directory, "subworkflows", installed_by=component
+                    )
                     install_subworkflow_object.install(subworkflow, silent=True)
 
     def _change_component_type(self, new_component_type):
