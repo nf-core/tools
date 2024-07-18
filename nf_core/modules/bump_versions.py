@@ -6,6 +6,7 @@ or for a single module
 import logging
 import os
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import questionary
@@ -30,7 +31,7 @@ log = logging.getLogger(__name__)
 class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
     def __init__(
         self,
-        pipeline_dir: str,
+        pipeline_dir: Union[str, Path],
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,
         no_pull: bool = False,

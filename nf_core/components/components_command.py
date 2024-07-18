@@ -22,7 +22,7 @@ class ComponentCommand:
     def __init__(
         self,
         component_type: str,
-        dir: str,
+        dir: Union[str, Path],
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,
         no_pull: bool = False,
@@ -33,7 +33,7 @@ class ComponentCommand:
         Initialise the ComponentClass object
         """
         self.component_type = component_type
-        self.dir = dir
+        self.dir = Path(dir) if dir else None
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
         self.no_prompts = no_prompts
