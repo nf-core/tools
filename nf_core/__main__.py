@@ -2188,7 +2188,7 @@ def command_create(ctx, name, description, author, version, force, outdir, templ
     log.warning(
         "The `[magenta]nf-core create[/]` command is deprecated. Use `[magenta]nf-core pipelines create[/]` instead."
     )
-    pipelines_create(ctx, name, description, author, version, force, outdir, template_yaml, organisation)
+    pipelines_create(ctx, name, description, author, version="1.0.0dev", force, outdir, template_yaml, organisation)
 
 
 # Main script is being run - launch the CLI
