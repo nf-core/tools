@@ -1,5 +1,7 @@
 """Test Pipeline Create App"""
 
+from unittest import mock
+
 from nf_core.pipelines.create import PipelineCreateApp
 
 
@@ -104,6 +106,7 @@ def test_type_nfcore_validation(snap_compare):
         await pilot.click("#start")
         await pilot.click("#type_nfcore")
         await pilot.click("#next")
+        await pilot.pause()
 
     assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
 
@@ -216,7 +219,8 @@ def test_github_question(tmpdir, snap_compare):
     assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
 
 
-def test_github_details(tmpdir, snap_compare):
+@mock.patch("nf_core.pipelines.create.githubrepo.GithubRepo._get_github_credentials")
+def test_github_details(mock_get_github_credentials, tmpdir, snap_compare):
     """Test snapshot for the github_repo screen.
     Steps to get to this screen:
         screen welcome > press start >
@@ -229,7 +233,10 @@ def test_github_details(tmpdir, snap_compare):
     """
 
     async def run_before(pilot) -> None:
-        delete = ["backspace"] * 50
+        mock_get_github_credentials.return_value = (
+            None,
+            None,
+        )  # mock the github credentials to have consistent snapshots
         await pilot.click("#start")
         await pilot.click("#type_nfcore")
         await pilot.click("#name")
@@ -247,10 +254,6 @@ def test_github_details(tmpdir, snap_compare):
         await pilot.app.workers.wait_for_complete()
         await pilot.click("#close_screen")
         await pilot.click("#github_repo")
-        await pilot.click("#gh_username")
-        await pilot.press(*delete)  # delete field automatically filled using github CLI
-        await pilot.press("tab")
-        await pilot.press(*delete)
 
     assert snap_compare("../nf_core/pipelines/create/__init__.py", terminal_size=(100, 50), run_before=run_before)
 

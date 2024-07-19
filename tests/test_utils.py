@@ -10,8 +10,8 @@ from unittest import mock
 import pytest
 import requests
 
-import nf_core.list
 import nf_core.pipelines.create.create
+import nf_core.pipelines.list
 import nf_core.utils
 
 from .utils import with_temporary_folder
@@ -160,7 +160,7 @@ class TestUtils(unittest.TestCase):
             nf_core.utils.pip_package("not_a_package=1.0")
 
     def test_get_repo_releases_branches_nf_core(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("methylseq", wfs)
         for r in wf_releases:
@@ -171,7 +171,7 @@ class TestUtils(unittest.TestCase):
         assert "dev" in wf_branches.keys()
 
     def test_get_repo_releases_branches_not_nf_core(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("MultiQC/MultiQC", wfs)
         for r in wf_releases:
@@ -182,13 +182,13 @@ class TestUtils(unittest.TestCase):
         assert "main" in wf_branches.keys()
 
     def test_get_repo_releases_branches_not_exists(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         with pytest.raises(AssertionError):
             nf_core.utils.get_repo_releases_branches("made_up_pipeline", wfs)
 
     def test_get_repo_releases_branches_not_exists_slash(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         with pytest.raises(AssertionError):
             nf_core.utils.get_repo_releases_branches("made-up/pipeline", wfs)

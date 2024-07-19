@@ -15,11 +15,11 @@ import jinja2
 import yaml
 
 import nf_core
-import nf_core.schema
+import nf_core.pipelines.schema
 import nf_core.utils
-from nf_core.create_logo import create_logo
-from nf_core.lint_utils import run_prettier_on_file
 from nf_core.pipelines.create.utils import CreateConfig
+from nf_core.pipelines.create_logo import create_logo
+from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
@@ -92,6 +92,7 @@ class PipelineCreate:
                 "CODE_OF_CONDUCT.md",
                 ".github/workflows/awsfulltest.yml",
                 ".github/workflows/awstest.yml",
+                ".github/workflows/release-announcements.yml",
             ],
         }
         # Get list of files we're skipping with the supplied skip keys
@@ -382,7 +383,7 @@ class PipelineCreate:
         """
         schema_path = self.outdir / "nextflow_schema.json"
 
-        schema = nf_core.schema.PipelineSchema()
+        schema = nf_core.pipelines.schema.PipelineSchema()
         schema.schema_filename = schema_path
         schema.no_prompts = True
         schema.load_schema()

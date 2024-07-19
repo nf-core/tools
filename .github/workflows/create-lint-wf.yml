@@ -79,12 +79,12 @@ jobs:
         working-directory: create-lint-wf
 
       # Run the other nf-core commands
-      - name: nf-core list
-        run: nf-core --log-file log.txt list
+      - name: nf-core pipelines list
+        run: nf-core --log-file log.txt pipelines list
         working-directory: create-lint-wf
 
-      - name: nf-core schema
-        run: nf-core --log-file log.txt schema build --dir nf-core-testpipeline/ --no-prompts
+      - name: nf-core pipelines schema
+        run: nf-core --log-file log.txt pipelines schema build --dir nf-core-testpipeline/ --no-prompts
         working-directory: create-lint-wf
 
       - name: Cleanup work directory
