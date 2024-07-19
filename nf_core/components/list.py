@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Dict, List, Optional, Union, cast
 
 import rich.table
 
@@ -87,18 +87,18 @@ class ComponentList(ComponentCommand):
                 return ""
 
             # Verify that 'modules.json' is consistent with the installed modules
-            modules_json: ModulesJson = ModulesJson(self.dir)
+            modules_json: ModulesJson = ModulesJson(self.directory)
             modules_json.check_up_to_date()
 
             # Filter by keywords
-            repos_with_comps: Dict[str, List[Tuple[str, str]]] = {
+            repos_with_comps = {
                 repo_url: [comp for comp in components if all(k in comp[1] for k in keywords)]
                 for repo_url, components in modules_json.get_all_components(self.component_type).items()
             }
 
             # Nothing found
             if sum(map(len, repos_with_comps)) == 0:
-                log.info(f"No nf-core {self.component_type} found in '{self.dir}'{pattern_msg(keywords)}")
+                log.info(f"No nf-core {self.component_type} found in '{self.directory}'{pattern_msg(keywords)}")
                 return ""
 
             table.add_column("Repository")
@@ -160,5 +160,5 @@ class ComponentList(ComponentCommand):
                 f"{pattern_msg(keywords)}:\n"
             )
         else:
-            log.info(f"{self.component_type.capitalize()} installed in '{self.dir}'{pattern_msg(keywords)}:\n")
+            log.info(f"{self.component_type.capitalize()} installed in '{self.directory}'{pattern_msg(keywords)}:\n")
         return table

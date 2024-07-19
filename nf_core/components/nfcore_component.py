@@ -5,7 +5,7 @@ The NFCoreComponent class holds information and utility functions for a single m
 import logging
 import re
 from pathlib import Path
-from typing import Union
+from typing import List, Optional, Tuple, Union
 
 log = logging.getLogger(__name__)
 
@@ -18,13 +18,13 @@ class NFCoreComponent:
 
     def __init__(
         self,
-        component_name,
-        repo_url,
-        component_dir,
-        repo_type,
-        base_dir,
-        component_type,
-        remote_component=True,
+        component_name: str,
+        repo_url: Optional[str],
+        component_dir: Path,
+        repo_type: str,
+        base_dir: Path,
+        component_type: str,
+        remote_component: bool = True,
     ):
         """
         Initialize the object
@@ -46,21 +46,21 @@ class NFCoreComponent:
         self.component_dir = component_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
-        self.passed = []
-        self.warned = []
-        self.failed = []
-        self.inputs = []
-        self.outputs = []
-        self.has_meta = False
-        self.git_sha = None
-        self.is_patched = False
+        self.passed: List[Tuple[str, str, Path]] = []
+        self.warned: List[Tuple[str, str, Path]] = []
+        self.failed: List[Tuple[str, str, Path]] = []
+        self.inputs: List[str] = []
+        self.outputs: List[str] = []
+        self.has_meta: bool = False
+        self.git_sha: Optional[str] = None
+        self.is_patched: bool = False
 
         if remote_component:
             # Initialize the important files
-            self.main_nf = Path(self.component_dir, "main.nf")
-            self.meta_yml = Path(self.component_dir, "meta.yml")
+            self.main_nf: Path = Path(self.component_dir, "main.nf")
+            self.meta_yml: Optional[Path] = Path(self.component_dir, "meta.yml")
             self.process_name = ""
-            self.environment_yml = Path(self.component_dir, "environment.yml")
+            self.environment_yml: Optional[Path] = Path(self.component_dir, "environment.yml")
 
             repo_dir = self.component_dir.parts[: self.component_dir.parts.index(self.component_name.split("/")[0])][-1]
             self.org = repo_dir
@@ -79,8 +79,8 @@ class NFCoreComponent:
             self.component_name = self.component_dir.stem
             # These attributes are only used by nf-core modules
             # so just initialize them to None
-            self.meta_yml = ""
-            self.environment_yml = ""
+            self.meta_yml = None
+            self.environment_yml = None
             self.test_dir = None
             self.test_yml = None
             self.test_main_nf = None
@@ -155,10 +155,10 @@ class NFCoreComponent:
                         included_components.append(component)
         return included_components
 
-    def get_inputs_from_main_nf(self):
+    def get_inputs_from_main_nf(self) -> None:
         """Collect all inputs from the main.nf file."""
-        inputs = []
-        with open(self.main_nf) as f:
+        inputs: List[str] = []
+        with open(str(self.main_nf)) as f:
             data = f.read()
         # get input values from main.nf after "input:", which can be formatted as tuple val(foo) path(bar) or val foo or val bar or path bar or path foo
         # regex matches:
@@ -171,7 +171,6 @@ class NFCoreComponent:
         # don't match anything inside comments or after "output:"
         if "input:" not in data:
             log.debug(f"Could not find any inputs in {self.main_nf}")
-            return inputs
         input_data = data.split("input:")[1].split("output:")[0]
         regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
         matches = re.finditer(regex, input_data, re.MULTILINE)
@@ -187,7 +186,7 @@ class NFCoreComponent:
 
     def get_outputs_from_main_nf(self):
         outputs = []
-        with open(self.main_nf) as f:
+        with open(str(self.main_nf)) as f:
             data = f.read()
         # get output values from main.nf after "output:". the names are always after "emit:"
         if "output:" not in data:

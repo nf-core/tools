@@ -1,11 +1,13 @@
 import logging
 import os
 from pathlib import Path
+from typing import List, Optional, Union
 
 import questionary
 from rich.console import Console
 from rich.syntax import Syntax
 
+import nf_core.components
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
@@ -22,26 +24,26 @@ log = logging.getLogger(__name__)
 class ComponentInstall(ComponentCommand):
     def __init__(
         self,
-        pipeline_dir,
-        component_type,
-        force=False,
-        prompt=False,
-        sha=None,
-        remote_url=None,
-        branch=None,
-        no_pull=False,
-        installed_by=False,
+        pipeline_dir: Union[str, Path],
+        component_type: str,
+        force: bool = False,
+        prompt: bool = False,
+        sha: Optional[str] = None,
+        remote_url: Optional[str] = None,
+        branch: Optional[str] = None,
+        no_pull: bool = False,
+        installed_by: Optional[List[str]] = None,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha
-        if installed_by:
+        if installed_by is not None:
             self.installed_by = installed_by
         else:
-            self.installed_by = self.component_type
+            self.installed_by = [self.component_type]
 
-    def install(self, component, silent=False):
+    def install(self, component: str, silent: bool = False) -> bool:
         if self.repo_type == "modules":
             log.error(f"You cannot install a {component} in a clone of nf-core/modules")
             return False
@@ -67,8 +69,11 @@ class ComponentInstall(ComponentCommand):
         # Verify SHA
         if not self.modules_repo.verify_sha(self.prompt, self.sha):
             return False
+        if self.modules_repo is None:
+            return False
 
         # Check and verify component name
+
         component = self.collect_and_verify_name(component, self.modules_repo)
         if not component:
             return False
@@ -156,19 +161,21 @@ class ComponentInstall(ComponentCommand):
         modules_to_install, subworkflows_to_install = get_components_to_install(subworkflow_dir)
         for s_install in subworkflows_to_install:
             original_installed = self.installed_by
-            self.installed_by = Path(subworkflow_dir).parts[-1]
+            self.installed_by = [Path(subworkflow_dir).parts[-1]]
             self.install(s_install, silent=True)
             self.installed_by = original_installed
         for m_install in modules_to_install:
             original_component_type = self.component_type
             self.component_type = "modules"
             original_installed = self.installed_by
-            self.installed_by = Path(subworkflow_dir).parts[-1]
+            self.installed_by = [Path(subworkflow_dir).parts[-1]]
             self.install(m_install, silent=True)
             self.component_type = original_component_type
             self.installed_by = original_installed
 
-    def collect_and_verify_name(self, component, modules_repo):
+    def collect_and_verify_name(
+        self, component: Optional[str], modules_repo: nf_core.modules.modules_repo.ModulesRepo
+    ) -> str:
         """
         Collect component name.
         Check that the supplied name is an available module/subworkflow.
@@ -180,18 +187,19 @@ class ComponentInstall(ComponentCommand):
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
+        if component is None:
+            return ""
+
         # Check that the supplied name is an available module/subworkflow
         if component and component not in modules_repo.get_avail_components(self.component_type, commit=self.sha):
             log.error(
                 f"{self.component_type[:-1].title()} '{component}' not found in list of available {self.component_type}."
             )
             log.info(f"Use the command 'nf-core {self.component_type} list' to view available software")
-            return False
 
         if not modules_repo.component_exists(component, self.component_type, commit=self.sha):
             warn_msg = f"{self.component_type[:-1].title()} '{component}' not found in remote '{modules_repo.remote_url}' ({modules_repo.branch})"
             log.warning(warn_msg)
-            return False
 
         return component
 

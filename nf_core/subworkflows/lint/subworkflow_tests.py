@@ -202,9 +202,12 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
                 f"subworkflows_{org_alphabet}",
             ]
             included_components = []
-            if subworkflow.main_nf.is_file():
+            if subworkflow.main_nf is not None and Path(subworkflow.main_nf).is_file():
                 included_components = subworkflow._get_included_components(subworkflow.main_nf)
-            chained_components_tags = subworkflow._get_included_components_in_chained_tests(subworkflow.nftest_main_nf)
+            if subworkflow.nftest_main_nf is not None and subworkflow.nftest_main_nf.is_file():
+                chained_components_tags = subworkflow._get_included_components_in_chained_tests(
+                    subworkflow.nftest_main_nf
+                )
             log.debug(f"Included components: {included_components}")
             log.debug(f"Required tags: {required_tags}")
             log.debug(f"Included components for chained nf-tests: {chained_components_tags}")

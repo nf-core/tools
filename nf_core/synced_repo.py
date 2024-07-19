@@ -4,7 +4,7 @@ import os
 import shutil
 from configparser import NoOptionError, NoSectionError
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional, Union
 
 import git
 from git.exc import GitCommandError
@@ -51,9 +51,14 @@ class RemoteProgressbar(git.RemoteProgress):
         """
         if not self.progress_bar.tasks[self.tid].started:
             self.progress_bar.start_task(self.tid)
-        self.progress_bar.update(
-            self.tid, total=max_count, completed=cur_count, state=f"{cur_count / max_count * 100:.1f}%"
-        )
+        if cur_count is not None and max_count is not None:
+            cur_count = float(cur_count)
+            max_count = float(max_count)
+            state = f"{cur_count / max_count * 100:.1f}%"
+        else:
+            state = "Unknown"
+
+        self.progress_bar.update(self.tid, total=max_count, completed=cur_count, state=state)
 
 
 class SyncedRepo:
@@ -138,6 +143,9 @@ class SyncedRepo:
         self.subworkflows_dir = os.path.join(self.local_repo_dir, "subworkflows", self.repo_path)
 
         self.avail_module_names = None
+
+    def setup_local_repo(self, remote_url, branch, hide_progress):
+        pass
 
     def verify_sha(self, prompt, sha):
         """
@@ -258,7 +266,7 @@ class SyncedRepo:
         """
         return component_name in self.get_avail_components(component_type, checkout=checkout, commit=commit)
 
-    def get_component_dir(self, component_name, component_type):
+    def get_component_dir(self, component_name: str, component_type: str) -> Path:
         """
         Returns the file path of a module/subworkflow directory in the repo.
         Does not verify that the path exists.
@@ -269,11 +277,15 @@ class SyncedRepo:
             component_path (str): The path of the module/subworkflow in the local copy of the repository
         """
         if component_type == "modules":
-            return os.path.join(self.modules_dir, component_name)
+            return Path(self.modules_dir, component_name)
         elif component_type == "subworkflows":
-            return os.path.join(self.subworkflows_dir, component_name)
+            return Path(self.subworkflows_dir, component_name)
+        else:
+            raise ValueError(f"Invalid component type: {component_type}")
 
-    def install_component(self, component_name, install_dir, commit, component_type):
+    def install_component(
+        self, component_name: str, install_dir: Union[str, Path], commit: str, component_type: str
+    ) -> bool:
         """
         Install the module/subworkflow files into a pipeline at the given commit
 
@@ -281,6 +293,7 @@ class SyncedRepo:
             component_name (str): The name of the module/subworkflow
             install_dir (str): The path where the module/subworkflow should be installed
             commit (str): The git SHA for the version of the module/subworkflow to be installed
+            component_type (str): Either 'modules' or 'subworkflows'
 
         Returns:
             (bool): Whether the operation was successful or not
@@ -332,6 +345,8 @@ class SyncedRepo:
         return files_identical
 
     def ensure_git_user_config(self, default_name: str, default_email: str) -> None:
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
         try:
             with self.repo.config_reader() as git_config:
                 user_name = git_config.get_value("user", "name", default=None)
@@ -346,7 +361,7 @@ class SyncedRepo:
                 if not user_email:
                     git_config.set_value("user", "email", default_email)
 
-    def get_component_git_log(self, component_name, component_type, depth=None):
+    def get_component_git_log(self, component_name: Union[str, Path], component_type: str, depth: Optional[int] = None):
         """
         Fetches the commit history the of requested module/subworkflow since a given date. The default value is
         not arbitrary - it is the last time the structure of the nf-core/modules repository was had an
@@ -358,19 +373,26 @@ class SyncedRepo:
         Returns:
             ( dict ): Iterator of commit SHAs and associated (truncated) message
         """
+
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
         self.checkout_branch()
-        component_path = os.path.join(component_type, self.repo_path, component_name)
+        component_path = Path(component_type, self.repo_path, component_name)
+
         commits_new = self.repo.iter_commits(max_count=depth, paths=component_path)
-        commits_new = [
-            {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_new
-        ]
+        if not commits_new:
+            raise ValueError(f"Could not find any commits for '{component_name}' in '{self.remote_url}'")
+        else:
+            commits_new = [
+                {"git_sha": commit.hexsha, "trunc_message": commit.message.splitlines()[0]} for commit in commits_new
+            ]
         commits_old = []
         if component_type == "modules":
             # Grab commits also from previous modules structure
-            component_path = os.path.join("modules", component_name)
+            component_path = Path("modules", component_name)
             commits_old = self.repo.iter_commits(max_count=depth, paths=component_path)
             commits_old = [
-                {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_old
+                {"git_sha": commit.hexsha, "trunc_message": commit.message.splitlines()[0]} for commit in commits_old
             ]
         commits = iter(commits_new + commits_old)
         return commits
@@ -385,6 +407,8 @@ class SyncedRepo:
         """
         Verifies that a given commit sha exists on the branch
         """
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
         self.checkout_branch()
         return sha in (commit.hexsha for commit in self.repo.iter_commits())
 
@@ -399,10 +423,12 @@ class SyncedRepo:
         Raises:
             LookupError: If the search for the commit fails
         """
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
         self.checkout_branch()
         for commit in self.repo.iter_commits():
             if commit.hexsha == sha:
-                message = commit.message.partition("\n")[0]
+                message = commit.message.splitlines()[0]
                 date_obj = commit.committed_datetime
                 date = str(date_obj.date())
                 return message, date

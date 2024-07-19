@@ -7,7 +7,7 @@ import logging
 import operator
 import os
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import rich.box
 import rich.console
@@ -37,12 +37,12 @@ class LintExceptionError(Exception):
 class LintResult:
     """An object to hold the results of a lint test"""
 
-    def __init__(self, component, lint_test, message, file_path):
+    def __init__(self, component: NFCoreComponent, lint_test: str, message: str, file_path: Path):
         self.component = component
         self.lint_test = lint_test
         self.message = message
         self.file_path = file_path
-        self.component_name = component.component_name
+        self.component_name: str = component.component_name
 
 
 @rich.repr.auto
@@ -73,9 +73,9 @@ class ComponentLint(ComponentCommand):
         )
 
         self.fail_warned = fail_warned
-        self.passed: List[str] = []
-        self.warned: List[str] = []
-        self.failed: List[str] = []
+        self.passed: List[LintResult] = []
+        self.warned: List[LintResult] = []
+        self.failed: List[LintResult] = []
         if self.component_type == "modules":
             self.lint_tests = self.get_all_module_lint_tests(self.repo_type == "pipeline")
         else:
@@ -88,17 +88,21 @@ class ComponentLint(ComponentCommand):
             for repo_url, components in modules_json.get_all_components(self.component_type).items():
                 if remote_url is not None and remote_url != repo_url:
                     continue
-                for org, comp in components:
-                    self.all_remote_components.append(
-                        NFCoreComponent(
-                            comp,
-                            repo_url,
-                            Path(self.directory, self.component_type, org, comp),
-                            self.repo_type,
-                            Path(self.directory),
-                            self.component_type,
-                        )
+                if isinstance(components, str):
+                    raise LookupError(
+                        f"Error parsing modules.json: {components}. " f"Please check the file for errors or try again."
                     )
+                org, comp = components
+                self.all_remote_components.append(
+                    NFCoreComponent(
+                        comp,
+                        repo_url,
+                        Path(self.directory, self.component_type, org, comp),
+                        self.repo_type,
+                        Path(self.directory),
+                        self.component_type,
+                    )
+                )
             if not self.all_remote_components:
                 raise LookupError(
                     f"No {self.component_type} from {self.modules_repo.remote_url} installed in pipeline."
@@ -119,7 +123,7 @@ class ComponentLint(ComponentCommand):
                     for comp in self.get_local_components()
                 ]
             self.config = nf_core.utils.fetch_wf_config(Path(self.directory), cache_config=True)
-        else:
+        elif self.repo_type == "modules":
             component_dir = Path(
                 self.directory,
                 self.default_modules_path if self.component_type == "modules" else self.default_subworkflows_path,

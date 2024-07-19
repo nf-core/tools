@@ -22,11 +22,12 @@ from pathlib import Path
 from typing import Dict, Generator, List, Optional, Tuple, Union
 
 import git
-import prompt_toolkit
+import prompt_toolkit.styles
 import questionary
-import requests
+import requests.auth
 import requests_cache
 import rich
+import rich.markup
 import yaml
 from packaging.version import Version
 from rich.live import Live
@@ -524,8 +525,9 @@ class GitHubAPISession(requests_cache.CachedSession):
                     self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
             except Exception:
                 ex_type, ex_value, _ = sys.exc_info()
-                output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
-                log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
+                if ex_type is not None:
+                    output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
+                    log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
 
         # Default auth if we have a GitHub Token (eg. GitHub Actions CI)
         if os.environ.get("GITHUB_TOKEN") is not None and self.auth is None:
@@ -804,6 +806,8 @@ def get_biocontainer_tag(package, version):
                         singularity_image = all_singularity[k]["image"]
                         current_date = date
                         docker_image_name = docker_image["image_name"].lstrip("quay.io/")
+                if singularity_image is None:
+                    raise LookupError(f"Could not find singularity container for {package}")
                 return docker_image_name, singularity_image["image_name"]
             except TypeError:
                 raise LookupError(f"Could not find docker or singularity container for {package}")
@@ -1072,7 +1076,7 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Path, dict]:
     return config_fn, tools_config
 
 
-def determine_base_dir(directory="."):
+def determine_base_dir(directory: Union[Path, str] = ".") -> Path:
     base_dir = start_dir = Path(directory).absolute()
     # Only iterate up the tree if the start dir doesn't have a config
     while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
@@ -1080,7 +1084,7 @@ def determine_base_dir(directory="."):
         config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
         if config_fn:
             break
-    return directory if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
+    return Path(directory) if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
 
 
 def get_first_available_path(directory: Union[Path, str], paths: List[str]) -> Union[Path, None]:

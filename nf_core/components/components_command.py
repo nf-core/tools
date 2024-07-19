@@ -33,7 +33,7 @@ class ComponentCommand:
         Initialise the ComponentClass object
         """
         self.component_type = component_type
-        self.directory = Path(directory) if directory else None
+        self.directory = Path(directory)
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
         self.no_prompts = no_prompts
@@ -109,13 +109,13 @@ class ComponentCommand:
             log.info("Creating missing 'module.json' file.")
             ModulesJson(self.directory).create()
 
-    def clear_component_dir(self, component_name: str, component_dir: str) -> bool:
+    def clear_component_dir(self, component_name: str, component_dir: Union[str, Path]) -> bool:
         """
         Removes all files in the module/subworkflow directory
 
         Args:
             component_name (str): The name of the module/subworkflow
-            component_dir (str): The path to the module/subworkflow in the module repository
+            component_dir (str, Path): The path to the module/subworkflow
 
         """
 
@@ -156,7 +156,7 @@ class ComponentCommand:
         ]
 
     def install_component_files(
-        self, component_name: str, component_version: str, modules_repo: ModulesRepo, install_dir: str
+        self, component_name: str, component_version: str, modules_repo: ModulesRepo, install_dir: Union[str, Path]
     ) -> bool:
         """
         Installs a module/subworkflow into the given directory
@@ -165,7 +165,7 @@ class ComponentCommand:
             component_name (str): The name of the module/subworkflow
             component_version (str): Git SHA for the version of the module/subworkflow to be installed
             modules_repo (ModulesRepo): A correctly configured ModulesRepo object
-            install_dir (str): The path to where the module/subworkflow should be installed (should be the 'modules/' or 'subworkflows/' dir of the pipeline)
+            install_dir (str, Path): The path to where the module/subworkflow should be installed (should be the 'modules/' or 'subworkflows/' dir of the pipeline)
 
         Returns:
             (bool): Whether the operation was successful of not

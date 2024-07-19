@@ -6,19 +6,24 @@ import logging
 import re
 import sqlite3
 from pathlib import Path
+from typing import List, Tuple
 from urllib.parse import urlparse, urlunparse
 
 import requests
 import yaml
+from rich.progress import Progress
 
 import nf_core
 import nf_core.modules.modules_utils
+from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_differ import ModulesDiffer
 
 log = logging.getLogger(__name__)
 
 
-def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
+def main_nf(
+    module_lint_object, module: NFCoreComponent, fix_version: bool, registry: str, progress_bar: Progress
+) -> Tuple[List[str], List[str]]:
     """
     Lint a ``main.nf`` module file
 
@@ -43,7 +48,7 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
 
     # Check if we have a patch file affecting the 'main.nf' file
     # otherwise read the lines directly from the module
-    lines = None
+    lines: List[str] = []
     if module.is_patched:
         lines = ModulesDiffer.try_apply_patch(
             module.component_name,
@@ -51,8 +56,9 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
             module.patch_path,
             Path(module.component_dir).relative_to(module.base_dir),
             reverse=True,
-        ).get("main.nf")
-    if lines is None:
+        ).get("main.nf", [""])
+
+    if not lines:
         try:
             # Check whether file exists and load it
             with open(module.main_nf) as fh:
@@ -60,10 +66,13 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
             module.passed.append(("main_nf_exists", "Module file exists", module.main_nf))
         except FileNotFoundError:
             module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
-            return
 
     deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
-    lines_j = "\n".join(lines)
+    if lines is not None:
+        lines_j = "\n".join(lines)
+    else:
+        lines_j = ""
+
     for i in deprecated_i:
         if i in lines_j:
             module.failed.append(

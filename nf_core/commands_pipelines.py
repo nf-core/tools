@@ -284,7 +284,7 @@ def pipelines_sync(ctx, dir, from_branch, pull_request, github_repository, usern
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
     To keep nf-core pipelines up to date with improvements in the main
-    template, we use a method of synchronisation that uses a special
+    template, we use a method of w that uses a special
     git branch called [cyan i]TEMPLATE[/].
 
     This command updates the [cyan i]TEMPLATE[/] branch with the latest version of

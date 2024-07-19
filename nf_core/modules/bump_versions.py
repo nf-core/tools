@@ -76,10 +76,10 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
             )
 
         # Get list of all modules
-        _, nfcore_modules = nf_core.modules.modules_utils.get_installed_modules(self.dir)
+        _, nfcore_modules = nf_core.modules.modules_utils.get_installed_modules(self.directory)
 
         # Load the .nf-core.yml config
-        _, self.tools_config = nf_core.utils.load_tools_config(self.dir)
+        _, self.tools_config = nf_core.utils.load_tools_config(self.directory)
 
         # Prompt for module or all
         if module is None and not all_modules:
@@ -179,7 +179,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
             except (LookupError, ValueError):
                 self.failed.append(
                     (
-                        f"Conda version not specified correctly: {module.main_nf.relative_to(self.dir)}",
+                        f"Conda version not specified correctly: {Path(module.main_nf).relative_to(self.directory)}",
                         module.component_name,
                     )
                 )
@@ -245,12 +245,12 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
                 fh.write(content)
 
             # change version in environment.yml
-            with open(module.environment_yml) as fh:
+            with open(str(module.environment_yml)) as fh:
                 env_yml = yaml.safe_load(fh)
             env_yml["dependencies"][0] = re.sub(
                 bioconda_packages[0], f"bioconda::{bioconda_tool_name}={last_ver}", env_yml["dependencies"][0]
             )
-            with open(module.environment_yml, "w") as fh:
+            with open(str(module.environment_yml), "w") as fh:
                 yaml.dump(env_yml, fh, default_flow_style=False, Dumper=custom_yaml_dumper())
 
             self.updated.append(
@@ -272,7 +272,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         # Check whether file exists and load it
         bioconda_packages = []
         try:
-            with open(module.environment_yml) as fh:
+            with open(str(module.environment_yml)) as fh:
                 env_yml = yaml.safe_load(fh)
             bioconda_packages = env_yml.get("dependencies", [])
         except FileNotFoundError:

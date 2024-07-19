@@ -6,7 +6,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Union
+from typing import Any, List, Optional, Tuple, Union
 
 import git
 import questionary
@@ -153,7 +153,7 @@ class ModulesJson:
         # The function might rename some directories, keep track of them
         renamed_dirs = {}
         # Check if there are any untracked repositories
-        dirs_not_covered = self.directory_tree_uncovered(directory, [Path(ModulesRepo(url).repo_path) for url in repos])
+        dirs_not_covered = self.dir_tree_uncovered(directory, [Path(ModulesRepo(url).repo_path) for url in repos])
         if len(dirs_not_covered) > 0:
             log.info(f"Found custom {component_type[:-1]} repositories when creating 'modules.json'")
             # Loop until all directories in the base directory are covered by a remote
@@ -203,7 +203,7 @@ class ModulesJson:
                 if component_type not in repos[nrepo_remote]:
                     repos[nrepo_remote][component_type] = {}
                 repos[nrepo_remote][component_type][nrepo_name] = {}
-                dirs_not_covered = self.directory_tree_uncovered(
+                dirs_not_covered = self.dir_tree_uncovered(
                     directory, [Path(name) for url in repos for name in repos[url][component_type]]
                 )
 
@@ -244,7 +244,9 @@ class ModulesJson:
             depth += 1
         return dirs_not_covered
 
-    def determine_branches_and_shas(self, component_type, install_dir, remote_url, components):
+    def determine_branches_and_shas(
+        self, component_type: str, install_dir: Union[str, Path], remote_url: str, components: List[Path]
+    ) -> dict[Path, dict[str, Any]]:
         """
         Determines what branch and commit sha each module/subworkflow in the pipeline belongs to
 
@@ -265,6 +267,8 @@ class ModulesJson:
             repo_path = self.modules_dir / install_dir
         elif component_type == "subworkflows":
             repo_path = self.subworkflows_dir / install_dir
+        else:
+            raise ValueError(f"Unknown component type '{component_type}'")
         # Get the branches present in the repository, as well as the default branch
         available_branches = ModulesRepo.get_remote_branches(remote_url)
         sb_local = []
@@ -282,16 +286,16 @@ class ModulesJson:
                 if patch_file.is_file():
                     temp_module_dir = self.try_apply_patch_reverse(component, install_dir, patch_file, component_path)
                     correct_commit_sha = self.find_correct_commit_sha(
-                        component_type, component, temp_module_dir, modules_repo
+                        component_type, str(component), temp_module_dir, modules_repo
                     )
                 else:
                     correct_commit_sha = self.find_correct_commit_sha(
-                        component_type, component, component_path, modules_repo
+                        component_type, str(component), component_path, modules_repo
                     )
                     if correct_commit_sha is None:
                         # Check in the old path
                         correct_commit_sha = self.find_correct_commit_sha(
-                            component_type, component, repo_path / component_type / component, modules_repo
+                            component_type, str(component), repo_path / component_type / component, modules_repo
                         )
                 if correct_commit_sha is None:
                     log.info(
@@ -334,7 +338,7 @@ class ModulesJson:
         # Clean up the modules/subworkflows we were unable to find the sha for
         for component in sb_local:
             log.debug(f"Moving {component_type[:-1]} '{Path(install_dir, component)}' to 'local' directory")
-            self.move_component_to_local(component_type, component, install_dir)
+            self.move_component_to_local(component_type, component, str(install_dir))
 
         for component in dead_components:
             log.debug(f"Removing {component_type[:-1]} {Path(install_dir, component)}'")
@@ -342,7 +346,13 @@ class ModulesJson:
 
         return repo_entry
 
-    def find_correct_commit_sha(self, component_type, component_name, component_path, modules_repo):
+    def find_correct_commit_sha(
+        self,
+        component_type: str,
+        component_name: Union[str, Path],
+        component_path: Union[str, Path],
+        modules_repo: ModulesRepo,
+    ) -> Optional[str]:
         """
         Returns the SHA for the latest commit where the local files are identical to the remote files
         Args:
@@ -370,24 +380,27 @@ class ModulesJson:
                 return commit_sha
         return None
 
-    def move_component_to_local(self, component_type, component, repo_name):
+    def move_component_to_local(self, component_type: str, component: Union[str, Path], repo_name: str):
         """
         Move a module/subworkflow to the 'local' directory
 
         Args:
-            component (str): The name of the module/subworkflow
+            component_type (str): The type of component, either 'modules' or 'subworkflows'
+            component (Union[str,Path]): The name of the module/subworkflow
             repo_name (str): The name of the repository the module resides in
         """
         if component_type == "modules":
             directory = self.modules_dir
         elif component_type == "subworkflows":
             directory = self.subworkflows_dir
+        else:
+            raise ValueError(f"Unknown component type '{component_type}'")
         current_path = directory / repo_name / component
         local_dir = directory / "local"
         if not local_dir.exists():
             local_dir.mkdir()
 
-        to_name = component
+        to_name = str(component)
         # Check if there is already a subdirectory with the name
         while (local_dir / to_name).exists():
             # Add a time suffix to the path to make it unique
@@ -395,7 +408,7 @@ class ModulesJson:
             to_name += f"-{datetime.datetime.now().strftime('%y%m%d%H%M%S')}"
         shutil.move(current_path, local_dir / to_name)
 
-    def unsynced_components(self):
+    def unsynced_components(self) -> Tuple[List[Path], List[Path], dict]:
         """
         Compute the difference between the modules/subworkflows in the directory and the
         modules/subworkflows in the 'modules.json' file. This is done by looking at all
@@ -406,6 +419,7 @@ class ModulesJson:
             by the modules.json file, and modules/subworkflows in the modules.json where
             the installation directory is missing
         """
+        assert self.modules_json is not None  # mypy
         # Add all modules from modules.json to missing_installation
         missing_installation = copy.deepcopy(self.modules_json["repos"])
         # Obtain the path of all installed modules
@@ -429,14 +443,27 @@ class ModulesJson:
 
         return untracked_dirs_modules, untracked_dirs_subworkflows, missing_installation
 
-    def parse_dirs(self, dirs, missing_installation, component_type):
+    def parse_dirs(self, dirs: List[Path], missing_installation: dict, component_type: str) -> Tuple[List[Path], dict]:
+        """
+        Parse directories and check if they are tracked in the modules.json file
+
+        Args:
+            dirs ([ Path ]): List of directories to check
+            missing_installation (dict): Dictionary with the modules.json entries
+            component_type (str): The type of component, either 'modules' or 'subworkflows'
+
+        Returns:
+            (untracked_dirs ([ Path ]), missing_installation (dict)): List of directories that are not tracked
+            by the modules.json file, and the updated missing_installation dictionary
+        """
+
         untracked_dirs = []
         for dir_ in dirs:
             # Check if the module/subworkflows directory exists in modules.json
             install_dir = dir_.parts[0]
-            component = str(Path(*dir_.parts[1:]))
+            component = Path(*dir_.parts[1:])
             component_in_file = False
-            git_url = None
+            git_url = ""
             for repo in missing_installation:
                 if component_type in missing_installation[repo]:
                     if install_dir in missing_installation[repo][component_type]:
@@ -453,9 +480,7 @@ class ModulesJson:
                 # Check if the entry has a git sha and branch before removing
                 components_dict = module_repo[component_type][install_dir]
                 if "git_sha" not in components_dict[component] or "branch" not in components_dict[component]:
-                    self.determine_branches_and_shas(
-                        component_type, component, git_url, module_repo["base_path"], [component]
-                    )
+                    self.determine_branches_and_shas(component_type, component, git_url, [component])
                 # Remove the module/subworkflow from modules/subworkflows without installation
                 module_repo[component_type][install_dir].pop(component)
                 if len(module_repo[component_type][install_dir]) == 0:
@@ -470,13 +495,14 @@ class ModulesJson:
 
         return untracked_dirs, missing_installation
 
-    def has_git_url_and_modules(self):
+    def has_git_url_and_modules(self) -> bool:
         """
         Check that all repo entries in the modules.json
         has a git url and a modules dict entry
         Returns:
             (bool): True if they are found for all repos, False otherwise
         """
+        assert self.modules_json is not None  # mypy
         for repo_url, repo_entry in self.modules_json.get("repos", {}).items():
             if "modules" not in repo_entry:
                 if "subworkflows" in repo_entry:
@@ -538,7 +564,7 @@ class ModulesJson:
                     failed_to_install.append(module)
         return failed_to_install
 
-    def check_up_to_date(self):
+    def check_up_to_date(self) -> bool:
         """
         Checks whether the modules and subworkflows installed in the directory
         are consistent with the entries in the 'modules.json' file and vice versa.
@@ -558,6 +584,8 @@ class ModulesJson:
             self.load()
             if not self.has_git_url_and_modules():
                 raise UserWarning
+
+            assert self.modules_json is not None  # mypy
             # check that all "installed_by" entries are lists and not strings
             # [these strings come from an older dev version, so this check can probably be removed in a future release]
             for _, repo_entry in self.modules_json.get("repos", {}).items():
@@ -601,7 +629,7 @@ class ModulesJson:
         if len(subworkflows_missing_from_modules_json) > 0:
             dump_modules_json = True
             self.resolve_missing_from_modules_json(subworkflows_missing_from_modules_json, "subworkflows")
-
+        assert self.modules_json is not None  # mypy
         # If the "installed_by" value is not present for modules/subworkflows, add it.
         for repo, repo_content in self.modules_json["repos"].items():
             for component_type, dir_content in repo_content.items():
@@ -626,8 +654,9 @@ class ModulesJson:
 
         if dump_modules_json:
             self.dump(run_prettier=True)
+        return True
 
-    def load(self):
+    def load(self) -> None:
         """
         Loads the modules.json file into the variable 'modules_json'
 
@@ -648,14 +677,14 @@ class ModulesJson:
 
     def update(
         self,
-        component_type,
-        modules_repo,
-        component_name,
-        component_version,
-        installed_by,
-        installed_by_log=None,
-        write_file=True,
-    ):
+        component_type: str,
+        modules_repo: ModulesRepo,
+        component_name: str,
+        component_version: str,
+        installed_by: Optional[List[str]],
+        installed_by_log: Optional[List[str]] = None,
+        write_file: bool = True,
+    ) -> bool:
         """
         Updates the 'module.json' file with new module/subworkflow info
 
@@ -675,9 +704,11 @@ class ModulesJson:
 
         if self.modules_json is None:
             self.load()
+            assert self.modules_json is not None  # mypy
         repo_name = modules_repo.repo_path
         remote_url = modules_repo.remote_url
         branch = modules_repo.branch
+
         if remote_url not in self.modules_json["repos"]:
             self.modules_json["repos"][remote_url] = {component_type: {repo_name: {}}}
         if component_type not in self.modules_json["repos"][remote_url]:
@@ -757,6 +788,8 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
+            assert self.modules_json is not None  # mypy
+
         if repo_url not in self.modules_json["repos"]:
             raise LookupError(f"Repo '{repo_url}' not present in 'modules.json'")
         if module_name not in self.modules_json["repos"][repo_url]["modules"][install_dir]:
@@ -768,6 +801,8 @@ class ModulesJson:
     def remove_patch_entry(self, module_name, repo_url, install_dir, write_file=True):
         if self.modules_json is None:
             self.load()
+            assert self.modules_json is not None  # mypy
+
         try:
             del self.modules_json["repos"][repo_url]["modules"][install_dir][module_name]["patch"]
         except KeyError:
@@ -789,6 +824,7 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
+            assert self.modules_json is not None  # mypy
         path = (
             self.modules_json["repos"]
             .get(repo_url, {})
@@ -845,6 +881,8 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
+            assert self.modules_json is not None  # mypy
+
         return repo_name in self.modules_json.get("repos", {})
 
     def module_present(self, module_name, repo_url, install_dir):
@@ -859,6 +897,7 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
+            assert self.modules_json is not None  # mypy
         return module_name in self.modules_json.get("repos", {}).get(repo_url, {}).get("modules", {}).get(
             install_dir, {}
         )
@@ -872,8 +911,8 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
-
-        return copy.deepcopy(self.modules_json)  # type: ignore
+            assert self.modules_json is not None  # mypy
+        return copy.deepcopy(self.modules_json)
 
     def get_component_version(self, component_type, component_name, repo_url, install_dir):
         """
@@ -889,6 +928,7 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
+            assert self.modules_json is not None  # mypy
         return (
             self.modules_json.get("repos", {})
             .get(repo_url, {})
@@ -912,6 +952,7 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
+            assert self.modules_json is not None  # mypy
         return (
             self.modules_json.get("repos", {})
             .get(repo_url, {})
@@ -935,6 +976,7 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
+            assert self.modules_json is not None  # mypy
         return (
             self.modules_json.get("repos", {})
             .get(repo_url, {})
@@ -944,7 +986,7 @@ class ModulesJson:
             .get("git_sha", None)
         )
 
-    def get_all_components(self, component_type):
+    def get_all_components(self, component_type: str) -> dict[str, Tuple[(str, str)]]:
         """
         Retrieves all pipeline modules/subworkflows that are reported in the modules.json
 
@@ -954,6 +996,8 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
+            assert self.modules_json is not None  # mypy
+
         if self.pipeline_components is None:
             self.pipeline_components = {}
             for repo, repo_entry in self.modules_json.get("repos", {}).items():
@@ -987,6 +1031,7 @@ class ModulesJson:
 
         if self.modules_json is None:
             self.load()
+            assert self.modules_json is not None  # mypy
         component_types = ["modules"] if component_type == "modules" else ["modules", "subworkflows"]
         # Find all components that have an entry of install by of  a given component, recursively call this function for subworkflows
         for type in component_types:
@@ -1016,10 +1061,11 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
+            assert self.modules_json is not None  # mypy
         installed_by_entries = {}
-        for repo_url, repo_entry in self.modules_json.get("repos", {}).items():
+        for _, repo_entry in self.modules_json.get("repos", {}).items():
             if component_type in repo_entry:
-                for install_dir, components in repo_entry[component_type].items():
+                for _, components in repo_entry[component_type].items():
                     if name in components:
                         installed_by_entries = components[name]["installed_by"]
                         break
@@ -1037,6 +1083,7 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
+            assert self.modules_json is not None  # mypy
         branch = (
             self.modules_json["repos"]
             .get(repo_url, {})
@@ -1096,7 +1143,8 @@ class ModulesJson:
                 log.info(
                     f"Was unable to reinstall some {component_type}. Removing 'modules.json' entries: {', '.join(uninstallable_components)}"
                 )
-
+            if self.modules_json is None:
+                raise UserWarning("No modules.json file found")
             for (repo_url, install_dir), component_entries in remove_from_mod_json.items():
                 for component in component_entries:
                     self.modules_json["repos"][repo_url][component_type][install_dir].pop(component)
@@ -1113,7 +1161,7 @@ class ModulesJson:
             log.info(
                 f"Recomputing commit SHAs for {component_type} which were missing from 'modules.json': {', '.join(format_missing)}"
             )
-
+        assert self.modules_json is not None  # mypy
         # Get the remotes we are missing
         tracked_repos = {repo_url: (repo_entry) for repo_url, repo_entry in self.modules_json["repos"].items()}
         repos, _ = self.get_pipeline_module_repositories(component_type, self.modules_dir, tracked_repos)
@@ -1186,7 +1234,7 @@ class ModulesJson:
 
         sw_path = Path(self.subworkflows_dir, org, subworkflow)
         dep_mods, dep_subwfs = get_components_to_install(sw_path)
-
+        assert self.modules_json is not None  # mypy
         for dep_mod in dep_mods:
             installed_by = self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"]
             if installed_by == ["modules"]:

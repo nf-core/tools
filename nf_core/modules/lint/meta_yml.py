@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 from jsonschema import exceptions, validators
 
-from nf_core.components.lint import ComponentLint
+from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_differ import ModulesDiffer
 
@@ -53,9 +53,11 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
         ).get("meta.yml")
         if lines is not None:
             meta_yaml = yaml.safe_load("".join(lines))
+    if module.meta_yml is None:
+        raise LintExceptionError("Module does not have a `meta.yml` file")
     if meta_yaml is None:
         try:
-            with open(module.meta_yml) as fh:
+            with open(str(module.meta_yml)) as fh:
                 meta_yaml = yaml.safe_load(fh)
             module.passed.append(("meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
         except FileNotFoundError:

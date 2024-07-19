@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 from jsonschema import exceptions, validators
 
-from nf_core.components.lint import ComponentLint
+from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.utils import custom_yaml_dumper
 
@@ -22,8 +22,10 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
     """
     env_yml = None
     #  load the environment.yml file
+    if module.environment_yml is None:
+        raise LintExceptionError("Module does not have an `environment.yml` file")
     try:
-        with open(Path(module.component_dir, "environment.yml")) as fh:
+        with open(str(module.environment_yml)) as fh:
             env_yml = yaml.safe_load(fh)
 
         module.passed.append(("environment_yml_exists", "Module's `environment.yml` exists", module.environment_yml))

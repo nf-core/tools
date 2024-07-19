@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+from typing import Optional
 
 import git
 import rich
@@ -35,7 +36,13 @@ class ModulesRepo(SyncedRepo):
     local_repo_statuses = {}
     no_pull_global = False
 
-    def __init__(self, remote_url=None, branch=None, no_pull=False, hide_progress=False):
+    def __init__(
+        self,
+        remote_url: Optional[str] = None,
+        branch: Optional[str] = None,
+        no_pull: bool = False,
+        hide_progress: bool = False,
+    ):
         """
         Initializes the object and clones the git repository if it is not already present
         """

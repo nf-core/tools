@@ -4,6 +4,7 @@ import json
 import logging
 import os
 from pathlib import Path
+from typing import List, Union
 
 from rich.console import Console
 from rich.syntax import Syntax
@@ -295,7 +296,7 @@ class ModulesDiffer:
                 console.print(Syntax("".join(diff), "diff", theme="ansi_dark", padding=1))
 
     @staticmethod
-    def per_file_patch(patch_fn):
+    def per_file_patch(patch_fn: Union[str, Path]) -> dict[str, List[str]]:
         """
         Splits a patch file for several files into one patch per file.
 
@@ -306,12 +307,12 @@ class ModulesDiffer:
             dict[str, str]: A dictionary indexed by the filenames with the
                             file patches as values
         """
-        with open(patch_fn) as fh:
+        with open(str(patch_fn)) as fh:
             lines = fh.readlines()
 
         patches = {}
         i = 0
-        patch_lines = []
+        patch_lines: list[str] = []
         key = "preamble"
         while i < len(lines):
             line = lines[i]
@@ -391,12 +392,12 @@ class ModulesDiffer:
         """
         Tries to apply a patch to a modified file. Since the line numbers in
         the patch does not agree if the file is modified, the old and new
-        lines in the patch are reconstructed and then we look for the old lines
+        lines inpatch are reconstructed and then we look for the old lines
         in the modified file. If all hunk in the patch are found in the new file
         it is updated with the new lines from the patch file.
 
         Args:
-            new_fn (str | Path): Path to the modified file
+            file_lines ([str]): The lines of the file to be patched
             patch (str | Path): (Outdated) patch for the file
             reverse (bool): Apply the patch in reverse
 
@@ -450,7 +451,9 @@ class ModulesDiffer:
         return patched_new_lines
 
     @staticmethod
-    def try_apply_patch(module, repo_path, patch_path, module_dir, reverse=False):
+    def try_apply_patch(
+        module: str, repo_path: Union[str, Path], patch_path: Union[str, Path], module_dir: Path, reverse: bool = False
+    ) -> dict[str, List[str]]:
         """
         Try applying a full patch file to a module
 
@@ -459,6 +462,7 @@ class ModulesDiffer:
             repo_path (str): Name of the repository where the module resides
             patch_path (str): The absolute path to the patch file to be applied
             module_dir (Path): The directory containing the module
+            reverse (bool): Apply the patch in reverse
 
         Returns:
             dict[str, str]: A dictionary with file paths (relative to the pipeline dir)

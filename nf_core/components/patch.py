@@ -30,6 +30,10 @@ class ComponentPatch(ComponentCommand):
             raise UserWarning("The command was not run in a valid pipeline directory.")
 
         components = self.modules_json.get_all_components(self.component_type).get(self.modules_repo.remote_url)
+        if components is None:
+            raise UserWarning(
+                f"No {self.component_type[:-1]}s found in the 'modules.json' file for the remote '{self.modules_repo.remote_url}'"
+            )
         component_names = [component for _, component in components]
 
         if component is not None and component not in component_names:
