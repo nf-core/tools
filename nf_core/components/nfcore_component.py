@@ -21,7 +21,7 @@ class NFCoreComponent:
         component_name: str,
         repo_url: Optional[str],
         component_dir: Path,
-        repo_type: str,
+        repo_type: Optional[str],
         base_dir: Path,
         component_type: str,
         remote_component: bool = True,
@@ -54,6 +54,7 @@ class NFCoreComponent:
         self.has_meta: bool = False
         self.git_sha: Optional[str] = None
         self.is_patched: bool = False
+        self.branch: Optional[str] = None
 
         if remote_component:
             # Initialize the important files
@@ -84,6 +85,9 @@ class NFCoreComponent:
             self.test_dir = None
             self.test_yml = None
             self.test_main_nf = None
+
+    def __repr__(self) -> str:
+        return f"<NFCoreComponent {self.component_name} {self.component_dir} {self.repo_url}>"
 
     def _get_main_nf_tags(self, test_main_nf: Union[Path, str]):
         """Collect all tags from the main.nf.test file."""

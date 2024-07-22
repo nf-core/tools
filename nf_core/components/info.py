@@ -97,7 +97,6 @@ class ComponentInfo(ComponentCommand):
         Args:
             module: str: Module name to check
         """
-        assert self.modules_json is not None  # mypy
         if component is None:
             self.local = questionary.confirm(
                 f"Is the {self.component_type[:-1]} locally installed?", style=nf_core.utils.nfcore_question_style
@@ -105,7 +104,8 @@ class ComponentInfo(ComponentCommand):
             if self.local:
                 if self.repo_type == "modules":
                     components = self.get_components_clone_modules()
-                else:
+                elif self.repo_type == "pipeline":
+                    assert self.modules_json is not None  # mypy
                     all_components = self.modules_json.get_all_components(self.component_type).get(
                         self.modules_repo.remote_url, []
                     )
@@ -117,6 +117,8 @@ class ComponentInfo(ComponentCommand):
                         raise UserWarning(
                             f"No {self.component_type[:-1]} installed from '{self.modules_repo.remote_url}'"
                         )
+                else:
+                    raise UserWarning("Unknown repository type")
             else:
                 components = self.modules_repo.get_avail_components(self.component_type)
             components.sort()
@@ -174,8 +176,8 @@ class ComponentInfo(ComponentCommand):
             Optional[dict]: Parsed meta.yml if found, None otherwise
         """
 
-        assert self.modules_json is not None  # mypy
         if self.repo_type == "pipeline":
+            assert self.modules_json is not None  # mypy
             # Try to find and load the meta.yml file
             component_base_path = Path(self.directory, self.component_type)
             # Check that we have any modules/subworkflows installed from this repo

@@ -4,7 +4,7 @@ import os
 import shutil
 from configparser import NoOptionError, NoSectionError
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Iterable, Optional, Union
 
 import git
 from git.exc import GitCommandError
@@ -121,28 +121,32 @@ class SyncedRepo:
             remote_url = NF_CORE_MODULES_REMOTE
 
         self.remote_url = remote_url
+        self.fullname = None
+        self.local_repo_dir = None
 
         self.repo = None
         # TODO: SyncedRepo doesn't have this method and both the ModulesRepo and
         # the WorkflowRepo define their own including custom init methods. This needs
         # fixing.
         self.setup_local_repo(remote_url, branch, hide_progress)
+        if self.local_repo_dir is None:
+            raise ValueError("Repository not initialized")
+        else:
+            config_fn, repo_config = load_tools_config(self.local_repo_dir)
+            try:
+                self.repo_path = repo_config["org_path"]
+            except KeyError:
+                raise UserWarning(f"'org_path' key not present in {config_fn.name}")
 
-        config_fn, repo_config = load_tools_config(self.local_repo_dir)
-        try:
-            self.repo_path = repo_config["org_path"]
-        except KeyError:
-            raise UserWarning(f"'org_path' key not present in {config_fn.name}")
+            # Verify that the repo seems to be correctly configured
+            if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
+                self.verify_branch()
 
-        # Verify that the repo seems to be correctly configured
-        if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
-            self.verify_branch()
+            # Convenience variable
+            self.modules_dir = Path(self.local_repo_dir, "modules", self.repo_path)
+            self.subworkflows_dir = Path(self.local_repo_dir, "subworkflows", self.repo_path)
 
-        # Convenience variable
-        self.modules_dir = os.path.join(self.local_repo_dir, "modules", self.repo_path)
-        self.subworkflows_dir = os.path.join(self.local_repo_dir, "subworkflows", self.repo_path)
-
-        self.avail_module_names = None
+            self.avail_module_names = None
 
     def setup_local_repo(self, remote_url, branch, hide_progress):
         pass
@@ -361,7 +365,9 @@ class SyncedRepo:
                 if not user_email:
                     git_config.set_value("user", "email", default_email)
 
-    def get_component_git_log(self, component_name: Union[str, Path], component_type: str, depth: Optional[int] = None):
+    def get_component_git_log(
+        self, component_name: Union[str, Path], component_type: str, depth: Optional[int] = None
+    ) -> Iterable[Dict[str, str]]:
         """
         Fetches the commit history the of requested module/subworkflow since a given date. The default value is
         not arbitrary - it is the last time the structure of the nf-core/modules repository was had an
@@ -373,35 +379,32 @@ class SyncedRepo:
         Returns:
             ( dict ): Iterator of commit SHAs and associated (truncated) message
         """
-
         if self.repo is None:
             raise ValueError("Repository not initialized")
         self.checkout_branch()
         component_path = Path(component_type, self.repo_path, component_name)
 
-        commits_new = self.repo.iter_commits(max_count=depth, paths=component_path)
-        if not commits_new:
-            raise ValueError(f"Could not find any commits for '{component_name}' in '{self.remote_url}'")
-        else:
-            commits_new = [
-                {"git_sha": commit.hexsha, "trunc_message": commit.message.splitlines()[0]} for commit in commits_new
-            ]
-        commits_old = []
+        commits_new_iter = self.repo.iter_commits(max_count=depth, paths=component_path)
+        commits_old_iter = []
         if component_type == "modules":
             # Grab commits also from previous modules structure
-            component_path = Path("modules", component_name)
-            commits_old = self.repo.iter_commits(max_count=depth, paths=component_path)
-            commits_old = [
-                {"git_sha": commit.hexsha, "trunc_message": commit.message.splitlines()[0]} for commit in commits_old
-            ]
+            old_component_path = Path("modules", component_name)
+            commits_old_iter = self.repo.iter_commits(max_count=depth, paths=old_component_path)
+
+        commits_old = [{"git_sha": commit.hexsha, "trunc_message": commit.message} for commit in commits_old_iter]
+        commits_new = [{"git_sha": commit.hexsha, "trunc_message": commit.message} for commit in commits_new_iter]
         commits = iter(commits_new + commits_old)
+
         return commits
 
     def get_latest_component_version(self, component_name, component_type):
         """
         Returns the latest commit in the repository
         """
-        return list(self.get_component_git_log(component_name, component_type, depth=1))[0]["git_sha"]
+        try:
+            return list(self.get_component_git_log(component_name, component_type, depth=1))[0]["git_sha"]
+        except UserWarning:
+            return None
 
     def sha_exists_on_branch(self, sha):
         """

@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Union, cast
 import rich.table
 
 from nf_core.components.components_command import ComponentCommand
-from nf_core.modules.modules_json import ModulesJson
+from nf_core.modules.modules_json import ModulesJson, ModulesJsonModuleEntry
 from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
@@ -110,7 +110,7 @@ class ComponentList(ComponentCommand):
             modules_json_file = modules_json.modules_json
 
             for repo_url, component_with_dir in sorted(repos_with_comps.items()):
-                repo_entry: Dict[str, Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]]
+                repo_entry: Dict[str, Dict[str, Dict[str, ModulesJsonModuleEntry]]]
                 if modules_json_file is None:
                     log.warning(f"Modules JSON file '{modules_json.modules_json_path}' is missing. ")
                     continue

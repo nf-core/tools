@@ -27,7 +27,7 @@ def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[P
 
     # Figure out the repository type from the .nf-core.yml config file if we can
     config_fn, tools_config = nf_core.utils.load_tools_config(base_dir)
-    repo_type: Optional[str] = tools_config.get("repository_type", None)
+    repo_type = tools_config.get("repository_type", None)
 
     # If not set, prompt the user
     if not repo_type and use_prompt:
@@ -101,7 +101,7 @@ def prompt_component_version_sha(
     git_sha = ""
     page_nbr = 1
 
-    all_commits = modules_repo.get_component_git_log(component_name, component_type)
+    all_commits = iter(modules_repo.get_component_git_log(component_name, component_type))
     next_page_commits = [next(all_commits, None) for _ in range(10)]
     next_page_commits = [commit for commit in next_page_commits if commit is not None]
 

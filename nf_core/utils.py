@@ -30,6 +30,7 @@ import rich
 import rich.markup
 import yaml
 from packaging.version import Version
+from pydantic import BaseModel, ValidationError
 from rich.live import Live
 from rich.spinner import Spinner
 
@@ -175,9 +176,9 @@ class Pipeline:
             log.debug("No conda `environment.yml` file found.")
             return False
 
-    def _fp(self, fn):
+    def _fp(self, fn: Union[str, Path]) -> Path:
         """Convenience function to get full path to a file in the pipeline"""
-        return os.path.join(self.wf_path, fn)
+        return Path(self.wf_path, fn)
 
     def list_files(self) -> List[Path]:
         """Get a list of all files in the pipeline"""
@@ -191,9 +192,8 @@ class Pipeline:
                     files.append(full_fn)
                 else:
                     log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             # Failed, so probably not initialised as a git repository - just a list of all files
-            log.debug(f"Couldn't call 'git ls-files': {e}")
             files = []
             for file_path in self.wf_path.rglob("*"):
                 if file_path.is_file():
@@ -1041,7 +1041,26 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Path, dict]:
+class NFCoreTemplateConfig(BaseModel):
+    org: str
+    name: str
+    description: str
+    author: str
+    version: Optional[str]
+    force: Optional[bool]
+    outdir: Optional[str]
+    skip_features: Optional[list]
+    is_nfcore: Optional[bool]
+
+
+class NFCoreYamlConfig(BaseModel):
+    nf_core_version: str
+    repository_type: str
+    org_path: str
+    template: NFCoreTemplateConfig
+
+
+def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Path, NFCoreYamlConfig]:
     """
     Parse the nf-core.yml configuration file
 
@@ -1059,21 +1078,26 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Path, dict]:
     if config_fn is None:
         depr_path = get_first_available_path(directory, DEPRECATED_CONFIG_PATHS)
         if depr_path:
-            log.error(
-                f"Deprecated `{depr_path.name}` file found! The file will not be loaded. "
-                f"Please rename the file to `{CONFIG_PATHS[0]}`."
+            raise AssertionError(
+                f"Deprecated `{depr_path.name}` file found! Please rename the file to `{CONFIG_PATHS[0]}`."
             )
         else:
-            log.debug(f"No tools config file found: {CONFIG_PATHS[0]}")
-        return Path(directory, CONFIG_PATHS[0]), {}
-
-    with open(config_fn) as fh:
+            raise AssertionError(f"Could not find a config file in the directory '{directory}'")
+    with open(str(config_fn)) as fh:
         tools_config = yaml.safe_load(fh)
+
     # If the file is empty
-    tools_config = tools_config or {}
+    if tools_config is None:
+        raise AssertionError(f"Config file '{config_fn}' is empty")
+
+    # Check for required fields
+    try:
+        nf_core_yaml_config = NFCoreYamlConfig(**tools_config)
+    except ValidationError as e:
+        raise AssertionError(f"Config file '{config_fn}' is invalid: {e}")
 
     log.debug("Using config file: %s", config_fn)
-    return config_fn, tools_config
+    return config_fn, nf_core_yaml_config
 
 
 def determine_base_dir(directory: Union[Path, str] = ".") -> Path:

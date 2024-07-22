@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+from pathlib import Path
 from typing import Optional
 
 import git
@@ -72,8 +73,8 @@ class ModulesRepo(SyncedRepo):
             self.verify_branch()
 
         # Convenience variable
-        self.modules_dir = os.path.join(self.local_repo_dir, "modules", self.repo_path)
-        self.subworkflows_dir = os.path.join(self.local_repo_dir, "subworkflows", self.repo_path)
+        self.modules_dir = Path(self.local_repo_dir, "modules", self.repo_path)
+        self.subworkflows_dir = Path(self.local_repo_dir, "subworkflows", self.repo_path)
 
         self.avail_module_names = None
 

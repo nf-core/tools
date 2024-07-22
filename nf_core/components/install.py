@@ -100,8 +100,11 @@ class ComponentInstall(ComponentCommand):
             modules_json.load()
             modules_json.update(self.component_type, self.modules_repo, component, current_version, self.installed_by)
             return False
-
-        version = self.get_version(component, self.sha, self.prompt, current_version, self.modules_repo)
+        try:
+            version = self.get_version(component, self.sha, self.prompt, current_version, self.modules_repo)
+        except UserWarning as e:
+            log.error(e)
+            return False
         if not version:
             return False
 
@@ -174,7 +177,7 @@ class ComponentInstall(ComponentCommand):
             self.installed_by = original_installed
 
     def collect_and_verify_name(
-        self, component: Optional[str], modules_repo: nf_core.modules.modules_repo.ModulesRepo
+        self, component: Optional[str], modules_repo: "nf_core.modules.modules_repo.ModulesRepo"
     ) -> str:
         """
         Collect component name.

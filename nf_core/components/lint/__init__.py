@@ -92,17 +92,17 @@ class ComponentLint(ComponentCommand):
                     raise LookupError(
                         f"Error parsing modules.json: {components}. " f"Please check the file for errors or try again."
                     )
-                org, comp = components
-                self.all_remote_components.append(
-                    NFCoreComponent(
-                        comp,
-                        repo_url,
-                        Path(self.directory, self.component_type, org, comp),
-                        self.repo_type,
-                        Path(self.directory),
-                        self.component_type,
+                for org, comp in components:
+                    self.all_remote_components.append(
+                        NFCoreComponent(
+                            comp,
+                            repo_url,
+                            Path(self.directory, self.component_type, org, comp),
+                            self.repo_type,
+                            Path(self.directory),
+                            self.component_type,
+                        )
                     )
-                )
             if not self.all_remote_components:
                 raise LookupError(
                     f"No {self.component_type} from {self.modules_repo.remote_url} installed in pipeline."
@@ -123,7 +123,7 @@ class ComponentLint(ComponentCommand):
                     for comp in self.get_local_components()
                 ]
             self.config = nf_core.utils.fetch_wf_config(Path(self.directory), cache_config=True)
-        elif self.repo_type == "modules":
+        else:
             component_dir = Path(
                 self.directory,
                 self.default_modules_path if self.component_type == "modules" else self.default_subworkflows_path,
@@ -141,11 +141,11 @@ class ComponentLint(ComponentCommand):
                 Path(self.directory).joinpath("tests", "config"), cache_config=True
             )
 
-        if registry is None:
-            self.registry = self.config.get("docker.registry", "quay.io")
-        else:
-            self.registry = registry
-        log.debug(f"Registry set to {self.registry}")
+            if registry is None:
+                self.registry = self.config.get("docker.registry", "quay.io")
+            else:
+                self.registry = registry
+            log.debug(f"Registry set to {self.registry}")
 
         self.lint_config = None
         self.modules_json = None
