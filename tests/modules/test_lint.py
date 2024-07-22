@@ -180,7 +180,7 @@ class TestModulesCreate(TestModules):
     def test_modules_lint_trimgalore(self):
         """Test linting the TrimGalore! module"""
         self.mods_install.install("trimgalore")
-        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
+        module_lint = nf_core.modules.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, module="trimgalore")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
@@ -191,11 +191,11 @@ class TestModulesCreate(TestModules):
         self.mods_remove.remove("fastqc", force=True)
         self.mods_remove.remove("multiqc", force=True)
         with pytest.raises(LookupError):
-            nf_core.modules.ModuleLint(dir=self.pipeline_dir)
+            nf_core.modules.ModuleLint(directory=self.pipeline_dir)
 
     def test_modules_lint_new_modules(self):
         """lint a new module"""
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, all_modules=True)
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
@@ -206,13 +206,13 @@ class TestModulesCreate(TestModules):
         self.mods_remove.remove("fastqc", force=True)
         self.mods_remove.remove("multiqc", force=True)
         with pytest.raises(LookupError):
-            nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
+            nf_core.modules.ModuleLint(directory=self.pipeline_dir, remote_url=GITLAB_URL)
 
     def test_modules_lint_gitlab_modules(self):
         """Lint modules from a different remote"""
         self.mods_install_gitlab.install("fastqc")
         self.mods_install_gitlab.install("multiqc")
-        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
+        module_lint = nf_core.modules.ModuleLint(directory=self.pipeline_dir, remote_url=GITLAB_URL)
         module_lint.lint(print_results=False, all_modules=True)
         assert len(module_lint.failed) == 2
         assert len(module_lint.passed) > 0
@@ -221,7 +221,7 @@ class TestModulesCreate(TestModules):
     def test_modules_lint_multiple_remotes(self):
         """Lint modules from a different remote"""
         self.mods_install_gitlab.install("multiqc")
-        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
+        module_lint = nf_core.modules.ModuleLint(directory=self.pipeline_dir, remote_url=GITLAB_URL)
         module_lint.lint(print_results=False, all_modules=True)
         assert len(module_lint.failed) == 1
         assert len(module_lint.passed) > 0
@@ -229,14 +229,14 @@ class TestModulesCreate(TestModules):
 
     def test_modules_lint_registry(self):
         """Test linting the samtools module and alternative registry"""
-        self.mods_install.install("samtools")
-        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, registry="public.ecr.aws")
-        module_lint.lint(print_results=False, module="samtools")
+        assert self.mods_install.install("samtools/sort")
+        module_lint = nf_core.modules.ModuleLint(directory=self.pipeline_dir, registry="public.ecr.aws")
+        module_lint.lint(print_results=False, module="samtools/sort")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
-        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
-        module_lint.lint(print_results=False, module="samtools")
+        module_lint = nf_core.modules.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(print_results=False, module="samtools/sort")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
@@ -255,7 +255,7 @@ class TestModulesCreate(TestModules):
         # to avoid error from try_apply_patch() during linting
         with set_wd(self.pipeline_dir):
             module_lint = nf_core.modules.ModuleLint(
-                dir=self.pipeline_dir,
+                directory=self.pipeline_dir,
                 remote_url=GITLAB_URL,
                 branch=PATCH_BRANCH,
                 hide_progress=True,
@@ -298,7 +298,7 @@ class TestModulesCreate(TestModules):
 
     def test_modules_lint_snapshot_file(self):
         """Test linting a module with a snapshot file"""
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
@@ -315,7 +315,7 @@ class TestModulesCreate(TestModules):
             "tests",
             "main.nf.test.snap",
         ).unlink()
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         Path(
             self.nfcore_modules,
@@ -359,7 +359,7 @@ class TestModulesCreate(TestModules):
             "w",
         ) as fh:
             fh.write(new_content)
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
@@ -377,7 +377,7 @@ class TestModulesCreate(TestModules):
                 "environment.yml.bak",
             )
         )
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         Path(
             self.nfcore_modules,
@@ -403,7 +403,7 @@ class TestModulesCreate(TestModules):
 
     def test_modules_environment_yml_file_sorted_correctly(self):
         """Test linting a module with a correctly sorted environment.yml file"""
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
@@ -438,7 +438,7 @@ class TestModulesCreate(TestModules):
             "w",
         ) as fh:
             fh.write(yaml_content)
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         # we fix the sorting on the fly, so this should pass
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
@@ -471,7 +471,7 @@ class TestModulesCreate(TestModules):
             "w",
         ) as fh:
             fh.write(yaml.dump(yaml_content))
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
@@ -504,7 +504,7 @@ class TestModulesCreate(TestModules):
             "w",
         ) as fh:
             fh.write(yaml.dump(yaml_content))
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         # reset changes
         yaml_content["name"] = "bpipe_test"
@@ -536,7 +536,7 @@ class TestModulesCreate(TestModules):
             "w",
         ) as fh:
             fh.write(yaml.dump(meta_yml))
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
 
         # reset changes
@@ -559,7 +559,7 @@ class TestModulesCreate(TestModules):
         main_nf_new = main_nf.replace("path bam", "path bai")
         with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf"), "w") as fh:
             fh.write(main_nf_new)
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf"), "w") as fh:
             fh.write(main_nf)
@@ -578,7 +578,7 @@ class TestModulesCreate(TestModules):
         main_nf_new = main_nf.replace("emit: bam", "emit: bai")
         with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf"), "w") as fh:
             fh.write(main_nf_new)
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf"), "w") as fh:
             fh.write(main_nf)
@@ -625,7 +625,7 @@ class TestModulesCreate(TestModules):
             "w",
         ) as fh:
             fh.write(yaml.dump(environment_yml))
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
 
         # reset changes
@@ -659,7 +659,7 @@ class TestModulesCreate(TestModules):
         Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests").rename(
             Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests.bak")
         )
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests.bak").rename(
             Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "tests")
@@ -690,7 +690,7 @@ class TestModulesCreate(TestModules):
                 "main.nf.test.bak",
             )
         )
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         Path(
             self.nfcore_modules,
@@ -719,7 +719,7 @@ class TestModulesCreate(TestModules):
     def test_modules_unused_pytest_files(self):
         """Test linting a nf-test module with files still present in `tests/modules/`"""
         Path(self.nfcore_modules, "tests", "modules", "bpipe", "test").mkdir(parents=True, exist_ok=True)
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         Path(self.nfcore_modules, "tests", "modules", "bpipe", "test").rmdir()
         assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
@@ -735,7 +735,7 @@ class TestModulesCreate(TestModules):
         self.nfcore_modules = Path(tmp_dir, "modules-test")
         Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_NFTEST_BRANCH)
 
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="kallisto/quant")
 
         assert len(module_lint.failed) == 3, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
@@ -774,7 +774,7 @@ class TestModulesCreate(TestModules):
             "w",
         ) as fh:
             fh.write(new_content)
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         with open(
             Path(
@@ -812,7 +812,7 @@ class TestModulesCreate(TestModules):
         with open(snap_file, "w") as fh:
             json.dump(snap, fh)
 
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
@@ -841,7 +841,7 @@ class TestModulesCreate(TestModules):
         with open(snap_file, "w") as fh:
             json.dump(snap, fh)
 
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules)
         module_lint.lint(print_results=False, module="bpipe/test")
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0

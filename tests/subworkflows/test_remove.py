@@ -14,10 +14,10 @@ class TestSubworkflowsRemove(TestSubworkflows):
         """Test removing subworkflow and all it's dependencies after installing it"""
         self.subworkflow_install.install("bam_sort_stats_samtools")
 
-        subworkflow_path = Path(self.subworkflow_install.dir, "subworkflows", "nf-core")
+        subworkflow_path = Path(self.subworkflow_install.directory, "subworkflows", "nf-core")
         bam_sort_stats_samtools_path = Path(subworkflow_path, "bam_sort_stats_samtools")
         bam_stats_samtools_path = Path(subworkflow_path, "bam_stats_samtools")
-        samtools_index_path = Path(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "index")
+        samtools_index_path = Path(self.subworkflow_install.directory, "modules", "nf-core", "samtools", "index")
         ModulesJson(self.pipeline_dir)
         mod_json_before = ModulesJson(self.pipeline_dir).get_modules_json()
         assert self.subworkflow_remove.remove("bam_sort_stats_samtools")
@@ -40,10 +40,10 @@ class TestSubworkflowsRemove(TestSubworkflows):
         self.subworkflow_install.install("bam_sort_stats_samtools")
         self.mods_install.install("samtools/index")
 
-        subworkflow_path = Path(self.subworkflow_install.dir, "subworkflows", "nf-core")
+        subworkflow_path = Path(self.subworkflow_install.directory, "subworkflows", "nf-core")
         bam_sort_stats_samtools_path = Path(subworkflow_path, "bam_sort_stats_samtools")
         bam_stats_samtools_path = Path(subworkflow_path, "bam_stats_samtools")
-        samtools_index_path = Path(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "index")
+        samtools_index_path = Path(self.subworkflow_install.directory, "modules", "nf-core", "samtools", "index")
 
         mod_json_before = ModulesJson(self.pipeline_dir).get_modules_json()
         assert self.subworkflow_remove.remove("bam_sort_stats_samtools")
@@ -67,11 +67,11 @@ class TestSubworkflowsRemove(TestSubworkflows):
         """Test removing subworkflow and all it's dependencies after installing it"""
         self.subworkflow_install.install("bam_sort_stats_samtools")
         self.subworkflow_install.install("bam_stats_samtools")
-        subworkflow_path = Path(self.subworkflow_install.dir, "subworkflows", "nf-core")
+        subworkflow_path = Path(self.subworkflow_install.directory, "subworkflows", "nf-core")
         bam_sort_stats_samtools_path = Path(subworkflow_path, "bam_sort_stats_samtools")
         bam_stats_samtools_path = Path(subworkflow_path, "bam_stats_samtools")
-        samtools_index_path = Path(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "index")
-        samtools_stats_path = Path(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "stats")
+        samtools_index_path = Path(self.subworkflow_install.directory, "modules", "nf-core", "samtools", "index")
+        samtools_stats_path = Path(self.subworkflow_install.directory, "modules", "nf-core", "samtools", "stats")
 
         assert self.subworkflow_remove.remove("bam_sort_stats_samtools")
 
@@ -85,11 +85,11 @@ class TestSubworkflowsRemove(TestSubworkflows):
     def test_subworkflows_remove_included_subworkflow(self):
         """Test removing subworkflow which is installed by another subworkflow and all it's dependencies."""
         self.subworkflow_install.install("bam_sort_stats_samtools")
-        subworkflow_path = Path(self.subworkflow_install.dir, "subworkflows", "nf-core")
+        subworkflow_path = Path(self.subworkflow_install.directory, "subworkflows", "nf-core")
         bam_sort_stats_samtools_path = Path(subworkflow_path, "bam_sort_stats_samtools")
         bam_stats_samtools_path = Path(subworkflow_path, "bam_stats_samtools")
-        samtools_index_path = Path(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "index")
-        samtools_stats_path = Path(self.subworkflow_install.dir, "modules", "nf-core", "samtools", "stats")
+        samtools_index_path = Path(self.subworkflow_install.directory, "modules", "nf-core", "samtools", "index")
+        samtools_stats_path = Path(self.subworkflow_install.directory, "modules", "nf-core", "samtools", "stats")
 
         assert self.subworkflow_remove.remove("bam_stats_samtools") is False
 

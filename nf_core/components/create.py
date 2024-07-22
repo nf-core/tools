@@ -14,6 +14,7 @@ from typing import Dict, Optional
 import jinja2
 import questionary
 import rich
+import rich.prompt
 import yaml
 from packaging.version import parse as parse_version
 

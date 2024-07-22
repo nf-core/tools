@@ -14,7 +14,7 @@ class TestSubworkflowsLint(TestSubworkflows):
     def test_subworkflows_lint(self):
         """Test linting the fastq_align_bowtie2 subworkflow"""
         self.subworkflow_install.install("fastq_align_bowtie2")
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.pipeline_dir)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
         subworkflow_lint.lint(print_results=False, subworkflow="fastq_align_bowtie2")
         assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
@@ -26,11 +26,11 @@ class TestSubworkflowsLint(TestSubworkflows):
         self.subworkflow_remove.remove("utils_nfcore_pipeline", force=True)
         self.subworkflow_remove.remove("utils_nfvalidation_plugin", force=True)
         with pytest.raises(LookupError):
-            nf_core.subworkflows.SubworkflowLint(dir=self.pipeline_dir)
+            nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
 
     def test_subworkflows_lint_new_subworkflow(self):
         """lint a new subworkflow"""
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.nfcore_modules)
         subworkflow_lint.lint(print_results=True, all_subworkflows=True)
         assert len(subworkflow_lint.failed) == 0
 
@@ -40,13 +40,13 @@ class TestSubworkflowsLint(TestSubworkflows):
     def test_subworkflows_lint_no_gitlab(self):
         """Test linting a pipeline with no subworkflows installed"""
         with pytest.raises(LookupError):
-            nf_core.subworkflows.SubworkflowLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
+            nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir, remote_url=GITLAB_URL)
 
     def test_subworkflows_lint_gitlab_subworkflows(self):
         """Lint subworkflows from a different remote"""
         self.subworkflow_install_gitlab.install("bam_stats_samtools")
         subworkflow_lint = nf_core.subworkflows.SubworkflowLint(
-            dir=self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
+            directory=self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
         )
         subworkflow_lint.lint(print_results=False, all_subworkflows=True)
         assert len(subworkflow_lint.failed) == 0
@@ -58,7 +58,7 @@ class TestSubworkflowsLint(TestSubworkflows):
         self.subworkflow_install_gitlab.install("bam_stats_samtools")
         self.subworkflow_install.install("fastq_align_bowtie2")
         subworkflow_lint = nf_core.subworkflows.SubworkflowLint(
-            dir=self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
+            directory=self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
         )
         subworkflow_lint.lint(print_results=False, all_subworkflows=True)
         assert len(subworkflow_lint.failed) == 0
@@ -67,7 +67,7 @@ class TestSubworkflowsLint(TestSubworkflows):
 
     def test_subworkflows_lint_snapshot_file(self):
         """Test linting a subworkflow with a snapshot file"""
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.nfcore_modules)
         subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
         assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
@@ -83,7 +83,7 @@ class TestSubworkflowsLint(TestSubworkflows):
             "tests",
             "main.nf.test.snap",
         ).unlink()
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.nfcore_modules)
         subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
         Path(
             self.nfcore_modules,
@@ -132,7 +132,7 @@ class TestSubworkflowsLint(TestSubworkflows):
             "tests",
             "main.nf.test.snap",
         ).unlink()
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.nfcore_modules)
         subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
         Path(
             self.nfcore_modules,
@@ -179,7 +179,7 @@ class TestSubworkflowsLint(TestSubworkflows):
             "w",
         ) as fh:
             fh.write(new_content)
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.pipeline_dir)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
         subworkflow_lint.lint(print_results=False, subworkflow="bam_stats_samtools")
         assert len(subworkflow_lint.failed) >= 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
@@ -218,7 +218,7 @@ class TestSubworkflowsLint(TestSubworkflows):
         ) as fh:
             fh.write(new_content)
 
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.pipeline_dir)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
         subworkflow_lint.lint(print_results=False, subworkflow="bam_stats_samtools")
         assert len(subworkflow_lint.failed) >= 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
@@ -265,7 +265,7 @@ class TestSubworkflowsLint(TestSubworkflows):
             "w",
         ) as fh:
             fh.write(new_content)
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.pipeline_dir)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
         subworkflow_lint.lint(print_results=False, subworkflow="bam_stats_samtools")
         assert len(subworkflow_lint.failed) >= 1, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
@@ -276,7 +276,7 @@ class TestSubworkflowsLint(TestSubworkflows):
         self.subworkflow_remove.remove("bam_stats_samtools", force=True)
 
     def test_subworkflows_absent_version(self):
-        """Test linting a nf-test module if the versions is absent in the snapshot file `"""
+        """Test linting a nf-test subworkflow if the versions is absent in the snapshot file `"""
         snap_file = Path(
             self.nfcore_modules,
             "subworkflows",
@@ -291,7 +291,11 @@ class TestSubworkflowsLint(TestSubworkflows):
         with open(snap_file, "w") as fh:
             fh.write(new_content)
 
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+        import ipdb
+
+        ipdb.set_trace()
+
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.nfcore_modules)
         subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
         assert len(subworkflow_lint.failed) == 0
         assert len(subworkflow_lint.passed) > 0
@@ -308,7 +312,7 @@ class TestSubworkflowsLint(TestSubworkflows):
         test_dir_copy = shutil.copytree(test_dir, test_dir.parent / "tests_copy")
         shutil.rmtree(test_dir)
 
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.nfcore_modules)
         subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
         assert len(subworkflow_lint.failed) == 0
         assert len(subworkflow_lint.passed) > 0
@@ -324,7 +328,7 @@ class TestSubworkflowsLint(TestSubworkflows):
         main_nf_copy = shutil.copy(main_nf, main_nf.parent / "main_nf_copy")
         main_nf.unlink()
 
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.nfcore_modules)
         subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
         assert len(subworkflow_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
@@ -351,7 +355,7 @@ class TestSubworkflowsLint(TestSubworkflows):
         with open(snap_file, "w") as fh:
             json.dump(snap, fh)
 
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.nfcore_modules)
         subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
         assert len(subworkflow_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
@@ -379,7 +383,7 @@ class TestSubworkflowsLint(TestSubworkflows):
         with open(snap_file, "w") as fh:
             json.dump(snap, fh)
 
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.nfcore_modules)
         subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
         assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0

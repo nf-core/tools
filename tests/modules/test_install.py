@@ -19,14 +19,14 @@ from ..utils import (
 class TestModulesCreate(TestModules):
     def test_modules_install_nopipeline(self):
         """Test installing a module - no pipeline given"""
-        self.mods_install.dir = None
+        self.mods_install.directory = None
         assert self.mods_install.install("foo") is False
 
     @with_temporary_folder
     def test_modules_install_emptypipeline(self, tmpdir):
         """Test installing a module - empty dir given"""
         os.mkdir(os.path.join(tmpdir, "nf-core-pipe"))
-        self.mods_install.dir = os.path.join(tmpdir, "nf-core-pipe")
+        self.mods_install.directory = os.path.join(tmpdir, "nf-core-pipe")
         with pytest.raises(UserWarning) as excinfo:
             self.mods_install.install("foo")
         assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
@@ -38,8 +38,8 @@ class TestModulesCreate(TestModules):
     def test_modules_install_trimgalore(self):
         """Test installing a module - TrimGalore!"""
         assert self.mods_install.install("trimgalore") is not False
-        assert self.mods_install.dir is not None
-        module_path = Path(self.mods_install.dir, "modules", "nf-core", "trimgalore")
+        assert self.mods_install.directory is not None
+        module_path = Path(self.mods_install.directory, "modules", "nf-core", "trimgalore")
         assert os.path.exists(module_path)
 
     def test_modules_install_trimgalore_twice(self):

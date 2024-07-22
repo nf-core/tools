@@ -512,12 +512,14 @@ class PipelineCreate:
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
         email_logo_path = Path(self.outdir) / "assets"
-        create_logo(text=self.jinja_params["short_name"], dir=email_logo_path, theme="light", force=bool(self.force))
+        create_logo(
+            text=self.jinja_params["short_name"], directory=email_logo_path, theme="light", force=bool(self.force)
+        )
         for theme in ["dark", "light"]:
             readme_logo_path = Path(self.outdir) / "docs" / "images"
             create_logo(
                 text=self.jinja_params["short_name"],
-                dir=readme_logo_path,
+                directory=readme_logo_path,
                 width=600,
                 theme=theme,
                 force=bool(self.force),
