@@ -158,7 +158,7 @@ class NFCoreComponent:
 
     def get_inputs_from_main_nf(self) -> None:
         """Collect all inputs from the main.nf file."""
-        inputs = []
+        inputs: list[list | str] = []
         with open(self.main_nf) as f:
             data = f.read()
         if self.component_type == "modules":
@@ -173,10 +173,10 @@ class NFCoreComponent:
             # don't match anything inside comments or after "output:"
             if "input:" not in data:
                 log.debug(f"Could not find any inputs in {self.main_nf}")
-                return inputs
+                return
             input_data = data.split("input:")[1].split("output:")[0]
             for line in input_data.split("\n"):
-                channel_elements = []
+                channel_elements: list[dict] = []
                 regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
                 matches = re.finditer(regex, line)
                 for _, match in enumerate(matches, start=1):
@@ -195,15 +195,14 @@ class NFCoreComponent:
             # get input values from main.nf after "take:"
             if "take:" not in data:
                 log.debug(f"Could not find any inputs in {self.main_nf}")
-                return inputs
+                return
             # get all lines between "take" and "main" or "emit"
             input_data = data.split("take:")[1].split("main:")[0].split("emit:")[0]
             for line in input_data.split("\n"):
                 try:
                     inputs.append(line.split()[0])
                 except IndexError:
-                    # Empty lines
-                    pass
+                    pass  # Empty lines
             log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
             self.inputs = inputs
 

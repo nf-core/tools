@@ -231,7 +231,6 @@ class SubworkflowLint(ComponentLint):
 
             self.failed += [LintResult(swf, *s) for s in swf.failed]
 
-
     def update_meta_yml_file(self, swf):
         """
         Update the meta.yml file with the correct inputs and outputs
@@ -251,9 +250,13 @@ class SubworkflowLint(ComponentLint):
         # Compare inputs and add them if missing
         if "input" in meta_yaml:
             # Delete inputs from meta.yml which are not present in main.nf
-            meta_yaml_corrected["input"] = [input for input in meta_yaml["input"] if list(input.keys())[0] in swf.inputs]
+            meta_yaml_corrected["input"] = [
+                input for input in meta_yaml["input"] if list(input.keys())[0] in swf.inputs
+            ]
             # Obtain inputs from main.nf missing in meta.yml
-            inputs_correct = [list(input.keys())[0] for input in meta_yaml_corrected["input"] if list(input.keys())[0] in swf.inputs]
+            inputs_correct = [
+                list(input.keys())[0] for input in meta_yaml_corrected["input"] if list(input.keys())[0] in swf.inputs
+            ]
             inputs_missing = [input for input in swf.inputs if input not in inputs_correct]
             # Add missing inputs to meta.yml
             for missing_input in inputs_missing:
@@ -261,9 +264,15 @@ class SubworkflowLint(ComponentLint):
 
         if "output" in meta_yaml:
             # Delete outputs from meta.yml which are not present in main.nf
-            meta_yaml_corrected["output"] = [output for output in meta_yaml["output"] if list(output.keys())[0] in swf.outputs]
+            meta_yaml_corrected["output"] = [
+                output for output in meta_yaml["output"] if list(output.keys())[0] in swf.outputs
+            ]
             # Obtain output from main.nf missing in meta.yml
-            outputs_correct = [list(output.keys())[0] for output in meta_yaml_corrected["output"] if list(output.keys())[0] in swf.outputs]
+            outputs_correct = [
+                list(output.keys())[0]
+                for output in meta_yaml_corrected["output"]
+                if list(output.keys())[0] in swf.outputs
+            ]
             outputs_missing = [output for output in swf.outputs if output not in outputs_correct]
             # Add missing inputs to meta.yml
             for missing_output in outputs_missing:
@@ -274,5 +283,3 @@ class SubworkflowLint(ComponentLint):
             log.info(f"Updating {swf.meta_yml}")
             yaml.dump(meta_yaml_corrected, fh)
             run_prettier_on_file(fh.name)
-
-

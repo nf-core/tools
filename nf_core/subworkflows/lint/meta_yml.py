@@ -9,6 +9,7 @@ import nf_core.components.components_utils
 
 log = logging.getLogger(__name__)
 
+
 def meta_yml(subworkflow_lint_object, subworkflow):
     """
     Lint a ``meta.yml`` file
