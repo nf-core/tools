@@ -1,7 +1,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import questionary
 import rich.prompt
@@ -133,7 +133,7 @@ def prompt_component_version_sha(
     return git_sha
 
 
-def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Any]], List[str]]:
+def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Optional[str]]], List[str]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """
@@ -154,6 +154,7 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Any]
                     subworkflows.append(name.lower())
 
     if Path(subworkflow_dir, "meta.yml").exists():
+        modules = []
         with open(Path(subworkflow_dir, "meta.yml")) as fh:
             meta = yaml.safe_load(fh)
             if "components" not in meta:
