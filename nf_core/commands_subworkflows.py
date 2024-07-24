@@ -102,7 +102,7 @@ def subworkflows_list_local(ctx, keywords, json, dir):  # pylint: disable=redefi
         sys.exit(1)
 
 
-def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by):
+def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by, fix):
     """
     Lint one or more subworkflows in a directory.
 
@@ -119,6 +119,7 @@ def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, lo
         subworkflow_lint = SubworkflowLint(
             dir,
             fail_warned=fail_warned,
+            fix=fix,
             registry=ctx.params["registry"],
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],

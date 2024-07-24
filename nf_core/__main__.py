@@ -1431,11 +1431,12 @@ def command_subworkflows_list_local(ctx, keywords, json, dir):  # pylint: disabl
     help="Sort lint output by subworkflow or test name.",
     show_default=True,
 )
-def command_subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by):
+@click.option("--fix", is_flag=True, help="Fix all linting tests if possible.")
+def command_subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by, fix):
     """
     Lint one or more subworkflows in a directory.
     """
-    subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by)
+    subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by, fix)
 
 
 # nf-core subworkflows info

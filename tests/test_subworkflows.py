@@ -159,6 +159,7 @@ class TestSubworkflows(unittest.TestCase):
         test_subworkflows_lint_snapshot_file,
         test_subworkflows_lint_snapshot_file_missing_fail,
         test_subworkflows_lint_snapshot_file_not_needed,
+        test_subworkflows_lint_update_meta_yml,
     )
     from .subworkflows.list import (  # type: ignore[misc]
         test_subworkflows_install_and_list_subworkflows,
