@@ -6,7 +6,10 @@ from unittest import mock
 import pytest
 
 import nf_core.components.components_command
-import nf_core.modules
+import nf_core.components.patch
+import nf_core.modules.modules_json
+import nf_core.modules.patch
+import nf_core.modules.update
 
 from ..test_modules import TestModules
 from ..utils import GITLAB_URL
@@ -29,7 +32,7 @@ REPO_URL = "https://gitlab.com/nf-core/modules-test.git"
 
 
 def setup_patch(pipeline_dir, modify_module):
-    install_obj = nf_core.modules.ModuleInstall(
+    install_obj = nf_core.modules.install.ModuleInstall(
         pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH, sha=ORG_SHA
     )
 
@@ -66,7 +69,7 @@ class TestModulesCreate(TestModules):
         setup_patch(self.pipeline_dir, False)
 
         # Try creating a patch file
-        patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
+        patch_obj = nf_core.modules.patch.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
         with pytest.raises(UserWarning):
             patch_obj.patch(BISMARK_ALIGN)
 
@@ -84,7 +87,7 @@ class TestModulesCreate(TestModules):
         setup_patch(self.pipeline_dir, True)
 
         # Try creating a patch file
-        patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
+        patch_obj = nf_core.modules.patch.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
         patch_obj.patch(BISMARK_ALIGN)
 
         module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
@@ -119,7 +122,7 @@ class TestModulesCreate(TestModules):
         module_path = Path(self.pipeline_dir, module_relpath)
 
         # Try creating a patch file
-        patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
+        patch_obj = nf_core.modules.patch.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
         patch_obj.patch(BISMARK_ALIGN)
 
         patch_fn = f"{'-'.join(BISMARK_ALIGN.split('/'))}.diff"
@@ -132,7 +135,7 @@ class TestModulesCreate(TestModules):
             "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
         )
 
-        update_obj = nf_core.modules.ModuleUpdate(
+        update_obj = nf_core.modules.update.ModuleUpdate(
             self.pipeline_dir, sha=SUCCEED_SHA, remote_url=GITLAB_URL, branch=PATCH_BRANCH
         )
         # Install the new files
@@ -187,7 +190,7 @@ class TestModulesCreate(TestModules):
         module_path = Path(self.pipeline_dir, module_relpath)
 
         # Try creating a patch file
-        patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
+        patch_obj = nf_core.modules.patch.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
         patch_obj.patch(BISMARK_ALIGN)
 
         patch_fn = f"{'-'.join(BISMARK_ALIGN.split('/'))}.diff"
@@ -200,7 +203,7 @@ class TestModulesCreate(TestModules):
             "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
         )
 
-        update_obj = nf_core.modules.ModuleUpdate(
+        update_obj = nf_core.modules.update.ModuleUpdate(
             self.pipeline_dir, sha=FAIL_SHA, remote_url=GITLAB_URL, branch=PATCH_BRANCH
         )
         # Install the new files
@@ -226,7 +229,7 @@ class TestModulesCreate(TestModules):
         module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
 
         # Try creating a patch file
-        patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
+        patch_obj = nf_core.modules.patch.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
         patch_obj.patch(BISMARK_ALIGN)
 
         patch_fn = f"{'-'.join(BISMARK_ALIGN.split('/'))}.diff"
@@ -240,7 +243,7 @@ class TestModulesCreate(TestModules):
         )
 
         # Update the module
-        update_obj = nf_core.modules.ModuleUpdate(
+        update_obj = nf_core.modules.update.ModuleUpdate(
             self.pipeline_dir,
             sha=SUCCEED_SHA,
             show_diff=False,
@@ -287,7 +290,7 @@ class TestModulesCreate(TestModules):
         module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
 
         # Try creating a patch file
-        patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
+        patch_obj = nf_core.modules.patch.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
         patch_obj.patch(BISMARK_ALIGN)
 
         patch_fn = f"{'-'.join(BISMARK_ALIGN.split('/'))}.diff"
@@ -304,7 +307,7 @@ class TestModulesCreate(TestModules):
         with open(module_path / patch_fn) as fh:
             patch_contents = fh.read()
 
-        update_obj = nf_core.modules.ModuleUpdate(
+        update_obj = nf_core.modules.update.ModuleUpdate(
             self.pipeline_dir,
             sha=FAIL_SHA,
             show_diff=False,
@@ -339,7 +342,7 @@ class TestModulesCreate(TestModules):
         setup_patch(self.pipeline_dir, True)
 
         # Try creating a patch file
-        patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
+        patch_obj = nf_core.modules.patch.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
         patch_obj.patch(BISMARK_ALIGN)
 
         module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)

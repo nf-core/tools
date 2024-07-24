@@ -1,14 +1,13 @@
 """Tests covering the subworkflows commands"""
 
 import json
-import os
-import shutil
 import unittest
 from pathlib import Path
 
 import pytest
 
 import nf_core.modules
+import nf_core.modules.install
 import nf_core.pipelines.create.create
 import nf_core.subworkflows
 
@@ -104,49 +103,11 @@ class TestSubworkflows(unittest.TestCase):
             force=False,
             sha="8c343b3c8a0925949783dc547666007c245c235b",
         )
-        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
+        self.mods_install = nf_core.modules.install.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
 
         # Set up remove objects
         self.subworkflow_remove = nf_core.subworkflows.SubworkflowRemove(self.pipeline_dir)
 
-    def tearDown(self):
-        """Clean up temporary files and folders"""
-
-        if os.path.exists(self.tmp_dir):
-            shutil.rmtree(self.tmp_dir)
-
     @pytest.fixture(autouse=True)
     def _use_caplog(self, caplog):
         self.caplog = caplog
-
-    # ################################################
-    # # Test of the individual subworkflow commands. #
-    # ################################################
-
-    # from .subworkflows.list import (  # type: ignore[misc]
-    #     test_subworkflows_install_and_list_subworkflows,
-    #     test_subworkflows_install_gitlab_and_list_subworkflows,
-    #     test_subworkflows_list_remote,
-    #     test_subworkflows_list_remote_gitlab,
-    # )
-    # from .subworkflows.remove import (  # type: ignore[misc]
-    #     test_subworkflows_remove_included_subworkflow,
-    #     test_subworkflows_remove_one_of_two_subworkflow,
-    #     test_subworkflows_remove_subworkflow,
-    #     test_subworkflows_remove_subworkflow_keep_installed_module,
-    # )
-    # from .subworkflows.update import (  # type: ignore[misc]
-    #     test_install_and_update,
-    #     test_install_at_hash_and_update,
-    #     test_install_at_hash_and_update_and_save_diff_limit_output,
-    #     test_install_at_hash_and_update_and_save_diff_to_file,
-    #     test_install_at_hash_and_update_limit_output,
-    #     test_update_all,
-    #     test_update_all_linked_components_from_subworkflow,
-    #     test_update_all_subworkflows_from_module,
-    #     test_update_change_of_included_modules,
-    #     test_update_with_config_dont_update,
-    #     test_update_with_config_fix_all,
-    #     test_update_with_config_fixed_version,
-    #     test_update_with_config_no_updates,
-    # )

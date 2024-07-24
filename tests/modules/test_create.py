@@ -9,7 +9,7 @@ import responses
 import yaml
 from git.repo import Repo
 
-import nf_core.modules
+import nf_core.modules.create
 from tests.utils import (
     GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH,
     GITLAB_URL,
@@ -26,7 +26,7 @@ class TestModulesCreate(TestModules):
         with responses.RequestsMock() as rsps:
             mock_anaconda_api_calls(rsps, "trim-galore", "0.6.7")
             mock_biocontainers_api_calls(rsps, "trim-galore", "0.6.7")
-            module_create = nf_core.modules.ModuleCreate(
+            module_create = nf_core.modules.create.ModuleCreate(
                 self.pipeline_dir, "trimgalore", "@author", "process_single", True, True, conda_name="trim-galore"
             )
             with requests_cache.disabled():
@@ -38,7 +38,7 @@ class TestModulesCreate(TestModules):
         with responses.RequestsMock() as rsps:
             mock_anaconda_api_calls(rsps, "trim-galore", "0.6.7")
             mock_biocontainers_api_calls(rsps, "trim-galore", "0.6.7")
-            module_create = nf_core.modules.ModuleCreate(
+            module_create = nf_core.modules.create.ModuleCreate(
                 self.pipeline_dir, "trimgalore", "@author", "process_single", False, False, conda_name="trim-galore"
             )
             with requests_cache.disabled():
@@ -53,7 +53,7 @@ class TestModulesCreate(TestModules):
         with responses.RequestsMock() as rsps:
             mock_anaconda_api_calls(rsps, "fastqc", "0.11.9")
             mock_biocontainers_api_calls(rsps, "fastqc", "0.11.9")
-            module_create = nf_core.modules.ModuleCreate(
+            module_create = nf_core.modules.create.ModuleCreate(
                 self.nfcore_modules, "fastqc", "@author", "process_low", False, False
             )
             with requests_cache.disabled():
@@ -68,7 +68,7 @@ class TestModulesCreate(TestModules):
         with responses.RequestsMock() as rsps:
             mock_anaconda_api_calls(rsps, "star", "2.8.10a")
             mock_biocontainers_api_calls(rsps, "star", "2.8.10a")
-            module_create = nf_core.modules.ModuleCreate(
+            module_create = nf_core.modules.create.ModuleCreate(
                 self.nfcore_modules, "star/index", "@author", "process_medium", False, False
             )
             with requests_cache.disabled():
@@ -94,7 +94,7 @@ class TestModulesCreate(TestModules):
 
         # Create a module with --migrate-pytest
         mock_rich_ask.return_value = True
-        module_create = nf_core.modules.ModuleCreate(self.nfcore_modules, "samtools/sort", migrate_pytest=True)
+        module_create = nf_core.modules.create.ModuleCreate(self.nfcore_modules, "samtools/sort", migrate_pytest=True)
         module_create.create()
 
         with open(module_dir / "main.nf") as fh:
@@ -128,7 +128,7 @@ class TestModulesCreate(TestModules):
 
         # Create a module with --migrate-pytest
         mock_rich_ask.return_value = False
-        module_create = nf_core.modules.ModuleCreate(self.nfcore_modules, "samtools/sort", migrate_pytest=True)
+        module_create = nf_core.modules.create.ModuleCreate(self.nfcore_modules, "samtools/sort", migrate_pytest=True)
         module_create.create()
 
         # Check that pytest folder is not deleted
@@ -157,7 +157,7 @@ class TestModulesCreate(TestModules):
 
         # Create a module with --migrate-pytest
         mock_rich_ask.return_value = True
-        module_create = nf_core.modules.ModuleCreate(self.nfcore_modules, "samtools/sort", migrate_pytest=True)
+        module_create = nf_core.modules.create.ModuleCreate(self.nfcore_modules, "samtools/sort", migrate_pytest=True)
         module_create.create()
 
         # Check that symlink is deleted
