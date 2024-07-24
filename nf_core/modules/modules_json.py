@@ -1187,11 +1187,17 @@ class ModulesJson:
 
         for dep_mod in dep_mods:
             if isinstance(dep_mod, dict):
+                name = dep_mod["name"]
                 if dep_mod["git_remote"] is not None:
-                    repo = dep_mod["git_remote"]
-                    org = dep_mod["org_path"]
-                dep_mod = dep_mod["name"]
-            installed_by = self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"]
+                    current_repo = dep_mod["git_remote"]
+                    current_org = dep_mod["org_path"]
+                    installed_by = self.modules_json["repos"][current_repo]["modules"][current_org][name][
+                        "installed_by"
+                    ]
+                else:
+                    installed_by = self.modules_json["repos"][repo]["modules"][org][name]["installed_by"]
+            else:
+                installed_by = self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"]
             if installed_by == ["modules"]:
                 self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"] = []
             if subworkflow not in installed_by:
