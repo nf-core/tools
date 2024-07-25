@@ -274,7 +274,7 @@ class PipelineSync:
                 version=self.wf_config["manifest.version"].strip('"').strip("'"),
                 no_git=True,
                 force=True,
-                outdir=self.pipeline_dir,
+                outdir=str(self.pipeline_dir),
                 author=self.wf_config["manifest.author"].strip('"').strip("'"),
             ).init_pipeline()
         except Exception as err:

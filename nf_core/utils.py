@@ -1052,6 +1052,12 @@ class NFCoreTemplateConfig(BaseModel):
     skip_features: Optional[list] = None
     is_nfcore: Optional[bool] = None
 
+    def __getitem__(self, item: str) -> Any:
+        return getattr(self, item)
+
+    def get(self, item: str, default: Any = None) -> Any:
+        return getattr(self, item, default)
+
 
 LintConfigType = Optional[Dict[str, Union[List[str], List[Dict[str, List[str]]], bool]]]
 
@@ -1086,7 +1092,6 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
     tools_config = {}
 
     config_fn = get_first_available_path(directory, CONFIG_PATHS)
-
     if config_fn is None:
         depr_path = get_first_available_path(directory, DEPRECATED_CONFIG_PATHS)
         if depr_path:
@@ -1102,7 +1107,6 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
     # If the file is empty
     if tools_config is None:
         raise AssertionError(f"Config file '{config_fn}' is empty")
-
     # Check for required fields
     try:
         nf_core_yaml_config = NFCoreYamlConfig(**tools_config)

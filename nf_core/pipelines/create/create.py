@@ -21,7 +21,7 @@ import nf_core.utils
 from nf_core.pipelines.create.utils import CreateConfig
 from nf_core.pipelines.create_logo import create_logo
 from nf_core.pipelines.lint_utils import run_prettier_on_file
-from nf_core.utils import LintConfigType
+from nf_core.utils import LintConfigType, NFCoreTemplateConfig
 
 log = logging.getLogger(__name__)
 
@@ -111,7 +111,7 @@ class PipelineCreate:
         self.is_interactive = is_interactive
         self.force = self.config.force
         if self.config.outdir is None:
-            self.config.outdir = os.getcwd()
+            self.config.outdir = str(Path.cwd())
         if self.config.outdir == ".":
             self.outdir = Path(self.config.outdir, self.jinja_params["name_noslash"]).absolute()
         else:
@@ -289,13 +289,13 @@ class PipelineCreate:
                 log.info("Use -f / --force to overwrite existing files")
                 raise UserWarning(f"Output directory '{self.outdir}' exists!")
         else:
-            os.makedirs(self.outdir)
+            self.outdir.mkdir(parents=True, exist_ok=True)
 
         # Run jinja2 for each file in the template folder
         env = jinja2.Environment(
             loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
         )
-        template_dir = os.path.join(os.path.dirname(nf_core.__file__), "pipeline-template")
+        template_dir = Path(nf_core.__file__).parent / "pipeline-template"
         object_attrs = self.jinja_params
         object_attrs["nf_core_version"] = nf_core.__version__
 
@@ -310,26 +310,24 @@ class PipelineCreate:
         }
 
         # Set the paths to skip according to customization
-        for template_fn_path_obj in template_files:
-            template_fn_path = str(template_fn_path_obj)
-
+        for template_fn_path in template_files:
             # Skip files that are in the self.skip_paths list
             for skip_path in self.skip_paths:
-                if os.path.relpath(template_fn_path, template_dir).startswith(skip_path):
+                if str(template_fn_path.relative_to(template_dir)).startswith(skip_path):
                     break
             else:
-                if os.path.isdir(template_fn_path):
+                if template_fn_path.is_dir():
                     continue
-                if any([s in template_fn_path for s in ignore_strs]):
+                if any([s in str(template_fn_path) for s in ignore_strs]):
                     log.debug(f"Ignoring '{template_fn_path}' in jinja2 template creation")
                     continue
 
                 # Set up vars and directories
-                template_fn = os.path.relpath(template_fn_path, template_dir)
+                template_fn = template_fn_path.relative_to(template_dir)
                 output_path = self.outdir / template_fn
                 if template_fn in rename_files:
                     output_path = self.outdir / rename_files[template_fn]
-                os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                output_path.parent.mkdir(parents=True, exist_ok=True)
 
                 try:
                     # Just copy binary files
@@ -338,7 +336,7 @@ class PipelineCreate:
 
                     # Got this far - render the template
                     log.debug(f"Rendering template file: '{template_fn}'")
-                    j_template = env.get_template(template_fn)
+                    j_template = env.get_template(str(template_fn))
                     rendered_output = j_template.render(object_attrs)
 
                     # Write to the pipeline output file
@@ -379,9 +377,7 @@ class PipelineCreate:
             config_fn, config_yml = nf_core.utils.load_tools_config(self.outdir)
             if config_fn is not None and config_yml is not None:
                 with open(str(config_fn), "w") as fh:
-                    config_yml.template = self.config.model_dump()
-                    # convert posix path to string for yaml dump
-                    config_yml["template"]["outdir"] = str(config_yml["template"]["outdir"])
+                    config_yml.template = NFCoreTemplateConfig(**self.config.model_dump())
                     yaml.safe_dump(config_yml.model_dump(), fh)
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
                     run_prettier_on_file(self.outdir / config_fn)
