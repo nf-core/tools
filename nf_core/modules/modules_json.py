@@ -6,12 +6,13 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Dict, List, NotRequired, Optional, Tuple, TypedDict, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import git
 import questionary
 import rich.prompt
 from git.exc import GitCommandError
+from typing_extensions import NotRequired, TypedDict  # for py<3.11
 
 import nf_core.utils
 from nf_core.components.components_utils import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE, get_components_to_install
