@@ -19,6 +19,14 @@ from nf_core.pipelines.lint_utils import console
 
 log = logging.getLogger(__name__)
 
+# Import lint functions
+from .main_nf import main_nf  # type: ignore[misc]
+from .meta_yml import meta_yml  # type: ignore[misc]
+from .subworkflow_changes import subworkflow_changes  # type: ignore[misc]
+from .subworkflow_tests import subworkflow_tests  # type: ignore[misc]
+from .subworkflow_todos import subworkflow_todos  # type: ignore[misc]
+from .subworkflow_version import subworkflow_version  # type: ignore[misc]
+
 
 class SubworkflowLint(ComponentLint):
     """
@@ -26,13 +34,12 @@ class SubworkflowLint(ComponentLint):
     repository or in any nf-core pipeline directory
     """
 
-    # Import lint functions
-    from .main_nf import main_nf  # type: ignore[misc]
-    from .meta_yml import meta_yml  # type: ignore[misc]
-    from .subworkflow_changes import subworkflow_changes  # type: ignore[misc]
-    from .subworkflow_tests import subworkflow_tests  # type: ignore[misc]
-    from .subworkflow_todos import subworkflow_todos  # type: ignore[misc]
-    from .subworkflow_version import subworkflow_version  # type: ignore[misc]
+    main_nf = main_nf
+    meta_yml = meta_yml
+    subworkflow_changes = subworkflow_changes
+    subworkflow_tests = subworkflow_tests
+    subworkflow_todos = subworkflow_todos
+    subworkflow_version = subworkflow_version
 
     def __init__(
         self,
