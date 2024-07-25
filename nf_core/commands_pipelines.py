@@ -60,7 +60,7 @@ def pipelines_create(ctx, name, description, author, version, force, outdir, tem
 
 
 # nf-core pipelines bump-version
-def pipelines_bump_version(ctx, new_version, dir, nextflow):
+def pipelines_bump_version(ctx, new_version, directory, nextflow):
     """
     Update nf-core pipeline version number.
 
@@ -78,10 +78,10 @@ def pipelines_bump_version(ctx, new_version, dir, nextflow):
 
     try:
         # Check if pipeline directory contains necessary files
-        is_pipeline_directory(dir)
+        is_pipeline_directory(directory)
 
         # Make a pipeline object and load config etc
-        pipeline_obj = Pipeline(dir)
+        pipeline_obj = Pipeline(directory)
         pipeline_obj._load()
 
         # Bump the pipeline version number
@@ -97,7 +97,7 @@ def pipelines_bump_version(ctx, new_version, dir, nextflow):
 # nf-core pipelines lint
 def pipelines_lint(
     ctx,
-    dir,
+    directory,
     release,
     fix,
     key,
@@ -123,7 +123,7 @@ def pipelines_lint(
 
     # Check if pipeline directory is a pipeline
     try:
-        is_pipeline_directory(dir)
+        is_pipeline_directory(directory)
     except UserWarning as e:
         log.error(e)
         sys.exit(1)
@@ -131,7 +131,7 @@ def pipelines_lint(
     # Run the lint tests!
     try:
         lint_obj, module_lint_obj, subworkflow_lint_obj = run_linting(
-            dir,
+            directory,
             release,
             fix,
             key,
@@ -279,7 +279,7 @@ def pipelines_list(ctx, keywords, sort, json, show_archived):
 
 
 # nf-core pipelines sync
-def pipelines_sync(ctx, dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
+def pipelines_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
@@ -295,12 +295,13 @@ def pipelines_sync(ctx, dir, from_branch, pull_request, github_repository, usern
     from nf_core.pipelines.sync import PipelineSync, PullRequestExceptionError, SyncExceptionError
     from nf_core.utils import is_pipeline_directory
 
-    # Check if pipeline directory contains necessary files
-    is_pipeline_directory(dir)
-
-    # Sync the given pipeline dir
-    sync_obj = PipelineSync(dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
     try:
+        # Check if pipeline directory contains necessary files
+        is_pipeline_directory(directory)
+        # Sync the given pipeline dir
+        sync_obj = PipelineSync(
+            directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr
+        )
         sync_obj.sync()
     except (SyncExceptionError, PullRequestExceptionError) as e:
         log.error(e)
@@ -360,7 +361,7 @@ def pipelines_schema_validate(pipeline, params):
 
 
 # nf-core pipelines schema build
-def pipelines_schema_build(dir, no_prompts, web_only, url):
+def pipelines_schema_build(directory, no_prompts, web_only, url):
     """
     Interactively build a pipeline schema from Nextflow params.
 
@@ -376,7 +377,7 @@ def pipelines_schema_build(dir, no_prompts, web_only, url):
 
     try:
         schema_obj = PipelineSchema()
-        if schema_obj.build_schema(dir, no_prompts, web_only, url) is False:
+        if schema_obj.build_schema(directory, no_prompts, web_only, url) is False:
             sys.exit(1)
     except (UserWarning, AssertionError) as e:
         log.error(e)
