@@ -55,6 +55,7 @@ class NFCoreComponent:
         self.git_sha: Optional[str] = None
         self.is_patched: bool = False
         self.branch: Optional[str] = None
+        self.workflow_name: Optional[str] = None
 
         if remote_component:
             # Initialize the important files

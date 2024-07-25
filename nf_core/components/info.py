@@ -136,17 +136,17 @@ class ComponentInfo(ComponentCommand):
                 ).unsafe_ask()
         else:
             if self.repo_type == "pipeline":
+                assert self.modules_json is not None  # mypy
                 # check if the module is locally installed
                 local_paths = self.modules_json.get_all_components(self.component_type).get(
                     self.modules_repo.remote_url
                 )  # type: ignore
-                if local_paths is None:
-                    raise LookupError(f"No {self.component_type[:-1]} installed from {self.modules_repo.remote_url}")
-                for directory, comp in local_paths:
-                    if comp == component:
-                        component_base_path = Path(self.directory, self.component_type)
-                        self.local_path = Path(component_base_path, directory, component)
-                        break
+                if local_paths is not None:
+                    for directory, comp in local_paths:
+                        if comp == component:
+                            component_base_path = Path(self.directory, self.component_type)
+                            self.local_path = Path(component_base_path, directory, component)
+                            break
                 if self.local_path:
                     self.local = True
 

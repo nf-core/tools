@@ -2,50 +2,104 @@
 
 import json
 import os
-import shutil
-import tempfile
-import unittest
 from pathlib import Path
+from typing import Dict, List, Union
 from unittest import mock
 
 import git
 import pytest
+import yaml
 
 import nf_core.pipelines.create.create
 import nf_core.pipelines.sync
+from nf_core.utils import NFCoreYamlConfig
 
+from ..test_pipelines import TestPipelines
 from ..utils import with_temporary_folder
 
 
-class TestModules(unittest.TestCase):
+class MockResponse:
+    def __init__(self, data: Union[Dict, List[Dict]], status_code: int, url: str):
+        self.url: str = url
+        self.status_code: int = status_code
+        self.from_cache: bool = False
+        self.reason: str = "Mocked response"
+        self.data: Union[Dict, List[Dict]] = data
+        self.content: str = json.dumps(data)
+        self.headers: Dict[str, str] = {"content-encoding": "test", "connection": "fake"}
+
+    def json(self):
+        return self.data
+
+
+def mocked_requests_get(url) -> MockResponse:
+    """Helper function to emulate POST requests responses from the web"""
+
+    url_template = "https://api.github.com/repos/{}/response/"
+    if url == Path(url_template.format("no_existing_pr"), "pulls?head=TEMPLATE&base=None"):
+        return MockResponse([], 200, url)
+    if url == Path(url_template.format("list_prs"), "pulls"):
+        response_data = [
+            {
+                "state": "closed",
+                "head": {"ref": "nf-core-template-merge-2"},
+                "base": {"ref": "master"},
+                "html_url": "pr_url",
+            }
+        ] + [
+            {
+                "state": "open",
+                "head": {"ref": f"nf-core-template-merge-{branch_no}"},
+                "base": {"ref": "master"},
+                "html_url": "pr_url",
+            }
+            for branch_no in range(3, 7)
+        ]
+        return MockResponse(response_data, 200, url)
+
+    return MockResponse([{"html_url": url}], 404, url)
+
+
+def mocked_requests_patch(url: str, data: str, **kwargs) -> MockResponse:
+    """Helper function to emulate POST requests responses from the web"""
+
+    if url == "url_to_update_pr":
+        return MockResponse({"html_url": "great_success"}, 200, url)
+    # convert data to dict
+    response = json.loads(data)
+    response["patch_url"] = url
+    return MockResponse(response, 404, url)
+
+
+def mocked_requests_post(url, **kwargs):
+    """Helper function to emulate POST requests responses from the web"""
+
+    if url == "https://api.github.com/repos/no_existing_pr/response/pulls":
+        return MockResponse({"html_url": "great_success"}, 201, url)
+
+    return MockResponse({}, 404, url)
+
+
+class TestModules(TestPipelines):
     """Class for modules tests"""
 
     def setUp(self):
-        """Create a new pipeline to test"""
-        self.tmp_dir = tempfile.mkdtemp()
-        self.pipeline_dir = os.path.join(self.tmp_dir, "testpipeline")
-        default_branch = "master"
-        self.create_obj = nf_core.pipelines.create.create.PipelineCreate(
-            "testing",
-            "test pipeline",
-            "tester",
-            outdir=self.pipeline_dir,
-            default_branch=default_branch,
-        )
-        self.create_obj.init_pipeline()
-        self.remote_path = os.path.join(self.tmp_dir, "remote_repo")
+        super().setUp()
+        self.remote_path = Path(self.tmp_dir, "remote_repo")
         self.remote_repo = git.Repo.init(self.remote_path, bare=True)
 
         if self.remote_repo.active_branch.name != "master":
-            self.remote_repo.active_branch.rename(default_branch)
-
-    def tearDown(self):
-        if os.path.exists(self.tmp_dir):
-            shutil.rmtree(self.tmp_dir)
+            self.remote_repo.active_branch.rename("master")
 
     @with_temporary_folder
-    def test_inspect_sync_dir_notgit(self, tmp_dir):
+    def test_inspect_sync_dir_notgit(self, tmp_dir: str):
         """Try syncing an empty directory"""
+        nf_core_yml_path = Path(tmp_dir, ".nf-core.yml")
+        nf_core_yml = NFCoreYamlConfig(repository_type="pipeline")
+
+        with open(nf_core_yml_path, "w") as fh:
+            yaml.dump(nf_core_yml.model_dump(), fh)
+
         psync = nf_core.pipelines.sync.PipelineSync(tmp_dir)
         with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
             psync.inspect_sync_dir()
@@ -227,88 +281,6 @@ class TestModules(unittest.TestCase):
             psync.push_merge_branch()
         assert exc_info.value.args[0].startswith(f"Could not push branch '{psync.merge_branch}'")
 
-    def mocked_requests_get(url, **kwargs):
-        """Helper function to emulate POST requests responses from the web"""
-
-        class MockResponse:
-            def __init__(self, data, status_code):
-                self.url = kwargs.get("url")
-                self.status_code = status_code
-                self.from_cache = False
-                self.reason = "Mocked response"
-                self.data = data
-                self.content = json.dumps(data)
-                self.headers = {"content-encoding": "test", "connection": "fake"}
-
-            def json(self):
-                return self.data
-
-        url_template = "https://api.github.com/repos/{}/response/"
-        if url == os.path.join(url_template.format("no_existing_pr"), "pulls?head=TEMPLATE&base=None"):
-            response_data = []
-            return MockResponse(response_data, 200)
-        if url == os.path.join(url_template.format("list_prs"), "pulls"):
-            response_data = [
-                {
-                    "state": "closed",
-                    "head": {"ref": "nf-core-template-merge-2"},
-                    "base": {"ref": "master"},
-                    "html_url": "pr_url",
-                }
-            ] + [
-                {
-                    "state": "open",
-                    "head": {"ref": f"nf-core-template-merge-{branch_no}"},
-                    "base": {"ref": "master"},
-                    "html_url": "pr_url",
-                }
-                for branch_no in range(3, 7)
-            ]
-            return MockResponse(response_data, 200)
-
-        return MockResponse({"html_url": url}, 404)
-
-    def mocked_requests_patch(url, **kwargs):
-        """Helper function to emulate POST requests responses from the web"""
-
-        class MockResponse:
-            def __init__(self, data, status_code):
-                self.url = kwargs.get("url")
-                self.status_code = status_code
-                self.from_cache = False
-                self.reason = "Mocked"
-                self.content = json.dumps(data)
-                self.headers = {"content-encoding": "test", "connection": "fake"}
-
-        if url == "url_to_update_pr":
-            response_data = {"html_url": "great_success"}
-            return MockResponse(response_data, 200)
-
-        return MockResponse({"patch_url": url}, 404)
-
-    def mocked_requests_post(url, **kwargs):
-        """Helper function to emulate POST requests responses from the web"""
-
-        class MockResponse:
-            def __init__(self, data, status_code):
-                self.url = kwargs.get("url")
-                self.status_code = status_code
-                self.from_cache = False
-                self.reason = "Mocked"
-                self.data = data
-                self.content = json.dumps(data)
-                self.headers = {"content-encoding": "test", "connection": "fake"}
-
-            def json(self):
-                return self.data
-
-        if url == "https://api.github.com/repos/no_existing_pr/response/pulls":
-            response_data = {"html_url": "great_success"}
-            return MockResponse(response_data, 201)
-
-        response_data = {}
-        return MockResponse(response_data, 404)
-
     @mock.patch("nf_core.utils.gh_api.get", side_effect=mocked_requests_get)
     @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
     def test_make_pull_request_success(self, mock_post, mock_get):
@@ -354,7 +326,7 @@ class TestModules(unittest.TestCase):
 
             prs = mock_get(f"https://api.github.com/repos/{psync.gh_repo}/pulls").data
             for pr in prs:
-                if pr["state"] == "open":
+                if pr.get("state", None) == "open":
                     mock_close_open_pr.assert_any_call(pr)
 
     @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
@@ -368,7 +340,7 @@ class TestModules(unittest.TestCase):
         psync.gh_username = "bad_url"
         psync.gh_repo = "bad_url/response"
         os.environ["GITHUB_AUTH_TOKEN"] = "test"
-        pr = {
+        pr: Dict[str, Union[str, Dict[str, str]]] = {
             "state": "open",
             "head": {"ref": "nf-core-template-merge-3"},
             "base": {"ref": "master"},

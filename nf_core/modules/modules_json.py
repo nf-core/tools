@@ -922,7 +922,7 @@ class ModulesJson:
             install_dir, {}
         )
 
-    def get_modules_json(self) -> dict:
+    def get_modules_json(self) -> ModulesJsonType:
         """
         Returns a copy of the loaded modules.json
 
@@ -932,7 +932,7 @@ class ModulesJson:
         if self.modules_json is None:
             self.load()
             assert self.modules_json is not None  # mypy
-        return copy.deepcopy(self.modules_json)  # type: ignore
+        return copy.deepcopy(self.modules_json)
 
     def get_component_version(self, component_type, component_name, repo_url, install_dir):
         """
@@ -1182,6 +1182,7 @@ class ModulesJson:
         repos, _ = self.get_pipeline_module_repositories(component_type, self.modules_dir, tracked_repos)
 
         # Get tuples of components that miss installation and their install directory
+
         def components_with_repos():
             for directory in missing_from_modules_json:
                 for repo_url in repos:
@@ -1197,7 +1198,7 @@ class ModulesJson:
                                 paths_in_directory.append(str(Path(*Path(dir_name).parts[-2:])))
                                 pass
                         paths_in_directory.append(Path(dir_name).parts[-1])
-                    if dir in paths_in_directory:
+                    if directory in paths_in_directory:
                         yield (modules_repo.repo_path, directory)
 
         # Add all components into a dictionary with install directories

@@ -4,7 +4,7 @@ import os
 import shutil
 from configparser import NoOptionError, NoSectionError
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Union
+from typing import Dict, Iterable, List, Optional, Union
 
 import git
 from git.exc import GitCommandError
@@ -129,14 +129,16 @@ class SyncedRepo:
         # the WorkflowRepo define their own including custom init methods. This needs
         # fixing.
         self.setup_local_repo(remote_url, branch, hide_progress)
+
         if self.local_repo_dir is None:
             raise ValueError("Repository not initialized")
         else:
             config_fn, repo_config = load_tools_config(self.local_repo_dir)
-            try:
-                self.repo_path = repo_config["org_path"]
-            except KeyError:
-                raise UserWarning(f"'org_path' key not present in {config_fn.name}")
+            if config_fn is not None and repo_config is not None:
+                try:
+                    self.repo_path = repo_config.org_path
+                except KeyError:
+                    raise UserWarning(f"'org_path' key not present in {config_fn.name}")
 
             # Verify that the repo seems to be correctly configured
             if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
@@ -147,6 +149,9 @@ class SyncedRepo:
             self.subworkflows_dir = Path(self.local_repo_dir, "subworkflows", self.repo_path)
 
             self.avail_module_names = None
+
+    def __repr__(self) -> str:
+        return f"SyncedRepo({self.remote_url}, {self.branch})"
 
     def setup_local_repo(self, remote_url, branch, hide_progress):
         pass
@@ -402,8 +407,12 @@ class SyncedRepo:
         Returns the latest commit in the repository
         """
         try:
-            return list(self.get_component_git_log(component_name, component_type, depth=1))[0]["git_sha"]
-        except UserWarning:
+            git_logs = list(self.get_component_git_log(component_name, component_type, depth=1))
+            if not git_logs:
+                return None
+            return git_logs[0]["git_sha"]
+        except Exception as e:
+            log.debug(f"Could not get latest version of {component_name}: {e}")
             return None
 
     def sha_exists_on_branch(self, sha):
@@ -437,7 +446,9 @@ class SyncedRepo:
                 return message, date
         raise LookupError(f"Commit '{sha}' not found in the '{self.remote_url}'")
 
-    def get_avail_components(self, component_type, checkout=True, commit=None):
+    def get_avail_components(
+        self, component_type: str, checkout: bool = True, commit: Optional[str] = None
+    ) -> List[str]:
         """
         Gets the names of the modules/subworkflows in the repository. They are detected by
         checking which directories have a 'main.nf' file
@@ -456,9 +467,9 @@ class SyncedRepo:
             directory = self.subworkflows_dir
         # Module/Subworkflow directories are characterized by having a 'main.nf' file
         avail_component_names = [
-            os.path.relpath(dirpath, start=directory)
-            for dirpath, _, file_names in os.walk(directory)
-            if "main.nf" in file_names
+            str(Path(dirpath).relative_to(directory))
+            for dirpath, _, files in Path.walk(directory)
+            if "main.nf" in files
         ]
         return avail_component_names
 

@@ -151,15 +151,15 @@ class PipelineLint(nf_core.utils.Pipeline):
             "nfcore_yml",
         ] + (["version_consistency"] if release_mode else [])
 
-    def _load(self):
+    def _load(self) -> bool:
         """Load information about the pipeline into the PipelineLint object"""
         # Load everything using the parent object
         super()._load()
 
         # Load lint object specific stuff
-        self._load_lint_config()
+        return self._load_lint_config()
 
-    def _load_lint_config(self):
+    def _load_lint_config(self) -> bool:
         """Parse a pipeline lint config file.
 
         Load the '.nf-core.yml'  config file and extract
@@ -168,14 +168,19 @@ class PipelineLint(nf_core.utils.Pipeline):
         Add parsed config to the `self.lint_config` class attribute.
         """
         _, tools_config = nf_core.utils.load_tools_config(self.wf_path)
-        self.lint_config = tools_config.get("lint", {})
+        self.lint_config = getattr(tools_config, "lint", {}) or {}
+        is_correct = True
 
         # Check if we have any keys that don't match lint test names
-        for k in self.lint_config:
-            if k not in self.lint_tests:
-                log.warning(f"Found unrecognised test name '{k}' in pipeline lint config")
+        if self.lint_config is not None:
+            for k in self.lint_config:
+                if k not in self.lint_tests:
+                    log.warning(f"Found unrecognised test name '{k}' in pipeline lint config")
+                    is_correct = False
 
-    def _lint_pipeline(self):
+        return is_correct
+
+    def _lint_pipeline(self) -> None:
         """Main linting function.
 
         Takes the pipeline directory as the primary input and iterates through
@@ -240,7 +245,8 @@ class PipelineLint(nf_core.utils.Pipeline):
                 "Running lint checks", total=len(self.lint_tests), test_name=self.lint_tests[0]
             )
             for test_name in self.lint_tests:
-                if self.lint_config.get(test_name, {}) is False:
+                lint_test = self.lint_config.get(test_name, {}) if self.lint_config is not None else {}
+                if lint_test is False:
                     log.debug(f"Skipping lint test '{test_name}'")
                     self.ignored.append((test_name, test_name))
                     continue

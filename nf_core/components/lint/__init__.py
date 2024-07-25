@@ -75,6 +75,11 @@ class ComponentLint(ComponentCommand):
         self.passed: List[LintResult] = []
         self.warned: List[LintResult] = []
         self.failed: List[LintResult] = []
+        self.all_local_components: List[NFCoreComponent] = []
+
+        self.lint_config = None
+        self.modules_json = None
+
         if self.component_type == "modules":
             self.lint_tests = self.get_all_module_lint_tests(self.repo_type == "pipeline")
         else:
@@ -107,7 +112,7 @@ class ComponentLint(ComponentCommand):
                     f"No {self.component_type} from {self.modules_repo.remote_url} installed in pipeline."
                 )
             local_component_dir = Path(self.directory, self.component_type, "local")
-            self.all_local_components = []
+
             if local_component_dir.exists():
                 self.all_local_components = [
                     NFCoreComponent(
@@ -122,7 +127,7 @@ class ComponentLint(ComponentCommand):
                     for comp in self.get_local_components()
                 ]
             self.config = nf_core.utils.fetch_wf_config(Path(self.directory), cache_config=True)
-        else:
+        elif self.repo_type == "modules":
             component_dir = Path(
                 self.directory,
                 self.default_modules_path if self.component_type == "modules" else self.default_subworkflows_path,
@@ -145,9 +150,6 @@ class ComponentLint(ComponentCommand):
             else:
                 self.registry = registry
             log.debug(f"Registry set to {self.registry}")
-
-        self.lint_config = None
-        self.modules_json = None
 
     def __repr__(self) -> str:
         return f"ComponentLint({self.component_type}, {self.directory})"

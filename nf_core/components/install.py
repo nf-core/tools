@@ -69,7 +69,11 @@ class ComponentInstall(ComponentCommand):
         # Verify SHA
         if not self.modules_repo.verify_sha(self.prompt, self.sha):
             return False
+
+        # verify self.modules_repo entries:
         if self.modules_repo is None:
+            return False
+        if self.modules_repo.repo_path is None:
             return False
 
         # Check and verify component name

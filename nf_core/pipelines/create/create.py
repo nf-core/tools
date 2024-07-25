@@ -8,9 +8,10 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Optional, Union
+from typing import Dict, List, Optional, Union
 
 import git
+import git.config
 import jinja2
 import yaml
 
@@ -61,12 +62,15 @@ class PipelineCreate:
             self.config = template_config
         elif from_config_file:
             # Try reading config file
-            _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else ".")
-            # Obtain a CreateConfig object from `.nf-core.yml` config file
-            if "template" in config_yml:
-                self.config = CreateConfig(**config_yml["template"])
-            else:
-                raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
+            try:
+                _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else Path().cwd())
+                # Obtain a CreateConfig object from `.nf-core.yml` config file
+                if config_yml is not None and getattr(config_yml, "template", None) is not None:
+                    self.config = CreateConfig(**config_yml["template"])
+                else:
+                    raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
+            except (FileNotFoundError, UserWarning):
+                log.debug("The '.nf-core.yml' configuration file was not found.")
         elif (name and description and author) or (
             template_config and (isinstance(template_config, str) or isinstance(template_config, Path))
         ):
@@ -191,7 +195,10 @@ class PipelineCreate:
             skip_paths (list<str>): List of template areas which contain paths to skip.
         """
         # Try reading config file
-        _, config_yml = nf_core.utils.load_tools_config(pipeline_dir)
+        try:
+            _, config_yml = nf_core.utils.load_tools_config(pipeline_dir)
+        except UserWarning:
+            config_yml = None
 
         # Define the different template areas, and what actions to take for each
         # if they are skipped
@@ -230,13 +237,13 @@ class PipelineCreate:
         jinja_params["name_docker"] = jinja_params["name"].replace(jinja_params["org"], jinja_params["prefix_nodash"])
         jinja_params["logo_light"] = f"{jinja_params['name_noslash']}_logo_light.png"
         jinja_params["logo_dark"] = f"{jinja_params['name_noslash']}_logo_dark.png"
-
-        if (
-            "lint" in config_yml
-            and "nextflow_config" in config_yml["lint"]
-            and "manifest.name" in config_yml["lint"]["nextflow_config"]
-        ):
-            return jinja_params, skip_paths
+        if config_yml is not None:
+            if (
+                hasattr(config_yml, "lint")
+                and hasattr(config_yml["lint"], "nextflow_config")
+                and hasattr(config_yml["lint"]["nextflow_config"], "manifest.name")
+            ):
+                return jinja_params, skip_paths
 
         # Check that the pipeline name matches the requirements
         if not re.match(r"^[a-z]+$", jinja_params["short_name"]):
@@ -417,7 +424,7 @@ class PipelineCreate:
         """
         # Create a lint config
         short_name = self.jinja_params["short_name"]
-        lint_config = {
+        lint_config: Dict[str, List[str]] = {
             "files_exist": [
                 "CODE_OF_CONDUCT.md",
                 f"assets/nf-core-{short_name}_logo_light.png",
@@ -503,9 +510,10 @@ class PipelineCreate:
 
         # Add the lint content to the preexisting nf-core config
         config_fn, nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
-        nf_core_yml["lint"] = lint_config
-        with open(self.outdir / config_fn, "w") as fh:
-            yaml.dump(nf_core_yml, fh, default_flow_style=False, sort_keys=False)
+        if config_fn is not None and nf_core_yml is not None:
+            nf_core_yml.lint = lint_config
+            with open(self.outdir / config_fn, "w") as fh:
+                yaml.dump(nf_core_yml.model_dump(), fh, default_flow_style=False, sort_keys=False)
 
         run_prettier_on_file(os.path.join(self.outdir, config_fn))
 
@@ -531,9 +539,9 @@ class PipelineCreate:
         Raises:
             UserWarning: if Git default branch is set to 'dev' or 'TEMPLATE'.
         """
-        default_branch = self.default_branch
+        default_branch: Optional[str] = self.default_branch
         try:
-            default_branch = default_branch or git.config.GitConfigParser().get_value("init", "defaultBranch")
+            default_branch = default_branch or str(git.config.GitConfigParser().get_value("init", "defaultBranch"))
         except configparser.Error:
             log.debug("Could not read init.defaultBranch")
         if default_branch in ["dev", "TEMPLATE"]:

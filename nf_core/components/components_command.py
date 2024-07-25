@@ -38,7 +38,6 @@ class ComponentCommand:
         self.hide_progress = hide_progress
         self.no_prompts = no_prompts
         self._configure_repo_and_paths()
-        self.repo_type: Optional[str] = None
 
     def _configure_repo_and_paths(self, nf_dir_req: bool = True) -> None:
         """

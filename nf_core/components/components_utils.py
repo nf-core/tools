@@ -27,7 +27,9 @@ def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[P
 
     # Figure out the repository type from the .nf-core.yml config file if we can
     config_fn, tools_config = nf_core.utils.load_tools_config(base_dir)
-    repo_type = tools_config.get("repository_type", None)
+    if config_fn is None:
+        raise UserWarning(f"Could not find a config file in directory: {base_dir}")
+    repo_type = getattr(tools_config, "repository_type", None) or None
 
     # If not set, prompt the user
     if not repo_type and use_prompt:
@@ -55,13 +57,11 @@ def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[P
     # Check if it's a valid answer
     if repo_type not in ["pipeline", "modules"]:
         raise UserWarning(f"Invalid repository type: '{repo_type}'")
-
+    org: str = ""
     # Check for org if modules repo
-    if repo_type == "pipeline":
-        org = ""
-    elif repo_type == "modules":
-        org = tools_config.get("org_path", None)
-        if org is None:
+    if repo_type == "modules":
+        org = getattr(tools_config, "org_path", "") or ""
+        if org == "":
             log.warning("Organisation path not defined in %s [key: org_path]", config_fn.name)
             org = questionary.text(
                 "What is the organisation path under which modules and subworkflows are stored?",
@@ -70,7 +70,7 @@ def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[P
             ).unsafe_ask()
             log.info("To avoid this prompt in the future, add the 'org_path' key to a root '%s' file.", config_fn.name)
             if rich.prompt.Confirm.ask("[bold][blue]?[/] Would you like me to add this config now?", default=True):
-                with open(config_fn, "a+") as fh:
+                with open(str(config_fn), "a+") as fh:
                     fh.write(f"org_path: {org}\n")
                     log.info(f"Config added to '{config_fn.name}'")
 

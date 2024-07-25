@@ -7,7 +7,7 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import questionary
 import yaml
@@ -22,13 +22,13 @@ import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.utils import custom_yaml_dumper, rich_force_colors
+from nf_core.utils import NFCoreYamlConfig, custom_yaml_dumper, rich_force_colors
 from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
 
 
-class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
+class ModuleVersionBumper(ComponentCommand):
     def __init__(
         self,
         pipeline_dir: Union[str, Path],
@@ -43,7 +43,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         self.failed: List[Tuple[str, str]] = []
         self.ignored: List[Tuple[str, str]] = []
         self.show_up_to_date: Optional[bool] = None
-        self.tools_config: Dict[str, Any] = {}
+        self.tools_config: Optional[NFCoreYamlConfig]
 
     def bump_versions(
         self, module: Union[str, None] = None, all_modules: bool = False, show_uptodate: bool = False
@@ -160,7 +160,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
             return False
 
         # Don't update if blocked in blacklist
-        self.bump_versions_config = self.tools_config.get("bump-versions", {})
+        self.bump_versions_config = getattr(self.tools_config, "bump-versions", {}) or {}
         if module.component_name in self.bump_versions_config:
             config_version = self.bump_versions_config[module.component_name]
             if not config_version:
