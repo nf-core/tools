@@ -13,7 +13,7 @@ def modules_list_remote(ctx, keywords, json):
     """
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
-    from nf_core.modules import ModuleList
+    from nf_core.modules.list import ModuleList
 
     try:
         module_list = ModuleList(
@@ -33,7 +33,7 @@ def modules_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-b
     """
     List modules installed locally in a pipeline
     """
-    from nf_core.modules import ModuleList
+    from nf_core.modules.list import ModuleList
 
     try:
         module_list = ModuleList(
@@ -55,7 +55,7 @@ def modules_install(ctx, tool, dir, prompt, force, sha):
 
     Fetches and installs module files from a remote repo e.g. nf-core/modules.
     """
-    from nf_core.modules import ModuleInstall
+    from nf_core.modules.install import ModuleInstall
 
     try:
         module_install = ModuleInstall(
@@ -93,7 +93,7 @@ def modules_update(
 
     Fetches and updates module files from a remote repo e.g. nf-core/modules.
     """
-    from nf_core.modules import ModuleUpdate
+    from nf_core.modules.update import ModuleUpdate
 
     try:
         module_install = ModuleUpdate(
@@ -125,7 +125,7 @@ def modules_patch(ctx, tool, dir, remove):
     Checks if a module has been modified locally and creates a patch file
     describing how the module has changed from the remote version
     """
-    from nf_core.modules import ModulePatch
+    from nf_core.modules.patch import ModulePatch
 
     try:
         module_patch = ModulePatch(
@@ -147,7 +147,7 @@ def modules_remove(ctx, dir, tool):
     """
     Remove a module from a pipeline.
     """
-    from nf_core.modules import ModuleRemove
+    from nf_core.modules.remove import ModuleRemove
 
     try:
         module_remove = ModuleRemove(
@@ -194,7 +194,7 @@ def modules_create(
     elif no_meta:
         has_meta = False
 
-    from nf_core.modules import ModuleCreate
+    from nf_core.modules.create import ModuleCreate
 
     # Run function
     try:
@@ -257,7 +257,7 @@ def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed,
     nf-core/modules repository.
     """
     from nf_core.components.lint import LintExceptionError
-    from nf_core.modules import ModuleLint
+    from nf_core.modules.lint import ModuleLint
 
     try:
         module_lint = ModuleLint(
@@ -302,7 +302,7 @@ def modules_info(ctx, tool, dir):
     will print this usage info.
     If not, usage from the remote modules repo will be shown.
     """
-    from nf_core.modules import ModuleInfo
+    from nf_core.modules.info import ModuleInfo
 
     try:
         module_info = ModuleInfo(
