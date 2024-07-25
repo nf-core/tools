@@ -8,7 +8,7 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, cast
 
 import git
 import git.config
@@ -21,6 +21,7 @@ import nf_core.utils
 from nf_core.pipelines.create.utils import CreateConfig
 from nf_core.pipelines.create_logo import create_logo
 from nf_core.pipelines.lint_utils import run_prettier_on_file
+from nf_core.utils import LintConfigType
 
 log = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ class PipelineCreate:
         from_config_file: bool = False,
         default_branch: Optional[str] = None,
         is_interactive: bool = False,
-    ):
+    ) -> None:
         if isinstance(template_config, CreateConfig):
             self.config = template_config
         elif from_config_file:
@@ -418,13 +419,13 @@ class PipelineCreate:
 
         run_prettier_on_file(bug_report_path)
 
-    def fix_linting(self):
+    def fix_linting(self) -> None:
         """
         Updates the .nf-core.yml with linting configurations
         for a customized pipeline.
         """
         # Create a lint config
-        short_name = self.jinja_params["short_name"]
+        short_name: str = self.jinja_params["short_name"]
         lint_config: Dict[str, List[str]] = {
             "files_exist": [
                 "CODE_OF_CONDUCT.md",
@@ -512,7 +513,7 @@ class PipelineCreate:
         # Add the lint content to the preexisting nf-core config
         config_fn, nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
         if config_fn is not None and nf_core_yml is not None:
-            nf_core_yml.lint = lint_config
+            nf_core_yml.lint = cast(LintConfigType, lint_config)
             with open(self.outdir / config_fn, "w") as fh:
                 yaml.dump(nf_core_yml.model_dump(), fh, default_flow_style=False, sort_keys=False)
 
@@ -534,7 +535,7 @@ class PipelineCreate:
                 force=bool(self.force),
             )
 
-    def git_init_pipeline(self):
+    def git_init_pipeline(self) -> None:
         """Initialises the new pipeline as a Git repository and submits first commit.
 
         Raises:

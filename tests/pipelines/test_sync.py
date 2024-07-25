@@ -331,7 +331,7 @@ class TestModules(TestPipelines):
 
     @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
     @mock.patch("nf_core.utils.gh_api.patch", side_effect=mocked_requests_patch)
-    def test_close_open_pr(self, mock_patch, mock_post):
+    def test_close_open_pr(self, mock_patch, mock_post) -> None:
         psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
