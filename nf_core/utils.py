@@ -19,7 +19,7 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import git
 import prompt_toolkit.styles
@@ -1042,25 +1042,37 @@ DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
 class NFCoreTemplateConfig(BaseModel):
-    org: str
-    name: str
-    description: str
-    author: str
-    version: Optional[str]
-    force: Optional[bool]
-    outdir: Optional[str]
-    skip_features: Optional[list]
-    is_nfcore: Optional[bool]
+    org: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    author: Optional[str] = None
+    version: Optional[str] = None
+    force: Optional[bool] = None
+    outdir: Optional[str] = None
+    skip_features: Optional[list] = None
+    is_nfcore: Optional[bool] = None
+
+
+LintConfigType = Optional[Dict[str, Union[List[str], List[Dict[str, List[str]]], bool]]]
 
 
 class NFCoreYamlConfig(BaseModel):
-    nf_core_version: str
     repository_type: str
-    org_path: str
-    template: NFCoreTemplateConfig
+    nf_core_version: Optional[str] = None
+    org_path: Optional[str] = None
+    lint: LintConfigType = None
+    template: Optional[NFCoreTemplateConfig] = None
+    bump_version: Optional[Dict[str, bool]] = None
+    update: Optional[Dict[str, Union[str, bool, Dict[str, Union[str, Dict[str, Union[str, bool]]]]]]] = None
+
+    def __getitem__(self, item: str) -> Any:
+        return getattr(self, item)
+
+    def get(self, item: str, default: Any = None) -> Any:
+        return getattr(self, item, default)
 
 
-def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Path, NFCoreYamlConfig]:
+def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path], Optional[NFCoreYamlConfig]]:
     """
     Parse the nf-core.yml configuration file
 
@@ -1078,11 +1090,12 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Path, NFCoreYa
     if config_fn is None:
         depr_path = get_first_available_path(directory, DEPRECATED_CONFIG_PATHS)
         if depr_path:
-            raise AssertionError(
+            raise UserWarning(
                 f"Deprecated `{depr_path.name}` file found! Please rename the file to `{CONFIG_PATHS[0]}`."
             )
         else:
-            raise AssertionError(f"Could not find a config file in the directory '{directory}'")
+            log.debug(f"Could not find a config file in the directory '{directory}'")
+            return Path(directory, CONFIG_PATHS[0]), None
     with open(str(config_fn)) as fh:
         tools_config = yaml.safe_load(fh)
 
@@ -1094,7 +1107,10 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Path, NFCoreYa
     try:
         nf_core_yaml_config = NFCoreYamlConfig(**tools_config)
     except ValidationError as e:
-        raise AssertionError(f"Config file '{config_fn}' is invalid: {e}")
+        error_message = f"Config file '{config_fn}' is invalid"
+        for error in e.errors():
+            error_message += f"\n{error['loc'][0]}: {error['msg']}"
+        raise AssertionError(error_message)
 
     log.debug("Using config file: %s", config_fn)
     return config_fn, nf_core_yaml_config

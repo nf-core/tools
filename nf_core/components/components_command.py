@@ -181,7 +181,10 @@ class ComponentCommand:
         Add parsed config to the `self.lint_config` class attribute.
         """
         _, tools_config = nf_core.utils.load_tools_config(self.directory)
-        self.lint_config = tools_config.get("lint", {})
+        if tools_config is None:
+            raise UserWarning("Could not load `.nf-core.yml` file.")
+        else:
+            self.lint_config = tools_config.get("lint", {})
 
     def check_modules_structure(self) -> None:
         """

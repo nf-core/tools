@@ -97,11 +97,7 @@ class ComponentUpdate(ComponentCommand):
             updated = []
 
         _, tool_config = nf_core.utils.load_tools_config(self.directory)
-        self.update_config = tool_config.get("update", {})
-
-        if self.update_config is None:
-            raise UserWarning("Could not find '.nf-core.yml' file in pipeline directory")
-
+        self.update_config = getattr(tool_config, "update", {}) or {}
         self._parameter_checks()
 
         # Check modules directory structure
@@ -396,27 +392,26 @@ class ComponentUpdate(ComponentCommand):
 
         sha = self.sha
         config_entry = None
-        if self.update_config is None:
-            raise UserWarning("Could not find '.nf-core.yml' file in pipeline directory")
-        if any(
-            [
-                entry.count("/") == 1
-                and (entry.endswith("modules") or entry.endswith("subworkflows"))
-                and not (entry.endswith(".git") or entry.endswith(".git/"))
-                for entry in self.update_config.keys()
-            ]
-        ):
-            raise UserWarning(
-                "Your '.nf-core.yml' file format is outdated. "
-                "The format should be of the form:\n"
-                "update:\n  <repo_url>:\n    <component_install_directory>:\n      <component_name>:"
-            )
-        if isinstance(self.update_config.get(self.modules_repo.remote_url, {}), str):
-            # If the repo entry is a string, it's the sha to update to
-            config_entry = self.update_config.get(self.modules_repo.remote_url, {})
-        elif component in self.update_config.get(self.modules_repo.remote_url, {}).get(install_dir, {}):
-            # If the component to update is in .nf-core.yml config file
-            config_entry = self.update_config[self.modules_repo.remote_url][install_dir].get(component)
+        if self.update_config is not None:
+            if any(
+                [
+                    entry.count("/") == 1
+                    and (entry.endswith("modules") or entry.endswith("subworkflows"))
+                    and not (entry.endswith(".git") or entry.endswith(".git/"))
+                    for entry in self.update_config.keys()
+                ]
+            ):
+                raise UserWarning(
+                    "Your '.nf-core.yml' file format is outdated. "
+                    "The format should be of the form:\n"
+                    "update:\n  <repo_url>:\n    <component_install_directory>:\n      <component_name>:"
+                )
+            if isinstance(self.update_config.get(self.modules_repo.remote_url, {}), str):
+                # If the repo entry is a string, it's the sha to update to
+                config_entry = self.update_config.get(self.modules_repo.remote_url, {})
+            elif component in self.update_config.get(self.modules_repo.remote_url, {}).get(install_dir, {}):
+                # If the component to update is in .nf-core.yml config file
+                config_entry = self.update_config[self.modules_repo.remote_url][install_dir].get(component)
         if config_entry is not None and config_entry is not True:
             if config_entry is False:
                 log.warn(
@@ -481,6 +476,7 @@ class ComponentUpdate(ComponentCommand):
         components_info = {}
         # Loop through all the modules/subworkflows in the pipeline
         # and check if they have an entry in the '.nf-core.yml' file
+
         for repo_name, components in self.modules_json.get_all_components(self.component_type).items():
             if isinstance(self.update_config, dict) and (
                 repo_name not in self.update_config or self.update_config[repo_name] is True
@@ -630,10 +626,8 @@ class ComponentUpdate(ComponentCommand):
                     overridden_repos.append(repo_name)
             elif isinstance(self.update_config, dict) and self.update_config[repo_name] is False:
                 skipped_repos.append(repo_name)
-            elif not isinstance(self.update_config, dict):
-                raise UserWarning("`.nf-core.yml` is not correctly formatted.")
             else:
-                raise UserWarning(f"Repo '{repo_name}' has an invalid entry in '.nf-core.yml'")
+                log.debug(f"no update config for {repo_name} in `.nf-core.yml`")
 
         if skipped_repos:
             skipped_str = "', '".join(skipped_repos)

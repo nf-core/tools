@@ -63,6 +63,7 @@ class ModulesRepo(SyncedRepo):
         self.setup_local_repo(remote_url, branch, hide_progress)
 
         config_fn, repo_config = load_tools_config(self.local_repo_dir)
+        assert config_fn is not None and repo_config is not None  # mypy
         try:
             self.repo_path = repo_config["org_path"]
         except KeyError:

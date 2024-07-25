@@ -1,8 +1,6 @@
 """Tests covering the modules commands"""
 
 import json
-import os
-import shutil
 import unittest
 from pathlib import Path
 
@@ -12,7 +10,13 @@ import responses
 import yaml
 
 import nf_core.modules
+import nf_core.modules.create
+import nf_core.modules.install
+import nf_core.modules.modules_repo
+import nf_core.modules.remove
 import nf_core.pipelines.create.create
+from nf_core import __version__
+from nf_core.utils import NFCoreYamlConfig
 
 from .utils import (
     GITLAB_BRANCH_TEST_BRANCH,
@@ -34,24 +38,28 @@ def create_modules_repo_dummy(tmp_dir):
     Path(root_dir, "modules", "nf-core").mkdir(parents=True)
     Path(root_dir, "tests", "modules", "nf-core").mkdir(parents=True)
     Path(root_dir, "tests", "config").mkdir(parents=True)
+
+    nf_core_yml = NFCoreYamlConfig(nf_core_version=__version__, repository_type="modules", org_path="nf-core")
     with open(Path(root_dir, ".nf-core.yml"), "w") as fh:
-        fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
+        yaml.dump(nf_core_yml.model_dump(), fh)
     # mock biocontainers and anaconda response
     with responses.RequestsMock() as rsps:
         mock_anaconda_api_calls(rsps, "bpipe", "0.9.12--hdfd78af_0")
         mock_biocontainers_api_calls(rsps, "bpipe", "0.9.12--hdfd78af_0")
         # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
-        module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
+        module_create = nf_core.modules.create.ModuleCreate(
+            root_dir, "bpipe/test", "@author", "process_single", False, False
+        )
         with requests_cache.disabled():
-            module_create.create()
+            assert module_create.create()
 
     # Remove doi from meta.yml which makes lint fail
     meta_yml_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "meta.yml")
 
-    with open(meta_yml_path) as fh:
+    with open(str(meta_yml_path)) as fh:
         meta_yml = yaml.safe_load(fh)
     del meta_yml["tools"][0]["bpipe"]["doi"]
-    with open(meta_yml_path, "w") as fh:
+    with open(str(meta_yml_path), "w") as fh:
         yaml.dump(meta_yml, fh)
     # Add dummy content to main.nf.test.snap
     test_snap_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
@@ -102,8 +110,8 @@ class TestModules(unittest.TestCase):
         self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
 
         # Set up install objects
-        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
-        self.mods_install_old = nf_core.modules.ModuleInstall(
+        self.mods_install = nf_core.modules.install.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
+        self.mods_install_old = nf_core.modules.install.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
             force=False,
@@ -111,21 +119,21 @@ class TestModules(unittest.TestCase):
             remote_url=GITLAB_URL,
             branch=OLD_TRIMGALORE_BRANCH,
         )
-        self.mods_install_trimgalore = nf_core.modules.ModuleInstall(
+        self.mods_install_trimgalore = nf_core.modules.install.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
             force=False,
             remote_url=GITLAB_URL,
             branch=OLD_TRIMGALORE_BRANCH,
         )
-        self.mods_install_gitlab = nf_core.modules.ModuleInstall(
+        self.mods_install_gitlab = nf_core.modules.install.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
             force=False,
             remote_url=GITLAB_URL,
             branch=GITLAB_DEFAULT_BRANCH,
         )
-        self.mods_install_gitlab_old = nf_core.modules.ModuleInstall(
+        self.mods_install_gitlab_old = nf_core.modules.install.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
             force=False,
@@ -135,8 +143,8 @@ class TestModules(unittest.TestCase):
         )
 
         # Set up remove objects
-        self.mods_remove = nf_core.modules.ModuleRemove(self.pipeline_dir)
-        self.mods_remove_gitlab = nf_core.modules.ModuleRemove(
+        self.mods_remove = nf_core.modules.remove.ModuleRemove(self.pipeline_dir)
+        self.mods_remove_gitlab = nf_core.modules.remove.ModuleRemove(
             self.pipeline_dir,
             remote_url=GITLAB_URL,
             branch=GITLAB_DEFAULT_BRANCH,
@@ -145,15 +153,9 @@ class TestModules(unittest.TestCase):
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
 
-    def tearDown(self):
-        """Clean up temporary files and folders"""
-
-        if os.path.exists(self.tmp_dir):
-            shutil.rmtree(self.tmp_dir)
-
     def test_modulesrepo_class(self):
         """Initialise a modules repo object"""
-        modrepo = nf_core.modules.ModulesRepo()
+        modrepo = nf_core.modules.modules_repo.ModulesRepo()
         assert modrepo.repo_path == "nf-core"
         assert modrepo.branch == "master"
 

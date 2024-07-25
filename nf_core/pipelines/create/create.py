@@ -376,13 +376,14 @@ class PipelineCreate:
 
         if self.config:
             config_fn, config_yml = nf_core.utils.load_tools_config(self.outdir)
-            with open(config_fn, "w") as fh:
-                config_yml.update(template=self.config.model_dump())
-                # convert posix path to string for yaml dump
-                config_yml["template"]["outdir"] = str(config_yml["template"]["outdir"])
-                yaml.safe_dump(config_yml, fh)
-                log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
-                run_prettier_on_file(self.outdir / config_fn)
+            if config_fn is not None and config_yml is not None:
+                with open(str(config_fn), "w") as fh:
+                    config_yml.template = self.config.model_dump()
+                    # convert posix path to string for yaml dump
+                    config_yml["template"]["outdir"] = str(config_yml["template"]["outdir"])
+                    yaml.safe_dump(config_yml.model_dump(), fh)
+                    log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
+                    run_prettier_on_file(self.outdir / config_fn)
 
     def update_nextflow_schema(self):
         """

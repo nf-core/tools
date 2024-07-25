@@ -2,8 +2,11 @@ import os
 import re
 from pathlib import Path
 
+import yaml
+
 import nf_core.pipelines.create.create
 import nf_core.pipelines.lint
+from nf_core.utils import NFCoreYamlConfig
 
 from ..test_lint import TestLint
 
@@ -124,11 +127,13 @@ class TestLintNextflowConfig(TestLint):
     def test_default_values_ignored(self):
         """Test ignoring linting of default values."""
         # Add max_cpus to the ignore list
-        nf_core_yml = Path(self.new_pipeline) / ".nf-core.yml"
-        with open(nf_core_yml, "w") as f:
-            f.write(
-                "repository_type: pipeline\nlint:\n  nextflow_config:\n    - config_defaults:\n      - params.max_cpus\n"
-            )
+        nf_core_yml_path = Path(self.new_pipeline) / ".nf-core.yml"
+        nf_core_yml = NFCoreYamlConfig(
+            repository_type="pipeline", lint={"nextflow_config": [{"config_defaults": ["params.max_cpus"]}]}
+        )
+        with open(nf_core_yml_path, "w") as f:
+            yaml.dump(nf_core_yml.model_dump(), f)
+
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj.load_pipeline_config()
         lint_obj._load_lint_config()
