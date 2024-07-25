@@ -47,7 +47,7 @@ class TestPipelinesLint(TestLint):
 
     def test_load_lint_config_not_found(self):
         """Try to load a linting config file that doesn't exist"""
-        self.lint_obj._load_lint_config()
+        assert self.lint_obj._load_lint_config()
         assert self.lint_obj.lint_config == {}
 
     def test_load_lint_config_ignore_all_tests(self):
@@ -58,7 +58,7 @@ class TestPipelinesLint(TestLint):
         lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
 
         # Make a config file listing all test names
-        config_dict = {"lint": {test_name: False for test_name in lint_obj.lint_tests}}
+        config_dict = {"repository_type": "pipeline", "lint": {test_name: False for test_name in lint_obj.lint_tests}}
         with open(Path(new_pipeline, ".nf-core.yml"), "w") as fh:
             yaml.dump(config_dict, fh)
 

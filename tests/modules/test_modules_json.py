@@ -220,7 +220,7 @@ class TestModulesCreate(TestModules):
         mod_json_obj.create()  # Create modules.json explicitly to get correct module sha
         mod_json_orig = mod_json_obj.get_modules_json()
         mod_json = copy.deepcopy(mod_json_orig)
-        mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"] = ""
+        mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"] = {}
         # save the altered module.json and load it again to check if it will fix itself
         mod_json_obj.modules_json = mod_json
         mod_json_obj.dump()

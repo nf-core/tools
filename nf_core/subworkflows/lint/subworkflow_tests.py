@@ -27,14 +27,14 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
     repo_dir = subworkflow.component_dir.parts[
         : subworkflow.component_dir.parts.index(subworkflow.component_name.split("/")[0])
     ][-1]
-    test_dir = Path(
+    pytest_dir = Path(
         subworkflow.base_dir,
         "tests",
         "subworkflows",
         repo_dir,
         subworkflow.component_name,
     )
-    pytest_main_nf = Path(test_dir, "main.nf")
+    pytest_main_nf = Path(pytest_dir, "main.nf")
     is_pytest = pytest_main_nf.is_file()
     log.debug(f"{pytest_main_nf} is pytest: {is_pytest}")
     if subworkflow.nftest_testdir.is_dir():
@@ -265,8 +265,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
 
     # Check that the old test directory does not exist
     if not is_pytest:
-        old_test_dir = Path(subworkflow.base_dir, "tests", "subworkflows", subworkflow.component_name)
-        if old_test_dir.is_dir():
-            subworkflow.failed.append(("test_old_test_dir", "old test directory exists", old_test_dir))
+        if pytest_dir.is_dir():
+            subworkflow.failed.append(("test_old_test_dir", "old test directory exists", pytest_dir))
         else:
-            subworkflow.passed.append(("test_old_test_dir", "old test directory does not exist", old_test_dir))
+            subworkflow.passed.append(("test_old_test_dir", "old test directory does not exist", pytest_dir))

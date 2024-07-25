@@ -10,6 +10,7 @@ from pathlib import Path
 import git
 import questionary
 import requests
+import requests.auth
 import requests_cache
 import rich
 import yaml
@@ -86,23 +87,23 @@ class PipelineSync:
         self.pr_url = ""
 
         self.config_yml_path, self.config_yml = nf_core.utils.load_tools_config(self.pipeline_dir)
-
+        assert self.config_yml_path is not None  # mypy
         # Throw deprecation warning if template_yaml_path is set
         if template_yaml_path is not None:
             log.warning(
                 f"The `template_yaml_path` argument is deprecated. Saving pipeline creation settings in .nf-core.yml instead. Please remove {template_yaml_path} file."
             )
-            if "template" in self.config_yml:
+            if getattr(self.config_yml, "template", None) is not None:
                 overwrite_template = questionary.confirm(
                     f"A template section already exists in '{self.config_yml_path}'. Do you want to overwrite?",
                     style=nf_core.utils.nfcore_question_style,
                     default=False,
                 ).unsafe_ask()
-            if overwrite_template or "template" not in self.config_yml:
+            if overwrite_template or getattr(self.config_yml, "template", None) is None:
                 with open(template_yaml_path) as f:
-                    self.config_yml["template"] = yaml.safe_load(f)
+                    self.config_yml.template = yaml.safe_load(f)
                 with open(self.config_yml_path, "w") as fh:
-                    yaml.safe_dump(self.config_yml, fh)
+                    yaml.safe_dump(self.config_yml.model_dump(), fh)
                 log.info(f"Saved pipeline creation settings to '{self.config_yml_path}'")
                 raise SystemExit(
                     f"Please commit your changes and delete the {template_yaml_path} file. Then run the sync command again."
@@ -259,11 +260,12 @@ class PipelineSync:
 
         # Only show error messages from pipeline creation
         logging.getLogger("nf_core.pipelines.create").setLevel(logging.ERROR)
-
+        assert self.config_yml_path is not None
+        assert self.config_yml is not None
         # Re-write the template yaml info from .nf-core.yml config
-        if "template" in self.config_yml:
+        if getattr(self.config_yml, "template", None) is not None:
             with open(self.config_yml_path, "w") as config_path:
-                yaml.safe_dump(self.config_yml, config_path)
+                yaml.safe_dump(self.config_yml.model_dump(), config_path)
 
         try:
             nf_core.pipelines.create.create.PipelineCreate(
@@ -411,21 +413,24 @@ class PipelineSync:
             return False
 
         for pr in list_prs_json:
-            log.debug(f"Looking at PR from '{pr['head']['ref']}': {pr['html_url']}")
-            # Ignore closed PRs
-            if pr["state"] != "open":
-                log.debug(f"Ignoring PR as state not open ({pr['state']}): {pr['html_url']}")
-                continue
+            if isinstance(pr, int):
+                log.debug(f"Incorrect PR format: {pr}")
+            else:
+                log.debug(f"Looking at PR from '{pr['head']['ref']}': {pr['html_url']}")
+                # Ignore closed PRs
+                if pr["state"] != "open":
+                    log.debug(f"Ignoring PR as state not open ({pr['state']}): {pr['html_url']}")
+                    continue
 
-            # Don't close the new PR that we just opened
-            if pr["head"]["ref"] == self.merge_branch:
-                continue
+                # Don't close the new PR that we just opened
+                if pr["head"]["ref"] == self.merge_branch:
+                    continue
 
-            # PR is from an automated branch and goes to our target base
-            if pr["head"]["ref"].startswith("nf-core-template-merge-") and pr["base"]["ref"] == self.from_branch:
-                self.close_open_pr(pr)
+                # PR is from an automated branch and goes to our target base
+                if pr["head"]["ref"].startswith("nf-core-template-merge-") and pr["base"]["ref"] == self.from_branch:
+                    self.close_open_pr(pr)
 
-    def close_open_pr(self, pr):
+    def close_open_pr(self, pr) -> bool:
         """Given a PR API response, add a comment and close."""
         log.debug(f"Attempting to close PR: '{pr['html_url']}'")
 

@@ -228,7 +228,7 @@ class ModuleLint(ComponentLint):
         # TODO: consider unifying modules and subworkflows lint_module() function and add it to the ComponentLint class
         # Only check the main script in case of a local module
         if local:
-            self.main_nf(mod, fix_version, self.registry, progress_bar)
+            self.main_nf(mod, fix_version, registry, progress_bar)
             self.passed += [LintResult(mod, *m) for m in mod.passed]
             warned = [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
             if not self.fail_warned:
@@ -245,7 +245,7 @@ class ModuleLint(ComponentLint):
 
             for test_name in self.lint_tests:
                 if test_name == "main_nf":
-                    getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
+                    getattr(self, test_name)(mod, fix_version, registry, progress_bar)
                 else:
                     getattr(self, test_name)(mod)
 

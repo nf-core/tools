@@ -205,7 +205,7 @@ def files_exist(self) -> Dict[str, List[str]]:
     ]
 
     # Remove files that should be ignored according to the linting config
-    ignore_files = self.lint_config.get("files_exist", [])
+    ignore_files = self.lint_config.get("files_exist", []) if self.lint_config is not None else []
 
     def pf(file_path: Union[str, Path]) -> Path:
         return Path(self.wf_path, file_path)
