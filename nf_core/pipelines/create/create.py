@@ -516,7 +516,7 @@ class PipelineCreate:
             with open(self.outdir / config_fn, "w") as fh:
                 yaml.dump(nf_core_yml.model_dump(), fh, default_flow_style=False, sort_keys=False)
 
-        run_prettier_on_file(os.path.join(self.outdir, config_fn))
+            run_prettier_on_file(Path(self.outdir, config_fn))
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""

@@ -1192,7 +1192,7 @@ class ModulesJson:
                         self.modules_dir,
                         modules_repo.repo_path,
                     )
-                    for dir_name, _, _ in os.walk(repo_url_path):
+                    for dir_name, _, _ in Path.walk(repo_url_path):
                         if component_type == "modules":
                             if len(Path(directory).parts) > 1:  # The module name is TOOL/SUBTOOL
                                 paths_in_directory.append(str(Path(*Path(dir_name).parts[-2:])))

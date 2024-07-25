@@ -2,6 +2,7 @@
 
 import os
 import unittest
+from pathlib import Path
 
 import git
 import yaml
@@ -22,7 +23,8 @@ class NfcoreCreateTest(unittest.TestCase):
         self.pipeline_version = "1.0.0"
         self.default_branch = "default"
 
-    def test_pipeline_creation(self):
+    @with_temporary_folder
+    def test_pipeline_creation(self, tmp_path):
         pipeline = nf_core.pipelines.create.create.PipelineCreate(
             name=self.pipeline_name,
             description=self.pipeline_description,
@@ -30,6 +32,7 @@ class NfcoreCreateTest(unittest.TestCase):
             version=self.pipeline_version,
             no_git=False,
             force=True,
+            outdir=tmp_path,
             default_branch=self.default_branch,
         )
 
@@ -51,10 +54,10 @@ class NfcoreCreateTest(unittest.TestCase):
             default_branch=self.default_branch,
         )
         pipeline.init_pipeline()
-        assert os.path.isdir(os.path.join(pipeline.outdir, ".git"))
+        assert Path(pipeline.outdir, ".git").is_dir()
         assert f" {self.default_branch}\n" in git.Repo.init(pipeline.outdir).git.branch()
-        assert not os.path.exists(os.path.join(pipeline.outdir, "pipeline_template.yml"))
-        with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
+        assert not Path(pipeline.outdir, "pipeline_template.yml").exists()
+        with open(Path(pipeline.outdir, ".nf-core.yml")) as fh:
             assert "template" in fh.read()
 
     @with_temporary_folder
