@@ -117,13 +117,13 @@ workflow PIPELINE_INITIALISATION {
 workflow PIPELINE_COMPLETION {
 
     take:
-    email           //  string: email address
-    email_on_fail   //  string: email address sent on pipeline failure
-    plaintext_email // boolean: Send plain-text email instead of HTML
-    outdir          //    path: Path to output directory where results will be published
-    monochrome_logs // boolean: Disable ANSI colour codes in log output
-    hook_url        //  string: hook URL for notifications
-    multiqc_report  //  string: Path to MultiQC report
+    email           //   string: email address
+    email_on_fail   //   string: email address sent on pipeline failure
+    plaintext_email //  boolean: Send plain-text email instead of HTML
+    outdir          //     path: Path to output directory where results will be published
+    monochrome_logs //  boolean: Disable ANSI colour codes in log output
+    hook_url        //   string: hook URL for notifications
+    multiqc_report  // [string]: List of paths to MultiQC report (Note: only the first one will be used)
 
     main:
 
@@ -134,7 +134,7 @@ workflow PIPELINE_COMPLETION {
     //
     workflow.onComplete {
         if (email || email_on_fail) {
-            completionEmail(summary_params, email, email_on_fail, plaintext_email, outdir, monochrome_logs, multiqc_report.toList())
+            completionEmail(summary_params, email, email_on_fail, plaintext_email, outdir, monochrome_logs, multiqc_report)
         }
 
         completionSummary(monochrome_logs)
