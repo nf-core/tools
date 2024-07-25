@@ -1,15 +1,22 @@
 import logging
 import re
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 import questionary
 import rich.prompt
 
+if TYPE_CHECKING:
+    from nf_core.modules.modules_repo import ModulesRepo
+
 import nf_core.utils
-from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
+
+# Constants for the nf-core/modules repo used throughout the module files
+NF_CORE_MODULES_NAME = "nf-core"
+NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
+NF_CORE_MODULES_DEFAULT_BRANCH = "master"
 
 
 def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[Path, Optional[str], str]:
@@ -82,7 +89,10 @@ def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[P
 
 
 def prompt_component_version_sha(
-    component_name: str, component_type: str, modules_repo: ModulesRepo, installed_sha: Optional[str] = None
+    component_name: str,
+    component_type: str,
+    modules_repo: "ModulesRepo",
+    installed_sha: Optional[str] = None,
 ) -> str:
     """
     Creates an interactive questionary prompt for selecting the module/subworkflow version

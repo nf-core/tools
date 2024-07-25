@@ -12,11 +12,11 @@ import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.components_utils import (
+    NF_CORE_MODULES_NAME,
     get_components_to_install,
     prompt_component_version_sha,
 )
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
 
 log = logging.getLogger(__name__)
 
