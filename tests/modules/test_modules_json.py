@@ -7,9 +7,9 @@ from nf_core.components.components_utils import (
     NF_CORE_MODULES_DEFAULT_BRANCH,
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
-    ModulesRepo,
 )
 from nf_core.modules.modules_json import ModulesJson
+from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.patch import ModulePatch
 
 from ..test_modules import TestModules
