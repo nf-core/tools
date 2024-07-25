@@ -45,7 +45,6 @@ class LintResult:
         self.component_name: str = component.component_name
 
 
-@rich.repr.auto
 class ComponentLint(ComponentCommand):
     """
     An object for linting modules and subworkflows either in a clone of the 'nf-core/modules'
