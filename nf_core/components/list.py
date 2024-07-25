@@ -1,5 +1,6 @@
 import json
 import logging
+from pathlib import Path
 from typing import Dict, List, Optional, Union, cast
 
 import rich.table
@@ -15,7 +16,7 @@ class ComponentList(ComponentCommand):
     def __init__(
         self,
         component_type: str,
-        pipeline_dir: str,
+        pipeline_dir: Union[str, Path],
         remote: bool = True,
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,

@@ -63,16 +63,18 @@ class ModulesRepo(SyncedRepo):
         self.setup_local_repo(remote_url, branch, hide_progress)
 
         config_fn, repo_config = load_tools_config(self.local_repo_dir)
-        assert config_fn is not None and repo_config is not None  # mypy
+        if config_fn is None or repo_config is None:
+            raise UserWarning(f"Could not find a configuration file in {self.local_repo_dir}")
         try:
-            self.repo_path = repo_config["org_path"]
+            self.repo_path = repo_config.org_path
         except KeyError:
             raise UserWarning(f"'org_path' key not present in {config_fn.name}")
 
         # Verify that the repo seems to be correctly configured
         if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
             self.verify_branch()
-
+        if self.repo_path is None:
+            raise UserWarning(f"Could not find the org_path in the configuration file: {config_fn.name}")
         # Convenience variable
         self.modules_dir = Path(self.local_repo_dir, "modules", self.repo_path)
         self.subworkflows_dir = Path(self.local_repo_dir, "subworkflows", self.repo_path)
@@ -96,7 +98,7 @@ class ModulesRepo(SyncedRepo):
             branch (str): name of branch to use
         Sets self.repo
         """
-        self.local_repo_dir = os.path.join(NFCORE_DIR if not in_cache else NFCORE_CACHE_DIR, self.fullname)
+        self.local_repo_dir = Path(NFCORE_DIR if not in_cache else NFCORE_CACHE_DIR, self.fullname)
         try:
             if not os.path.exists(self.local_repo_dir):
                 try:

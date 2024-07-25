@@ -1,14 +1,14 @@
 import logging
-import os
 import re
 from pathlib import Path
+from typing import Dict, List, Optional, Union
 
 from nf_core.pipelines.schema import PipelineSchema
 
 log = logging.getLogger(__name__)
 
 
-def nextflow_config(self):
+def nextflow_config(self) -> Dict[str, List[str]]:
     """Checks the pipeline configuration for required variables.
 
     All nf-core pipelines are required to be configured with a minimal set of variable
@@ -173,7 +173,7 @@ def nextflow_config(self):
     ]
 
     # Remove field that should be ignored according to the linting config
-    ignore_configs = self.lint_config.get("nextflow_config", [])
+    ignore_configs = self.lint_config.get("nextflow_config", []) if self.lint_config is not None else []
 
     for cfs in config_fail:
         for cf in cfs:
@@ -205,12 +205,13 @@ def nextflow_config(self):
             failed.append(f"Config variable (incorrectly) found: {self._wrap_quotes(cf)}")
 
     # Check and warn if the process configuration is done with deprecated syntax
+
     process_with_deprecated_syntax = list(
         set(
             [
-                re.search(r"^(process\.\$.*?)\.+.*$", ck).group(1)
+                match.group(1)
                 for ck in self.nf_config.keys()
-                if re.match(r"^(process\.\$.*?)\.+.*$", ck)
+                if (match := re.match(r"^(process\.\$.*?)\.+.*$", ck)) is not None
             ]
         )
     )
@@ -313,7 +314,7 @@ def nextflow_config(self):
             r'System.err.println("WARNING: Could not load nf-core/config profiles: ${params.custom_config_base}/nfcore_custom.config")',
             r"}",
         ]
-        path = os.path.join(self.wf_path, "nextflow.config")
+        path = Path(self.wf_path, "nextflow.config")
         i = 0
         with open(path) as f:
             for line in f:
@@ -335,7 +336,7 @@ def nextflow_config(self):
             )
 
     # Check for the availability of the "test" configuration profile by parsing nextflow.config
-    with open(os.path.join(self.wf_path, "nextflow.config")) as f:
+    with open(Path(self.wf_path, "nextflow.config")) as f:
         content = f.read()
 
         # Remove comments
@@ -379,8 +380,8 @@ def nextflow_config(self):
         if param in ignore_defaults:
             ignored.append(f"Config default ignored: {param}")
         elif param in self.nf_config.keys():
-            config_default = None
-            schema_default = None
+            config_default: Optional[Union[str, float, int]] = None
+            schema_default: Optional[Union[str, float, int]] = None
             if schema.schema_types[param_name] == "boolean":
                 schema_default = str(schema.schema_defaults[param_name]).lower()
                 config_default = str(self.nf_config[param]).lower()
