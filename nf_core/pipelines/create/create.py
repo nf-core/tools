@@ -53,7 +53,7 @@ class PipelineCreate:
         no_git: bool = False,
         force: bool = False,
         outdir: Optional[Union[Path, str]] = None,
-        template_config: Optional[CreateConfig] = None,
+        template_config: Optional[Union[CreateConfig, str, Path]] = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
         default_branch: Optional[str] = None,
