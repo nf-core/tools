@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import Dict, List, Union
 
 from rich.console import Console
 from rich.syntax import Syntax
@@ -296,7 +296,7 @@ class ModulesDiffer:
                 console.print(Syntax("".join(diff), "diff", theme="ansi_dark", padding=1))
 
     @staticmethod
-    def per_file_patch(patch_fn: Union[str, Path]) -> dict[str, List[str]]:
+    def per_file_patch(patch_fn: Union[str, Path]) -> Dict[str, List[str]]:
         """
         Splits a patch file for several files into one patch per file.
 
@@ -453,7 +453,7 @@ class ModulesDiffer:
     @staticmethod
     def try_apply_patch(
         module: str, repo_path: Union[str, Path], patch_path: Union[str, Path], module_dir: Path, reverse: bool = False
-    ) -> dict[str, List[str]]:
+    ) -> Dict[str, List[str]]:
         """
         Try applying a full patch file to a module
 

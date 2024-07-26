@@ -1000,7 +1000,7 @@ class ModulesJson:
             .get("git_sha", None)
         )
 
-    def get_all_components(self, component_type: str) -> dict[str, List[Tuple[(str, str)]]]:
+    def get_all_components(self, component_type: str) -> Dict[str, List[Tuple[(str, str)]]]:
         """
         Retrieves all pipeline modules/subworkflows that are reported in the modules.json
 
