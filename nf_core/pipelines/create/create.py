@@ -249,7 +249,7 @@ class PipelineCreate:
                 return jinja_params, skip_paths
 
         # Check that the pipeline name matches the requirements
-        if not re.match(r"^[a-z-]+$", jinja_params["short_name"]):
+        if not re.match(r"^[a-z]+$", jinja_params["short_name"]):
             if jinja_params["is_nfcore"]:
                 raise UserWarning("[red]Invalid workflow name: must be lowercase without punctuation.")
             else:
