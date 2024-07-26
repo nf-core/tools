@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from nf_core.modules.modules_json import ModulesJson, ModulesJsonType
 
@@ -19,7 +19,7 @@ def modules_json(self) -> Dict[str, List[str]]:
     # Load pipeline modules and modules.json
     _modules_json = ModulesJson(self.wf_path)
     _modules_json.load()
-    modules_json_dict: ModulesJsonType | None = _modules_json.modules_json
+    modules_json_dict: Union[ModulesJsonType, None] = _modules_json.modules_json
     modules_dir = Path(self.wf_path, "modules")
 
     if _modules_json and modules_json_dict is not None:

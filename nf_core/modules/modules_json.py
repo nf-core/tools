@@ -115,7 +115,7 @@ class ModulesJson:
         self.dump()
 
     def get_component_names_from_repo(
-        self, repos: Dict[str, Dict[str, Dict[str, Dict[str, Dict[str, str | List[str]]]]]], directory: Path
+        self, repos: Dict[str, Dict[str, Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]]], directory: Path
     ) -> List[Tuple[str, List[str], str]]:
         """
         Get component names from repositories in a pipeline.
