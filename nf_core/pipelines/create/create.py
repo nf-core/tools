@@ -81,8 +81,11 @@ class PipelineCreate:
         else:
             raise UserWarning("The template configuration was not provided.")
 
+        if self.config.outdir is None:
+            self.config.outdir = str(Path.cwd())
+
         self.jinja_params, skip_paths = self.obtain_jinja_params_dict(
-            self.config.skip_features or [], self.config.outdir
+            self.config.skip_features or [], Path(self.config.outdir)
         )
 
         skippable_paths = {
@@ -110,8 +113,7 @@ class PipelineCreate:
         self.default_branch = default_branch
         self.is_interactive = is_interactive
         self.force = self.config.force
-        if self.config.outdir is None:
-            self.config.outdir = str(Path.cwd())
+
         if self.config.outdir == ".":
             self.outdir = Path(self.config.outdir, self.jinja_params["name_noslash"]).absolute()
         else:
@@ -184,7 +186,7 @@ class PipelineCreate:
         if self.config.is_nfcore is None:
             self.config.is_nfcore = self.config.org == "nf-core"
 
-    def obtain_jinja_params_dict(self, features_to_skip, pipeline_dir):
+    def obtain_jinja_params_dict(self, features_to_skip: List[str], pipeline_dir: Union[str, Path]):
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
@@ -379,7 +381,6 @@ class PipelineCreate:
                 with open(str(config_fn), "w") as fh:
                     self.config.outdir = str(self.config.outdir)
                     config_yml.template = NFCoreTemplateConfig(**self.config.model_dump())
-
                     yaml.safe_dump(config_yml.model_dump(), fh)
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
                     run_prettier_on_file(self.outdir / config_fn)
