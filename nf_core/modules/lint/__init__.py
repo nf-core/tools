@@ -238,7 +238,7 @@ class ModuleLint(ComponentLint):
 
         # Otherwise run all the lint tests
         else:
-            if self.repo_type == "pipeline" and self.modules_json:
+            if self.repo_type == "pipeline" and self.modules_json and mod.repo_url:
                 # Set correct sha
                 version = self.modules_json.get_module_version(mod.component_name, mod.repo_url, mod.org)
                 mod.git_sha = version
