@@ -22,6 +22,7 @@ from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.pipelines.lint_utils import console
+from nf_core.utils import LintConfigType
 from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
@@ -77,8 +78,8 @@ class ComponentLint(ComponentCommand):
         self.failed: List[LintResult] = []
         self.all_local_components: List[NFCoreComponent] = []
 
-        self.lint_config = None
-        self.modules_json = None
+        self.lint_config: Optional[LintConfigType] = None
+        self.modules_json: Optional[ModulesJson] = None
 
         if self.component_type == "modules":
             self.lint_tests = self.get_all_module_lint_tests(self.repo_type == "pipeline")

@@ -28,3 +28,4 @@ repos:
           - types-jsonschema
           - types-Markdown
           - types-setuptools
+          - pydantic

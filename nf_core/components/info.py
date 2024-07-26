@@ -107,7 +107,7 @@ class ComponentInfo(ComponentCommand):
                 elif self.repo_type == "pipeline":
                     assert self.modules_json is not None  # mypy
                     all_components = self.modules_json.get_all_components(self.component_type).get(
-                        self.modules_repo.remote_url, []
+                        self.modules_repo.remote_url, {}
                     )
                     components = [
                         component if directory == self.modules_repo.repo_path else f"{directory}/{component}"

@@ -77,7 +77,7 @@ def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[P
             ).unsafe_ask()
             log.info("To avoid this prompt in the future, add the 'org_path' key to a root '%s' file.", config_fn.name)
             if rich.prompt.Confirm.ask("[bold][blue]?[/] Would you like me to add this config now?", default=True):
-                with open(str(config_fn), "a+") as fh:
+                with open(config_fn, "a+") as fh:
                     fh.write(f"org_path: {org}\n")
                     log.info(f"Config added to '{config_fn.name}'")
 
