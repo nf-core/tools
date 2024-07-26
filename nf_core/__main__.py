@@ -650,7 +650,7 @@ def command_pipelines_bump_version(ctx, new_version, directory, nextflow):
 # nf-core pipelines create-logo
 @pipelines.command("create-logo")
 @click.argument("logo-text", metavar="<logo_text>")
-@click.option("-d", "--dir", type=click.Path(), default=".", help="Directory to save the logo in.")
+@click.option("-d", "--dir", "directory", type=click.Path(), default=".", help="Directory to save the logo in.")
 @click.option(
     "-n",
     "--name",
