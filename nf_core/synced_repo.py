@@ -466,9 +466,7 @@ class SyncedRepo:
             directory = self.subworkflows_dir
         # Module/Subworkflow directories are characterized by having a 'main.nf' file
         avail_component_names = [
-            str(Path(dirpath).relative_to(directory))
-            for dirpath, _, files in Path.walk(directory)
-            if "main.nf" in files
+            str(Path(dirpath).relative_to(directory)) for dirpath, _, files in os.walk(directory) if "main.nf" in files
         ]
         return avail_component_names
 

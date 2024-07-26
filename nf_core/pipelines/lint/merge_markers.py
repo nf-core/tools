@@ -1,5 +1,6 @@
 import fnmatch
 import logging
+import os
 from pathlib import Path
 
 import nf_core.utils
@@ -42,7 +43,7 @@ def merge_markers(self):
         with open(Path(self.wf_path, ".gitignore"), encoding="latin1") as fh:
             for line in fh:
                 ignore.append(Path(line.strip().rstrip("/")).name)
-    for root, dirs, files in Path.walk(self.wf_path, top_down=True):
+    for root, dirs, files in os.walk(self.wf_path, topdown=True):
         # Ignore files
         for i_base in ignore:
             i = str(Path(root, i_base))

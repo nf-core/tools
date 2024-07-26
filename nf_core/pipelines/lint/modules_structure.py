@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 log = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ def modules_structure(self):
         modules/nf-core/modules/TOOL/SUBTOOL
     """
     wrong_location_modules = []
-    for directory, _, files in Path.walk(Path(self.wf_path, "modules")):
+    for directory, _, files in os.walk(Path(self.wf_path, "modules")):
         if "main.nf" in files:
             module_path = Path(directory).relative_to(Path(self.wf_path, "modules"))
             parts = module_path.parts

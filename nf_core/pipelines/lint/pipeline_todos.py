@@ -1,5 +1,6 @@
 import fnmatch
 import logging
+import os
 from pathlib import Path
 
 log = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ def pipeline_todos(self, root_dir=None):
         with open(Path(root_dir, ".gitignore"), encoding="latin1") as fh:
             for line in fh:
                 ignore.append(Path(line.strip().rstrip("/")).name)
-    for root, dirs, files in Path.walk(root_dir, top_down=True):
+    for root, dirs, files in os.walk(root_dir, topdown=True):
         # Ignore files
         for i_base in ignore:
             i = str(Path(root, i_base))

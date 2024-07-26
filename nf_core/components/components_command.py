@@ -1,5 +1,6 @@
 import logging
 import mmap
+import os
 import shutil
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -87,7 +88,7 @@ class ComponentCommand:
             component_base_path = Path(self.directory, self.default_subworkflows_path)
         return [
             str(Path(directory).relative_to(component_base_path))
-            for directory, _, files in Path.walk(component_base_path)
+            for directory, _, files in os.walk(component_base_path)
             if "main.nf" in files
         ]
 
@@ -126,10 +127,10 @@ class ComponentCommand:
         try:
             shutil.rmtree(component_dir)
             # remove all empty directories
-            for dir_path, dir_names, filenames in Path.walk(Path(self.directory), top_down=False):
+            for dir_path, dir_names, filenames in os.walk(Path(self.directory), topdown=False):
                 if not dir_names and not filenames:
                     try:
-                        dir_path.rmdir()
+                        Path(dir_path).rmdir()
                     except OSError:
                         pass
                     else:
@@ -156,9 +157,7 @@ class ComponentCommand:
             raise LookupError(f"Nothing installed from {install_dir} in pipeline")
 
         return [
-            str(Path(dir_path).relative_to(repo_dir))
-            for dir_path, _, files in Path.walk(repo_dir)
-            if "main.nf" in files
+            str(Path(dir_path).relative_to(repo_dir)) for dir_path, _, files in os.walk(repo_dir) if "main.nf" in files
         ]
 
     def install_component_files(
@@ -202,7 +201,7 @@ class ComponentCommand:
         """
         if self.repo_type == "pipeline":
             wrong_location_modules: List[Path] = []
-            for directory, _, files in Path.walk(Path(self.directory, "modules")):
+            for directory, _, files in os.walk(Path(self.directory, "modules")):
                 if "main.nf" in files:
                     module_path = Path(directory).relative_to(Path(self.directory, "modules"))
                     parts = module_path.parts
