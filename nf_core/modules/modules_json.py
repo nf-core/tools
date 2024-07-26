@@ -134,7 +134,7 @@ class ModulesJson:
                 repo_url,
                 [
                     str(component_name.relative_to(directory / modules_repo.repo_path))
-                    for component_name, _, file_names in Path(directory / modules_repo.repo_path).walk()
+                    for component_name, _, file_names in Path.walk(directory / modules_repo.repo_path)
                     if "main.nf" in file_names
                 ],
                 modules_repo.repo_path,
@@ -1189,7 +1189,7 @@ class ModulesJson:
                         self.modules_dir,
                         modules_repo.repo_path,
                     )
-                    for dir_name, _, _ in repo_url_path.walk():
+                    for dir_name, _, _ in Path.walk(repo_url_path):
                         if component_type == "modules":
                             if len(Path(directory).parts) > 1:  # The module name is TOOL/SUBTOOL
                                 paths_in_directory.append(str(Path(*Path(dir_name).parts[-2:])))
