@@ -1036,7 +1036,7 @@ def command_modules_remove(ctx, directory, tool):
 @modules.command("create")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
+@click.option("-d", "--dir", "directory", type=click.Path(exists=True), default=".", metavar="<directory>")
 @click.option(
     "-a",
     "--author",
@@ -1306,7 +1306,7 @@ def subworkflows(ctx, git_remote, branch, no_pull):
 @subworkflows.command("create")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
+@click.option("-d", "--dir", "directory", type=click.Path(exists=True), default=".", metavar="<directory>")
 @click.option(
     "-a",
     "--author",
@@ -1751,7 +1751,7 @@ def command_schema_docs(schema_path, output, format, force, columns):
 # nf-core create-logo (deprecated)
 @nf_core_cli.command("create-logo", deprecated=True, hidden=True)
 @click.argument("logo-text", metavar="<logo_text>")
-@click.option("-d", "--dir", type=click.Path(), default=".", help="Directory to save the logo in.")
+@click.option("-d", "--dir", "directory", type=click.Path(), default=".", help="Directory to save the logo in.")
 @click.option(
     "-n",
     "--name",

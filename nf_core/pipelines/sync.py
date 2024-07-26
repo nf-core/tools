@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 from pathlib import Path
+from typing import Dict, Optional, Union
 
 import git
 import questionary
@@ -61,24 +62,24 @@ class PipelineSync:
 
     def __init__(
         self,
-        pipeline_dir,
-        from_branch=None,
-        make_pr=False,
-        gh_repo=None,
-        gh_username=None,
-        template_yaml_path=None,
-        force_pr=False,
+        pipeline_dir: Union[str, Path],
+        from_branch: Optional[str] = None,
+        make_pr: bool = False,
+        gh_repo: Optional[str] = None,
+        gh_username: Optional[str] = None,
+        template_yaml_path: Optional[str] = None,
+        force_pr: bool = False,
     ):
         """Initialise syncing object"""
 
-        self.pipeline_dir = Path(pipeline_dir).resolve()
+        self.pipeline_dir: Path = Path(pipeline_dir).resolve()
         self.from_branch = from_branch
         self.original_branch = None
         self.original_merge_branch = f"nf-core-template-merge-{nf_core.__version__}"
         self.merge_branch = self.original_merge_branch
         self.made_changes = False
         self.make_pr = make_pr
-        self.gh_pr_returned_data = {}
+        self.gh_pr_returned_data: Dict = {}
         self.required_config_vars = ["manifest.name", "manifest.description", "manifest.version", "manifest.author"]
         self.force_pr = force_pr
 
@@ -87,7 +88,7 @@ class PipelineSync:
         self.pr_url = ""
 
         self.config_yml_path, self.config_yml = nf_core.utils.load_tools_config(self.pipeline_dir)
-        assert self.config_yml_path is not None  # mypy
+        assert self.config_yml_path is not None and self.config_yml is not None  # mypy
         # Throw deprecation warning if template_yaml_path is set
         if template_yaml_path is not None:
             log.warning(

@@ -278,7 +278,7 @@ class PipelineCreate:
                 "https://nf-co.re/docs/tutorials/adding_a_pipeline/overview#join-the-community[/link]"
             )
 
-    def render_template(self):
+    def render_template(self) -> None:
         """Runs Jinja to create a new nf-core pipeline."""
         log.info(f"Creating new pipeline: '{self.name}'")
 
@@ -306,7 +306,7 @@ class PipelineCreate:
         template_files += list(Path(template_dir).glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
         short_name = self.jinja_params["short_name"]
-        rename_files = {
+        rename_files: Dict[str, str] = {
             "workflows/pipeline.nf": f"workflows/{short_name}.nf",
             "subworkflows/local/utils_nfcore_pipeline_pipeline/main.nf": f"subworkflows/local/utils_nfcore_{short_name}_pipeline/main.nf",
         }
@@ -327,8 +327,9 @@ class PipelineCreate:
                 # Set up vars and directories
                 template_fn = template_fn_path.relative_to(template_dir)
                 output_path = self.outdir / template_fn
-                if template_fn in rename_files:
-                    output_path = self.outdir / rename_files[template_fn]
+
+                if str(template_fn) in rename_files:
+                    output_path = self.outdir / rename_files[str(template_fn)]
                 output_path.parent.mkdir(parents=True, exist_ok=True)
 
                 try:
