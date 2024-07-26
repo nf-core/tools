@@ -133,7 +133,7 @@ class ModulesJson:
             components = (
                 repo_url,
                 [
-                    str(component_name.relative_to(directory / modules_repo.repo_path))
+                    str(Path(component_name).relative_to(directory / modules_repo.repo_path))
                     for component_name, _, file_names in os.walk(directory / modules_repo.repo_path)
                     if "main.nf" in file_names
                 ],

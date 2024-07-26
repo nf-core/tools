@@ -53,7 +53,7 @@ class PipelineCreate:
         no_git: bool = False,
         force: bool = False,
         outdir: Optional[Union[Path, str]] = None,
-        template_config: Optional[Union[str, CreateConfig, Path]] = None,
+        template_config: Optional[CreateConfig] = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
         default_branch: Optional[str] = None,
@@ -67,7 +67,7 @@ class PipelineCreate:
                 _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else Path().cwd())
                 # Obtain a CreateConfig object from `.nf-core.yml` config file
                 if config_yml is not None and getattr(config_yml, "template", None) is not None:
-                    self.config = CreateConfig(**config_yml["template"])
+                    self.config = CreateConfig(**config_yml["template"].model_dump())
                 else:
                     raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
             except (FileNotFoundError, UserWarning):
@@ -261,7 +261,6 @@ class PipelineCreate:
 
     def init_pipeline(self):
         """Creates the nf-core pipeline."""
-
         # Make the new pipeline
         self.render_template()
 

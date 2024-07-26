@@ -270,13 +270,10 @@ class PipelineSync:
 
         try:
             nf_core.pipelines.create.create.PipelineCreate(
-                name=self.wf_config["manifest.name"].strip('"').strip("'"),
-                description=self.wf_config["manifest.description"].strip('"').strip("'"),
-                version=self.wf_config["manifest.version"].strip('"').strip("'"),
+                outdir=str(self.pipeline_dir),
+                from_config_file=True,
                 no_git=True,
                 force=True,
-                outdir=str(self.pipeline_dir),
-                author=self.wf_config["manifest.author"].strip('"').strip("'"),
             ).init_pipeline()
         except Exception as err:
             # Reset to where you were to prevent git getting messed up.
