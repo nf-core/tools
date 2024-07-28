@@ -34,6 +34,7 @@ class ComponentInstall(ComponentCommand):
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.current_remote = remote_url
+        self.branch = branch
         self.force = force
         self.prompt = prompt
         self.sha = sha
@@ -57,9 +58,9 @@ class ComponentInstall(ComponentCommand):
         if isinstance(component, dict):
             if component["git_remote"] is not None:
                 remote_url = component["git_remote"]
-                self.modules_repo = ModulesRepo(remote_url)
+                self.modules_repo = ModulesRepo(remote_url, self.branch)
             else:
-                self.modules_repo = ModulesRepo(self.current_remote)
+                self.modules_repo = ModulesRepo(self.current_remote, self.branch)
             component = component["name"]
 
         # Verify that 'modules.json' is consistent with the installed modules and subworkflows
