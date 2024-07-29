@@ -1,16 +1,14 @@
 import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Union
-
-if TYPE_CHECKING:
-    from nf_core.modules.modules_repo import ModulesRepo
+from typing import List, Optional, Union
 
 import questionary
 from rich.console import Console
 from rich.syntax import Syntax
 
 import nf_core.components
+import nf_core.modules.modules_repo
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
@@ -183,7 +181,9 @@ class ComponentInstall(ComponentCommand):
             self.component_type = original_component_type
             self.installed_by = original_installed
 
-    def collect_and_verify_name(self, component: Optional[str], modules_repo: ModulesRepo) -> str:
+    def collect_and_verify_name(
+        self, component: Optional[str], modules_repo: "nf_core.modules.modules_repo.ModulesRepo"
+    ) -> str:
         """
         Collect component name.
         Check that the supplied name is an available module/subworkflow.

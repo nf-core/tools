@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import questionary
 import yaml
@@ -83,14 +83,14 @@ class ComponentInfo(ComponentCommand):
             self.modules_json = None
         self.component = self.init_mod_name(component_name)
 
-    def _configure_repo_and_paths(self, nf_dir_req=False):
+    def _configure_repo_and_paths(self, nf_dir_req=False) -> None:
         """
         Override the default with nf_dir_req set to False to allow
         info to be run from anywhere and still return remote info
         """
         return super()._configure_repo_and_paths(nf_dir_req)
 
-    def init_mod_name(self, component):
+    def init_mod_name(self, component: Optional[str]) -> str:
         """
         Makes sure that we have a module/subworkflow name before proceeding.
 
@@ -106,9 +106,10 @@ class ComponentInfo(ComponentCommand):
                     components = self.get_components_clone_modules()
                 elif self.repo_type == "pipeline":
                     assert self.modules_json is not None  # mypy
-                    all_components = self.modules_json.get_all_components(self.component_type).get(
-                        self.modules_repo.remote_url, {}
-                    )
+                    all_components: List[Tuple[str, str]] = self.modules_json.get_all_components(
+                        self.component_type
+                    ).get(self.modules_repo.remote_url, [])
+
                     components = [
                         component if directory == self.modules_repo.repo_path else f"{directory}/{component}"
                         for directory, component in all_components
@@ -169,7 +170,7 @@ class ComponentInfo(ComponentCommand):
 
         return self.generate_component_info_help()
 
-    def get_local_yaml(self):
+    def get_local_yaml(self) -> Optional[Dict]:
         """Attempt to get the meta.yml file from a locally installed module/subworkflow.
 
         Returns:
@@ -316,7 +317,7 @@ class ComponentInfo(ComponentCommand):
             )
 
         # Print include statement
-        if self.local_path:
+        if self.local_path and self.modules_repo.repo_path is not None:
             install_folder = Path(self.directory, self.component_type, self.modules_repo.repo_path)
             component_name = "_".join(self.component.upper().split("/"))
             renderables.append(

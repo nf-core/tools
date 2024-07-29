@@ -30,7 +30,7 @@ import rich
 import rich.markup
 import yaml
 from packaging.version import Version
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, field_validator
 from rich.live import Live
 from rich.spinner import Spinner
 
@@ -1050,9 +1050,17 @@ class NFCoreTemplateConfig(BaseModel):
     author: Optional[str] = None
     version: Optional[str] = None
     force: Optional[bool] = None
-    outdir: Optional[str] = None
+    outdir: Optional[Union[str, Path]] = None
     skip_features: Optional[list] = None
     is_nfcore: Optional[bool] = None
+
+    # convert outdir to str
+    @field_validator("outdir")
+    @classmethod
+    def outdir_to_str(cls, v: Optional[Union[str, Path]]) -> Optional[str]:
+        if v is not None:
+            v = str(v)
+        return v
 
     def __getitem__(self, item: str) -> Any:
         if self is None:

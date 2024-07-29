@@ -83,9 +83,8 @@ class PipelineCreate:
 
         if self.config.outdir is None:
             self.config.outdir = str(Path.cwd())
-
         self.jinja_params, skip_paths = self.obtain_jinja_params_dict(
-            self.config.skip_features or [], Path(self.config.outdir)
+            self.config.skip_features or [], str(self.config.outdir)
         )
 
         skippable_paths = {
