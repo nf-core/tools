@@ -11,7 +11,7 @@ import tarfile
 import textwrap
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from zipfile import ZipFile
 
 import git
@@ -24,6 +24,7 @@ from git.exc import GitCommandError, InvalidGitRepositoryError
 from packaging.version import Version
 
 import nf_core
+import nf_core.modules.modules_utils
 import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
@@ -131,6 +132,7 @@ class DownloadWorkflow:
         self.compress_type = compress_type
         self.force = force
         self.platform = platform
+        self.fullname: Optional[str] = None
         # if flag is not specified, do not assume deliberate choice and prompt config inclusion interactively.
         # this implies that non-interactive "no" choice is only possible implicitly (e.g. with --platform or if prompt is suppressed by !stderr.is_interactive).
         # only alternative would have been to make it a parameter with argument, e.g. -d="yes" or -d="no".
@@ -161,8 +163,8 @@ class DownloadWorkflow:
         # allows to specify a container library / registry or a respective mirror to download images from
         self.parallel_downloads = parallel_downloads
 
-        self.wf_revisions = {}
-        self.wf_branches = {}
+        self.wf_revisions = []
+        self.wf_branches: Dict[str, Any] = {}
         self.wf_sha = {}
         self.wf_download_url = {}
         self.nf_config = {}
@@ -339,7 +341,7 @@ class DownloadWorkflow:
             stderr.print("Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).")
             self.pipeline = nf_core.utils.prompt_remote_pipeline_name(self.wfs)
 
-    def prompt_revision(self):
+    def prompt_revision(self) -> None:
         """
         Prompt for pipeline revision / branch
         Prompt user for revision tag if '--revision' was not set

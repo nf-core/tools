@@ -903,7 +903,9 @@ def prompt_remote_pipeline_name(wfs):
     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
 
 
-def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
+def prompt_pipeline_release_branch(
+    wf_releases: List[Dict[str, Any]], wf_branches: Dict[str, Any], multiple: bool = False
+) -> tuple[Any, list[str]]:
     """Prompt for pipeline release / branch
 
     Args:
@@ -912,18 +914,18 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
         multiple (bool): Allow selection of multiple releases & branches (for Seqera Platform)
 
     Returns:
-        choice (str): Selected release / branch name
+        choice (questionary.Choice or bool): Selected release / branch or False if no releases / branches available
     """
     # Prompt user for release tag, tag_set will contain all available.
-    choices = []
-    tag_set = []
+    choices: List[questionary.Choice] = []
+    tag_set: List[str] = []
 
     # Releases
     if len(wf_releases) > 0:
         for tag in map(lambda release: release.get("tag_name"), wf_releases):
             tag_display = [("fg:ansiblue", f"{tag}  "), ("class:choice-default", "[release]")]
             choices.append(questionary.Choice(title=tag_display, value=tag))
-            tag_set.append(tag)
+            tag_set.append(str(tag))
 
     # Branches
     for branch in wf_branches.keys():
@@ -932,7 +934,7 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
         tag_set.append(branch)
 
     if len(choices) == 0:
-        return False
+        return [], []
 
     if multiple:
         return (
