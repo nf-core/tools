@@ -263,8 +263,12 @@ class PipelineSync:
         logging.getLogger("nf_core.pipelines.create").setLevel(logging.ERROR)
         assert self.config_yml_path is not None
         assert self.config_yml is not None
+
         # Re-write the template yaml info from .nf-core.yml config
-        if getattr(self.config_yml, "template", None) is not None:
+        if self.config_yml.template is not None:
+            # Set force true in config to overwrite existing files
+
+            self.config_yml.template.force = True
             with open(self.config_yml_path, "w") as config_path:
                 yaml.safe_dump(self.config_yml.model_dump(), config_path)
 
@@ -275,6 +279,14 @@ class PipelineSync:
                 no_git=True,
                 force=True,
             ).init_pipeline()
+
+            # set force to false to avoid overwriting files in the future
+            if self.config_yml.template is not None:
+                # Set force true in config to overwrite existing files
+                self.config_yml.template.force = False
+                with open(self.config_yml_path, "w") as config_path:
+                    yaml.safe_dump(self.config_yml.model_dump(), config_path)
+
         except Exception as err:
             # Reset to where you were to prevent git getting messed up.
             self.repo.git.reset("--hard")
