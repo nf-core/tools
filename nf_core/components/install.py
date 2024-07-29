@@ -8,7 +8,6 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 import nf_core.components
-import nf_core.modules.modules_repo
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
@@ -69,12 +68,18 @@ class ComponentInstall(ComponentCommand):
 
         # Verify SHA
         if not self.modules_repo.verify_sha(self.prompt, self.sha):
+            err_msg = f"SHA '{self.sha}' is not a valid commit SHA for the repository '{self.modules_repo.remote_url}'"
+            log.error(err_msg)
             return False
 
         # verify self.modules_repo entries:
         if self.modules_repo is None:
+            err_msg = "Could not find a valid modules repository."
+            log.error(err_msg)
             return False
         if self.modules_repo.repo_path is None:
+            err_msg = "Could not find a valid modules repository path."
+            log.error(err_msg)
             return False
 
         # Check and verify component name
@@ -200,10 +205,10 @@ class ComponentInstall(ComponentCommand):
 
         # Check that the supplied name is an available module/subworkflow
         if component and component not in modules_repo.get_avail_components(self.component_type, commit=self.sha):
-            log.error(
-                f"{self.component_type[:-1].title()} '{component}' not found in list of available {self.component_type}."
-            )
             log.info(f"Use the command 'nf-core {self.component_type} list' to view available software")
+            raise SystemError(
+                f"{self.component_type[:-1].title()} '{component}' not found in available {self.component_type}"
+            )
 
         if not modules_repo.component_exists(component, self.component_type, commit=self.sha):
             warn_msg = f"{self.component_type[:-1].title()} '{component}' not found in remote '{modules_repo.remote_url}' ({modules_repo.branch})"

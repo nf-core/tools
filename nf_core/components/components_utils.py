@@ -63,7 +63,7 @@ def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[P
 
     # Check if it's a valid answer
     if repo_type not in ["pipeline", "modules"]:
-        raise UserWarning(f"Invalid repository type: '{repo_type}'")
+        raise UserWarning(f"Invalid repository type: '{repo_type}', must be 'pipeline' or 'modules'")
     org: str = ""
     # Check for org if modules repo
     if repo_type == "modules":
