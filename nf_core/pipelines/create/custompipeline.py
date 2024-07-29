@@ -42,8 +42,8 @@ For more information about nf-core configuration profiles, see the [nf-core/conf
 """
 
 markdown_code_linters = """
-Pipelines include code linters, these linters will check the formatting of your code.
-Linters will check JSON, YAML, Python and others.
+Pipelines include code linters to check the formatting of your code in order to harmonize code styles between developers.
+Linters will check all non-ignored files, e.g., JSON, YAML, Nextlow or Python files in your repository.
 The available code linters are:
 
 - pre-commit (https://pre-commit.com/): used to run all code-linters on every PR and on ever commit if you run `pre-commit install` to install it in your local repository.

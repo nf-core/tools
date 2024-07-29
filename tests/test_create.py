@@ -118,4 +118,3 @@ class NfcoreCreateTest(unittest.TestCase):
         assert not os.path.exists(Path(pipeline.outdir / ".github"))
         assert not os.path.exists(Path(pipeline.outdir / "conf" / "igenomes.config"))
         assert not os.path.exists(Path(pipeline.outdir / ".editorconfig"))
-        assert not os.path.exists(Path(pipeline.outdir / ".editorconfig"))
