@@ -905,7 +905,7 @@ def prompt_remote_pipeline_name(wfs):
 
 def prompt_pipeline_release_branch(
     wf_releases: List[Dict[str, Any]], wf_branches: Dict[str, Any], multiple: bool = False
-) -> tuple[Any, list[str]]:
+) -> Tuple[Any, List[str]]:
     """Prompt for pipeline release / branch
 
     Args:
