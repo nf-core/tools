@@ -104,7 +104,7 @@ class ComponentLint(ComponentCommand):
                             repo_url,
                             Path(self.directory, self.component_type, org, comp),
                             self.repo_type,
-                            Path(self.directory),
+                            self.directory,
                             self.component_type,
                         )
                     )
@@ -121,20 +121,20 @@ class ComponentLint(ComponentCommand):
                         None,
                         Path(local_component_dir, comp),
                         self.repo_type,
-                        Path(self.directory),
+                        self.directory,
                         self.component_type,
                         remote_component=False,
                     )
                     for comp in self.get_local_components()
                 ]
-            self.config = nf_core.utils.fetch_wf_config(Path(self.directory), cache_config=True)
+            self.config = nf_core.utils.fetch_wf_config(self.directory, cache_config=True)
         elif self.repo_type == "modules":
             component_dir = Path(
                 self.directory,
                 self.default_modules_path if self.component_type == "modules" else self.default_subworkflows_path,
             )
             self.all_remote_components = [
-                NFCoreComponent(m, None, component_dir / m, self.repo_type, Path(self.directory), self.component_type)
+                NFCoreComponent(m, None, component_dir / m, self.repo_type, self.directory, self.component_type)
                 for m in self.get_components_clone_modules()
             ]
             self.all_local_components = []
@@ -142,9 +142,7 @@ class ComponentLint(ComponentCommand):
                 raise LookupError(f"No {self.component_type} in '{self.component_type}' directory")
 
             # This could be better, perhaps glob for all nextflow.config files in?
-            self.config = nf_core.utils.fetch_wf_config(
-                Path(self.directory).joinpath("tests", "config"), cache_config=True
-            )
+            self.config = nf_core.utils.fetch_wf_config(self.directory / "tests" / "config", cache_config=True)
 
             if registry is None:
                 self.registry = self.config.get("docker.registry", "quay.io")

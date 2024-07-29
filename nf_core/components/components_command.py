@@ -49,9 +49,7 @@ class ComponentCommand:
         """
         try:
             if self.directory:
-                self.directory, self.repo_type, self.org = get_repo_info(
-                    Path(self.directory), use_prompt=not self.no_prompts
-                )
+                self.directory, self.repo_type, self.org = get_repo_info(self.directory, use_prompt=not self.no_prompts)
             else:
                 self.repo_type = None
                 self.org = ""
@@ -94,13 +92,13 @@ class ComponentCommand:
         """Check that we were given a pipeline or clone of nf-core/modules"""
         if self.repo_type == "modules":
             return True
-        if not Path(self.directory).exists():
+        if not self.directory.exists():
             log.error(f"Could not find directory: {self.directory}")
             return False
         main_nf = Path(self.directory, "main.nf")
         nf_config = Path(self.directory, "nextflow.config")
         if not main_nf.exists() and not nf_config.exists():
-            if Path(self.directory).resolve().parts[-1].startswith("nf-core"):
+            if self.directory.resolve().parts[-1].startswith("nf-core"):
                 raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.directory}'")
             log.warning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.directory}'")
         return True
@@ -125,7 +123,7 @@ class ComponentCommand:
         try:
             shutil.rmtree(component_dir)
             # remove all empty directories
-            for dir_path, dir_names, filenames in os.walk(Path(self.directory), topdown=False):
+            for dir_path, dir_names, filenames in os.walk(self.directory, topdown=False):
                 if not dir_names and not filenames:
                     try:
                         Path(dir_path).rmdir()
@@ -258,7 +256,7 @@ class ComponentCommand:
                 ):
                     modules_json.modules_json["repos"][self.modules_repo.remote_url]["modules"][
                         self.modules_repo.repo_path
-                    ][module_name]["patch"] = str(patch_path.relative_to(Path(self.directory).resolve()))
+                    ][module_name]["patch"] = str(patch_path.relative_to(self.directory.resolve()))
                 modules_json.dump()
 
     def check_if_in_include_stmts(self, component_path: str) -> Dict[str, List[Dict[str, Union[int, str]]]]:
