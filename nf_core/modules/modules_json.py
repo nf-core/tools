@@ -355,7 +355,7 @@ class ModulesJson:
 
         # Clean up the modules/subworkflows we were unable to find the sha for
         for component in sb_local:
-            log.debug(f"Moving {component_type[:-1]} '{Path(install_dir, str(component))}' to 'local' directory")
+            log.debug(f"Moving {component_type[:-1]} '{Path(install_dir, component)}' to 'local' directory")
             self.move_component_to_local(component_type, component, str(install_dir))
 
         for component in dead_components:
@@ -398,13 +398,13 @@ class ModulesJson:
                 return commit_sha
         return None
 
-    def move_component_to_local(self, component_type: str, component: Union[str, Path], repo_name: str):
+    def move_component_to_local(self, component_type: str, component: str, repo_name: str):
         """
         Move a module/subworkflow to the 'local' directory
 
         Args:
             component_type (str): The type of component, either 'modules' or 'subworkflows'
-            component (Union[str,Path]): The name of the module/subworkflow
+            component (str): The name of the module/subworkflow
             repo_name (str): The name of the repository the module resides in
         """
         if component_type == "modules":
@@ -418,7 +418,7 @@ class ModulesJson:
         if not local_dir.exists():
             local_dir.mkdir()
 
-        to_name = str(component)
+        to_name = component
         # Check if there is already a subdirectory with the name
         while (local_dir / to_name).exists():
             # Add a time suffix to the path to make it unique
@@ -1086,9 +1086,7 @@ class ModulesJson:
 
         return installed_by_entries
 
-    def get_component_branch(
-        self, component_type: str, component: Union[str, Path], repo_url: str, install_dir: str
-    ) -> str:
+    def get_component_branch(self, component_type: str, component: str, repo_url: str, install_dir: str) -> str:
         """
         Gets the branch from which the module/subworkflow was installed
 
@@ -1101,7 +1099,7 @@ class ModulesJson:
             self.load()
             assert self.modules_json is not None  # mypy
         try:
-            branch = self.modules_json["repos"][repo_url][component_type][install_dir][str(component)]["branch"]
+            branch = self.modules_json["repos"][repo_url][component_type][install_dir][component]["branch"]
         except (KeyError, TypeError):
             branch = None
         if branch is None:
