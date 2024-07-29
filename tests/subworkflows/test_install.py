@@ -17,26 +17,6 @@ from ..utils import (
 
 
 class TestSubworkflowsInstall(TestSubworkflows):
-    def test_subworkflow_install_nopipeline(self):
-        """Test installing a subworkflow - no pipeline given"""
-        assert self.subworkflow_install.directory is not None
-        self.subworkflow_install.directory = Path("non_existent_dir")
-        assert self.subworkflow_install.install("foo") is False
-
-    @with_temporary_folder
-    def test_subworkflows_install_emptypipeline(self, tmpdir):
-        """Test installing a subworkflow - empty dir given"""
-
-        Path(tmpdir, "nf-core-pipe").mkdir(exist_ok=True)
-        self.subworkflow_install.directory = Path(tmpdir, "nf-core-pipe")
-        with pytest.raises(UserWarning) as excinfo:
-            self.subworkflow_install.install("foo")
-        assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
-
-    def test_subworkflows_install_nosubworkflow(self):
-        """Test installing a subworkflow - unrecognised subworkflow given"""
-        assert self.subworkflow_install.install("foo") is False
-
     def test_subworkflows_install_bam_sort_stats_samtools(self):
         """Test installing a subworkflow - bam_sort_stats_samtools"""
         assert self.subworkflow_install.install("bam_sort_stats_samtools") is not False
@@ -57,6 +37,28 @@ class TestSubworkflowsInstall(TestSubworkflows):
         assert samtools_idxstats_path.exists()
         assert samtools_flagstat_path.exists()
 
+    def test_subworkflow_install_nopipeline(self):
+        """Test installing a subworkflow - no pipeline given"""
+        assert self.subworkflow_install.directory is not None
+        self.subworkflow_install.directory = Path("non_existent_dir")
+        assert self.subworkflow_install.install("bam_stats_samtools") is False
+
+    @with_temporary_folder
+    def test_subworkflows_install_emptypipeline(self, tmpdir):
+        """Test installing a subworkflow - empty dir given"""
+
+        Path(tmpdir, "nf-core-pipe").mkdir(exist_ok=True)
+        self.subworkflow_install.directory = Path(tmpdir, "nf-core-pipe")
+        with pytest.raises(UserWarning) as excinfo:
+            self.subworkflow_install.install("bam_stats_samtools")
+        assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
+
+    def test_subworkflows_install_nosubworkflow(self):
+        """Test installing a subworkflow - unrecognised subworkflow given"""
+        with pytest.raises(SystemError) as excinfo:
+            self.subworkflow_install.install("foo")
+        assert "Subworkflow 'foo' not found in available subworkflows" in str(excinfo.value)
+
     def test_subworkflows_install_bam_sort_stats_samtools_twice(self):
         """Test installing a subworkflow - bam_sort_stats_samtools already there"""
         self.subworkflow_install.install("bam_sort_stats_samtools")
@@ -76,7 +78,9 @@ class TestSubworkflowsInstall(TestSubworkflows):
         """Test installing a subworkflow from a different branch"""
         install_obj = SubworkflowInstall(self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH)
         # The bam_stats_samtools subworkflow does not exists in the branch-test branch
-        assert install_obj.install("bam_stats_samtools") is False
+        with pytest.raises(Exception) as excinfo:
+            install_obj.install("bam_stats_samtools")
+            assert "Subworkflow 'bam_stats_samtools' not found in available subworkflows" in str(excinfo.value)
 
     def test_subworkflows_install_tracking(self):
         """Test installing a subworkflow and finding the correct entries in installed_by section of modules.json"""
