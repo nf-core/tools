@@ -19,7 +19,7 @@ class TestSubworkflowsList(TestSubworkflows):
     def test_subworkflows_list_remote_gitlab(self):
         """Test listing the subworkflows in the remote gitlab repo"""
         subworkflows_list = nf_core.subworkflows.SubworkflowList(
-            None, remote=True, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
+            remote=True, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
         )
         listed_subworkflows = subworkflows_list.list_components()
         console = Console(record=True)

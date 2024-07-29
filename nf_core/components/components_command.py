@@ -37,6 +37,8 @@ class ComponentCommand:
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress: bool = hide_progress
         self.no_prompts: bool = no_prompts
+        self.repo_type: Optional[str] = None
+        self.org: str = ""
         self._configure_repo_and_paths()
 
     def _configure_repo_and_paths(self, nf_dir_req: bool = True) -> None:
@@ -50,15 +52,11 @@ class ComponentCommand:
         try:
             if self.directory:
                 self.directory, self.repo_type, self.org = get_repo_info(self.directory, use_prompt=not self.no_prompts)
-            else:
-                self.repo_type = None
-                self.org = ""
-
         except UserWarning:
             if nf_dir_req:
                 raise
-            self.repo_type = None
-            self.org = ""
+        except FileNotFoundError:
+            raise
 
         self.default_modules_path = Path("modules", self.org)
         self.default_tests_path = Path("tests", "modules", self.org)

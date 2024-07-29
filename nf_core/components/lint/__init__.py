@@ -86,6 +86,11 @@ class ComponentLint(ComponentCommand):
         else:
             self.lint_tests = self.get_all_subworkflow_lint_tests(self.repo_type == "pipeline")
 
+        if self.repo_type is None:
+            raise LookupError(
+                "Could not determine repository type. Please check the repository type in the nf-core.yml"
+            )
+
         if self.repo_type == "pipeline":
             modules_json = ModulesJson(self.directory)
             modules_json.check_up_to_date()
@@ -128,6 +133,8 @@ class ComponentLint(ComponentCommand):
                     for comp in self.get_local_components()
                 ]
             self.config = nf_core.utils.fetch_wf_config(self.directory, cache_config=True)
+            self._set_registry(registry)
+
         elif self.repo_type == "modules":
             component_dir = Path(
                 self.directory,
@@ -143,15 +150,17 @@ class ComponentLint(ComponentCommand):
 
             # This could be better, perhaps glob for all nextflow.config files in?
             self.config = nf_core.utils.fetch_wf_config(self.directory / "tests" / "config", cache_config=True)
-
-            if registry is None:
-                self.registry = self.config.get("docker.registry", "quay.io")
-            else:
-                self.registry = registry
-            log.debug(f"Registry set to {self.registry}")
+            self._set_registry(registry)
 
     def __repr__(self) -> str:
         return f"ComponentLint({self.component_type}, {self.directory})"
+
+    def _set_registry(self, registry) -> None:
+        if registry is None:
+            self.registry = self.config.get("docker.registry", "quay.io")
+        else:
+            self.registry = registry
+        log.debug(f"Registry set to {self.registry}")
 
     @staticmethod
     def get_all_module_lint_tests(is_pipeline):

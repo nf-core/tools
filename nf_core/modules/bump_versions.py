@@ -245,12 +245,15 @@ class ModuleVersionBumper(ComponentCommand):
                 fh.write(content)
 
             # change version in environment.yml
-            with open(str(module.environment_yml)) as fh:
+            if not module.environment_yml:
+                log.error(f"Could not read `environment.yml` of {module.component_name} module.")
+                return False
+            with open(module.environment_yml) as fh:
                 env_yml = yaml.safe_load(fh)
             env_yml["dependencies"][0] = re.sub(
                 bioconda_packages[0], f"bioconda::{bioconda_tool_name}={last_ver}", env_yml["dependencies"][0]
             )
-            with open(str(module.environment_yml), "w") as fh:
+            with open(module.environment_yml, "w") as fh:
                 yaml.dump(env_yml, fh, default_flow_style=False, Dumper=custom_yaml_dumper())
 
             self.updated.append(
@@ -271,11 +274,11 @@ class ModuleVersionBumper(ComponentCommand):
         """
         # Check whether file exists and load it
         bioconda_packages = []
-        try:
-            with open(str(module.environment_yml)) as fh:
+        if module.environment_yml is not None and module.environment_yml.exists():
+            with open(module.environment_yml) as fh:
                 env_yml = yaml.safe_load(fh)
             bioconda_packages = env_yml.get("dependencies", [])
-        except FileNotFoundError:
+        else:
             log.error(f"Could not read `environment.yml` of {module.component_name} module.")
 
         return bioconda_packages

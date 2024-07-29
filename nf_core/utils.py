@@ -1113,6 +1113,8 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
         else:
             log.debug(f"Could not find a config file in the directory '{directory}'")
             return Path(directory, CONFIG_PATHS[0]), None
+    if not Path(config_fn).is_file():
+        raise FileNotFoundError(f"No `.nf-core.yml` file found in the directory '{directory}'")
     with open(str(config_fn)) as fh:
         tools_config = yaml.safe_load(fh)
 
