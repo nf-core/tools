@@ -42,7 +42,7 @@ class ModulesJson:
     An object for handling a 'modules.json' file in a pipeline
     """
 
-    def __init__(self, pipeline_dir: Union[str, Path]):
+    def __init__(self, pipeline_dir: Union[str, Path]) -> None:
         """
         Initialise the object.
 
@@ -130,6 +130,10 @@ class ModulesJson:
         names = []
         for repo_url in repos:
             modules_repo = ModulesRepo(repo_url)
+            if modules_repo is None:
+                raise UserWarning(f"Could not find module repository for '{repo_url}' in '{directory}'")
+            if modules_repo.repo_path is None:
+                raise UserWarning(f"Could not find module repository path for '{repo_url}' in '{directory}'")
             components = (
                 repo_url,
                 [
@@ -195,6 +199,8 @@ class ModulesJson:
 
                 # Verify that there is a directory corresponding the remote
                 nrepo_name = ModulesRepo(nrepo_remote).repo_path
+                if nrepo_name is None:
+                    raise UserWarning(f"Could not find the repository name for '{nrepo_remote}'")
                 if not (directory / nrepo_name).exists():
                     log.info(
                         "The provided remote does not seem to correspond to a local directory. "
@@ -416,7 +422,7 @@ class ModulesJson:
         current_path = directory / repo_name / component
         local_dir = directory / "local"
         if not local_dir.exists():
-            local_dir.mkdir()
+            local_dir.mkdir(parents=True)
 
         to_name = component
         # Check if there is already a subdirectory with the name

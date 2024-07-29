@@ -40,7 +40,7 @@ class ModulesRepo(SyncedRepo):
         branch: Optional[str] = None,
         no_pull: bool = False,
         hide_progress: bool = False,
-    ):
+    ) -> None:
         """
         Initializes the object and clones the git repository if it is not already present
         """
