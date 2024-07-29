@@ -26,7 +26,7 @@ def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[P
     """
 
     # Verify that the pipeline dir exists
-    if directory is None or not Path(directory).is_dir():
+    if not Path(directory).is_dir():
         raise UserWarning(f"Could not find directory: {directory}")
 
     # Try to find the root directory

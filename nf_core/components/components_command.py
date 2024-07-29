@@ -94,7 +94,7 @@ class ComponentCommand:
         """Check that we were given a pipeline or clone of nf-core/modules"""
         if self.repo_type == "modules":
             return True
-        if self.directory is None or not Path(self.directory).exists():
+        if not Path(self.directory).exists():
             log.error(f"Could not find directory: {self.directory}")
             return False
         main_nf = Path(self.directory, "main.nf")
