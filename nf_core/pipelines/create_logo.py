@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -59,11 +59,11 @@ def create_logo(
             return logo_path
         # cache file
         cache_path = Path(NFCORE_CACHE_DIR, "logo", cache_name)
-        img = None
+        img: Optional[Image.Image] = None
         if cache_path.is_file():
             log.debug(f"Logo already exists in cache at: {cache_path}. Reusing this file.")
             img = Image.open(str(cache_path))
-        if not img:
+        if img is None:
             log.debug(f"Creating logo for {text}")
 
             # make sure the figure fits the text

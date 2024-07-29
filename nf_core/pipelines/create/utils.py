@@ -124,10 +124,16 @@ class TextInput(Static):
     @on(Input.Submitted)
     def show_invalid_reasons(self, event: Union[Input.Changed, Input.Submitted]) -> None:
         """Validate the text input and show errors if invalid."""
-        if not event.validation_result.is_valid:
-            self.query_one(".validation_msg").update("\n".join(event.validation_result.failure_descriptions))
+        val_msg = self.query_one(".validation_msg")
+        if not isinstance(val_msg, Static):
+            raise ValueError("Validation message not found.")
+
+        if event.validation_result is not None and not event.validation_result.is_valid:
+            # check that val_msg is instance of Static
+            if isinstance(val_msg, Static):
+                val_msg.update("\n".join(event.validation_result.failure_descriptions))
         else:
-            self.query_one(".validation_msg").update("")
+            val_msg.update("")
 
 
 class ValidateConfig(Validator):
