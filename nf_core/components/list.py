@@ -25,7 +25,9 @@ class ComponentList(ComponentCommand):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.remote = remote
 
-    def list_components(self, keywords: Optional[List[str]] = None, print_json=False) -> Union[rich.table.Table, str]:
+    def list_components(
+        self, keywords: Optional[List[str]] = None, print_json: bool = False
+    ) -> Union[rich.table.Table, str]:
         keywords = keywords or []
         """
         Get available modules/subworkflows names from GitHub tree for repo

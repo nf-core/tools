@@ -17,7 +17,7 @@ def modules_list_remote(ctx, keywords, json):
 
     try:
         module_list = ModuleList(
-            None,
+            ".",
             True,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
@@ -29,7 +29,7 @@ def modules_list_remote(ctx, keywords, json):
         sys.exit(1)
 
 
-def modules_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
+def modules_list_local(ctx, keywords, json, directory):  # pylint: disable=redefined-builtin
     """
     List modules installed locally in a pipeline
     """
@@ -37,7 +37,7 @@ def modules_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-b
 
     try:
         module_list = ModuleList(
-            dir,
+            directory,
             False,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
@@ -49,7 +49,7 @@ def modules_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-b
         sys.exit(1)
 
 
-def modules_install(ctx, tool, dir, prompt, force, sha):
+def modules_install(ctx, tool, directory, prompt, force, sha):
     """
     Install DSL2 modules within a pipeline.
 
@@ -59,7 +59,7 @@ def modules_install(ctx, tool, dir, prompt, force, sha):
 
     try:
         module_install = ModuleInstall(
-            dir,
+            directory,
             force,
             prompt,
             sha,
@@ -118,7 +118,7 @@ def modules_update(
         sys.exit(1)
 
 
-def modules_patch(ctx, tool, dir, remove):
+def modules_patch(ctx, tool, directory, remove):
     """
     Create a patch file for minor changes in a module
 
@@ -129,7 +129,7 @@ def modules_patch(ctx, tool, dir, remove):
 
     try:
         module_patch = ModulePatch(
-            dir,
+            directory,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
@@ -143,7 +143,7 @@ def modules_patch(ctx, tool, dir, remove):
         sys.exit(1)
 
 
-def modules_remove(ctx, dir, tool):
+def modules_remove(ctx, directory, tool):
     """
     Remove a module from a pipeline.
     """
@@ -151,7 +151,7 @@ def modules_remove(ctx, dir, tool):
 
     try:
         module_remove = ModuleRemove(
-            dir,
+            directory,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
@@ -165,7 +165,7 @@ def modules_remove(ctx, dir, tool):
 def modules_create(
     ctx,
     tool,
-    dir,
+    directory,
     author,
     label,
     meta,
@@ -199,7 +199,7 @@ def modules_create(
     # Run function
     try:
         module_create = ModuleCreate(
-            dir,
+            directory,
             tool,
             author,
             label,
@@ -219,7 +219,7 @@ def modules_create(
         sys.exit(1)
 
 
-def modules_test(ctx, tool, dir, no_prompts, update, once, profile):
+def modules_test(ctx, tool, directory, no_prompts, update, once, profile):
     """
     Run nf-test for a module.
 
@@ -231,7 +231,7 @@ def modules_test(ctx, tool, dir, no_prompts, update, once, profile):
         module_tester = ComponentsTest(
             component_type="modules",
             component_name=tool,
-            directory=dir,
+            directory=directory,
             no_prompts=no_prompts,
             update=update,
             once=once,
@@ -246,7 +246,7 @@ def modules_test(ctx, tool, dir, no_prompts, update, once, profile):
         sys.exit(1)
 
 
-def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version):
+def modules_lint(ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version):
     """
     Lint one or more modules in a directory.
 
@@ -261,7 +261,7 @@ def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed,
 
     try:
         module_lint = ModuleLint(
-            dir,
+            directory,
             fail_warned=fail_warned,
             registry=ctx.params["registry"],
             remote_url=ctx.obj["modules_repo_url"],
@@ -290,7 +290,7 @@ def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed,
         sys.exit(1)
 
 
-def modules_info(ctx, tool, dir):
+def modules_info(ctx, tool, directory):
     """
     Show developer usage information about a given module.
 
@@ -306,7 +306,7 @@ def modules_info(ctx, tool, dir):
 
     try:
         module_info = ModuleInfo(
-            dir,
+            directory,
             tool,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
@@ -318,7 +318,7 @@ def modules_info(ctx, tool, dir):
         sys.exit(1)
 
 
-def modules_bump_versions(ctx, tool, dir, all, show_all):
+def modules_bump_versions(ctx, tool, directory, all, show_all):
     """
     Bump versions for one or more modules in a clone of
     the nf-core/modules repo.
@@ -328,7 +328,7 @@ def modules_bump_versions(ctx, tool, dir, all, show_all):
 
     try:
         version_bumper = ModuleVersionBumper(
-            dir,
+            directory,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],

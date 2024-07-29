@@ -22,9 +22,7 @@ class ComponentCommand:
     def __init__(
         self,
         component_type: str,
-        directory: Union[
-            str, Path
-        ],  # TODO: This is actually None sometimes (e.g. in test_modules_list_remote), need to rewrite the logic here to handle these cases elegantly, for example setting a default path
+        directory: Union[str, Path] = ".",
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,
         no_pull: bool = False,
@@ -34,11 +32,11 @@ class ComponentCommand:
         """
         Initialise the ComponentClass object
         """
-        self.component_type = component_type
-        self.directory = directory
+        self.component_type: str = component_type
+        self.directory: Path = Path(directory)
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
-        self.hide_progress = hide_progress
-        self.no_prompts = no_prompts
+        self.hide_progress: bool = hide_progress
+        self.no_prompts: bool = no_prompts
         self._configure_repo_and_paths()
 
     def _configure_repo_and_paths(self, nf_dir_req: bool = True) -> None:

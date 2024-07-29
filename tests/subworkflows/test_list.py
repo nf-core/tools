@@ -9,7 +9,7 @@ from ..utils import GITLAB_SUBWORKFLOWS_BRANCH, GITLAB_URL
 class TestSubworkflowsList(TestSubworkflows):
     def test_subworkflows_list_remote(self):
         """Test listing available subworkflows"""
-        subworkflows_list = nf_core.subworkflows.SubworkflowList(None, remote=True)
+        subworkflows_list = nf_core.subworkflows.SubworkflowList(remote=True)
         listed_subworkflows = subworkflows_list.list_components()
         console = Console(record=True)
         console.print(listed_subworkflows)
