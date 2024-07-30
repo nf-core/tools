@@ -25,7 +25,7 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
     if module.environment_yml is None:
         raise LintExceptionError("Module does not have an `environment.yml` file")
     try:
-        with open(str(module.environment_yml)) as fh:
+        with open(module.environment_yml) as fh:
             env_yml = yaml.safe_load(fh)
 
         module.passed.append(("environment_yml_exists", "Module's `environment.yml` exists", module.environment_yml))

@@ -62,7 +62,7 @@ def create_logo(
         img: Optional[Image.Image] = None
         if cache_path.is_file():
             log.debug(f"Logo already exists in cache at: {cache_path}. Reusing this file.")
-            img = Image.open(str(cache_path))
+            img = Image.open(cache_path)
         if img is None:
             log.debug(f"Creating logo for {text}")
 
@@ -81,7 +81,7 @@ def create_logo(
                 template_fn = "nf-core-repo-logo-base-darkbg.png"
 
             template_path = assets / template_fn
-            img = Image.open(str(template_path))
+            img = Image.open(template_path)
             # get the height of the template image
             height = img.size[1]
 

@@ -290,7 +290,7 @@ class ComponentCreate(ComponentCommand):
             # Write output to the target file
             log.debug(f"Writing output to: '{dest_fn}'")
             dest_fn.parent.mkdir(exist_ok=True, parents=True)
-            with open(str(dest_fn), "w") as fh:
+            with open(dest_fn, "w") as fh:
                 log.debug(f"Writing output to: '{dest_fn}'")
                 fh.write(rendered_output)
 

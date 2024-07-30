@@ -43,7 +43,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
     module.get_outputs_from_main_nf()
     # Check if we have a patch file, get original file in that case
     meta_yaml = None
-    if module.is_patched:
+    if module.is_patched and module_lint_object.modules_repo.repo_path is not None:
         lines = ModulesDiffer.try_apply_patch(
             module.component_name,
             module_lint_object.modules_repo.repo_path,
@@ -57,7 +57,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
         raise LintExceptionError("Module does not have a `meta.yml` file")
     if meta_yaml is None:
         try:
-            with open(str(module.meta_yml)) as fh:
+            with open(module.meta_yml) as fh:
                 meta_yaml = yaml.safe_load(fh)
             module.passed.append(("meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
         except FileNotFoundError:

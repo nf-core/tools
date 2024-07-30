@@ -307,7 +307,7 @@ class ModulesDiffer:
             dict[str, str]: A dictionary indexed by the filenames with the
                             file patches as values
         """
-        with open(str(patch_fn)) as fh:
+        with open(patch_fn) as fh:
             lines = fh.readlines()
 
         patches = {}

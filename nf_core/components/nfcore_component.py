@@ -163,7 +163,7 @@ class NFCoreComponent:
     def get_inputs_from_main_nf(self) -> None:
         """Collect all inputs from the main.nf file."""
         inputs: List[str] = []
-        with open(str(self.main_nf)) as f:
+        with open(self.main_nf) as f:
             data = f.read()
         # get input values from main.nf after "input:", which can be formatted as tuple val(foo) path(bar) or val foo or val bar or path bar or path foo
         # regex matches:
@@ -191,7 +191,7 @@ class NFCoreComponent:
 
     def get_outputs_from_main_nf(self):
         outputs = []
-        with open(str(self.main_nf)) as f:
+        with open(self.main_nf) as f:
             data = f.read()
         # get output values from main.nf after "output:". the names are always after "emit:"
         if "output:" not in data:
