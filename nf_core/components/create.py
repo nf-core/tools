@@ -236,6 +236,7 @@ class ComponentCreate(ComponentCommand):
             "process_medium",
             "process_high",
             "process_long",
+            "process_high_memory",
         ]
         if self.process_label is None:
             log.info(

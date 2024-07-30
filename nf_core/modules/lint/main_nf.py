@@ -423,7 +423,14 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
 
 
 def check_process_labels(self, lines):
-    correct_process_labels = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
+    correct_process_labels = [
+        "process_single",
+        "process_low",
+        "process_medium",
+        "process_high",
+        "process_long",
+        "process_high_memory",
+    ]
     all_labels = [line.strip() for line in lines if line.lstrip().startswith("label ")]
     bad_labels = []
     good_labels = []
