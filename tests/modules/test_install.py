@@ -55,7 +55,9 @@ class TestModulesCreate(TestModules):
         """Test installing a module from a different branch"""
         install_obj = ModuleInstall(self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH)
         # The FastQC module does not exists in the branch-test branch
-        assert install_obj.install("fastqc") is False
+        with pytest.raises(Exception) as excinfo:
+            install_obj.install("fastqc")
+            assert "Module 'fastqc' not found in available module" in str(excinfo.value)
 
     def test_modules_install_different_branch_succeed(self):
         """Test installing a module from a different branch"""

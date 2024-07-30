@@ -4,7 +4,10 @@ from pathlib import Path
 from typing import List, Optional, Union
 
 import questionary
+from rich import print
 from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
 from rich.syntax import Syntax
 
 import nf_core.components
@@ -160,7 +163,7 @@ class ComponentInstall(ComponentCommand):
             )
             if self.component_type == "subworkflows":
                 subworkflow_config = Path(install_folder, component, "nextflow.config").relative_to(self.directory)
-                if os.path.isfile(subworkflow_config):
+                if subworkflow_config.is_file():
                     log.info("Add the following config statement to use this subworkflow:")
                     Console().print(
                         Syntax(f"includeConfig '{subworkflow_config}'", "groovy", theme="ansi_dark", padding=1)
@@ -205,10 +208,20 @@ class ComponentInstall(ComponentCommand):
 
         # Check that the supplied name is an available module/subworkflow
         if component and component not in modules_repo.get_avail_components(self.component_type, commit=self.sha):
-            log.info(f"Use the command 'nf-core {self.component_type} list' to view available software")
-            raise SystemError(
-                f"{self.component_type[:-1].title()} '{component}' not found in available {self.component_type}"
+            log.error(f"{self.component_type[:-1].title()} '{component}' not found in available {self.component_type}")
+            print(
+                Panel(
+                    Markdown(
+                        f"Use the command `nf-core {self.component_type} list` to view available {self.component_type}."
+                    ),
+                    title="info",
+                    title_align="left",
+                    style="blue",
+                    padding=1,
+                )
             )
+
+            raise ValueError
 
         if not modules_repo.component_exists(component, self.component_type, commit=self.sha):
             warn_msg = f"{self.component_type[:-1].title()} '{component}' not found in remote '{modules_repo.remote_url}' ({modules_repo.branch})"

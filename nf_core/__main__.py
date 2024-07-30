@@ -126,7 +126,7 @@ rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
 # because they are actually preliminary, but intended program terminations.
 # (Custom exceptions are cleaner than `sys.exit(1)`, which we used before)
 def selective_traceback_hook(exctype, value, traceback):
-    if exctype in {DownloadError, UserWarning}:  # extend set as needed
+    if exctype in {DownloadError, UserWarning, ValueError}:  # extend set as needed
         log.error(value)
     else:
         # print the colored traceback for all other exceptions with rich as usual
