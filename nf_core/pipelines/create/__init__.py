@@ -2,6 +2,7 @@
 
 import logging
 
+import click
 from textual.app import App
 from textual.widgets import Button
 
@@ -23,6 +24,7 @@ log_handler = utils.CustomLogHandler(
     show_time=False,
     show_path=False,
     markup=True,
+    tracebacks_suppress=[click],
 )
 logging.basicConfig(
     level="INFO",
