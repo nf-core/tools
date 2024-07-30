@@ -448,7 +448,10 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
             raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
             if response.status_code != 200 and response.status_code != 301:
-                log.debug(f"Response content:\n{response.content.decode()}")
+                response_content = response.content
+                if isinstance(response_content, bytes):
+                    response_content = response_content.decode()
+                log.debug(f"Response content:\n{response_content}")
                 raise AssertionError(
                     f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )
@@ -460,7 +463,10 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
                 if "status" not in web_response:
                     raise AssertionError()
             except (json.decoder.JSONDecodeError, AssertionError, TypeError):
-                log.debug(f"Response content:\n{response.content.decode()}")
+                response_content = response.content
+                if isinstance(response_content, bytes):
+                    response_content = response_content.decode()
+                log.debug(f"Response content:\n{response_content}")
                 raise AssertionError(
                     f"nf-core website API results response not recognised: {api_url}\n "
                     "See verbose log for full response"

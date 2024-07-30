@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 class SubworkflowList(ComponentList):
     def __init__(
         self,
-        pipeline_dir: Union[str, Path],
+        pipeline_dir: Union[str, Path] = ".",
         remote: bool = True,
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,
