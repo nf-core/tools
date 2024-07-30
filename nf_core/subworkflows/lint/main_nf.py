@@ -31,8 +31,9 @@ def main_nf(_, subworkflow: NFCoreComponent) -> Tuple[List[str], List[str]]:
     outputs: List[str] = []
 
     # Read the lines directly from the subworkflow
-    lines = None
-    if lines is None:
+    lines: List[str] = []
+
+    if len(lines) == 0:
         try:
             # Check whether file exists and load it
             with open(subworkflow.main_nf) as fh:
