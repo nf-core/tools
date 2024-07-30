@@ -22,8 +22,17 @@ class ComponentList(ComponentCommand):
         branch: Optional[str] = None,
         no_pull: bool = False,
     ) -> None:
-        super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.remote = remote
+        super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
+
+    def _configure_repo_and_paths(self, nf_dir_req=True) -> None:
+        """
+        Override the default with nf_dir_req set to False to allow
+        info to be run from anywhere and still return remote info
+        """
+        if self.remote:
+            nf_dir_req = False
+        return super()._configure_repo_and_paths(nf_dir_req)
 
     def list_components(
         self, keywords: Optional[List[str]] = None, print_json: bool = False

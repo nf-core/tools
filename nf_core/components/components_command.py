@@ -51,6 +51,8 @@ class ComponentCommand:
         """
         try:
             if self.directory:
+                if self.directory == Path(".") and not nf_dir_req:
+                    self.no_prompts = True
                 self.directory, self.repo_type, self.org = get_repo_info(self.directory, use_prompt=not self.no_prompts)
         except UserWarning:
             if nf_dir_req:
