@@ -55,9 +55,10 @@ class TestSubworkflowsInstall(TestSubworkflows):
 
     def test_subworkflows_install_nosubworkflow(self):
         """Test installing a subworkflow - unrecognised subworkflow given"""
-        with pytest.raises(SystemError) as excinfo:
+        with pytest.raises(ValueError) as excinfo:
             self.subworkflow_install.install("foo")
-        assert "Subworkflow 'foo' not found in available subworkflows" in str(excinfo.value)
+        assert excinfo.typename == "ValueError"
+        assert "Subworkflow 'foo' not found in available subworkflows" in self.caplog.text
 
     def test_subworkflows_install_bam_sort_stats_samtools_twice(self):
         """Test installing a subworkflow - bam_sort_stats_samtools already there"""

@@ -181,14 +181,18 @@ def update_config(rgc):
         log.info("Could not determine path to 'refgenie_genomes.config' file.")
         return False
 
+    if refgenie_genomes_config_file is None:
+        log.info("Could not determine path to 'refgenie_genomes.config' file.")
+        return False
+
     # Save the updated genome config
-    try:
-        with open(str(refgenie_genomes_config_file), "w+") as fh:
-            fh.write(refgenie_genomes)
-        log.info(f"Updated nf-core genomes config: {refgenie_genomes_config_file}")
-    except FileNotFoundError:
+    if not Path(refgenie_genomes_config_file).is_file():
         log.warning(f"Could not write to {refgenie_genomes_config_file}")
         return False
+    else:
+        with open(refgenie_genomes_config_file, "w+") as fh:
+            fh.write(refgenie_genomes)
+        log.info(f"Updated nf-core genomes config: {refgenie_genomes_config_file}")
 
     # Add include statement to NXF_HOME/config
     if nxf_home:

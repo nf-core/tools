@@ -10,10 +10,10 @@ from ..test_modules import TestModules
 from ..utils import GITLAB_DEFAULT_BRANCH, GITLAB_URL
 
 
-class TestModulesCreate(TestModules):
+class TestModulesList(TestModules):
     def test_modules_list_remote(self):
         """Test listing available modules"""
-        mods_list = nf_core.modules.list.ModuleList(remote=True)
+        mods_list = nf_core.modules.list.ModuleList()
         listed_mods = mods_list.list_components()
         console = Console(record=True)
         console.print(listed_mods)
@@ -22,7 +22,7 @@ class TestModulesCreate(TestModules):
 
     def test_modules_list_remote_gitlab(self):
         """Test listing the modules in the remote gitlab repo"""
-        mods_list = nf_core.modules.list.ModuleList(remote=True, remote_url=GITLAB_URL, branch=GITLAB_DEFAULT_BRANCH)
+        mods_list = nf_core.modules.list.ModuleList(remote_url=GITLAB_URL, branch=GITLAB_DEFAULT_BRANCH)
         listed_mods = mods_list.list_components()
         console = Console(record=True)
         console.print(listed_mods)

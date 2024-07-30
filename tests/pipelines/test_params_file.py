@@ -20,15 +20,15 @@ class TestParamsFileBuilder:
 
         # Create a test pipeline in temp directory
         cls.tmp_dir = tempfile.mkdtemp()
-        cls.template_dir = os.path.join(cls.tmp_dir, "wf")
+        cls.template_dir = Path(cls.tmp_dir, "wf")
         create_obj = nf_core.pipelines.create.create.PipelineCreate(
             "testpipeline", "a description", "Me", outdir=cls.template_dir, no_git=True
         )
         create_obj.init_pipeline()
 
-        cls.template_schema = os.path.join(cls.template_dir, "nextflow_schema.json")
+        cls.template_schema = Path(cls.template_dir, "nextflow_schema.json")
         cls.params_template_builder = ParamsFileBuilder(cls.template_dir)
-        cls.invalid_template_schema = os.path.join(cls.template_dir, "nextflow_schema_invalid.json")
+        cls.invalid_template_schema = Path(cls.template_dir, "nextflow_schema_invalid.json")
 
         # Remove the allOf section to make the schema invalid
         with open(cls.template_schema) as fh:
@@ -40,14 +40,14 @@ class TestParamsFileBuilder:
 
     @classmethod
     def teardown_class(cls):
-        if os.path.exists(cls.tmp_dir):
+        if Path(cls.tmp_dir).exists():
             shutil.rmtree(cls.tmp_dir)
 
     def test_build_template(self):
-        outfile = os.path.join(self.tmp_dir, "params-file.yml")
-        self.params_template_builder.write_params_file(outfile)
+        outfile = Path(self.tmp_dir, "params-file.yml")
+        self.params_template_builder.write_params_file(str(outfile))
 
-        assert os.path.exists(outfile)
+        assert outfile.exists()
 
         with open(outfile) as fh:
             out = fh.read()
@@ -56,9 +56,9 @@ class TestParamsFileBuilder:
 
     def test_build_template_invalid_schema(self, caplog):
         """Build a schema from a template"""
-        outfile = os.path.join(self.tmp_dir, "params-file-invalid.yml")
+        outfile = Path(self.tmp_dir, "params-file-invalid.yml")
         builder = ParamsFileBuilder(self.invalid_template_schema)
-        res = builder.write_params_file(outfile)
+        res = builder.write_params_file(str(outfile))
 
         assert res is False
         assert "Pipeline schema file is invalid" in caplog.text

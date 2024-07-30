@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import pytest
@@ -17,30 +16,28 @@ from ..utils import (
 
 
 class TestModulesCreate(TestModules):
-    def test_modules_install_nopipeline(self):
-        """Test installing a module - no pipeline given"""
-        self.pipeline_dir = None
-        assert self.mods_install.install("foo") is False
-
     @with_temporary_folder
     def test_modules_install_emptypipeline(self, tmpdir):
         """Test installing a module - empty dir given"""
         Path(tmpdir, "nf-core-pipe").mkdir()
         self.mods_install.directory = Path(tmpdir, "nf-core-pipe")
         with pytest.raises(UserWarning) as excinfo:
-            self.mods_install.install("foo")
+            self.mods_install.install("fastp")
         assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
 
     def test_modules_install_nomodule(self):
         """Test installing a module - unrecognised module given"""
-        assert self.mods_install.install("foo") is False
+        with pytest.raises(ValueError) as excinfo:
+            self.mods_install.install("foo")
+        assert excinfo.typename == "ValueError"
+        assert "Module 'foo' not found in available modules" in self.caplog.text
 
     def test_modules_install_trimgalore(self):
         """Test installing a module - TrimGalore!"""
         assert self.mods_install.install("trimgalore") is not False
         assert self.mods_install.directory is not None
         module_path = Path(self.mods_install.directory, "modules", "nf-core", "trimgalore")
-        assert os.path.exists(module_path)
+        assert module_path.exists()
 
     def test_modules_install_trimgalore_twice(self):
         """Test installing a module - TrimGalore! already there"""

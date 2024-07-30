@@ -43,8 +43,8 @@ def main_nf(
       of ``software`` and ``prefix``
     """
 
-    inputs = []
-    outputs = []
+    inputs: List[str] = []
+    outputs: List[str] = []
 
     # Check if we have a patch file affecting the 'main.nf' file
     # otherwise read the lines directly from the module
@@ -58,7 +58,7 @@ def main_nf(
             reverse=True,
         ).get("main.nf", [""])
 
-    if not lines:
+    if len(lines) == 0:
         try:
             # Check whether file exists and load it
             with open(module.main_nf) as fh:
@@ -66,9 +66,10 @@ def main_nf(
             module.passed.append(("main_nf_exists", "Module file exists", module.main_nf))
         except FileNotFoundError:
             module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
+            raise FileNotFoundError(f"Module file does not exist: {module.main_nf}")
 
     deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
-    if lines is not None:
+    if len(lines) > 0:
         lines_j = "\n".join(lines)
     else:
         lines_j = ""
