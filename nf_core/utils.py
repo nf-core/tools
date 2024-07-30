@@ -19,7 +19,7 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
 
 import git
 import prompt_toolkit.styles
@@ -66,11 +66,11 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     ]
 )
 
-NFCORE_CACHE_DIR = os.path.join(
-    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME") or "", ".cache")),
+NFCORE_CACHE_DIR = Path(
+    os.environ.get("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
     "nfcore",
 )
-NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
+NFCORE_DIR = Path(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
 
 
 def fetch_remote_version(source_url):
@@ -358,17 +358,17 @@ def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
             )
 
 
-def setup_nfcore_dir():
+def setup_nfcore_dir() -> bool:
     """Creates a directory for files that need to be kept between sessions
 
     Currently only used for keeping local copies of modules repos
     """
-    if not os.path.exists(NFCORE_DIR):
-        os.makedirs(NFCORE_DIR)
-        return True
+    if not NFCORE_DIR.exists():
+        NFCORE_DIR.mkdir(parents=True)
+    return True
 
 
-def setup_requests_cachedir() -> dict:
+def setup_requests_cachedir() -> Dict[str, Union[Path, datetime.timedelta, str]]:
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
@@ -377,10 +377,10 @@ def setup_requests_cachedir() -> dict:
     Uses requests_cache monkey patching.
     Also returns the config dict so that we can use the same setup with a Session.
     """
-    pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = setup_nfcore_cachedir(f"cache_{pyversion}")
-    config = {
-        "cache_name": os.path.join(cachedir, "github_info"),
+    pyversion: str = ".".join(str(v) for v in sys.version_info[0:3])
+    cachedir: Path = setup_nfcore_cachedir(f"cache_{pyversion}")
+    config: Dict[str, Union[Path, datetime.timedelta, str]] = {
+        "cache_name": Path(cachedir, "github_info"),
         "expire_after": datetime.timedelta(hours=1),
         "backend": "sqlite",
     }
@@ -403,7 +403,7 @@ def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
     return cachedir
 
 
-def wait_cli_function(poll_func, refresh_per_second=20):
+def wait_cli_function(poll_func: Callable[[], bool], refresh_per_second: int = 20) -> None:
     """
     Display a command-line spinner while calling a function repeatedly.
 
@@ -427,7 +427,7 @@ def wait_cli_function(poll_func, refresh_per_second=20):
         raise AssertionError("Cancelled!")
 
 
-def poll_nfcore_web_api(api_url, post_data=None):
+def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
     """
     Poll the nf-core website API
 
@@ -448,7 +448,7 @@ def poll_nfcore_web_api(api_url, post_data=None):
             raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
             if response.status_code != 200 and response.status_code != 301:
-                log.debug(f"Response content:\n{response.content}")
+                log.debug(f"Response content:\n{response.content.decode()}")
                 raise AssertionError(
                     f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )
@@ -460,7 +460,7 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 if "status" not in web_response:
                     raise AssertionError()
             except (json.decoder.JSONDecodeError, AssertionError, TypeError):
-                log.debug(f"Response content:\n{response.content}")
+                log.debug(f"Response content:\n{response.content.decode()}")
                 raise AssertionError(
                     f"nf-core website API results response not recognised: {api_url}\n "
                     "See verbose log for full response"
@@ -476,14 +476,14 @@ class GitHubAPISession(requests_cache.CachedSession):
     such as automatically setting up GitHub authentication if we can.
     """
 
-    def __init__(self):  # pylint: disable=super-init-not-called
-        self.auth_mode = None
-        self.return_ok = [200, 201]
-        self.return_retry = [403]
-        self.return_unauthorised = [401]
-        self.has_init = False
+    def __init__(self) -> None:
+        self.auth_mode: Optional[str] = None
+        self.return_ok: List[int] = [200, 201]
+        self.return_retry: List[int] = [403]
+        self.return_unauthorised: List[int] = [401]
+        self.has_init: bool = False
 
-    def lazy_init(self):
+    def lazy_init(self) -> None:
         """
         Initialise the object.
 

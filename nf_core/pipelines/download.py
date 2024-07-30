@@ -1388,7 +1388,7 @@ class DownloadWorkflow:
         # where the output of 'singularity pull' is first generated before being copied to the NXF_SINGULARITY_CACHDIR.
         # if not defined by the Singularity administrators, then use the temporary directory to avoid storing the images in the work directory.
         if os.environ.get("SINGULARITY_CACHEDIR") is None:
-            os.environ["SINGULARITY_CACHEDIR"] = NFCORE_CACHE_DIR
+            os.environ["SINGULARITY_CACHEDIR"] = str(NFCORE_CACHE_DIR)
 
         # Sometimes, container still contain an explicit library specification, which
         # resulted in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11

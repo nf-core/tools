@@ -430,7 +430,7 @@ class ModulesJson:
             # Add a time suffix to the path to make it unique
             # (do it again and again if it didn't work out...)
             to_name += f"-{datetime.datetime.now().strftime('%y%m%d%H%M%S')}"
-        shutil.move(current_path, local_dir / to_name)
+        shutil.move(str(current_path), local_dir / to_name)
 
     def unsynced_components(self) -> Tuple[List[str], List[str], dict]:
         """

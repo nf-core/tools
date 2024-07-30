@@ -755,7 +755,7 @@ class ComponentUpdate(ComponentCommand):
             config_files = [f for f in pipeline_files if str(f).endswith(".config")]
             for config_file in config_files:
                 log.debug(f"Moving '{component}/{config_file}' to updated component")
-                shutil.move(pipeline_path / config_file, temp_component_dir / config_file)
+                shutil.move(str(pipeline_path / config_file), temp_component_dir / config_file)
                 files.append(temp_component_dir / config_file)
 
         else:
@@ -772,7 +772,7 @@ class ComponentUpdate(ComponentCommand):
                 log.debug(f"Moving '{file}' to updated component")
                 dest = Path(pipeline_path, file)
                 dest.parent.mkdir(parents=True, exist_ok=True)
-                shutil.move(path, dest)
+                shutil.move(str(path), dest)
 
         log.info(f"Updating '{repo_path}/{component}'")
         log.debug(f"Updating {self.component_type[:-1]} '{component}' to {new_version} from {repo_path}")

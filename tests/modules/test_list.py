@@ -67,7 +67,7 @@ class TestModulesList(TestModules):
         assert "fastqc" in listed_mods
         assert "multiqc" in listed_mods
 
-    def test_modules_list_remote_json(self):
+    def test_modules_list_remote_json(self) -> None:
         """Test listing available modules as JSON"""
         mods_list = nf_core.modules.list.ModuleList(remote=True)
         listed_mods: str = str(mods_list.list_components(print_json=True))
