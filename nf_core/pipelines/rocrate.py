@@ -23,13 +23,16 @@ class ROCrate:
     """
     Class to generate an RO Crate for a pipeline
 
-    Args:
-        pipeline_dir (Path): Path to the pipeline directory
-        version (str): Version of the pipeline to use
-
     """
 
-    def __init__(self, pipeline_dir: Path, version=""):
+    def __init__(self, pipeline_dir: Path, version="") -> None:
+        """
+        Initialise the ROCrate object
+
+        Args:
+            pipeline_dir (Path): Path to the pipeline directory
+            version (str): Version of the pipeline to checkout
+        """
         from nf_core.utils import is_pipeline_directory, setup_requests_cachedir
 
         is_pipeline_directory(pipeline_dir)
@@ -144,9 +147,6 @@ class ROCrate:
             }
         )
 
-        # Set main entity file
-        self.set_main_entity("main.nf")
-
         # add readme as description
         readme = Path("README.md")
 
@@ -175,6 +175,9 @@ class ROCrate:
         else:
             self.crate.CreativeWorkStatus = "Stable"
 
+        # Set main entity file
+        self.set_main_entity("main.nf")
+
         # Add all other files
         self.add_workflow_files()
 
@@ -182,16 +185,21 @@ class ROCrate:
         """
         Set the main.nf as the main entity of the crate and add necessary metadata
         """
-
         wf_file = self.crate.add_jsonld(
             {
                 "@id": main_entity_filename,
                 "@type": ["File", "SoftwareSourceCode", "ComputationalWorkflow"],
             },
-        )
+        )  # FIXME: this adds "#main.nf" to the crate, but it should be "main.nf"
+        wf_file = cast(rocrate.model.entity.Entity, wf_file)  # ro-crate is untyped so need to cast type manually
         self.crate.mainEntity = wf_file
         self.add_main_authors(wf_file)
         wf_file.append_to("programmingLanguage", {"@id": "#nextflow"})
+        wf_file.append_to("dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/")
+        # add dateCreated and dateModified, based on the current data
+        wf_file.append_to("dateCreated", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True)
+        wf_file.append_to("dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True)
+
         # get keywords from nf-core website
         remote_workflows = requests.get("https://nf-co.re/pipelines.json").json()["remote_workflows"]
         # go through all remote workflows and find the one that matches the pipeline name
