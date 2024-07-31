@@ -580,8 +580,8 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
     pipelines_list(ctx, keywords, sort, json, show_archived)
 
 
-# nf-core ro-crate
-@nf_core_cli.command("ro-crate")
+# nf-core pipelines ro-crate
+@pipelines.command("ro-crate")
 @click.argument(
     "pipeline_dir",
     type=click.Path(exists=True),
@@ -603,7 +603,8 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
     type=str,
     help="Version of pipeline to use for RO Crate",
 )
-def rocrate(ctx, pipeline_dir, json_path, zip_path, pipeline_version):
+@click.pass_context
+def ro_crate(ctx, pipeline_dir, json_path, zip_path, pipeline_version):
     """
     Make an Research Object Crate
     """
