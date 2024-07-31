@@ -16,10 +16,11 @@
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
+                    "schema": "assets/schema_input.json",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
                     "description": "Path to comma-separated file containing information about the samples in the experiment.",
-                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.{% if branded %} See [usage docs](https://nf-co.re/{{ short_name }}/usage#samplesheet-input).{% endif %}",
+                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.{% if is_nfcore %} See [usage docs](https://nf-co.re/{{ short_name }}/usage#samplesheet-input).{% endif %}",
                     "fa_icon": "fas fa-file-csv"
                 },
                 "outdir": {
@@ -42,6 +43,7 @@
                 }
             }
         },
+        {%- if igenomes %}
         "reference_genome_options": {
             "title": "Reference genome options",
             "type": "object",
@@ -73,6 +75,7 @@
                 }
             }
         },
+        {%- endif %}
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -264,6 +267,13 @@
                     "description": "Validation of parameters in lenient more.",
                     "hidden": true,
                     "help_text": "Allows string values that are parseable as numbers or booleans. For further information see [JSONSchema docs](https://github.com/everit-org/json-schema#lenient-mode)."
+                },
+                "pipelines_testdata_base_path": {
+                    "type": "string",
+                    "fa_icon": "far fa-check-circle",
+                    "description": "Base URL or local path to location of pipeline test dataset files",
+                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/",
+                    "hidden": true
                 }
             }
         }
@@ -272,9 +282,9 @@
         {
             "$ref": "#/definitions/input_output_options"
         },
-        {
+        {% if igenomes %}{
             "$ref": "#/definitions/reference_genome_options"
-        },
+        },{% endif %}
         {
             "$ref": "#/definitions/institutional_config_options"
         },

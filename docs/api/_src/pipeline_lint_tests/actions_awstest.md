@@ -1,5 +1,5 @@
 # actions_awstest
 
 ```{eval-rst}
-.. automethod:: nf_core.lint.PipelineLint.actions_awstest
+.. automethod:: nf_core.pipelines.lint.PipelineLint.actions_awstest
 ```

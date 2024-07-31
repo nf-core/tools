@@ -12,9 +12,20 @@ on:
     paths-ignore:
       - "docs/**"
       - "CHANGELOG.md"
+      # ignore github workflows except for the current one
+      - ".github/**"
+      - "!.github/workflows/pytest.yml"
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      runners:
+        description: "Runners to test on"
+        type: choice
+        options:
+          - "ubuntu-latest"
+          - "self-hosted"
+        default: "self-hosted"
 
 # Cancel if a newer run with the same workflow name is queued
 concurrency:
@@ -29,7 +40,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: ["3.8", "3.11"]
+        python-version: ["3.8", "3.12"]
         runner: ["ubuntu-latest"]
         include:
           - python-version: "3.8"
@@ -50,7 +61,7 @@ jobs:
     name: Get test file matrix
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
         name: Check out source-code repository
 
       - name: List tests
@@ -64,7 +75,8 @@ jobs:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: [setup, list_tests]
     if: ${{ needs.setup.outputs.run-tests }}
-    runs-on: self-hosted
+    # run on self-hosted runners for test_components.py (because of the gitlab branch), based on the input if it is dispatched manually, on github if it is a rerun or on self-hosted by default
+    runs-on: ${{ matrix.test == 'test_components.py' && 'self-hosted' || (github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted') }}
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
       fail-fast: false # run all tests even if one fails
@@ -75,11 +87,11 @@ jobs:
           cd pytest
           export NXF_WORK=$(pwd)
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
         name: Check out source-code repository
 
       - name: Set up Python ${{ needs.setup.outputs.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
         with:
           python-version: ${{ needs.setup.outputs.python-version }}
           cache: "pip"
@@ -98,37 +110,21 @@ jobs:
           sudo add-apt-repository --remove ppa:git-core/ppa
           sudo apt install -y git
 
+      - name: Set up Singularity
+        if: ${{ matrix.test == 'test_download.py'}}
+        uses: eWaterCycle/setup-singularity@931d4e31109e875b13309ae1d07c70ca8fbc8537 # v7
+        with:
+          singularity-version: 3.8.3
+
       - name: Get current date
         id: date
         run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v1
-
-      - name: Look if nf-test is already installed and write to env variable
-        id: check-nftest
-        run: |
-          if [ -f /usr/local/bin/nf-test ]; then
-            echo "nftest_installed=true" >> $GITHUB_ENV
-          else
-            echo "nftest_installed=false" >> $GITHUB_ENV
-          fi
-
-      - name: Cache nf-test installation
-        if: env.nftest_installed != 'true'
-        id: cache-software
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4
-        with:
-          path: |
-            /usr/local/bin/nf-test
-            /home/runner/.nf-test/nf-test.jar
-          key: ${{ runner.os }}-nftest-${{ env.date }}
+        uses: nf-core/setup-nextflow@v2
 
       - name: Install nf-test
-        if: steps.cache-software.outputs.cache-hit != 'true' && env.nftest_installed != 'true'
-        run: |
-          wget -qO- https://code.askimed.com/install/nf-test | bash
-          sudo mv nf-test /usr/local/bin/
+        uses: nf-core/setup-nf-test@v1
 
       - name: move coveragerc file up
         run: |
@@ -146,28 +142,36 @@ jobs:
             exit 1
           fi
 
+      - name: Store snapshot report
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
+        if: always()
+        with:
+          name: Snapshot Report ${{ matrix.test }}
+          path: ./snapshot_report.html
+
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
         with:
           name: coverage_${{ matrix.test }}
           path: .coverage
 
   coverage:
     needs: test
-    runs-on: self-hosted
+    # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
+    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     steps:
       - name: go to subdirectory
         run: |
           mkdir -p pytest
           cd pytest
 
-      - uses: actions/checkout@v4
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
         env:
           AGENT_TOOLSDIRECTORY: /opt/actions-runner/_work/tools/tools/
         with:
-          python-version: 3.11
+          python-version: "3.12"
           cache: "pip"
 
       - name: Install dependencies
@@ -180,14 +184,14 @@ jobs:
           mv .github/.coveragerc .
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4
       - name: Run coverage
         run: |
           coverage combine --keep coverage*/.coverage*
           coverage report
           coverage xml
 
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@5ecb98a3c6b747ed38dc09f787459979aebb39be # v4
         with:
           files: coverage.xml
         env:

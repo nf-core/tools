@@ -2,15 +2,16 @@
 Helper functions for tests
 """
 
+import filecmp
 import functools
-import os
 import tempfile
+from pathlib import Path
 from typing import Any, Callable, Tuple
 
 import responses
 
-import nf_core.create
 import nf_core.modules
+import nf_core.pipelines.create.create
 
 OLD_TRIMGALORE_SHA = "9b7a3bdefeaad5d42324aa7dd50f87bea1b04386"
 OLD_TRIMGALORE_BRANCH = "mimic-old-trimgalore"
@@ -93,18 +94,24 @@ def mock_biocontainers_api_calls(rsps: responses.RequestsMock, module: str, vers
     rsps.get(biocontainers_api_url, json=biocontainers_mock, status=200)
 
 
-def create_tmp_pipeline() -> Tuple[str, str, str, str]:
+def create_tmp_pipeline() -> Tuple[Path, Path, str, Path]:
     """Create a new Pipeline for testing"""
 
-    tmp_dir = tempfile.mkdtemp()
-    root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
+    tmp_dir = Path(tempfile.mkdtemp())
+    root_repo_dir = Path(__file__).resolve().parent.parent
+    template_dir = root_repo_dir / "nf_core" / "pipeline-template"
     pipeline_name = "mypipeline"
-    pipeline_dir = os.path.join(tmp_dir, pipeline_name)
+    pipeline_dir = tmp_dir / pipeline_name
 
-    nf_core.create.PipelineCreate(
-        pipeline_name, "it is mine", "me", no_git=True, outdir=pipeline_dir, plain=True
+    nf_core.pipelines.create.create.PipelineCreate(
+        pipeline_name, "it is mine", "me", no_git=True, outdir=str(pipeline_dir)
     ).init_pipeline()
 
     # return values to instance variables for later use in test methods
     return tmp_dir, template_dir, pipeline_name, pipeline_dir
+
+
+def cmp_component(dir1: Path, dir2: Path) -> bool:
+    """Compare two versions of the same component"""
+    files = ["main.nf", "meta.yml"]
+    return all(filecmp.cmp(dir1 / f, dir2 / f, shallow=False) for f in files)

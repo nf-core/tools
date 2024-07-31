@@ -1,5 +1,4 @@
-""" Tests covering the pipeline launch code.
-"""
+"""Tests covering the pipeline launch code."""
 
 import json
 import os
@@ -9,8 +8,8 @@ from unittest import TestCase, mock
 
 import pytest
 
-import nf_core.create
-import nf_core.launch
+import nf_core.pipelines.create.create
+import nf_core.pipelines.launch
 
 from .utils import create_tmp_pipeline, with_temporary_file, with_temporary_folder
 
@@ -22,7 +21,7 @@ class TestLaunch(TestCase):
         """Create a new PipelineSchema and Launch objects"""
         self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
         self.nf_params_fn = os.path.join(self.tmp_dir, "nf-params.json")
-        self.launcher = nf_core.launch.Launch(self.pipeline_dir, params_out=self.nf_params_fn)
+        self.launcher = nf_core.pipelines.launch.Launch(self.pipeline_dir, params_out=self.nf_params_fn)
 
     def tearDown(self):
         """Clean up temporary files and folders"""
@@ -33,13 +32,13 @@ class TestLaunch(TestCase):
         if Path(self.tmp_dir).exists():
             shutil.rmtree(self.tmp_dir)
 
-    @mock.patch.object(nf_core.launch.Launch, "prompt_web_gui", side_effect=[True])
-    @mock.patch.object(nf_core.launch.Launch, "launch_web_gui")
+    @mock.patch.object(nf_core.pipelines.launch.Launch, "prompt_web_gui", side_effect=[True])
+    @mock.patch.object(nf_core.pipelines.launch.Launch, "launch_web_gui")
     def test_launch_pipeline(self, mock_webbrowser, mock_lauch_web_gui):
         """Test the main launch function"""
         self.launcher.launch_pipeline()
 
-    @mock.patch.object(nf_core.launch.Confirm, "ask", side_effect=[False])
+    @mock.patch.object(nf_core.pipelines.launch.Confirm, "ask", side_effect=[False])
     def test_launch_file_exists(self, mock_confirm):
         """Test that we detect an existing params file and return"""
         # Make an empty params file to be overwritten
@@ -47,9 +46,9 @@ class TestLaunch(TestCase):
         # Try and to launch, return with error
         assert self.launcher.launch_pipeline() is False
 
-    @mock.patch.object(nf_core.launch.Launch, "prompt_web_gui", side_effect=[True])
-    @mock.patch.object(nf_core.launch.Launch, "launch_web_gui")
-    @mock.patch.object(nf_core.launch.Confirm, "ask", side_effect=[False])
+    @mock.patch.object(nf_core.pipelines.launch.Launch, "prompt_web_gui", side_effect=[True])
+    @mock.patch.object(nf_core.pipelines.launch.Launch, "launch_web_gui")
+    @mock.patch.object(nf_core.pipelines.launch.Confirm, "ask", side_effect=[False])
     def test_launch_file_exists_overwrite(self, mock_webbrowser, mock_lauch_web_gui, mock_confirm):
         """Test that we detect an existing params file and we overwrite it"""
         # Make an empty params file to be overwritten
@@ -66,12 +65,12 @@ class TestLaunch(TestCase):
     def test_make_pipeline_schema(self, tmp_path):
         """Create a workflow, but delete the schema file, then try to load it"""
         test_pipeline_dir = os.path.join(tmp_path, "wf")
-        create_obj = nf_core.create.PipelineCreate(
-            "testpipeline", "", "", outdir=test_pipeline_dir, no_git=True, plain=True
+        create_obj = nf_core.pipelines.create.create.PipelineCreate(
+            "testpipeline", "a description", "Me", outdir=test_pipeline_dir, no_git=True
         )
         create_obj.init_pipeline()
         os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
-        self.launcher = nf_core.launch.Launch(test_pipeline_dir, params_out=self.nf_params_fn)
+        self.launcher = nf_core.pipelines.launch.Launch(test_pipeline_dir, params_out=self.nf_params_fn)
         self.launcher.get_pipeline_schema()
         assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
         assert self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]["outdir"] == {
@@ -187,7 +186,7 @@ class TestLaunch(TestCase):
             }
         ],
     )
-    @mock.patch.object(nf_core.launch.Launch, "sanitise_web_response")
+    @mock.patch.object(nf_core.pipelines.launch.Launch, "sanitise_web_response")
     def test_get_web_launch_response_valid(self, mock_poll_nfcore_web_api, mock_sanitise):
         """Test polling the website for a launch response - complete, valid response"""
         self.launcher.get_pipeline_schema()

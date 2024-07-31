@@ -25,7 +25,8 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
     If the module has inputs or outputs, they are expected to be
     formatted as:
 
-    ..code-block::
+    .. code-block:: groovy
+
         tuple val(foo) path(bar)
         val foo
         path foo
@@ -75,7 +76,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
             hint = f"\nCheck the entry for `{e.path[0]}`."
         if e.message.startswith("None is not of type 'object'") and len(e.path) > 2:
             hint = f"\nCheck that the child entries of {str(e.path[0])+'.'+str(e.path[2])} are indented correctly."
-        if e.schema.get("message"):
+        if e.schema and isinstance(e.schema, dict) and "message" in e.schema:
             e.message = e.schema["message"]
             incorrect_value = meta_yaml
             for key in e.path:

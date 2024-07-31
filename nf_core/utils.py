@@ -1,6 +1,7 @@
 """
 Common utility functions for the nf-core python package.
 """
+
 import concurrent.futures
 import datetime
 import errno
@@ -34,6 +35,15 @@ from rich.spinner import Spinner
 import nf_core
 
 log = logging.getLogger(__name__)
+
+# ASCII nf-core logo
+nfcore_logo = [
+    r"[green]                                          ,--.[grey39]/[green],-.",
+    r"[blue]          ___     __   __   __   ___     [green]/,-._.--~\ ",
+    r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {",
+    r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,",
+    r"[green]                                          `._,._,'",
+]
 
 # Custom style for questionary
 nfcore_question_style = prompt_toolkit.styles.Style(
@@ -181,8 +191,8 @@ class Pipeline:
             git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.wf_path).splitlines()
             self.files = []
             for fn in git_ls_files:
-                full_fn = os.path.join(self.wf_path, fn.decode("utf-8"))
-                if os.path.isfile(full_fn):
+                full_fn = Path(self.wf_path) / fn.decode("utf-8")
+                if full_fn.is_file():
                     self.files.append(full_fn)
                 else:
                     log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
@@ -192,7 +202,7 @@ class Pipeline:
             self.files = []
             for subdir, _, files in os.walk(self.wf_path):
                 for fn in files:
-                    self.files.append(os.path.join(subdir, fn))
+                    self.files.append(Path(subdir) / fn)
 
     def _load_pipeline_config(self):
         """Get the nextflow config for this pipeline
@@ -201,7 +211,7 @@ class Pipeline:
         """
         self.nf_config = fetch_wf_config(self.wf_path)
 
-        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "").strip("'").split("/")
+        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "/").strip("'").split("/")
 
         nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
         if nextflow_version_match:
@@ -234,10 +244,14 @@ def is_pipeline_directory(wf_path):
     for fn in ["main.nf", "nextflow.config"]:
         path = os.path.join(wf_path, fn)
         if not os.path.isfile(path):
-            raise UserWarning(f"'{wf_path}' is not a pipeline - '{fn}' is missing")
+            if wf_path == ".":
+                warning = f"Current directory is not a pipeline - '{fn}' is missing."
+            else:
+                warning = f"'{wf_path}' is not a pipeline - '{fn}' is missing."
+            raise UserWarning(warning)
 
 
-def fetch_wf_config(wf_path: Union[Path, str], cache_config=True) -> dict:
+def fetch_wf_config(wf_path: Union[str, Path], cache_config: bool = True):
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
 
@@ -257,12 +271,13 @@ def fetch_wf_config(wf_path: Union[Path, str], cache_config=True) -> dict:
     cache_path = None
 
     # Nextflow home directory - use env var if set, or default to ~/.nextflow
-    nxf_home = Path(os.environ.get("NXF_HOME", Path(os.getenv("HOME", ""), ".nextflow")))
+    nxf_home = Path(os.environ.get("NXF_HOME", Path(os.getenv("HOME") or "", ".nextflow")))
 
     # Build a cache directory if we can
-    if (nxf_home).is_dir():
-        cache_basedir = nxf_home / "nf-core"
-        cache_basedir.mkdir(parents=True, exist_ok=True)
+    if nxf_home.is_dir():
+        cache_basedir = Path(nxf_home, "nf-core")
+        if not cache_basedir.is_dir():
+            cache_basedir.mkdir(parents=True, exist_ok=True)
 
     # If we're given a workflow object with a commit, see if we have a cached copy
     cache_fn = None
@@ -308,9 +323,10 @@ def fetch_wf_config(wf_path: Union[Path, str], cache_config=True) -> dict:
     main_nf = None
     try:
         main_nf = Path(wf_path, "main.nf")
-        with open(main_nf) as fh:
-            for main_nf_line in fh:
-                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", main_nf_line)
+        with open(main_nf, "rb") as fh:
+            for line in fh:
+                line_str = line.decode("utf-8")
+                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=(?!=)", line_str)
                 if match:
                     config[match.group(1)] = "null"
     except FileNotFoundError as e:
@@ -443,11 +459,14 @@ def poll_nfcore_web_api(api_url, post_data=None):
         except requests.exceptions.ConnectionError:
             raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
-            if response.status_code != 200:
+            if response.status_code != 200 and response.status_code != 301:
                 log.debug(f"Response content:\n{response.content}")
                 raise AssertionError(
                     f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )
+            # follow redirects
+            if response.status_code == 301:
+                return poll_nfcore_web_api(response.headers["Location"], post_data)
             try:
                 web_response = json.loads(response.content)
                 if "status" not in web_response:
@@ -473,6 +492,7 @@ class GitHubAPISession(requests_cache.CachedSession):
         self.auth_mode = None
         self.return_ok = [200, 201]
         self.return_retry = [403]
+        self.return_unauthorised = [401]
         self.has_init = False
 
     def lazy_init(self):
@@ -566,6 +586,8 @@ class GitHubAPISession(requests_cache.CachedSession):
                 raise e
             else:
                 return r
+        elif request.status_code in self.return_unauthorised:
+            raise RuntimeError("GitHub API PR failed, probably due to an expired GITHUB_TOKEN.")
 
         return request
 
@@ -581,7 +603,7 @@ class GitHubAPISession(requests_cache.CachedSession):
         """
         Try to fetch a URL, keep retrying if we get a certain return code.
 
-        Used in nf-core sync code because we get 403 errors: too many simultaneous requests
+        Used in nf-core pipelines sync code because we get 403 errors: too many simultaneous requests
         See https://github.com/nf-core/tools/issues/911
         """
         if not self.has_init:
@@ -863,7 +885,7 @@ def prompt_remote_pipeline_name(wfs):
     """Prompt for the pipeline name with questionary
 
     Args:
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         pipeline (str): GitHub repo - username/repo
@@ -903,7 +925,7 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
     Args:
         wf_releases (array): Array of repo releases as returned by the GitHub API
         wf_branches (array): Array of repo branches, as returned by the GitHub API
-        multiple (bool): Allow selection of multiple releases & branches (for Tower)
+        multiple (bool): Allow selection of multiple releases & branches (for Seqera Platform)
 
     Returns:
         choice (str): Selected release / branch name
@@ -949,7 +971,7 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
 
 class SingularityCacheFilePathValidator(questionary.Validator):
     """
-    Validator for file path specified as --singularity-cache-index argument in nf-core download
+    Validator for file path specified as --singularity-cache-index argument in nf-core pipelines download
     """
 
     def validate(self, value):
@@ -970,7 +992,7 @@ def get_repo_releases_branches(pipeline, wfs):
 
     Args:
         pipeline (str): GitHub repo username/repo
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         wf_releases, wf_branches (tuple): Array of releases, Array of branches
@@ -1054,7 +1076,7 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-def load_tools_config(directory: Union[str, Path] = "."):
+def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Path, dict]:
     """
     Parse the nf-core.yml configuration file
 
@@ -1082,7 +1104,6 @@ def load_tools_config(directory: Union[str, Path] = "."):
 
     with open(config_fn) as fh:
         tools_config = yaml.safe_load(fh)
-
     # If the file is empty
     tools_config = tools_config or {}
 
@@ -1092,12 +1113,13 @@ def load_tools_config(directory: Union[str, Path] = "."):
 
 def determine_base_dir(directory="."):
     base_dir = start_dir = Path(directory).absolute()
-    while base_dir != base_dir.parent:
+    # Only iterate up the tree if the start dir doesn't have a config
+    while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
         base_dir = base_dir.parent
         config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
         if config_fn:
-            return directory if base_dir == start_dir else base_dir
-    return directory
+            break
+    return directory if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
 
 
 def get_first_available_path(directory, paths):

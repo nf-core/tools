@@ -1,19 +1,19 @@
-""" Tests covering the pipeline schema code.
-"""
+"""Tests covering the pipeline schema code."""
 
 import json
 import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import pytest
 import requests
 import yaml
 
-import nf_core.create
-import nf_core.schema
+import nf_core.pipelines.create.create
+import nf_core.pipelines.schema
 
 from .utils import with_temporary_file, with_temporary_folder
 
@@ -23,14 +23,14 @@ class TestSchema(unittest.TestCase):
 
     def setUp(self):
         """Create a new PipelineSchema object"""
-        self.schema_obj = nf_core.schema.PipelineSchema()
+        self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
         self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
         # Create a test pipeline in temp directory
         self.tmp_dir = tempfile.mkdtemp()
         self.template_dir = os.path.join(self.tmp_dir, "wf")
-        create_obj = nf_core.create.PipelineCreate(
-            "testpipeline", "", "", outdir=self.template_dir, no_git=True, plain=True
+        create_obj = nf_core.pipelines.create.create.PipelineCreate(
+            "testpipeline", "a description", "Me", outdir=self.template_dir, no_git=True
         )
         create_obj.init_pipeline()
 
@@ -217,6 +217,15 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.pipeline_manifest["description"] = "Test pipeline"
         self.schema_obj.make_skeleton_schema()
         self.schema_obj.validate_schema(self.schema_obj.schema)
+        assert self.schema_obj.schema["title"] == "nf-core/test pipeline parameters"
+
+    def test_make_skeleton_schema_absent_name(self):
+        """Test making a new schema skeleton"""
+        self.schema_obj.schema_filename = self.template_schema
+        self.schema_obj.pipeline_manifest["description"] = "Test pipeline"
+        self.schema_obj.make_skeleton_schema()
+        self.schema_obj.validate_schema(self.schema_obj.schema)
+        assert self.schema_obj.schema["title"] == "wf pipeline parameters"
 
     def test_get_wf_params(self):
         """Test getting the workflow parameters from a pipeline"""
@@ -315,9 +324,9 @@ class TestSchema(unittest.TestCase):
 
         Pretty much a copy of test_launch.py test_make_pipeline_schema
         """
-        test_pipeline_dir = os.path.join(tmp_dir, "wf")
+        test_pipeline_dir = Path(tmp_dir, "wf")
         shutil.copytree(self.template_dir, test_pipeline_dir)
-        os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
+        Path(test_pipeline_dir, "nextflow_schema.json").unlink()
 
         self.schema_obj.build_schema(test_pipeline_dir, True, False, None)
 

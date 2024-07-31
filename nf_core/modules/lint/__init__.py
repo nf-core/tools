@@ -6,7 +6,6 @@ Command:
 nf-core modules lint
 """
 
-
 import logging
 import os
 
@@ -16,7 +15,7 @@ import rich
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
-from nf_core.lint_utils import console
+from nf_core.pipelines.lint_utils import console
 
 log = logging.getLogger(__name__)
 
@@ -214,6 +213,11 @@ class ModuleLint(ComponentLint):
 
         # Otherwise run all the lint tests
         else:
+            if self.repo_type == "pipeline" and self.modules_json:
+                # Set correct sha
+                version = self.modules_json.get_module_version(mod.component_name, mod.repo_url, mod.org)
+                mod.git_sha = version
+
             for test_name in self.lint_tests:
                 if test_name == "main_nf":
                     getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)

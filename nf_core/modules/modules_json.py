@@ -6,7 +6,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Union
+from typing import Dict, Optional
 
 import git
 import questionary
@@ -15,12 +15,12 @@ from git.exc import GitCommandError
 
 import nf_core.utils
 from nf_core.components.components_utils import get_components_to_install
-from nf_core.lint_utils import dump_json_with_prettier
 from nf_core.modules.modules_repo import (
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
     ModulesRepo,
 )
+from nf_core.pipelines.lint_utils import dump_json_with_prettier
 
 from .modules_differ import ModulesDiffer
 
@@ -32,7 +32,7 @@ class ModulesJson:
     An object for handling a 'modules.json' file in a pipeline
     """
 
-    def __init__(self, pipeline_dir):
+    def __init__(self, pipeline_dir: str):
         """
         Initialise the object.
 
@@ -43,7 +43,7 @@ class ModulesJson:
         self.modules_dir = Path(self.dir, "modules")
         self.subworkflows_dir = Path(self.dir, "subworkflows")
         self.modules_json_path = Path(self.dir, "modules.json")
-        self.modules_json: Union[dict, None] = None
+        self.modules_json: Optional[Dict] = None
         self.pipeline_modules = None
         self.pipeline_subworkflows = None
         self.pipeline_components = None
@@ -863,7 +863,7 @@ class ModulesJson:
             install_dir, {}
         )
 
-    def get_modules_json(self):
+    def get_modules_json(self) -> dict:
         """
         Returns a copy of the loaded modules.json
 
@@ -872,7 +872,8 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
-        return copy.deepcopy(self.modules_json)
+
+        return copy.deepcopy(self.modules_json)  # type: ignore
 
     def get_component_version(self, component_type, component_name, repo_url, install_dir):
         """
@@ -1051,7 +1052,7 @@ class ModulesJson:
             )
         return branch
 
-    def dump(self, run_prettier: bool = False):
+    def dump(self, run_prettier: bool = False) -> None:
         """
         Sort the modules.json, and write it to file
         """

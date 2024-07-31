@@ -1,4 +1,5 @@
 """Test generate a snapshot"""
+
 import json
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -90,7 +91,7 @@ def test_update_snapshot_module(self):
             snap_content = json.load(fh)
         original_timestamp = snap_content["Single-End"]["timestamp"]
         # delete the timestamp in json
-        snap_content["Single-End"]["content"][0]["0"][0][1] = ""
+        snap_content["Single-End"]["timestamp"] = ""
         with open(snap_path, "w") as fh:
             json.dump(snap_content, fh)
         snap_generator = ComponentsTest(
@@ -119,9 +120,12 @@ def test_test_not_found(self):
             remote_url=GITLAB_URL,
             branch=GITLAB_NFTEST_BRANCH,
         )
+        test_file = Path("modules", "nf-core-test", "fastp", "tests", "main.nf.test")
+        test_file.rename(test_file.parent / "main.nf.test.bak")
         with pytest.raises(UserWarning) as e:
             snap_generator.run()
         assert "Test file 'main.nf.test' not found" in str(e.value)
+        Path(test_file.parent / "main.nf.test.bak").rename(test_file)
 
 
 def test_unstable_snapshot(self):

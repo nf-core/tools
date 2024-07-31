@@ -1,6 +1,7 @@
 """
 The NFCoreComponent class holds information and utility functions for a single module or subworkflow
 """
+
 import logging
 import re
 from pathlib import Path
@@ -16,7 +17,14 @@ class NFCoreComponent:
     """
 
     def __init__(
-        self, component_name, repo_url, component_dir, repo_type, base_dir, component_type, remote_component=True
+        self,
+        component_name,
+        repo_url,
+        component_dir,
+        repo_type,
+        base_dir,
+        component_type,
+        remote_component=True,
     ):
         """
         Initialize the object
@@ -58,7 +66,6 @@ class NFCoreComponent:
             self.org = repo_dir
             self.nftest_testdir = Path(self.component_dir, "tests")
             self.nftest_main_nf = Path(self.nftest_testdir, "main.nf.test")
-            self.tags_yml = Path(self.nftest_testdir, "tags.yml")
 
             if self.repo_type == "pipeline":
                 patch_fn = f"{self.component_name.replace('/', '-')}.diff"
@@ -163,7 +170,7 @@ class NFCoreComponent:
         # path foo
         # don't match anything inside comments or after "output:"
         if "input:" not in data:
-            log.info(f"Could not find any inputs in {self.main_nf}")
+            log.debug(f"Could not find any inputs in {self.main_nf}")
             return inputs
         input_data = data.split("input:")[1].split("output:")[0]
         regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
@@ -175,7 +182,7 @@ class NFCoreComponent:
             elif match.group(4):
                 input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
                 inputs.append(input_val)
-        log.info(f"Found {len(inputs)} inputs in {self.main_nf}")
+        log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
         self.inputs = inputs
 
     def get_outputs_from_main_nf(self):
@@ -184,12 +191,12 @@ class NFCoreComponent:
             data = f.read()
         # get output values from main.nf after "output:". the names are always after "emit:"
         if "output:" not in data:
-            log.info(f"Could not find any outputs in {self.main_nf}")
+            log.debug(f"Could not find any outputs in {self.main_nf}")
             return outputs
         output_data = data.split("output:")[1].split("when:")[0]
         regex = r"emit:\s*([^)\s,]+)"
         matches = re.finditer(regex, output_data, re.MULTILINE)
         for _, match in enumerate(matches, start=1):
             outputs.append(match.group(1))
-        log.info(f"Found {len(outputs)} outputs in {self.main_nf}")
+        log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")
         self.outputs = outputs

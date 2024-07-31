@@ -1,6 +1,6 @@
-FROM python:3.11-slim
-LABEL authors="phil.ewels@scilifelab.se,erik.danielsson@scilifelab.se" \
-    description="Docker image containing requirements for the nfcore tools"
+FROM python:3.12-slim@sha256:740d94a19218c8dd584b92f804b1158f85b0d241e5215ea26ed2dcade2b9d138
+LABEL authors="phil.ewels@seqera.io,erik.danielsson@scilifelab.se" \
+    description="Docker image containing requirements for nf-core/tools"
 
 # Do not pick up python packages from $HOME
 ENV PYTHONNUSERSITE=1

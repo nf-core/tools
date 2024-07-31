@@ -1,5 +1,5 @@
 # files_unchanged
 
 ```{eval-rst}
-.. automethod:: nf_core.lint.PipelineLint.files_unchanged
+.. automethod:: nf_core.pipelines.lint.PipelineLint.files_unchanged
 ```
