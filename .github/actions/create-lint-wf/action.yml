@@ -61,6 +61,7 @@ runs:
 
     # Add empty ro-crate file
     - name: add empty ro-crate file
+      shell: bash
       run: touch nf-core-testpipeline/ro-crate-metadata.json
       working-directory: create-lint-wf
 
