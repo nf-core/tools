@@ -280,7 +280,7 @@ def pipelines_list(ctx, keywords, sort, json, show_archived):
 
 # nf-core pipelines ro-crate
 def pipelines_ro_crate(ctx, pipeline_dir, json_path, zip_path, pipeline_version) -> None:
-    from nf_core.rocrate import ROCrate
+    from nf_core.pipelines.rocrate import ROCrate
 
     if json_path is None and zip_path is None:
         log.error("Either `--json_path` or `--zip_path` must be specified.")

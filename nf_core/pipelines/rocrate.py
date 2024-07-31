@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-""" Code to deal with pipeline RO (Research Object) Crates """
-
+"""Code to deal with pipeline RO (Research Object) Crates"""
 
 import logging
 import sys
