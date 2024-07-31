@@ -569,6 +569,37 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
     pipelines_list(ctx, keywords, sort, json, show_archived)
 
 
+# nf-core pipelines ro-crate
+@pipelines.command("ro-crate")
+@click.argument(
+    "pipeline_dir",
+    type=click.Path(exists=True),
+    default=Path.cwd(),
+    required=True,
+    metavar="<pipeline directory>",
+)
+@click.option(
+    "-j",
+    "--json_path",
+    default=Path.cwd(),
+    type=str,
+    help="Path to save RO Crate metadata json file to",
+)
+@click.option("-z", "--zip_path", type=str, help="Path to save RO Crate zip file to")
+@click.option(
+    "-pv",
+    "--pipeline_version",
+    type=str,
+    help="Version of pipeline to use for RO Crate",
+)
+@click.pass_context
+def ro_crate(ctx, pipeline_dir, json_path, zip_path, pipeline_version):
+    """
+    Make an Research Object Crate
+    """
+    pipelines_ro_crate(ctx, pipeline_dir, json_path, zip_path, pipeline_version)
+
+
 # nf-core pipelines sync
 @pipelines.command("sync")
 @click.pass_context

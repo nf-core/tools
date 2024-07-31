@@ -3,8 +3,10 @@
 
 import logging
 import tempfile
+from datetime import datetime
 from pathlib import Path
-from typing import Union
+from typing import Set, Union, cast
+from urllib.parse import quote
 
 import requests
 import rocrate.model.entity
@@ -202,7 +204,7 @@ class ROCrate:
         log.debug(f"Adding topics: {topics}")
         wf_file.append_to("keywords", topics)
 
-    def add_main_authors(self, wf_file):
+    def add_main_authors(self, wf_file: rocrate.model.entity.Entity) -> None:
         """
         Add workflow authors to the crate
         """
@@ -217,34 +219,45 @@ class ROCrate:
             return
         # look at git contributors for author names
         try:
-            contributors = set()
+            contributors: Set[str] = set()
 
             commits_touching_path = list(self.pipeline_obj.repo.iter_commits(paths="main.nf"))
 
             for commit in commits_touching_path:
-                contributors.add(commit.author.name)
+                if commit.author.name is not None:
+                    contributors.add(commit.author.name)
             # exclude bots
-            contributors = [c for c in contributors if not c.endswith("bot") or c != "Travis CI User"]
-            # remove usernames (just keep names with spaces)
-            contributors = [c for c in contributors if " " in c]
+            contributors = {c for c in contributors if not c.endswith("bot") and c != "Travis CI User"}
 
             log.debug(f"Found {len(contributors)} git authors")
             for git_author in contributors:
+                git_author = requests.get(f"https://api.github.com/users/{git_author}").json().get("name", git_author)
+                if git_author is None:
+                    log.debug(f"Could not find name for {git_author}")
+                    continue
+
                 if git_author not in authors:
                     authors.append(git_author)
         except AttributeError:
             log.debug("Could not find git authors")
 
+        # remove usernames (just keep names with spaces)
+        authors = [c for c in authors if " " in c]
+
         for author in authors:
             log.debug(f"Adding author: {author}")
             orcid = get_orcid(author)
-            author_entitity = self.crate.add(Person(self.crate, orcid, properties={"name": author}))
-            wf_file.append_to("author", author_entitity)
+            author_entitity = self.crate.add(
+                Person(self.crate, orcid if orcid is not None else "#" + quote(author), properties={"name": author})
+            )
+            wf_file.append_to("creator", author_entitity)
 
     def add_workflow_files(self):
         """
         Add workflow files to the RO Crate
         """
+        import re
+
         import nf_core.utils
 
         wf_filenames = nf_core.utils.get_wf_files(Path.cwd())
@@ -263,8 +276,15 @@ class ROCrate:
             if fn.endswith(".png"):
                 log.debug(f"Adding workflow image file: {fn}")
                 self.crate.add_jsonld({"@id": Path(fn).name, "@type": ["File", "ImageObject"]})
-                if "metro_map" in fn:
+                if re.search(r"(metro|tube)_?(map)?", fn) and self.crate.mainEntity is not None:
                     log.info(f"Setting main entity image to: {fn}")
+                    # check if image is set in main entity
+                    if self.crate.mainEntity.get("image"):
+                        log.info(
+                            f"Main entity already has an image: {self.crate.mainEntity.get('image')}, replacing it with: {fn}"
+                        )
+                    else:
+                        log.info(f"Setting main entity image to: {fn}")
                     self.crate.mainEntity.append_to("image", {"@id": Path(fn).name})
                 continue
             if fn.endswith(".md"):
