@@ -1,5 +1,4 @@
-""" Test the nf-core rocrate command """
-
+"""Test the nf-core pipelines rocrate command"""
 
 import shutil
 import tempfile
@@ -9,8 +8,9 @@ from pathlib import Path
 import rocrate.rocrate
 from git import Repo
 
-import nf_core.create
-import nf_core.rocrate
+import nf_core.pipelines.create
+import nf_core.pipelines.create.create
+import nf_core.pipelines.rocrate
 import nf_core.utils
 
 
@@ -25,15 +25,14 @@ class TestROCrate(unittest.TestCase):
 
         self.tmp_dir = Path(tempfile.mkdtemp())
         self.test_pipeline_dir = Path(self.tmp_dir, "nf-core-testpipeline")
-        self.create_obj = nf_core.create.PipelineCreate(
+        self.create_obj = nf_core.pipelines.create.create.PipelineCreate(
             name="testpipeline",
             description="This is a test pipeline",
             author="Test McTestFace",
-            outdir=self.test_pipeline_dir,
+            outdir=str(self.test_pipeline_dir),
             version="1.0.0",
             no_git=False,
             force=True,
-            plain=True,
         )
         self.create_obj.init_pipeline()
 
@@ -54,7 +53,7 @@ class TestROCrate(unittest.TestCase):
         """Run the nf-core rocrate command"""
 
         # Run the command
-        self.rocrate_obj = nf_core.rocrate.ROCrate(self.test_pipeline_dir)
+        self.rocrate_obj = nf_core.pipelines.rocrate.ROCrate(self.test_pipeline_dir)
         self.rocrate_obj.create_ro_crate(self.test_pipeline_dir, metadata_path=Path(self.test_pipeline_dir))
 
         # Check that the crate was created

@@ -277,6 +277,27 @@ def pipelines_list(ctx, keywords, sort, json, show_archived):
     stdout.print(list_workflows(keywords, sort, json, show_archived))
 
 
+# nf-core pipelines ro-crate
+def pipelines_ro_crate(ctx, pipeline_dir, json_path, zip_path, pipeline_version) -> None:
+    from nf_core.pipelines.rocrate import ROCrate
+
+    if json_path is None and zip_path is None:
+        log.error("Either `--json_path` or `--zip_path` must be specified.")
+        sys.exit(1)
+    else:
+        pipeline_dir = Path(pipeline_dir)
+        if json_path is not None:
+            json_path = Path(json_path)
+        if zip_path is not None:
+            zip_path = Path(zip_path)
+        try:
+            rocrate_obj = ROCrate(pipeline_dir, pipeline_version)
+            rocrate_obj.create_ro_crate(pipeline_dir, metadata_path=json_path, zip_path=zip_path)
+        except (UserWarning, LookupError, FileNotFoundError) as e:
+            log.error(e)
+            sys.exit(1)
+
+
 # nf-core pipelines sync
 def pipelines_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
     """
