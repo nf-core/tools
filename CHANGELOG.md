@@ -55,6 +55,7 @@
 - Update python:3.12-slim Docker digest to f11725a ([#3071](https://github.com/nf-core/tools/pull/3071))
 - Fix number of arguments for pipelines_create within the command_create function ([#3074](https://github.com/nf-core/tools/pull/3074))
 - Update python:3.12-slim Docker digest to 740d94a ([#3079](https://github.com/nf-core/tools/pull/3079))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.11.1 ([#3091](https://github.com/nf-core/tools/pull/3091))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
