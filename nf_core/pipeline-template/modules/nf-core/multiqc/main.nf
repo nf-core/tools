@@ -16,7 +16,7 @@ process MULTIQC {
     path "*multiqc_report.html", emit: report
     path "*_data"              , emit: data
     path "*_plots"             , optional:true, emit: plots
-    path "versions.yml"        , emit: versions
+    path "versions.yml"        , emit: versions, topic: version_yaml
 
     when:
     task.ext.when == null || task.ext.when
