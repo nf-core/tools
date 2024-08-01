@@ -128,10 +128,10 @@ def topicVersionToYAML(topic_version) {
 //
 def workflowVersionToYAML() {
     return """
-    Workflow:
-        $workflow.manifest.name: ${getWorkflowVersion()}
-        Nextflow: $workflow.nextflow.version
-    """.stripIndent().trim()
+    |Workflow:
+    |  $workflow.manifest.name: ${getWorkflowVersion()}
+    |  Nextflow: $workflow.nextflow.version
+    """.stripMargin().trim()
 }
 
 //
