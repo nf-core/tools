@@ -11,3 +11,4 @@ skip_features:
   - github_badges
   - igenomes
   - nf_core_configs
+  - code_linters

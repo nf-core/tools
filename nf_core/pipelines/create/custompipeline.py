@@ -41,6 +41,16 @@ If you are likely to be running nf-core pipelines regularly it is a good idea to
 For more information about nf-core configuration profiles, see the [nf-core/configs repository](https://github.com/nf-core/configs)
 """
 
+markdown_code_linters = """
+Pipelines include code linters to check the formatting of your code in order to harmonize code styles between developers.
+Linters will check all non-ignored files, e.g., JSON, YAML, Nextlow or Python files in your repository.
+The available code linters are:
+
+- pre-commit (https://pre-commit.com/): used to run all code-linters on every PR and on ever commit if you run `pre-commit install` to install it in your local repository.
+- editor-config (https://github.com/editorconfig-checker/editorconfig-checker): checks rules such as indentation or trailing spaces.
+- prettier (https://github.com/prettier/prettier): enforces a consistent style (indentation, quoting, line length, etc).
+"""
+
 
 class CustomPipeline(Screen):
     """Select if the pipeline will use genomic data."""
@@ -79,6 +89,12 @@ class CustomPipeline(Screen):
                 "Add configuration files",
                 "The pipeline will include configuration profiles containing custom parameters requried to run nf-core pipelines at different institutions",
                 "nf_core_configs",
+            ),
+            PipelineFeature(
+                markdown_code_linters,
+                "Use code linters",
+                "The pipeline will include code linters and CI tests to lint your code: pre-commit, editor-config and prettier.",
+                "code_linters",
             ),
             classes="features-container",
         )
