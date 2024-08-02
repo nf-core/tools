@@ -362,6 +362,8 @@
 
 ### Modules
 
+- `nf-core modules list` now works on pipeline repos as well as module repos
+
 ### Subworkflows
 
 - Fix bug: missing subworkflow name when using `nf-core subworkflows create` ([#2435](https://github.com/nf-core/tools/pull/2435))

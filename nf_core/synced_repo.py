@@ -9,6 +9,7 @@ from typing import Dict
 import git
 from git.exc import GitCommandError
 
+from nf_core.components.components_utils import get_repo_info
 from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
@@ -124,10 +125,7 @@ class SyncedRepo:
         self.setup_local_repo(remote_url, branch, hide_progress)
 
         config_fn, repo_config = load_tools_config(self.local_repo_dir)
-        try:
-            self.repo_path = repo_config["org_path"]
-        except KeyError:
-            raise UserWarning(f"'org_path' key not present in {config_fn.name}")
+        _, self.repo_type, self.repo_path = get_repo_info(self.local_repo_dir, use_prompt=True)
 
         # Verify that the repo seems to be correctly configured
         if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
