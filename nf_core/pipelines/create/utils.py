@@ -65,7 +65,7 @@ class CreateConfig(BaseModel):
             if not re.match(r"^[a-z]+$", v):
                 raise ValueError("Must be lowercase without punctuation.")
         else:
-            if not re.match(r"^[a-zA-Z-_]+$", v):
+            if not re.match(r"^[a-zA-Z-_0-9]+$", v):
                 raise ValueError("Must not contain special characters. Only '-' or '_' are allowed.")
         return v
 
