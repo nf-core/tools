@@ -154,7 +154,6 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Opti
                     subworkflows.append(name.lower())
 
     if Path(subworkflow_dir, "meta.yml").exists():
-        modules = []
         with open(Path(subworkflow_dir, "meta.yml")) as fh:
             meta = yaml.safe_load(fh)
             if "components" not in meta:
@@ -162,7 +161,7 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Opti
             components = meta.get("components")
             component_list = []
             for component in components:
-                if component not in subworkflows:
+                if component not in subworkflows and component in [d["name"] for d in modules]:
                     if isinstance(component, str):
                         comp_dict = {"name": component, "org_path": None, "git_remote": None}
                     else:
@@ -173,5 +172,5 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Opti
                             "git_remote": component[name]["git_remote"],
                         }
                     component_list.append(comp_dict)
-            modules.extend(component_list)
+            modules = component_list
     return modules, subworkflows
