@@ -101,6 +101,7 @@ class PipelineCreate:
                 ".prettierrc.yml",
                 ".github/workflows/fix-linting.yml",
             ],
+            "citations": ["CITATIONS.md", "assets/methods_description_template.yml"],
         }
         # Get list of files we're skipping with the supplied skip keys
         self.skip_paths = set(sp for k in skip_paths for sp in skippable_paths[k])
@@ -210,6 +211,7 @@ class PipelineCreate:
             "igenomes": {"file": True, "content": True},
             "nf_core_configs": {"file": False, "content": True},
             "code_linters": {"file": True, "content": True},
+            "citations": {"file": True, "content": True},
         }
 
         # Set the parameters for the jinja template

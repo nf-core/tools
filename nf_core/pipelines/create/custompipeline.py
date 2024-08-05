@@ -51,6 +51,13 @@ The available code linters are:
 - prettier (https://github.com/prettier/prettier): enforces a consistent style (indentation, quoting, line length, etc).
 """
 
+markdown_citations = """
+If adding citations, the pipeline template will contain a `CITATIONS.md` file to add the citations of all tools used in the pipeline.
+
+Additionally, it will include a YAML file (`assets/methods_description_template.yml`) to describe a Materials & Methods section describing the tools used in the pieline,
+and the logics to add this section to the output MultiQC report (if the report is generated).
+"""
+
 
 class CustomPipeline(Screen):
     """Select if the pipeline will use genomic data."""
@@ -95,6 +102,12 @@ class CustomPipeline(Screen):
                 "Use code linters",
                 "The pipeline will include code linters and CI tests to lint your code: pre-commit, editor-config and prettier.",
                 "code_linters",
+            ),
+            PipelineFeature(
+                markdown_citations,
+                "Include citations",
+                "Include a CITATIONS.md file to add pipeline tools citations.",
+                "citations",
             ),
             classes="features-container",
         )

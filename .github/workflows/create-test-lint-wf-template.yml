@@ -42,6 +42,7 @@ jobs:
           - "template_skip_igenomes.yml"
           - "template_skip_ci.yml"
           - "template_skip_code_linters.yml"
+          - "template_skip_citations.yml"
         runner:
           # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
           - ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
@@ -106,6 +107,10 @@ jobs:
       - name: Create template skip code_linters
         run: |
           printf "org: my-prefix\nskip: code_linters" > create-test-lint-wf/template_skip_code_linters.yml
+
+      - name: Create template skip citations
+        run: |
+          printf "org: my-prefix\nskip: citations" > create-test-lint-wf/template_skip_citations.yml
 
       # Create a pipeline from the template
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
