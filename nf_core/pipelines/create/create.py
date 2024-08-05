@@ -101,7 +101,7 @@ class PipelineCreate:
                 ".prettierrc.yml",
                 ".github/workflows/fix-linting.yml",
             ],
-            "citations": ["CITATIONS.md", "assets/methods_description_template.yml"],
+            "citations": ["assets/methods_description_template.yml"],
         }
         # Get list of files we're skipping with the supplied skip keys
         self.skip_paths = set(sp for k in skip_paths for sp in skippable_paths[k])
