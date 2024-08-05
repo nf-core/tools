@@ -7,6 +7,7 @@ from pathlib import Path
 import git
 import jinja2
 import yaml
+import itertools
 
 import nf_core.pipelines.create.create
 from nf_core.pipelines.create.utils import load_features_yaml
@@ -15,6 +16,7 @@ from ..utils import TEST_DATA_DIR, with_temporary_folder
 
 PIPELINE_TEMPLATE_YML = TEST_DATA_DIR / "pipeline_create_template.yml"
 PIPELINE_TEMPLATE_YML_SKIP = TEST_DATA_DIR / "pipeline_create_template_skip.yml"
+PIPELINE_TEMPLATE = Path(nf_core.__file__).parent / "pipeline-template"
 
 
 class NfcoreCreateTest(unittest.TestCase):
@@ -134,3 +136,40 @@ class NfcoreCreateTest(unittest.TestCase):
         assert not (pipeline.outdir / ".github").exists()
         assert not (pipeline.outdir / "conf" / "igenomes.config").exists()
         assert not (pipeline.outdir / ".editorconfig").exists()
+
+    def test_template_customisation_all_files_grouping(self):
+        """Test that all pipeline template files are included in a pipeline customisation group."""
+        create_obj = nf_core.pipelines.create.create.PipelineCreate(
+            template_config=PIPELINE_TEMPLATE_YML_SKIP,
+            default_branch=self.default_branch,
+        )
+        all_skippable_paths = itertools.chain(*[sp for sp in create_obj.skippable_paths.values()])
+        for _, _, files in PIPELINE_TEMPLATE.walk():
+            for file in files:
+                str_path = str(Path(file).relative_to(PIPELINE_TEMPLATE))
+                assert str_path in all_skippable_paths, f"Template file `{str_path}` not present in a group for pipeline customisation `PipelineCreate.skippable_paths`."
+
+    def test_template_customisation_all_template_areas(self):
+        """Check that all groups in `skippable_paths` are template areas."""
+        create_obj = nf_core.pipelines.create.create.PipelineCreate(
+            template_config=PIPELINE_TEMPLATE_YML_SKIP,
+            default_branch=self.default_branch,
+        )
+        for area in create_obj.skippable_paths.keys():
+            if area != "is_nfcore":
+                assert area in create_obj.template_areas.keys(), f"Customisation template group `{area}` not present in `PipelineCreate.template_areas`."
+
+    def test_template_customisation_all_features_tested(self):
+        "Check that all customisation groups are tested on CI."
+        create_obj = nf_core.pipelines.create.create.PipelineCreate(
+            template_config=PIPELINE_TEMPLATE_YML_SKIP,
+            default_branch=self.default_branch,
+        )
+        with open(PIPELINE_TEMPLATE_YML_SKIP) as fh:
+            skip_yaml = yaml.safe_load(fh)
+        with open(Path(nf_core.__file__).parent.parent / ".github" / "workflows" / "create-test-lint-wf-template.yml") as fh:
+            ci_workflow = yaml.safe_load(fh)
+        for area in create_obj.skippable_paths.keys():
+            assert area in skip_yaml["skip_features"], f"Customisation template group `{area}` not tested in `tests/data/pipeline_create_template_skip.yml`."
+            if area != "github":
+                assert f"template_skip_{area}.yml" in ci_workflow["jobs"]["RunTestWorkflow"]["strategy"]["matrix"]["TEMPLATE"], f"Customisation template group `{area}` not tested in `create-test-lint-wf-template.yml` github workflow."
