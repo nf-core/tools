@@ -218,6 +218,11 @@ class ROCrate:
         wf_file.append_to("dateCreated", self.crate.root_dataset.get("dateCreated", ""), compact=True)
         wf_file.append_to("dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True)
         wf_file.append_to("sdPublisher", {"@id": "https://nf-co.re/"})
+        if self.version.endswith("dev"):
+            url = "dev"
+        else:
+            url = self.version
+        wf_file.append_to("url", {"@id": f"https://nf-co.re/{self.crate.name.replace('nf-core/','')}/{url}/"})
         if self.pipeline_obj.schema_obj is not None:
             log.debug("input value")
 
@@ -225,6 +230,7 @@ class ROCrate:
                 "input"
             ]
             input_value: Dict[str, Union[str, List[str], bool]] = {
+                "@id": "#input",
                 "@type": ["PropertyValueSpecification", "FormalParameter"],
                 "default": schema_input.get("default", ""),
                 "encodingFormat": schema_input.get("mimetype", ""),
@@ -232,9 +238,10 @@ class ROCrate:
                 in self.pipeline_obj.schema_obj.schema["definitions"]["input_output_options"]["required"],
                 "dct:conformsTo": "https://bioschemas.org/types/FormalParameter/1.0-RELEASE",
             }
+            self.crate.add_jsonld(input_value)
             wf_file.append_to(
                 "input",
-                input_value,
+                {"@id": "#input"},
             )
 
         # get keywords from nf-core website
@@ -336,10 +343,10 @@ class ROCrate:
         log.debug(f"Adding {len(wf_filenames)} workflow files")
         for fn in wf_filenames:
             # add nextflow language to .nf and .config files
-            if fn.endswith(".nf") or fn.endswith(".config") or fn.endswith(".nf.test"):
-                log.debug(f"Adding workflow file: {fn}")
-                self.crate.add_file(fn, properties={"programmingLanguage": {"@id": "#nextflow"}})
-                continue
+            # if fn.endswith(".nf") or fn.endswith(".config") or fn.endswith(".nf.test") and not fn.endswith("main.nf"):
+            #     log.debug(f"Adding workflow file: {fn}")
+            #     self.crate.add_file(fn, properties={"programmingLanguage": {"@id": "#nextflow"}})
+            #     continue
             if fn.endswith(".png"):
                 log.debug(f"Adding workflow image file: {fn}")
                 self.crate.add_jsonld({"@id": fn, "@type": ["File", "ImageObject"]})
@@ -359,10 +366,10 @@ class ROCrate:
                 log.debug(f"Adding workflow file: {fn}")
                 self.crate.add_file(fn, properties={"encodingFormat": "text/markdown"})
                 continue
-            else:
-                log.debug(f"Adding workflow file: {fn}")
-                self.crate.add_file(fn)
-                continue
+            # else:
+            #     log.debug(f"Adding workflow file: {fn}")
+            #     self.crate.add_file(fn)
+            #     continue
 
     def set_crate_paths(self, path: Path) -> None:
         """Given a pipeline name, directory, or path, set wf_crate_filename"""
