@@ -312,7 +312,7 @@ class ModulesDiffer:
 
         patches = {}
         i = 0
-        patch_lines: list[str] = []
+        patch_lines: List[str] = []
         key = "preamble"
         while i < len(lines):
             line = lines[i]
