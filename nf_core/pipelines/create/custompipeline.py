@@ -51,6 +51,13 @@ The available code linters are:
 - prettier (https://github.com/prettier/prettier): enforces a consistent style (indentation, quoting, line length, etc).
 """
 
+markdown_gitpod = """
+Gitpod (https://www.gitpod.io/) provides standardized and automated development environments.
+
+Including this to your pipeline will provide an environment with the latest version of nf-core/tools installed and all its requirements.
+This is useful to have all the tools ready for pipeline development.
+"""
+
 
 class CustomPipeline(Screen):
     """Select if the pipeline will use genomic data."""
@@ -95,6 +102,12 @@ class CustomPipeline(Screen):
                 "Use code linters",
                 "The pipeline will include code linters and CI tests to lint your code: pre-commit, editor-config and prettier.",
                 "code_linters",
+            ),
+            PipelineFeature(
+                markdown_gitpod,
+                "Include a gitpod environment",
+                "Include the configuration required to use Gitpod.",
+                "gitpod",
             ),
             classes="features-container",
         )
