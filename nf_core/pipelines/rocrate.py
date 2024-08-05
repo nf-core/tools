@@ -197,10 +197,10 @@ class ROCrate:
             {"@id": "https://nf-co.re/", "@type": "Organization", "name": "nf-core", "url": "https://nf-co.re/"}
         )
 
-        # Add all other files
-        self.add_workflow_files()
         # Set main entity file
         self.set_main_entity("main.nf")
+        # Add all other files
+        self.add_workflow_files()
 
     def set_main_entity(self, main_entity_filename: str):
         """
@@ -342,7 +342,7 @@ class ROCrate:
                 continue
             if fn.endswith(".png"):
                 log.debug(f"Adding workflow image file: {fn}")
-                self.crate.add_jsonld({"@id": Path(fn).name, "@type": ["File", "ImageObject"]})
+                self.crate.add_jsonld({"@id": fn, "@type": ["File", "ImageObject"]})
                 if re.search(r"(metro|tube)_?(map)?", fn) and self.crate.mainEntity is not None:
                     log.info(f"Setting main entity image to: {fn}")
                     # check if image is set in main entity
@@ -352,6 +352,7 @@ class ROCrate:
                         )
                     else:
                         log.info(f"Setting main entity image to: {fn}")
+                    self.crate.update_jsonld({"@id": "#" + fn, "about": {"@id": self.crate.mainEntity.id}})
                     self.crate.mainEntity.append_to("image", {"@id": Path(fn).name})
                 continue
             if fn.endswith(".md"):
