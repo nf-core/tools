@@ -67,8 +67,8 @@ class TestROCrate(unittest.TestCase):
         for entity in entities:
             entity_json = entity.as_jsonld()
             if entity_json["@id"] == "./":
-                self.assertEqual(entity_json.get("name"), "Research Object Crate for nf-core/testpipeline")
-                self.assertEqual(entity_json["mainEntity"], {"@id": "#main.nf"})
+                self.assertEqual(entity_json.get("name"), "nf-core/testpipeline")
+                self.assertEqual(entity_json["mainEntity"], {"@id": "main.nf"})
             elif entity_json["@id"] == "#main.nf":
                 self.assertEqual(entity_json["programmingLanguage"], [{"@id": "#nextflow"}])
                 self.assertEqual(entity_json["image"], [{"@id": "nf-core-testpipeline_metro_map.png"}])
