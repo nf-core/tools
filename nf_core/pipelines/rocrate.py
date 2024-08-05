@@ -97,9 +97,9 @@ class ROCrate:
 
         # Save just the JSON metadata file
         if metadata_path is not None:
-            log.info(f"Saving metadata file '{metadata_path}'")
+            log.info(f"Saving metadata file to '{metadata_path}'")
             # Save the crate to a temporary directory
-            tmpdir = Path(tempfile.mkdtemp(), "wf")
+            tmpdir = Path(tempfile.TemporaryDirectory().name)
             self.crate.write(tmpdir)
             # Now save just the JSON file
             crate_json_fn = Path(tmpdir, "ro-crate-metadata.json")
@@ -198,7 +198,6 @@ class ROCrate:
 
         # Add all other files
         self.add_workflow_files()
-
         # Set main entity file
         self.set_main_entity("main.nf")
 
@@ -215,7 +214,7 @@ class ROCrate:
         wf_file.append_to("programmingLanguage", {"@id": "#nextflow"})
         wf_file.append_to("dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/")
         # add dateCreated and dateModified, based on the current data
-        wf_file.append_to("dateCreated", self.crate.get("dateCreated", ""), compact=True)
+        wf_file.append_to("dateCreated", self.crate.root_dataset.get("dateCreated", ""), compact=True)
         wf_file.append_to("dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True)
         wf_file.append_to("sdPublisher", {"@id": "https://nf-co.re/"})
         if self.pipeline_obj.schema_obj is not None:
@@ -255,11 +254,6 @@ class ROCrate:
 
         wf_file.append_to("license", self.crate.license)
         wf_file.append_to("name", self.crate.name)
-
-        self.crate.add_file(
-            main_entity_filename,
-            properties=wf_file.properties(),
-        )
 
     def add_main_authors(self, wf_file: rocrate.model.entity.Entity) -> None:
         """
@@ -337,12 +331,9 @@ class ROCrate:
 
         wf_filenames = nf_core.utils.get_wf_files(Path.cwd())
         # exclude github action files
-        wf_filenames = [fn for fn in wf_filenames if not fn.startswith(".github/")]
+        wf_filenames = [fn for fn in wf_filenames if not fn.startswith(".github/") and not fn == "main.nf"]
         log.debug(f"Adding {len(wf_filenames)} workflow files")
         for fn in wf_filenames:
-            # skip main.nf
-            if fn == "main.nf":
-                continue
             # add nextflow language to .nf and .config files
             if fn.endswith(".nf") or fn.endswith(".config") or fn.endswith(".nf.test"):
                 log.debug(f"Adding workflow file: {fn}")
