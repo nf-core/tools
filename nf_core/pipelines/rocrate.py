@@ -212,17 +212,20 @@ class ROCrate:
         )
         wf_file = cast(rocrate.model.entity.Entity, wf_file)  # ro-crate is untyped so need to cast type manually
 
-        wf_file.append_to("programmingLanguage", {"@id": "#nextflow"})
-        wf_file.append_to("dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/")
+        wf_file.append_to("programmingLanguage", {"@id": "#nextflow"}, compact=True)
+        wf_file.append_to(
+            "dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/", compact=True
+        )
         # add dateCreated and dateModified, based on the current data
         wf_file.append_to("dateCreated", self.crate.root_dataset.get("dateCreated", ""), compact=True)
         wf_file.append_to("dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True)
-        wf_file.append_to("sdPublisher", {"@id": "https://nf-co.re/"})
+        wf_file.append_to("sdPublisher", {"@id": "https://nf-co.re/"}, compact=True)
         if self.version.endswith("dev"):
             url = "dev"
         else:
             url = self.version
-        wf_file.append_to("url", {"@id": f"https://nf-co.re/{self.crate.name.replace('nf-core/','')}/{url}/"})
+        wf_file.append_to("url", f"https://nf-co.re/{self.crate.name.replace('nf-core/','')}/{url}/", compact=True)
+        wf_file.append_to("version", self.version, compact=True)
         if self.pipeline_obj.schema_obj is not None:
             log.debug("input value")
 
@@ -351,7 +354,6 @@ class ROCrate:
                 log.debug(f"Adding workflow image file: {fn}")
                 self.crate.add_jsonld({"@id": fn, "@type": ["File", "ImageObject"]})
                 if re.search(r"(metro|tube)_?(map)?", fn) and self.crate.mainEntity is not None:
-                    log.info(f"Setting main entity image to: {fn}")
                     # check if image is set in main entity
                     if self.crate.mainEntity.get("image"):
                         log.info(
