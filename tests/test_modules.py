@@ -6,12 +6,13 @@ import shutil
 import unittest
 from pathlib import Path
 
+import pytest
 import requests_cache
 import responses
 import yaml
 
-import nf_core.create
 import nf_core.modules
+import nf_core.pipelines.create.create
 
 from .utils import (
     GITLAB_BRANCH_TEST_BRANCH,
@@ -37,8 +38,8 @@ def create_modules_repo_dummy(tmp_dir):
         fh.writelines(["repository_type: modules", "\n", "org_path: nf-core", "\n"])
     # mock biocontainers and anaconda response
     with responses.RequestsMock() as rsps:
-        mock_anaconda_api_calls(rsps, "bpipe", "0.9.11--hdfd78af_0")
-        mock_biocontainers_api_calls(rsps, "bpipe", "0.9.11--hdfd78af_0")
+        mock_anaconda_api_calls(rsps, "bpipe", "0.9.12--hdfd78af_0")
+        mock_biocontainers_api_calls(rsps, "bpipe", "0.9.12--hdfd78af_0")
         # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
         module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_single", False, False)
         with requests_cache.disabled():
@@ -99,6 +100,7 @@ class TestModules(unittest.TestCase):
 
         # Set up the schema
         self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
+
         # Set up install objects
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
         self.mods_install_old = nf_core.modules.ModuleInstall(
@@ -155,6 +157,10 @@ class TestModules(unittest.TestCase):
         assert modrepo.repo_path == "nf-core"
         assert modrepo.branch == "master"
 
+    @pytest.fixture(autouse=True)
+    def _use_caplog(self, caplog):
+        self.caplog = caplog
+
     ############################################
     # Test of the individual modules commands. #
     ############################################
@@ -201,8 +207,6 @@ class TestModules(unittest.TestCase):
         test_modules_environment_yml_file_not_array,
         test_modules_environment_yml_file_sorted_correctly,
         test_modules_environment_yml_file_sorted_incorrectly,
-        test_modules_incorrect_tags_yml_key,
-        test_modules_incorrect_tags_yml_values,
         test_modules_lint_check_process_labels,
         test_modules_lint_check_url,
         test_modules_lint_empty,
@@ -219,8 +223,6 @@ class TestModules(unittest.TestCase):
         test_modules_meta_yml_incorrect_name,
         test_modules_meta_yml_input_mismatch,
         test_modules_meta_yml_output_mismatch,
-        test_modules_missing_required_tag,
-        test_modules_missing_tags_yml,
         test_modules_missing_test_dir,
         test_modules_missing_test_main_nf,
         test_modules_unused_pytest_files,
@@ -272,6 +274,8 @@ class TestModules(unittest.TestCase):
         test_install_and_update,
         test_install_at_hash_and_update,
         test_install_at_hash_and_update_and_save_diff_to_file,
+        test_install_at_hash_and_update_and_save_diff_to_file_limit_output,
+        test_install_at_hash_and_update_limit_output,
         test_update_all,
         test_update_different_branch_mix_modules_branch_test,
         test_update_different_branch_mixed_modules_main,

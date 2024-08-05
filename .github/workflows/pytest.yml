@@ -142,6 +142,13 @@ jobs:
             exit 1
           fi
 
+      - name: Store snapshot report
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
+        if: always()
+        with:
+          name: Snapshot Report ${{ matrix.test }}
+          path: ./snapshot_report.html
+
       - name: Upload coverage
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
         with:

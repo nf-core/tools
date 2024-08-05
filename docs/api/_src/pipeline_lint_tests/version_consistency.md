@@ -1,5 +1,5 @@
 # version_consistency
 
 ```{eval-rst}
-.. automethod:: nf_core.lint.PipelineLint.version_consistency
+.. automethod:: nf_core.pipelines.lint.PipelineLint.version_consistency
 ```

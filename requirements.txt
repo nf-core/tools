@@ -1,6 +1,7 @@
 click
 filetype
 GitPython
+PyGithub
 jinja2
 jsonschema>=3.0
 markdown>=3.3
@@ -9,14 +10,15 @@ pillow
 pdiff
 pre-commit
 prompt_toolkit>=3.0.3
-pytest-workflow>=2.0.0
-pytest>=7.0.0
+pydantic>=2.2.1
 pyyaml
 questionary>=1.8.0
 refgenie
 requests
 requests_cache
-rich-click>=1.6.1
+rich-click==1.8.*
 rich>=13.3.1
 tabulate
+textual==0.71.0
 trogon
+pdiff

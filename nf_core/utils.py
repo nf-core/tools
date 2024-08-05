@@ -36,6 +36,15 @@ import nf_core
 
 log = logging.getLogger(__name__)
 
+# ASCII nf-core logo
+nfcore_logo = [
+    r"[green]                                          ,--.[grey39]/[green],-.",
+    r"[blue]          ___     __   __   __   ___     [green]/,-._.--~\ ",
+    r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {",
+    r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,",
+    r"[green]                                          `._,._,'",
+]
+
 # Custom style for questionary
 nfcore_question_style = prompt_toolkit.styles.Style(
     [
@@ -569,7 +578,7 @@ class GitHubAPISession(requests_cache.CachedSession):
         """
         Try to fetch a URL, keep retrying if we get a certain return code.
 
-        Used in nf-core sync code because we get 403 errors: too many simultaneous requests
+        Used in nf-core pipelines sync code because we get 403 errors: too many simultaneous requests
         See https://github.com/nf-core/tools/issues/911
         """
         if not self.has_init:
@@ -845,7 +854,7 @@ def prompt_remote_pipeline_name(wfs):
     """Prompt for the pipeline name with questionary
 
     Args:
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         pipeline (str): GitHub repo - username/repo
@@ -925,7 +934,7 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
 
 class SingularityCacheFilePathValidator(questionary.Validator):
     """
-    Validator for file path specified as --singularity-cache-index argument in nf-core download
+    Validator for file path specified as --singularity-cache-index argument in nf-core pipelines download
     """
 
     def validate(self, value):
@@ -945,7 +954,7 @@ def get_repo_releases_branches(pipeline, wfs):
 
     Args:
         pipeline (str): GitHub repo username/repo
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         wf_releases, wf_branches (tuple): Array of releases, Array of branches
@@ -1060,7 +1069,7 @@ def determine_base_dir(directory="."):
         config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
         if config_fn:
             break
-    return directory if base_dir == start_dir else base_dir
+    return directory if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
 
 
 def get_first_available_path(directory, paths):

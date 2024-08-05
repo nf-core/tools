@@ -12,8 +12,8 @@ import pytest
 import requests
 import yaml
 
-import nf_core.create
-import nf_core.schema
+import nf_core.pipelines.create.create
+import nf_core.pipelines.schema
 
 from .utils import with_temporary_file, with_temporary_folder
 
@@ -23,14 +23,14 @@ class TestSchema(unittest.TestCase):
 
     def setUp(self):
         """Create a new PipelineSchema object"""
-        self.schema_obj = nf_core.schema.PipelineSchema()
+        self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
         self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
         # Create a test pipeline in temp directory
         self.tmp_dir = tempfile.mkdtemp()
         self.template_dir = os.path.join(self.tmp_dir, "wf")
-        create_obj = nf_core.create.PipelineCreate(
-            "testpipeline", "", "", outdir=self.template_dir, no_git=True, plain=True
+        create_obj = nf_core.pipelines.create.create.PipelineCreate(
+            "testpipeline", "a description", "Me", outdir=self.template_dir, no_git=True
         )
         create_obj.init_pipeline()
 

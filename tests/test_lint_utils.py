@@ -3,7 +3,7 @@ import shutil
 import git
 import pytest
 
-import nf_core.lint_utils
+import nf_core.pipelines.lint_utils
 
 JSON_WITH_SYNTAX_ERROR = "{'a':1, 1}"
 JSON_MALFORMED = "{'a':1}"
@@ -50,16 +50,16 @@ def git_dir_with_json_syntax_error(temp_git_repo):
 
 
 def test_run_prettier_on_formatted_file(formatted_json):
-    nf_core.lint_utils.run_prettier_on_file(formatted_json)
+    nf_core.pipelines.lint_utils.run_prettier_on_file(formatted_json)
     assert formatted_json.read_text() == JSON_FORMATTED
 
 
 def test_run_prettier_on_malformed_file(malformed_json):
-    nf_core.lint_utils.run_prettier_on_file(malformed_json)
+    nf_core.pipelines.lint_utils.run_prettier_on_file(malformed_json)
     assert malformed_json.read_text() == JSON_FORMATTED
 
 
 def test_run_prettier_on_syntax_error_file(syntax_error_json, caplog):
-    nf_core.lint_utils.run_prettier_on_file(syntax_error_json)
+    nf_core.pipelines.lint_utils.run_prettier_on_file(syntax_error_json)
     expected_critical_log = "SyntaxError: Unexpected token (1:10)"
     assert expected_critical_log in caplog.text

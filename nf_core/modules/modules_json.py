@@ -14,12 +14,12 @@ from git.exc import GitCommandError
 
 import nf_core.utils
 from nf_core.components.components_utils import get_components_to_install
-from nf_core.lint_utils import dump_json_with_prettier
 from nf_core.modules.modules_repo import (
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
     ModulesRepo,
 )
+from nf_core.pipelines.lint_utils import dump_json_with_prettier
 
 from .modules_differ import ModulesDiffer
 
@@ -862,7 +862,7 @@ class ModulesJson:
             install_dir, {}
         )
 
-    def get_modules_json(self):
+    def get_modules_json(self) -> dict:
         """
         Returns a copy of the loaded modules.json
 
@@ -871,7 +871,8 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
-        return copy.deepcopy(self.modules_json)
+
+        return copy.deepcopy(self.modules_json)  # type: ignore
 
     def get_component_version(self, component_type, component_name, repo_url, install_dir):
         """

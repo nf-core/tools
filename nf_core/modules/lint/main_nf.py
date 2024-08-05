@@ -367,14 +367,14 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             # response = _bioconda_package(bp)
             response = nf_core.utils.anaconda_package(bp)
         except LookupError:
-            self.warned.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
+            self.warned.append(("bioconda_version", f"Conda version not specified correctly: {bp}", self.main_nf))
         except ValueError:
-            self.failed.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
+            self.failed.append(("bioconda_version", f"Conda version not specified correctly: {bp}", self.main_nf))
         else:
             # Check that required version is available at all
             if bioconda_version not in response.get("versions"):
                 self.failed.append(
-                    ("bioconda_version", f"Conda package had unknown version: `{bioconda_version}`", self.main_nf)
+                    ("bioconda_version", f"Conda package {bp} had unknown version: `{bioconda_version}`", self.main_nf)
                 )
                 continue  # No need to test for latest version, continue linting
             # Check version is latest available
@@ -423,7 +423,14 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
 
 
 def check_process_labels(self, lines):
-    correct_process_labels = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
+    correct_process_labels = [
+        "process_single",
+        "process_low",
+        "process_medium",
+        "process_high",
+        "process_long",
+        "process_high_memory",
+    ]
     all_labels = [line.strip() for line in lines if line.lstrip().startswith("label ")]
     bad_labels = []
     good_labels = []

@@ -1,8 +1,8 @@
 import re
 from pathlib import Path
 
-import nf_core.create
-import nf_core.lint
+import nf_core.pipelines.create
+import nf_core.pipelines.lint
 
 
 def test_nfcore_yml_pass(self):
@@ -26,7 +26,7 @@ def test_nfcore_yml_fail_repo_type(self):
         new_content = content.replace("repository_type: pipeline", "repository_type: foo")
     with open(nf_core_yml, "w") as fh:
         fh.write(new_content)
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     results = lint_obj.nfcore_yml()
     assert "Repository type in `.nf-core.yml` is not valid." in str(results["failed"])
@@ -44,7 +44,7 @@ def test_nfcore_yml_fail_nfcore_version(self):
         new_content = re.sub(r"nf_core_version:.+", "nf_core_version: foo", content)
     with open(nf_core_yml, "w") as fh:
         fh.write(new_content)
-    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     results = lint_obj.nfcore_yml()
     assert "nf-core version in `.nf-core.yml` is not set to the latest version." in str(results["warned"])

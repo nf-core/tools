@@ -3,12 +3,11 @@
 import os
 import unittest
 from pathlib import Path
-from unittest import mock
 
 import git
 import yaml
 
-import nf_core.create
+import nf_core.pipelines.create.create
 
 from .utils import with_temporary_folder
 
@@ -26,25 +25,24 @@ class NfcoreCreateTest(unittest.TestCase):
         self.default_branch = "default"
 
     def test_pipeline_creation(self):
-        pipeline = nf_core.create.PipelineCreate(
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(
             name=self.pipeline_name,
             description=self.pipeline_description,
             author=self.pipeline_author,
             version=self.pipeline_version,
             no_git=False,
             force=True,
-            plain=True,
             default_branch=self.default_branch,
         )
 
-        assert pipeline.template_params["name"] == self.pipeline_name
-        assert pipeline.template_params["description"] == self.pipeline_description
-        assert pipeline.template_params["author"] == self.pipeline_author
-        assert pipeline.template_params["version"] == self.pipeline_version
+        assert pipeline.config.name == self.pipeline_name
+        assert pipeline.config.description == self.pipeline_description
+        assert pipeline.config.author == self.pipeline_author
+        assert pipeline.config.version == self.pipeline_version
 
     @with_temporary_folder
     def test_pipeline_creation_initiation(self, tmp_path):
-        pipeline = nf_core.create.PipelineCreate(
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(
             name=self.pipeline_name,
             description=self.pipeline_description,
             author=self.pipeline_author,
@@ -52,7 +50,6 @@ class NfcoreCreateTest(unittest.TestCase):
             no_git=False,
             force=True,
             outdir=tmp_path,
-            plain=True,
             default_branch=self.default_branch,
         )
         pipeline.init_pipeline()
@@ -60,20 +57,14 @@ class NfcoreCreateTest(unittest.TestCase):
         assert f" {self.default_branch}\n" in git.Repo.init(pipeline.outdir).git.branch()
         assert not os.path.exists(os.path.join(pipeline.outdir, "pipeline_template.yml"))
         with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
-            assert "template" not in fh.read()
+            assert "template" in fh.read()
 
     @with_temporary_folder
     def test_pipeline_creation_initiation_with_yml(self, tmp_path):
-        pipeline = nf_core.create.PipelineCreate(
-            name=self.pipeline_name,
-            description=self.pipeline_description,
-            author=self.pipeline_author,
-            version=self.pipeline_version,
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(
             no_git=False,
-            force=True,
             outdir=tmp_path,
-            template_yaml_path=PIPELINE_TEMPLATE_YML,
-            plain=True,
+            template_config=PIPELINE_TEMPLATE_YML,
             default_branch=self.default_branch,
         )
         pipeline.init_pipeline()
@@ -86,23 +77,12 @@ class NfcoreCreateTest(unittest.TestCase):
         with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
             nfcore_yml = yaml.safe_load(fh)
             assert "template" in nfcore_yml
-            assert nfcore_yml["template"] == yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text())
+            assert yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text()).items() <= nfcore_yml["template"].items()
 
-    @mock.patch.object(nf_core.create.PipelineCreate, "customize_template")
-    @mock.patch.object(nf_core.create.questionary, "confirm")
     @with_temporary_folder
-    def test_pipeline_creation_initiation_customize_template(self, mock_questionary, mock_customize, tmp_path):
-        mock_questionary.unsafe_ask.return_value = True
-        mock_customize.return_value = {"prefix": "testprefix"}
-        pipeline = nf_core.create.PipelineCreate(
-            name=self.pipeline_name,
-            description=self.pipeline_description,
-            author=self.pipeline_author,
-            version=self.pipeline_version,
-            no_git=False,
-            force=True,
-            outdir=tmp_path,
-            default_branch=self.default_branch,
+    def test_pipeline_creation_initiation_customize_template(self, tmp_path):
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(
+            outdir=tmp_path, template_config=PIPELINE_TEMPLATE_YML, default_branch=self.default_branch
         )
         pipeline.init_pipeline()
         assert os.path.isdir(os.path.join(pipeline.outdir, ".git"))
@@ -114,34 +94,27 @@ class NfcoreCreateTest(unittest.TestCase):
         with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
             nfcore_yml = yaml.safe_load(fh)
             assert "template" in nfcore_yml
-            assert nfcore_yml["template"] == yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text())
+            assert yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text()).items() <= nfcore_yml["template"].items()
 
     @with_temporary_folder
     def test_pipeline_creation_with_yml_skip(self, tmp_path):
-        pipeline = nf_core.create.PipelineCreate(
-            name=self.pipeline_name,
-            description=self.pipeline_description,
-            author=self.pipeline_author,
-            version=self.pipeline_version,
-            no_git=False,
-            force=True,
+        pipeline = nf_core.pipelines.create.create.PipelineCreate(
             outdir=tmp_path,
-            template_yaml_path=PIPELINE_TEMPLATE_YML_SKIP,
-            plain=True,
+            template_config=PIPELINE_TEMPLATE_YML_SKIP,
             default_branch=self.default_branch,
         )
         pipeline.init_pipeline()
-        assert not os.path.isdir(os.path.join(pipeline.outdir, ".git"))
 
         # Check pipeline template yml has been dumped to `.nf-core.yml` and matches input
-        assert not os.path.exists(os.path.join(pipeline.outdir, "pipeline_template.yml"))
-        assert os.path.exists(os.path.join(pipeline.outdir, ".nf-core.yml"))
-        with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
+        assert not (pipeline.outdir / "pipeline_template.yml").exists()
+        assert (pipeline.outdir / ".nf-core.yml").exists()
+        with open(pipeline.outdir / ".nf-core.yml") as fh:
             nfcore_yml = yaml.safe_load(fh)
             assert "template" in nfcore_yml
-            assert nfcore_yml["template"] == yaml.safe_load(PIPELINE_TEMPLATE_YML_SKIP.read_text())
+            assert yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text()).items() <= nfcore_yml["template"].items()
 
         # Check that some of the skipped files are not present
-        assert not os.path.exists(os.path.join(pipeline.outdir, "CODE_OF_CONDUCT.md"))
-        assert not os.path.exists(os.path.join(pipeline.outdir, ".github"))
-        assert not os.path.exists(os.path.join(pipeline.outdir, "conf", "igenomes.config"))
+        assert not (pipeline.outdir / "CODE_OF_CONDUCT.md").exists()
+        assert not (pipeline.outdir / ".github").exists()
+        assert not (pipeline.outdir / "conf" / "igenomes.config").exists()
+        assert not (pipeline.outdir / ".editorconfig").exists()
