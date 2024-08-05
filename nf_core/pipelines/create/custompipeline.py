@@ -54,7 +54,7 @@ The available code linters are:
 markdown_citations = """
 If adding citations, the pipeline template will contain a `CITATIONS.md` file to add the citations of all tools used in the pipeline.
 
-Additionally, it will include a YAML file (`assets/methods_description_template.yml`) to describe a Materials & Methods section describing the tools used in the pieline,
+Additionally, it will include a YAML file (`assets/methods_description_template.yml`) to add a Materials & Methods section describing the tools used in the pieline,
 and the logics to add this section to the output MultiQC report (if the report is generated).
 """
 
@@ -106,7 +106,7 @@ class CustomPipeline(Screen):
             PipelineFeature(
                 markdown_citations,
                 "Include citations",
-                "Include a CITATIONS.md file to add pipeline tools citations.",
+                "Include pipeline tools citations in CITATIONS.md and a method description in the MultiQC report (if enabled).",
                 "citations",
             ),
             classes="features-container",
