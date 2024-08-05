@@ -591,9 +591,16 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
     "--pipeline_version",
     type=str,
     help="Version of pipeline to use for RO Crate",
+    default="",
 )
 @click.pass_context
-def ro_crate(ctx, pipeline_dir, json_path, zip_path, pipeline_version):
+def ro_crate(
+    ctx,
+    pipeline_dir: str,
+    json_path: str,
+    zip_path: str,
+    pipeline_version: str,
+):
     """
     Make an Research Object Crate
     """

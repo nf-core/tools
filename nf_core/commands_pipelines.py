@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Optional, Union
 
 import rich
 
@@ -278,7 +279,13 @@ def pipelines_list(ctx, keywords, sort, json, show_archived):
 
 
 # nf-core pipelines ro-crate
-def pipelines_ro_crate(ctx, pipeline_dir, json_path, zip_path, pipeline_version) -> None:
+def pipelines_ro_crate(
+    ctx,
+    pipeline_dir: Union[str, Path],
+    json_path: Optional[Union[str, Path]],
+    zip_path: Optional[Union[str, Path]],
+    pipeline_version: str,
+) -> None:
     from nf_core.pipelines.rocrate import ROCrate
 
     if json_path is None and zip_path is None:

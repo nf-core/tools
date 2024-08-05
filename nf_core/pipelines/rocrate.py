@@ -2,18 +2,22 @@
 """Code to deal with pipeline RO (Research Object) Crates"""
 
 import logging
+import os
+import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Set, Union, cast
+from typing import Dict, List, Optional, Set, Union, cast
 from urllib.parse import quote
 
 import requests
 import rocrate.model.entity
 import rocrate.rocrate
 from git import GitCommandError, InvalidGitRepositoryError
+from rich.progress import BarColumn, Progress
 from rocrate.model.person import Person
 
+from nf_core.pipelines.schema import PipelineSchema
 from nf_core.utils import Pipeline
 
 log = logging.getLogger(__name__)
@@ -37,10 +41,14 @@ class ROCrate:
 
         is_pipeline_directory(pipeline_dir)
         self.pipeline_dir = pipeline_dir
-        self.version = version
+        self.version: str = version
         self.crate: rocrate.rocrate.ROCrate
         self.pipeline_obj = Pipeline(str(self.pipeline_dir))
         self.pipeline_obj._load()
+        self.pipeline_obj.schema_obj = PipelineSchema()
+        # Assume we're in a pipeline dir root if schema path not set
+        self.pipeline_obj.schema_obj.get_schema_path(self.pipeline_dir)
+        self.pipeline_obj.schema_obj.load_schema()
 
         setup_requests_cachedir()
 
@@ -70,7 +78,7 @@ class ROCrate:
         os.chdir(self.pipeline_dir)
 
         # Check that the checkout pipeline version is the same as the requested version
-        if self.version:
+        if self.version != "":
             if self.version != self.pipeline_obj.nf_config.get("manifest.version"):
                 # using git checkout to get the requested version
                 log.info(f"Checking out pipeline version {self.version}")
@@ -84,7 +92,7 @@ class ROCrate:
                 except GitCommandError:
                     log.error(f"Could not checkout version {self.version}")
                     sys.exit(1)
-
+        self.version = self.pipeline_obj.nf_config.get("manifest.version", "")
         self.make_workflow_ro_crate()
 
         # Save just the JSON metadata file
@@ -167,38 +175,67 @@ class ROCrate:
         except FileNotFoundError:
             log.error(f"Could not find LICENSE file in {self.pipeline_dir}")
 
-        # add doi as identifier
-        self.crate.name = f'Research Object Crate for {self.pipeline_obj.nf_config.get("manifest.name")}'
+        self.crate.name = self.pipeline_obj.nf_config.get("manifest.name")
 
-        if "dev" in self.pipeline_obj.nf_config.get("manifest.version", ""):
+        self.crate.root_dataset.append_to("version", self.version, compact=True)
+
+        if "dev" in self.version:
             self.crate.CreativeWorkStatus = "InProgress"
         else:
             self.crate.CreativeWorkStatus = "Stable"
+            tags = self.pipeline_obj.repo.tags
+            if tags:
+                # get the tag for this version
+                for tag in tags:
+                    if tag.commit.hexsha == self.pipeline_obj.repo.head.commit.hexsha:
+                        self.crate.root_dataset.append_to(
+                            "dateCreated", tag.commit.committed_datetime.strftime("%Y-%m-%dT%H:%M:%SZ"), compact=True
+                        )
 
-        # Set main entity file
-        self.set_main_entity("main.nf")
+        self.crate.add_jsonld(
+            {"@id": "https://nf-co.re/", "@type": "Organization", "name": "nf-core", "url": "https://nf-co.re/"}
+        )
 
         # Add all other files
         self.add_workflow_files()
+
+        # Set main entity file
+        self.set_main_entity("main.nf")
 
     def set_main_entity(self, main_entity_filename: str):
         """
         Set the main.nf as the main entity of the crate and add necessary metadata
         """
-        wf_file = self.crate.add_jsonld(
-            {
-                "@id": main_entity_filename,
-                "@type": ["File", "SoftwareSourceCode", "ComputationalWorkflow"],
-            },
-        )  # FIXME: this adds "#main.nf" to the crate, but it should be "main.nf"
+        wf_file = self.crate.add_file(
+            main_entity_filename,
+            properties={"@type": ["File", "SoftwareSourceCode", "ComputationalWorkflow"]},
+        )
         wf_file = cast(rocrate.model.entity.Entity, wf_file)  # ro-crate is untyped so need to cast type manually
-        self.crate.mainEntity = wf_file
-        self.add_main_authors(wf_file)
+
         wf_file.append_to("programmingLanguage", {"@id": "#nextflow"})
         wf_file.append_to("dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/")
         # add dateCreated and dateModified, based on the current data
-        wf_file.append_to("dateCreated", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True)
+        wf_file.append_to("dateCreated", self.crate.get("dateCreated", ""), compact=True)
         wf_file.append_to("dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True)
+        wf_file.append_to("sdPublisher", {"@id": "https://nf-co.re/"})
+        if self.pipeline_obj.schema_obj is not None:
+            log.debug("input value")
+
+            schema_input = self.pipeline_obj.schema_obj.schema["definitions"]["input_output_options"]["properties"][
+                "input"
+            ]
+            input_value: Dict[str, Union[str, List[str], bool]] = {
+                "@type": ["PropertyValueSpecification", "FormalParameter"],
+                "default": schema_input.get("default", ""),
+                "encodingFormat": schema_input.get("mimetype", ""),
+                "valueRequired": "input"
+                in self.pipeline_obj.schema_obj.schema["definitions"]["input_output_options"]["required"],
+                "dct:conformsTo": "https://bioschemas.org/types/FormalParameter/1.0-RELEASE",
+            }
+            wf_file.append_to(
+                "input",
+                input_value,
+            )
 
         # get keywords from nf-core website
         remote_workflows = requests.get("https://nf-co.re/pipelines.json").json()["remote_workflows"]
@@ -212,6 +249,18 @@ class ROCrate:
         log.debug(f"Adding topics: {topics}")
         wf_file.append_to("keywords", topics)
 
+        self.add_main_authors(wf_file)
+
+        self.crate.mainEntity = wf_file
+
+        wf_file.append_to("license", self.crate.license)
+        wf_file.append_to("name", self.crate.name)
+
+        self.crate.add_file(
+            main_entity_filename,
+            properties=wf_file.properties(),
+        )
+
     def add_main_authors(self, wf_file: rocrate.model.entity.Entity) -> None:
         """
         Add workflow authors to the crate
@@ -222,43 +271,61 @@ class ROCrate:
             authors = self.pipeline_obj.nf_config["manifest.author"].split(",")
             # remove spaces
             authors = [a.strip() for a in authors]
+            # add manifest authors as maintainer to crate
+
         except KeyError:
             log.error("No author field found in manifest of nextflow.config")
             return
         # look at git contributors for author names
         try:
-            contributors: Set[str] = set()
+            git_contributors: Set[str] = set()
 
             commits_touching_path = list(self.pipeline_obj.repo.iter_commits(paths="main.nf"))
 
             for commit in commits_touching_path:
                 if commit.author.name is not None:
-                    contributors.add(commit.author.name)
+                    git_contributors.add(commit.author.name)
             # exclude bots
-            contributors = {c for c in contributors if not c.endswith("bot") and c != "Travis CI User"}
+            contributors = {c for c in git_contributors if not c.endswith("bot") and c != "Travis CI User"}
 
             log.debug(f"Found {len(contributors)} git authors")
-            for git_author in contributors:
-                git_author = requests.get(f"https://api.github.com/users/{git_author}").json().get("name", git_author)
-                if git_author is None:
-                    log.debug(f"Could not find name for {git_author}")
-                    continue
 
-                if git_author not in authors:
-                    authors.append(git_author)
+            progress_bar = Progress(
+                "[bold blue]{task.description}",
+                BarColumn(bar_width=None),
+                "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
+                transient=True,
+                disable=os.environ.get("HIDE_PROGRESS", None) is not None,
+            )
+            with progress_bar:
+                bump_progress = progress_bar.add_task(
+                    "Searching for author names on GitHub", total=len(contributors), test_name=""
+                )
+
+                for git_author in contributors:
+                    progress_bar.update(bump_progress, advance=1, test_name=git_author)
+                    git_author = (
+                        requests.get(f"https://api.github.com/users/{git_author}").json().get("name", git_author)
+                    )
+                    if git_author is None:
+                        log.debug(f"Could not find name for {git_author}")
+                        continue
+
         except AttributeError:
-            log.debug("Could not find git authors")
+            log.debug("Could not find git contributors")
 
         # remove usernames (just keep names with spaces)
-        authors = [c for c in authors if " " in c]
+        named_contributors = {c for c in contributors if " " in c}
 
-        for author in authors:
+        for author in named_contributors:
             log.debug(f"Adding author: {author}")
             orcid = get_orcid(author)
             author_entitity = self.crate.add(
                 Person(self.crate, orcid if orcid is not None else "#" + quote(author), properties={"name": author})
             )
             wf_file.append_to("creator", author_entitity)
+            if author in authors:
+                wf_file.append_to("maintainer", author_entitity)
 
     def add_workflow_files(self):
         """
@@ -307,8 +374,6 @@ class ROCrate:
     def set_crate_paths(self, path: Path) -> None:
         """Given a pipeline name, directory, or path, set wf_crate_filename"""
 
-        path = Path(path)
-
         if path.is_dir():
             self.pipeline_dir = path
             # wf_crate_filename = path / "ro-crate-metadata.json"
@@ -321,7 +386,7 @@ class ROCrate:
             raise OSError(f"Could not find pipeline '{path}'")
 
 
-def get_orcid(name: str) -> Union[str, None]:
+def get_orcid(name: str) -> Optional[str]:
     """
     Get the ORCID for a given name
 
