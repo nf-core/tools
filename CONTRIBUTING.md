@@ -145,4 +145,4 @@ If the Textual snapshots (run by `tests/test_crate_app.py`) fail, an HTML report
 If you are sure that these changes are correct, you can automatically update the snapshots form the PR by posting a comment with the magic words `@nf-core-bot regenerate snapshots`.
 
 > [!WARNING]
-> Please always check this report to make sure that the changes are expected.
+> Please always check the HTML report to make sure that the changes are expected.

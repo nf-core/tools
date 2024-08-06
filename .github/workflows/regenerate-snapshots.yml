@@ -8,7 +8,7 @@ jobs:
     # Only run if comment is on a PR with the main repo, and if it contains the magic keywords
     if: >
       contains(github.event.comment.html_url, '/pull/') &&
-      contains(github.event.comment.body, '@nf-core-bot regenerate snapshots') &&
+      contains(github.event.comment.body, '@nf-core-bot update snapshots') &&
       github.repository == 'nf-core/tools'
     runs-on: ubuntu-latest
     steps:
@@ -36,6 +36,7 @@ jobs:
         uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
         with:
           python-version: "3.12"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -45,7 +46,7 @@ jobs:
       - name: Run pytest to regenerate snapshots
         id: pytest
         run: |
-          python3 -m pytest tests/test_create_app.py --snapshot-update --color=yes --cov --durations=0
+          python3 -m pytest tests/test_create_app.py --snapshot-update --color=yes  --durations=0
         continue-on-error: true
 
       # indication that the run has finished
