@@ -125,3 +125,24 @@ To get started:
 Devcontainer specs:
 
 - [DevContainer config](.devcontainer/devcontainer.json)
+
+## nf-core-bot
+
+nf-core has a bot which you can use to perform certain actions on a PR.
+
+- Fix linting:
+
+If the linting tests is failing on a PR to nf-core/tools, you can post a comment with the magic words `@nf-core-bot fix linting`. The bot will try to fix the linting, push to your branch, and react to the comment if the fix was successful or not.
+
+- Update the `CHANGELOG.md`:
+
+The nf-core-bot runs automatically on every PR updating the `CHANGELOG.md` if it was not updated. It will add the new change using the title of your PR.
+If the action didn't run automatically, or you want to provide a different title, you can post a comment with `@nf-core-bot changelog`, optionally followed by the description that you want to add to the changelog.
+
+- Update Textual snapshots:
+
+If the Textual snapshots (run by `tests/test_crate_app.py`) fail, an HTML report is generated and uploaded as an artifact.
+If you are sure that these changes are correct, you can automatically update the snapshots form the PR by posting a comment with the magic words `@nf-core-bot regenerate snapshots`.
+
+> [!WARNING]
+> Please always check this report to make sure that the changes are expected.
