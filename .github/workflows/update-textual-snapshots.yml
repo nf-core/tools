@@ -1,10 +1,10 @@
-name: Regenerate Textual snapshots from a comment
+name: Update Textual snapshots from a comment
 on:
   issue_comment:
     types: [created]
 
 jobs:
-  regenerate-snapshots:
+  update-snapshots:
     # Only run if comment is on a PR with the main repo, and if it contains the magic keywords
     if: >
       contains(github.event.comment.html_url, '/pull/') &&
@@ -43,7 +43,7 @@ jobs:
           python -m pip install --upgrade pip -r requirements-dev.txt
           pip install -e .
 
-      - name: Run pytest to regenerate snapshots
+      - name: Run pytest to update snapshots
         id: pytest
         run: |
           python3 -m pytest tests/test_create_app.py --snapshot-update --color=yes  --durations=0
