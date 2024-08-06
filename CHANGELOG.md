@@ -10,6 +10,7 @@
 - Use filename in code block for `params.yml` ([#3055](https://github.com/nf-core/tools/pull/3055))
 - Remove release announcement for non nf-core pipelines ([#3072](https://github.com/nf-core/tools/pull/3072))
 - add option to exclude code linters for custom pipeline template ([#3084](https://github.com/nf-core/tools/pull/3084))
+- add option to exclude multiqc from pipeline template ([#3103](https://github.com/nf-core/tools/pull/3103))
 
 ### Linting
 
