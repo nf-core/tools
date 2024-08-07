@@ -12,6 +12,7 @@
 - add option to exclude code linters for custom pipeline template ([#3084](https://github.com/nf-core/tools/pull/3084))
 - add option to exclude citations for custom pipeline template ([#3101](https://github.com/nf-core/tools/pull/3101))
 - add option to exclude gitpod for custom pipeline template ([#3100](https://github.com/nf-core/tools/pull/3100))
+- add option to exclude codespaces from pipeline template ([#3105](https://github.com/nf-core/tools/pull/3105))
 
 ### Linting
 
