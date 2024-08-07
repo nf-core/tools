@@ -14,3 +14,4 @@ skip_features:
   - code_linters
   - citations
   - gitpod
+  - multiqc
