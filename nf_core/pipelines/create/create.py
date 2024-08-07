@@ -520,8 +520,10 @@ class PipelineCreate:
 
         # Add multiqc specific configurations
         if not self.jinja_params["multiqc"]:
-            lint_config.setdefault("files_unchanged", []).extend([".github/CONTRIBUTING.md", "assets/sendmail_template.txt"])
-lint_config.setdefault("files_exist", []).extend(["assets/multiqc_config.yml"])
+            lint_config.setdefault("files_unchanged", []).extend(
+                [".github/CONTRIBUTING.md", "assets/sendmail_template.txt"]
+            )
+            lint_config.setdefault("files_exist", []).extend(["assets/multiqc_config.yml"])
             lint_config["multiqc_config"] = False
 
         # If the pipeline is not nf-core
