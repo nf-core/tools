@@ -116,6 +116,7 @@ If you are using a new feature from core Nextflow, you may bump the minimum requ
 ### Images and figures
 
 For overview images and other documents we follow the nf-core [style guidelines and examples](https://nf-co.re/developers/design_guidelines).
+{%- if codespaces %}
 
 ## GitHub Codespaces
 
@@ -131,3 +132,4 @@ To get started:
 Devcontainer specs:
 
 - [DevContainer config](.devcontainer/devcontainer.json)
+  {% endif %}

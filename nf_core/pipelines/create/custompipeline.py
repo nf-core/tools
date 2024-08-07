@@ -65,6 +65,13 @@ Including this to your pipeline will provide an environment with the latest vers
 This is useful to have all the tools ready for pipeline development.
 """
 
+markdown_codespaces = """
+The pipeline will include a devcontainer configuration.
+The devcontainer will create a GitHub Codespaces for Nextflow development with nf-core/tools and Nextflow installed.
+
+Github Codespaces (https://github.com/features/codespaces) is an online developer environment that runs in your browser, complete with VSCode and a terminal.
+"""
+
 
 class CustomPipeline(Screen):
     """Select if the pipeline will use genomic data."""
@@ -121,6 +128,12 @@ class CustomPipeline(Screen):
                 "Include a gitpod environment",
                 "Include the configuration required to use Gitpod.",
                 "gitpod",
+            ),
+            PipelineFeature(
+                markdown_codespaces,
+                "Include GitHub Codespaces",
+                "The pipeline will include a devcontainer configuration for GitHub Codespaces, providing a development environment with nf-core/tools and Nextflow installed.",
+                "codespaces",
             ),
             classes="features-container",
         )
