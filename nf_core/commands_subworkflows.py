@@ -44,24 +44,23 @@ def subworkflows_test(ctx, subworkflow, dir, no_prompts, update, once, profile, 
 
     if migrate_pytest:
         subworkflows_create(ctx, subworkflow, dir, None, False, True)
-    else:
-        try:
-            sw_tester = ComponentsTest(
-                component_type="subworkflows",
-                component_name=subworkflow,
-                directory=dir,
-                no_prompts=no_prompts,
-                update=update,
-                once=once,
-                remote_url=ctx.obj["modules_repo_url"],
-                branch=ctx.obj["modules_repo_branch"],
-                verbose=ctx.obj["verbose"],
-                profile=profile,
-            )
-            sw_tester.run()
-        except (UserWarning, LookupError) as e:
-            log.critical(e)
-            sys.exit(1)
+    try:
+        sw_tester = ComponentsTest(
+            component_type="subworkflows",
+            component_name=subworkflow,
+            directory=dir,
+            no_prompts=no_prompts,
+            update=update,
+            once=once,
+            remote_url=ctx.obj["modules_repo_url"],
+            branch=ctx.obj["modules_repo_branch"],
+            verbose=ctx.obj["verbose"],
+            profile=profile,
+        )
+        sw_tester.run()
+    except (UserWarning, LookupError) as e:
+        log.critical(e)
+        sys.exit(1)
 
 
 def subworkflows_list_remote(ctx, keywords, json):
