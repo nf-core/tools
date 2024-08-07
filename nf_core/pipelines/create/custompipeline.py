@@ -65,6 +65,11 @@ Including this to your pipeline will provide an environment with the latest vers
 This is useful to have all the tools ready for pipeline development.
 """
 
+markdown_changelog = """
+Having a `CHANGELOG.md` file in the pipeline root directory is useful to track the changes added to each version.
+You can read more information on the recommended format here: https://keepachangelog.com/en/1.0.0/
+"""
+
 
 class CustomPipeline(Screen):
     """Select if the pipeline will use genomic data."""
@@ -127,6 +132,12 @@ class CustomPipeline(Screen):
                 "Use multiqc",
                 "The pipeline will include the MultiQC module which generates an HTML report for quality control.",
                 "multiqc",
+            ),
+            PipelineFeature(
+                markdown_changelog,
+                "Add a changelog",
+                "Add a CHANGELOG.md file.",
+                "changelog",
             ),
             classes="features-container",
         )
