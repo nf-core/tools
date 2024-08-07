@@ -12,3 +12,4 @@ skip_features:
   - igenomes
   - nf_core_configs
   - code_linters
+  - gitpod
