@@ -103,6 +103,7 @@ class PipelineCreate:
             ],
             "citations": ["assets/methods_description_template.yml"],
             "gitpod": [".gitpod.yml"],
+            "changelog": ["CHANGELOG.md"],
         }
         # Get list of files we're skipping with the supplied skip keys
         self.skip_paths = set(sp for k in skip_paths for sp in skippable_paths[k])
@@ -214,6 +215,7 @@ class PipelineCreate:
             "code_linters": {"file": True, "content": True},
             "citations": {"file": True, "content": True},
             "gitpod": {"file": True, "content": True},
+            "changelog": {"file": True, "content": False},
         }
 
         # Set the parameters for the jinja template
@@ -508,6 +510,10 @@ class PipelineCreate:
         # Add github badges specific configurations
         if not self.jinja_params["github_badges"] or not self.jinja_params["github"]:
             lint_config["readme"] = ["nextflow_badge"]
+
+        # Add changelog specific configurations
+        if not self.jinja_params["changelog"]:
+            lint_config["files_exist"].extend(["CHANGELOG.md"])
 
         # If the pipeline is not nf-core
         if not self.config.is_nfcore:
