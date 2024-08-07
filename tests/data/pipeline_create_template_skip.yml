@@ -13,3 +13,4 @@ skip_features:
   - nf_core_configs
   - code_linters
   - citations
+  - gitpod

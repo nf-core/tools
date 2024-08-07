@@ -58,6 +58,13 @@ Additionally, it will include a YAML file (`assets/methods_description_template.
 and the logics to add this section to the output MultiQC report (if the report is generated).
 """
 
+markdown_gitpod = """
+Gitpod (https://www.gitpod.io/) provides standardized and automated development environments.
+
+Including this to your pipeline will provide an environment with the latest version of nf-core/tools installed and all its requirements.
+This is useful to have all the tools ready for pipeline development.
+"""
+
 
 class CustomPipeline(Screen):
     """Select if the pipeline will use genomic data."""
@@ -108,6 +115,12 @@ class CustomPipeline(Screen):
                 "Include citations",
                 "Include pipeline tools citations in CITATIONS.md and a method description in the MultiQC report (if enabled).",
                 "citations",
+            ),
+            PipelineFeature(
+                markdown_gitpod,
+                "Include a gitpod environment",
+                "Include the configuration required to use Gitpod.",
+                "gitpod",
             ),
             classes="features-container",
         )
