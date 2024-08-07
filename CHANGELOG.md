@@ -13,6 +13,8 @@
 - add option to exclude citations for custom pipeline template ([#3101](https://github.com/nf-core/tools/pull/3101))
 - add option to exclude gitpod for custom pipeline template ([#3100](https://github.com/nf-core/tools/pull/3100))
 - add option to exclude codespaces from pipeline template ([#3105](https://github.com/nf-core/tools/pull/3105))
+- add option to exclude multiqc from pipeline template ([#3103](https://github.com/nf-core/tools/pull/3103))
+- add option to exclude changelog from custom pipeline template ([#3104](https://github.com/nf-core/tools/pull/3104))
 
 ### Linting
 

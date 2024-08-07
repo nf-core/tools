@@ -123,7 +123,7 @@ workflow PIPELINE_COMPLETION {
     outdir          //    path: Path to output directory where results will be published
     monochrome_logs // boolean: Disable ANSI colour codes in log output
     hook_url        //  string: hook URL for notifications
-    multiqc_report  //  string: Path to MultiQC report
+    {% if multiqc %}multiqc_report  //  string: Path to MultiQC report{% endif %}
 
     main:
 
@@ -134,7 +134,11 @@ workflow PIPELINE_COMPLETION {
     //
     workflow.onComplete {
         if (email || email_on_fail) {
+            {%- if multiqc %}
             completionEmail(summary_params, email, email_on_fail, plaintext_email, outdir, monochrome_logs, multiqc_report.toList())
+            {%- else %}
+            completionEmail(summary_params, email, email_on_fail, plaintext_email, outdir, monochrome_logs, [])
+            {%- endif %}
         }
 
         completionSummary(monochrome_logs)
@@ -206,8 +210,7 @@ def genomeExistsError() {
     }
 }
 {%- endif %}
-
-{%- if citations %}
+{%- if citations or multiqc %}
 //
 // Generate methods description for MultiQC
 //

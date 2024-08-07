@@ -6,7 +6,7 @@ from textual.containers import Center, ScrollableContainer
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown, Switch
 
-from nf_core.pipelines.create.utils import PipelineFeature, markdown_genomes
+from nf_core.pipelines.create.utils import PipelineFeature, markdown_genomes, markdown_multiqc
 
 markdown_ci = """
 Nf-core provides a set of Continuous Integration (CI) tests for Github.
@@ -72,6 +72,11 @@ The devcontainer will create a GitHub Codespaces for Nextflow development with n
 Github Codespaces (https://github.com/features/codespaces) is an online developer environment that runs in your browser, complete with VSCode and a terminal.
 """
 
+markdown_changelog = """
+Having a `CHANGELOG.md` file in the pipeline root directory is useful to track the changes added to each version.
+You can read more information on the recommended format here: https://keepachangelog.com/en/1.0.0/
+"""
+
 
 class CustomPipeline(Screen):
     """Select if the pipeline will use genomic data."""
@@ -134,6 +139,18 @@ class CustomPipeline(Screen):
                 "Include GitHub Codespaces",
                 "The pipeline will include a devcontainer configuration for GitHub Codespaces, providing a development environment with nf-core/tools and Nextflow installed.",
                 "codespaces",
+            ),
+            PipelineFeature(
+                markdown_multiqc,
+                "Use multiqc",
+                "The pipeline will include the MultiQC module which generates an HTML report for quality control.",
+                "multiqc",
+            ),
+            PipelineFeature(
+                markdown_changelog,
+                "Add a changelog",
+                "Add a CHANGELOG.md file.",
+                "changelog",
             ),
             classes="features-container",
         )
