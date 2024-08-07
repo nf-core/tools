@@ -44,6 +44,7 @@ jobs:
           - "template_skip_code_linters.yml"
           - "template_skip_citations.yml"
           - "template_skip_gitpod.yml"
+          - "template_skip_multiqc.yml"
           - "template_skip_changelog.yml"
         runner:
           # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
@@ -117,6 +118,10 @@ jobs:
       - name: Create template skip gitpod
         run: |
           printf "org: my-prefix\nskip: gitpod" > create-test-lint-wf/template_skip_gitpod.yml
+
+      - name: Create template skip multiqc
+        run: |
+          printf "org: my-prefix\nskip: multiqc" > create-test-lint-wf/template_skip_multiqc.yml
 
       - name: Create template skip changelog
         run: |

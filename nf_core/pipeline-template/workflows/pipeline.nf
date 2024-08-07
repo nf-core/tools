@@ -5,11 +5,11 @@
 */
 
 include { FASTQC                 } from '../modules/nf-core/fastqc/main'
-include { MULTIQC                } from '../modules/nf-core/multiqc/main'
+{% if multiqc %}include { MULTIQC                } from '../modules/nf-core/multiqc/main'{% endif %}
 include { paramsSummaryMap       } from 'plugin/nf-validation'
-include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+{% if multiqc %}include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'{% endif %}
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-{% if citations %}include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'{% endif %}
+{% if citations or multiqc %}include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'{% endif %}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -25,7 +25,7 @@ workflow {{ short_name|upper }} {
     main:
 
     ch_versions = Channel.empty()
-    ch_multiqc_files = Channel.empty()
+    {% if multiqc %}ch_multiqc_files = Channel.empty(){% endif %}
 
     //
     // MODULE: Run FastQC
@@ -33,7 +33,7 @@ workflow {{ short_name|upper }} {
     FASTQC (
         ch_samplesheet
     )
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
+    {% if multiqc %}ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}){% endif %}
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
     //
@@ -47,6 +47,7 @@ workflow {{ short_name|upper }} {
             newLine: true
         ).set { ch_collated_versions }
 
+{% if multiqc %}
     //
     // MODULE: MultiQC
     //
@@ -89,9 +90,9 @@ workflow {{ short_name|upper }} {
         ch_multiqc_custom_config.toList(),
         ch_multiqc_logo.toList()
     )
-
+{% endif %}
     emit:
-    multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
+    {%- if multiqc %}multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html{% endif %}
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
 }
 
