@@ -44,6 +44,7 @@ jobs:
           - "template_skip_code_linters.yml"
           - "template_skip_citations.yml"
           - "template_skip_gitpod.yml"
+          - "template_skip_multiqc.yml"
         runner:
           # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
           - ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
@@ -116,6 +117,10 @@ jobs:
       - name: Create template skip gitpod
         run: |
           printf "org: my-prefix\nskip: gitpod" > create-test-lint-wf/template_skip_gitpod.yml
+
+      - name: Create template skip multiqc
+        run: |
+          printf "org: my-prefix\nskip: multiqc" > create-test-lint-wf/template_skip_multiqc.yml
 
       # Create a pipeline from the template
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}

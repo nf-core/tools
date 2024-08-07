@@ -6,7 +6,7 @@ from textual.containers import Center, ScrollableContainer
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown, Switch
 
-from nf_core.pipelines.create.utils import PipelineFeature, markdown_genomes
+from nf_core.pipelines.create.utils import PipelineFeature, markdown_genomes, markdown_multiqc
 
 markdown_ci = """
 Nf-core provides a set of Continuous Integration (CI) tests for Github.
@@ -121,6 +121,12 @@ class CustomPipeline(Screen):
                 "Include a gitpod environment",
                 "Include the configuration required to use Gitpod.",
                 "gitpod",
+            ),
+            PipelineFeature(
+                markdown_multiqc,
+                "Use multiqc",
+                "The pipeline will include the MultiQC module which generates an HTML report for quality control.",
+                "multiqc",
             ),
             classes="features-container",
         )
