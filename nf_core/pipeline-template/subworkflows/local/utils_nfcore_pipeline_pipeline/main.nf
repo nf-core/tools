@@ -210,7 +210,7 @@ def genomeExistsError() {
     }
 }
 {%- endif %}
-{%- if multiqc %}
+{%- if citations or multiqc %}
 //
 // Generate methods description for MultiQC
 //
