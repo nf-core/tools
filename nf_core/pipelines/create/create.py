@@ -455,7 +455,7 @@ class PipelineCreate:
                 "multiqc_config": ["report_comment"],
             }
         else:
-            lint_config = {"files_exist": [], "files_unchanged": []}
+            lint_config = {}
 
         # Add GitHub hosting specific configurations
         if not self.jinja_params["github"]:
@@ -516,8 +516,15 @@ class PipelineCreate:
 
         # Add multiqc specific configurations
         if not self.jinja_params["multiqc"]:
-            lint_config["files_unchanged"].extend([".github/CONTRIBUTING.md", "assets/sendmail_template.txt"])
-            lint_config["multiqc_config"] = ["report_comment"]
+            try:
+                lint_config["files_unchanged"].extend([".github/CONTRIBUTING.md", "assets/sendmail_template.txt"])
+            except KeyError:
+                lint_config["files_unchanged"] = [".github/CONTRIBUTING.md", "assets/sendmail_template.txt"]
+            try:
+                lint_config["files_exist"].extend(["assets/multiqc_config.yml"])
+            except KeyError:
+                lint_config["files_exist"] = ["assets/multiqc_config.yml"]
+            lint_config["multiqc_config"] = False
 
         # If the pipeline is not nf-core
         if not self.config.is_nfcore:
