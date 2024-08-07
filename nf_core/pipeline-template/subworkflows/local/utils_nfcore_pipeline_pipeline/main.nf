@@ -207,6 +207,7 @@ def genomeExistsError() {
 }
 {%- endif %}
 
+{%- if citations %}
 //
 // Generate methods description for MultiQC
 //
@@ -270,3 +271,4 @@ def methodsDescriptionText(mqc_methods_yaml) {
 
     return description_html.toString()
 }
+{% endif %}

@@ -101,6 +101,7 @@ class PipelineCreate:
                 ".prettierrc.yml",
                 ".github/workflows/fix-linting.yml",
             ],
+            "citations": ["assets/methods_description_template.yml"],
             "gitpod": [".gitpod.yml"],
         }
         # Get list of files we're skipping with the supplied skip keys
@@ -211,6 +212,7 @@ class PipelineCreate:
             "igenomes": {"file": True, "content": True},
             "nf_core_configs": {"file": False, "content": True},
             "code_linters": {"file": True, "content": True},
+            "citations": {"file": True, "content": True},
             "gitpod": {"file": True, "content": True},
         }
 
