@@ -14,5 +14,6 @@ skip_features:
   - code_linters
   - citations
   - gitpod
+  - codespaces
   - multiqc
   - changelog

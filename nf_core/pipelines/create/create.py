@@ -103,6 +103,7 @@ class PipelineCreate:
             ],
             "citations": ["assets/methods_description_template.yml"],
             "gitpod": [".gitpod.yml"],
+            "codespaces": [".devcontainer/devcontainer.json"],
             "multiqc": [
                 "assets/multiqc_config.yml",
                 "assets/methods_description_template.yml",
@@ -220,6 +221,7 @@ class PipelineCreate:
             "code_linters": {"file": True, "content": True},
             "citations": {"file": True, "content": True},
             "gitpod": {"file": True, "content": True},
+            "codespaces": {"file": True, "content": True},
             "multiqc": {"file": True, "content": True},
             "changelog": {"file": True, "content": False},
         }
@@ -519,6 +521,10 @@ class PipelineCreate:
         # Add github badges specific configurations
         if not self.jinja_params["github_badges"] or not self.jinja_params["github"]:
             lint_config["readme"] = ["nextflow_badge"]
+
+        # Add codespaces specific configurations
+        if not self.jinja_params["codespaces"]:
+            lint_config["files_unchanged"].extend([".github/CONTRIBUTING.md"])
 
         # Add multiqc specific configurations
         if not self.jinja_params["multiqc"]:
