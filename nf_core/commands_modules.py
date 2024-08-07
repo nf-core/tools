@@ -242,24 +242,23 @@ def modules_test(ctx, tool, dir, no_prompts, update, once, profile, migrate_pyte
             empty_template=False,
             migrate_pytest=migrate_pytest,
         )
-    else:
-        try:
-            module_tester = ComponentsTest(
-                component_type="modules",
-                component_name=tool,
-                directory=dir,
-                no_prompts=no_prompts,
-                update=update,
-                once=once,
-                remote_url=ctx.obj["modules_repo_url"],
-                branch=ctx.obj["modules_repo_branch"],
-                verbose=ctx.obj["verbose"],
-                profile=profile,
-            )
-            module_tester.run()
-        except (UserWarning, LookupError) as e:
-            log.critical(e)
-            sys.exit(1)
+    try:
+        module_tester = ComponentsTest(
+            component_type="modules",
+            component_name=tool,
+            directory=dir,
+            no_prompts=no_prompts,
+            update=update,
+            once=once,
+            remote_url=ctx.obj["modules_repo_url"],
+            branch=ctx.obj["modules_repo_branch"],
+            verbose=ctx.obj["verbose"],
+            profile=profile,
+        )
+        module_tester.run()
+    except (UserWarning, LookupError) as e:
+        log.critical(e)
+        sys.exit(1)
 
 
 def modules_lint(ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version):
