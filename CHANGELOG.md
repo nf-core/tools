@@ -15,6 +15,7 @@
 - add option to exclude codespaces from pipeline template ([#3105](https://github.com/nf-core/tools/pull/3105))
 - add option to exclude multiqc from pipeline template ([#3103](https://github.com/nf-core/tools/pull/3103))
 - add option to exclude changelog from custom pipeline template ([#3104](https://github.com/nf-core/tools/pull/3104))
+- handle template features with a yaml file ([#3108](https://github.com/nf-core/tools/pull/3108))
 
 ### Linting
 
