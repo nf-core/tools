@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 import git
+import jinja2
 import yaml
 
 import nf_core.pipelines.create.create
@@ -98,9 +99,24 @@ class NfcoreCreateTest(unittest.TestCase):
 
     @with_temporary_folder
     def test_pipeline_creation_with_yml_skip(self, tmp_path):
+        # Update pipeline_create_template_skip.yml file
+        features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "templatefeatures.yml"
+        with open(features_yml_path) as fh:
+            template_features_yml = yaml.safe_load(fh)
+        all_features = list(template_features_yml.keys())
+        all_features.remove("is_nfcore")
+        env = jinja2.Environment(loader=jinja2.PackageLoader("tests", "data"), keep_trailing_newline=True)
+        skip_template = env.get_template(
+            str(PIPELINE_TEMPLATE_YML_SKIP.relative_to(Path(nf_core.__file__).parent.parent / "tests" / "data"))
+        )
+        rendered_content = skip_template.render({"all_features": all_features})
+        rendered_yaml = Path(tmp_path) / "pipeline_create_template_skip.yml"
+        with open(rendered_yaml, "w") as fh:
+            fh.write(rendered_content)
+
         pipeline = nf_core.pipelines.create.create.PipelineCreate(
             outdir=tmp_path,
-            template_config=PIPELINE_TEMPLATE_YML_SKIP,
+            template_config=rendered_yaml,
             default_branch=self.default_branch,
         )
         pipeline.init_pipeline()

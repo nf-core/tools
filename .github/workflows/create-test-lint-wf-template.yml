@@ -31,31 +31,41 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
+  install-yq:
+    name: Install yq
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Set up yq
+        uses: frenck/action-setup-yq@v1
+
+  prepare-matrix:
+    name: Retrieve all template features
+    runs-on: ubuntu-latest
+    outputs:
+      all_features: ${{ steps.create_matrix.outputs.matrix }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: Create Matrix
+        id: create_matrix
+        run: echo "matrix=$(yq 'keys' ${{ github.workspace }}/nf_core/pipelines/create/templatefeatures.yml)" >> $GITHUB_OUTPUT
+
   RunTestWorkflow:
     runs-on: ${{ matrix.runner }}
     env:
       NXF_ANSI_LOG: false
     strategy:
       matrix:
-        TEMPLATE:
-          - "template_skip_github_badges.yml"
-          - "template_skip_igenomes.yml"
-          - "template_skip_ci.yml"
-          - "template_skip_code_linters.yml"
-          - "template_skip_citations.yml"
-          - "template_skip_gitpod.yml"
-          - "template_skip_codespaces.yml"
-          - "template_skip_multiqc.yml"
-          - "template_skip_changelog.yml"
+        TEMPLATE: ${{ fromJSON(needs.prepare-matrix.outputs.all_features) }}
         runner:
           # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
           - ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
         profile: ["self_hosted_runner"]
         include:
-          - TEMPLATE: "template_skip_all.yml"
+          - TEMPLATE: all
             runner: ubuntu-latest
             profile: "docker"
-          - TEMPLATE: "template_skip_nf_core_configs.yml"
+          - TEMPLATE: nf_core_configs
             runner: ubuntu-latest
             profile: "docker"
       fail-fast: false
@@ -90,53 +100,17 @@ jobs:
         run: |
           mkdir create-test-lint-wf
           export NXF_WORK=$(pwd)
-          printf "org: my-prefix\nskip: ['ci', 'github_badges', 'igenomes', 'nf_core_configs']" > create-test-lint-wf/template_skip_all.yml
+          printf "org: my-prefix\nskip: ${{ needs.prepare-matrix.outputs.all_features }}" > create-test-lint-wf/template_skip_all.yml
 
-      - name: Create template skip github_badges
+      - name: Create template skip {{ matrix.TEMPLATE }}
         run: |
-          printf "org: my-prefix\nskip: github_badges" > create-test-lint-wf/template_skip_github_badges.yml
-
-      - name: Create template skip igenomes
-        run: |
-          printf "org: my-prefix\nskip: igenomes" > create-test-lint-wf/template_skip_igenomes.yml
-
-      - name: Create template skip ci
-        run: |
-          printf "org: my-prefix\nskip: ci" > create-test-lint-wf/template_skip_ci.yml
-
-      - name: Create template skip nf_core_configs
-        run: |
-          printf "org: my-prefix\nskip: nf_core_configs" > create-test-lint-wf/template_skip_nf_core_configs.yml
-
-      - name: Create template skip code_linters
-        run: |
-          printf "org: my-prefix\nskip: code_linters" > create-test-lint-wf/template_skip_code_linters.yml
-
-      - name: Create template skip citations
-        run: |
-          printf "org: my-prefix\nskip: citations" > create-test-lint-wf/template_skip_citations.yml
-
-      - name: Create template skip gitpod
-        run: |
-          printf "org: my-prefix\nskip: gitpod" > create-test-lint-wf/template_skip_gitpod.yml
-
-      - name: Create template skip multiqc
-        run: |
-          printf "org: my-prefix\nskip: multiqc" > create-test-lint-wf/template_skip_multiqc.yml
-
-      - name: Create template skip changelog
-        run: |
-          printf "org: my-prefix\nskip: changelog" > create-test-lint-wf/template_skip_changelog.yml
-
-      - name: Create template skip codespaces
-        run: |
-          printf "org: my-prefix\nskip: codespaces" > create-test-lint-wf/template_skip_codespaces.yml
+          printf "org: my-prefix\nskip: {{ matrix.TEMPLATE }}" > create-test-lint-wf/template_skip_{{ matrix.TEMPLATE }}.yml
 
       # Create a pipeline from the template
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
         run: |
           cd create-test-lint-wf
-          nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml ${{ matrix.TEMPLATE }}
+          nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
 
       - name: run the pipeline
         run: |

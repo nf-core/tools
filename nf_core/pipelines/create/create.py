@@ -76,43 +76,26 @@ class PipelineCreate:
         else:
             raise UserWarning("The template configuration was not provided.")
 
-        self.jinja_params, skip_paths = self.obtain_jinja_params_dict(
+        # Read features yaml file
+        features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "templatefeatures.yml"
+        with open(features_yml_path) as fh:
+            self.template_features_yml = yaml.safe_load(fh)
+
+        self.jinja_params, self.skip_areas = self.obtain_jinja_params_dict(
             self.config.skip_features or [], self.config.outdir
         )
 
-        skippable_paths = {
-            "github": [
-                ".github/",
-                ".gitignore",
-            ],
-            "ci": [".github/workflows/"],
-            "igenomes": ["conf/igenomes.config"],
-            "is_nfcore": [
-                ".github/ISSUE_TEMPLATE/config",
-                "CODE_OF_CONDUCT.md",
-                ".github/workflows/awsfulltest.yml",
-                ".github/workflows/awstest.yml",
-                ".github/workflows/release-announcements.yml",
-            ],
-            "code_linters": [
-                ".editorconfig",
-                ".pre-commit-config.yaml",
-                ".prettierignore",
-                ".prettierrc.yml",
-                ".github/workflows/fix-linting.yml",
-            ],
-            "citations": ["assets/methods_description_template.yml"],
-            "gitpod": [".gitpod.yml"],
-            "codespaces": [".devcontainer/devcontainer.json"],
-            "multiqc": [
-                "assets/multiqc_config.yml",
-                "assets/methods_description_template.yml",
-                "modules/nf-core/multiqc/",
-            ],
-            "changelog": ["CHANGELOG.md"],
-        }
+        # format strings in features yaml
+        short_name = self.jinja_params["short_name"]
+        env = jinja2.Environment(loader=jinja2.PackageLoader("nf_core", "pipelines"), keep_trailing_newline=True)
+        features_template = env.get_template(
+            str(features_yml_path.relative_to(Path(nf_core.__file__).parent / "pipelines"))
+        )
+        rendered_features = features_template.render({"short_name": short_name})
+        self.template_features_yml = yaml.safe_load(rendered_features)
+
         # Get list of files we're skipping with the supplied skip keys
-        self.skip_paths = set(sp for k in skip_paths for sp in skippable_paths[k])
+        self.skip_paths = set(sp for k in self.skip_areas for sp in self.template_features_yml[k]["skippable_paths"])
 
         # Set convenience variables
         self.name = self.config.name
@@ -205,43 +188,27 @@ class PipelineCreate:
 
         Returns:
             jinja_params (dict): Dictionary of template areas to skip with values true/false.
-            skip_paths (list<str>): List of template areas which contain paths to skip.
+            skip_areas (list<str>): List of template areas which contain paths to skip.
         """
         # Try reading config file
         _, config_yml = nf_core.utils.load_tools_config(pipeline_dir)
-
-        # Define the different template areas, and what actions to take for each
-        # if they are skipped
-        template_areas = {
-            "github": {"file": True, "content": False},
-            "ci": {"file": True, "content": False},
-            "github_badges": {"file": False, "content": True},
-            "igenomes": {"file": True, "content": True},
-            "nf_core_configs": {"file": False, "content": True},
-            "code_linters": {"file": True, "content": True},
-            "citations": {"file": True, "content": True},
-            "gitpod": {"file": True, "content": True},
-            "codespaces": {"file": True, "content": True},
-            "multiqc": {"file": True, "content": True},
-            "changelog": {"file": True, "content": False},
-        }
 
         # Set the parameters for the jinja template
         jinja_params = self.config.model_dump()
 
         # Add template areas to jinja params and create list of areas with paths to skip
-        skip_paths = []
-        for t_area in template_areas:
+        skip_areas = []
+        for t_area in self.template_features_yml.keys():
             if t_area in features_to_skip:
-                if template_areas[t_area]["file"]:
-                    skip_paths.append(t_area)
+                if self.template_features_yml[t_area]["skippable_paths"]:
+                    skip_areas.append(t_area)
                 jinja_params[t_area] = False
             else:
                 jinja_params[t_area] = True
 
         # Add is_nfcore as an area to skip for non-nf-core pipelines, to skip all nf-core files
-        if not jinja_params["is_nfcore"]:
-            skip_paths.append("is_nfcore")
+        if not self.config.is_nfcore:
+            skip_areas.append("is_nfcore")
 
         # Set the last parameters based on the ones provided
         jinja_params["short_name"] = (
@@ -259,7 +226,7 @@ class PipelineCreate:
             and "nextflow_config" in config_yml["lint"]
             and "manifest.name" in config_yml["lint"]["nextflow_config"]
         ):
-            return jinja_params, skip_paths
+            return jinja_params, skip_areas
 
         # Check that the pipeline name matches the requirements
         if not re.match(r"^[a-z]+$", jinja_params["short_name"]):
@@ -270,7 +237,7 @@ class PipelineCreate:
                     "Your workflow name is not lowercase without punctuation. This may cause Nextflow errors.\nConsider changing the name to avoid special characters."
                 )
 
-        return jinja_params, skip_paths
+        return jinja_params, skip_areas
 
     def init_pipeline(self):
         """Creates the nf-core pipeline."""
@@ -438,109 +405,20 @@ class PipelineCreate:
         for a customized pipeline.
         """
         # Create a lint config
-        short_name = self.jinja_params["short_name"]
-        if not self.config.is_nfcore:
-            lint_config = {
-                "files_exist": [
-                    "CODE_OF_CONDUCT.md",
-                    f"assets/nf-core-{short_name}_logo_light.png",
-                    f"docs/images/nf-core-{short_name}_logo_light.png",
-                    f"docs/images/nf-core-{short_name}_logo_dark.png",
-                    ".github/ISSUE_TEMPLATE/config.yml",
-                    ".github/workflows/awstest.yml",
-                    ".github/workflows/awsfulltest.yml",
-                ],
-                "files_unchanged": [
-                    "CODE_OF_CONDUCT.md",
-                    f"assets/nf-core-{short_name}_logo_light.png",
-                    f"docs/images/nf-core-{short_name}_logo_light.png",
-                    f"docs/images/nf-core-{short_name}_logo_dark.png",
-                ],
-                "nextflow_config": [
-                    "manifest.name",
-                    "manifest.homePage",
-                ],
-                "multiqc_config": ["report_comment"],
-            }
-        else:
-            lint_config = {}
-
-        # Add GitHub hosting specific configurations
-        if not self.jinja_params["github"]:
-            lint_config["files_exist"].extend(
-                [
-                    ".github/ISSUE_TEMPLATE/bug_report.yml",
-                    ".github/ISSUE_TEMPLATE/feature_request.yml",
-                    ".github/PULL_REQUEST_TEMPLATE.md",
-                    ".github/CONTRIBUTING.md",
-                    ".github/.dockstore.yml",
-                    ".gitignore",
-                ]
-            )
-            lint_config["files_unchanged"].extend(
-                [
-                    ".github/ISSUE_TEMPLATE/bug_report.yml",
-                    ".github/ISSUE_TEMPLATE/config.yml",
-                    ".github/ISSUE_TEMPLATE/feature_request.yml",
-                    ".github/PULL_REQUEST_TEMPLATE.md",
-                    ".github/workflows/branch.yml",
-                    ".github/workflows/linting_comment.yml",
-                    ".github/workflows/linting.yml",
-                    ".github/CONTRIBUTING.md",
-                    ".github/.dockstore.yml",
-                ]
-            )
-
-        # Add CI specific configurations
-        if not self.jinja_params["ci"]:
-            lint_config["files_exist"].extend(
-                [
-                    ".github/workflows/branch.yml",
-                    ".github/workflows/ci.yml",
-                    ".github/workflows/linting_comment.yml",
-                    ".github/workflows/linting.yml",
-                ]
-            )
-
-        # Add custom config specific configurations
-        if not self.jinja_params["nf_core_configs"]:
-            lint_config["files_exist"].extend(["conf/igenomes.config"])
-            lint_config["nextflow_config"].extend(
-                [
-                    "process.cpus",
-                    "process.memory",
-                    "process.time",
-                    "custom_config",
-                ]
-            )
-
-        # Add igenomes specific configurations
-        if not self.jinja_params["igenomes"]:
-            lint_config["files_exist"].extend(["conf/igenomes.config"])
-
-        # Add github badges specific configurations
-        if not self.jinja_params["github_badges"] or not self.jinja_params["github"]:
-            lint_config["readme"] = ["nextflow_badge"]
-
-        # Add codespaces specific configurations
-        if not self.jinja_params["codespaces"]:
-            lint_config["files_unchanged"].extend([".github/CONTRIBUTING.md"])
-
-        # Add multiqc specific configurations
-        if not self.jinja_params["multiqc"]:
-            lint_config.setdefault("files_unchanged", []).extend(
-                [".github/CONTRIBUTING.md", "assets/sendmail_template.txt"]
-            )
-            lint_config.setdefault("files_exist", []).extend(["assets/multiqc_config.yml"])
-            lint_config["multiqc_config"] = False
-
-        # Add changelog specific configurations
-        if not self.jinja_params["changelog"]:
-            lint_config["files_exist"].extend(["CHANGELOG.md"])
-
-        # If the pipeline is not nf-core
-        if not self.config.is_nfcore:
-            lint_config["files_unchanged"].extend([".github/ISSUE_TEMPLATE/bug_report.yml"])
+        lint_config = {}
+        for area in self.skip_areas:
+            try:
+                for lint_test in self.template_features_yml[area]["linting"]:
+                    if not lint_config[lint_test]:
+                        pass
+                    if self.template_features_yml[area]["linting"][lint_test]:
+                        lint_config.setdefault(lint_test, []).extend(
+                            self.template_features_yml[area]["linting"][lint_test]
+                        )
+                    else:
+                        lint_config[lint_test] = False
+            except KeyError:
+                pass  # Areas without linting
 
         # Add the lint content to the preexisting nf-core config
         config_fn, nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
