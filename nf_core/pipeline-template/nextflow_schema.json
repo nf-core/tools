@@ -35,12 +35,13 @@
                     "fa_icon": "fas fa-envelope",
                     "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
                     "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
-                },
+                }{% if multiqc %},
                 "multiqc_title": {
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
                 }
+                {% endif %}
             }
         },
         {%- if igenomes %}
@@ -201,6 +202,7 @@
                     "fa_icon": "fas fa-remove-format",
                     "hidden": true
                 },
+                {%- if multiqc %}
                 "max_multiqc_email_size": {
                     "type": "string",
                     "description": "File size limit when attaching MultiQC reports to summary emails.",
@@ -209,6 +211,7 @@
                     "fa_icon": "fas fa-file-upload",
                     "hidden": true
                 },
+                {% endif %}
                 "monochrome_logs": {
                     "type": "boolean",
                     "description": "Do not use coloured log outputs.",
@@ -222,6 +225,7 @@
                     "help_text": "Incoming hook URL for messaging service. Currently, MS Teams and Slack are supported.",
                     "hidden": true
                 },
+                {%- if multiqc %}
                 "multiqc_config": {
                     "type": "string",
                     "format": "file-path",
@@ -234,12 +238,12 @@
                     "description": "Custom logo file to supply to MultiQC. File name must also be set in the MultiQC config file",
                     "fa_icon": "fas fa-image",
                     "hidden": true
-                },
+                },{% if citations %}
                 "multiqc_methods_description": {
                     "type": "string",
                     "description": "Custom MultiQC yaml file containing HTML including a methods description.",
                     "fa_icon": "fas fa-cog"
-                },
+                },{% endif %}{% endif %}
                 "validate_params": {
                     "type": "boolean",
                     "description": "Boolean whether to validate parameters against the schema at runtime",

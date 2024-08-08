@@ -6,7 +6,7 @@ from textual.containers import Center, ScrollableContainer
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown, Switch
 
-from nf_core.pipelines.create.utils import PipelineFeature, markdown_genomes
+from nf_core.pipelines.create.utils import PipelineFeature, markdown_genomes, markdown_multiqc
 
 
 class NfcorePipeline(Screen):
@@ -28,6 +28,12 @@ class NfcorePipeline(Screen):
                 "Use reference genomes",
                 "The pipeline will be configured to use a copy of the most common reference genome files from iGenomes",
                 "igenomes",
+            ),
+            PipelineFeature(
+                markdown_multiqc,
+                "Use multiqc",
+                "The pipeline will include the MultiQC module which generates an HTML report for quality control.",
+                "multiqc",
             ),
             classes="features-container",
         )
