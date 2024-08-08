@@ -1154,11 +1154,17 @@ def command_modules_create(
     default=None,
     help="Run tests with a specific profile",
 )
-def command_modules_test(ctx, tool, dir, no_prompts, update, once, profile):
+@click.option(
+    "--migrate-pytest",
+    is_flag=True,
+    default=False,
+    help="Migrate a module with pytest tests to nf-test",
+)
+def command_modules_test(ctx, tool, dir, no_prompts, update, once, profile, migrate_pytest):
     """
     Run nf-test for a module.
     """
-    modules_test(ctx, tool, dir, no_prompts, update, once, profile)
+    modules_test(ctx, tool, dir, no_prompts, update, once, profile, migrate_pytest)
 
 
 # nf-core modules lint
@@ -1352,11 +1358,17 @@ def command_subworkflows_create(ctx, subworkflow, dir, author, force, migrate_py
     default=None,
     help="Run tests with a specific profile",
 )
-def command_subworkflows_test(ctx, subworkflow, dir, no_prompts, update, once, profile):
+@click.option(
+    "--migrate-pytest",
+    is_flag=True,
+    default=False,
+    help="Migrate a subworkflow with pytest tests to nf-test",
+)
+def command_subworkflows_test(ctx, subworkflow, dir, no_prompts, update, once, profile, migrate_pytest):
     """
     Run nf-test for a subworkflow.
     """
-    subworkflows_test(ctx, subworkflow, dir, no_prompts, update, once, profile)
+    subworkflows_test(ctx, subworkflow, dir, no_prompts, update, once, profile, migrate_pytest)
 
 
 # nf-core subworkflows list subcommands
