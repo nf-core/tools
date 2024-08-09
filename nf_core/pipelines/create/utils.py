@@ -244,24 +244,3 @@ def add_hide_class(app, widget_id: str) -> None:
 def remove_hide_class(app, widget_id: str) -> None:
     """Remove class 'hide' to a widget. Display widget."""
     app.get_widget_by_id(widget_id).remove_class("hide")
-
-
-## Markdown text to reuse in different screens
-markdown_genomes = """
-Nf-core pipelines are configured to use a copy of the most common reference genome files.
-
-By selecting this option, your pipeline will include a configuration file specifying the paths to these files.
-
-The required code to use these files will also be included in the template.
-When the pipeline user provides an appropriate genome key,
-the pipeline will automatically download the required reference files.
-
-For more information about reference genomes in nf-core pipelines,
-see the [nf-core docs](https://nf-co.re/docs/usage/reference_genomes).
-"""
-
-markdown_multiqc = """
-MultiQC is a visualization tool that generates a single HTML report summarising all samples in your project. Most of the pipeline quality control results can be visualised in the report and further statistics are available in the report data directory.
-
-The pipeline will include the MultiQC module and will have special steps which also allow the software versions to be reported in the MultiQC output for future traceability. For more information about how to use MultiQC reports, see http://multiqc.info.
-"""

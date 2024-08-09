@@ -25,6 +25,8 @@ github:
       - ".github/.dockstore.yml"
     readme:
       - "nextflow_badge"
+  nfcore_pipelines: False
+  custom_pipelines: False
 ci:
   skippable_paths:
     - ".github/workflows/"
@@ -46,6 +48,8 @@ ci:
       - ".github/workflows/ci.yml"
       - ".github/workflows/linting_comment.yml"
       - ".github/workflows/linting.yml"
+  nfcore_pipelines: False
+  custom_pipelines: True
 igenomes:
   skippable_paths:
     - "conf/igenomes.config"
@@ -65,6 +69,8 @@ igenomes:
   linting:
     files_exist:
       - "conf/igenomes.config"
+  nfcore_pipelines: True
+  custom_pipelines: True
 github_badges:
   skippable_paths: False
   short_description: "Add Github badges"
@@ -81,6 +87,8 @@ github_badges:
   linting:
     readme:
       - "nextflow_badge"
+  nfcore_pipelines: False
+  custom_pipelines: True
 nf_core_configs:
   skippable_paths: False
   short_description: "Add configuration files"
@@ -101,6 +109,8 @@ nf_core_configs:
       - "process.memory"
       - "process.time"
       - "custom_config"
+  nfcore_pipelines: False
+  custom_pipelines: True
 is_nfcore:
   skippable_paths:
     - ".github/ISSUE_TEMPLATE/config"
@@ -131,6 +141,8 @@ is_nfcore:
       - "manifest.homePage"
     multiqc_config:
       - "report_comment"
+  nfcore_pipelines: False
+  custom_pipelines: False
 code_linters:
   skippable_paths:
     - ".editorconfig"
@@ -148,6 +160,8 @@ code_linters:
     - pre-commit (https://pre-commit.com/): used to run all code-linters on every PR and on ever commit if you run `pre-commit install` to install it in your local repository.
     - editor-config (https://github.com/editorconfig-checker/editorconfig-checker): checks rules such as indentation or trailing spaces.
     - prettier (https://github.com/prettier/prettier): enforces a consistent style (indentation, quoting, line length, etc).
+  nfcore_pipelines: False
+  custom_pipelines: True
 citations:
   skippable_paths:
     - "assets/methods_description_template.yml"
@@ -158,6 +172,8 @@ citations:
 
     Additionally, it will include a YAML file (`assets/methods_description_template.yml`) to add a Materials & Methods section describing the tools used in the pieline,
     and the logics to add this section to the output MultiQC report (if the report is generated).
+  nfcore_pipelines: False
+  custom_pipelines: True
 gitpod:
   skippable_paths:
     - ".gitpod.yml"
@@ -168,6 +184,8 @@ gitpod:
 
     Including this to your pipeline will provide an environment with the latest version of nf-core/tools installed and all its requirements.
     This is useful to have all the tools ready for pipeline development.
+  nfcore_pipelines: False
+  custom_pipelines: True
 codespaces:
   skippable_paths:
     - ".devcontainer/devcontainer.json"
@@ -181,6 +199,8 @@ codespaces:
   linting:
     files_unchanged:
       - ".github/CONTRIBUTING.md"
+  nfcore_pipelines: False
+  custom_pipelines: True
 multiqc:
   skippable_paths:
     - "assets/multiqc_config.yml"
@@ -199,6 +219,8 @@ multiqc:
     files_exist:
       - "assets/multiqc_config.yml"
     multiqc_config: False
+  nfcore_pipelines: True
+  custom_pipelines: True
 changelog:
   skippable_paths:
     - "CHANGELOG.md"
@@ -211,3 +233,5 @@ changelog:
   linting:
     files_exist:
       - "CHANGELOG.md"
+  nfcore_pipelines: False
+  custom_pipelines: True
