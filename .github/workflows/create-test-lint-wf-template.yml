@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Create Matrix
         id: create_matrix
-        run: echo "matrix=$(yq 'keys' ${{ github.workspace }}/nf_core/pipelines/create/templatefeatures.yml)" >> $GITHUB_OUTPUT
+        run: echo "matrix=$(yq 'keys' ${{ github.workspace }}/nf_core/pipelines/create/templatefeatures.yml | awk '{print $2}' | paste -sd "," - | awk '{print "[" $0 "]"}')" >> $GITHUB_OUTPUT
 
   RunTestWorkflow:
     runs-on: ${{ matrix.runner }}
