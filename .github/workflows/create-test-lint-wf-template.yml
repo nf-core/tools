@@ -42,6 +42,11 @@ jobs:
           - "template_skip_igenomes.yml"
           - "template_skip_ci.yml"
           - "template_skip_code_linters.yml"
+          - "template_skip_citations.yml"
+          - "template_skip_gitpod.yml"
+          - "template_skip_codespaces.yml"
+          - "template_skip_multiqc.yml"
+          - "template_skip_changelog.yml"
         runner:
           # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
           - ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
@@ -106,6 +111,26 @@ jobs:
       - name: Create template skip code_linters
         run: |
           printf "org: my-prefix\nskip: code_linters" > create-test-lint-wf/template_skip_code_linters.yml
+
+      - name: Create template skip citations
+        run: |
+          printf "org: my-prefix\nskip: citations" > create-test-lint-wf/template_skip_citations.yml
+
+      - name: Create template skip gitpod
+        run: |
+          printf "org: my-prefix\nskip: gitpod" > create-test-lint-wf/template_skip_gitpod.yml
+
+      - name: Create template skip multiqc
+        run: |
+          printf "org: my-prefix\nskip: multiqc" > create-test-lint-wf/template_skip_multiqc.yml
+
+      - name: Create template skip changelog
+        run: |
+          printf "org: my-prefix\nskip: changelog" > create-test-lint-wf/template_skip_changelog.yml
+
+      - name: Create template skip codespaces
+        run: |
+          printf "org: my-prefix\nskip: codespaces" > create-test-lint-wf/template_skip_codespaces.yml
 
       # Create a pipeline from the template
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}

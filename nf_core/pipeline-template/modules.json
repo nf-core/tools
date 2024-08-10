@@ -9,12 +9,13 @@
                         "branch": "master",
                         "git_sha": "285a50500f9e02578d90b3ce6382ea3c30216acd",
                         "installed_by": ["modules"]
-                    },
+                    }{%- if multiqc %},
                     "multiqc": {
                         "branch": "master",
                         "git_sha": "b7ebe95761cd389603f9cc0e0dc384c0f663815a",
                         "installed_by": ["modules"]
                     }
+                    {%- endif %}
                 }
             },
             "subworkflows": {

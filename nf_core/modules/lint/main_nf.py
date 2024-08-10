@@ -81,6 +81,7 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
     script_lines = []
     shell_lines = []
     when_lines = []
+    lines = iter(lines)
     for line in lines:
         if re.search(r"^\s*process\s*\w*\s*{", line) and state == "module":
             state = "process"
@@ -104,6 +105,13 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
         if state == "process" and not _is_empty(line):
             process_lines.append(line)
         if state == "input" and not _is_empty(line):
+            # allow multiline tuples
+            if "tuple" in line and line.count("(") <= 1:
+                joint_tuple = line
+                while re.sub(r"\s", "", line) != ")":
+                    joint_tuple = joint_tuple + line
+                    line = next(lines)
+                line = joint_tuple
             inputs.extend(_parse_input(module, line))
         if state == "output" and not _is_empty(line):
             outputs += _parse_output(module, line)
@@ -437,7 +445,7 @@ def check_process_labels(self, lines):
     if len(all_labels) > 0:
         for label in all_labels:
             try:
-                label = re.match(r"^label\s+'?([a-zA-Z0-9_-]+)'?$", label).group(1)
+                label = re.match(r"^label\s+'?\"?([a-zA-Z0-9_-]+)'?\"?$", label).group(1)
             except AttributeError:
                 self.warned.append(
                     (
