@@ -166,10 +166,14 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Opti
                         comp_dict = {"name": component, "org_path": None, "git_remote": None}
                     else:
                         name = list(component.keys())[0]
+                        git_remote = component[name]["git_remote"]
+                        match_name = re.match(r"(?:https://|git@)[\w\.]+[:/](.*?)/", git_remote)
+                        if match_name is not None:
+                            org_path = match_name.group(1)
                         comp_dict = {
                             "name": name,
-                            "org_path": component[name]["org_path"],
-                            "git_remote": component[name]["git_remote"],
+                            "org_path": org_path,
+                            "git_remote": git_remote,
                         }
                     component_list.append(comp_dict)
             modules = component_list
