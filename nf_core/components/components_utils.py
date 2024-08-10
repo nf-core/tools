@@ -174,6 +174,7 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Opti
                             "name": name,
                             "org_path": org_path,
                             "git_remote": git_remote,
+                            "branch": component[name].get("branch", "master"),
                         }
                     component_list.append(comp_dict)
             modules = component_list
