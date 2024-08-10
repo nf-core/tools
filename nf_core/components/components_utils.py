@@ -149,7 +149,7 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Opti
                 name, link = match.groups()
                 if link.startswith("../../../"):
                     name_split = name.lower().split("_")
-                    modules.append({"name": "/".join(name_split), "org_path": None, "git_remote": None})
+                    modules.append({"name": "/".join(name_split), "org_path": None, "git_remote": None, "branch": None})
                 elif link.startswith("../"):
                     subworkflows.append(name.lower())
 
@@ -163,7 +163,7 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Opti
             for component in components:
                 if component not in subworkflows and component in [d["name"] for d in modules]:
                     if isinstance(component, str):
-                        comp_dict = {"name": component, "org_path": None, "git_remote": None}
+                        comp_dict = {"name": component, "org_path": None, "git_remote": None, "branch": None}
                     else:
                         name = list(component.keys())[0]
                         git_remote = component[name]["git_remote"]
