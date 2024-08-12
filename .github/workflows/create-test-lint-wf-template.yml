@@ -56,7 +56,7 @@ jobs:
       NXF_ANSI_LOG: false
     strategy:
       matrix:
-        TEMPLATE: ${{ fromJSON(needs.prepare-matrix.outputs.all_features) }}
+        TEMPLATE: ${{ needs.prepare-matrix.outputs.all_features }}
         runner:
           # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
           - ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
@@ -68,6 +68,9 @@ jobs:
           - TEMPLATE: nf_core_configs
             runner: ubuntu-latest
             profile: "docker"
+        exclude:
+          - TEMPLATE: github
+          - TEMPLATE: is_nfcore
       fail-fast: false
 
     steps:
