@@ -1210,11 +1210,11 @@ class ModulesJson:
                 if dep_subwf["git_remote"] is not None:
                     current_repo = dep_subwf["git_remote"]
                     current_org = dep_subwf["org_path"]
-                    installed_by = self.modules_json["repos"][current_repo]["modules"][current_org][name][
+                    installed_by = self.modules_json["repos"][current_repo]["subworkflows"][current_org][name][
                         "installed_by"
                     ]
                 else:
-                    installed_by = self.modules_json["repos"][repo]["modules"][org][name]["installed_by"]
+                    installed_by = self.modules_json["repos"][repo]["subworkflows"][org][name]["installed_by"]
             if installed_by == ["subworkflows"]:
                 self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"] = []
             if subworkflow not in installed_by:
