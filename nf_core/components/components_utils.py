@@ -133,7 +133,9 @@ def prompt_component_version_sha(
     return git_sha
 
 
-def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Optional[str]]], List[str]]:
+def get_components_to_install(
+    subworkflow_dir: str,
+) -> Tuple[List[Dict[str, Optional[str]]], List[Dict[str, Optional[str]]]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """
@@ -149,33 +151,45 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[Dict[str, Opti
                 name, link = match.groups()
                 if link.startswith("../../../"):
                     name_split = name.lower().split("_")
-                    modules.append({"name": "/".join(name_split), "org_path": None, "git_remote": None, "branch": None})
+                    component_dict = {
+                        "name": "/".join(name_split),
+                        "org_path": None,
+                        "git_remote": None,
+                        "branch": None,
+                    }
+                    modules.append(component_dict)
                 elif link.startswith("../"):
-                    subworkflows.append(name.lower())
+                    component_dict = {"name": name.lower(), "org_path": None, "git_remote": None, "branch": None}
+                    subworkflows.append(component_dict)
 
     if Path(subworkflow_dir, "meta.yml").exists():
         with open(Path(subworkflow_dir, "meta.yml")) as fh:
             meta = yaml.safe_load(fh)
-            if "components" not in meta:
-                return modules, subworkflows
-            components = meta.get("components")
-            component_list = []
+            components = meta.get("components", [])
+            new_module_list = []
+            new_subwf_list = []
+
             for component in components:
-                if component not in subworkflows and component in [d["name"] for d in modules]:
-                    if isinstance(component, str):
-                        comp_dict = {"name": component, "org_path": None, "git_remote": None, "branch": None}
-                    else:
-                        name = list(component.keys())[0]
-                        git_remote = component[name]["git_remote"]
-                        match_name = re.match(r"(?:https://|git@)[\w\.]+[:/](.*?)/", git_remote)
-                        if match_name is not None:
-                            org_path = match_name.group(1)
-                        comp_dict = {
-                            "name": name,
-                            "org_path": org_path,
-                            "git_remote": git_remote,
-                            "branch": component[name].get("branch", "master"),
-                        }
-                    component_list.append(comp_dict)
-            modules = component_list
+                if isinstance(component, str):
+                    component_dict = {"name": component, "org_path": None, "git_remote": None, "branch": None}
+                else:
+                    name = list(component.keys())[0]
+                    git_remote = component[name]["git_remote"]
+                    org_path_match = re.search(r"(?:https://|git@)[\w\.]+[:/](.*?)/", git_remote)
+                    org_path = org_path_match.group(1) if org_path_match else None
+                    component_dict = {
+                        "name": name.lower(),
+                        "org_path": org_path,
+                        "git_remote": git_remote,
+                        "branch": component[name].get("branch", "master"),
+                    }
+
+                if component_dict["name"] in [sw["name"] for sw in subworkflows]:
+                    new_subwf_list.append(component_dict)
+                else:
+                    new_module_list.append(component_dict)
+
+        modules = new_module_list
+        subworkflows = new_subwf_list
+
     return modules, subworkflows
