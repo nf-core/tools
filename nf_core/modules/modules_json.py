@@ -1202,8 +1202,8 @@ class ModulesJson:
                 installed_by = self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"]
             if installed_by == ["modules"]:
                 self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"] = []
-            if subworkflow not in installed_by:
-                self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"].append(subworkflow)
+            if sw_name not in installed_by:
+                self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"].append(sw_name)
 
         for dep_subwf in dep_subwfs:
             if isinstance(dep_subwf, dict):
@@ -1218,6 +1218,6 @@ class ModulesJson:
                     installed_by = self.modules_json["repos"][repo]["subworkflows"][org][name]["installed_by"]
             if installed_by == ["subworkflows"]:
                 self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"] = []
-            if subworkflow not in installed_by:
-                self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"].append(subworkflow)
+            if sw_name not in installed_by:
+                self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"].append(sw_name)
             self.recreate_dependencies(repo, org, dep_subwf)
