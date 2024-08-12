@@ -20,6 +20,7 @@
 
 - Fix linting fail on nfcore_external_java_deps if nf_schema is used ([#2976](https://github.com/nf-core/tools/pull/2976))
 - Conda module linting: Include package name in log file ([#3014](https://github.com/nf-core/tools/pull/3014))
+- Restructure pipeline tests and move pipeline linting into subfolder ([#3070](https://github.com/nf-core/tools/pull/3070))
 - Fix module linting warning for process_high_memory ([#3086](https://github.com/nf-core/tools/issues/3086))
 
 ### Download

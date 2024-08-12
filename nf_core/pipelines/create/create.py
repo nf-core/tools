@@ -8,9 +8,10 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Optional, Union
+from typing import Dict, List, Optional, Union, cast
 
 import git
+import git.config
 import jinja2
 import yaml
 
@@ -20,6 +21,7 @@ import nf_core.utils
 from nf_core.pipelines.create.utils import CreateConfig
 from nf_core.pipelines.create_logo import create_logo
 from nf_core.pipelines.lint_utils import run_prettier_on_file
+from nf_core.utils import LintConfigType, NFCoreTemplateConfig
 
 log = logging.getLogger(__name__)
 
@@ -50,23 +52,26 @@ class PipelineCreate:
         version: str = "1.0.0dev",
         no_git: bool = False,
         force: bool = False,
-        outdir: Optional[str] = None,
-        template_config: Optional[Union[str, CreateConfig, Path]] = None,
+        outdir: Optional[Union[Path, str]] = None,
+        template_config: Optional[Union[CreateConfig, str, Path]] = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
         default_branch: Optional[str] = None,
         is_interactive: bool = False,
-    ):
+    ) -> None:
         if isinstance(template_config, CreateConfig):
             self.config = template_config
         elif from_config_file:
             # Try reading config file
-            _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else ".")
-            # Obtain a CreateConfig object from `.nf-core.yml` config file
-            if "template" in config_yml:
-                self.config = CreateConfig(**config_yml["template"])
-            else:
-                raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
+            try:
+                _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else Path().cwd())
+                # Obtain a CreateConfig object from `.nf-core.yml` config file
+                if config_yml is not None and getattr(config_yml, "template", None) is not None:
+                    self.config = CreateConfig(**config_yml["template"].model_dump())
+                else:
+                    raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
+            except (FileNotFoundError, UserWarning):
+                log.debug("The '.nf-core.yml' configuration file was not found.")
         elif (name and description and author) or (
             template_config and (isinstance(template_config, str) or isinstance(template_config, Path))
         ):
@@ -76,8 +81,10 @@ class PipelineCreate:
         else:
             raise UserWarning("The template configuration was not provided.")
 
+        if self.config.outdir is None:
+            self.config.outdir = str(Path.cwd())
         self.jinja_params, skip_paths = self.obtain_jinja_params_dict(
-            self.config.skip_features or [], self.config.outdir
+            self.config.skip_features or [], str(self.config.outdir)
         )
 
         skippable_paths = {
@@ -122,8 +129,7 @@ class PipelineCreate:
         self.default_branch = default_branch
         self.is_interactive = is_interactive
         self.force = self.config.force
-        if self.config.outdir is None:
-            self.config.outdir = os.getcwd()
+
         if self.config.outdir == ".":
             self.outdir = Path(self.config.outdir, self.jinja_params["name_noslash"]).absolute()
         else:
@@ -196,7 +202,7 @@ class PipelineCreate:
         if self.config.is_nfcore is None:
             self.config.is_nfcore = self.config.org == "nf-core"
 
-    def obtain_jinja_params_dict(self, features_to_skip, pipeline_dir):
+    def obtain_jinja_params_dict(self, features_to_skip: List[str], pipeline_dir: Union[str, Path]):
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
@@ -208,7 +214,10 @@ class PipelineCreate:
             skip_paths (list<str>): List of template areas which contain paths to skip.
         """
         # Try reading config file
-        _, config_yml = nf_core.utils.load_tools_config(pipeline_dir)
+        try:
+            _, config_yml = nf_core.utils.load_tools_config(pipeline_dir)
+        except UserWarning:
+            config_yml = None
 
         # Define the different template areas, and what actions to take for each
         # if they are skipped
@@ -253,13 +262,13 @@ class PipelineCreate:
         jinja_params["name_docker"] = jinja_params["name"].replace(jinja_params["org"], jinja_params["prefix_nodash"])
         jinja_params["logo_light"] = f"{jinja_params['name_noslash']}_logo_light.png"
         jinja_params["logo_dark"] = f"{jinja_params['name_noslash']}_logo_dark.png"
-
-        if (
-            "lint" in config_yml
-            and "nextflow_config" in config_yml["lint"]
-            and "manifest.name" in config_yml["lint"]["nextflow_config"]
-        ):
-            return jinja_params, skip_paths
+        if config_yml is not None:
+            if (
+                hasattr(config_yml, "lint")
+                and hasattr(config_yml["lint"], "nextflow_config")
+                and hasattr(config_yml["lint"]["nextflow_config"], "manifest.name")
+            ):
+                return jinja_params, skip_paths
 
         # Check that the pipeline name matches the requirements
         if not re.match(r"^[a-z]+$", jinja_params["short_name"]):
@@ -274,7 +283,6 @@ class PipelineCreate:
 
     def init_pipeline(self):
         """Creates the nf-core pipeline."""
-
         # Make the new pipeline
         self.render_template()
 
@@ -291,7 +299,7 @@ class PipelineCreate:
                 "https://nf-co.re/docs/tutorials/adding_a_pipeline/overview#join-the-community[/link]"
             )
 
-    def render_template(self):
+    def render_template(self) -> None:
         """Runs Jinja to create a new nf-core pipeline."""
         log.info(f"Creating new pipeline: '{self.name}'")
 
@@ -304,13 +312,13 @@ class PipelineCreate:
                 log.info("Use -f / --force to overwrite existing files")
                 raise UserWarning(f"Output directory '{self.outdir}' exists!")
         else:
-            os.makedirs(self.outdir)
+            self.outdir.mkdir(parents=True, exist_ok=True)
 
         # Run jinja2 for each file in the template folder
         env = jinja2.Environment(
             loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
         )
-        template_dir = os.path.join(os.path.dirname(nf_core.__file__), "pipeline-template")
+        template_dir = Path(nf_core.__file__).parent / "pipeline-template"
         object_attrs = self.jinja_params
         object_attrs["nf_core_version"] = nf_core.__version__
 
@@ -319,32 +327,31 @@ class PipelineCreate:
         template_files += list(Path(template_dir).glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
         short_name = self.jinja_params["short_name"]
-        rename_files = {
+        rename_files: Dict[str, str] = {
             "workflows/pipeline.nf": f"workflows/{short_name}.nf",
             "subworkflows/local/utils_nfcore_pipeline_pipeline/main.nf": f"subworkflows/local/utils_nfcore_{short_name}_pipeline/main.nf",
         }
 
         # Set the paths to skip according to customization
-        for template_fn_path_obj in template_files:
-            template_fn_path = str(template_fn_path_obj)
-
+        for template_fn_path in template_files:
             # Skip files that are in the self.skip_paths list
             for skip_path in self.skip_paths:
-                if os.path.relpath(template_fn_path, template_dir).startswith(skip_path):
+                if str(template_fn_path.relative_to(template_dir)).startswith(skip_path):
                     break
             else:
-                if os.path.isdir(template_fn_path):
+                if template_fn_path.is_dir():
                     continue
-                if any([s in template_fn_path for s in ignore_strs]):
+                if any([s in str(template_fn_path) for s in ignore_strs]):
                     log.debug(f"Ignoring '{template_fn_path}' in jinja2 template creation")
                     continue
 
                 # Set up vars and directories
-                template_fn = os.path.relpath(template_fn_path, template_dir)
+                template_fn = template_fn_path.relative_to(template_dir)
                 output_path = self.outdir / template_fn
-                if template_fn in rename_files:
-                    output_path = self.outdir / rename_files[template_fn]
-                os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+                if str(template_fn) in rename_files:
+                    output_path = self.outdir / rename_files[str(template_fn)]
+                output_path.parent.mkdir(parents=True, exist_ok=True)
 
                 try:
                     # Just copy binary files
@@ -353,7 +360,7 @@ class PipelineCreate:
 
                     # Got this far - render the template
                     log.debug(f"Rendering template file: '{template_fn}'")
-                    j_template = env.get_template(template_fn)
+                    j_template = env.get_template(str(template_fn))
                     rendered_output = j_template.render(object_attrs)
 
                     # Write to the pipeline output file
@@ -378,7 +385,6 @@ class PipelineCreate:
         # Remove all unused parameters in the nextflow schema
         if not self.jinja_params["igenomes"] or not self.jinja_params["nf_core_configs"]:
             self.update_nextflow_schema()
-
         if self.config.is_nfcore:
             # Make a logo and save it, if it is a nf-core pipeline
             self.make_pipeline_logo()
@@ -393,11 +399,13 @@ class PipelineCreate:
 
         if self.config:
             config_fn, config_yml = nf_core.utils.load_tools_config(self.outdir)
-            with open(config_fn, "w") as fh:
-                config_yml.update(template=self.config.model_dump())
-                yaml.safe_dump(config_yml, fh)
-                log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
-                run_prettier_on_file(self.outdir / config_fn)
+            if config_fn is not None and config_yml is not None:
+                with open(str(config_fn), "w") as fh:
+                    self.config.outdir = str(self.config.outdir)
+                    config_yml.template = NFCoreTemplateConfig(**self.config.model_dump())
+                    yaml.safe_dump(config_yml.model_dump(), fh)
+                    log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
+                    run_prettier_on_file(self.outdir / config_fn)
 
     def update_nextflow_schema(self):
         """
@@ -438,7 +446,9 @@ class PipelineCreate:
         for a customized pipeline.
         """
         # Create a lint config
+        short_name: str = self.jinja_params["short_name"]
         short_name = self.jinja_params["short_name"]
+        lint_config = {}
         if not self.config.is_nfcore:
             lint_config = {
                 "files_exist": [
@@ -462,8 +472,6 @@ class PipelineCreate:
                 ],
                 "multiqc_config": ["report_comment"],
             }
-        else:
-            lint_config = {}
 
         # Add GitHub hosting specific configurations
         if not self.jinja_params["github"]:
@@ -544,31 +552,38 @@ class PipelineCreate:
 
         # Add the lint content to the preexisting nf-core config
         config_fn, nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
-        nf_core_yml["lint"] = lint_config
-        with open(self.outdir / config_fn, "w") as fh:
-            yaml.dump(nf_core_yml, fh, default_flow_style=False, sort_keys=False)
+        if config_fn is not None and nf_core_yml is not None:
+            nf_core_yml.lint = cast(LintConfigType, lint_config)
+            with open(self.outdir / config_fn, "w") as fh:
+                yaml.dump(nf_core_yml.model_dump(), fh, default_flow_style=False, sort_keys=False)
 
-        run_prettier_on_file(os.path.join(self.outdir, config_fn))
+            run_prettier_on_file(Path(self.outdir, config_fn))
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
         email_logo_path = Path(self.outdir) / "assets"
-        create_logo(text=self.jinja_params["short_name"], dir=email_logo_path, theme="light", force=self.force)
+        create_logo(
+            text=self.jinja_params["short_name"], directory=email_logo_path, theme="light", force=bool(self.force)
+        )
         for theme in ["dark", "light"]:
             readme_logo_path = Path(self.outdir) / "docs" / "images"
             create_logo(
-                text=self.jinja_params["short_name"], dir=readme_logo_path, width=600, theme=theme, force=self.force
+                text=self.jinja_params["short_name"],
+                directory=readme_logo_path,
+                width=600,
+                theme=theme,
+                force=bool(self.force),
             )
 
-    def git_init_pipeline(self):
+    def git_init_pipeline(self) -> None:
         """Initialises the new pipeline as a Git repository and submits first commit.
 
         Raises:
             UserWarning: if Git default branch is set to 'dev' or 'TEMPLATE'.
         """
-        default_branch = self.default_branch
+        default_branch: Optional[str] = self.default_branch
         try:
-            default_branch = default_branch or git.config.GitConfigParser().get_value("init", "defaultBranch")
+            default_branch = default_branch or str(git.config.GitConfigParser().get_value("init", "defaultBranch"))
         except configparser.Error:
             log.debug("Could not read init.defaultBranch")
         if default_branch in ["dev", "TEMPLATE"]:

@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple, Union
 log = logging.getLogger(__name__)
 
 
-def files_exist(self) -> Dict[str, Union[List[str], bool]]:
+def files_exist(self) -> Dict[str, List[str]]:
     """Checks a given pipeline directory for required files.
 
     Iterates through the pipeline's directory content and checks that specified
@@ -205,7 +205,7 @@ def files_exist(self) -> Dict[str, Union[List[str], bool]]:
     ]
 
     # Remove files that should be ignored according to the linting config
-    ignore_files = self.lint_config.get("files_exist", [])
+    ignore_files = self.lint_config.get("files_exist", []) if self.lint_config is not None else []
 
     def pf(file_path: Union[str, Path]) -> Path:
         return Path(self.wf_path, file_path)
