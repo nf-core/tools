@@ -187,7 +187,8 @@ def get_components_to_install(
                 if component_dict["name"] in [sw["name"] for sw in subworkflows]:
                     new_subwf_list.append(component_dict)
                 else:
-                    new_module_list.append(component_dict)
+                    if component_dict["name"] in [m["name"] for m in modules]:
+                        new_module_list.append(component_dict)
 
         modules = new_module_list
         subworkflows = new_subwf_list
