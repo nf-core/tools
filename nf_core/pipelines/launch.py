@@ -7,6 +7,7 @@ import os
 import re
 import subprocess
 import webbrowser
+from pathlib import Path
 
 import questionary
 from rich.console import Console
@@ -46,7 +47,7 @@ class Launch:
         self.schema_obj = None
         self.use_params_file = False if command_only else True
         self.params_in = params_in
-        self.params_out = params_out if params_out else os.path.join(os.getcwd(), "nf-params.json")
+        self.params_out = params_out if params_out else Path.cwd() / "nf-params.json"
         self.save_all = save_all
         self.show_hidden = show_hidden
         self.web_schema_launch_url = url if url else "https://nf-co.re/launch"
@@ -697,7 +698,7 @@ class Launch:
             # Write the user selection to a file and run nextflow with that
             if self.use_params_file:
                 dump_json_with_prettier(self.params_out, self.schema_obj.input_params)
-                self.nextflow_cmd += f' -params-file "{os.path.relpath(self.params_out)}"'
+                self.nextflow_cmd += f' -params-file "{Path(self.params_out)}"'
 
             # Call nextflow with a list of command line flags
             else:

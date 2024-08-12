@@ -36,7 +36,7 @@ def repo_full_name_from_remote(remote_url: str) -> str:
     return path
 
 
-def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], List[NFCoreComponent]]:
+def get_installed_modules(directory: Path, repo_type="modules") -> Tuple[List[str], List[NFCoreComponent]]:
     """
     Make a list of all modules installed in this repository
 
@@ -52,15 +52,15 @@ def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], Lis
     # initialize lists
     local_modules: List[str] = []
     nfcore_modules_names: List[str] = []
-    local_modules_dir: Optional[str] = None
-    nfcore_modules_dir = os.path.join(dir, "modules", "nf-core")
+    local_modules_dir: Optional[Path] = None
+    nfcore_modules_dir = Path(directory, "modules", "nf-core")
 
     # Get local modules
     if repo_type == "pipeline":
-        local_modules_dir = os.path.join(dir, "modules", "local")
+        local_modules_dir = Path(directory, "modules", "local")
 
         # Filter local modules
-        if os.path.exists(local_modules_dir):
+        if local_modules_dir.exists():
             local_modules = os.listdir(local_modules_dir)
             local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
 
@@ -89,7 +89,7 @@ def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], Lis
             "nf-core/modules",
             Path(nfcore_modules_dir, m),
             repo_type=repo_type,
-            base_dir=Path(dir),
+            base_dir=directory,
             component_type="modules",
         )
         for m in nfcore_modules_names

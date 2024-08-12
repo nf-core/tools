@@ -915,6 +915,7 @@ class PipelineSchema:
             log.info("Found saved status from nf-core pipelines schema builder")
             try:
                 self.schema = web_response["schema"]
+                log.debug(f"Schema from web builder:\n{json.dumps(self.schema, indent=4)}")
                 self.remove_schema_empty_definitions()
                 self.validate_schema()
             except AssertionError as e:

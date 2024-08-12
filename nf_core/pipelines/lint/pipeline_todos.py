@@ -1,6 +1,7 @@
 import fnmatch
 import logging
 import os
+from pathlib import Path
 
 log = logging.getLogger(__name__)
 
@@ -39,19 +40,19 @@ def pipeline_todos(self, root_dir=None):
         root_dir = self.wf_path
 
     ignore = [".git"]
-    if os.path.isfile(os.path.join(root_dir, ".gitignore")):
-        with open(os.path.join(root_dir, ".gitignore"), encoding="latin1") as fh:
+    if Path(root_dir, ".gitignore").is_file():
+        with open(Path(root_dir, ".gitignore"), encoding="latin1") as fh:
             for line in fh:
-                ignore.append(os.path.basename(line.strip().rstrip("/")))
+                ignore.append(Path(line.strip().rstrip("/")).name)
     for root, dirs, files in os.walk(root_dir, topdown=True):
         # Ignore files
         for i_base in ignore:
-            i = os.path.join(root, i_base)
-            dirs[:] = [d for d in dirs if not fnmatch.fnmatch(os.path.join(root, d), i)]
-            files[:] = [f for f in files if not fnmatch.fnmatch(os.path.join(root, f), i)]
+            i = str(Path(root, i_base))
+            dirs[:] = [d for d in dirs if not fnmatch.fnmatch(str(Path(root, d)), i)]
+            files[:] = [f for f in files if not fnmatch.fnmatch(str(Path(root, f)), i)]
         for fname in files:
             try:
-                with open(os.path.join(root, fname), encoding="latin1") as fh:
+                with open(Path(root, fname), encoding="latin1") as fh:
                     for line in fh:
                         if "TODO nf-core" in line:
                             line = (
@@ -63,7 +64,7 @@ def pipeline_todos(self, root_dir=None):
                                 .strip()
                             )
                             warned.append(f"TODO string in `{fname}`: _{line}_")
-                            file_paths.append(os.path.join(root, fname))
+                            file_paths.append(Path(root, fname))
             except FileNotFoundError:
                 log.debug(f"Could not open file {fname} in pipeline_todos lint test")
 
