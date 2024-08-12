@@ -429,14 +429,18 @@ def poll_nfcore_web_api(api_url, post_data=None):
             if post_data is None:
                 response = requests.get(api_url, headers={"Cache-Control": "no-cache"})
             else:
-                response = requests.post(url=api_url, data=post_data)
+                log.debug(f"Sending POST request to {api_url} with data: {post_data}")
+                response = requests.post(
+                    url=api_url,
+                    data=post_data,
+                )
         except requests.exceptions.Timeout:
             raise AssertionError(f"URL timed out: {api_url}")
         except requests.exceptions.ConnectionError:
             raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
             if response.status_code != 200 and response.status_code != 301:
-                log.debug(f"Response content:\n{response.content}")
+                log.debug(f"Response content:\n{response.status_code}")
                 raise AssertionError(
                     f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )

@@ -43,7 +43,7 @@ class PipelineSchema:
         self.schema_from_scratch = False
         self.no_prompts = False
         self.web_only = False
-        self.web_schema_build_url = "https://nf-co.re/pipeline_schema_builder"
+        self.web_schema_build_url = "https://nf-co.re/.netlify/functions/process_schema"
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
 
@@ -643,7 +643,7 @@ class PipelineSchema:
 
         # If running interactively, send to the web for customisation
         if not self.no_prompts:
-            if Confirm.ask(":rocket:  Launch web builder for customisation and editing?"):
+            if Confirm.ask(":rocket:  Launch web builder for customisation and editing?", default=True):
                 try:
                     self.launch_web_builder()
                 except AssertionError as e:
@@ -657,7 +657,7 @@ class PipelineSchema:
                     if self.web_schema_build_web_url:
                         log.info(
                             "To save your work, open {}\n"
-                            f"Click the blue 'Finished' button, copy the schema and paste into this file: { self.web_schema_build_web_url, self.schema_filename}"
+                            f"Click the blue 'Finished' button, copy the schema and paste into this file: { self.web_schema_build_web_url, str(self.schema_filename)}"
                         )
                     return False
 
@@ -883,9 +883,9 @@ class PipelineSchema:
             if "web_url" not in web_response:
                 raise AssertionError('"web_url" not in web_response')
             # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatability.
-            if web_response["status"] != "recieved":
+            if web_response["status"] != "received":
                 raise AssertionError(
-                    f'web_response["status"] should be "recieved", but it is "{web_response["status"]}"'
+                    f'web_response["status"] should be "received", but it is "{web_response["status"]}"'
                 )
         except AssertionError:
             log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
