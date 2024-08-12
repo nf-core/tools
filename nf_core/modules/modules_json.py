@@ -1183,7 +1183,8 @@ class ModulesJson:
         i.e., no module or subworkflow has been installed by the user in the meantime
         """
 
-        sw_path = Path(self.subworkflows_dir, org, subworkflow)
+        sw_name = subworkflow["name"] if isinstance(subworkflow, dict) else subworkflow
+        sw_path = Path(self.subworkflows_dir, org, sw_name)
         dep_mods, dep_subwfs = get_components_to_install(sw_path)
 
         for dep_mod in dep_mods:
