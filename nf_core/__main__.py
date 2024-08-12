@@ -1165,11 +1165,17 @@ def command_modules_create(
     default=None,
     help="Run tests with a specific profile",
 )
-def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile):
+@click.option(
+    "--migrate-pytest",
+    is_flag=True,
+    default=False,
+    help="Migrate a module with pytest tests to nf-test",
+)
+def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest):
     """
     Run nf-test for a module.
     """
-    modules_test(ctx, tool, directory, no_prompts, update, once, profile)
+    modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest)
 
 
 # nf-core modules lint
@@ -1367,11 +1373,17 @@ def command_subworkflows_create(ctx, subworkflow, directory, author, force, migr
     default=None,
     help="Run tests with a specific profile",
 )
-def command_subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile):
+@click.option(
+    "--migrate-pytest",
+    is_flag=True,
+    default=False,
+    help="Migrate a subworkflow with pytest tests to nf-test",
+)
+def command_subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile, migrate_pytest):
     """
     Run nf-test for a subworkflow.
     """
-    subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile)
+    subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile, migrate_pytest)
 
 
 # nf-core subworkflows list subcommands
@@ -2194,7 +2206,7 @@ def command_lint(
 )
 @click.option("-d", "--description", type=str, help="A short description of your pipeline")
 @click.option("-a", "--author", type=str, help="Name of the main author(s)")
-@click.option("--version", type=str, help="The initial version number to use")
+@click.option("--version", type=str, default="1.0.0dev", help="The initial version number to use")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
 @click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
@@ -2213,7 +2225,7 @@ def command_create(ctx, name, description, author, version, force, outdir, templ
     log.warning(
         "The `[magenta]nf-core create[/]` command is deprecated. Use `[magenta]nf-core pipelines create[/]` instead."
     )
-    pipelines_create(ctx, name, description, author, version, force, outdir, template_yaml, plain, organisation)
+    pipelines_create(ctx, name, description, author, version, force, outdir, template_yaml, organisation)
 
 
 # Main script is being run - launch the CLI

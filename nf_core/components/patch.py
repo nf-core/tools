@@ -37,7 +37,7 @@ class ComponentPatch(ComponentCommand):
         component_names = [component for _, component in components]
 
         if component is not None and component not in component_names:
-            component_dir = [dir for dir, m in components if m == component][0]
+            component_dir = [d for d, m in components if m == component][0]
             raise UserWarning(
                 f"{self.component_type[:-1].title()} '{Path(self.component_type, component_dir, component)}' does not exist in the pipeline"
             )

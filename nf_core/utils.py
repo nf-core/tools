@@ -19,7 +19,7 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, TypedDict, Union
 
 import git
 import prompt_toolkit.styles
@@ -1077,14 +1077,18 @@ class NFCoreTemplateConfig(BaseModel):
         return getattr(self, item, default)
 
 
-LintConfigType = Optional[Dict[str, Union[List[str], List[Dict[str, List[str]]], bool]]]
+class LintConfigType(TypedDict):
+    files_exist: Optional[Union[List, List[str], List[Dict[str, List[str]]]]]
+    files_unchanged: Optional[Union[List[str], List[Dict[str, List[str]]]]]
+    nextflow_config: Optional[Union[List[str], List[Dict[str, List[str]]]]]
+    multiqc_config: Optional[Union[List[str], bool]]
 
 
 class NFCoreYamlConfig(BaseModel):
     repository_type: str
     nf_core_version: Optional[str] = None
     org_path: Optional[str] = None
-    lint: LintConfigType = None
+    lint: Optional[LintConfigType] = None
     template: Optional[NFCoreTemplateConfig] = None
     bump_version: Optional[Dict[str, bool]] = None
     update: Optional[Dict[str, Union[str, bool, Dict[str, Union[str, Dict[str, Union[str, bool]]]]]]] = None

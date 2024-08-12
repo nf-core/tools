@@ -26,6 +26,7 @@ Content-Disposition: inline; filename="{{ name_noslash }}_logo_light.png"
     join( '\n' ) %>
 
 <%
+{%- if multiqc %}
 if (mqcFile){
 def mqcFileObj = new File("$mqcFile")
 if (mqcFileObj.length() < mqcMaxSize){
@@ -48,6 +49,7 @@ ${mqcFileObj.
     join( '\n' )}
 """
 }}
+{%- endif %}
 %>
 
 --nfcoremimeboundary--

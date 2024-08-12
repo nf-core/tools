@@ -99,7 +99,24 @@ class PipelineCreate:
                 "CODE_OF_CONDUCT.md",
                 ".github/workflows/awsfulltest.yml",
                 ".github/workflows/awstest.yml",
+                ".github/workflows/release-announcements.yml",
             ],
+            "code_linters": [
+                ".editorconfig",
+                ".pre-commit-config.yaml",
+                ".prettierignore",
+                ".prettierrc.yml",
+                ".github/workflows/fix-linting.yml",
+            ],
+            "citations": ["assets/methods_description_template.yml"],
+            "gitpod": [".gitpod.yml"],
+            "codespaces": [".devcontainer/devcontainer.json"],
+            "multiqc": [
+                "assets/multiqc_config.yml",
+                "assets/methods_description_template.yml",
+                "modules/nf-core/multiqc/",
+            ],
+            "changelog": ["CHANGELOG.md"],
         }
         # Get list of files we're skipping with the supplied skip keys
         self.skip_paths = set(sp for k in skip_paths for sp in skippable_paths[k])
@@ -210,6 +227,12 @@ class PipelineCreate:
             "github_badges": {"file": False, "content": True},
             "igenomes": {"file": True, "content": True},
             "nf_core_configs": {"file": False, "content": True},
+            "code_linters": {"file": True, "content": True},
+            "citations": {"file": True, "content": True},
+            "gitpod": {"file": True, "content": True},
+            "codespaces": {"file": True, "content": True},
+            "multiqc": {"file": True, "content": True},
+            "changelog": {"file": True, "content": False},
         }
 
         # Set the parameters for the jinja template
@@ -371,8 +394,8 @@ class PipelineCreate:
                 # in the github bug report template
                 self.remove_nf_core_in_bug_report_template()
 
-            # Update the .nf-core.yml with linting configurations
-            self.fix_linting()
+        # Update the .nf-core.yml with linting configurations
+        self.fix_linting()
 
         if self.config:
             config_fn, config_yml = nf_core.utils.load_tools_config(self.outdir)
@@ -417,35 +440,38 @@ class PipelineCreate:
 
         run_prettier_on_file(bug_report_path)
 
-    def fix_linting(self) -> None:
+    def fix_linting(self):
         """
         Updates the .nf-core.yml with linting configurations
         for a customized pipeline.
         """
         # Create a lint config
         short_name: str = self.jinja_params["short_name"]
-        lint_config: Dict[str, List[str]] = {
-            "files_exist": [
-                "CODE_OF_CONDUCT.md",
-                f"assets/nf-core-{short_name}_logo_light.png",
-                f"docs/images/nf-core-{short_name}_logo_light.png",
-                f"docs/images/nf-core-{short_name}_logo_dark.png",
-                ".github/ISSUE_TEMPLATE/config.yml",
-                ".github/workflows/awstest.yml",
-                ".github/workflows/awsfulltest.yml",
-            ],
-            "files_unchanged": [
-                "CODE_OF_CONDUCT.md",
-                f"assets/nf-core-{short_name}_logo_light.png",
-                f"docs/images/nf-core-{short_name}_logo_light.png",
-                f"docs/images/nf-core-{short_name}_logo_dark.png",
-            ],
-            "nextflow_config": [
-                "manifest.name",
-                "manifest.homePage",
-            ],
-            "multiqc_config": ["report_comment"],
-        }
+        short_name = self.jinja_params["short_name"]
+        lint_config = {}
+        if not self.config.is_nfcore:
+            lint_config = {
+                "files_exist": [
+                    "CODE_OF_CONDUCT.md",
+                    f"assets/nf-core-{short_name}_logo_light.png",
+                    f"docs/images/nf-core-{short_name}_logo_light.png",
+                    f"docs/images/nf-core-{short_name}_logo_dark.png",
+                    ".github/ISSUE_TEMPLATE/config.yml",
+                    ".github/workflows/awstest.yml",
+                    ".github/workflows/awsfulltest.yml",
+                ],
+                "files_unchanged": [
+                    "CODE_OF_CONDUCT.md",
+                    f"assets/nf-core-{short_name}_logo_light.png",
+                    f"docs/images/nf-core-{short_name}_logo_light.png",
+                    f"docs/images/nf-core-{short_name}_logo_dark.png",
+                ],
+                "nextflow_config": [
+                    "manifest.name",
+                    "manifest.homePage",
+                ],
+                "multiqc_config": ["report_comment"],
+            }
 
         # Add GitHub hosting specific configurations
         if not self.jinja_params["github"]:
@@ -503,6 +529,22 @@ class PipelineCreate:
         # Add github badges specific configurations
         if not self.jinja_params["github_badges"] or not self.jinja_params["github"]:
             lint_config["readme"] = ["nextflow_badge"]
+
+        # Add codespaces specific configurations
+        if not self.jinja_params["codespaces"]:
+            lint_config["files_unchanged"].extend([".github/CONTRIBUTING.md"])
+
+        # Add multiqc specific configurations
+        if not self.jinja_params["multiqc"]:
+            lint_config.setdefault("files_unchanged", []).extend(
+                [".github/CONTRIBUTING.md", "assets/sendmail_template.txt"]
+            )
+            lint_config.setdefault("files_exist", []).extend(["assets/multiqc_config.yml"])
+            lint_config["multiqc_config"] = False
+
+        # Add changelog specific configurations
+        if not self.jinja_params["changelog"]:
+            lint_config["files_exist"].extend(["CHANGELOG.md"])
 
         # If the pipeline is not nf-core
         if not self.config.is_nfcore:

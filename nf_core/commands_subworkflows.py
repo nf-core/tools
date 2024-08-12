@@ -34,7 +34,7 @@ def subworkflows_create(ctx, subworkflow, directory, author, force, migrate_pyte
         sys.exit(1)
 
 
-def subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile):
+def subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile, migrate_pytest):
     """
     Run nf-test for a subworkflow.
 
@@ -42,6 +42,8 @@ def subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, pro
     """
     from nf_core.components.components_test import ComponentsTest
 
+    if migrate_pytest:
+        subworkflows_create(ctx, subworkflow, directory, None, False, True)
     try:
         sw_tester = ComponentsTest(
             component_type="subworkflows",

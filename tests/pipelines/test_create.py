@@ -107,14 +107,15 @@ class NfcoreCreateTest(unittest.TestCase):
         pipeline.init_pipeline()
 
         # Check pipeline template yml has been dumped to `.nf-core.yml` and matches input
-        assert not os.path.exists(os.path.join(pipeline.outdir, "pipeline_template.yml"))
-        assert os.path.exists(os.path.join(pipeline.outdir, ".nf-core.yml"))
-        with open(os.path.join(pipeline.outdir, ".nf-core.yml")) as fh:
+        assert not (pipeline.outdir / "pipeline_template.yml").exists()
+        assert (pipeline.outdir / ".nf-core.yml").exists()
+        with open(pipeline.outdir / ".nf-core.yml") as fh:
             nfcore_yml = yaml.safe_load(fh)
             assert "template" in nfcore_yml
             assert yaml.safe_load(PIPELINE_TEMPLATE_YML.read_text()).items() <= nfcore_yml["template"].items()
 
         # Check that some of the skipped files are not present
-        assert not os.path.exists(os.path.join(pipeline.outdir, "CODE_OF_CONDUCT.md"))
-        assert not os.path.exists(os.path.join(pipeline.outdir, ".github"))
-        assert not os.path.exists(os.path.join(pipeline.outdir, "conf", "igenomes.config"))
+        assert not (pipeline.outdir / "CODE_OF_CONDUCT.md").exists()
+        assert not (pipeline.outdir / ".github").exists()
+        assert not (pipeline.outdir / "conf" / "igenomes.config").exists()
+        assert not (pipeline.outdir / ".editorconfig").exists()

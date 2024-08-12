@@ -219,7 +219,7 @@ def modules_create(
         sys.exit(1)
 
 
-def modules_test(ctx, tool, directory, no_prompts, update, once, profile):
+def modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest):
     """
     Run nf-test for a module.
 
@@ -227,6 +227,21 @@ def modules_test(ctx, tool, directory, no_prompts, update, once, profile):
     """
     from nf_core.components.components_test import ComponentsTest
 
+    if migrate_pytest:
+        modules_create(
+            ctx,
+            tool,
+            directory,
+            author="",
+            label="",
+            meta=True,
+            no_meta=False,
+            force=False,
+            conda_name=None,
+            conda_package_version=None,
+            empty_template=False,
+            migrate_pytest=migrate_pytest,
+        )
     try:
         module_tester = ComponentsTest(
             component_type="modules",
