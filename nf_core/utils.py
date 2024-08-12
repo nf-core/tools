@@ -19,7 +19,7 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, TypedDict, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
 
 import git
 import prompt_toolkit.styles
@@ -1077,11 +1077,7 @@ class NFCoreTemplateConfig(BaseModel):
         return getattr(self, item, default)
 
 
-class LintConfigType(TypedDict):
-    files_exist: Optional[Union[List, List[str], List[Dict[str, List[str]]]]]
-    files_unchanged: Optional[Union[List[str], List[Dict[str, List[str]]]]]
-    nextflow_config: Optional[Union[List[str], List[Dict[str, List[str]]]]]
-    multiqc_config: Optional[Union[List[str], bool]]
+LintConfigType = Optional[Dict[str, Union[List[str], List[Dict[str, List[str]]], bool]]]
 
 
 class NFCoreYamlConfig(BaseModel):
