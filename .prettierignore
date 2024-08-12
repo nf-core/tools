@@ -5,6 +5,8 @@ docs/api/_build
 testing
 nf_core/module-template/meta.yml
 nf_core/pipeline-template/nextflow_schema.json
+nf_core/pipeline-template/modules.json
+nf_core/pipeline-template/tower.yml
 # don't run on things handled by ruff
 *.py
 *.pyc
