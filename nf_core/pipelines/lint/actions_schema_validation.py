@@ -1,6 +1,5 @@
-import glob
 import logging
-import os
+from pathlib import Path
 from typing import Any, Dict, List
 
 import jsonschema
@@ -26,7 +25,7 @@ def actions_schema_validation(self) -> Dict[str, List[str]]:
     logging.getLogger("nf_core.pipelines.schema").setLevel(logging.ERROR)
 
     # Get all workflow files
-    action_workflows = glob.glob(os.path.join(self.wf_path, ".github/workflows/*.y*ml"))
+    action_workflows = list(Path(self.wf_path).glob(".github/workflows/*.y*ml"))
 
     # Load the GitHub workflow schema
     r = requests.get("https://json.schemastore.org/github-workflow", allow_redirects=True)
@@ -40,7 +39,7 @@ def actions_schema_validation(self) -> Dict[str, List[str]]:
 
     # Validate all workflows against the schema
     for wf_path in action_workflows:
-        wf = os.path.basename(wf_path)
+        wf = wf_path.name
 
         # load workflow
         try:

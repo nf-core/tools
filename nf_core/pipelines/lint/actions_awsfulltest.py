@@ -1,9 +1,10 @@
-import os
+from pathlib import Path
+from typing import Dict, List
 
 import yaml
 
 
-def actions_awsfulltest(self):
+def actions_awsfulltest(self) -> Dict[str, List[str]]:
     """Checks the GitHub Actions awsfulltest is valid.
 
     In addition to small test datasets run on GitHub Actions, we provide the possibility of testing the pipeline on full size datasets on AWS.
@@ -29,8 +30,8 @@ def actions_awsfulltest(self):
     warned = []
     failed = []
 
-    fn = os.path.join(self.wf_path, ".github", "workflows", "awsfulltest.yml")
-    if os.path.isfile(fn):
+    fn = Path(self.wf_path, ".github", "workflows", "awsfulltest.yml")
+    if fn.is_file():
         try:
             with open(fn) as fh:
                 wf = yaml.safe_load(fh)

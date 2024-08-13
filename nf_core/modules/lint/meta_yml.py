@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 from jsonschema import exceptions, validators
 
-from nf_core.components.lint import ComponentLint
+from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_differ import ModulesDiffer
 
@@ -43,7 +43,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
     module.get_outputs_from_main_nf()
     # Check if we have a patch file, get original file in that case
     meta_yaml = None
-    if module.is_patched:
+    if module.is_patched and module_lint_object.modules_repo.repo_path is not None:
         lines = ModulesDiffer.try_apply_patch(
             module.component_name,
             module_lint_object.modules_repo.repo_path,
@@ -53,6 +53,8 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
         ).get("meta.yml")
         if lines is not None:
             meta_yaml = yaml.safe_load("".join(lines))
+    if module.meta_yml is None:
+        raise LintExceptionError("Module does not have a `meta.yml` file")
     if meta_yaml is None:
         try:
             with open(module.meta_yml) as fh:
