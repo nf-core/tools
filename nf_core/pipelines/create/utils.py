@@ -3,9 +3,9 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from logging import LogRecord
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, Union
+from typing import Any, Dict, Iterator, Union
 
-from pydantic import BaseModel, ConfigDict, ValidationError, ValidationInfo, field_validator
+from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
 from rich.logging import RichHandler
 from textual import on
 from textual._context import active_app
@@ -15,6 +15,8 @@ from textual.message import Message
 from textual.validation import ValidationResult, Validator
 from textual.widget import Widget
 from textual.widgets import Button, Input, Markdown, RichLog, Static, Switch
+
+from nf_core.utils import NFCoreTemplateConfig
 
 # Use ContextVar to define a context on the model initialization
 _init_context_var: ContextVar = ContextVar("_init_context_var", default={})
@@ -33,18 +35,8 @@ def init_context(value: Dict[str, Any]) -> Iterator[None]:
 NFCORE_PIPELINE_GLOBAL: bool = True
 
 
-class CreateConfig(BaseModel):
+class CreateConfig(NFCoreTemplateConfig):
     """Pydantic model for the nf-core create config."""
-
-    org: Optional[str] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
-    author: Optional[str] = None
-    version: Optional[str] = None
-    force: Optional[bool] = True
-    outdir: Optional[str] = None
-    skip_features: Optional[list] = None
-    is_nfcore: Optional[bool] = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -103,7 +95,7 @@ class TextInput(Static):
     and validation messages.
     """
 
-    def __init__(self, field_id, placeholder, description, default=None, password=None, **kwargs) -> None:
+    def __init__(self, field_id, placeholder, description, default="", password=False, **kwargs) -> None:
         """Initialise the widget with our values.
 
         Pass on kwargs upstream for standard usage."""
@@ -132,10 +124,16 @@ class TextInput(Static):
     @on(Input.Submitted)
     def show_invalid_reasons(self, event: Union[Input.Changed, Input.Submitted]) -> None:
         """Validate the text input and show errors if invalid."""
-        if not event.validation_result.is_valid:
-            self.query_one(".validation_msg").update("\n".join(event.validation_result.failure_descriptions))
+        val_msg = self.query_one(".validation_msg")
+        if not isinstance(val_msg, Static):
+            raise ValueError("Validation message not found.")
+
+        if event.validation_result is not None and not event.validation_result.is_valid:
+            # check that val_msg is instance of Static
+            if isinstance(val_msg, Static):
+                val_msg.update("\n".join(event.validation_result.failure_descriptions))
         else:
-            self.query_one(".validation_msg").update("")
+            val_msg.update("")
 
 
 class ValidateConfig(Validator):

@@ -21,7 +21,7 @@ indent_style = unset
 [**/Makefile]
 indent_style = unset
 
-[tests/__snapshots__/*]
+[tests/pipelines/__snapshots__/*]
 charset = unset
 end_of_line = unset
 insert_final_newline = unset
