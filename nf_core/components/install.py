@@ -58,7 +58,8 @@ class ComponentInstall(ComponentCommand):
         if isinstance(component, dict):
             if component["git_remote"] is not None:
                 remote_url = component["git_remote"]
-                self.modules_repo = ModulesRepo(remote_url, self.branch)
+                branch = component["branch"]
+                self.modules_repo = ModulesRepo(remote_url, branch)
             else:
                 self.modules_repo = ModulesRepo(self.current_remote, self.branch)
             component = component["name"]
