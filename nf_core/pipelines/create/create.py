@@ -8,7 +8,7 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 import git
 import git.config
@@ -185,7 +185,7 @@ class PipelineCreate:
 
     def obtain_jinja_params_dict(
         self, features_to_skip: List[str], pipeline_dir: Union[str, Path]
-    ) -> tuple[dict, list[str]]:
+    ) -> Tuple[Dict, List[str]]:
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
