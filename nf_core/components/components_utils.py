@@ -165,7 +165,9 @@ def get_components_to_install(
     if Path(subworkflow_dir, "meta.yml").exists():
         with open(Path(subworkflow_dir, "meta.yml")) as fh:
             meta = yaml.safe_load(fh)
-            components = meta.get("components", [])
+            if "components" not in meta:
+                return modules, subworkflows
+            components = meta.get("components")
             new_module_list = []
             new_subwf_list = []
 
