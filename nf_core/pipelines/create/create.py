@@ -18,7 +18,7 @@ import yaml
 import nf_core
 import nf_core.pipelines.schema
 import nf_core.utils
-from nf_core.pipelines.create.utils import CreateConfig
+from nf_core.pipelines.create.utils import CreateConfig, features_yml_path, load_features_yaml
 from nf_core.pipelines.create_logo import create_logo
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.utils import LintConfigType, NFCoreTemplateConfig
@@ -82,9 +82,7 @@ class PipelineCreate:
             raise UserWarning("The template configuration was not provided.")
 
         # Read features yaml file
-        features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "templatefeatures.yml"
-        with open(features_yml_path) as fh:
-            self.template_features_yml = yaml.safe_load(fh)
+        self.template_features_yml = load_features_yaml()
 
         if self.config.outdir is None:
             self.config.outdir = str(Path.cwd())

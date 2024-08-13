@@ -72,9 +72,7 @@ class PipelineCreateApp(App[utils.CreateConfig]):
     LOGGING_STATE = None
 
     # Template features
-    features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "templatefeatures.yml"
-    with open(features_yml_path) as fh:
-        template_features_yml = yaml.safe_load(fh)
+    template_features_yml = utils.load_features_yaml()
 
     def on_mount(self) -> None:
         self.push_screen("welcome")

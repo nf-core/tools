@@ -5,6 +5,7 @@ from logging import LogRecord
 from pathlib import Path
 from typing import Any, Dict, Iterator, Union
 
+import yaml
 from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
 from rich.logging import RichHandler
 from textual import on
@@ -16,6 +17,7 @@ from textual.validation import ValidationResult, Validator
 from textual.widget import Widget
 from textual.widgets import Button, Input, Markdown, RichLog, Static, Switch
 
+import nf_core
 from nf_core.utils import NFCoreTemplateConfig
 
 # Use ContextVar to define a context on the model initialization
@@ -33,6 +35,9 @@ def init_context(value: Dict[str, Any]) -> Iterator[None]:
 
 # Define a global variable to store the pipeline type
 NFCORE_PIPELINE_GLOBAL: bool = True
+
+# YAML file describing template features
+features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "templatefeatures.yml"
 
 
 class CreateConfig(NFCoreTemplateConfig):
@@ -242,3 +247,9 @@ def add_hide_class(app, widget_id: str) -> None:
 def remove_hide_class(app, widget_id: str) -> None:
     """Remove class 'hide' to a widget. Display widget."""
     app.get_widget_by_id(widget_id).remove_class("hide")
+
+
+def load_features_yaml() -> dict:
+    """Load the YAML file describing template features."""
+    with open(features_yml_path) as fh:
+        return yaml.safe_load(fh)
