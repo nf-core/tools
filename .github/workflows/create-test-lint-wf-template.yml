@@ -35,7 +35,7 @@ jobs:
     name: Retrieve all template features
     runs-on: ubuntu-latest
     outputs:
-      all_features: ${{ steps.create_matrix.outputs.matrix }}
+      all_features: ${{ fromJSON(steps.create_matrix.outputs.matrix) }}
     steps:
       - name: 🏗 Set up yq
         uses: frenck/action-setup-yq@v1
@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Create Matrix
         id: create_matrix
-        run: echo "matrix=$(yq 'keys' ${{ github.workspace }}/nf_core/pipelines/create/templatefeatures.yml | awk '{print $2}' | paste -sd "," - | awk '{print "[" $0 "]"}')" >> $GITHUB_OUTPUT
+        run: echo "matrix=$(yq 'keys' ${{ github.workspace }}/nf_core/pipelines/create/templatefeatures.yml | awk '{print "\""$2"\""}' | paste -sd "," - | awk '{print "[" $0 "]"}')" >> $GITHUB_OUTPUT
 
   RunTestWorkflow:
     runs-on: ${{ matrix.runner }}
