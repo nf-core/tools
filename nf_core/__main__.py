@@ -738,7 +738,7 @@ def command_pipelines_schema_validate(pipeline, params):
 @click.option(
     "--url",
     type=str,
-    default="https://nf-co.re/pipeline_schema_builder",
+    default="http://localhost:8000",
     help="Customise the builder URL (for development work)",
 )
 def command_pipelines_schema_build(directory, no_prompts, web_only, url):
@@ -1687,7 +1687,7 @@ def command_schema_validate(pipeline, params):
 @click.option(
     "--url",
     type=str,
-    default="https://nf-co.re/pipeline_schema_builder",
+    default="http://localhost:8000",
     help="Customise the builder URL (for development work)",
 )
 def command_schema_build(directory, no_prompts, web_only, url):

@@ -17,6 +17,7 @@ from rich.prompt import Confirm
 from rich.syntax import Syntax
 
 import nf_core.pipelines.list
+import nf_core.server
 import nf_core.utils
 from nf_core.pipelines.lint_utils import dump_json_with_prettier, run_prettier_on_file
 
@@ -43,7 +44,7 @@ class PipelineSchema:
         self.schema_from_scratch = False
         self.no_prompts = False
         self.web_only = False
-        self.web_schema_build_url = "https://nf-co.re/.netlify/functions/process_schema"
+        self.web_schema_build_url = "http://localhost:8000"
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
 
@@ -650,10 +651,7 @@ class PipelineSchema:
                     log.error(e.args[0])
                     # Extra help for people running offline
                     if "Could not connect" in e.args[0]:
-                        log.info(
-                            f"If you're working offline, now copy your schema ({self.schema_filename}) and paste at https://nf-co.re/pipeline_schema_builder"
-                        )
-                        log.info("When you're finished, you can paste the edited schema back into the same file")
+                        log.info("Could not connect to the web builder")
                     if self.web_schema_build_web_url:
                         log.info(
                             "To save your work, open {}\n"
@@ -869,6 +867,8 @@ class PipelineSchema:
         """
         Send pipeline schema to web builder and wait for response
         """
+        nf_core.server.start_server()
+
         content = {
             "post_content": "json_schema",
             "api": "true",
@@ -882,7 +882,6 @@ class PipelineSchema:
                 raise AssertionError('"api_url" not in web_response')
             if "web_url" not in web_response:
                 raise AssertionError('"web_url" not in web_response')
-            # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatability.
             if web_response["status"] != "received":
                 raise AssertionError(
                     f'web_response["status"] should be "received", but it is "{web_response["status"]}"'
