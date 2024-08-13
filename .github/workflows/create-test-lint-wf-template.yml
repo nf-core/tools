@@ -51,7 +51,7 @@ jobs:
       NXF_ANSI_LOG: false
     strategy:
       matrix:
-        TEMPLATE: ${{ needs.prepare-matrix.outputs.all_features }}
+        TEMPLATE: ${{ fromJson(needs.prepare-matrix.outputs.all_features) }}
         runner:
           # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
           - ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
