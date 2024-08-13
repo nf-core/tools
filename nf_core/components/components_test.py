@@ -93,7 +93,7 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         os.environ["NFT_DIFF_ARGS"] = (
             "--line-numbers --expand-tabs=2"  # taken from https://code.askimed.com/nf-test/docs/assertions/snapshots/#snapshot-differences
         )
-        with nf_core.utils.set_wd(Path(self.dir)):
+        with nf_core.utils.set_wd(self.directory):
             self.check_snapshot_stability()
         if len(self.errors) > 0:
             errors = "\n - ".join(self.errors)
@@ -126,7 +126,7 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         self.component_dir = Path(self.component_type, self.modules_repo.repo_path, *self.component_name.split("/"))
 
         # First, sanity check that the module directory exists
-        if not Path(self.dir, self.component_dir).is_dir():
+        if not Path(self.directory, self.component_dir).is_dir():
             raise UserWarning(
                 f"Cannot find directory '{self.component_dir}'.{' Should be TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else ''}"
             )

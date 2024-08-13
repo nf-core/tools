@@ -5,15 +5,4 @@ version: 1.0.0
 force: True
 org: testprefix
 is_nfcore: False
-skip_features:
-  - github
-  - ci
-  - github_badges
-  - igenomes
-  - nf_core_configs
-  - code_linters
-  - citations
-  - gitpod
-  - codespaces
-  - multiqc
-  - changelog
+skip_features: {{ all_features }}

@@ -5,10 +5,13 @@ import logging
 import os
 import re
 import shutil
+from pathlib import Path
+from typing import Dict, Optional, Union
 
 import git
 import questionary
 import requests
+import requests.auth
 import requests_cache
 import rich
 import yaml
@@ -59,24 +62,24 @@ class PipelineSync:
 
     def __init__(
         self,
-        pipeline_dir,
-        from_branch=None,
-        make_pr=False,
-        gh_repo=None,
-        gh_username=None,
-        template_yaml_path=None,
-        force_pr=False,
+        pipeline_dir: Union[str, Path],
+        from_branch: Optional[str] = None,
+        make_pr: bool = False,
+        gh_repo: Optional[str] = None,
+        gh_username: Optional[str] = None,
+        template_yaml_path: Optional[str] = None,
+        force_pr: bool = False,
     ):
         """Initialise syncing object"""
 
-        self.pipeline_dir = os.path.abspath(pipeline_dir)
+        self.pipeline_dir: Path = Path(pipeline_dir).resolve()
         self.from_branch = from_branch
         self.original_branch = None
         self.original_merge_branch = f"nf-core-template-merge-{nf_core.__version__}"
         self.merge_branch = self.original_merge_branch
         self.made_changes = False
         self.make_pr = make_pr
-        self.gh_pr_returned_data = {}
+        self.gh_pr_returned_data: Dict = {}
         self.required_config_vars = ["manifest.name", "manifest.description", "manifest.version", "manifest.author"]
         self.force_pr = force_pr
 
@@ -85,23 +88,23 @@ class PipelineSync:
         self.pr_url = ""
 
         self.config_yml_path, self.config_yml = nf_core.utils.load_tools_config(self.pipeline_dir)
-
+        assert self.config_yml_path is not None and self.config_yml is not None  # mypy
         # Throw deprecation warning if template_yaml_path is set
         if template_yaml_path is not None:
             log.warning(
                 f"The `template_yaml_path` argument is deprecated. Saving pipeline creation settings in .nf-core.yml instead. Please remove {template_yaml_path} file."
             )
-            if "template" in self.config_yml:
+            if getattr(self.config_yml, "template", None) is not None:
                 overwrite_template = questionary.confirm(
                     f"A template section already exists in '{self.config_yml_path}'. Do you want to overwrite?",
                     style=nf_core.utils.nfcore_question_style,
                     default=False,
                 ).unsafe_ask()
-            if overwrite_template or "template" not in self.config_yml:
+            if overwrite_template or getattr(self.config_yml, "template", None) is None:
                 with open(template_yaml_path) as f:
-                    self.config_yml["template"] = yaml.safe_load(f)
+                    self.config_yml.template = yaml.safe_load(f)
                 with open(self.config_yml_path, "w") as fh:
-                    yaml.safe_dump(self.config_yml, fh)
+                    yaml.safe_dump(self.config_yml.model_dump(), fh)
                 log.info(f"Saved pipeline creation settings to '{self.config_yml_path}'")
                 raise SystemExit(
                     f"Please commit your changes and delete the {template_yaml_path} file. Then run the sync command again."
@@ -209,7 +212,7 @@ class PipelineSync:
 
         # Fetch workflow variables
         log.debug("Fetching workflow config variables")
-        self.wf_config = nf_core.utils.fetch_wf_config(self.pipeline_dir)
+        self.wf_config = nf_core.utils.fetch_wf_config(Path(self.pipeline_dir))
 
         # Check that we have the required variables
         for rvar in self.required_config_vars:
@@ -258,22 +261,32 @@ class PipelineSync:
 
         # Only show error messages from pipeline creation
         logging.getLogger("nf_core.pipelines.create").setLevel(logging.ERROR)
+        assert self.config_yml_path is not None
+        assert self.config_yml is not None
 
         # Re-write the template yaml info from .nf-core.yml config
-        if "template" in self.config_yml:
+        if self.config_yml.template is not None:
+            # Set force true in config to overwrite existing files
+
+            self.config_yml.template.force = True
             with open(self.config_yml_path, "w") as config_path:
-                yaml.safe_dump(self.config_yml, config_path)
+                yaml.safe_dump(self.config_yml.model_dump(), config_path)
 
         try:
             nf_core.pipelines.create.create.PipelineCreate(
-                name=self.wf_config["manifest.name"].strip('"').strip("'"),
-                description=self.wf_config["manifest.description"].strip('"').strip("'"),
-                version=self.wf_config["manifest.version"].strip('"').strip("'"),
+                outdir=str(self.pipeline_dir),
+                from_config_file=True,
                 no_git=True,
                 force=True,
-                outdir=self.pipeline_dir,
-                author=self.wf_config["manifest.author"].strip('"').strip("'"),
             ).init_pipeline()
+
+            # set force to false to avoid overwriting files in the future
+            if self.config_yml.template is not None:
+                # Set force true in config to overwrite existing files
+                self.config_yml.template.force = False
+                with open(self.config_yml_path, "w") as config_path:
+                    yaml.safe_dump(self.config_yml.model_dump(), config_path)
+
         except Exception as err:
             # Reset to where you were to prevent git getting messed up.
             self.repo.git.reset("--hard")
@@ -410,21 +423,24 @@ class PipelineSync:
             return False
 
         for pr in list_prs_json:
-            log.debug(f"Looking at PR from '{pr['head']['ref']}': {pr['html_url']}")
-            # Ignore closed PRs
-            if pr["state"] != "open":
-                log.debug(f"Ignoring PR as state not open ({pr['state']}): {pr['html_url']}")
-                continue
+            if isinstance(pr, int):
+                log.debug(f"Incorrect PR format: {pr}")
+            else:
+                log.debug(f"Looking at PR from '{pr['head']['ref']}': {pr['html_url']}")
+                # Ignore closed PRs
+                if pr["state"] != "open":
+                    log.debug(f"Ignoring PR as state not open ({pr['state']}): {pr['html_url']}")
+                    continue
 
-            # Don't close the new PR that we just opened
-            if pr["head"]["ref"] == self.merge_branch:
-                continue
+                # Don't close the new PR that we just opened
+                if pr["head"]["ref"] == self.merge_branch:
+                    continue
 
-            # PR is from an automated branch and goes to our target base
-            if pr["head"]["ref"].startswith("nf-core-template-merge-") and pr["base"]["ref"] == self.from_branch:
-                self.close_open_pr(pr)
+                # PR is from an automated branch and goes to our target base
+                if pr["head"]["ref"].startswith("nf-core-template-merge-") and pr["base"]["ref"] == self.from_branch:
+                    self.close_open_pr(pr)
 
-    def close_open_pr(self, pr):
+    def close_open_pr(self, pr) -> bool:
         """Given a PR API response, add a comment and close."""
         log.debug(f"Attempting to close PR: '{pr['html_url']}'")
 

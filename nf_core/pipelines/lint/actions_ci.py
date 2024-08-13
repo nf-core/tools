@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import yaml
 
@@ -40,10 +40,10 @@ def actions_ci(self):
     """
     passed = []
     failed = []
-    fn = os.path.join(self.wf_path, ".github", "workflows", "ci.yml")
+    fn = Path(self.wf_path, ".github", "workflows", "ci.yml")
 
     # Return an ignored status if we can't find the file
-    if not os.path.isfile(fn):
+    if not fn.is_file():
         return {"ignored": ["'.github/workflows/ci.yml' not found"]}
 
     try:

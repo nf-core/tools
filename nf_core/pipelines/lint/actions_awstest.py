@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import yaml
 
@@ -22,8 +22,8 @@ def actions_awstest(self):
     * Must be turned on for ``workflow_dispatch``.
 
     """
-    fn = os.path.join(self.wf_path, ".github", "workflows", "awstest.yml")
-    if not os.path.isfile(fn):
+    fn = Path(self.wf_path, ".github", "workflows", "awstest.yml")
+    if not fn.is_file():
         return {"ignored": [f"'awstest.yml' workflow not found: `{fn}`"]}
 
     try:
