@@ -33,7 +33,7 @@ class NfcorePipeline(Screen):
         for name, feature in self.parent.template_features_yml.items():
             if feature["nfcore_pipelines"]:
                 self.query_one("#features").mount(
-                    PipelineFeature(feature["help"], feature["short_description"], feature["description"], name)
+                    PipelineFeature(feature["help_text"], feature["short_description"], feature["description"], name)
                 )
 
     @on(Button.Pressed, "#continue")

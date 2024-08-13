@@ -31,19 +31,14 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  install-yq:
-    name: Install yq
-    runs-on: ubuntu-latest
-    steps:
-      - name: 🏗 Set up yq
-        uses: frenck/action-setup-yq@v1
-
   prepare-matrix:
     name: Retrieve all template features
     runs-on: ubuntu-latest
     outputs:
       all_features: ${{ steps.create_matrix.outputs.matrix }}
     steps:
+      - name: 🏗 Set up yq
+        uses: frenck/action-setup-yq@v1
       - name: checkout
         uses: actions/checkout@v3
       - name: Create Matrix

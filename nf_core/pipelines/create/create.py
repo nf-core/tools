@@ -185,7 +185,9 @@ class PipelineCreate:
         if self.config.is_nfcore is None:
             self.config.is_nfcore = self.config.org == "nf-core"
 
-    def obtain_jinja_params_dict(self, features_to_skip: List[str], pipeline_dir: Union[str, Path]):
+    def obtain_jinja_params_dict(
+        self, features_to_skip: List[str], pipeline_dir: Union[str, Path]
+    ) -> tuple[dict, list[str]]:
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
