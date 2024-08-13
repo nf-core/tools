@@ -35,7 +35,7 @@ jobs:
     name: Retrieve all template features
     runs-on: ubuntu-latest
     outputs:
-      all_features: ${{ fromJSON(steps.create_matrix.outputs.matrix) }}
+      all_features: ${{ steps.create_matrix.outputs.matrix }}
     steps:
       - name: 🏗 Set up yq
         uses: frenck/action-setup-yq@v1
