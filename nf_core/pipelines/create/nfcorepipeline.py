@@ -6,7 +6,7 @@ from textual.containers import Center, ScrollableContainer
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Markdown, Switch
 
-from nf_core.pipelines.create.utils import PipelineFeature, markdown_genomes, markdown_multiqc
+from nf_core.pipelines.create.utils import PipelineFeature
 
 
 class NfcorePipeline(Screen):
@@ -22,26 +22,19 @@ class NfcorePipeline(Screen):
                 """
             )
         )
-        yield ScrollableContainer(
-            PipelineFeature(
-                markdown_genomes,
-                "Use reference genomes",
-                "The pipeline will be configured to use a copy of the most common reference genome files from iGenomes",
-                "igenomes",
-            ),
-            PipelineFeature(
-                markdown_multiqc,
-                "Use multiqc",
-                "The pipeline will include the MultiQC module which generates an HTML report for quality control.",
-                "multiqc",
-            ),
-            classes="features-container",
-        )
+        yield ScrollableContainer(id="features")
         yield Center(
             Button("Back", id="back", variant="default"),
             Button("Continue", id="continue", variant="success"),
             classes="cta",
         )
+
+    def on_mount(self) -> None:
+        for name, feature in self.parent.template_features_yml.items():
+            if feature["nfcore_pipelines"]:
+                self.query_one("#features").mount(
+                    PipelineFeature(feature["help_text"], feature["short_description"], feature["description"], name)
+                )
 
     @on(Button.Pressed, "#continue")
     def on_button_pressed(self, event: Button.Pressed) -> None:

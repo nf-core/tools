@@ -5,6 +5,7 @@ from logging import LogRecord
 from pathlib import Path
 from typing import Any, Dict, Iterator, Union
 
+import yaml
 from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
 from rich.logging import RichHandler
 from textual import on
@@ -16,6 +17,7 @@ from textual.validation import ValidationResult, Validator
 from textual.widget import Widget
 from textual.widgets import Button, Input, Markdown, RichLog, Static, Switch
 
+import nf_core
 from nf_core.utils import NFCoreTemplateConfig
 
 # Use ContextVar to define a context on the model initialization
@@ -33,6 +35,9 @@ def init_context(value: Dict[str, Any]) -> Iterator[None]:
 
 # Define a global variable to store the pipeline type
 NFCORE_PIPELINE_GLOBAL: bool = True
+
+# YAML file describing template features
+features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "templatefeatures.yml"
 
 
 class CreateConfig(NFCoreTemplateConfig):
@@ -244,22 +249,7 @@ def remove_hide_class(app, widget_id: str) -> None:
     app.get_widget_by_id(widget_id).remove_class("hide")
 
 
-## Markdown text to reuse in different screens
-markdown_genomes = """
-Nf-core pipelines are configured to use a copy of the most common reference genome files.
-
-By selecting this option, your pipeline will include a configuration file specifying the paths to these files.
-
-The required code to use these files will also be included in the template.
-When the pipeline user provides an appropriate genome key,
-the pipeline will automatically download the required reference files.
-
-For more information about reference genomes in nf-core pipelines,
-see the [nf-core docs](https://nf-co.re/docs/usage/reference_genomes).
-"""
-
-markdown_multiqc = """
-MultiQC is a visualization tool that generates a single HTML report summarising all samples in your project. Most of the pipeline quality control results can be visualised in the report and further statistics are available in the report data directory.
-
-The pipeline will include the MultiQC module and will have special steps which also allow the software versions to be reported in the MultiQC output for future traceability. For more information about how to use MultiQC reports, see http://multiqc.info.
-"""
+def load_features_yaml() -> Dict:
+    """Load the YAML file describing template features."""
+    with open(features_yml_path) as fh:
+        return yaml.safe_load(fh)
