@@ -218,6 +218,7 @@ class PipelineCreate:
         # Add is_nfcore as an area to skip for non-nf-core pipelines, to skip all nf-core files
         if not self.config.is_nfcore:
             skip_areas.append("is_nfcore")
+            jinja_params["is_nfcore"] = False
 
         # Set the last parameters based on the ones provided
         jinja_params["short_name"] = (
