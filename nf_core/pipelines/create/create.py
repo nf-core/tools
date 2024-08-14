@@ -368,9 +368,7 @@ class PipelineCreate:
                     run_prettier_on_file(self.outdir / config_fn)
 
         # Run prettier on files
-        for file in self.outdir.iterdir():
-            if file.is_file() and file.name.endswith(("yaml", "yml", "json")):
-                run_prettier_on_file(file)
+        run_prettier_on_file(self.outdir)
 
     def fix_linting(self):
         """
