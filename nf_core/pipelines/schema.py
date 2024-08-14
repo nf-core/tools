@@ -359,11 +359,22 @@ class PipelineSchema:
         """
         if schema is None:
             schema = self.schema
-        try:
-            jsonschema.Draft7Validator.check_schema(schema)
-            log.debug("JSON Schema Draft7 validated")
-        except jsonschema.exceptions.SchemaError as e:
-            raise AssertionError(f"Schema does not validate as Draft 7 JSON Schema:\n {e}")
+
+        schema_draft = schema["$schema"]
+        if schema_draft == "https://json-schema.org/draft-07/schema":
+            try:
+                jsonschema.Draft7Validator.check_schema(schema)
+                log.debug("JSON Schema Draft7 validated")
+            except jsonschema.exceptions.SchemaError as e:
+                raise AssertionError(f"Schema does not validate as Draft 7 JSON Schema:\n {e}")
+        elif schema_draft == "https://json-schema.org/draft/2020-12/schema":
+            try:
+                jsonschema.Draft202012Validator.check_schema(schema)
+                log.debug("JSON Schema Draft2020-12 validated")
+            except jsonschema.exceptions.SchemaError as e:
+                raise AssertionError(f"Schema does not validate as Draft 2020-12 JSON Schema:\n {e}")
+        else:
+            raise AssertionError(f"Unsupported JSON schema draft detected: ${schema_draft}. Use draft 7 or 2020-12 instead.")
 
         param_keys = list(schema.get("properties", {}).keys())
         num_params = len(param_keys)
