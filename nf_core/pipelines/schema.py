@@ -867,7 +867,9 @@ class PipelineSchema:
         """
         Send pipeline schema to web builder and wait for response
         """
+
         nf_core.server.start_server()
+        log.info("Sending pipeline schema to nf-core web builder for customisation")
 
         content = {
             "post_content": "json_schema",

@@ -31,7 +31,6 @@ import rich.markup
 import yaml
 from packaging.version import Version
 from pydantic import BaseModel, ValidationError, field_validator
-from rich.json import JSON
 from rich.live import Live
 from rich.spinner import Spinner
 
@@ -456,7 +455,7 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
                 response_content = response.content
                 if isinstance(response_content, bytes):
                     response_content = response_content.decode()
-                log.debug(f"Response content:\n{JSON(response_content)}")
+                log.debug(f"Response status_code: {response.status_code}, Response content:\n{response_content}")
                 raise AssertionError(
                     f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )
@@ -465,13 +464,16 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
                 return poll_nfcore_web_api(response.headers["Location"], post_data)
             try:
                 web_response = json.loads(response.content)
+                import ipdb
+
+                ipdb.set_trace()
                 if "status" not in web_response:
                     raise AssertionError()
             except (json.decoder.JSONDecodeError, AssertionError, TypeError):
                 response_content = response.content
                 if isinstance(response_content, bytes):
                     response_content = response_content.decode()
-                log.debug(f"Response content:\n{JSON(response_content)}")
+                log.debug(f"Response content:\n{response_content}")
                 raise AssertionError(
                     f"nf-core website API results response not recognised: {api_url}\n "
                     "See verbose log for full response"
