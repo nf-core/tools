@@ -44,7 +44,7 @@ jobs:
       - name: Create Matrix
         id: create_matrix
         run: |
-          echo "matrix=$(yq 'keys | tojson' ${{ github.workspace }}/nf_core/pipelines/create/templatefeatures.yml >> $GITHUB_OUTPUT
+          echo "matrix=$(yq 'keys | tojson' ${{ github.workspace }}/nf_core/pipelines/create/templatefeatures.yml) >> $GITHUB_OUTPUT
           echo $GITHUB_OUTPUT
 
   RunTestWorkflow:
