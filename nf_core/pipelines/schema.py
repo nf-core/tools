@@ -116,7 +116,25 @@ class PipelineSchema:
             self.schema = json.load(fh)
         self.schema_defaults = {}
         self.schema_params = {}
+        if "$schema" not in self.schema:
+            raise AssertionError("Schema missing top-level `$schema` attribute")        
+        self.schema_draft = self.schema["$schema"]
+        self.defs_notation = self.get_defs_notation()
         log.debug(f"JSON file loaded: {self.schema_filename}")
+
+    def get_defs_notation(self, schema=None):
+        if schema is None:
+            schema = self.schema
+
+        if "$defs" in schema:
+            defs_notation = "$defs"
+        elif "definitions" in schema:
+            defs_notation = "definitions"
+        elif "defs" in schema:
+            # nf-schema v2.0.0 only supported defs. this has been changed to $defs in nf-schema v2.1.0
+            # this line prevents the breakage of schemas created for v2.0.0
+            defs_notation = "defs"
+        return defs_notation
 
     def sanitise_param_default(self, param):
         """
@@ -168,10 +186,11 @@ class PipelineSchema:
                 if param["default"] is not None:
                     self.schema_defaults[p_key] = param["default"]
 
+        # TODO add support for nested parameters
         # Grouped schema properties in subschema definitions
-        for defn_name, definition in self.schema.get("definitions", {}).items():
+        for defn_name, definition in self.schema.get(self.defs_notation, {}).items():
             for p_key, param in definition.get("properties", {}).items():
-                self.schema_params[p_key] = ("definitions", defn_name, "properties", p_key)
+                self.schema_params[p_key] = (self.defs_notation, defn_name, "properties", p_key)
                 if "default" in param:
                     param = self.sanitise_param_default(param)
                     if param["default"] is not None:
@@ -248,13 +267,14 @@ class PipelineSchema:
         if self.schema is None:
             log.error("[red][✗] Pipeline schema not found")
         try:
+            # TODO add support for nested parameters
             # Make copy of schema and remove required flags
             schema_no_required = copy.deepcopy(self.schema)
             if "required" in schema_no_required:
                 schema_no_required.pop("required")
-            for group_key, group in schema_no_required.get("definitions", {}).items():
+            for group_key, group in schema_no_required.get(self.defs_notation, {}).items():
                 if "required" in group:
-                    schema_no_required["definitions"][group_key].pop("required")
+                    schema_no_required[self.defs_notation][group_key].pop("required")
             jsonschema.validate(self.schema_defaults, schema_no_required)
         except jsonschema.exceptions.ValidationError as e:
             raise AssertionError(f"Default parameters are invalid: {e.message}")
@@ -360,6 +380,8 @@ class PipelineSchema:
         if schema is None:
             schema = self.schema
 
+        if "$schema" not in schema:
+            raise AssertionError("Schema missing top-level `$schema` attribute")
         schema_draft = schema["$schema"]
         if schema_draft == "https://json-schema.org/draft-07/schema":
             try:
@@ -374,25 +396,14 @@ class PipelineSchema:
             except jsonschema.exceptions.SchemaError as e:
                 raise AssertionError(f"Schema does not validate as Draft 2020-12 JSON Schema:\n {e}")
         else:
-            raise AssertionError(f"Unsupported JSON schema draft detected: ${schema_draft}. Use draft 7 or 2020-12 instead.")
+            raise AssertionError(f"Schema `$schema` should be `https://json-schema.org/draft/2020-12/schema` or `https://json-schema.org/draft-07/schema` \n Found `{schema_draft}`")
 
         param_keys = list(schema.get("properties", {}).keys())
         num_params = len(param_keys)
         schema_defs = dict()
-        defs_notation = ""
-        if "$defs" in schema:
-            schema_defs = schema.get("$defs", {}).items()
-            defs_notation = "$defs"
-        elif "definitions" in schema:
-            schema_defs = schema.get("definitions", {}).items()
-            defs_notation = "definitions"
-        elif "defs" in schema:
-            # nf-schema v2.0.0 only supported defs. this has been changed to $defs in nf-schema v2.1.0
-            # this line prevents the breakage of schemas created for v2.0.0
-            schema_defs = schema.get("defs", {}).items()
-            defs_notation = "defs"
+        defs_notation = self.get_defs_notation(schema)
 
-        for d_key, d_schema in schema_defs:
+        for d_key, d_schema in schema.get(defs_notation, {}).items():
             # Check that this definition is mentioned in allOf
             if "allOf" not in schema:
                 raise AssertionError("Schema has definitions, but no allOf key")
@@ -428,19 +439,13 @@ class PipelineSchema:
     def validate_schema_title_description(self, schema=None):
         """
         Extra validation command for linting.
-        Checks that the schema "$id", "title" and "description" attributes match the piipeline config.
+        Checks that the schema "$id", "title" and "description" attributes match the pipeline config.
         """
         if schema is None:
             schema = self.schema
         if schema is None:
             log.debug("Pipeline schema not set - skipping validation of top-level attributes")
             return None
-
-        if "$schema" not in self.schema:
-            raise AssertionError("Schema missing top-level `$schema` attribute")
-        schema_attr = "http://json-schema.org/draft-07/schema"
-        if self.schema["$schema"] != schema_attr:
-            raise AssertionError(f"Schema `$schema` should be `{schema_attr}`\n Found `{self.schema['$schema']}`")
 
         if self.pipeline_manifest == {}:
             self.get_wf_params()
