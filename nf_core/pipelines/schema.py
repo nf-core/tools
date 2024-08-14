@@ -400,7 +400,6 @@ class PipelineSchema:
 
         param_keys = list(schema.get("properties", {}).keys())
         num_params = len(param_keys)
-        schema_defs = dict()
         defs_notation = self.get_defs_notation(schema)
 
         for d_key, d_schema in schema.get(defs_notation, {}).items():
@@ -424,11 +423,11 @@ class PipelineSchema:
 
         # Check that everything in allOf exists
         for allOf in schema.get("allOf", []):
-            _, allOf_defs_notation, def_key = allOf["$ref"].split("/") # "#/<defs_notation>/<def_name>"
-            if allOf_defs_notation not in schema:
-                raise AssertionError(f"Schema has allOf, but no {allOf_defs_notation}")
-            if def_key not in schema.get(allOf_defs_notation, {}):
-                raise AssertionError(f"Subschema `{def_key}` found in `allOf` but not `{allOf_defs_notation}`")
+            _, allof_defs_notation, def_key = allOf["$ref"].split("/") # "#/<defs_notation>/<def_name>"
+            if allof_defs_notation not in schema:
+                raise AssertionError(f"Schema has allOf, but no {allof_defs_notation}")
+            if def_key not in schema.get(allof_defs_notation, {}):
+                raise AssertionError(f"Subschema `{def_key}` found in `allOf` but not `{allof_defs_notation}`")
 
         # Check that the schema describes at least one parameter
         if num_params == 0:
