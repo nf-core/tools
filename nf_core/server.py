@@ -5,20 +5,42 @@ import random
 import shelve
 import threading
 import urllib.parse as urlparse
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http import HTTPStatus
+from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from typing import Dict
-from urllib.parse import parse_qs
+from urllib.parse import parse_qsl
 
 from nf_core.utils import NFCORE_CACHE_DIR
+
+# Global lock for shelve access
+shelve_lock = threading.Lock()
 
 log = logging.getLogger(__name__)
 
 
-class MyHandler(BaseHTTPRequestHandler):
+def parse_qsld(query: str) -> Dict:
+    return dict(parse_qsl(query))
+
+
+class MyHandler(SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory="web-gui", **kwargs)
+
+    def send_cors_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "http://localhost:4321")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Accept, message")
+
+    def do_OPTIONS(self):  # noqa: N802
+        self.send_response(HTTPStatus.NO_CONTENT)
+        self.send_cors_headers()
+        self.end_headers()
+
     def _send_response(self, status_code: int, body: Dict) -> None:
         self.send_response(status_code)
         self.send_header("Content-type", "application/json")
+        self.send_cors_headers()
         self.end_headers()
         self.wfile.write(json.dumps(body).encode())
 
@@ -30,47 +52,54 @@ class MyHandler(BaseHTTPRequestHandler):
         if urlparse.urlparse(self.path).path == "/process-schema":
             if content_type == "application/json":
                 data = json.loads(post_data.decode())
-            else:
-                data = parse_qs(post_data.decode(), keep_blank_values=True)
+                key = parse_qsld(urlparse.urlparse(self.path).query).get("id", None)
+                with shelve_lock:
+                    with shelve.open("nf-core") as db:
+                        db[key] = data
 
-                data["schema"] = json.loads(data.get("schema", [None])[0])
+            else:
+                data = parse_qsld(post_data.decode())
+
+                data["schema"] = json.loads(data.get("schema", None))
                 key = "schema_" + datetime.date.today().strftime("%Y-%m-%d") + "_" + str(random.randint(0, 1000))
                 # write data to local cache
-                with shelve.open("nf-core") as db:
-                    db[key] = data
-
+                with shelve_lock:
+                    with shelve.open("nf-core") as db:
+                        db[key] = data
+            status = data.get("status", "received")
+            if status == "waiting_for_user":
+                status = "received"
             self._send_response(
                 200,
                 {
                     "message": "Data stored successfully",
-                    "status": "received",
+                    "status": status,
                     "key": key,
-                    "web_url": "http://localhost:4321/schema_builder?id=" + key,
-                    "api_url": "http://localhost:8000/?id=" + key,
+                    "web_url": "http://localhost:8000/schema_builder.html?id=" + key,
+                    "api_url": "http://localhost:8000/process-schema?id=" + key,
                 },
             )
         else:
             self._send_response(404, {"error": "Not Found"})
 
     def do_GET(self):  # noqa: N802
-        log.debug("GET request received")
-        log.debug(self.path)
         parsed = urlparse.urlparse(self.path)
-        key: str | None = parse_qs(parsed.query).get("id", [None])[0]
+        key: str | None = parse_qsld(parsed.query).get("id", None)
         if parsed.path == "/process-schema":
             if key is None:
                 self._send_response(400, {"error": "Bad Request"})
                 return
 
-            with shelve.open("nf-core") as db:
-                data = db.get(key, None)
+            with shelve_lock:
+                with shelve.open("nf-core") as db:
+                    data = db.get(key, None)
 
             if data is None:
                 self._send_response(404, {"error": "Not Found"})
             else:
-                self._send_response(200, {"message": "GET request received", "status": data.status, "data": data})
+                self._send_response(200, {"message": "GET request received", "status": data["status"], "data": data})
         else:
-            self._send_response(404, {"error": "Not Found"})
+            super().do_GET()
 
 
 def run(

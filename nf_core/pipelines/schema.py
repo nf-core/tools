@@ -44,7 +44,7 @@ class PipelineSchema:
         self.schema_from_scratch = False
         self.no_prompts = False
         self.web_only = False
-        self.web_schema_build_url = "http://localhost:8000"
+        self.web_schema_build_url = "http://localhost:8000/process-schema"
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
 
@@ -915,7 +915,7 @@ class PipelineSchema:
         if web_response["status"] == "web_builder_edited":
             log.info("Found saved status from nf-core pipelines schema builder")
             try:
-                self.schema = web_response["schema"]
+                self.schema = web_response["data"]["schema"]
                 log.debug(f"Schema from web builder:\n{json.dumps(self.schema, indent=4)}")
                 self.remove_schema_empty_definitions()
                 self.validate_schema()

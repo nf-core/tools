@@ -464,9 +464,6 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
                 return poll_nfcore_web_api(response.headers["Location"], post_data)
             try:
                 web_response = json.loads(response.content)
-                import ipdb
-
-                ipdb.set_trace()
                 if "status" not in web_response:
                     raise AssertionError()
             except (json.decoder.JSONDecodeError, AssertionError, TypeError):
@@ -479,6 +476,7 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
                     "See verbose log for full response"
                 )
             else:
+                log.debug(f"Got response from nf-core API: {web_response['status']}")
                 return web_response
 
 
