@@ -383,7 +383,7 @@ class PipelineSchema:
         if "$schema" not in schema:
             raise AssertionError("Schema missing top-level `$schema` attribute")
         schema_draft = schema["$schema"]
-        if schema_draft == "https://json-schema.org/draft-07/schema":
+        if schema_draft == "https://json-schema.org/draft-07/schema" or schema_draft == "http://json-schema.org/draft-07/schema":
             try:
                 jsonschema.Draft7Validator.check_schema(schema)
                 log.debug("JSON Schema Draft7 validated")
