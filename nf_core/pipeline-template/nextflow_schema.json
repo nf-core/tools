@@ -77,6 +77,7 @@
             }
         },
         {%- endif %}
+        {%- if nf_core_configs %}
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -125,6 +126,7 @@
                 }
             }
         },
+        {%- endif %}
         "max_job_request_options": {
             "title": "Max job request options",
             "type": "object",
@@ -289,9 +291,9 @@
         {% if igenomes %}{
             "$ref": "#/definitions/reference_genome_options"
         },{% endif %}
-        {
+        {% if nf_core_configs %}{
             "$ref": "#/definitions/institutional_config_options"
-        },
+        },{% endif %}
         {
             "$ref": "#/definitions/max_job_request_options"
         },

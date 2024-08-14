@@ -349,17 +349,9 @@ class PipelineCreate:
                 template_stat = os.stat(template_fn_path)
                 os.chmod(output_path, template_stat.st_mode)
 
-        # Remove all unused parameters in the nextflow schema
-        if not self.jinja_params["igenomes"] or not self.jinja_params["nf_core_configs"]:
-            self.update_nextflow_schema()
         if self.config.is_nfcore:
             # Make a logo and save it, if it is a nf-core pipeline
             self.make_pipeline_logo()
-        else:
-            if self.jinja_params["github"]:
-                # Remove field mentioning nf-core docs
-                # in the github bug report template
-                self.remove_nf_core_in_bug_report_template()
 
         # Update the .nf-core.yml with linting configurations
         self.fix_linting()
@@ -374,38 +366,10 @@ class PipelineCreate:
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
                     run_prettier_on_file(self.outdir / config_fn)
 
-    def update_nextflow_schema(self):
-        """
-        Removes unused parameters from the nextflow schema.
-        """
-        schema_path = self.outdir / "nextflow_schema.json"
-
-        schema = nf_core.pipelines.schema.PipelineSchema()
-        schema.schema_filename = schema_path
-        schema.no_prompts = True
-        schema.load_schema()
-        schema.get_wf_params()
-        schema.remove_schema_notfound_configs()
-        schema.save_schema(suppress_logging=True)
-        run_prettier_on_file(schema_path)
-
-    def remove_nf_core_in_bug_report_template(self):
-        """
-        Remove the field mentioning nf-core documentation
-        in the github bug report template
-        """
-        bug_report_path = self.outdir / ".github" / "ISSUE_TEMPLATE" / "bug_report.yml"
-
-        with open(bug_report_path) as fh:
-            contents = yaml.load(fh, Loader=yaml.FullLoader)
-
-        # Remove the first item in the body, which is the information about the docs
-        contents["body"].pop(0)
-
-        with open(bug_report_path, "w") as fh:
-            yaml.dump(contents, fh, default_flow_style=False, sort_keys=False)
-
-        run_prettier_on_file(bug_report_path)
+        # Run prettier on files
+        for file in self.outdir.iterdir():
+            if file.is_file() and file.name.endswith(("yaml", "yml", "json")):
+                run_prettier_on_file(file)
 
     def fix_linting(self):
         """
@@ -414,7 +378,7 @@ class PipelineCreate:
         """
         # Create a lint config
         lint_config = {}
-        for area in self.skip_areas:
+        for area in (self.config.skip_features or []) + self.skip_areas:
             try:
                 for lint_test in self.template_features_yml[area]["linting"]:
                     try:

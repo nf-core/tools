@@ -109,6 +109,8 @@ nf_core_configs:
       - "process.memory"
       - "process.time"
       - "custom_config"
+      - "params.custom_config_version"
+      - "params.custom_config_base"
   nfcore_pipelines: False
   custom_pipelines: True
 is_nfcore:
