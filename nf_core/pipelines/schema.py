@@ -378,17 +378,32 @@ class PipelineSchema:
 
         param_keys = list(schema.get("properties", {}).keys())
         num_params = len(param_keys)
-        for d_key, d_schema in schema.get("definitions", {}).items():
+        schema_defs = dict()
+        defs_notation = ""
+        if "$defs" in schema:
+            schema_defs = schema.get("$defs", {}).items()
+            defs_notation = "$defs"
+        elif "definitions" in schema:
+            schema_defs = schema.get("definitions", {}).items()
+            defs_notation = "definitions"
+        elif "defs" in schema:
+            # nf-schema v2.0.0 only supported defs. this has been changed to $defs in nf-schema v2.1.0
+            # this line prevents the breakage of schemas created for v2.0.0
+            schema_defs = schema.get("defs", {}).items()
+            defs_notation = "defs"
+
+        for d_key, d_schema in schema_defs:
             # Check that this definition is mentioned in allOf
             if "allOf" not in schema:
                 raise AssertionError("Schema has definitions, but no allOf key")
             in_allOf = False
             for allOf in schema.get("allOf", []):
-                if allOf["$ref"] == f"#/definitions/{d_key}":
+                if allOf["$ref"] == f"#/{defs_notation}/{d_key}":
                     in_allOf = True
             if not in_allOf:
-                raise AssertionError(f"Definition subschema `{d_key}` not included in schema `allOf`")
+                raise AssertionError(f"Definition subschema `#{defs_notation}/{d_key}` not included in schema `allOf`")
 
+            # TODO add support for nested parameters
             for d_param_id in d_schema.get("properties", {}):
                 # Check that we don't have any duplicate parameter IDs in different definitions
                 if d_param_id in param_keys:
@@ -398,11 +413,11 @@ class PipelineSchema:
 
         # Check that everything in allOf exists
         for allOf in schema.get("allOf", []):
-            if "definitions" not in schema:
-                raise AssertionError("Schema has allOf, but no definitions")
-            def_key = allOf["$ref"][14:]
-            if def_key not in schema.get("definitions", {}):
-                raise AssertionError(f"Subschema `{def_key}` found in `allOf` but not `definitions`")
+            _, allOf_defs_notation, def_key = allOf["$ref"].split("/") # "#/<defs_notation>/<def_name>"
+            if allOf_defs_notation not in schema:
+                raise AssertionError(f"Schema has allOf, but no {allOf_defs_notation}")
+            if def_key not in schema.get(allOf_defs_notation, {}):
+                raise AssertionError(f"Subschema `{def_key}` found in `allOf` but not `{allOf_defs_notation}`")
 
         # Check that the schema describes at least one parameter
         if num_params == 0:
