@@ -119,7 +119,7 @@ class PipelineSchema:
         self.schema_defaults = {}
         self.schema_params = {}
         if "$schema" not in self.schema:
-            raise AssertionError("Schema missing top-level `$schema` attribute")        
+            raise AssertionError("Schema missing top-level `$schema` attribute")
         self.schema_draft = self.schema["$schema"]
         self.defs_notation = self.get_defs_notation()
         log.debug(f"JSON file loaded: {self.schema_filename}")
@@ -385,7 +385,10 @@ class PipelineSchema:
         if "$schema" not in schema:
             raise AssertionError("Schema missing top-level `$schema` attribute")
         schema_draft = schema["$schema"]
-        if schema_draft == "https://json-schema.org/draft-07/schema" or schema_draft == "http://json-schema.org/draft-07/schema":
+        if (
+            schema_draft == "https://json-schema.org/draft-07/schema"
+            or schema_draft == "http://json-schema.org/draft-07/schema"
+        ):
             try:
                 jsonschema.Draft7Validator.check_schema(schema)
                 log.debug("JSON Schema Draft7 validated")
@@ -398,7 +401,9 @@ class PipelineSchema:
             except jsonschema.exceptions.SchemaError as e:
                 raise AssertionError(f"Schema does not validate as Draft 2020-12 JSON Schema:\n {e}")
         else:
-            raise AssertionError(f"Schema `$schema` should be `https://json-schema.org/draft/2020-12/schema` or `https://json-schema.org/draft-07/schema` \n Found `{schema_draft}`")
+            raise AssertionError(
+                f"Schema `$schema` should be `https://json-schema.org/draft/2020-12/schema` or `https://json-schema.org/draft-07/schema` \n Found `{schema_draft}`"
+            )
 
         param_keys = list(schema.get("properties", {}).keys())
         num_params = len(param_keys)
@@ -425,7 +430,7 @@ class PipelineSchema:
 
         # Check that everything in allOf exists
         for allOf in schema.get("allOf", []):
-            _, allof_defs_notation, def_key = allOf["$ref"].split("/") # "#/<defs_notation>/<def_name>"
+            _, allof_defs_notation, def_key = allOf["$ref"].split("/")  # "#/<defs_notation>/<def_name>"
             if allof_defs_notation not in schema:
                 raise AssertionError(f"Schema has allOf, but no {allof_defs_notation}")
             if def_key not in schema.get(allof_defs_notation, {}):
