@@ -336,6 +336,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
             )
 
     # Check for the availability of the "test" configuration profile by parsing nextflow.config
+    # Also check for the presence of nf-validation/nf-schema and check if they have pinned versions
     with open(Path(self.wf_path, "nextflow.config")) as f:
         content = f.read()
 
@@ -362,6 +363,38 @@ def nextflow_config(self) -> Dict[str, List[str]]:
                 passed.append("nextflow.config contains configuration profile `test`")
             else:
                 failed.append("nextflow.config does not contain configuration profile `test`")
+
+        match_plugins = re.search(r"\bplugins\s*\{([^}]+)}", cleaned_content, re.MULTILINE)
+        if not match_plugins:
+            failed.append(
+                "nextflow.config does not contain `plugins` scope, but `nf-validation` or `nf-schema` plugins are required"
+            )
+        else:
+            found_plugins = {}
+            for line in match_plugins.group(1).split("\n"):
+                cleaned_line = line.split("//")[0].strip().replace("\"", "'")
+                if "id" not in line: continue
+                match_line = re.search(r"\bid\s'([^']+)'", cleaned_line)
+                if not match_line:
+                    failed.append(f"nextflow.config contains an invalid plugins identifier: {cleaned_line}")
+                    continue
+                plugin = match_line.group(1)
+                name = plugin.split("@")[0]
+                version = ""
+                if "@" in plugin:
+                    version = plugin.split("@")[1]
+                found_plugins[name] = version
+
+            if len(found_plugins) == 0:
+                failed.append("nextflow.config contains an empty plugins scope")
+            elif "nf-validation" in found_plugins and "nf-schema" in found_plugins:
+                failed.append("nextflow.config contains both nf-validation and nf-schema")
+            elif "nf-validation" in found_plugins and found_plugins["nf-validation"] == "":
+                failed.append("nextflow.config contains an unpinned version of nf-validation")
+            elif "nf-schema" in found_plugins and found_plugins["nf-schema"] == "":
+                failed.append("nextflow.config contains an unpinned version of nf-schema")
+            elif "nf-validation" not in found_plugins and "nf-schema" not in found_plugins:
+                failed.append("nextflow.config does not contain `nf-validation` or `nf-schema` in the plugins scope")
 
     # Check that the default values in nextflow.config match the default values defined in the nextflow_schema.json
     ignore_defaults = []
