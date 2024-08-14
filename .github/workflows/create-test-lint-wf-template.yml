@@ -40,7 +40,7 @@ jobs:
       - name: 🏗 Set up yq
         uses: frenck/action-setup-yq@v1
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
       - name: Create Matrix
         id: create_matrix
         run: |
@@ -102,9 +102,9 @@ jobs:
           export NXF_WORK=$(pwd)
           printf "org: my-prefix\nskip: ${{ needs.prepare-matrix.outputs.all_features }}" > create-test-lint-wf/template_skip_all.yml
 
-      - name: Create template skip {{ matrix.TEMPLATE }}
+      - name: Create template skip ${{ matrix.TEMPLATE }}
         run: |
-          printf "org: my-prefix\nskip: {{ matrix.TEMPLATE }}" > create-test-lint-wf/template_skip_{{ matrix.TEMPLATE }}.yml
+          printf "org: my-prefix\nskip: ${{ matrix.TEMPLATE }}" > create-test-lint-wf/template_skip_{{ matrix.TEMPLATE }}.yml
 
       # Create a pipeline from the template
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
