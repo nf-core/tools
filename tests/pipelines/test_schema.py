@@ -175,6 +175,7 @@ class TestSchema(unittest.TestCase):
         Check that the schema validation fails when we have duplicate IDs in definition subschema
         """
         self.schema_obj.schema = {
+            "$schema": "http://json-schema.org/draft-07/schema",
             "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"foo": {}}}},
             "allOf": [{"$ref": "#/definitions/groupOne"}, {"$ref": "#/definitions/groupTwo"}],
         }
@@ -187,18 +188,20 @@ class TestSchema(unittest.TestCase):
         Check that the schema validation fails when we a definition in allOf is not in definitions
         """
         self.schema_obj.schema = {
+            "$schema": "http://json-schema.org/draft-07/schema",
             "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"bar": {}}}},
             "allOf": [{"$ref": "#/definitions/groupOne"}],
         }
         with pytest.raises(AssertionError) as exc_info:
             self.schema_obj.validate_schema(self.schema_obj.schema)
-        assert exc_info.value.args[0] == "Definition subschema `groupTwo` not included in schema `allOf`"
+        assert exc_info.value.args[0] == "Definition subschema `#/definitions/groupTwo` not included in schema `allOf`"
 
     def test_validate_schema_fail_unexpected_allof(self):
         """
         Check that the schema validation fails when we an unrecognised definition is in allOf
         """
         self.schema_obj.schema = {
+            "$schema": "http://json-schema.org/draft-07/schema",
             "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"bar": {}}}},
             "allOf": [
                 {"$ref": "#/definitions/groupOne"},

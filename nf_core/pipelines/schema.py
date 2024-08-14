@@ -46,6 +46,8 @@ class PipelineSchema:
         self.web_schema_build_url = "https://nf-co.re/pipeline_schema_builder"
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
+        self.schema_draft = "https://json-schema.org/draft/2020-12/schema"
+        self.defs_notation = "$defs"
 
     def get_schema_path(
         self, path: Union[str, Path], local_only: bool = False, revision: Union[str, None] = None
