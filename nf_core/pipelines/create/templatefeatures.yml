@@ -162,6 +162,11 @@ code_linters:
     - pre-commit (https://pre-commit.com/): used to run all code-linters on every PR and on ever commit if you run `pre-commit install` to install it in your local repository.
     - editor-config (https://github.com/editorconfig-checker/editorconfig-checker): checks rules such as indentation or trailing spaces.
     - prettier (https://github.com/prettier/prettier): enforces a consistent style (indentation, quoting, line length, etc).
+  linting:
+    files_exist:
+      - ".editorconfig"
+      - ".prettierignore"
+      - ".prettierrc.yml"
   nfcore_pipelines: False
   custom_pipelines: True
 citations:
