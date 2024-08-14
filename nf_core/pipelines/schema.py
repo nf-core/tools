@@ -203,7 +203,7 @@ class PipelineSchema:
         for name, param in self.schema.get("properties", {}).items():
             if "type" in param:
                 self.schema_types[name] = param["type"]
-        for _, definition in self.schema.get("definitions", {}).items():
+        for _, definition in self.schema.get(self.defs_notation, {}).items():
             for name, param in definition.get("properties", {}).items():
                 if "type" in param:
                     self.schema_types[name] = param["type"]
