@@ -417,12 +417,15 @@ class PipelineCreate:
         for area in self.skip_areas:
             try:
                 for lint_test in self.template_features_yml[area]["linting"]:
-                    if self.template_features_yml[area]["linting"][lint_test]:
-                        lint_config.setdefault(lint_test, []).extend(
-                            self.template_features_yml[area]["linting"][lint_test]
-                        )
-                    else:
-                        lint_config[lint_test] = False
+                    try:
+                        if self.template_features_yml[area]["linting"][lint_test]:
+                            lint_config.setdefault(lint_test, []).extend(
+                                self.template_features_yml[area]["linting"][lint_test]
+                            )
+                        else:
+                            lint_config[lint_test] = False
+                    except AttributeError:
+                        pass  # When linting is False
             except KeyError:
                 pass  # Areas without linting
 
