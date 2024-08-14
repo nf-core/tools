@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: */results/*
+
+Sitemap: https://nf-co.re/sitemap-index.xml
