@@ -45,11 +45,10 @@ jobs:
         id: create_matrix
         run: |
           echo "matrix=$(yq 'keys | tojson(0)' nf_core/pipelines/create/templatefeatures.yml)" >> $GITHUB_OUTPUT
-      - name: Setup ssh session
-        uses: Warpbuilds/action-debugger@v1.3
 
   RunTestWorkflow:
     runs-on: ${{ matrix.runner }}
+    needs: prepare-matrix
     env:
       NXF_ANSI_LOG: false
     strategy:
