@@ -68,6 +68,9 @@ jobs:
         exclude:
           - TEMPLATE: github
           - TEMPLATE: is_nfcore
+          - TEMPLATE: nf_core_configs
+            runner: self-hosted
+            profile: "self_hosted_runner"
       fail-fast: false
 
     steps:
