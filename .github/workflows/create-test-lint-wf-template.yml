@@ -104,7 +104,7 @@ jobs:
 
       - name: Create template skip ${{ matrix.TEMPLATE }}
         run: |
-          printf "org: my-prefix\nskip: ${{ matrix.TEMPLATE }}" > create-test-lint-wf/template_skip_{{ matrix.TEMPLATE }}.yml
+          printf "org: my-prefix\nskip: ${{ matrix.TEMPLATE }}" > create-test-lint-wf/template_skip_${{ matrix.TEMPLATE }}.yml
 
       # Create a pipeline from the template
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
