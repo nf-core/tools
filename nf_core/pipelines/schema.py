@@ -413,7 +413,7 @@ class PipelineSchema:
                 if allOf["$ref"] == f"#/{defs_notation}/{d_key}":
                     in_allOf = True
             if not in_allOf:
-                raise AssertionError(f"Definition subschema `#{defs_notation}/{d_key}` not included in schema `allOf`")
+                raise AssertionError(f"Definition subschema `#/{defs_notation}/{d_key}` not included in schema `allOf`")
 
             # TODO add support for nested parameters
             for d_param_id in d_schema.get("properties", {}):
