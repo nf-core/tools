@@ -40,18 +40,20 @@ jobs:
       - name: 🏗 Set up yq
         uses: frenck/action-setup-yq@v1
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
       - name: Create Matrix
         id: create_matrix
-        run: echo "matrix=$(yq 'keys' ${{ github.workspace }}/nf_core/pipelines/create/templatefeatures.yml | awk '{print $2}' | paste -sd "," - | awk '{print "[" $0 "]"}')" >> $GITHUB_OUTPUT
+        run: |
+          echo "matrix=$(yq 'keys | tojson(0)' nf_core/pipelines/create/templatefeatures.yml)" >> $GITHUB_OUTPUT
 
   RunTestWorkflow:
     runs-on: ${{ matrix.runner }}
+    needs: prepare-matrix
     env:
       NXF_ANSI_LOG: false
     strategy:
       matrix:
-        TEMPLATE: ${{ needs.prepare-matrix.outputs.all_features }}
+        TEMPLATE: ${{ fromJson(needs.prepare-matrix.outputs.all_features) }}
         runner:
           # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
           - ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
@@ -66,6 +68,8 @@ jobs:
         exclude:
           - TEMPLATE: github
           - TEMPLATE: is_nfcore
+          - TEMPLATE: nf_core_configs
+            profile: "self_hosted_runner"
       fail-fast: false
 
     steps:
@@ -94,15 +98,16 @@ jobs:
           version: latest-everything
 
       # Create template files
-      - name: Create template skip all (except github)
+      - name: Create template skip ${{ matrix.TEMPLATE }}
         run: |
           mkdir create-test-lint-wf
           export NXF_WORK=$(pwd)
-          printf "org: my-prefix\nskip: ${{ needs.prepare-matrix.outputs.all_features }}" > create-test-lint-wf/template_skip_all.yml
-
-      - name: Create template skip {{ matrix.TEMPLATE }}
-        run: |
-          printf "org: my-prefix\nskip: {{ matrix.TEMPLATE }}" > create-test-lint-wf/template_skip_{{ matrix.TEMPLATE }}.yml
+          if [ ${{ matrix.TEMPLATE }} == "all" ]
+          then
+            printf "org: my-prefix\nskip_features: ${{ needs.prepare-matrix.outputs.all_features }}" > create-test-lint-wf/template_skip_all.yml
+          else
+            printf "org: my-prefix\nskip_features: [${{ matrix.TEMPLATE }}]" > create-test-lint-wf/template_skip_${{ matrix.TEMPLATE }}.yml
+          fi
 
       # Create a pipeline from the template
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
