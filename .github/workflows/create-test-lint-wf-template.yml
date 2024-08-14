@@ -98,15 +98,16 @@ jobs:
           version: latest-everything
 
       # Create template files
-      - name: Create template skip all (except github)
+      - name: Create template skip ${{ matrix.TEMPLATE }}
         run: |
           mkdir create-test-lint-wf
           export NXF_WORK=$(pwd)
-          printf "org: my-prefix\nskip_features: ${{ needs.prepare-matrix.outputs.all_features }}" > create-test-lint-wf/template_skip_all.yml
-
-      - name: Create template skip ${{ matrix.TEMPLATE }}
-        run: |
-          printf "org: my-prefix\nskip_features: [${{ matrix.TEMPLATE }}]" > create-test-lint-wf/template_skip_${{ matrix.TEMPLATE }}.yml
+          if [ ${{ matrix.TEMPLATE }} == "all" ]
+          then
+            printf "org: my-prefix\nskip_features: ${{ needs.prepare-matrix.outputs.all_features }}" > create-test-lint-wf/template_skip_all.yml
+          else
+            printf "org: my-prefix\nskip_features: [${{ matrix.TEMPLATE }}]" > create-test-lint-wf/template_skip_${{ matrix.TEMPLATE }}.yml
+          fi
 
       # Create a pipeline from the template
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
