@@ -1138,8 +1138,8 @@ def create_module(
 
 # nf-core modules test
 @modules.command("test")
-@click.pass_context
 @click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.pass_context
 @click.option(
     "-d",
     "--dir",
