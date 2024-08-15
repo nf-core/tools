@@ -1,8 +1,5 @@
-import datetime
 import json
 import logging
-import random
-import shelve
 import threading
 import urllib.parse as urlparse
 from http import HTTPStatus
@@ -13,10 +10,7 @@ from urllib.parse import parse_qsl
 
 from nf_core.utils import NFCORE_CACHE_DIR
 
-# Global lock for shelve access
-shelve_lock = threading.Lock()
-
-log = logging.getLogger(__name__)
+log: logging.Logger = logging.getLogger(__name__)
 
 
 def parse_qsld(query: str) -> Dict:
@@ -24,6 +18,8 @@ def parse_qsld(query: str) -> Dict:
 
 
 class MyHandler(SimpleHTTPRequestHandler):
+    status = "waiting_for_user"  # Default status
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory="web-gui", **kwargs)
 
@@ -52,54 +48,58 @@ class MyHandler(SimpleHTTPRequestHandler):
         if urlparse.urlparse(self.path).path == "/process-schema":
             if content_type == "application/json":
                 data = json.loads(post_data.decode())
-                key = parse_qsld(urlparse.urlparse(self.path).query).get("id", None)
-                with shelve_lock:
-                    with shelve.open("nf-core") as db:
-                        db[key] = data
+                schema_path = data.get("schema_path", None)
+                # write data to local schema_file
+                open(schema_path, "w").write(json.dumps(data["schema"], indent=4))
 
             else:
                 data = parse_qsld(post_data.decode())
 
                 data["schema"] = json.loads(data.get("schema", None))
-                key = "schema_" + datetime.date.today().strftime("%Y-%m-%d") + "_" + str(random.randint(0, 1000))
-                # write data to local cache
-                with shelve_lock:
-                    with shelve.open("nf-core") as db:
-                        db[key] = data
+                schema_path = data.get("schema_path", None)
+                # write data to local schema_file
+                open(schema_path, "w").write(json.dumps(data["schema"], indent=4))
             status = data.get("status", "received")
+            MyHandler.status = status
             if status == "waiting_for_user":
                 status = "received"
+
             self._send_response(
                 200,
                 {
                     "message": "Data stored successfully",
                     "status": status,
-                    "key": key,
-                    "web_url": "http://localhost:8000/schema_builder.html?id=" + key,
-                    "api_url": "http://localhost:8000/process-schema?id=" + key,
+                    "schema_path": schema_path,
+                    "web_url": "http://localhost:8000/schema_builder.html?schema_path="
+                    + urlparse.quote(schema_path, safe=""),
+                    "api_url": "http://localhost:8000/process-schema?schema_path="
+                    + urlparse.quote(schema_path, safe=""),
                 },
             )
         else:
             self._send_response(404, {"error": "Not Found"})
 
-    def do_GET(self):  # noqa: N802
+    def do_GET(self) -> None:  # noqa: N802
         parsed = urlparse.urlparse(self.path)
-        key: str | None = parse_qsld(parsed.query).get("id", None)
         if parsed.path == "/process-schema":
-            if key is None:
-                self._send_response(400, {"error": "Bad Request"})
-                return
+            schema_path: str | None = parse_qsld(parsed.query).get("schema_path", None)
+            if schema_path is None:
+                self._send_response(422, {"error": "schema_path parameter not found"})
 
-            with shelve_lock:
-                with shelve.open("nf-core") as db:
-                    data = db.get(key, None)
-
-            if data is None:
-                self._send_response(404, {"error": "Not Found"})
             else:
-                self._send_response(200, {"message": "GET request received", "status": data["status"], "data": data})
+                with open(schema_path) as file:
+                    data = json.load(file)
+                if data is None:
+                    self._send_response(404, {"error": "Not Found"})
+                else:
+                    self._send_response(
+                        200, {"message": "GET request received", "status": MyHandler.status, "data": data}
+                    )
         else:
             super().do_GET()
+
+    def log_message(self, format, *args):
+        log.debug(format % args)
 
 
 def run(

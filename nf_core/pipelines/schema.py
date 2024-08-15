@@ -8,6 +8,7 @@ import webbrowser
 from pathlib import Path
 from typing import Union
 
+import git
 import jinja2
 import jsonschema
 import markdown
@@ -867,6 +868,17 @@ class PipelineSchema:
         """
         Send pipeline schema to web builder and wait for response
         """
+        # check if self.schema_filename doesn't have uncommited changes using git python
+        if self.schema_filename and self.pipeline_dir:
+            repo = git.Repo(self.pipeline_dir)
+            if str(Path(self.schema_filename).relative_to(self.pipeline_dir)) in [
+                item.a_path for item in repo.index.diff(None)
+            ]:
+                if not Confirm.ask(
+                    f""":exclamation_mark:  '{str(self.schema_filename)}' has uncommitted changes. These will be overwritten in the following steps. Do you still want to continue""",
+                    default=True,
+                ):
+                    return
 
         nf_core.server.start_server()
         log.info("Sending pipeline schema to nf-core web builder for customisation")
@@ -877,6 +889,7 @@ class PipelineSchema:
             "version": nf_core.__version__,
             "status": "waiting_for_user",
             "schema": json.dumps(self.schema),
+            "schema_path": str(self.schema_filename),
         }
         web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_build_url, content)
         try:
@@ -915,7 +928,7 @@ class PipelineSchema:
         if web_response["status"] == "web_builder_edited":
             log.info("Found saved status from nf-core pipelines schema builder")
             try:
-                self.schema = web_response["data"]["schema"]
+                self.schema = web_response["data"]
                 log.debug(f"Schema from web builder:\n{json.dumps(self.schema, indent=4)}")
                 self.remove_schema_empty_definitions()
                 self.validate_schema()
