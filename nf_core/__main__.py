@@ -1137,6 +1137,13 @@ def command_modules_create(
 @click.pass_context
 @click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
 @click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    default=False,
+    help="Print verbose output to the console.",
+)
+@click.option(
     "-d",
     "--dir",
     "directory",
@@ -1171,11 +1178,11 @@ def command_modules_create(
     default=False,
     help="Migrate a module with pytest tests to nf-test",
 )
-def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest):
+def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest, verbose):
     """
     Run nf-test for a module.
     """
-    modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest)
+    modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest, verbose)
 
 
 # nf-core modules lint
