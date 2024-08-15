@@ -1141,7 +1141,7 @@ def command_modules_create(
     "--verbose",
     is_flag=True,
     default=False,
-    help="Print verbose output to the console.",
+    help="Print verbose output to the console. Sets `--debug` inside the nf-test command.",
 )
 @click.option(
     "-d",
