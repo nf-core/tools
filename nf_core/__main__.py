@@ -1182,7 +1182,8 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
     """
     Run nf-test for a module.
     """
-    ctx.obj['verbose'] = verbose
+    if verbose:
+        ctx.obj['verbose'] = verbose
     modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest)
 
 
