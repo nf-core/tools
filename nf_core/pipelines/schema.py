@@ -653,11 +653,6 @@ class PipelineSchema:
                     # Extra help for people running offline
                     if "Could not connect" in e.args[0]:
                         log.info("Could not connect to the web builder")
-                    if self.web_schema_build_web_url:
-                        log.info(
-                            "To save your work, open {}\n"
-                            f"Click the blue 'Finished' button, copy the schema and paste into this file: { self.web_schema_build_web_url, str(self.schema_filename)}"
-                        )
                     return False
 
     def get_wf_params(self):
