@@ -5,8 +5,9 @@ import logging
 import os
 import sys
 import tempfile
+from datetime import datetime
 from pathlib import Path
-from typing import Optional, Set, Union
+from typing import Dict, List, Optional, Set, Union
 from urllib.parse import quote
 
 import requests
@@ -132,20 +133,6 @@ class ROCrate:
         # Create the RO Crate object
         self.crate = rocrate.rocrate.ROCrate()
 
-        # Set language type
-        programming_language = rocrate.model.entity.Entity(
-            self.crate,
-            "#nextflow",
-            properties={
-                "@type": ["ComputerLanguage", "SoftwareApplication"],
-                "name": "Nextflow",
-                "url": "https://www.nextflow.io/",
-                "identifier": "https://www.nextflow.io/",
-                "version": self.pipeline_obj.nf_config.get("manifest.nextflowVersion", ""),
-            },
-        )
-        self.crate.add(programming_language)
-
         # Conform to RO-Crate 1.1 and workflowhub-ro-crate
         self.crate.update_jsonld(
             {
@@ -217,67 +204,66 @@ class ROCrate:
             dest_path=main_entity_filename,
             main=True,
             lang="nextflow",  # adds the #nextflow entity automatically and connects it to programmingLanguage
-            lang_version="X.Y.Z",  # sets version on #nextflow
+            lang_version=self.pipeline_obj.nf_config.get("manifest.nextflowVersion", ""),
         )
-        # wf_file = self.crate.add_file(
-        #     main_entity_filename,
-        #     properties={"@type": ["File", "SoftwareSourceCode", "ComputationalWorkflow"]},
-        # )
-        # wf_file = cast(rocrate.model.entity.Entity, wf_file)  # ro-crate is untyped so need to cast type manually
 
-        # wf_file.append_to("programmingLanguage", {"@id": "#nextflow"}, compact=True)
-        # wf_file.append_to(
-        #     "dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/", compact=True
-        # )
-        # # add dateCreated and dateModified, based on the current data
-        # wf_file.append_to("dateCreated", self.crate.root_dataset.get("dateCreated", ""), compact=True)
-        # wf_file.append_to("dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True)
-        # wf_file.append_to("sdPublisher", {"@id": "https://nf-co.re/"}, compact=True)
-        # if self.version.endswith("dev"):
-        #     url = "dev"
-        # else:
-        #     url = self.version
-        # wf_file.append_to("url", f"https://nf-co.re/{self.crate.name.replace('nf-core/','')}/{url}/", compact=True)
-        # wf_file.append_to("version", self.version, compact=True)
-        # if self.pipeline_obj.schema_obj is not None:
-        #     log.debug("input value")
+        self.crate.mainEntity.append_to(
+            "dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/", compact=True
+        )
+        # add dateCreated and dateModified, based on the current data
+        self.crate.mainEntity.append_to("dateCreated", self.crate.root_dataset.get("dateCreated", ""), compact=True)
+        self.crate.mainEntity.append_to(
+            "dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True
+        )
+        self.crate.mainEntity.append_to("sdPublisher", {"@id": "https://nf-co.re/"}, compact=True)
+        if self.version.endswith("dev"):
+            url = "dev"
+        else:
+            url = self.version
+        self.crate.mainEntity.append_to(
+            "url", f"https://nf-co.re/{self.crate.name.replace('nf-core/','')}/{url}/", compact=True
+        )
+        self.crate.mainEntity.append_to("version", self.version, compact=True)
+        if self.pipeline_obj.schema_obj is not None:
+            log.debug("input value")
 
-        #     schema_input = self.pipeline_obj.schema_obj.schema["definitions"]["input_output_options"]["properties"][
-        #         "input"
-        #     ]
-        #     input_value: Dict[str, Union[str, List[str], bool]] = {
-        #         "@id": "#input",
-        #         "@type": ["PropertyValueSpecification", "FormalParameter"],
-        #         "default": schema_input.get("default", ""),
-        #         "encodingFormat": schema_input.get("mimetype", ""),
-        #         "valueRequired": "input"
-        #         in self.pipeline_obj.schema_obj.schema["definitions"]["input_output_options"]["required"],
-        #         "dct:conformsTo": "https://bioschemas.org/types/FormalParameter/1.0-RELEASE",
-        #     }
-        #     self.crate.add_jsonld(input_value)
-        #     wf_file.append_to(
-        #         "input",
-        #         {"@id": "#input"},
-        #     )
+            schema_input = self.pipeline_obj.schema_obj.schema["definitions"]["input_output_options"]["properties"][
+                "input"
+            ]
+            input_value: Dict[str, Union[str, List[str], bool]] = {
+                "@id": "#input",
+                "@type": ["PropertyValueSpecification", "FormalParameter"],
+                "default": schema_input.get("default", ""),
+                "encodingFormat": schema_input.get("mimetype", ""),
+                "valueRequired": "input"
+                in self.pipeline_obj.schema_obj.schema["definitions"]["input_output_options"]["required"],
+                "dct:conformsTo": "https://bioschemas.org/types/FormalParameter/1.0-RELEASE",
+            }
+            self.crate.add_jsonld(input_value)
+            self.crate.mainEntity.append_to(
+                "input",
+                {"@id": "#input"},
+            )
 
-        # # get keywords from nf-core website
-        # remote_workflows = requests.get("https://nf-co.re/pipelines.json").json()["remote_workflows"]
-        # # go through all remote workflows and find the one that matches the pipeline name
-        # topics = ["nf-core", "nextflow"]
-        # for remote_wf in remote_workflows:
-        #     if remote_wf["name"] == self.pipeline_obj.pipeline_name.replace("nf-core/", ""):
-        #         topics = topics + remote_wf["topics"]
-        #         break
+        # get keywords from nf-core website
+        remote_workflows = requests.get("https://nf-co.re/pipelines.json").json()["remote_workflows"]
+        # go through all remote workflows and find the one that matches the pipeline name
+        topics = ["nf-core", "nextflow"]
+        for remote_wf in remote_workflows:
+            assert self.pipeline_obj.pipeline_name is not None  # mypy
+            if remote_wf["name"] == self.pipeline_obj.pipeline_name.replace("nf-core/", ""):
+                topics = topics + remote_wf["topics"]
+                break
 
-        # log.debug(f"Adding topics: {topics}")
-        # wf_file.append_to("keywords", topics)
+        log.debug(f"Adding topics: {topics}")
+        self.crate.mainEntity.append_to("keywords", topics)
 
-        # self.add_main_authors(wf_file)
+        # self.add_main_authors(self.crate.mainEntity)
 
-        # self.crate.mainEntity = wf_file
+        self.crate.mainEntity = self.crate.mainEntity
 
-        # wf_file.append_to("license", self.crate.license)
-        # wf_file.append_to("name", self.crate.name)
+        self.crate.mainEntity.append_to("license", self.crate.license)
+        self.crate.mainEntity.append_to("name", self.crate.name)
 
     def add_main_authors(self, wf_file: rocrate.model.entity.Entity) -> None:
         """
@@ -357,12 +343,48 @@ class ROCrate:
         # exclude github action files
         wf_filenames = [fn for fn in wf_filenames if not fn.startswith(".github/") and not fn == "main.nf"]
         log.debug(f"Adding {len(wf_filenames)} workflow files")
+        # find all main.nf files inside modules/nf-core and subworkflows/nf-core
+        component_files = [
+            fn
+            for fn in wf_filenames
+            if ((fn.startswith("modules/nf-core") or fn.startswith("subworkflows/nf-core")) and fn.endswith("main.nf"))
+        ]
+
+        wf_dirs = [str(Path(fn).parent) for fn in component_files]
+        for wf_dir in wf_dirs:
+            if Path(wf_dir).exists():
+                log.debug(f"Adding workflow directory: {wf_dir}")
+                component_type = wf_dir.split("/")[0]
+                component_name = wf_dir.replace(component_type + "/nf-core/", "").replace("/", "_")
+                self.crate.add_directory(
+                    wf_dir,
+                    dest_path=wf_dir,
+                    properties={
+                        "description": f"nf-core {component_type} [{component_name}](https://nf-co.re/{component_type}/{component_name}) installed from the [nf-core/modules repository](https://github.com/nf-core/modules/)."
+                    },
+                )
+        wf_locals = [
+            str(Path(fn).parent)
+            for fn in wf_filenames
+            if fn.startswith("modules/local") or fn.startswith("subworkflows/local") and fn.endswith("main.nf")
+        ]
+
+        for wf_dir in wf_locals:
+            log.debug(f"Adding workflow directory: {wf_dir}")
+            component_type = wf_dir.split("/")[0].rstrip("s")
+            component_name = wf_dir.replace(component_type + "/local/", "").replace("/", "_")
+
+            self.crate.add_directory(wf_dir, dest_path=wf_dir, properties={"description": f"local {component_type}"})
+        # go through all files that are not part of directories inside wf_dirs
+        wf_filenames = [
+            fn for fn in wf_filenames if not any(fn.startswith(str(wf_dir)) for wf_dir in wf_dirs + wf_locals)
+        ]
         for fn in wf_filenames:
             # add nextflow language to .nf and .config files
-            # if fn.endswith(".nf") or fn.endswith(".config") or fn.endswith(".nf.test") and not fn.endswith("main.nf"):
-            #     log.debug(f"Adding workflow file: {fn}")
-            #     self.crate.add_file(fn, properties={"programmingLanguage": {"@id": "#nextflow"}})
-            #     continue
+            if fn.endswith(".nf") or fn.endswith(".config") or fn.endswith(".nf.test"):
+                log.debug(f"Adding workflow file: {fn}")
+                self.crate.add_file(fn, dest_path=fn, properties={"programmingLanguage": {"@id": "#nextflow"}})
+                continue
             if fn.endswith(".png"):
                 log.debug(f"Adding workflow image file: {fn}")
                 self.crate.add_jsonld({"@id": fn, "@type": ["File", "ImageObject"]})
@@ -378,13 +400,13 @@ class ROCrate:
                     self.crate.mainEntity.append_to("image", {"@id": Path(fn).name})
                 continue
             if fn.endswith(".md"):
-                log.debug(f"Adding workflow file: {fn}")
-                self.crate.add_file(fn, properties={"encodingFormat": "text/markdown"})
+                log.debug(f"Adding file: {fn}")
+                self.crate.add_file(fn, dest_path=fn, properties={"encodingFormat": "text/markdown"})
                 continue
-            # else:
-            #     log.debug(f"Adding workflow file: {fn}")
-            #     self.crate.add_file(fn)
-            #     continue
+            else:
+                log.debug(f"Adding file: {fn}")
+                self.crate.add_file(fn, dest_path=fn)
+                continue
 
     def set_crate_paths(self, path: Path) -> None:
         """Given a pipeline name, directory, or path, set wf_crate_filename"""
