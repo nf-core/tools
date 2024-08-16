@@ -19,7 +19,7 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Optional, Tuple, Union
 
 import git
 import prompt_toolkit.styles
@@ -35,7 +35,9 @@ from rich.live import Live
 from rich.spinner import Spinner
 
 import nf_core
-from nf_core.pipelines.schema import PipelineSchema
+
+if TYPE_CHECKING:
+    from nf_core.pipelines.schema import PipelineSchema
 
 log = logging.getLogger(__name__)
 
@@ -170,8 +172,8 @@ class Pipeline:
         self.repo: Optional[git.Repo] = None
 
         try:
-            repo = git.Repo(self.wf_path)
-            self.git_sha = repo.head.object.hexsha
+            self.repo = git.Repo(self.wf_path)
+            self.git_sha = self.repo.head.object.hexsha
         except Exception as e:
             log.debug(f"Could not find git hash for pipeline: {self.wf_path}. {e}")
 
