@@ -191,7 +191,7 @@ def get_components_to_install(
                             "name": component_name,
                             "org_path": org_path,
                             "git_remote": git_remote,
-                            "branch": component[component_name].get("branch", "master"),
+                            "branch": component[component_name].get("branch", None),
                         }
 
                         current_comp_dict[component_name].update(component_dict)
