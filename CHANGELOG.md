@@ -69,6 +69,7 @@
 - Pipelines: allow numbers in custom pipeline name ([#3094](https://github.com/nf-core/tools/pull/3094))
 - Add bot action to update textual snapshots and write bot documentation ([#3102](https://github.com/nf-core/tools/pull/3102))
 - Components: allow spaces at the betinning of include statements ([#3115](https://github.com/nf-core/tools/pull/3115))
+- Update dependency prompt_toolkit to <=3.0.47 ([#3121](https://github.com/nf-core/tools/pull/3121))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
