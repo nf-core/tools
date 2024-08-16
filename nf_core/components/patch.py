@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 
 class ComponentPatch(ComponentCommand):
-    def __init__(self, pipeline_dir, component_type, remote_url=None, branch=None, no_pull=False, installed_by=False):
+    def __init__(self, pipeline_dir, component_type, remote_url=None, branch=None, no_pull=False, installed_by=None):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
 
         self.modules_json = ModulesJson(pipeline_dir)
@@ -30,10 +30,14 @@ class ComponentPatch(ComponentCommand):
             raise UserWarning("The command was not run in a valid pipeline directory.")
 
         components = self.modules_json.get_all_components(self.component_type).get(self.modules_repo.remote_url)
+        if components is None:
+            raise UserWarning(
+                f"No {self.component_type[:-1]}s found in the 'modules.json' file for the remote '{self.modules_repo.remote_url}'"
+            )
         component_names = [component for _, component in components]
 
         if component is not None and component not in component_names:
-            component_dir = [dir for dir, m in components if m == component][0]
+            component_dir = [d for d, m in components if m == component][0]
             raise UserWarning(
                 f"{self.component_type[:-1].title()} '{Path(self.component_type, component_dir, component)}' does not exist in the pipeline"
             )
@@ -84,8 +88,8 @@ class ComponentPatch(ComponentCommand):
         patch_filename = f"{component.replace('/', '-')}.diff"
         component_relpath = Path(self.component_type, component_dir, component)
         patch_relpath = Path(component_relpath, patch_filename)
-        component_current_dir = Path(self.dir, component_relpath)
-        patch_path = Path(self.dir, patch_relpath)
+        component_current_dir = Path(self.directory, component_relpath)
+        patch_path = Path(self.directory, patch_relpath)
 
         if patch_path.exists():
             remove = questionary.confirm(
@@ -185,8 +189,8 @@ class ComponentPatch(ComponentCommand):
         patch_filename = f"{component.replace('/', '-')}.diff"
         component_relpath = Path(self.component_type, component_dir, component)
         patch_relpath = Path(component_relpath, patch_filename)
-        patch_path = Path(self.dir, patch_relpath)
-        component_path = Path(self.dir, component_relpath)
+        patch_path = Path(self.directory, patch_relpath)
+        component_path = Path(self.directory, component_relpath)
 
         if patch_path.exists():
             remove = questionary.confirm(

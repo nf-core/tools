@@ -1,5 +1,5 @@
-import os
 import re
+from pathlib import Path
 
 
 def readme(self):
@@ -29,9 +29,9 @@ def readme(self):
     failed = []
 
     # Remove field that should be ignored according to the linting config
-    ignore_configs = self.lint_config.get("readme", [])
+    ignore_configs = self.lint_config.get("readme", []) if self.lint_config is not None else []
 
-    with open(os.path.join(self.wf_path, "README.md")) as fh:
+    with open(Path(self.wf_path, "README.md")) as fh:
         content = fh.read()
 
     if "nextflow_badge" not in ignore_configs:

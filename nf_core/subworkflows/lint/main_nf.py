@@ -4,12 +4,14 @@ Lint the main.nf file of a subworkflow
 
 import logging
 import re
-from typing import List
+from typing import List, Tuple
+
+from nf_core.components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
 
 
-def main_nf(_, subworkflow):
+def main_nf(_, subworkflow: NFCoreComponent) -> Tuple[List[str], List[str]]:
     """
     Lint a ``main.nf`` subworkflow file
 
@@ -25,12 +27,13 @@ def main_nf(_, subworkflow):
     * The subworkflow emits a software version
     """
 
-    inputs = []
-    outputs = []
+    inputs: List[str] = []
+    outputs: List[str] = []
 
     # Read the lines directly from the subworkflow
-    lines = None
-    if lines is None:
+    lines: List[str] = []
+
+    if len(lines) == 0:
         try:
             # Check whether file exists and load it
             with open(subworkflow.main_nf) as fh:
@@ -38,7 +41,7 @@ def main_nf(_, subworkflow):
             subworkflow.passed.append(("main_nf_exists", "Subworkflow file exists", subworkflow.main_nf))
         except FileNotFoundError:
             subworkflow.failed.append(("main_nf_exists", "Subworkflow file does not exist", subworkflow.main_nf))
-            return
+            return inputs, outputs
 
     # Go through subworkflow main.nf file and switch state according to current section
     # Perform section-specific linting
@@ -199,7 +202,7 @@ def check_subworkflow_section(self, lines: List[str]) -> List[str]:
     return includes
 
 
-def check_workflow_section(self, lines):
+def check_workflow_section(self, lines: List[str]) -> None:
     """Lint the workflow definition of a subworkflow before
     Specifically checks that the name is all capital letters
 

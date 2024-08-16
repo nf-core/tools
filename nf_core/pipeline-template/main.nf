@@ -56,10 +56,10 @@ workflow {{ prefix_nodash|upper }}_{{ short_name|upper }} {
     {{ short_name|upper }} (
         samplesheet
     )
-
+{%- if multiqc %}
     emit:
     multiqc_report = {{ short_name|upper }}.out.multiqc_report // channel: /path/to/multiqc_report.html
-
+{%- endif %}
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,7 +101,7 @@ workflow {
         params.outdir,
         params.monochrome_logs,
         params.hook_url,
-        {{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report
+        {%- if multiqc %}{{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report{% endif %}
     )
 }
 

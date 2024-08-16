@@ -2,7 +2,7 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import List, Union
+from typing import List
 
 import rich
 import rich.box
@@ -111,9 +111,13 @@ def ignore_file(lint_name: str, file_path: Path, dir_path: Path) -> List[List[st
     passed: List[str] = []
     failed: List[str] = []
     ignored: List[str] = []
-    _, lint_conf = nf_core.utils.load_tools_config(dir_path)
-    lint_conf = lint_conf.get("lint", {})
-    ignore_entry: Union[List[str], bool] = lint_conf.get(lint_name, [])
+    _, pipeline_conf = nf_core.utils.load_tools_config(dir_path)
+    lint_conf = getattr(pipeline_conf, "lint", None) or None
+
+    if lint_conf is None:
+        ignore_entry: List[str] = []
+    else:
+        ignore_entry = lint_conf.get(lint_name, [])
     full_path = dir_path / file_path
     # Return a failed status if we can't find the file
     if not full_path.is_file():

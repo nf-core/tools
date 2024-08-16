@@ -21,7 +21,7 @@ def subworkflow_version(subworkflow_lint_object, subworkflow):
     newer version of the subworkflow available.
     """
 
-    modules_json_path = Path(subworkflow_lint_object.dir, "modules.json")
+    modules_json_path = Path(subworkflow_lint_object.directory, "modules.json")
     # Verify that a git_sha exists in the `modules.json` file for this module
     version = subworkflow_lint_object.modules_json.get_subworkflow_version(
         subworkflow.component_name, subworkflow.repo_url, subworkflow.org

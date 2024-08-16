@@ -10,7 +10,8 @@ import subprocess
 import tarfile
 import textwrap
 from datetime import datetime
-from typing import List, Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 from zipfile import ZipFile
 
 import git
@@ -23,6 +24,7 @@ from git.exc import GitCommandError, InvalidGitRepositoryError
 from packaging.version import Version
 
 import nf_core
+import nf_core.modules.modules_utils
 import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
@@ -130,6 +132,7 @@ class DownloadWorkflow:
         self.compress_type = compress_type
         self.force = force
         self.platform = platform
+        self.fullname: Optional[str] = None
         # if flag is not specified, do not assume deliberate choice and prompt config inclusion interactively.
         # this implies that non-interactive "no" choice is only possible implicitly (e.g. with --platform or if prompt is suppressed by !stderr.is_interactive).
         # only alternative would have been to make it a parameter with argument, e.g. -d="yes" or -d="no".
@@ -160,8 +163,8 @@ class DownloadWorkflow:
         # allows to specify a container library / registry or a respective mirror to download images from
         self.parallel_downloads = parallel_downloads
 
-        self.wf_revisions = {}
-        self.wf_branches = {}
+        self.wf_revisions = []
+        self.wf_branches: Dict[str, Any] = {}
         self.wf_sha = {}
         self.wf_download_url = {}
         self.nf_config = {}
@@ -230,7 +233,7 @@ class DownloadWorkflow:
             summary_log.append(f"Enabled for Seqera Platform: '{self.platform}'")
 
         # Check that the outdir doesn't already exist
-        if os.path.exists(self.outdir):
+        if self.outdir is not None and os.path.exists(self.outdir):
             if not self.force:
                 raise DownloadError(
                     f"Output directory '{self.outdir}' already exists (use [red]--force[/] to overwrite)"
@@ -338,7 +341,7 @@ class DownloadWorkflow:
             stderr.print("Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).")
             self.pipeline = nf_core.utils.prompt_remote_pipeline_name(self.wfs)
 
-    def prompt_revision(self):
+    def prompt_revision(self) -> None:
         """
         Prompt for pipeline revision / branch
         Prompt user for revision tag if '--revision' was not set
@@ -697,7 +700,7 @@ class DownloadWorkflow:
         with open(nfconfig_fn, "w") as nfconfig_fh:
             nfconfig_fh.write(nfconfig)
 
-    def find_container_images(self, workflow_directory):
+    def find_container_images(self, workflow_directory: str) -> None:
         """Find container image names for workflow.
 
         Starts by using `nextflow config` to pull out any process.container
@@ -716,7 +719,7 @@ class DownloadWorkflow:
         module_findings = []
 
         # Use linting code to parse the pipeline nextflow config
-        self.nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
+        self.nf_config = nf_core.utils.fetch_wf_config(Path(workflow_directory))
 
         # Find any config variables that look like a container
         for k, v in self.nf_config.items():
@@ -1007,7 +1010,7 @@ class DownloadWorkflow:
 
         # should exist, because find_container_images() is always called before
         if not self.nf_config:
-            self.nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
+            self.nf_config = nf_core.utils.fetch_wf_config(Path(workflow_directory))
 
         # Select registries defined in pipeline config
         configured_registries = [
@@ -1385,7 +1388,7 @@ class DownloadWorkflow:
         # where the output of 'singularity pull' is first generated before being copied to the NXF_SINGULARITY_CACHDIR.
         # if not defined by the Singularity administrators, then use the temporary directory to avoid storing the images in the work directory.
         if os.environ.get("SINGULARITY_CACHEDIR") is None:
-            os.environ["SINGULARITY_CACHEDIR"] = NFCORE_CACHE_DIR
+            os.environ["SINGULARITY_CACHEDIR"] = str(NFCORE_CACHE_DIR)
 
         # Sometimes, container still contain an explicit library specification, which
         # resulted in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
