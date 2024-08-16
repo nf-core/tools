@@ -35,6 +35,7 @@ from rich.live import Live
 from rich.spinner import Spinner
 
 import nf_core
+from nf_core.pipelines.schema import PipelineSchema
 
 log = logging.getLogger(__name__)
 
@@ -165,7 +166,8 @@ class Pipeline:
         self.wf_path = Path(wf_path)
         self.pipeline_name: Optional[str] = None
         self.pipeline_prefix: Optional[str] = None
-        self.schema_obj: Optional[Dict] = None
+        self.schema_obj: Optional[PipelineSchema] = None
+        self.repo: Optional[git.Repo] = None
 
         try:
             repo = git.Repo(self.wf_path)
@@ -1205,7 +1207,7 @@ def get_first_available_path(directory: Union[Path, str], paths: List[str]) -> U
     return None
 
 
-def sort_dictionary(d: dict) -> dict:
+def sort_dictionary(d: Dict) -> Dict:
     """Sorts a nested dictionary recursively"""
     result = {}
     for k, v in sorted(d.items()):

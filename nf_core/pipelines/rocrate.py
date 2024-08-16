@@ -5,9 +5,8 @@ import logging
 import os
 import sys
 import tempfile
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Union, cast
+from typing import Optional, Set, Union
 from urllib.parse import quote
 
 import requests
@@ -44,7 +43,7 @@ class ROCrate:
         self.pipeline_dir = pipeline_dir
         self.version: str = version
         self.crate: rocrate.rocrate.ROCrate
-        self.pipeline_obj = Pipeline(str(self.pipeline_dir))
+        self.pipeline_obj = Pipeline(self.pipeline_dir)
         self.pipeline_obj._load()
         self.pipeline_obj.schema_obj = PipelineSchema()
         # Assume we're in a pipeline dir root if schema path not set
@@ -83,9 +82,12 @@ class ROCrate:
             if self.version != self.pipeline_obj.nf_config.get("manifest.version"):
                 # using git checkout to get the requested version
                 log.info(f"Checking out pipeline version {self.version}")
+                if self.pipeline_obj.repo is None:
+                    log.error(f"Pipeline repository not found in {self.pipeline_dir}")
+                    sys.exit(1)
                 try:
                     self.pipeline_obj.repo.git.checkout(self.version)
-                    self.pipeline_obj = Pipeline(str(self.pipeline_dir))
+                    self.pipeline_obj = Pipeline(self.pipeline_dir)
                     self.pipeline_obj._load()
                 except InvalidGitRepositoryError:
                     log.error(f"Could not find a git repository in {self.pipeline_dir}")
@@ -184,14 +186,19 @@ class ROCrate:
             self.crate.CreativeWorkStatus = "InProgress"
         else:
             self.crate.CreativeWorkStatus = "Stable"
-            tags = self.pipeline_obj.repo.tags
-            if tags:
-                # get the tag for this version
-                for tag in tags:
-                    if tag.commit.hexsha == self.pipeline_obj.repo.head.commit.hexsha:
-                        self.crate.root_dataset.append_to(
-                            "dateCreated", tag.commit.committed_datetime.strftime("%Y-%m-%dT%H:%M:%SZ"), compact=True
-                        )
+            if self.pipeline_obj.repo is None:
+                log.error(f"Pipeline repository not found in {self.pipeline_dir}")
+            else:
+                tags = self.pipeline_obj.repo.tags
+                if tags:
+                    # get the tag for this version
+                    for tag in tags:
+                        if tag.commit.hexsha == self.pipeline_obj.repo.head.commit.hexsha:
+                            self.crate.root_dataset.append_to(
+                                "dateCreated",
+                                tag.commit.committed_datetime.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                                compact=True,
+                            )
 
         self.crate.add_jsonld(
             {"@id": "https://nf-co.re/", "@type": "Organization", "name": "nf-core", "url": "https://nf-co.re/"}
@@ -206,65 +213,72 @@ class ROCrate:
         """
         Set the main.nf as the main entity of the crate and add necessary metadata
         """
-        wf_file = self.crate.add_file(
+        self.crate.add_workflow(  # sets @type and conformsTo according to Workflow RO-Crate spec
             main_entity_filename,
-            properties={"@type": ["File", "SoftwareSourceCode", "ComputationalWorkflow"]},
+            dest_path=main_entity_filename,
+            main=True,
+            lang="nextflow",  # adds the #nextflow entity automatically and connects it to programmingLanguage
+            lang_version="X.Y.Z",  # sets version on #nextflow
         )
-        wf_file = cast(rocrate.model.entity.Entity, wf_file)  # ro-crate is untyped so need to cast type manually
+        # wf_file = self.crate.add_file(
+        #     main_entity_filename,
+        #     properties={"@type": ["File", "SoftwareSourceCode", "ComputationalWorkflow"]},
+        # )
+        # wf_file = cast(rocrate.model.entity.Entity, wf_file)  # ro-crate is untyped so need to cast type manually
 
-        wf_file.append_to("programmingLanguage", {"@id": "#nextflow"}, compact=True)
-        wf_file.append_to(
-            "dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/", compact=True
-        )
-        # add dateCreated and dateModified, based on the current data
-        wf_file.append_to("dateCreated", self.crate.root_dataset.get("dateCreated", ""), compact=True)
-        wf_file.append_to("dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True)
-        wf_file.append_to("sdPublisher", {"@id": "https://nf-co.re/"}, compact=True)
-        if self.version.endswith("dev"):
-            url = "dev"
-        else:
-            url = self.version
-        wf_file.append_to("url", f"https://nf-co.re/{self.crate.name.replace('nf-core/','')}/{url}/", compact=True)
-        wf_file.append_to("version", self.version, compact=True)
-        if self.pipeline_obj.schema_obj is not None:
-            log.debug("input value")
+        # wf_file.append_to("programmingLanguage", {"@id": "#nextflow"}, compact=True)
+        # wf_file.append_to(
+        #     "dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/", compact=True
+        # )
+        # # add dateCreated and dateModified, based on the current data
+        # wf_file.append_to("dateCreated", self.crate.root_dataset.get("dateCreated", ""), compact=True)
+        # wf_file.append_to("dateModified", str(datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")), compact=True)
+        # wf_file.append_to("sdPublisher", {"@id": "https://nf-co.re/"}, compact=True)
+        # if self.version.endswith("dev"):
+        #     url = "dev"
+        # else:
+        #     url = self.version
+        # wf_file.append_to("url", f"https://nf-co.re/{self.crate.name.replace('nf-core/','')}/{url}/", compact=True)
+        # wf_file.append_to("version", self.version, compact=True)
+        # if self.pipeline_obj.schema_obj is not None:
+        #     log.debug("input value")
 
-            schema_input = self.pipeline_obj.schema_obj.schema["definitions"]["input_output_options"]["properties"][
-                "input"
-            ]
-            input_value: Dict[str, Union[str, List[str], bool]] = {
-                "@id": "#input",
-                "@type": ["PropertyValueSpecification", "FormalParameter"],
-                "default": schema_input.get("default", ""),
-                "encodingFormat": schema_input.get("mimetype", ""),
-                "valueRequired": "input"
-                in self.pipeline_obj.schema_obj.schema["definitions"]["input_output_options"]["required"],
-                "dct:conformsTo": "https://bioschemas.org/types/FormalParameter/1.0-RELEASE",
-            }
-            self.crate.add_jsonld(input_value)
-            wf_file.append_to(
-                "input",
-                {"@id": "#input"},
-            )
+        #     schema_input = self.pipeline_obj.schema_obj.schema["definitions"]["input_output_options"]["properties"][
+        #         "input"
+        #     ]
+        #     input_value: Dict[str, Union[str, List[str], bool]] = {
+        #         "@id": "#input",
+        #         "@type": ["PropertyValueSpecification", "FormalParameter"],
+        #         "default": schema_input.get("default", ""),
+        #         "encodingFormat": schema_input.get("mimetype", ""),
+        #         "valueRequired": "input"
+        #         in self.pipeline_obj.schema_obj.schema["definitions"]["input_output_options"]["required"],
+        #         "dct:conformsTo": "https://bioschemas.org/types/FormalParameter/1.0-RELEASE",
+        #     }
+        #     self.crate.add_jsonld(input_value)
+        #     wf_file.append_to(
+        #         "input",
+        #         {"@id": "#input"},
+        #     )
 
-        # get keywords from nf-core website
-        remote_workflows = requests.get("https://nf-co.re/pipelines.json").json()["remote_workflows"]
-        # go through all remote workflows and find the one that matches the pipeline name
-        topics = ["nf-core", "nextflow"]
-        for remote_wf in remote_workflows:
-            if remote_wf["name"] == self.pipeline_obj.pipeline_name.replace("nf-core/", ""):
-                topics = topics + remote_wf["topics"]
-                break
+        # # get keywords from nf-core website
+        # remote_workflows = requests.get("https://nf-co.re/pipelines.json").json()["remote_workflows"]
+        # # go through all remote workflows and find the one that matches the pipeline name
+        # topics = ["nf-core", "nextflow"]
+        # for remote_wf in remote_workflows:
+        #     if remote_wf["name"] == self.pipeline_obj.pipeline_name.replace("nf-core/", ""):
+        #         topics = topics + remote_wf["topics"]
+        #         break
 
-        log.debug(f"Adding topics: {topics}")
-        wf_file.append_to("keywords", topics)
+        # log.debug(f"Adding topics: {topics}")
+        # wf_file.append_to("keywords", topics)
 
-        self.add_main_authors(wf_file)
+        # self.add_main_authors(wf_file)
 
-        self.crate.mainEntity = wf_file
+        # self.crate.mainEntity = wf_file
 
-        wf_file.append_to("license", self.crate.license)
-        wf_file.append_to("name", self.crate.name)
+        # wf_file.append_to("license", self.crate.license)
+        # wf_file.append_to("name", self.crate.name)
 
     def add_main_authors(self, wf_file: rocrate.model.entity.Entity) -> None:
         """
@@ -284,7 +298,7 @@ class ROCrate:
         # look at git contributors for author names
         try:
             git_contributors: Set[str] = set()
-
+            assert self.pipeline_obj.repo is not None  # mypy
             commits_touching_path = list(self.pipeline_obj.repo.iter_commits(paths="main.nf"))
 
             for commit in commits_touching_path:

@@ -432,7 +432,7 @@ class ModulesJson:
             to_name += f"-{datetime.datetime.now().strftime('%y%m%d%H%M%S')}"
         shutil.move(str(current_path), local_dir / to_name)
 
-    def unsynced_components(self) -> Tuple[List[str], List[str], dict]:
+    def unsynced_components(self) -> Tuple[List[str], List[str], Dict]:
         """
         Compute the difference between the modules/subworkflows in the directory and the
         modules/subworkflows in the 'modules.json' file. This is done by looking at all
