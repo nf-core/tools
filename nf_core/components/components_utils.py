@@ -168,11 +168,11 @@ def get_components_to_install(
                         "git_remote": None,
                         "branch": None,
                     }
-                    modules[component_dict["name"]] = component_dict
+                    modules[component_name] = component_dict
                 elif link.startswith("../"):
                     component_name = name.lower()
                     component_dict = {"name": component_name, "org_path": None, "git_remote": None, "branch": None}
-                    subworkflows[component_dict["name"]] = component_dict
+                    subworkflows[component_name] = component_dict
 
     if Path(subworkflow_dir, "meta.yml").exists():
         with open(Path(subworkflow_dir, "meta.yml")) as fh:
@@ -194,6 +194,6 @@ def get_components_to_install(
                             "branch": component[component_name].get("branch", "master"),
                         }
 
-                        current_comp_dict[component_dict["name"]].update(component_dict)
+                        current_comp_dict[component_name].update(component_dict)
 
     return list(modules.values()), list(subworkflows.values())
