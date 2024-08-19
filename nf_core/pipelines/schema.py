@@ -430,11 +430,11 @@ class PipelineSchema:
         param_keys = list(schema.get("properties", {}).keys())
         num_params = len(param_keys)
 
-        print(self.defs_notation)
+        # Add a small check for older nf-schema JSON schemas
+        if "defs" in schema:
+            raise AssertionError(f'Using "defs" for schema definitions is not supported. Please use {self.defs_notation} instead')
 
         for d_key, d_schema in schema.get(self.defs_notation, {}).items():
-            print(d_key)
-            print(d_schema)
             # Check that this definition is mentioned in allOf
             if "allOf" not in schema:
                 raise AssertionError("Schema has definitions, but no allOf key")
