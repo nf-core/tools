@@ -235,7 +235,7 @@ class PipelineSchema:
         """Save a pipeline schema to a file"""
         # Write results to a JSON file
         num_params = len(self.schema.get("properties", {}))
-        num_params += sum(len(d.get("properties", {})) for d in self.schema.get("definitions", {}).values())
+        num_params += sum(len(d.get("properties", {})) for d in self.schema.get(self.defs_notation, {}).values())
         if not suppress_logging:
             log.info(f"Writing schema with {num_params} params: '{self.schema_filename}'")
         dump_json_with_prettier(self.schema_filename, self.schema)
@@ -321,7 +321,7 @@ class PipelineSchema:
             params_ignore = []
 
         # Go over group keys
-        for group_key, group in schema_no_required.get("definitions", {}).items():
+        for group_key, group in schema_no_required.get(self.defs_notation, {}).items():
             group_properties = group.get("properties")
             for param in group_properties:
                 if param in params_ignore:
@@ -527,9 +527,9 @@ class PipelineSchema:
         if "input" not in self.schema_params:
             raise LookupError("Parameter `input` not found in schema")
         # Check that the input parameter is defined in the right place
-        if "input" not in self.schema.get("definitions", {}).get("input_output_options", {}).get("properties", {}):
+        if "input" not in self.schema.get(self.defs_notation, {}).get("input_output_options", {}).get("properties", {}):
             raise LookupError("Parameter `input` is not defined in the correct subschema (input_output_options)")
-        input_entry = self.schema["definitions"]["input_output_options"]["properties"]["input"]
+        input_entry = self.schema[self.defs_notation]["input_output_options"]["properties"]["input"]
         if "mimetype" not in input_entry:
             return None
         mimetype = input_entry["mimetype"]
@@ -581,7 +581,7 @@ class PipelineSchema:
         out = f"# {self.schema['title']}\n\n"
         out += f"{self.schema['description']}\n"
         # Grouped parameters
-        for definition in self.schema.get("definitions", {}).values():
+        for definition in self.schema.get(self.defs_notation, {}).values():
             out += f"\n## {definition.get('title', {})}\n\n"
             out += f"{definition.get('description', '')}\n\n"
             required = definition.get("required", [])
@@ -763,15 +763,15 @@ class PipelineSchema:
         """
         # Identify and remove empty definitions from the schema
         empty_definitions = []
-        for d_key, d_schema in list(self.schema.get("definitions", {}).items()):
+        for d_key, d_schema in list(self.schema.get(self.defs_notation, {}).items()):
             if not d_schema.get("properties"):
-                del self.schema["definitions"][d_key]
+                del self.schema[self.defs_notation][d_key]
                 empty_definitions.append(d_key)
                 log.warning(f"Removing empty group: '{d_key}'")
 
         # Remove "allOf" group with empty definitions from the schema
         for d_key in empty_definitions:
-            allOf = {"$ref": f"#/definitions/{d_key}"}
+            allOf = {"$ref": f"#/{self.defs_notation}/{d_key}"}
             if allOf in self.schema.get("allOf", []):
                 self.schema["allOf"].remove(allOf)
 
@@ -780,8 +780,8 @@ class PipelineSchema:
             del self.schema["allOf"]
 
         # If we don't have anything left in "definitions", remove it
-        if self.schema.get("definitions") == {}:
-            del self.schema["definitions"]
+        if self.schema.get(self.defs_notation) == {}:
+            del self.schema[self.defs_notation]
 
     def remove_schema_notfound_configs(self):
         """
@@ -791,9 +791,9 @@ class PipelineSchema:
         # Top-level properties
         self.schema, params_removed = self.remove_schema_notfound_configs_single_schema(self.schema)
         # Sub-schemas in definitions
-        for d_key, definition in self.schema.get("definitions", {}).items():
+        for d_key, definition in self.schema.get(self.defs_notation, {}).items():
             cleaned_schema, p_removed = self.remove_schema_notfound_configs_single_schema(definition)
-            self.schema["definitions"][d_key] = cleaned_schema
+            self.schema[self.defs_notation][d_key] = cleaned_schema
             params_removed.extend(p_removed)
 
         return params_removed
