@@ -5,6 +5,7 @@ import json
 import logging
 import tempfile
 import webbrowser
+import re
 from pathlib import Path
 from typing import Union
 
@@ -32,7 +33,7 @@ class PipelineSchema:
 
         self.schema = {}
         self.pipeline_dir = ""
-        self.schema_filename = ""
+        self._schema_filename = ""
         self.schema_defaults = {}
         self.schema_types = {}
         self.schema_params = {}
@@ -46,8 +47,46 @@ class PipelineSchema:
         self.web_schema_build_url = "https://nf-co.re/pipeline_schema_builder"
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
-        self.schema_draft = "https://json-schema.org/draft/2020-12/schema"
-        self.defs_notation = "$defs"
+        self.validation_plugin = None
+        self.schema_draft = None
+        self.defs_notation = None
+
+    # Update the validation plugin code everytime the schema gets changed
+    def set_schema_filename(self, schema: str) -> None:
+        self._schema_filename = schema
+        basepath = "/".join(str(schema).split("/")[:-1])
+        config = f"{basepath}/nextflow.config" if basepath != "" else "nextflow.config"
+        self._update_validation_plugin_from_config(config)
+    
+    def get_schema_filename(self) -> str:
+        return self._schema_filename
+    
+    def del_schema_filename(self) -> None:
+        del self._schema_filename
+
+    schema_filename = property(get_schema_filename, set_schema_filename, del_schema_filename)
+
+    def _update_validation_plugin_from_config(self, config: str) -> None:
+        plugin = "nf-schema"
+        with open(Path(config)) as conf:
+            nf_schema_pattern = re.compile("id\s*[\"']nf-schema", re.MULTILINE)
+            nf_validation_pattern = re.compile("id\s*[\"']nf-validation", re.MULTILINE)
+            config_content = conf.read()
+            if re.search(nf_validation_pattern, config_content):
+                plugin = "nf-validation"
+            elif re.search(nf_schema_pattern, config_content):
+                plugin = "nf-schema"
+            else:
+                log.warning("Could not find nf-schema or nf-validation in the pipeline config. Defaulting to nf-schema")
+            
+        self.validation_plugin = plugin
+        # Previous versions of nf-schema used "defs", but it's advised to use "$defs"
+        if plugin == "nf-schema":
+            self.defs_notation = "$defs"
+            self.schema_draft = "https://json-schema.org/draft/2020-12/schema"
+        else:
+            self.defs_notation = "definitions"
+            self.schema_draft = "https://json-schema.org/draft-07/schema"
 
     def get_schema_path(
         self, path: Union[str, Path], local_only: bool = False, revision: Union[str, None] = None
@@ -120,23 +159,7 @@ class PipelineSchema:
         self.schema_params = {}
         if "$schema" not in self.schema:
             raise AssertionError("Schema missing top-level `$schema` attribute")
-        self.schema_draft = self.schema["$schema"]
-        self.defs_notation = self.get_defs_notation()
         log.debug(f"JSON file loaded: {self.schema_filename}")
-
-    def get_defs_notation(self, schema=None):
-        if schema is None:
-            schema = self.schema
-
-        if "$defs" in schema:
-            defs_notation = "$defs"
-        elif "definitions" in schema:
-            defs_notation = "definitions"
-        elif "defs" in schema:
-            # nf-schema v2.0.0 only supported defs. this has been changed to $defs in nf-schema v2.1.0
-            # this line prevents the breakage of schemas created for v2.0.0
-            defs_notation = "defs"
-        return defs_notation
 
     def sanitise_param_default(self, param):
         """
@@ -385,16 +408,15 @@ class PipelineSchema:
         if "$schema" not in schema:
             raise AssertionError("Schema missing top-level `$schema` attribute")
         schema_draft = schema["$schema"]
-        if (
-            schema_draft == "https://json-schema.org/draft-07/schema"
-            or schema_draft == "http://json-schema.org/draft-07/schema"
-        ):
+        if self.schema_draft != schema_draft:
+            raise AssertionError(f"Schema is using the wrong draft: {schema_draft}, should be {self.schema_draft}")
+        if self.schema_draft == "https://json-schema.org/draft-07/schema":
             try:
                 jsonschema.Draft7Validator.check_schema(schema)
                 log.debug("JSON Schema Draft7 validated")
             except jsonschema.exceptions.SchemaError as e:
                 raise AssertionError(f"Schema does not validate as Draft 7 JSON Schema:\n {e}")
-        elif schema_draft == "https://json-schema.org/draft/2020-12/schema":
+        elif self.schema_draft == "https://json-schema.org/draft/2020-12/schema":
             try:
                 jsonschema.Draft202012Validator.check_schema(schema)
                 log.debug("JSON Schema Draft2020-12 validated")
@@ -407,18 +429,21 @@ class PipelineSchema:
 
         param_keys = list(schema.get("properties", {}).keys())
         num_params = len(param_keys)
-        defs_notation = self.get_defs_notation(schema)
 
-        for d_key, d_schema in schema.get(defs_notation, {}).items():
+        print(self.defs_notation)
+
+        for d_key, d_schema in schema.get(self.defs_notation, {}).items():
+            print(d_key)
+            print(d_schema)
             # Check that this definition is mentioned in allOf
             if "allOf" not in schema:
                 raise AssertionError("Schema has definitions, but no allOf key")
             in_allOf = False
             for allOf in schema.get("allOf", []):
-                if allOf["$ref"] == f"#/{defs_notation}/{d_key}":
+                if allOf["$ref"] == f"#/{self.defs_notation}/{d_key}":
                     in_allOf = True
             if not in_allOf:
-                raise AssertionError(f"Definition subschema `#/{defs_notation}/{d_key}` not included in schema `allOf`")
+                raise AssertionError(f"Definition subschema `#/{self.defs_notation}/{d_key}` not included in schema `allOf`")
 
             # TODO add support for nested parameters
             for d_param_id in d_schema.get("properties", {}):

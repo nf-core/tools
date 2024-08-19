@@ -364,6 +364,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
             else:
                 failed.append("nextflow.config does not contain configuration profile `test`")
 
+        # Lint for nf-validation and nf-schema
         match_plugins = re.search(r"\bplugins\s*\{([^}]+)}", cleaned_content, re.MULTILINE)
         if not match_plugins:
             failed.append(
