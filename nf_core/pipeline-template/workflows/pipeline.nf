@@ -6,7 +6,7 @@
 
 include { FASTQC                 } from '../modules/nf-core/fastqc/main'
 {% if multiqc %}include { MULTIQC                } from '../modules/nf-core/multiqc/main'{% endif %}
-include { paramsSummaryMap       } from 'plugin/nf-validation'
+include { paramsSummaryMap       } from 'plugin/nf-schema'
 {% if multiqc %}include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'{% endif %}
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 {% if citations or multiqc %}include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'{% endif %}
