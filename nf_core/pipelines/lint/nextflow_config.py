@@ -396,6 +396,9 @@ def nextflow_config(self) -> Dict[str, List[str]]:
             elif "nf-validation" not in found_plugins and "nf-schema" not in found_plugins:
                 failed.append("nextflow.config does not contain `nf-validation` or `nf-schema` in the plugins scope")
 
+            if "nf-validation" in found_plugins:
+                warned.append("nf-validation has been detected in the pipeline. Please migrate to nf-schema: https://nextflow-io.github.io/nf-schema/latest/migration_guide/")
+
     # Check that the default values in nextflow.config match the default values defined in the nextflow_schema.json
     ignore_defaults = []
     for item in ignore_configs:
