@@ -245,7 +245,7 @@ changelog:
 license:
   skippable_paths:
     - "LICENSE"
-  short_description: "Add a license"
+  short_description: "Add a license File"
   description: "Add the MIT license file."
   help_text: |
     To protect the copyright of the pipeline, you can add a LICENSE file.
