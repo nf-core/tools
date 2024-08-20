@@ -18,6 +18,7 @@
 - handle template features with a yaml file ([#3108](https://github.com/nf-core/tools/pull/3108))
 - add templatefeatures.yml to python package ([#3112](https://github.com/nf-core/tools/pull/3112))
 - add option to exclude license from pipeline template ([#3125](https://github.com/nf-core/tools/pull/3125))
+- add option to exclude email from pipeline template ([#3126](https://github.com/nf-core/tools/pull/3126))
 
 ### Linting
 
