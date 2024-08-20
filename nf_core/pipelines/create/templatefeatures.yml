@@ -257,3 +257,21 @@ license:
       - "LICENSE"
   nfcore_pipelines: False
   custom_pipelines: True
+email:
+  skippable_paths:
+    - "assets/email_template.html"
+    - "assets/sendmail_template.txt"
+    - "assets/email_template.txt"
+  short_description: "Enable email updates"
+  description: "Enable sending emails on pipeline completion."
+  help_text: |
+    Enable the option of sending an email which will include pipeline execution reports on pipeline completion.
+  linting:
+    files_exist:
+      - "assets/email_template.html"
+      - "assets/sendmail_template.txt"
+      - "assets/email_template.txt"
+    files_unchanged:
+      - ".prettierignore"
+  nfcore_pipelines: False
+  custom_pipelines: True

@@ -1,4 +1,6 @@
+{%- if email %}
 email_template.html
+{%- endif %}
 adaptivecard.json
 slackreport.json
 .nextflow*

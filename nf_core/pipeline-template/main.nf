@@ -20,7 +20,7 @@
 include { {{ short_name|upper }}  } from './workflows/{{ short_name }}'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
-{% if igenomes %}
+{%- if igenomes %}
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 
 /*
@@ -95,9 +95,11 @@ workflow {
     // SUBWORKFLOW: Run completion tasks
     //
     PIPELINE_COMPLETION (
+        {%- if email %}
         params.email,
         params.email_on_fail,
         params.plaintext_email,
+        {%- endif %}
         params.outdir,
         params.monochrome_logs,
         params.hook_url,
