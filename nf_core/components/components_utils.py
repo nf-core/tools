@@ -162,12 +162,17 @@ def get_components_to_install(
                 if link.startswith("../../../"):
                     name_split = name.lower().split("_")
                     component_name = "/".join(name_split)
-                    current_comp_dict = modules
+                    component_dict = {
+                        "name": component_name,
+                        "org_path": None,
+                        "git_remote": None,
+                        "branch": None,
+                    }
+                    modules[component_name] = component_dict
                 elif link.startswith("../"):
                     component_name = name.lower()
-                    current_comp_dict = subworkflows
-                component_dict = {"name": component_name, "org_path": None, "git_remote": None, "branch": None}
-                current_comp_dict[component_name] = component_dict
+                    component_dict = {"name": component_name, "org_path": None, "git_remote": None, "branch": None}
+                    subworkflows[component_name] = component_dict
 
     if Path(subworkflow_dir, "meta.yml").exists():
         with open(Path(subworkflow_dir, "meta.yml")) as fh:
