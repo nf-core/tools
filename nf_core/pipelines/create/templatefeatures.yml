@@ -242,3 +242,18 @@ changelog:
       - "CHANGELOG.md"
   nfcore_pipelines: False
   custom_pipelines: True
+license:
+  skippable_paths:
+    - "LICENSE"
+  short_description: "Add a license"
+  description: "Add the MIT license file."
+  help_text: |
+    To protect the copyright of the pipeline, you can add a LICENSE file.
+    This option ads the MIT License. You can read the conditions here: https://opensource.org/license/MIT
+  linting:
+    files_exist:
+      - "LICENSE"
+    files_unchanged:
+      - "LICENSE"
+  nfcore_pipelines: False
+  custom_pipelines: True
