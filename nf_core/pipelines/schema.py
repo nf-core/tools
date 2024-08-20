@@ -50,6 +50,7 @@ class PipelineSchema:
         self.validation_plugin = None
         self.schema_draft = None
         self.defs_notation = None
+        self.ignored_params = []
 
     # Update the validation plugin code everytime the schema gets changed
     def set_schema_filename(self, schema: str) -> None:
@@ -69,15 +70,25 @@ class PipelineSchema:
     def _update_validation_plugin_from_config(self, config: str) -> None:
         plugin = "nf-schema"
         with open(Path(config)) as conf:
-            nf_schema_pattern = re.compile("id\s*[\"']nf-schema", re.MULTILINE)
-            nf_validation_pattern = re.compile("id\s*[\"']nf-validation", re.MULTILINE)
+            nf_schema_pattern = re.compile(r"id\s*[\"']nf-schema", re.MULTILINE)
+            nf_validation_pattern = re.compile(r"id\s*[\"']nf-validation", re.MULTILINE)
             config_content = conf.read()
             if re.search(nf_validation_pattern, config_content):
                 plugin = "nf-validation"
+                self.ignored_params = self.pipeline_params.get("validationSchemaIgnoreParams", "").strip("\"'").split(",")
+                self.ignored_params.append("validationSchemaIgnoreParams")
             elif re.search(nf_schema_pattern, config_content):
                 plugin = "nf-schema"
+                ignored_params_pattern = re.compile(r"defaultIgnoreParams\s*=\s*\[([^\]]*)\]", re.MULTILINE)
+                ignored_params_match = re.search(ignored_params_pattern, config_content)
+                ignored_params = ["help", "helpFull", "showHidden"] # Help parameter should be ignored by default
+                if ignored_params_match and len(ignored_params_match.groups()) == 1:
+                    ignored_params.extend(ignored_params_match.group(1).replace("\"", "").replace("'", '').replace(" ", "").split(","))
+                self.ignored_params = ignored_params
             else:
                 log.warning("Could not find nf-schema or nf-validation in the pipeline config. Defaulting to nf-schema")
+            
+
             
         self.validation_plugin = plugin
         # Previous versions of nf-schema used "defs", but it's advised to use "$defs"
@@ -845,13 +856,12 @@ class PipelineSchema:
         Update defaults if they have changed
         """
         params_added = []
-        params_ignore = self.pipeline_params.get("validationSchemaIgnoreParams", "").strip("\"'").split(",")
-        params_ignore.append("validationSchemaIgnoreParams")
+
         for p_key, p_val in self.pipeline_params.items():
             s_key = self.schema_params.get(p_key)
             # Check if key is in schema parameters
             # Key is in pipeline but not in schema or ignored from schema
-            if p_key not in self.schema_params and p_key not in params_ignore:
+            if p_key not in self.schema_params and p_key not in self.ignored_params:
                 if (
                     self.no_prompts
                     or self.schema_from_scratch
@@ -884,7 +894,7 @@ class PipelineSchema:
             elif (
                 s_key
                 and (p_key not in self.schema_defaults)
-                and (p_key not in params_ignore)
+                and (p_key not in self.ignored_params)
                 and (p_def := self.build_schema_param(p_val).get("default"))
             ):
                 if self.no_prompts or Confirm.ask(

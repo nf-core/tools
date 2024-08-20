@@ -65,14 +65,6 @@ def nextflow_config(self) -> Dict[str, List[str]]:
         * Should always be set to default value:
         ``https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}``
 
-    * ``params.validationShowHiddenParams``
-
-        * Determines whether boilerplate params are showed by schema. Set to ``false`` by default
-
-    * ``params.validationSchemaIgnoreParams``
-
-        * A comma separated string of inputs the schema validation should ignore.
-
     **The following variables throw warnings if missing:**
 
     * ``manifest.mainScript``: The filename of the main pipeline script (should be ``main.nf``)
@@ -151,8 +143,11 @@ def nextflow_config(self) -> Dict[str, List[str]]:
         ["process.time"],
         ["params.outdir"],
         ["params.input"],
-        ["params.validationShowHiddenParams"],
-        ["params.validationSchemaIgnoreParams"],
+        ["validation.help.enabled"],
+        ["validation.help.beforeText"],
+        ["validation.help.afterText"],
+        ["validation.summary.beforeText"],
+        ["validation.summary.afterText"]
     ]
     # Throw a warning if these are missing
     config_warn = [
