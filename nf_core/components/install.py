@@ -50,6 +50,15 @@ class ComponentInstall(ComponentCommand):
             self.installed_by = [self.component_type]
 
     def install(self, component: str, silent: bool = False) -> bool:
+        if isinstance(component, dict):
+            if component["git_remote"] is not None:
+                remote_url = component["git_remote"]
+                branch = component["branch"]
+                self.modules_repo = ModulesRepo(remote_url, branch)
+            else:
+                self.modules_repo = ModulesRepo(self.current_remote, self.branch)
+            component = component["name"]
+
         if self.repo_type == "modules":
             log.error(f"You cannot install a {component} in a clone of nf-core/modules")
             return False
@@ -60,15 +69,6 @@ class ComponentInstall(ComponentCommand):
         if self.component_type == "modules":
             # Check modules directory structure
             self.check_modules_structure()
-
-        if isinstance(component, dict):
-            if component["git_remote"] is not None:
-                remote_url = component["git_remote"]
-                branch = component["branch"]
-                self.modules_repo = ModulesRepo(remote_url, branch)
-            else:
-                self.modules_repo = ModulesRepo(self.current_remote, self.branch)
-            component = component["name"]
 
         # Verify that 'modules.json' is consistent with the installed modules and subworkflows
         modules_json = ModulesJson(self.directory)
