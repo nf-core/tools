@@ -69,35 +69,45 @@ class PipelineSchema:
 
     def _update_validation_plugin_from_config(self, config: str) -> None:
         plugin = "nf-schema"
-        with open(Path(config)) as conf:
-            nf_schema_pattern = re.compile(r"id\s*[\"']nf-schema", re.MULTILINE)
-            nf_validation_pattern = re.compile(r"id\s*[\"']nf-validation", re.MULTILINE)
-            config_content = conf.read()
-            if re.search(nf_validation_pattern, config_content):
-                plugin = "nf-validation"
-                self.ignored_params = self.pipeline_params.get("validationSchemaIgnoreParams", "").strip("\"'").split(",")
-                self.ignored_params.append("validationSchemaIgnoreParams")
-            elif re.search(nf_schema_pattern, config_content):
-                plugin = "nf-schema"
-                ignored_params_pattern = re.compile(r"defaultIgnoreParams\s*=\s*\[([^\]]*)\]", re.MULTILINE)
-                ignored_params_match = re.search(ignored_params_pattern, config_content)
-                ignored_params = ["help", "helpFull", "showHidden"] # Help parameter should be ignored by default
-                if ignored_params_match and len(ignored_params_match.groups()) == 1:
-                    ignored_params.extend(ignored_params_match.group(1).replace("\"", "").replace("'", '').replace(" ", "").split(","))
-                self.ignored_params = ignored_params
-            else:
-                log.warning("Could not find nf-schema or nf-validation in the pipeline config. Defaulting to nf-schema")
-            
+        conf = nf_core.utils.fetch_wf_config(Path(self.schema_filename).parent)
 
-            
+        plugins = str(conf.get("plugins", "")).strip("\"").strip("'").strip(" ").split(",")
+        plugin_found = False
+        for plugin_instance in plugins:
+            if "nf-schema" in plugin_instance:
+                plugin = "nf-schema"
+                plugin_found = True
+                break
+            elif "nf-validation" in plugin_instance:
+                plugin = "nf-validation"
+                plugin_found = True
+                break
+
+        if not plugin_found:
+            log.warning("Could not find nf-schema or nf-validation in the pipeline config. Defaulting to nf-schema")
+
+        if "nf-validation" in plugins:
+            plugin = "nf-validation"
+        elif "nf-schema" in plugins:
+            plugin = "nf-schema"
+
         self.validation_plugin = plugin
         # Previous versions of nf-schema used "defs", but it's advised to use "$defs"
         if plugin == "nf-schema":
             self.defs_notation = "$defs"
+            ignored_params = ["help", "helpFull", "showHidden"] # Help parameter should be ignored by default
+            ignored_params_config = conf.get("validation", {}).get("defaultIgnoreParams", [])
+            if len(ignored_params_config) > 0:
+                ignored_params.extend(ignored_params_config)
+            self.ignored_params = ignored_params
             self.schema_draft = "https://json-schema.org/draft/2020-12/schema"
+
         else:
             self.defs_notation = "definitions"
             self.schema_draft = "https://json-schema.org/draft-07/schema"
+            self.get_wf_params()
+            self.ignored_params = self.pipeline_params.get("validationSchemaIgnoreParams", "").strip("\"'").split(",")
+            self.ignored_params.append("validationSchemaIgnoreParams")
 
     def get_schema_path(
         self, path: Union[str, Path], local_only: bool = False, revision: Union[str, None] = None
@@ -325,17 +335,11 @@ class PipelineSchema:
         if self.pipeline_params == {}:
             self.get_wf_params()
 
-        # Collect parameters to ignore
-        if "validationSchemaIgnoreParams" in self.pipeline_params:
-            params_ignore = self.pipeline_params.get("validationSchemaIgnoreParams", "").strip("\"'").split(",")
-        else:
-            params_ignore = []
-
         # Go over group keys
         for group_key, group in schema_no_required.get(self.defs_notation, {}).items():
             group_properties = group.get("properties")
             for param in group_properties:
-                if param in params_ignore:
+                if param in self.ignored_params:
                     continue
                 if param in self.pipeline_params:
                     self.validate_config_default_parameter(param, group_properties[param], self.pipeline_params[param])
@@ -348,7 +352,7 @@ class PipelineSchema:
         ungrouped_properties = self.schema.get("properties")
         if ungrouped_properties:
             for param in ungrouped_properties:
-                if param in params_ignore:
+                if param in self.ignored_params:
                     continue
                 if param in self.pipeline_params:
                     self.validate_config_default_parameter(
