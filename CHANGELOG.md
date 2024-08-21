@@ -31,6 +31,7 @@
 - add option to exclude license from pipeline template ([#3125](https://github.com/nf-core/tools/pull/3125))
 - add option to exclude email from pipeline template ([#3126](https://github.com/nf-core/tools/pull/3126))
 - add option to exclude fastqc from pipeline template ([#3129](https://github.com/nf-core/tools/pull/3129))
+- add option to exclude documentation from pipeline template ([#3130](https://github.com/nf-core/tools/pull/3130))
 
 ### Linting
 
