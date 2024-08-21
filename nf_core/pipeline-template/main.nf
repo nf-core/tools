@@ -19,6 +19,7 @@
 
 include { {{ short_name|upper }}  } from './workflows/{{ short_name }}'
 {%- if modules %}
+{%- if modules %}
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 {%- if igenomes %}
@@ -72,6 +73,7 @@ workflow {
 
     main:
 
+    {%- if modules %}
     {%- modules %}
     //
     // SUBWORKFLOW: Run initialisation tasks
