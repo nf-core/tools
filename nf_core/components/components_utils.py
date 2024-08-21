@@ -149,8 +149,9 @@ def get_components_to_install(
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """
-    modules = {}
-    subworkflows = {}
+    modules: Dict[str, Dict[str, Optional[str]]] = {}
+    subworkflows: Dict[str, Dict[str, Optional[str]]] = {}
+
     with open(Path(subworkflow_dir, "main.nf")) as fh:
         for line in fh:
             regex = re.compile(
@@ -162,16 +163,13 @@ def get_components_to_install(
                 if link.startswith("../../../"):
                     name_split = name.lower().split("_")
                     component_name = "/".join(name_split)
-                    component_dict = {
+                    component_dict: Dict[str, Optional[str]] = {
                         "name": component_name,
-                        "org_path": None,
-                        "git_remote": None,
-                        "branch": None,
                     }
                     modules[component_name] = component_dict
                 elif link.startswith("../"):
                     component_name = name.lower()
-                    component_dict = {"name": component_name, "org_path": None, "git_remote": None, "branch": None}
+                    component_dict = {"name": component_name}
                     subworkflows[component_name] = component_dict
 
     if Path(subworkflow_dir, "meta.yml").exists():
@@ -188,7 +186,6 @@ def get_components_to_install(
                         current_comp_dict = subworkflows if component_name in subworkflows else modules
 
                         component_dict = {
-                            "name": component_name,
                             "org_path": org_path,
                             "git_remote": git_remote,
                             "branch": component[component_name].get("branch", None),
