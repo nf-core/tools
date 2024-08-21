@@ -51,13 +51,13 @@ class ComponentInstall(ComponentCommand):
 
     def install(self, component: str, silent: bool = False) -> bool:
         if isinstance(component, dict):
-            if component["git_remote"] is not None:
-                remote_url = component["git_remote"]
-                branch = component["branch"]
+            if component.get("git_remote") is not None:
+                remote_url = component.get("git_remote")
+                branch = component.get("branch")
                 self.modules_repo = ModulesRepo(remote_url, branch)
             else:
                 self.modules_repo = ModulesRepo(self.current_remote, self.branch)
-            component = component["name"]
+            component = component.get("name")
 
         if self.repo_type == "modules":
             log.error(f"You cannot install a {component} in a clone of nf-core/modules")
