@@ -175,6 +175,7 @@ def modules_create(
     conda_package_version,
     empty_template,
     migrate_pytest,
+    migrate_pytest_hard,
 ):
     """
     Create a new DSL2 module from the nf-core template.
@@ -194,6 +195,10 @@ def modules_create(
     elif no_meta:
         has_meta = False
 
+    if migrate_pytest_hard and not migrate_pytest:
+        log.error("--migrate_pytest_hard can only allowed in combination with --migrate_pytest.")
+        sys.exit(1)
+
     from nf_core.modules.create import ModuleCreate
 
     # Run function
@@ -209,6 +214,7 @@ def modules_create(
             conda_package_version,
             empty_template,
             migrate_pytest,
+            migrate_pytest_hard,
         )
         module_create.create()
     except UserWarning as e:
@@ -219,13 +225,27 @@ def modules_create(
         sys.exit(1)
 
 
-def modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest):
+def modules_test(
+    ctx,
+    tool,
+    directory,
+    no_prompts,
+    update,
+    once,
+    profile,
+    migrate_pytest,
+    migrate_pytest_hard,
+):
     """
     Run nf-test for a module.
 
     Given the name of a module, runs the nf-test command to test the module and generate snapshots.
     """
     from nf_core.components.components_test import ComponentsTest
+
+    if migrate_pytest_hard and not migrate_pytest:
+        log.error("--migrate_pytest_hard can only allowed in combination with --migrate_pytest.")
+        sys.exit(1)
 
     if migrate_pytest:
         modules_create(
@@ -241,6 +261,7 @@ def modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrat
             conda_package_version=None,
             empty_template=False,
             migrate_pytest=migrate_pytest,
+            migrate_pytest_hard=migrate_pytest_hard,
         )
     try:
         module_tester = ComponentsTest(
@@ -261,7 +282,19 @@ def modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrat
         sys.exit(1)
 
 
-def modules_lint(ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version):
+def modules_lint(
+    ctx,
+    tool,
+    directory,
+    registry,
+    key,
+    all,
+    fail_warned,
+    local,
+    passed,
+    sort_by,
+    fix_version,
+):
     """
     Lint one or more modules in a directory.
 

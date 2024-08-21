@@ -40,6 +40,7 @@ class ComponentCreate(ComponentCommand):
         conda_version: Optional[str] = None,
         empty_template: bool = False,
         migrate_pytest: bool = False,
+        migrate_pytest_hard=False,
     ):
         super().__init__(component_type, directory)
         self.directory = directory
@@ -61,6 +62,9 @@ class ComponentCreate(ComponentCommand):
         self.file_paths: Dict[str, Path] = {}
         self.not_empty_template = not empty_template
         self.migrate_pytest = migrate_pytest
+        self.migrate_pytest_hard = migrate_pytest_hard
+        self.pytest_units_str = None
+        self.pytest_has_nextflow_config = False
 
     def create(self) -> bool:
         """
@@ -160,12 +164,22 @@ class ComponentCreate(ComponentCommand):
         not_alphabet = re.compile(r"[^a-zA-Z]")
         self.org_alphabet = not_alphabet.sub("", self.org)
 
+        # Extract pytest nextflow config
+        pytest_nextflow_config_contents = None
+        if self.migrate_pytest:
+            pytest_nextflow_config_contents = self._extract_nextflow_config()
+
+        # Extract pytest units
+        if self.migrate_pytest and self.migrate_pytest_hard:
+            self._extract_pytest_units()
+
         # Create component template with jinja2
         assert self._render_template()
         log.info(f"Created component template: '{self.component_name}'")
 
         if self.migrate_pytest:
             self._copy_old_files(component_old_path)
+            self._copy_nextflow_config(pytest_nextflow_config_contents)
             log.info("Migrate pytest tests: Copied original module files to new module")
             shutil.rmtree(component_old_path)
             self._print_and_delete_pytest_files()
@@ -458,6 +472,8 @@ class ComponentCreate(ComponentCommand):
                     component_old_path / "templates",
                     self.file_paths["environment.yml"].parent / "templates",
                 )
+
+    def _extract_nextflow_config(self):
         # Create a nextflow.config file if it contains information other than publishDir
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
         nextflow_config = pytest_dir / "nextflow.config"
@@ -469,19 +485,28 @@ class ComponentCreate(ComponentCommand):
                         config_lines += line
             # if the nextflow.config file only contained publishDir, non_publish_dir_lines will be 11 characters long (`process {\n}`)
             if len(config_lines) > 11:
-                log.debug("Copying nextflow.config file from pytest tests")
-                with open(
-                    Path(
-                        self.directory,
-                        self.component_type,
-                        self.org,
-                        self.component_dir,
-                        "tests",
-                        "nextflow.config",
-                    ),
-                    "w+",
-                ) as ofh:
-                    ofh.write(config_lines)
+                self.pytest_has_nextflow_config = True
+                return config_lines
+
+        return None
+
+    def _copy_nextflow_config(self, config_lines):
+        if config_lines is None:
+            return
+
+        log.debug("Copying nextflow.config file from pytest tests")
+        with open(
+            Path(
+                self.directory,
+                self.component_type,
+                self.org,
+                self.component_dir,
+                "tests",
+                "nextflow.config",
+            ),
+            "w+",
+        ) as ofh:
+            ofh.write(config_lines)
 
     def _print_and_delete_pytest_files(self):
         """Prompt if pytest files should be deleted and printed to stdout"""
@@ -519,3 +544,94 @@ class ComponentCreate(ComponentCommand):
         with open(modules_yml, "w") as fh:
             yaml.dump(yml_file, fh)
         run_prettier_on_file(modules_yml)
+
+    def _extract_pytest_units(self):
+        pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
+        main_nf_contents = Path(pytest_dir, "main.nf").read_text(encoding="UTF-8")
+
+        main_nf_workflows = re.findall(r"workflow\s*(\w+)\s*{([^}]+)}", main_nf_contents, re.DOTALL)
+
+        log.debug(f"Found {len(main_nf_workflows)} workflows {[x[0] for x in main_nf_workflows]}")
+
+        nf_test_workflow = []
+        for workflow in main_nf_workflows:
+            workflow_name = workflow[0]
+            workflow_content = str(workflow[1])
+
+            invoked_components = re.findall(r"(\w+)\s*\(([^\)]+)\)", workflow_content, re.DOTALL)
+
+            invoked_components = [c for c in invoked_components if c[0] != "file"]
+
+            log.debug(f"Found {len(invoked_components)} components invoked by {workflow_name}: {invoked_components}")
+
+            if len(invoked_components) > 1:
+                raise ValueError(
+                    f"Test workflow {workflow_name} invokes multiple components. This is not supported currently."
+                )
+
+            # TODO: Generalize to multiple components
+            invoked_component = invoked_components[0]
+
+            invoked_component_name = str(invoked_component[0]).strip()
+            invoked_component_args = str(invoked_component[1]).strip().split(",")
+
+            if len(invoked_component_args) > 1:
+                raise ValueError(
+                    f"Test workflow {workflow_name} has invoked a component {invoked_component_name} with multiple args {invoked_component_args}. This is not supported currently."
+                )
+
+            # TODO: Generalize to multiple args
+            invoked_component_arg = invoked_component_args[0]
+
+            log.debug(
+                f"Looking for arg {invoked_component_arg} for {invoked_component_name} in workflow {workflow_name}"
+            )
+
+            if invoked_component_arg != "input":
+                raise ValueError(
+                    f"Test workflow {workflow_name} has invoked a component {invoked_component_name} with arg {invoked_component_arg} other than 'input'. This is not supported currently."
+                )
+
+            arg_data = re.findall(r"input\s*=\s*(\[.*?\n\s*\])", workflow_content, re.DOTALL)
+
+            log.debug(f"For arg {invoked_component_arg} found data: {arg_data}")
+
+            if len(arg_data) > 1 or len(arg_data) == 0:
+                raise ValueError(f"{invoked_component_arg} data could not be parsed")
+
+            arg_data = arg_data[0]
+
+            nf_test_workflow.append({"name": workflow_name.replace("_", "-"), "input": arg_data})
+
+        log.debug(f"Scaffolding {len(nf_test_workflow)} nf-test(s)")
+
+        test_units_str = ""
+        for test in nf_test_workflow:
+            input_data_lines = str(test["input"]).split("\n")
+            input_data_indented = (
+                input_data_lines[0].strip()
+                + "\n"
+                + "\n".join(["\t\t\t\t" + line.strip() for line in input_data_lines[1:]])
+            )
+            test_unit_str = f"""
+    test("{test['name']}") {{
+
+        when {{
+            process {{
+                \"\"\"
+                input[0] = {input_data_indented}
+                \"\"\"
+            }}
+        }}
+
+        then {{
+            assertAll(
+                {{ assert process.success }},
+                {{ assert snapshot(process.out).match() }}
+            )
+        }}
+    }}
+    """
+            test_units_str += test_unit_str
+
+        self.pytest_units_str = test_units_str
