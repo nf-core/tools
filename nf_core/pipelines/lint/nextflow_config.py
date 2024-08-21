@@ -170,7 +170,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
     ]
 
     # Lint for plugins
-    config_plugins = ast.literal_eval(self.nf_config.get("plugins", "").strip("\""))
+    config_plugins = ast.literal_eval(self.nf_config.get("plugins", ""))
     found_plugins = []
     if len(config_plugins) == 0:
         failed.append("nextflow.config contains an empty plugins scope")
@@ -185,6 +185,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
         failed.append("nextflow.config does not contain `nf-validation` or `nf-schema` in the plugins scope")
 
     if "nf-schema" in found_plugins:
+        passed.append("Found nf-schema plugin")
         if self.nf_config.get("validation.help.enabled", "false") == "false":
             failed.append("The help message has not been enabled. Set the `validation.help.enabled` configuration option to `true` to enable help messages")
         config_fail_ifdefined.extend([
@@ -195,6 +196,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
         ])
 
     if "nf-validation" in found_plugins:
+        passed.append("Found nf-validation plugin")
         warned.append("nf-validation has been detected in the pipeline. Please migrate to nf-schema: https://nextflow-io.github.io/nf-schema/latest/migration_guide/")
 
 

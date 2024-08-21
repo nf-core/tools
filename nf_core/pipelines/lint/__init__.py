@@ -45,6 +45,7 @@ from .nextflow_config import nextflow_config
 from .nfcore_yml import nfcore_yml
 from .pipeline_name_conventions import pipeline_name_conventions
 from .pipeline_todos import pipeline_todos
+from .plugin_includes import plugin_includes
 from .readme import readme
 from .schema_description import schema_description
 from .schema_lint import schema_lint
@@ -92,6 +93,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     nfcore_yml = nfcore_yml
     pipeline_name_conventions = pipeline_name_conventions
     pipeline_todos = pipeline_todos
+    plugin_includes = plugin_includes
     readme = readme
     schema_description = schema_description
     schema_lint = schema_lint
@@ -135,6 +137,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "actions_awsfulltest",
             "readme",
             "pipeline_todos",
+            "plugin_includes",
             "pipeline_name_conventions",
             "template_strings",
             "schema_lint",
