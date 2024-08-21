@@ -278,7 +278,7 @@ email:
 adaptivecard:
   skippable_paths:
     - "assets/adaptivecard.json"
-  short_description: "Add template for status messages"
+  short_description: "Support Microsoft Teams notifications"
   description: "Enable pipeline status update messages through Microsoft Teams"
   help_text: |
     This adds an Adaptive Card. A snippets of user interface.
@@ -291,7 +291,7 @@ adaptivecard:
 slackreport:
   skippable_paths:
     - "assets/slackreport.json"
-  short_description: "Add template for slack status messages"
+  short_description: "Support Slack notifications"
   description: "Enable pipeline status update messages through Slack"
   help_text: |
     This adds an JSON template used as a template for pipeline update messages in Slack.
