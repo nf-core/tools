@@ -573,7 +573,7 @@ class ComponentCreate(ComponentCommand):
             invoked_component = invoked_components[0]
 
             invoked_component_name = str(invoked_component[0]).strip()
-            invoked_component_args = [arg.strip() for arg in str(invoked_component[1]).split(",")]
+            invoked_component_args = self._split_pytest_component_args(invoked_component[1].strip())
 
             arg_data = self._extract_pytest_args_data(
                 workflow_name, workflow_content, invoked_component_name, invoked_component_args
@@ -675,3 +675,19 @@ class ComponentCreate(ComponentCommand):
         arg_data_lines = arg_data.split("\n")
 
         return arg_data_lines[0].strip() + "\n" + "\n".join(["\t\t\t\t" + line.strip() for line in arg_data_lines[1:]])
+
+    def _split_pytest_component_args(self, args_str: str) -> list[str]:
+        # Single argument case
+        if "," not in args_str:
+            return [args_str.strip()]
+
+        args = []
+
+        arg_matches = re.findall(r"(\w+\s*|\[\s*\]|\[\[\],\[\]\])", args_str)
+
+        log.debug(f"For args string {args_str} found matches {arg_matches}")
+
+        for arg_match in arg_matches:
+            args.append(str(arg_match).strip())
+
+        return args
