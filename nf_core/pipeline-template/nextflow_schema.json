@@ -81,12 +81,6 @@
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
                     "default": "s3://ngi-igenomes/igenomes/"
-                },
-                "genomes": {
-                    "type": "object",
-                    "description": "An object containing all reference data availabe in igenomes",
-                    "fa_icon": "fas fa-ban",
-                    "hidden": true
                 }
             }
         },
