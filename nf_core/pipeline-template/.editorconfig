@@ -25,8 +25,10 @@ insert_final_newline = unset
 trim_trailing_whitespace = unset
 indent_style = unset
 
+{%- if email %}
 [/assets/email*]
 indent_size = unset
+{%- endif %}
 
 # ignore python and markdown
 [*.{py,md}]
