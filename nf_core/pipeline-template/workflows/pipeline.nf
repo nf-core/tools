@@ -4,12 +4,14 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+{%- if modules %}
 {% if fastqc %}include { FASTQC                 } from '../modules/nf-core/fastqc/main'{% endif %}
 {% if multiqc %}include { MULTIQC                } from '../modules/nf-core/multiqc/main'{% endif %}
 {% if nf_schema %}include { paramsSummaryMap       } from 'plugin/nf-schema'{% endif %}
 {% if multiqc %}include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'{% endif %}
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 {% if citations or multiqc %}include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'{% endif %}
+{%- endif %}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -24,6 +26,7 @@ workflow {{ short_name|upper }} {
 
     main:
 
+    {%- if modules %}
     ch_versions = Channel.empty()
     {% if multiqc %}ch_multiqc_files = Channel.empty(){% endif %}
 
@@ -98,6 +101,7 @@ workflow {{ short_name|upper }} {
     emit:
     {%- if multiqc %}multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html{% endif %}
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
+{% endif %}
 }
 
 /*

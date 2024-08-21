@@ -300,6 +300,20 @@ email:
       - ".prettierignore"
   nfcore_pipelines: False
   custom_pipelines: True
+modules:
+  skippable_paths:
+    - "conf/base.config"
+    - "conf/modules.config"
+    - "conf/modules.json"
+    - "modules"
+    - "subworkflows"
+  short_description: "Use nf-core components"
+  description: "Include all required files to use nf-core modules and subworkflows"
+  help_text: |
+    It is *recommended* to use this feature if you want to use modules and subworkflows in your pipeline.
+    This will add all required files to use nf-core components or any compatible components from private repos by using `nf-core modules` and `nf-core subworkflows` commands.
+  nfcore_pipelines: False
+  custom_pipelines: True
 adaptivecard:
   skippable_paths:
     - "assets/adaptivecard.json"
