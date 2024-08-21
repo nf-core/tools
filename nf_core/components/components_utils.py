@@ -176,7 +176,7 @@ def get_components_to_install(
         with open(Path(subworkflow_dir, "meta.yml")) as fh:
             meta = yaml.safe_load(fh)
             if "components" in meta:
-                components = meta.get("components")
+                components = meta["components"]
                 for component in components:
                     if isinstance(component, dict):
                         component_name = list(component.keys())[0].lower()
@@ -188,7 +188,7 @@ def get_components_to_install(
                         component_dict = {
                             "org_path": org_path,
                             "git_remote": git_remote,
-                            "branch": component[component_name].get("branch", None),
+                            "branch": component[component_name].get("branch"),
                         }
 
                         current_comp_dict[component_name].update(component_dict)

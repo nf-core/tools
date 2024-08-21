@@ -1255,12 +1255,9 @@ class ModulesJson:
         assert self.modules_json is not None  # mypy
         for dep_mod in dep_mods:
             name = dep_mod["name"]
-            if dep_mod.get("git_remote") is not None:
-                current_repo = dep_mod.get("git_remote", repo)
-                current_org = dep_mod.get("org_path", org)
-                installed_by = self.modules_json["repos"][current_repo]["modules"][current_org][name]["installed_by"]
-            else:
-                installed_by = self.modules_json["repos"][repo]["modules"][org][name]["installed_by"]
+            current_repo = dep_mod.get("git_remote", repo)
+            current_org = dep_mod.get("org_path", org)
+            installed_by = self.modules_json["repos"][current_repo]["modules"][current_org][name]["installed_by"]
             if installed_by == ["modules"]:
                 self.modules_json["repos"][repo]["modules"][org][dep_mod]["installed_by"] = []
             if sw_name not in installed_by:
@@ -1268,14 +1265,9 @@ class ModulesJson:
 
         for dep_subwf in dep_subwfs:
             name = dep_subwf["name"]
-            if dep_subwf.get("git_remote") is not None:
-                current_repo = dep_subwf.get("git_remote", repo)
-                current_org = dep_subwf.get("org_path", org)
-                installed_by = self.modules_json["repos"][current_repo]["subworkflows"][current_org][name][
-                    "installed_by"
-                ]
-            else:
-                installed_by = self.modules_json["repos"][repo]["subworkflows"][org][name]["installed_by"]
+            current_repo = dep_subwf.get("git_remote", repo)
+            current_org = dep_subwf.get("org_path", org)
+            installed_by = self.modules_json["repos"][current_repo]["subworkflows"][current_org][name]["installed_by"]
             if installed_by == ["subworkflows"]:
                 self.modules_json["repos"][repo]["subworkflows"][org][dep_subwf]["installed_by"] = []
             if sw_name not in installed_by:
