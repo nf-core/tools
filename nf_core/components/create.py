@@ -573,53 +573,26 @@ class ComponentCreate(ComponentCommand):
             invoked_component = invoked_components[0]
 
             invoked_component_name = str(invoked_component[0]).strip()
-            invoked_component_args = str(invoked_component[1]).strip().split(",")
+            invoked_component_args = [arg.strip() for arg in str(invoked_component[1]).split(",")]
 
-            if len(invoked_component_args) > 1:
-                raise ValueError(
-                    f"Test workflow {workflow_name} has invoked a component {invoked_component_name} with multiple args {invoked_component_args}. This is not supported currently."
-                )
-
-            # TODO: Generalize to multiple args
-            invoked_component_arg = invoked_component_args[0]
-
-            log.debug(
-                f"Looking for arg {invoked_component_arg} for {invoked_component_name} in workflow {workflow_name}"
+            arg_data = self._extract_pytest_args_data(
+                workflow_name, workflow_content, invoked_component_name, invoked_component_args
             )
-
-            if invoked_component_arg != "input":
-                raise ValueError(
-                    f"Test workflow {workflow_name} has invoked a component {invoked_component_name} with arg {invoked_component_arg} other than 'input'. This is not supported currently."
-                )
-
-            arg_data = re.findall(r"input\s*=\s*(\[.*?\n\s*\])", workflow_content, re.DOTALL)
-
-            log.debug(f"For arg {invoked_component_arg} found data: {arg_data}")
-
-            if len(arg_data) > 1 or len(arg_data) == 0:
-                raise ValueError(f"{invoked_component_arg} data could not be parsed")
-
-            arg_data = arg_data[0]
 
             nf_test_workflow.append({"name": workflow_name.replace("_", "-"), "input": arg_data})
 
-        log.debug(f"Scaffolding {len(nf_test_workflow)} nf-test(s)")
-
         test_units_str = ""
         for test in nf_test_workflow:
-            input_data_lines = str(test["input"]).split("\n")
-            input_data_indented = (
-                input_data_lines[0].strip()
-                + "\n"
-                + "\n".join(["\t\t\t\t" + line.strip() for line in input_data_lines[1:]])
-            )
+            log.debug(f"Scaffolding nf-test '{test['name']}'")
+
+            input_data_lines = self._make_nf_test_input(test["input"])
             test_unit_str = f"""
     test("{test['name']}") {{
 
         when {{
             process {{
                 \"\"\"
-                input[0] = {input_data_indented}
+                {input_data_lines}
                 \"\"\"
             }}
         }}
@@ -635,3 +608,58 @@ class ComponentCreate(ComponentCommand):
             test_units_str += test_unit_str
 
         self.pytest_units_str = test_units_str
+
+    def _extract_pytest_args_data(
+        self, workflow_name, workflow_content, invoked_component_name, invoked_component_args
+    ) -> list[str]:
+        return [
+            self._extract_pytest_arg_data(workflow_name, workflow_content, invoked_component_name, arg)
+            for arg in invoked_component_args
+        ]
+
+    def _extract_pytest_arg_data(self, workflow_name, workflow_content, invoked_component_name, invoked_component_arg):
+        log.debug(
+            f"Looking for arg '{invoked_component_arg}' for '{invoked_component_name}' in workflow '{workflow_name}'"
+        )
+
+        re_matches = self._extract_pytest_arg_matches(invoked_component_arg, workflow_content)
+
+        if len(re_matches) != 1:
+            raise ValueError(f"'{invoked_component_arg}' data could not be parsed from matches {re_matches}")
+
+        found_arg_data = re_matches[0]
+
+        log.debug(f"For arg '{invoked_component_arg}' found data {found_arg_data}")
+
+        return found_arg_data
+
+    def _extract_pytest_arg_matches(self, invoked_component_arg, workflow_content):
+        # list such as input = [etc]
+        list_match = re.findall(rf"{invoked_component_arg}\s*=\s*(\[.*?\n\s*\])", workflow_content, re.DOTALL)
+
+        if list_match != []:
+            return list_match
+
+        # String match such as 'etc', "etc"
+        return re.findall(rf"{invoked_component_arg}\s*=\s*(['\"]+.*?['\"]+)", workflow_content, re.DOTALL)
+
+    def _make_nf_test_input(self, input_data):
+        input_data_lines = ""
+        for index in range(len(input_data)):
+            arg_data = input_data[index]
+            if "\n" in arg_data:
+                input_data_str = self._indent_nf_test_arg(arg_data)
+            else:
+                input_data_str = arg_data.strip()
+
+            indent = ""
+            if index > 0:
+                indent = "\t\t\t\t"
+            input_data_lines += indent + f"input[{index}] = " + input_data_str + "\n"
+
+        return input_data_lines
+
+    def _indent_nf_test_arg(self, arg_data):
+        arg_data_lines = arg_data.split("\n")
+
+        return arg_data_lines[0].strip() + "\n" + "\n".join(["\t\t\t\t" + line.strip() for line in arg_data_lines[1:]])
