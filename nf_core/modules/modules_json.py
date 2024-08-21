@@ -674,7 +674,7 @@ class ModulesJson:
             dump_modules_json = True
             for repo, subworkflows in subworkflows_dict.items():
                 for org, subworkflow in subworkflows:
-                    self.recreate_dependencies(repo, org, subworkflow)
+                    self.recreate_dependencies(repo, org, {"name": subworkflow})
         self.pipeline_components = original_pipeline_components
 
         if dump_modules_json:
@@ -1249,7 +1249,7 @@ class ModulesJson:
         i.e., no module or subworkflow has been installed by the user in the meantime
         """
 
-        sw_name = subworkflow["name"] if isinstance(subworkflow, dict) else subworkflow
+        sw_name = subworkflow["name"]
         sw_path = Path(self.subworkflows_dir, org, sw_name)
         dep_mods, dep_subwfs = get_components_to_install(sw_path)
         assert self.modules_json is not None  # mypy
