@@ -4,7 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FASTQC                 } from '../modules/nf-core/fastqc/main'
+{% if fastqc %}include { FASTQC                 } from '../modules/nf-core/fastqc/main'{% endif %}
 {% if multiqc %}include { MULTIQC                } from '../modules/nf-core/multiqc/main'{% endif %}
 include { paramsSummaryMap       } from 'plugin/nf-validation'
 {% if multiqc %}include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'{% endif %}
@@ -27,6 +27,7 @@ workflow {{ short_name|upper }} {
     ch_versions = Channel.empty()
     {% if multiqc %}ch_multiqc_files = Channel.empty(){% endif %}
 
+    {%- if fastqc %}
     //
     // MODULE: Run FastQC
     //
@@ -35,6 +36,7 @@ workflow {{ short_name|upper }} {
     )
     {% if multiqc %}ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}){% endif %}
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    {%- endif %}
 
     //
     // Collate and save software versions

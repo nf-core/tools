@@ -44,8 +44,8 @@
      workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
-1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-   {% if multiqc %}2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/)){% endif %}
+{% if fastqc %}1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)){% endif %}
+{% if multiqc %}2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/)){% endif %}
 
 ## Usage
 

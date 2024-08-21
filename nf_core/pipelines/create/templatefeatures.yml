@@ -228,6 +228,16 @@ multiqc:
     multiqc_config: False
   nfcore_pipelines: True
   custom_pipelines: True
+fastqc:
+  skippable_paths:
+    - "modules/nf-core/fastqc/"
+  short_description: "Use fastqc"
+  description: "The pipeline will include the FastQC module which performs quality control analysis of input FASTQ files."
+  help_text: |
+    FastQC is a tool which provides quality control checks on raw sequencing data.
+    The pipeline will include the FastQC module.
+  nfcore_pipelines: True
+  custom_pipelines: True
 changelog:
   skippable_paths:
     - "CHANGELOG.md"
