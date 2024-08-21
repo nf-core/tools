@@ -583,12 +583,14 @@ class ComponentCreate(ComponentCommand):
 
         test_units_str = ""
         for test in nf_test_workflow:
-            log.debug(f"Scaffolding nf-test '{test['name']}'")
+            test_name = test["name"]
+            log.debug(f"Scaffolding nf-test '{test_name}'")
 
             input_data_lines = self._make_nf_test_input(test["input"])
+            add_stub_option = "options '-stub'" if "stub" in test_name else ""
             test_unit_str = f"""
-    test("{test['name']}") {{
-
+    test("{test_name}") {{
+        {add_stub_option}
         when {{
             process {{
                 \"\"\"
@@ -618,6 +620,10 @@ class ComponentCreate(ComponentCommand):
         ]
 
     def _extract_pytest_arg_data(self, workflow_name, workflow_content, invoked_component_name, invoked_component_arg):
+        if "[" in invoked_component_arg:
+            log.debug(f"Arg '{invoked_component_arg}' is a value")
+            return invoked_component_arg
+
         log.debug(
             f"Looking for arg '{invoked_component_arg}' for '{invoked_component_name}' in workflow '{workflow_name}'"
         )
@@ -634,8 +640,14 @@ class ComponentCreate(ComponentCommand):
         return found_arg_data
 
     def _extract_pytest_arg_matches(self, invoked_component_arg, workflow_content):
-        # list such as input = [etc]
+        # multiline list such as input = [etc]
         list_match = re.findall(rf"{invoked_component_arg}\s*=\s*(\[.*?\n\s*\])", workflow_content, re.DOTALL)
+
+        if list_match != []:
+            return list_match
+
+        # simple list such as input = [ ]
+        list_match = re.findall(rf"{invoked_component_arg}\s*=\s*(\[\s*\])", workflow_content, re.DOTALL)
 
         if list_match != []:
             return list_match
