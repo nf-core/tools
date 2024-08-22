@@ -182,7 +182,10 @@ def get_components_to_install(
                         component_name = list(component.keys())[0].lower()
                         git_remote = component[component_name]["git_remote"]
                         org_path_match = re.search(r"(?:https://|git@)[\w\.]+[:/](.*?)/", git_remote)
-                        org_path = org_path_match.group(1) if org_path_match else None
+                        if org_path_match:
+                            org_path = org_path_match.group(1)
+                        else:
+                            raise UserWarning(f"Organisation path could not be established for {component_name}") 
                         current_comp_dict = subworkflows if component_name in subworkflows else modules
 
                         component_dict = {
