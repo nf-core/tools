@@ -569,7 +569,7 @@ class ComponentCreate(ComponentCommand):
 
             nxf_symbols = self._extract_pytest_nxf_symbols(workflow_content)
 
-            invoked_components = re.findall(r"(\w+)\s*\(([^\)]+)\)", workflow_content, re.DOTALL)
+            invoked_components = re.findall(r"(\w+)\s*\(([^\)]*)\)", workflow_content, re.DOTALL)
 
             invoked_components = [c for c in invoked_components if c[0] != "file"]
 
@@ -696,6 +696,10 @@ class ComponentCreate(ComponentCommand):
         return arg_data_lines[0].strip() + "\n" + "\n".join(["\t\t\t\t" + line.strip() for line in arg_data_lines[1:]])
 
     def _extract_pytest_component_args(self, args_str: str, nxf_symbols: dict[str, str]) -> list[str]:
+        # No arg
+        if args_str == "":
+            return []
+
         # Single argument
         if args_str in nxf_symbols.keys():
             return [nxf_symbols[args_str]]
