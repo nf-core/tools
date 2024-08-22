@@ -484,7 +484,7 @@ class ComponentCreate(ComponentCommand):
                     if "publishDir" not in line and line.strip() != "":
                         config_lines += line
             # if the nextflow.config file only contained publishDir, non_publish_dir_lines will be 11 characters long (`process {\n}`)
-            if len(config_lines) > 11:
+            if not re.match(r"^\s*process\s*{\s*}\s*$", config_lines, re.DOTALL):
                 self.pytest_has_nextflow_config = True
                 return config_lines
 
@@ -549,7 +549,7 @@ class ComponentCreate(ComponentCommand):
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
         main_nf_contents = Path(pytest_dir, "main.nf").read_text(encoding="UTF-8")
 
-        include_statements = re.findall(r"include\s*{\s*(\w+)\s*as?\s*(\w+)?\s*}", main_nf_contents)
+        include_statements = re.findall(r"include\s*{\s*(\w+)([\sas]+)?(\w+)?\s*}", main_nf_contents)
 
         log.debug(f"Found {len(include_statements)} include statements {include_statements}")
 
@@ -565,11 +565,17 @@ class ComponentCreate(ComponentCommand):
             workflow_name = workflow[0]
             workflow_content = str(workflow[1])
 
+            log.debug(f"Looking for NXF symbols in workflow {workflow_name}")
+
+            nxf_symbols = self._extract_pytest_nxf_symbols(workflow_content)
+
             invoked_components = re.findall(r"(\w+)\s*\(([^\)]+)\)", workflow_content, re.DOTALL)
 
             invoked_components = [c for c in invoked_components if c[0] != "file"]
 
-            log.debug(f"Found {len(invoked_components)} components invoked by {workflow_name}: {invoked_components}")
+            log.debug(
+                f"Found {len(invoked_components)} component(s) invoked by '{workflow_name}': {invoked_components}"
+            )
 
             if len(invoked_components) > 1:
                 raise ValueError(
@@ -579,14 +585,12 @@ class ComponentCreate(ComponentCommand):
             # TODO: Generalize to multiple components
             invoked_component = invoked_components[0]
 
-            invoked_component_name = str(invoked_component[0]).strip()
-            invoked_component_args = self._split_pytest_component_args(invoked_component[1].strip())
+            # invoked_component_name = invoked_component[0].strip()
+            invoked_component_args = invoked_component[1].strip()
 
-            arg_data = self._extract_pytest_args_data(
-                workflow_name, workflow_content, invoked_component_name, invoked_component_args
-            )
+            extracted_component_args = self._extract_pytest_component_args(invoked_component_args, nxf_symbols)
 
-            nf_test_workflow.append({"name": workflow_name.replace("_", "-"), "input": arg_data})
+            nf_test_workflow.append({"name": workflow_name.replace("_", "-"), "input": extracted_component_args})
 
         test_units_str = ""
         for test in nf_test_workflow:
@@ -618,49 +622,57 @@ class ComponentCreate(ComponentCommand):
 
         self.pytest_units_str = test_units_str
 
-    def _extract_pytest_args_data(
-        self, workflow_name, workflow_content, invoked_component_name, invoked_component_args
-    ) -> list[str]:
-        return [
-            self._extract_pytest_arg_data(workflow_name, workflow_content, invoked_component_name, arg)
-            for arg in invoked_component_args
-        ]
+    def _extract_pytest_nxf_symbols(self, workflow_content: str) -> dict[str, str]:
+        symbols = {}
+        found_all = False
 
-    def _extract_pytest_arg_data(self, workflow_name, workflow_content, invoked_component_name, invoked_component_arg):
-        if "[" in invoked_component_arg:
-            log.debug(f"Arg '{invoked_component_arg}' is a value")
-            return invoked_component_arg
+        remaining_content = workflow_content
+        while not found_all:
+            match = self._extract_pytest_nxf_symbol_match(remaining_content)
+            if match:
+                match = match[0]
 
-        log.debug(
-            f"Looking for arg '{invoked_component_arg}' for '{invoked_component_name}' in workflow '{workflow_name}'"
-        )
+                log.debug(f"Found symbol '{match[0]}' with data {match[1]}")
+                remaining_content = remaining_content.replace(f"{match[0]}={match[1]}", "", 1)
+                symbols[match[0].strip()] = match[1].strip()
+                continue
 
-        re_matches = self._extract_pytest_arg_matches(invoked_component_arg, workflow_content)
+            found_all = True
 
-        if len(re_matches) != 1:
-            raise ValueError(f"'{invoked_component_arg}' data could not be parsed from matches {re_matches}")
+        return symbols
 
-        found_arg_data = re_matches[0]
-
-        log.debug(f"For arg '{invoked_component_arg}' found data {found_arg_data}")
-
-        return found_arg_data
-
-    def _extract_pytest_arg_matches(self, invoked_component_arg, workflow_content):
+    def _extract_pytest_nxf_symbol_match(self, workflow_content):
         # multiline list such as input = [etc]
-        list_match = re.findall(rf"{invoked_component_arg}\s*=\s*(\[.*?\n\s*\])", workflow_content, re.DOTALL)
+        list_match = re.findall(r"(\w+\s*)=(\s*\[.*?\n\s*\])", workflow_content, re.DOTALL)
 
         if list_match != []:
             return list_match
 
         # simple list such as input = [ ]
-        list_match = re.findall(rf"{invoked_component_arg}\s*=\s*(\[\s*\])", workflow_content, re.DOTALL)
+        list_match = re.findall(r"(\w+\s*)=(\s*\[\s*\])", workflow_content, re.DOTALL)
 
         if list_match != []:
             return list_match
 
         # String match such as 'etc', "etc"
-        return re.findall(rf"{invoked_component_arg}\s*=\s*(['\"]+.*?['\"]+)", workflow_content, re.DOTALL)
+        string_match = re.findall(r"(\w+\s*)=(\s*['\"][^'\"]*['\"])", workflow_content)
+
+        if string_match != []:
+            return string_match
+
+        # Number match such as 123.1
+        num_match = re.findall(r"(\w+\s*)=(\s*[\d\.]+)", workflow_content, re.DOTALL)
+
+        if num_match != []:
+            return num_match
+
+        # File match such as file(params.test_data['sarscov2']['genome']['transcriptome_fasta'], checkIfExists: true)
+        file_match = re.findall(r"(\w+\s*)=(\s*file\s*\(.*?\s*\))", workflow_content, re.DOTALL)
+
+        if file_match != []:
+            return file_match
+
+        return []
 
     def _make_nf_test_input(self, input_data):
         input_data_lines = ""
@@ -683,18 +695,42 @@ class ComponentCreate(ComponentCommand):
 
         return arg_data_lines[0].strip() + "\n" + "\n".join(["\t\t\t\t" + line.strip() for line in arg_data_lines[1:]])
 
-    def _split_pytest_component_args(self, args_str: str) -> list[str]:
-        # Single argument case
-        if "," not in args_str:
-            return [args_str.strip()]
+    def _extract_pytest_component_args(self, args_str: str, nxf_symbols: dict[str, str]) -> list[str]:
+        # Single argument
+        if args_str in nxf_symbols.keys():
+            return [nxf_symbols[args_str]]
 
-        args = []
+        # All arguments are named
+        match = re.match(r"^[\sa-zA-Z_,]+$", args_str, re.DOTALL)
 
-        arg_matches = re.findall(r"(\w+\s*|\[\s*\]|\[\[\],\[\]\])", args_str)
+        if match:
+            return [nxf_symbols[arg.strip()] for arg in args_str.split(",")]
 
-        log.debug(f"For args string {args_str} found matches {arg_matches}")
+        # Split args while keeping brackets grouped
+        args = re.findall(r"\[.+\]|\w+|\[\]", args_str)
 
-        for arg_match in arg_matches:
-            args.append(str(arg_match).strip())
+        if not args:
+            raise ValueError(f"Can not split args: {args_str}")
 
-        return args
+        log.debug(f"Split args: {args_str} into: {args}")
+
+        # Replace the symbols embedded in list args
+        normalized_args = []
+        for arg in args:
+            if "[" in arg:
+                normalized_arg = self._replace_pytest_symbol_in_list_arg(arg, nxf_symbols)
+                normalized_args.append(normalized_arg)
+                continue
+
+            # For remaining args, try to replace symbol if possible
+            normalized_args.append(nxf_symbols[arg] if arg in nxf_symbols.keys() else arg)
+
+        return normalized_args
+
+    def _replace_pytest_symbol_in_list_arg(self, arg: str, nxf_symbols: dict[str, str]) -> str:
+        symbols = re.findall(r"[a-zA-Z_]+", arg)
+
+        for symbol in symbols:
+            arg = arg.replace(symbol, nxf_symbols[symbol] if symbol in nxf_symbols.keys() else symbol, 1)
+
+        return arg
