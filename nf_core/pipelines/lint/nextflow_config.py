@@ -143,8 +143,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
         ["process.memory"],
         ["process.time"],
         ["params.outdir"],
-        ["params.input"],
-        ["validation.help.enabled"]
+        ["params.input"]
     ]
     # Throw a warning if these are missing
     config_warn = [
@@ -152,12 +151,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
         ["timeline.file"],
         ["trace.file"],
         ["report.file"],
-        ["dag.file"],
-        ["validation.help.beforeText"],
-        ["validation.help.afterText"],
-        ["validation.help.command"],
-        ["validation.summary.beforeText"],
-        ["validation.summary.afterText"]
+        ["dag.file"]
     ]
     # Old depreciated vars - fail if present
     config_fail_ifdefined = [
@@ -188,6 +182,16 @@ def nextflow_config(self) -> Dict[str, List[str]]:
         passed.append("Found nf-schema plugin")
         if self.nf_config.get("validation.help.enabled", "false") == "false":
             failed.append("The help message has not been enabled. Set the `validation.help.enabled` configuration option to `true` to enable help messages")
+        config_fail.extend([
+            ["validation.help.enabled"]
+        ])
+        config_warn.extend([
+            ["validation.help.beforeText"],
+            ["validation.help.afterText"],
+            ["validation.help.command"],
+            ["validation.summary.beforeText"],
+            ["validation.summary.afterText"]
+        ])
         config_fail_ifdefined.extend([
             "params.validationFailUnrecognisedParams",
             "params.validationLenientMode",
