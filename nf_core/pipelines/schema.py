@@ -5,7 +5,6 @@ import json
 import logging
 import tempfile
 import webbrowser
-import re
 from pathlib import Path
 from typing import Union
 
@@ -58,10 +57,10 @@ class PipelineSchema:
         basepath = "/".join(str(schema).split("/")[:-1])
         config = f"{basepath}/nextflow.config" if basepath != "" else "nextflow.config"
         self._update_validation_plugin_from_config(config)
-    
+
     def get_schema_filename(self) -> str:
         return self._schema_filename
-    
+
     def del_schema_filename(self) -> None:
         del self._schema_filename
 
@@ -71,7 +70,7 @@ class PipelineSchema:
         plugin = "nf-schema"
         conf = nf_core.utils.fetch_wf_config(Path(self.schema_filename).parent)
 
-        plugins = str(conf.get("plugins", "")).strip("\"").strip("'").strip(" ").split(",")
+        plugins = str(conf.get("plugins", "")).strip('"').strip("'").strip(" ").split(",")
         plugin_found = False
         for plugin_instance in plugins:
             if "nf-schema" in plugin_instance:
@@ -95,7 +94,7 @@ class PipelineSchema:
         # Previous versions of nf-schema used "defs", but it's advised to use "$defs"
         if plugin == "nf-schema":
             self.defs_notation = "$defs"
-            ignored_params = ["help", "helpFull", "showHidden"] # Help parameter should be ignored by default
+            ignored_params = ["help", "helpFull", "showHidden"]  # Help parameter should be ignored by default
             ignored_params_config = conf.get("validation", {}).get("defaultIgnoreParams", [])
             if len(ignored_params_config) > 0:
                 ignored_params.extend(ignored_params_config)
@@ -447,7 +446,9 @@ class PipelineSchema:
 
         # Add a small check for older nf-schema JSON schemas
         if "defs" in schema:
-            raise AssertionError(f'Using "defs" for schema definitions is not supported. Please use {self.defs_notation} instead')
+            raise AssertionError(
+                f'Using "defs" for schema definitions is not supported. Please use {self.defs_notation} instead'
+            )
 
         for d_key, d_schema in schema.get(self.defs_notation, {}).items():
             # Check that this definition is mentioned in allOf
@@ -458,7 +459,9 @@ class PipelineSchema:
                 if allOf["$ref"] == f"#/{self.defs_notation}/{d_key}":
                     in_allOf = True
             if not in_allOf:
-                raise AssertionError(f"Definition subschema `#/{self.defs_notation}/{d_key}` not included in schema `allOf`")
+                raise AssertionError(
+                    f"Definition subschema `#/{self.defs_notation}/{d_key}` not included in schema `allOf`"
+                )
 
             # TODO add support for nested parameters
             for d_param_id in d_schema.get("properties", {}):
