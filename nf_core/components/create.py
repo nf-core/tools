@@ -668,6 +668,13 @@ class ComponentCreate(ComponentCommand):
         if list_match != []:
             return list_match
 
+        # second rule for multiline list such as input = [etc]
+        # The first rule might not be needed!
+        list_match = re.findall(r"(\w+\s*)=(\s*\[[^=]+\]\s+)", workflow_content, re.DOTALL)
+
+        if list_match != []:
+            return list_match
+
         # simple list such as input = [ ]
         list_match = re.findall(r"(\w+\s*)=(\s*\[\s*\])", workflow_content, re.DOTALL)
 
