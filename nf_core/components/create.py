@@ -549,6 +549,13 @@ class ComponentCreate(ComponentCommand):
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
         main_nf_contents = Path(pytest_dir, "main.nf").read_text(encoding="UTF-8")
 
+        include_statements = re.findall(r"include\s*{\s*(\w+)\s*as?\s*(\w+)?\s*}", main_nf_contents)
+
+        log.debug(f"Found {len(include_statements)} include statements {include_statements}")
+
+        if len(include_statements) > 1:
+            raise ValueError("Multiple include statements are not yet supported")
+
         main_nf_workflows = re.findall(r"workflow\s*(\w+)\s*{([^}]+)}", main_nf_contents, re.DOTALL)
 
         log.debug(f"Found {len(main_nf_workflows)} workflows {[x[0] for x in main_nf_workflows]}")
