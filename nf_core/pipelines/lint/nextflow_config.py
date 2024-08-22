@@ -164,10 +164,10 @@ def nextflow_config(self) -> Dict[str, List[str]]:
     ]
 
     # Lint for plugins
-    config_plugins = ast.literal_eval(self.nf_config.get("plugins", ""))
+    config_plugins = ast.literal_eval(self.nf_config.get("plugins", "[]"))
     found_plugins = []
     if len(config_plugins) == 0:
-        failed.append("nextflow.config contains an empty plugins scope")
+        warned.append("nextflow.config contains an empty plugins scope")
     for plugin in config_plugins:
         if "@" not in plugin:
             failed.append(f"Plugin '{plugin}' does not have a pinned version")
@@ -176,7 +176,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
     if "nf-validation" in found_plugins and "nf-schema" in found_plugins:
         failed.append("nextflow.config contains both nf-validation and nf-schema")
     if "nf-validation" not in found_plugins and "nf-schema" not in found_plugins:
-        failed.append("nextflow.config does not contain `nf-validation` or `nf-schema` in the plugins scope")
+        warned.append("nextflow.config does not contain `nf-validation` or `nf-schema` in the plugins scope")
 
     if "nf-schema" in found_plugins:
         passed.append("Found nf-schema plugin")

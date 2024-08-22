@@ -77,9 +77,14 @@ workflow PIPELINE_INITIALISATION {
     //
     // Create channel from input file provided through params.input
     //
-    {% if nf_schema %}
-    Channel
-        .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
+
+    Channel{% if nf_schema %}
+        .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json")){% else %}
+        .fromPath(params.input)
+        .splitCsv(header: true, strip: true)
+        .map { row ->
+            [[id:row.sample], row.fastq_1, row.fastq_2]
+        }{% endif %}
         .map {
             meta, fastq_1, fastq_2 ->
                 if (!fastq_2) {
@@ -97,12 +102,6 @@ workflow PIPELINE_INITIALISATION {
                 return [ meta, fastqs.flatten() ]
         }
         .set { ch_samplesheet }
-    {% else %}
-    Channel
-        .fromPath(params.input)
-        .splitCsv(header: true, strip: true)
-        .set { ch_samplesheet }
-    {% endif %}
 
     emit:
     samplesheet = ch_samplesheet
@@ -130,19 +129,21 @@ workflow PIPELINE_COMPLETION {
 
     main:
 
-    summary_params = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
-
     //
     // Completion email and summary
     //
     workflow.onComplete {
         {%- if email %}
         if (email || email_on_fail) {
-            {%- if multiqc %}
-            completionEmail(summary_params, email, email_on_fail, plaintext_email, outdir, monochrome_logs, multiqc_report.toList())
-            {%- else %}
-            completionEmail(summary_params, email, email_on_fail, plaintext_email, outdir, monochrome_logs, [])
-            {%- endif %}
+            completionEmail(
+                {% if nf_schema %}paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json"){% else %}{}{% endif %},
+                email,
+                email_on_fail,
+                plaintext_email,
+                outdir,
+                monochrome_logs,
+                {% if multiqc %}multiqc_report.toList(){% else %}[]{% endif %}
+            )
         }
         {%- endif %}
 
