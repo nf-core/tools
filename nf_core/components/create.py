@@ -141,6 +141,23 @@ class ComponentCreate(ComponentCommand):
         # Check existence of directories early for fast-fail
         self.file_paths = self._get_component_dirs()
 
+        component_outputs = {}  # output: meta_data
+        if self.migrate_pytest and self.migrate_pytest_hard:
+            # Extract outputs data
+            main_nf_data = Path(
+                self.directory, self.component_type, self.org, self.component_dir, "main.nf"
+            ).read_text()
+            if "output:" not in main_nf_data:
+                log.debug(f"Could not find any outputs in {self.component_name}")
+            else:
+                component_outputs_data = main_nf_data.split("output:")[1].split("when:")[0]
+                matches = re.findall(r"(.*)emit:\s*([^)\s,]+)", component_outputs_data, re.MULTILINE)
+                for match in matches:
+                    component_outputs[match[1]] = match[0]
+                log.debug(
+                    f"Found {len(component_outputs)} outputs in {self.component_name}: {component_outputs.keys()}"
+                )
+
         if self.migrate_pytest:
             # Rename the component directory to old
             component_old_dir = Path(str(self.component_dir) + "_old")
@@ -171,7 +188,7 @@ class ComponentCreate(ComponentCommand):
 
         # Extract pytest units
         if self.migrate_pytest and self.migrate_pytest_hard:
-            self._extract_pytest_units()
+            self._extract_pytest_units(component_outputs)
 
         # Create component template with jinja2
         assert self._render_template()
@@ -545,7 +562,7 @@ class ComponentCreate(ComponentCommand):
             yaml.dump(yml_file, fh)
         run_prettier_on_file(modules_yml)
 
-    def _extract_pytest_units(self):
+    def _extract_pytest_units(self, component_outputs):
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
         main_nf_contents = Path(pytest_dir, "main.nf").read_text(encoding="UTF-8")
 
@@ -599,6 +616,9 @@ class ComponentCreate(ComponentCommand):
 
             input_data_lines = self._make_nf_test_input(test["input"])
             add_stub_option = "options '-stub'" if "stub" in test_name else ""
+
+            power_assertions = self._get_power_assertions(component_outputs, is_stub=("stub" in test_name))
+
             test_unit_str = f"""
     test("{test_name}") {{
         {add_stub_option}
@@ -613,7 +633,7 @@ class ComponentCreate(ComponentCommand):
         then {{
             assertAll(
                 {{ assert process.success }},
-                {{ assert snapshot(process.out).match() }}
+                {power_assertions}
             )
         }}
     }}
@@ -738,3 +758,40 @@ class ComponentCreate(ComponentCommand):
             arg = arg.replace(symbol, nxf_symbols[symbol] if symbol in nxf_symbols.keys() else symbol, 1)
 
         return arg
+
+    def _get_power_assertions(self, component_outputs, is_stub):
+        power_assertions = "{ assert snapshot(process.out).match() }"
+
+        if is_stub:
+            return power_assertions
+
+        non_stable_outputs = ["bam", "txt", "log", "gz"]
+
+        outputs_str = " ".join([f"{key} {value}" for (key, value) in component_outputs.items()]).lower()
+        has_non_stable = any([ns_output in outputs_str for ns_output in non_stable_outputs])
+
+        if not has_non_stable:
+            return power_assertions
+
+        power_assertions = "{ assert snapshot("
+        for output_name, output_meta in component_outputs.items():
+            if output_name == "versions":
+                continue
+
+            if "bam" in output_name or "bam" in output_meta:
+                power_assertions += f"\n\t\t\t\t\tbam(process.out.{output_name}[0][1]).getReadsMD5(),"
+                continue
+
+            if "log" in output_name or "log" in output_meta:
+                power_assertions += f"\n\t\t\t\t\tfile(process.out.{output_name}[0][1]).name,"
+                continue
+
+            if "gz" in output_name or "gz" in output_meta:
+                power_assertions += f"\n\t\t\t\t\tpath(process.out.{output_name}[0][1]).linesGzip[3..7],"
+                continue
+
+            power_assertions += f"\n\t\t\t\t\tprocess.out.{output_name},"
+
+        power_assertions += "\n\t\t\t\t\tprocess.out.versions\n\t\t\t\t\t).match()\n\t\t\t\t}"
+
+        return power_assertions
