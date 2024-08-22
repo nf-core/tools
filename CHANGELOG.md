@@ -19,6 +19,8 @@
 - add templatefeatures.yml to python package ([#3112](https://github.com/nf-core/tools/pull/3112))
 - add option to exclude license from pipeline template ([#3125](https://github.com/nf-core/tools/pull/3125))
 - add option to exclude email from pipeline template ([#3126](https://github.com/nf-core/tools/pull/3126))
+- Use nf-schema instead of nf-validation ([#3116](https://github.com/nf-core/tools/pull/3116))
+- add option to exclude nf-schema from the template ([#3116](https://github.com/nf-core/tools/pull/3116))
 
 ### Linting
 
@@ -26,6 +28,10 @@
 - Conda module linting: Include package name in log file ([#3014](https://github.com/nf-core/tools/pull/3014))
 - Restructure pipeline tests and move pipeline linting into subfolder ([#3070](https://github.com/nf-core/tools/pull/3070))
 - Fix module linting warning for process_high_memory ([#3086](https://github.com/nf-core/tools/issues/3086))
+- Linting will now fail when an unpinned plugin is used ([#3116](https://github.com/nf-core/tools/pull/3116))
+- Linting will now check if the schema is correct for the used validation plugin ([#3116])(https://github.com/nf-core/tools/pull/3116)
+- Linting will now check the use of the right validation plugin include statements in the workflow scripts ([#3116])(https://github.com/nf-core/tools/pull/3116)
+- Full linting for correct use of nf-schema and nf-validation ([#3116](https://github.com/nf-core/tools/pull/3116))
 
 ### Download
 
