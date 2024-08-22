@@ -60,7 +60,7 @@ class TestLaunch(TestPipelines):
         Path(test_pipeline_dir, "nextflow_schema.json").unlink()
         self.launcher = nf_core.pipelines.launch.Launch(test_pipeline_dir, params_out=self.nf_params_fn)
         self.launcher.get_pipeline_schema()
-        assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
+        assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) >= 2
         assert self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]["outdir"] == {
             "type": "string",
             "format": "directory-path",

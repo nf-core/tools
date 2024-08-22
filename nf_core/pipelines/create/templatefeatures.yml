@@ -252,3 +252,61 @@ nf_schema:
     of changed parameters and validate and convert a samplesheet to a channel.
   nfcore_pipelines: False
   custom_pipelines: False
+license:
+  skippable_paths:
+    - "LICENSE"
+  short_description: "Add a license File"
+  description: "Add the MIT license file."
+  help_text: |
+    To protect the copyright of the pipeline, you can add a LICENSE file.
+    This option ads the MIT License. You can read the conditions here: https://opensource.org/license/MIT
+  linting:
+    files_exist:
+      - "LICENSE"
+    files_unchanged:
+      - "LICENSE"
+  nfcore_pipelines: False
+  custom_pipelines: True
+email:
+  skippable_paths:
+    - "assets/email_template.html"
+    - "assets/sendmail_template.txt"
+    - "assets/email_template.txt"
+  short_description: "Enable email updates"
+  description: "Enable sending emails on pipeline completion."
+  help_text: |
+    Enable the option of sending an email which will include pipeline execution reports on pipeline completion.
+  linting:
+    files_exist:
+      - "assets/email_template.html"
+      - "assets/sendmail_template.txt"
+      - "assets/email_template.txt"
+    files_unchanged:
+      - ".prettierignore"
+  nfcore_pipelines: False
+  custom_pipelines: True
+adaptivecard:
+  skippable_paths:
+    - "assets/adaptivecard.json"
+  short_description: "Support Microsoft Teams notifications"
+  description: "Enable pipeline status update messages through Microsoft Teams"
+  help_text: |
+    This adds an Adaptive Card. A snippets of user interface.
+    This Adaptive Card is used as a template for pipeline update messages and it is compatible with Microsoft Teams.
+  linting:
+    files_unchanged:
+      - ".prettierignore"
+  nfcore_pipelines: False
+  custom_pipelines: True
+slackreport:
+  skippable_paths:
+    - "assets/slackreport.json"
+  short_description: "Support Slack notifications"
+  description: "Enable pipeline status update messages through Slack"
+  help_text: |
+    This adds an JSON template used as a template for pipeline update messages in Slack.
+  linting:
+    files_unchanged:
+      - ".prettierignore"
+  nfcore_pipelines: False
+  custom_pipelines: True
