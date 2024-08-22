@@ -70,6 +70,7 @@ jobs:
           - TEMPLATE: is_nfcore
           - TEMPLATE: nf_core_configs
             profile: "self_hosted_runner"
+          - TEMPLATE: test_config
       fail-fast: false
 
     steps:
