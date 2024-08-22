@@ -738,7 +738,7 @@ class ComponentCreate(ComponentCommand):
             return [nxf_symbols[arg.strip()] for arg in args_str.split(",")]
 
         # Split args while keeping brackets grouped
-        args = re.findall(r"\[.+\]|\w+|\[\]", args_str)
+        args = re.findall(r"\[.+\]|\w+|\[\]|[\w'\"]+", args_str)
 
         if not args:
             raise ValueError(f"Can not split args: {args_str}")
