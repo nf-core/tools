@@ -447,7 +447,7 @@ class PipelineSchema:
         # Add a small check for older nf-schema JSON schemas
         if "defs" in schema:
             raise AssertionError(
-                f'Using "defs" for schema definitions is not supported. Please use {self.defs_notation} instead'
+                f'Using "defs" for schema definitions is not supported. Please use "{self.defs_notation}" instead'
             )
 
         for d_key, d_schema in schema.get(self.defs_notation, {}).items():

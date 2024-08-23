@@ -367,7 +367,6 @@ def nextflow_config(self) -> Dict[str, List[str]]:
             )
 
     # Check for the availability of the "test" configuration profile by parsing nextflow.config
-    # Also check for the presence of nf-validation/nf-schema and check if they have pinned versions
     with open(Path(self.wf_path, "nextflow.config")) as f:
         content = f.read()
 

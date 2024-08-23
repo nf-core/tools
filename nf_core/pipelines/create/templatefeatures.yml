@@ -245,13 +245,14 @@ changelog:
 nf_schema:
   skippable_paths:
     - "subworkflows/nf-core/utils_nfschema_plugin"
-  short_description: "Use nf-schema for this pipeline."
+  short_description: "Use nf-schema"
+  description: "Use nf-schema for this pipeline."
   help_text: |
     nf-schema is used to validate input parameters based on a JSON schema.
     It also provides helper functionality to create help messages, get a summary
     of changed parameters and validate and convert a samplesheet to a channel.
-  nfcore_pipelines: False
-  custom_pipelines: False
+  nfcore_pipelines: True
+  custom_pipelines: True
 license:
   skippable_paths:
     - "LICENSE"
