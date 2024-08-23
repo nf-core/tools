@@ -17,6 +17,8 @@
 - add option to exclude changelog from custom pipeline template ([#3104](https://github.com/nf-core/tools/pull/3104))
 - handle template features with a yaml file ([#3108](https://github.com/nf-core/tools/pull/3108))
 - add templatefeatures.yml to python package ([#3112](https://github.com/nf-core/tools/pull/3112))
+- add option to exclude license from pipeline template ([#3125](https://github.com/nf-core/tools/pull/3125))
+- add option to exclude email from pipeline template ([#3126](https://github.com/nf-core/tools/pull/3126))
 
 ### Linting
 
@@ -68,6 +70,9 @@
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.11.1 ([#3091](https://github.com/nf-core/tools/pull/3091))
 - Pipelines: allow numbers in custom pipeline name ([#3094](https://github.com/nf-core/tools/pull/3094))
 - Add bot action to update textual snapshots and write bot documentation ([#3102](https://github.com/nf-core/tools/pull/3102))
+- Components: allow spaces at the betinning of include statements ([#3115](https://github.com/nf-core/tools/pull/3115))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.6.0 ([#3122](https://github.com/nf-core/tools/pull/3122))
+- Update python:3.12-slim Docker digest to 59c7332 ([#3124](https://github.com/nf-core/tools/pull/3124))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 

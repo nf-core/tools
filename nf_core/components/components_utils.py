@@ -157,7 +157,7 @@ def get_components_to_install(
             regex = re.compile(
                 r"include(?: *{ *)([a-zA-Z\_0-9]*)(?: *as *)?(?:[a-zA-Z\_0-9]*)?(?: *})(?: *from *)(?:'|\")(.*)(?:'|\")"
             )
-            match = regex.match(line)
+            match = regex.search(line)
             if match and len(match.groups()) == 2:
                 name, link = match.groups()
                 if link.startswith("../../../"):
