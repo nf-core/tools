@@ -12,11 +12,15 @@ include { UTILS_NFVALIDATION_PLUGIN } from '../../nf-core/utils_nfvalidation_plu
 include { paramsSummaryMap          } from 'plugin/nf-validation'
 include { fromSamplesheet           } from 'plugin/nf-validation'
 include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipeline'
+{%- if email %}
 include { completionEmail           } from '../../nf-core/utils_nfcore_pipeline'
+{%- endif %}
 include { completionSummary         } from '../../nf-core/utils_nfcore_pipeline'
 include { dashedLine                } from '../../nf-core/utils_nfcore_pipeline'
 include { nfCoreLogo                } from '../../nf-core/utils_nfcore_pipeline'
+{%- if adaptivecard or slackreport %}
 include { imNotification            } from '../../nf-core/utils_nfcore_pipeline'
+{%- endif %}
 include { UTILS_NFCORE_PIPELINE     } from '../../nf-core/utils_nfcore_pipeline'
 include { workflowCitation          } from '../../nf-core/utils_nfcore_pipeline'
 
@@ -117,13 +121,15 @@ workflow PIPELINE_INITIALISATION {
 workflow PIPELINE_COMPLETION {
 
     take:
+    {%- if email %}
     email           //  string: email address
     email_on_fail   //  string: email address sent on pipeline failure
     plaintext_email // boolean: Send plain-text email instead of HTML
+    {% endif %}
     outdir          //    path: Path to output directory where results will be published
     monochrome_logs // boolean: Disable ANSI colour codes in log output
-    hook_url        //  string: hook URL for notifications
-    multiqc_report  //  string: Path to MultiQC report
+    {% if adaptivecard or slackreport %}hook_url        //  string: hook URL for notifications{% endif %}
+    {% if multiqc %}multiqc_report  //  string: Path to MultiQC report{% endif %}
 
     main:
 
@@ -133,15 +139,23 @@ workflow PIPELINE_COMPLETION {
     // Completion email and summary
     //
     workflow.onComplete {
+        {%- if email %}
         if (email || email_on_fail) {
+            {%- if multiqc %}
             completionEmail(summary_params, email, email_on_fail, plaintext_email, outdir, monochrome_logs, multiqc_report.toList())
+            {%- else %}
+            completionEmail(summary_params, email, email_on_fail, plaintext_email, outdir, monochrome_logs, [])
+            {%- endif %}
         }
+        {%- endif %}
 
         completionSummary(monochrome_logs)
 
+        {%- if adaptivecard or slackreport %}
         if (hook_url) {
             imNotification(summary_params, hook_url)
         }
+        {%- endif %}
     }
 
     workflow.onError {
@@ -206,7 +220,7 @@ def genomeExistsError() {
     }
 }
 {%- endif %}
-
+{%- if citations or multiqc %}
 //
 // Generate methods description for MultiQC
 //
@@ -270,3 +284,4 @@ def methodsDescriptionText(mqc_methods_yaml) {
 
     return description_html.toString()
 }
+{% endif %}

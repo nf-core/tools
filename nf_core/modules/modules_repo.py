@@ -1,23 +1,22 @@
 import logging
 import os
 import shutil
+from pathlib import Path
+from typing import Optional
 
 import git
 import rich
 import rich.progress
+import rich.prompt
 from git.exc import GitCommandError, InvalidGitRepositoryError
 
 import nf_core.modules.modules_json
 import nf_core.modules.modules_utils
+from nf_core.components.components_utils import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
 from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR, load_tools_config
 
 log = logging.getLogger(__name__)
-
-# Constants for the nf-core/modules repo used throughout the module files
-NF_CORE_MODULES_NAME = "nf-core"
-NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
-NF_CORE_MODULES_DEFAULT_BRANCH = "master"
 
 
 class ModulesRepo(SyncedRepo):
@@ -35,7 +34,13 @@ class ModulesRepo(SyncedRepo):
     local_repo_statuses = {}
     no_pull_global = False
 
-    def __init__(self, remote_url=None, branch=None, no_pull=False, hide_progress=False):
+    def __init__(
+        self,
+        remote_url: Optional[str] = None,
+        branch: Optional[str] = None,
+        no_pull: bool = False,
+        hide_progress: bool = False,
+    ) -> None:
         """
         Initializes the object and clones the git repository if it is not already present
         """
@@ -54,18 +59,21 @@ class ModulesRepo(SyncedRepo):
         self.setup_local_repo(remote_url, branch, hide_progress)
 
         config_fn, repo_config = load_tools_config(self.local_repo_dir)
+        if config_fn is None or repo_config is None:
+            raise UserWarning(f"Could not find a configuration file in {self.local_repo_dir}")
         try:
-            self.repo_path = repo_config["org_path"]
+            self.repo_path = repo_config.org_path
         except KeyError:
             raise UserWarning(f"'org_path' key not present in {config_fn.name}")
 
         # Verify that the repo seems to be correctly configured
         if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
             self.verify_branch()
-
+        if self.repo_path is None:
+            raise UserWarning(f"Could not find the org_path in the configuration file: {config_fn.name}")
         # Convenience variable
-        self.modules_dir = os.path.join(self.local_repo_dir, "modules", self.repo_path)
-        self.subworkflows_dir = os.path.join(self.local_repo_dir, "subworkflows", self.repo_path)
+        self.modules_dir = Path(self.local_repo_dir, "modules", self.repo_path)
+        self.subworkflows_dir = Path(self.local_repo_dir, "subworkflows", self.repo_path)
 
         self.avail_module_names = None
 
@@ -86,7 +94,7 @@ class ModulesRepo(SyncedRepo):
             branch (str): name of branch to use
         Sets self.repo
         """
-        self.local_repo_dir = os.path.join(NFCORE_DIR if not in_cache else NFCORE_CACHE_DIR, self.fullname)
+        self.local_repo_dir = Path(NFCORE_DIR if not in_cache else NFCORE_CACHE_DIR, self.fullname)
         try:
             if not os.path.exists(self.local_repo_dir):
                 try:

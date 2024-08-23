@@ -4,19 +4,18 @@ import os
 import shutil
 from configparser import NoOptionError, NoSectionError
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Iterable, List, Optional, Union
 
 import git
 from git.exc import GitCommandError
 
+from nf_core.components.components_utils import (
+    NF_CORE_MODULES_NAME,
+    NF_CORE_MODULES_REMOTE,
+)
 from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
-
-# Constants for the nf-core/modules repo used throughout the module files
-NF_CORE_MODULES_NAME = "nf-core"
-NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
-NF_CORE_MODULES_DEFAULT_BRANCH = "master"
 
 
 class RemoteProgressbar(git.RemoteProgress):
@@ -51,9 +50,14 @@ class RemoteProgressbar(git.RemoteProgress):
         """
         if not self.progress_bar.tasks[self.tid].started:
             self.progress_bar.start_task(self.tid)
-        self.progress_bar.update(
-            self.tid, total=max_count, completed=cur_count, state=f"{cur_count / max_count * 100:.1f}%"
-        )
+        if cur_count is not None and max_count is not None:
+            cur_count = float(cur_count)
+            max_count = float(max_count)
+            state = f"{cur_count / max_count * 100:.1f}%"
+        else:
+            state = "Unknown"
+
+        self.progress_bar.update(self.tid, total=max_count, completed=cur_count, state=state)
 
 
 class SyncedRepo:
@@ -116,6 +120,8 @@ class SyncedRepo:
             remote_url = NF_CORE_MODULES_REMOTE
 
         self.remote_url = remote_url
+        self.fullname = None
+        self.local_repo_dir = None
 
         self.repo = None
         # TODO: SyncedRepo doesn't have this method and both the ModulesRepo and
@@ -123,21 +129,31 @@ class SyncedRepo:
         # fixing.
         self.setup_local_repo(remote_url, branch, hide_progress)
 
-        config_fn, repo_config = load_tools_config(self.local_repo_dir)
-        try:
-            self.repo_path = repo_config["org_path"]
-        except KeyError:
-            raise UserWarning(f"'org_path' key not present in {config_fn.name}")
+        if self.local_repo_dir is None:
+            raise ValueError("Repository not initialized")
+        else:
+            config_fn, repo_config = load_tools_config(self.local_repo_dir)
+            if config_fn is not None and repo_config is not None:
+                try:
+                    self.repo_path = repo_config.org_path
+                except KeyError:
+                    raise UserWarning(f"'org_path' key not present in {config_fn.name}")
 
-        # Verify that the repo seems to be correctly configured
-        if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
-            self.verify_branch()
+            # Verify that the repo seems to be correctly configured
+            if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
+                self.verify_branch()
 
-        # Convenience variable
-        self.modules_dir = os.path.join(self.local_repo_dir, "modules", self.repo_path)
-        self.subworkflows_dir = os.path.join(self.local_repo_dir, "subworkflows", self.repo_path)
+            # Convenience variable
+            self.modules_dir = Path(self.local_repo_dir, "modules", self.repo_path)
+            self.subworkflows_dir = Path(self.local_repo_dir, "subworkflows", self.repo_path)
 
-        self.avail_module_names = None
+            self.avail_module_names = None
+
+    def __repr__(self) -> str:
+        return f"SyncedRepo({self.remote_url}, {self.branch})"
+
+    def setup_local_repo(self, remote_url, branch, hide_progress):
+        pass
 
     def verify_sha(self, prompt, sha):
         """
@@ -258,7 +274,7 @@ class SyncedRepo:
         """
         return component_name in self.get_avail_components(component_type, checkout=checkout, commit=commit)
 
-    def get_component_dir(self, component_name, component_type):
+    def get_component_dir(self, component_name: str, component_type: str) -> Path:
         """
         Returns the file path of a module/subworkflow directory in the repo.
         Does not verify that the path exists.
@@ -269,11 +285,15 @@ class SyncedRepo:
             component_path (str): The path of the module/subworkflow in the local copy of the repository
         """
         if component_type == "modules":
-            return os.path.join(self.modules_dir, component_name)
+            return Path(self.modules_dir, component_name)
         elif component_type == "subworkflows":
-            return os.path.join(self.subworkflows_dir, component_name)
+            return Path(self.subworkflows_dir, component_name)
+        else:
+            raise ValueError(f"Invalid component type: {component_type}")
 
-    def install_component(self, component_name, install_dir, commit, component_type):
+    def install_component(
+        self, component_name: str, install_dir: Union[str, Path], commit: str, component_type: str
+    ) -> bool:
         """
         Install the module/subworkflow files into a pipeline at the given commit
 
@@ -281,6 +301,7 @@ class SyncedRepo:
             component_name (str): The name of the module/subworkflow
             install_dir (str): The path where the module/subworkflow should be installed
             commit (str): The git SHA for the version of the module/subworkflow to be installed
+            component_type (str): Either 'modules' or 'subworkflows'
 
         Returns:
             (bool): Whether the operation was successful or not
@@ -332,6 +353,8 @@ class SyncedRepo:
         return files_identical
 
     def ensure_git_user_config(self, default_name: str, default_email: str) -> None:
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
         try:
             with self.repo.config_reader() as git_config:
                 user_name = git_config.get_value("user", "name", default=None)
@@ -346,7 +369,9 @@ class SyncedRepo:
                 if not user_email:
                     git_config.set_value("user", "email", default_email)
 
-    def get_component_git_log(self, component_name, component_type, depth=None):
+    def get_component_git_log(
+        self, component_name: Union[str, Path], component_type: str, depth: Optional[int] = None
+    ) -> Iterable[Dict[str, str]]:
         """
         Fetches the commit history the of requested module/subworkflow since a given date. The default value is
         not arbitrary - it is the last time the structure of the nf-core/modules repository was had an
@@ -358,33 +383,43 @@ class SyncedRepo:
         Returns:
             ( dict ): Iterator of commit SHAs and associated (truncated) message
         """
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
         self.checkout_branch()
-        component_path = os.path.join(component_type, self.repo_path, component_name)
-        commits_new = self.repo.iter_commits(max_count=depth, paths=component_path)
-        commits_new = [
-            {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_new
-        ]
-        commits_old = []
+        component_path = Path(component_type, self.repo_path, component_name)
+
+        commits_new_iter = self.repo.iter_commits(max_count=depth, paths=component_path)
+        commits_old_iter = []
         if component_type == "modules":
             # Grab commits also from previous modules structure
-            component_path = os.path.join("modules", component_name)
-            commits_old = self.repo.iter_commits(max_count=depth, paths=component_path)
-            commits_old = [
-                {"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits_old
-            ]
+            old_component_path = Path("modules", component_name)
+            commits_old_iter = self.repo.iter_commits(max_count=depth, paths=old_component_path)
+
+        commits_old = [{"git_sha": commit.hexsha, "trunc_message": commit.message} for commit in commits_old_iter]
+        commits_new = [{"git_sha": commit.hexsha, "trunc_message": commit.message} for commit in commits_new_iter]
         commits = iter(commits_new + commits_old)
+
         return commits
 
     def get_latest_component_version(self, component_name, component_type):
         """
         Returns the latest commit in the repository
         """
-        return list(self.get_component_git_log(component_name, component_type, depth=1))[0]["git_sha"]
+        try:
+            git_logs = list(self.get_component_git_log(component_name, component_type, depth=1))
+            if not git_logs:
+                return None
+            return git_logs[0]["git_sha"]
+        except Exception as e:
+            log.debug(f"Could not get latest version of {component_name}: {e}")
+            return None
 
     def sha_exists_on_branch(self, sha):
         """
         Verifies that a given commit sha exists on the branch
         """
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
         self.checkout_branch()
         return sha in (commit.hexsha for commit in self.repo.iter_commits())
 
@@ -399,16 +434,20 @@ class SyncedRepo:
         Raises:
             LookupError: If the search for the commit fails
         """
+        if self.repo is None:
+            raise ValueError("Repository not initialized")
         self.checkout_branch()
         for commit in self.repo.iter_commits():
             if commit.hexsha == sha:
-                message = commit.message.partition("\n")[0]
+                message = commit.message.splitlines()[0]
                 date_obj = commit.committed_datetime
                 date = str(date_obj.date())
                 return message, date
         raise LookupError(f"Commit '{sha}' not found in the '{self.remote_url}'")
 
-    def get_avail_components(self, component_type, checkout=True, commit=None):
+    def get_avail_components(
+        self, component_type: str, checkout: bool = True, commit: Optional[str] = None
+    ) -> List[str]:
         """
         Gets the names of the modules/subworkflows in the repository. They are detected by
         checking which directories have a 'main.nf' file
@@ -427,9 +466,7 @@ class SyncedRepo:
             directory = self.subworkflows_dir
         # Module/Subworkflow directories are characterized by having a 'main.nf' file
         avail_component_names = [
-            os.path.relpath(dirpath, start=directory)
-            for dirpath, _, file_names in os.walk(directory)
-            if "main.nf" in file_names
+            str(Path(dirpath).relative_to(directory)) for dirpath, _, files in os.walk(directory) if "main.nf" in files
         ]
         return avail_component_names
 

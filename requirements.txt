@@ -9,10 +9,10 @@ packaging
 pillow
 pdiff
 pre-commit
-prompt_toolkit>=3.0.3
+prompt_toolkit<=3.0.36
 pydantic>=2.2.1
 pyyaml
-questionary>=1.8.0
+questionary>=2.0.1
 refgenie
 requests
 requests_cache

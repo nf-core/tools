@@ -9,12 +9,24 @@
 - Remove deprecated syntax ([#3046](https://github.com/nf-core/tools/pull/3046))
 - Use filename in code block for `params.yml` ([#3055](https://github.com/nf-core/tools/pull/3055))
 - Remove release announcement for non nf-core pipelines ([#3072](https://github.com/nf-core/tools/pull/3072))
+- add option to exclude code linters for custom pipeline template ([#3084](https://github.com/nf-core/tools/pull/3084))
+- add option to exclude citations for custom pipeline template ([#3101](https://github.com/nf-core/tools/pull/3101))
+- add option to exclude gitpod for custom pipeline template ([#3100](https://github.com/nf-core/tools/pull/3100))
+- add option to exclude codespaces from pipeline template ([#3105](https://github.com/nf-core/tools/pull/3105))
+- add option to exclude multiqc from pipeline template ([#3103](https://github.com/nf-core/tools/pull/3103))
+- add option to exclude changelog from custom pipeline template ([#3104](https://github.com/nf-core/tools/pull/3104))
+- handle template features with a yaml file ([#3108](https://github.com/nf-core/tools/pull/3108))
+- add templatefeatures.yml to python package ([#3112](https://github.com/nf-core/tools/pull/3112))
+- add option to exclude license from pipeline template ([#3125](https://github.com/nf-core/tools/pull/3125))
+- add option to exclude email from pipeline template ([#3126](https://github.com/nf-core/tools/pull/3126))
 
 ### Linting
 
 - Fix linting fail on nfcore_external_java_deps if nf_schema is used ([#2976](https://github.com/nf-core/tools/pull/2976))
 - Conda module linting: Include package name in log file ([#3014](https://github.com/nf-core/tools/pull/3014))
-- Remove defaults from conda environment.yml file. ([#3029](https://github.com/nf-core/tools/pull/3029))
+- Remove defaults from conda `environment.yml` file. ([#3029](https://github.com/nf-core/tools/pull/3029))
+- Restructure pipeline tests and move pipeline linting into subfolder ([#3070](https://github.com/nf-core/tools/pull/3070))
+- Fix module linting warning for process_high_memory ([#3086](https://github.com/nf-core/tools/issues/3086))
 
 ### Download
 
@@ -54,6 +66,14 @@
 - handle new jsonschema error type ([#3061](https://github.com/nf-core/tools/pull/3061))
 - Update python:3.12-slim Docker digest to f11725a ([#3071](https://github.com/nf-core/tools/pull/3071))
 - Fix number of arguments for pipelines_create within the command_create function ([#3074](https://github.com/nf-core/tools/pull/3074))
+- Update python:3.12-slim Docker digest to 740d94a ([#3079](https://github.com/nf-core/tools/pull/3079))
+- Add `--migrate_pytest` option to `nf-core <modules|subworkflows> test` command ([#3085](https://github.com/nf-core/tools/pull/3085))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.11.1 ([#3091](https://github.com/nf-core/tools/pull/3091))
+- Pipelines: allow numbers in custom pipeline name ([#3094](https://github.com/nf-core/tools/pull/3094))
+- Add bot action to update textual snapshots and write bot documentation ([#3102](https://github.com/nf-core/tools/pull/3102))
+- Components: allow spaces at the betinning of include statements ([#3115](https://github.com/nf-core/tools/pull/3115))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.6.0 ([#3122](https://github.com/nf-core/tools/pull/3122))
+- Update python:3.12-slim Docker digest to 59c7332 ([#3124](https://github.com/nf-core/tools/pull/3124))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 

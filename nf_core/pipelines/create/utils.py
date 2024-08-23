@@ -3,9 +3,10 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from logging import LogRecord
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, Union
+from typing import Any, Dict, Iterator, Union
 
-from pydantic import BaseModel, ConfigDict, ValidationError, ValidationInfo, field_validator
+import yaml
+from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
 from rich.logging import RichHandler
 from textual import on
 from textual._context import active_app
@@ -15,6 +16,9 @@ from textual.message import Message
 from textual.validation import ValidationResult, Validator
 from textual.widget import Widget
 from textual.widgets import Button, Input, Markdown, RichLog, Static, Switch
+
+import nf_core
+from nf_core.utils import NFCoreTemplateConfig
 
 # Use ContextVar to define a context on the model initialization
 _init_context_var: ContextVar = ContextVar("_init_context_var", default={})
@@ -32,19 +36,12 @@ def init_context(value: Dict[str, Any]) -> Iterator[None]:
 # Define a global variable to store the pipeline type
 NFCORE_PIPELINE_GLOBAL: bool = True
 
+# YAML file describing template features
+features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "templatefeatures.yml"
 
-class CreateConfig(BaseModel):
+
+class CreateConfig(NFCoreTemplateConfig):
     """Pydantic model for the nf-core create config."""
-
-    org: Optional[str] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
-    author: Optional[str] = None
-    version: Optional[str] = None
-    force: Optional[bool] = True
-    outdir: Optional[str] = None
-    skip_features: Optional[list] = None
-    is_nfcore: Optional[bool] = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -65,7 +62,7 @@ class CreateConfig(BaseModel):
             if not re.match(r"^[a-z]+$", v):
                 raise ValueError("Must be lowercase without punctuation.")
         else:
-            if not re.match(r"^[a-zA-Z-_]+$", v):
+            if not re.match(r"^[-\w]+$", v):
                 raise ValueError("Must not contain special characters. Only '-' or '_' are allowed.")
         return v
 
@@ -103,7 +100,7 @@ class TextInput(Static):
     and validation messages.
     """
 
-    def __init__(self, field_id, placeholder, description, default=None, password=None, **kwargs) -> None:
+    def __init__(self, field_id, placeholder, description, default="", password=False, **kwargs) -> None:
         """Initialise the widget with our values.
 
         Pass on kwargs upstream for standard usage."""
@@ -132,10 +129,16 @@ class TextInput(Static):
     @on(Input.Submitted)
     def show_invalid_reasons(self, event: Union[Input.Changed, Input.Submitted]) -> None:
         """Validate the text input and show errors if invalid."""
-        if not event.validation_result.is_valid:
-            self.query_one(".validation_msg").update("\n".join(event.validation_result.failure_descriptions))
+        val_msg = self.query_one(".validation_msg")
+        if not isinstance(val_msg, Static):
+            raise ValueError("Validation message not found.")
+
+        if event.validation_result is not None and not event.validation_result.is_valid:
+            # check that val_msg is instance of Static
+            if isinstance(val_msg, Static):
+                val_msg.update("\n".join(event.validation_result.failure_descriptions))
         else:
-            self.query_one(".validation_msg").update("")
+            val_msg.update("")
 
 
 class ValidateConfig(Validator):
@@ -246,16 +249,7 @@ def remove_hide_class(app, widget_id: str) -> None:
     app.get_widget_by_id(widget_id).remove_class("hide")
 
 
-## Markdown text to reuse in different screens
-markdown_genomes = """
-Nf-core pipelines are configured to use a copy of the most common reference genome files.
-
-By selecting this option, your pipeline will include a configuration file specifying the paths to these files.
-
-The required code to use these files will also be included in the template.
-When the pipeline user provides an appropriate genome key,
-the pipeline will automatically download the required reference files.
-
-For more information about reference genomes in nf-core pipelines,
-see the [nf-core docs](https://nf-co.re/docs/usage/reference_genomes).
-"""
+def load_features_yaml() -> Dict:
+    """Load the YAML file describing template features."""
+    with open(features_yml_path) as fh:
+        return yaml.safe_load(fh)

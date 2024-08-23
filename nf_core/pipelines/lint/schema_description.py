@@ -24,7 +24,7 @@ def schema_description(self):
     self.schema_obj.load_lint_schema()
 
     # Get parameters that should be ignored according to the linting config
-    ignore_params = self.lint_config.get("schema_description", [])
+    ignore_params = self.lint_config.get("schema_description", []) if self.lint_config is not None else []
 
     # Get ungrouped params
     if "properties" in self.schema_obj.schema.keys():
