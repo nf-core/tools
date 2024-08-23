@@ -73,6 +73,7 @@
 - Components: allow spaces at the betinning of include statements ([#3115](https://github.com/nf-core/tools/pull/3115))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.6.0 ([#3122](https://github.com/nf-core/tools/pull/3122))
 - Update python:3.12-slim Docker digest to 59c7332 ([#3124](https://github.com/nf-core/tools/pull/3124))
+- Update gitpod setup ([#3136](https://github.com/nf-core/tools/pull/3136))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
