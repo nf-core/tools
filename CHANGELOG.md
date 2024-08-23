@@ -1,6 +1,18 @@
 # nf-core/tools: Changelog
 
-## v2.14.2dev
+## v3.0.0dev
+
+**Highlights**
+
+- Pipeline commands are renamed from `nf-core <comand>` to `nf-core pipelines <command>` to follow the same command structure as modules and subworkflows commands.
+- More customisation for pipeline templates. The template has been divided into features which can be skipped, e.g. you can create a new pipeline without any traces of FastQC in it.
+- A new Text User Interface app when running `nf-core pipelines create` to help us guide you through the process better (no worries, you can still use the cli if you give all values as parameters)
+- We replaced nf-validation with nf-schema in the pipeline template
+- CI tests now lint with the nf-core tools version matching the template version of the pipeline, to minimise errors in opened PRs with every new tools release.
+- New command `nf-core pipelines ro-crate` to create a [Research Object (RO) crate](https://www.researchobject.org/ro-crate/) for a pipeline
+- `nf-core licences` command is deprecated.
+- The structure of nf-core/tools pytests has been updated
+- The structure of the API docs has been updated
 
 ### Template
 
@@ -9,14 +21,13 @@
 - Remove deprecated syntax ([#3046](https://github.com/nf-core/tools/pull/3046))
 - Use filename in code block for `params.yml` ([#3055](https://github.com/nf-core/tools/pull/3055))
 - Remove release announcement for non nf-core pipelines ([#3072](https://github.com/nf-core/tools/pull/3072))
+- handle template features with a yaml file ([#3108](https://github.com/nf-core/tools/pull/3108), [#3112](https://github.com/nf-core/tools/pull/3112))
 - add option to exclude code linters for custom pipeline template ([#3084](https://github.com/nf-core/tools/pull/3084))
 - add option to exclude citations for custom pipeline template ([#3101](https://github.com/nf-core/tools/pull/3101))
 - add option to exclude gitpod for custom pipeline template ([#3100](https://github.com/nf-core/tools/pull/3100))
 - add option to exclude codespaces from pipeline template ([#3105](https://github.com/nf-core/tools/pull/3105))
 - add option to exclude multiqc from pipeline template ([#3103](https://github.com/nf-core/tools/pull/3103))
 - add option to exclude changelog from custom pipeline template ([#3104](https://github.com/nf-core/tools/pull/3104))
-- handle template features with a yaml file ([#3108](https://github.com/nf-core/tools/pull/3108))
-- add templatefeatures.yml to python package ([#3112](https://github.com/nf-core/tools/pull/3112))
 - add option to exclude license from pipeline template ([#3125](https://github.com/nf-core/tools/pull/3125))
 - add option to exclude email from pipeline template ([#3126](https://github.com/nf-core/tools/pull/3126))
 
@@ -28,53 +39,45 @@
 - Restructure pipeline tests and move pipeline linting into subfolder ([#3070](https://github.com/nf-core/tools/pull/3070))
 - Fix module linting warning for process_high_memory ([#3086](https://github.com/nf-core/tools/issues/3086))
 
-### Download
+### Pipeline create command
+
+- Create: allow more special characters on the pipeline name for non-nf-core pipelines ([#3008](https://github.com/nf-core/tools/pull/3008))
+- Create: Mock git cretentials to generate stable textual snapshots ([#3007](https://github.com/nf-core/tools/pull/3007))
+- Create app: display input textbox with equally spaced grid ([#3038](https://github.com/nf-core/tools/pull/3038))
+- Pipelines: allow numbers in custom pipeline name ([#3094](https://github.com/nf-core/tools/pull/3094))
 
 ### Components
 
 - The `modules_nfcore` tag in the `main.nf.test` file of modules/subworkflows now displays the organization name in custom modules repositories ([#3005](https://github.com/nf-core/tools/pull/3005))
+- Add `--migrate_pytest` option to `nf-core <modules|subworkflows> test` command ([#3085](https://github.com/nf-core/tools/pull/3085))
+- Components: allow spaces at the beginning of include statements ([#3115](https://github.com/nf-core/tools/pull/3115))
 
 ### General
 
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.4 ([#2974](https://github.com/nf-core/tools/pull/2974))
-- Update gitpod/workspace-base Docker digest to 92dd1bc ([#2982](https://github.com/nf-core/tools/pull/2982))
 - Update output of generation script for API docs to new structure ([#2988](https://github.com/nf-core/tools/pull/2988))
 - Add no clobber and put bash options on their own line ([#2991](https://github.com/nf-core/tools/pull/2991))
 - update minimal textual version and snapshots ([#2998](https://github.com/nf-core/tools/pull/2998))
 - move pipeline subcommands for v3.0 ([#2983](https://github.com/nf-core/tools/pull/2983))
 - return directory if base_dir is the root directory ([#3003](https://github.com/nf-core/tools/pull/3003))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.6 ([#3006](https://github.com/nf-core/tools/pull/3006))
-- Create: allow more special characters on the pipeline name for non-nf-core pipelines ([#3008](https://github.com/nf-core/tools/pull/3008))
 - Remove nf-core licences command ([#3012](https://github.com/nf-core/tools/pull/3012))
 - README - absolute image paths ([#3013](https://github.com/nf-core/tools/pull/3013))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.7 ([#3015](https://github.com/nf-core/tools/pull/3015))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.8 ([#3017](https://github.com/nf-core/tools/pull/3017))
-- Update python:3.12-slim Docker digest to e3ae8cf ([#3020](https://github.com/nf-core/tools/pull/3020))
-- Update python:3.12-slim Docker digest to 2fba8e7 ([#3023](https://github.com/nf-core/tools/pull/3023))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.4.10 ([#3031](https://github.com/nf-core/tools/pull/3031))
 - Add warning deprecation message to top-level commands ([#3036](https://github.com/nf-core/tools/pull/3036))
-- Create: Mock git cretentials to generate stable textual snapshots ([#3007](https://github.com/nf-core/tools/pull/3007))
 - move pipeline commands to functions to avoid duplication ([#3039](https://github.com/nf-core/tools/pull/3039))
-- Create app: display input textbox with equally spaced grid ([#3038](https://github.com/nf-core/tools/pull/3038))
-- Update python:3.12-slim Docker digest to da2d7af ([#3041](https://github.com/nf-core/tools/pull/3041))
-- Update gitpod/workspace-base Docker digest to 0f38224 ([#3048](https://github.com/nf-core/tools/pull/3048))
 - update output_dir for api docs to new website structure ([#3051](https://github.com/nf-core/tools/pull/3051))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.5.1 ([#3052](https://github.com/nf-core/tools/pull/3052))
 - Add `--limit-output` argument for modules/subworkflow update ([#3047](https://github.com/nf-core/tools/pull/3047))
 - update api docs to new structure ([#3054](https://github.com/nf-core/tools/pull/3054))
-- Update to pytest v8 and move it to dev dependencies ([#3058](https://github.com/nf-core/tools/pull/3058))
 - handle new jsonschema error type ([#3061](https://github.com/nf-core/tools/pull/3061))
-- Update python:3.12-slim Docker digest to f11725a ([#3071](https://github.com/nf-core/tools/pull/3071))
 - Fix number of arguments for pipelines_create within the command_create function ([#3074](https://github.com/nf-core/tools/pull/3074))
-- Update python:3.12-slim Docker digest to 740d94a ([#3079](https://github.com/nf-core/tools/pull/3079))
-- Add `--migrate_pytest` option to `nf-core <modules|subworkflows> test` command ([#3085](https://github.com/nf-core/tools/pull/3085))
-- Update pre-commit hook pre-commit/mirrors-mypy to v1.11.1 ([#3091](https://github.com/nf-core/tools/pull/3091))
-- Pipelines: allow numbers in custom pipeline name ([#3094](https://github.com/nf-core/tools/pull/3094))
 - Add bot action to update textual snapshots and write bot documentation ([#3102](https://github.com/nf-core/tools/pull/3102))
-- Components: allow spaces at the betinning of include statements ([#3115](https://github.com/nf-core/tools/pull/3115))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.6.0 ([#3122](https://github.com/nf-core/tools/pull/3122))
-- Update python:3.12-slim Docker digest to 59c7332 ([#3124](https://github.com/nf-core/tools/pull/3124))
 - Update gitpod setup ([#3136](https://github.com/nf-core/tools/pull/3136))
+
+## Version updates
+
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.6.0 ([#3122](https://github.com/nf-core/tools/pull/3122))
+- Update gitpod/workspace-base Docker digest to 92dd1bc ([#2982](https://github.com/nf-core/tools/pull/2982))
+- Update python:3.12-slim Docker digest to 59c7332 ([#3124](https://github.com/nf-core/tools/pull/3124))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.11.1 ([#3091](https://github.com/nf-core/tools/pull/3091))
+- Update to pytest v8 and move it to dev dependencies ([#3058](https://github.com/nf-core/tools/pull/3058))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
