@@ -81,7 +81,7 @@ class TestUtils(TestPipelines):
     # def test_load_conda_env(self):
     #     """Load the pipeline Conda environment.yml file"""
     #     self.pipeline_obj._load_conda_environment()
-    #     assert self.pipeline_obj.conda_config["channels"] == ["conda-forge", "bioconda", "defaults"]
+    #     assert self.pipeline_obj.conda_config["channels"] == ["conda-forge", "bioconda"]
 
     def test_list_files_git(self):
         """Test listing pipeline files using `git ls`"""
