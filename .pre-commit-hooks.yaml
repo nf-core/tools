@@ -1,0 +1,18 @@
+- id: lint-modules
+  name: Lint nf-core modules
+  # description: This hook trims trailing whitespace.
+  entry: nf-core modules lint
+  language: python
+  types: [text]
+  files: "modules/**/*.nf"
+  pass_filenames: true
+  # args: []
+- id: lint-subworkflows
+  name: Lint nf-core subworkflows
+  # description: This hook trims trailing whitespace.
+  entry: nf-core subworkflows lint
+  language: python
+  types: [text]
+  files: "subworkflows/**/*.nf"
+  pass_filenames: true
+  # args: []
