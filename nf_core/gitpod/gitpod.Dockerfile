@@ -1,6 +1,7 @@
 # Test build locally before making a PR
 #   docker build -t gitpod:test -f nf_core/gitpod/gitpod.Dockerfile .
 
+# See https://docs.renovatebot.com/docker/#digest-pinning for why a digest is used.
 FROM gitpod/workspace-base@sha256:f189a4195c3861365356f9c1b438ab26fd88e1ff46ce2843afc62861fc982e0c
 
 USER root
@@ -40,9 +41,8 @@ RUN chown -R gitpod:gitpod /opt/conda /usr/src/nf_core
 
 # Change user to gitpod
 USER gitpod
-# Install nextflow, nf-core, Mamba, and pytest-workflow
-RUN conda config --add channels defaults && \
-    conda config --add channels bioconda && \
+# Install nextflow, nf-core, nf-test, and other useful tools
+RUN conda config --add channels bioconda && \
     conda config --add channels conda-forge && \
     conda config --set channel_priority strict && \
     conda install --quiet --yes --name base \
