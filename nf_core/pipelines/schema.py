@@ -85,11 +85,6 @@ class PipelineSchema:
         if not plugin_found:
             log.warning("Could not find nf-schema or nf-validation in the pipeline config. Defaulting to nf-schema")
 
-        if "nf-validation" in plugins:
-            plugin = "nf-validation"
-        elif "nf-schema" in plugins:
-            plugin = "nf-schema"
-
         self.validation_plugin = plugin
         # Previous versions of nf-schema used "defs", but it's advised to use "$defs"
         if plugin == "nf-schema":
