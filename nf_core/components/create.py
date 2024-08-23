@@ -735,7 +735,12 @@ class ComponentCreate(ComponentCommand):
         match = re.match(r"^[\sa-zA-Z_,]+$", args_str, re.DOTALL)
 
         if match:
-            return [nxf_symbols[arg.strip()] for arg in args_str.split(",")]
+            # Double check that any arg name is not on the prohibited list
+            args_list = args_str.split(",")
+            prohibited_names = ["false", "true"]
+            has_prohibited = any([arg.strip() in prohibited_names for arg in args_list])
+            if not has_prohibited:
+                return [nxf_symbols[arg.strip()] for arg in args_str.split(",")]
 
         # Split args while keeping brackets grouped
         args = re.findall(r"\[.+\]|\w+|\[\]|[\w'\"]+", args_str)
@@ -795,6 +800,10 @@ class ComponentCreate(ComponentCommand):
 
             if "gz" in output_name or "gz" in output_meta:
                 power_assertions += f"\n\t\t\t\t\tpath(process.out.{output_name}[0][1]).linesGzip[3..7],"
+                continue
+
+            if "txt" in output_name or "txt" in output_meta:
+                power_assertions += f"\n\t\t\t\t\tfile(process.out.{output_name}[0][1]).readLines()[3..7],"
                 continue
 
             power_assertions += f"\n\t\t\t\t\tprocess.out.{output_name},"
