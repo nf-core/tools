@@ -4,13 +4,13 @@
 
 **Highlights**
 
-- Pipeline commands are renamed from nf-core <comand> to nf-core pipelines <command>
-- More customisation for pipeline templates
-- A Text User Interface app when running nf-core pipelines create
-- The pipeline template will come with the nf-schema plugin
-- New command nf-core pipelines rocrate to create a Research Object (RO) crate for a pipeline
+- Pipeline commands are renamed from `nf-core <comand>` to `nf-core pipelines <command>` to match the structure of modules and subworkflows commands.
+- More customisation for pipeline templates. The template has been divided into features which can be skipped, making it easier to avoid annoying merge conflicts, for example, for pipeline which don't have a FastQC module.
+- A new Text User Interface app when running nf-core pipelines create
+- The pipeline template will come with the `nf-schema` plugin
+- Pipeline linting will run with the used version of the template to minimise errors in opened PRs with every new tools release.
+- New command `nf-core pipelines rocrate` to create a [Research Object (RO) crate](https://www.researchobject.org/ro-crate/about_ro_crate) for a pipeline
 - `nf-core licences` command is deprecated.
-- Pipeline linting will run with the used version of the template
 - The structure of nf-core/tools pytests has been updated
 - The structure of the API docs has been updated
 
