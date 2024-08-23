@@ -4,7 +4,7 @@
   entry: nf-core modules lint
   language: python
   types: [text]
-  files: "modules/**/*.nf"
+  files: ^modules/.*/.*/.*\.nf$
   pass_filenames: true
   # args: []
 - id: lint-subworkflows
@@ -13,6 +13,6 @@
   entry: nf-core subworkflows lint
   language: python
   types: [text]
-  files: "subworkflows/**/*.nf"
+  files: ^subworkflows/.*/.*/.*\.nf$
   pass_filenames: true
   # args: []
