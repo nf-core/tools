@@ -863,7 +863,7 @@ class PipelineSchema:
         """
         Send pipeline schema to web builder and wait for response
         """
-        # check if self.schema_filename doesn't have uncommited changes using git python
+        # check if self.schema_filename doesn't have uncommitted changes using git python
         if self.schema_filename and self.pipeline_dir:
             repo = git.Repo(self.pipeline_dir)
             if str(Path(self.schema_filename).relative_to(self.pipeline_dir)) in [
