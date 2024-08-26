@@ -148,9 +148,12 @@ They are loaded in sequence, so later profiles can overwrite earlier profiles.
 
 If `-profile` is not specified, the pipeline will run locally and expect all software to be installed and available on the `PATH`. This is _not_ recommended, since it can lead to different results on different machines dependent on the computer enviroment.
 
+{%- if test_config %}
+
 - `test`
   - A profile with a complete configuration for automated testing
   - Includes links to test data so needs no other parameters
+    {%- endif %}
 - `docker`
   - A generic configuration profile to be used with [Docker](https://docker.com/)
 - `singularity`
