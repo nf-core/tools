@@ -56,7 +56,9 @@ workflow PIPELINE_INITIALISATION {
     // Validate parameters and generate parameter summary to stdout
     //
     UTILS_NFSCHEMA_PLUGIN (
-        validate_params
+        workflow,
+        validate_params,
+        null
     )
     {% endif %}
 
@@ -128,6 +130,11 @@ workflow PIPELINE_COMPLETION {
     {% if multiqc %}multiqc_report  //  string: Path to MultiQC report{% endif %}
 
     main:
+    {% if nf_schema %}
+    summary_params = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
+    {% else %}
+    summary_params = [:]
+    {% endif %}
 
     //
     // Completion email and summary
@@ -136,7 +143,7 @@ workflow PIPELINE_COMPLETION {
         {%- if email %}
         if (email || email_on_fail) {
             completionEmail(
-                {% if nf_schema %}paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json"){% else %}{}{% endif %},
+                summary_params,
                 email,
                 email_on_fail,
                 plaintext_email,

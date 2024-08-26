@@ -32,7 +32,7 @@
                     }{% if nf_schema %},
                     "utils_nfschema_plugin": {
                         "branch": "master",
-                        "git_sha": "a3e87febb28bd0461c22a917c5b2c1492053ef85",
+                        "git_sha": "bbd5a41f4535a8defafe6080e00ea74c45f4f96c",
                         "installed_by": ["subworkflows"]
                     }{% endif %}
                 }
