@@ -17,7 +17,6 @@ keywords=[
 ]
 author="Phil Ewels"
 author_email="phil.ewels@scilifelab.se"
-license="MIT"
 
 dependencies = [
     "click",
@@ -120,3 +119,7 @@ extend-ignore-names = ["mocked_*", "*allOf", "*URI*"]
 
 # TODO Add mypy
 # TODO Add pytest.ini
+
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+]
