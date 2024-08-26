@@ -1163,6 +1163,7 @@ dependencies = [
     { name = "requests-cache" },
     { name = "rich" },
     { name = "rich-click" },
+    { name = "setuptools", marker = "python_version >= '3.12'" },
     { name = "tabulate" },
     { name = "textual" },
     { name = "trogon" },

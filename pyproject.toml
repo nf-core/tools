@@ -45,6 +45,7 @@ dependencies = [
     "textual==0.71.0",
     "trogon",
     "pdiff",
+    "setuptools; python_version >= '3.12'",
 ]
 # TODO include_package_data=True,
 # TODO zip_safe=False,
