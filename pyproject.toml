@@ -15,8 +15,10 @@ keywords=[
     "NGS",
     "next generation sequencing",
 ]
-author="Phil Ewels"
-author_email="phil.ewels@scilifelab.se"
+authors = [
+  {name = "Phil Ewels", email = "phil.ewels@scilifelab.se"},
+]
+# TODO maintainers = [{name = "Brett Cannon", email = "brett@example.com"}]
 
 dependencies = [
     "click",
@@ -44,7 +46,6 @@ dependencies = [
     "trogon",
     "pdiff",
 ]
-# TODO packages=find_packages(exclude=("docs")),
 # TODO include_package_data=True,
 # TODO zip_safe=False,
 
@@ -53,9 +54,9 @@ Repository = "https://github.com/nf-core/tools"
 # TODO https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
 
 
-[project.entry_points]
-"console_scripts" = ["nf-core=nf_core.__main__:run_nf_core"]
-"refgenie.hooks.post_update" = ["nf-core-refgenie=nf_core.pipelines.refgenie:update_config"]
+# [project.entry_points]
+# "console_scripts" = ["nf-core=nf_core.__main__:run_nf_core"]
+# "refgenie.hooks.post_update" = ["nf-core-refgenie=nf_core.pipelines.refgenie:update_config"]
 
 [tool.uv]
 dev-dependencies = [
@@ -80,6 +81,10 @@ dev-dependencies = [
     "pytest>=8.0.0",
     "ruff",
 ]
+
+[tool.uv.workspace]
+# members = ["packages/*", "examples/*"]
+exclude = ["docs"]
 
 [build-system]
 build-backend = "setuptools.build_meta"
