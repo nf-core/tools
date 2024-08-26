@@ -44,7 +44,7 @@ workflow {{ short_name|upper }} {
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
-            name: 'nf_core_pipeline_software_mqc_versions.yml',
+            name: {% if is_nfcore %}'nf_core_' {% else %} '' {% endif %} + 'pipeline_software_' + {% if multiqc %} 'mqc_' {% else %} '' {% endif %} + 'versions.yml',
             sort: true,
             newLine: true
         ).set { ch_collated_versions }
