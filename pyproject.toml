@@ -1,3 +1,87 @@
+[project]
+name = "nf-core"
+version = "2.14.2dev"
+requires-python = ">=3.8, <4"
+description = "Helper tools for use with nf-core Nextflow pipelines."
+readme = "README.md"
+keywords=[
+    "nf-core",
+    "nextflow",
+    "bioinformatics",
+    "workflow",
+    "pipeline",
+    "biology",
+    "sequencing",
+    "NGS",
+    "next generation sequencing",
+]
+author="Phil Ewels"
+author_email="phil.ewels@scilifelab.se"
+license="MIT"
+
+dependencies = [
+    "click",
+    "filetype",
+    "GitPython",
+    "PyGithub",
+    "jinja2",
+    "jsonschema>=3.0",
+    "markdown>=3.3",
+    "packaging",
+    "pillow",
+    "pdiff",
+    "pre-commit",
+    "prompt_toolkit>=3.0.3",
+    "pydantic>=2.2.1",
+    "pyyaml",
+    "questionary>=1.8.0",
+    "refgenie",
+    "requests",
+    "requests_cache",
+    "rich-click==1.8.*",
+    "rich>=13.3.1",
+    "tabulate",
+    "textual==0.71.0",
+    "trogon",
+    "pdiff",
+]
+# TODO packages=find_packages(exclude=("docs")),
+# TODO include_package_data=True,
+# TODO zip_safe=False,
+
+[project.urls]
+Repository = "https://github.com/nf-core/tools"
+# TODO https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#urls
+
+
+[project.entry_points]
+"console_scripts" = ["nf-core=nf_core.__main__:run_nf_core"]
+"refgenie.hooks.post_update" = ["nf-core-refgenie=nf_core.pipelines.refgenie:update_config"]
+
+[tool.uv]
+dev-dependencies = [
+    "mypy",
+    "myst_parser",
+    "pytest-cov",
+    "pytest-datafiles",
+    "responses",
+    "ruff",
+    "Sphinx",
+    "sphinx-rtd-theme",
+    "textual-dev==1.5.1",
+    "types-PyYAML",
+    "types-requests",
+    "types-jsonschema",
+    "types-Markdown",
+    "types-PyYAML",
+    "types-requests",
+    "types-setuptools",
+    "pytest-textual-snapshot==0.4.0",
+    "pytest-workflow>=2.0.0",
+    "pytest>=8.0.0",
+    "ruff",
+]
+
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = ["setuptools>=40.6.0", "wheel"]
@@ -33,3 +117,6 @@ known-first-party = ["nf_core"]
 
 [tool.ruff.lint.pep8-naming]
 extend-ignore-names = ["mocked_*", "*allOf", "*URI*"]
+
+# TODO Add mypy
+# TODO Add pytest.ini
