@@ -231,7 +231,7 @@ def toolCitationText() {
     def citation_text = [
             "Tools used in the workflow included:",
             {% if fastqc %}"FastQC (Andrews 2010),",{% endif %}
-            "MultiQC (Ewels et al. 2016)",
+            {% if multiqc %}"MultiQC (Ewels et al. 2016)",{% endif %}
             "."
         ].join(' ').trim()
 
@@ -244,7 +244,7 @@ def toolBibliographyText() {
     // Uncomment function in methodsDescriptionText to render in MultiQC report
     def reference_text = [
             {% if fastqc %}"<li>Andrews S, (2010) FastQC, URL: https://www.bioinformatics.babraham.ac.uk/projects/fastqc/).</li>",{% endif %}
-            "<li>Ewels, P., Magnusson, M., Lundin, S., & Käller, M. (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics , 32(19), 3047–3048. doi: /10.1093/bioinformatics/btw354</li>"
+            {% if multiqc %}"<li>Ewels, P., Magnusson, M., Lundin, S., & Käller, M. (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics , 32(19), 3047–3048. doi: /10.1093/bioinformatics/btw354</li>"{% endif %}
         ].join(' ').trim()
 
     return reference_text
