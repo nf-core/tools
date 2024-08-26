@@ -187,6 +187,7 @@
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.11.1 ([#3091](https://github.com/nf-core/tools/pull/3091))
 - Update to pytest v8 and move it to dev dependencies ([#3058](https://github.com/nf-core/tools/pull/3058))
 - Update minimal textual version and snapshots ([#2998](https://github.com/nf-core/tools/pull/2998))
+- Create pre-commit hooks ([#3141](https://github.com/nf-core/tools/pull/3141))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
