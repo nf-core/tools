@@ -1,7 +1,7 @@
 [project]
 name = "nf-core"
 version = "2.14.2dev"
-requires-python = ">=3.8, <4"
+requires-python = ">=3.8.1, <4"
 description = "Helper tools for use with nf-core Nextflow pipelines."
 readme = "README.md"
 keywords=[
