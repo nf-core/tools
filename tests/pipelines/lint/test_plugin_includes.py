@@ -2,11 +2,12 @@ import nf_core.pipelines.lint
 
 from ..test_lint import TestLint
 
+
 class TestLintNextflowConfig(TestLint):
     def setUp(self) -> None:
         super().setUp()
         self.new_pipeline = self._make_pipeline_copy()
-    
+
     def test_default_values_match(self):
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         result = lint_obj.plugin_includes()
