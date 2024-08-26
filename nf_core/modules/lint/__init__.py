@@ -110,7 +110,7 @@ class ModuleLint(ComponentLint):
         """
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for module or all
-        if module is None and not all_modules:
+        if module is None and not all_modules and len(self.all_remote_components) > 0:
             questions = [
                 {
                     "type": "list",
