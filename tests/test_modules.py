@@ -44,8 +44,8 @@ def create_modules_repo_dummy(tmp_dir):
         yaml.dump(nf_core_yml.model_dump(), fh)
     # mock biocontainers and anaconda response
     with responses.RequestsMock() as rsps:
-        mock_anaconda_api_calls(rsps, "bpipe", "0.9.12--hdfd78af_0")
-        mock_biocontainers_api_calls(rsps, "bpipe", "0.9.12--hdfd78af_0")
+        mock_anaconda_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
+        mock_biocontainers_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
         # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
         module_create = nf_core.modules.create.ModuleCreate(
             root_dir, "bpipe/test", "@author", "process_single", False, False

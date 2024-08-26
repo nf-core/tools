@@ -12,9 +12,12 @@ The directories listed below will be created in the results directory after the 
 
 The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:
 
-- [FastQC](#fastqc) - Raw read QC
-  {% if multiqc %}- [MultiQC](#multiqc) - Aggregate report describing results and QC from the whole pipeline{% endif %}
+{% if fastqc %}- [FastQC](#fastqc) - Raw read QC{% endif %}
+{% if multiqc %}- [MultiQC](#multiqc) - Aggregate report describing results and QC from the whole pipeline{% endif %}
+
 - [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
+
+{%- if fastqc %}
 
 ### FastQC
 
@@ -28,7 +31,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 </details>
 
 [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/) gives general quality metrics about your sequenced reads. It provides information about the quality score distribution across your reads, per base sequence content (%A/T/G/C), adapter contamination and overrepresented sequences. For further reading and documentation see the [FastQC help pages](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/Help/).
-
+{%- endif %}
 {%- if multiqc %}
 
 ### MultiQC
