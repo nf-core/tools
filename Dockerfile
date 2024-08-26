@@ -1,16 +1,19 @@
 FROM python:3.12-slim@sha256:740d94a19218c8dd584b92f804b1158f85b0d241e5215ea26ed2dcade2b9d138
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 LABEL authors="phil.ewels@seqera.io,erik.danielsson@scilifelab.se" \
     description="Docker image containing requirements for nf-core/tools"
 
 # Do not pick up python packages from $HOME
 ENV PYTHONNUSERSITE=1
 
-# Update pip to latest version
-RUN python -m pip install --upgrade pip
-
+RUN uv venv /opt/venv
+# Use the virtual environment automatically
+ENV VIRTUAL_ENV=/opt/venv
+# Place entry points in the environment at the front of the path
+ENV PATH="/opt/venv/bin:$PATH"
 # Install dependencies
-COPY requirements.txt requirements.txt
-RUN python -m pip install -r requirements.txt
+COPY pyproject.toml .
+RUN uv pip install -r pyproject.toml
 
 # Install Nextflow dependencies
 RUN apt-get update \
@@ -41,7 +44,7 @@ COPY . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
 
 # Install nf-core
-RUN python -m pip install .
+RUN uv pip install -e .
 
 # Set up entrypoint and cmd for easy docker usage
 ENTRYPOINT [ "nf-core" ]
