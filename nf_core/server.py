@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict
 from urllib.parse import parse_qsl
 
-from nf_core.utils import NFCORE_CACHE_DIR
+import nf_core
 
 log: logging.Logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class MyHandler(SimpleHTTPRequestHandler):
     status = "waiting_for_user"  # Default status
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory="web-gui", **kwargs)
+        super().__init__(*args, directory=str(Path(nf_core.__file__).parent / "web-gui"), **kwargs)
 
     def send_cors_headers(self):
         self.send_header("Access-Control-Allow-Origin", "http://localhost:4321")
@@ -111,7 +111,6 @@ def run(
     server_address = ("localhost", 8000)
     log.info(f"Starting server on http://{server_address[0]}:{server_address[1]}")
     server_instance = server_class(server_address, handler_class)
-    Path(NFCORE_CACHE_DIR / "schema").mkdir(parents=True, exist_ok=True)
 
     try:
         server_instance.serve_forever()
