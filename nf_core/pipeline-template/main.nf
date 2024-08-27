@@ -19,7 +19,6 @@
 
 include { {{ short_name|upper }}  } from './workflows/{{ short_name }}'
 {%- if modules %}
-{%- if modules %}
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 {%- if igenomes %}
@@ -58,10 +57,10 @@ workflow {{ prefix_nodash|upper }}_{{ short_name|upper }} {
     {{ short_name|upper }} (
         samplesheet
     )
-{%- if multiqc or modules %}
+{%- if multiqc %}{%- if modules %}
     emit:
     multiqc_report = {{ short_name|upper }}.out.multiqc_report // channel: /path/to/multiqc_report.html
-{%- endif %}
+{%- endif %}{%- endif %}
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,7 +73,6 @@ workflow {
     main:
 
     {%- if modules %}
-    {%- modules %}
     //
     // SUBWORKFLOW: Run initialisation tasks
     //

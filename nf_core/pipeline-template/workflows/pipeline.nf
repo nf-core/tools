@@ -24,9 +24,9 @@ workflow {{ short_name|upper }} {
     take:
     ch_samplesheet // channel: samplesheet read in from --input
 
+    {%- if modules %}
     main:
 
-    {%- if modules %}
     ch_versions = Channel.empty()
     {% if multiqc %}ch_multiqc_files = Channel.empty(){% endif %}
 
