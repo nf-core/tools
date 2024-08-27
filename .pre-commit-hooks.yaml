@@ -16,3 +16,4 @@
   files: ^subworkflows/.*/.*/.*\.nf$
   pass_filenames: true
   # args: []
+# TODO lint-pipeline
