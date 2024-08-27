@@ -54,9 +54,7 @@ class PipelineSchema:
     # Update the validation plugin code everytime the schema gets changed
     def set_schema_filename(self, schema: str) -> None:
         self._schema_filename = schema
-        basepath = "/".join(str(schema).split("/")[:-1])
-        config = f"{basepath}/nextflow.config" if basepath != "" else "nextflow.config"
-        self._update_validation_plugin_from_config(config)
+        self._update_validation_plugin_from_config()
 
     def get_schema_filename(self) -> str:
         return self._schema_filename
@@ -66,9 +64,12 @@ class PipelineSchema:
 
     schema_filename = property(get_schema_filename, set_schema_filename, del_schema_filename)
 
-    def _update_validation_plugin_from_config(self, config: str) -> None:
+    def _update_validation_plugin_from_config(self) -> None:
         plugin = "nf-schema"
-        conf = nf_core.utils.fetch_wf_config(Path(self.schema_filename).parent)
+        if self.schema_filename:
+            conf = nf_core.utils.fetch_wf_config(Path(self.schema_filename).parent)
+        else:
+            conf = nf_core.utils.fetch_wf_config(Path(self.pipeline_dir))
 
         plugins = str(conf.get("plugins", "")).strip('"').strip("'").strip(" ").split(",")
         plugin_found = False
@@ -464,7 +465,7 @@ class PipelineSchema:
             for d_param_id in d_schema.get("properties", {}):
                 # Check that we don't have any duplicate parameter IDs in different definitions
                 if d_param_id in param_keys:
-                    raise AssertionError(f"Duplicate parameter found in schema `definitions`: `{d_param_id}`")
+                    raise AssertionError(f"Duplicate parameter found in schema `{self.defs_notation}`: `{d_param_id}`")
                 param_keys.append(d_param_id)
                 num_params += 1
 
