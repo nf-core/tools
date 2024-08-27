@@ -246,7 +246,7 @@ modules:
   skippable_paths:
     - "conf/base.config"
     - "conf/modules.config"
-    - "conf/modules.json"
+    - "modules.json"
     - "modules"
     - "subworkflows"
   short_description: "Use nf-core components"

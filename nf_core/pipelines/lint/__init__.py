@@ -9,7 +9,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import git
 import rich
@@ -547,7 +547,7 @@ def run_linting(
     md_fn=None,
     json_fn=None,
     hide_progress: bool = False,
-) -> Tuple[PipelineLint, Union[ComponentLint, None], Union[ComponentLint, None]]:
+) -> Tuple[PipelineLint, Optional[ComponentLint], Optional[ComponentLint]]:
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.
@@ -592,7 +592,10 @@ def run_linting(
     lint_obj._load_lint_config()
     lint_obj.load_pipeline_config()
 
-    if "nfcore_components" in lint_obj.lint_config and not lint_obj.lint_config:
+    if "nfcore_components" in lint_obj.lint_config and not lint_obj.lint_config["nfcore_components"]:
+        module_lint_obj = None
+        subworkflow_lint_obj = None
+    else:
         # Create the modules lint object
         module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir, hide_progress=hide_progress)
         # Create the subworkflows lint object
@@ -628,9 +631,6 @@ def run_linting(
         module_lint_obj.set_up_pipeline_files()
         if subworkflow_lint_obj is not None:
             subworkflow_lint_obj.set_up_pipeline_files()
-    else:
-        module_lint_obj = None
-        subworkflow_lint_obj = None
 
     # Run the pipeline linting tests
     try:
@@ -640,26 +640,26 @@ def run_linting(
         log.info("Stopping tests...")
         return lint_obj, module_lint_obj, subworkflow_lint_obj
 
-    if module_lint_obj is not None and subworkflow_lint_obj is not None:
+    if module_lint_obj is not None:
         # Run the module lint tests
         if len(module_lint_obj.all_local_components) > 0:
             module_lint_obj.lint_modules(module_lint_obj.all_local_components, local=True)
         if len(module_lint_obj.all_remote_components) > 0:
             module_lint_obj.lint_modules(module_lint_obj.all_remote_components, local=False)
+    if subworkflow_lint_obj is not None:
         # Run the subworkflows lint tests
-        if subworkflow_lint_obj is not None:
-            if len(subworkflow_lint_obj.all_local_components) > 0:
-                subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_local_components, local=True)
-            if len(subworkflow_lint_obj.all_remote_components) > 0:
-                subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_remote_components, local=False)
+        if len(subworkflow_lint_obj.all_local_components) > 0:
+            subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_local_components, local=True)
+        if len(subworkflow_lint_obj.all_remote_components) > 0:
+            subworkflow_lint_obj.lint_subworkflows(subworkflow_lint_obj.all_remote_components, local=False)
 
     # Print the results
     lint_obj._print_results(show_passed)
-    if module_lint_obj is not None and subworkflow_lint_obj is not None:
+    if module_lint_obj is not None:
         module_lint_obj._print_results(show_passed, sort_by=sort_by)
-        if subworkflow_lint_obj is not None:
-            subworkflow_lint_obj._print_results(show_passed, sort_by=sort_by)
-        nf_core.pipelines.lint_utils.print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj)
+    if subworkflow_lint_obj is not None:
+        subworkflow_lint_obj._print_results(show_passed, sort_by=sort_by)
+    nf_core.pipelines.lint_utils.print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj)
     nf_core.pipelines.lint_utils.print_fixes(lint_obj)
 
     # Save results to Markdown file
