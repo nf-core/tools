@@ -5,11 +5,12 @@
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {
+                    {%- if fastqc %}
                     "fastqc": {
                         "branch": "master",
                         "git_sha": "285a50500f9e02578d90b3ce6382ea3c30216acd",
                         "installed_by": ["modules"]
-                    }{%- if multiqc %},
+                    }{% endif %}{%- if multiqc %}{% if fastqc %},{% endif %}
                     "multiqc": {
                         "branch": "master",
                         "git_sha": "b7ebe95761cd389603f9cc0e0dc384c0f663815a",
@@ -22,7 +23,7 @@
                 "nf-core": {
                     "utils_nextflow_pipeline": {
                         "branch": "master",
-                        "git_sha": "5caf7640a9ef1d18d765d55339be751bb0969dfa",
+                        "git_sha": "20c03aede5a80ff520a905cea1f8ca121b5bb661",
                         "installed_by": ["subworkflows"]
                     },
                     "utils_nfcore_pipeline": {

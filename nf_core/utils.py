@@ -680,7 +680,7 @@ def anaconda_package(dep, dep_channels=None):
     """
 
     if dep_channels is None:
-        dep_channels = ["conda-forge", "bioconda", "defaults"]
+        dep_channels = ["conda-forge", "bioconda"]
 
     # Check if each dependency is the latest available version
     if "=" in dep:

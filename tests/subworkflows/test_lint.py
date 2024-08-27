@@ -2,8 +2,6 @@ import json
 import shutil
 from pathlib import Path
 
-import pytest
-
 import nf_core.subworkflows
 
 from ..test_subworkflows import TestSubworkflows
@@ -25,8 +23,8 @@ class TestSubworkflowsLint(TestSubworkflows):
         self.subworkflow_remove.remove("utils_nextflow_pipeline", force=True)
         self.subworkflow_remove.remove("utils_nfcore_pipeline", force=True)
         self.subworkflow_remove.remove("utils_nfvalidation_plugin", force=True)
-        with pytest.raises(LookupError):
-            nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
+        nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
+        assert "No subworkflows from https://github.com/nf-core/modules.git installed in pipeline" in self.caplog.text
 
     def test_subworkflows_lint_new_subworkflow(self):
         """lint a new subworkflow"""
@@ -39,8 +37,8 @@ class TestSubworkflowsLint(TestSubworkflows):
 
     def test_subworkflows_lint_no_gitlab(self):
         """Test linting a pipeline with no subworkflows installed"""
-        with pytest.raises(LookupError):
-            nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir, remote_url=GITLAB_URL)
+        nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir, remote_url=GITLAB_URL)
+        assert f"No subworkflows from {GITLAB_URL} installed in pipeline" in self.caplog.text
 
     def test_subworkflows_lint_gitlab_subworkflows(self):
         """Lint subworkflows from a different remote"""

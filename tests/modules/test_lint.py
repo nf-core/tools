@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 from typing import Union
 
-import pytest
 import yaml
 from git.repo import Repo
 
@@ -191,8 +190,8 @@ class TestModulesCreate(TestModules):
         """Test linting a pipeline with no modules installed"""
         self.mods_remove.remove("fastqc", force=True)
         self.mods_remove.remove("multiqc", force=True)
-        with pytest.raises(LookupError):
-            nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        assert "No modules from https://github.com/nf-core/modules.git installed in pipeline" in self.caplog.text
 
     def test_modules_lint_new_modules(self):
         """lint a new module"""
@@ -206,8 +205,8 @@ class TestModulesCreate(TestModules):
         """Test linting a pipeline with no modules installed"""
         self.mods_remove.remove("fastqc", force=True)
         self.mods_remove.remove("multiqc", force=True)
-        with pytest.raises(LookupError):
-            nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir, remote_url=GITLAB_URL)
+        nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir, remote_url=GITLAB_URL)
+        assert f"No modules from {GITLAB_URL} installed in pipeline" in self.caplog.text
 
     def test_modules_lint_gitlab_modules(self):
         """Lint modules from a different remote"""
@@ -566,7 +565,7 @@ class TestModulesCreate(TestModules):
             fh.write(main_nf)
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) >= 0
-        assert len(module_lint.warned) == 2
+        assert len(module_lint.warned) == 2, f"Linting warning with {[x.__dict__ for x in module_lint.warned]}"
         lint_tests = [x.lint_test for x in module_lint.warned]
         # check that it is there twice:
         assert lint_tests.count("meta_input_meta_only") == 1
