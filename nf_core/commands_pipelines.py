@@ -279,8 +279,8 @@ def pipelines_list(ctx, keywords, sort, json, show_archived):
     stdout.print(list_workflows(keywords, sort, json, show_archived))
 
 
-# nf-core pipelines ro-crate
-def pipelines_ro_crate(
+# nf-core pipelines rocrate
+def pipelines_rocrate(
     ctx,
     pipeline_dir: Union[str, Path],
     json_path: Optional[Union[str, Path]],
@@ -300,7 +300,7 @@ def pipelines_ro_crate(
             zip_path = Path(zip_path)
         try:
             rocrate_obj = ROCrate(pipeline_dir, pipeline_version)
-            rocrate_obj.create_ro_crate(pipeline_dir, metadata_path=json_path, zip_path=zip_path)
+            rocrate_obj.create_rocrate(pipeline_dir, metadata_path=json_path, zip_path=zip_path)
         except (UserWarning, LookupError, FileNotFoundError) as e:
             log.error(e)
             sys.exit(1)

@@ -36,7 +36,7 @@ from nf_core.commands_pipelines import (
     pipelines_launch,
     pipelines_lint,
     pipelines_list,
-    pipelines_ro_crate,
+    pipelines_rocrate,
     pipelines_schema_build,
     pipelines_schema_docs,
     pipelines_schema_lint,
@@ -87,7 +87,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "For developers",
-            "commands": ["create", "lint", "bump-version", "sync", "schema", "ro-crate", "create-logo"],
+            "commands": ["create", "lint", "bump-version", "sync", "schema", "rocrate", "create-logo"],
         },
     ],
     "nf-core modules": [
@@ -581,8 +581,8 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
     pipelines_list(ctx, keywords, sort, json, show_archived)
 
 
-# nf-core pipelines ro-crate
-@pipelines.command("ro-crate")
+# nf-core pipelines rocrate
+@pipelines.command("rocrate")
 @click.argument(
     "pipeline_dir",
     type=click.Path(exists=True),
@@ -606,7 +606,7 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
     default="",
 )
 @click.pass_context
-def ro_crate(
+def rocrate(
     ctx,
     pipeline_dir: str,
     json_path: str,
@@ -616,7 +616,7 @@ def ro_crate(
     """
     Make an Research Object Crate
     """
-    pipelines_ro_crate(ctx, pipeline_dir, json_path, zip_path, pipeline_version)
+    pipelines_rocrate(ctx, pipeline_dir, json_path, zip_path, pipeline_version)
 
 
 # nf-core pipelines sync
