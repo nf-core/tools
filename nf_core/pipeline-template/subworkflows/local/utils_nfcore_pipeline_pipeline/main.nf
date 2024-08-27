@@ -134,7 +134,7 @@ workflow PIPELINE_COMPLETION {
     summary_params = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
     {%- else %}
     summary_params = [:]
-    {% endif %}
+    {%- endif %}
 
     //
     // Completion email and summary
