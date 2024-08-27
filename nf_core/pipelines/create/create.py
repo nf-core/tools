@@ -84,6 +84,11 @@ class PipelineCreate:
         # Read features yaml file
         self.template_features_yml = load_features_yaml()
 
+        # Set fields used by the class methods
+        self.no_git = no_git
+        self.default_branch = default_branch
+        self.is_interactive = is_interactive
+
         if self.config.outdir is None:
             self.config.outdir = str(Path.cwd())
 
@@ -108,11 +113,6 @@ class PipelineCreate:
 
         # Set convenience variables
         self.name = self.config.name
-
-        # Set fields used by the class methods
-        self.no_git = no_git
-        self.default_branch = default_branch
-        self.is_interactive = is_interactive
         self.force = self.config.force
 
         if self.config.outdir == ".":
