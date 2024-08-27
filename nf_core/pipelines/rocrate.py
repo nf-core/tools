@@ -3,15 +3,14 @@
 
 import logging
 import os
+import re
 import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Union
-from urllib.parse import quote
 
 import requests
-import rocrate.model.entity
 import rocrate.rocrate
 from git import GitCommandError, InvalidGitRepositoryError
 from rich.progress import BarColumn, Progress
@@ -52,7 +51,7 @@ class ROCrate:
 
         setup_requests_cachedir()
 
-    def create_ro_crate(
+    def create_rocrate(
         self, outdir: Path, metadata_path: Union[None, Path] = None, zip_path: Union[None, Path] = None
     ) -> None:
         """
@@ -96,7 +95,7 @@ class ROCrate:
                     log.error(f"Could not checkout version {self.version}")
                     sys.exit(1)
         self.version = self.pipeline_obj.nf_config.get("manifest.version", "")
-        self.make_workflow_ro_crate()
+        self.make_workflow_rocrate()
 
         # Save just the JSON metadata file
         if metadata_path is not None:
@@ -123,7 +122,7 @@ class ROCrate:
         # Change back to the original directory
         os.chdir(current_path)
 
-    def make_workflow_ro_crate(self) -> None:
+    def make_workflow_rocrate(self) -> None:
         """
         Create an RO Crate for a pipeline
         """
@@ -258,7 +257,7 @@ class ROCrate:
         log.debug(f"Adding topics: {topics}")
         self.crate.mainEntity.append_to("keywords", topics)
 
-        # self.add_main_authors(self.crate.mainEntity)
+        self.add_main_authors(self.crate.mainEntity)
 
         self.crate.mainEntity = self.crate.mainEntity
 
@@ -323,9 +322,14 @@ class ROCrate:
 
         for author in named_contributors:
             log.debug(f"Adding author: {author}")
+            assert self.pipeline_obj.repo is not None  # mypy
+            # get email from git log
+            email = self.pipeline_obj.repo.git.log(f"--author={author}", "--pretty=format:%ae", "-1")
             orcid = get_orcid(author)
             author_entitity = self.crate.add(
-                Person(self.crate, orcid if orcid is not None else "#" + quote(author), properties={"name": author})
+                Person(
+                    self.crate, orcid if orcid is not None else "#" + email, properties={"name": author, "email": email}
+                )
             )
             wf_file.append_to("creator", author_entitity)
             if author in authors:
@@ -335,7 +339,6 @@ class ROCrate:
         """
         Add workflow files to the RO Crate
         """
-        import re
 
         import nf_core.utils
 
@@ -360,7 +363,7 @@ class ROCrate:
                     wf_dir,
                     dest_path=wf_dir,
                     properties={
-                        "description": f"nf-core {component_type} [{component_name}](https://nf-co.re/{component_type}/{component_name}) installed from the [nf-core/modules repository](https://github.com/nf-core/modules/)."
+                        "description": f"nf-core {re.sub('s$', '', component_type)} [{component_name}](https://nf-co.re/{component_type}/{component_name}) installed from the [nf-core/modules repository](https://github.com/nf-core/modules/)."
                     },
                 )
         wf_locals = [

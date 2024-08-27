@@ -54,7 +54,7 @@ class TestROCrate(unittest.TestCase):
 
         # Run the command
         self.rocrate_obj = nf_core.pipelines.rocrate.ROCrate(self.test_pipeline_dir)
-        self.rocrate_obj.create_ro_crate(self.test_pipeline_dir, metadata_path=Path(self.test_pipeline_dir))
+        self.rocrate_obj.create_rocrate(self.test_pipeline_dir, metadata_path=Path(self.test_pipeline_dir))
 
         # Check that the crate was created
         self.assertTrue(Path(self.test_pipeline_dir, "ro-crate-metadata.json").exists())
