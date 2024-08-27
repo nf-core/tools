@@ -130,7 +130,7 @@ workflow PIPELINE_COMPLETION {
     {% if multiqc %}multiqc_report  //  string: Path to MultiQC report{% endif %}
 
     main:
-    {% if nf_schema %}
+    {%- if nf_schema %}
     summary_params = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
     {% else %}
     summary_params = [:]
