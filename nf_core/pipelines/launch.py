@@ -279,7 +279,6 @@ class Launch:
         # Add the new defintion to the allOf key so that it's included in validation
         # Put it at the start of the list so that it comes first
 
-
     def prompt_web_gui(self):
         """Ask whether to use the web-based or cli wizard to collect params"""
         log.info(
