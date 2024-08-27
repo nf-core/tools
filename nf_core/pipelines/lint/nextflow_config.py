@@ -160,48 +160,47 @@ def nextflow_config(self) -> Dict[str, List[str]]:
     # Lint for plugins
     config_plugins = ast.literal_eval(self.nf_config.get("plugins", "[]"))
     found_plugins = []
-    if len(config_plugins) == 0:
-        warned.append("nextflow.config contains an empty plugins scope")
     for plugin in config_plugins:
         if "@" not in plugin:
             failed.append(f"Plugin '{plugin}' does not have a pinned version")
         found_plugins.append(plugin.split("@")[0])
 
-    if "nf-validation" in found_plugins and "nf-schema" in found_plugins:
-        failed.append("nextflow.config contains both nf-validation and nf-schema")
-    if "nf-validation" not in found_plugins and "nf-schema" not in found_plugins:
-        warned.append("nextflow.config does not contain `nf-validation` or `nf-schema` in the plugins scope")
+    if "nf-validation" in found_plugins or "nf-schema" in found_plugins:
+        if "nf-validation" in found_plugins and "nf-schema" in found_plugins:
+            failed.append("nextflow.config contains both nf-validation and nf-schema")
+        if "nf-validation" not in found_plugins and "nf-schema" not in found_plugins:
+            warned.append("nextflow.config does not contain `nf-validation` or `nf-schema` in the plugins scope")
 
-    if "nf-schema" in found_plugins:
-        passed.append("Found nf-schema plugin")
-        if self.nf_config.get("validation.help.enabled", "false") == "false":
-            failed.append(
-                "The help message has not been enabled. Set the `validation.help.enabled` configuration option to `true` to enable help messages"
+        if "nf-schema" in found_plugins:
+            passed.append("Found nf-schema plugin")
+            if self.nf_config.get("validation.help.enabled", "false") == "false":
+                failed.append(
+                    "The help message has not been enabled. Set the `validation.help.enabled` configuration option to `true` to enable help messages"
+                )
+            config_fail.extend([["validation.help.enabled"]])
+            config_warn.extend(
+                [
+                    ["validation.help.beforeText"],
+                    ["validation.help.afterText"],
+                    ["validation.help.command"],
+                    ["validation.summary.beforeText"],
+                    ["validation.summary.afterText"],
+                ]
             )
-        config_fail.extend([["validation.help.enabled"]])
-        config_warn.extend(
-            [
-                ["validation.help.beforeText"],
-                ["validation.help.afterText"],
-                ["validation.help.command"],
-                ["validation.summary.beforeText"],
-                ["validation.summary.afterText"],
-            ]
-        )
-        config_fail_ifdefined.extend(
-            [
-                "params.validationFailUnrecognisedParams",
-                "params.validationLenientMode",
-                "params.validationSchemaIgnoreParams",
-                "params.validationShowHiddenParams",
-            ]
-        )
+            config_fail_ifdefined.extend(
+                [
+                    "params.validationFailUnrecognisedParams",
+                    "params.validationLenientMode",
+                    "params.validationSchemaIgnoreParams",
+                    "params.validationShowHiddenParams",
+                ]
+            )
 
-    if "nf-validation" in found_plugins:
-        passed.append("Found nf-validation plugin")
-        warned.append(
-            "nf-validation has been detected in the pipeline. Please migrate to nf-schema: https://nextflow-io.github.io/nf-schema/latest/migration_guide/"
-        )
+        if "nf-validation" in found_plugins:
+            passed.append("Found nf-validation plugin")
+            warned.append(
+                "nf-validation has been detected in the pipeline. Please migrate to nf-schema: https://nextflow-io.github.io/nf-schema/latest/migration_guide/"
+            )
 
     # Remove field that should be ignored according to the linting config
     ignore_configs = self.lint_config.get("nextflow_config", []) if self.lint_config is not None else []

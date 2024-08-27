@@ -83,7 +83,7 @@ class PipelineSchema:
                 break
 
         if not plugin_found:
-            log.warning("Could not find nf-schema or nf-validation in the pipeline config. Defaulting to nf-schema")
+            log.info("Could not find nf-schema or nf-validation in the pipeline config. Defaulting to nf-schema notation for the JSON schema.")
 
         self.validation_plugin = plugin
         # Previous versions of nf-schema used "defs", but it's advised to use "$defs"

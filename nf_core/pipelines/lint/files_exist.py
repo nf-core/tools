@@ -200,9 +200,7 @@ def files_exist(self) -> Dict[str, List[str]]:
         Path("Singularity"),
     ]
     files_warn_ifexists = [Path(".travis.yml")]
-    files_fail_ifinconfig: List[Tuple[Path, List[Dict[str, str]]]] = [
-        (Path("lib", "nfcore_external_java_deps.jar"), [{"plugins": "nf-validation"}, {"plugins": "nf-schema"}]),
-    ]
+    files_fail_ifinconfig: List[Tuple[Path, List[Dict[str, str]]]] = []
 
     # Remove files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("files_exist", []) if self.lint_config is not None else []
