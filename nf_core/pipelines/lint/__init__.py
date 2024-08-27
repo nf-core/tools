@@ -152,7 +152,6 @@ class PipelineLint(nf_core.utils.Pipeline):
             "base_config",
             "modules_config",
             "nfcore_yml",
-            "nfcore_components",
         ] + (["version_consistency"] if release_mode else [])
 
     def _load(self) -> bool:
@@ -178,7 +177,8 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Check if we have any keys that don't match lint test names
         if self.lint_config is not None:
             for k in self.lint_config:
-                if k not in self.lint_tests:
+                if k != "nfcore_components" and k not in self.lint_tests:
+                    # nfcore_components is an exception to allow custom pipelines without nf-core components
                     log.warning(f"Found unrecognised test name '{k}' in pipeline lint config")
                     is_correct = False
 

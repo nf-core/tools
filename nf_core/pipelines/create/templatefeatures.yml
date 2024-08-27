@@ -262,7 +262,7 @@ modules:
     files_exist:
       - "conf/base.config"
       - "conf/modules.config"
-      - "conf/modules.json"
+      - "modules.json"
     nextflow_config:
       - "process.cpus"
       - "process.memory"
