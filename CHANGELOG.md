@@ -30,6 +30,8 @@
 - add option to exclude changelog from custom pipeline template ([#3104](https://github.com/nf-core/tools/pull/3104))
 - add option to exclude license from pipeline template ([#3125](https://github.com/nf-core/tools/pull/3125))
 - add option to exclude email from pipeline template ([#3126](https://github.com/nf-core/tools/pull/3126))
+- Use nf-schema instead of nf-validation ([#3116](https://github.com/nf-core/tools/pull/3116))
+- add option to exclude nf-schema from the template ([#3116](https://github.com/nf-core/tools/pull/3116))
 - add option to exclude fastqc from pipeline template ([#3129](https://github.com/nf-core/tools/pull/3129))
 - add option to exclude documentation from pipeline template ([#3130](https://github.com/nf-core/tools/pull/3130))
 - add option to exclude test configs from pipeline template ([#3133](https://github.com/nf-core/tools/pull/3133))
@@ -42,6 +44,10 @@
 - Remove defaults from conda `environment.yml` file. ([#3029](https://github.com/nf-core/tools/pull/3029))
 - Restructure pipeline tests and move pipeline linting into subfolder ([#3070](https://github.com/nf-core/tools/pull/3070))
 - Fix module linting warning for process_high_memory ([#3086](https://github.com/nf-core/tools/issues/3086))
+- Linting will now fail when an unpinned plugin is used ([#3116](https://github.com/nf-core/tools/pull/3116))
+- Linting will now check if the schema is correct for the used validation plugin ([#3116])(https://github.com/nf-core/tools/pull/3116)
+- Linting will now check the use of the right validation plugin include statements in the workflow scripts ([#3116])(https://github.com/nf-core/tools/pull/3116)
+- Full linting for correct use of nf-schema and nf-validation ([#3116](https://github.com/nf-core/tools/pull/3116))
 
 ### Pipeline create command
 
