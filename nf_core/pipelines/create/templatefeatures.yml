@@ -143,8 +143,8 @@ is_nfcore:
       - "manifest.homePage"
       - "validation.help.beforeText"
       - "validation.help.afterText"
-      - "validation.sumary.beforeText"
-      - "validation.sumary.afterText"
+      - "validation.summary.beforeText"
+      - "validation.summary.afterText"
     multiqc_config:
       - "report_comment"
   nfcore_pipelines: False
