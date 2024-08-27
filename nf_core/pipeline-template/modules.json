@@ -23,7 +23,7 @@
                 "nf-core": {
                     "utils_nextflow_pipeline": {
                         "branch": "master",
-                        "git_sha": "0710581f16d6f4e6b27ab6f410757c8259fdd6f4",
+                        "git_sha": "16f913a1ea8bb2cc48ccfc0b3b9406c5b3333799",
                         "installed_by": ["subworkflows"]
                     },
                     "utils_nfcore_pipeline": {
