@@ -244,7 +244,6 @@ fastqc:
   custom_pipelines: True
 modules:
   skippable_paths:
-    - "conf/base.config"
     - "conf/modules.config"
     - "modules.json"
     - "modules"
@@ -260,7 +259,6 @@ modules:
     base_config: False
     modules_config: False
     files_exist:
-      - "conf/base.config"
       - "conf/modules.config"
       - "modules.json"
     nextflow_config:
