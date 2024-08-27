@@ -263,15 +263,22 @@ class Launch:
 
     def merge_nxf_flag_schema(self):
         """Take the Nextflow flag schema and merge it with the pipeline schema"""
-        # Add the coreNextflow subschema to the schema definitions
-        if "definitions" not in self.schema_obj.schema:
-            self.schema_obj.schema["definitions"] = {}
-        self.schema_obj.schema["definitions"].update(self.nxf_flag_schema)
-        # Add the new defintion to the allOf key so that it's included in validation
-        # Put it at the start of the list so that it comes first
         if "allOf" not in self.schema_obj.schema:
             self.schema_obj.schema["allOf"] = []
-        self.schema_obj.schema["allOf"].insert(0, {"$ref": "#/definitions/coreNextflow"})
+        # Add the coreNextflow subschema to the schema definitions
+        if "$defs" in self.schema_obj.schema or "definitions" not in self.schema_obj.schema:
+            if "$defs" not in self.schema_obj.schema:
+                self.schema_obj["$defs"] = {}
+            self.schema_obj.schema["$defs"].update(self.nxf_flag_schema)
+            self.schema_obj.schema["allOf"].insert(0, {"$ref": "#/$defs/coreNextflow"})
+
+        if "definitions" in self.schema_obj.schema:
+            self.schema_obj.schema["definitions"] = {}
+            self.schema_obj.schema["definitions"].update(self.nxf_flag_schema)
+            self.schema_obj.schema["allOf"].insert(0, {"$ref": "#/definitions/coreNextflow"})
+        # Add the new defintion to the allOf key so that it's included in validation
+        # Put it at the start of the list so that it comes first
+
 
     def prompt_web_gui(self):
         """Ask whether to use the web-based or cli wizard to collect params"""
@@ -379,7 +386,8 @@ class Launch:
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
             questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
-        for _, definition in self.schema_obj.schema.get("definitions", {}).items():
+        definitions_schemas = self.schema_obj.schema.get("$defs", self.schema_obj.schema.get("definitions", {})).items()
+        for _, definition in definitions_schemas:
             for param_id, param_obj in definition.get("properties", {}).items():
                 questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
@@ -399,9 +407,10 @@ class Launch:
         """Go through the pipeline schema and prompt user to change defaults"""
         answers = {}
         # Start with the subschema in the definitions - use order of allOf
+        definitions_schemas = self.schema_obj.schema.get("$defs", self.schema_obj.schema.get("definitions", {})).items()
         for allOf in self.schema_obj.schema.get("allOf", []):
             d_key = allOf["$ref"][14:]
-            answers.update(self.prompt_group(d_key, self.schema_obj.schema["definitions"][d_key]))
+            answers.update(self.prompt_group(d_key, definitions_schemas[d_key]))
 
         # Top level schema params
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
