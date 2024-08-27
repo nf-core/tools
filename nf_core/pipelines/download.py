@@ -1672,7 +1672,7 @@ class WorkflowRepo(SyncedRepo):
                 for tag in tags_to_remove:
                     self.repo.delete_tag(tag)
 
-                # switch to a revision that should be kept, because deleting heads fails, if they are checked out (e.g. "master")
+                # switch to a revision that should be kept, because deleting heads fails, if they are checked out (e.g. "main")
                 self.checkout(self.revision[0])
 
                 # delete unwanted heads/branches from repository

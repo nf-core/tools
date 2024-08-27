@@ -24,7 +24,7 @@ class TestLintActionsAws(TestLint):
         new_pipeline = self._make_pipeline_copy()
         with open(Path(new_pipeline, ".github", "workflows", "awstest.yml")) as fh:
             awstest_yml = yaml.safe_load(fh)
-        awstest_yml[True]["push"] = ["master"]
+        awstest_yml[True]["push"] = ["main"]
         with open(Path(new_pipeline, ".github", "workflows", "awstest.yml"), "w") as fh:
             yaml.dump(awstest_yml, fh)
 

@@ -10,6 +10,7 @@ import git
 from git.exc import GitCommandError
 
 from nf_core.components.components_utils import (
+    NF_CORE_MODULES_DEFAULT_BRANCH,
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
 )
@@ -186,7 +187,7 @@ class SyncedRepo:
         if branch is None:
             # Don't bother fetching default branch if we're using nf-core
             if self.remote_url == NF_CORE_MODULES_REMOTE:
-                self.branch = "master"
+                self.branch = NF_CORE_MODULES_DEFAULT_BRANCH
             else:
                 self.branch = self.get_default_branch()
         else:
