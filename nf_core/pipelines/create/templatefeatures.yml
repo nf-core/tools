@@ -141,6 +141,10 @@ is_nfcore:
     nextflow_config:
       - "manifest.name"
       - "manifest.homePage"
+      - "validation.help.beforeText"
+      - "validation.help.afterText"
+      - "validation.sumary.beforeText"
+      - "validation.sumary.afterText"
     multiqc_config:
       - "report_comment"
   nfcore_pipelines: False
