@@ -87,6 +87,7 @@ def files_exist(self) -> Dict[str, List[str]]:
         lib/Workflow.groovy
         lib/WorkflowMain.groovy
         lib/WorkflowPIPELINE.groovy
+        lib/nfcore_external_java_deps.jar
         parameters.settings.json
         pipeline_template.yml # saving information in .nf-core.yml
         Singularity
@@ -97,12 +98,6 @@ def files_exist(self) -> Dict[str, List[str]]:
     .. code-block:: bash
 
         .travis.yml
-
-    Files that *must not* be present if a certain entry is present in ``nextflow.config``:
-
-    .. code-block:: bash
-
-        lib/nfcore_external_java_deps.jar # if "nf-validation" is in nextflow.config
 
     .. tip:: You can configure the ``nf-core pipelines lint`` tests to ignore any of these checks by setting
             the ``files_exist`` key as follows in your ``.nf-core.yml`` config file. For example:
