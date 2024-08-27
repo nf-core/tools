@@ -168,8 +168,6 @@ def nextflow_config(self) -> Dict[str, List[str]]:
     if "nf-validation" in found_plugins or "nf-schema" in found_plugins:
         if "nf-validation" in found_plugins and "nf-schema" in found_plugins:
             failed.append("nextflow.config contains both nf-validation and nf-schema")
-        if "nf-validation" not in found_plugins and "nf-schema" not in found_plugins:
-            warned.append("nextflow.config does not contain `nf-validation` or `nf-schema` in the plugins scope")
 
         if "nf-schema" in found_plugins:
             passed.append("Found nf-schema plugin")
