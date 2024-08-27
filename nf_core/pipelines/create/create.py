@@ -431,7 +431,7 @@ class PipelineCreate:
             )  # default to main
         except configparser.Error:
             log.debug("Could not read init.defaultBranch")
-        if self.default_branch in ["dev", "TEMPLATE"]:
+        if self.default_branch is not None and self.default_branch in ["dev", "TEMPLATE"]:
             raise UserWarning(
                 f"Your Git defaultBranch '{self.default_branch}' is incompatible with nf-core.\n"
                 "'dev' and 'TEMPLATE' can not be used as default branch name.\n"
