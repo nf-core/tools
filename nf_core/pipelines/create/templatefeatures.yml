@@ -263,10 +263,6 @@ modules:
       - "conf/base.config"
       - "conf/modules.config"
       - "modules.json"
-    nextflow_config:
-      - "process.cpus"
-      - "process.memory"
-      - "process.time"
   nfcore_pipelines: False
   custom_pipelines: True
 changelog:
