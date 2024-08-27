@@ -3,7 +3,7 @@ import nf_core.pipelines.lint
 from ..test_lint import TestLint
 
 
-class TestLintNextflowConfig(TestLint):
+class TestLintPluginIncludes(TestLint):
     def setUp(self) -> None:
         super().setUp()
         self.new_pipeline = self._make_pipeline_copy()
