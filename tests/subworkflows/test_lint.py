@@ -22,7 +22,7 @@ class TestSubworkflowsLint(TestSubworkflows):
         """Test linting a pipeline with no subworkflows installed"""
         self.subworkflow_remove.remove("utils_nextflow_pipeline", force=True)
         self.subworkflow_remove.remove("utils_nfcore_pipeline", force=True)
-        self.subworkflow_remove.remove("utils_nfvalidation_plugin", force=True)
+        self.subworkflow_remove.remove("utils_nfschema_plugin", force=True)
         nf_core.subworkflows.SubworkflowLint(directory=self.pipeline_dir)
         assert "No subworkflows from https://github.com/nf-core/modules.git installed in pipeline" in self.caplog.text
 
