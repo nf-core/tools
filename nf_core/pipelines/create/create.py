@@ -56,7 +56,7 @@ class PipelineCreate:
         template_config: Optional[Union[CreateConfig, str, Path]] = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
-        default_branch: Optional[str] = None,
+        default_branch: str = "main",
         is_interactive: bool = False,
     ) -> None:
         if isinstance(template_config, CreateConfig):
@@ -431,7 +431,7 @@ class PipelineCreate:
             )  # default to main
         except configparser.Error:
             log.debug("Could not read init.defaultBranch")
-        if self.default_branch is not None and self.default_branch in ["dev", "TEMPLATE"]:
+        if self.default_branch in ["dev", "TEMPLATE"]:
             raise UserWarning(
                 f"Your Git defaultBranch '{self.default_branch}' is incompatible with nf-core.\n"
                 "'dev' and 'TEMPLATE' can not be used as default branch name.\n"
