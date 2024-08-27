@@ -80,6 +80,7 @@
 - Fix number of arguments for pipelines_create within the command_create function ([#3074](https://github.com/nf-core/tools/pull/3074))
 - Add bot action to update textual snapshots and write bot documentation ([#3102](https://github.com/nf-core/tools/pull/3102))
 - Update gitpod setup ([#3136](https://github.com/nf-core/tools/pull/3136))
+- fix syncing a pipeline from current directory ([#3143](https://github.com/nf-core/tools/pull/3143))
 
 ## Version updates
 
