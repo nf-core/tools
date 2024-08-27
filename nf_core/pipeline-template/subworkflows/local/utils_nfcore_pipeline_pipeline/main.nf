@@ -132,7 +132,7 @@ workflow PIPELINE_COMPLETION {
     main:
     {%- if nf_schema %}
     summary_params = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
-    {% else %}
+    {%- else %}
     summary_params = [:]
     {% endif %}
 
