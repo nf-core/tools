@@ -92,7 +92,11 @@ class PipelineSchema:
         # Previous versions of nf-schema used "defs", but it's advised to use "$defs"
         if plugin == "nf-schema":
             self.defs_notation = "$defs"
-            ignored_params = ["help", "helpFull", "showHidden"]  # Help parameter should be ignored by default
+            ignored_params = [
+                conf.get("validation.help.shortParameter", "help"),
+                conf.get("validation.help.fullParameter", "helpFull"),
+                conf.get("validation.help.showHiddenParameter", "showHidden"),
+            ]  # Help parameter should be ignored by default
             ignored_params_config = conf.get("validation", {}).get("defaultIgnoreParams", [])
             if len(ignored_params_config) > 0:
                 ignored_params.extend(ignored_params_config)
