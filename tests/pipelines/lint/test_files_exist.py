@@ -62,7 +62,7 @@ class TestLintFilesExist(TestLint):
         lib_dir.mkdir()
         (lib_dir / "nfcore_external_java_deps.jar").touch()
         results = lint_obj.files_exist()
-        assert results["failed"] == []
+        assert results["failed"] == ["File must be removed: `lib/nfcore_external_java_deps.jar`"]
         assert results["ignored"] == []
 
     def test_files_exist_fail_conditional(self):
