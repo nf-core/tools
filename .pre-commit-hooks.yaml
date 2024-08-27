@@ -16,4 +16,10 @@
   files: ^subworkflows/.*/.*/.*\.nf$
   pass_filenames: true
   # args: []
-# TODO lint-pipeline
+- id: lint-pipeline
+  name: Lint nf-core pipeline
+  description: Check pipeline code against nf-core guidelines.
+  entry: nf-core --hide-progress lint
+  language: python
+  types: [text]
+  # args: []

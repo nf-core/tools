@@ -14,6 +14,4 @@ repos:
   - repo: https://github.com/nf-core/tools
     rev: "2.14.1"
     hooks:
-      - id: lint-modules
-      - id: lint-subworkflows
-      # TODO lint-pipeline
+      - id: lint-pipeline
