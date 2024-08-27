@@ -198,6 +198,7 @@ def files_exist(self) -> Dict[str, List[str]]:
         Path("parameters.settings.json"),
         Path("pipeline_template.yml"),  # saving information in .nf-core.yml
         Path("Singularity"),
+        Path("lib", "nfcore_external_java_deps.jar"),
     ]
     files_warn_ifexists = [Path(".travis.yml")]
     files_fail_ifinconfig: List[Tuple[Path, List[Dict[str, str]]]] = []
