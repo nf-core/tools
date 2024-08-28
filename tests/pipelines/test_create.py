@@ -152,9 +152,9 @@ class NfcoreCreateTest(unittest.TestCase):
             if template_features_yml[feature]["skippable_paths"]:
                 all_skipped_files.extend(template_features_yml[feature]["skippable_paths"])
 
-        for root, _, files in PIPELINE_TEMPLATE.walk():
+        for root, _, files in os.walk(PIPELINE_TEMPLATE):
             for file in files:
-                str_path = str((root / file).relative_to(PIPELINE_TEMPLATE))
+                str_path = str((Path(root) / file).relative_to(PIPELINE_TEMPLATE))
                 if str_path not in base_required_files:
                     try:
                         assert (
