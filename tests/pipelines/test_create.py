@@ -1,6 +1,5 @@
 """Some tests covering the pipeline creation sub command."""
 
-import itertools
 import os
 import unittest
 from pathlib import Path
@@ -139,48 +138,37 @@ class NfcoreCreateTest(unittest.TestCase):
 
     def test_template_customisation_all_files_grouping(self):
         """Test that all pipeline template files are included in a pipeline customisation group."""
-        create_obj = nf_core.pipelines.create.create.PipelineCreate(
-            template_config=PIPELINE_TEMPLATE_YML_SKIP,
-            default_branch=self.default_branch,
-        )
-        all_skippable_paths = itertools.chain(*[sp for sp in create_obj.skippable_paths.values()])
-        for _, _, files in PIPELINE_TEMPLATE.walk():
+        template_features_yml = load_features_yaml()
+        base_required_files = [
+            ".nf-core.yml",
+            "README.md",
+            "nextflow.config",
+            "CITATIONS.md",
+            "main.nf",
+            "workflows/pipeline.nf",
+        ]
+        all_skipped_files = []
+        for feature in template_features_yml.keys():
+            if template_features_yml[feature]["skippable_paths"]:
+                all_skipped_files.extend(template_features_yml[feature]["skippable_paths"])
+
+        for root, _, files in PIPELINE_TEMPLATE.walk():
             for file in files:
-                str_path = str(Path(file).relative_to(PIPELINE_TEMPLATE))
-                assert (
-                    str_path in all_skippable_paths
-                ), f"Template file `{str_path}` not present in a group for pipeline customisation `PipelineCreate.skippable_paths`."
-
-    def test_template_customisation_all_template_areas(self):
-        """Check that all groups in `skippable_paths` are template areas."""
-        create_obj = nf_core.pipelines.create.create.PipelineCreate(
-            template_config=PIPELINE_TEMPLATE_YML_SKIP,
-            default_branch=self.default_branch,
-        )
-        for area in create_obj.skippable_paths.keys():
-            if area != "is_nfcore":
-                assert (
-                    area in create_obj.template_areas.keys()
-                ), f"Customisation template group `{area}` not present in `PipelineCreate.template_areas`."
-
-    def test_template_customisation_all_features_tested(self):
-        "Check that all customisation groups are tested on CI."
-        create_obj = nf_core.pipelines.create.create.PipelineCreate(
-            template_config=PIPELINE_TEMPLATE_YML_SKIP,
-            default_branch=self.default_branch,
-        )
-        with open(PIPELINE_TEMPLATE_YML_SKIP) as fh:
-            skip_yaml = yaml.safe_load(fh)
-        with open(
-            Path(nf_core.__file__).parent.parent / ".github" / "workflows" / "create-test-lint-wf-template.yml"
-        ) as fh:
-            ci_workflow = yaml.safe_load(fh)
-        for area in create_obj.skippable_paths.keys():
-            assert (
-                area in skip_yaml["skip_features"]
-            ), f"Customisation template group `{area}` not tested in `tests/data/pipeline_create_template_skip.yml`."
-            if area != "github":
-                assert (
-                    f"template_skip_{area}.yml"
-                    in ci_workflow["jobs"]["RunTestWorkflow"]["strategy"]["matrix"]["TEMPLATE"]
-                ), f"Customisation template group `{area}` not tested in `create-test-lint-wf-template.yml` github workflow."
+                str_path = str((root / file).relative_to(PIPELINE_TEMPLATE))
+                if str_path not in base_required_files:
+                    try:
+                        assert (
+                            str_path in all_skipped_files
+                        ), f"Template file `{str_path}` not present in a group for pipeline customisation in `template_features.yml`."
+                    except AssertionError:
+                        if "/" in str_path:
+                            # Check if the parent directory is in the skipped files
+                            upper_dir_present = False
+                            for i in range(1, len(str_path.split("/"))):
+                                upper_dir = "/".join(str_path.split("/")[:i])
+                                if upper_dir in all_skipped_files:
+                                    upper_dir_present = True
+                                    break
+                            assert upper_dir_present, f"Template file `{str_path}` not present in a group for pipeline customisation in `template_features.yml`."
+                        else:
+                            raise

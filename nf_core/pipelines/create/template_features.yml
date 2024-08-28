@@ -1,7 +1,8 @@
 github:
   skippable_paths:
-    - ".github/"
+    - ".github"
     - ".gitignore"
+    - ".gitattributes"
   short_description: "Skip the creation of a local Git repository."
   description: ""
   help_text: ""
@@ -282,6 +283,9 @@ changelog:
 nf_schema:
   skippable_paths:
     - "subworkflows/nf-core/utils_nfschema_plugin"
+    - "nextflow_schema.json"
+    - "assets/schema_input.json"
+    - "assets/samplesheet.csv"
   short_description: "Use nf-schema"
   description: "Use the nf-schema Nextflow plugin for this pipeline."
   help_text: |
