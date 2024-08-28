@@ -292,6 +292,13 @@ nf_schema:
     [nf-schema](https://nextflow-io.github.io/nf-schema/latest/) is used to validate input parameters based on a JSON schema.
     It also provides helper functionality to create help messages, get a summary
     of changed parameters and validate and convert a samplesheet to a channel.
+  linting:
+    files_exist:
+      - "nextflow_schema.json"
+    schema_params: False
+    schema_lint: False
+    schema_description: False
+    nextflow_config: False
   nfcore_pipelines: True
   custom_pipelines: True
 license:
