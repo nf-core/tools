@@ -7,6 +7,12 @@
   </picture>
 </h1>
 
+{%- else %}
+
+<h1>
+  {{ name }}
+</h1>
+
 {% endif -%}
 {% if github_badges -%}
 [![GitHub Actions CI Status](https://github.com/{{ name }}/actions/workflows/ci.yml/badge.svg)](https://github.com/{{ name }}/actions/workflows/ci.yml)

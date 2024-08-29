@@ -27,7 +27,7 @@ github:
     readme:
       - "nextflow_badge"
   nfcore_pipelines: False
-  custom_pipelines: False
+  custom_pipelines: True
 ci:
   skippable_paths:
     - ".github/workflows/"

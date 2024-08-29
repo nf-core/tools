@@ -184,6 +184,7 @@
                     "fa_icon": "fas fa-question-circle",
                     "hidden": true
                 },
+                {%- if modules %}
                 "publish_dir_mode": {
                     "type": "string",
                     "default": "copy",
@@ -192,7 +193,7 @@
                     "fa_icon": "fas fa-copy",
                     "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"],
                     "hidden": true
-                },{% if email %}
+                },{% endif %}{% if email %}
                 "email_on_fail": {
                     "type": "string",
                     "description": "Email address for completion summary, only when pipeline fails.",
@@ -215,21 +216,22 @@
                     "default": "25.MB",
                     "fa_icon": "fas fa-file-upload",
                     "hidden": true
-                },
-                {% endif %}
+                },{% endif %}
+                {%- if modules %}
                 "monochrome_logs": {
                     "type": "boolean",
                     "description": "Do not use coloured log outputs.",
                     "fa_icon": "fas fa-palette",
                     "hidden": true
-                },
+                },{% endif %}
+                {%- if slackreport or adaptivecard %}
                 "hook_url": {
                     "type": "string",
                     "description": "Incoming hook URL for messaging service",
                     "fa_icon": "fas fa-people-group",
                     "help_text": "Incoming hook URL for messaging service. Currently, MS Teams and Slack are supported.",
                     "hidden": true
-                },
+                },{% endif %}
                 {%- if multiqc %}
                 "multiqc_config": {
                     "type": "string",
