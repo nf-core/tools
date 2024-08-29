@@ -64,7 +64,12 @@ class NFCoreComponent:
             self.process_name = ""
             self.environment_yml: Optional[Path] = Path(self.component_dir, "environment.yml")
 
-            repo_dir = self.component_dir.parts[: self.component_dir.parts.index(self.component_name.split("/")[0])][-1]
+            name_index = (
+                len(self.component_dir.parts)
+                - 1
+                - self.component_dir.parts[::-1].index(self.component_name.split("/")[0])
+            )
+            repo_dir = self.component_dir.parts[:name_index][-1]
             self.org = repo_dir
             self.nftest_testdir = Path(self.component_dir, "tests")
             self.nftest_main_nf = Path(self.nftest_testdir, "main.nf.test")
