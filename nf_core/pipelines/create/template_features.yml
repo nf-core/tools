@@ -1,11 +1,18 @@
 github:
   skippable_paths:
     - ".github"
-    - ".gitignore"
     - ".gitattributes"
-  short_description: "Skip the creation of a local Git repository."
-  description: ""
-  help_text: ""
+  short_description: "Use a GitHub repository."
+  description: "Create a GitHub repository for the pipeline."
+  help_text: |
+    This will create a GitHub repository for the pipeline.
+
+    The repository will include:
+    - Continuous Integration (CI) tests
+    - Issues and pull requests templates
+
+    The initialisation of a git repository is required to use the nf-core/tools.
+    This means that even if you unselect this option, your pipeline will still contain a `.git` directory and `.gitignore` file.
   linting:
     files_exist:
       - ".github/ISSUE_TEMPLATE/bug_report.yml"
@@ -13,7 +20,6 @@ github:
       - ".github/PULL_REQUEST_TEMPLATE.md"
       - ".github/CONTRIBUTING.md"
       - ".github/.dockstore.yml"
-      - ".gitignore"
     files_unchanged:
       - ".github/ISSUE_TEMPLATE/bug_report.yml"
       - ".github/ISSUE_TEMPLATE/config.yml"
