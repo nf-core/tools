@@ -36,6 +36,7 @@
 - add option to exclude documentation from pipeline template ([#3130](https://github.com/nf-core/tools/pull/3130))
 - add option to exclude test configs from pipeline template ([#3133](https://github.com/nf-core/tools/pull/3133))
 - add option to exclude tower.yml from pipeline template ([#3134](https://github.com/nf-core/tools/pull/3134))
+- test pipeline with conda and singularity on PRs to master ([#3149](https://github.com/nf-core/tools/pull/3149))
 
 ### Linting
 
