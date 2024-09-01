@@ -49,6 +49,7 @@
 - Linting will now check if the schema is correct for the used validation plugin ([#3116])(https://github.com/nf-core/tools/pull/3116)
 - Linting will now check the use of the right validation plugin include statements in the workflow scripts ([#3116])(https://github.com/nf-core/tools/pull/3116)
 - Full linting for correct use of nf-schema and nf-validation ([#3116](https://github.com/nf-core/tools/pull/3116))
+- Handle cases where the directory path contains the name of the component ([#3147](https://github.com/nf-core/tools/pull/3147))
 
 ### Pipeline create command
 
