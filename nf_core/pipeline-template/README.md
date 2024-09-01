@@ -9,9 +9,7 @@
 
 {%- else %}
 
-<h1>
-  {{ name }}
-</h1>
+# {{ name }}
 
 {% endif -%}
 {% if github_badges -%}
