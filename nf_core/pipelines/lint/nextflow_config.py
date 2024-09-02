@@ -1,3 +1,4 @@
+import ast
 import logging
 import re
 from pathlib import Path
@@ -64,14 +65,6 @@ def nextflow_config(self) -> Dict[str, List[str]]:
 
         * Should always be set to default value:
         ``https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}``
-
-    * ``params.validationShowHiddenParams``
-
-        * Determines whether boilerplate params are showed by schema. Set to ``false`` by default
-
-    * ``params.validationSchemaIgnoreParams``
-
-        * A comma separated string of inputs the schema validation should ignore.
 
     **The following variables throw warnings if missing:**
 
@@ -151,17 +144,9 @@ def nextflow_config(self) -> Dict[str, List[str]]:
         ["process.time"],
         ["params.outdir"],
         ["params.input"],
-        ["params.validationShowHiddenParams"],
-        ["params.validationSchemaIgnoreParams"],
     ]
     # Throw a warning if these are missing
-    config_warn = [
-        ["manifest.mainScript"],
-        ["timeline.file"],
-        ["trace.file"],
-        ["report.file"],
-        ["dag.file"],
-    ]
+    config_warn = [["manifest.mainScript"], ["timeline.file"], ["trace.file"], ["report.file"], ["dag.file"]]
     # Old depreciated vars - fail if present
     config_fail_ifdefined = [
         "params.nf_required_version",
@@ -171,6 +156,49 @@ def nextflow_config(self) -> Dict[str, List[str]]:
         "params.name",
         "params.enable_conda",
     ]
+
+    # Lint for plugins
+    config_plugins = ast.literal_eval(self.nf_config.get("plugins", "[]"))
+    found_plugins = []
+    for plugin in config_plugins:
+        if "@" not in plugin:
+            failed.append(f"Plugin '{plugin}' does not have a pinned version")
+        found_plugins.append(plugin.split("@")[0])
+
+    if "nf-validation" in found_plugins or "nf-schema" in found_plugins:
+        if "nf-validation" in found_plugins and "nf-schema" in found_plugins:
+            failed.append("nextflow.config contains both nf-validation and nf-schema")
+
+        if "nf-schema" in found_plugins:
+            passed.append("Found nf-schema plugin")
+            if self.nf_config.get("validation.help.enabled", "false") == "false":
+                failed.append(
+                    "The help message has not been enabled. Set the `validation.help.enabled` configuration option to `true` to enable help messages"
+                )
+            config_fail.extend([["validation.help.enabled"]])
+            config_warn.extend(
+                [
+                    ["validation.help.beforeText"],
+                    ["validation.help.afterText"],
+                    ["validation.help.command"],
+                    ["validation.summary.beforeText"],
+                    ["validation.summary.afterText"],
+                ]
+            )
+            config_fail_ifdefined.extend(
+                [
+                    "params.validationFailUnrecognisedParams",
+                    "params.validationLenientMode",
+                    "params.validationSchemaIgnoreParams",
+                    "params.validationShowHiddenParams",
+                ]
+            )
+
+        if "nf-validation" in found_plugins:
+            passed.append("Found nf-validation plugin")
+            warned.append(
+                "nf-validation has been detected in the pipeline. Please migrate to nf-schema: https://nextflow-io.github.io/nf-schema/latest/migration_guide/"
+            )
 
     # Remove field that should be ignored according to the linting config
     ignore_configs = self.lint_config.get("nextflow_config", []) if self.lint_config is not None else []

@@ -4,6 +4,5 @@ name: "{{ component_name_underscore }}"
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - "{{ bioconda if bioconda else 'YOUR-TOOL-HERE' }}"

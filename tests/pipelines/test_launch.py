@@ -47,7 +47,7 @@ class TestLaunch(TestPipelines):
     def test_get_pipeline_schema(self):
         """Test loading the params schema from a pipeline"""
         self.launcher.get_pipeline_schema()
-        assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
+        assert len(self.launcher.schema_obj.schema["$defs"]["input_output_options"]["properties"]) > 2
 
     @with_temporary_folder
     def test_make_pipeline_schema(self, tmp_path):
@@ -60,8 +60,8 @@ class TestLaunch(TestPipelines):
         Path(test_pipeline_dir, "nextflow_schema.json").unlink()
         self.launcher = nf_core.pipelines.launch.Launch(test_pipeline_dir, params_out=self.nf_params_fn)
         self.launcher.get_pipeline_schema()
-        assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) >= 2
-        assert self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]["outdir"] == {
+        assert len(self.launcher.schema_obj.schema["$defs"]["input_output_options"]["properties"]) >= 2
+        assert self.launcher.schema_obj.schema["$defs"]["input_output_options"]["properties"]["outdir"] == {
             "type": "string",
             "format": "directory-path",
             "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
@@ -91,8 +91,8 @@ class TestLaunch(TestPipelines):
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         self.launcher.merge_nxf_flag_schema()
-        assert self.launcher.schema_obj.schema["allOf"][0] == {"$ref": "#/definitions/coreNextflow"}
-        assert "-resume" in self.launcher.schema_obj.schema["definitions"]["coreNextflow"]["properties"]
+        assert self.launcher.schema_obj.schema["allOf"][0] == {"$ref": "#/$defs/coreNextflow"}
+        assert "-resume" in self.launcher.schema_obj.schema["$defs"]["coreNextflow"]["properties"]
 
     def test_ob_to_questionary_string(self):
         """Check converting a python dict to a pyenquirer format - simple strings"""
