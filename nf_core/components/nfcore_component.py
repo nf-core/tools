@@ -64,12 +64,19 @@ class NFCoreComponent:
             self.process_name = ""
             self.environment_yml: Optional[Path] = Path(self.component_dir, "environment.yml")
 
+            component_list = self.component_name.split("/")
+
             name_index = (
                 len(self.component_dir.parts)
                 - 1
-                - self.component_dir.parts[::-1].index(self.component_name.split("/")[0])
+                - self.component_dir.parts[::-1].index(component_list[0])
             )
+            if len(component_list) != 1 and component_list[0] == component_list[1]:
+                # Handle cases where the subtool has the same name as the tool
+                name_index -= 1
+
             repo_dir = self.component_dir.parts[:name_index][-1]
+            
             self.org = repo_dir
             self.nftest_testdir = Path(self.component_dir, "tests")
             self.nftest_main_nf = Path(self.nftest_testdir, "main.nf.test")
