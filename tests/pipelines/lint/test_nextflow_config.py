@@ -2,11 +2,8 @@ import os
 import re
 from pathlib import Path
 
-import yaml
-
 import nf_core.pipelines.create.create
 import nf_core.pipelines.lint
-from nf_core.utils import NFCoreYamlConfig
 
 from ..test_lint import TestLint
 
@@ -30,9 +27,7 @@ class TestLintNextflowConfig(TestLint):
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) == 0
         assert len(result["warned"]) == 0
-        assert "Config default value correct: params.validate_params" in str(
-            result["passed"]
-        )
+        assert "Config default value correct: params.validate_params" in str(result["passed"])
 
     def test_nextflow_config_bad_name_fail(self):
         """Tests that config variable existence test fails with bad pipeline name"""

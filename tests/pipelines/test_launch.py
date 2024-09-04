@@ -17,13 +17,9 @@ class TestLaunch(TestPipelines):
     def setUp(self) -> None:
         super().setUp()
         self.nf_params_fn = Path(self.pipeline_dir, "nf-params.json")
-        self.launcher = nf_core.pipelines.launch.Launch(
-            self.pipeline_dir, params_out=self.nf_params_fn
-        )
+        self.launcher = nf_core.pipelines.launch.Launch(self.pipeline_dir, params_out=self.nf_params_fn)
 
-    @mock.patch.object(
-        nf_core.pipelines.launch.Launch, "prompt_web_gui", side_effect=[True]
-    )
+    @mock.patch.object(nf_core.pipelines.launch.Launch, "prompt_web_gui", side_effect=[True])
     @mock.patch.object(nf_core.pipelines.launch.Launch, "launch_web_gui")
     def test_launch_pipeline(self, mock_webbrowser, mock_lauch_web_gui):
         """Test the main launch function"""
@@ -38,14 +34,10 @@ class TestLaunch(TestPipelines):
         # Try and to launch, return with error
         assert self.launcher.launch_pipeline() is False
 
-    @mock.patch.object(
-        nf_core.pipelines.launch.Launch, "prompt_web_gui", side_effect=[True]
-    )
+    @mock.patch.object(nf_core.pipelines.launch.Launch, "prompt_web_gui", side_effect=[True])
     @mock.patch.object(nf_core.pipelines.launch.Launch, "launch_web_gui")
     @mock.patch.object(nf_core.pipelines.launch.Confirm, "ask", side_effect=[False])
-    def test_launch_file_exists_overwrite(
-        self, mock_webbrowser, mock_lauch_web_gui, mock_confirm
-    ):
+    def test_launch_file_exists_overwrite(self, mock_webbrowser, mock_lauch_web_gui, mock_confirm):
         """Test that we detect an existing params file and we overwrite it"""
         # Make an empty params file to be overwritten
         open(self.nf_params_fn, "a").close()
@@ -55,14 +47,7 @@ class TestLaunch(TestPipelines):
     def test_get_pipeline_schema(self):
         """Test loading the params schema from a pipeline"""
         self.launcher.get_pipeline_schema()
-        assert (
-            len(
-                self.launcher.schema_obj.schema["$defs"]["input_output_options"][
-                    "properties"
-                ]
-            )
-            > 2
-        )
+        assert len(self.launcher.schema_obj.schema["$defs"]["input_output_options"]["properties"]) > 2
 
     @with_temporary_folder
     def test_make_pipeline_schema(self, tmp_path):
@@ -73,21 +58,10 @@ class TestLaunch(TestPipelines):
         )
         create_obj.init_pipeline()
         Path(test_pipeline_dir, "nextflow_schema.json").unlink()
-        self.launcher = nf_core.pipelines.launch.Launch(
-            test_pipeline_dir, params_out=self.nf_params_fn
-        )
+        self.launcher = nf_core.pipelines.launch.Launch(test_pipeline_dir, params_out=self.nf_params_fn)
         self.launcher.get_pipeline_schema()
-        assert (
-            len(
-                self.launcher.schema_obj.schema["$defs"]["input_output_options"][
-                    "properties"
-                ]
-            )
-            >= 2
-        )
-        assert self.launcher.schema_obj.schema["$defs"]["input_output_options"][
-            "properties"
-        ]["outdir"] == {
+        assert len(self.launcher.schema_obj.schema["$defs"]["input_output_options"]["properties"]) >= 2
+        assert self.launcher.schema_obj.schema["$defs"]["input_output_options"]["properties"]["outdir"] == {
             "type": "string",
             "format": "directory-path",
             "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
@@ -117,13 +91,8 @@ class TestLaunch(TestPipelines):
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         self.launcher.merge_nxf_flag_schema()
-        assert self.launcher.schema_obj.schema["allOf"][0] == {
-            "$ref": "#/$defs/coreNextflow"
-        }
-        assert (
-            "-resume"
-            in self.launcher.schema_obj.schema["$defs"]["coreNextflow"]["properties"]
-        )
+        assert self.launcher.schema_obj.schema["allOf"][0] == {"$ref": "#/$defs/coreNextflow"}
+        assert "-resume" in self.launcher.schema_obj.schema["$defs"]["coreNextflow"]["properties"]
 
     def test_ob_to_questionary_string(self):
         """Check converting a python dict to a pyenquirer format - simple strings"""
@@ -144,9 +113,7 @@ class TestLaunch(TestPipelines):
         """Check the prompt to launch the web schema or use the cli"""
         assert self.launcher.prompt_web_gui() is True
 
-    @mock.patch(
-        "questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Command line"}]
-    )
+    @mock.patch("questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Command line"}])
     def test_prompt_web_gui_false(self, mock_prompt):
         """Check the prompt to launch the web schema or use the cli"""
         assert self.launcher.prompt_web_gui() is False
@@ -166,9 +133,7 @@ class TestLaunch(TestPipelines):
     )
     @mock.patch("webbrowser.open")
     @mock.patch("nf_core.utils.wait_cli_function")
-    def test_launch_web_gui(
-        self, mock_poll_nfcore_web_api, mock_webbrowser, mock_wait_cli_function
-    ):
+    def test_launch_web_gui(self, mock_poll_nfcore_web_api, mock_webbrowser, mock_wait_cli_function):
         """Check the code that opens the web browser"""
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
@@ -189,9 +154,7 @@ class TestLaunch(TestPipelines):
         """Test polling the website for a launch response - status error"""
         with pytest.raises(AssertionError) as exc_info:
             self.launcher.get_web_launch_response()
-        assert exc_info.value.args[0].startswith(
-            "Web launch GUI returned unexpected status (foo): "
-        )
+        assert exc_info.value.args[0].startswith("Web launch GUI returned unexpected status (foo): ")
 
     @mock.patch(
         "nf_core.utils.poll_nfcore_web_api",
@@ -227,9 +190,7 @@ class TestLaunch(TestPipelines):
         ],
     )
     @mock.patch.object(nf_core.pipelines.launch.Launch, "sanitise_web_response")
-    def test_get_web_launch_response_valid(
-        self, mock_poll_nfcore_web_api, mock_sanitise
-    ):
+    def test_get_web_launch_response_valid(self, mock_poll_nfcore_web_api, mock_sanitise):
         """Test polling the website for a launch response - complete, valid response"""
         self.launcher.get_pipeline_schema()
         assert self.launcher.get_web_launch_response() is True
@@ -350,10 +311,7 @@ class TestLaunch(TestPipelines):
         self.launcher.nxf_flags["-name"] = "Test_Workflow"
         self.launcher.nxf_flags["-resume"] = True
         self.launcher.build_command()
-        assert (
-            self.launcher.nextflow_cmd
-            == f'nextflow run {self.pipeline_dir} -name "Test_Workflow" -resume'
-        )
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir} -name "Test_Workflow" -resume'
 
     def test_build_command_params(self):
         """Test the functionality to build a nextflow command - params supplied"""
@@ -361,18 +319,13 @@ class TestLaunch(TestPipelines):
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
         # Check command
-        assert (
-            self.launcher.nextflow_cmd
-            == f'nextflow run {self.pipeline_dir} -params-file "{self.nf_params_fn}"'
-        )
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir} -params-file "{self.nf_params_fn}"'
         # Check saved parameters file
         with open(self.nf_params_fn) as fh:
             try:
                 saved_json = json.load(fh)
             except json.JSONDecodeError as e:
-                raise UserWarning(
-                    f"Unable to load JSON file '{self.nf_params_fn}' due to error {e}"
-                )
+                raise UserWarning(f"Unable to load JSON file '{self.nf_params_fn}' due to error {e}")
 
         assert saved_json == {"input": "custom_input"}
 
@@ -382,7 +335,4 @@ class TestLaunch(TestPipelines):
         self.launcher.get_pipeline_schema()
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
-        assert (
-            self.launcher.nextflow_cmd
-            == f'nextflow run {self.pipeline_dir} --input "custom_input"'
-        )
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.pipeline_dir} --input "custom_input"'
