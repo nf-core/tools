@@ -37,6 +37,7 @@
 - add option to exclude test configs from pipeline template ([#3133](https://github.com/nf-core/tools/pull/3133))
 - add option to exclude tower.yml from pipeline template ([#3134](https://github.com/nf-core/tools/pull/3134))
 - Add tests to ensure all files are part of a template customisation group and all groups are tested ([#3099](https://github.com/nf-core/tools/pull/3099))
+- Replaces the old custom `check_max()` function with the Nextflow native `resourceLimits` directive ([#3037](https://github.com/nf-core/tools/pull/3037))
 
 ### Linting
 
@@ -98,7 +99,6 @@
 
 - Don't cache pip in `linting.yml` ([#2961](https://github.com/nf-core/tools/pull/2961))
 - Lint pipelines with the nf-core template version and post comment if it is outdated ([#2978](https://github.com/nf-core/tools/pull/2978))
-- Replaces the old custom `check_max()` function with the Nextflow native `resourceLimits` directive ([#3037](https://github.com/nf-core/tools/pull/3037))
 
 ### General
 
