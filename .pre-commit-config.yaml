@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.10
+    rev: v0.6.0
     hooks:
       - id: ruff # linter
         args: [--fix, --exit-non-zero-on-fix] # sort imports and fix
@@ -10,7 +10,7 @@ repos:
     hooks:
       - id: prettier
         additional_dependencies:
-          - prettier@3.2.5
+          - prettier@3.3.3
 
   - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
     rev: "2.7.3"
@@ -19,7 +19,7 @@ repos:
         alias: ec
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.10.0"
+    rev: "v1.11.1"
     hooks:
       - id: mypy
         additional_dependencies:
@@ -28,3 +28,4 @@ repos:
           - types-jsonschema
           - types-Markdown
           - types-setuptools
+          - pydantic

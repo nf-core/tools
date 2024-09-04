@@ -6,19 +6,24 @@ import logging
 import re
 import sqlite3
 from pathlib import Path
+from typing import List, Tuple
 from urllib.parse import urlparse, urlunparse
 
 import requests
 import yaml
+from rich.progress import Progress
 
 import nf_core
 import nf_core.modules.modules_utils
+from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_differ import ModulesDiffer
 
 log = logging.getLogger(__name__)
 
 
-def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
+def main_nf(
+    module_lint_object, module: NFCoreComponent, fix_version: bool, registry: str, progress_bar: Progress
+) -> Tuple[List[str], List[str]]:
     """
     Lint a ``main.nf`` module file
 
@@ -38,12 +43,12 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
       of ``software`` and ``prefix``
     """
 
-    inputs = []
-    outputs = []
+    inputs: List[str] = []
+    outputs: List[str] = []
 
     # Check if we have a patch file affecting the 'main.nf' file
     # otherwise read the lines directly from the module
-    lines = None
+    lines: List[str] = []
     if module.is_patched:
         lines = ModulesDiffer.try_apply_patch(
             module.component_name,
@@ -51,8 +56,9 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
             module.patch_path,
             Path(module.component_dir).relative_to(module.base_dir),
             reverse=True,
-        ).get("main.nf")
-    if lines is None:
+        ).get("main.nf", [""])
+
+    if len(lines) == 0:
         try:
             # Check whether file exists and load it
             with open(module.main_nf) as fh:
@@ -60,10 +66,14 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
             module.passed.append(("main_nf_exists", "Module file exists", module.main_nf))
         except FileNotFoundError:
             module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
-            return
+            raise FileNotFoundError(f"Module file does not exist: {module.main_nf}")
 
     deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
-    lines_j = "\n".join(lines)
+    if len(lines) > 0:
+        lines_j = "\n".join(lines)
+    else:
+        lines_j = ""
+
     for i in deprecated_i:
         if i in lines_j:
             module.failed.append(
@@ -81,7 +91,8 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
     script_lines = []
     shell_lines = []
     when_lines = []
-    for line in lines:
+    iter_lines = iter(lines)
+    for line in iter_lines:
         if re.search(r"^\s*process\s*\w*\s*{", line) and state == "module":
             state = "process"
         if re.search(r"input\s*:", line) and state in ["process"]:
@@ -104,6 +115,13 @@ def main_nf(module_lint_object, module, fix_version, registry, progress_bar):
         if state == "process" and not _is_empty(line):
             process_lines.append(line)
         if state == "input" and not _is_empty(line):
+            # allow multiline tuples
+            if "tuple" in line and line.count("(") <= 1:
+                joint_tuple = line
+                while re.sub(r"\s", "", line) != ")":
+                    joint_tuple = joint_tuple + line
+                    line = next(iter_lines)
+                line = joint_tuple
             inputs.extend(_parse_input(module, line))
         if state == "output" and not _is_empty(line):
             outputs += _parse_output(module, line)
@@ -423,14 +441,21 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
 
 
 def check_process_labels(self, lines):
-    correct_process_labels = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
+    correct_process_labels = [
+        "process_single",
+        "process_low",
+        "process_medium",
+        "process_high",
+        "process_long",
+        "process_high_memory",
+    ]
     all_labels = [line.strip() for line in lines if line.lstrip().startswith("label ")]
     bad_labels = []
     good_labels = []
     if len(all_labels) > 0:
         for label in all_labels:
             try:
-                label = re.match(r"^label\s+'?([a-zA-Z0-9_-]+)'?$", label).group(1)
+                label = re.match(r"^label\s+'?\"?([a-zA-Z0-9_-]+)'?\"?$", label).group(1)
             except AttributeError:
                 self.warned.append(
                     (

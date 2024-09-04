@@ -27,8 +27,7 @@ def nfcore_yml(self) -> Dict[str, List[str]]:
     ignored: List[str] = []
 
     # Remove field that should be ignored according to the linting config
-    ignore_configs = self.lint_config.get(".nf-core", [])
-
+    ignore_configs = self.lint_config.get(".nf-core", []) if self.lint_config is not None else []
     try:
         with open(Path(self.wf_path, ".nf-core.yml")) as fh:
             content = fh.read()

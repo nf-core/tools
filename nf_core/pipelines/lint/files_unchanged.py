@@ -112,7 +112,8 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     logging.getLogger("nf_core.pipelines.create").setLevel(logging.ERROR)
 
     # Generate a new pipeline with nf-core create that we can compare to
-    tmp_dir = tempfile.mkdtemp()
+    tmp_dir = Path(tempfile.TemporaryDirectory().name)
+    tmp_dir.mkdir(parents=True)
 
     # Create a template.yaml file for the pipeline creation
     template_yaml = {
@@ -123,10 +124,11 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     }
 
     template_yaml_path = Path(tmp_dir, "template.yaml")
+
     with open(template_yaml_path, "w") as fh:
         yaml.dump(template_yaml, fh, default_flow_style=False)
 
-    test_pipeline_dir = os.path.join(tmp_dir, f"{prefix}-{short_name}")
+    test_pipeline_dir = Path(tmp_dir, f"{prefix}-{short_name}")
     create_obj = nf_core.pipelines.create.create.PipelineCreate(
         None, None, None, no_git=True, outdir=test_pipeline_dir, template_config=template_yaml_path
     )
@@ -141,7 +143,7 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         """Helper function - get file path for template file"""
         return Path(test_pipeline_dir, file_path)
 
-    ignore_files = self.lint_config.get("files_unchanged", [])
+    ignore_files = self.lint_config.get("files_unchanged", []) if self.lint_config is not None else []
 
     # Files that must be completely unchanged from template
     for files in files_exact:
