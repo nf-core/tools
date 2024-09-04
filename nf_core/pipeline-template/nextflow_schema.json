@@ -135,6 +135,7 @@
                 }
             }
         },
+        {%- endif %}
         "generic_options": {
             "title": "Generic options",
             "type": "object",
