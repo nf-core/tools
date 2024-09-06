@@ -172,8 +172,8 @@ def get_components_to_install(
                     component_dict = {"name": component_name}
                     subworkflows[component_name] = component_dict
 
-    if Path(subworkflow_dir, "meta.yml").exists():
-        with open(Path(subworkflow_dir, "meta.yml")) as fh:
+    if (sw_meta := Path(subworkflow_dir, "meta.yml")).exists():
+        with open(sw_meta) as fh:
             meta = yaml.safe_load(fh)
             if "components" in meta:
                 components = meta["components"]
