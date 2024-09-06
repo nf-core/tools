@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import questionary
 from rich import print
@@ -49,7 +49,7 @@ class ComponentInstall(ComponentCommand):
         else:
             self.installed_by = [self.component_type]
 
-    def install(self, component: str, silent: bool = False) -> bool:
+    def install(self, component: Union[str, Dict[str, str]], silent: bool = False) -> bool:
         if isinstance(component, dict):
             remote_url = component.get("git_remote", self.current_remote)
             branch = component.get("branch", self.branch)
