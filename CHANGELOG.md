@@ -50,6 +50,7 @@
 - Linting will now check the use of the right validation plugin include statements in the workflow scripts ([#3116])(https://github.com/nf-core/tools/pull/3116)
 - Full linting for correct use of nf-schema and nf-validation ([#3116](https://github.com/nf-core/tools/pull/3116))
 - Handle cases where the directory path contains the name of the component ([#3147](https://github.com/nf-core/tools/pull/3147))
+- Don't test conda `environment.yml` `name` attribute (which should no longer be there) ([#3161](https://github.com/nf-core/tools/pull/3161))
 
 ### Pipeline create command
 
