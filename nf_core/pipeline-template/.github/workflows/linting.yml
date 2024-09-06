@@ -58,7 +58,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PR_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: nf-core -l lint_log.txt pipelines lint --dir ${GITHUB_WORKSPACE} --markdown lint_results.md
-        if: ${{ github.base_ref == 'dev' }}
+        if: ${{ github.base_ref != 'master' }}
 
       - name: Run nf-core pipelines lint --release
         env:
