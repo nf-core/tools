@@ -1309,8 +1309,7 @@ class DownloadWorkflow:
         log.debug(f"Downloading Singularity image: '{container}'")
 
         # Set output path to save file to
-        output_path = cache_path or out_path
-        output_path_tmp = f"{output_path}.partial"
+        output_path_tmp = f"{out_path}.partial"
         log.debug(f"Downloading to: '{output_path_tmp}'")
 
         # Set up progress bar
@@ -1340,16 +1339,16 @@ class DownloadWorkflow:
                         fh.write(data)
 
             # Rename partial filename to final filename
-            os.rename(output_path_tmp, output_path)
+            os.rename(output_path_tmp, out_path)
 
-            # Copy cached download if we are using the cache
+            # Copy download to cache if one is defined
             if cache_path:
-                log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
-                progress.update(task, description="Copying from cache to target directory")
-                shutil.copyfile(cache_path, out_path)
+                log.debug(f"Copying {container} to cache: '{os.path.basename(out_path)}'")
+                progress.update(task, description="Copying from target directory to cache")
+                shutil.copyfile(out_path, cache_path)
 
             # Create symlinks to ensure that the images are found even with different registries being used.
-            self.symlink_singularity_images(output_path)
+            self.symlink_singularity_images(out_path)
 
             progress.remove_task(task)
 
@@ -1361,8 +1360,8 @@ class DownloadWorkflow:
             log.debug(f"Deleting incompleted singularity image download:\n'{output_path_tmp}'")
             if output_path_tmp and os.path.exists(output_path_tmp):
                 os.remove(output_path_tmp)
-            if output_path and os.path.exists(output_path):
-                os.remove(output_path)
+            if out_path and os.path.exists(out_path):
+                os.remove(out_path)
             # Re-raise the caught exception
             raise
         finally:
@@ -1383,8 +1382,6 @@ class DownloadWorkflow:
         Raises:
             Various exceptions possible from `subprocess` execution of Singularity.
         """
-        output_path = cache_path or out_path
-
         # where the output of 'singularity pull' is first generated before being copied to the NXF_SINGULARITY_CACHDIR.
         # if not defined by the Singularity administrators, then use the temporary directory to avoid storing the images in the work directory.
         if os.environ.get("SINGULARITY_CACHEDIR") is None:
@@ -1406,11 +1403,11 @@ class DownloadWorkflow:
                 "singularity",
                 "pull",
                 "--name",
-                output_path,
+                out_path,
                 address,
             ]
         elif shutil.which("apptainer"):
-            singularity_command = ["apptainer", "pull", "--name", output_path, address]
+            singularity_command = ["apptainer", "pull", "--name", out_path, address]
         else:
             raise OSError("Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH")
         log.debug(f"Building singularity image: {address}")
@@ -1453,14 +1450,14 @@ class DownloadWorkflow:
                     error_msg=lines,
                 )
 
-        # Copy cached download if we are using the cache
+        # Copy download to cache if one is defined
         if cache_path:
-            log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
-            progress.update(task, current_log="Copying from cache to target directory")
-            shutil.copyfile(cache_path, out_path)
+            log.debug(f"Copying {container} to cache: '{os.path.basename(out_path)}'")
+            progress.update(task, current_log="Copying from target directory to cache")
+            shutil.copyfile(out_path, cache_path)
 
         # Create symlinks to ensure that the images are found even with different registries being used.
-        self.symlink_singularity_images(output_path)
+        self.symlink_singularity_images(out_path)
 
         progress.remove_task(task)
 
