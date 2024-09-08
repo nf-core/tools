@@ -47,7 +47,7 @@ RUN conda config --add channels defaults && \
     conda config --set channel_priority strict && \
     conda install --quiet --yes --name base \
     nextflow \
-    nf-test \
+    nf-test=0.9.0 \
     prettier \
     pre-commit \
     ruff \
