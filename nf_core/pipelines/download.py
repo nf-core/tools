@@ -1285,11 +1285,17 @@ class DownloadWorkflow:
 
     def singularity_copy_cache_image(self, container: str, out_path: str, cache_path: str) -> None:
         """Copy Singularity image from NXF_SINGULARITY_CACHEDIR to target folder."""
-        log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
-        shutil.copyfile(cache_path, out_path)
+        self.singularity_copy_image(container, cache_path, out_path)
         # Create symlinks to ensure that the images are found even with different registries being used.
         self.symlink_singularity_images(cache_path)
-        self.symlink_singularity_images(out_path)
+
+    def singularity_copy_image(self, container: str, from_path: str, to_path: str) -> None:
+        """Copy Singularity image between folders. This function is used seamlessly
+        across the target directory, NXF_SINGULARITY_CACHEDIR, and NXF_SINGULARITY_LIBRARYDIR."""
+        log.debug(f"Copying {container} to cache: '{os.path.basename(from_path)}'")
+        shutil.copyfile(from_path, to_path)
+        # Create symlinks to ensure that the images are found even with different registries being used.
+        self.symlink_singularity_images(to_path)
 
     def singularity_download_image(
         self, container: str, out_path: str, cache_path: Optional[str], progress: DownloadProgress
@@ -1342,11 +1348,8 @@ class DownloadWorkflow:
 
             # Copy download to cache if one is defined
             if cache_path:
-                log.debug(f"Copying {container} to cache: '{os.path.basename(out_path)}'")
                 progress.update(task, description="Copying from target directory to cache")
-                shutil.copyfile(out_path, cache_path)
-                # Create symlinks to ensure that the images are found even with different registries being used.
-                self.symlink_singularity_images(cache_path)
+                self.singularity_copy_image(container, out_path, cache_path)
 
             # Create symlinks to ensure that the images are found even with different registries being used.
             self.symlink_singularity_images(out_path)
@@ -1453,11 +1456,8 @@ class DownloadWorkflow:
 
         # Copy download to cache if one is defined
         if cache_path:
-            log.debug(f"Copying {container} to cache: '{os.path.basename(out_path)}'")
             progress.update(task, current_log="Copying from target directory to cache")
-            shutil.copyfile(out_path, cache_path)
-            # Create symlinks to ensure that the images are found even with different registries being used.
-            self.symlink_singularity_images(cache_path)
+            self.singularity_copy_image(container, out_path, cache_path)
 
         # Create symlinks to ensure that the images are found even with different registries being used.
         self.symlink_singularity_images(out_path)
