@@ -1086,7 +1086,7 @@ class DownloadWorkflow:
 
                 # Organise containers based on what we need to do with them
                 containers_exist: List[str] = []
-                containers_cache: List[Tuple[str, str, Optional[str]]] = []
+                containers_cache: List[Tuple[str, str, str]] = []
                 containers_download: List[Tuple[str, str, Optional[str]]] = []
                 containers_pull: List[Tuple[str, str, Optional[str]]] = []
                 for container in self.containers:
@@ -1283,15 +1283,13 @@ class DownloadWorkflow:
 
         return (out_path, cache_path)
 
-    def singularity_copy_cache_image(self, container: str, out_path: str, cache_path: Optional[str]) -> None:
+    def singularity_copy_cache_image(self, container: str, out_path: str, cache_path: str) -> None:
         """Copy Singularity image from NXF_SINGULARITY_CACHEDIR to target folder."""
-        # Copy to destination folder if we have a cached version
-        if cache_path and os.path.exists(cache_path):
-            log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
-            shutil.copyfile(cache_path, out_path)
-            # Create symlinks to ensure that the images are found even with different registries being used.
-            self.symlink_singularity_images(cache_path)
-            self.symlink_singularity_images(out_path)
+        log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
+        shutil.copyfile(cache_path, out_path)
+        # Create symlinks to ensure that the images are found even with different registries being used.
+        self.symlink_singularity_images(cache_path)
+        self.symlink_singularity_images(out_path)
 
     def singularity_download_image(
         self, container: str, out_path: str, cache_path: Optional[str], progress: DownloadProgress
