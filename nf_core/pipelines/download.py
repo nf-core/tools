@@ -1087,11 +1087,12 @@ class DownloadWorkflow:
                 # Organise containers based on what we need to do with them
                 containers_exist: List[str] = []
                 containers_cache: List[Tuple[str, str, str]] = []
+                containers_library: List[Tuple[str, str, str, Optional[str]]] = []
                 containers_download: List[Tuple[str, str, Optional[str]]] = []
                 containers_pull: List[Tuple[str, str, Optional[str]]] = []
                 for container in self.containers:
                     # Fetch the output and cached filenames for this container
-                    out_path, cache_path = self.singularity_image_filenames(container)
+                    out_path, cache_path, library_path = self.singularity_image_filenames(container)
 
                     # Check that the directories exist
                     out_path_dir = os.path.dirname(out_path)
@@ -1109,9 +1110,14 @@ class DownloadWorkflow:
                         containers_exist.append(container)
                         continue
 
-                    # We have a copy of this in the NXF_SINGULARITY_CACHE dir
+                    # We have a copy of this in NXF_SINGULARITY_CACHEDIR
                     if cache_path and os.path.exists(cache_path):
                         containers_cache.append((container, out_path, cache_path))
+                        continue
+
+                    # We have a copy of this in NXF_SINGULARITY_LIBRARYDIR
+                    if library_path and os.path.exists(library_path):
+                        containers_library.append((container, library_path, out_path, cache_path))
                         continue
 
                     # Direct download within Python
@@ -1143,6 +1149,12 @@ class DownloadWorkflow:
                     for container in containers_cache:
                         progress.update(task, description="Copying singularity images from cache")
                         self.singularity_copy_cache_image(*container)
+                        progress.update(task, advance=1)
+
+                if containers_library:
+                    for container in containers_library:
+                        progress.update(task, description="Copying singularity images from library")
+                        self.singularity_copy_library_image(*container)
                         progress.update(task, advance=1)
 
                 if containers_download or containers_pull:
@@ -1226,7 +1238,7 @@ class DownloadWorkflow:
                         # Task should advance in any case. Failure to pull will not kill the download process.
                         progress.update(task, advance=1)
 
-    def singularity_image_filenames(self, container: str) -> Tuple[str, Optional[str]]:
+    def singularity_image_filenames(self, container: str) -> Tuple[str, Optional[str], Optional[str]]:
         """Check Singularity cache for image, copy to destination folder if found.
 
         Args:
@@ -1234,11 +1246,12 @@ class DownloadWorkflow:
                                 or a Docker Hub repository ID.
 
         Returns:
-            tuple (str, str):   Returns a tuple of (out_path, cache_path).
+            (str, str, str):    Returns a tuple of (out_path, cache_path, library_path).
                                 out_path is the final target output path. it may point to the NXF_SINGULARITY_CACHEDIR, if cache utilisation was set to 'amend'.
                                 If cache utilisation was set to 'copy', it will point to the target folder, a subdirectory of the output directory. In the latter case,
                                 cache_path may either be None (image is not yet cached locally) or point to the image in the NXF_SINGULARITY_CACHEDIR, so it will not be
                                 downloaded from the web again, but directly copied from there. See get_singularity_images() for implementation.
+                                library_path is the points to the container in NXF_SINGULARITY_LIBRARYDIR, if the latter is defined.
         """
 
         # Generate file paths
@@ -1281,13 +1294,25 @@ class DownloadWorkflow:
         elif self.container_cache_utilisation in ["amend", "copy"]:
             raise FileNotFoundError("Singularity cache is required but no '$NXF_SINGULARITY_CACHEDIR' set!")
 
-        return (out_path, cache_path)
+        library_path = None
+        if os.environ.get("NXF_SINGULARITY_LIBRARYDIR"):
+            library_path = os.path.join(os.environ["NXF_SINGULARITY_LIBRARYDIR"], out_name)
+
+        return (out_path, cache_path, library_path)
 
     def singularity_copy_cache_image(self, container: str, out_path: str, cache_path: str) -> None:
         """Copy Singularity image from NXF_SINGULARITY_CACHEDIR to target folder."""
         self.singularity_copy_image(container, cache_path, out_path)
         # Create symlinks to ensure that the images are found even with different registries being used.
         self.symlink_singularity_images(cache_path)
+
+    def singularity_copy_library_image(
+        self, container: str, library_path: str, out_path: str, cache_path: Optional[str]
+    ) -> None:
+        """Copy Singularity image from NXF_SINGULARITY_LIBRARYDIR to target folder, and possibly NXF_SINGULARITY_CACHEDIR."""
+        self.singularity_copy_image(container, library_path, out_path)
+        if cache_path:
+            self.singularity_copy_image(container, library_path, cache_path)
 
     def singularity_copy_image(self, container: str, from_path: str, to_path: str) -> None:
         """Copy Singularity image between folders. This function is used seamlessly
