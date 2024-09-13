@@ -51,6 +51,7 @@ class ComponentInstall(ComponentCommand):
 
     def install(self, component: Union[str, Dict[str, str]], silent: bool = False) -> bool:
         if isinstance(component, dict):
+            # Override modules_repo when the component to install is a dependency from a subworkflow.
             remote_url = component.get("git_remote", self.current_remote)
             branch = component.get("branch", self.branch)
             self.modules_repo = ModulesRepo(remote_url, branch)
