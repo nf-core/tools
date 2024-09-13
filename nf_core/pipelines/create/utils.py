@@ -37,7 +37,7 @@ def init_context(value: Dict[str, Any]) -> Iterator[None]:
 NFCORE_PIPELINE_GLOBAL: bool = True
 
 # YAML file describing template features
-features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "templatefeatures.yml"
+features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "template_features.yml"
 
 
 class CreateConfig(NFCoreTemplateConfig):

@@ -68,7 +68,7 @@ jobs:
           --download-configuration
 
       - name: Inspect download
-        run: tree ./${{ env.REPOTITLE_LOWERCASE }}
+        run: tree ./${{ env.REPOTITLE_LOWERCASE }}{% endraw %}{% if test_config %}{% raw %}
 
       - name: Run the downloaded pipeline (stub)
         id: stub_run_pipeline
@@ -83,4 +83,4 @@ jobs:
         env:
           NXF_SINGULARITY_CACHEDIR: ./
           NXF_SINGULARITY_HOME_MOUNT: true
-        run: nextflow run ./${{ env.REPOTITLE_LOWERCASE }}/$( sed 's/\W/_/g' <<< ${{ env.REPO_BRANCH }}) -profile test,singularity --outdir ./results{% endraw %}
+        run: nextflow run ./${{ env.REPOTITLE_LOWERCASE }}/$( sed 's/\W/_/g' <<< ${{ env.REPO_BRANCH }}) -profile test,singularity --outdir ./results{% endraw %}{% endif %}

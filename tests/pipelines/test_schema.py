@@ -24,6 +24,9 @@ class TestSchema(unittest.TestCase):
     def setUp(self):
         """Create a new PipelineSchema object"""
         self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
+        self.schema_obj.schema_draft = "https://json-schema.org/draft/2020-12/schema"
+        self.schema_obj.defs_notation = "$defs"
+        self.schema_obj.validation_plugin = "nf-schema"
         self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
         # Create a test pipeline in temp directory
@@ -105,7 +108,7 @@ class TestSchema(unittest.TestCase):
         docs = self.schema_obj.print_documentation()
         assert self.schema_obj.schema["title"] in docs
         assert self.schema_obj.schema["description"] in docs
-        for definition in self.schema_obj.schema.get("definitions", {}).values():
+        for definition in self.schema_obj.schema.get("$defs", {}).values():
             assert definition["title"] in docs
             assert definition["description"] in docs
 
@@ -175,40 +178,43 @@ class TestSchema(unittest.TestCase):
         Check that the schema validation fails when we have duplicate IDs in definition subschema
         """
         self.schema_obj.schema = {
-            "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"foo": {}}}},
-            "allOf": [{"$ref": "#/definitions/groupOne"}, {"$ref": "#/definitions/groupTwo"}],
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$defs": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"foo": {}}}},
+            "allOf": [{"$ref": "#/$defs/groupOne"}, {"$ref": "#/$defs/groupTwo"}],
         }
         with pytest.raises(AssertionError) as exc_info:
             self.schema_obj.validate_schema(self.schema_obj.schema)
-        assert exc_info.value.args[0] == "Duplicate parameter found in schema `definitions`: `foo`"
+        assert exc_info.value.args[0] == "Duplicate parameter found in schema `$defs`: `foo`"
 
     def test_validate_schema_fail_missing_def(self):
         """
-        Check that the schema validation fails when we a definition in allOf is not in definitions
+        Check that the schema validation fails when we a definition in allOf is not in $defs
         """
         self.schema_obj.schema = {
-            "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"bar": {}}}},
-            "allOf": [{"$ref": "#/definitions/groupOne"}],
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$defs": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"bar": {}}}},
+            "allOf": [{"$ref": "#/$defs/groupOne"}],
         }
         with pytest.raises(AssertionError) as exc_info:
             self.schema_obj.validate_schema(self.schema_obj.schema)
-        assert exc_info.value.args[0] == "Definition subschema `groupTwo` not included in schema `allOf`"
+        assert exc_info.value.args[0] == "Definition subschema `#/$defs/groupTwo` not included in schema `allOf`"
 
     def test_validate_schema_fail_unexpected_allof(self):
         """
         Check that the schema validation fails when we an unrecognised definition is in allOf
         """
         self.schema_obj.schema = {
-            "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"bar": {}}}},
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$defs": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"bar": {}}}},
             "allOf": [
-                {"$ref": "#/definitions/groupOne"},
-                {"$ref": "#/definitions/groupTwo"},
-                {"$ref": "#/definitions/groupThree"},
+                {"$ref": "#/$defs/groupOne"},
+                {"$ref": "#/$defs/groupTwo"},
+                {"$ref": "#/$defs/groupThree"},
             ],
         }
         with pytest.raises(AssertionError) as exc_info:
             self.schema_obj.validate_schema(self.schema_obj.schema)
-        assert exc_info.value.args[0] == "Subschema `groupThree` found in `allOf` but not `definitions`"
+        assert exc_info.value.args[0] == "Subschema `groupThree` found in `allOf` but not `$defs`"
 
     def test_make_skeleton_schema(self):
         """Test making a new schema skeleton"""
@@ -264,7 +270,7 @@ class TestSchema(unittest.TestCase):
         even when they're in a group
         """
         self.schema_obj.schema = {
-            "definitions": {
+            "$defs": {
                 "subSchemaId": {
                     "properties": {"foo": {"type": "string"}, "bar": {"type": "string"}},
                     "required": ["foo"],
@@ -274,8 +280,8 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.pipeline_params = {"bar": True}
         self.schema_obj.no_prompts = True
         params_removed = self.schema_obj.remove_schema_notfound_configs()
-        assert len(self.schema_obj.schema["definitions"]["subSchemaId"]["properties"]) == 1
-        assert "required" not in self.schema_obj.schema["definitions"]["subSchemaId"]
+        assert len(self.schema_obj.schema["$defs"]["subSchemaId"]["properties"]) == 1
+        assert "required" not in self.schema_obj.schema["$defs"]["subSchemaId"]
         assert len(params_removed) == 1
         assert "foo" in params_removed
 

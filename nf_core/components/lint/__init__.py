@@ -114,9 +114,7 @@ class ComponentLint(ComponentCommand):
                         )
                     )
             if not self.all_remote_components:
-                raise LookupError(
-                    f"No {self.component_type} from {self.modules_repo.remote_url} installed in pipeline."
-                )
+                log.warning(f"No {self.component_type} from {self.modules_repo.remote_url} installed in pipeline.")
             local_component_dir = Path(self.directory, self.component_type, "local")
 
             if local_component_dir.exists():
@@ -146,7 +144,7 @@ class ComponentLint(ComponentCommand):
             ]
             self.all_local_components = []
             if not self.all_remote_components:
-                raise LookupError(f"No {self.component_type} in '{self.component_type}' directory")
+                log.warning(f"No {self.component_type} in '{self.component_type}' directory")
 
             # This could be better, perhaps glob for all nextflow.config files in?
             self.config = nf_core.utils.fetch_wf_config(self.directory / "tests" / "config", cache_config=True)

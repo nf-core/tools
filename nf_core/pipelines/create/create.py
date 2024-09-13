@@ -70,6 +70,8 @@ class PipelineCreate:
                     self.config = CreateConfig(**config_yml["template"].model_dump())
                 else:
                     raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
+                # Update the output directory
+                self.config.outdir = outdir if outdir else Path().cwd()
             except (FileNotFoundError, UserWarning):
                 log.debug("The '.nf-core.yml' configuration file was not found.")
         elif (name and description and author) or (

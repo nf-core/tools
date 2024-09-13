@@ -44,7 +44,7 @@ jobs:
       - name: Create Matrix
         id: create_matrix
         run: |
-          echo "matrix=$(yq 'keys | tojson(0)' nf_core/pipelines/create/templatefeatures.yml)" >> $GITHUB_OUTPUT
+          echo "matrix=$(yq 'keys | filter(. != "github") | filter(. != "is_nfcore") | filter(. != "test_config") | tojson(0)' nf_core/pipelines/create/template_features.yml)" >> $GITHUB_OUTPUT
 
   RunTestWorkflow:
     runs-on: ${{ matrix.runner }}
@@ -66,8 +66,6 @@ jobs:
             runner: ubuntu-latest
             profile: "docker"
         exclude:
-          - TEMPLATE: github
-          - TEMPLATE: is_nfcore
           - TEMPLATE: nf_core_configs
             profile: "self_hosted_runner"
       fail-fast: false
