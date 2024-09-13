@@ -38,6 +38,7 @@
 - add option to exclude tower.yml from pipeline template ([#3134](https://github.com/nf-core/tools/pull/3134))
 - run nf-core lint `--release` on PRs to master ([#3148](https://github.com/nf-core/tools/pull/3148))
 - Add tests to ensure all files are part of a template customisation group and all groups are tested ([#3099](https://github.com/nf-core/tools/pull/3099))
+- Update the syntax of `utils_nfcore_pipeline_pipeline` local subworkflow ([#3166](https://github.com/nf-core/tools/pull/3166))
 
 ### Linting
 
