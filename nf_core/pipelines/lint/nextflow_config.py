@@ -346,7 +346,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
             failed.append(f"Config `params.custom_config_base` is not set to `{custom_config_base}`")
 
         # Check that lines for loading custom profiles exist
-        lines = [
+        old_lines = [
             r"// Load nf-core custom profiles from different Institutions",
             r"try {",
             r'includeConfig "${params.custom_config_base}/nfcore_custom.config"',
@@ -354,11 +354,19 @@ def nextflow_config(self) -> Dict[str, List[str]]:
             r'System.err.println("WARNING: Could not load nf-core/config profiles: ${params.custom_config_base}/nfcore_custom.config")',
             r"}",
         ]
+        lines = [
+            r"// Load nf-core custom profiles from different Institutions",
+            r'''includeConfig !System.getenv('NXF_OFFLINE') && params.custom_config_base ? "${params.custom_config_base}/nfcore_custom.config" : "/dev/null"''',
+        ]
         path = Path(self.wf_path, "nextflow.config")
         i = 0
         with open(path) as f:
             for line in f:
-                if lines[i] in line:
+                if old_lines[i] in line:
+                    i += 1
+                    if i == len(old_lines):
+                        break
+                elif lines[i] in line:
                     i += 1
                     if i == len(lines):
                         break
@@ -366,6 +374,12 @@ def nextflow_config(self) -> Dict[str, List[str]]:
                     i = 0
         if i == len(lines):
             passed.append("Lines for loading custom profiles found")
+        elif i == len(old_lines):
+            failed.append(
+                "Old lines for loading custom profiles found. File should contain: ```groovy\n{}".format(
+                    "\n".join(lines)
+                )
+            )
         else:
             lines[2] = f"\t{lines[2]}"
             lines[4] = f"\t{lines[4]}"
