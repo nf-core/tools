@@ -183,6 +183,7 @@ code_linters:
 citations:
   skippable_paths:
     - "assets/methods_description_template.yml"
+    - "CITATIONS.md"
   short_description: "Include citations"
   description: "Include pipeline tools citations in CITATIONS.md and a method description in the MultiQC report (if enabled)."
   help_text: |
