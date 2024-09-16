@@ -60,6 +60,7 @@ ci:
 igenomes:
   skippable_paths:
     - "conf/igenomes.config"
+    - "conf/igenomes_ignored.config"
   short_description: "Use reference genomes"
   description: "The pipeline will be configured to use a copy of the most common reference genome files from iGenomes"
   help_text: |
