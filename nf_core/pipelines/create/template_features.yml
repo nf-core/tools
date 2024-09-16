@@ -272,6 +272,18 @@ modules:
       - "modules.json"
   nfcore_pipelines: False
   custom_pipelines: True
+workflows_dir:
+  skippable_paths:
+    - "workflows"
+  short_description: "Add workflows directory"
+  description: "Add a directory to store Nextflow workflows"
+  help_text: |
+    This will add a directory to store Nextflow workflows.
+    This is useful to keep the pipeline structure clean and organized.
+
+    The pipeline structure will have a `main.nf` file in the root directory. This will contain the main workflow and call the rest of the workflows in the `workflows` directory.
+  nfcore_pipelines: False
+  custom_pipelines: True
 changelog:
   skippable_paths:
     - "CHANGELOG.md"
