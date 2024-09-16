@@ -113,7 +113,7 @@ def create_tmp_pipeline(no_git: bool = False) -> Tuple[Path, Path, str, Path]:
     tmp_dir = Path(tempfile.TemporaryDirectory().name)
     root_repo_dir = Path(__file__).resolve().parent.parent
     template_dir = root_repo_dir / "nf_core" / "pipeline-template"
-    pipeline_name = "mypipeline"
+    pipeline_name = "testpipeline"
     pipeline_dir = tmp_dir / pipeline_name
     pipeline_dir.mkdir(parents=True)
 
@@ -123,7 +123,7 @@ def create_tmp_pipeline(no_git: bool = False) -> Tuple[Path, Path, str, Path]:
         org_path="nf-core",
         lint=None,
         template=NFCoreTemplateConfig(
-            name="mypipeline",
+            name="testpipeline",
             author="me",
             description="it is mine",
             org="nf-core",
