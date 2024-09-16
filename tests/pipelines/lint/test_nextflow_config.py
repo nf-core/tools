@@ -106,9 +106,9 @@ class TestLintNextflowConfig(TestLint):
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj.load_pipeline_config()
         result = lint_obj.nextflow_config()
-        assert len(result["failed"]) == 1
+        assert len(result["failed"]) == 2
         assert (
-            result["failed"][0]
+            result["failed"][1]
             == "Config default value incorrect: `params.custom_config_base` is set as `https://raw.githubusercontent.com/nf-core/configs/master` in `nextflow_schema.json` but is `null` in `nextflow.config`."
         )
 
