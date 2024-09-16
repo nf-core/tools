@@ -45,7 +45,7 @@ USER gitpod
 RUN conda config --add channels bioconda && \
     conda config --add channels conda-forge && \
     conda config --set channel_priority strict && \
-    conda install --quiet --yes --name base \
+    conda install --quiet --yes --update-all --name base \
     nextflow \
     nf-test \
     prettier \
