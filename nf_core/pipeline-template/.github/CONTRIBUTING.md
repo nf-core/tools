@@ -30,16 +30,18 @@ If you're not used to this workflow with git, you can start with some [docs from
 
 ## Tests
 
+{%- if test_config %}
 You have the option to test your changes locally by running the pipeline. For receiving warnings about process selectors and other `debug` information, it is recommended to use the debug profile. Execute all the tests with the following command:
 
 ```bash
 nf-test test --profile debug,test,docker --verbose
 ```
 
+{% endif %}
 When you create a pull request with changes, [GitHub Actions](https://github.com/features/actions) will run automatic tests.
 Typically, pull-requests are only fully reviewed when these tests are passing, though of course we can help out before then.
 
-There are typically two types of tests that run:
+{% if test_config %}There are typically two types of tests that run:{% endif %}
 
 ### Lint tests
 
@@ -48,12 +50,15 @@ To enforce these and ensure that all pipelines stay in sync, we have developed a
 
 If any failures or warnings are encountered, please follow the listed URL for more documentation.
 
+{%- if test_config %}
+
 ### Pipeline tests
 
 Each `nf-core` pipeline should be set up with a minimal set of test-data.
 `GitHub Actions` then runs the pipeline on this data to ensure that it exits successfully.
 If there are any failures then the automated tests fail.
 These tests are run both with the latest available version of `Nextflow` and also the minimum required version that is stated in the pipeline code.
+{%- endif %}
 
 ## Patch
 
@@ -87,8 +92,10 @@ If you wish to contribute a new step, please use the following coding standards:
 6. Add sanity checks and validation for all relevant parameters.
 7. Perform local tests to validate that the new code works as expected.
 8. If applicable, add a new test command in `.github/workflow/ci.yml`.
+   {%- if multiqc %}
 9. Update MultiQC config `assets/multiqc_config.yml` so relevant suffixes, file name clean up and module plots are in the appropriate order. If applicable, add a [MultiQC](https://https://multiqc.info/) module.
 10. Add a description of the output files and if relevant any appropriate images from the MultiQC report to `docs/output.md`.
+    {% endif %}
 
 ### Default values
 
@@ -116,6 +123,7 @@ If you are using a new feature from core Nextflow, you may bump the minimum requ
 ### Images and figures
 
 For overview images and other documents we follow the nf-core [style guidelines and examples](https://nf-co.re/developers/design_guidelines).
+{%- if codespaces %}
 
 ## GitHub Codespaces
 
@@ -131,3 +139,4 @@ To get started:
 Devcontainer specs:
 
 - [DevContainer config](.devcontainer/devcontainer.json)
+  {% endif %}

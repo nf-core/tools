@@ -5,7 +5,7 @@ The NFCoreComponent class holds information and utility functions for a single m
 import logging
 import re
 from pathlib import Path
-from typing import Union
+from typing import List, Optional, Tuple, Union
 
 log = logging.getLogger(__name__)
 
@@ -18,13 +18,13 @@ class NFCoreComponent:
 
     def __init__(
         self,
-        component_name,
-        repo_url,
-        component_dir,
-        repo_type,
-        base_dir,
-        component_type,
-        remote_component=True,
+        component_name: str,
+        repo_url: Optional[str],
+        component_dir: Path,
+        repo_type: Optional[str],
+        base_dir: Path,
+        component_type: str,
+        remote_component: bool = True,
     ):
         """
         Initialize the object
@@ -46,23 +46,33 @@ class NFCoreComponent:
         self.component_dir = component_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
-        self.passed = []
-        self.warned = []
-        self.failed = []
-        self.inputs = []
-        self.outputs = []
-        self.has_meta = False
-        self.git_sha = None
-        self.is_patched = False
+        self.passed: List[Tuple[str, str, Path]] = []
+        self.warned: List[Tuple[str, str, Path]] = []
+        self.failed: List[Tuple[str, str, Path]] = []
+        self.inputs: List[list[dict[str, dict[str, str]]]] = []
+        self.outputs: List[str] = []
+        self.has_meta: bool = False
+        self.git_sha: Optional[str] = None
+        self.is_patched: bool = False
+        self.branch: Optional[str] = None
+        self.workflow_name: Optional[str] = None
 
         if remote_component:
             # Initialize the important files
-            self.main_nf = Path(self.component_dir, "main.nf")
-            self.meta_yml = Path(self.component_dir, "meta.yml")
+            self.main_nf: Path = Path(self.component_dir, "main.nf")
+            self.meta_yml: Optional[Path] = Path(self.component_dir, "meta.yml")
             self.process_name = ""
-            self.environment_yml = Path(self.component_dir, "environment.yml")
+            self.environment_yml: Optional[Path] = Path(self.component_dir, "environment.yml")
 
-            repo_dir = self.component_dir.parts[: self.component_dir.parts.index(self.component_name.split("/")[0])][-1]
+            component_list = self.component_name.split("/")
+
+            name_index = len(self.component_dir.parts) - 1 - self.component_dir.parts[::-1].index(component_list[0])
+            if len(component_list) != 1 and component_list[0] == component_list[1]:
+                # Handle cases where the subtool has the same name as the tool
+                name_index -= 1
+
+            repo_dir = self.component_dir.parts[:name_index][-1]
+
             self.org = repo_dir
             self.nftest_testdir = Path(self.component_dir, "tests")
             self.nftest_main_nf = Path(self.nftest_testdir, "main.nf.test")
@@ -79,11 +89,14 @@ class NFCoreComponent:
             self.component_name = self.component_dir.stem
             # These attributes are only used by nf-core modules
             # so just initialize them to None
-            self.meta_yml = ""
-            self.environment_yml = ""
+            self.meta_yml = None
+            self.environment_yml = None
             self.test_dir = None
             self.test_yml = None
             self.test_main_nf = None
+
+    def __repr__(self) -> str:
+        return f"<NFCoreComponent {self.component_name} {self.component_dir} {self.repo_url}>"
 
     def _get_main_nf_tags(self, test_main_nf: Union[Path, str]):
         """Collect all tags from the main.nf.test file."""
@@ -155,9 +168,9 @@ class NFCoreComponent:
                         included_components.append(component)
         return included_components
 
-    def get_inputs_from_main_nf(self):
+    def get_inputs_from_main_nf(self) -> None:
         """Collect all inputs from the main.nf file."""
-        inputs = []
+        inputs: list[list[dict[str, dict[str, str]]]] = []
         with open(self.main_nf) as f:
             data = f.read()
         # get input values from main.nf after "input:", which can be formatted as tuple val(foo) path(bar) or val foo or val bar or path bar or path foo
@@ -171,10 +184,9 @@ class NFCoreComponent:
         # don't match anything inside comments or after "output:"
         if "input:" not in data:
             log.debug(f"Could not find any inputs in {self.main_nf}")
-            return inputs
         input_data = data.split("input:")[1].split("output:")[0]
         for line in input_data.split("\n"):
-            channel_elements = []
+            channel_elements: list[dict[str, dict[str, str]]] = []
             regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
             matches = re.finditer(regex, line)
             for _, match in enumerate(matches, start=1):

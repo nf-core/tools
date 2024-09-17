@@ -8,18 +8,34 @@ nf-core modules lint
 
 import logging
 import os
+from pathlib import Path
+from typing import List, Optional, Union
 
 import questionary
 import rich
+import rich.progress
 import ruamel.yaml
 
+import nf_core.components
+import nf_core.components.nfcore_component
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_utils import get_biotools_id
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
+from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.pipelines.lint_utils import console, run_prettier_on_file
 
 log = logging.getLogger(__name__)
+
+from .environment_yml import environment_yml
+from .main_nf import main_nf
+from .meta_yml import meta_yml, obtain_correct_and_specified_inputs, obtain_correct_and_specified_outputs, read_meta_yml
+from .module_changes import module_changes
+from .module_deprecations import module_deprecations
+from .module_patch import module_patch
+from .module_tests import module_tests
+from .module_todos import module_todos
+from .module_version import module_version
 
 
 class ModuleLint(ComponentLint):
@@ -29,35 +45,33 @@ class ModuleLint(ComponentLint):
     """
 
     # Import lint functions
-    from .environment_yml import environment_yml  # type: ignore[misc]
-    from .main_nf import main_nf  # type: ignore[misc]
-    from .meta_yml import (  # type: ignore[misc]
-        meta_yml,
-        obtain_correct_and_specified_inputs,
-        obtain_correct_and_specified_outputs,
-        read_meta_yml,
-    )
-    from .module_changes import module_changes  # type: ignore[misc]
-    from .module_deprecations import module_deprecations  # type: ignore[misc]
-    from .module_patch import module_patch  # type: ignore[misc]
-    from .module_tests import module_tests  # type: ignore[misc]
-    from .module_todos import module_todos  # type: ignore[misc]
-    from .module_version import module_version  # type: ignore[misc]
+    environment_yml = environment_yml
+    main_nf = main_nf
+    meta_yml = meta_yml
+    obtain_correct_and_specified_inputs = obtain_correct_and_specified_inputs
+    obtain_correct_and_specified_outputs = obtain_correct_and_specified_outputs
+    read_meta_yml = read_meta_yml
+    module_changes = module_changes
+    module_deprecations = module_deprecations
+    module_patch = module_patch
+    module_tests = module_tests
+    module_todos = module_todos
+    module_version = module_version
 
     def __init__(
         self,
-        dir,
-        fail_warned=False,
-        fix=False,
-        remote_url=None,
-        branch=None,
-        no_pull=False,
-        registry=None,
-        hide_progress=False,
+        directory: Union[str, Path],
+        fail_warned: bool = False,
+        fix: bool = False,
+        remote_url: Optional[str] = None,
+        branch: Optional[str] = None,
+        no_pull: bool = False,
+        registry: Optional[str] = None,
+        hide_progress: bool = False,
     ):
         super().__init__(
             component_type="modules",
-            dir=dir,
+            directory=directory,
             fail_warned=fail_warned,
             fix=fix,
             remote_url=remote_url,
@@ -103,7 +117,7 @@ class ModuleLint(ComponentLint):
         """
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for module or all
-        if module is None and not all_modules:
+        if module is None and not all_modules and len(self.all_remote_components) > 0:
             questions = [
                 {
                     "type": "list",
@@ -136,9 +150,9 @@ class ModuleLint(ComponentLint):
             remote_modules = self.all_remote_components
 
         if self.repo_type == "modules":
-            log.info(f"Linting modules repo: [magenta]'{self.dir}'")
+            log.info(f"Linting modules repo: [magenta]'{self.directory}'")
         else:
-            log.info(f"Linting pipeline: [magenta]'{self.dir}'")
+            log.info(f"Linting pipeline: [magenta]'{self.directory}'")
         if module:
             log.info(f"Linting module: [magenta]'{module}'")
 
@@ -163,7 +177,9 @@ class ModuleLint(ComponentLint):
             self._print_results(show_passed=show_passed, sort_by=sort_by)
             self.print_summary()
 
-    def lint_modules(self, modules, registry="quay.io", local=False, fix_version=False):
+    def lint_modules(
+        self, modules: List[NFCoreComponent], registry: str = "quay.io", local: bool = False, fix_version: bool = False
+    ) -> None:
         """
         Lint a list of modules
 
@@ -191,9 +207,15 @@ class ModuleLint(ComponentLint):
 
             for mod in modules:
                 progress_bar.update(lint_progress, advance=1, test_name=mod.component_name)
-                self.lint_module(mod, progress_bar, registry=registry, local=local, fix_version=fix_version)
+                self.lint_module(mod, progress_bar, local=local, fix_version=fix_version)
 
-    def lint_module(self, mod, progress_bar, registry, local=False, fix_version=False):
+    def lint_module(
+        self,
+        mod: NFCoreComponent,
+        progress_bar: rich.progress.Progress,
+        local: bool = False,
+        fix_version: bool = False,
+    ):
         """
         Perform linting on one module
 
@@ -228,7 +250,7 @@ class ModuleLint(ComponentLint):
             if self.fix:
                 self.update_meta_yml_file(mod)
 
-            if self.repo_type == "pipeline" and self.modules_json:
+            if self.repo_type == "pipeline" and self.modules_json and mod.repo_url:
                 # Set correct sha
                 version = self.modules_json.get_module_version(mod.component_name, mod.repo_url, mod.org)
                 mod.git_sha = version

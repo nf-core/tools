@@ -1,5 +1,5 @@
-import os
 import re
+from pathlib import Path
 
 
 def readme(self):
@@ -29,14 +29,14 @@ def readme(self):
     failed = []
 
     # Remove field that should be ignored according to the linting config
-    ignore_configs = self.lint_config.get("readme", [])
+    ignore_configs = self.lint_config.get("readme", []) if self.lint_config is not None else []
 
-    with open(os.path.join(self.wf_path, "README.md")) as fh:
+    with open(Path(self.wf_path, "README.md")) as fh:
         content = fh.read()
 
     if "nextflow_badge" not in ignore_configs:
         # Check that there is a readme badge showing the minimum required version of Nextflow
-        # [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A523.04.0-23aa62.svg)](https://www.nextflow.io/)
+        # [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A523.10.0-23aa62.svg)](https://www.nextflow.io/)
         # and that it has the correct version
         nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/nextflow%20DSL2-!?(?:%E2%89%A5|%3E%3D)([\d\.]+)-23aa62\.svg\)\]\(https://www\.nextflow\.io/\)"
         match = re.search(nf_badge_re, content)

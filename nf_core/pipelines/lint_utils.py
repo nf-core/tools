@@ -22,15 +22,22 @@ def print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj):
     swf_passed = 0
     swf_warned = 0
     swf_failed = 0
+    module_passed = 0
+    module_warned = 0
+    module_failed = 0
     if subworkflow_lint_obj is not None:
         swf_passed = len(subworkflow_lint_obj.passed)
         swf_warned = len(subworkflow_lint_obj.warned)
         swf_failed = len(subworkflow_lint_obj.failed)
-    nbr_passed = len(lint_obj.passed) + len(module_lint_obj.passed) + swf_passed
+    if module_lint_obj is not None:
+        module_passed = len(module_lint_obj.passed)
+        module_warned = len(module_lint_obj.warned)
+        module_failed = len(module_lint_obj.failed)
+    nbr_passed = len(lint_obj.passed) + module_passed + swf_passed
     nbr_ignored = len(lint_obj.ignored)
     nbr_fixed = len(lint_obj.fixed)
-    nbr_warned = len(lint_obj.warned) + len(module_lint_obj.warned) + swf_warned
-    nbr_failed = len(lint_obj.failed) + len(module_lint_obj.failed) + swf_failed
+    nbr_warned = len(lint_obj.warned) + module_warned + swf_warned
+    nbr_failed = len(lint_obj.failed) + module_failed + swf_failed
 
     summary_colour = "red" if nbr_failed > 0 else "green"
     table = Table(box=rich.box.ROUNDED, style=summary_colour)
@@ -110,9 +117,13 @@ def ignore_file(lint_name: str, file_path: Path, dir_path: Path) -> List[List[st
     passed: List[str] = []
     failed: List[str] = []
     ignored: List[str] = []
-    _, lint_conf = nf_core.utils.load_tools_config(dir_path)
-    lint_conf = lint_conf.get("lint", {})
-    ignore_entry: List[str] | bool = lint_conf.get(lint_name, [])
+    _, pipeline_conf = nf_core.utils.load_tools_config(dir_path)
+    lint_conf = getattr(pipeline_conf, "lint", None) or None
+
+    if lint_conf is None:
+        ignore_entry: List[str] = []
+    else:
+        ignore_entry = lint_conf.get(lint_name, [])
     full_path = dir_path / file_path
     # Return a failed status if we can't find the file
     if not full_path.is_file():
