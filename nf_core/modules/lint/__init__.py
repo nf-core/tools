@@ -288,7 +288,7 @@ class ModuleLint(ComponentLint):
         if "output" in meta_yml:
             correct_outputs, meta_outputs = self.obtain_correct_and_specified_outputs(mod, meta_yml)
 
-        if correct_inputs != meta_inputs:
+        if "input" in meta_yml and correct_inputs != meta_inputs:
             log.debug(
                 f"Correct inputs: '{correct_inputs}' differ from current inputs: '{meta_inputs}' in '{mod.meta_yml}'"
             )
@@ -319,7 +319,7 @@ class ModuleLint(ComponentLint):
                                             ][feature]
                                     break
 
-        if correct_outputs != meta_outputs:
+        if "output" in meta_yml and correct_outputs != meta_outputs:
             log.debug(
                 f"Correct outputs: '{correct_outputs}' differ from current outputs: '{meta_outputs}' in '{mod.meta_yml}'"
             )
