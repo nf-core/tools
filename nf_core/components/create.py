@@ -40,6 +40,7 @@ class ComponentCreate(ComponentCommand):
         conda_version: Optional[str] = None,
         empty_template: bool = False,
         migrate_pytest: bool = False,
+        migrate_pytest_hard=False,
     ):
         super().__init__(component_type, directory)
         self.directory = directory
@@ -61,6 +62,9 @@ class ComponentCreate(ComponentCommand):
         self.file_paths: Dict[str, Path] = {}
         self.not_empty_template = not empty_template
         self.migrate_pytest = migrate_pytest
+        self.migrate_pytest_hard = migrate_pytest_hard
+        self.pytest_units_str = None
+        self.pytest_has_nextflow_config = False
 
     def create(self) -> bool:
         """
@@ -137,6 +141,23 @@ class ComponentCreate(ComponentCommand):
         # Check existence of directories early for fast-fail
         self.file_paths = self._get_component_dirs()
 
+        component_outputs = {}  # output: meta_data
+        if self.migrate_pytest and self.migrate_pytest_hard:
+            # Extract outputs data
+            main_nf_data = Path(
+                self.directory, self.component_type, self.org, self.component_dir, "main.nf"
+            ).read_text()
+            if "output:" not in main_nf_data:
+                log.debug(f"Could not find any outputs in {self.component_name}")
+            else:
+                component_outputs_data = main_nf_data.split("output:")[1].split("when:")[0]
+                matches = re.findall(r"(.*)emit:\s*([^)\s,]+)", component_outputs_data, re.MULTILINE)
+                for match in matches:
+                    component_outputs[match[1]] = match[0]
+                log.debug(
+                    f"Found {len(component_outputs)} outputs in {self.component_name}: {component_outputs.keys()}"
+                )
+
         if self.migrate_pytest:
             # Rename the component directory to old
             component_old_dir = Path(str(self.component_dir) + "_old")
@@ -160,12 +181,22 @@ class ComponentCreate(ComponentCommand):
         not_alphabet = re.compile(r"[^a-zA-Z]")
         self.org_alphabet = not_alphabet.sub("", self.org)
 
+        # Extract pytest nextflow config
+        pytest_nextflow_config_contents = None
+        if self.migrate_pytest:
+            pytest_nextflow_config_contents = self._extract_nextflow_config()
+
+        # Extract pytest units
+        if self.migrate_pytest and self.migrate_pytest_hard:
+            self._extract_pytest_units(component_outputs)
+
         # Create component template with jinja2
         assert self._render_template()
         log.info(f"Created component template: '{self.component_name}'")
 
         if self.migrate_pytest:
             self._copy_old_files(component_old_path)
+            self._copy_nextflow_config(pytest_nextflow_config_contents)
             log.info("Migrate pytest tests: Copied original module files to new module")
             shutil.rmtree(component_old_path)
             self._print_and_delete_pytest_files()
@@ -458,6 +489,8 @@ class ComponentCreate(ComponentCommand):
                     component_old_path / "templates",
                     self.file_paths["environment.yml"].parent / "templates",
                 )
+
+    def _extract_nextflow_config(self):
         # Create a nextflow.config file if it contains information other than publishDir
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
         nextflow_config = pytest_dir / "nextflow.config"
@@ -468,20 +501,29 @@ class ComponentCreate(ComponentCommand):
                     if "publishDir" not in line and line.strip() != "":
                         config_lines += line
             # if the nextflow.config file only contained publishDir, non_publish_dir_lines will be 11 characters long (`process {\n}`)
-            if len(config_lines) > 11:
-                log.debug("Copying nextflow.config file from pytest tests")
-                with open(
-                    Path(
-                        self.directory,
-                        self.component_type,
-                        self.org,
-                        self.component_dir,
-                        "tests",
-                        "nextflow.config",
-                    ),
-                    "w+",
-                ) as ofh:
-                    ofh.write(config_lines)
+            if not re.match(r"^\s*process\s*{\s*}\s*$", config_lines, re.DOTALL):
+                self.pytest_has_nextflow_config = True
+                return config_lines
+
+        return None
+
+    def _copy_nextflow_config(self, config_lines):
+        if config_lines is None:
+            return
+
+        log.debug("Copying nextflow.config file from pytest tests")
+        with open(
+            Path(
+                self.directory,
+                self.component_type,
+                self.org,
+                self.component_dir,
+                "tests",
+                "nextflow.config",
+            ),
+            "w+",
+        ) as ofh:
+            ofh.write(config_lines)
 
     def _print_and_delete_pytest_files(self):
         """Prompt if pytest files should be deleted and printed to stdout"""
@@ -519,3 +561,261 @@ class ComponentCreate(ComponentCommand):
         with open(modules_yml, "w") as fh:
             yaml.dump(yml_file, fh)
         run_prettier_on_file(modules_yml)
+
+    def _extract_pytest_units(self, component_outputs):
+        pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
+        main_nf_contents = Path(pytest_dir, "main.nf").read_text(encoding="UTF-8")
+
+        include_statements = re.findall(r"include\s*{\s*(\w+)([\sas]+)?(\w+)?\s*}", main_nf_contents)
+
+        log.debug(f"Found {len(include_statements)} include statements {include_statements}")
+
+        if len(include_statements) > 1:
+            raise ValueError("Multiple include statements are not yet supported")
+
+        main_nf_workflows = re.findall(r"workflow\s*(\w+)\s*{([^}]+)}", main_nf_contents, re.DOTALL)
+
+        log.debug(f"Found {len(main_nf_workflows)} workflows {[x[0] for x in main_nf_workflows]}")
+
+        nf_test_workflow = []
+        for workflow in main_nf_workflows:
+            workflow_name = workflow[0]
+            workflow_content = str(workflow[1])
+
+            log.debug(f"Looking for NXF symbols in workflow {workflow_name}")
+
+            nxf_symbols = self._extract_pytest_nxf_symbols(workflow_content)
+
+            invoked_components = re.findall(r"(\w+)\s*\(([^\)]*)\)", workflow_content, re.DOTALL)
+
+            invoked_components = [c for c in invoked_components if c[0] != "file"]
+
+            log.debug(
+                f"Found {len(invoked_components)} component(s) invoked by '{workflow_name}': {invoked_components}"
+            )
+
+            if len(invoked_components) > 1:
+                raise ValueError(
+                    f"Test workflow {workflow_name} invokes multiple components. This is not supported currently."
+                )
+
+            # TODO: Generalize to multiple components
+            invoked_component = invoked_components[0]
+
+            # invoked_component_name = invoked_component[0].strip()
+            invoked_component_args = invoked_component[1].strip()
+
+            extracted_component_args = self._extract_pytest_component_args(invoked_component_args, nxf_symbols)
+
+            nf_test_workflow.append({"name": workflow_name.replace("_", "-"), "input": extracted_component_args})
+
+        test_units_str = ""
+        for test in nf_test_workflow:
+            test_name = test["name"]
+            log.debug(f"Scaffolding nf-test '{test_name}'")
+
+            input_data_lines = self._make_nf_test_input(test["input"])
+            add_stub_option = "options '-stub'" if "stub" in test_name else ""
+
+            power_assertions = self._get_power_assertions(component_outputs, is_stub=("stub" in test_name))
+
+            test_unit_str = f"""
+    test("{test_name}") {{
+        {add_stub_option}
+        when {{
+            process {{
+                \"\"\"
+                {input_data_lines}
+                \"\"\"
+            }}
+        }}
+
+        then {{
+            assertAll(
+                {{ assert process.success }},
+                {power_assertions}
+            )
+        }}
+    }}
+    """
+            test_units_str += test_unit_str
+
+        self.pytest_units_str = test_units_str
+
+    def _extract_pytest_nxf_symbols(self, workflow_content: str) -> dict[str, str]:
+        symbols = {}
+        found_all = False
+
+        remaining_content = workflow_content
+        while not found_all:
+            match = self._extract_pytest_nxf_symbol_match(remaining_content)
+            if match:
+                match = match[0]
+
+                log.debug(f"Found symbol '{match[0]}' with data {match[1]}")
+                remaining_content = remaining_content.replace(f"{match[0]}={match[1]}", "", 1)
+                symbols[match[0].strip()] = match[1].strip()
+                continue
+
+            found_all = True
+
+        return symbols
+
+    def _extract_pytest_nxf_symbol_match(self, workflow_content):
+        # multiline list such as input = [etc]
+        list_match = re.findall(r"(\w+\s*)=(\s*\[.*?\n\s*\])", workflow_content, re.DOTALL)
+
+        if list_match != []:
+            return list_match
+
+        # second rule for multiline list such as input = [etc]
+        # The first rule might not be needed!
+        list_match = re.findall(r"(\w+\s*)=(\s*\[[^=]+\]\s+)", workflow_content, re.DOTALL)
+
+        if list_match != []:
+            return list_match
+
+        # simple list such as input = [ ]
+        list_match = re.findall(r"(\w+\s*)=(\s*\[\s*\])", workflow_content, re.DOTALL)
+
+        if list_match != []:
+            return list_match
+
+        # String match such as 'etc', "etc"
+        string_match = re.findall(r"(\w+\s*)=(\s*['\"][^'\"]*['\"])", workflow_content)
+
+        if string_match != []:
+            return string_match
+
+        # Number match such as 123.1
+        num_match = re.findall(r"(\w+\s*)=(\s*[\d\.]+)", workflow_content, re.DOTALL)
+
+        if num_match != []:
+            return num_match
+
+        # File match such as file(params.test_data['sarscov2']['genome']['transcriptome_fasta'], checkIfExists: true)
+        file_match = re.findall(r"(\w+\s*)=(\s*file\s*\(.*?\s*\))", workflow_content, re.DOTALL)
+
+        if file_match != []:
+            return file_match
+
+        return []
+
+    def _make_nf_test_input(self, input_data):
+        input_data_lines = ""
+        for index in range(len(input_data)):
+            arg_data = input_data[index]
+            if "\n" in arg_data:
+                input_data_str = self._indent_nf_test_arg(arg_data)
+            else:
+                input_data_str = arg_data.strip()
+
+            indent = ""
+            if index > 0:
+                indent = "\t\t\t\t"
+            input_data_lines += indent + f"input[{index}] = " + input_data_str + "\n"
+
+        return input_data_lines
+
+    def _indent_nf_test_arg(self, arg_data):
+        arg_data_lines = arg_data.split("\n")
+
+        return arg_data_lines[0].strip() + "\n" + "\n".join(["\t\t\t\t" + line.strip() for line in arg_data_lines[1:]])
+
+    def _extract_pytest_component_args(self, args_str: str, nxf_symbols: dict[str, str]) -> list[str]:
+        # No arg
+        if args_str == "":
+            return []
+
+        # Single argument
+        if args_str in nxf_symbols.keys():
+            return [nxf_symbols[args_str]]
+
+        # All arguments are named
+        match = re.match(r"^[\sa-zA-Z_,]+$", args_str, re.DOTALL)
+
+        if match:
+            # Double check that any arg name is not on the prohibited list
+            args_list = args_str.split(",")
+            prohibited_names = ["false", "true"]
+            has_prohibited = any([arg.strip() in prohibited_names for arg in args_list])
+            if not has_prohibited:
+                return [nxf_symbols[arg.strip()] for arg in args_str.split(",")]
+
+        # Split args while keeping brackets grouped
+        args = re.findall(r"\[.+\]|\w+|\[\]|[\w'\"]+", args_str)
+
+        if not args:
+            raise ValueError(f"Can not split args: {args_str}")
+
+        log.debug(f"Split args: {args_str} into: {args}")
+
+        # Replace the symbols embedded in list args
+        normalized_args = []
+        for arg in args:
+            if "[" in arg:
+                normalized_arg = self._replace_pytest_symbol_in_list_arg(arg, nxf_symbols)
+                normalized_args.append(normalized_arg)
+                continue
+
+            # For remaining args, try to replace symbol if possible
+            normalized_args.append(nxf_symbols[arg] if arg in nxf_symbols.keys() else arg)
+
+        return normalized_args
+
+    def _replace_pytest_symbol_in_list_arg(self, arg: str, nxf_symbols: dict[str, str]) -> str:
+        symbols = re.findall(r"[a-zA-Z_]+", arg)
+
+        for symbol in symbols:
+            arg = arg.replace(symbol, nxf_symbols[symbol] if symbol in nxf_symbols.keys() else symbol, 1)
+
+        return arg
+
+    def _get_power_assertions(self, component_outputs, is_stub):
+        power_assertions = "{ assert snapshot(process.out).match() }"
+
+        if is_stub:
+            return power_assertions
+
+        non_stable_outputs = ["bam", "txt", "log", "gz", "rds", "png"]
+
+        outputs_str = " ".join([f"{key} {value}" for (key, value) in component_outputs.items()]).lower()
+        has_non_stable = any([ns_output in outputs_str for ns_output in non_stable_outputs])
+
+        if not has_non_stable:
+            return power_assertions
+
+        power_assertions = "{ assert snapshot("
+        for output_name, output_meta in component_outputs.items():
+            if output_name == "versions":
+                continue
+
+            if "bam" in output_name or "bam" in output_meta:
+                power_assertions += f"\n\t\t\t\t\tbam(process.out.{output_name}[0][1]).getReadsMD5(),"
+                continue
+
+            if "log" in output_name or "log" in output_meta:
+                power_assertions += f"\n\t\t\t\t\tfile(process.out.{output_name}[0][1]).name,"
+                continue
+
+            if "gz" in output_name or "gz" in output_meta:
+                power_assertions += f"\n\t\t\t\t\tpath(process.out.{output_name}[0][1]).linesGzip[3..7],"
+                continue
+
+            if "txt" in output_name or "txt" in output_meta:
+                power_assertions += f"\n\t\t\t\t\tfile(process.out.{output_name}[0][1]).readLines()[3..7],"
+                continue
+
+            if "rds" in output_name or "rds" in output_meta:
+                power_assertions += f"\n\t\t\t\t\tfile(process.out.{output_name}[0][1]).name,"
+                continue
+
+            if "png" in output_name or "png" in output_meta:
+                power_assertions += f"\n\t\t\t\t\tfile(process.out.{output_name}[0][1]).name,"
+                continue
+
+            power_assertions += f"\n\t\t\t\t\tprocess.out.{output_name},"
+
+        power_assertions += "\n\t\t\t\t\tprocess.out.versions\n\t\t\t\t\t).match()\n\t\t\t\t}"
+
+        return power_assertions
