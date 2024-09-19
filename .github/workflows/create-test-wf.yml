@@ -75,7 +75,7 @@ jobs:
           pwd
           # echo content of current directory
           ls -la
-          nextflow run nf-core-testpipeline -profile test,self_hosted_runner --outdir ./results
+          nextflow run nf-core-testpipeline -profile self_hosted_runner,test --outdir ./results
 
       - name: Upload log file artifact
         if: ${{ always() }}
