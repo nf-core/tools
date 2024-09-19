@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import questionary
 from rich import print
@@ -20,6 +20,7 @@ from nf_core.components.components_utils import (
     prompt_component_version_sha,
 )
 from nf_core.modules.modules_json import ModulesJson
+from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
@@ -38,6 +39,8 @@ class ComponentInstall(ComponentCommand):
         installed_by: Optional[List[str]] = None,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
+        self.current_remote = remote_url
+        self.branch = branch
         self.force = force
         self.prompt = prompt
         self.sha = sha
@@ -46,7 +49,14 @@ class ComponentInstall(ComponentCommand):
         else:
             self.installed_by = [self.component_type]
 
-    def install(self, component: str, silent: bool = False) -> bool:
+    def install(self, component: Union[str, Dict[str, str]], silent: bool = False) -> bool:
+        if isinstance(component, dict):
+            # Override modules_repo when the component to install is a dependency from a subworkflow.
+            remote_url = component.get("git_remote", self.current_remote)
+            branch = component.get("branch", self.branch)
+            self.modules_repo = ModulesRepo(remote_url, branch)
+            component = component["name"]
+
         if self.repo_type == "modules":
             log.error(f"You cannot install a {component} in a clone of nf-core/modules")
             return False

@@ -7,6 +7,8 @@ from nf_core.subworkflows.install import SubworkflowInstall
 
 from ..test_subworkflows import TestSubworkflows
 from ..utils import (
+    CROSS_ORGANIZATION_BRANCH,
+    CROSS_ORGANIZATION_URL,
     GITLAB_BRANCH_TEST_BRANCH,
     GITLAB_REPO,
     GITLAB_SUBWORKFLOWS_BRANCH,
@@ -82,6 +84,20 @@ class TestSubworkflowsInstall(TestSubworkflows):
         with pytest.raises(Exception) as excinfo:
             install_obj.install("bam_stats_samtools")
             assert "Subworkflow 'bam_stats_samtools' not found in available subworkflows" in str(excinfo.value)
+
+    def test_subworkflows_install_across_organizations(self):
+        """Test installing a subworkflow with modules from different organizations"""
+        install_obj = SubworkflowInstall(
+            self.pipeline_dir, remote_url=CROSS_ORGANIZATION_URL, branch=CROSS_ORGANIZATION_BRANCH
+        )
+        # The hic_bwamem2 subworkflow contains modules from different organizations
+        install_obj.install("get_genome_annotation")
+        # Verify that the installed_by entry was added correctly
+        modules_json = ModulesJson(self.pipeline_dir)
+        mod_json = modules_json.get_modules_json()
+        assert mod_json["repos"][CROSS_ORGANIZATION_URL]["modules"]["jvfe"]["wget"]["installed_by"] == [
+            "get_genome_annotation"
+        ]
 
     def test_subworkflows_install_tracking(self):
         """Test installing a subworkflow and finding the correct entries in installed_by section of modules.json"""
