@@ -440,7 +440,7 @@ class TestModulesCreate(TestModules):
         ) as fh:
             yaml_content = yaml.safe_load(fh)
         # Add a new dependency to the environment.yml file and reverse the order
-        yaml_content["dependencies"].append("z")
+        yaml_content["dependencies"].append("z=0.0.0")
         yaml_content["dependencies"].reverse()
         yaml_content = yaml.dump(yaml_content)
         with open(
