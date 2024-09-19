@@ -39,6 +39,7 @@
 - run nf-core lint `--release` on PRs to master ([#3148](https://github.com/nf-core/tools/pull/3148))
 - Add tests to ensure all files are part of a template customisation group and all groups are tested ([#3099](https://github.com/nf-core/tools/pull/3099))
 - Replaces the old custom `check_max()` function with the Nextflow native `resourceLimits` directive ([#3037](https://github.com/nf-core/tools/pull/3037))
+- Fixed release announcement hashtags for Mastodon ([#3099](https://github.com/nf-core/tools/pull/3176))
 
 ### Linting
 
