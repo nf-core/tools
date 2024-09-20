@@ -1,10 +1,14 @@
 """A Textual app to create a pipeline."""
 
 import logging
+from pathlib import Path
 
+import click
+import yaml
 from textual.app import App
 from textual.widgets import Button
 
+import nf_core
 from nf_core.pipelines.create import utils
 from nf_core.pipelines.create.basicdetails import BasicDetails
 from nf_core.pipelines.create.custompipeline import CustomPipeline
@@ -23,6 +27,7 @@ log_handler = utils.CustomLogHandler(
     show_time=False,
     show_path=False,
     markup=True,
+    tracebacks_suppress=[click],
 )
 logging.basicConfig(
     level="INFO",
@@ -65,6 +70,9 @@ class PipelineCreateApp(App[utils.CreateConfig]):
     LOG_HANDLER = log_handler
     # Logging state
     LOGGING_STATE = None
+
+    # Template features
+    template_features_yml = utils.load_features_yaml()
 
     def on_mount(self) -> None:
         self.push_screen("welcome")

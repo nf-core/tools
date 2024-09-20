@@ -1,7 +1,8 @@
 # Test build locally before making a PR
 #   docker build -t gitpod:test -f nf_core/gitpod/gitpod.Dockerfile .
 
-FROM gitpod/workspace-base@sha256:0f3822450f94084f6a62db4a4282d895591f6a55632dc044fe496f98cb79e75c
+# See https://docs.renovatebot.com/docker/#digest-pinning for why a digest is used.
+FROM gitpod/workspace-base@sha256:f189a4195c3861365356f9c1b438ab26fd88e1ff46ce2843afc62861fc982e0c
 
 USER root
 
@@ -40,12 +41,11 @@ RUN chown -R gitpod:gitpod /opt/conda /usr/src/nf_core
 
 # Change user to gitpod
 USER gitpod
-# Install nextflow, nf-core, Mamba, and pytest-workflow
-RUN conda config --add channels defaults && \
-    conda config --add channels bioconda && \
+# Install nextflow, nf-core, nf-test, and other useful tools
+RUN conda config --add channels bioconda && \
     conda config --add channels conda-forge && \
     conda config --set channel_priority strict && \
-    conda install --quiet --yes --name base \
+    conda install --quiet --yes --update-all --name base \
     nextflow \
     nf-test \
     prettier \
@@ -63,3 +63,4 @@ RUN nextflow self-update && \
 # Setup pdiff for nf-test diffs
 ENV NFT_DIFF="pdiff"
 ENV NFT_DIFF_ARGS="--line-numbers --expand-tabs=2"
+ENV JAVA_TOOL_OPTIONS=

@@ -20,6 +20,14 @@ from nf_core.pipelines.lint_utils import console, run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
+# Import lint functions
+from .main_nf import main_nf  # type: ignore[misc]
+from .meta_yml import meta_yml  # type: ignore[misc]
+from .subworkflow_changes import subworkflow_changes  # type: ignore[misc]
+from .subworkflow_tests import subworkflow_tests  # type: ignore[misc]
+from .subworkflow_todos import subworkflow_todos  # type: ignore[misc]
+from .subworkflow_version import subworkflow_version  # type: ignore[misc]
+
 
 class SubworkflowLint(ComponentLint):
     """
@@ -27,17 +35,16 @@ class SubworkflowLint(ComponentLint):
     repository or in any nf-core pipeline directory
     """
 
-    # Import lint functions
-    from .main_nf import main_nf  # type: ignore[misc]
-    from .meta_yml import meta_yml  # type: ignore[misc]
-    from .subworkflow_changes import subworkflow_changes  # type: ignore[misc]
-    from .subworkflow_tests import subworkflow_tests  # type: ignore[misc]
-    from .subworkflow_todos import subworkflow_todos  # type: ignore[misc]
-    from .subworkflow_version import subworkflow_version  # type: ignore[misc]
+    main_nf = main_nf
+    meta_yml = meta_yml
+    subworkflow_changes = subworkflow_changes
+    subworkflow_tests = subworkflow_tests
+    subworkflow_todos = subworkflow_todos
+    subworkflow_version = subworkflow_version
 
     def __init__(
         self,
-        dir,
+        directory,
         fail_warned=False,
         fix=False,
         remote_url=None,
@@ -48,7 +55,7 @@ class SubworkflowLint(ComponentLint):
     ):
         super().__init__(
             component_type="subworkflows",
-            dir=dir,
+            directory=directory,
             fail_warned=fail_warned,
             fix=fix,
             remote_url=remote_url,
@@ -125,9 +132,9 @@ class SubworkflowLint(ComponentLint):
             remote_subworkflows = self.all_remote_components
 
         if self.repo_type == "modules":
-            log.info(f"Linting modules repo: [magenta]'{self.dir}'")
+            log.info(f"Linting modules repo: [magenta]'{self.directory}'")
         else:
-            log.info(f"Linting pipeline: [magenta]'{self.dir}'")
+            log.info(f"Linting pipeline: [magenta]'{self.directory}'")
         if subworkflow:
             log.info(f"Linting subworkflow: [magenta]'{subworkflow}'")
 

@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 stdout = rich.console.Console(force_terminal=rich_force_colors())
 
 
-def subworkflows_create(ctx, subworkflow, dir, author, force, migrate_pytest):
+def subworkflows_create(ctx, subworkflow, directory, author, force, migrate_pytest):
     """
     Create a new subworkflow from the nf-core template.
 
@@ -24,7 +24,7 @@ def subworkflows_create(ctx, subworkflow, dir, author, force, migrate_pytest):
 
     # Run function
     try:
-        subworkflow_create = SubworkflowCreate(dir, subworkflow, author, force, migrate_pytest)
+        subworkflow_create = SubworkflowCreate(directory, subworkflow, author, force, migrate_pytest)
         subworkflow_create.create()
     except UserWarning as e:
         log.critical(e)
@@ -34,7 +34,7 @@ def subworkflows_create(ctx, subworkflow, dir, author, force, migrate_pytest):
         sys.exit(1)
 
 
-def subworkflows_test(ctx, subworkflow, dir, no_prompts, update, once, profile):
+def subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile, migrate_pytest):
     """
     Run nf-test for a subworkflow.
 
@@ -42,11 +42,13 @@ def subworkflows_test(ctx, subworkflow, dir, no_prompts, update, once, profile):
     """
     from nf_core.components.components_test import ComponentsTest
 
+    if migrate_pytest:
+        subworkflows_create(ctx, subworkflow, directory, None, False, True)
     try:
         sw_tester = ComponentsTest(
             component_type="subworkflows",
             component_name=subworkflow,
-            directory=dir,
+            directory=directory,
             no_prompts=no_prompts,
             update=update,
             once=once,
@@ -69,7 +71,7 @@ def subworkflows_list_remote(ctx, keywords, json):
 
     try:
         subworkflow_list = SubworkflowList(
-            None,
+            ".",
             True,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
@@ -82,7 +84,7 @@ def subworkflows_list_remote(ctx, keywords, json):
         sys.exit(1)
 
 
-def subworkflows_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
+def subworkflows_list_local(ctx, keywords, json, directory):  # pylint: disable=redefined-builtin
     """
     List subworkflows installed locally in a pipeline
     """
@@ -90,7 +92,7 @@ def subworkflows_list_local(ctx, keywords, json, dir):  # pylint: disable=redefi
 
     try:
         subworkflow_list = SubworkflowList(
-            dir,
+            directory,
             False,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
@@ -102,7 +104,7 @@ def subworkflows_list_local(ctx, keywords, json, dir):  # pylint: disable=redefi
         sys.exit(1)
 
 
-def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by, fix):
+def subworkflows_lint(ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix):
     """
     Lint one or more subworkflows in a directory.
 
@@ -117,7 +119,7 @@ def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, lo
 
     try:
         subworkflow_lint = SubworkflowLint(
-            dir,
+            directory,
             fail_warned=fail_warned,
             fix=fix,
             registry=ctx.params["registry"],
@@ -146,7 +148,7 @@ def subworkflows_lint(ctx, subworkflow, dir, registry, key, all, fail_warned, lo
         sys.exit(1)
 
 
-def subworkflows_info(ctx, subworkflow, dir):
+def subworkflows_info(ctx, subworkflow, directory):
     """
     Show developer usage information about a given subworkflow.
 
@@ -162,7 +164,7 @@ def subworkflows_info(ctx, subworkflow, dir):
 
     try:
         subworkflow_info = SubworkflowInfo(
-            dir,
+            directory,
             subworkflow,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
@@ -174,7 +176,7 @@ def subworkflows_info(ctx, subworkflow, dir):
         sys.exit(1)
 
 
-def subworkflows_install(ctx, subworkflow, dir, prompt, force, sha):
+def subworkflows_install(ctx, subworkflow, directory, prompt, force, sha):
     """
     Install DSL2 subworkflow within a pipeline.
 
@@ -184,7 +186,7 @@ def subworkflows_install(ctx, subworkflow, dir, prompt, force, sha):
 
     try:
         subworkflow_install = SubworkflowInstall(
-            dir,
+            directory,
             force,
             prompt,
             sha,
@@ -200,7 +202,7 @@ def subworkflows_install(ctx, subworkflow, dir, prompt, force, sha):
         sys.exit(1)
 
 
-def subworkflows_remove(ctx, dir, subworkflow):
+def subworkflows_remove(ctx, directory, subworkflow):
     """
     Remove a subworkflow from a pipeline.
     """
@@ -208,7 +210,7 @@ def subworkflows_remove(ctx, dir, subworkflow):
 
     try:
         module_remove = SubworkflowRemove(
-            dir,
+            directory,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
@@ -222,7 +224,7 @@ def subworkflows_remove(ctx, dir, subworkflow):
 def subworkflows_update(
     ctx,
     subworkflow,
-    dir,
+    directory,
     force,
     prompt,
     sha,
@@ -230,6 +232,7 @@ def subworkflows_update(
     preview,
     save_diff,
     update_deps,
+    limit_output,
 ):
     """
     Update DSL2 subworkflow within a pipeline.
@@ -240,7 +243,7 @@ def subworkflows_update(
 
     try:
         subworkflow_install = SubworkflowUpdate(
-            dir,
+            directory,
             force,
             prompt,
             sha,
@@ -251,6 +254,7 @@ def subworkflows_update(
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
+            limit_output,
         )
         exit_status = subworkflow_install.update(subworkflow)
         if not exit_status and install_all:

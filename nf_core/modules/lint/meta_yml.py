@@ -6,7 +6,7 @@ from typing import Union
 import ruamel.yaml
 from jsonschema import exceptions, validators
 
-from nf_core.components.lint import ComponentLint
+from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_differ import ModulesDiffer
 
@@ -45,6 +45,19 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
 
     # Check if we have a patch file, get original file in that case
     meta_yaml = read_meta_yml(module_lint_object, module)
+    if module.is_patched and module_lint_object.modules_repo.repo_path is not None:
+        lines = ModulesDiffer.try_apply_patch(
+            module.component_name,
+            module_lint_object.modules_repo.repo_path,
+            module.patch_path,
+            Path(module.component_dir).relative_to(module.base_dir),
+            reverse=True,
+        ).get("meta.yml")
+        if lines is not None:
+            yaml = ruamel.yaml.YAML()
+            meta_yaml = yaml.safe_load("".join(lines))
+    if module.meta_yml is None:
+        raise LintExceptionError("Module does not have a `meta.yml` file")
     if meta_yaml is None:
         module.failed.append(("meta_yml_exists", "Module `meta.yml` does not exist", module.meta_yml))
         return
@@ -65,7 +78,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
             hint = f"\nCheck the entry for `{e.path[0]}`."
         if e.message.startswith("None is not of type 'object'") and len(e.path) > 2:
             hint = f"\nCheck that the child entries of {str(e.path[0])+'.'+str(e.path[2])} are indented correctly."
-        if e.schema.get("message"):
+        if e.schema and isinstance(e.schema, dict) and "message" in e.schema:
             e.message = e.schema["message"]
             incorrect_value = meta_yaml
             for key in e.path:
@@ -117,7 +130,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
                 module.failed.append(
                     (
                         "correct_meta_inputs",
-                        f"Incorrect inputs specified in module `meta.yml`. Inputs should contain: {correct_inputs}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
+                        f"Module `meta.yml` does not match `main.nf`. Inputs should contain: {correct_inputs}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
                         module.meta_yml,
                     )
                 )
@@ -155,7 +168,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
                 module.failed.append(
                     (
                         "correct_meta_outputs",
-                        f"Incorrect outputs specified in module `meta.yml`. Outputs should contain: {correct_outputs}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
+                        f"Module `meta.yml` does not match `main.nf`. Outputs should contain: {correct_outputs}\nRun `nf-core modules lint --fix` to update the `meta.yml` file.",
                         module.meta_yml,
                     )
                 )
@@ -187,11 +200,10 @@ def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) ->
         if lines is not None:
             meta_yaml = yaml.load("".join(lines))
     if meta_yaml is None:
-        try:
-            with open(module.meta_yml) as fh:
-                meta_yaml = yaml.load(fh)
-        except FileNotFoundError:
+        if module.meta_yml is None:
             return None
+        with open(module.meta_yml) as fh:
+            meta_yaml = yaml.load(fh)
     return meta_yaml
 
 

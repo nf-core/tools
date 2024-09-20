@@ -73,6 +73,7 @@ def module_tests(_, module: NFCoreComponent):
         with open(module.nftest_main_nf) as fh:
             if "snapshot(" in fh.read():
                 snap_file = module.nftest_testdir / "main.nf.test.snap"
+
                 if snap_file.is_file():
                     module.passed.append(
                         (

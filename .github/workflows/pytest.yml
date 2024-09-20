@@ -67,7 +67,7 @@ jobs:
       - name: List tests
         id: list_tests
         run: |
-          echo "tests=$(find tests/test_* | tac | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_OUTPUT
+          echo "tests=$(find tests -type f -name "test_*.py" | tac | sed 's/tests\///g'  | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_OUTPUT
     outputs:
       tests: ${{ steps.list_tests.outputs.tests }}
 
@@ -149,10 +149,15 @@ jobs:
           name: Snapshot Report ${{ matrix.test }}
           path: ./snapshot_report.html
 
+      - name: remove slashes from test name
+        run: |
+          test=$(echo ${{ matrix.test }} | sed 's/\//__/g')
+          echo "test=${test}" >> $GITHUB_ENV
+
       - name: Upload coverage
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
         with:
-          name: coverage_${{ matrix.test }}
+          name: coverage_${{ env.test }}
           path: .coverage
 
   coverage:

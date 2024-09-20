@@ -1,6 +1,7 @@
 import fnmatch
 import logging
 import os
+from pathlib import Path
 
 import nf_core.utils
 
@@ -35,36 +36,36 @@ def merge_markers(self):
     failed = []
     ignored = []
 
-    ignored_config = self.lint_config.get("merge_markers", [])
+    ignored_config = self.lint_config.get("merge_markers", []) if self.lint_config is not None else []
 
     ignore = [".git"]
-    if os.path.isfile(os.path.join(self.wf_path, ".gitignore")):
-        with open(os.path.join(self.wf_path, ".gitignore"), encoding="latin1") as fh:
+    if Path(self.wf_path, ".gitignore").is_file():
+        with open(Path(self.wf_path, ".gitignore"), encoding="latin1") as fh:
             for line in fh:
-                ignore.append(os.path.basename(line.strip().rstrip("/")))
+                ignore.append(Path(line.strip().rstrip("/")).name)
     for root, dirs, files in os.walk(self.wf_path, topdown=True):
         # Ignore files
         for i_base in ignore:
-            i = os.path.join(root, i_base)
-            dirs[:] = [d for d in dirs if not fnmatch.fnmatch(os.path.join(root, d), i)]
-            files[:] = [f for f in files if not fnmatch.fnmatch(os.path.join(root, f), i)]
+            i = str(Path(root, i_base))
+            dirs[:] = [d for d in dirs if not fnmatch.fnmatch(str(Path(root, d)), i)]
+            files[:] = [f for f in files if not fnmatch.fnmatch(str(Path(root, f)), i)]
         for fname in files:
             # File ignored in config
-            if os.path.relpath(os.path.join(root, fname), self.wf_path) in ignored_config:
-                ignored.append(f"Ignoring file `{os.path.join(root, fname)}`")
+            if str(Path(root, fname).relative_to(self.wf_path)) in ignored_config:
+                ignored.append(f"Ignoring file `{Path(root, fname)}`")
                 continue
             # Skip binary files
-            if nf_core.utils.is_file_binary(os.path.join(root, fname)):
+            if nf_core.utils.is_file_binary(Path(root, fname)):
                 continue
             try:
-                with open(os.path.join(root, fname), encoding="latin1") as fh:
+                with open(Path(root, fname), encoding="latin1") as fh:
                     for line in fh:
                         if ">>>>>>>" in line:
-                            failed.append(f"Merge marker '>>>>>>>' in `{os.path.join(root, fname)}`: {line[:30]}")
+                            failed.append(f"Merge marker '>>>>>>>' in `{Path(root, fname)}`: {line[:30]}")
                         if "<<<<<<<" in line:
-                            failed.append(f"Merge marker '<<<<<<<' in `{os.path.join(root, fname)}`: {line[:30]}")
+                            failed.append(f"Merge marker '<<<<<<<' in `{Path(root, fname)}`: {line[:30]}")
             except FileNotFoundError:
-                log.debug(f"Could not open file {os.path.join(root, fname)} in merge_markers lint test")
+                log.debug(f"Could not open file {Path(root, fname)} in merge_markers lint test")
     if len(failed) == 0:
         passed.append("No merge markers found in pipeline files")
     return {"passed": passed, "failed": failed, "ignored": ignored}
