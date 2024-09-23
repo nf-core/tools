@@ -65,7 +65,7 @@ class TestSubworkflowsLint(TestSubworkflows):
 
     def test_subworkflows_lint_update_meta_yml(self):
         """update the meta.yml of a subworkflow"""
-        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(dir=self.nfcore_modules, fix=True)
+        subworkflow_lint = nf_core.subworkflows.SubworkflowLint(directory=self.nfcore_modules, fix=True)
         subworkflow_lint.lint(print_results=False, subworkflow="test_subworkflow")
         assert len(subworkflow_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in subworkflow_lint.failed]}"
         assert len(subworkflow_lint.passed) > 0
