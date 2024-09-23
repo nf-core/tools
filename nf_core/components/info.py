@@ -280,14 +280,26 @@ class ComponentInfo(ComponentCommand):
             inputs_table = Table(expand=True, show_lines=True, box=box.MINIMAL_HEAVY_HEAD, padding=0)
             inputs_table.add_column(":inbox_tray: Inputs")
             inputs_table.add_column("Description")
-            inputs_table.add_column("Pattern", justify="right", style="green")
+            if self.component_type == "modules":
+                inputs_table.add_column("Pattern", justify="right", style="green")
+            elif self.component_type == "subworkflows":
+                inputs_table.add_column("Structure", justify="right", style="green")
             for input in self.meta["input"]:
-                for key, info in input.items():
-                    inputs_table.add_row(
-                        f"[orange1 on black] {key} [/][dim i] ({info['type']})",
-                        Markdown(info["description"] if info["description"] else ""),
-                        info.get("pattern", ""),
-                    )
+                if self.component_type == "modules":
+                    for element in input:
+                        for key, info in element.items():
+                            inputs_table.add_row(
+                                f"[orange1 on black] {key} [/][dim i] ({info['type']})",
+                                Markdown(info["description"] if info["description"] else ""),
+                                info.get("pattern", ""),
+                            )
+                elif self.component_type == "subworkflows":
+                    for key, info in input.items():
+                        inputs_table.add_row(
+                            f"[orange1 on black] {key} [/][dim i]",
+                            Markdown(info["description"] if info["description"] else ""),
+                            info.get("structure", ""),
+                        )
 
             renderables.append(inputs_table)
 
@@ -296,14 +308,27 @@ class ComponentInfo(ComponentCommand):
             outputs_table = Table(expand=True, show_lines=True, box=box.MINIMAL_HEAVY_HEAD, padding=0)
             outputs_table.add_column(":outbox_tray: Outputs")
             outputs_table.add_column("Description")
-            outputs_table.add_column("Pattern", justify="right", style="green")
+            if self.component_type == "modules":
+                inputs_table.add_column("Pattern", justify="right", style="green")
+            elif self.component_type == "subworkflows":
+                inputs_table.add_column("Structure", justify="right", style="green")
             for output in self.meta["output"]:
-                for key, info in output.items():
-                    outputs_table.add_row(
-                        f"[orange1 on black] {key} [/][dim i] ({info['type']})",
-                        Markdown(info["description"] if info["description"] else ""),
-                        info.get("pattern", ""),
-                    )
+                if self.component_type == "modules":
+                    for ch_name, elements in output.items():
+                        for element in elements:
+                            for key, info in element.items():
+                                outputs_table.add_row(
+                                    f"[orange1 on black] {key} [/][dim i] ({info['type']})",
+                                    Markdown(info["description"] if info["description"] else ""),
+                                    info.get("pattern", ""),
+                                )
+                elif self.component_type == "subworkflows":
+                    for key, info in output.items():
+                        outputs_table.add_row(
+                            f"[orange1 on black] {key} [/][dim i]",
+                            Markdown(info["description"] if info["description"] else ""),
+                            info.get("structure", ""),
+                        )
 
             renderables.append(outputs_table)
 
