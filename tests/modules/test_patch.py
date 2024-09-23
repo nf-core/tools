@@ -21,8 +21,8 @@ Uses a branch (patch-tester) in the GitLab nf-core/modules-test repo when
 testing if the update commands works correctly with patch files
 """
 
-ORG_SHA = "002623ccc88a3b0cb302c7d8f13792a95354d9f2"
-CORRECT_SHA = "1dff30bfca2d98eb7ac7b09269a15e822451d99f"
+ORG_SHA = "63e780200600e340365b669f9c673b670764c569"
+CORRECT_SHA = "63e780200600e340365b669f9c673b670764c569"
 SUCCEED_SHA = "ba15c20c032c549d77c5773659f19c2927daf48e"
 FAIL_SHA = "67b642d4471c4005220a342cad3818d5ba2b5a73"
 BISMARK_ALIGN = "bismark/align"
