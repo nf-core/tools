@@ -412,7 +412,7 @@ def command_pipelines_lint(
     help="List of images already available in a remote `singularity.cacheDir`.",
 )
 @click.option(
-    "-n",
+    "-d",
     "--parallel-downloads",
     type=int,
     default=4,
