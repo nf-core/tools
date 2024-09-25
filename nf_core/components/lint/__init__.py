@@ -57,6 +57,7 @@ class ComponentLint(ComponentCommand):
         component_type: str,
         directory: Union[str, Path],
         fail_warned: bool = False,
+        fix: bool = False,
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,
         no_pull: bool = False,
@@ -73,6 +74,7 @@ class ComponentLint(ComponentCommand):
         )
 
         self.fail_warned = fail_warned
+        self.fix = fix
         self.passed: List[LintResult] = []
         self.warned: List[LintResult] = []
         self.failed: List[LintResult] = []
