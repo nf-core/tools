@@ -210,6 +210,14 @@ class TestModulesCreate(TestModules):
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
 
+    def test_modules_lint_update_meta_yml(self):
+        """update the meta.yml of a module"""
+        module_lint = nf_core.modules.ModuleLint(directory=self.nfcore_modules, fix=True)
+        module_lint.lint(print_results=False, module="fastqc")
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+        assert len(module_lint.warned) >= 0
+
     def test_modules_lint_no_gitlab(self):
         """Test linting a pipeline with no modules installed"""
         self.mods_remove.remove("fastqc", force=True)
@@ -432,7 +440,7 @@ class TestModulesCreate(TestModules):
         ) as fh:
             yaml_content = yaml.safe_load(fh)
         # Add a new dependency to the environment.yml file and reverse the order
-        yaml_content["dependencies"].append("z")
+        yaml_content["dependencies"].append("z=0.0.0")
         yaml_content["dependencies"].reverse()
         yaml_content = yaml.dump(yaml_content)
         with open(

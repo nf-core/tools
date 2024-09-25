@@ -1231,11 +1231,14 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
     is_flag=True,
     help="Fix the module version if a newer version is available",
 )
-def command_modules_lint(ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version):
+@click.option("--fix", is_flag=True, help="Fix all linting tests if possible.")
+def command_modules_lint(
+    ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix
+):
     """
     Lint one or more modules in a directory.
     """
-    modules_lint(ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version)
+    modules_lint(ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix)
 
 
 # nf-core modules info
