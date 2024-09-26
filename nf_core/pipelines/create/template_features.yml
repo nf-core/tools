@@ -1,10 +1,18 @@
 github:
   skippable_paths:
-    - ".github/"
-    - ".gitignore"
-  short_description: "Skip the creation of a local Git repository."
-  description: ""
-  help_text: ""
+    - ".github"
+    - ".gitattributes"
+  short_description: "Use a GitHub repository."
+  description: "Create a GitHub repository for the pipeline."
+  help_text: |
+    This will create a GitHub repository for the pipeline.
+
+    The repository will include:
+    - Continuous Integration (CI) tests
+    - Issues and pull requests templates
+
+    The initialisation of a git repository is required to use the nf-core/tools.
+    This means that even if you unselect this option, your pipeline will still contain a `.git` directory and `.gitignore` file.
   linting:
     files_exist:
       - ".github/ISSUE_TEMPLATE/bug_report.yml"
@@ -12,7 +20,6 @@ github:
       - ".github/PULL_REQUEST_TEMPLATE.md"
       - ".github/CONTRIBUTING.md"
       - ".github/.dockstore.yml"
-      - ".gitignore"
     files_unchanged:
       - ".github/ISSUE_TEMPLATE/bug_report.yml"
       - ".github/ISSUE_TEMPLATE/config.yml"
@@ -26,7 +33,7 @@ github:
     readme:
       - "nextflow_badge"
   nfcore_pipelines: False
-  custom_pipelines: False
+  custom_pipelines: True
 ci:
   skippable_paths:
     - ".github/workflows/"
@@ -282,12 +289,22 @@ changelog:
 nf_schema:
   skippable_paths:
     - "subworkflows/nf-core/utils_nfschema_plugin"
+    - "nextflow_schema.json"
+    - "assets/schema_input.json"
+    - "assets/samplesheet.csv"
   short_description: "Use nf-schema"
   description: "Use the nf-schema Nextflow plugin for this pipeline."
   help_text: |
     [nf-schema](https://nextflow-io.github.io/nf-schema/latest/) is used to validate input parameters based on a JSON schema.
     It also provides helper functionality to create help messages, get a summary
     of changed parameters and validate and convert a samplesheet to a channel.
+  linting:
+    files_exist:
+      - "nextflow_schema.json"
+    schema_params: False
+    schema_lint: False
+    schema_description: False
+    nextflow_config: False
   nfcore_pipelines: True
   custom_pipelines: True
 license:

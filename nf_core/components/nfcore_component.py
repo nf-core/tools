@@ -49,7 +49,7 @@ class NFCoreComponent:
         self.passed: List[Tuple[str, str, Path]] = []
         self.warned: List[Tuple[str, str, Path]] = []
         self.failed: List[Tuple[str, str, Path]] = []
-        self.inputs: List[str] = []
+        self.inputs: List[list[dict[str, dict[str, str]]]] = []
         self.outputs: List[str] = []
         self.has_meta: bool = False
         self.git_sha: Optional[str] = None
@@ -64,12 +64,15 @@ class NFCoreComponent:
             self.process_name = ""
             self.environment_yml: Optional[Path] = Path(self.component_dir, "environment.yml")
 
-            name_index = (
-                len(self.component_dir.parts)
-                - 1
-                - self.component_dir.parts[::-1].index(self.component_name.split("/")[0])
-            )
+            component_list = self.component_name.split("/")
+
+            name_index = len(self.component_dir.parts) - 1 - self.component_dir.parts[::-1].index(component_list[0])
+            if len(component_list) != 1 and component_list[0] == component_list[1]:
+                # Handle cases where the subtool has the same name as the tool
+                name_index -= 1
+
             repo_dir = self.component_dir.parts[:name_index][-1]
+
             self.org = repo_dir
             self.nftest_testdir = Path(self.component_dir, "tests")
             self.nftest_main_nf = Path(self.nftest_testdir, "main.nf.test")
@@ -167,7 +170,7 @@ class NFCoreComponent:
 
     def get_inputs_from_main_nf(self) -> None:
         """Collect all inputs from the main.nf file."""
-        inputs: List[str] = []
+        inputs: list[list[dict[str, dict[str, str]]]] = []
         with open(self.main_nf) as f:
             data = f.read()
         # get input values from main.nf after "input:", which can be formatted as tuple val(foo) path(bar) or val foo or val bar or path bar or path foo
@@ -181,16 +184,22 @@ class NFCoreComponent:
         # don't match anything inside comments or after "output:"
         if "input:" not in data:
             log.debug(f"Could not find any inputs in {self.main_nf}")
+            return
         input_data = data.split("input:")[1].split("output:")[0]
-        regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
-        matches = re.finditer(regex, input_data, re.MULTILINE)
-        for _, match in enumerate(matches, start=1):
-            if match.group(3):
-                input_val = match.group(3).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
-                inputs.append(input_val)
-            elif match.group(4):
-                input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
-                inputs.append(input_val)
+        for line in input_data.split("\n"):
+            channel_elements: list[dict[str, dict[str, str]]] = []
+            regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            matches = re.finditer(regex, line)
+            for _, match in enumerate(matches, start=1):
+                input_val = None
+                if match.group(3):
+                    input_val = match.group(3).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
+                elif match.group(4):
+                    input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
+                if input_val:
+                    channel_elements.append({input_val: {}})
+            if len(channel_elements) > 0:
+                inputs.append(channel_elements)
         log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
         self.inputs = inputs
 
@@ -203,9 +212,23 @@ class NFCoreComponent:
             log.debug(f"Could not find any outputs in {self.main_nf}")
             return outputs
         output_data = data.split("output:")[1].split("when:")[0]
-        regex = r"emit:\s*([^)\s,]+)"
-        matches = re.finditer(regex, output_data, re.MULTILINE)
-        for _, match in enumerate(matches, start=1):
-            outputs.append(match.group(1))
+        regex_emit = r"emit:\s*([^)\s,]+)"
+        regex_elements = r"(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+        for line in output_data.split("\n"):
+            match_emit = re.search(regex_emit, line)
+            matches_elements = re.finditer(regex_elements, line)
+            if not match_emit:
+                continue
+            output_channel = {match_emit.group(1): []}
+            for _, match_element in enumerate(matches_elements, start=1):
+                output_val = None
+                if match_element.group(3):
+                    output_val = match_element.group(3)
+                elif match_element.group(4):
+                    output_val = match_element.group(4)
+                if output_val:
+                    output_val = output_val.strip("'").strip('"')  # remove quotes
+                    output_channel[match_emit.group(1)].append({output_val: {}})
+            outputs.append(output_channel)
         log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")
         self.outputs = outputs

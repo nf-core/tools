@@ -36,6 +36,10 @@
 - add option to exclude documentation from pipeline template ([#3130](https://github.com/nf-core/tools/pull/3130))
 - add option to exclude test configs from pipeline template ([#3133](https://github.com/nf-core/tools/pull/3133))
 - add option to exclude tower.yml from pipeline template ([#3134](https://github.com/nf-core/tools/pull/3134))
+- run nf-core lint `--release` on PRs to master ([#3148](https://github.com/nf-core/tools/pull/3148))
+- Add tests to ensure all files are part of a template customisation group and all groups are tested ([#3099](https://github.com/nf-core/tools/pull/3099))
+- Replaces the old custom `check_max()` function with the Nextflow native `resourceLimits` directive ([#3037](https://github.com/nf-core/tools/pull/3037))
+- Fixed release announcement hashtags for Mastodon ([#3099](https://github.com/nf-core/tools/pull/3176))
 
 ### Linting
 
@@ -49,6 +53,7 @@
 - Linting will now check the use of the right validation plugin include statements in the workflow scripts ([#3116])(https://github.com/nf-core/tools/pull/3116)
 - Full linting for correct use of nf-schema and nf-validation ([#3116](https://github.com/nf-core/tools/pull/3116))
 - Handle cases where the directory path contains the name of the component ([#3147](https://github.com/nf-core/tools/pull/3147))
+- Don't test conda `environment.yml` `name` attribute (which should no longer be there) ([#3161](https://github.com/nf-core/tools/pull/3161))
 
 ### Pipeline create command
 
@@ -82,6 +87,7 @@
 - Add bot action to update textual snapshots and write bot documentation ([#3102](https://github.com/nf-core/tools/pull/3102))
 - Update gitpod setup ([#3136](https://github.com/nf-core/tools/pull/3136))
 - fix syncing a pipeline from current directory ([#3143](https://github.com/nf-core/tools/pull/3143))
+- Patch gitpod conda setup to not use defaults channel ([#3159](https://github.com/nf-core/tools/pull/3159))
 
 ## Version updates
 
