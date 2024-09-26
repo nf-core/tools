@@ -69,7 +69,7 @@ jobs:
           --outdir ./${{ env.REPOTITLE_LOWERCASE }} \
           --compress "none" \
           --container-system 'singularity' \
-          --container-library "quay.io" -l "docker.io" -l "ghcr.io" -l "community.wave.seqera.io" \
+          --container-library "quay.io" -l "docker.io" -l "community.wave.seqera.io" \
           --container-cache-utilisation 'amend' \
           --download-configuration 'yes'
 
@@ -109,7 +109,10 @@ jobs:
         run: |
           {% raw %}
           if [ "${{ env.IMAGE_COUNT_INITIAL }}" -ne "${{ env.IMAGE_COUNT_AFTER }}" ]; then
-            echo "$(expr ${{ env.IMAGE_COUNT_AFTER }}-${{ env.IMAGE_COUNT_INITIAL }}) additional container images were \n downloaded at runtime . The pipeline has no support for offline runs!"
+            initial_count=${{ env.IMAGE_COUNT_INITIAL }}
+            final_count=${{ env.IMAGE_COUNT_AFTER }}
+            difference=$((final_count - initial_count))
+            echo "$difference additional container images were \n downloaded at runtime . The pipeline has no support for offline runs!"
             tree ./singularity_container_images
             exit 1
           else
