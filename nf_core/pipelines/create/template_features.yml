@@ -77,6 +77,7 @@ igenomes:
   linting:
     files_exist:
       - "conf/igenomes.config"
+      - "conf/igenomes_ignored.config"
   nfcore_pipelines: True
   custom_pipelines: True
 github_badges:
