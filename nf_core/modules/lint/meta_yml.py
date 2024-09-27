@@ -95,6 +95,23 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
 
     # Confirm that all input and output channels are correctly specified
     if valid_meta_yml:
+        # confirm that the name matches the process name in main.nf
+        if meta_yaml["name"].upper() == module.process_name:
+            module.passed.append(
+                (
+                    "meta_name",
+                    "Correct name specified in `meta.yml`.",
+                    module.meta_yml,
+                )
+            )
+        else:
+            module.failed.append(
+                (
+                    "meta_name",
+                    f"Conflicting `process` name between meta.yml (`{meta_yaml['name']}`) and main.nf (`{module.process_name}`)",
+                    module.meta_yml,
+                )
+            )
         # Check that inputs are specified in meta.yml
         if len(module.inputs) > 0 and "input" not in meta_yaml:
             module.failed.append(
