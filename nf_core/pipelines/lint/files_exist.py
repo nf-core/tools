@@ -167,6 +167,7 @@ def files_exist(self) -> Dict[str, List[str]]:
         [Path("assets", "multiqc_config.yml")],
         [Path("conf", "base.config")],
         [Path("conf", "igenomes.config")],
+        [Path("conf", "igenomes_ignored.config")],
         [Path(".github", "workflows", "awstest.yml")],
         [Path(".github", "workflows", "awsfulltest.yml")],
         [Path("modules.json")],

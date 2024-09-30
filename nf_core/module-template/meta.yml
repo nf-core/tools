@@ -53,11 +53,6 @@ input:
 ## TODO nf-core: Add a description of all of the variables used as output
 {% endif -%}
 output:
-  - versions:
-    - "versions.yml":
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
   - {{ 'bam:' if not_empty_template else "output:" }}
   #{% if has_meta -%} Only when we have meta
     - meta:
@@ -81,6 +76,11 @@ output:
           {% else -%}
           - edam: ""
           {%- endif %}
+  - versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
 
 authors:
   - "{{ author }}"
