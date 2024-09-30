@@ -120,6 +120,7 @@ nf_core_configs:
       - "custom_config"
       - "params.custom_config_version"
       - "params.custom_config_base"
+    included_configs: False
   nfcore_pipelines: False
   custom_pipelines: True
 is_nfcore:
