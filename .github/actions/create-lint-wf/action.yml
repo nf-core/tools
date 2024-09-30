@@ -53,6 +53,12 @@ runs:
       run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
       working-directory: create-lint-wf
 
+    # Uncomment includeConfig statement
+    - name: uncomment include config
+      shell: bash
+      run: sed -i 's/\/\/ includeConfig/includeConfig/' nf-core-testpipeline/nextflow.config
+      working-directory: create-lint-wf
+
     # Replace zenodo.XXXXXX to pass readme linting
     - name: replace zenodo.XXXXXX
       shell: bash

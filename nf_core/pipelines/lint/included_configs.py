@@ -20,7 +20,6 @@ def included_configs(self):
 
     with open(config_file) as fh:
         config = fh.read()
-        print(self.pipeline_name)
         if (
             f"// includeConfig !System.getenv('NXF_OFFLINE') && params.custom_config_base ? \"${{params.custom_config_base}}/pipeline/{self.pipeline_name}.config\""
             in config

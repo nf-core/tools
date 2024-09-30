@@ -137,6 +137,11 @@ jobs:
         run: find my-prefix-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
         working-directory: create-test-lint-wf
 
+      # Uncomment includeConfig statement
+      - name: uncomment include config
+        run: sed -i 's/\/\/ includeConfig/includeConfig/' nf-core-testpipeline/nextflow.config
+        working-directory: create-lint-wf
+
       # Replace zenodo.XXXXXX to pass readme linting
       - name: replace zenodo.XXXXXX
         run: find my-prefix-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;

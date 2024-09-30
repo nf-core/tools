@@ -78,6 +78,11 @@ jobs:
         run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
         working-directory: create-lint-wf
 
+      # Uncomment includeConfig statement
+      - name: uncomment include config
+        run: sed -i 's/\/\/ includeConfig/includeConfig/' nf-core-testpipeline/nextflow.config
+        working-directory: create-lint-wf
+
       # Run the other nf-core commands
       - name: nf-core pipelines list
         run: nf-core --log-file log.txt pipelines list
