@@ -26,7 +26,7 @@ def included_configs(self):
         ):
             failed.append("Pipeline config does not include custom configs. Please uncomment the includeConfig line.")
         elif (
-            "includeConfig !System.getenv('NXF_OFFLINE') && params.custom_config_base ? \"${{params.custom_config_base}}/pipeline/{self.pipeline_name}.config\""
+            f"includeConfig !System.getenv('NXF_OFFLINE') && params.custom_config_base ? \"${{params.custom_config_base}}/pipeline/{self.pipeline_name}.config\""
             in config
         ):
             passed.append("Pipeline config includes custom configs.")
