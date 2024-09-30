@@ -139,7 +139,7 @@ jobs:
 
       # Uncomment includeConfig statement
       - name: uncomment include config
-        run: find nf-core-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
+        run: find my-prefix-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
         working-directory: create-test-lint-wf
 
       # Replace zenodo.XXXXXX to pass readme linting
