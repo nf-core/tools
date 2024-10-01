@@ -60,6 +60,7 @@ ci:
 igenomes:
   skippable_paths:
     - "conf/igenomes.config"
+    - "conf/igenomes_ignored.config"
   short_description: "Use reference genomes"
   description: "The pipeline will be configured to use a copy of the most common reference genome files from iGenomes"
   help_text: |
@@ -76,6 +77,7 @@ igenomes:
   linting:
     files_exist:
       - "conf/igenomes.config"
+      - "conf/igenomes_ignored.config"
   nfcore_pipelines: True
   custom_pipelines: True
 github_badges:
@@ -118,6 +120,7 @@ nf_core_configs:
       - "custom_config"
       - "params.custom_config_version"
       - "params.custom_config_base"
+    included_configs: False
   nfcore_pipelines: False
   custom_pipelines: True
 is_nfcore:

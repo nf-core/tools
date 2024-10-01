@@ -36,8 +36,13 @@
 - add option to exclude documentation from pipeline template ([#3130](https://github.com/nf-core/tools/pull/3130))
 - add option to exclude test configs from pipeline template ([#3133](https://github.com/nf-core/tools/pull/3133))
 - add option to exclude tower.yml from pipeline template ([#3134](https://github.com/nf-core/tools/pull/3134))
+- test pipeline with conda and singularity on PRs to master ([#3149](https://github.com/nf-core/tools/pull/3149))
 - run nf-core lint `--release` on PRs to master ([#3148](https://github.com/nf-core/tools/pull/3148))
 - Add tests to ensure all files are part of a template customisation group and all groups are tested ([#3099](https://github.com/nf-core/tools/pull/3099))
+- Remove if/else block to include `igenomes.config` ([#3168](https://github.com/nf-core/tools/pull/3168))
+- Replaces the old custom `check_max()` function with the Nextflow native `resourceLimits` directive ([#3037](https://github.com/nf-core/tools/pull/3037))
+- Fixed release announcement hashtags for Mastodon ([#3099](https://github.com/nf-core/tools/pull/3176))
+- Remove try/catch blocks from `nextflow.config` ([#3167](https://github.com/nf-core/tools/pull/3167))
 
 ### Linting
 
@@ -65,6 +70,7 @@
 - The `modules_nfcore` tag in the `main.nf.test` file of modules/subworkflows now displays the organization name in custom modules repositories ([#3005](https://github.com/nf-core/tools/pull/3005))
 - Add `--migrate_pytest` option to `nf-core <modules|subworkflows> test` command ([#3085](https://github.com/nf-core/tools/pull/3085))
 - Components: allow spaces at the beginning of include statements ([#3115](https://github.com/nf-core/tools/pull/3115))
+- Add option `--fix` to update the `meta.yml` file of subworkflows ([#3077](https://github.com/nf-core/tools/pull/3077))
 
 ### General
 

@@ -37,6 +37,7 @@ from .actions_schema_validation import actions_schema_validation
 from .configs import base_config, modules_config
 from .files_exist import files_exist
 from .files_unchanged import files_unchanged
+from .included_configs import included_configs
 from .merge_markers import merge_markers
 from .modules_json import modules_json
 from .modules_structure import modules_structure
@@ -101,6 +102,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     system_exit = system_exit
     template_strings = template_strings
     version_consistency = version_consistency
+    included_configs = included_configs
 
     def __init__(
         self, wf_path, release_mode=False, fix=(), key=None, fail_ignored=False, fail_warned=False, hide_progress=False
@@ -152,7 +154,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "base_config",
             "modules_config",
             "nfcore_yml",
-        ] + (["version_consistency"] if release_mode else [])
+        ] + (["version_consistency", "included_configs"] if release_mode else [])
 
     def _load(self) -> bool:
         """Load information about the pipeline into the PipelineLint object"""
