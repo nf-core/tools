@@ -38,7 +38,7 @@ jobs:
     strategy:
       matrix:
         NXF_VER:
-          - "23.10.0"
+          - "24.04.2"
           - "latest-everything"
     steps:
       - name: go to subdirectory and change nextflow workdir
@@ -76,6 +76,11 @@ jobs:
       # Remove TODO statements
       - name: remove TODO
         run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
+        working-directory: create-lint-wf
+
+      # Uncomment includeConfig statement
+      - name: uncomment include config
+        run: find nf-core-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
         working-directory: create-lint-wf
 
       # Run the other nf-core commands

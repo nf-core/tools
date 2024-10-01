@@ -44,7 +44,7 @@ jobs:
       - name: Create Matrix
         id: create_matrix
         run: |
-          echo "matrix=$(yq 'keys | filter(. != "github") | filter(. != "is_nfcore") | filter(. != "test_config") | tojson(0)' nf_core/pipelines/create/templatefeatures.yml)" >> $GITHUB_OUTPUT
+          echo "matrix=$(yq 'keys | filter(. != "github") | filter(. != "is_nfcore") | filter(. != "test_config") | tojson(0)' nf_core/pipelines/create/template_features.yml)" >> $GITHUB_OUTPUT
 
   RunTestWorkflow:
     runs-on: ${{ matrix.runner }}
@@ -135,6 +135,11 @@ jobs:
       # Remove TODO statements
       - name: remove TODO
         run: find my-prefix-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
+        working-directory: create-test-lint-wf
+
+      # Uncomment includeConfig statement
+      - name: uncomment include config
+        run: find my-prefix-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
         working-directory: create-test-lint-wf
 
       # Replace zenodo.XXXXXX to pass readme linting
