@@ -23,7 +23,7 @@
 - Remove release announcement for non nf-core pipelines ([#3072](https://github.com/nf-core/tools/pull/3072))
 - handle template features with a yaml file ([#3108](https://github.com/nf-core/tools/pull/3108), [#3112](https://github.com/nf-core/tools/pull/3112))
 - add option to exclude code linters for custom pipeline template ([#3084](https://github.com/nf-core/tools/pull/3084))
-- add option to exclude citations for custom pipeline template ([#3101](https://github.com/nf-core/tools/pull/3101))
+- add option to exclude citations for custom pipeline template ([#3101](https://github.com/nf-core/tools/pull/3101) and [#3169](https://github.com/nf-core/tools/pull/3169))
 - add option to exclude gitpod for custom pipeline template ([#3100](https://github.com/nf-core/tools/pull/3100))
 - add option to exclude codespaces from pipeline template ([#3105](https://github.com/nf-core/tools/pull/3105))
 - add option to exclude multiqc from pipeline template ([#3103](https://github.com/nf-core/tools/pull/3103))
