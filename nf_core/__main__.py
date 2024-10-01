@@ -1815,6 +1815,7 @@ def command_create_logo(logo_text, directory, name, theme, width, format, force)
 
 # nf-core sync (deprecated)
 @nf_core_cli.command("sync", hidden=True, deprecated=True)
+@click.pass_context
 @click.option(
     "-d",
     "--dir",
@@ -1845,14 +1846,14 @@ def command_create_logo(logo_text, directory, name, theme, width, format, force)
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-def command_sync(directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
+def command_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
     """
     Use `nf-core pipelines sync` instead.
     """
     log.warning(
         "The `[magenta]nf-core sync[/]` command is deprecated. Use `[magenta]nf-core pipelines sync[/]` instead."
     )
-    pipelines_sync(directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
+    pipelines_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
 
 
 # nf-core bump-version (deprecated)
