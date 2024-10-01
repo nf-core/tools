@@ -39,8 +39,8 @@
 - test pipeline with conda and singularity on PRs to master ([#3149](https://github.com/nf-core/tools/pull/3149))
 - run nf-core lint `--release` on PRs to master ([#3148](https://github.com/nf-core/tools/pull/3148))
 - Add tests to ensure all files are part of a template customisation group and all groups are tested ([#3099](https://github.com/nf-core/tools/pull/3099))
+- Update the syntax of `utils_nfcore_pipeline_pipeline` local subworkflow ([#3166](https://github.com/nf-core/tools/pull/3166))
 - Remove if/else block to include `igenomes.config` ([#3168](https://github.com/nf-core/tools/pull/3168))
-- Replaces the old custom `check_max()` function with the Nextflow native `resourceLimits` directive ([#3037](https://github.com/nf-core/tools/pull/3037))
 - Fixed release announcement hashtags for Mastodon ([#3099](https://github.com/nf-core/tools/pull/3176))
 - Remove try/catch blocks from `nextflow.config` ([#3167](https://github.com/nf-core/tools/pull/3167))
 
