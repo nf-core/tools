@@ -194,6 +194,9 @@ citations:
 
     Additionally, it will include a YAML file (`assets/methods_description_template.yml`) to add a Materials & Methods section describing the tools used in the pieline,
     and the logics to add this section to the output MultiQC report (if the report is generated).
+  linting:
+    files_exist:
+      - "CITATIONS.md"
   nfcore_pipelines: False
   custom_pipelines: True
 gitpod:
