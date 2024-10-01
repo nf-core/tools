@@ -72,6 +72,17 @@
 - Components: allow spaces at the beginning of include statements ([#3115](https://github.com/nf-core/tools/pull/3115))
 - Add option `--fix` to update the `meta.yml` file of subworkflows ([#3077](https://github.com/nf-core/tools/pull/3077))
 
+### Download
+
+- Fully removed already deprecated `-t` / `--tower` flag.
+- Refactored the CLI for consistency (short flag is usually second word, e.g. also for `--container-library` etc.):
+
+| Old parameter                     | New parameter                     |
+| --------------------------------- | --------------------------------- |
+| `-d` / `--download-configuration` | `-c` / `--download-configuration` |
+| `-p` / `--parallel-downloads`     | `-d` / `--parallel-downloads`     |
+| new parameter                     | `-p` / (`--platform`)             |
+
 ### General
 
 - Update output of generation script for API docs to new structure ([#2988](https://github.com/nf-core/tools/pull/2988))

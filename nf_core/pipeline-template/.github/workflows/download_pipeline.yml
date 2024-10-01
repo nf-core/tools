@@ -65,7 +65,7 @@ jobs:
           --container-system 'singularity' \
           --container-library "quay.io" -l "docker.io" -l "ghcr.io" \
           --container-cache-utilisation 'amend' \
-          --download-configuration
+          --download-configuration 'yes'
 
       - name: Inspect download
         run: tree ./${{ env.REPOTITLE_LOWERCASE }}{% endraw %}{% if test_config %}{% raw %}

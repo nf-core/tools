@@ -366,26 +366,18 @@ def command_pipelines_lint(
     help="Archive compression type",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
-# TODO: Remove this in a future release. Deprecated in March 2024.
 @click.option(
-    "-t",
-    "--tower",
-    is_flag=True,
-    default=False,
-    hidden=True,
-    help="Download for Seqera Platform. DEPRECATED: Please use `--platform` instead.",
-)
-@click.option(
+    "-p",
     "--platform",
     is_flag=True,
     default=False,
     help="Download for Seqera Platform (formerly Nextflow Tower)",
 )
 @click.option(
-    "-d",
+    "-c",
     "--download-configuration",
-    is_flag=True,
-    default=False,
+    type=click.Choice(["yes", "no"]),
+    default="no",
     help="Include configuration profiles in download. Not available with `--platform`",
 )
 @click.option(
@@ -420,7 +412,7 @@ def command_pipelines_lint(
     help="List of images already available in a remote `singularity.cacheDir`.",
 )
 @click.option(
-    "-p",
+    "-d",
     "--parallel-downloads",
     type=int,
     default=4,
@@ -434,7 +426,6 @@ def command_pipelines_download(
     outdir,
     compress,
     force,
-    tower,
     platform,
     download_configuration,
     tag,
@@ -454,7 +445,6 @@ def command_pipelines_download(
         outdir,
         compress,
         force,
-        tower,
         platform,
         download_configuration,
         tag,
@@ -2120,8 +2110,7 @@ def command_download(
         outdir,
         compress,
         force,
-        tower,
-        platform,
+        platform or tower,
         download_configuration,
         tag,
         container_system,
