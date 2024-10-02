@@ -1148,13 +1148,16 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
             author=wf_config["manifest.author"].strip('"').strip("'"),
             version=wf_config["manifest.version"].strip('"').strip("'"),
             outdir=str(directory),
+            is_nfcore=True,
         )
     elif "prefix" in config_template_keys or "skip" in config_template_keys:
         # The .nf-core.yml file contained the old prefix or skip keys
         nf_core_yaml_config.template = NFCoreTemplateConfig(
             org=tools_config["template"]["prefix"]
             if "prefix" in config_template_keys
-            else tools_config["template"]["org"] or "nf-core",
+            else tools_config["template"]["org"]
+            if "org" in config_template_keys
+            else "nf-core",
             name=tools_config["template"]["name"]
             if "name" in config_template_keys
             else wf_config["manifest.name"].strip('"').strip("'").split("/")[-1],
@@ -1173,6 +1176,11 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
             else tools_config["template"]["skip_features"]
             if "skip_features" in config_template_keys
             else None,
+            is_nfcore=tools_config["template"]["prefix"] == "nf-core"
+            if "prefix" in config_template_keys
+            else tools_config["template"]["org"] == "nf-core"
+            if "org" in config_template_keys
+            else True,
         )
 
     log.debug("Using config file: %s", config_fn)
