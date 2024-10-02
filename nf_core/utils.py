@@ -1154,34 +1154,14 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
         elif "prefix" in config_template_keys or "skip" in config_template_keys:
             # The .nf-core.yml file contained the old prefix or skip keys
             nf_core_yaml_config.template = NFCoreTemplateConfig(
-                org=tools_config["template"]["prefix"]
-                if "prefix" in config_template_keys
-                else tools_config["template"]["org"]
-                if "org" in config_template_keys
-                else "nf-core",
-                name=tools_config["template"]["name"]
-                if "name" in config_template_keys
-                else wf_config["manifest.name"].strip("'\"").split("/")[-1],
-                description=tools_config["template"]["description"]
-                if "description" in config_template_keys
-                else wf_config["manifest.description"].strip("'\""),
-                author=tools_config["template"]["author"]
-                if "author" in config_template_keys
-                else wf_config["manifest.author"].strip("'\""),
-                version=tools_config["template"]["version"]
-                if "version" in config_template_keys
-                else wf_config["manifest.version"].strip("'\""),
-                outdir=tools_config["template"]["outdir"] if "outdir" in config_template_keys else str(directory),
-                skip_features=tools_config["template"]["skip"]
-                if "skip" in config_template_keys
-                else tools_config["template"]["skip_features"]
-                if "skip_features" in config_template_keys
-                else None,
-                is_nfcore=tools_config["template"]["prefix"] == "nf-core"
-                if "prefix" in config_template_keys
-                else tools_config["template"]["org"] == "nf-core"
-                if "org" in config_template_keys
-                else True,
+                org=tools_config["template"].get("prefix", tools_config["template"].get("org", "nf-core")),
+                name=tools_config["template"].get("name", wf_config["manifest.name"].strip("'\"").split("/")[-1]),
+                description=tools_config["template"].get("description", wf_config["manifest.description"].strip("'\"")),
+                author=tools_config["template"].get("author", wf_config["manifest.author"].strip("'\"")),
+                version=tools_config["template"].get("version", wf_config["manifest.version"].strip("'\"")),
+                outdir=tools_config["template"].get("outdir", str(directory)),
+                skip_features=tools_config["template"].get("skip", tools_config["template"].get("skip_features")),
+                is_nfcore=tools_config["template"].get("prefix", tools_config["template"].get("org")) == "nf-core",
             )
 
     log.debug("Using config file: %s", config_fn)
