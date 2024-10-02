@@ -1137,7 +1137,7 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
         raise AssertionError(error_message)
 
     wf_config = fetch_wf_config(Path(directory))
-    if nf_core_yaml_config["repository_type"] == "pipeline" and wf_config != {}:
+    if nf_core_yaml_config["repository_type"] == "pipeline" and wf_config:
         # Retrieve information if template from config file is empty
         config_template_keys = (
             tools_config["template"].keys()
