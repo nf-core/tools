@@ -71,7 +71,7 @@ class PipelineSchema:
         else:
             conf = nf_core.utils.fetch_wf_config(Path(self.pipeline_dir))
 
-        plugins = str(conf.get("plugins", "")).strip('"').strip("'").strip(" ").split(",")
+        plugins = str(conf.get("plugins", "")).strip("'\"").strip(" ").split(",")
         plugin_found = False
         for plugin_instance in plugins:
             if "nf-schema" in plugin_instance:
@@ -373,7 +373,7 @@ class PipelineSchema:
         # If we have a default in the schema, check it matches the config
         if "default" in schema_param and (
             (schema_param["type"] == "boolean" and str(config_default).lower() != str(schema_param["default"]).lower())
-            and (str(schema_param["default"]) != str(config_default).strip('"').strip("'"))
+            and (str(schema_param["default"]) != str(config_default).strip("'\""))
         ):
             # Check that we are not deferring the execution of this parameter in the schema default with squiggly brakcets
             if schema_param["type"] != "string" or "{" not in schema_param["default"]:

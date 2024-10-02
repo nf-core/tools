@@ -182,7 +182,7 @@ class PipelineCreate:
             self.config.force = force if force else False
         if self.config.outdir is None:
             self.config.outdir = outdir if outdir else "."
-        if self.config.is_nfcore is None:
+        if self.config.is_nfcore is None or self.config.is_nfcore == "null":
             self.config.is_nfcore = self.config.org == "nf-core"
 
     def obtain_jinja_params_dict(
@@ -363,11 +363,9 @@ class PipelineCreate:
             config_fn, config_yml = nf_core.utils.load_tools_config(self.outdir)
             if config_fn is not None and config_yml is not None:
                 with open(str(config_fn), "w") as fh:
-                    self.config.outdir = str(self.config.outdir)
                     config_yml.template = NFCoreTemplateConfig(**self.config.model_dump())
                     yaml.safe_dump(config_yml.model_dump(), fh)
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
-                    run_prettier_on_file(self.outdir / config_fn)
 
         # Run prettier on files
         run_prettier_on_file(self.outdir)
@@ -400,8 +398,6 @@ class PipelineCreate:
             nf_core_yml.lint = cast(LintConfigType, lint_config)
             with open(self.outdir / config_fn, "w") as fh:
                 yaml.dump(nf_core_yml.model_dump(), fh, default_flow_style=False, sort_keys=False)
-
-            run_prettier_on_file(Path(self.outdir, config_fn))
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
