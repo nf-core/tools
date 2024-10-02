@@ -18,6 +18,7 @@ requests
 requests_cache
 rich-click==1.8.*
 rich>=13.3.1
+rocrate
 tabulate
 textual==0.71.0
 trogon

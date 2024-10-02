@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import List
 
 import rich
+import rich.box
 from rich.console import Console
 from rich.table import Table
 
