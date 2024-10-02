@@ -1139,15 +1139,15 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
     wf_config = fetch_wf_config(Path(directory))
     if nf_core_yaml_config["repository_type"] == "pipeline" and wf_config:
         # Retrieve information if template from config file is empty
-       config_template_keys = tools_config.get('template', {}).keys()
+        config_template_keys = tools_config.get("template", {}).keys()
         if nf_core_yaml_config.template is None:
             # The .nf-core.yml file did not contain template information
             nf_core_yaml_config.template = NFCoreTemplateConfig(
                 org="nf-core",
-                name=wf_config["manifest.name"].strip('"').strip("'").split("/")[-1],
-                description=wf_config["manifest.description"].strip('"').strip("'"),
-                author=wf_config["manifest.author"].strip('"').strip("'"),
-                version=wf_config["manifest.version"].strip('"').strip("'"),
+                name=wf_config["manifest.name"].strip("'\"").split("/")[-1],
+                description=wf_config["manifest.description"].strip("'\""),
+                author=wf_config["manifest.author"].strip("'\""),
+                version=wf_config["manifest.version"].strip("'\""),
                 outdir=str(directory),
                 is_nfcore=True,
             )
@@ -1161,16 +1161,16 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
                 else "nf-core",
                 name=tools_config["template"]["name"]
                 if "name" in config_template_keys
-                else wf_config["manifest.name"].strip('"').strip("'").split("/")[-1],
+                else wf_config["manifest.name"].strip("'\"").split("/")[-1],
                 description=tools_config["template"]["description"]
                 if "description" in config_template_keys
-                else wf_config["manifest.description"].strip('"').strip("'"),
+                else wf_config["manifest.description"].strip("'\""),
                 author=tools_config["template"]["author"]
                 if "author" in config_template_keys
-                else wf_config["manifest.author"].strip('"').strip("'"),
+                else wf_config["manifest.author"].strip("'\""),
                 version=tools_config["template"]["version"]
                 if "version" in config_template_keys
-                else wf_config["manifest.version"].strip('"').strip("'"),
+                else wf_config["manifest.version"].strip("'\""),
                 outdir=tools_config["template"]["outdir"] if "outdir" in config_template_keys else str(directory),
                 skip_features=tools_config["template"]["skip"]
                 if "skip" in config_template_keys

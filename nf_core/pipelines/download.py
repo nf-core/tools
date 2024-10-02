@@ -746,7 +746,7 @@ class DownloadWorkflow:
                     self.nf_config is needed, because we need to restart search over raw input
                     if no proper container matches are found.
                     """
-                    config_findings.append((k, v.strip('"').strip("'"), self.nf_config, "Nextflow configs"))
+                    config_findings.append((k, v.strip("'\""), self.nf_config, "Nextflow configs"))
 
         # rectify the container paths found in the config
         # Raw config_findings may yield multiple containers, so better create a shallow copy of the list, since length of input and output may be different ?!?
