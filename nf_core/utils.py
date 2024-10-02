@@ -1139,7 +1139,8 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
     wf_config = fetch_wf_config(Path(directory))
     if nf_core_yaml_config["repository_type"] == "pipeline" and wf_config:
         # Retrieve information if template from config file is empty
-        config_template_keys = tools_config.get("template", {}).keys()
+        template = tools_config.get("template")
+        config_template_keys = template.keys() if template is not None else []
         if nf_core_yaml_config.template is None:
             # The .nf-core.yml file did not contain template information
             nf_core_yaml_config.template = NFCoreTemplateConfig(
