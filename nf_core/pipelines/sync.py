@@ -21,6 +21,7 @@ import nf_core
 import nf_core.pipelines.create.create
 import nf_core.pipelines.list
 import nf_core.utils
+from nf_core.pipelines.lint_utils import dump_yaml_with_prettier
 
 log = logging.getLogger(__name__)
 
@@ -290,8 +291,7 @@ class PipelineSync:
                 self.config_yml.template.outdir = "."
                 # Update nf-core version
                 self.config_yml.nf_core_version = nf_core.__version__
-                with open(self.config_yml_path, "w") as config_path:
-                    yaml.safe_dump(self.config_yml.model_dump(), config_path)
+                dump_yaml_with_prettier(self.config_yml_path, self.config_yml.model_dump())
 
         except Exception as err:
             # Reset to where you were to prevent git getting messed up.
