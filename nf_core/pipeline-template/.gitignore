@@ -2,6 +2,7 @@
 work/
 data/
 results/
+null/
 .DS_Store
 testing/
 testing*
