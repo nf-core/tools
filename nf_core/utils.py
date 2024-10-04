@@ -1099,15 +1099,15 @@ class NFCoreYamlConfig(BaseModel):
     nf_core_version: Optional[str] = None
     """ Version of nf-core/tools used to create/update the pipeline"""
     org_path: Optional[str] = None
-    """ Path to the organisation's nf-core pipelines repository """
+    """ Path to the organisation's modules repository (used for modules repo_type only) """
     lint: Optional[LintConfigType] = None
-    """ Linting configuration """
+    """ Pipeline linting configuration, see https://nf-co.re/docs/nf-core-tools/pipelines/lint#linting-config for examples and documentation """
     template: Optional[NFCoreTemplateConfig] = None
-    """ Template configuration """
+    """ Pipeline template configuration """
     bump_version: Optional[Dict[str, bool]] = None
-    """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). """
+    """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information."""
     update: Optional[Dict[str, Union[str, bool, Dict[str, Union[str, Dict[str, Union[str, bool]]]]]]] = None
-    """ Disable updating specific modules/subworkflows (when repository_type is pipeline)."""
+    """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information."""
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
