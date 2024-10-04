@@ -307,7 +307,12 @@ class PipelineSync:
         try:
             self.repo.git.checkout(self.original_branch, "--", "modules.json")
         except GitCommandError as e:
-            raise SyncExceptionError(f"Could not copy modules.json to TEMPLATE branch:\n{e}")
+            # don't raise an error if the file doesn't exist
+            if "did not match any file(s) known to git" in str(e):
+                log.info("No modules.json file found in current pipeline - not copying")
+                return
+            else:
+                raise SyncExceptionError(f"Could not copy modules.json to TEMPLATE branch:\n{e}")
 
     def commit_template_changes(self):
         """If we have any changes with the new template files, make a git commit"""
