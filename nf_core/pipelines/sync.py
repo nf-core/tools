@@ -18,6 +18,7 @@ import yaml
 from git import GitCommandError, InvalidGitRepositoryError
 
 import nf_core
+import nf_core.modules.modules_json
 import nf_core.pipelines.create.create
 import nf_core.pipelines.list
 import nf_core.utils
@@ -306,6 +307,7 @@ class PipelineSync:
         log.info("Copying modules.json to TEMPLATE branch")
         try:
             self.repo.git.checkout(self.original_branch, "--", "modules.json")
+            nf_core.modules.modules_json.ModulesJson(self.pipeline_dir).check_up_to_date()
         except GitCommandError as e:
             # don't raise an error if the file doesn't exist
             if "did not match any file(s) known to git" in str(e):
