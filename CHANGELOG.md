@@ -43,6 +43,7 @@
 - Remove if/else block to include `igenomes.config` ([#3168](https://github.com/nf-core/tools/pull/3168))
 - Fixed release announcement hashtags for Mastodon ([#3099](https://github.com/nf-core/tools/pull/3176))
 - Remove try/catch blocks from `nextflow.config` ([#3167](https://github.com/nf-core/tools/pull/3167))
+- Extend `download_pipeline.yml` to count pre-downloaded container images. ([#3182](https://github.com/nf-core/tools/pull/3182))
 
 ### Linting
 
