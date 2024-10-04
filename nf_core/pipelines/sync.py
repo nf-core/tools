@@ -18,7 +18,6 @@ import yaml
 from git import GitCommandError, InvalidGitRepositoryError
 
 import nf_core
-import nf_core.modules.modules_json
 import nf_core.pipelines.create.create
 import nf_core.pipelines.list
 import nf_core.utils
@@ -138,7 +137,6 @@ class PipelineSync:
         self.checkout_template_branch()
         self.delete_template_branch_files()
         self.make_template_pipeline()
-        self.copy_components_to_template()
         self.commit_template_changes()
 
         if not self.made_changes and self.force_pr:
@@ -299,22 +297,6 @@ class PipelineSync:
             # Reset to where you were to prevent git getting messed up.
             self.repo.git.reset("--hard")
             raise SyncExceptionError(f"Failed to rebuild pipeline from template with error:\n{err}")
-
-    def copy_components_to_template(self) -> None:
-        """
-        Copy the modules.json file from the current pipeline to the TEMPLATE branch using git checkout
-        """
-        log.info("Copying modules.json to TEMPLATE branch")
-        try:
-            self.repo.git.checkout(self.original_branch, "--", "modules.json")
-            nf_core.modules.modules_json.ModulesJson(self.pipeline_dir).check_up_to_date()
-        except GitCommandError as e:
-            # don't raise an error if the file doesn't exist
-            if "did not match any file(s) known to git" in str(e):
-                log.info("No modules.json file found in current pipeline - not copying")
-                return
-            else:
-                raise SyncExceptionError(f"Could not copy modules.json to TEMPLATE branch:\n{e}")
 
     def commit_template_changes(self):
         """If we have any changes with the new template files, make a git commit"""
