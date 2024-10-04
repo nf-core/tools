@@ -74,7 +74,7 @@ jobs:
           --download-configuration 'yes'
 
       - name: Inspect download
-        run: tree ./${{ env.REPOTITLE_LOWERCASE }}{% endraw %}{% if test_config %}{% raw %}
+        run: tree ./${{ env.REPOTITLE_LOWERCASE }}{% if test_config %}
 
       - name: Count the downloaded number of container images
         id: count_initial
@@ -96,7 +96,7 @@ jobs:
         env:
           NXF_SINGULARITY_CACHEDIR: ./singularity_container_images
           NXF_SINGULARITY_HOME_MOUNT: true
-        run: nextflow run ./${{ env.REPOTITLE_LOWERCASE }}/$( sed 's/\W/_/g' <<< ${{ env.REPO_BRANCH }}) -profile test,singularity --outdir ./results{% endraw %}{% endif %}
+        run: nextflow run ./${{ env.REPOTITLE_LOWERCASE }}/$( sed 's/\W/_/g' <<< ${{ env.REPO_BRANCH }}) -profile test,singularity --outdir ./results
 
       - name: Count the downloaded number of container images
         id: count_afterwards
@@ -107,7 +107,6 @@ jobs:
 
       - name: Compare container image counts
         run: |
-          {% raw %}
           if [ "${{ env.IMAGE_COUNT_INITIAL }}" -ne "${{ env.IMAGE_COUNT_AFTER }}" ]; then
             initial_count=${{ env.IMAGE_COUNT_INITIAL }}
             final_count=${{ env.IMAGE_COUNT_AFTER }}
@@ -118,4 +117,4 @@ jobs:
           else
             echo "The pipeline can be downloaded successfully!"
           fi
-          {% endraw %}
+          {% endif %}{% endraw %}
