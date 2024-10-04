@@ -1050,15 +1050,26 @@ DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
 class NFCoreTemplateConfig(BaseModel):
+    """Template configuration schema"""
+
     org: Optional[str] = None
+    """ Organisation name """
     name: Optional[str] = None
+    """ Pipeline name """
     description: Optional[str] = None
+    """ Pipeline description """
     author: Optional[str] = None
+    """ Pipeline author """
     version: Optional[str] = None
+    """ Pipeline version """
     force: Optional[bool] = True
+    """ Force overwrite of existing files """
     outdir: Optional[Union[str, Path]] = None
+    """ Output directory """
     skip_features: Optional[list] = None
+    """ Skip features. See https://nf-co.re/docs/nf-core-tools/pipelines/create for a list of features. """
     is_nfcore: Optional[bool] = None
+    """ Whether the pipeline is an nf-core pipeline. """
 
     # convert outdir to str
     @field_validator("outdir")
@@ -1081,13 +1092,22 @@ LintConfigType = Optional[Dict[str, Union[List[str], List[Dict[str, List[str]]],
 
 
 class NFCoreYamlConfig(BaseModel):
+    """.nf-core.yml configuration file schema"""
+
     repository_type: str
+    """ Type of repository: pipeline or modules """
     nf_core_version: Optional[str] = None
+    """ Version of nf-core/tools used to create/update the pipeline"""
     org_path: Optional[str] = None
+    """ Path to the organisation's nf-core pipelines repository """
     lint: Optional[LintConfigType] = None
+    """ Linting configuration """
     template: Optional[NFCoreTemplateConfig] = None
+    """ Template configuration """
     bump_version: Optional[Dict[str, bool]] = None
+    """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). """
     update: Optional[Dict[str, Union[str, bool, Dict[str, Union[str, Dict[str, Union[str, bool]]]]]]] = None
+    """ Disable updating specific modules/subworkflows (when repository_type is pipeline)."""
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
