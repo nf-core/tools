@@ -248,7 +248,7 @@ class ComponentCreate(ComponentCommand):
         if self.process_label is None:
             log.info(
                 "Provide an appropriate resource label for the process, taken from the "
-                "[link=https://github.com/nf-core/tools/blob/master/nf_core/pipeline-template/conf/base.config#L29]nf-core pipeline template[/link].\n"
+                "[link=https://github.com/nf-core/tools/blob/main/nf_core/pipeline-template/conf/base.config#L29]nf-core pipeline template[/link].\n"
                 "For example: {}".format(", ".join(process_label_defaults))
             )
         while self.process_label is None:

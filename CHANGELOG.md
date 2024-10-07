@@ -11,8 +11,9 @@
 - CI tests now lint with the nf-core tools version matching the template version of the pipeline, to minimise errors in opened PRs with every new tools release.
 - New command `nf-core pipelines ro-crate` to create a [Research Object (RO) crate](https://www.researchobject.org/ro-crate/) for a pipeline
 - `nf-core licences` command is deprecated.
-- The structure of nf-core/tools pytests has been updated
-- The structure of the API docs has been updated
+- Changed default branch to `main`.
+- The structure of nf-core/tools pytests has been updated.
+- The structure of the API docs has been updated.
 
 ### Template
 
@@ -86,6 +87,7 @@
 
 ### General
 
+- Change default branch to `main`
 - Update output of generation script for API docs to new structure ([#2988](https://github.com/nf-core/tools/pull/2988))
 - Add no clobber and put bash options on their own line ([#2991](https://github.com/nf-core/tools/pull/2991))
 - update minimal textual version and snapshots ([#2998](https://github.com/nf-core/tools/pull/2998))
