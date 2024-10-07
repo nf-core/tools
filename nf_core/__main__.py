@@ -366,26 +366,18 @@ def command_pipelines_lint(
     help="Archive compression type",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
-# TODO: Remove this in a future release. Deprecated in March 2024.
 @click.option(
-    "-t",
-    "--tower",
-    is_flag=True,
-    default=False,
-    hidden=True,
-    help="Download for Seqera Platform. DEPRECATED: Please use `--platform` instead.",
-)
-@click.option(
+    "-p",
     "--platform",
     is_flag=True,
     default=False,
     help="Download for Seqera Platform (formerly Nextflow Tower)",
 )
 @click.option(
-    "-d",
+    "-c",
     "--download-configuration",
-    is_flag=True,
-    default=False,
+    type=click.Choice(["yes", "no"]),
+    default="no",
     help="Include configuration profiles in download. Not available with `--platform`",
 )
 @click.option(
@@ -420,7 +412,7 @@ def command_pipelines_lint(
     help="List of images already available in a remote `singularity.cacheDir`.",
 )
 @click.option(
-    "-p",
+    "-d",
     "--parallel-downloads",
     type=int,
     default=4,
@@ -434,7 +426,6 @@ def command_pipelines_download(
     outdir,
     compress,
     force,
-    tower,
     platform,
     download_configuration,
     tag,
@@ -454,7 +445,6 @@ def command_pipelines_download(
         outdir,
         compress,
         force,
-        tower,
         platform,
         download_configuration,
         tag,
@@ -1231,11 +1221,14 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
     is_flag=True,
     help="Fix the module version if a newer version is available",
 )
-def command_modules_lint(ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version):
+@click.option("--fix", is_flag=True, help="Fix all linting tests if possible.")
+def command_modules_lint(
+    ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix
+):
     """
     Lint one or more modules in a directory.
     """
-    modules_lint(ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version)
+    modules_lint(ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix)
 
 
 # nf-core modules info
@@ -1476,11 +1469,14 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
     help="Sort lint output by subworkflow or test name.",
     show_default=True,
 )
-def command_subworkflows_lint(ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by):
+@click.option("--fix", is_flag=True, help="Fix all linting tests if possible.")
+def command_subworkflows_lint(
+    ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix
+):
     """
     Lint one or more subworkflows in a directory.
     """
-    subworkflows_lint(ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by)
+    subworkflows_lint(ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix)
 
 
 # nf-core subworkflows info
@@ -1819,6 +1815,7 @@ def command_create_logo(logo_text, directory, name, theme, width, format, force)
 
 # nf-core sync (deprecated)
 @nf_core_cli.command("sync", hidden=True, deprecated=True)
+@click.pass_context
 @click.option(
     "-d",
     "--dir",
@@ -1849,14 +1846,14 @@ def command_create_logo(logo_text, directory, name, theme, width, format, force)
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
-def command_sync(directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
+def command_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
     """
     Use `nf-core pipelines sync` instead.
     """
     log.warning(
         "The `[magenta]nf-core sync[/]` command is deprecated. Use `[magenta]nf-core pipelines sync[/]` instead."
     )
-    pipelines_sync(directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
+    pipelines_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
 
 
 # nf-core bump-version (deprecated)
@@ -2114,8 +2111,7 @@ def command_download(
         outdir,
         compress,
         force,
-        tower,
-        platform,
+        platform or tower,
         download_configuration,
         tag,
         container_system,

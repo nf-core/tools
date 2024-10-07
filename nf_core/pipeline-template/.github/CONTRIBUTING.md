@@ -37,7 +37,7 @@ You have the option to test your changes locally by running the pipeline. For re
 nf-test test --profile debug,test,docker --verbose
 ```
 
-{% endif %}
+{% endif -%}
 When you create a pull request with changes, [GitHub Actions](https://github.com/features/actions) will run automatic tests.
 Typically, pull-requests are only fully reviewed when these tests are passing, though of course we can help out before then.
 
@@ -95,7 +95,7 @@ If you wish to contribute a new step, please use the following coding standards:
    {%- if multiqc %}
 9. Update MultiQC config `assets/multiqc_config.yml` so relevant suffixes, file name clean up and module plots are in the appropriate order. If applicable, add a [MultiQC](https://https://multiqc.info/) module.
 10. Add a description of the output files and if relevant any appropriate images from the MultiQC report to `docs/output.md`.
-    {% endif %}
+    {%- endif %}
 
 ### Default values
 

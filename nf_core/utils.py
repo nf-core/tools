@@ -1050,15 +1050,26 @@ DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
 class NFCoreTemplateConfig(BaseModel):
+    """Template configuration schema"""
+
     org: Optional[str] = None
+    """ Organisation name """
     name: Optional[str] = None
+    """ Pipeline name """
     description: Optional[str] = None
+    """ Pipeline description """
     author: Optional[str] = None
+    """ Pipeline author """
     version: Optional[str] = None
+    """ Pipeline version """
     force: Optional[bool] = True
+    """ Force overwrite of existing files """
     outdir: Optional[Union[str, Path]] = None
+    """ Output directory """
     skip_features: Optional[list] = None
+    """ Skip features. See https://nf-co.re/docs/nf-core-tools/pipelines/create for a list of features. """
     is_nfcore: Optional[bool] = None
+    """ Whether the pipeline is an nf-core pipeline. """
 
     # convert outdir to str
     @field_validator("outdir")
@@ -1081,13 +1092,22 @@ LintConfigType = Optional[Dict[str, Union[List[str], List[Dict[str, List[str]]],
 
 
 class NFCoreYamlConfig(BaseModel):
+    """.nf-core.yml configuration file schema"""
+
     repository_type: str
+    """ Type of repository: pipeline or modules """
     nf_core_version: Optional[str] = None
+    """ Version of nf-core/tools used to create/update the pipeline"""
     org_path: Optional[str] = None
+    """ Path to the organisation's modules repository (used for modules repo_type only) """
     lint: Optional[LintConfigType] = None
+    """ Pipeline linting configuration, see https://nf-co.re/docs/nf-core-tools/pipelines/lint#linting-config for examples and documentation """
     template: Optional[NFCoreTemplateConfig] = None
+    """ Pipeline template configuration """
     bump_version: Optional[Dict[str, bool]] = None
+    """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information."""
     update: Optional[Dict[str, Union[str, bool, Dict[str, Union[str, Dict[str, Union[str, bool]]]]]]] = None
+    """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information."""
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
@@ -1135,6 +1155,35 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
         for error in e.errors():
             error_message += f"\n{error['loc'][0]}: {error['msg']}"
         raise AssertionError(error_message)
+
+    wf_config = fetch_wf_config(Path(directory))
+    if nf_core_yaml_config["repository_type"] == "pipeline" and wf_config:
+        # Retrieve information if template from config file is empty
+        template = tools_config.get("template")
+        config_template_keys = template.keys() if template is not None else []
+        if nf_core_yaml_config.template is None:
+            # The .nf-core.yml file did not contain template information
+            nf_core_yaml_config.template = NFCoreTemplateConfig(
+                org="nf-core",
+                name=wf_config["manifest.name"].strip("'\"").split("/")[-1],
+                description=wf_config["manifest.description"].strip("'\""),
+                author=wf_config["manifest.author"].strip("'\""),
+                version=wf_config["manifest.version"].strip("'\""),
+                outdir=str(directory),
+                is_nfcore=True,
+            )
+        elif "prefix" in config_template_keys or "skip" in config_template_keys:
+            # The .nf-core.yml file contained the old prefix or skip keys
+            nf_core_yaml_config.template = NFCoreTemplateConfig(
+                org=tools_config["template"].get("prefix", tools_config["template"].get("org", "nf-core")),
+                name=tools_config["template"].get("name", wf_config["manifest.name"].strip("'\"").split("/")[-1]),
+                description=tools_config["template"].get("description", wf_config["manifest.description"].strip("'\"")),
+                author=tools_config["template"].get("author", wf_config["manifest.author"].strip("'\"")),
+                version=tools_config["template"].get("version", wf_config["manifest.version"].strip("'\"")),
+                outdir=tools_config["template"].get("outdir", str(directory)),
+                skip_features=tools_config["template"].get("skip", tools_config["template"].get("skip_features")),
+                is_nfcore=tools_config["template"].get("prefix", tools_config["template"].get("org")) == "nf-core",
+            )
 
     log.debug("Using config file: %s", config_fn)
     return config_fn, nf_core_yaml_config

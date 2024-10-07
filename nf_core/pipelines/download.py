@@ -133,10 +133,8 @@ class DownloadWorkflow:
         self.force = force
         self.platform = platform
         self.fullname: Optional[str] = None
-        # if flag is not specified, do not assume deliberate choice and prompt config inclusion interactively.
-        # this implies that non-interactive "no" choice is only possible implicitly (e.g. with --platform or if prompt is suppressed by !stderr.is_interactive).
-        # only alternative would have been to make it a parameter with argument, e.g. -d="yes" or -d="no".
-        self.include_configs = True if download_configuration else False if bool(platform) else None
+        # downloading configs is not supported for Seqera Platform downloads.
+        self.include_configs = True if download_configuration == "yes" and not bool(platform) else False
         # Additional tags to add to the downloaded pipeline. This enables to mark particular commits or revisions with
         # additional tags, e.g. "stable", "testing", "validated", "production" etc. Since this requires a git-repo, it is only
         # available for the bare / Seqera Platform download.
@@ -748,7 +746,7 @@ class DownloadWorkflow:
                     self.nf_config is needed, because we need to restart search over raw input
                     if no proper container matches are found.
                     """
-                    config_findings.append((k, v.strip('"').strip("'"), self.nf_config, "Nextflow configs"))
+                    config_findings.append((k, v.strip("'\""), self.nf_config, "Nextflow configs"))
 
         # rectify the container paths found in the config
         # Raw config_findings may yield multiple containers, so better create a shallow copy of the list, since length of input and output may be different ?!?

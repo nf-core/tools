@@ -23,7 +23,7 @@
 - Remove release announcement for non nf-core pipelines ([#3072](https://github.com/nf-core/tools/pull/3072))
 - handle template features with a yaml file ([#3108](https://github.com/nf-core/tools/pull/3108), [#3112](https://github.com/nf-core/tools/pull/3112))
 - add option to exclude code linters for custom pipeline template ([#3084](https://github.com/nf-core/tools/pull/3084))
-- add option to exclude citations for custom pipeline template ([#3101](https://github.com/nf-core/tools/pull/3101))
+- add option to exclude citations for custom pipeline template ([#3101](https://github.com/nf-core/tools/pull/3101) and [#3169](https://github.com/nf-core/tools/pull/3169))
 - add option to exclude gitpod for custom pipeline template ([#3100](https://github.com/nf-core/tools/pull/3100))
 - add option to exclude codespaces from pipeline template ([#3105](https://github.com/nf-core/tools/pull/3105))
 - add option to exclude multiqc from pipeline template ([#3103](https://github.com/nf-core/tools/pull/3103))
@@ -36,6 +36,14 @@
 - add option to exclude documentation from pipeline template ([#3130](https://github.com/nf-core/tools/pull/3130))
 - add option to exclude test configs from pipeline template ([#3133](https://github.com/nf-core/tools/pull/3133))
 - add option to exclude tower.yml from pipeline template ([#3134](https://github.com/nf-core/tools/pull/3134))
+- test pipeline with conda and singularity on PRs to master ([#3149](https://github.com/nf-core/tools/pull/3149))
+- run nf-core lint `--release` on PRs to master ([#3148](https://github.com/nf-core/tools/pull/3148))
+- Add tests to ensure all files are part of a template customisation group and all groups are tested ([#3099](https://github.com/nf-core/tools/pull/3099))
+- Update the syntax of `utils_nfcore_pipeline_pipeline` local subworkflow ([#3166](https://github.com/nf-core/tools/pull/3166))
+- Remove if/else block to include `igenomes.config` ([#3168](https://github.com/nf-core/tools/pull/3168))
+- Fixed release announcement hashtags for Mastodon ([#3099](https://github.com/nf-core/tools/pull/3176))
+- Remove try/catch blocks from `nextflow.config` ([#3167](https://github.com/nf-core/tools/pull/3167))
+- Extend `download_pipeline.yml` to count pre-downloaded container images. ([#3182](https://github.com/nf-core/tools/pull/3182))
 
 ### Linting
 
@@ -49,6 +57,7 @@
 - Linting will now check the use of the right validation plugin include statements in the workflow scripts ([#3116])(https://github.com/nf-core/tools/pull/3116)
 - Full linting for correct use of nf-schema and nf-validation ([#3116](https://github.com/nf-core/tools/pull/3116))
 - Handle cases where the directory path contains the name of the component ([#3147](https://github.com/nf-core/tools/pull/3147))
+- Don't test conda `environment.yml` `name` attribute (which should no longer be there) ([#3161](https://github.com/nf-core/tools/pull/3161))
 
 ### Pipeline create command
 
@@ -62,6 +71,18 @@
 - The `modules_nfcore` tag in the `main.nf.test` file of modules/subworkflows now displays the organization name in custom modules repositories ([#3005](https://github.com/nf-core/tools/pull/3005))
 - Add `--migrate_pytest` option to `nf-core <modules|subworkflows> test` command ([#3085](https://github.com/nf-core/tools/pull/3085))
 - Components: allow spaces at the beginning of include statements ([#3115](https://github.com/nf-core/tools/pull/3115))
+- Add option `--fix` to update the `meta.yml` file of subworkflows ([#3077](https://github.com/nf-core/tools/pull/3077))
+
+### Download
+
+- Fully removed already deprecated `-t` / `--tower` flag.
+- Refactored the CLI for consistency (short flag is usually second word, e.g. also for `--container-library` etc.):
+
+| Old parameter                     | New parameter                     |
+| --------------------------------- | --------------------------------- |
+| `-d` / `--download-configuration` | `-c` / `--download-configuration` |
+| `-p` / `--parallel-downloads`     | `-d` / `--parallel-downloads`     |
+| new parameter                     | `-p` / (`--platform`)             |
 
 ### General
 
@@ -82,6 +103,7 @@
 - Add bot action to update textual snapshots and write bot documentation ([#3102](https://github.com/nf-core/tools/pull/3102))
 - Update gitpod setup ([#3136](https://github.com/nf-core/tools/pull/3136))
 - fix syncing a pipeline from current directory ([#3143](https://github.com/nf-core/tools/pull/3143))
+- Patch gitpod conda setup to not use defaults channel ([#3159](https://github.com/nf-core/tools/pull/3159))
 
 ## Version updates
 
