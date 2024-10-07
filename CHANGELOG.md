@@ -87,7 +87,7 @@
 
 ### General
 
-- Change default branch to `main`
+- Change default branch to `main` for the nf-core/tools repository
 - Update output of generation script for API docs to new structure ([#2988](https://github.com/nf-core/tools/pull/2988))
 - Add no clobber and put bash options on their own line ([#2991](https://github.com/nf-core/tools/pull/2991))
 - update minimal textual version and snapshots ([#2998](https://github.com/nf-core/tools/pull/2998))
