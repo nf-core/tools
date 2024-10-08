@@ -4,6 +4,7 @@ import json
 import logging
 import os
 from pathlib import Path
+from typing import Dict, List, Union
 
 from rich.console import Console
 from rich.syntax import Syntax
@@ -133,6 +134,7 @@ class ModulesDiffer:
         for_git=True,
         dsp_from_dir=None,
         dsp_to_dir=None,
+        limit_output=False,
     ):
         """
         Writes the diffs of a module to the diff file.
@@ -154,6 +156,7 @@ class ModulesDiffer:
                             adds a/ and b/ prefixes to the file paths
             dsp_from_dir (str | Path): The 'from' directory displayed in the diff
             dsp_to_dir (str | Path): The 'to' directory displayed in the diff
+            limit_output (bool): If true, don't write the diff for files other than main.nf
         """
         if dsp_from_dir is None:
             dsp_from_dir = from_dir
@@ -174,9 +177,22 @@ class ModulesDiffer:
             else:
                 fh.write(f"Changes in module '{Path(repo_path, module)}'\n")
 
-            for _, (diff_status, diff) in diffs.items():
-                if diff_status != ModulesDiffer.DiffEnum.UNCHANGED:
+            for file, (diff_status, diff) in diffs.items():
+                if diff_status == ModulesDiffer.DiffEnum.UNCHANGED:
+                    # The files are identical
+                    fh.write(f"'{Path(dsp_from_dir, file)}' is unchanged\n")
+                elif diff_status == ModulesDiffer.DiffEnum.CREATED:
+                    # The file was created between the commits
+                    fh.write(f"'{Path(dsp_from_dir, file)}' was created\n")
+                elif diff_status == ModulesDiffer.DiffEnum.REMOVED:
+                    # The file was removed between the commits
+                    fh.write(f"'{Path(dsp_from_dir, file)}' was removed\n")
+                elif limit_output and not file.suffix == ".nf":
+                    # Skip printing the diff for files other than main.nf
+                    fh.write(f"Changes in '{Path(module, file)}' but not shown\n")
+                else:
                     # The file has changed write the diff lines to the file
+                    fh.write(f"Changes in '{Path(module, file)}':\n")
                     for line in diff:
                         fh.write(line)
                     fh.write("\n")
@@ -219,7 +235,15 @@ class ModulesDiffer:
 
     @staticmethod
     def print_diff(
-        module, repo_path, from_dir, to_dir, current_version=None, new_version=None, dsp_from_dir=None, dsp_to_dir=None
+        module,
+        repo_path,
+        from_dir,
+        to_dir,
+        current_version=None,
+        new_version=None,
+        dsp_from_dir=None,
+        dsp_to_dir=None,
+        limit_output=False,
     ):
         """
         Prints the diffs between two module versions to the terminal
@@ -234,6 +258,7 @@ class ModulesDiffer:
             new_version (str): The version of the module the diff is computed against
             dsp_from_dir (str | Path): The 'from' directory displayed in the diff
             dsp_to_dir (str | Path): The 'to' directory displayed in the diff
+            limit_output (bool): If true, don't print the diff for files other than main.nf
         """
         if dsp_from_dir is None:
             dsp_from_dir = from_dir
@@ -261,6 +286,9 @@ class ModulesDiffer:
             elif diff_status == ModulesDiffer.DiffEnum.REMOVED:
                 # The file was removed between the commits
                 log.info(f"'{Path(dsp_from_dir, file)}' was removed")
+            elif limit_output and not file.suffix == ".nf":
+                # Skip printing the diff for files other than main.nf
+                log.info(f"Changes in '{Path(module, file)}' but not shown")
             else:
                 # The file has changed
                 log.info(f"Changes in '{Path(module, file)}':")
@@ -268,7 +296,7 @@ class ModulesDiffer:
                 console.print(Syntax("".join(diff), "diff", theme="ansi_dark", padding=1))
 
     @staticmethod
-    def per_file_patch(patch_fn):
+    def per_file_patch(patch_fn: Union[str, Path]) -> Dict[str, List[str]]:
         """
         Splits a patch file for several files into one patch per file.
 
@@ -284,7 +312,7 @@ class ModulesDiffer:
 
         patches = {}
         i = 0
-        patch_lines = []
+        patch_lines: List[str] = []
         key = "preamble"
         while i < len(lines):
             line = lines[i]
@@ -363,13 +391,13 @@ class ModulesDiffer:
     def try_apply_single_patch(file_lines, patch, reverse=False):
         """
         Tries to apply a patch to a modified file. Since the line numbers in
-        the patch does not agree if the file is modified, the old and new
+        the patch do not agree if the file is modified, the old and new
         lines in the patch are reconstructed and then we look for the old lines
         in the modified file. If all hunk in the patch are found in the new file
         it is updated with the new lines from the patch file.
 
         Args:
-            new_fn (str | Path): Path to the modified file
+            file_lines ([str]): The lines of the file to be patched
             patch (str | Path): (Outdated) patch for the file
             reverse (bool): Apply the patch in reverse
 
@@ -423,7 +451,9 @@ class ModulesDiffer:
         return patched_new_lines
 
     @staticmethod
-    def try_apply_patch(module, repo_path, patch_path, module_dir, reverse=False):
+    def try_apply_patch(
+        module: str, repo_path: Union[str, Path], patch_path: Union[str, Path], module_dir: Path, reverse: bool = False
+    ) -> Dict[str, List[str]]:
         """
         Try applying a full patch file to a module
 
@@ -432,6 +462,7 @@ class ModulesDiffer:
             repo_path (str): Name of the repository where the module resides
             patch_path (str): The absolute path to the patch file to be applied
             module_dir (Path): The directory containing the module
+            reverse (bool): Apply the patch in reverse
 
         Returns:
             dict[str, str]: A dictionary with file paths (relative to the pipeline dir)

@@ -27,12 +27,12 @@ runs:
       run: |
         mkdir -p create-lint-wf && cd create-lint-wf
         export NXF_WORK=$(pwd)
-        nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
+        nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
 
     # Try syncing it before we change anything
-    - name: nf-core sync
+    - name: nf-core pipelines sync
       shell: bash
-      run: nf-core --log-file log.txt sync --dir nf-core-testpipeline/
+      run: nf-core --log-file log.txt pipelines sync --dir nf-core-testpipeline/
       working-directory: create-lint-wf
 
     # Run code style linting
@@ -53,26 +53,32 @@ runs:
       run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
       working-directory: create-lint-wf
 
+    # Uncomment includeConfig statement
+    - name: uncomment include config
+      shell: bash
+      run: find nf-core-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
+      working-directory: create-lint-wf
+
     # Replace zenodo.XXXXXX to pass readme linting
     - name: replace zenodo.XXXXXX
       shell: bash
       run: find nf-core-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
       working-directory: create-lint-wf
 
-    # Run nf-core linting
-    - name: nf-core lint
+    # Run nf-core pipelines linting
+    - name: nf-core pipelines lint
       shell: bash
-      run: nf-core --verbose --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned
+      run: nf-core --verbose --log-file log.txt --hide-progress pipelines lint --dir nf-core-testpipeline --fail-ignored --fail-warned
       working-directory: create-lint-wf
 
-    - name: nf-core bump-version to release
+    - name: nf-core pipelines bump-version to release
       shell: bash
-      run: nf-core --log-file log.txt bump-version --dir nf-core-testpipeline/ 1.1
+      run: nf-core --log-file log.txt pipelines bump-version --dir nf-core-testpipeline/ 1.1
       working-directory: create-lint-wf
 
-    - name: nf-core lint in release mode
+    - name: nf-core pipelines lint in release mode
       shell: bash
-      run: nf-core --log-file log.txt --hide-progress lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
+      run: nf-core --log-file log.txt --hide-progress pipelines lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
       working-directory: create-lint-wf
 
     - name: Upload log file artifact

@@ -7,6 +7,7 @@ import logging
 import operator
 import os
 from pathlib import Path
+from typing import List, Optional, Tuple, Union
 
 import rich.box
 import rich.console
@@ -19,8 +20,9 @@ import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.lint_utils import console
 from nf_core.modules.modules_json import ModulesJson
+from nf_core.pipelines.lint_utils import console
+from nf_core.utils import LintConfigType
 from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
@@ -36,15 +38,14 @@ class LintExceptionError(Exception):
 class LintResult:
     """An object to hold the results of a lint test"""
 
-    def __init__(self, component, lint_test, message, file_path):
+    def __init__(self, component: NFCoreComponent, lint_test: str, message: str, file_path: Path):
         self.component = component
         self.lint_test = lint_test
         self.message = message
         self.file_path = file_path
-        self.component_name = component.component_name
+        self.component_name: str = component.component_name
 
 
-@rich.repr.auto
 class ComponentLint(ComponentCommand):
     """
     An object for linting modules and subworkflows either in a clone of the 'nf-core/modules'
@@ -53,18 +54,19 @@ class ComponentLint(ComponentCommand):
 
     def __init__(
         self,
-        component_type,
-        dir,
-        fail_warned=False,
-        remote_url=None,
-        branch=None,
-        no_pull=False,
-        registry=None,
-        hide_progress=False,
+        component_type: str,
+        directory: Union[str, Path],
+        fail_warned: bool = False,
+        fix: bool = False,
+        remote_url: Optional[str] = None,
+        branch: Optional[str] = None,
+        no_pull: bool = False,
+        registry: Optional[str] = None,
+        hide_progress: bool = False,
     ):
         super().__init__(
             component_type,
-            dir=dir,
+            directory=directory,
             remote_url=remote_url,
             branch=branch,
             no_pull=no_pull,
@@ -72,38 +74,51 @@ class ComponentLint(ComponentCommand):
         )
 
         self.fail_warned = fail_warned
-        self.passed = []
-        self.warned = []
-        self.failed = []
+        self.fix = fix
+        self.passed: List[LintResult] = []
+        self.warned: List[LintResult] = []
+        self.failed: List[LintResult] = []
+        self.all_local_components: List[NFCoreComponent] = []
+
+        self.lint_config: Optional[LintConfigType] = None
+        self.modules_json: Optional[ModulesJson] = None
+
         if self.component_type == "modules":
             self.lint_tests = self.get_all_module_lint_tests(self.repo_type == "pipeline")
         else:
             self.lint_tests = self.get_all_subworkflow_lint_tests(self.repo_type == "pipeline")
 
+        if self.repo_type is None:
+            raise LookupError(
+                "Could not determine repository type. Please check the repository type in the nf-core.yml"
+            )
+
         if self.repo_type == "pipeline":
-            modules_json = ModulesJson(self.dir)
+            modules_json = ModulesJson(self.directory)
             modules_json.check_up_to_date()
-            self.all_remote_components = []
+            self.all_remote_components: List[NFCoreComponent] = []
             for repo_url, components in modules_json.get_all_components(self.component_type).items():
                 if remote_url is not None and remote_url != repo_url:
                     continue
+                if isinstance(components, str):
+                    raise LookupError(
+                        f"Error parsing modules.json: {components}. " f"Please check the file for errors or try again."
+                    )
                 for org, comp in components:
                     self.all_remote_components.append(
                         NFCoreComponent(
                             comp,
                             repo_url,
-                            Path(self.dir, self.component_type, org, comp),
+                            Path(self.directory, self.component_type, org, comp),
                             self.repo_type,
-                            Path(self.dir),
+                            self.directory,
                             self.component_type,
                         )
                     )
             if not self.all_remote_components:
-                raise LookupError(
-                    f"No {self.component_type} from {self.modules_repo.remote_url} installed in pipeline."
-                )
-            local_component_dir = Path(self.dir, self.component_type, "local")
-            self.all_local_components = []
+                log.warning(f"No {self.component_type} from {self.modules_repo.remote_url} installed in pipeline.")
+            local_component_dir = Path(self.directory, self.component_type, "local")
+
             if local_component_dir.exists():
                 self.all_local_components = [
                     NFCoreComponent(
@@ -111,37 +126,41 @@ class ComponentLint(ComponentCommand):
                         None,
                         Path(local_component_dir, comp),
                         self.repo_type,
-                        Path(self.dir),
+                        self.directory,
                         self.component_type,
                         remote_component=False,
                     )
                     for comp in self.get_local_components()
                 ]
-            self.config = nf_core.utils.fetch_wf_config(self.dir, cache_config=True)
-        else:
+            self.config = nf_core.utils.fetch_wf_config(self.directory, cache_config=True)
+            self._set_registry(registry)
+
+        elif self.repo_type == "modules":
             component_dir = Path(
-                self.dir,
+                self.directory,
                 self.default_modules_path if self.component_type == "modules" else self.default_subworkflows_path,
             )
             self.all_remote_components = [
-                NFCoreComponent(m, None, component_dir / m, self.repo_type, Path(self.dir), self.component_type)
+                NFCoreComponent(m, None, component_dir / m, self.repo_type, self.directory, self.component_type)
                 for m in self.get_components_clone_modules()
             ]
             self.all_local_components = []
             if not self.all_remote_components:
-                raise LookupError(f"No {self.component_type} in '{self.component_type}' directory")
+                log.warning(f"No {self.component_type} in '{self.component_type}' directory")
 
             # This could be better, perhaps glob for all nextflow.config files in?
-            self.config = nf_core.utils.fetch_wf_config(Path(self.dir).joinpath("tests", "config"), cache_config=True)
+            self.config = nf_core.utils.fetch_wf_config(self.directory / "tests" / "config", cache_config=True)
+            self._set_registry(registry)
 
+    def __repr__(self) -> str:
+        return f"ComponentLint({self.component_type}, {self.directory})"
+
+    def _set_registry(self, registry) -> None:
         if registry is None:
             self.registry = self.config.get("docker.registry", "quay.io")
         else:
             self.registry = registry
         log.debug(f"Registry set to {self.registry}")
-
-        self.lint_config = None
-        self.modules_json = None
 
     @staticmethod
     def get_all_module_lint_tests(is_pipeline):
@@ -168,7 +187,7 @@ class ComponentLint(ComponentCommand):
 
     def set_up_pipeline_files(self):
         self.load_lint_config()
-        self.modules_json = ModulesJson(self.dir)
+        self.modules_json = ModulesJson(self.directory)
         self.modules_json.load()
 
         # Only continue if a lint config has been loaded
@@ -243,7 +262,7 @@ class ComponentLint(ComponentCommand):
                     module_name = lint_result.component_name
 
                 # Make the filename clickable to open in VSCode
-                file_path = os.path.relpath(lint_result.file_path, self.dir)
+                file_path = os.path.relpath(lint_result.file_path, self.directory)
                 file_path_link = f"[link=vscode://file/{os.path.abspath(file_path)}]{file_path}[/link]"
 
                 table.add_row(

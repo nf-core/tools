@@ -1,19 +1,17 @@
 """Tests covering for utility functions."""
 
 import os
-import shutil
-import tempfile
-import unittest
 from pathlib import Path
 from unittest import mock
 
 import pytest
 import requests
 
-import nf_core.create
-import nf_core.list
+import nf_core.pipelines.create.create
+import nf_core.pipelines.list
 import nf_core.utils
 
+from .test_pipelines import TestPipelines
 from .utils import with_temporary_folder
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
@@ -28,31 +26,8 @@ def test_strip_ansi_codes():
     assert stripped == "ls examplefile.zip"
 
 
-class TestUtils(unittest.TestCase):
+class TestUtils(TestPipelines):
     """Class for utils tests"""
-
-    def setUp(self):
-        """Function that runs at start of tests for common resources
-
-        Use nf_core.create() to make a pipeline that we can use for testing
-        """
-        self.tmp_dir = tempfile.mkdtemp()
-        self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
-        self.create_obj = nf_core.create.PipelineCreate(
-            "testpipeline",
-            "This is a test pipeline",
-            "Test McTestFace",
-            no_git=True,
-            outdir=self.test_pipeline_dir,
-            plain=True,
-        )
-        self.create_obj.init_pipeline()
-        # Base Pipeline object on this directory
-        self.pipeline_obj = nf_core.utils.Pipeline(self.test_pipeline_dir)
-
-    def tearDown(self):
-        if os.path.exists(self.tmp_dir):
-            shutil.rmtree(self.tmp_dir)
 
     def test_check_if_outdated_1(self):
         current_version = "1.0"
@@ -96,9 +71,9 @@ class TestUtils(unittest.TestCase):
         os.environ.pop("PY_COLORS", None)
         assert nf_core.utils.rich_force_colors() is True
 
-    def test_load_pipeline_config(self):
+    def testload_pipeline_config(self):
         """Load the pipeline Nextflow config"""
-        self.pipeline_obj._load_pipeline_config()
+        self.pipeline_obj.load_pipeline_config()
         assert self.pipeline_obj.nf_config["dag.enabled"] == "true"
 
     # TODO nf-core: Assess and strip out if no longer required for DSL2
@@ -106,12 +81,12 @@ class TestUtils(unittest.TestCase):
     # def test_load_conda_env(self):
     #     """Load the pipeline Conda environment.yml file"""
     #     self.pipeline_obj._load_conda_environment()
-    #     assert self.pipeline_obj.conda_config["channels"] == ["conda-forge", "bioconda", "defaults"]
+    #     assert self.pipeline_obj.conda_config["channels"] == ["conda-forge", "bioconda"]
 
     def test_list_files_git(self):
         """Test listing pipeline files using `git ls`"""
-        self.pipeline_obj._list_files()
-        assert Path(self.test_pipeline_dir, "main.nf") in self.pipeline_obj.files
+        files = self.pipeline_obj.list_files()
+        assert Path(self.pipeline_dir, "main.nf") in files
 
     @with_temporary_folder
     def test_list_files_no_git(self, tmpdir):
@@ -120,8 +95,8 @@ class TestUtils(unittest.TestCase):
         tmp_fn = Path(tmpdir, "testfile")
         tmp_fn.touch()
         pipeline_obj = nf_core.utils.Pipeline(tmpdir)
-        pipeline_obj._list_files()
-        assert tmp_fn in pipeline_obj.files
+        files = pipeline_obj.list_files()
+        assert tmp_fn in files
 
     @mock.patch("os.path.exists")
     @mock.patch("os.makedirs")
@@ -161,7 +136,7 @@ class TestUtils(unittest.TestCase):
             nf_core.utils.pip_package("not_a_package=1.0")
 
     def test_get_repo_releases_branches_nf_core(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("methylseq", wfs)
         for r in wf_releases:
@@ -172,7 +147,7 @@ class TestUtils(unittest.TestCase):
         assert "dev" in wf_branches.keys()
 
     def test_get_repo_releases_branches_not_nf_core(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("MultiQC/MultiQC", wfs)
         for r in wf_releases:
@@ -183,57 +158,50 @@ class TestUtils(unittest.TestCase):
         assert "main" in wf_branches.keys()
 
     def test_get_repo_releases_branches_not_exists(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         with pytest.raises(AssertionError):
             nf_core.utils.get_repo_releases_branches("made_up_pipeline", wfs)
 
     def test_get_repo_releases_branches_not_exists_slash(self):
-        wfs = nf_core.list.Workflows()
+        wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
         with pytest.raises(AssertionError):
             nf_core.utils.get_repo_releases_branches("made-up/pipeline", wfs)
 
+    def test_validate_file_md5(self):
+        # MD5(test) = d8e8fca2dc0f896fd7cb4cb0031ba249
+        test_file = TEST_DATA_DIR / "test.txt"
+        test_file_md5 = "d8e8fca2dc0f896fd7cb4cb0031ba249"
+        different_md5 = "9e7b964750cf0bb08ee960fce356b6d6"
+        non_hex_string = "s"
+        assert nf_core.utils.validate_file_md5(test_file, test_file_md5)
+        with pytest.raises(IOError):
+            nf_core.utils.validate_file_md5(test_file, different_md5)
+        with pytest.raises(ValueError):
+            nf_core.utils.validate_file_md5(test_file, non_hex_string)
 
-def test_validate_file_md5():
-    # MD5(test) = d8e8fca2dc0f896fd7cb4cb0031ba249
-    test_file = TEST_DATA_DIR / "test.txt"
-    test_file_md5 = "d8e8fca2dc0f896fd7cb4cb0031ba249"
-    different_md5 = "9e7b964750cf0bb08ee960fce356b6d6"
-    non_hex_string = "s"
-    assert nf_core.utils.validate_file_md5(test_file, test_file_md5)
-    with pytest.raises(IOError):
-        nf_core.utils.validate_file_md5(test_file, different_md5)
-    with pytest.raises(ValueError):
-        nf_core.utils.validate_file_md5(test_file, non_hex_string)
+    def test_nested_setitem(self):
+        d = {"a": {"b": {"c": "value"}}}
+        nf_core.utils.nested_setitem(d, ["a", "b", "c"], "value new")
+        assert d["a"]["b"]["c"] == "value new"
+        assert d == {"a": {"b": {"c": "value new"}}}
 
+    def test_nested_delitem(self):
+        d = {"a": {"b": {"c": "value"}}}
+        nf_core.utils.nested_delitem(d, ["a", "b", "c"])
+        assert "c" not in d["a"]["b"]
+        assert d == {"a": {"b": {}}}
 
-def test_nested_setitem():
-    d = {"a": {"b": {"c": "value"}}}
-    nf_core.utils.nested_setitem(d, ["a", "b", "c"], "value new")
-    assert d["a"]["b"]["c"] == "value new"
-    assert d == {"a": {"b": {"c": "value new"}}}
-
-
-def test_nested_delitem():
-    d = {"a": {"b": {"c": "value"}}}
-    nf_core.utils.nested_delitem(d, ["a", "b", "c"])
-    assert "c" not in d["a"]["b"]
-    assert d == {"a": {"b": {}}}
-
-
-def test_set_wd():
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        with nf_core.utils.set_wd(tmpdirname):
+    def test_set_wd(self):
+        with nf_core.utils.set_wd(self.tmp_dir):
             context_wd = Path().resolve()
-        assert context_wd == Path(tmpdirname).resolve()
+        assert context_wd == Path(self.tmp_dir).resolve()
         assert context_wd != Path().resolve()
 
-
-def test_set_wd_revert_on_raise():
-    wd_before_context = Path().resolve()
-    with tempfile.TemporaryDirectory() as tmpdirname:
+    def test_set_wd_revert_on_raise(self):
+        wd_before_context = Path().resolve()
         with pytest.raises(Exception):
-            with nf_core.utils.set_wd(tmpdirname):
+            with nf_core.utils.set_wd(self.tmp_dir):
                 raise Exception
-    assert wd_before_context == Path().resolve()
+        assert wd_before_context == Path().resolve()

@@ -39,7 +39,7 @@ jobs:
     strategy:
       matrix:
         NXF_VER:
-          - "23.04.0"
+          - "24.04.2"
           - "latest-everything"
     steps:
       - name: go to working directory
@@ -70,8 +70,8 @@ jobs:
         run: |
           mkdir create-test-wf && cd create-test-wf
           export NXF_WORK=$(pwd)
-          nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
-          nextflow run nf-core-testpipeline -profile test,self_hosted_runner --outdir ./results
+          nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+          nextflow run nf-core-testpipeline -profile self_hosted_runner,test --outdir ./results
 
       - name: Upload log file artifact
         if: ${{ always() }}

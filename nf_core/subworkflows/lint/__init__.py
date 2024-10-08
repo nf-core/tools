@@ -11,13 +11,22 @@ import os
 
 import questionary
 import rich
+import ruamel.yaml
 
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
-from nf_core.lint_utils import console
+from nf_core.pipelines.lint_utils import console, run_prettier_on_file
 
 log = logging.getLogger(__name__)
+
+# Import lint functions
+from .main_nf import main_nf  # type: ignore[misc]
+from .meta_yml import meta_yml  # type: ignore[misc]
+from .subworkflow_changes import subworkflow_changes  # type: ignore[misc]
+from .subworkflow_tests import subworkflow_tests  # type: ignore[misc]
+from .subworkflow_todos import subworkflow_todos  # type: ignore[misc]
+from .subworkflow_version import subworkflow_version  # type: ignore[misc]
 
 
 class SubworkflowLint(ComponentLint):
@@ -26,18 +35,18 @@ class SubworkflowLint(ComponentLint):
     repository or in any nf-core pipeline directory
     """
 
-    # Import lint functions
-    from .main_nf import main_nf  # type: ignore[misc]
-    from .meta_yml import meta_yml  # type: ignore[misc]
-    from .subworkflow_changes import subworkflow_changes  # type: ignore[misc]
-    from .subworkflow_tests import subworkflow_tests  # type: ignore[misc]
-    from .subworkflow_todos import subworkflow_todos  # type: ignore[misc]
-    from .subworkflow_version import subworkflow_version  # type: ignore[misc]
+    main_nf = main_nf
+    meta_yml = meta_yml
+    subworkflow_changes = subworkflow_changes
+    subworkflow_tests = subworkflow_tests
+    subworkflow_todos = subworkflow_todos
+    subworkflow_version = subworkflow_version
 
     def __init__(
         self,
-        dir,
+        directory,
         fail_warned=False,
+        fix=False,
         remote_url=None,
         branch=None,
         no_pull=False,
@@ -46,8 +55,9 @@ class SubworkflowLint(ComponentLint):
     ):
         super().__init__(
             component_type="subworkflows",
-            dir=dir,
+            directory=directory,
             fail_warned=fail_warned,
+            fix=fix,
             remote_url=remote_url,
             branch=branch,
             no_pull=no_pull,
@@ -122,9 +132,9 @@ class SubworkflowLint(ComponentLint):
             remote_subworkflows = self.all_remote_components
 
         if self.repo_type == "modules":
-            log.info(f"Linting modules repo: [magenta]'{self.dir}'")
+            log.info(f"Linting modules repo: [magenta]'{self.directory}'")
         else:
-            log.info(f"Linting pipeline: [magenta]'{self.dir}'")
+            log.info(f"Linting pipeline: [magenta]'{self.directory}'")
         if subworkflow:
             log.info(f"Linting subworkflow: [magenta]'{subworkflow}'")
 
@@ -207,6 +217,10 @@ class SubworkflowLint(ComponentLint):
 
         # Otherwise run all the lint tests
         else:
+            # Update meta.yml file if requested
+            if self.fix:
+                self.update_meta_yml_file(swf)
+
             if self.repo_type == "pipeline" and self.modules_json:
                 # Set correct sha
                 version = self.modules_json.get_subworkflow_version(swf.component_name, swf.repo_url, swf.org)
@@ -223,3 +237,56 @@ class SubworkflowLint(ComponentLint):
                 self.failed += warned
 
             self.failed += [LintResult(swf, *s) for s in swf.failed]
+
+    def update_meta_yml_file(self, swf):
+        """
+        Update the meta.yml file with the correct inputs and outputs
+        """
+        yaml = ruamel.yaml.YAML()
+        yaml.preserve_quotes = True
+        yaml.indent(mapping=2, sequence=2, offset=0)
+
+        # Read meta.yml
+        with open(swf.meta_yml) as fh:
+            meta_yaml = yaml.load(fh)
+        meta_yaml_corrected = meta_yaml.copy()
+        # Obtain inputs and outputs from main.nf
+        swf.get_inputs_from_main_nf()
+        swf.get_outputs_from_main_nf()
+
+        # Compare inputs and add them if missing
+        if "input" in meta_yaml:
+            # Delete inputs from meta.yml which are not present in main.nf
+            meta_yaml_corrected["input"] = [
+                input for input in meta_yaml["input"] if list(input.keys())[0] in swf.inputs
+            ]
+            # Obtain inputs from main.nf missing in meta.yml
+            inputs_correct = [
+                list(input.keys())[0] for input in meta_yaml_corrected["input"] if list(input.keys())[0] in swf.inputs
+            ]
+            inputs_missing = [input for input in swf.inputs if input not in inputs_correct]
+            # Add missing inputs to meta.yml
+            for missing_input in inputs_missing:
+                meta_yaml_corrected["input"].append({missing_input: {"description": ""}})
+
+        if "output" in meta_yaml:
+            # Delete outputs from meta.yml which are not present in main.nf
+            meta_yaml_corrected["output"] = [
+                output for output in meta_yaml["output"] if list(output.keys())[0] in swf.outputs
+            ]
+            # Obtain output from main.nf missing in meta.yml
+            outputs_correct = [
+                list(output.keys())[0]
+                for output in meta_yaml_corrected["output"]
+                if list(output.keys())[0] in swf.outputs
+            ]
+            outputs_missing = [output for output in swf.outputs if output not in outputs_correct]
+            # Add missing inputs to meta.yml
+            for missing_output in outputs_missing:
+                meta_yaml_corrected["output"].append({missing_output: {"description": ""}})
+
+        # Write corrected meta.yml to file
+        with open(swf.meta_yml, "w") as fh:
+            log.info(f"Updating {swf.meta_yml}")
+            yaml.dump(meta_yaml_corrected, fh)
+            run_prettier_on_file(fh.name)

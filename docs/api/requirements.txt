@@ -1,3 +1,4 @@
+autodoc_pydantic
 Sphinx>=3.3.1
 sphinxcontrib-napoleon
 sphinx-markdown-builder

@@ -1,10 +1,124 @@
 # nf-core/tools: Changelog
 
+## [v3.0.0 - Titanium Tapir](https://github.com/nf-core/tools/releases/tag/3.0.0) - [2024-10-08]
+
+**Highlights**
+
+- Pipeline commands are renamed from `nf-core <comand>` to `nf-core pipelines <command>` to follow the same command structure as modules and subworkflows commands.
+- More customisation for pipeline templates. The template has been divided into features which can be skipped, e.g. you can create a new pipeline without any traces of FastQC in it.
+- A new Text User Interface app when running `nf-core pipelines create` to help us guide you through the process better (no worries, you can still use the cli if you give all values as parameters)
+- We replaced nf-validation with nf-schema in the pipeline template
+- CI tests now lint with the nf-core tools version matching the template version of the pipeline, to minimise errors in opened PRs with every new tools release.
+- `nf-core licences` command is deprecated.
+- The structure of nf-core/tools pytests has been updated
+- The structure of the API docs has been updated
+
+### Template
+
+- Change paths to test data ([#2985](https://github.com/nf-core/tools/pull/2985))
+- Run awsfulltest on PRs to `master` with two PR approvals ([#3042](https://github.com/nf-core/tools/pull/3042))
+- Remove deprecated syntax ([#3046](https://github.com/nf-core/tools/pull/3046))
+- Use filename in code block for `params.yml` ([#3055](https://github.com/nf-core/tools/pull/3055))
+- Remove release announcement for non nf-core pipelines ([#3072](https://github.com/nf-core/tools/pull/3072))
+- handle template features with a yaml file ([#3108](https://github.com/nf-core/tools/pull/3108), [#3112](https://github.com/nf-core/tools/pull/3112))
+- add option to exclude code linters for custom pipeline template ([#3084](https://github.com/nf-core/tools/pull/3084))
+- add option to exclude citations for custom pipeline template ([#3101](https://github.com/nf-core/tools/pull/3101) and [#3169](https://github.com/nf-core/tools/pull/3169))
+- add option to exclude gitpod for custom pipeline template ([#3100](https://github.com/nf-core/tools/pull/3100))
+- add option to exclude codespaces from pipeline template ([#3105](https://github.com/nf-core/tools/pull/3105))
+- add option to exclude multiqc from pipeline template ([#3103](https://github.com/nf-core/tools/pull/3103))
+- add option to exclude changelog from custom pipeline template ([#3104](https://github.com/nf-core/tools/pull/3104))
+- add option to exclude license from pipeline template ([#3125](https://github.com/nf-core/tools/pull/3125))
+- add option to exclude email from pipeline template ([#3126](https://github.com/nf-core/tools/pull/3126))
+- add option to exclude nf-schema from the template ([#3116](https://github.com/nf-core/tools/pull/3116))
+- add option to exclude fastqc from pipeline template ([#3129](https://github.com/nf-core/tools/pull/3129))
+- add option to exclude documentation from pipeline template ([#3130](https://github.com/nf-core/tools/pull/3130))
+- add option to exclude test configs from pipeline template ([#3133](https://github.com/nf-core/tools/pull/3133))
+- add option to exclude tower.yml from pipeline template ([#3134](https://github.com/nf-core/tools/pull/3134))
+- Use nf-schema instead of nf-validation ([#3116](https://github.com/nf-core/tools/pull/3116))
+- test pipeline with conda and singularity on PRs to master ([#3149](https://github.com/nf-core/tools/pull/3149))
+- run nf-core lint `--release` on PRs to master ([#3148](https://github.com/nf-core/tools/pull/3148))
+- Add tests to ensure all files are part of a template customisation group and all groups are tested ([#3099](https://github.com/nf-core/tools/pull/3099))
+- Update the syntax of `utils_nfcore_pipeline_pipeline` local subworkflow ([#3166](https://github.com/nf-core/tools/pull/3166))
+- Remove if/else block to include `igenomes.config` ([#3168](https://github.com/nf-core/tools/pull/3168))
+- Fixed release announcement hashtags for Mastodon ([#3099](https://github.com/nf-core/tools/pull/3176))
+- Remove try/catch blocks from `nextflow.config` ([#3167](https://github.com/nf-core/tools/pull/3167))
+- Extend `download_pipeline.yml` to count pre-downloaded container images. ([#3182](https://github.com/nf-core/tools/pull/3182))
+
+### Linting
+
+- Fix linting fail on nfcore_external_java_deps if nf_schema is used ([#2976](https://github.com/nf-core/tools/pull/2976))
+- Conda module linting: Include package name in log file ([#3014](https://github.com/nf-core/tools/pull/3014))
+- Remove defaults from conda `environment.yml` file. ([#3029](https://github.com/nf-core/tools/pull/3029))
+- Restructure pipeline tests and move pipeline linting into subfolder ([#3070](https://github.com/nf-core/tools/pull/3070))
+- Fix module linting warning for process_high_memory ([#3086](https://github.com/nf-core/tools/issues/3086))
+- Linting will now fail when an unpinned plugin is used ([#3116](https://github.com/nf-core/tools/pull/3116))
+- Linting will now check if the schema is correct for the used validation plugin ([#3116])(https://github.com/nf-core/tools/pull/3116)
+- Linting will now check the use of the right validation plugin include statements in the workflow scripts ([#3116])(https://github.com/nf-core/tools/pull/3116)
+- Full linting for correct use of nf-schema and nf-validation ([#3116](https://github.com/nf-core/tools/pull/3116))
+- Handle cases where the directory path contains the name of the component ([#3147](https://github.com/nf-core/tools/pull/3147))
+- Don't test conda `environment.yml` `name` attribute (which should no longer be there) ([#3161](https://github.com/nf-core/tools/pull/3161))
+
+### Pipeline create command
+
+- Allow more special characters on the pipeline name for non-nf-core pipelines ([#3008](https://github.com/nf-core/tools/pull/3008))
+- Mock git cretentials to generate stable textual snapshots ([#3007](https://github.com/nf-core/tools/pull/3007))
+- Display input textbox with equally spaced grid ([#3038](https://github.com/nf-core/tools/pull/3038))
+- Allow numbers in custom pipeline name ([#3094](https://github.com/nf-core/tools/pull/3094))
+
+### Components
+
+- The `modules_nfcore` tag in the `main.nf.test` file of modules/subworkflows now displays the organization name in custom modules repositories ([#3005](https://github.com/nf-core/tools/pull/3005))
+- Add `--migrate_pytest` option to `nf-core <modules|subworkflows> test` command ([#3085](https://github.com/nf-core/tools/pull/3085))
+- Allow spaces at the beginning of include statements ([#3115](https://github.com/nf-core/tools/pull/3115))
+- Add option `--fix` to update the `meta.yml` file of subworkflows ([#3077](https://github.com/nf-core/tools/pull/3077))
+
+### Download
+
+- Fully removed already deprecated `-t` / `--tower` flag.
+- Refactored the CLI for consistency (short flag is usually second word, e.g. also for `--container-library` etc.):
+
+| Old parameter                     | New parameter                     |
+| --------------------------------- | --------------------------------- |
+| `-d` / `--download-configuration` | `-c` / `--download-configuration` |
+| `-p` / `--parallel-downloads`     | `-d` / `--parallel-downloads`     |
+| new parameter                     | `-p` / (`--platform`)             |
+
+### General
+
+- Update output of generation script for API docs to new structure ([#2988](https://github.com/nf-core/tools/pull/2988))
+- Remove `rich-codex.yml` action, images are now generated on the website repo ([#2989](https://github.com/nf-core/tools/pull/2989))
+- Add no clobber and put bash options on their own line ([#2991](https://github.com/nf-core/tools/pull/2991))
+- move pipeline subcommands for v3.0 ([#2983](https://github.com/nf-core/tools/pull/2983))
+- return directory if base_dir is the root directory ([#3003](https://github.com/nf-core/tools/pull/3003))
+- Remove nf-core licences command ([#3012](https://github.com/nf-core/tools/pull/3012))
+- README - absolute image paths ([#3013](https://github.com/nf-core/tools/pull/3013))
+- Add warning deprecation message to top-level commands ([#3036](https://github.com/nf-core/tools/pull/3036))
+- move pipeline commands to functions to avoid duplication ([#3039](https://github.com/nf-core/tools/pull/3039))
+- update output_dir for api docs to new website structure ([#3051](https://github.com/nf-core/tools/pull/3051))
+- Add `--limit-output` argument for modules/subworkflow update ([#3047](https://github.com/nf-core/tools/pull/3047))
+- update api docs to new structure ([#3054](https://github.com/nf-core/tools/pull/3054))
+- handle new jsonschema error type ([#3061](https://github.com/nf-core/tools/pull/3061))
+- Fix number of arguments for pipelines_create within the command_create function ([#3074](https://github.com/nf-core/tools/pull/3074))
+- Add bot action to update textual snapshots and write bot documentation ([#3102](https://github.com/nf-core/tools/pull/3102))
+- Update gitpod setup ([#3136](https://github.com/nf-core/tools/pull/3136))
+- fix syncing a pipeline from current directory ([#3143](https://github.com/nf-core/tools/pull/3143))
+- Patch gitpod conda setup to not use defaults channel ([#3159](https://github.com/nf-core/tools/pull/3159))
+
+## Version updates
+
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.6.0 ([#3122](https://github.com/nf-core/tools/pull/3122))
+- Update gitpod/workspace-base Docker digest to 92dd1bc ([#2982](https://github.com/nf-core/tools/pull/2982))
+- Update python:3.12-slim Docker digest to 59c7332 ([#3124](https://github.com/nf-core/tools/pull/3124))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.11.1 ([#3091](https://github.com/nf-core/tools/pull/3091))
+- Update to pytest v8 and move it to dev dependencies ([#3058](https://github.com/nf-core/tools/pull/3058))
+- Update minimal textual version and snapshots ([#2998](https://github.com/nf-core/tools/pull/2998))
+
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
 ### Template
 
 - Don't cache pip in `linting.yml` ([#2961](https://github.com/nf-core/tools/pull/2961))
+- Lint pipelines with the nf-core template version and post comment if it is outdated ([#2978](https://github.com/nf-core/tools/pull/2978))
 
 ### General
 
@@ -75,6 +189,8 @@
 - fix(collectfile): sort true for methods_description_mqc.yaml ([#2947](https://github.com/nf-core/tools/pull/2947))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.4.3 ([#2951](https://github.com/nf-core/tools/pull/2951))
 - Restructure CHANGELOG.md ([#2954](https://github.com/nf-core/tools/pull/2954))
+- fix: ensure path object converted to string before stripping quotes ([#2878](https://github.com/nf-core/tools/pull/2878))
+- Test data uses paths instead of config map ([#2877](https://github.com/nf-core/tools/pull/2877))
 
 ## [v2.13.1 - Tin Puppy Patch](https://github.com/nf-core/tools/releases/tag/2.13) - [2024-02-29]
 

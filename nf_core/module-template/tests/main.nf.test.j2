@@ -7,7 +7,7 @@ nextflow_process {
     process "{{ component_name_underscore|upper }}"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_{{ org_alphabet }}"
     {%- if subtool %}
     tag "{{ component }}"
     {%- endif %}
@@ -28,10 +28,10 @@ nextflow_process {
                 {% if has_meta %}
                 input[0] = [
                     [ id:'test', single_end:false ], // meta map
-                    file(params.test_data['sarscov2']['illumina']['test_paired_end_bam'], checkIfExists: true)
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true),
                 ]
                 {%- else %}
-                input[0] = file(params.test_data['sarscov2']['illumina']['test_single_end_bam'], checkIfExists: true)
+                input[0] = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true),
                 {%- endif %}
                 """
             }
@@ -60,10 +60,10 @@ nextflow_process {
                 {% if has_meta %}
                 input[0] = [
                     [ id:'test', single_end:false ], // meta map
-                    file(params.test_data['sarscov2']['illumina']['test_paired_end_bam'], checkIfExists: true)
-                    ]
+                    file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true),
+                ]
                 {%- else %}
-                input[0] = file(params.test_data['sarscov2']['illumina']['test_single_end_bam'], checkIfExists: true)
+                input[0] = file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true),
                 {%- endif %}
                 """
             }

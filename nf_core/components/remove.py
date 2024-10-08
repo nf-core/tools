@@ -58,10 +58,10 @@ class ComponentRemove(ComponentCommand):
             removed_components = []
 
         # Get the module/subworkflow directory
-        component_dir = Path(self.dir, self.component_type, repo_path, component)
+        component_dir = Path(self.directory, self.component_type, repo_path, component)
 
         # Load the modules.json file
-        modules_json = ModulesJson(self.dir)
+        modules_json = ModulesJson(self.directory)
         modules_json.load()
 
         # Verify that the module/subworkflow is actually installed
@@ -98,9 +98,16 @@ class ComponentRemove(ComponentCommand):
                 for file, stmts in include_stmts.items():
                     renderables = []
                     for stmt in stmts:
+                        # check that the line number is integer
+                        if not isinstance(stmt["line_number"], int):
+                            log.error(
+                                f"Could not parse line number '{stmt['line_number']}' in '{file}'. Please report this issue."
+                            )
+                            continue
+
                         renderables.append(
                             Syntax(
-                                stmt["line"],
+                                str(stmt["line"]),
                                 "groovy",
                                 theme="ansi_dark",
                                 line_numbers=True,
@@ -123,7 +130,7 @@ class ComponentRemove(ComponentCommand):
                         style=nf_core.utils.nfcore_question_style,
                     ).unsafe_ask():
                         # add the component back to modules.json
-                        if not ComponentInstall(self.dir, self.component_type, force=True).install(
+                        if not ComponentInstall(self.directory, self.component_type, force=True).install(
                             component, silent=True
                         ):
                             log.warning(
@@ -133,7 +140,9 @@ class ComponentRemove(ComponentCommand):
                         return removed
             # Remove the component files of all entries removed from modules.json
             removed = (
-                True if self.clear_component_dir(component, Path(self.dir, removed_component_dir)) or removed else False
+                True
+                if self.clear_component_dir(component, Path(self.directory, removed_component_dir)) or removed
+                else False
             )
             removed_components.append(component)
 

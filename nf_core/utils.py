@@ -19,22 +19,33 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, Tuple, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
 
 import git
-import prompt_toolkit
+import prompt_toolkit.styles
 import questionary
-import requests
+import requests.auth
 import requests_cache
 import rich
+import rich.markup
 import yaml
 from packaging.version import Version
+from pydantic import BaseModel, ValidationError, field_validator
 from rich.live import Live
 from rich.spinner import Spinner
 
 import nf_core
 
 log = logging.getLogger(__name__)
+
+# ASCII nf-core logo
+nfcore_logo = [
+    r"[green]                                          ,--.[grey39]/[green],-.",
+    r"[blue]          ___     __   __   __   ___     [green]/,-._.--~\ ",
+    r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {",
+    r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,",
+    r"[green]                                          `._,._,'",
+]
 
 # Custom style for questionary
 nfcore_question_style = prompt_toolkit.styles.Style(
@@ -55,11 +66,11 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     ]
 )
 
-NFCORE_CACHE_DIR = os.path.join(
-    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME") or "", ".cache")),
+NFCORE_CACHE_DIR = Path(
+    os.environ.get("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
     "nfcore",
 )
-NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
+NFCORE_DIR = Path(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
 
 
 def fetch_remote_version(source_url):
@@ -124,59 +135,79 @@ class Pipeline:
         schema_obj (obj): A :class:`PipelineSchema` object
     """
 
-    def __init__(self, wf_path):
+    def __init__(self, wf_path: Path) -> None:
         """Initialise pipeline object"""
-        self.conda_config = {}
-        self.conda_package_info = {}
-        self.nf_config = {}
-        self.files = []
-        self.git_sha = None
-        self.minNextflowVersion = None
-        self.wf_path = wf_path
-        self.pipeline_name = None
-        self.pipeline_prefix = None
-        self.schema_obj = None
+        self.conda_config: Dict = {}
+        self.conda_package_info: Dict = {}
+        self.nf_config: Dict = {}
+        self.files: List[Path] = []
+        self.git_sha: Optional[str] = None
+        self.minNextflowVersion: Optional[str] = None
+        self.wf_path = Path(wf_path)
+        self.pipeline_name: Optional[str] = None
+        self.pipeline_prefix: Optional[str] = None
+        self.schema_obj: Optional[Dict] = None
 
         try:
             repo = git.Repo(self.wf_path)
             self.git_sha = repo.head.object.hexsha
-        except Exception:
-            log.debug(f"Could not find git hash for pipeline: {self.wf_path}")
+        except Exception as e:
+            log.debug(f"Could not find git hash for pipeline: {self.wf_path}. {e}")
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
         if os.environ.get("GITHUB_PR_COMMIT", "") != "":
             self.git_sha = os.environ["GITHUB_PR_COMMIT"]
 
-    def _load(self):
-        """Run core load functions"""
-        self._list_files()
-        self._load_pipeline_config()
-        self._load_conda_environment()
+    def __repr__(self) -> str:
+        return f"<Pipeline '{self.pipeline_name}' at {self.wf_path}>"
 
-    def _list_files(self):
+    def _load(self) -> bool:
+        """Run core load functions"""
+
+        return self.load_pipeline_config() and self._load_conda_environment()
+
+    def _load_conda_environment(self) -> bool:
+        """Try to load the pipeline environment.yml file, if it exists"""
+        try:
+            with open(Path(self.wf_path, "environment.yml")) as fh:
+                self.conda_config = yaml.safe_load(fh)
+            return True
+        except FileNotFoundError:
+            log.debug("No conda `environment.yml` file found.")
+            return False
+
+    def _fp(self, fn: Union[str, Path]) -> Path:
+        """Convenience function to get full path to a file in the pipeline"""
+        return Path(self.wf_path, fn)
+
+    def list_files(self) -> List[Path]:
         """Get a list of all files in the pipeline"""
+        files = []
         try:
             # First, try to get the list of files using git
             git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.wf_path).splitlines()
-            self.files = []
             for fn in git_ls_files:
                 full_fn = Path(self.wf_path) / fn.decode("utf-8")
                 if full_fn.is_file():
-                    self.files.append(full_fn)
+                    files.append(full_fn)
                 else:
                     log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             # Failed, so probably not initialised as a git repository - just a list of all files
-            log.debug(f"Couldn't call 'git ls-files': {e}")
-            self.files = []
-            for subdir, _, files in os.walk(self.wf_path):
-                for fn in files:
-                    self.files.append(Path(subdir) / fn)
+            files = []
+            for file_path in self.wf_path.rglob("*"):
+                if file_path.is_file():
+                    # Append the file path to the list
+                    files.append(file_path)
+            if len(files) == 0:
+                log.debug(f"No files found in pipeline: {self.wf_path}")
 
-    def _load_pipeline_config(self):
+        return files
+
+    def load_pipeline_config(self) -> bool:
         """Get the nextflow config for this pipeline
 
-        Once loaded, set a few convienence reference class attributes
+        Once loaded, set a few convenience reference class attributes
         """
         self.nf_config = fetch_wf_config(self.wf_path)
 
@@ -185,18 +216,8 @@ class Pipeline:
         nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
         if nextflow_version_match:
             self.minNextflowVersion = nextflow_version_match.group(0)
-
-    def _load_conda_environment(self):
-        """Try to load the pipeline environment.yml file, if it exists"""
-        try:
-            with open(os.path.join(self.wf_path, "environment.yml")) as fh:
-                self.conda_config = yaml.safe_load(fh)
-        except FileNotFoundError:
-            log.debug("No conda `environment.yml` file found.")
-
-    def _fp(self, fn):
-        """Convenience function to get full path to a file in the pipeline"""
-        return os.path.join(self.wf_path, fn)
+            return True
+        return False
 
 
 def is_pipeline_directory(wf_path):
@@ -220,7 +241,7 @@ def is_pipeline_directory(wf_path):
             raise UserWarning(warning)
 
 
-def fetch_wf_config(wf_path: str, cache_config: bool = True) -> dict:
+def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
 
@@ -254,7 +275,7 @@ def fetch_wf_config(wf_path: str, cache_config: bool = True) -> dict:
     concat_hash = ""
     for fn in ["nextflow.config", "main.nf"]:
         try:
-            with open(Path(wf_path, fn), "rb") as fh:
+            with open(wf_path / fn, "rb") as fh:
                 concat_hash += hashlib.sha256(fh.read()).hexdigest()
         except FileNotFoundError:
             pass
@@ -337,17 +358,17 @@ def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
             )
 
 
-def setup_nfcore_dir():
+def setup_nfcore_dir() -> bool:
     """Creates a directory for files that need to be kept between sessions
 
     Currently only used for keeping local copies of modules repos
     """
-    if not os.path.exists(NFCORE_DIR):
-        os.makedirs(NFCORE_DIR)
-        return True
+    if not NFCORE_DIR.exists():
+        NFCORE_DIR.mkdir(parents=True)
+    return True
 
 
-def setup_requests_cachedir() -> dict:
+def setup_requests_cachedir() -> Dict[str, Union[Path, datetime.timedelta, str]]:
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
@@ -356,10 +377,10 @@ def setup_requests_cachedir() -> dict:
     Uses requests_cache monkey patching.
     Also returns the config dict so that we can use the same setup with a Session.
     """
-    pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = setup_nfcore_cachedir(f"cache_{pyversion}")
-    config = {
-        "cache_name": os.path.join(cachedir, "github_info"),
+    pyversion: str = ".".join(str(v) for v in sys.version_info[0:3])
+    cachedir: Path = setup_nfcore_cachedir(f"cache_{pyversion}")
+    config: Dict[str, Union[Path, datetime.timedelta, str]] = {
+        "cache_name": Path(cachedir, "github_info"),
         "expire_after": datetime.timedelta(hours=1),
         "backend": "sqlite",
     }
@@ -382,7 +403,7 @@ def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
     return cachedir
 
 
-def wait_cli_function(poll_func, refresh_per_second=20):
+def wait_cli_function(poll_func: Callable[[], bool], refresh_per_second: int = 20) -> None:
     """
     Display a command-line spinner while calling a function repeatedly.
 
@@ -406,7 +427,7 @@ def wait_cli_function(poll_func, refresh_per_second=20):
         raise AssertionError("Cancelled!")
 
 
-def poll_nfcore_web_api(api_url, post_data=None):
+def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
     """
     Poll the nf-core website API
 
@@ -427,7 +448,10 @@ def poll_nfcore_web_api(api_url, post_data=None):
             raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
             if response.status_code != 200 and response.status_code != 301:
-                log.debug(f"Response content:\n{response.content}")
+                response_content = response.content
+                if isinstance(response_content, bytes):
+                    response_content = response_content.decode()
+                log.debug(f"Response content:\n{response_content}")
                 raise AssertionError(
                     f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )
@@ -439,7 +463,10 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 if "status" not in web_response:
                     raise AssertionError()
             except (json.decoder.JSONDecodeError, AssertionError, TypeError):
-                log.debug(f"Response content:\n{response.content}")
+                response_content = response.content
+                if isinstance(response_content, bytes):
+                    response_content = response_content.decode()
+                log.debug(f"Response content:\n{response_content}")
                 raise AssertionError(
                     f"nf-core website API results response not recognised: {api_url}\n "
                     "See verbose log for full response"
@@ -455,14 +482,14 @@ class GitHubAPISession(requests_cache.CachedSession):
     such as automatically setting up GitHub authentication if we can.
     """
 
-    def __init__(self):  # pylint: disable=super-init-not-called
-        self.auth_mode = None
-        self.return_ok = [200, 201]
-        self.return_retry = [403]
-        self.return_unauthorised = [401]
-        self.has_init = False
+    def __init__(self) -> None:
+        self.auth_mode: Optional[str] = None
+        self.return_ok: List[int] = [200, 201]
+        self.return_retry: List[int] = [403]
+        self.return_unauthorised: List[int] = [401]
+        self.has_init: bool = False
 
-    def lazy_init(self):
+    def lazy_init(self) -> None:
         """
         Initialise the object.
 
@@ -504,8 +531,9 @@ class GitHubAPISession(requests_cache.CachedSession):
                     self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
             except Exception:
                 ex_type, ex_value, _ = sys.exc_info()
-                output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
-                log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
+                if ex_type is not None:
+                    output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
+                    log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
 
         # Default auth if we have a GitHub Token (eg. GitHub Actions CI)
         if os.environ.get("GITHUB_TOKEN") is not None and self.auth is None:
@@ -569,7 +597,7 @@ class GitHubAPISession(requests_cache.CachedSession):
         """
         Try to fetch a URL, keep retrying if we get a certain return code.
 
-        Used in nf-core sync code because we get 403 errors: too many simultaneous requests
+        Used in nf-core pipelines sync code because we get 403 errors: too many simultaneous requests
         See https://github.com/nf-core/tools/issues/911
         """
         if not self.has_init:
@@ -626,7 +654,7 @@ def anaconda_package(dep, dep_channels=None):
     """
 
     if dep_channels is None:
-        dep_channels = ["conda-forge", "bioconda", "defaults"]
+        dep_channels = ["conda-forge", "bioconda"]
 
     # Check if each dependency is the latest available version
     if "=" in dep:
@@ -784,6 +812,8 @@ def get_biocontainer_tag(package, version):
                         singularity_image = all_singularity[k]["image"]
                         current_date = date
                         docker_image_name = docker_image["image_name"].lstrip("quay.io/")
+                if singularity_image is None:
+                    raise LookupError(f"Could not find singularity container for {package}")
                 return docker_image_name, singularity_image["image_name"]
             except TypeError:
                 raise LookupError(f"Could not find docker or singularity container for {package}")
@@ -845,7 +875,7 @@ def prompt_remote_pipeline_name(wfs):
     """Prompt for the pipeline name with questionary
 
     Args:
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         pipeline (str): GitHub repo - username/repo
@@ -879,7 +909,9 @@ def prompt_remote_pipeline_name(wfs):
     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
 
 
-def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
+def prompt_pipeline_release_branch(
+    wf_releases: List[Dict[str, Any]], wf_branches: Dict[str, Any], multiple: bool = False
+) -> Tuple[Any, List[str]]:
     """Prompt for pipeline release / branch
 
     Args:
@@ -888,18 +920,18 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
         multiple (bool): Allow selection of multiple releases & branches (for Seqera Platform)
 
     Returns:
-        choice (str): Selected release / branch name
+        choice (questionary.Choice or bool): Selected release / branch or False if no releases / branches available
     """
     # Prompt user for release tag, tag_set will contain all available.
-    choices = []
-    tag_set = []
+    choices: List[questionary.Choice] = []
+    tag_set: List[str] = []
 
     # Releases
     if len(wf_releases) > 0:
         for tag in map(lambda release: release.get("tag_name"), wf_releases):
             tag_display = [("fg:ansiblue", f"{tag}  "), ("class:choice-default", "[release]")]
             choices.append(questionary.Choice(title=tag_display, value=tag))
-            tag_set.append(tag)
+            tag_set.append(str(tag))
 
     # Branches
     for branch in wf_branches.keys():
@@ -908,7 +940,7 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
         tag_set.append(branch)
 
     if len(choices) == 0:
-        return False
+        return [], []
 
     if multiple:
         return (
@@ -925,7 +957,7 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
 
 class SingularityCacheFilePathValidator(questionary.Validator):
     """
-    Validator for file path specified as --singularity-cache-index argument in nf-core download
+    Validator for file path specified as --singularity-cache-index argument in nf-core pipelines download
     """
 
     def validate(self, value):
@@ -945,7 +977,7 @@ def get_repo_releases_branches(pipeline, wfs):
 
     Args:
         pipeline (str): GitHub repo username/repo
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         wf_releases, wf_branches (tuple): Array of releases, Array of branches
@@ -1017,7 +1049,74 @@ CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Path, dict]:
+class NFCoreTemplateConfig(BaseModel):
+    """Template configuration schema"""
+
+    org: Optional[str] = None
+    """ Organisation name """
+    name: Optional[str] = None
+    """ Pipeline name """
+    description: Optional[str] = None
+    """ Pipeline description """
+    author: Optional[str] = None
+    """ Pipeline author """
+    version: Optional[str] = None
+    """ Pipeline version """
+    force: Optional[bool] = True
+    """ Force overwrite of existing files """
+    outdir: Optional[Union[str, Path]] = None
+    """ Output directory """
+    skip_features: Optional[list] = None
+    """ Skip features. See https://nf-co.re/docs/nf-core-tools/pipelines/create for a list of features. """
+    is_nfcore: Optional[bool] = None
+    """ Whether the pipeline is an nf-core pipeline. """
+
+    # convert outdir to str
+    @field_validator("outdir")
+    @classmethod
+    def outdir_to_str(cls, v: Optional[Union[str, Path]]) -> Optional[str]:
+        if v is not None:
+            v = str(v)
+        return v
+
+    def __getitem__(self, item: str) -> Any:
+        if self is None:
+            return None
+        return getattr(self, item)
+
+    def get(self, item: str, default: Any = None) -> Any:
+        return getattr(self, item, default)
+
+
+LintConfigType = Optional[Dict[str, Union[List[str], List[Dict[str, List[str]]], bool]]]
+
+
+class NFCoreYamlConfig(BaseModel):
+    """.nf-core.yml configuration file schema"""
+
+    repository_type: str
+    """ Type of repository: pipeline or modules """
+    nf_core_version: Optional[str] = None
+    """ Version of nf-core/tools used to create/update the pipeline"""
+    org_path: Optional[str] = None
+    """ Path to the organisation's modules repository (used for modules repo_type only) """
+    lint: Optional[LintConfigType] = None
+    """ Pipeline linting configuration, see https://nf-co.re/docs/nf-core-tools/pipelines/lint#linting-config for examples and documentation """
+    template: Optional[NFCoreTemplateConfig] = None
+    """ Pipeline template configuration """
+    bump_version: Optional[Dict[str, bool]] = None
+    """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information."""
+    update: Optional[Dict[str, Union[str, bool, Dict[str, Union[str, Dict[str, Union[str, bool]]]]]]] = None
+    """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information."""
+
+    def __getitem__(self, item: str) -> Any:
+        return getattr(self, item)
+
+    def get(self, item: str, default: Any = None) -> Any:
+        return getattr(self, item, default)
+
+
+def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path], Optional[NFCoreYamlConfig]]:
     """
     Parse the nf-core.yml configuration file
 
@@ -1031,28 +1130,66 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Path, dict]:
     tools_config = {}
 
     config_fn = get_first_available_path(directory, CONFIG_PATHS)
-
     if config_fn is None:
         depr_path = get_first_available_path(directory, DEPRECATED_CONFIG_PATHS)
         if depr_path:
-            log.error(
-                f"Deprecated `{depr_path.name}` file found! The file will not be loaded. "
-                f"Please rename the file to `{CONFIG_PATHS[0]}`."
+            raise UserWarning(
+                f"Deprecated `{depr_path.name}` file found! Please rename the file to `{CONFIG_PATHS[0]}`."
             )
         else:
-            log.debug(f"No tools config file found: {CONFIG_PATHS[0]}")
-        return Path(directory, CONFIG_PATHS[0]), {}
-
+            log.debug(f"Could not find a config file in the directory '{directory}'")
+            return Path(directory, CONFIG_PATHS[0]), None
+    if not Path(config_fn).is_file():
+        raise FileNotFoundError(f"No `.nf-core.yml` file found in the directory '{directory}'")
     with open(config_fn) as fh:
         tools_config = yaml.safe_load(fh)
+
     # If the file is empty
-    tools_config = tools_config or {}
+    if tools_config is None:
+        raise AssertionError(f"Config file '{config_fn}' is empty")
+    # Check for required fields
+    try:
+        nf_core_yaml_config = NFCoreYamlConfig(**tools_config)
+    except ValidationError as e:
+        error_message = f"Config file '{config_fn}' is invalid"
+        for error in e.errors():
+            error_message += f"\n{error['loc'][0]}: {error['msg']}"
+        raise AssertionError(error_message)
+
+    wf_config = fetch_wf_config(Path(directory))
+    if nf_core_yaml_config["repository_type"] == "pipeline" and wf_config:
+        # Retrieve information if template from config file is empty
+        template = tools_config.get("template")
+        config_template_keys = template.keys() if template is not None else []
+        if nf_core_yaml_config.template is None:
+            # The .nf-core.yml file did not contain template information
+            nf_core_yaml_config.template = NFCoreTemplateConfig(
+                org="nf-core",
+                name=wf_config["manifest.name"].strip("'\"").split("/")[-1],
+                description=wf_config["manifest.description"].strip("'\""),
+                author=wf_config["manifest.author"].strip("'\""),
+                version=wf_config["manifest.version"].strip("'\""),
+                outdir=str(directory),
+                is_nfcore=True,
+            )
+        elif "prefix" in config_template_keys or "skip" in config_template_keys:
+            # The .nf-core.yml file contained the old prefix or skip keys
+            nf_core_yaml_config.template = NFCoreTemplateConfig(
+                org=tools_config["template"].get("prefix", tools_config["template"].get("org", "nf-core")),
+                name=tools_config["template"].get("name", wf_config["manifest.name"].strip("'\"").split("/")[-1]),
+                description=tools_config["template"].get("description", wf_config["manifest.description"].strip("'\"")),
+                author=tools_config["template"].get("author", wf_config["manifest.author"].strip("'\"")),
+                version=tools_config["template"].get("version", wf_config["manifest.version"].strip("'\"")),
+                outdir=tools_config["template"].get("outdir", str(directory)),
+                skip_features=tools_config["template"].get("skip", tools_config["template"].get("skip_features")),
+                is_nfcore=tools_config["template"].get("prefix", tools_config["template"].get("org")) == "nf-core",
+            )
 
     log.debug("Using config file: %s", config_fn)
-    return config_fn, tools_config
+    return config_fn, nf_core_yaml_config
 
 
-def determine_base_dir(directory="."):
+def determine_base_dir(directory: Union[Path, str] = ".") -> Path:
     base_dir = start_dir = Path(directory).absolute()
     # Only iterate up the tree if the start dir doesn't have a config
     while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
@@ -1060,10 +1197,10 @@ def determine_base_dir(directory="."):
         config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
         if config_fn:
             break
-    return directory if base_dir == start_dir else base_dir
+    return Path(directory) if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
 
 
-def get_first_available_path(directory, paths):
+def get_first_available_path(directory: Union[Path, str], paths: List[str]) -> Union[Path, None]:
     for p in paths:
         if Path(directory, p).is_file():
             return Path(directory, p)
