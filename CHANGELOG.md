@@ -3,6 +3,7 @@
 ## v3.1.0dev
 
 ### Bug fixes
+
 - Fixed an issue where the linting CI action didn't read the correct file
 
 ## [v3.0.0 - Titanium Tapir](https://github.com/nf-core/tools/releases/tag/3.0.0) - [2024-10-08]
