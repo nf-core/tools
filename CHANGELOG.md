@@ -86,6 +86,7 @@
 ### General
 
 - Update output of generation script for API docs to new structure ([#2988](https://github.com/nf-core/tools/pull/2988))
+- Remove `rich-codex.yml` action, images are now generated on the website repo ([#2989](https://github.com/nf-core/tools/pull/2989))
 - Add no clobber and put bash options on their own line ([#2991](https://github.com/nf-core/tools/pull/2991))
 - move pipeline subcommands for v3.0 ([#2983](https://github.com/nf-core/tools/pull/2983))
 - return directory if base_dir is the root directory ([#3003](https://github.com/nf-core/tools/pull/3003))
