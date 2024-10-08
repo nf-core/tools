@@ -14,8 +14,8 @@ on:
 jobs:
   run-platform:
     name: Run AWS full tests
-    # run only if the PR is approved by at least 2 reviewers and against the master branch
-    if: github.repository == '{{ name }}' && github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'master'
+    # run only if the PR is approved by at least 2 reviewers and against the master branch or manually triggered
+    if: github.repository == '{{ name }}' && github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'master' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: octokit/request-action@v2.x
