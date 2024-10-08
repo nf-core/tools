@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## [v3.0.0 - Titanium Tapir](https://github.com/nf-core/tools/releases/tag/3.0.0) - [2024-10-07]
+## [v3.0.0 - Titanium Tapir](https://github.com/nf-core/tools/releases/tag/3.0.0) - [2024-10-08]
 
 **Highlights**
 
