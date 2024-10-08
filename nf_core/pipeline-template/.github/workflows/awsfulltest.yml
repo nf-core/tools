@@ -14,7 +14,8 @@ on:
 jobs:
   run-platform:
     name: Run AWS full tests
-    if: github.repository == '{{ name }}' && github.event.review.state == 'approved'
+    # run only if the PR is approved by at least 2 reviewers and against the master branch
+    if: github.repository == '{{ name }}' && github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'master'
     runs-on: ubuntu-latest
     steps:
       - uses: octokit/request-action@v2.x
