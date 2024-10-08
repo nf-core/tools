@@ -1,5 +1,5 @@
 # modules_structure
 
 ```{eval-rst}
-.. automethod:: nf_core.lint.PipelineLint.modules_structure
+.. automethod:: nf_core.pipelines.lint.PipelineLint.modules_structure
 ```

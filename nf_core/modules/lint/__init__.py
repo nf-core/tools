@@ -8,16 +8,34 @@ nf-core modules lint
 
 import logging
 import os
+from pathlib import Path
+from typing import List, Optional, Union
 
 import questionary
 import rich
+import rich.progress
+import ruamel.yaml
 
+import nf_core.components
+import nf_core.components.nfcore_component
 import nf_core.modules.modules_utils
 import nf_core.utils
+from nf_core.components.components_utils import get_biotools_id
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
-from nf_core.lint_utils import console
+from nf_core.components.nfcore_component import NFCoreComponent
+from nf_core.pipelines.lint_utils import console, run_prettier_on_file
 
 log = logging.getLogger(__name__)
+
+from .environment_yml import environment_yml
+from .main_nf import main_nf
+from .meta_yml import meta_yml, obtain_correct_and_specified_inputs, obtain_correct_and_specified_outputs, read_meta_yml
+from .module_changes import module_changes
+from .module_deprecations import module_deprecations
+from .module_patch import module_patch
+from .module_tests import module_tests
+from .module_todos import module_todos
+from .module_version import module_version
 
 
 class ModuleLint(ComponentLint):
@@ -27,30 +45,35 @@ class ModuleLint(ComponentLint):
     """
 
     # Import lint functions
-    from .environment_yml import environment_yml  # type: ignore[misc]
-    from .main_nf import main_nf  # type: ignore[misc]
-    from .meta_yml import meta_yml  # type: ignore[misc]
-    from .module_changes import module_changes  # type: ignore[misc]
-    from .module_deprecations import module_deprecations  # type: ignore[misc]
-    from .module_patch import module_patch  # type: ignore[misc]
-    from .module_tests import module_tests  # type: ignore[misc]
-    from .module_todos import module_todos  # type: ignore[misc]
-    from .module_version import module_version  # type: ignore[misc]
+    environment_yml = environment_yml
+    main_nf = main_nf
+    meta_yml = meta_yml
+    obtain_correct_and_specified_inputs = obtain_correct_and_specified_inputs
+    obtain_correct_and_specified_outputs = obtain_correct_and_specified_outputs
+    read_meta_yml = read_meta_yml
+    module_changes = module_changes
+    module_deprecations = module_deprecations
+    module_patch = module_patch
+    module_tests = module_tests
+    module_todos = module_todos
+    module_version = module_version
 
     def __init__(
         self,
-        dir,
-        fail_warned=False,
-        remote_url=None,
-        branch=None,
-        no_pull=False,
-        registry=None,
-        hide_progress=False,
+        directory: Union[str, Path],
+        fail_warned: bool = False,
+        fix: bool = False,
+        remote_url: Optional[str] = None,
+        branch: Optional[str] = None,
+        no_pull: bool = False,
+        registry: Optional[str] = None,
+        hide_progress: bool = False,
     ):
         super().__init__(
             component_type="modules",
-            dir=dir,
+            directory=directory,
             fail_warned=fail_warned,
+            fix=fix,
             remote_url=remote_url,
             branch=branch,
             no_pull=no_pull,
@@ -94,7 +117,7 @@ class ModuleLint(ComponentLint):
         """
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for module or all
-        if module is None and not all_modules:
+        if module is None and not all_modules and len(self.all_remote_components) > 0:
             questions = [
                 {
                     "type": "list",
@@ -127,9 +150,9 @@ class ModuleLint(ComponentLint):
             remote_modules = self.all_remote_components
 
         if self.repo_type == "modules":
-            log.info(f"Linting modules repo: [magenta]'{self.dir}'")
+            log.info(f"Linting modules repo: [magenta]'{self.directory}'")
         else:
-            log.info(f"Linting pipeline: [magenta]'{self.dir}'")
+            log.info(f"Linting pipeline: [magenta]'{self.directory}'")
         if module:
             log.info(f"Linting module: [magenta]'{module}'")
 
@@ -154,7 +177,9 @@ class ModuleLint(ComponentLint):
             self._print_results(show_passed=show_passed, sort_by=sort_by)
             self.print_summary()
 
-    def lint_modules(self, modules, registry="quay.io", local=False, fix_version=False):
+    def lint_modules(
+        self, modules: List[NFCoreComponent], registry: str = "quay.io", local: bool = False, fix_version: bool = False
+    ) -> None:
         """
         Lint a list of modules
 
@@ -182,9 +207,15 @@ class ModuleLint(ComponentLint):
 
             for mod in modules:
                 progress_bar.update(lint_progress, advance=1, test_name=mod.component_name)
-                self.lint_module(mod, progress_bar, registry=registry, local=local, fix_version=fix_version)
+                self.lint_module(mod, progress_bar, local=local, fix_version=fix_version)
 
-    def lint_module(self, mod, progress_bar, registry, local=False, fix_version=False):
+    def lint_module(
+        self,
+        mod: NFCoreComponent,
+        progress_bar: rich.progress.Progress,
+        local: bool = False,
+        fix_version: bool = False,
+    ):
         """
         Perform linting on one module
 
@@ -213,7 +244,13 @@ class ModuleLint(ComponentLint):
 
         # Otherwise run all the lint tests
         else:
-            if self.repo_type == "pipeline" and self.modules_json:
+            mod.get_inputs_from_main_nf()
+            mod.get_outputs_from_main_nf()
+            # Update meta.yml file if requested
+            if self.fix:
+                self.update_meta_yml_file(mod)
+
+            if self.repo_type == "pipeline" and self.modules_json and mod.repo_url:
                 # Set correct sha
                 version = self.modules_json.get_module_version(mod.component_name, mod.repo_url, mod.org)
                 mod.git_sha = version
@@ -232,3 +269,104 @@ class ModuleLint(ComponentLint):
                 self.failed += warned
 
             self.failed += [LintResult(mod, *m) for m in mod.failed]
+
+    def update_meta_yml_file(self, mod):
+        """
+        Update the meta.yml file with the correct inputs and outputs
+        """
+        meta_yml = self.read_meta_yml(mod)
+        corrected_meta_yml = meta_yml.copy()
+        yaml = ruamel.yaml.YAML()
+        yaml.preserve_quotes = True
+        yaml.indent(mapping=2, sequence=2, offset=0)
+
+        # Obtain inputs and outputs from main.nf and meta.yml
+        # Used to compare only the structure of channels and elements
+        # Do not compare features to allow for custom features in meta.yml (i.e. pattern)
+        if "input" in meta_yml:
+            correct_inputs, meta_inputs = self.obtain_correct_and_specified_inputs(mod, meta_yml)
+        if "output" in meta_yml:
+            correct_outputs, meta_outputs = self.obtain_correct_and_specified_outputs(mod, meta_yml)
+
+        if "input" in meta_yml and correct_inputs != meta_inputs:
+            log.debug(
+                f"Correct inputs: '{correct_inputs}' differ from current inputs: '{meta_inputs}' in '{mod.meta_yml}'"
+            )
+            corrected_meta_yml["input"] = mod.inputs.copy()  # list of lists (channels) of dicts (elements)
+            for i, channel in enumerate(corrected_meta_yml["input"]):
+                for j, element in enumerate(channel):
+                    element_name = list(element.keys())[0]
+                    for k, meta_element in enumerate(meta_yml["input"]):
+                        try:
+                            # Handle old format of meta.yml: list of dicts (channels)
+                            if element_name in meta_element.keys():
+                                # Copy current features of that input element form meta.yml
+                                for feature in meta_element[element_name].keys():
+                                    if feature not in element[element_name].keys():
+                                        corrected_meta_yml["input"][i][j][element_name][feature] = meta_element[
+                                            element_name
+                                        ][feature]
+                                break
+                        except AttributeError:
+                            # Handle new format of meta.yml: list of lists (channels) of elements (dicts)
+                            for x, meta_ch_element in enumerate(meta_element):
+                                if element_name in meta_ch_element.keys():
+                                    # Copy current features of that input element form meta.yml
+                                    for feature in meta_element[x][element_name].keys():
+                                        if feature not in element[element_name].keys():
+                                            corrected_meta_yml["input"][i][j][element_name][feature] = meta_element[x][
+                                                element_name
+                                            ][feature]
+                                    break
+
+        if "output" in meta_yml and correct_outputs != meta_outputs:
+            log.debug(
+                f"Correct outputs: '{correct_outputs}' differ from current outputs: '{meta_outputs}' in '{mod.meta_yml}'"
+            )
+            corrected_meta_yml["output"] = mod.outputs.copy()  # list of dicts (channels) with list of dicts (elements)
+            for i, channel in enumerate(corrected_meta_yml["output"]):
+                ch_name = list(channel.keys())[0]
+                for j, element in enumerate(channel[ch_name]):
+                    element_name = list(element.keys())[0]
+                    for k, meta_element in enumerate(meta_yml["output"]):
+                        if element_name in meta_element.keys():
+                            # Copy current features of that output element form meta.yml
+                            for feature in meta_element[element_name].keys():
+                                if feature not in element[element_name].keys():
+                                    corrected_meta_yml["output"][i][ch_name][j][element_name][feature] = meta_element[
+                                        element_name
+                                    ][feature]
+                            break
+                        elif ch_name in meta_element.keys():
+                            # When the previous output element was using the name of the channel
+                            # Copy current features of that output element form meta.yml
+                            try:
+                                # Handle old format of meta.yml
+                                for feature in meta_element[ch_name].keys():
+                                    if feature not in element[element_name].keys():
+                                        corrected_meta_yml["output"][i][ch_name][j][element_name][feature] = (
+                                            meta_element[ch_name][feature]
+                                        )
+                            except AttributeError:
+                                # Handle new format of meta.yml
+                                for x, meta_ch_element in enumerate(meta_element[ch_name]):
+                                    for meta_ch_element_name in meta_ch_element.keys():
+                                        for feature in meta_ch_element[meta_ch_element_name].keys():
+                                            if feature not in element[element_name].keys():
+                                                corrected_meta_yml["output"][i][ch_name][j][element_name][feature] = (
+                                                    meta_ch_element[meta_ch_element_name][feature]
+                                                )
+                            break
+
+        # Add bio.tools identifier
+        for i, tool in enumerate(corrected_meta_yml["tools"]):
+            tool_name = list(tool.keys())[0]
+            if "identifier" not in tool[tool_name]:
+                corrected_meta_yml["tools"][i][tool_name]["identifier"] = get_biotools_id(
+                    mod.component_name if "/" not in mod.component_name else mod.component_name.split("/")[0]
+                )
+
+        with open(mod.meta_yml, "w") as fh:
+            log.info(f"Updating {mod.meta_yml}")
+            yaml.dump(corrected_meta_yml, fh)
+            run_prettier_on_file(fh.name)

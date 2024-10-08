@@ -38,7 +38,7 @@ jobs:
     strategy:
       matrix:
         NXF_VER:
-          - "23.04.0"
+          - "24.04.2"
           - "latest-everything"
     steps:
       - name: go to subdirectory and change nextflow workdir
@@ -78,13 +78,18 @@ jobs:
         run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
         working-directory: create-lint-wf
 
-      # Run the other nf-core commands
-      - name: nf-core list
-        run: nf-core --log-file log.txt list
+      # Uncomment includeConfig statement
+      - name: uncomment include config
+        run: find nf-core-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
         working-directory: create-lint-wf
 
-      - name: nf-core schema
-        run: nf-core --log-file log.txt schema build --dir nf-core-testpipeline/ --no-prompts
+      # Run the other nf-core commands
+      - name: nf-core pipelines list
+        run: nf-core --log-file log.txt pipelines list
+        working-directory: create-lint-wf
+
+      - name: nf-core pipelines schema
+        run: nf-core --log-file log.txt pipelines schema build --dir nf-core-testpipeline/ --no-prompts
         working-directory: create-lint-wf
 
       - name: Cleanup work directory

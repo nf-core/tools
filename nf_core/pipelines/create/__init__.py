@@ -1,10 +1,15 @@
 """A Textual app to create a pipeline."""
 
 import logging
+from pathlib import Path
 
+import click
+import yaml
 from textual.app import App
 from textual.widgets import Button
 
+import nf_core
+from nf_core.pipelines.create import utils
 from nf_core.pipelines.create.basicdetails import BasicDetails
 from nf_core.pipelines.create.custompipeline import CustomPipeline
 from nf_core.pipelines.create.finaldetails import FinalDetails
@@ -14,19 +19,15 @@ from nf_core.pipelines.create.githubrepoquestion import GithubRepoQuestion
 from nf_core.pipelines.create.loggingscreen import LoggingScreen
 from nf_core.pipelines.create.nfcorepipeline import NfcorePipeline
 from nf_core.pipelines.create.pipelinetype import ChoosePipelineType
-from nf_core.pipelines.create.utils import (
-    CreateConfig,
-    CustomLogHandler,
-    LoggingConsole,
-)
 from nf_core.pipelines.create.welcome import WelcomeScreen
 
-log_handler = CustomLogHandler(
-    console=LoggingConsole(classes="log_console"),
+log_handler = utils.CustomLogHandler(
+    console=utils.LoggingConsole(classes="log_console"),
     rich_tracebacks=True,
     show_time=False,
     show_path=False,
     markup=True,
+    tracebacks_suppress=[click],
 )
 logging.basicConfig(
     level="INFO",
@@ -36,7 +37,7 @@ logging.basicConfig(
 log_handler.setLevel("INFO")
 
 
-class PipelineCreateApp(App[CreateConfig]):
+class PipelineCreateApp(App[utils.CreateConfig]):
     """A Textual app to manage stopwatches."""
 
     CSS_PATH = "create.tcss"
@@ -60,15 +61,18 @@ class PipelineCreateApp(App[CreateConfig]):
     }
 
     # Initialise config as empty
-    TEMPLATE_CONFIG = CreateConfig()
+    TEMPLATE_CONFIG = utils.CreateConfig()
 
     # Initialise pipeline type
-    PIPELINE_TYPE = None
+    NFCORE_PIPELINE = True
 
     # Log handler
     LOG_HANDLER = log_handler
     # Logging state
     LOGGING_STATE = None
+
+    # Template features
+    template_features_yml = utils.load_features_yaml()
 
     def on_mount(self) -> None:
         self.push_screen("welcome")
@@ -78,10 +82,12 @@ class PipelineCreateApp(App[CreateConfig]):
         if event.button.id == "start":
             self.push_screen("choose_type")
         elif event.button.id == "type_nfcore":
-            self.PIPELINE_TYPE = "nfcore"
+            self.NFCORE_PIPELINE = True
+            utils.NFCORE_PIPELINE_GLOBAL = True
             self.push_screen("basic_details")
         elif event.button.id == "type_custom":
-            self.PIPELINE_TYPE = "custom"
+            self.NFCORE_PIPELINE = False
+            utils.NFCORE_PIPELINE_GLOBAL = False
             self.push_screen("basic_details")
         elif event.button.id == "continue":
             self.push_screen("final_details")

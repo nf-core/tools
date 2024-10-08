@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 from jsonschema import exceptions, validators
 
-from nf_core.components.lint import ComponentLint
+from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.utils import custom_yaml_dumper
 
@@ -22,8 +22,10 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
     """
     env_yml = None
     #  load the environment.yml file
+    if module.environment_yml is None:
+        raise LintExceptionError("Module does not have an `environment.yml` file")
     try:
-        with open(Path(module.component_dir, "environment.yml")) as fh:
+        with open(module.environment_yml) as fh:
             env_yml = yaml.safe_load(fh)
 
         module.passed.append(("environment_yml_exists", "Module's `environment.yml` exists", module.environment_yml))
@@ -60,7 +62,7 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
             hint = ""
             if len(e.path) > 0:
                 hint = f"\nCheck the entry for `{e.path[0]}`."
-            if e.schema.get("message"):
+            if e.schema and isinstance(e.schema, dict) and "message" in e.schema:
                 e.message = e.schema["message"]
             module.failed.append(
                 (
@@ -88,42 +90,3 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
                 env_yml["dependencies"].sort()
                 with open(Path(module.component_dir, "environment.yml"), "w") as fh:
                     yaml.dump(env_yml, fh, Dumper=custom_yaml_dumper())
-
-            # Check that the name in the environment.yml file matches the name in the meta.yml file
-            with open(Path(module.component_dir, "meta.yml")) as fh:
-                meta_yml = yaml.safe_load(fh)
-
-            if env_yml["name"] == meta_yml["name"]:
-                module.passed.append(
-                    (
-                        "environment_yml_name",
-                        "The module's `environment.yml` name matches module name",
-                        module.environment_yml,
-                    )
-                )
-            else:
-                module.failed.append(
-                    (
-                        "environment_yml_name",
-                        f"Conflicting process name between environment.yml (`{env_yml['name']}`) and meta.yml (`{module.component_name}`)",
-                        module.environment_yml,
-                    )
-                )
-
-            # Check that the name is lowercase
-            if env_yml["name"] == env_yml["name"].lower():
-                module.passed.append(
-                    (
-                        "environment_yml_name_lowercase",
-                        "The module's `environment.yml` name is lowercase",
-                        module.environment_yml,
-                    )
-                )
-            else:
-                module.failed.append(
-                    (
-                        "environment_yml_name_lowercase",
-                        "The module's `environment.yml` name is not lowercase",
-                        module.environment_yml,
-                    )
-                )

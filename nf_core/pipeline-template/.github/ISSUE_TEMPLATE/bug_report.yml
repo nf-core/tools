@@ -2,6 +2,7 @@ name: Bug report
 description: Report something that is broken or incorrect
 labels: bug
 body:
+{%- if is_nfcore %}
   - type: markdown
     attributes:
       value: |
@@ -9,6 +10,7 @@ body:
 
         - [nf-core website: troubleshooting](https://nf-co.re/usage/troubleshooting)
         - [{{ name }} pipeline documentation](https://nf-co.re/{{ short_name }}/usage)
+{%- endif %}
 
   - type: textarea
     id: description

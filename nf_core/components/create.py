@@ -14,13 +14,15 @@ from typing import Dict, Optional
 import jinja2
 import questionary
 import rich
+import rich.prompt
 import yaml
 from packaging.version import parse as parse_version
 
 import nf_core
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.lint_utils import run_prettier_on_file
+from nf_core.components.components_utils import get_biotools_id
+from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +31,7 @@ class ComponentCreate(ComponentCommand):
     def __init__(
         self,
         component_type: str,
-        directory: str = ".",
+        directory: Path = Path("."),
         component: str = "",
         author: Optional[str] = None,
         process_label: Optional[str] = None,
@@ -60,8 +62,9 @@ class ComponentCreate(ComponentCommand):
         self.file_paths: Dict[str, Path] = {}
         self.not_empty_template = not empty_template
         self.migrate_pytest = migrate_pytest
+        self.tool_identifier = ""
 
-    def create(self):
+    def create(self) -> bool:
         """
         Create a new DSL2 module or subworkflow from the nf-core template.
 
@@ -88,8 +91,7 @@ class ComponentCreate(ComponentCommand):
         ├── meta.yml
         ├── environment.yml
         └── tests
-            ├── main.nf.test
-            └── tags.yml
+            └── main.nf.test
         ```
 
         The function will attempt to automatically find a Bioconda package called <component>
@@ -102,17 +104,16 @@ class ComponentCreate(ComponentCommand):
         ├── main.nf
         ├── meta.yml
         └── tests
-            ├── main.nf.test
-            └── tags.yml
+            └── main.nf.test
         ```
 
         """
-
         if self.component_type == "modules":
             # Check modules directory structure
             self.check_modules_structure()
 
         # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
+
         log.info(f"Repository type: [blue]{self.repo_type}")
         if self.directory != ".":
             log.info(f"Base directory: '{self.directory}'")
@@ -150,6 +151,8 @@ class ComponentCreate(ComponentCommand):
             if self.component_type == "modules":
                 # Try to find a bioconda package for 'component'
                 self._get_bioconda_tool()
+                # Try to find a biotools entry for 'component'
+                self.tool_identifier = get_biotools_id(self.component)
 
             # Prompt for GitHub username
             self._get_username()
@@ -162,7 +165,7 @@ class ComponentCreate(ComponentCommand):
         self.org_alphabet = not_alphabet.sub("", self.org)
 
         # Create component template with jinja2
-        self._render_template()
+        assert self._render_template()
         log.info(f"Created component template: '{self.component_name}'")
 
         if self.migrate_pytest:
@@ -172,7 +175,9 @@ class ComponentCreate(ComponentCommand):
             self._print_and_delete_pytest_files()
 
         new_files = [str(path) for path in self.file_paths.values()]
+
         log.info("Created following files:\n  " + "\n  ".join(new_files))
+        return True
 
     def _get_bioconda_tool(self):
         """
@@ -232,7 +237,14 @@ class ComponentCreate(ComponentCommand):
                 log.info(f"Could not find a Docker/Singularity container ({e})")
 
     def _get_module_structure_components(self):
-        process_label_defaults = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
+        process_label_defaults = [
+            "process_single",
+            "process_low",
+            "process_medium",
+            "process_high",
+            "process_long",
+            "process_high_memory",
+        ]
         if self.process_label is None:
             log.info(
                 "Provide an appropriate resource label for the process, taken from the "
@@ -256,17 +268,19 @@ class ComponentCreate(ComponentCommand):
             )
         while self.has_meta is None:
             self.has_meta = rich.prompt.Confirm.ask(
-                "[violet]Will the module require a meta map of sample information?", default=True
+                "[violet]Will the module require a meta map of sample information?",
+                default=True,
             )
 
-    def _render_template(self):
+    def _render_template(self) -> Optional[bool]:
         """
         Create new module/subworkflow files with Jinja2.
         """
         object_attrs = vars(self)
         # Run jinja2 for each file in the template folder
         env = jinja2.Environment(
-            loader=jinja2.PackageLoader("nf_core", f"{self.component_type[:-1]}-template"), keep_trailing_newline=True
+            loader=jinja2.PackageLoader("nf_core", f"{self.component_type[:-1]}-template"),
+            keep_trailing_newline=True,
         )
         for template_fn, dest_fn in self.file_paths.items():
             log.debug(f"Rendering template file: '{template_fn}'")
@@ -290,6 +304,7 @@ class ComponentCreate(ComponentCommand):
                 Path(nf_core.__file__).parent / f"{self.component_type[:-1]}-template" / template_fn
             ).stat()
             dest_fn.chmod(template_stat.st_mode)
+        return True
 
     def _collect_name_prompt(self):
         """
@@ -333,7 +348,7 @@ class ComponentCreate(ComponentCommand):
                 elif self.component_type == "subworkflows":
                     self.component = rich.prompt.Prompt.ask("[violet]Name of subworkflow").strip()
 
-    def _get_component_dirs(self):
+    def _get_component_dirs(self) -> Dict[str, Path]:
         """Given a directory and a tool/subtool or subworkflow, set the file paths and check if they already exist
 
         Returns dict: keys are relative paths to template files, vals are target paths.
@@ -365,9 +380,8 @@ class ComponentCreate(ComponentCommand):
             # Set file paths
             file_paths["main.nf"] = component_file
 
-        if self.repo_type == "modules":
+        elif self.repo_type == "modules":
             component_dir = Path(self.directory, self.component_type, self.org, self.component_dir)
-
             # Check if module/subworkflow directories exist already
             if component_dir.exists() and not self.force_overwrite and not self.migrate_pytest:
                 raise UserWarning(
@@ -376,7 +390,13 @@ class ComponentCreate(ComponentCommand):
 
             if self.component_type == "modules":
                 # If a subtool, check if there is a module called the base tool name already
-                parent_tool_main_nf = Path(self.directory, self.component_type, self.org, self.component, "main.nf")
+                parent_tool_main_nf = Path(
+                    self.directory,
+                    self.component_type,
+                    self.org,
+                    self.component,
+                    "main.nf",
+                )
                 if self.subtool and parent_tool_main_nf.exists() and not self.migrate_pytest:
                     raise UserWarning(
                         f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.component_name}'"
@@ -390,15 +410,15 @@ class ComponentCreate(ComponentCommand):
                     raise UserWarning(
                         f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.component_name}'"
                     )
-
             # Set file paths
             # For modules - can be tool/ or tool/subtool/ so can't do in template directory structure
             file_paths["main.nf"] = component_dir / "main.nf"
             file_paths["meta.yml"] = component_dir / "meta.yml"
             if self.component_type == "modules":
                 file_paths["environment.yml"] = component_dir / "environment.yml"
-            file_paths["tests/tags.yml"] = component_dir / "tests" / "tags.yml"
             file_paths["tests/main.nf.test.j2"] = component_dir / "tests" / "main.nf.test"
+        else:
+            raise ValueError("`repo_type` not set correctly")
 
         return file_paths
 
@@ -432,11 +452,15 @@ class ComponentCreate(ComponentCommand):
         shutil.copyfile(component_old_path / "meta.yml", self.file_paths["meta.yml"])
         if self.component_type == "modules":
             log.debug("Copying original environment.yml file")
-            shutil.copyfile(component_old_path / "environment.yml", self.file_paths["environment.yml"])
+            shutil.copyfile(
+                component_old_path / "environment.yml",
+                self.file_paths["environment.yml"],
+            )
             if (component_old_path / "templates").is_dir():
                 log.debug("Copying original templates directory")
                 shutil.copytree(
-                    component_old_path / "templates", self.file_paths["environment.yml"].parent / "templates"
+                    component_old_path / "templates",
+                    self.file_paths["environment.yml"].parent / "templates",
                 )
         # Create a nextflow.config file if it contains information other than publishDir
         pytest_dir = Path(self.directory, "tests", self.component_type, self.org, self.component_dir)
@@ -451,7 +475,14 @@ class ComponentCreate(ComponentCommand):
             if len(config_lines) > 11:
                 log.debug("Copying nextflow.config file from pytest tests")
                 with open(
-                    Path(self.directory, self.component_type, self.org, self.component_dir, "tests", "nextflow.config"),
+                    Path(
+                        self.directory,
+                        self.component_type,
+                        self.org,
+                        self.component_dir,
+                        "tests",
+                        "nextflow.config",
+                    ),
                     "w+",
                 ) as ofh:
                     ofh.write(config_lines)

@@ -39,7 +39,7 @@ jobs:
     strategy:
       matrix:
         NXF_VER:
-          - "23.04.0"
+          - "24.04.2"
           - "latest-everything"
     steps:
       - name: go to working directory
@@ -75,7 +75,7 @@ jobs:
           pwd
           # echo content of current directory
           ls -la
-          nextflow run nf-core-testpipeline -profile test,self_hosted_runner --outdir ./results
+          nextflow run nf-core-testpipeline -profile self_hosted_runner,test --outdir ./results
 
       - name: Upload log file artifact
         if: ${{ always() }}

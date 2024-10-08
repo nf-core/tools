@@ -2,7 +2,7 @@
 
 from setuptools import find_packages, setup
 
-version = "2.14.2dev"
+version = "3.0.0"
 
 with open("README.md") as f:
     readme = f.read()
@@ -33,7 +33,7 @@ setup(
     license="MIT",
     entry_points={
         "console_scripts": ["nf-core=nf_core.__main__:run_nf_core"],
-        "refgenie.hooks.post_update": ["nf-core-refgenie=nf_core.refgenie:update_config"],
+        "refgenie.hooks.post_update": ["nf-core-refgenie=nf_core.pipelines.refgenie:update_config"],
     },
     python_requires=">=3.8, <4",
     install_requires=required,
