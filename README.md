@@ -21,7 +21,7 @@ For documentation of the internal Python functions, please refer to the [Tools P
 
 ## Installation
 
-For full installation instructions, please see the [nf-core documentation](https://nf-co.re/docs/usage/tools).
+For full installation instructions, please see the [nf-core documentation](https://nf-co.re/docs/nf-core-tools/installation).
 Below is a quick-start for those who know what they're doing:
 
 ### Bioconda

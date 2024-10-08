@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v3.0.0dev
+## [v3.0.0 - Titanium Tapir](https://github.com/nf-core/tools/releases/tag/3.0.0) - [2024-10-08]
 
 **Highlights**
 
@@ -9,7 +9,6 @@
 - A new Text User Interface app when running `nf-core pipelines create` to help us guide you through the process better (no worries, you can still use the cli if you give all values as parameters)
 - We replaced nf-validation with nf-schema in the pipeline template
 - CI tests now lint with the nf-core tools version matching the template version of the pipeline, to minimise errors in opened PRs with every new tools release.
-- New command `nf-core pipelines ro-crate` to create a [Research Object (RO) crate](https://www.researchobject.org/ro-crate/) for a pipeline
 - `nf-core licences` command is deprecated.
 - Changed default branch to `main`.
 - The structure of nf-core/tools pytests has been updated.
@@ -31,12 +30,12 @@
 - add option to exclude changelog from custom pipeline template ([#3104](https://github.com/nf-core/tools/pull/3104))
 - add option to exclude license from pipeline template ([#3125](https://github.com/nf-core/tools/pull/3125))
 - add option to exclude email from pipeline template ([#3126](https://github.com/nf-core/tools/pull/3126))
-- Use nf-schema instead of nf-validation ([#3116](https://github.com/nf-core/tools/pull/3116))
 - add option to exclude nf-schema from the template ([#3116](https://github.com/nf-core/tools/pull/3116))
 - add option to exclude fastqc from pipeline template ([#3129](https://github.com/nf-core/tools/pull/3129))
 - add option to exclude documentation from pipeline template ([#3130](https://github.com/nf-core/tools/pull/3130))
 - add option to exclude test configs from pipeline template ([#3133](https://github.com/nf-core/tools/pull/3133))
 - add option to exclude tower.yml from pipeline template ([#3134](https://github.com/nf-core/tools/pull/3134))
+- Use nf-schema instead of nf-validation ([#3116](https://github.com/nf-core/tools/pull/3116))
 - test pipeline with conda and singularity on PRs to master ([#3149](https://github.com/nf-core/tools/pull/3149))
 - run nf-core lint `--release` on PRs to master ([#3148](https://github.com/nf-core/tools/pull/3148))
 - Add tests to ensure all files are part of a template customisation group and all groups are tested ([#3099](https://github.com/nf-core/tools/pull/3099))
@@ -62,16 +61,16 @@
 
 ### Pipeline create command
 
-- Create: allow more special characters on the pipeline name for non-nf-core pipelines ([#3008](https://github.com/nf-core/tools/pull/3008))
-- Create: Mock git cretentials to generate stable textual snapshots ([#3007](https://github.com/nf-core/tools/pull/3007))
-- Create app: display input textbox with equally spaced grid ([#3038](https://github.com/nf-core/tools/pull/3038))
-- Pipelines: allow numbers in custom pipeline name ([#3094](https://github.com/nf-core/tools/pull/3094))
+- Allow more special characters on the pipeline name for non-nf-core pipelines ([#3008](https://github.com/nf-core/tools/pull/3008))
+- Mock git cretentials to generate stable textual snapshots ([#3007](https://github.com/nf-core/tools/pull/3007))
+- Display input textbox with equally spaced grid ([#3038](https://github.com/nf-core/tools/pull/3038))
+- Allow numbers in custom pipeline name ([#3094](https://github.com/nf-core/tools/pull/3094))
 
 ### Components
 
 - The `modules_nfcore` tag in the `main.nf.test` file of modules/subworkflows now displays the organization name in custom modules repositories ([#3005](https://github.com/nf-core/tools/pull/3005))
 - Add `--migrate_pytest` option to `nf-core <modules|subworkflows> test` command ([#3085](https://github.com/nf-core/tools/pull/3085))
-- Components: allow spaces at the beginning of include statements ([#3115](https://github.com/nf-core/tools/pull/3115))
+- Allow spaces at the beginning of include statements ([#3115](https://github.com/nf-core/tools/pull/3115))
 - Add option `--fix` to update the `meta.yml` file of subworkflows ([#3077](https://github.com/nf-core/tools/pull/3077))
 
 ### Download
@@ -89,8 +88,8 @@
 
 - Change default branch to `main` for the nf-core/tools repository
 - Update output of generation script for API docs to new structure ([#2988](https://github.com/nf-core/tools/pull/2988))
+- Remove `rich-codex.yml` action, images are now generated on the website repo ([#2989](https://github.com/nf-core/tools/pull/2989))
 - Add no clobber and put bash options on their own line ([#2991](https://github.com/nf-core/tools/pull/2991))
-- update minimal textual version and snapshots ([#2998](https://github.com/nf-core/tools/pull/2998))
 - move pipeline subcommands for v3.0 ([#2983](https://github.com/nf-core/tools/pull/2983))
 - return directory if base_dir is the root directory ([#3003](https://github.com/nf-core/tools/pull/3003))
 - Remove nf-core licences command ([#3012](https://github.com/nf-core/tools/pull/3012))
@@ -114,6 +113,7 @@
 - Update python:3.12-slim Docker digest to 59c7332 ([#3124](https://github.com/nf-core/tools/pull/3124))
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.11.1 ([#3091](https://github.com/nf-core/tools/pull/3091))
 - Update to pytest v8 and move it to dev dependencies ([#3058](https://github.com/nf-core/tools/pull/3058))
+- Update minimal textual version and snapshots ([#2998](https://github.com/nf-core/tools/pull/2998))
 
 ## [v2.14.1 - Tantalum Toad - Patch](https://github.com/nf-core/tools/releases/tag/2.14.1) - [2024-05-09]
 
