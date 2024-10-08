@@ -25,6 +25,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - id: test_variables
+        if: github.event_name != 'workflow_dispatch'
         run: |
           JSON_RESPONSE='${{ steps.check_approvals.outputs.data }}'{% endraw %}
           CURRENT_APPROVALS_COUNT=$(echo $JSON_RESPONSE | jq -c '[.[] | select(.state | contains("APPROVED")) ] | length')
