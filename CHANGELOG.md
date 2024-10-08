@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v3.1.0dev
+## v3.0.1dev
 
 ### Bug fixes
 
