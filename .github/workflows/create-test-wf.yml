@@ -71,10 +71,6 @@ jobs:
           mkdir create-test-wf && cd create-test-wf
           export NXF_WORK=$(pwd)
           nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
-          # echo current directory
-          pwd
-          # echo content of current directory
-          ls -la
           nextflow run nf-core-testpipeline -profile self_hosted_runner,test --outdir ./results
 
       - name: Upload log file artifact
