@@ -21,7 +21,7 @@ jobs:
       - uses: octokit/request-action@v2.x
         id: check_approvals
         with:
-          route: GET /repos/{%- raw -%}${{ github.repository }}/pulls/${{ github.event.review.number }}/reviews
+          route: GET /repos/{%- raw -%}${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - id: test_variables
