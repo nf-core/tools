@@ -113,7 +113,6 @@ ENV/
 # Jetbrains IDEs
 .idea
 pip-wheel-metadata
-.vscode
 .*.sw?
 
 # Textual
