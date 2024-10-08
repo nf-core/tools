@@ -10,8 +10,9 @@
 - We replaced nf-validation with nf-schema in the pipeline template
 - CI tests now lint with the nf-core tools version matching the template version of the pipeline, to minimise errors in opened PRs with every new tools release.
 - `nf-core licences` command is deprecated.
-- The structure of nf-core/tools pytests has been updated
-- The structure of the API docs has been updated
+- Changed default branch to `main`.
+- The structure of nf-core/tools pytests has been updated.
+- The structure of the API docs has been updated.
 
 ### Template
 
@@ -85,6 +86,7 @@
 
 ### General
 
+- Change default branch to `main` for the nf-core/tools repository
 - Update output of generation script for API docs to new structure ([#2988](https://github.com/nf-core/tools/pull/2988))
 - Remove `rich-codex.yml` action, images are now generated on the website repo ([#2989](https://github.com/nf-core/tools/pull/2989))
 - Add no clobber and put bash options on their own line ([#2991](https://github.com/nf-core/tools/pull/2991))

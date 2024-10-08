@@ -6,10 +6,10 @@
 4. Check that modules/subworkflows in template are up to date with the latest releases
 5. Create a PR to `dev` to bump the version in `CHANGELOG.md` and `setup.py` and change the gitpod container to `nfcore/gitpod:latest`.
 6. Make sure all CI tests are passing!
-7. Create a PR from `dev` to `master`
-8. Make sure all CI tests are passing again (additional tests are run on PRs to `master`)
+7. Create a PR from `dev` to `main`
+8. Make sure all CI tests are passing again (additional tests are run on PRs to `main`)
 9. Request review (2 approvals required)
-10. Merge the PR into `master`
+10. Merge the PR into `main`
 11. Wait for CI tests on the commit to passed
 12. (Optional but a good idea) Run a manual sync on `nf-core/testpipeline` and check that CI is passing on the resulting PR.
 13. Create a new release copying the `CHANGELOG` for that release into the description section.
