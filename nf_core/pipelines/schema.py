@@ -97,7 +97,7 @@ class PipelineSchema:
                 conf.get("validation.help.fullParameter", "helpFull"),
                 conf.get("validation.help.showHiddenParameter", "showHidden"),
             ]  # Help parameter should be ignored by default
-            ignored_params_config = conf.get("validation", {}).get("defaultIgnoreParams", [])
+            ignored_params_config = conf.get("validation.defaultIgnoreParams", [])
             if len(ignored_params_config) > 0:
                 ignored_params.extend(ignored_params_config)
             self.ignored_params = ignored_params
