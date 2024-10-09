@@ -1,4 +1,4 @@
-{%- if email %}
+{% if email -%}
 email_template.html
 {%- endif %}
 {%- if adaptivecard %}
