@@ -8,6 +8,7 @@
 - Fixed condition for `awsfulltest` to run ([#3203](https://github.com/nf-core/tools/pull/3203))
 - Fix too many empty lines added to .editorconfig file ([#3204](https://github.com/nf-core/tools/pull/3204))
 - Fix header blocks in local subworkflow including git merge marker-like strings ([#3201](https://github.com/nf-core/tools/pull/3201))
+- Update included subworkflows and modules ([#3208](https://github.com/nf-core/tools/pull/3208))
 
 ## [v3.0.0 - Titanium Tapir](https://github.com/nf-core/tools/releases/tag/3.0.0) - [2024-10-08]
 
