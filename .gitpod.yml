@@ -1,4 +1,4 @@
-image: nfcore/gitpod:dev
+image: nfcore/gitpod:latest
 tasks:
   - name: install current state of nf-core/tools and setup pre-commit
     command: |
