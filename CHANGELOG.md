@@ -1,5 +1,13 @@
 # nf-core/tools: Changelog
 
+## v3.0.1dev
+
+### Template
+
+- Fixed an issue where the linting CI action didn't read the correct file ([#3202](https://github.com/nf-core/tools/pull/3202))
+- Fixed condition for `awsfulltest` to run ([#3203](https://github.com/nf-core/tools/pull/3203))
+- Fix too many empty lines added to .editorconfig file ([#3204](https://github.com/nf-core/tools/pull/3204))
+
 ## [v3.0.0 - Titanium Tapir](https://github.com/nf-core/tools/releases/tag/3.0.0) - [2024-10-08]
 
 **Highlights**
