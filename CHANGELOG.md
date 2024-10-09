@@ -6,7 +6,7 @@
 
 - Fixed an issue where the linting CI action didn't read the correct file ([#3202](https://github.com/nf-core/tools/pull/3202))
 - Fixed condition for `awsfulltest` to run ([#3203](https://github.com/nf-core/tools/pull/3203))
-- Fix too many empty lines added by jinja ([#3204](https://github.com/nf-core/tools/pull/3204) and [#3205](https://github.com/nf-core/tools/pull/3205))
+- Fix too many empty lines added by jinja ([#3204](https://github.com/nf-core/tools/pull/3204) and [#3206](https://github.com/nf-core/tools/pull/3206))
 - Fix header blocks in local subworkflow including git merge marker-like strings ([#3201](https://github.com/nf-core/tools/pull/3201))
 
 ## [v3.0.0 - Titanium Tapir](https://github.com/nf-core/tools/releases/tag/3.0.0) - [2024-10-08]
