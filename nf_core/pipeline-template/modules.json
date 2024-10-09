@@ -28,7 +28,7 @@
                     },
                     "utils_nfcore_pipeline": {
                         "branch": "master",
-                        "git_sha": "9d05360da397692321d377b6102d2fb22507c6ef",
+                        "git_sha": "772684d9d66f37b650c8ba5146ac1ee3ecba2acb",
                         "installed_by": ["subworkflows"]
                     }{% if nf_schema %},
                     "utils_nfschema_plugin": {
