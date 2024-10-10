@@ -15,7 +15,7 @@ env:
   NXF_SINGULARITY_LIBRARYDIR: {% raw %}${{ github.workspace }}{% endraw %}/.singularity
 
 concurrency:
-  group: "{% raw %}${{ github.workflow }}{% endraw %}-{% raw %}${{ github.event.pull_request.number || github.ref }}{% endraw %}"
+  group: "{% raw %}${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}{% endraw %}"
   cancel-in-progress: true
 
 jobs:
