@@ -68,6 +68,7 @@ jobs:
         with:
           miniconda-version: "latest"
           auto-update-conda: true
+          conda-solver: libmamba
           channels: conda-forge,bioconda
 
       - name: Set up Conda
