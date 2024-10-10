@@ -391,8 +391,8 @@ class ModulesDiffer:
     def try_apply_single_patch(file_lines, patch, reverse=False):
         """
         Tries to apply a patch to a modified file. Since the line numbers in
-        the patch does not agree if the file is modified, the old and new
-        lines inpatch are reconstructed and then we look for the old lines
+        the patch do not agree if the file is modified, the old and new
+        lines in the patch are reconstructed and then we look for the old lines
         in the modified file. If all hunk in the patch are found in the new file
         it is updated with the new lines from the patch file.
 

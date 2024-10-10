@@ -49,7 +49,7 @@ jobs:
     steps:
       - name: Check conditions
         id: conditions
-        run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> "$GITHUB_OUTPUT"
+        run: echo "run-tests=${{ github.ref == 'refs/heads/main' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> "$GITHUB_OUTPUT"
 
     outputs:
       python-version: ${{ matrix.python-version }}
@@ -142,17 +142,17 @@ jobs:
             exit 1
           fi
 
-      - name: Store snapshot report
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
-        if: always()
-        with:
-          name: Snapshot Report ${{ matrix.test }}
-          path: ./snapshot_report.html
-
       - name: remove slashes from test name
         run: |
           test=$(echo ${{ matrix.test }} | sed 's/\//__/g')
           echo "test=${test}" >> $GITHUB_ENV
+
+      - name: Store snapshot report
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
+        if: always()
+        with:
+          name: Snapshot Report ${{ env.test }}
+          path: ./snapshot_report.html
 
       - name: Upload coverage
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4

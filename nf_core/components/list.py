@@ -25,7 +25,7 @@ class ComponentList(ComponentCommand):
         self.remote = remote
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
 
-    def _configure_repo_and_paths(self, nf_dir_req=True) -> None:
+    def _configure_repo_and_paths(self, nf_dir_req: bool = True) -> None:
         """
         Override the default with nf_dir_req set to False to allow
         info to be run from anywhere and still return remote info
