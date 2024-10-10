@@ -22,7 +22,7 @@ jobs:
   test:
     name: "Run pipeline with test data ({% raw %}${{ matrix.NXF_VER }}{% endraw %} | {% raw %}${{ matrix.test }}{% endraw %} | {% raw %}${{ matrix.profile }}{% endraw %})"
     # Only run on push if this is the nf-core dev branch (merged PRs)
-    if: "{% raw %}${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'nf-core/bamtofastq') }}{% endraw %}"
+    if: "{% raw %}${{{% endraw %} github.event_name != 'push' || (github.event_name == 'push' && github.repository == '{{ name }}') {% raw %}}}{% endraw %}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -35,13 +35,6 @@ jobs:
           - "singularity"
         test:
           - "test"
-          - "test_cram"
-          - "test_chr"
-          - "test_no_bai"
-          - "test_no_crai"
-          - "test_no_stats"
-          - "test_no_qc"
-          - "test_collate_fast"
         isMaster:
           - {% raw %}${{ github.base_ref == 'master' }}{% endraw %}
         exclude:
