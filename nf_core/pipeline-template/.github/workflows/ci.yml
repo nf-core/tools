@@ -37,6 +37,7 @@ jobs:
           - "test"
         isMaster:
           - {% raw %}${{ github.base_ref == 'master' }}{% endraw %}
+        # Exclude conda and singularity on dev
         exclude:
           - isMaster: false
             profile: "conda"
