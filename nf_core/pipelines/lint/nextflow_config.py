@@ -465,6 +465,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
                     f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
                 )
         else:
+            schema_default = str(schema.schema_defaults[param_name])
             failed.append(
                 f"Default value from the Nextflow schema `{param} = {self._wrap_quotes(schema_default)}` not found in `nextflow.config`."
             )
