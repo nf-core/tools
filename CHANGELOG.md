@@ -4,6 +4,8 @@
 
 ### Template
 
+- Add null/ to .gitignore ([#3191](https://github.com/nf-core/tools/pull/3191))
+
 ### Download
 
 ### Linting
