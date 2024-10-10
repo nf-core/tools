@@ -4,6 +4,8 @@
 
 ### Template
 
+- Parallelize pipeline GHA tests over docker/conda/singularity ([#3214](https://github.com/nf-core/tools/pull/3214))
+
 ### Download
 
 ### Linting
