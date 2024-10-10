@@ -5,6 +5,7 @@
 ### Template
 
 - Add null/ to .gitignore ([#3191](https://github.com/nf-core/tools/pull/3191))
+- Parallelize pipeline GHA tests over docker/conda/singularity ([#3214](https://github.com/nf-core/tools/pull/3214))
 
 ### Download
 
