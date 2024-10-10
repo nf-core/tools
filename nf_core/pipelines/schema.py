@@ -97,11 +97,16 @@ class PipelineSchema:
                 conf.get("validation.help.fullParameter", "helpFull"),
                 conf.get("validation.help.showHiddenParameter", "showHidden"),
             ]  # Help parameter should be ignored by default
-            ignored_params_config = conf.get("validation.defaultIgnoreParams", [])
+            ignored_params_config_str = conf.get("validation.defaultIgnoreParams", "")
+            ignored_params_config = [
+                item.strip().strip("'") for item in ignored_params_config_str[1:-1].split(",")
+            ]  # Extract list elements and remove whitespace
+
             if len(ignored_params_config) > 0:
                 log.debug(f"Ignoring parameters from config: {ignored_params_config}")
                 ignored_params.extend(ignored_params_config)
             self.ignored_params = ignored_params
+            log.debug(f"Ignoring parameters: {self.ignored_params}")
             self.schema_draft = "https://json-schema.org/draft/2020-12/schema"
 
         else:
