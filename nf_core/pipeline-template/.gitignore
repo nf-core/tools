@@ -2,8 +2,8 @@
 work/
 data/
 results/
-null/
 .DS_Store
 testing/
 testing*
 *.pyc
+null/
