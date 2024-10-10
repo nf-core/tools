@@ -34,6 +34,7 @@ jobs:
           - "docker"
           - "singularity"
         test:
+          # TODO nf-core: You can customise CI pipeline run tests as required
           - "test"
         isMaster:
           - {% raw %}${{ github.base_ref == 'master' }}{% endraw %}
