@@ -1,19 +1,16 @@
 # nf-core/tools: Changelog
 
-## v3.0.2dev
+## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 
 ### Template
 
 - Add null/ to .gitignore ([#3191](https://github.com/nf-core/tools/pull/3191))
 - Parallelize pipeline GHA tests over docker/conda/singularity ([#3214](https://github.com/nf-core/tools/pull/3214))
-
-### Download
+- Fix `template_version_comment.yml` github action ([#3212](https://github.com/nf-core/tools/pull/3212))
 
 ### Linting
 
-### Modules
-
-### Subworkflows
+- Fix bug when linting schema params and when using `defaultIgnoreParams` ([#3213](https://github.com/nf-core/tools/pull/3213))
 
 ### General
 
@@ -29,7 +26,6 @@
 - Fix too many empty lines added by jinja ([#3204](https://github.com/nf-core/tools/pull/3204) and [#3206](https://github.com/nf-core/tools/pull/3206))
 - Fix header blocks in local subworkflow including git merge marker-like strings ([#3201](https://github.com/nf-core/tools/pull/3201))
 - Update included subworkflows and modules ([#3208](https://github.com/nf-core/tools/pull/3208))
-- Fix `template_version_commant.yml` github action ([#3212](https://github.com/nf-core/tools/pull/3212))
 
 ## [v3.0.0 - Titanium Tapir](https://github.com/nf-core/tools/releases/tag/3.0.0) - [2024-10-08]
 
