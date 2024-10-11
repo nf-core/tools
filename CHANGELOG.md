@@ -6,7 +6,7 @@
 
 - Add null/ to .gitignore ([#3191](https://github.com/nf-core/tools/pull/3191))
 - Parallelize pipeline GHA tests over docker/conda/singularity ([#3214](https://github.com/nf-core/tools/pull/3214))
-- Fix `template_version_commant.yml` github action ([#3212](https://github.com/nf-core/tools/pull/3212))
+- Fix `template_version_comment.yml` github action ([#3212](https://github.com/nf-core/tools/pull/3212))
 - Fix bug when linting schema params ([#3213](https://github.com/nf-core/tools/pull/3213))
 
 ## [v3.0.1 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.1) - [2024-10-09]
