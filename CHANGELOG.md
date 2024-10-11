@@ -7,6 +7,7 @@
 - Add null/ to .gitignore ([#3191](https://github.com/nf-core/tools/pull/3191))
 - Parallelize pipeline GHA tests over docker/conda/singularity ([#3214](https://github.com/nf-core/tools/pull/3214))
 - Fix `template_version_comment.yml` github action ([#3212](https://github.com/nf-core/tools/pull/3212))
+- Fix pre-commit linting on pipeline template ([#3218](https://github.com/nf-core/tools/pull/3218))
 
 ### Linting
 
