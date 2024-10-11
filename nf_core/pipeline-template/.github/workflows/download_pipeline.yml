@@ -116,5 +116,4 @@ jobs:
             exit 1
           else
             echo "The pipeline can be downloaded successfully!"
-          fi
-          {% endraw %}{% endif %}
+          fi{% endraw %}{% endif %}
