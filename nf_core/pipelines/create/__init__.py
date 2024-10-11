@@ -41,7 +41,7 @@ class PipelineCreateApp(App[utils.CreateConfig]):
     """A Textual app to manage stopwatches."""
 
     CSS_PATH = "create.tcss"
-    TITLE = "nf-core create"
+    TITLE = "nf-core pipelines create"
     SUB_TITLE = "Create a new pipeline with the nf-core pipeline template"
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
