@@ -84,7 +84,8 @@ workflow {
         params.outdir,
         params.input
     )
-    {% endif %}
+    {%- endif %}
+
     //
     // WORKFLOW: Run main workflow
     //

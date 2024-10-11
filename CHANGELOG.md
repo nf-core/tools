@@ -1,5 +1,23 @@
 # nf-core/tools: Changelog
 
+## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
+
+### Template
+
+- Add null/ to .gitignore ([#3191](https://github.com/nf-core/tools/pull/3191))
+- Parallelize pipeline GHA tests over docker/conda/singularity ([#3214](https://github.com/nf-core/tools/pull/3214))
+- Fix `template_version_comment.yml` github action ([#3212](https://github.com/nf-core/tools/pull/3212))
+- Fix pre-commit linting on pipeline template ([#3218](https://github.com/nf-core/tools/pull/3218))
+
+### Linting
+
+- Fix bug when linting schema params and when using `defaultIgnoreParams` ([#3213](https://github.com/nf-core/tools/pull/3213))
+
+### General
+
+- Use updated pipeline commands in docstrings ([#3215](https://github.com/nf-core/tools/pull/3215))
+- Disable automatic sync on release, fix handling empty pipeline input ([#3217](https://github.com/nf-core/tools/pull/3217))
+
 ## [v3.0.1 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.1) - [2024-10-09]
 
 ### Template

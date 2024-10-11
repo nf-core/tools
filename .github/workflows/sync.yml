@@ -1,7 +1,7 @@
 name: Sync template
 on:
-  release:
-    types: [published]
+  # release:
+  #   types: [published]
   workflow_dispatch:
     inputs:
       testpipeline:
@@ -39,7 +39,7 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.testpipeline }}" == "true" ]; then
             echo '{"pipeline":["testpipeline"]}' > pipeline_names.json
-          elif [ "${{ github.event.inputs.pipeline }}" != "all" ]; then
+          elif [ "${{ github.event.inputs.pipeline }}" != "all" ] && [ "${{ github.event.inputs.pipeline }}" != "" ]; then
             curl -O https://nf-co.re/pipeline_names.json
             # check if the pipeline exists
             if ! grep -q "\"${{ github.event.inputs.pipeline }}\"" pipeline_names.json; then
