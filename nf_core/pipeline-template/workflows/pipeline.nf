@@ -65,13 +65,14 @@ workflow {{ short_name|upper }} {
         Channel.fromPath(params.multiqc_logo, checkIfExists: true) :
         Channel.empty()
 
-    {% if nf_schema %}
+    {%- if nf_schema %}
+
     summary_params      = paramsSummaryMap(
         workflow, parameters_schema: "nextflow_schema.json")
     ch_workflow_summary = Channel.value(paramsSummaryMultiqc(summary_params))
     ch_multiqc_files = ch_multiqc_files.mix(
         ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    {% endif %}
+    {%- endif %}
 
     {%- if citations %}
     ch_multiqc_custom_methods_description = params.multiqc_methods_description ?
