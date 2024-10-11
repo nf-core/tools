@@ -5,7 +5,7 @@ import re
 def template_strings(self):
     """Check for template placeholders.
 
-    The ``nf-core create`` pipeline template uses
+    The ``nf-core pipelines create`` pipeline template uses
     `Jinja <https://jinja.palletsprojects.com/en/2.11.x/>`_ behind the scenes.
 
     This lint test fails if any Jinja template variables such as
