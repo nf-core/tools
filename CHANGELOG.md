@@ -17,6 +17,8 @@
 
 ### General
 
+- Use updated pipeline commands in docstrings ([#3215](https://github.com/nf-core/tools/pull/3215))
+
 ## [v3.0.1 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.1) - [2024-10-09]
 
 ### Template
