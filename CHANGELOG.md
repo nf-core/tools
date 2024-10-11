@@ -15,6 +15,8 @@
 
 ### Subworkflows
 
+### General
+
 ## [v3.0.1 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.1) - [2024-10-09]
 
 ### Template
