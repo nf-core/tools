@@ -5,7 +5,7 @@ a nf-core pipeline.
 import logging
 import re
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import rich.console
 
@@ -60,6 +60,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
                     f"/releases/tag/{new_version}",
                 )
             ],
+            yaml_key=["report_comment"],
         )
     if multiqc_current_version != "dev" and multiqc_new_version == "dev":
         update_file_version(
@@ -71,6 +72,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
                     "/tree/dev",
                 )
             ],
+            yaml_key=["report_comment"],
         )
     if multiqc_current_version == "dev" and multiqc_new_version != "dev":
         update_file_version(
@@ -82,6 +84,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
                     f"/releases/tag/{multiqc_new_version}",
                 )
             ],
+            yaml_key=["report_comment"],
         )
     update_file_version(
         Path("assets", "multiqc_config.yml"),
@@ -92,6 +95,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
                 f"/{multiqc_new_version}/",
             ),
         ],
+        yaml_key=["report_comment"],
     )
     # nf-test snap files
     pipeline_name = pipeline_obj.nf_config.get("manifest.name", "").strip(" '\"")
@@ -114,10 +118,12 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         pipeline_obj,
         [
             (
-                rf"$\s+(version:\s*){re.escape(current_version)}",
-                rf"\g<1>{new_version}",
+                current_version,
+                new_version,
             )
         ],
+        required=False,
+        yaml_key=["template", "version"],
     )
 
 
@@ -159,10 +165,11 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
                 # example:
                 # NXF_VER:
                 #   - "20.04.0"
-                rf"- \"{re.escape(current_version)}\"",
-                f'- "{new_version}"',
+                current_version,
+                new_version,
             )
         ],
+        yaml_key=["jobs", "test", "strategy", "matrix", "NXF_VER"],
     )
 
     # README.md - Nextflow version badge
@@ -183,62 +190,88 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
     )
 
 
-def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patterns: List[Tuple[str, str]]) -> None:
-    """Updates the version number in a requested file.
+def update_file_version(
+    filename: Union[str, Path],
+    pipeline_obj: Pipeline,
+    patterns: List[Tuple[str, str]],
+    required: bool = True,
+    yaml_key: Optional[List[str]] = None,
+) -> None:
+    fn: Path = pipeline_obj._fp(filename)
 
-    Args:
-        filename (str): File to scan.
-        pipeline_obj (nf_core.pipelines.lint.PipelineLint): A PipelineLint object that holds information
-            about the pipeline contents and build files.
-        pattern (str): Regex pattern to apply.
-
-    Raises:
-        ValueError, if the version number cannot be found.
-    """
-    # Load the file
-    fn = pipeline_obj._fp(filename)
-    content = ""
-    try:
-        with open(fn) as fh:
-            content = fh.read()
-    except FileNotFoundError:
+    if not fn.exists():
         log.warning(f"File not found: '{fn}'")
         return
 
-    replacements: List[Tuple[str, str]] = []
-    updated_version: bool = False
-    for pattern in patterns:
-        found_match = False
+    if yaml_key:
+        update_yaml_file(fn, patterns, yaml_key, required)
+    else:
+        update_text_file(fn, patterns, required)
 
-        newcontent = []
-        for line in content.splitlines():
-            # Match the pattern
-            matches_pattern = re.findall(rf"^.*{pattern[0]}.*$", line)
-            if matches_pattern:
-                found_match = True
 
-                # Replace the match
-                newline = re.sub(pattern[0], pattern[1], line)
-                newcontent.append(newline)
+def update_yaml_file(fn: Path, patterns: List[Tuple[str, str]], yaml_key: List[str], required: bool):
+    import yaml
 
-                # Save for logging
-                replacements.append((line, newline))
+    with open(fn) as file:
+        yaml_content = yaml.safe_load(file)
 
-            # No match, keep line as it is
-            else:
-                newcontent.append(line)
+    try:
+        target = yaml_content
+        for key in yaml_key[:-1]:
+            target = target[key]
 
-        if found_match:
-            content = "\n".join(newcontent) + "\n"
-            updated_version = True
-        else:
-            log.error(f"Could not find version number in {filename}: `{pattern}`")
-    if updated_version:
-        log.info(f"Updated version in '{filename}'")
-        for replacement in replacements:
-            stderr.print(f"          [red] - {replacement[0].strip()}", highlight=False)
-            stderr.print(f"          [green] + {replacement[1].strip()}", highlight=False)
-        stderr.print("\n")
+        last_key = yaml_key[-1]
+        current_value = target[last_key]
 
-        with open(fn, "w") as fh:
-            fh.write(content)
+        new_value = current_value
+        for pattern, replacement in patterns:
+            new_value = re.sub(pattern, replacement, new_value)
+
+        if new_value != current_value:
+            target[last_key] = new_value
+            with open(fn, "w") as file:
+                yaml.dump(yaml_content, file)
+            log.info(f"Updated version in YAML file '{fn}'")
+            log_change(current_value, new_value)
+    except KeyError as e:
+        handle_error(f"Could not find key {e} in the YAML structure of {fn}", required)
+
+
+def update_text_file(fn: Path, patterns: List[Tuple[str, str]], required: bool):
+    with open(fn) as file:
+        content = file.read()
+
+    updated = False
+    for pattern, replacement in patterns:
+        new_content, count = re.subn(pattern, replacement, content)
+        if count > 0:
+            log_change(content, new_content)
+            content = new_content
+            updated = True
+            log.info(f"Updated version in '{fn}'")
+            log.debug(f"Replaced pattern '{pattern}' with '{replacement}' {count} times")
+        elif required:
+            handle_error(f"Could not find version number in {fn}: `{pattern}`", required)
+
+    if updated:
+        with open(fn, "w") as file:
+            file.write(content)
+
+
+def handle_error(message: str, required: bool):
+    if required:
+        raise ValueError(message)
+    else:
+        log.info(message)
+
+
+def log_change(old_content: str, new_content: str):
+    old_lines = old_content.splitlines()
+    new_lines = new_content.splitlines()
+
+    for old_line, new_line in zip(old_lines, new_lines):
+        if old_line != new_line:
+            stderr.print(f"          [red] - {old_line.strip()}", highlight=False)
+            stderr.print(f"          [green] + {new_line.strip()}", highlight=False)
+
+    stderr.print("\n")
