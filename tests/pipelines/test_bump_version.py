@@ -46,7 +46,7 @@ class TestBumpVersion(TestPipelines):
     def test_bump_nextflow_version(self):
         # Bump the version number to a specific version, preferably one
         # we're not already on
-        version = "22.04.3"
+        version = "24.04.2"
         nf_core.pipelines.bump_version.bump_nextflow_version(self.pipeline_obj, version)
         new_pipeline_obj = nf_core.utils.Pipeline(self.pipeline_dir)
         new_pipeline_obj._load()
