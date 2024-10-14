@@ -206,6 +206,7 @@ def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patt
         return
 
     replacements = []
+    updated_version = False
     for pattern in patterns:
         found_match = False
 
@@ -229,14 +230,15 @@ def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patt
 
         if found_match:
             content = "\n".join(newcontent) + "\n"
+            updated_version = True
         else:
             log.error(f"Could not find version number in {filename}: `{pattern}`")
+    if updated_version:
+        log.info(f"Updated version in '{filename}'")
+        for replacement in replacements:
+            stderr.print(f"          [red] - {replacement[0].strip()}", highlight=False)
+            stderr.print(f"          [green] + {replacement[1].strip()}", highlight=False)
+        stderr.print("\n")
 
-    log.info(f"Updated version in '{filename}'")
-    for replacement in replacements:
-        stderr.print(f"          [red] - {replacement[0].strip()}", highlight=False)
-        stderr.print(f"          [green] + {replacement[1].strip()}", highlight=False)
-    stderr.print("\n")
-
-    with open(fn, "w") as fh:
-        fh.write(content)
+        with open(fn, "w") as fh:
+            fh.write(content)
