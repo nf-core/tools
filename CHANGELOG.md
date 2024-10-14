@@ -14,6 +14,8 @@
 
 ### General
 
+- Include .nf-core.yml in `nf-core pipelines bump-version` ([#3220](https://github.com/nf-core/tools/pull/3220))
+
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 
 ### Template
