@@ -107,6 +107,18 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
                 )
             ],
         )
+    # .nf-core.yml - pipeline version
+    # update entry: version: 1.0.0dev, but not `nf_core_version`, or `bump_version`
+    update_file_version(
+        ".nf-core.yml",
+        pipeline_obj,
+        [
+            (
+                rf"$\s+(version:\s*){re.escape(current_version)}",
+                rf"\g<1>{new_version}",
+            )
+        ],
+    )
 
 
 def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
