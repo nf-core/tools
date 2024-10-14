@@ -1,5 +1,19 @@
 # nf-core/tools: Changelog
 
+## v3.0.3
+
+### Template
+
+### Download
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### General
+
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 
 ### Template
