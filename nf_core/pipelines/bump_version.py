@@ -205,8 +205,8 @@ def update_file_version(filename: Union[str, Path], pipeline_obj: Pipeline, patt
         log.warning(f"File not found: '{fn}'")
         return
 
-    replacements = []
-    updated_version = False
+    replacements: List[Tuple[str, str]] = []
+    updated_version: bool = False
     for pattern in patterns:
         found_match = False
 
