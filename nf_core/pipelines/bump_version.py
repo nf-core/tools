@@ -180,12 +180,7 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
             (
                 rf"nextflow%20DSL2-%E2%89%A5{re.escape(current_version)}-23aa62.svg",
                 f"nextflow%20DSL2-%E2%89%A5{new_version}-23aa62.svg",
-            ),
-            (
-                # example: 1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=20.04.0`)
-                rf"1\.\s*Install\s*\[`Nextflow`\]\(https:\/\/www\.nextflow\.io\/docs\/latest\/getstarted\.html#installation\)\s*\(`>={re.escape(current_version)}`\)",
-                f"1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>={new_version}`)",
-            ),
+            )
         ],
     )
 
@@ -225,14 +220,18 @@ def update_yaml_file(fn: Path, patterns: List[Tuple[str, str]], yaml_key: List[s
 
         new_value = current_value
         for pattern, replacement in patterns:
-            new_value = re.sub(pattern, replacement, new_value)
+            # check if current value is list
+            if isinstance(current_value, list):
+                new_value = [re.sub(pattern, replacement, item) for item in current_value]
+            else:
+                new_value = re.sub(pattern, replacement, current_value)
 
         if new_value != current_value:
             target[last_key] = new_value
             with open(fn, "w") as file:
                 yaml.dump(yaml_content, file)
             log.info(f"Updated version in YAML file '{fn}'")
-            log_change(current_value, new_value)
+            log_change(str(current_value), str(new_value))
     except KeyError as e:
         handle_error(f"Could not find key {e} in the YAML structure of {fn}", required)
 
