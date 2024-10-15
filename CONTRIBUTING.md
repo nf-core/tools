@@ -153,7 +153,7 @@ Optionally followed by the description that you want to add to the changelog.
 
 - Update Textual snapshots:
 
-If the Textual snapshots (run by `tests/test_crate_app.py`) fail, an HTML report is generated and uploaded as an artifact.
+If the Textual snapshots (run by `tests/pipelines/test_crate_app.py`) fail, an HTML report is generated and uploaded as an artifact.
 If you are sure that these changes are correct, you can automatically update the snapshots form the PR by posting a comment with the magic words:
 
 ```

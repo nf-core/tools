@@ -46,7 +46,7 @@ jobs:
       - name: Run pytest to update snapshots
         id: pytest
         run: |
-          python3 -m pytest tests/test_create_app.py --snapshot-update --color=yes  --durations=0
+          python3 -m pytest tests/pipelines/test_create_app.py --snapshot-update --color=yes  --durations=0
         continue-on-error: true
 
       # indication that the run has finished
