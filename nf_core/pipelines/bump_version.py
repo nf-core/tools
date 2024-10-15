@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
 import rich.console
+from ruamel.yaml import YAML
 
 import nf_core.utils
 from nf_core.utils import Pipeline
@@ -192,6 +193,18 @@ def update_file_version(
     required: bool = True,
     yaml_key: Optional[List[str]] = None,
 ) -> None:
+    """
+    Updates a file with a new version number.
+
+    Args:
+        filename (str): The name of the file to update.
+        pipeline_obj (nf_core.utils.Pipeline): A `Pipeline` object that holds information
+            about the pipeline contents.
+        patterns (List[Tuple[str, str]]): A list of tuples containing the regex patterns to
+            match and the replacement strings.
+        required (bool, optional): Whether the file is required to exist. Defaults to `True`.
+        yaml_key (Optional[List[str]], optional): The YAML key to update. Defaults to `None`.
+    """
     fn: Path = pipeline_obj._fp(filename)
 
     if not fn.exists():
@@ -205,11 +218,18 @@ def update_file_version(
 
 
 def update_yaml_file(fn: Path, patterns: List[Tuple[str, str]], yaml_key: List[str], required: bool):
-    from ruamel.yaml import YAML
+    """
+    Updates a YAML file with a new version number.
 
+    Args:
+        fn (Path): The name of the file to update.
+        patterns (List[Tuple[str, str]]): A list of tuples containing the regex patterns to
+            match and the replacement strings.
+        yaml_key (List[str]): The YAML key to update.
+        required (bool): Whether the file is required to exist.
+    """
     yaml = YAML()
     yaml.preserve_quotes = True
-
     with open(fn) as file:
         yaml_content = yaml.load(file)
 
@@ -240,6 +260,15 @@ def update_yaml_file(fn: Path, patterns: List[Tuple[str, str]], yaml_key: List[s
 
 
 def update_text_file(fn: Path, patterns: List[Tuple[str, str]], required: bool):
+    """
+    Updates a text file with a new version number.
+
+    Args:
+        fn (Path): The name of the file to update.
+        patterns (List[Tuple[str, str]]): A list of tuples containing the regex patterns to
+            match and the replacement strings.
+        required (bool): Whether the file is required to exist.
+    """
     with open(fn) as file:
         content = file.read()
 
