@@ -323,7 +323,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
 
     # If we can, save a cached copy
     # HINT: during testing phase (in test_download, for example) we don't want
-    # to save configuration copy in $HOME, otherwise the tests/test_download.py::DownloadTest::test_wf_use_local_configs
+    # to save configuration copy in $HOME, otherwise the tests/pipelines/test_download.py::DownloadTest::test_wf_use_local_configs
     # will fail after the first attempt. It's better to not save temporary data
     # in others folders than tmp when doing tests in general
     if cache_path and cache_config:
