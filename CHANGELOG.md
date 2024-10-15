@@ -4,6 +4,8 @@
 
 ### Template
 
+- Fix Manifest DOI text ([#3224](https://github.com/nf-core/tools/pull/3224))
+
 ### Download
 
 ### Linting
