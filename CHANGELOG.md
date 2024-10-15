@@ -4,6 +4,8 @@
 
 ### Template
 
+- Do not assume pipeline name is url ([#3225](https://github.com/nf-core/tools/pull/3225))
+
 ### Download
 
 ### Linting
