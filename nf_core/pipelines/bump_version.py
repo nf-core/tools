@@ -205,10 +205,13 @@ def update_file_version(
 
 
 def update_yaml_file(fn: Path, patterns: List[Tuple[str, str]], yaml_key: List[str], required: bool):
-    import yaml
+    from ruamel.yaml import YAML
+
+    yaml = YAML()
+    yaml.preserve_quotes = True
 
     with open(fn) as file:
-        yaml_content = yaml.safe_load(file)
+        yaml_content = yaml.load(file)
 
     try:
         target = yaml_content
