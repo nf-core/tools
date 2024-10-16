@@ -19,6 +19,7 @@
 
 - Include .nf-core.yml in `nf-core pipelines bump-version` ([#3220](https://github.com/nf-core/tools/pull/3220))
 - create: add shortcut to toggle all switches ([#3226](https://github.com/nf-core/tools/pull/3226))
+- Fix pydantic dump ([#3227](https://github.com/nf-core/tools/pull/3227))
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 
