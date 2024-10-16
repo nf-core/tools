@@ -1115,6 +1115,23 @@ class NFCoreYamlConfig(BaseModel):
     def get(self, item: str, default: Any = None) -> Any:
         return getattr(self, item, default)
 
+    def model_dump(self, **kwargs) -> Dict[str, Any]:
+        # Get the initial data
+        data = super().model_dump(**kwargs)
+
+        if self.repository_type == "modules":
+            # Fields to exclude for modules
+            fields_to_exclude = ["template", "update"]
+        else:  # pipeline
+            # Fields to exclude for pipeline
+            fields_to_exclude = ["bump_version"]
+
+        # Remove the fields based on repository_type
+        for field in fields_to_exclude:
+            data.pop(field, None)
+
+        return data
+
 
 def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path], Optional[NFCoreYamlConfig]]:
     """
