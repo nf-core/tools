@@ -1088,7 +1088,7 @@ class NFCoreTemplateConfig(BaseModel):
         return getattr(self, item, default)
 
 
-LintConfigType = Optional[Dict[str, Union[List[str], List[Union[List[str], Dict[str, List[str]]]], bool]]]
+LintConfigType = Optional[Dict[str, Union[List[str], List[Union[str, Dict[str, List[str]]]], bool]]]
 
 
 class NFCoreYamlConfig(BaseModel):
