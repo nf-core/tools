@@ -12,6 +12,8 @@
 
 ### Linting
 
+- allow mixed str and dict in lint config ([#3228](https://github.com/nf-core/tools/pull/3228))
+
 ### Modules
 
 ### Subworkflows
