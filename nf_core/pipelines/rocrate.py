@@ -5,7 +5,6 @@ import logging
 import os
 import re
 import sys
-import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Union
@@ -13,13 +12,51 @@ from typing import Dict, List, Optional, Set, Union
 import requests
 import rocrate.rocrate
 from git import GitCommandError, InvalidGitRepositoryError
+from repo2rocrate.nextflow import NextflowCrateBuilder
 from rich.progress import BarColumn, Progress
 from rocrate.model.person import Person
+from rocrate.rocrate import ROCrate as BaseROCrate
 
 from nf_core.pipelines.schema import PipelineSchema
 from nf_core.utils import Pipeline
 
 log = logging.getLogger(__name__)
+
+
+class CustomNextflowCrateBuilder(NextflowCrateBuilder):
+    DATA_ENTITIES = NextflowCrateBuilder.DATA_ENTITIES + [
+        ("docs/usage.md", "File", "Usage documentation"),
+        ("docs/output.md", "File", "Output documentation"),
+        ("suborkflows/local", "Dataset", "Pipeline-specific suborkflows"),
+        ("suborkflows/nf-core", "Dataset", "nf-core suborkflows"),
+        (".nf-core.yml", "File", "nf-core configuration file, configuring template features and linting rules"),
+        (".pre-commit-config.yaml", "File", "Configuration file for pre-commit hooks"),
+        (".prettierignore", "File", "Ignore file for prettier"),
+        (".prettierrc", "File", "Configuration file for prettier"),
+    ]
+
+
+def custom_make_crate(
+    root: Path,
+    workflow: Optional[Path] = None,
+    repo_url: Optional[str] = None,
+    wf_name: Optional[str] = None,
+    wf_version: Optional[str] = None,
+    lang_version: Optional[str] = None,
+    ci_workflow: Optional[str] = "ci.yml",
+    diagram: Optional[Path] = None,
+) -> BaseROCrate:
+    builder = CustomNextflowCrateBuilder(root, repo_url=repo_url)
+
+    return builder.build(
+        workflow,
+        wf_name=wf_name,
+        wf_version=wf_version,
+        lang_version=lang_version,
+        license=None,
+        ci_workflow=ci_workflow,
+        diagram=diagram,
+    )
 
 
 class ROCrate:
@@ -52,19 +89,17 @@ class ROCrate:
         setup_requests_cachedir()
 
     def create_rocrate(
-        self, outdir: Path, metadata_path: Union[None, Path] = None, zip_path: Union[None, Path] = None
+        self, outdir: Path, json_path: Union[None, Path] = None, zip_path: Union[None, Path] = None
     ) -> None:
         """
         Create an RO Crate for a pipeline
 
         Args:
             outdir (Path): Path to the output directory
-            metadata_path (Path): Path to the metadata file
+            json_path (Path): Path to the metadata file
             zip_path (Path): Path to the zip file
 
         """
-        import os
-
         # Set input paths
         try:
             self.set_crate_paths(outdir)
@@ -73,8 +108,6 @@ class ROCrate:
             sys.exit(1)
 
         # Change to the pipeline directory, because the RO Crate doesn't handle relative paths well
-        current_path = Path.cwd()
-        os.chdir(self.pipeline_dir)
 
         # Check that the checkout pipeline version is the same as the requested version
         if self.version != "":
@@ -98,29 +131,19 @@ class ROCrate:
         self.make_workflow_rocrate()
 
         # Save just the JSON metadata file
-        if metadata_path is not None:
-            log.info(f"Saving metadata file to '{metadata_path}'")
-            # Save the crate to a temporary directory
-            tmpdir = Path(tempfile.TemporaryDirectory().name)
-            self.crate.write(tmpdir)
-            # Now save just the JSON file
-            crate_json_fn = Path(tmpdir, "ro-crate-metadata.json")
-            if metadata_path.name == "ro-crate-metadata.json":
-                crate_json_fn.rename(metadata_path)
-            else:
-                crate_json_fn.rename(metadata_path / "ro-crate-metadata.json")
+        if json_path is not None:
+            if json_path.name != "ro-crate-metadata.json":
+                json_path = json_path / "ro-crate-metadata.json"
+
+            log.info(f"Saving metadata file to '{json_path}'")
+            self.crate.metadata.write(json_path)
 
         # Save the whole crate zip file
         if zip_path is not None:
-            if zip_path.name == "ro-crate.crate.zip":
-                log.info(f"Saving zip file '{zip_path}'")
-                self.crate.write_zip(zip_path)
-            else:
-                log.info(f"Saving zip file '{zip_path}/ro-crate.crate.zip;")
-                self.crate.write_zip(zip_path / "ro-crate.crate.zip")
-
-        # Change back to the original directory
-        os.chdir(current_path)
+            if zip_path.name != "ro-crate.crate.zip":
+                zip_path = zip_path / "ro-crate.crate.zip"
+            log.info(f"Saving zip file '{zip_path}")
+            self.crate.write_zip(zip_path)
 
     def make_workflow_rocrate(self) -> None:
         """
@@ -129,18 +152,25 @@ class ROCrate:
         if self.pipeline_obj is None:
             raise ValueError("Pipeline object not loaded")
 
-        # Create the RO Crate object
-        self.crate = rocrate.rocrate.ROCrate()
+        diagram: Optional[Path] = None
+        # find files (metro|tube)_?(map)?.png in the pipeline directory or docs/ using pathlib
+        pattern = re.compile(r".*?(metro|tube|subway)_(map).*?\.png", re.IGNORECASE)
+        for file in self.pipeline_dir.rglob("*.png"):
+            if pattern.match(file.name):
+                log.debug(f"Found diagram: {file}")
+                diagram = file.relative_to(self.pipeline_dir)
+                break
 
-        # Conform to RO-Crate 1.1 and workflowhub-ro-crate
-        self.crate.update_jsonld(
-            {
-                "@id": "ro-crate-metadata.json",
-                "conformsTo": [
-                    {"@id": "https://w3id.org/ro/crate/1.1"},
-                    {"@id": "https://w3id.org/workflowhub/workflow-ro-crate/1.0"},
-                ],
-            }
+        # Create the RO Crate object
+
+        self.crate = custom_make_crate(
+            self.pipeline_dir,
+            self.pipeline_dir / "main.nf",
+            self.pipeline_obj.nf_config.get("manifest.homePage", ""),
+            self.pipeline_obj.nf_config.get("manifest.name", ""),
+            self.pipeline_obj.nf_config.get("manifest.version", ""),
+            self.pipeline_obj.nf_config.get("manifest.nextflowVersion", ""),
+            diagram=diagram,
         )
 
         # add readme as description
@@ -163,48 +193,19 @@ class ROCrate:
         except FileNotFoundError:
             log.error(f"Could not find LICENSE file in {self.pipeline_dir}")
 
-        self.crate.name = self.pipeline_obj.nf_config.get("manifest.name")
-
-        self.crate.root_dataset.append_to("version", self.version, compact=True)
-
-        if "dev" in self.version:
-            self.crate.CreativeWorkStatus = "InProgress"
-        else:
-            self.crate.CreativeWorkStatus = "Stable"
-            if self.pipeline_obj.repo is None:
-                log.error(f"Pipeline repository not found in {self.pipeline_dir}")
-            else:
-                tags = self.pipeline_obj.repo.tags
-                if tags:
-                    # get the tag for this version
-                    for tag in tags:
-                        if tag.commit.hexsha == self.pipeline_obj.repo.head.commit.hexsha:
-                            self.crate.root_dataset.append_to(
-                                "dateCreated",
-                                tag.commit.committed_datetime.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                                compact=True,
-                            )
-
         self.crate.add_jsonld(
             {"@id": "https://nf-co.re/", "@type": "Organization", "name": "nf-core", "url": "https://nf-co.re/"}
         )
 
-        # Set main entity file
+        # Set metadata for main entity file
         self.set_main_entity("main.nf")
-        # Add all other files
-        self.add_workflow_files()
 
     def set_main_entity(self, main_entity_filename: str):
         """
         Set the main.nf as the main entity of the crate and add necessary metadata
         """
-        self.crate.add_workflow(  # sets @type and conformsTo according to Workflow RO-Crate spec
-            main_entity_filename,
-            dest_path=main_entity_filename,
-            main=True,
-            lang="nextflow",  # adds the #nextflow entity automatically and connects it to programmingLanguage
-            lang_version=self.pipeline_obj.nf_config.get("manifest.nextflowVersion", ""),
-        )
+        if self.crate.mainEntity is None:
+            raise ValueError("Main entity not set")
 
         self.crate.mainEntity.append_to(
             "dct:conformsTo", "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/", compact=True
@@ -231,7 +232,7 @@ class ROCrate:
             ]
             input_value: Dict[str, Union[str, List[str], bool]] = {
                 "@id": "#input",
-                "@type": ["PropertyValueSpecification", "FormalParameter"],
+                "@type": ["FormalParameter"],
                 "default": schema_input.get("default", ""),
                 "encodingFormat": schema_input.get("mimetype", ""),
                 "valueRequired": "input"
@@ -263,6 +264,24 @@ class ROCrate:
 
         self.crate.mainEntity.append_to("license", self.crate.license)
         self.crate.mainEntity.append_to("name", self.crate.name)
+
+        if "dev" in self.version:
+            self.crate.creativeWorkStatus = "InProgress"
+        else:
+            self.crate.creativeWorkStatus = "Stable"
+            if self.pipeline_obj.repo is None:
+                log.error(f"Pipeline repository not found in {self.pipeline_dir}")
+            else:
+                tags = self.pipeline_obj.repo.tags
+                if tags:
+                    # get the tag for this version
+                    for tag in tags:
+                        if tag.commit.hexsha == self.pipeline_obj.repo.head.commit.hexsha:
+                            self.crate.mainEntity.append_to(
+                                "dateCreated",
+                                tag.commit.committed_datetime.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                                compact=True,
+                            )
 
     def add_main_authors(self, wf_file: rocrate.model.entity.Entity) -> None:
         """
@@ -334,82 +353,6 @@ class ROCrate:
             wf_file.append_to("creator", author_entitity)
             if author in authors:
                 wf_file.append_to("maintainer", author_entitity)
-
-    def add_workflow_files(self):
-        """
-        Add workflow files to the RO Crate
-        """
-
-        import nf_core.utils
-
-        wf_filenames = nf_core.utils.get_wf_files(Path.cwd())
-        # exclude github action files
-        wf_filenames = [fn for fn in wf_filenames if not fn.startswith(".github/") and not fn == "main.nf"]
-        log.debug(f"Adding {len(wf_filenames)} workflow files")
-        # find all main.nf files inside modules/nf-core and subworkflows/nf-core
-        component_files = [
-            fn
-            for fn in wf_filenames
-            if ((fn.startswith("modules/nf-core") or fn.startswith("subworkflows/nf-core")) and fn.endswith("main.nf"))
-        ]
-
-        wf_dirs = [str(Path(fn).parent) for fn in component_files]
-        for wf_dir in wf_dirs:
-            if Path(wf_dir).exists():
-                log.debug(f"Adding workflow directory: {wf_dir}")
-                component_type = wf_dir.split("/")[0]
-                component_name = wf_dir.replace(component_type + "/nf-core/", "").replace("/", "_")
-                self.crate.add_directory(
-                    wf_dir,
-                    dest_path=wf_dir,
-                    properties={
-                        "description": f"nf-core {re.sub('s$', '', component_type)} [{component_name}](https://nf-co.re/{component_type}/{component_name}) installed from the [nf-core/modules repository](https://github.com/nf-core/modules/)."
-                    },
-                )
-        wf_locals = [
-            str(Path(fn).parent)
-            for fn in wf_filenames
-            if fn.startswith("modules/local") or fn.startswith("subworkflows/local") and fn.endswith("main.nf")
-        ]
-
-        for wf_dir in wf_locals:
-            log.debug(f"Adding workflow directory: {wf_dir}")
-            component_type = wf_dir.split("/")[0].rstrip("s")
-            component_name = wf_dir.replace(component_type + "/local/", "").replace("/", "_")
-
-            self.crate.add_directory(wf_dir, dest_path=wf_dir, properties={"description": f"local {component_type}"})
-        # go through all files that are not part of directories inside wf_dirs
-        wf_filenames = [
-            fn for fn in wf_filenames if not any(fn.startswith(str(wf_dir)) for wf_dir in wf_dirs + wf_locals)
-        ]
-        for fn in wf_filenames:
-            # add nextflow language to .nf and .config files
-            if fn.endswith(".nf") or fn.endswith(".config") or fn.endswith(".nf.test"):
-                log.debug(f"Adding workflow file: {fn}")
-                self.crate.add_file(fn, dest_path=fn, properties={"programmingLanguage": {"@id": "#nextflow"}})
-                continue
-            if fn.endswith(".png"):
-                log.debug(f"Adding workflow image file: {fn}")
-                self.crate.add_jsonld({"@id": fn, "@type": ["File", "ImageObject"]})
-                if re.search(r"(metro|tube)_?(map)?", fn) and self.crate.mainEntity is not None:
-                    # check if image is set in main entity
-                    if self.crate.mainEntity.get("image"):
-                        log.info(
-                            f"Main entity already has an image: {self.crate.mainEntity.get('image')}, replacing it with: {fn}"
-                        )
-                    else:
-                        log.info(f"Setting main entity image to: {fn}")
-                    self.crate.update_jsonld({"@id": "#" + fn, "about": {"@id": self.crate.mainEntity.id}})
-                    self.crate.mainEntity.append_to("image", {"@id": Path(fn).name})
-                continue
-            if fn.endswith(".md"):
-                log.debug(f"Adding file: {fn}")
-                self.crate.add_file(fn, dest_path=fn, properties={"encodingFormat": "text/markdown"})
-                continue
-            else:
-                log.debug(f"Adding file: {fn}")
-                self.crate.add_file(fn, dest_path=fn)
-                continue
 
     def set_crate_paths(self, path: Path) -> None:
         """Given a pipeline name, directory, or path, set wf_crate_filename"""

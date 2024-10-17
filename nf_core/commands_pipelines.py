@@ -299,7 +299,7 @@ def pipelines_rocrate(
             zip_path = Path(zip_path)
         try:
             rocrate_obj = ROCrate(pipeline_dir, pipeline_version)
-            rocrate_obj.create_rocrate(pipeline_dir, metadata_path=json_path, zip_path=zip_path)
+            rocrate_obj.create_rocrate(pipeline_dir, json_path=json_path, zip_path=zip_path)
         except (UserWarning, LookupError, FileNotFoundError) as e:
             log.error(e)
             sys.exit(1)
