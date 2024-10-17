@@ -1088,7 +1088,7 @@ class NFCoreTemplateConfig(BaseModel):
         return getattr(self, item, default)
 
 
-LintConfigType = Optional[Dict[str, Union[List[str], List[Dict[str, List[str]]], bool]]]
+LintConfigType = Optional[Dict[str, Union[List[str], List[Union[List[str], Dict[str, List[str]]]], bool]]]
 
 
 class NFCoreYamlConfig(BaseModel):
@@ -1153,7 +1153,7 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
     except ValidationError as e:
         error_message = f"Config file '{config_fn}' is invalid"
         for error in e.errors():
-            error_message += f"\n{error['loc'][0]}: {error['msg']}"
+            error_message += f"\n{error['loc'][0]}: {error['msg']}\ninput: {error['input']}"
         raise AssertionError(error_message)
 
     wf_config = fetch_wf_config(Path(directory))
