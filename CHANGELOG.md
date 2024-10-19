@@ -32,7 +32,7 @@
 
 **Highlights**
 
-- Pipeline commands are renamed from `nf-core <comand>` to `nf-core pipelines <command>` to follow the same command structure as modules and subworkflows commands.
+- Pipeline commands are renamed from `nf-core <command>` to `nf-core pipelines <command>` to follow the same command structure as modules and subworkflows commands.
 - More customisation for pipeline templates. The template has been divided into features which can be skipped, e.g. you can create a new pipeline without any traces of FastQC in it.
 - A new Text User Interface app when running `nf-core pipelines create` to help us guide you through the process better (no worries, you can still use the cli if you give all values as parameters)
 - We replaced nf-validation with nf-schema in the pipeline template
@@ -185,7 +185,7 @@
 
 ### Download
 
-- Replace `--tower` with `--platform`. The former will remain for backwards compatability for now but will be removed in a future release. ([#2853](https://github.com/nf-core/tools/pull/2853))
+- Replace `--tower` with `--platform`. The former will remain for backwards compatibility for now but will be removed in a future release. ([#2853](https://github.com/nf-core/tools/pull/2853))
 - Better error message when GITHUB_TOKEN exists but is wrong/outdated
 - New `--tag` argument to add custom tags during a pipeline download ([#2938](https://github.com/nf-core/tools/pull/2938))
 
@@ -494,7 +494,7 @@
 - Refactored the CLI parameters related to container images. Although downloading other images than those of the Singularity/Apptainer container system is not supported for the time being, a generic name for the parameters seemed preferable. So the new parameter `--singularity-cache-index` introduced in [#2247](https://github.com/nf-core/tools/pull/2247) has been renamed to `--container-cache-index` prior to release ([#2336](https://github.com/nf-core/tools/pull/2336)).
 - To address issue [#2311](https://github.com/nf-core/tools/issues/2311), a new parameter `--container-library` was created allowing to specify the container library (registry) from which container images in OCI format (Docker) should be pulled ([#2336](https://github.com/nf-core/tools/pull/2336)).
 - Container detection in configs was improved. This allows for DSL2-like container definitions inside the container parameter value provided to process scopes [#2346](https://github.com/nf-core/tools/pull/2346).
-- Add apptainer to the list of false positve container strings ([#2353](https://github.com/nf-core/tools/pull/2353)).
+- Add apptainer to the list of false positive container strings ([#2353](https://github.com/nf-core/tools/pull/2353)).
 
 #### Updated CLI parameters
 
@@ -564,7 +564,7 @@ _In addition, `-r` / `--revision` has been changed to a parameter that can be pr
 
 - Add an `--empty-template` option to create a module without TODO statements or examples ([#2175](https://github.com/nf-core/tools/pull/2175) & [#2177](https://github.com/nf-core/tools/pull/2177))
 - Removed the `nf-core modules mulled` command and all its code dependencies ([2199](https://github.com/nf-core/tools/pull/2199)).
-- Take into accout the provided `--git_remote` URL when linting all modules ([2243](https://github.com/nf-core/tools/pull/2243)).
+- Take into account the provided `--git_remote` URL when linting all modules ([2243](https://github.com/nf-core/tools/pull/2243)).
 
 ### Subworkflows
 
@@ -973,7 +973,7 @@ Please note that there are many excellent integrations for Prettier available, f
   - `input:` / `output:` not being specified in module
   - Allow for containers from other biocontainers resource as defined [here](https://github.com/nf-core/modules/blob/cde237e7cec07798e5754b72aeca44efe89fc6db/modules/cat/fastq/main.nf#L7-L8)
 - Fixed traceback when using `stageAs` syntax as defined [here](https://github.com/nf-core/modules/blob/cde237e7cec07798e5754b72aeca44efe89fc6db/modules/cat/fastq/main.nf#L11)
-- Added `nf-core schema docs` command to output pipline parameter documentation in Markdown format for inclusion in GitHub and other documentation systems ([#741](https://github.com/nf-core/tools/issues/741))
+- Added `nf-core schema docs` command to output pipeline parameter documentation in Markdown format for inclusion in GitHub and other documentation systems ([#741](https://github.com/nf-core/tools/issues/741))
 - Allow conditional process execution from the configuration file ([#1393](https://github.com/nf-core/tools/pull/1393))
 - Add linting for when condition([#1397](https://github.com/nf-core/tools/pull/1397))
 - Added modules ignored table to `nf-core modules bump-versions`. ([#1234](https://github.com/nf-core/tools/issues/1234))
@@ -992,7 +992,7 @@ Please note that there are many excellent integrations for Prettier available, f
 
 - Update repo logos to utilize [GitHub's `#gh-light/dark-mode-only`](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#specifying-the-theme-an-image-is-shown-to), to switch between logos optimized for light or dark themes. The old repo logos have to be removed (in `docs/images` and `assets/`).
 - Deal with authentication with private repositories
-- Bump minimun Nextflow version to 21.10.3
+- Bump minimum Nextflow version to 21.10.3
 - Convert pipeline template to updated Nextflow DSL2 syntax
 - Solve circular import when importing `nf_core.modules.lint`
 - Disable cache in `nf_core.utils.fetch_wf_config` while performing `test_wf_use_local_configs`.
@@ -1014,15 +1014,15 @@ Please note that there are many excellent integrations for Prettier available, f
   - Defaults in `nextflow.config` must now match the variable _type_ specified in the schema
   - If you want the parameter to not have a default value, use `null`
   - Strings set to `false` or an empty string in `nextflow.config` will now fail linting
-- Bump minimun Nextflow version to 21.10.3
-- Changed `questionary` `ask()` to `unsafe_ask()` to not catch `KeyboardInterupts` ([#1237](https://github.com/nf-core/tools/issues/1237))
+- Bump minimum Nextflow version to 21.10.3
+- Changed `questionary` `ask()` to `unsafe_ask()` to not catch `KeyboardInterrupts` ([#1237](https://github.com/nf-core/tools/issues/1237))
 - Fixed bug in `nf-core launch` due to revisions specified with `-r` not being added to nextflow command. ([#1246](https://github.com/nf-core/tools/issues/1246))
 - Update regex in `readme` test of `nf-core lint` to agree with the pipeline template ([#1260](https://github.com/nf-core/tools/issues/1260))
 - Update 'fix' message in `nf-core lint` to conform to the current command line options. ([#1259](https://github.com/nf-core/tools/issues/1259))
 - Fixed bug in `nf-core list` when `NXF_HOME` is set
 - Run CI test used to create and lint/run the pipeline template with minimum and latest edge release of NF ([#1304](https://github.com/nf-core/tools/issues/1304))
 - New YAML issue templates for tools bug reports and feature requests, with a much richer interface ([#1165](https://github.com/nf-core/tools/pull/1165))
-- Handle synax errors in Nextflow config nicely when running `nf-core schema build` ([#1267](https://github.com/nf-core/tools/pull/1267))
+- Handle syntax errors in Nextflow config nicely when running `nf-core schema build` ([#1267](https://github.com/nf-core/tools/pull/1267))
 - Erase temporary files and folders while performing Python tests (pytest)
 - Remove base `Dockerfile` used for DSL1 pipeline container builds
 - Run tests with Python 3.10
@@ -1128,7 +1128,7 @@ This marks the first Nextflow DSL2-centric release of `tools` which means that s
 - Updated `nf-core modules install` and `modules.json` to work with new directory structure ([#1159](https://github.com/nf-core/tools/issues/1159))
 - Updated `nf-core modules remove` to work with new directory structure [[#1159](https://github.com/nf-core/tools/issues/1159)]
 - Restructured code and removed old table style in `nf-core modules list`
-- Fixed bug causing `modules.json` creation to loop indefinitly
+- Fixed bug causing `modules.json` creation to loop indefinitely
 - Added `--all` flag to `nf-core modules install`
 - Added `remote` and `local` subcommands to `nf-core modules list`
 - Fix bug due to restructuring in modules template
@@ -1449,7 +1449,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 ### Linting
 
 - Refactored PR branch tests to be a little clearer.
-- Linting error docs explain how to add an additional branch protecton rule to the `branch.yml` GitHub Actions workflow.
+- Linting error docs explain how to add an additional branch protection rule to the `branch.yml` GitHub Actions workflow.
 - Adapted linting docs to the new PR branch tests.
 - Failure for missing the readme bioconda badge is now a warn, in case this badge is not relevant
 - Added test for template `{{ cookiecutter.var }}` placeholders

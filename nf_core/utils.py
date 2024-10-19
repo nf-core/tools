@@ -414,7 +414,7 @@ def wait_cli_function(poll_func: Callable[[], bool], refresh_per_second: int = 2
        refresh_per_second (int): Refresh this many times per second. Default: 20.
 
     Returns:
-       None. Just sits in an infite loop until the function returns True.
+       None. Just sits in an infinite loop until the function returns True.
     """
     try:
         spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
@@ -433,7 +433,7 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
 
     Takes argument api_url for URL
 
-    Expects API reponse to be valid JSON and contain a top-level 'status' key.
+    Expects API response to be valid JSON and contain a top-level 'status' key.
     """
     # Run without requests_cache so that we get the updated statuses
     with requests_cache.disabled():
@@ -717,12 +717,12 @@ def parse_anaconda_licence(anaconda_response, version=None):
         license = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", license, flags=re.IGNORECASE)
         license = license.replace("GPL-", "GPLv")
         license = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", license)  # Add v prefix to GPL version if none found
-        license = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", license)  # Remove superflous .0 from GPL version
+        license = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", license)  # Remove superfluous .0 from GPL version
         license = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", license)
         license = re.sub(r"GPL\s*v", "GPL v", license)  # Normalise whitespace to one space between GPL and v
         license = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", license)  # Normalise whitespace around >= GPL versions
         license = license.replace("Clause", "clause")  # BSD capitilisation
-        license = re.sub(r"-only$", "", license)  # Remove superflous GPL "only" version suffixes
+        license = re.sub(r"-only$", "", license)  # Remove superfluous GPL "only" version suffixes
         clean_licences.append(license)
     return clean_licences
 

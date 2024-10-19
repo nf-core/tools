@@ -129,7 +129,7 @@ class TestLaunch(TestPipelines):
 
     @mock.patch(
         "nf_core.utils.poll_nfcore_web_api",
-        side_effect=[{"api_url": "foo", "web_url": "bar", "status": "recieved"}],
+        side_effect=[{"api_url": "foo", "web_url": "bar", "status": "received"}],
     )
     @mock.patch("webbrowser.open")
     @mock.patch("nf_core.utils.wait_cli_function")
@@ -298,7 +298,7 @@ class TestLaunch(TestPipelines):
         assert self.launcher.schema_obj.input_params == {"input": "custom_input"}
 
     def test_build_command_empty(self):
-        """Test the functionality to build a nextflow command - nothing customsied"""
+        """Test the functionality to build a nextflow command - nothing customised"""
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
         self.launcher.build_command()

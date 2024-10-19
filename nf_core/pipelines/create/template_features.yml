@@ -101,7 +101,7 @@ github_badges:
 nf_core_configs:
   skippable_paths: False
   short_description: "Add configuration files"
-  description: "The pipeline will include configuration profiles containing custom parameters requried to run nf-core pipelines at different institutions"
+  description: "The pipeline will include configuration profiles containing custom parameters required to run nf-core pipelines at different institutions"
   help_text: |
     Nf-core has a repository with a collection of configuration profiles.
 

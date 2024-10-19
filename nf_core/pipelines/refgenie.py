@@ -151,7 +151,7 @@ def update_config(rgc):
     - the NXF_REFGENIE_PATH environment variable
     - otherwise defaults to: $NXF_HOME/nf-core/refgenie_genomes.config
 
-    Additionaly, an 'includeConfig' statement is added to the file $NXF_HOME/config
+    Additionally, an 'includeConfig' statement is added to the file $NXF_HOME/config
     """
 
     # Compile nextflow refgenie_genomes.config from refgenie config

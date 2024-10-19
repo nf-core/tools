@@ -1590,7 +1590,7 @@ def command_subworkflows_remove(ctx, directory, subworkflow):
     "limit_output",
     is_flag=True,
     default=False,
-    help="Limit ouput to only the difference in main.nf",
+    help="Limit output to only the difference in main.nf",
 )
 @click.option(
     "-a",

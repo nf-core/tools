@@ -49,7 +49,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.load_lint_schema()
 
     def test_load_lint_schema_nofile(self):
-        """Check that linting raises properly if a non-existant file is given"""
+        """Check that linting raises properly if a non-existent file is given"""
         with pytest.raises(RuntimeError):
             self.schema_obj.get_schema_path("fake_file")
 
@@ -384,7 +384,7 @@ class TestSchema(unittest.TestCase):
             return MockResponse(response_data, 200)
 
         if kwargs["url"] == "valid_url_success":
-            response_data = {"status": "recieved", "api_url": "https://nf-co.re", "web_url": "https://nf-co.re"}
+            response_data = {"status": "received", "api_url": "https://nf-co.re", "web_url": "https://nf-co.re"}
             return MockResponse(response_data, 200)
 
     @mock.patch("requests.post", side_effect=mocked_requests_post)
