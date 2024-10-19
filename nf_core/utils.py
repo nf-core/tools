@@ -721,7 +721,7 @@ def parse_anaconda_licence(anaconda_response, version=None):
         license = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", license)
         license = re.sub(r"GPL\s*v", "GPL v", license)  # Normalise whitespace to one space between GPL and v
         license = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", license)  # Normalise whitespace around >= GPL versions
-        license = license.replace("Clause", "clause")  # BSD capitilisation
+        license = license.replace("Clause", "clause")  # BSD capitalisation
         license = re.sub(r"-only$", "", license)  # Remove superfluous GPL "only" version suffixes
         clean_licences.append(license)
     return clean_licences

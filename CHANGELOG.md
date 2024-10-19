@@ -528,7 +528,7 @@ _In addition, `-r` / `--revision` has been changed to a parameter that can be pr
 - GitPod base image: Always self-update to the latest version of Nextflow. Add [pre-commit](https://pre-commit.com/) dependency.
 - GitPod configs: Update Nextflow as an init task, init pre-commit in pipeline config.
 - Refgenie: Create `nxf_home/nf-core/refgenie_genomes.config` path if it doesn't exist ([#2312](https://github.com/nf-core/tools/pull/2312))
-- Add CI tests to test running a pipeline whe it's created from a template skipping different areas
+- Add CI tests to test running a pipeline when it's created from a template skipping different areas
 
 ## [v2.8 - Ruthenium Monkey](https://github.com/nf-core/tools/releases/tag/2.8) - [2023-04-27]
 
@@ -1209,7 +1209,7 @@ This marks the first Nextflow DSL2-centric release of `tools` which means that s
 ## [v1.13.2 - Copper Crocodile CPR :crocodile: :face_with_head_bandage:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-23]
 
 - Make module template pass the EC linter [[#953](https://github.com/nf-core/tools/pull/953)]
-- Added better logging message if a user doesn't specificy the directory correctly with `nf-core modules` commands [[#942](https://github.com/nf-core/tools/pull/942)]
+- Added better logging message if a user doesn't specify the directory correctly with `nf-core modules` commands [[#942](https://github.com/nf-core/tools/pull/942)]
 - Fixed parameter validation bug caused by JSONObject [[#937](https://github.com/nf-core/tools/issues/937)]
 - Fixed template creation error regarding file permissions [[#932](https://github.com/nf-core/tools/issues/932)]
 - Split the `create-lint-wf` tests up into separate steps in GitHub Actions to make the CI results easier to read

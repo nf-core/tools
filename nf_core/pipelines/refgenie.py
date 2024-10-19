@@ -144,7 +144,7 @@ def update_config(rgc):
 
     This function is executed after running 'refgenie pull <genome>/<asset>'
     The refgenie config file is transformed into a nextflow.config file, which is used to
-    overwrited the 'refgenie_genomes.config' file.
+    overwrite the 'refgenie_genomes.config' file.
     The path to the target  config file is inferred from the following options, in order:
 
     - the 'nextflow_config' attribute in the refgenie config file

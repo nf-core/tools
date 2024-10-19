@@ -116,7 +116,7 @@ First, go to the [{{ name }} releases page](https://github.com/{{ name }}/releas
 
 This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future. {% if multiqc %}For example, at the bottom of the MultiQC reports.{% endif %}
 
-To further assist in reproducbility, you can use share and re-use [parameter files](#running-the-pipeline) to repeat pipeline runs with the same settings without having to write out a command with every single parameter.
+To further assist in reproducibility, you can use share and reuse [parameter files](#running-the-pipeline) to repeat pipeline runs with the same settings without having to write out a command with every single parameter.
 
 :::tip
 If you wish to share such profile (such as upload as supplementary material for academic publications), make sure to NOT include cluster specific paths to files, nor institutional specific profiles.
