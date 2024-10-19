@@ -516,7 +516,7 @@ class DownloadTest(unittest.TestCase):
         result = download_obj.singularity_image_filenames("nf-core/ubuntu:20.04")
         assert result[0].endswith("/cachedir/nf-core-ubuntu-20.04.img")
 
-        ## Test phase III: Container wil lbe cached but also copied to out_path
+        ## Test phase III: Container will be cached but also copied to out_path
         # out_path: str, Path to cache
         # cache_path: str, Path to cache
         download_obj.container_cache_utilisation = "copy"
