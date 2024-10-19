@@ -607,11 +607,11 @@ class GitHubAPISession(requests_cache.CachedSession):
         while True:
             # GET request
             if post_data is None:
-                log.debug(f"Seding GET request to {url}")
+                log.debug(f"Sending GET request to {url}")
                 r = self.get(url=url)
             # POST request
             else:
-                log.debug(f"Seding POST request to {url}")
+                log.debug(f"Sending POST request to {url}")
                 r = self.post(url=url, json=post_data)
 
             # Failed but expected - try again
