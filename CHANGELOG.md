@@ -1,5 +1,27 @@
 # nf-core/tools: Changelog
 
+## v3.0.3dev
+
+### Template
+
+- Keep pipeline name in version.yml file ([#3223](https://github.com/nf-core/tools/pull/3223))
+- Fix Manifest DOI text ([#3224](https://github.com/nf-core/tools/pull/3224))
+- Do not assume pipeline name is url ([#3225](https://github.com/nf-core/tools/pull/3225))
+
+### Download
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### General
+
+- Include .nf-core.yml in `nf-core pipelines bump-version` ([#3220](https://github.com/nf-core/tools/pull/3220))
+- create: add shortcut to toggle all switches ([#3226](https://github.com/nf-core/tools/pull/3226))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.7.0 ([#3229](https://github.com/nf-core/tools/pull/3229))
+
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 
 ### Template
