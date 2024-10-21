@@ -1121,6 +1121,7 @@ class NFCoreYamlLintConfig(BaseModel):
         template_strings: False
         template_strings:
                 - docs/my_pdf.pdf
+        nfcore_components: False
     """
 
     files_unchanged: List[str] = []
