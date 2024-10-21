@@ -1129,7 +1129,7 @@ class NFCoreYamlLintConfig(BaseModel):
     """ List of files that should not contain merge markers """
     nextflow_config: Optional[Union[bool, List[Union[str, Dict[str, List[str]]]]]] = []
     """ List of Nextflow config files that should not be changed """
-    multiqc_config: List[str] = []
+    multiqc_config: Union[bool, List[str]] = []
     """ List of MultiQC config options that be changed """
     files_exist: List[str] = []
     """ List of files that can not exist """
