@@ -39,8 +39,8 @@ def template_strings(self):
     ignored = []
     # Files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("template_strings", []) if self.lint_config is not None else []
-    files = self.list_files()
 
+    files = self.list_files()
     # Loop through files, searching for string
     num_matches = 0
     for fn in files:
