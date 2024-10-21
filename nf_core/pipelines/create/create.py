@@ -8,7 +8,7 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Dict, List, Optional, Tuple, Union
 
 import git
 import git.config
@@ -21,7 +21,7 @@ import nf_core.utils
 from nf_core.pipelines.create.utils import CreateConfig, features_yml_path, load_features_yaml
 from nf_core.pipelines.create_logo import create_logo
 from nf_core.pipelines.lint_utils import run_prettier_on_file
-from nf_core.utils import LintConfigType, NFCoreTemplateConfig
+from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlLintConfig
 
 log = logging.getLogger(__name__)
 
@@ -395,7 +395,7 @@ class PipelineCreate:
         # Add the lint content to the preexisting nf-core config
         config_fn, nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
         if config_fn is not None and nf_core_yml is not None:
-            nf_core_yml.lint = cast(LintConfigType, lint_config)
+            nf_core_yml.lint = NFCoreYamlLintConfig(**lint_config)
             with open(self.outdir / config_fn, "w") as fh:
                 yaml.dump(nf_core_yml.model_dump(), fh, default_flow_style=False, sort_keys=False)
 

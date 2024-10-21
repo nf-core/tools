@@ -1088,9 +1088,6 @@ class NFCoreTemplateConfig(BaseModel):
         return getattr(self, item, default)
 
 
-LintConfigType = Optional[Dict[str, Union[List[str], List[Union[str, Dict[str, List[str]]]], bool]]]
-
-
 class NFCoreYamlLintConfig(BaseModel):
     """
     schema for linting config in `.nf-core.yml` should cover:
