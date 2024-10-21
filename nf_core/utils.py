@@ -1123,7 +1123,7 @@ class NFCoreYamlLintConfig(BaseModel):
                 - docs/my_pdf.pdf
     """
 
-    files_unchanged: Optional[List[str]] = None
+    files_unchanged: List[str] = []
     """ List of files that should not be changed """
     modules_config: Optional[Union[bool, List[str]]] = None
     """ List of modules that should not be changed """
@@ -1131,12 +1131,14 @@ class NFCoreYamlLintConfig(BaseModel):
     """ List of files that should not contain merge markers """
     nextflow_config: Optional[Union[bool, List[Union[str, Dict[str, List[str]]]]]] = None
     """ List of Nextflow config files that should not be changed """
-    multiqc_config: Optional[List[str]] = None
+    multiqc_config: List[str] = []
     """ List of MultiQC config options that be changed """
-    files_exist: Optional[List[str]] = None
+    files_exist: List[str] = []
     """ List of files that can not exist """
     template_strings: Optional[Union[bool, List[str]]] = None
     """ List of files that can contain template strings """
+    nfcore_components: Optional[bool] = None
+    """ Include all required files to use nf-core modules and subworkflows """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
