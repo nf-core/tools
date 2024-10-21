@@ -144,6 +144,8 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
         return Path(test_pipeline_dir, file_path)
 
     ignore_files = self.lint_config.get("files_unchanged", []) if self.lint_config is not None else []
+    if ignore_files is None:
+        ignore_files = []
 
     # Files that must be completely unchanged from template
     for files in files_exact:
