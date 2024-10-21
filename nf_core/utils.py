@@ -1121,7 +1121,7 @@ class NFCoreYamlLintConfig(BaseModel):
         nfcore_components: False
     """
 
-    files_unchanged: List[str] = []
+    files_unchanged: Union[bool, List[str]] = []
     """ List of files that should not be changed """
     modules_config: Optional[Union[bool, List[str]]] = []
     """ List of modules that should not be changed """
@@ -1131,7 +1131,7 @@ class NFCoreYamlLintConfig(BaseModel):
     """ List of Nextflow config files that should not be changed """
     multiqc_config: Union[bool, List[str]] = []
     """ List of MultiQC config options that be changed """
-    files_exist: List[str] = []
+    files_exist: Union[bool, List[str]] = []
     """ List of files that can not exist """
     template_strings: Optional[Union[bool, List[str]]] = []
     """ List of files that can contain template strings """
