@@ -1091,6 +1091,63 @@ class NFCoreTemplateConfig(BaseModel):
 LintConfigType = Optional[Dict[str, Union[List[str], List[Union[str, Dict[str, List[str]]]], bool]]]
 
 
+class NFCoreYamlLintConfig(BaseModel):
+    """
+    schema for linting config in `.nf-core.yml` should cover:
+
+    .. code-block:: yaml
+        files_unchanged:
+            - .github/workflows/branch.yml
+        modules_config: False
+        modules_config:
+                - fastqc
+        # merge_markers: False
+        merge_markers:
+                - docs/my_pdf.pdf
+        nextflow_config: False
+        nextflow_config:
+            - manifest.name
+            - config_defaults:
+                - params.annotation_db
+                - params.multiqc_comment_headers
+                - params.custom_table_headers
+        # multiqc_config: False
+        multiqc_config:
+            - report_section_order
+            - report_comment
+        files_exist:
+            - .github/CONTRIBUTING.md
+            - CITATIONS.md
+        template_strings: False
+        template_strings:
+                - docs/my_pdf.pdf
+    """
+
+    files_unchanged: Optional[List[str]] = None
+    """ List of files that should not be changed """
+    modules_config: Optional[Union[bool, List[str]]] = None
+    """ List of modules that should not be changed """
+    merge_markers: Optional[Union[bool, List[str]]] = None
+    """ List of files that should not contain merge markers """
+    nextflow_config: Optional[Union[bool, List[Union[str, Dict[str, List[str]]]]]] = None
+    """ List of Nextflow config files that should not be changed """
+    multiqc_config: Optional[List[str]] = None
+    """ List of MultiQC config options that be changed """
+    files_exist: Optional[List[str]] = None
+    """ List of files that can not exist """
+    template_strings: Optional[Union[bool, List[str]]] = None
+    """ List of files that can contain template strings """
+
+    def __getitem__(self, item: str) -> Any:
+        return getattr(self, item)
+
+    def get(self, item: str, default: Any = None) -> Any:
+        return getattr(self, item, default)
+
+    def __setitem__(self, item: str, value: Any) -> None:
+        setattr(self, item, value)
+
+
 class NFCoreYamlConfig(BaseModel):
     """.nf-core.yml configuration file schema"""
 
@@ -1100,7 +1157,7 @@ class NFCoreYamlConfig(BaseModel):
     """ Version of nf-core/tools used to create/update the pipeline"""
     org_path: Optional[str] = None
     """ Path to the organisation's modules repository (used for modules repo_type only) """
-    lint: Optional[LintConfigType] = None
+    lint: Optional[NFCoreYamlLintConfig] = None
     """ Pipeline linting configuration, see https://nf-co.re/docs/nf-core-tools/pipelines/lint#linting-config for examples and documentation """
     template: Optional[NFCoreTemplateConfig] = None
     """ Pipeline template configuration """
@@ -1114,6 +1171,9 @@ class NFCoreYamlConfig(BaseModel):
 
     def get(self, item: str, default: Any = None) -> Any:
         return getattr(self, item, default)
+
+    def __setitem__(self, item: str, value: Any) -> None:
+        setattr(self, item, value)
 
 
 def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path], Optional[NFCoreYamlConfig]]:
