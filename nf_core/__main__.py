@@ -1371,7 +1371,7 @@ def command_subworkflows_create(ctx, subworkflow, directory, author, force, migr
 )
 @click.option(
     "--profile",
-    type=click.Choice(["none", "singularity"]),
+    type=click.Choice(["docker", "singularity", "conda"]),
     default=None,
     help="Run tests with a specific profile",
 )
