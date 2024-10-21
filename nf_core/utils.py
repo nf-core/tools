@@ -1126,17 +1126,17 @@ class NFCoreYamlLintConfig(BaseModel):
 
     files_unchanged: List[str] = []
     """ List of files that should not be changed """
-    modules_config: Optional[Union[bool, List[str]]] = None
+    modules_config: Optional[Union[bool, List[str]]] = []
     """ List of modules that should not be changed """
-    merge_markers: Optional[Union[bool, List[str]]] = None
+    merge_markers: Optional[Union[bool, List[str]]] = []
     """ List of files that should not contain merge markers """
-    nextflow_config: Optional[Union[bool, List[Union[str, Dict[str, List[str]]]]]] = None
+    nextflow_config: Optional[Union[bool, List[Union[str, Dict[str, List[str]]]]]] = []
     """ List of Nextflow config files that should not be changed """
     multiqc_config: List[str] = []
     """ List of MultiQC config options that be changed """
     files_exist: List[str] = []
     """ List of files that can not exist """
-    template_strings: Optional[Union[bool, List[str]]] = None
+    template_strings: Optional[Union[bool, List[str]]] = []
     """ List of files that can contain template strings """
     nfcore_components: Optional[bool] = None
     """ Include all required files to use nf-core modules and subworkflows """
