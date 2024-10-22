@@ -30,7 +30,7 @@ import rich
 import rich.markup
 import yaml
 from packaging.version import Version
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import BaseModel, ValidationError, field_validator
 from rich.live import Live
 from rich.spinner import Spinner
 
@@ -1094,28 +1094,20 @@ LintConfigType = Optional[Dict[str, Union[List[str], List[Dict[str, List[str]]],
 class NFCoreYamlConfig(BaseModel):
     """.nf-core.yml configuration file schema"""
 
-    repository_type: Literal["pipeline", "modules"] = Field(..., description="Type of repository")
-    nf_core_version: Optional[str] = Field(
-        None, description="Version of nf-core/tools used to create/update the pipeline"
-    )
-    org_path: Optional[str] = Field(
-        None, description="Path to the organisation's modules repository (used for modules repo_type only)"
-    )
-    lint: Optional[LintConfigType] = Field(
-        None,
-        description="Pipeline linting configuration, see https://nf-co.re/docs/nf-core-tools/pipelines/lint#linting-config for examples and documentation",
-    )
-    template: Optional[NFCoreTemplateConfig] = Field(
-        None, description="Pipeline template configuration"
-    )
-    bump_version: Optional[Dict[str, bool]] = Field(
-        None,
-        description="Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information.",
-    )
-    update: Optional[Dict[str, Union[str, bool, Dict[str, Union[str, Dict[str, Union[str, bool]]]]]]] = Field(
-        None,
-        description="Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information.",
-    )
+    repository_type: Optional[Literal["pipeline", "modules"]] = None
+    """ Type of repository """
+    nf_core_version: Optional[str] = None
+    """ Version of nf-core/tools used to create/update the pipeline """
+    org_path: Optional[str] = None
+    """ Path to the organisation's modules repository (used for modules repo_type only) """
+    lint: Optional[LintConfigType] = None
+    """ Pipeline linting configuration, see https://nf-co.re/docs/nf-core-tools/pipelines/lint#linting-config for examples and documentation """
+    template: Optional[NFCoreTemplateConfig] = None
+    """ Pipeline template configuration """
+    bump_version: Optional[Dict[str, bool]] = None
+    """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information. """
+    update: Optional[Dict[str, Union[str, bool, Dict[str, Union[str, Dict[str, Union[str, bool]]]]]]] = None
+    """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information. """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
