@@ -178,7 +178,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Check if we have any keys that don't match lint test names
         if self.lint_config is not None:
             for k, v in self.lint_config:
-                if k != "nfcore_components" and k not in self.lint_tests:
+                if v is not None and k != "nfcore_components" and k not in self.lint_tests:
                     # nfcore_components is an exception to allow custom pipelines without nf-core components
                     log.warning(f"Found unrecognised test name '{k}' in pipeline lint config")
                     is_correct = False

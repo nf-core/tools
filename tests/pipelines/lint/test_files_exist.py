@@ -37,8 +37,7 @@ class TestLintFilesExist(TestLint):
     def test_files_exist_deprecated_file(self):
         """Check whether deprecated file issues warning"""
 
-        nf = Path(self.new_pipeline, "parameters.settings.json")
-        nf.touch()
+        Path(self.new_pipeline, "parameters.settings.json").touch()
 
         assert self.lint_obj._load()
 
