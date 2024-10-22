@@ -269,7 +269,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
         url = None
         line = raw_line.strip(" \n'\"}:")
 
-        # Catch preceeding "container "
+        # Catch preceding "container "
         if line.startswith("container"):
             line = line.replace("container", "").strip(" \n'\"}:")
 
