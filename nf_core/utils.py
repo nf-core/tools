@@ -1106,7 +1106,7 @@ class NFCoreYamlConfig(BaseModel):
         description="Pipeline linting configuration, see https://nf-co.re/docs/nf-core-tools/pipelines/lint#linting-config for examples and documentation",
     )
     template: Optional[NFCoreTemplateConfig] = Field(
-        None, description="Pipeline template configuration", exclude=repository_type == "modules"
+        None, description="Pipeline template configuration"
     )
     bump_version: Optional[Dict[str, bool]] = Field(
         None,
