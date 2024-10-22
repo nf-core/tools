@@ -1132,7 +1132,7 @@ class NFCoreYamlConfig(BaseModel):
             fields_to_exclude = ["template", "update"]
         else:  # pipeline
             # Fields to exclude for pipeline
-            fields_to_exclude = ["bump_version"]
+            fields_to_exclude = ["bump_version", "org_path"]
 
         # Remove the fields based on repository_type
         for field in fields_to_exclude:
