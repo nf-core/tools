@@ -20,6 +20,7 @@
 
 - Include .nf-core.yml in `nf-core pipelines bump-version` ([#3220](https://github.com/nf-core/tools/pull/3220))
 - create: add shortcut to toggle all switches ([#3226](https://github.com/nf-core/tools/pull/3226))
+- Remove unrelated values when saving `.nf-core` file ([#3227](https://github.com/nf-core/tools/pull/3227))
 - chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.12.0 ([#3230](https://github.com/nf-core/tools/pull/3230))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.7.0 ([#3229](https://github.com/nf-core/tools/pull/3229))
 - Update python:3.12-slim Docker digest to 032c526 ([#3232](https://github.com/nf-core/tools/pull/3232))
