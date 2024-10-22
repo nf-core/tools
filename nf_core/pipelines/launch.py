@@ -276,7 +276,7 @@ class Launch:
             self.schema_obj.schema["definitions"] = {}
             self.schema_obj.schema["definitions"].update(self.nxf_flag_schema)
             self.schema_obj.schema["allOf"].insert(0, {"$ref": "#/definitions/coreNextflow"})
-        # Add the new defintion to the allOf key so that it's included in validation
+        # Add the new definition to the allOf key so that it's included in validation
         # Put it at the start of the list so that it comes first
 
     def prompt_web_gui(self):
@@ -316,7 +316,7 @@ class Launch:
                 raise AssertionError('"api_url" not in web_response')
             if "web_url" not in web_response:
                 raise AssertionError('"web_url" not in web_response')
-            # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatability.
+            # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatibility.
             if web_response["status"] != "recieved":
                 raise AssertionError(
                     f'web_response["status"] should be "recieved", but it is "{web_response["status"]}"'
@@ -434,7 +434,7 @@ class Launch:
         question = self.single_param_to_questionary(param_id, param_obj, answers)
         answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
 
-        # If required and got an empty reponse, ask again
+        # If required and got an empty response, ask again
         while isinstance(answer[param_id], str) and answer[param_id].strip() == "" and is_required:
             log.error(f"'--{param_id}' is required")
             answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
@@ -457,7 +457,7 @@ class Launch:
         Prompt for edits to a group of parameters (subschema in 'definitions')
 
         Args:
-          group_id: Paramater ID (string)
+          group_id: Parameter ID (string)
           group_obj: JSON Schema keys (dict)
 
         Returns:
