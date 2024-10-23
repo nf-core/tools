@@ -7,6 +7,7 @@
 - Keep pipeline name in version.yml file ([#3223](https://github.com/nf-core/tools/pull/3223))
 - Fix Manifest DOI text ([#3224](https://github.com/nf-core/tools/pull/3224))
 - Do not assume pipeline name is url ([#3225](https://github.com/nf-core/tools/pull/3225))
+- fix worklfow_dispatch trigger and parse more review comments in awsfulltest ([#3235](https://github.com/nf-core/tools/pull/3235))
 
 ### Download
 
