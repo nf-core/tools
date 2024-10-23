@@ -257,6 +257,21 @@ class DownloadTest(unittest.TestCase):
             not in download_obj.containers
         )
 
+        # mock_seqera_container.nf
+        assert (
+            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
+            in download_obj.containers
+        )
+
+        # ToDO: This URI should actually NOT be in there, but prioritize_direct_download() can not handle this case.
+        #
+        # It works purely by comparing the strings, thus can establish the equivalence of 'https://depot.galaxyproject.org/singularity/umi_tools:1.1.5--py39hf95cd2a_0'
+        # and 'biocontainers/umi_tools:1.1.5--py39hf95cd2a_0' because of the identical string 'umi_tools:1.1.5--py39hf95cd2a_0', but has no means to establish that
+        # 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data' and
+        # 'community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264' are the equivalent container. It would need to query an API at Seqera for this.
+
+        assert "community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264" in download_obj.containers
+
     #
     # Tests for 'singularity_pull_image'
     #
