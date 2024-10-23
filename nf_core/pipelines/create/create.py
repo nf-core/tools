@@ -67,7 +67,7 @@ class PipelineCreate:
                 _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else Path().cwd())
                 # Obtain a CreateConfig object from `.nf-core.yml` config file
                 if config_yml is not None and getattr(config_yml, "template", None) is not None:
-                    self.config = CreateConfig(**config_yml["template"].model_dump())
+                    self.config = CreateConfig(**config_yml["template"].model_dump(exclude_none=True))
                 else:
                     raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
                 # Update the output directory
@@ -205,7 +205,7 @@ class PipelineCreate:
             config_yml = None
 
         # Set the parameters for the jinja template
-        jinja_params = self.config.model_dump()
+        jinja_params = self.config.model_dump(exclude_none=True)
 
         # Add template areas to jinja params and create list of areas with paths to skip
         skip_areas = []
@@ -363,8 +363,8 @@ class PipelineCreate:
             config_fn, config_yml = nf_core.utils.load_tools_config(self.outdir)
             if config_fn is not None and config_yml is not None:
                 with open(str(config_fn), "w") as fh:
-                    config_yml.template = NFCoreTemplateConfig(**self.config.model_dump())
-                    yaml.safe_dump(config_yml.model_dump(), fh)
+                    config_yml.template = NFCoreTemplateConfig(**self.config.model_dump(exclude_none=True))
+                    yaml.safe_dump(config_yml.model_dump(exclude_none=True), fh)
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
 
         # Run prettier on files
@@ -397,7 +397,7 @@ class PipelineCreate:
         if config_fn is not None and nf_core_yml is not None:
             nf_core_yml.lint = NFCoreYamlLintConfig(**lint_config)
             with open(self.outdir / config_fn, "w") as fh:
-                yaml.dump(nf_core_yml.model_dump(), fh, default_flow_style=False, sort_keys=False)
+                yaml.dump(nf_core_yml.model_dump(exclude_none=True), fh, default_flow_style=False, sort_keys=False)
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""

@@ -1121,27 +1121,65 @@ class NFCoreYamlLintConfig(BaseModel):
         nfcore_components: False
     """
 
-    files_unchanged: Union[bool, List[str]] = []
+    files_unchanged: Optional[Union[bool, List[str]]] = None
     """ List of files that should not be changed """
-    modules_config: Optional[Union[bool, List[str]]] = []
+    modules_config: Optional[Optional[Union[bool, List[str]]]] = None
     """ List of modules that should not be changed """
-    merge_markers: Optional[Union[bool, List[str]]] = []
+    merge_markers: Optional[Optional[Union[bool, List[str]]]] = None
     """ List of files that should not contain merge markers """
-    nextflow_config: Optional[Union[bool, List[Union[str, Dict[str, List[str]]]]]] = []
+    nextflow_config: Optional[Optional[Union[bool, List[Union[str, Dict[str, List[str]]]]]]] = None
     """ List of Nextflow config files that should not be changed """
-    multiqc_config: Union[bool, List[str]] = []
+    multiqc_config: Optional[Union[bool, List[str]]] = None
     """ List of MultiQC config options that be changed """
-    files_exist: Union[bool, List[str]] = []
+    files_exist: Optional[Union[bool, List[str]]] = None
     """ List of files that can not exist """
-    template_strings: Optional[Union[bool, List[str]]] = []
+    template_strings: Optional[Optional[Union[bool, List[str]]]] = None
     """ List of files that can contain template strings """
+    readme: Optional[Union[bool, List[str]]] = None
+    """ Lint the README.md file """
     nfcore_components: Optional[bool] = None
-    """ Include all required files to use nf-core modules and subworkflows """
+    """ Lint all required files to use nf-core modules and subworkflows """
+    actions_ci: Optional[bool] = None
+    """ Lint all required files to use GitHub Actions CI """
+    actions_awstest: Optional[bool] = None
+    """ Lint all required files to run tests on AWS """
+    actions_awsfulltest: Optional[bool] = None
+    """ Lint all required files to run full tests on AWS """
+    pipeline_todos: Optional[bool] = None
+    """ Lint for TODOs statements"""
+    plugin_includes: Optional[bool] = None
+    """ Lint for nextflow plugin """
+    pipeline_name_conventions: Optional[bool] = None
+    """ Lint for pipeline name conventions """
+    schema_lint: Optional[bool] = None
+    """ Lint nextflow_schema.json file"""
+    schema_params: Optional[bool] = None
+    """ Lint schema for all params """
+    system_exit: Optional[bool] = None
+    """ Lint for System.exit calls in groovy/nextflow code """
+    schema_description: Optional[bool] = None
+    """ Check that every parameter in the schema has a description. """
+    actions_schema_validation: Optional[bool] = None
+    """ Lint GitHub Action workflow files with schema"""
+    modules_json: Optional[bool] = None
+    """ Lint modules.json file """
+    modules_structure: Optional[bool] = None
+    """ Lint modules structure """
+    base_config: Optional[bool] = None
+    """ Lint base.config file """
+    nfcore_yml: Optional[bool] = None
+    """ Lint nf-core.yml """
+    version_consistency: Optional[bool] = None
+    """ Lint for version consistency """
+    included_configs: Optional[bool] = None
+    """ Lint for included configs """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
 
     def get(self, item: str, default: Any = None) -> Any:
+        if getattr(self, item, default) is None:
+            return default
         return getattr(self, item, default)
 
     def __setitem__(self, item: str, value: Any) -> None:

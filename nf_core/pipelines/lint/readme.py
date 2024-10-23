@@ -23,6 +23,21 @@ def readme(self):
 
         * If pipeline is released but still contains a 'zenodo.XXXXXXX' tag, the test fails
 
+    To disable this test, add the following to the pipeline's ``.nf-core.yml`` file:
+
+    .. code-block:: yaml
+        lint:
+            readme: False
+
+    To disable subsets of these tests, add the following to the pipeline's ``.nf-core.yml`` file:
+
+    .. code-block:: yaml
+
+            lint:
+                readme:
+                    nextflow_badge
+                    zenodo_release
+
     """
     passed = []
     warned = []
