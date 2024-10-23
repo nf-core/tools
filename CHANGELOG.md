@@ -26,6 +26,7 @@
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.7.0 ([#3229](https://github.com/nf-core/tools/pull/3229))
 - Update python:3.12-slim Docker digest to 032c526 ([#3232](https://github.com/nf-core/tools/pull/3232))
 - use correct `--profile` options for `nf-core subworkflows test` ([#3233](https://github.com/nf-core/tools/pull/3233))
+- Update GitHub Actions ([#3237](https://github.com/nf-core/tools/pull/3237))
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 
