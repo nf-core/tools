@@ -76,4 +76,5 @@ process CAT_FASTQ {
             """
         }
     }
+
 }
