@@ -144,14 +144,14 @@ def update_config(rgc):
 
     This function is executed after running 'refgenie pull <genome>/<asset>'
     The refgenie config file is transformed into a nextflow.config file, which is used to
-    overwrited the 'refgenie_genomes.config' file.
+    overwrite the 'refgenie_genomes.config' file.
     The path to the target  config file is inferred from the following options, in order:
 
     - the 'nextflow_config' attribute in the refgenie config file
     - the NXF_REFGENIE_PATH environment variable
     - otherwise defaults to: $NXF_HOME/nf-core/refgenie_genomes.config
 
-    Additionaly, an 'includeConfig' statement is added to the file $NXF_HOME/config
+    Additionally, an 'includeConfig' statement is added to the file $NXF_HOME/config
     """
 
     # Compile nextflow refgenie_genomes.config from refgenie config

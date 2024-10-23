@@ -24,7 +24,7 @@ version: 2.4.1
 doi: 10.1038/s41587-020-0439-x
 date-released: 2022-05-16
 url: https://github.com/nf-core/tools
-prefered-citation:
+preferred-citation:
   type: article
   authors:
     - family-names: Ewels

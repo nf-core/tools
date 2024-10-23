@@ -113,7 +113,7 @@ class TestUtils(TestPipelines):
     @mock.patch("requests.get")
     def test_pip_package_timeout(self, mock_get):
         """Tests the PyPi connection and simulates a request timeout, which should
-        return in an addiional warning in the linting"""
+        return in an additional warning in the linting"""
         # Define the behaviour of the request get mock
         mock_get.side_effect = requests.exceptions.Timeout()
         # Now do the test

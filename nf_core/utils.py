@@ -20,7 +20,7 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Literal, Optional, Tuple, Union
 
 import git
 import prompt_toolkit.styles
@@ -438,7 +438,7 @@ def wait_cli_function(poll_func: Callable[[], bool], refresh_per_second: int = 2
        refresh_per_second (int): Refresh this many times per second. Default: 20.
 
     Returns:
-       None. Just sits in an infite loop until the function returns True.
+       None. Just sits in an infinite loop until the function returns True.
     """
     try:
         spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
@@ -457,7 +457,7 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
 
     Takes argument api_url for URL
 
-    Expects API reponse to be valid JSON and contain a top-level 'status' key.
+    Expects API response to be valid JSON and contain a top-level 'status' key.
     """
     # Run without requests_cache so that we get the updated statuses
     with requests_cache.disabled():
@@ -633,11 +633,11 @@ class GitHubAPISession(requests_cache.CachedSession):
         while True:
             # GET request
             if post_data is None:
-                log.debug(f"Seding GET request to {url}")
+                log.debug(f"Sending GET request to {url}")
                 r = self.get(url=url)
             # POST request
             else:
-                log.debug(f"Seding POST request to {url}")
+                log.debug(f"Sending POST request to {url}")
                 r = self.post(url=url, json=post_data)
 
             # Failed but expected - try again
@@ -743,12 +743,12 @@ def parse_anaconda_licence(anaconda_response, version=None):
         license = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", license, flags=re.IGNORECASE)
         license = license.replace("GPL-", "GPLv")
         license = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", license)  # Add v prefix to GPL version if none found
-        license = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", license)  # Remove superflous .0 from GPL version
+        license = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", license)  # Remove superfluous .0 from GPL version
         license = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", license)
         license = re.sub(r"GPL\s*v", "GPL v", license)  # Normalise whitespace to one space between GPL and v
         license = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", license)  # Normalise whitespace around >= GPL versions
-        license = license.replace("Clause", "clause")  # BSD capitilisation
-        license = re.sub(r"-only$", "", license)  # Remove superflous GPL "only" version suffixes
+        license = license.replace("Clause", "clause")  # BSD capitalisation
+        license = re.sub(r"-only$", "", license)  # Remove superfluous GPL "only" version suffixes
         clean_licences.append(license)
     return clean_licences
 
@@ -1145,10 +1145,10 @@ LintConfigType = Optional[Dict[str, Union[List[str], List[Dict[str, List[str]]],
 class NFCoreYamlConfig(BaseModel):
     """.nf-core.yml configuration file schema"""
 
-    repository_type: str
-    """ Type of repository: pipeline or modules """
+    repository_type: Optional[Literal["pipeline", "modules"]] = None
+    """ Type of repository """
     nf_core_version: Optional[str] = None
-    """ Version of nf-core/tools used to create/update the pipeline"""
+    """ Version of nf-core/tools used to create/update the pipeline """
     org_path: Optional[str] = None
     """ Path to the organisation's modules repository (used for modules repo_type only) """
     lint: Optional[LintConfigType] = None
@@ -1156,15 +1156,32 @@ class NFCoreYamlConfig(BaseModel):
     template: Optional[NFCoreTemplateConfig] = None
     """ Pipeline template configuration """
     bump_version: Optional[Dict[str, bool]] = None
-    """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information."""
+    """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information. """
     update: Optional[Dict[str, Union[str, bool, Dict[str, Union[str, Dict[str, Union[str, bool]]]]]]] = None
-    """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information."""
+    """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information. """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
 
     def get(self, item: str, default: Any = None) -> Any:
         return getattr(self, item, default)
+
+    def model_dump(self, **kwargs) -> Dict[str, Any]:
+        # Get the initial data
+        config = super().model_dump(**kwargs)
+
+        if self.repository_type == "modules":
+            # Fields to exclude for modules
+            fields_to_exclude = ["template", "update"]
+        else:  # pipeline
+            # Fields to exclude for pipeline
+            fields_to_exclude = ["bump_version", "org_path"]
+
+        # Remove the fields based on repository_type
+        for field in fields_to_exclude:
+            config.pop(field, None)
+
+        return config
 
 
 def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path], Optional[NFCoreYamlConfig]]:

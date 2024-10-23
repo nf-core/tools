@@ -51,7 +51,7 @@ class PipelineSchema:
         self.defs_notation = None
         self.ignored_params = []
 
-    # Update the validation plugin code everytime the schema gets changed
+    # Update the validation plugin code every time the schema gets changed
     def set_schema_filename(self, schema: str) -> None:
         self._schema_filename = schema
         self._update_validation_plugin_from_config()
@@ -971,7 +971,7 @@ class PipelineSchema:
                 raise AssertionError('"api_url" not in web_response')
             if "web_url" not in web_response:
                 raise AssertionError('"web_url" not in web_response')
-            # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatability.
+            # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatibility.
             if web_response["status"] != "recieved":
                 raise AssertionError(
                     f'web_response["status"] should be "recieved", but it is "{web_response["status"]}"'
