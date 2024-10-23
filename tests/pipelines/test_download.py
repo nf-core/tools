@@ -268,7 +268,7 @@ class DownloadTest(unittest.TestCase):
         # It works purely by comparing the strings, thus can establish the equivalence of 'https://depot.galaxyproject.org/singularity/umi_tools:1.1.5--py39hf95cd2a_0'
         # and 'biocontainers/umi_tools:1.1.5--py39hf95cd2a_0' because of the identical string 'umi_tools:1.1.5--py39hf95cd2a_0', but has no means to establish that
         # 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data' and
-        # 'community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264' are the equivalent container. It would need to query an API at Seqera for this.
+        # 'community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264' are the equivalent container. It would need to query an API at Seqera for that.
 
         assert "community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264" in download_obj.containers
 
@@ -391,10 +391,72 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("os.symlink")
     @mock.patch("os.open")
     @mock.patch("os.close")
-    @mock.patch("re.sub")
     @mock.patch("os.path.basename")
     @mock.patch("os.path.dirname")
     def test_symlink_singularity_images(
+        self,
+        tmp_path,
+        mock_dirname,
+        mock_basename,
+        mock_close,
+        mock_open,
+        mock_symlink,
+        mock_makedirs,
+    ):
+        # Setup
+        mock_dirname.return_value = f"{tmp_path}/path/to"
+        mock_basename.return_value = "singularity-image.img"
+        mock_open.return_value = 12  # file descriptor
+        mock_close.return_value = 12  # file descriptor
+
+        download_obj = DownloadWorkflow(
+            pipeline="dummy",
+            outdir=tmp_path,
+            container_library=(
+                "quay.io",
+                "community-cr-prod.seqera.io/docker/registry/v2",
+                "depot.galaxyproject.org/singularity",
+            ),
+        )
+
+        # Call the method
+        download_obj.symlink_singularity_images(f"{tmp_path}/path/to/singularity-image.img")
+
+        # Check that os.makedirs was called with the correct arguments
+        mock_makedirs.assert_any_call(f"{tmp_path}/path/to", exist_ok=True)
+
+        # Check that os.open was called with the correct arguments
+        mock_open.assert_any_call(f"{tmp_path}/path/to", os.O_RDONLY)
+
+        # Check that os.symlink was called with the correct arguments
+        expected_calls = [
+            mock.call(
+                "./singularity-image.img",
+                "./quay.io-singularity-image.img",
+                dir_fd=12,
+            ),
+            mock.call(
+                "./singularity-image.img",
+                "./community-cr-prod.seqera.io-docker-registry-v2-singularity-image.img",
+                dir_fd=12,
+            ),
+            mock.call(
+                "./singularity-image.img",
+                "./depot.galaxyproject.org-singularity-singularity-image.img",
+                dir_fd=12,
+            ),
+        ]
+        mock_symlink.assert_has_calls(expected_calls, any_order=True)
+
+    @with_temporary_folder
+    @mock.patch("os.makedirs")
+    @mock.patch("os.symlink")
+    @mock.patch("os.open")
+    @mock.patch("os.close")
+    @mock.patch("re.sub")
+    @mock.patch("os.path.basename")
+    @mock.patch("os.path.dirname")
+    def test_symlink_singularity_images_registry(
         self,
         tmp_path,
         mock_dirname,
@@ -415,23 +477,22 @@ class DownloadTest(unittest.TestCase):
         download_obj = DownloadWorkflow(
             pipeline="dummy",
             outdir=tmp_path,
-            container_library=("mirage-the-imaginative-registry.io", "quay.io"),
+            container_library=("quay.io", "community-cr-prod.seqera.io/docker/registry/v2"),
         )
 
-        # Call the method
+        download_obj.registry_set = {"quay.io", "community-cr-prod.seqera.io/docker/registry/v2"}
+
+        # Call the method with registry - should not happen, but preserve it then.
         download_obj.symlink_singularity_images(f"{tmp_path}/path/to/quay.io-singularity-image.img")
         print(mock_resub.call_args)
 
         # Check that os.makedirs was called with the correct arguments
         mock_makedirs.assert_any_call(f"{tmp_path}/path/to", exist_ok=True)
 
-        # Check that os.open was called with the correct arguments
-        mock_open.assert_called_once_with(f"{tmp_path}/path/to", os.O_RDONLY)
-
         # Check that os.symlink was called with the correct arguments
-        mock_symlink.assert_any_call(
+        mock_symlink.assert_called_with(
             "./quay.io-singularity-image.img",
-            "./mirage-the-imaginative-registry.io-quay.io-singularity-image.img",
+            "./community-cr-prod.seqera.io-docker-registry-v2-singularity-image.img",
             dir_fd=12,
         )
         # Check that there is no attempt to symlink to itself (test parameters would result in that behavior if not checked in the function)
@@ -439,6 +500,10 @@ class DownloadTest(unittest.TestCase):
             unittest.mock.call("./quay.io-singularity-image.img", "./quay.io-singularity-image.img", dir_fd=12)
             not in mock_symlink.call_args_list
         )
+
+        # Normally it would be called for each registry, but since quay.io is part of the name, it
+        # will only be called once, as no symlink to itself must be created.
+        mock_open.assert_called_once_with(f"{tmp_path}/path/to", os.O_RDONLY)
 
     #
     # Test for gather_registries'
@@ -461,10 +526,16 @@ class DownloadTest(unittest.TestCase):
         download_obj.gather_registries(tmp_path)
         assert download_obj.registry_set
         assert isinstance(download_obj.registry_set, set)
-        assert len(download_obj.registry_set) == 6
+        assert len(download_obj.registry_set) == 8
 
         assert "quay.io" in download_obj.registry_set  # default registry, if no container library is provided.
-        assert "depot.galaxyproject.org" in download_obj.registry_set  # default registry, often hardcoded in modules
+        assert (
+            "depot.galaxyproject.org/singularity" in download_obj.registry_set
+        )  # default registry, often hardcoded in modules
+        assert "community.wave.seqera.io/library" in download_obj.registry_set  # Seqera containers Docker
+        assert (
+            "community-cr-prod.seqera.io/docker/registry/v2" in download_obj.registry_set
+        )  # Seqera containers Singularity https:// download
         assert "apptainer-registry.io" in download_obj.registry_set
         assert "docker.io" in download_obj.registry_set
         assert "podman-registry.io" in download_obj.registry_set
@@ -498,7 +569,14 @@ class DownloadTest(unittest.TestCase):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
         download_obj.outdir = tmp_path
         download_obj.container_cache_utilisation = "amend"
-        download_obj.registry_set = {"docker.io", "quay.io", "depot.galaxyproject.org"}
+
+        download_obj.registry_set = {
+            "docker.io",
+            "quay.io",
+            "depot.galaxyproject.org/singularity",
+            "community.wave.seqera.io/library",
+            "community-cr-prod.seqera.io/docker/registry/v2",
+        }
 
         ## Test phase I: Container not yet cached, should be amended to cache
         # out_path: str, Path to cache
@@ -516,11 +594,13 @@ class DownloadTest(unittest.TestCase):
         self.assertTrue(all((isinstance(element, str), element is None) for element in result))
 
         # assert that the correct out_path is returned that points to the cache
-        assert result[0].endswith("/cachedir/singularity-bbmap-38.93--he522d1c_0.img")
+        assert result[0].endswith("/cachedir/bbmap-38.93--he522d1c_0.img")
 
         ## Test phase II: Test various container names
         # out_path: str, Path to cache
         # cache_path: None
+
+        # Test --- mulled containers #
         result = download_obj.singularity_image_filenames(
             "quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0"
         )
@@ -528,8 +608,31 @@ class DownloadTest(unittest.TestCase):
             "/cachedir/biocontainers-mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2-59cdd445419f14abac76b31dd0d71217994cbcc9-0.img"
         )
 
+        # Test --- Docker containers without registry #
         result = download_obj.singularity_image_filenames("nf-core/ubuntu:20.04")
         assert result[0].endswith("/cachedir/nf-core-ubuntu-20.04.img")
+
+        # Test --- Docker container with explicit registry -> should be trimmed #
+        result = download_obj.singularity_image_filenames("docker.io/nf-core/ubuntu:20.04")
+        assert result[0].endswith("/cachedir/nf-core-ubuntu-20.04.img")
+
+        # Test --- Docker container with explicit registry not in registry set -> can't be trimmed
+        result = download_obj.singularity_image_filenames("mirage-the-imaginative-registry.io/nf-core/ubuntu:20.04")
+        assert result[0].endswith("/cachedir/mirage-the-imaginative-registry.io-nf-core-ubuntu-20.04.img")
+
+        # Test --- Seqera Docker containers: Trimmed, because it is hard-coded in the registry set.
+        result = download_obj.singularity_image_filenames(
+            "community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264"
+        )
+        assert result[0].endswith("/cachedir/coreutils-9.5--ae99c88a9b28c264.img")
+
+        # Test --- Seqera Singularity containers: Trimmed, because it is hard-coded in the registry set.
+        result = download_obj.singularity_image_filenames(
+            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
+        )
+        assert result[0].endswith(
+            "cachedir/blobs-sha256-c2-c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975-data.img"
+        )
 
         ## Test phase III: Container will be cached but also copied to out_path
         # out_path: str, Path to cache
@@ -540,8 +643,8 @@ class DownloadTest(unittest.TestCase):
         )
 
         self.assertTrue(all(isinstance(element, str) for element in result))
-        assert result[0].endswith("/singularity-images/singularity-bbmap-38.93--he522d1c_0.img")
-        assert result[1].endswith("/cachedir/singularity-bbmap-38.93--he522d1c_0.img")
+        assert result[0].endswith("/singularity-images/bbmap-38.93--he522d1c_0.img")
+        assert result[1].endswith("/cachedir/bbmap-38.93--he522d1c_0.img")
 
         ## Test phase IV: Expect an error if no NXF_SINGULARITY_CACHEDIR is defined
         os.environ["NXF_SINGULARITY_CACHEDIR"] = ""

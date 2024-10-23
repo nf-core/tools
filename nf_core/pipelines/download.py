@@ -1023,7 +1023,13 @@ class DownloadWorkflow:
                 self.registry_set.add(self.nf_config[registry])
 
         # add depot.galaxyproject.org to the set, because it is the default registry for singularity hardcoded in modules
-        self.registry_set.add("depot.galaxyproject.org")
+        self.registry_set.add("depot.galaxyproject.org/singularity")
+
+        # add community.wave.seqera.io/library to the set to support the new Seqera Docker container registry
+        self.registry_set.add("community.wave.seqera.io/library")
+
+        # add chttps://community-cr-prod.seqera.io/docker/registry/v2/ to the set to support the new Seqera Singularity container registry
+        self.registry_set.add("community-cr-prod.seqera.io/docker/registry/v2")
 
     def symlink_singularity_images(self, image_out_path: str) -> None:
         """Create a symlink for each registry in the registry set that points to the image.
@@ -1040,10 +1046,13 @@ class DownloadWorkflow:
 
         if self.registry_set:
             # Create a regex pattern from the set, in case trimming is needed.
-            trim_pattern = "|".join(f"^{re.escape(registry)}-?" for registry in self.registry_set)
+            trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in self.registry_set)
 
             for registry in self.registry_set:
-                if not os.path.basename(image_out_path).startswith(registry):
+                # Nextflow will convert it like this as well, so we need it mimic its behavior
+                registry = registry.replace("/", "-")
+
+                if not bool(re.search(trim_pattern, os.path.basename(image_out_path))):
                     symlink_name = os.path.join("./", f"{registry}-{os.path.basename(image_out_path)}")
                 else:
                     trimmed_name = re.sub(f"{trim_pattern}", "", os.path.basename(image_out_path))
@@ -1263,7 +1272,7 @@ class DownloadWorkflow:
         # if docker.registry / singularity.registry are set to empty strings at runtime, which can be included in the HPC config profiles easily.
         if self.registry_set:
             # Create a regex pattern from the set of registries
-            trim_pattern = "|".join(f"^{re.escape(registry)}-?" for registry in self.registry_set)
+            trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in self.registry_set)
             # Use the pattern to trim the string
             out_name = re.sub(f"{trim_pattern}", "", out_name)
 
