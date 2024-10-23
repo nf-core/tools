@@ -7,7 +7,7 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Union
+from typing import Optional, Set, Union
 
 import requests
 import rocrate.rocrate
@@ -90,7 +90,7 @@ class ROCrate:
 
     def create_rocrate(
         self, outdir: Path, json_path: Union[None, Path] = None, zip_path: Union[None, Path] = None
-    ) -> None:
+    ) -> bool:
         """
         Create an RO Crate for a pipeline
 
@@ -106,8 +106,6 @@ class ROCrate:
         except OSError as e:
             log.error(e)
             sys.exit(1)
-
-        # Change to the pipeline directory, because the RO Crate doesn't handle relative paths well
 
         # Check that the checkout pipeline version is the same as the requested version
         if self.version != "":
@@ -132,11 +130,12 @@ class ROCrate:
 
         # Save just the JSON metadata file
         if json_path is not None:
-            if json_path.name != "ro-crate-metadata.json":
-                json_path = json_path / "ro-crate-metadata.json"
+            if json_path.name == "ro-crate-metadata.json":
+                json_path = json_path.parent
 
             log.info(f"Saving metadata file to '{json_path}'")
             self.crate.metadata.write(json_path)
+            return True
 
         # Save the whole crate zip file
         if zip_path is not None:
@@ -144,6 +143,10 @@ class ROCrate:
                 zip_path = zip_path / "ro-crate.crate.zip"
             log.info(f"Saving zip file '{zip_path}")
             self.crate.write_zip(zip_path)
+            return True
+        if json_path is None and zip_path is None:
+            log.error("Please provide a path to save the ro-crate file or the zip file.")
+            return False
 
     def make_workflow_rocrate(self) -> None:
         """
@@ -224,26 +227,6 @@ class ROCrate:
             "url", f"https://nf-co.re/{self.crate.name.replace('nf-core/','')}/{url}/", compact=True
         )
         self.crate.mainEntity.append_to("version", self.version, compact=True)
-        if self.pipeline_obj.schema_obj is not None:
-            log.debug("input value")
-
-            schema_input = self.pipeline_obj.schema_obj.schema["definitions"]["input_output_options"]["properties"][
-                "input"
-            ]
-            input_value: Dict[str, Union[str, List[str], bool]] = {
-                "@id": "#input",
-                "@type": ["FormalParameter"],
-                "default": schema_input.get("default", ""),
-                "encodingFormat": schema_input.get("mimetype", ""),
-                "valueRequired": "input"
-                in self.pipeline_obj.schema_obj.schema["definitions"]["input_output_options"]["required"],
-                "dct:conformsTo": "https://bioschemas.org/types/FormalParameter/1.0-RELEASE",
-            }
-            self.crate.add_jsonld(input_value)
-            self.crate.mainEntity.append_to(
-                "input",
-                {"@id": "#input"},
-            )
 
         # get keywords from nf-core website
         remote_workflows = requests.get("https://nf-co.re/pipelines.json").json()["remote_workflows"]

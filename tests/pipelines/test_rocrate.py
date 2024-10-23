@@ -36,14 +36,14 @@ class TestROCrate(TestPipelines):
         """Run the nf-core rocrate command"""
 
         # Run the command
-        self.rocrate_obj = nf_core.pipelines.rocrate.ROCrate(self.test_pipeline_dir)
-        self.rocrate_obj.create_rocrate(self.test_pipeline_dir, metadata_path=Path(self.test_pipeline_dir))
+        self.rocrate_obj = nf_core.pipelines.rocrate.ROCrate(self.pipeline_dir)
+        assert self.rocrate_obj.create_rocrate(self.pipeline_dir, self.pipeline_dir)
 
         # Check that the crate was created
-        self.assertTrue(Path(self.test_pipeline_dir, "ro-crate-metadata.json").exists())
+        self.assertTrue(Path(self.pipeline_dir, "ro-crate-metadata.json").exists())
 
         # Check that the entries in the crate are correct
-        crate = rocrate.rocrate.ROCrate(self.test_pipeline_dir)
+        crate = rocrate.rocrate.ROCrate(self.pipeline_dir)
         entities = crate.get_entities()
 
         # Check if the correct entities are set:
