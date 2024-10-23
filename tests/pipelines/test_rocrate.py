@@ -1,8 +1,6 @@
 """Test the nf-core pipelines rocrate command"""
 
 import shutil
-import tempfile
-import unittest
 from pathlib import Path
 
 import rocrate.rocrate
@@ -13,33 +11,18 @@ import nf_core.pipelines.create.create
 import nf_core.pipelines.rocrate
 import nf_core.utils
 
+from ..test_pipelines import TestPipelines
 
-class TestROCrate(unittest.TestCase):
+
+class TestROCrate(TestPipelines):
     """Class for lint tests"""
 
-    def setUp(self):
-        """Function that runs at start of tests for common resources
-
-        Use nf_core.create() to make a pipeline that we can use for testing
-        """
-
-        self.tmp_dir = Path(tempfile.mkdtemp())
-        self.test_pipeline_dir = Path(self.tmp_dir, "nf-core-testpipeline")
-        self.create_obj = nf_core.pipelines.create.create.PipelineCreate(
-            name="testpipeline",
-            description="This is a test pipeline",
-            author="Test McTestFace",
-            outdir=str(self.test_pipeline_dir),
-            version="1.0.0",
-            no_git=False,
-            force=True,
-        )
-        self.create_obj.init_pipeline()
-
+    def setUp(self) -> None:
+        super().setUp()
         # add fake metro map
-        Path(self.test_pipeline_dir, "docs", "images", "nf-core-testpipeline_metro_map.png").touch()
+        Path(self.pipeline_dir, "docs", "images", "nf-core-testpipeline_metro_map.png").touch()
         # commit the changes
-        repo = Repo(self.test_pipeline_dir)
+        repo = Repo(self.pipeline_dir)
         repo.git.add(A=True)
         repo.index.commit("Initial commit")
 
