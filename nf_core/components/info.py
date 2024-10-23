@@ -211,9 +211,9 @@ class ComponentInfo(ComponentCommand):
                         return yaml.safe_load(fh)
             log.debug(f"{self.component_type[:-1].title()} '{self.component}' meta.yml not found locally")
 
-        return {}
+        return None
 
-    def get_remote_yaml(self) -> Optional[Dict]:
+    def get_remote_yaml(self) -> Optional[dict]:
         """Attempt to get the meta.yml file from a remote repo.
 
         Returns:
