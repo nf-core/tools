@@ -1692,7 +1692,7 @@ class WorkflowRepo(SyncedRepo):
                         self.repo.create_head("latest", "latest")  # create a new head for latest
                         self.checkout("latest")
                     else:
-                        # desired revisions may contain arbitrary branch names that do not correspond to valid sematic versioning patterns.
+                        # desired revisions may contain arbitrary branch names that do not correspond to valid semantic versioning patterns.
                         valid_versions = [
                             Version(v) for v in desired_revisions if re.match(r"\d+\.\d+(?:\.\d+)*(?:[\w\-_])*", v)
                         ]

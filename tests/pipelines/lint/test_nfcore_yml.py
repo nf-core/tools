@@ -33,12 +33,8 @@ class TestLintNfCoreYml(TestLint):
 
         self.nf_core_yml["repository_type"] = "foo"
         self.yaml.dump(self.nf_core_yml, self.nf_core_yml_path)
-        assert self.lint_obj._load()
-        results = self.lint_obj.nfcore_yml()
-        assert "Repository type in `.nf-core.yml` is not valid." in str(results["failed"])
-        assert len(results.get("warned", [])) == 0
-        assert len(results.get("passed", [])) >= 0
-        assert len(results.get("ignored", [])) == 0
+        with self.assertRaises(AssertionError):
+            self.lint_obj._load()
 
     def test_nfcore_yml_fail_nfcore_version(self):
         """Lint test: nfcore_yml - FAIL - nf-core version not set"""

@@ -67,7 +67,7 @@ class GithubRepo(Screen):
             yield TextInput(
                 "repo_org",
                 "Organisation name",
-                "The name of the organisation where the GitHub repo will be cretaed",
+                "The name of the organisation where the GitHub repo will be created",
                 default=self.parent.TEMPLATE_CONFIG.org,
                 classes="column",
             )

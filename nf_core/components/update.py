@@ -55,7 +55,7 @@ class ComponentUpdate(ComponentCommand):
         self.branch = branch
 
     def _parameter_checks(self):
-        """Checks the compatibilty of the supplied parameters.
+        """Checks the compatibility of the supplied parameters.
 
         Raises:
             UserWarning: if any checks fail.
