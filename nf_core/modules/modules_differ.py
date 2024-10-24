@@ -298,7 +298,16 @@ class ModulesDiffer:
                 # Pretty print the diff using the pygments diff lexer
                 syntax = Syntax("".join(diff), "diff", theme="ansi_dark", line_numbers=True)
                 panel_group.append(Panel(syntax, title=str(file), title_align="left", padding=0))
-            console.print(Panel(Group(*panel_group), title=str(module), title_align="left", padding=0, box=box.HEAVY))
+            console.print(
+                Panel(
+                    Group(*panel_group),
+                    title=str(module),
+                    title_align="left",
+                    padding=0,
+                    border_style="blue",
+                    box=box.HEAVY,
+                )
+            )
 
     @staticmethod
     def per_file_patch(patch_fn: Union[str, Path]) -> Dict[str, List[str]]:
