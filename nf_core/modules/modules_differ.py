@@ -6,7 +6,8 @@ import os
 from pathlib import Path
 from typing import Dict, List, Union
 
-from rich.console import Console
+from rich import box
+from rich.console import Console, Group, RenderableType
 from rich.panel import Panel
 from rich.syntax import Syntax
 
@@ -277,6 +278,7 @@ class ModulesDiffer:
         else:
             log.info(f"Changes in module '{Path(repo_path, module)}'")
 
+        panel_group: list[RenderableType] = []
         for file, (diff_status, diff) in diffs.items():
             if diff_status == ModulesDiffer.DiffEnum.UNCHANGED:
                 # The files are identical
@@ -295,7 +297,8 @@ class ModulesDiffer:
                 log.info(f"Changes in '{Path(module, file)}':")
                 # Pretty print the diff using the pygments diff lexer
                 syntax = Syntax("".join(diff), "diff", theme="ansi_dark", line_numbers=True)
-                console.print(Panel(syntax, title=str(file), title_align="left", padding=0))
+                panel_group.append(Panel(syntax, title=str(file), title_align="left", padding=0))
+            console.print(Panel(Group(*panel_group), title=str(module), title_align="left", padding=0, box=box.HEAVY))
 
     @staticmethod
     def per_file_patch(patch_fn: Union[str, Path]) -> Dict[str, List[str]]:
