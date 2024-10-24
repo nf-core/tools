@@ -21,6 +21,7 @@ import nf_core.utils
 from nf_core.pipelines.create.utils import CreateConfig, features_yml_path, load_features_yaml
 from nf_core.pipelines.create_logo import create_logo
 from nf_core.pipelines.lint_utils import run_prettier_on_file
+from nf_core.rocrate import ROCrate
 from nf_core.utils import LintConfigType, NFCoreTemplateConfig
 
 log = logging.getLogger(__name__)
@@ -255,6 +256,9 @@ class PipelineCreate:
         """Creates the nf-core pipeline."""
         # Make the new pipeline
         self.render_template()
+        # Create the RO-Crate metadata file
+        rocrate_obj = ROCrate(self.outdir)
+        rocrate_obj.create_rocrate(self.outdir, json_path=self.outdir / "ro-crate-metadata.json")
 
         # Init the git repository and make the first commit
         if not self.no_git:
