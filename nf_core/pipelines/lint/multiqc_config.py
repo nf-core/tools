@@ -31,6 +31,15 @@ def multiqc_config(self) -> Dict[str, List[str]]:
             lint:
                 multiqc_config: False
 
+        To disable this test only for specific sections, you can specify a list of section names.
+        For example:
+
+        .. code-block:: yaml
+        lint:
+                multiqc_config:
+                    - report_section_order
+                    - report_comment
+
     """
 
     passed: List[str] = []

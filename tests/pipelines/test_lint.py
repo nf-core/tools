@@ -48,7 +48,8 @@ class TestPipelinesLint(TestLint):
     def test_load_lint_config_not_found(self):
         """Try to load a linting config file that doesn't exist"""
         assert self.lint_obj._load_lint_config()
-        assert self.lint_obj.lint_config == {}
+        assert self.lint_obj.lint_config is not None
+        assert self.lint_obj.lint_config.model_dump(exclude_none=True) == {}
 
     def test_load_lint_config_ignore_all_tests(self):
         """Try to load a linting config file that ignores all tests"""
@@ -64,7 +65,8 @@ class TestPipelinesLint(TestLint):
 
         # Load the new lint config file and check
         lint_obj._load_lint_config()
-        assert sorted(list(lint_obj.lint_config.keys())) == sorted(lint_obj.lint_tests)
+        assert lint_obj.lint_config is not None
+        assert sorted(list(lint_obj.lint_config.model_dump(exclude_none=True))) == sorted(lint_obj.lint_tests)
 
         # Try running linting and make sure that all tests are ignored
         lint_obj._lint_pipeline()
