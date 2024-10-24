@@ -130,6 +130,11 @@ jobs:
         run: |
           mv .github/.coveragerc .
 
+      - name: remove slashes from test name
+        run: |
+          test=$(echo ${{ matrix.test }} | sed 's/\//__/g')
+          echo "test=${test}" >> $GITHUB_ENV
+
       - name: Test with pytest
         run: |
           python3 -m pytest tests/${{matrix.test}} --color=yes --cov --cov-data-file=.coverage.${{ env.test }} --durations=0 && exit_code=0|| exit_code=$?
@@ -143,11 +148,6 @@ jobs:
             echo "Tests failed with exit code ${exit_code}"
             exit 1
           fi
-
-      - name: remove slashes from test name
-        run: |
-          test=$(echo ${{ matrix.test }} | sed 's/\//__/g')
-          echo "test=${test}" >> $GITHUB_ENV
 
       - name: Store snapshot report
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
