@@ -177,14 +177,14 @@ class ROCrate:
         )
 
         # add readme as description
-        readme = Path("README.md")
+        readme = self.pipeline_dir / "README.md"
 
         try:
             self.crate.description = readme.read_text()
         except FileNotFoundError:
             log.error(f"Could not find README.md in {self.pipeline_dir}")
         # get license from LICENSE file
-        license_file = Path("LICENSE")
+        license_file = self.pipeline_dir / "LICENSE"
         try:
             license = license_file.read_text()
             if license.startswith("MIT"):

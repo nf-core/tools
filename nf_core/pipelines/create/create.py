@@ -21,7 +21,7 @@ import nf_core.utils
 from nf_core.pipelines.create.utils import CreateConfig, features_yml_path, load_features_yaml
 from nf_core.pipelines.create_logo import create_logo
 from nf_core.pipelines.lint_utils import run_prettier_on_file
-from nf_core.rocrate import ROCrate
+from nf_core.pipelines.rocrate import ROCrate
 from nf_core.utils import LintConfigType, NFCoreTemplateConfig
 
 log = logging.getLogger(__name__)
