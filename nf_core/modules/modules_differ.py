@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, List, Union
 
 from rich.console import Console
+from rich.panel import Panel
 from rich.syntax import Syntax
 
 import nf_core.utils
@@ -293,7 +294,8 @@ class ModulesDiffer:
                 # The file has changed
                 log.info(f"Changes in '{Path(module, file)}':")
                 # Pretty print the diff using the pygments diff lexer
-                console.print(Syntax("".join(diff), "diff", theme="ansi_dark", padding=1))
+                syntax = Syntax("".join(diff), "diff", theme="ansi_dark", line_numbers=True)
+                console.print(Panel(syntax, title=str(file), title_align="left", padding=0))
 
     @staticmethod
     def per_file_patch(patch_fn: Union[str, Path]) -> Dict[str, List[str]]:
