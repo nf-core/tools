@@ -2,4 +2,4 @@
 omit = nf_core/*-template/*
 source = nf_core
 relative_files = True
-
+data_file = ".coverage"
