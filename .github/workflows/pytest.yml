@@ -61,7 +61,7 @@ jobs:
     name: Get test file matrix
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out source-code repository
 
       - name: List tests
@@ -87,11 +87,11 @@ jobs:
           cd pytest
           export NXF_WORK=$(pwd)
 
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out source-code repository
 
       - name: Set up Python ${{ needs.setup.outputs.python-version }}
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
         with:
           python-version: ${{ needs.setup.outputs.python-version }}
           cache: "pip"
@@ -172,9 +172,9 @@ jobs:
           mkdir -p pytest
           cd pytest
 
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Set up Python 3.12
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
         env:
           AGENT_TOOLSDIRECTORY: /opt/actions-runner/_work/tools/tools/
         with:
