@@ -17,7 +17,6 @@ from rich.progress import BarColumn, Progress
 from rocrate.model.person import Person
 from rocrate.rocrate import ROCrate as BaseROCrate
 
-from nf_core.pipelines.schema import PipelineSchema
 from nf_core.utils import Pipeline
 
 log = logging.getLogger(__name__)
@@ -81,10 +80,6 @@ class ROCrate:
         self.crate: rocrate.rocrate.ROCrate
         self.pipeline_obj = Pipeline(self.pipeline_dir)
         self.pipeline_obj._load()
-        self.pipeline_obj.schema_obj = PipelineSchema()
-        # Assume we're in a pipeline dir root if schema path not set
-        self.pipeline_obj.schema_obj.get_schema_path(self.pipeline_dir)
-        self.pipeline_obj.schema_obj.load_schema()
 
         setup_requests_cachedir()
 
