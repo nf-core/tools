@@ -284,7 +284,9 @@ class ROCrate:
         # look at git contributors for author names
         try:
             git_contributors: Set[str] = set()
-            assert self.pipeline_obj.repo is not None  # mypy
+            if self.pipeline_obj.repo is None:
+                log.info("No git repository found. No git contributors will be added as authors.")
+                return
             commits_touching_path = list(self.pipeline_obj.repo.iter_commits(paths="main.nf"))
 
             for commit in commits_touching_path:
@@ -324,7 +326,10 @@ class ROCrate:
 
         for author in named_contributors:
             log.debug(f"Adding author: {author}")
-            assert self.pipeline_obj.repo is not None  # mypy
+
+            if self.pipeline_obj.repo is None:
+                log.info("No git repository found. No git contributors will be added as authors.")
+                return
             # get email from git log
             email = self.pipeline_obj.repo.git.log(f"--author={author}", "--pretty=format:%ae", "-1")
             orcid = get_orcid(author)

@@ -432,3 +432,13 @@ seqera_platform:
     You can extend this file adding any other desired configuration.
   nfcore_pipelines: False
   custom_pipelines: True
+rocrate:
+  skippable_paths:
+    - "ro-crate-metadata.json"
+  short_description: "Add RO-Crate metadata"
+  description: "Add a RO-Crate metadata file to describe the pipeline"
+  help_text: |
+    RO-Crate is a metadata specification to describe research data and software.
+    This will add a `ro-crate-metadata.json` file to describe the pipeline.
+  nfcore_pipelines: False
+  custom_pipelines: True
