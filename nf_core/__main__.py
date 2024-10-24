@@ -771,7 +771,7 @@ def command_pipelines_schema_lint(directory, schema_file):
     """
     Check that a given pipeline schema is valid.
     """
-    pipelines_schema_lint(directory / schema_file)
+    pipelines_schema_lint(Path(directory, schema_file))
 
 
 # nf-core pipelines schema docs
@@ -818,7 +818,7 @@ def command_pipelines_schema_docs(directory, schema_file, output, format, force,
     """
     Outputs parameter documentation for a pipeline schema.
     """
-    pipelines_schema_docs(directory / schema_file, output, format, force, columns)
+    pipelines_schema_docs(Path(directory, schema_file), output, format, force, columns)
 
 
 # nf-core modules subcommands
