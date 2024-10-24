@@ -4,6 +4,7 @@
 import logging
 import os
 import sys
+from pathlib import Path
 
 import rich
 import rich.console
@@ -696,12 +697,24 @@ def pipeline_schema():
 
 # nf-core pipelines schema validate
 @pipeline_schema.command("validate")
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
 @click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
-def command_pipelines_schema_validate(pipeline, params):
+def command_pipelines_schema_validate(directory, pipeline, params):
     """
     Validate a set of parameters against a pipeline schema.
     """
+    if Path(directory, pipeline).exists():
+        # this is a local pipeline
+        pipeline = Path(directory, pipeline)
+
     pipelines_schema_validate(pipeline, params)
 
 
@@ -740,23 +753,39 @@ def command_pipelines_schema_build(directory, no_prompts, web_only, url):
 
 # nf-core pipelines schema lint
 @pipeline_schema.command("lint")
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
 @click.argument(
-    "schema_path",
+    "schema_file",
     type=click.Path(exists=True),
     default="nextflow_schema.json",
     metavar="<pipeline schema>",
 )
-def command_pipelines_schema_lint(schema_path):
+def command_pipelines_schema_lint(directory, schema_file):
     """
     Check that a given pipeline schema is valid.
     """
-    pipelines_schema_lint(schema_path)
+    pipelines_schema_lint(directory / schema_file)
 
 
 # nf-core pipelines schema docs
 @pipeline_schema.command("docs")
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
 @click.argument(
-    "schema_path",
+    "schema_file",
     type=click.Path(exists=True),
     default="nextflow_schema.json",
     required=False,
@@ -785,11 +814,11 @@ def command_pipelines_schema_lint(schema_path):
     help="CSV list of columns to include in the parameter tables (parameter,description,type,default,required,hidden)",
     default="parameter,description,type,default,required,hidden",
 )
-def command_pipelines_schema_docs(schema_path, output, format, force, columns):
+def command_pipelines_schema_docs(directory, schema_file, output, format, force, columns):
     """
     Outputs parameter documentation for a pipeline schema.
     """
-    pipelines_schema_docs(schema_path, output, format, force, columns)
+    pipelines_schema_docs(directory / schema_file, output, format, force, columns)
 
 
 # nf-core modules subcommands
