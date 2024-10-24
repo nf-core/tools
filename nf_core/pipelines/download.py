@@ -1354,9 +1354,10 @@ class DownloadWorkflow:
                 log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
                 progress.update(task, description="Copying from cache to target directory")
                 shutil.copyfile(cache_path, out_path)
+                self.symlink_singularity_images(cache_path)  # symlinks inside the cache directory
 
             # Create symlinks to ensure that the images are found even with different registries being used.
-            self.symlink_singularity_images(output_path)
+            self.symlink_singularity_images(out_path)
 
             progress.remove_task(task)
 
@@ -1465,9 +1466,10 @@ class DownloadWorkflow:
             log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
             progress.update(task, current_log="Copying from cache to target directory")
             shutil.copyfile(cache_path, out_path)
+            self.symlink_singularity_images(cache_path)  # symlinks inside the cache directory
 
         # Create symlinks to ensure that the images are found even with different registries being used.
-        self.symlink_singularity_images(output_path)
+        self.symlink_singularity_images(out_path)
 
         progress.remove_task(task)
 
