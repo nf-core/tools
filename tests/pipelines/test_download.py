@@ -273,6 +273,60 @@ class DownloadTest(unittest.TestCase):
         assert "community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264" in download_obj.containers
 
     #
+    # Test for 'prioritize_direct_download'
+    #
+    @with_temporary_folder
+    def test_prioritize_direct_download(self, tmp_path):
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
+
+        # tests deduplication and https priority as well as Seqera Container exception
+
+        test_container = [
+            "https://depot.galaxyproject.org/singularity/ubuntu:22.04",
+            "nf-core/ubuntu:22.04",
+            "biocontainers/umi-transfer:1.5.0--h715e4b3_0",
+            "https://depot.galaxyproject.org/singularity/umi-transfer:1.5.0--h715e4b3_0",
+            "biocontainers/umi-transfer:1.5.0--h715e4b3_0",
+            "quay.io/nf-core/sortmerna:4.3.7--6502243397c065ba",
+            "nf-core/sortmerna:4.3.7--6502243397c065ba",
+            "https://depot.galaxyproject.org/singularity/sortmerna:4.3.7--hdbdd923_1",
+            "https://depot.galaxyproject.org/singularity/sortmerna:4.3.7--hdbdd923_0",
+            "https://depot.galaxyproject.org/singularity/sortmerna:4.2.0--h9ee0642_1",
+            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data",
+            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data",
+        ]
+
+        result = download_obj.prioritize_direct_download(test_container)
+
+        # Verify that the priority works for regular https downloads (https encountered first)
+        assert "https://depot.galaxyproject.org/singularity/ubuntu:22.04" in result
+        assert "nf-core/ubuntu:22.04" not in result
+
+        # Verify that the priority works for regular https downloads (https encountered second)
+        assert "biocontainers/umi-transfer:1.5.0--h715e4b3_0" not in result
+        assert "https://depot.galaxyproject.org/singularity/umi-transfer:1.5.0--h715e4b3_0" in result
+
+        # Verify that the priority works for images with and without explicit registry
+        # No priority here, though - the first is retained.
+        assert "nf-core/sortmerna:4.3.7--6502243397c065ba" in result
+        assert "quay.io/nf-core/sortmerna:4.3.7--6502243397c065ba" not in result
+
+        # Verify that different versions of the same tool and different build numbers are retained
+        assert "https://depot.galaxyproject.org/singularity/sortmerna:4.3.7--hdbdd923_1" in result
+        assert "https://depot.galaxyproject.org/singularity/sortmerna:4.3.7--hdbdd923_0" in result
+        assert "https://depot.galaxyproject.org/singularity/sortmerna:4.2.0--h9ee0642_1" in result
+
+        # Verify that Seqera containers are not deduplicated
+        assert (
+            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data"
+            in result
+        )
+        assert (
+            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
+            in result
+        )
+
+    #
     # Tests for 'singularity_pull_image'
     #
     # If Singularity is installed, but the container can't be accessed because it does not exist or there are access

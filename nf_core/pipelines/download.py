@@ -970,7 +970,7 @@ class DownloadWorkflow:
         """
         return self.prioritize_direct_download(cleaned_matches)
 
-    def prioritize_direct_download(self, container_list):
+    def prioritize_direct_download(self, container_list: List[str]) -> List[str]:
         """
         Helper function that takes a list of container images (URLs and Docker URIs),
         eliminates all Docker URIs for which also a URL is contained and returns the
@@ -993,13 +993,31 @@ class DownloadWorkflow:
         we want to keep it and not replace with with whatever we have now (which might be the Docker URI).
 
         A regex that matches http, r"^$|^http" could thus be used to prioritize the Docker URIs over http Downloads
+
+        We also need to handle a special case: The https:// Singularity downloads from Seqera Containers all end in 'data', although
+        they are not equivalent:
+
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data'
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data'
+
         """
-        d = {}
+        d: dict[str, str] = {}
+        seqera_containers: list[str] = []
+        all_others: list[str] = []
+
         for c in container_list:
+            if bool(re.search(r"/data$", c)):
+                seqera_containers.append(c)
+            else:
+                all_others.append(c)
+
+        for c in all_others:
             if re.match(r"^$|(?!^http)", d.get(k := re.sub(".*/(.*)", "\\1", c), "")):
                 log.debug(f"{c} matches and will be saved as {k}")
                 d[k] = c
-        return sorted(list(d.values()))
+
+        # combine deduplicated others and Seqera containers
+        return sorted(list(d.values()) + seqera_containers)
 
     def gather_registries(self, workflow_directory: str) -> None:
         """Fetch the registries from the pipeline config and CLI arguments and store them in a set.
