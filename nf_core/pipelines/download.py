@@ -995,15 +995,15 @@ class DownloadWorkflow:
         A regex that matches http, r"^$|^http" could thus be used to prioritize the Docker URIs over http Downloads
 
         We also need to handle a special case: The https:// Singularity downloads from Seqera Containers all end in 'data', although
-        they are not equivalent:
+        they are not equivalent, e.g.:
 
         'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data'
         'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data'
 
         """
-        d: dict[str, str] = {}
-        seqera_containers: list[str] = []
-        all_others: list[str] = []
+        d: Dict[str, str] = {}
+        seqera_containers: List[str] = []
+        all_others: List[str] = []
 
         for c in container_list:
             if bool(re.search(r"/data$", c)):
