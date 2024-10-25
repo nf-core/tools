@@ -301,7 +301,7 @@ class ModulesDiffer:
             console.print(
                 Panel(
                     Group(*panel_group),
-                    title=str(module),
+                    title=f"[white]{str(module)}[/white]",
                     title_align="left",
                     padding=0,
                     border_style="blue",
