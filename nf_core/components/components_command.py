@@ -71,6 +71,10 @@ class ComponentCommand:
         """
         local_component_dir = Path(self.directory, self.component_type, "local")
         return [
+            str(Path(directory).relative_to(local_component_dir))
+            for directory, _, files in os.walk(local_component_dir)
+            if "main.nf" in files
+        ] + [
             str(path.relative_to(local_component_dir)) for path in local_component_dir.iterdir() if path.suffix == ".nf"
         ]
 
