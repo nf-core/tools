@@ -8,6 +8,8 @@
 
 ### Modules
 
+- feat(1929): Make local modules use remote structure ([#3256](https://github.com/nf-core/tools/pull/3256))
+
 ### Subworkflows
 
 ### General
