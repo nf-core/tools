@@ -23,7 +23,8 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
 
     Additionally, checks that all included components in test ``main.nf`` are specified in ``test.yml``
     """
-
+    if subworkflow.nftest_testdir is None or subworkflow.nftest_main_nf is None:
+        raise ValueError()
     repo_dir = subworkflow.component_dir.parts[
         : subworkflow.component_dir.parts.index(subworkflow.component_name.split("/")[0])
     ][-1]

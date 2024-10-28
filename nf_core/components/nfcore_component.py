@@ -74,8 +74,8 @@ class NFCoreComponent:
             repo_dir = self.component_dir.parts[:name_index][-1]
 
             self.org = repo_dir
-            self.nftest_testdir = Path(self.component_dir, "tests")
-            self.nftest_main_nf = Path(self.nftest_testdir, "main.nf.test")
+            self.nftest_testdir: Optional[Path] = Path(self.component_dir, "tests")
+            self.nftest_main_nf: Optional[Path] = Path(self.nftest_testdir, "main.nf.test")
 
             if self.repo_type == "pipeline":
                 patch_fn = f"{self.component_name.replace('/', '-')}.diff"
@@ -85,15 +85,22 @@ class NFCoreComponent:
                     self.patch_path = patch_path
         else:
             # The main file is just the local module
-            self.main_nf = self.component_dir
-            self.component_name = self.component_dir.stem
-            # These attributes are only used by nf-core modules
-            # so just initialize them to None
-            self.meta_yml = None
-            self.environment_yml = None
-            self.test_dir = None
-            self.test_yml = None
-            self.test_main_nf = None
+            if self.component_dir.is_dir():
+                self.main_nf = Path(self.component_dir, "main.nf")
+                self.component_name = self.component_dir.stem
+                # These attributes are only required by nf-core modules
+                # so just set them to None if they don't exist
+                self.meta_yml = p if (p := Path(self.component_dir, "meta.yml")).exists() else None
+                self.environment_yml = p if (p := Path(self.component_dir, "environment.yml")).exists() else None
+                self.nftest_testdir = p if (p := Path(self.component_dir, "tests")).exists() else None
+                if self.nftest_testdir is not None:
+                    self.nftest_main_nf = p if (p := Path(self.nftest_testdir, "main.nf.test")).exists() else None
+            else:
+                self.main_nf = self.component_dir
+                self.meta_yml = None
+                self.environment_yml = None
+                self.nftest_testdir = None
+                self.nftest_main_nf = None
 
         self.process_name: str = self._get_process_name()
 
