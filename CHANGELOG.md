@@ -18,8 +18,11 @@
 ### Modules
 
 - add a panel around diff previews when updating ([#3246](https://github.com/nf-core/tools/pull/3246))
+- Modules created in pipelines "local" dir now use the full template ([#3256](https://github.com/nf-core/tools/pull/3256))
 
 ### Subworkflows
+
+- Subworkflows created in pipelines "local" dir now use the full template ([#3256](https://github.com/nf-core/tools/pull/3256))
 
 ### General
 
@@ -33,7 +36,6 @@
 - Update GitHub Actions ([#3237](https://github.com/nf-core/tools/pull/3237))
 - add `--dir/-d` option to schema commands ([#3247](https://github.com/nf-core/tools/pull/3247))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.1 ([#3250](https://github.com/nf-core/tools/pull/3250))
-- fix(1929): more type-gating ([#3256](https://github.com/nf-core/tools/pull/3256))
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 

@@ -12,7 +12,7 @@ from nf_core.utils import custom_yaml_dumper
 log = logging.getLogger(__name__)
 
 
-def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None:
+def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
     """
     Lint an ``environment.yml`` file.
 
@@ -23,6 +23,15 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent) 
     env_yml = None
     #  load the environment.yml file
     if module.environment_yml is None:
+        if allow_missing:
+            module.warned.append(
+                (
+                    "environment_yml_exists",
+                    "Module's `environment.yml` does not exist",
+                    Path(module.component_dir, "environment.yml"),
+                ),
+            )
+            return
         raise LintExceptionError("Module does not have an `environment.yml` file")
     try:
         with open(module.environment_yml) as fh:
