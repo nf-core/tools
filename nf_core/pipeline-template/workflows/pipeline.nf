@@ -11,6 +11,7 @@
 {% if multiqc %}include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'{% endif %}
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 {% if citations or multiqc %}include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'{% endif %}
+{% if downstream_samplesheet %}include { GENERATE_DOWNSTREAM_SAMPLESHEETS } from '../subworkflows/local/generate_downstream_samplesheets'{% endif %}
 {%- endif %}
 
 /*
@@ -40,6 +41,16 @@ workflow {{ short_name|upper }} {
     {% if multiqc %}ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}){% endif %}
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
     {%- endif %}
+
+
+    {% if downstream_samplesheet %}
+    //
+    // SUBWORKFLOW: Generate downstream samplesheets
+    //
+    GENERATE_DOWNSTREAM_SAMPLESHEETS(
+        ch_samplesheet
+    )
+    {% endif %}
 
     //
     // Collate and save software versions

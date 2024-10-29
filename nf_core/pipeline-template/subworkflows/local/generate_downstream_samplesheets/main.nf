@@ -1,39 +1,49 @@
-//
-// Subworkflow with functionality specific to the nf-core/createtaxdb pipeline
-//
+
+
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    SUBWORKFLOW SPECIFIC FOR RNASEQ
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 
 workflow SAMPLESHEET_RNASEQ {
     take:
     ch_reads
+    format
 
     main:
-    format = 'csv'
 
-    ch_list_for_samplesheet = ch_reads.map { meta, db ->
-        def tool = meta.tool
-        def db_name = meta.id + '-' + meta.tool
-        def db_params = ""
-        def db_type = ""
-        def db_path = file(params.outdir).toString() + '/' + meta.tool + '/' + db.getName()
-        [tool: tool, db_name: db_name, db_params: db_params, db_type: db_type, db_path: db_path]
+    ch_list_for_samplesheet = ch_reads.map { meta, reads ->
+        def out_path     = file(params.outdir).toString() + '/relative/custom/path/'
+        def sample       = meta.id
+        def fastq_1      = meta.single_end  ? out_path + reads.getName() : out_path + reads[0].getName()
+        def fastq_2      = !meta.single_end ? out_path + reads[1].getName() : ""
+        def strandedness = "auto"
+        [sample: sample, fastq_1: fastq_1, fastq_2: fastq_2, strandedness: strandedness]
     }
 
-    if (params.build_bracken && params.build_kraken2) {
-        log.warn("Generated nf-core/taxprofiler samplesheet will only have a row for bracken. If Kraken2 is wished to be executed separately, duplicate row and update tool column to Kraken2!")
-    }
-
-    channelToSamplesheet(ch_list_for_samplesheet, "${params.outdir}/downstream_samplesheets/databases-taxprofiler", format)
+    channelToSamplesheet(ch_list_for_samplesheet, "${params.outdir}/downstream_samplesheets/rnaseq", format)
 }
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    SUBWORKFLOW CALLING PIPELINE SPECIFIC SAMPLESHEET GENERATION
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 
 workflow GENERATE_DOWNSTREAM_SAMPLESHEETS {
     take:
-    ch_databases
+    ch_reads
 
     main:
     def downstreampipeline_names = params.generate_pipeline_samplesheets.split(",")
 
-    if (downstreampipeline_names.contains('taxprofiler')) {
-        SAMPLESHEET_TAXPROFILER(ch_databases)
+    if (downstreampipeline_names.contains('rnaseq')) {
+        SAMPLESHEET_RNASEQ(
+            ch_reads,
+            params.generate_pipeline_samplesheets_format
+        )
     }
 }
 

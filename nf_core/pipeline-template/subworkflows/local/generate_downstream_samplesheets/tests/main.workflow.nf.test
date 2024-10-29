@@ -1,0 +1,43 @@
+nextflow_workflow {
+
+    name "Test Workflow GENERATE_DOWNSTREAM_SAMPLESHEETS"
+    script "../main.nf"
+    workflow "GENERATE_DOWNSTREAM_SAMPLESHEETS"
+    tag 'subworkflows'
+    tag 'generate_downstream_samplesheets'
+    tag 'subworkflows/generated_downstream_samplesheets'
+
+    test("Test worfklow rnaseq") {
+        when {
+            params {
+                outdir                                = "."
+                generate_pipeline_samplesheets        = 'rnaseq'
+                generate_pipeline_samplesheets_format = 'csv'
+            }
+            workflow {
+                """
+                input[0] = Channel.of(
+                    [
+                        [id: 'test-pe', single_end: false, reads: ['test_1.fastq.gz', 'test_2.fastq.gz']]
+                    ],
+                    [
+                        [id: 'test-se', single_end: true, reads: ['test_1.fastq.gz']]
+                    ]
+                )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    [
+                        "${params.outdir}/downstream_samplesheets/rnaseq.csv"
+                    ]).match()
+                }
+            )
+        }
+    }
+
+}
