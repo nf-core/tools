@@ -27,7 +27,7 @@ nextflow_function {
                         fastq_1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz',
                         fastq_2: '',
                         strandedness: 'auto']
-                    ]
+                    ])
                 input[1] = "$outputDir/test.csv"
                 input[2] = "csv"
                 """
@@ -62,7 +62,7 @@ nextflow_function {
                         fastq_1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz',
                         fastq_2: '',
                         strandedness: 'auto']
-                    ]
+                    ])
                 input[1] = "$outputDir/test.tsv"
                 input[2] = "tsv"
                 """

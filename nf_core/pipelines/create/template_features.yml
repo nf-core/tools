@@ -281,7 +281,7 @@ modules:
   custom_pipelines: True
 downstream_samplesheet:
   skippable_paths:
-    - "subworkflows/local/generate_downstream_samplesheets/"
+    - "subworkflows/local/generate_downstream_samplesheets"
   short_description: "Include a subworkflow to generate downstream samplesheets"
   description: "The pipeline will include the generate_downstream_samplesheets subworkflow for the generation of a samplesheet for other downstream pipelines."
   help_text: |
