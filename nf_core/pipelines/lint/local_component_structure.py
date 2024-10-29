@@ -18,14 +18,21 @@ def local_component_structure(self):
 
         modules/local/modules/TOOL_SUBTOOL.nf
     """
-    warned = []
+    warned_mods = []
     for nf_file in Path(self.wf_path, "modules", "local").glob("*.nf"):
-        warned.append(f"{nf_file.name} in modules/local should be moved to a TOOL/SUBTOOL/main.nf structure")
-    for nf_file in Path(self.wf_path, "subworkflows", "local").glob("*.nf"):
-        warned.append(f"{nf_file.name} in subworkflows/local should be moved to a SUBWORKFLOW_NAME/main.nf structure")
-
+        warned_mods.append(f"{nf_file.name} in modules/local should be moved to a TOOL/SUBTOOL/main.nf structure")
     # If there are modules installed in the wrong location
     passed = []
-    if len(warned) == 0:
-        passed = ["modules directory structure is correct 'modules/nf-core/TOOL/SUBTOOL'"]
-    return {"passed": passed, "warned": warned, "failed": [], "ignored": []}
+    if len(warned_mods) == 0:
+        passed = ["local modules directory structure is correct 'modules/local/TOOL/SUBTOOL'"]
+
+    warned_swfs = []
+    for nf_file in Path(self.wf_path, "subworkflows", "local").glob("*.nf"):
+        warned_swfs.append(
+            f"{nf_file.name} in subworkflows/local should be moved to a SUBWORKFLOW_NAME/main.nf structure"
+        )
+
+    if len(warned_swfs) == 0:
+        passed = ["local subworkflows directory structure is correct 'subworkflows/local/TOOL/SUBTOOL'"]
+
+    return {"passed": passed, "warned": warned_mods + warned_swfs, "failed": [], "ignored": []}
