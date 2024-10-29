@@ -117,7 +117,7 @@ class ModuleLint(ComponentLint):
         """
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for module or all
-        if module is None and not all_modules and len(self.all_remote_components) > 0:
+        if module is None and not (local or all_modules) and len(self.all_remote_components) > 0:
             questions = [
                 {
                     "type": "list",
@@ -257,7 +257,6 @@ class ModuleLint(ComponentLint):
                 self.warned += warned
             else:
                 self.failed += warned
-            self.failed += [LintResult(mod, *m) for m in mod.failed]
 
         # Otherwise run all the lint tests
         else:

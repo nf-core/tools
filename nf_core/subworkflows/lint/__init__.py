@@ -99,7 +99,7 @@ class SubworkflowLint(ComponentLint):
         """
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for subworkflow or all
-        if subworkflow is None and not all_subworkflows:
+        if subworkflow is None and not (local or all_subworkflows):
             questions = [
                 {
                     "type": "list",

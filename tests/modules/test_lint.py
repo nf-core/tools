@@ -767,7 +767,7 @@ class TestModulesLint(TestModules):
         local = Path(self.pipeline_dir, "modules", "local", "trimgalore")
         shutil.move(installed, local)
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
-        module_lint.lint(print_results=False, local=True, all_modules=True)
+        module_lint.lint(print_results=False, local=True)
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
@@ -780,7 +780,7 @@ class TestModulesLint(TestModules):
         Path(self.pipeline_dir, "modules", "local", "trimgalore", "environment.yml").unlink()
         Path(self.pipeline_dir, "modules", "local", "trimgalore", "meta.yml").unlink()
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
-        module_lint.lint(print_results=False, local=True, all_modules=True)
+        module_lint.lint(print_results=False, local=True)
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
@@ -796,7 +796,7 @@ class TestModulesLint(TestModules):
         shutil.copy(installed, local)
         self.mods_remove.remove("trimgalore", force=True)
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
-        module_lint.lint(print_results=False, local=True, all_modules=True)
+        module_lint.lint(print_results=False, local=True)
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
