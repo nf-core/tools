@@ -8,6 +8,7 @@
 - Fix Manifest DOI text ([#3224](https://github.com/nf-core/tools/pull/3224))
 - Do not assume pipeline name is url ([#3225](https://github.com/nf-core/tools/pull/3225))
 - fix worklfow_dispatch trigger and parse more review comments in awsfulltest ([#3235](https://github.com/nf-core/tools/pull/3235))
+- Add `linkify` as an explicit dependency, to avoid it from being absent in the bioconda build. ([#3260](https://github.com/nf-core/tools/pull/3260)).
 
 ### Download
 
