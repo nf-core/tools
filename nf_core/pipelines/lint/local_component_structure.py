@@ -12,7 +12,7 @@ def local_component_structure(self):
 
         modules/local/TOOL/SUBTOOL
 
-    Prior to nf-core/tools release 3.0.3 the directory structure allowed top-level `*.nf` files:
+    Prior to nf-core/tools release 3.1.0 the directory structure allowed top-level `*.nf` files:
 
     .. code-block:: bash
 
@@ -22,7 +22,7 @@ def local_component_structure(self):
     for nf_file in Path(self.wf_path, "modules", "local").glob("*.nf"):
         warned.append(f"{nf_file.name} in modules/local should be moved to a TOOL/SUBTOOL/main.nf structure")
     for nf_file in Path(self.wf_path, "subworkflows", "local").glob("*.nf"):
-        warned.append(f"{nf_file.name} in subworkflows/local should be moved to a TOOL/SUBTOOL/main.nf structure")
+        warned.append(f"{nf_file.name} in subworkflows/local should be moved to a SUBWORKFLOW_NAME/main.nf structure")
 
     # If there are modules installed in the wrong location
     passed = []
