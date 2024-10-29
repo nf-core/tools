@@ -13,7 +13,7 @@ from nf_core.components.nfcore_component import NFCoreComponent
 log = logging.getLogger(__name__)
 
 
-def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None:
+def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
     """
     Lint a ``meta.yml`` file
 
@@ -42,7 +42,13 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
         module (NFCoreComponent): The module to lint
 
     """
-
+    if module.meta_yml is None:
+        if allow_missing:
+            module.warned.append(
+                ("meta_yml_exists", "Module `meta.yml` does not exist", Path(module.component_dir, "meta.yml"))
+            )
+            return
+        raise LintExceptionError("Module does not have a `meta.yml` file")
     # Check if we have a patch file, get original file in that case
     meta_yaml = read_meta_yml(module_lint_object, module)
     if module.is_patched and module_lint_object.modules_repo.repo_path is not None:
@@ -57,8 +63,6 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
         if lines is not None:
             yaml = ruamel.yaml.YAML()
             meta_yaml = yaml.safe_load("".join(lines))
-    if module.meta_yml is None:
-        raise LintExceptionError("Module does not have a `meta.yml` file")
     if meta_yaml is None:
         module.failed.append(("meta_yml_exists", "Module `meta.yml` does not exist", module.meta_yml))
         return
