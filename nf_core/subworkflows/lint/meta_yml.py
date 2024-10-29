@@ -6,11 +6,12 @@ import jsonschema.validators
 import yaml
 
 import nf_core.components.components_utils
+from nf_core.components.lint import LintExceptionError
 
 log = logging.getLogger(__name__)
 
 
-def meta_yml(subworkflow_lint_object, subworkflow):
+def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
     """
     Lint a ``meta.yml`` file
 
@@ -28,6 +29,18 @@ def meta_yml(subworkflow_lint_object, subworkflow):
 
     """
     # Read the meta.yml file
+    if subworkflow.meta_yml is None:
+        if allow_missing:
+            subworkflow.warned.append(
+                (
+                    "meta_yml_exists",
+                    "Subworkflow `meta.yml` does not exist",
+                    Path(subworkflow.component_dir, "meta.yml"),
+                )
+            )
+            return
+        raise LintExceptionError("Subworkflow does not have a `meta.yml` file")
+
     try:
         with open(subworkflow.meta_yml) as fh:
             meta_yaml = yaml.safe_load(fh)
@@ -49,7 +62,7 @@ def meta_yml(subworkflow_lint_object, subworkflow):
         if len(e.path) > 0:
             hint = f"\nCheck the entry for `{e.path[0]}`."
         if e.message.startswith("None is not of type 'object'") and len(e.path) > 2:
-            hint = f"\nCheck that the child entries of {e.path[0]+'.'+e.path[2]} are indented correctly."
+            hint = f"\nCheck that the child entries of {e.path[0]}.{e.path[2]} are indented correctly."
         subworkflow.failed.append(
             (
                 "meta_yml_valid",
@@ -96,10 +109,9 @@ def meta_yml(subworkflow_lint_object, subworkflow):
             )
 
         # confirm that all included components in ``main.nf`` are specified in ``meta.yml``
-        included_components = nf_core.components.components_utils.get_components_to_install(subworkflow.component_dir)
-        included_components = (
-            included_components[0] + included_components[1]
-        )  # join included modules and included subworkflows in a single list
+        included_components_ = nf_core.components.components_utils.get_components_to_install(subworkflow.component_dir)
+        included_components = included_components_[0] + included_components_[1]
+        # join included modules and included subworkflows in a single list
         if "components" in meta_yaml:
             meta_components = [x for x in meta_yaml["components"]]
             for component in set(included_components):
