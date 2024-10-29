@@ -152,7 +152,7 @@ class SubworkflowLint(ComponentLint):
             self.lint_subworkflows(local_subworkflows, registry=registry, local=True)
 
         # Lint nf-core subworkflows
-        if len(remote_subworkflows) > 0:
+        if not local and len(remote_subworkflows) > 0:
             self.lint_subworkflows(remote_subworkflows, registry=registry, local=False)
 
         if print_results:
@@ -208,6 +208,7 @@ class SubworkflowLint(ComponentLint):
         # Only check the main script in case of a local subworkflow
         if local:
             self.main_nf(swf)
+            self.meta_yml(swf, allow_missing=True)
             self.passed += [LintResult(swf, *s) for s in swf.passed]
             warned = [LintResult(swf, *m) for m in (swf.warned + swf.failed)]
             if not self.fail_warned:

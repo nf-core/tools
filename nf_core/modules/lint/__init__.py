@@ -170,7 +170,7 @@ class ModuleLint(ComponentLint):
             self.lint_modules(local_modules, registry=registry, local=True, fix_version=fix_version)
 
         # Lint nf-core modules
-        if len(remote_modules) > 0:
+        if not local and len(remote_modules) > 0:
             self.lint_modules(remote_modules, registry=registry, local=False, fix_version=fix_version)
 
         if print_results:
@@ -248,9 +248,8 @@ class ModuleLint(ComponentLint):
                 elif test_name in ["meta_yml", "environment_yml"]:
                     # Allow files to be missing for local
                     getattr(self, test_name)(mod, allow_missing=True)
-            """
-            self.main_nf(mod, fix_version, self.registry, progress_bar)
-            """
+                else:
+                    getattr(self, test_name)(mod)
 
             self.passed += [LintResult(mod, *m) for m in mod.passed]
             warned = [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
