@@ -47,9 +47,11 @@ workflow {{ short_name|upper }} {
     //
     // SUBWORKFLOW: Generate downstream samplesheets
     //
-    GENERATE_DOWNSTREAM_SAMPLESHEETS(
-        ch_samplesheet
-    )
+    if (params.generate_downstream_samplesheets) {
+        GENERATE_DOWNSTREAM_SAMPLESHEETS(
+            ch_samplesheet
+        )
+    }
     {% endif %}
 
     //
