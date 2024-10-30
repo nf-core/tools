@@ -1,0 +1,26 @@
+{
+    "Test Function channelToSamplesheet - tsv": {
+        "content": [
+            {
+                
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.1",
+            "nextflow": "24.10.0"
+        },
+        "timestamp": "2024-10-30T10:06:13.403158303"
+    },
+    "Test Function channelToSamplesheet - csv": {
+        "content": [
+            {
+                
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.1",
+            "nextflow": "24.10.0"
+        },
+        "timestamp": "2024-10-30T10:06:02.487840724"
+    }
+}

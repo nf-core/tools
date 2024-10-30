@@ -7,6 +7,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+// TODO: Update the following workflow to a specific pipeline
 workflow SAMPLESHEET_RNASEQ {
     take:
     ch_reads
@@ -34,19 +35,21 @@ workflow SAMPLESHEET_RNASEQ {
 
 workflow GENERATE_DOWNSTREAM_SAMPLESHEETS {
     take:
-    ch_reads
+    input
 
     main:
     def downstreampipeline_names = params.generate_pipeline_samplesheets.split(",")
 
+    // TODO: Add more pipelines here
     if (downstreampipeline_names.contains('rnaseq')) {
         SAMPLESHEET_RNASEQ(
-            ch_reads,
+            input,
             params.generate_pipeline_samplesheets_format
         )
     }
 }
 
+// Input can be any channel with a dictionary
 def channelToSamplesheet(ch_list_for_samplesheet, path, format) {
     def format_sep = [csv: ",", tsv: "\t", txt: "\t"][format]
 

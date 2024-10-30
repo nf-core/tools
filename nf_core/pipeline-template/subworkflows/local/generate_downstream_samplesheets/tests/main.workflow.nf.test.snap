@@ -1,0 +1,14 @@
+{
+    "Test worfklow rnaseq": {
+        "content": [
+            [
+                "./downstream_samplesheets/rnaseq.csv"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.1",
+            "nextflow": "24.10.0"
+        },
+        "timestamp": "2024-10-30T09:34:46.912767154"
+    }
+}

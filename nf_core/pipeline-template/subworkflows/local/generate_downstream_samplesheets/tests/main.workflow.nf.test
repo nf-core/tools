@@ -18,10 +18,12 @@ nextflow_workflow {
                 """
                 input[0] = Channel.of(
                     [
-                        [id: 'test-pe', single_end: false, reads: ['test_1.fastq.gz', 'test_2.fastq.gz']]
+                        [ id:'test', single_end:false ],
+                        [file('test_1.fastq.gz', checkIfExists: false), file('test_2.fastq.gz', checkIfExists: false)]
                     ],
                     [
-                        [id: 'test-se', single_end: true, reads: ['test_1.fastq.gz']]
+                        [id: 'test-se', single_end: true],
+                        file('test_1.fastq.gz', checkIfExists: false)
                     ]
                 )
                 """
