@@ -209,6 +209,7 @@ class SubworkflowLint(ComponentLint):
         if local:
             self.main_nf(swf)
             self.meta_yml(swf, allow_missing=True)
+            self.subworkflow_todos(swf)
             self.passed += [LintResult(swf, *s) for s in swf.passed]
             warned = [LintResult(swf, *m) for m in (swf.warned + swf.failed)]
             if not self.fail_warned:
