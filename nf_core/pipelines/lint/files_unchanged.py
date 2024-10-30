@@ -6,9 +6,9 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Union
 
-import yaml
-
 import nf_core.pipelines.create.create
+import nf_core.utils
+from nf_core.pipelines.create.utils import CreateConfig
 
 log = logging.getLogger(__name__)
 
@@ -115,22 +115,16 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     tmp_dir = Path(tempfile.TemporaryDirectory().name)
     tmp_dir.mkdir(parents=True)
 
-    # Create a template.yaml file for the pipeline creation
-    template_yaml = {
-        "name": short_name,
-        "description": self.nf_config["manifest.description"].strip("\"'"),
-        "author": self.nf_config["manifest.author"].strip("\"'"),
-        "org": prefix,
-    }
+    _, config_yml = nf_core.utils.load_tools_config(self.wf_path)
 
-    template_yaml_path = Path(tmp_dir, "template.yaml")
-
-    with open(template_yaml_path, "w") as fh:
-        yaml.dump(template_yaml, fh, default_flow_style=False)
+    if config_yml is not None and getattr(config_yml, "template", None) is not None:
+        template_config = CreateConfig(**config_yml["template"].model_dump())
+    else:
+        raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
 
     test_pipeline_dir = Path(tmp_dir, f"{prefix}-{short_name}")
     create_obj = nf_core.pipelines.create.create.PipelineCreate(
-        None, None, None, no_git=True, outdir=test_pipeline_dir, template_config=template_yaml_path
+        None, None, None, no_git=True, outdir=test_pipeline_dir, template_config=template_config
     )
     create_obj.init_pipeline()
 
