@@ -7,8 +7,9 @@
 - Keep pipeline name in version.yml file ([#3223](https://github.com/nf-core/tools/pull/3223))
 - Fix Manifest DOI text ([#3224](https://github.com/nf-core/tools/pull/3224))
 - Do not assume pipeline name is url ([#3225](https://github.com/nf-core/tools/pull/3225))
-- fix worklfow_dispatch trigger and parse more review comments in awsfulltest ([#3235](https://github.com/nf-core/tools/pull/3235))
+- fix workflow_dispatch trigger and parse more review comments in awsfulltest ([#3235](https://github.com/nf-core/tools/pull/3235))
 - Add resource limits to Gitpod profile([#3255](https://github.com/nf-core/tools/pull/3255))
+- Fix a typo ([#3268](https://github.com/nf-core/tools/pull/3268))
 
 ### Download
 
