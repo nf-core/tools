@@ -285,9 +285,9 @@ downstream_samplesheet:
   short_description: "Generate downstream samplesheets"
   description: "The pipeline will include the generate_downstream_samplesheets subworkflow for the generation of a samplesheet for other downstream pipelines."
   help_text: |
-    The pipeline will include the generate_downstream_samplesheets subworkflow.
+    The pipeline will include the `GENERATE_DOWNSTREAM_SAMPLESHEETS` subworkflow.
 
-    The subworkflow generate_downstream_samplesheets provides a base template for generating samplesheets by taking a specified input channel of i.e. reads or fasta extracts its metadata for generating samplesheets.
+    The subworkflow `GENERATE_DOWNSTREAM_SAMPLESHEETS` provides a base template for generating samplesheets by taking a specified input channel of reads or fasta and extracts its metadata for generating samplesheets.
   nfcore_pipelines: True
   custom_pipelines: True
 changelog:
