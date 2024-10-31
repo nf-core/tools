@@ -970,7 +970,7 @@ class DownloadWorkflow:
         """
         return self.prioritize_direct_download(cleaned_matches)
 
-    def prioritize_direct_download(self, container_list):
+    def prioritize_direct_download(self, container_list: List[str]) -> List[str]:
         """
         Helper function that takes a list of container images (URLs and Docker URIs),
         eliminates all Docker URIs for which also a URL is contained and returns the
@@ -993,13 +993,31 @@ class DownloadWorkflow:
         we want to keep it and not replace with with whatever we have now (which might be the Docker URI).
 
         A regex that matches http, r"^$|^http" could thus be used to prioritize the Docker URIs over http Downloads
+
+        We also need to handle a special case: The https:// Singularity downloads from Seqera Containers all end in 'data', although
+        they are not equivalent, e.g.:
+
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data'
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data'
+
         """
-        d = {}
+        d: Dict[str, str] = {}
+        seqera_containers: List[str] = []
+        all_others: List[str] = []
+
         for c in container_list:
+            if bool(re.search(r"/data$", c)):
+                seqera_containers.append(c)
+            else:
+                all_others.append(c)
+
+        for c in all_others:
             if re.match(r"^$|(?!^http)", d.get(k := re.sub(".*/(.*)", "\\1", c), "")):
                 log.debug(f"{c} matches and will be saved as {k}")
                 d[k] = c
-        return sorted(list(d.values()))
+
+        # combine deduplicated others and Seqera containers
+        return sorted(list(d.values()) + seqera_containers)
 
     def gather_registries(self, workflow_directory: str) -> None:
         """Fetch the registries from the pipeline config and CLI arguments and store them in a set.
@@ -1023,7 +1041,13 @@ class DownloadWorkflow:
                 self.registry_set.add(self.nf_config[registry])
 
         # add depot.galaxyproject.org to the set, because it is the default registry for singularity hardcoded in modules
-        self.registry_set.add("depot.galaxyproject.org")
+        self.registry_set.add("depot.galaxyproject.org/singularity")
+
+        # add community.wave.seqera.io/library to the set to support the new Seqera Docker container registry
+        self.registry_set.add("community.wave.seqera.io/library")
+
+        # add chttps://community-cr-prod.seqera.io/docker/registry/v2/ to the set to support the new Seqera Singularity container registry
+        self.registry_set.add("community-cr-prod.seqera.io/docker/registry/v2")
 
     def symlink_singularity_images(self, image_out_path: str) -> None:
         """Create a symlink for each registry in the registry set that points to the image.
@@ -1040,10 +1064,13 @@ class DownloadWorkflow:
 
         if self.registry_set:
             # Create a regex pattern from the set, in case trimming is needed.
-            trim_pattern = "|".join(f"^{re.escape(registry)}-?" for registry in self.registry_set)
+            trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in self.registry_set)
 
             for registry in self.registry_set:
-                if not os.path.basename(image_out_path).startswith(registry):
+                # Nextflow will convert it like this as well, so we need it mimic its behavior
+                registry = registry.replace("/", "-")
+
+                if not bool(re.search(trim_pattern, os.path.basename(image_out_path))):
                     symlink_name = os.path.join("./", f"{registry}-{os.path.basename(image_out_path)}")
                 else:
                     trimmed_name = re.sub(f"{trim_pattern}", "", os.path.basename(image_out_path))
@@ -1263,7 +1290,7 @@ class DownloadWorkflow:
         # if docker.registry / singularity.registry are set to empty strings at runtime, which can be included in the HPC config profiles easily.
         if self.registry_set:
             # Create a regex pattern from the set of registries
-            trim_pattern = "|".join(f"^{re.escape(registry)}-?" for registry in self.registry_set)
+            trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in self.registry_set)
             # Use the pattern to trim the string
             out_name = re.sub(f"{trim_pattern}", "", out_name)
 
@@ -1345,9 +1372,10 @@ class DownloadWorkflow:
                 log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
                 progress.update(task, description="Copying from cache to target directory")
                 shutil.copyfile(cache_path, out_path)
+                self.symlink_singularity_images(cache_path)  # symlinks inside the cache directory
 
             # Create symlinks to ensure that the images are found even with different registries being used.
-            self.symlink_singularity_images(output_path)
+            self.symlink_singularity_images(out_path)
 
             progress.remove_task(task)
 
@@ -1456,9 +1484,10 @@ class DownloadWorkflow:
             log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
             progress.update(task, current_log="Copying from cache to target directory")
             shutil.copyfile(cache_path, out_path)
+            self.symlink_singularity_images(cache_path)  # symlinks inside the cache directory
 
         # Create symlinks to ensure that the images are found even with different registries being used.
-        self.symlink_singularity_images(output_path)
+        self.symlink_singularity_images(out_path)
 
         progress.remove_task(task)
 
@@ -1692,7 +1721,7 @@ class WorkflowRepo(SyncedRepo):
                         self.repo.create_head("latest", "latest")  # create a new head for latest
                         self.checkout("latest")
                     else:
-                        # desired revisions may contain arbitrary branch names that do not correspond to valid sematic versioning patterns.
+                        # desired revisions may contain arbitrary branch names that do not correspond to valid semantic versioning patterns.
                         valid_versions = [
                             Version(v) for v in desired_revisions if re.match(r"\d+\.\d+(?:\.\d+)*(?:[\w\-_])*", v)
                         ]

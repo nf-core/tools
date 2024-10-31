@@ -19,7 +19,7 @@ jobs:
       )
 
     steps:
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           token: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
 
@@ -36,7 +36,7 @@ jobs:
           fi
           gh pr checkout $PR_NUMBER
 
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
+      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
         with:
           python-version: "3.12"
 
@@ -65,7 +65,7 @@ jobs:
           echo "File changed: ${{ env.changed }}"
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
         with:
           python-version: "3.12"
           cache: "pip"
