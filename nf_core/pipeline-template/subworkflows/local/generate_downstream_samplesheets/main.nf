@@ -55,7 +55,7 @@ workflow SAMPLESHEET_SAREK {
         [ patient: patient, sample: sample, lane: lane, fastq_1: fastq_1, fastq_2: fastq_2 ]
     }
 
-    channelToSamplesheet(ch_list_for_samplesheet, "${params.outdir}/downstream_samplesheets/rnaseq", format)
+    channelToSamplesheet(ch_list_for_samplesheet, "${params.outdir}/downstream_samplesheets/sarek", format)
 }
 
 /*

@@ -7,11 +7,11 @@ nextflow_workflow {
     tag 'generate_downstream_samplesheets'
     tag 'subworkflows/generated_downstream_samplesheets'
 
-    test("Test worfklow rnaseq") {
+    test("Test worfklow rnaseq,sarek") {
         when {
             params {
                 outdir                                = "."
-                generate_pipeline_samplesheets        = 'rnaseq'
+                generate_pipeline_samplesheets        = 'rnaseq,sarek'
                 generate_pipeline_samplesheets_format = 'csv'
             }
             workflow {
@@ -35,7 +35,8 @@ nextflow_workflow {
                 { assert workflow.success },
                 { assert snapshot(
                     [
-                        "${params.outdir}/downstream_samplesheets/rnaseq.csv"
+                        "${params.outdir}/downstream_samplesheets/rnaseq.csv",
+                        "${params.outdir}/downstream_samplesheets/sarek.csv"
                     ]).match()
                 }
             )
