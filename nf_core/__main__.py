@@ -1837,7 +1837,7 @@ def command_create_logo(logo_text, directory, name, theme, width, format, force)
     Use `nf-core pipelines create-logo` instead.
     """
     log.warning(
-        "The `[magenta]nf-core create-logo[/]` command is deprecated. Use `[magenta]nf-core pipelines screate-logo[/]` instead."
+        "The `[magenta]nf-core create-logo[/]` command is deprecated. Use `[magenta]nf-core pipeliness create-logo[/]` instead."
     )
     pipelines_create_logo(logo_text, directory, name, theme, width, format, force)
 
