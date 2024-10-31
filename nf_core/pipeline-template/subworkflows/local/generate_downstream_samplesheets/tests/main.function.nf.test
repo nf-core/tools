@@ -1,0 +1,79 @@
+
+nextflow_function {
+
+    name "Test Functions"
+    script "../main.nf"
+    tag 'subworkflows'
+    tag 'generate_downstream_samplesheets'
+    tag 'subworkflows/generate_downstream_samplesheets'
+
+    test("Test Function channelToSamplesheet - csv") {
+
+        function "channelToSamplesheet"
+
+        when {
+            function {
+                """
+                // define inputs of the function here. Example:
+                input[0] = Channel.of(
+                    [
+                        sample: 'test-pe',
+                        fastq_1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz',
+                        fastq_2: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz',
+                        strandedness: 'auto'
+                    ],
+                    [
+                        sample: 'test-se',
+                        fastq_1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz',
+                        fastq_2: '',
+                        strandedness: 'auto'
+                    ])
+                input[1] = "$outputDir/test.csv"
+                input[2] = "csv"
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("Test Function channelToSamplesheet - tsv") {
+
+        function "channelToSamplesheet"
+
+        when {
+            function {
+                """
+                // define inputs of the function here. Example:
+                input[0] = Channel.of(
+                    [
+                        sample: 'test-pe',
+                        fastq_1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz',
+                        fastq_2: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz',
+                        strandedness: 'auto'
+                    ],
+                    [
+                        sample: 'test-se',
+                        fastq_1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz',
+                        fastq_2: '',
+                        strandedness: 'auto'
+                    ])
+                input[1] = "$outputDir/test.tsv"
+                input[2] = "tsv"
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+}

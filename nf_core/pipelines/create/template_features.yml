@@ -279,6 +279,17 @@ modules:
       - "modules.json"
   nfcore_pipelines: False
   custom_pipelines: True
+downstream_samplesheet:
+  skippable_paths:
+    - "subworkflows/local/generate_downstream_samplesheets"
+  short_description: "Generate downstream samplesheets"
+  description: "The pipeline will include the generate_downstream_samplesheets subworkflow for the generation of a samplesheet for other downstream pipelines."
+  help_text: |
+    The pipeline will include the `GENERATE_DOWNSTREAM_SAMPLESHEETS` subworkflow.
+
+    The subworkflow `GENERATE_DOWNSTREAM_SAMPLESHEETS` provides a base template for generating samplesheets by taking a specified input channel, *eg:* reads or fasta, and extracts its metadata for generating samplesheets.
+  nfcore_pipelines: True
+  custom_pipelines: True
 changelog:
   skippable_paths:
     - "CHANGELOG.md"

@@ -1,0 +1,15 @@
+{
+    "Test worfklow rnaseq,sarek": {
+        "content": [
+            [
+                "./downstream_samplesheets/rnaseq.csv",
+                "./downstream_samplesheets/sarek.csv"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.1",
+            "nextflow": "24.10.0"
+        },
+        "timestamp": "2024-10-31T15:44:42.743679838"
+    }
+}

@@ -86,6 +86,30 @@
             }
         },
         {%- endif %}
+        {% if downstream_samplesheet %}
+        "generate_samplesheet_options": {
+            "title": "Downstream pipeline samplesheet generation options",
+            "type": "object",
+            "fa_icon": "fas fa-university",
+            "description": "Options for generating input samplesheets for complementary downstream pipelines.",
+            "properties": {
+                "generate_downstream_samplesheets": {
+                    "type": "boolean",
+                    "description": "Turn on generation of samplesheets for downstream pipelines."
+                },
+                "generate_pipeline_samplesheets": {
+                    "type": "string",
+                    "description": "Specify a comma separated string in quotes to specify which pipeline to generate a samplesheet for.",
+                    "pattern": "^(rnaseq|sarek)(?:,(sarek|rnaseq)){0,1}"
+                },
+                "generate_pipeline_samplesheets_format": {
+                    "type": "string",
+                    "description": "Specify the output format of the samplesheet.",
+                    "enum": ["txt", "tsv", "csv"],
+                }
+            }
+        },
+        {%- endif %}
         {%- if nf_core_configs %}
         "institutional_config_options": {
             "title": "Institutional config options",
