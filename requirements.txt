@@ -19,7 +19,7 @@ requests_cache
 rich-click==1.8.*
 rich>=13.3.1
 tabulate
-textual==0.71.0
+textual==0.85.2
 trogon
 pdiff
 ruamel.yaml
