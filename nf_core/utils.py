@@ -67,10 +67,10 @@ nfcore_question_style = prompt_toolkit.styles.Style(
 )
 
 NFCORE_CACHE_DIR = Path(
-    os.environ.get("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
-    "nfcore",
+    os.getenv("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
+    "nf-core",
 )
-NFCORE_DIR = Path(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
+NFCORE_DIR = Path(os.getenv("XDG_CONFIG_HOME", Path(os.getenv("HOME") or "", ".config")), "nf-core")
 
 
 def fetch_remote_version(source_url):
