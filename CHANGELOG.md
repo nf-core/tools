@@ -38,6 +38,7 @@
 - handle new schema structure in `nf-core pipelines create-params-file` ([#3276](https://github.com/nf-core/tools/pull/3276))
 - Update Gitpod image to use Miniforge instead of Miniconda([#3274](https://github.com/nf-core/tools/pull/3274))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.3 ([#3275](https://github.com/nf-core/tools/pull/3275))
+- Add hint to solve git errors with a synced repo ([#3279](https://github.com/nf-core/tools/pull/3279))
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 
