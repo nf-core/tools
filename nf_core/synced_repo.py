@@ -261,7 +261,7 @@ class SyncedRepo:
                 self.repo.git.checkout(self.branch, force=True)
             else:
                 log.error(
-                    f"You found a git error: {e}\n"
+                    f"Git error: {e}\n"
                     "To solve this, you can try to remove the cloned rempository and run the command again.\n"
                     f"This repository is typically found at `{self.local_repo_dir}`"
                 )
@@ -405,7 +405,7 @@ class SyncedRepo:
             commits_new = [{"git_sha": commit.hexsha, "trunc_message": commit.message} for commit in commits_new_iter]
         except git.GitCommandError as e:
             log.error(
-                f"You found a git error: {e}\n"
+                f"Git error: {e}\n"
                 "To solve this, you can try to remove the cloned rempository and run the command again.\n"
                 f"This repository is typically found at `{self.local_repo_dir}`"
             )
