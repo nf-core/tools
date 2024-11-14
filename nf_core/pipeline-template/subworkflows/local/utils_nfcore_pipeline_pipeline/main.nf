@@ -128,8 +128,10 @@ workflow PIPELINE_COMPLETION {
     {%- endif %}
     outdir          //    path: Path to output directory where results will be published
     monochrome_logs // boolean: Disable ANSI colour codes in log output
-    {% if adaptivecard or slackreport %}hook_url        //  string: hook URL for notifications{% endif %}
-    {% if multiqc %}multiqc_report  //  string: Path to MultiQC report{% endif %}
+    {%- if adaptivecard or slackreport %}
+    hook_url        //  string: hook URL for notifications{% endif %}
+    {%- if multiqc %}
+    multiqc_report  //  string: Path to MultiQC report{% endif %}
 
     main:
     {%- if nf_schema %}
@@ -237,8 +239,10 @@ def toolCitationText() {
     // Uncomment function in methodsDescriptionText to render in MultiQC report
     def citation_text = [
             "Tools used in the workflow included:",
-            {% if fastqc %}"FastQC (Andrews 2010),",{% endif %}
-            {% if multiqc %}"MultiQC (Ewels et al. 2016)",{% endif %}
+            {%- if fastqc %}
+            "FastQC (Andrews 2010),",{% endif %}
+            {%- if multiqc %}
+            "MultiQC (Ewels et al. 2016)",{% endif %}
             "."
         ].join(' ').trim()
 
@@ -250,8 +254,10 @@ def toolBibliographyText() {
     // Can use ternary operators to dynamically construct based conditions, e.g. params["run_xyz"] ? "<li>Author (2023) Pub name, Journal, DOI</li>" : "",
     // Uncomment function in methodsDescriptionText to render in MultiQC report
     def reference_text = [
-            {% if fastqc %}"<li>Andrews S, (2010) FastQC, URL: https://www.bioinformatics.babraham.ac.uk/projects/fastqc/).</li>",{% endif %}
-            {% if multiqc %}"<li>Ewels, P., Magnusson, M., Lundin, S., & Käller, M. (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics , 32(19), 3047–3048. doi: /10.1093/bioinformatics/btw354</li>"{% endif %}
+            {%- if fastqc %}
+            "<li>Andrews S, (2010) FastQC, URL: https://www.bioinformatics.babraham.ac.uk/projects/fastqc/).</li>",{% endif %}
+            {%- if multiqc %}
+            "<li>Ewels, P., Magnusson, M., Lundin, S., & Käller, M. (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics , 32(19), 3047–3048. doi: /10.1093/bioinformatics/btw354</li>"{% endif %}
         ].join(' ').trim()
 
     return reference_text
