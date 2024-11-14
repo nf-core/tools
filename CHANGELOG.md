@@ -17,6 +17,8 @@
 
 ### Linting
 
+- General: Run pre-commit when testing linting the template pipeline ([#3280](https://github.com/nf-core/tools/pull/3280))
+
 ### Modules
 
 - add a panel around diff previews when updating ([#3246](https://github.com/nf-core/tools/pull/3246))
