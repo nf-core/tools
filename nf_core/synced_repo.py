@@ -260,12 +260,7 @@ class SyncedRepo:
                 log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
                 self.repo.git.checkout(self.branch, force=True)
             else:
-                log.error(
-                    f"Git error: {e}\n"
-                    "To solve this, you can try to remove the cloned rempository and run the command again.\n"
-                    f"This repository is typically found at `{self.local_repo_dir}`"
-                )
-                raise UserWarning
+                raise e
 
     def component_exists(self, component_name, component_type, checkout=True, commit=None):
         """
