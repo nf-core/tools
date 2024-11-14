@@ -260,6 +260,11 @@ class SyncedRepo:
                 log.debug(f"Overwriting local changes in '{self.local_repo_dir}'")
                 self.repo.git.checkout(self.branch, force=True)
             else:
+                log.error(
+                    f"Could not check out commit '{commit}' in '{self.remote_url}'.\n"
+                    "To solve this, you can try to remove the cloned rempository and run the command again."
+                    f"This repository is tipically found at `~/.config/nfcore/{self.local_repo_dir}`"
+                )
                 raise e
 
     def component_exists(self, component_name, component_type, checkout=True, commit=None):
