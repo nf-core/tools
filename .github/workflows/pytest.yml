@@ -40,7 +40,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: ["3.8", "3.11"]
+        python-version: ["3.8", "3.12"]
         runner: ["ubuntu-latest"]
         include:
           - python-version: "3.8"
@@ -49,7 +49,7 @@ jobs:
     steps:
       - name: Check conditions
         id: conditions
-        run: echo "run-tests=${{ github.ref == 'refs/heads/master' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> "$GITHUB_OUTPUT"
+        run: echo "run-tests=${{ github.ref == 'refs/heads/main' || (matrix.runner == 'ubuntu-20.04' && matrix.python-version == '3.8') }}" >> "$GITHUB_OUTPUT"
 
     outputs:
       python-version: ${{ matrix.python-version }}
@@ -61,13 +61,13 @@ jobs:
     name: Get test file matrix
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out source-code repository
 
       - name: List tests
         id: list_tests
         run: |
-          echo "tests=$(find tests/test_* | tac | sed 's/tests\///g' | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_OUTPUT
+          echo "tests=$(find tests -type f -name "test_*.py" | tac | sed 's/tests\///g'  | jq -R -s -c '{test: (split("\n")[:-1])}')" >> $GITHUB_OUTPUT
     outputs:
       tests: ${{ steps.list_tests.outputs.tests }}
 
@@ -87,11 +87,11 @@ jobs:
           cd pytest
           export NXF_WORK=$(pwd)
 
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out source-code repository
 
       - name: Set up Python ${{ needs.setup.outputs.python-version }}
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
         with:
           python-version: ${{ needs.setup.outputs.python-version }}
           cache: "pip"
@@ -142,10 +142,24 @@ jobs:
             exit 1
           fi
 
-      - name: Upload coverage
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
+      - name: remove slashes from test name
+        run: |
+          test=$(echo ${{ matrix.test }} | sed 's/\//__/g')
+          echo "test=${test}" >> $GITHUB_ENV
+
+      - name: Store snapshot report
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        if: always()
         with:
-          name: coverage_${{ matrix.test }}
+          include-hidden-files: true
+          name: Snapshot Report ${{ env.test }}
+          path: ./snapshot_report.html
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        with:
+          include-hidden-files: true
+          name: coverage_${{ env.test }}
           path: .coverage
 
   coverage:
@@ -158,13 +172,13 @@ jobs:
           mkdir -p pytest
           cd pytest
 
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-      - name: Set up Python 3.11
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
         env:
           AGENT_TOOLSDIRECTORY: /opt/actions-runner/_work/tools/tools/
         with:
-          python-version: 3.11
+          python-version: "3.12"
           cache: "pip"
 
       - name: Install dependencies
@@ -177,14 +191,14 @@ jobs:
           mv .github/.coveragerc .
 
       - name: Download all artifacts
-        uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
       - name: Run coverage
         run: |
           coverage combine --keep coverage*/.coverage*
           coverage report
           coverage xml
 
-      - uses: codecov/codecov-action@54bcd8715eee62d40e33596ef5e8f0f48dbbccab # v4
+      - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
         with:
           files: coverage.xml
         env:

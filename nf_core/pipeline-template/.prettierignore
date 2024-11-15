@@ -1,6 +1,12 @@
+{% if email -%}
 email_template.html
+{%- endif %}
+{%- if adaptivecard %}
 adaptivecard.json
+{%- endif %}
+{%- if slackreport %}
 slackreport.json
+{%- endif %}
 .nextflow*
 work/
 data/

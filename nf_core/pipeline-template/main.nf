@@ -4,14 +4,12 @@
     {{ name }}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Github : https://github.com/{{ name }}
-{%- if branded %}
+{%- if is_nfcore %}
     Website: https://nf-co.re/{{ short_name }}
     Slack  : https://nfcore.slack.com/channels/{{ short_name }}
 {%- endif %}
 ----------------------------------------------------------------------------------------
 */
-
-nextflow.enable.dsl = 2
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -20,9 +18,10 @@ nextflow.enable.dsl = 2
 */
 
 include { {{ short_name|upper }}  } from './workflows/{{ short_name }}'
+{%- if modules %}
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
-{% if igenomes %}
+{%- if igenomes %}
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 
 /*
@@ -35,7 +34,7 @@ include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_{{ s
 //   This is an example of how to use getGenomeAttribute() to fetch parameters
 //   from igenomes.config using `--genome`
 params.fasta = getGenomeAttribute('fasta')
-{% endif %}
+{% endif %}{% endif %}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     NAMED WORKFLOWS FOR PIPELINE
@@ -58,10 +57,10 @@ workflow {{ prefix_nodash|upper }}_{{ short_name|upper }} {
     {{ short_name|upper }} (
         samplesheet
     )
-
+{%- if multiqc %}{%- if modules %}
     emit:
     multiqc_report = {{ short_name|upper }}.out.multiqc_report // channel: /path/to/multiqc_report.html
-
+{%- endif %}{%- endif %}
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -73,38 +72,49 @@ workflow {
 
     main:
 
+    {%- if modules %}
     //
     // SUBWORKFLOW: Run initialisation tasks
     //
     PIPELINE_INITIALISATION (
         params.version,
-        params.help,
         params.validate_params,
         params.monochrome_logs,
         args,
         params.outdir,
         params.input
     )
+    {%- endif %}
 
     //
     // WORKFLOW: Run main workflow
     //
     {{ prefix_nodash|upper }}_{{ short_name|upper }} (
+        {%- if modules %}
         PIPELINE_INITIALISATION.out.samplesheet
+        {%- else %}
+        params.input
+        {%- endif %}
     )
 
+    {%- if modules %}
     //
     // SUBWORKFLOW: Run completion tasks
     //
     PIPELINE_COMPLETION (
+        {%- if email %}
         params.email,
         params.email_on_fail,
         params.plaintext_email,
+        {%- endif %}
         params.outdir,
         params.monochrome_logs,
-        params.hook_url,
-        {{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report
+        {%- if adaptivecard or slackreport %}
+        params.hook_url,{% endif %}
+        {%- if multiqc %}
+        {{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report{% endif %}
     )
+    {%- endif %}
 }
 
 /*

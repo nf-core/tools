@@ -1,5 +1,5 @@
-# nextflow_config
+# modules_json
 
 ```{eval-rst}
-.. automethod:: nf_core.lint.PipelineLint.modules_json
+.. automethod:: nf_core.pipelines.lint.PipelineLint.modules_json
 ```

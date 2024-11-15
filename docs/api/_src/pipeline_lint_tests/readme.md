@@ -1,5 +1,5 @@
 # readme
 
 ```{eval-rst}
-.. automethod:: nf_core.lint.PipelineLint.readme
+.. automethod:: nf_core.pipelines.lint.PipelineLint.readme
 ```

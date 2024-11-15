@@ -1,6 +1,7 @@
 import logging
 import os
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
 
 import questionary
 import yaml
@@ -14,8 +15,8 @@ from rich.text import Text
 
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
+from nf_core.components.components_utils import NF_CORE_MODULES_REMOTE
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE
 
 log = logging.getLogger(__name__)
 
@@ -57,38 +58,39 @@ class ComponentInfo(ComponentCommand):
 
     def __init__(
         self,
-        component_type,
-        pipeline_dir,
-        component_name,
-        remote_url=None,
-        branch=None,
-        no_pull=False,
+        component_type: str,
+        pipeline_dir: Union[str, Path],
+        component_name: str,
+        remote_url: Optional[str] = None,
+        branch: Optional[str] = None,
+        no_pull: bool = False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
-        self.meta = None
-        self.local_path = None
-        self.remote_location = None
-        self.local = None
+        self.meta: Optional[Dict] = None
+        self.local_path: Optional[Path] = None
+        self.remote_location: Optional[str] = None
+        self.local: bool = False
+        self.modules_json: Optional[ModulesJson] = None
 
         if self.repo_type == "pipeline":
             # Check modules directory structure
             if self.component_type == "modules":
                 self.check_modules_structure()
             # Check modules.json up to date
-            self.modules_json = ModulesJson(self.dir)
+            self.modules_json = ModulesJson(self.directory)
             self.modules_json.check_up_to_date()
         else:
             self.modules_json = None
         self.component = self.init_mod_name(component_name)
 
-    def _configure_repo_and_paths(self, nf_dir_req=False):
+    def _configure_repo_and_paths(self, nf_dir_req=False) -> None:
         """
         Override the default with nf_dir_req set to False to allow
         info to be run from anywhere and still return remote info
         """
         return super()._configure_repo_and_paths(nf_dir_req)
 
-    def init_mod_name(self, component):
+    def init_mod_name(self, component: Optional[str]) -> str:
         """
         Makes sure that we have a module/subworkflow name before proceeding.
 
@@ -102,18 +104,22 @@ class ComponentInfo(ComponentCommand):
             if self.local:
                 if self.repo_type == "modules":
                     components = self.get_components_clone_modules()
-                else:
-                    components = self.modules_json.get_all_components(self.component_type).get(
-                        self.modules_repo.remote_url, {}
-                    )
+                elif self.repo_type == "pipeline":
+                    assert self.modules_json is not None  # mypy
+                    all_components: List[Tuple[str, str]] = self.modules_json.get_all_components(
+                        self.component_type
+                    ).get(self.modules_repo.remote_url, [])
+
                     components = [
                         component if directory == self.modules_repo.repo_path else f"{directory}/{component}"
-                        for directory, component in components
+                        for directory, component in all_components
                     ]
                     if not components:
                         raise UserWarning(
                             f"No {self.component_type[:-1]} installed from '{self.modules_repo.remote_url}'"
                         )
+                else:
+                    raise UserWarning("Unknown repository type")
             else:
                 components = self.modules_repo.get_avail_components(self.component_type)
             components.sort()
@@ -131,15 +137,17 @@ class ComponentInfo(ComponentCommand):
                 ).unsafe_ask()
         else:
             if self.repo_type == "pipeline":
+                assert self.modules_json is not None  # mypy
                 # check if the module is locally installed
                 local_paths = self.modules_json.get_all_components(self.component_type).get(
-                    self.modules_repo.remote_url, {}
-                )
-                for directory, comp in local_paths:
-                    if comp == component:
-                        component_base_path = Path(self.dir, self.component_type)
-                        self.local_path = Path(component_base_path, directory, component)
-                        break
+                    self.modules_repo.remote_url
+                )  # type: ignore
+                if local_paths is not None:
+                    for directory, comp in local_paths:
+                        if comp == component:
+                            component_base_path = Path(self.directory, self.component_type)
+                            self.local_path = Path(component_base_path, directory, component)
+                            break
                 if self.local_path:
                     self.local = True
 
@@ -162,24 +170,26 @@ class ComponentInfo(ComponentCommand):
 
         return self.generate_component_info_help()
 
-    def get_local_yaml(self):
+    def get_local_yaml(self) -> Optional[Dict]:
         """Attempt to get the meta.yml file from a locally installed module/subworkflow.
 
         Returns:
-            dict or bool: Parsed meta.yml found, False otherwise
+            Optional[dict]: Parsed meta.yml if found, None otherwise
         """
 
         if self.repo_type == "pipeline":
+            assert self.modules_json is not None  # mypy
             # Try to find and load the meta.yml file
-            component_base_path = Path(self.dir, self.component_type)
+            component_base_path = Path(self.directory, self.component_type)
             # Check that we have any modules/subworkflows installed from this repo
             components = self.modules_json.get_all_components(self.component_type).get(self.modules_repo.remote_url)
-            component_names = [component for _, component in components]
             if components is None:
                 raise LookupError(f"No {self.component_type[:-1]} installed from {self.modules_repo.remote_url}")
 
+            component_names = [component for _, component in components]
+
             if self.component in component_names:
-                install_dir = [dir for dir, module in components if module == self.component][0]
+                install_dir = [directory for directory, module in components if module == self.component][0]
                 comp_dir = Path(component_base_path, install_dir, self.component)
                 meta_fn = Path(comp_dir, "meta.yml")
                 if meta_fn.exists():
@@ -190,7 +200,7 @@ class ComponentInfo(ComponentCommand):
 
             log.debug(f"{self.component_type[:-1].title()} '{self.component}' meta.yml not found locally")
         else:
-            component_base_path = Path(self.dir, self.component_type, self.org)
+            component_base_path = Path(self.directory, self.component_type, self.org)
             if self.component in os.listdir(component_base_path):
                 comp_dir = Path(component_base_path, self.component)
                 meta_fn = Path(comp_dir, "meta.yml")
@@ -203,7 +213,7 @@ class ComponentInfo(ComponentCommand):
 
         return None
 
-    def get_remote_yaml(self):
+    def get_remote_yaml(self) -> Optional[dict]:
         """Attempt to get the meta.yml file from a remote repo.
 
         Returns:
@@ -211,13 +221,32 @@ class ComponentInfo(ComponentCommand):
         """
         # Check if our requested module/subworkflow is there
         if self.component not in self.modules_repo.get_avail_components(self.component_type):
-            return False
+            return None
 
         file_contents = self.modules_repo.get_meta_yml(self.component_type, self.component)
         if file_contents is None:
-            return False
+            return None
         self.remote_location = self.modules_repo.remote_url
         return yaml.safe_load(file_contents)
+
+    def generate_params_table(self, type) -> Table:
+        "Generate a rich table for inputs and outputs"
+        table = Table(expand=True, show_lines=True, box=box.MINIMAL_HEAVY_HEAD, padding=0)
+        table.add_column(f":inbox_tray: {type}")
+        table.add_column("Description")
+        if self.component_type == "modules":
+            table.add_column("Pattern", justify="right", style="green")
+        elif self.component_type == "subworkflows":
+            table.add_column("Structure", justify="right", style="green")
+        return table
+
+    def get_channel_structure(self, structure: dict) -> str:
+        "Get the structure of a channel"
+        structure_str = ""
+        for key, info in structure.items():
+            pattern = f" - {info['pattern']}" if info.get("pattern") else ""
+            structure_str += f"{key} ({info['type']}{pattern})"
+        return structure_str
 
     def generate_component_info_help(self):
         """Take the parsed meta.yml and generate rich help.
@@ -242,7 +271,8 @@ class ComponentInfo(ComponentCommand):
                     "\n"
                 )
             )
-
+        if self.meta is None:
+            raise UserWarning("No meta.yml file found")
         if self.meta.get("tools"):
             tools_strings = []
             for tool in self.meta["tools"]:
@@ -266,33 +296,48 @@ class ComponentInfo(ComponentCommand):
 
         # Inputs
         if self.meta.get("input"):
-            inputs_table = Table(expand=True, show_lines=True, box=box.MINIMAL_HEAVY_HEAD, padding=0)
-            inputs_table.add_column(":inbox_tray: Inputs")
-            inputs_table.add_column("Description")
-            inputs_table.add_column("Pattern", justify="right", style="green")
-            for input in self.meta["input"]:
-                for key, info in input.items():
-                    inputs_table.add_row(
-                        f"[orange1 on black] {key} [/][dim i] ({info['type']})",
-                        Markdown(info["description"] if info["description"] else ""),
-                        info.get("pattern", ""),
-                    )
+            inputs_table = self.generate_params_table("Inputs")
+            for i, input in enumerate(self.meta["input"]):
+                inputs_table.add_row(f"[italic]input[{i}][/]", "", "")
+                if self.component_type == "modules":
+                    for element in input:
+                        for key, info in element.items():
+                            inputs_table.add_row(
+                                f"[orange1 on black] {key} [/][dim i] ({info['type']})",
+                                Markdown(info["description"] if info["description"] else ""),
+                                info.get("pattern", ""),
+                            )
+                elif self.component_type == "subworkflows":
+                    for key, info in input.items():
+                        inputs_table.add_row(
+                            f"[orange1 on black] {key} [/][dim i]",
+                            Markdown(info["description"] if info["description"] else ""),
+                            self.get_channel_structure(info["structure"]) if info.get("structure") else "",
+                        )
 
             renderables.append(inputs_table)
 
         # Outputs
         if self.meta.get("output"):
-            outputs_table = Table(expand=True, show_lines=True, box=box.MINIMAL_HEAVY_HEAD, padding=0)
-            outputs_table.add_column(":outbox_tray: Outputs")
-            outputs_table.add_column("Description")
-            outputs_table.add_column("Pattern", justify="right", style="green")
+            outputs_table = self.generate_params_table("Outputs")
             for output in self.meta["output"]:
-                for key, info in output.items():
-                    outputs_table.add_row(
-                        f"[orange1 on black] {key} [/][dim i] ({info['type']})",
-                        Markdown(info["description"] if info["description"] else ""),
-                        info.get("pattern", ""),
-                    )
+                if self.component_type == "modules":
+                    for ch_name, elements in output.items():
+                        outputs_table.add_row(f"{ch_name}", "", "")
+                        for element in elements:
+                            for key, info in element.items():
+                                outputs_table.add_row(
+                                    f"[orange1 on black] {key} [/][dim i] ({info['type']})",
+                                    Markdown(info["description"] if info["description"] else ""),
+                                    info.get("pattern", ""),
+                                )
+                elif self.component_type == "subworkflows":
+                    for key, info in output.items():
+                        outputs_table.add_row(
+                            f"[orange1 on black] {key} [/][dim i]",
+                            Markdown(info["description"] if info["description"] else ""),
+                            self.get_channel_structure(info["structure"]) if info.get("structure") else "",
+                        )
 
             renderables.append(outputs_table)
 
@@ -306,22 +351,22 @@ class ComponentInfo(ComponentCommand):
             )
 
         # Print include statement
-        if self.local_path:
-            install_folder = Path(self.dir, self.component_type, self.modules_repo.repo_path)
+        if self.local_path and self.modules_repo.repo_path is not None:
+            install_folder = Path(self.directory, self.component_type, self.modules_repo.repo_path)
             component_name = "_".join(self.component.upper().split("/"))
             renderables.append(
                 Text.from_markup(f"\n [blue]Use the following statement to include this {self.component_type[:-1]}:")
             )
             renderables.append(
                 Syntax(
-                    f"include {{ {component_name} }} from '../{Path(install_folder, self.component).relative_to(self.dir)}/main'",
+                    f"include {{ {component_name} }} from '../{Path(install_folder, self.component).relative_to(self.directory)}/main'",
                     "groovy",
                     theme="ansi_dark",
                     padding=1,
                 )
             )
             if self.component_type == "subworkflows":
-                subworkflow_config = Path(install_folder, self.component, "nextflow.config").relative_to(self.dir)
+                subworkflow_config = Path(install_folder, self.component, "nextflow.config").relative_to(self.directory)
                 if os.path.isfile(subworkflow_config):
                     renderables.append(
                         Text.from_markup("\n [blue]Add the following config statement to use this subworkflow:")

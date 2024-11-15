@@ -1,33 +1,43 @@
 import logging
 import re
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 import questionary
+import requests
 import rich.prompt
 
+if TYPE_CHECKING:
+    from nf_core.modules.modules_repo import ModulesRepo
+
 import nf_core.utils
-from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
+# Constants for the nf-core/modules repo used throughout the module files
+NF_CORE_MODULES_NAME = "nf-core"
+NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
+NF_CORE_MODULES_DEFAULT_BRANCH = "master"
 
-def get_repo_info(directory: str, use_prompt: Optional[bool] = True) -> Tuple[str, Optional[str], str]:
+
+def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[Path, Optional[str], str]:
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
     """
 
     # Verify that the pipeline dir exists
-    if directory is None or not Path(directory).is_dir():
+    if not Path(directory).is_dir():
         raise UserWarning(f"Could not find directory: {directory}")
 
     # Try to find the root directory
-    base_dir: str = nf_core.utils.determine_base_dir(directory)
+    base_dir: Path = nf_core.utils.determine_base_dir(directory)
 
     # Figure out the repository type from the .nf-core.yml config file if we can
     config_fn, tools_config = nf_core.utils.load_tools_config(base_dir)
-    repo_type: Optional[str] = tools_config.get("repository_type", None)
+    if config_fn is None:
+        raise UserWarning(f"Could not find a config file in directory: {base_dir}")
+    repo_type = getattr(tools_config, "repository_type", None) or None
 
     # If not set, prompt the user
     if not repo_type and use_prompt:
@@ -54,14 +64,12 @@ def get_repo_info(directory: str, use_prompt: Optional[bool] = True) -> Tuple[st
 
     # Check if it's a valid answer
     if repo_type not in ["pipeline", "modules"]:
-        raise UserWarning(f"Invalid repository type: '{repo_type}'")
-
+        raise UserWarning(f"Invalid repository type: '{repo_type}', must be 'pipeline' or 'modules'")
+    org: str = ""
     # Check for org if modules repo
-    if repo_type == "pipeline":
-        org = ""
-    elif repo_type == "modules":
-        org = tools_config.get("org_path", None)
-        if org is None:
+    if repo_type == "modules":
+        org = getattr(tools_config, "org_path", "") or ""
+        if org == "":
             log.warning("Organisation path not defined in %s [key: org_path]", config_fn.name)
             org = questionary.text(
                 "What is the organisation path under which modules and subworkflows are stored?",
@@ -82,7 +90,10 @@ def get_repo_info(directory: str, use_prompt: Optional[bool] = True) -> Tuple[st
 
 
 def prompt_component_version_sha(
-    component_name: str, component_type: str, modules_repo: ModulesRepo, installed_sha: Optional[str] = None
+    component_name: str,
+    component_type: str,
+    modules_repo: "ModulesRepo",
+    installed_sha: Optional[str] = None,
 ) -> str:
     """
     Creates an interactive questionary prompt for selecting the module/subworkflow version
@@ -101,7 +112,7 @@ def prompt_component_version_sha(
     git_sha = ""
     page_nbr = 1
 
-    all_commits = modules_repo.get_component_git_log(component_name, component_type)
+    all_commits = iter(modules_repo.get_component_git_log(component_name, component_type))
     next_page_commits = [next(all_commits, None) for _ in range(10)]
     next_page_commits = [commit for commit in next_page_commits if commit is not None]
 
@@ -132,7 +143,7 @@ def prompt_component_version_sha(
     return git_sha
 
 
-def get_components_to_install(subworkflow_dir: str) -> Tuple[List[str], List[str]]:
+def get_components_to_install(subworkflow_dir: Union[str, Path]) -> Tuple[List[str], List[str]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """
@@ -143,7 +154,7 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[str], List[str
             regex = re.compile(
                 r"include(?: *{ *)([a-zA-Z\_0-9]*)(?: *as *)?(?:[a-zA-Z\_0-9]*)?(?: *})(?: *from *)(?:'|\")(.*)(?:'|\")"
             )
-            match = regex.match(line)
+            match = regex.search(line)
             if match and len(match.groups()) == 2:
                 name, link = match.groups()
                 if link.startswith("../../../"):
@@ -152,3 +163,29 @@ def get_components_to_install(subworkflow_dir: str) -> Tuple[List[str], List[str
                 elif link.startswith("../"):
                     subworkflows.append(name.lower())
     return modules, subworkflows
+
+
+def get_biotools_id(tool_name) -> str:
+    """
+    Try to find a bio.tools ID for 'tool'
+    """
+    url = f"https://bio.tools/api/t/?q={tool_name}&format=json"
+    try:
+        # Send a GET request to the API
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an error for bad status codes
+        # Parse the JSON response
+        data = response.json()
+
+        # Iterate through the tools in the response to find the tool name
+        for tool in data["list"]:
+            if tool["name"].lower() == tool_name:
+                return tool["biotoolsCURIE"]
+
+        # If the tool name was not found in the response
+        log.warning(f"Could not find a bio.tools ID for '{tool_name}'")
+        return ""
+
+    except requests.exceptions.RequestException as e:
+        log.warning(f"Could not find a bio.tools ID for '{tool_name}': {e}")
+        return ""

@@ -1,7 +1,7 @@
 name: Sync template
 on:
-  release:
-    types: [published]
+  # release:
+  #   types: [published]
   workflow_dispatch:
     inputs:
       testpipeline:
@@ -15,6 +15,14 @@ on:
           - "ubuntu-latest"
           - "self-hosted"
         default: "self-hosted"
+      force_pr:
+        description: "Force a PR to be created"
+        type: boolean
+        default: false
+      pipeline:
+        description: "Pipeline to sync"
+        type: string
+        default: "all"
 
 # Cancel if a newer run is started
 concurrency:
@@ -31,6 +39,14 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.testpipeline }}" == "true" ]; then
             echo '{"pipeline":["testpipeline"]}' > pipeline_names.json
+          elif [ "${{ github.event.inputs.pipeline }}" != "all" ] && [ "${{ github.event.inputs.pipeline }}" != "" ]; then
+            curl -O https://nf-co.re/pipeline_names.json
+            # check if the pipeline exists
+            if ! grep -q "\"${{ github.event.inputs.pipeline }}\"" pipeline_names.json; then
+              echo "Pipeline ${{ github.event.inputs.pipeline }} does not exist"
+              exit 1
+            fi
+            echo '{"pipeline":["${{ github.event.inputs.pipeline }}"]}' > pipeline_names.json
           else
             curl -O https://nf-co.re/pipeline_names.json
           fi
@@ -38,16 +54,16 @@ jobs:
 
   sync:
     needs: get-pipelines
-    # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
-    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
+    # use the github runner on release otherwise use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
+    runs-on: ${{github.event_name == 'release' && 'self-hosted' || github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     strategy:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out nf-core/tools
 
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out nf-core/${{ matrix.pipeline }}
         with:
           repository: nf-core/${{ matrix.pipeline }}
@@ -56,10 +72,10 @@ jobs:
           path: nf-core/${{ matrix.pipeline }}
           fetch-depth: "0"
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+      - name: Set up Python 3.12
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
         with:
-          python-version: 3.11
+          python-version: "3.12"
 
       - name: Install python dependencies
         run: |
@@ -78,7 +94,7 @@ jobs:
         run: |
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
-          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt sync -d nf-core/${{ matrix.pipeline }} \
+          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt pipelines sync -d nf-core/${{ matrix.pipeline }} \
             --from-branch dev \
             --pull-request \
             --username nf-core-bot \
@@ -86,7 +102,7 @@ jobs:
 
       - name: Upload sync log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
         with:
           name: sync_log_${{ matrix.pipeline }}
           path: sync_log_${{ matrix.pipeline }}.txt

@@ -38,7 +38,7 @@ jobs:
     strategy:
       matrix:
         NXF_VER:
-          - "23.04.0"
+          - "24.04.2"
           - "latest-everything"
     steps:
       - name: go to subdirectory and change nextflow workdir
@@ -48,14 +48,14 @@ jobs:
           export NXF_WORK=$(pwd)
 
       # Get the repo code
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out source-code repository
 
       # Set up nf-core/tools
-      - name: Set up Python 3.11
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5
+      - name: Set up Python 3.12
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
         with:
-          python-version: 3.11
+          python-version: "3.12"
           cache: pip
 
       - name: Install python dependencies
@@ -78,13 +78,18 @@ jobs:
         run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
         working-directory: create-lint-wf
 
-      # Run the other nf-core commands
-      - name: nf-core list
-        run: nf-core --log-file log.txt list
+      # Uncomment includeConfig statement
+      - name: uncomment include config
+        run: find nf-core-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
         working-directory: create-lint-wf
 
-      - name: nf-core schema
-        run: nf-core --log-file log.txt schema build --dir nf-core-testpipeline/ --no-prompts
+      # Run the other nf-core commands
+      - name: nf-core pipelines list
+        run: nf-core --log-file log.txt pipelines list
+        working-directory: create-lint-wf
+
+      - name: nf-core pipelines schema
+        run: nf-core --log-file log.txt pipelines schema build --dir nf-core-testpipeline/ --no-prompts
         working-directory: create-lint-wf
 
       - name: Cleanup work directory

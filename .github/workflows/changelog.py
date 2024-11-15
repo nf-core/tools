@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """
 Taken from https://github.com/MultiQC/MultiQC/blob/main/.github/workflows/changelog.py and updated for nf-core
 
@@ -18,7 +19,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 REPO_URL = "https://github.com/nf-core/tools"
 
@@ -32,7 +33,7 @@ assert pr_title, pr_title
 assert pr_number, pr_number
 
 # Trim the PR number added when GitHub squashes commits, e.g. "Template: Updated (#2026)"
-pr_title = pr_title.removesuffix(f" (#{pr_number})")
+pr_title = pr_title.removesuffix(f" (#{pr_number})")  # type: ignore
 
 changelog_path = workspace_path / "CHANGELOG.md"
 
@@ -50,7 +51,7 @@ if any(
     sys.exit(0)
 
 
-def _determine_change_type(pr_title) -> tuple[str, str]:
+def _determine_change_type(pr_title) -> Tuple[str, str]:
     """
     Determine the type of the PR: Template, Download, Linting, Modules, Subworkflows, or General
     Returns a tuple of the section name and the module info.
@@ -85,7 +86,7 @@ pr_title = re.sub(rf"{section}:[\s]*", "", pr_title, flags=re.IGNORECASE)
 pr_link = f"([#{pr_number}]({REPO_URL}/pull/{pr_number}))"
 
 # Handle manual changelog entries through comments.
-if comment := comment.removeprefix("@nf-core-bot changelog").strip():
+if comment := comment.removeprefix("@nf-core-bot changelog").strip():  # type: ignore
     print(f"Adding manual changelog entry: {comment}")
     pr_title = comment
 new_lines = [

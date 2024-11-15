@@ -20,3 +20,11 @@ indent_style = unset
 
 [**/Makefile]
 indent_style = unset
+
+[tests/pipelines/__snapshots__/*]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+indent_style = unset
+indent_size = unset

@@ -9,3 +9,5 @@ include nf_core/assets/logo/nf-core-repo-logo-base-lightbg.png
 include nf_core/assets/logo/nf-core-repo-logo-base-darkbg.png
 include nf_core/assets/logo/placeholder_logo.svg
 include nf_core/assets/logo/MavenPro-Bold.ttf
+include nf_core/pipelines/create/create.tcss
+include nf_core/pipelines/create/template_features.yml

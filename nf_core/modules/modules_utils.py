@@ -20,24 +20,23 @@ def repo_full_name_from_remote(remote_url: str) -> str:
     Extracts the path from the remote URL
     See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
     """
-    # Check whether we have a https or ssh url
-    if remote_url.startswith("https"):
-        path = urlparse(remote_url).path
-        # Remove the intial '/'
-        path = path[1:]
-        # Remove extension
-        path = os.path.splitext(path)[0]
+
+    if remote_url.startswith(("https://", "http://", "ftps://", "ftp://", "ssh://")):
+        # Parse URL and remove the initial '/'
+        path = urlparse(remote_url).path.lstrip("/")
+    elif "git@" in remote_url:
+        # Extract the part after 'git@' and parse it
+        path = urlparse(remote_url.split("git@")[-1]).path
     else:
-        # Remove the initial `git@``
-        split_path: list = remote_url.split("@")
-        path = split_path[-1] if len(split_path) > 1 else split_path[0]
-        path = urlparse(path).path
-        # Remove extension
-        path = os.path.splitext(path)[0]
+        path = urlparse(remote_url).path
+
+    # Remove the file extension from the path
+    path, _ = os.path.splitext(path)
+
     return path
 
 
-def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], List[NFCoreComponent]]:
+def get_installed_modules(directory: Path, repo_type="modules") -> Tuple[List[str], List[NFCoreComponent]]:
     """
     Make a list of all modules installed in this repository
 
@@ -53,15 +52,15 @@ def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], Lis
     # initialize lists
     local_modules: List[str] = []
     nfcore_modules_names: List[str] = []
-    local_modules_dir: Optional[str] = None
-    nfcore_modules_dir = os.path.join(dir, "modules", "nf-core")
+    local_modules_dir: Optional[Path] = None
+    nfcore_modules_dir = Path(directory, "modules", "nf-core")
 
     # Get local modules
     if repo_type == "pipeline":
-        local_modules_dir = os.path.join(dir, "modules", "local")
+        local_modules_dir = Path(directory, "modules", "local")
 
         # Filter local modules
-        if os.path.exists(local_modules_dir):
+        if local_modules_dir.exists():
             local_modules = os.listdir(local_modules_dir)
             local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
 
@@ -90,7 +89,7 @@ def get_installed_modules(dir: str, repo_type="modules") -> Tuple[List[str], Lis
             "nf-core/modules",
             Path(nfcore_modules_dir, m),
             repo_type=repo_type,
-            base_dir=Path(dir),
+            base_dir=directory,
             component_type="modules",
         )
         for m in nfcore_modules_names

@@ -6,8 +6,17 @@ responses
 ruff
 Sphinx
 sphinx-rtd-theme
+textual-dev==1.6.1
+types-PyYAML
+types-requests
 types-jsonschema
 types-Markdown
 types-PyYAML
 types-requests
 types-setuptools
+typing_extensions >=4.0.0
+pytest-asyncio
+pytest-textual-snapshot==1.0.0
+pytest-workflow>=2.0.0
+pytest>=8.0.0
+ruff
