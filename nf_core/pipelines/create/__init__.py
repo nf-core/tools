@@ -1,14 +1,11 @@
 """A Textual app to create a pipeline."""
 
 import logging
-from pathlib import Path
 
 import click
-import yaml
 from textual.app import App
-from textual.widgets import Button
+from textual.widgets import Button, Switch
 
-import nf_core
 from nf_core.pipelines.create import utils
 from nf_core.pipelines.create.basicdetails import BasicDetails
 from nf_core.pipelines.create.custompipeline import CustomPipeline
@@ -41,11 +38,12 @@ class PipelineCreateApp(App[utils.CreateConfig]):
     """A Textual app to manage stopwatches."""
 
     CSS_PATH = "create.tcss"
-    TITLE = "nf-core create"
+    TITLE = "nf-core pipelines create"
     SUB_TITLE = "Create a new pipeline with the nf-core pipeline template"
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
         ("q", "quit", "Quit"),
+        ("a", "toggle_all", "Toggle all"),
     ]
     SCREENS = {
         "welcome": WelcomeScreen(),
@@ -105,3 +103,14 @@ class PipelineCreateApp(App[utils.CreateConfig]):
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
         self.dark: bool = not self.dark
+
+    def action_toggle_all(self) -> None:
+        """An action to toggle all Switches."""
+        switches = self.query(Switch)
+        if not switches:
+            return  # No Switches widgets found
+        # Determine the new state based on the first switch
+        new_state = not switches.first().value if switches.first() else True
+        for switch in switches:
+            switch.value = new_state
+        self.refresh()

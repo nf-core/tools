@@ -269,7 +269,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
         url = None
         line = raw_line.strip(" \n'\"}:")
 
-        # Catch preceeding "container "
+        # Catch preceding "container "
         if line.startswith("container"):
             line = line.replace("container", "").strip(" \n'\"}:")
 
@@ -342,6 +342,7 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
             continue
         try:
             container_url = "https://" + urlunparse(url) if not url.scheme == "https" else urlunparse(url)
+            log.debug(f"Trying to connect to URL: {container_url}")
             response = requests.head(
                 container_url,
                 stream=True,

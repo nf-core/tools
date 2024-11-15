@@ -7,7 +7,7 @@
   </picture>
 </h1>
 
-{%- else %}
+{% else %}
 
 # {{ name }}
 
@@ -128,7 +128,7 @@ An extensive list of references for the tools used by the pipeline can be found 
 You can cite the `nf-core` publication as follows:
 
 {% else -%}
-This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
+This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/main/LICENSE).
 
 {% endif -%}
 

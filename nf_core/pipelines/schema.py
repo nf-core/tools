@@ -51,7 +51,7 @@ class PipelineSchema:
         self.defs_notation = None
         self.ignored_params = []
 
-    # Update the validation plugin code everytime the schema gets changed
+    # Update the validation plugin code every time the schema gets changed
     def set_schema_filename(self, schema: str) -> None:
         self._schema_filename = schema
         self._update_validation_plugin_from_config()
@@ -97,10 +97,16 @@ class PipelineSchema:
                 conf.get("validation.help.fullParameter", "helpFull"),
                 conf.get("validation.help.showHiddenParameter", "showHidden"),
             ]  # Help parameter should be ignored by default
-            ignored_params_config = conf.get("validation", {}).get("defaultIgnoreParams", [])
+            ignored_params_config_str = conf.get("validation.defaultIgnoreParams", "")
+            ignored_params_config = [
+                item.strip().strip("'") for item in ignored_params_config_str[1:-1].split(",")
+            ]  # Extract list elements and remove whitespace
+
             if len(ignored_params_config) > 0:
+                log.debug(f"Ignoring parameters from config: {ignored_params_config}")
                 ignored_params.extend(ignored_params_config)
             self.ignored_params = ignored_params
+            log.debug(f"Ignoring parameters: {self.ignored_params}")
             self.schema_draft = "https://json-schema.org/draft/2020-12/schema"
 
         else:
@@ -118,6 +124,7 @@ class PipelineSchema:
         # Supplied path exists - assume a local pipeline directory or schema
         if path.exists():
             log.debug(f"Path exists: {path}. Assuming local pipeline directory or schema")
+            local_only = True
             if revision is not None:
                 log.warning(f"Local workflow supplied, ignoring revision '{revision}'")
             if path.is_dir():
@@ -963,7 +970,7 @@ class PipelineSchema:
                 raise AssertionError('"api_url" not in web_response')
             if "web_url" not in web_response:
                 raise AssertionError('"web_url" not in web_response')
-            # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatability.
+            # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatibility.
             if web_response["status"] != "recieved":
                 raise AssertionError(
                     f'web_response["status"] should be "recieved", but it is "{web_response["status"]}"'

@@ -6,7 +6,7 @@ These are the most common things requested on pull requests (PRs).
 
 Remember that PRs should be made against the dev branch, unless you're preparing a release.
 
-Learn more about contributing: https://github.com/nf-core/tools/tree/master/.github/CONTRIBUTING.md
+Learn more about contributing: https://github.com/nf-core/tools/tree/main/.github/CONTRIBUTING.md
 -->
 
 ## PR checklist

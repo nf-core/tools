@@ -22,9 +22,9 @@ include { UTILS_NFCORE_PIPELINE     } from '../../nf-core/utils_nfcore_pipeline'
 include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipeline'
 
 /*
-========================================================================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     SUBWORKFLOW TO INITIALISE PIPELINE
-========================================================================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
 workflow PIPELINE_INITIALISATION {
@@ -51,7 +51,8 @@ workflow PIPELINE_INITIALISATION {
         workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1
     )
 
-    {% if nf_schema %}
+    {%- if nf_schema %}
+
     //
     // Validate parameters and generate parameter summary to stdout
     //
@@ -60,7 +61,7 @@ workflow PIPELINE_INITIALISATION {
         validate_params,
         null
     )
-    {% endif %}
+    {%- endif %}
 
     //
     // Check config provided to the pipeline
@@ -70,6 +71,7 @@ workflow PIPELINE_INITIALISATION {
     )
 
     {%- if igenomes %}
+
     //
     // Custom validation for pipeline parameters
     //
@@ -111,9 +113,9 @@ workflow PIPELINE_INITIALISATION {
 }
 
 /*
-========================================================================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     SUBWORKFLOW FOR PIPELINE COMPLETION
-========================================================================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
 workflow PIPELINE_COMPLETION {
@@ -123,11 +125,13 @@ workflow PIPELINE_COMPLETION {
     email           //  string: email address
     email_on_fail   //  string: email address sent on pipeline failure
     plaintext_email // boolean: Send plain-text email instead of HTML
-    {% endif %}
+    {%- endif %}
     outdir          //    path: Path to output directory where results will be published
     monochrome_logs // boolean: Disable ANSI colour codes in log output
-    {% if adaptivecard or slackreport %}hook_url        //  string: hook URL for notifications{% endif %}
-    {% if multiqc %}multiqc_report  //  string: Path to MultiQC report{% endif %}
+    {%- if adaptivecard or slackreport %}
+    hook_url        //  string: hook URL for notifications{% endif %}
+    {%- if multiqc %}
+    multiqc_report  //  string: Path to MultiQC report{% endif %}
 
     main:
     {%- if nf_schema %}
@@ -169,9 +173,9 @@ workflow PIPELINE_COMPLETION {
 }
 
 /*
-========================================================================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     FUNCTIONS
-========================================================================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
 {%- if igenomes %}
@@ -235,8 +239,10 @@ def toolCitationText() {
     // Uncomment function in methodsDescriptionText to render in MultiQC report
     def citation_text = [
             "Tools used in the workflow included:",
-            {% if fastqc %}"FastQC (Andrews 2010),",{% endif %}
-            {% if multiqc %}"MultiQC (Ewels et al. 2016)",{% endif %}
+            {%- if fastqc %}
+            "FastQC (Andrews 2010),",{% endif %}
+            {%- if multiqc %}
+            "MultiQC (Ewels et al. 2016)",{% endif %}
             "."
         ].join(' ').trim()
 
@@ -248,15 +254,17 @@ def toolBibliographyText() {
     // Can use ternary operators to dynamically construct based conditions, e.g. params["run_xyz"] ? "<li>Author (2023) Pub name, Journal, DOI</li>" : "",
     // Uncomment function in methodsDescriptionText to render in MultiQC report
     def reference_text = [
-            {% if fastqc %}"<li>Andrews S, (2010) FastQC, URL: https://www.bioinformatics.babraham.ac.uk/projects/fastqc/).</li>",{% endif %}
-            {% if multiqc %}"<li>Ewels, P., Magnusson, M., Lundin, S., & Käller, M. (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics , 32(19), 3047–3048. doi: /10.1093/bioinformatics/btw354</li>"{% endif %}
+            {%- if fastqc %}
+            "<li>Andrews S, (2010) FastQC, URL: https://www.bioinformatics.babraham.ac.uk/projects/fastqc/).</li>",{% endif %}
+            {%- if multiqc %}
+            "<li>Ewels, P., Magnusson, M., Lundin, S., & Käller, M. (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics , 32(19), 3047–3048. doi: /10.1093/bioinformatics/btw354</li>"{% endif %}
         ].join(' ').trim()
 
     return reference_text
 }
 
 def methodsDescriptionText(mqc_methods_yaml) {
-    // Convert  to a named map so can be used as with familar NXF ${workflow} variable syntax in the MultiQC YML file
+    // Convert  to a named map so can be used as with familiar NXF ${workflow} variable syntax in the MultiQC YML file
     def meta = [:]
     meta.workflow = workflow.toMap()
     meta["manifest_map"] = workflow.manifest.toMap()

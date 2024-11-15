@@ -84,7 +84,8 @@ workflow {
         params.outdir,
         params.input
     )
-    {% endif %}
+    {%- endif %}
+
     //
     // WORKFLOW: Run main workflow
     //
@@ -108,8 +109,10 @@ workflow {
         {%- endif %}
         params.outdir,
         params.monochrome_logs,
-        {% if adaptivecard or slackreport %}params.hook_url,{% endif %}
-        {% if multiqc %}{{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report{% endif %}
+        {%- if adaptivecard or slackreport %}
+        params.hook_url,{% endif %}
+        {%- if multiqc %}
+        {{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report{% endif %}
     )
     {%- endif %}
 }

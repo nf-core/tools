@@ -1,12 +1,12 @@
 <h1>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nf-core/tools/master/docs/images/nfcore-tools_logo_dark.png">
-    <img alt="nf-core/tools" src="https://raw.githubusercontent.com/nf-core/tools/master/docs/images/nfcore-tools_logo_light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nf-core/tools/main/docs/images/nfcore-tools_logo_dark.png">
+    <img alt="nf-core/tools" src="https://raw.githubusercontent.com/nf-core/tools/main/docs/images/nfcore-tools_logo_light.png">
   </picture>
 </h1><!-- omit in toc -->
 
-[![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=master&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amaster)
-[![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
+[![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=main&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amain)
+[![codecov](https://codecov.io/gh/nf-core/tools/branch/main/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
 [![code style: prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
 [![code style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v1.json)](https://github.com/charliermarsh/ruff)
 
@@ -21,7 +21,7 @@ For documentation of the internal Python functions, please refer to the [Tools P
 
 ## Installation
 
-For full installation instructions, please see the [nf-core documentation](https://nf-co.re/docs/usage/tools).
+For full installation instructions, please see the [nf-core documentation](https://nf-co.re/docs/nf-core-tools/installation).
 Below is a quick-start for those who know what they're doing:
 
 ### Bioconda

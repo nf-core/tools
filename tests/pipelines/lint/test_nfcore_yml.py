@@ -33,7 +33,9 @@ class TestLintNfCoreYml(TestLint):
         with open(self.nf_core_yml, "w") as fh:
             fh.write(new_content)
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
-        lint_obj._load()
+        # assert that it raises assertion error
+        with self.assertRaises(AssertionError):
+            lint_obj._load()
         results = lint_obj.nfcore_yml()
         assert "Repository type in `.nf-core.yml` is not valid." in str(results["failed"])
         assert len(results.get("warned", [])) == 0
