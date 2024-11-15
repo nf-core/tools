@@ -432,3 +432,14 @@ seqera_platform:
     You can extend this file adding any other desired configuration.
   nfcore_pipelines: False
   custom_pipelines: True
+vscode:
+  skippable_paths:
+    - ".vscode"
+  short_description: "Render website admonitions in VSCode"
+  description: "Add a VSCode configuration to render website admonitions"
+  help_text: |
+    This will add a VSCode configuration file to render the admonitions in markdown files with the same style as the nf-core website.
+
+    Adds the `.vscode` directory to the pipelinerepository.
+  nfcore_pipelines: False
+  custom_pipelines: True
