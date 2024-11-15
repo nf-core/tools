@@ -466,16 +466,22 @@ class ModulesDiffer:
 
     @staticmethod
     def try_apply_patch(
-        module: str, repo_path: Union[str, Path], patch_path: Union[str, Path], module_dir: Path, reverse: bool = False
+        component_type: str,
+        component: str,
+        repo_path: Union[str, Path],
+        patch_path: Union[str, Path],
+        component_dir: Path,
+        reverse: bool = False,
     ) -> Dict[str, List[str]]:
         """
-        Try applying a full patch file to a module
+        Try applying a full patch file to a module or subworkflow
 
         Args:
-            module (str): Name of the module
+            component_type (str): The type of component (modules or subworkflows)
+            component (str): Name of the module or subworkflow
             repo_path (str): Name of the repository where the module resides
             patch_path (str): The absolute path to the patch file to be applied
-            module_dir (Path): The directory containing the module
+            component_dir (Path): The directory containing the component
             reverse (bool): Apply the patch in reverse
 
         Returns:
@@ -485,13 +491,13 @@ class ModulesDiffer:
         Raises:
             LookupError: If the patch application fails in a file
         """
-        module_relpath = Path("modules", repo_path, module)
+        component_relpath = Path(component_type, repo_path, component)
         patches = ModulesDiffer.per_file_patch(patch_path)
         new_files = {}
         for file, patch in patches.items():
             log.debug(f"Applying patch to {file}")
-            fn = Path(file).relative_to(module_relpath)
-            file_path = module_dir / fn
+            fn = Path(file).relative_to(component_relpath)
+            file_path = component_dir / fn
             try:
                 with open(file_path) as fh:
                     file_lines = fh.readlines()

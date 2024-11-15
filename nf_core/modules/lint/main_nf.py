@@ -51,6 +51,7 @@ def main_nf(
     lines: List[str] = []
     if module.is_patched:
         lines = ModulesDiffer.try_apply_patch(
+            module.component_type,
             module.component_name,
             module_lint_object.modules_repo.repo_path,
             module.patch_path,

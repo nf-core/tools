@@ -47,6 +47,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
     meta_yaml = read_meta_yml(module_lint_object, module)
     if module.is_patched and module_lint_object.modules_repo.repo_path is not None:
         lines = ModulesDiffer.try_apply_patch(
+            module.component_type,
             module.component_name,
             module_lint_object.modules_repo.repo_path,
             module.patch_path,
@@ -208,6 +209,7 @@ def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) ->
     # Check if we have a patch file, get original file in that case
     if module.is_patched:
         lines = ModulesDiffer.try_apply_patch(
+            module.component_type,
             module.component_name,
             module_lint_object.modules_repo.repo_path,
             module.patch_path,

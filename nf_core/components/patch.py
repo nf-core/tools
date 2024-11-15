@@ -65,7 +65,9 @@ class ComponentPatch(ComponentCommand):
         component_fullname = str(Path(self.component_type, self.modules_repo.repo_path, component))
 
         # Verify that the component has an entry in the modules.json file
-        if not self.modules_json.module_present(component, self.modules_repo.remote_url, component_dir):
+        if not self.modules_json.component_present(
+            component, self.modules_repo.remote_url, component_dir, self.component_type
+        ):
             raise UserWarning(
                 f"The '{component_fullname}' {self.component_type[:-1]} does not have an entry in the 'modules.json' file. Cannot compute patch"
             )
@@ -127,7 +129,9 @@ class ComponentPatch(ComponentCommand):
             raise UserWarning(f"{self.component_type[:-1]} '{component_fullname}' is unchanged. No patch to compute")
 
         # Write changes to modules.json
-        self.modules_json.add_patch_entry(component, self.modules_repo.remote_url, component_dir, patch_relpath)
+        self.modules_json.add_patch_entry(
+            self.component_type, component, self.modules_repo.remote_url, component_dir, patch_relpath
+        )
         log.debug(f"Wrote patch path for {self.component_type[:-1]} {component} to modules.json")
 
         # Show the changes made to the module
@@ -166,7 +170,9 @@ class ComponentPatch(ComponentCommand):
         component_fullname = str(Path(self.component_type, component_dir, component))
 
         # Verify that the component has an entry in the modules.json file
-        if not self.modules_json.module_present(component, self.modules_repo.remote_url, component_dir):
+        if not self.modules_json.component_present(
+            component, self.modules_repo.remote_url, component_dir, self.component_type
+        ):
             raise UserWarning(
                 f"The '{component_fullname}' {self.component_type[:-1]} does not have an entry in the 'modules.json' file. Cannot compute patch"
             )
@@ -202,7 +208,7 @@ class ComponentPatch(ComponentCommand):
 
         # Try to apply the patch in reverse and move resulting files to module dir
         temp_component_dir = self.modules_json.try_apply_patch_reverse(
-            component, self.modules_repo.repo_path, patch_relpath, component_path
+            self.component_type, component, self.modules_repo.repo_path, patch_relpath, component_path
         )
         try:
             for file in Path(temp_component_dir).glob("*"):

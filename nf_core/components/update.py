@@ -810,7 +810,9 @@ class ComponentUpdate(ComponentCommand):
         shutil.copytree(component_install_dir, temp_component_dir)
 
         try:
-            new_files = ModulesDiffer.try_apply_patch(component, repo_path, patch_path, temp_component_dir)
+            new_files = ModulesDiffer.try_apply_patch(
+                self.component_type, component, repo_path, patch_path, temp_component_dir
+            )
         except LookupError:
             # Patch failed. Save the patch file by moving to the install dir
             shutil.move(patch_path, Path(component_install_dir, patch_path.relative_to(component_dir)))
@@ -848,7 +850,12 @@ class ComponentUpdate(ComponentCommand):
 
         # Add the patch file to the modules.json file
         self.modules_json.add_patch_entry(
-            component, self.modules_repo.remote_url, repo_path, patch_relpath, write_file=write_file
+            self.component_type,
+            component,
+            self.modules_repo.remote_url,
+            repo_path,
+            patch_relpath,
+            write_file=write_file,
         )
 
         return True

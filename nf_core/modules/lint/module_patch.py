@@ -162,6 +162,7 @@ def patch_reversible(module_lint_object, module, patch_path):
     """
     try:
         ModulesDiffer.try_apply_patch(
+            module.component_type,
             module.component_name,
             module_lint_object.modules_repo.repo_path,
             patch_path,

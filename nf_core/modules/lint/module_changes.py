@@ -31,6 +31,7 @@ def module_changes(module_lint_object, module):
         shutil.copytree(module.component_dir, tempdir)
         try:
             new_lines = ModulesDiffer.try_apply_patch(
+                module.component_type,
                 module.component_name,
                 module.org,
                 module.patch_path,
