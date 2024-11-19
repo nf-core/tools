@@ -1460,9 +1460,10 @@ class DownloadWorkflow:
         # Sometimes, container still contain an explicit library specification, which
         # resulted in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
         # Thus, if an explicit registry is specified, the provided -l value is ignored.
+        # Additionally, check if the container to be pulled is native Singularity: oras:// protocol.
         container_parts = container.split("/")
         if len(container_parts) > 2:
-            address = f"docker://{container}"
+            address = container if container.startswith("oras://") else f"docker://{container}"
             absolute_URI = True
         else:
             address = f"docker://{library}/{container.replace('docker://', '')}"
