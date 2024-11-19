@@ -1000,14 +1000,18 @@ class DownloadWorkflow:
         'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data'
         'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data'
 
+        Lastly, we want to remove at least a few Docker URIs for those modules, that have an oras:// download link.
         """
         d: Dict[str, str] = {}
-        seqera_containers: List[str] = []
+        seqera_containers_http: List[str] = []
+        seqera_containers_oras: List[str] = []
         all_others: List[str] = []
 
         for c in container_list:
             if bool(re.search(r"/data$", c)):
-                seqera_containers.append(c)
+                seqera_containers_http.append(c)
+            elif bool(re.search(r"^oras$", c)):
+                seqera_containers_oras.append(c)
             else:
                 all_others.append(c)
 
@@ -1016,8 +1020,45 @@ class DownloadWorkflow:
                 log.debug(f"{c} matches and will be saved as {k}")
                 d[k] = c
 
-        # combine deduplicated others and deduplicated Seqera containers
-        return sorted(list(d.values()) + list(set(seqera_containers)))
+        combined_with_oras = self.reconcile_seqera_container_uris(seqera_containers_oras, list(d.values()))
+
+        # combine deduplicated others (Seqera containers oras, http others and Docker URI others) and Seqera containers http
+        return sorted(list(set(combined_with_oras + seqera_containers_http)))
+
+    @staticmethod
+    def reconcile_seqera_container_uris(prioritzed_container_list: List[str], other_list: List[str]) -> List[str]:
+        """
+        Helper function that takes a list of Seqera container URIs,
+        extracts the software string and builds a regex from them to filter out
+        similar containers from the second container list.
+
+        prioritzed_container_list = [
+        ...     "oras://community.wave.seqera.io/library/multiqc:1.25.1--f0e743d16869c0bf",
+        ...     "oras://community.wave.seqera.io/library/multiqc_pip_multiqc-plugins:e1f4877f1515d03c"
+        ... ]
+
+        will be cleaned to
+
+        ['library/multiqc:1.25.1', 'library/multiqc_pip_multiqc-plugins']
+
+        Subsequently, build a regex from those and filter out matching duplicates in other_list:
+        """
+
+        # trim the URIs to the stem that contains the tool string, assign with Walrus operator to account for non-matching patterns
+        trimmed_priority_list = [
+            match.group()
+            for c in set(prioritzed_container_list)
+            if (match := re.search(r"library/.*?:[\d.]+", c) if "--" in c else re.search(r"library/[^\s:]+", c))
+        ]
+
+        # build regex
+        prioritized_containers = re.compile("|".join(f"{re.escape(c)}" for c in trimmed_priority_list))
+
+        # filter out matches in other list
+        filtered_containers = [c for c in other_list if not re.search(prioritized_containers, c)]
+
+        # combine priorized and regular container lists
+        return sorted(list(set(prioritzed_container_list + filtered_containers)))
 
     def gather_registries(self, workflow_directory: str) -> None:
         """Fetch the registries from the pipeline config and CLI arguments and store them in a set.
