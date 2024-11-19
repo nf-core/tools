@@ -1016,8 +1016,8 @@ class DownloadWorkflow:
                 log.debug(f"{c} matches and will be saved as {k}")
                 d[k] = c
 
-        # combine deduplicated others and Seqera containers
-        return sorted(list(d.values()) + seqera_containers)
+        # combine deduplicated others and deduplicated Seqera containers
+        return sorted(list(d.values()) + list(set(seqera_containers)))
 
     def gather_registries(self, workflow_directory: str) -> None:
         """Fetch the registries from the pipeline config and CLI arguments and store them in a set.
