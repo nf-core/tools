@@ -305,6 +305,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
             try:
                 k, v = ul.split(" = ", 1)
                 config[k] = v.strip("'\"")
+                log.debug(f"Added config key:value pair: {k}={v}")
             except ValueError:
                 log.debug(f"Couldn't find key=value config pair:\n  {ul}")
 
@@ -1360,8 +1361,10 @@ def set_wd(path: Path) -> Generator[None, None, None]:
         Path to the working directory to be used inside this context.
     """
     start_wd = Path().absolute()
-    os.chdir(Path(path).resolve())
     try:
+        os.chdir(Path(path).resolve())
         yield
+    except Exception as e:
+        log.error(f"Error setting working directory to {path}: {e}")
     finally:
         os.chdir(start_wd)

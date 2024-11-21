@@ -122,9 +122,11 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                     ).unsafe_ask()
                 except LookupError:
                     raise
-
-        self.component_dir = Path(self.component_type, self.modules_repo.repo_path, *self.component_name.split("/"))
-
+        if self.modules_repo.repo_path is None:
+            raise ValueError("modules_repo.repo_path is None")
+        self.component_dir = Path(
+            self.component_type, self.modules_repo.repo_path, *self.component_name.split("/")
+        ).absolute()
         # First, sanity check that the module directory exists
         if not Path(self.directory, self.component_dir).is_dir():
             raise UserWarning(
@@ -194,7 +196,6 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         self.update = False  # reset self.update to False to test if the new snapshot is stable
         tag = f"subworkflows/{self.component_name}" if self.component_type == "subworkflows" else self.component_name
         profile = self.profile if self.profile else os.environ["PROFILE"]
-
         result = nf_core.utils.run_cmd(
             "nf-test",
             f"test --tag {tag} --profile {profile} {verbose} {update}",
@@ -208,7 +209,6 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
             obsolete_snapshots = compiled_pattern.search(nftest_out.decode())
             if obsolete_snapshots:
                 self.obsolete_snapshots = True
-
             # check if nf-test was successful
             if "Assertion failed:" in nftest_out.decode():
                 return False
@@ -216,6 +216,9 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
                 log.error("Test file 'main.nf.test' not found")
                 self.errors.append("Test file 'main.nf.test' not found")
                 return False
+            elif "No tests to execute" in nftest_out.decode():
+                log.debug("No tests to execute")  # no tests to execute is not an error anymore in nf-test v0.9.2
+                return True
             else:
                 log.debug("nf-test successful")
                 return True

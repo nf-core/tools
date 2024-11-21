@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import nf_core.utils
+from nf_core.components.components_utils import NF_CORE_MODULES_REMOTE
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
 
@@ -33,7 +34,9 @@ class ComponentCommand:
         Initialise the ComponentClass object
         """
         self.component_type: str = component_type
-        self.directory: Path = Path(directory)
+        self.directory: Path = Path(directory).absolute()
+        if remote_url is None:
+            remote_url = NF_CORE_MODULES_REMOTE
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress: bool = hide_progress
         self.no_prompts: bool = no_prompts
@@ -60,10 +63,10 @@ class ComponentCommand:
         except FileNotFoundError:
             raise
 
-        self.default_modules_path = Path("modules", self.org)
-        self.default_tests_path = Path("tests", "modules", self.org)
-        self.default_subworkflows_path = Path("subworkflows", self.org)
-        self.default_subworkflows_tests_path = Path("tests", "subworkflows", self.org)
+        self.default_modules_path = Path("modules", self.org).absolute()
+        self.default_tests_path = Path("tests", "modules", self.org).absolute()
+        self.default_subworkflows_path = Path("subworkflows", self.org).absolute()
+        self.default_subworkflows_tests_path = Path("tests", "subworkflows", self.org).absolute()
 
     def get_local_components(self) -> List[str]:
         """
@@ -212,6 +215,8 @@ class ComponentCommand:
                 self.modules_repo.setup_local_repo(
                     self.modules_repo.remote_url, self.modules_repo.branch, self.hide_progress
                 )
+                if self.modules_repo.repo_path is None:
+                    raise ValueError("Modules repo path is None")
                 # Move wrong modules to the right directory
                 for module in wrong_location_modules:
                     modules_dir = Path("modules").resolve()
