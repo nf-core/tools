@@ -120,7 +120,7 @@ def test_test_not_found(self):
             remote_url=GITLAB_URL,
             branch=GITLAB_NFTEST_BRANCH,
         )
-        test_file = Path("modules", "nf-core-test", "fastp", "tests", "main.nf.test")
+        test_file = Path(snap_generator.default_modules_path, snap_generator.component_name, "tests", "main.nf.test")
         test_file.rename(test_file.parent / "main.nf.test.bak")
         with pytest.raises(UserWarning) as e:
             snap_generator.run()

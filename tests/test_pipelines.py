@@ -13,10 +13,6 @@ class TestPipelines(TestCase):
         self.pipeline_obj = Pipeline(self.pipeline_dir)
         self.pipeline_obj._load()
 
-    def tearDown(self) -> None:
-        """Remove the test pipeline directory"""
-        shutil.rmtree(self.tmp_dir)
-
     def _make_pipeline_copy(self):
         """Make a copy of the test pipeline that can be edited
 

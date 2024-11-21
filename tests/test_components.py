@@ -8,6 +8,8 @@ from pathlib import Path
 
 from git.repo import Repo
 
+# needs to be run before .utils import otherwise NFCORE_DIR is not set to a temp dir
+os.environ["XDG_CONFIG_HOME"] = str(Path(tempfile.mkdtemp()))
 from .utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 
 
@@ -16,9 +18,8 @@ class TestComponents(unittest.TestCase):
 
     def setUp(self):
         """Clone a testing version the nf-core/modules repo"""
-        self.tmp_dir = Path(tempfile.mkdtemp())
-        self.nfcore_modules = Path(self.tmp_dir, "modules-test")
-
+        self.nfcore_modules = Path(tempfile.mkdtemp(), "modules-test")
+        self.nfcore_modules.mkdir(parents=True, exist_ok=True)
         Repo.clone_from(GITLAB_URL, self.nfcore_modules, branch=GITLAB_NFTEST_BRANCH)
 
         # Set $PROFILE environment variable to docker - tests will run with Docker
@@ -28,9 +29,8 @@ class TestComponents(unittest.TestCase):
     def tearDown(self):
         """Clean up temporary files and folders"""
 
-        # Clean up temporary files
-        if self.tmp_dir.is_dir():
-            shutil.rmtree(self.tmp_dir)
+        if self.nfcore_modules.exists():
+            shutil.rmtree(self.nfcore_modules)
 
     ############################################
     # Test of the individual components commands. #
