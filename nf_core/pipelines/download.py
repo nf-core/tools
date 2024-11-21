@@ -1026,7 +1026,7 @@ class DownloadWorkflow:
         return sorted(list(set(combined_with_oras + seqera_containers_http)))
 
     @staticmethod
-    def reconcile_seqera_container_uris(prioritzed_container_list: List[str], other_list: List[str]) -> List[str]:
+    def reconcile_seqera_container_uris(prioritized_container_list: List[str], other_list: List[str]) -> List[str]:
         """
         Helper function that takes a list of Seqera container URIs,
         extracts the software string and builds a regex from them to filter out
@@ -1043,22 +1043,24 @@ class DownloadWorkflow:
 
         Subsequently, build a regex from those and filter out matching duplicates in other_list:
         """
+        if not prioritized_container_list:
+            return other_list
+        else:
+            # trim the URIs to the stem that contains the tool string, assign with Walrus operator to account for non-matching patterns
+            trimmed_priority_list = [
+                match.group()
+                for c in set(prioritized_container_list)
+                if (match := re.search(r"library/.*?:[\d.]+", c) if "--" in c else re.search(r"library/[^\s:]+", c))
+            ]
 
-        # trim the URIs to the stem that contains the tool string, assign with Walrus operator to account for non-matching patterns
-        trimmed_priority_list = [
-            match.group()
-            for c in set(prioritzed_container_list)
-            if (match := re.search(r"library/.*?:[\d.]+", c) if "--" in c else re.search(r"library/[^\s:]+", c))
-        ]
+            # build regex
+            prioritized_containers = re.compile("|".join(f"{re.escape(c)}" for c in trimmed_priority_list))
 
-        # build regex
-        prioritized_containers = re.compile("|".join(f"{re.escape(c)}" for c in trimmed_priority_list))
+            # filter out matches in other list
+            filtered_containers = [c for c in other_list if not re.search(prioritized_containers, c)]
 
-        # filter out matches in other list
-        filtered_containers = [c for c in other_list if not re.search(prioritized_containers, c)]
-
-        # combine priorized and regular container lists
-        return sorted(list(set(prioritzed_container_list + filtered_containers)))
+            # combine prioritized and regular container lists
+            return sorted(list(set(prioritized_container_list + filtered_containers)))
 
     def gather_registries(self, workflow_directory: str) -> None:
         """Fetch the registries from the pipeline config and CLI arguments and store them in a set.
