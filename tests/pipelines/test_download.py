@@ -257,7 +257,20 @@ class DownloadTest(unittest.TestCase):
             not in download_obj.containers
         )
 
-        # mock_seqera_container.nf
+        # mock_seqera_container_oras.nf
+        assert "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6" in download_obj.containers
+        assert "community.wave.seqera.io/library/umi-transfer:1.0.0--d30e8812ea280fa1" not in download_obj.containers
+
+        # mock_seqera_container_oras_mulled.nf
+        assert (
+            "oras://community.wave.seqera.io/library/umi-transfer_umicollapse:796a995ff53da9e3"
+            in download_obj.containers
+        )
+        assert (
+            "community.wave.seqera.io/library/umi-transfer_umicollapse:3298d4f1b49e33bd" not in download_obj.containers
+        )
+
+        # mock_seqera_container_http.nf
         assert (
             "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
             in download_obj.containers
@@ -354,6 +367,15 @@ class DownloadTest(unittest.TestCase):
         # Test successful pull with absolute URI (use tiny 3.5MB test container from the "Kogia" project: https://github.com/bschiffthaler/kogia)
         download_obj.singularity_pull_image(
             "docker.io/bschiffthaler/sed", f"{tmp_dir}/sed.sif", None, "docker.io", mock_rich_progress
+        )
+
+        # Test successful pull with absolute oras:// URI
+        download_obj.singularity_pull_image(
+            "oras://ghcr.io/scilifelab/umi-transfer:latest",
+            f"{tmp_dir}/umi-transfer-oras.sif",
+            None,
+            "docker.io",
+            mock_rich_progress,
         )
 
         # try to pull from non-existing registry (Name change hello-world_new.sif is needed, otherwise ImageExistsError is raised before attempting to pull.)
