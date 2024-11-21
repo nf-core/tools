@@ -395,8 +395,16 @@ class SyncedRepo:
             old_component_path = Path("modules", component_name)
             commits_old_iter = self.repo.iter_commits(max_count=depth, paths=old_component_path)
 
-        commits_old = [{"git_sha": commit.hexsha, "trunc_message": commit.message} for commit in commits_old_iter]
-        commits_new = [{"git_sha": commit.hexsha, "trunc_message": commit.message} for commit in commits_new_iter]
+        try:
+            commits_old = [{"git_sha": commit.hexsha, "trunc_message": commit.message} for commit in commits_old_iter]
+            commits_new = [{"git_sha": commit.hexsha, "trunc_message": commit.message} for commit in commits_new_iter]
+        except git.GitCommandError as e:
+            log.error(
+                f"Git error: {e}\n"
+                "To solve this, you can try to remove the cloned rempository and run the command again.\n"
+                f"This repository is typically found at `{self.local_repo_dir}`"
+            )
+            raise UserWarning
         commits = iter(commits_new + commits_old)
 
         return commits

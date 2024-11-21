@@ -152,6 +152,12 @@ jobs:
         run: nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned
         working-directory: create-test-lint-wf
 
+      # Run code style linting
+      - name: run pre-commit
+        shell: bash
+        run: pre-commit run --all-files
+        working-directory: create-test-lint-wf
+
       # Run bump-version
       - name: nf-core pipelines bump-version
         run: nf-core --log-file log.txt pipelines bump-version --dir my-prefix-testpipeline/ 1.1

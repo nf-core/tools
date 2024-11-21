@@ -23,9 +23,9 @@ RUN apt-get update --quiet && \
     add-apt-repository -y ppa:apptainer/ppa && \
     apt-get update --quiet && \
     apt-get install --quiet --yes apptainer && \
-    wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
-    rm Miniconda3-latest-Linux-x86_64.sh && \
+    wget --quiet https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh && \
+    bash Miniforge3-Linux-x86_64.sh -b -p /opt/conda && \
+    rm Miniforge3-Linux-x86_64.sh && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
