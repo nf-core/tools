@@ -20,7 +20,7 @@ import nf_core.components
 import nf_core.components.nfcore_component
 import nf_core.modules.modules_utils
 import nf_core.utils
-from nf_core.components.components_utils import get_biotools_id
+from nf_core.components.components_utils import NF_CORE_MODULES_REMOTE, get_biotools_id
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.pipelines.lint_utils import console, run_prettier_on_file
@@ -58,28 +58,8 @@ class ModuleLint(ComponentLint):
     module_todos = module_todos
     module_version = module_version
 
-    def __init__(
-        self,
-        directory: Union[str, Path],
-        fail_warned: bool = False,
-        fix: bool = False,
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
-        no_pull: bool = False,
-        registry: Optional[str] = None,
-        hide_progress: bool = False,
-    ):
-        super().__init__(
-            component_type="modules",
-            directory=directory,
-            fail_warned=fail_warned,
-            fix=fix,
-            remote_url=remote_url,
-            branch=branch,
-            no_pull=no_pull,
-            registry=registry,
-            hide_progress=hide_progress,
-        )
+    def __init__(self, directory, **kwargs) -> None:
+        super().__init__("modules", directory=directory, **kwargs)
 
     def lint(
         self,
@@ -312,11 +292,11 @@ class ModuleLint(ComponentLint):
                             for x, meta_ch_element in enumerate(meta_element):
                                 if element_name in meta_ch_element.keys():
                                     # Copy current features of that input element form meta.yml
-                                    for feature in meta_element[x][element_name].keys():
+                                    for feature in meta_ch_element[x][element_name].keys():
                                         if feature not in element[element_name].keys():
-                                            corrected_meta_yml["input"][i][j][element_name][feature] = meta_element[x][
-                                                element_name
-                                            ][feature]
+                                            corrected_meta_yml["input"][i][j][element_name][feature] = meta_ch_element[
+                                                x
+                                            ][element_name][feature]
                                     break
 
         if "output" in meta_yml and correct_outputs != meta_outputs:
