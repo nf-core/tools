@@ -435,7 +435,7 @@ class DownloadTest(unittest.TestCase):
         with pytest.raises(ContainerError.NoSingularityContainerError):
             download_obj.singularity_pull_image(
                 "oras://ghcr.io/matthiaszepper/umi-transfer:dev",
-                f"{tmp_dir}/umi-transfer-oras.sif",
+                f"{tmp_dir}/umi-transfer-oras_impostor.sif",
                 None,
                 "docker.io",
                 mock_rich_progress,
@@ -445,7 +445,7 @@ class DownloadTest(unittest.TestCase):
         with pytest.raises(ContainerError.RegistryNotFoundError):
             download_obj.singularity_pull_image(
                 "hello-world",
-                f"{tmp_dir}/hello-world_new.sif",
+                f"{tmp_dir}/break_the_registry_test.sif",
                 None,
                 "register-this-domain-to-break-the-test.io",
                 mock_rich_progress,
@@ -481,7 +481,7 @@ class DownloadTest(unittest.TestCase):
         with pytest.raises(ContainerError.InvalidTagError):
             download_obj.singularity_pull_image(
                 "ewels/multiqc:go-rewrite",
-                f"{tmp_dir}/umi-transfer.sif",
+                f"{tmp_dir}/multiqc-go.sif",
                 None,
                 "ghcr.io",
                 mock_rich_progress,
