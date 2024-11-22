@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 import nf_core.modules.modules_repo
-from nf_core.modules.modules_differ import ModulesDiffer
+from nf_core.components.components_differ import ComponentsDiffer
 
 
 def subworkflow_changes(subworkflow_lint_object, subworkflow):
@@ -30,7 +30,7 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
         tempdir = tempdir_parent / "tmp_subworkflow_dir"
         shutil.copytree(subworkflow.component_dir, tempdir)
         try:
-            new_lines = ModulesDiffer.try_apply_patch(
+            new_lines = ComponentsDiffer.try_apply_patch(
                 subworkflow.component_type,
                 subworkflow.component_name,
                 subworkflow.org,

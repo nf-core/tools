@@ -15,8 +15,8 @@ from rich.progress import Progress
 
 import nf_core
 import nf_core.modules.modules_utils
+from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.modules_differ import ModulesDiffer
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def main_nf(
     # otherwise read the lines directly from the module
     lines: List[str] = []
     if module.is_patched:
-        lines = ModulesDiffer.try_apply_patch(
+        lines = ComponentsDiffer.try_apply_patch(
             module.component_type,
             module.component_name,
             module_lint_object.modules_repo.repo_path,

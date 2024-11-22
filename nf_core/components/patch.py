@@ -8,7 +8,7 @@ import questionary
 
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.modules.modules_differ import ModulesDiffer
+from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.modules.modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ class ComponentPatch(ComponentCommand):
         # Write the patch to a temporary location (otherwise it is printed to the screen later)
         patch_temp_path = tempfile.mktemp()
         try:
-            ModulesDiffer.write_diff_file(
+            ComponentsDiffer.write_diff_file(
                 patch_temp_path,
                 component,
                 self.modules_repo.repo_path,
@@ -135,7 +135,7 @@ class ComponentPatch(ComponentCommand):
         log.debug(f"Wrote patch path for {self.component_type[:-1]} {component} to modules.json")
 
         # Show the changes made to the module
-        ModulesDiffer.print_diff(
+        ComponentsDiffer.print_diff(
             component,
             self.modules_repo.repo_path,
             component_install_dir,

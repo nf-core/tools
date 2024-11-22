@@ -19,7 +19,7 @@ from nf_core.components.components_utils import NF_CORE_MODULES_NAME, NF_CORE_MO
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.pipelines.lint_utils import dump_json_with_prettier
 
-from .modules_differ import ModulesDiffer
+from ..components.components_differ import ComponentsDiffer
 
 log = logging.getLogger(__name__)
 
@@ -883,7 +883,7 @@ class ModulesJson:
         patch_path = Path(self.directory / patch_relpath)
 
         try:
-            new_files = ModulesDiffer.try_apply_patch(
+            new_files = ComponentsDiffer.try_apply_patch(
                 component_type, component, repo_name, patch_path, component_dir, reverse=True
             )
         except LookupError as e:
