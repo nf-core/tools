@@ -22,8 +22,11 @@
 ### Modules
 
 - add a panel around diff previews when updating ([#3246](https://github.com/nf-core/tools/pull/3246))
+- Modules created in pipelines "local" dir now use the full template ([#3256](https://github.com/nf-core/tools/pull/3256))
 
 ### Subworkflows
+
+- Subworkflows created in pipelines "local" dir now use the full template ([#3256](https://github.com/nf-core/tools/pull/3256))
 
 ### General
 

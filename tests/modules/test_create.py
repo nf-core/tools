@@ -31,7 +31,7 @@ class TestModulesCreate(TestModules):
             )
             with requests_cache.disabled():
                 module_create.create()
-        assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "trimgalore.nf"))
+        assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "trimgalore/main.nf"))
 
     def test_modules_create_fail_exists(self):
         """Fail at creating the same module twice"""
@@ -46,7 +46,7 @@ class TestModulesCreate(TestModules):
             with pytest.raises(UserWarning) as excinfo:
                 with requests_cache.disabled():
                     module_create.create()
-        assert "Module file exists already" in str(excinfo.value)
+        assert "module directory exists:" in str(excinfo.value)
 
     def test_modules_create_nfcore_modules(self):
         """Create a module in nf-core/modules clone"""
