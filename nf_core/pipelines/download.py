@@ -1887,6 +1887,9 @@ class ContainerError(Exception):
             elif re.search(r"manifest\sunknown", line):
                 self.error_type = self.InvalidTagError(self)
                 break
+            elif re.search(r"ORAS\sSIF\simage\sshould\shave\sa\ssingle\slayer", line):
+                self.error_type = self.NoSingularityContainerError(self)
+                break
             elif re.search(r"Image\sfile\salready\sexists", line):
                 self.error_type = self.ImageExistsError(self)
                 break
@@ -1949,6 +1952,17 @@ class ContainerError(Exception):
                 f'[bold red]"{self.error_log.container}" already exists at destination and cannot be pulled[/]\n'
             )
             self.helpmessage = f'Saving image of "{self.error_log.container}" failed, because "{self.error_log.out_path}" exists.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.\n'
+            super().__init__(self.message)
+
+    class NoSingularityContainerError(RuntimeError):
+        """The container image is no native Singularity Image Format."""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = (
+                f'[bold red]"{self.error_log.container}" is no valid Singularity Image Format container.[/]\n'
+            )
+            self.helpmessage = f"Pulling \"{self.error_log.container}\" failed, because it appears invalid. To convert form Docker's OCI format, prefix the URI with 'docker://' instead of 'oras://'.\n"
             super().__init__(self.message)
 
     class OtherError(RuntimeError):

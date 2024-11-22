@@ -369,6 +369,10 @@ class DownloadTest(unittest.TestCase):
             "biocontainers/sylph:0.6.1--b97274cdc1caa649",
         ]
 
+        # test that the test_container list is returned as it is, if no prioritized_containers are specified
+        result_empty = download_obj.reconcile_seqera_container_uris([], test_container)
+        assert result_empty == test_container
+
         result = download_obj.reconcile_seqera_container_uris(prioritized_container, test_container)
 
         # Verify that unrelated images are retained
@@ -420,12 +424,22 @@ class DownloadTest(unittest.TestCase):
 
         # Test successful pull with absolute oras:// URI
         download_obj.singularity_pull_image(
-            "oras://ghcr.io/scilifelab/umi-transfer:latest",
+            "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
             f"{tmp_dir}/umi-transfer-oras.sif",
             None,
             "docker.io",
             mock_rich_progress,
         )
+
+        # try pulling Docker container image with oras://
+        with pytest.raises(ContainerError.NoSingularityContainerError):
+            download_obj.singularity_pull_image(
+                "oras://ghcr.io/matthiaszepper/umi-transfer:dev",
+                f"{tmp_dir}/umi-transfer-oras.sif",
+                None,
+                "docker.io",
+                mock_rich_progress,
+            )
 
         # try to pull from non-existing registry (Name change hello-world_new.sif is needed, otherwise ImageExistsError is raised before attempting to pull.)
         with pytest.raises(ContainerError.RegistryNotFoundError):
