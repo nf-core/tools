@@ -449,7 +449,9 @@ class ComponentUpdate(ComponentCommand):
                 self.modules_repo.setup_branch(current_branch)
 
         # If there is a patch file, get its filename
-        patch_fn = self.modules_json.get_patch_fn(component, self.modules_repo.remote_url, install_dir)
+        patch_fn = self.modules_json.get_patch_fn(
+            self.component_type, component, self.modules_repo.remote_url, install_dir
+        )
 
         return (self.modules_repo, component, sha, patch_fn)
 
@@ -695,7 +697,12 @@ class ComponentUpdate(ComponentCommand):
 
         # Add patch filenames to the components that have them
         components_info = [
-            (repo, comp, sha, self.modules_json.get_patch_fn(comp, repo.remote_url, repo.repo_path))
+            (
+                repo,
+                comp,
+                sha,
+                self.modules_json.get_patch_fn(self.component_type, comp, repo.remote_url, repo.repo_path),
+            )
             for repo, comp, sha in components_info
         ]
 

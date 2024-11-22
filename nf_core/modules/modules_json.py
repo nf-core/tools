@@ -837,17 +837,17 @@ class ModulesJson:
         if write_file:
             self.dump()
 
-    def get_patch_fn(self, module_name, repo_url, install_dir):
+    def get_patch_fn(self, component_type, component_name, repo_url, install_dir):
         """
-        Get the patch filename of a module
+        Get the patch filename of a component
 
         Args:
-            module_name (str): The name of the module
-            repo_url (str): The URL of the repository containing the module
-            install_dir (str): The name of the directory where modules are installed
+            component_name (str): The name of the component
+            repo_url (str): The URL of the repository containing the component
+            install_dir (str): The name of the directory where components are installed
 
         Returns:
-            (str): The patch filename for the module, None if not present
+            (str): The patch filename for the component, None if not present
         """
         if self.modules_json is None:
             self.load()
@@ -855,9 +855,9 @@ class ModulesJson:
         path = (
             self.modules_json["repos"]
             .get(repo_url, {})
-            .get("modules")
+            .get(component_type)
             .get(install_dir)
-            .get(module_name, {})
+            .get(component_name, {})
             .get("patch")
         )
         return Path(path) if path is not None else None
