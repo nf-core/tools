@@ -839,11 +839,12 @@ class DownloadWorkflow:
         url_regex = (
             r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
         )
+        oras_regex = r"oras:\/\/[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
         # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
         docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
 
         # at this point, we don't have to distinguish anymore, because we will later prioritize direct downloads over Docker URIs.
-        either_url_or_docker = re.compile(f"{url_regex}|{docker_regex}", re.S)
+        either_url_or_docker = re.compile(f"{url_regex}|{oras_regex}|{docker_regex}", re.S)
 
         for _, container_value, search_space, file_path in raw_findings:
             """
@@ -1010,7 +1011,7 @@ class DownloadWorkflow:
         for c in container_list:
             if bool(re.search(r"/data$", c)):
                 seqera_containers_http.append(c)
-            elif bool(re.search(r"^oras$", c)):
+            elif bool(re.search(r"^oras://", c)):
                 seqera_containers_oras.append(c)
             else:
                 all_others.append(c)
