@@ -66,7 +66,7 @@ class TestSubworkflowsPatch(TestSubworkflows):
         subworkflow_path = Path(self.pipeline_dir, "subworkflows", GITLAB_REPO, "bam_sort_stats_samtools")
 
         # Check that no patch file has been added to the directory
-        assert "bam_sort_stats_samtools.diff" not in set(os.listdir(subworkflow_path))
+        assert not (subworkflow_path / "bam_sort_stats_samtools.diff").exists()
 
     def test_create_patch_change(self):
         """Test creating a patch when there is no change to the subworkflow"""
@@ -79,7 +79,7 @@ class TestSubworkflowsPatch(TestSubworkflows):
         subworkflow_path = Path(self.pipeline_dir, "subworkflows", GITLAB_REPO, "bam_sort_stats_samtools")
 
         # Check that a patch file with the correct name has been created
-        assert "bam_sort_stats_samtools.diff" in set(os.listdir(subworkflow_path))
+        assert (subworkflow_path / "bam_sort_stats_samtools.diff").exists()
 
         # Check that the correct lines are in the patch file
         with open(subworkflow_path / "bam_sort_stats_samtools.diff") as fh:
@@ -101,7 +101,7 @@ class TestSubworkflowsPatch(TestSubworkflows):
         patch_obj.patch("bam_sort_stats_samtools")
 
         # Check that a patch file with the correct name has been created
-        assert "bam_sort_stats_samtools.diff" in set(os.listdir(subworkflow_path))
+        assert (subworkflow_path / "bam_sort_stats_samtools.diff").exists()
 
         update_obj = nf_core.subworkflows.SubworkflowUpdate(
             self.pipeline_dir, sha=OLD_SHA, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
@@ -125,7 +125,7 @@ class TestSubworkflowsPatch(TestSubworkflows):
         update_obj.move_files_from_tmp_dir("bam_sort_stats_samtools", install_dir, GITLAB_REPO, OLD_SHA)
 
         # Check that a patch file with the correct name has been created
-        assert "bam_sort_stats_samtools.diff" in set(os.listdir(subworkflow_path))
+        assert (subworkflow_path / "bam_sort_stats_samtools.diff").exists()
 
         # Check that the correct lines are in the patch file
         with open(subworkflow_path / "bam_sort_stats_samtools.diff") as fh:
@@ -152,7 +152,7 @@ class TestSubworkflowsPatch(TestSubworkflows):
         patch_obj.patch("bam_sort_stats_samtools")
 
         # Check that a patch file with the correct name has been created
-        assert "bam_sort_stats_samtools.diff" in set(os.listdir(subworkflow_path))
+        assert (subworkflow_path / "bam_sort_stats_samtools.diff").exists()
 
         update_obj = nf_core.subworkflows.SubworkflowUpdate(
             self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_SUBWORKFLOWS_BRANCH
@@ -188,7 +188,7 @@ class TestSubworkflowsPatch(TestSubworkflows):
 
         patch_fn = "bam_sort_stats_samtools.diff"
         # Check that a patch file with the correct name has been created
-        assert patch_fn in set(os.listdir(swf_path))
+        assert (swf_path / patch_fn).exists()
 
         # Check the 'modules.json' contains a patch file for the subworkflow
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
@@ -208,7 +208,7 @@ class TestSubworkflowsPatch(TestSubworkflows):
         assert update_obj.update("bam_sort_stats_samtools")
 
         # Check that a patch file with the correct name has been created
-        assert patch_fn in set(os.listdir(swf_path))
+        assert (swf_path / patch_fn).exists()
 
         # Check the 'modules.json' contains a patch file for the subworkflow
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
@@ -245,7 +245,7 @@ class TestSubworkflowsPatch(TestSubworkflows):
 
         patch_fn = "bam_sort_stats_samtools.diff"
         # Check that a patch file with the correct name has been created
-        assert patch_fn in set(os.listdir(swf_path))
+        assert (swf_path / patch_fn).exists()
 
         # Check the 'modules.json' contains a patch file for the subworkflow
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
@@ -298,10 +298,10 @@ class TestSubworkflowsPatch(TestSubworkflows):
         subworkflow_path = Path(self.pipeline_dir, "subworkflows", GITLAB_REPO, "bam_sort_stats_samtools")
 
         # Check that a patch file with the correct name has been created
-        assert "bam_sort_stats_samtools.diff" in set(os.listdir(subworkflow_path))
+        assert (subworkflow_path / "bam_sort_stats_samtools.diff").exists()
 
         with mock.patch.object(nf_core.components.patch.questionary, "confirm") as mock_questionary:
             mock_questionary.unsafe_ask.return_value = True
             patch_obj.remove("bam_sort_stats_samtools")
         # Check that the diff file has been removed
-        assert "bam_sort_stats_samtools.diff" not in set(os.listdir(subworkflow_path))
+        assert not (subworkflow_path / "bam_sort_stats_samtools.diff").exists()
