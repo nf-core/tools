@@ -6,9 +6,9 @@ from typing import Union
 import ruamel.yaml
 from jsonschema import exceptions, validators
 
+from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.modules_differ import ModulesDiffer
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +46,8 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> None
     # Check if we have a patch file, get original file in that case
     meta_yaml = read_meta_yml(module_lint_object, module)
     if module.is_patched and module_lint_object.modules_repo.repo_path is not None:
-        lines = ModulesDiffer.try_apply_patch(
+        lines = ComponentsDiffer.try_apply_patch(
+            module.component_type,
             module.component_name,
             module_lint_object.modules_repo.repo_path,
             module.patch_path,
@@ -207,7 +208,8 @@ def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) ->
     yaml.preserve_quotes = True
     # Check if we have a patch file, get original file in that case
     if module.is_patched:
-        lines = ModulesDiffer.try_apply_patch(
+        lines = ComponentsDiffer.try_apply_patch(
+            module.component_type,
             module.component_name,
             module_lint_object.modules_repo.repo_path,
             module.patch_path,
