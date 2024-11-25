@@ -10,6 +10,7 @@
 - fix workflow_dispatch trigger and parse more review comments in awsfulltest ([#3235](https://github.com/nf-core/tools/pull/3235))
 - Add resource limits to Gitpod profile([#3255](https://github.com/nf-core/tools/pull/3255))
 - Fix a typo ([#3268](https://github.com/nf-core/tools/pull/3268))
+- Remove `def` from `nextflow.config` and add `trace_report_suffix` param ([#3296](https://github.com/nf-core/tools/pull/3296))
 
 ### Download
 
