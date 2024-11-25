@@ -76,7 +76,7 @@ class TestModulesCreate(TestModules):
         module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
 
         # Check that no patch file has been added to the directory
-        assert "bismark-align.diff" in set(os.listdir(module_path))
+        assert "bismark-align.diff" not in set(os.listdir(module_path))
 
         # Check the 'modules.json' contains no patch file for the module
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
