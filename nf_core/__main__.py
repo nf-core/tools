@@ -1024,7 +1024,7 @@ def command_modules_update(
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-@click.option("-r", "--remove", is_flag=True, default=False)
+@click.option("-r", "--remove", is_flag=True, default=False, help="Remove an existent patch file and regenerate it.")
 def command_modules_patch(ctx, tool, directory, remove):
     """
     Create a patch file for minor changes in a module
@@ -1578,7 +1578,7 @@ def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-@click.option("-r", "--remove", is_flag=True, default=False)
+@click.option("-r", "--remove", is_flag=True, default=False, help="Remove an existent patch file and regenerate it.")
 def subworkflows_patch(ctx, tool, dir, remove):
     """
     Create a patch file for minor changes in a subworkflow
