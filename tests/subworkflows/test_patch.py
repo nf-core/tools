@@ -172,17 +172,120 @@ class TestSubworkflowsPatch(TestSubworkflows):
             is False
         )
 
-    # TODO: create those two missing tests
     def test_create_patch_update_success(self):
-        """Test creating a patch file and updating a subworkflow when there is a diff conflict"""
-
-    def test_create_patch_update_fail(self):
         """
         Test creating a patch file and the updating the subworkflow
 
         Should have the same effect as 'test_create_patch_try_apply_successful'
         but uses higher level api
         """
+        self.setup_patch(self.pipeline_dir, True)
+        swf_path = Path(self.pipeline_dir, "subworkflows", GITLAB_REPO, "bam_sort_stats_samtools")
+
+        # Try creating a patch file
+        patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_SUBWORKFLOWS_BRANCH)
+        patch_obj.patch("bam_sort_stats_samtools")
+
+        patch_fn = "bam_sort_stats_samtools.diff"
+        # Check that a patch file with the correct name has been created
+        assert set(os.listdir(swf_path)) == {"main.nf", "meta.yml", patch_fn}
+
+        # Check the 'modules.json' contains a patch file for the subworkflow
+        modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
+        assert modules_json_obj.get_patch_fn(
+            "subworkflows", "bam_sort_stats_samtools", GITLAB_URL, GITLAB_REPO
+        ) == Path("subworkflows", GITLAB_REPO, "bam_sort_stats_samtools", patch_fn)
+
+        # Update the subworkflow
+        update_obj = nf_core.subworkflows.update.SubworkflowUpdate(
+            self.pipeline_dir,
+            sha=OLD_SHA,
+            show_diff=False,
+            update_deps=True,
+            remote_url=GITLAB_URL,
+            branch=GITLAB_SUBWORKFLOWS_BRANCH,
+        )
+        assert update_obj.update("bam_sort_stats_samtools")
+
+        # Check that a patch file with the correct name has been created
+        assert set(os.listdir(swf_path)) == {"main.nf", "meta.yml", patch_fn}
+
+        # Check the 'modules.json' contains a patch file for the subworkflow
+        modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
+        assert modules_json_obj.get_patch_fn(
+            "subworkflows", "bam_sort_stats_samtools", GITLAB_URL, GITLAB_REPO
+        ) == Path("subworkflows", GITLAB_REPO, "bam_sort_stats_samtools", patch_fn), modules_json_obj.get_patch_fn(
+            "subworkflows", "bam_sort_stats_samtools", GITLAB_URL, GITLAB_REPO
+        )
+
+        # Check that the correct lines are in the patch file
+        with open(swf_path / patch_fn) as fh:
+            patch_lines = fh.readlines()
+        swf_relpath = swf_path.relative_to(self.pipeline_dir)
+        assert f"--- {swf_relpath / 'main.nf'}\n" in patch_lines
+        assert f"+++ {swf_relpath / 'main.nf'}\n" in patch_lines
+        assert "-    ch_fasta // channel: [ fasta ]\n" in patch_lines
+
+        # Check that 'main.nf' is updated correctly
+        with open(swf_path / "main.nf") as fh:
+            main_nf_lines = fh.readlines()
+        # this line should have been removed by the patch
+        assert "    ch_fasta // channel: [ fasta ]\n" not in main_nf_lines
+
+    def test_create_patch_update_fail(self):
+        """
+        Test creating a patch file and updating a subworkflow when there is a diff conflict
+        """
+        self.setup_patch(self.pipeline_dir, True)
+        swf_path = Path(self.pipeline_dir, "subworkflows", GITLAB_REPO, "bam_sort_stats_samtools")
+
+        # Try creating a patch file
+        patch_obj = nf_core.subworkflows.SubworkflowPatch(self.pipeline_dir, GITLAB_URL, GITLAB_SUBWORKFLOWS_BRANCH)
+        patch_obj.patch("bam_sort_stats_samtools")
+
+        patch_fn = "bam_sort_stats_samtools.diff"
+        # Check that a patch file with the correct name has been created
+        assert set(os.listdir(swf_path)) == {"main.nf", "meta.yml", patch_fn}
+
+        # Check the 'modules.json' contains a patch file for the subworkflow
+        modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
+        assert modules_json_obj.get_patch_fn(
+            "subworkflows", "bam_sort_stats_samtools", GITLAB_URL, GITLAB_REPO
+        ) == Path("subworkflows", GITLAB_REPO, "bam_sort_stats_samtools", patch_fn)
+
+        # Save the file contents for downstream comparison
+        with open(swf_path / patch_fn) as fh:
+            patch_contents = fh.read()
+
+        update_obj = nf_core.subworkflows.update.SubworkflowUpdate(
+            self.pipeline_dir,
+            sha=FAIL_SHA,
+            show_diff=False,
+            update_deps=True,
+            remote_url=GITLAB_URL,
+            branch=GITLAB_SUBWORKFLOWS_BRANCH,
+        )
+        update_obj.update("bam_sort_stats_samtools")
+
+        # Check that the installed files have not been affected by the attempted patch
+        temp_dir = Path(tempfile.mkdtemp())
+        nf_core.components.components_command.ComponentCommand(
+            "subworkflows", self.pipeline_dir, GITLAB_URL, GITLAB_SUBWORKFLOWS_BRANCH
+        ).install_component_files("bam_sort_stats_samtools", FAIL_SHA, update_obj.modules_repo, temp_dir)
+
+        temp_module_dir = temp_dir / "bam_sort_stats_samtools"
+        for file in os.listdir(temp_module_dir):
+            assert file in os.listdir(swf_path)
+            with open(swf_path / file) as fh:
+                installed = fh.read()
+            with open(temp_module_dir / file) as fh:
+                shouldbe = fh.read()
+            assert installed == shouldbe
+
+        # Check that the patch file is unaffected
+        with open(swf_path / patch_fn) as fh:
+            new_patch_contents = fh.read()
+        assert patch_contents == new_patch_contents
 
     def test_remove_patch(self):
         """Test creating a patch when there is no change to the subworkflow"""
