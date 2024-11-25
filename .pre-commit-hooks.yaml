@@ -7,14 +7,16 @@
   files: ^modules/.*/.*/.*\.nf$
   pass_filenames: true
   # args: []
+  # NOTE See https://github.com/nf-core/modules/pull/7084 for reasoning
 - id: lint-subworkflows
   name: Lint nf-core subworkflows
-  # description: This hook trims trailing whitespace.
-  entry: nf-core --hide-progress subworkflows lint
+  description: Runs linting on all the subworkflows
+  entry: nf-core --hide-progress subworkflows lint -a
   language: python
   types: [text]
-  files: ^subworkflows/.*/.*/.*\.nf$
-  pass_filenames: true
+  files: ^subworkflows/[^/]+$
+  alias: sw
+  pass_filenames: false
   # args: []
 - id: lint-pipeline
   name: Lint nf-core pipeline
