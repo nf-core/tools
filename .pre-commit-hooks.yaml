@@ -22,7 +22,8 @@
 - id: lint-pipeline
   name: Lint nf-core pipeline
   description: Check pipeline code against nf-core guidelines.
-  entry: nf-core --hide-progress lint
+  entry: nf-core --hide-progress pipelines lint
   language: python
   types: [text]
-  # args: []
+  pass_filenames: false
+  # args: ["--fix"]
