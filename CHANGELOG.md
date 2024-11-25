@@ -25,6 +25,8 @@
 
 ### Subworkflows
 
+- Add `nf-core subworkflows patch` command ([#2861](https://github.com/nf-core/tools/pull/2861))
+
 ### General
 
 - Include .nf-core.yml in `nf-core pipelines bump-version` ([#3220](https://github.com/nf-core/tools/pull/3220))
