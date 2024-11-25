@@ -26,4 +26,5 @@
   language: python
   types: [text]
   pass_filenames: false
+  stages: [pre-push, manual]
   # args: ["--fix"]
