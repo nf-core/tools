@@ -1,13 +1,14 @@
-- id: lint-modules
-  name: Lint nf-core modules
-  # description: This hook trims trailing whitespace.
-  entry: nf-core --hide-progress modules lint
-  language: python
-  types: [text]
-  files: ^modules/.*/.*/.*\.nf$
-  pass_filenames: true
-  # args: []
-  # NOTE See https://github.com/nf-core/modules/pull/7084 for reasoning
+# TODO https://github.com/nf-core/tools/issues/3140
+# - id: lint-modules
+#   name: Lint nf-core modules
+#   # description: This hook trims trailing whitespace.
+#   entry: nf-core --hide-progress modules lint
+#   language: python
+#   types: [text]
+#   files: ^modules/[^/]+$
+#   pass_filenames: true
+# args: []
+# NOTE See https://github.com/nf-core/modules/pull/7084 for reasoning
 - id: lint-subworkflows
   name: Lint nf-core subworkflows
   description: Runs linting on all the subworkflows
