@@ -110,5 +110,5 @@ runs:
 
     - name: nf-core modules list remote gitlab
       shell: bash
-      run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git list remote
+      run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git list remote --dir nf-core-testpipeline/
       working-directory: create-lint-wf
