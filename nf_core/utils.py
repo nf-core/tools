@@ -418,7 +418,7 @@ def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
         if not Path(cachedir).exists():
             Path(cachedir).mkdir(parents=True)
     except PermissionError:
-        log.warn(f"Could not create cache directory: {cachedir}")
+        log.warning(f"Could not create cache directory: {cachedir}")
 
     return cachedir
 
