@@ -361,11 +361,9 @@ def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
 
 def setup_nfcore_dir() -> bool:
     """Creates a directory for files that need to be kept between sessions
-
     Currently only used for keeping local copies of modules repos
     """
-    if not NFCORE_DIR.exists():
-        NFCORE_DIR.mkdir(parents=True)
+    NFCORE_DIR.mkdir(parents=True, exist_ok=True)
     return True
 
 
@@ -411,15 +409,12 @@ def setup_requests_cachedir() -> Dict[str, Union[Path, datetime.timedelta, str]]
 
 def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
     """Sets up local caching for caching files between sessions."""
-
     cachedir = Path(NFCORE_CACHE_DIR, cache_fn)
-
     try:
-        if not Path(cachedir).exists():
-            Path(cachedir).mkdir(parents=True)
+        # Create directory with parents=True and exist_ok=True to handle race conditions
+        Path(cachedir).mkdir(parents=True, exist_ok=True)
     except PermissionError:
         log.warning(f"Could not create cache directory: {cachedir}")
-
     return cachedir
 
 
