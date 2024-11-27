@@ -10,6 +10,7 @@
 - fix workflow_dispatch trigger and parse more review comments in awsfulltest ([#3235](https://github.com/nf-core/tools/pull/3235))
 - Add resource limits to Gitpod profile([#3255](https://github.com/nf-core/tools/pull/3255))
 - Fix a typo ([#3268](https://github.com/nf-core/tools/pull/3268))
+- Remove `def` from `nextflow.config` and add `trace_report_suffix` param ([#3296](https://github.com/nf-core/tools/pull/3296))
 
 ### Download
 
@@ -24,6 +25,8 @@
 - add a panel around diff previews when updating ([#3246](https://github.com/nf-core/tools/pull/3246))
 
 ### Subworkflows
+
+- Add `nf-core subworkflows patch` command ([#2861](https://github.com/nf-core/tools/pull/2861))
 
 ### General
 
@@ -45,6 +48,7 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.4 ([#3282](https://github.com/nf-core/tools/pull/3282))
 - Update codecov/codecov-action action to v5 ([#3283](https://github.com/nf-core/tools/pull/3283))
 - Update python:3.12-slim Docker digest to 2a6386a ([#3284](https://github.com/nf-core/tools/pull/3284))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.0 ([#3299](https://github.com/nf-core/tools/pull/3299))
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 

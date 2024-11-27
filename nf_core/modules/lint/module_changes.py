@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 import nf_core.modules.modules_repo
-from nf_core.modules.modules_differ import ModulesDiffer
+from nf_core.components.components_differ import ComponentsDiffer
 
 
 def module_changes(module_lint_object, module):
@@ -30,7 +30,8 @@ def module_changes(module_lint_object, module):
         tempdir = tempdir_parent / "tmp_module_dir"
         shutil.copytree(module.component_dir, tempdir)
         try:
-            new_lines = ModulesDiffer.try_apply_patch(
+            new_lines = ComponentsDiffer.try_apply_patch(
+                module.component_type,
                 module.component_name,
                 module.org,
                 module.patch_path,
