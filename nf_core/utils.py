@@ -379,15 +379,34 @@ def setup_requests_cachedir() -> Dict[str, Union[Path, datetime.timedelta, str]]
     Also returns the config dict so that we can use the same setup with a Session.
     """
     pyversion: str = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir: Path = setup_nfcore_cachedir(f"cache_{pyversion}")
-    config: Dict[str, Union[Path, datetime.timedelta, str]] = {
-        "cache_name": Path(cachedir, "github_info"),
-        "expire_after": datetime.timedelta(hours=1),
-        "backend": "sqlite",
-    }
+    try:
+        # Create cache directory with exist_ok=True
+        cachedir: Path = setup_nfcore_cachedir(f"cache_{pyversion}")
+        cachedir.mkdir(parents=True, exist_ok=True)
 
-    logging.getLogger("requests_cache").setLevel(logging.WARNING)
-    return config
+        # Ensure the github_info subdirectory exists
+        github_cache = cachedir / "github_info"
+        github_cache.mkdir(parents=True, exist_ok=True)
+
+        config: Dict[str, Union[Path, datetime.timedelta, str]] = {
+            "cache_name": github_cache,
+            "expire_after": datetime.timedelta(hours=1),
+            "backend": "sqlite",
+        }
+
+        logging.getLogger("requests_cache").setLevel(logging.WARNING)
+        return config
+    except PermissionError:
+        # Fallback to temporary directory if we can't create in home
+        import tempfile
+
+        tmp_dir = Path(tempfile.gettempdir()) / "nf-core"
+        tmp_dir.mkdir(parents=True, exist_ok=True)
+        return {
+            "cache_name": tmp_dir / "github_info",
+            "expire_after": datetime.timedelta(hours=1),
+            "backend": "sqlite",
+        }
 
 
 def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
