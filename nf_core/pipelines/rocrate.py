@@ -83,9 +83,7 @@ class ROCrate:
 
         setup_requests_cachedir()
 
-    def create_rocrate(
-        self, outdir: Path, json_path: Union[None, Path] = None, zip_path: Union[None, Path] = None
-    ) -> bool:
+    def create_rocrate(self, json_path: Union[None, Path] = None, zip_path: Union[None, Path] = None) -> bool:
         """
         Create an RO Crate for a pipeline
 
@@ -95,12 +93,6 @@ class ROCrate:
             zip_path (Path): Path to the zip file
 
         """
-        # Set input paths
-        try:
-            self.set_crate_paths(outdir)
-        except OSError as e:
-            log.error(e)
-            sys.exit(1)
 
         # Check that the checkout pipeline version is the same as the requested version
         if self.version != "":
@@ -336,20 +328,6 @@ class ROCrate:
             wf_file.append_to("creator", author_entitity)
             if author in authors:
                 wf_file.append_to("maintainer", author_entitity)
-
-    def set_crate_paths(self, path: Path) -> None:
-        """Given a pipeline name, directory, or path, set wf_crate_filename"""
-
-        if path.is_dir():
-            self.pipeline_dir = path
-            # wf_crate_filename = path / "ro-crate-metadata.json"
-        elif path.is_file():
-            self.pipeline_dir = path.parent
-            # wf_crate_filename = path
-
-        # Check that the schema file exists
-        if self.pipeline_dir is None:
-            raise OSError(f"Could not find pipeline '{path}'")
 
 
 def get_orcid(name: str) -> Optional[str]:

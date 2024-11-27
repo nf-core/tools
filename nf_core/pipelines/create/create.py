@@ -360,7 +360,7 @@ class PipelineCreate:
         if self.config.skip_features is None or "ro-crate" not in self.config.skip_features:
             # Create the RO-Crate metadata file
             rocrate_obj = ROCrate(self.outdir)
-            rocrate_obj.create_rocrate(self.outdir, json_path=self.outdir / "ro-crate-metadata.json")
+            rocrate_obj.create_rocrate(json_path=self.outdir / "ro-crate-metadata.json")
 
         # Update the .nf-core.yml with linting configurations
         self.fix_linting()
