@@ -115,6 +115,10 @@ click.rich_click.OPTION_GROUPS = {
     "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
 }
 
+click.rich_click.OPTION_GROUPS = {
+    "nf-core modules list remote": [{"options": ["--dir", "--json", "--help"]}],
+}
+
 # Set up rich stderr console
 stderr = rich.console.Console(stderr=True, force_terminal=rich_force_colors())
 stdout = rich.console.Console(force_terminal=rich_force_colors())
@@ -874,11 +878,19 @@ def modules_list(ctx):
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def command_modules_list_remote(ctx, keywords, json):
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
+)
+def command_modules_list_remote(ctx, keywords, json, directory):  # pylint: disable=redefined-builtin
     """
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
-    modules_list_remote(ctx, keywords, json)
+    modules_list_remote(ctx, keywords, json, directory)
 
 
 # nf-core modules list local
@@ -1432,11 +1444,19 @@ def subworkflows_list(ctx):
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def command_subworkflows_list_remote(ctx, keywords, json):
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
+)
+def command_subworkflows_list_remote(ctx, keywords, json, directory):  # pylint: disable=redefined-builtin
     """
     List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
-    subworkflows_list_remote(ctx, keywords, json)
+    subworkflows_list_remote(ctx, keywords, json, directory)
 
 
 # nf-core subworkflows list local

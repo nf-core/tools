@@ -63,7 +63,7 @@ def subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, pro
         sys.exit(1)
 
 
-def subworkflows_list_remote(ctx, keywords, json):
+def subworkflows_list_remote(ctx, keywords, json, directory):
     """
     List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
@@ -71,11 +71,11 @@ def subworkflows_list_remote(ctx, keywords, json):
 
     try:
         subworkflow_list = SubworkflowList(
-            ".",
-            True,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
+            directory=directory,
+            remote=True,
+            modules_repo_url=ctx.obj["modules_repo_url"],
+            modules_repo_branch=ctx.obj["modules_repo_branch"],
+            modules_repo_no_pull=ctx.obj["modules_repo_no_pull"],
         )
 
         stdout.print(subworkflow_list.list_components(keywords, json))
@@ -92,11 +92,11 @@ def subworkflows_list_local(ctx, keywords, json, directory):  # pylint: disable=
 
     try:
         subworkflow_list = SubworkflowList(
-            directory,
-            False,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
+            directory=directory,
+            remote=False,
+            modules_repo_url=ctx.obj["modules_repo_url"],
+            modules_repo_branch=ctx.obj["modules_repo_branch"],
+            modules_repo_no_pull=ctx.obj["modules_repo_no_pull"],
         )
         stdout.print(subworkflow_list.list_components(keywords, json))
     except (UserWarning, LookupError) as e:

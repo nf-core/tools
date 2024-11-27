@@ -175,7 +175,7 @@ class SyncedRepo:
 
         return True
 
-    def setup_branch(self, branch):
+    def setup_branch(self, branch: Optional[str] = None) -> None:
         """
         Verify that we have a branch and otherwise use the default one.
         The branch is then checked out to verify that it exists in the repo.
@@ -195,7 +195,7 @@ class SyncedRepo:
         # Verify that the branch exists by checking it out
         self.branch_exists()
 
-    def get_default_branch(self):
+    def get_default_branch(self) -> str:
         """
         Gets the default branch for the repo (the branch origin/HEAD is pointing to)
         """
@@ -203,16 +203,16 @@ class SyncedRepo:
         _, branch = origin_head.ref.name.split("/")
         return branch
 
-    def branch_exists(self):
+    def branch_exists(self) -> None:
         """
         Verifies that the branch exists in the repository by trying to check it out
         """
         try:
             self.checkout_branch()
-        except GitCommandError:
-            raise LookupError(f"Branch '{self.branch}' not found in '{self.remote_url}'")
+        except GitCommandError as e:
+            raise LookupError(e.stderr)
 
-    def verify_branch(self):
+    def verify_branch(self) -> None:
         """
         Verifies the active branch conforms to the correct directory structure
         """
@@ -225,7 +225,7 @@ class SyncedRepo:
                 )
             raise LookupError(err_str)
 
-    def checkout_branch(self):
+    def checkout_branch(self) -> None:
         """
         Checks out the specified branch of the repository
         """
@@ -242,7 +242,7 @@ class SyncedRepo:
             else:
                 raise e
 
-    def checkout(self, commit):
+    def checkout(self, commit: str) -> None:
         """
         Checks out the repository at the requested commit
 

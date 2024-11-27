@@ -19,7 +19,6 @@ from rich.progress import BarColumn, Progress
 from rich.table import Table
 
 import nf_core.modules.modules_utils
-import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.utils import NFCoreYamlConfig, custom_yaml_dumper, rich_force_colors
@@ -29,14 +28,8 @@ log = logging.getLogger(__name__)
 
 
 class ModuleVersionBumper(ComponentCommand):
-    def __init__(
-        self,
-        pipeline_dir: Union[str, Path],
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
-        no_pull: bool = False,
-    ):
-        super().__init__("modules", pipeline_dir, remote_url, branch, no_pull)
+    def __init__(self, **kwargs) -> None:
+        super().__init__("modules", **kwargs)
 
         self.up_to_date: List[Tuple[str, str]] = []
         self.updated: List[Tuple[str, str]] = []

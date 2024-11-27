@@ -414,7 +414,7 @@ class ComponentUpdate(ComponentCommand):
                 config_entry = self.update_config[self.modules_repo.remote_url][install_dir].get(component)
         if config_entry is not None and config_entry is not True:
             if config_entry is False:
-                log.warn(
+                log.warning(
                     f"{self.component_type[:-1].title()}'s update entry in '.nf-core.yml' for '{component}' is set to False"
                 )
                 return (self.modules_repo, None, None, None)

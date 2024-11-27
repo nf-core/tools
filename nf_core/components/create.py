@@ -132,7 +132,7 @@ class ComponentCreate(ComponentCommand):
 
         if self.subtool:
             self.component_name = f"{self.component}/{self.subtool}"
-            self.component_dir = Path(self.component, self.subtool)
+            self.component_dir = Path(self.component, self.subtool).absolute()
 
         self.component_name_underscore = self.component_name.replace("/", "_")
 

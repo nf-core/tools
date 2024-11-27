@@ -67,10 +67,10 @@ nfcore_question_style = prompt_toolkit.styles.Style(
 )
 
 NFCORE_CACHE_DIR = Path(
-    os.environ.get("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
-    "nfcore",
+    os.getenv("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
+    "nf-core",
 )
-NFCORE_DIR = Path(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
+NFCORE_DIR = Path(os.getenv("XDG_CONFIG_HOME", Path(os.getenv("HOME") or "", ".config")), "nf-core")
 
 
 def fetch_remote_version(source_url):
@@ -305,6 +305,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
             try:
                 k, v = ul.split(" = ", 1)
                 config[k] = v.strip("'\"")
+                log.debug(f"Added config key:value pair: {k}={v}")
             except ValueError:
                 log.debug(f"Couldn't find key=value config pair:\n  {ul}")
 
@@ -360,11 +361,9 @@ def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
 
 def setup_nfcore_dir() -> bool:
     """Creates a directory for files that need to be kept between sessions
-
     Currently only used for keeping local copies of modules repos
     """
-    if not NFCORE_DIR.exists():
-        NFCORE_DIR.mkdir(parents=True)
+    NFCORE_DIR.mkdir(parents=True, exist_ok=True)
     return True
 
 
@@ -378,28 +377,44 @@ def setup_requests_cachedir() -> Dict[str, Union[Path, datetime.timedelta, str]]
     Also returns the config dict so that we can use the same setup with a Session.
     """
     pyversion: str = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir: Path = setup_nfcore_cachedir(f"cache_{pyversion}")
-    config: Dict[str, Union[Path, datetime.timedelta, str]] = {
-        "cache_name": Path(cachedir, "github_info"),
-        "expire_after": datetime.timedelta(hours=1),
-        "backend": "sqlite",
-    }
+    try:
+        # Create cache directory with exist_ok=True
+        cachedir: Path = setup_nfcore_cachedir(f"cache_{pyversion}")
+        cachedir.mkdir(parents=True, exist_ok=True)
 
-    logging.getLogger("requests_cache").setLevel(logging.WARNING)
-    return config
+        # Ensure the github_info subdirectory exists
+        github_cache = cachedir / "github_info"
+        github_cache.mkdir(parents=True, exist_ok=True)
+
+        config: Dict[str, Union[Path, datetime.timedelta, str]] = {
+            "cache_name": github_cache,
+            "expire_after": datetime.timedelta(hours=1),
+            "backend": "sqlite",
+        }
+
+        logging.getLogger("requests_cache").setLevel(logging.WARNING)
+        return config
+    except PermissionError:
+        # Fallback to temporary directory if we can't create in home
+        import tempfile
+
+        tmp_dir = Path(tempfile.gettempdir()) / "nf-core"
+        tmp_dir.mkdir(parents=True, exist_ok=True)
+        return {
+            "cache_name": tmp_dir / "github_info",
+            "expire_after": datetime.timedelta(hours=1),
+            "backend": "sqlite",
+        }
 
 
 def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
     """Sets up local caching for caching files between sessions."""
-
     cachedir = Path(NFCORE_CACHE_DIR, cache_fn)
-
     try:
-        if not Path(cachedir).exists():
-            Path(cachedir).mkdir(parents=True)
+        # Create directory with parents=True and exist_ok=True to handle race conditions
+        Path(cachedir).mkdir(parents=True, exist_ok=True)
     except PermissionError:
-        log.warn(f"Could not create cache directory: {cachedir}")
-
+        log.warning(f"Could not create cache directory: {cachedir}")
     return cachedir
 
 
@@ -1360,8 +1375,10 @@ def set_wd(path: Path) -> Generator[None, None, None]:
         Path to the working directory to be used inside this context.
     """
     start_wd = Path().absolute()
-    os.chdir(Path(path).resolve())
     try:
+        os.chdir(Path(path).resolve())
         yield
+    except Exception as e:
+        log.error(f"Error setting working directory to {path}: {e}")
     finally:
         os.chdir(start_wd)

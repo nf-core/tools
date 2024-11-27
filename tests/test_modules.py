@@ -1,6 +1,8 @@
 """Tests covering the modules commands"""
 
 import json
+import os
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -17,6 +19,9 @@ import nf_core.modules.remove
 import nf_core.pipelines.create.create
 from nf_core import __version__
 from nf_core.pipelines.lint_utils import run_prettier_on_file
+
+# needs to be run before .utils import otherwise NFCORE_DIR is not set to a temp dir
+os.environ["XDG_CONFIG_HOME"] = tempfile.mkdtemp()
 from nf_core.utils import NFCoreYamlConfig
 
 from .utils import (
@@ -35,6 +40,7 @@ from .utils import (
 
 def create_modules_repo_dummy(tmp_dir):
     """Create a dummy copy of the nf-core/modules repo"""
+
     yaml = ruamel.yaml.YAML()
     yaml.preserve_quotes = True
     yaml.indent(mapping=2, sequence=2, offset=0)

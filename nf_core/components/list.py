@@ -1,6 +1,5 @@
 import json
 import logging
-from pathlib import Path
 from typing import Dict, List, Optional, Union, cast
 
 import rich.table
@@ -13,17 +12,9 @@ log = logging.getLogger(__name__)
 
 
 class ComponentList(ComponentCommand):
-    def __init__(
-        self,
-        component_type: str,
-        pipeline_dir: Union[str, Path] = ".",
-        remote: bool = True,
-        remote_url: Optional[str] = None,
-        branch: Optional[str] = None,
-        no_pull: bool = False,
-    ) -> None:
+    def __init__(self, component_type: str, remote: bool = True, **kwargs) -> None:
         self.remote = remote
-        super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
+        super().__init__(component_type, **kwargs)
 
     def _configure_repo_and_paths(self, nf_dir_req: bool = True) -> None:
         """
