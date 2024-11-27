@@ -96,6 +96,7 @@ class PipelineSchema:
                 conf.get("validation.help.shortParameter", "help"),
                 conf.get("validation.help.fullParameter", "helpFull"),
                 conf.get("validation.help.showHiddenParameter", "showHidden"),
+                "trace_report_suffix",  # report suffix should be ignored by default as it is a Java Date object
             ]  # Help parameter should be ignored by default
             ignored_params_config_str = conf.get("validation.defaultIgnoreParams", "")
             ignored_params_config = [
@@ -124,6 +125,7 @@ class PipelineSchema:
         # Supplied path exists - assume a local pipeline directory or schema
         if path.exists():
             log.debug(f"Path exists: {path}. Assuming local pipeline directory or schema")
+            local_only = True
             if revision is not None:
                 log.warning(f"Local workflow supplied, ignoring revision '{revision}'")
             if path.is_dir():

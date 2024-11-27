@@ -2,9 +2,12 @@
 Check whether the content of a subworkflow has changed compared to the original repository
 """
 
+import shutil
+import tempfile
 from pathlib import Path
 
 import nf_core.modules.modules_repo
+from nf_core.components.components_differ import ComponentsDiffer
 
 
 def subworkflow_changes(subworkflow_lint_object, subworkflow):
@@ -20,7 +23,29 @@ def subworkflow_changes(subworkflow_lint_object, subworkflow):
 
     Only runs when linting a pipeline, not the modules repository
     """
-    tempdir = subworkflow.component_dir
+    if subworkflow.is_patched:
+        # If the subworkflow is patched, we need to apply
+        # the patch in reverse before comparing with the remote
+        tempdir_parent = Path(tempfile.mkdtemp())
+        tempdir = tempdir_parent / "tmp_subworkflow_dir"
+        shutil.copytree(subworkflow.component_dir, tempdir)
+        try:
+            new_lines = ComponentsDiffer.try_apply_patch(
+                subworkflow.component_type,
+                subworkflow.component_name,
+                subworkflow.org,
+                subworkflow.patch_path,
+                tempdir,
+                reverse=True,
+            )
+            for file, lines in new_lines.items():
+                with open(tempdir / file, "w") as fh:
+                    fh.writelines(lines)
+        except LookupError:
+            # This error is already reported by subworkflow_patch, so just return
+            return
+    else:
+        tempdir = subworkflow.component_dir
     subworkflow.branch = subworkflow_lint_object.modules_json.get_component_branch(
         "subworkflows", subworkflow.component_name, subworkflow.repo_url, subworkflow.org
     )
