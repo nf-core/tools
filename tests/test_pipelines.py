@@ -1,9 +1,12 @@
 import os
 import shutil
+import tempfile
 from unittest import TestCase
 
 import pytest
 
+# needs to be run before .utils import otherwise NFCORE_DIR is not set to a temp dir
+os.environ["NXF_HOME"] = tempfile.mkdtemp()
 from nf_core.utils import Pipeline
 
 from .utils import create_tmp_pipeline
@@ -15,9 +18,6 @@ class TestPipelines(TestCase):
         self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
         self.pipeline_obj = Pipeline(self.pipeline_dir)
         self.pipeline_obj._load()
-
-        # setup nextflow cache dir
-        os.environ["NXF_HOME"] = str(self.tmp_dir / "nextflow_cache")
 
     def _make_pipeline_copy(self):
         """Make a copy of the test pipeline that can be edited
