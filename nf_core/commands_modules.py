@@ -17,11 +17,11 @@ def modules_list_remote(ctx, keywords, json):
 
     try:
         module_list = ModuleList(
-            ".",
-            True,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
+            directory=".",
+            remote=True,
+            remote_url=ctx.obj["modules_repo_url"],
+            branch=ctx.obj["modules_repo_branch"],
+            no_pull=ctx.obj["modules_repo_no_pull"],
         )
         stdout.print(module_list.list_components(keywords, json))
     except (UserWarning, LookupError) as e:
@@ -37,11 +37,11 @@ def modules_list_local(ctx, keywords, json, directory):  # pylint: disable=redef
 
     try:
         module_list = ModuleList(
-            directory,
-            False,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
+            directory=directory,
+            remote=False,
+            remote_url=ctx.obj["modules_repo_url"],
+            branch=ctx.obj["modules_repo_branch"],
+            no_pull=ctx.obj["modules_repo_no_pull"],
         )
         stdout.print(module_list.list_components(keywords, json))
     except (UserWarning, LookupError) as e:

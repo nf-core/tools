@@ -1,7 +1,7 @@
 from pathlib import Path
 
+from ...components.components_differ import ComponentsDiffer
 from ...components.nfcore_component import NFCoreComponent
-from ..modules_differ import ModulesDiffer
 
 
 def module_patch(module_lint_obj, module: NFCoreComponent):
@@ -66,11 +66,11 @@ def check_patch_valid(module, patch_path):
                     continue
                 topath = Path(line.split(" ")[1].strip("\n"))
                 if frompath == Path("/dev/null"):
-                    paths_in_patch.append((frompath, ModulesDiffer.DiffEnum.CREATED))
+                    paths_in_patch.append((frompath, ComponentsDiffer.DiffEnum.CREATED))
                 elif topath == Path("/dev/null"):
-                    paths_in_patch.append((frompath, ModulesDiffer.DiffEnum.REMOVED))
+                    paths_in_patch.append((frompath, ComponentsDiffer.DiffEnum.REMOVED))
                 elif frompath == topath:
-                    paths_in_patch.append((frompath, ModulesDiffer.DiffEnum.CHANGED))
+                    paths_in_patch.append((frompath, ComponentsDiffer.DiffEnum.CHANGED))
                 else:
                     module.failed.append(
                         (
@@ -105,7 +105,7 @@ def check_patch_valid(module, patch_path):
     # Warn about any created or removed files
     passed = True
     for path, diff_status in paths_in_patch:
-        if diff_status == ModulesDiffer.DiffEnum.CHANGED:
+        if diff_status == ComponentsDiffer.DiffEnum.CHANGED:
             if not Path(module.base_dir, path).exists():
                 module.failed.append(
                     (
@@ -116,7 +116,7 @@ def check_patch_valid(module, patch_path):
                 )
                 passed = False
                 continue
-        elif diff_status == ModulesDiffer.DiffEnum.CREATED:
+        elif diff_status == ComponentsDiffer.DiffEnum.CREATED:
             if not Path(module.base_dir, path).exists():
                 module.failed.append(
                     (
@@ -130,7 +130,7 @@ def check_patch_valid(module, patch_path):
             module.warned.append(
                 ("patch", f"Patch file performs file creation of {path}. This is discouraged."), patch_path
             )
-        elif diff_status == ModulesDiffer.DiffEnum.REMOVED:
+        elif diff_status == ComponentsDiffer.DiffEnum.REMOVED:
             if Path(module.base_dir, path).exists():
                 module.failed.append(
                     (
@@ -161,7 +161,8 @@ def patch_reversible(module_lint_object, module, patch_path):
         (bool): False if any test failed, True otherwise
     """
     try:
-        ModulesDiffer.try_apply_patch(
+        ComponentsDiffer.try_apply_patch(
+            module.component_type,
             module.component_name,
             module_lint_object.modules_repo.repo_path,
             patch_path,
