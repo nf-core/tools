@@ -1,3 +1,4 @@
+import os
 import shutil
 from unittest import TestCase
 
@@ -14,6 +15,9 @@ class TestPipelines(TestCase):
         self.tmp_dir, self.template_dir, self.pipeline_name, self.pipeline_dir = create_tmp_pipeline()
         self.pipeline_obj = Pipeline(self.pipeline_dir)
         self.pipeline_obj._load()
+
+        # setup nextflow cache dir
+        os.environ["NXF_HOME"] = str(self.tmp_dir / "nextflow_cache")
 
     def _make_pipeline_copy(self):
         """Make a copy of the test pipeline that can be edited
