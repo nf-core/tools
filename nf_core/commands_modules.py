@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 stdout = rich.console.Console(force_terminal=rich_force_colors())
 
 
-def modules_list_remote(ctx, keywords, json):
+def modules_list_remote(ctx, keywords, json, directory):  # pylint: disable=redefined-builtin
     """
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
@@ -17,7 +17,7 @@ def modules_list_remote(ctx, keywords, json):
 
     try:
         module_list = ModuleList(
-            directory=".",
+            directory=directory,
             remote=True,
             remote_url=ctx.obj["modules_repo_url"],
             branch=ctx.obj["modules_repo_branch"],
