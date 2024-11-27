@@ -7,6 +7,7 @@ import pytest
 
 # needs to be run before .utils import otherwise NFCORE_DIR is not set to a temp dir
 os.environ["NXF_HOME"] = tempfile.mkdtemp()
+os.environ["XDG_CONFIG_HOME"] = tempfile.mkdtemp()
 from nf_core.utils import Pipeline
 
 from .utils import create_tmp_pipeline

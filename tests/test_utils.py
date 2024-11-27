@@ -202,6 +202,6 @@ class TestUtils(TestPipelines):
     def test_set_wd_revert_on_raise(self):
         wd_before_context = Path().resolve()
         with pytest.raises(Exception):
-            with nf_core.utils.set_wd(self.tmp_dir):
+            with nf_core.utils.set_wd(self.tmp_dir / "non_existent_dir"):
                 raise Exception
         assert wd_before_context == Path().resolve()
