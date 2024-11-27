@@ -122,7 +122,6 @@ class ROCrate:
 
             log.info(f"Saving metadata file to '{json_path}'")
             self.crate.metadata.write(json_path)
-            return True
 
         # Save the whole crate zip file
         if zip_path is not None:
@@ -130,10 +129,12 @@ class ROCrate:
                 zip_path = zip_path / "ro-crate.crate.zip"
             log.info(f"Saving zip file '{zip_path}")
             self.crate.write_zip(zip_path)
-            return True
+
         if json_path is None and zip_path is None:
             log.error("Please provide a path to save the ro-crate file or the zip file.")
             return False
+
+        return True
 
     def make_workflow_rocrate(self) -> None:
         """
