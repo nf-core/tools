@@ -9,7 +9,7 @@ from pathlib import Path
 from git.repo import Repo
 
 # needs to be run before .utils import otherwise NFCORE_DIR is not set to a temp dir
-os.environ["XDG_CONFIG_HOME"] = str(Path(tempfile.mkdtemp()))
+os.environ["XDG_CONFIG_HOME"] = tempfile.mkdtemp()
 from .utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 
 
