@@ -442,6 +442,9 @@ rocrate:
     This will add a `ro-crate-metadata.json` file to describe the pipeline.
   nfcore_pipelines: False
   custom_pipelines: True
+  linting:
+    files_warn:
+      - "ro-crate-metadata.json"
 vscode:
   skippable_paths:
     - ".vscode"
