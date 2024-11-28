@@ -36,6 +36,7 @@ from nf_core.commands_pipelines import (
     pipelines_launch,
     pipelines_lint,
     pipelines_list,
+    pipelines_rocrate,
     pipelines_schema_build,
     pipelines_schema_docs,
     pipelines_schema_lint,
@@ -86,7 +87,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "For developers",
-            "commands": ["create", "lint", "bump-version", "sync", "schema", "create-logo"],
+            "commands": ["create", "lint", "bump-version", "sync", "schema", "rocrate", "create-logo"],
         },
     ],
     "nf-core modules": [
@@ -568,6 +569,44 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
     List available nf-core pipelines with local info.
     """
     pipelines_list(ctx, keywords, sort, json, show_archived)
+
+
+# nf-core pipelines rocrate
+@pipelines.command("rocrate")
+@click.argument(
+    "pipeline_dir",
+    type=click.Path(exists=True),
+    default=Path.cwd(),
+    required=True,
+    metavar="<pipeline directory>",
+)
+@click.option(
+    "-j",
+    "--json_path",
+    default=Path.cwd(),
+    type=str,
+    help="Path to save RO Crate metadata json file to",
+)
+@click.option("-z", "--zip_path", type=str, help="Path to save RO Crate zip file to")
+@click.option(
+    "-pv",
+    "--pipeline_version",
+    type=str,
+    help="Version of pipeline to use for RO Crate",
+    default="",
+)
+@click.pass_context
+def rocrate(
+    ctx,
+    pipeline_dir: str,
+    json_path: str,
+    zip_path: str,
+    pipeline_version: str,
+):
+    """
+    Make an Research Object Crate
+    """
+    pipelines_rocrate(ctx, pipeline_dir, json_path, zip_path, pipeline_version)
 
 
 # nf-core pipelines sync
@@ -1758,7 +1797,7 @@ def command_schema_validate(pipeline, params):
 @click.option(
     "--url",
     type=str,
-    default="https://nf-co.re/pipeline_schema_builder",
+    default="https://oldsite.nf-co.re/pipeline_schema_builder",
     help="Customise the builder URL (for development work)",
 )
 def command_schema_build(directory, no_prompts, web_only, url):
