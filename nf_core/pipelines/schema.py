@@ -96,6 +96,7 @@ class PipelineSchema:
                 conf.get("validation.help.shortParameter", "help"),
                 conf.get("validation.help.fullParameter", "helpFull"),
                 conf.get("validation.help.showHiddenParameter", "showHidden"),
+                "trace_report_suffix",  # report suffix should be ignored by default as it is a Java Date object
             ]  # Help parameter should be ignored by default
             ignored_params_config_str = conf.get("validation.defaultIgnoreParams", "")
             ignored_params_config = [
