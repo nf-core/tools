@@ -110,7 +110,7 @@ def test_update_snapshot_module(self):
         assert snap_content["Single-End"]["timestamp"] != original_timestamp
 
 
-def test_test_not_found(self):
+def test_test_not_found(self, capsys):
     """Generate the snapshot for a module in nf-core/modules clone which doesn't contain tests"""
     with set_wd(self.nfcore_modules):
         snap_generator = ComponentsTest(
@@ -122,9 +122,11 @@ def test_test_not_found(self):
         )
         test_file = Path(snap_generator.default_modules_path, snap_generator.component_name, "tests", "main.nf.test")
         test_file.rename(test_file.parent / "main.nf.test.bak")
-        with pytest.raises(UserWarning) as e:
-            snap_generator.run()
-        assert "Test file 'main.nf.test' not found" in str(e.value)
+
+        captured = capsys.readouterr()
+        assert snap_generator.run()
+        assert "No tests to execute" in captured.out
+
         Path(test_file.parent / "main.nf.test.bak").rename(test_file)
 
 
