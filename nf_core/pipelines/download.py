@@ -1963,7 +1963,7 @@ class ContainerError(Exception):
             self.message = (
                 f'[bold red]"{self.error_log.container}" is no valid Singularity Image Format container.[/]\n'
             )
-            self.helpmessage = f"Pulling \"{self.error_log.container}\" failed, because it appears invalid. To convert form Docker's OCI format, prefix the URI with 'docker://' instead of 'oras://'.\n"
+            self.helpmessage = f"Pulling \"{self.error_log.container}\" failed, because it appears invalid. To convert from Docker's OCI format, prefix the URI with 'docker://' instead of 'oras://'.\n"
             super().__init__(self.message)
 
     class OtherError(RuntimeError):
