@@ -182,7 +182,7 @@
                     "fa_icon": "fas fa-file-upload",
                     "hidden": true
                 },{% endif %}
-                {%- if modules %}
+                {%- if modules or nf_schema %}
                 "monochrome_logs": {
                     "type": "boolean",
                     "description": "Do not use coloured log outputs.",
