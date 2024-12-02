@@ -5,6 +5,7 @@ Common utility functions for the nf-core python package.
 import concurrent.futures
 import datetime
 import errno
+import fnmatch
 import hashlib
 import io
 import json
@@ -19,7 +20,7 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Literal, Optional, Tuple, Union
 
 import git
 import prompt_toolkit.styles
@@ -35,6 +36,9 @@ from rich.live import Live
 from rich.spinner import Spinner
 
 import nf_core
+
+if TYPE_CHECKING:
+    from nf_core.pipelines.schema import PipelineSchema
 
 log = logging.getLogger(__name__)
 
@@ -52,14 +56,29 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     [
         ("qmark", "fg:ansiblue bold"),  # token in front of the question
         ("question", "bold"),  # question text
-        ("answer", "fg:ansigreen nobold bg:"),  # submitted answer text behind the question
-        ("pointer", "fg:ansiyellow bold"),  # pointer used in select and checkbox prompts
-        ("highlighted", "fg:ansiblue bold"),  # pointed-at choice in select and checkbox prompts
-        ("selected", "fg:ansiyellow noreverse bold"),  # style for a selected item of a checkbox
+        (
+            "answer",
+            "fg:ansigreen nobold bg:",
+        ),  # submitted answer text behind the question
+        (
+            "pointer",
+            "fg:ansiyellow bold",
+        ),  # pointer used in select and checkbox prompts
+        (
+            "highlighted",
+            "fg:ansiblue bold",
+        ),  # pointed-at choice in select and checkbox prompts
+        (
+            "selected",
+            "fg:ansiyellow noreverse bold",
+        ),  # style for a selected item of a checkbox
         ("separator", "fg:ansiblack"),  # separator in lists
         ("instruction", ""),  # user instructions for select, rawselect, checkbox
         ("text", ""),  # plain text
-        ("disabled", "fg:gray italic"),  # disabled choices for select and checkbox prompts
+        (
+            "disabled",
+            "fg:gray italic",
+        ),  # disabled choices for select and checkbox prompts
         ("choice-default", "fg:ansiblack"),
         ("choice-default-changed", "fg:ansiyellow"),
         ("choice-required", "fg:ansired"),
@@ -79,7 +98,11 @@ def fetch_remote_version(source_url):
     return remote_version
 
 
-def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
+def check_if_outdated(
+    current_version=None,
+    remote_version=None,
+    source_url="https://nf-co.re/tools_version",
+):
     """
     Check if the current version of nf-core is outdated
     """
@@ -146,11 +169,12 @@ class Pipeline:
         self.wf_path = Path(wf_path)
         self.pipeline_name: Optional[str] = None
         self.pipeline_prefix: Optional[str] = None
-        self.schema_obj: Optional[Dict] = None
+        self.schema_obj: Optional[PipelineSchema] = None
+        self.repo: Optional[git.Repo] = None
 
         try:
-            repo = git.Repo(self.wf_path)
-            self.git_sha = repo.head.object.hexsha
+            self.repo = git.Repo(self.wf_path)
+            self.git_sha = self.repo.head.object.hexsha
         except Exception as e:
             log.debug(f"Could not find git hash for pipeline: {self.wf_path}. {e}")
 
@@ -254,7 +278,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     """
 
     log.debug(f"Got '{wf_path}' as path")
-
+    wf_path = Path(wf_path)
     config = {}
     cache_fn = None
     cache_basedir = None
@@ -441,6 +465,7 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
             if post_data is None:
                 response = requests.get(api_url, headers={"Cache-Control": "no-cache"})
             else:
+                log.debug(f"requesting {api_url} with {post_data}")
                 response = requests.post(url=api_url, data=post_data)
         except requests.exceptions.Timeout:
             raise AssertionError(f"URL timed out: {api_url}")
@@ -526,7 +551,8 @@ class GitHubAPISession(requests_cache.CachedSession):
                 with open(gh_cli_config_fn) as fh:
                     gh_cli_config = yaml.safe_load(fh)
                     self.auth = requests.auth.HTTPBasicAuth(
-                        gh_cli_config["github.com"]["user"], gh_cli_config["github.com"]["oauth_token"]
+                        gh_cli_config["github.com"]["user"],
+                        gh_cli_config["github.com"]["oauth_token"],
                     )
                     self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
             except Exception:
@@ -794,12 +820,18 @@ def get_biocontainer_tag(package, version):
                         # Obtain version and build
                         match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
                         if match is not None:
-                            all_docker[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
+                            all_docker[match.group(1)] = {
+                                "date": get_tag_date(img["updated"]),
+                                "image": img,
+                            }
                     elif img["image_type"] == "Singularity":
                         # Obtain version and build
                         match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
                         if match is not None:
-                            all_singularity[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
+                            all_singularity[match.group(1)] = {
+                                "date": get_tag_date(img["updated"]),
+                                "image": img,
+                            }
                 # Obtain common builds from Docker and Singularity images
                 common_keys = list(all_docker.keys() & all_singularity.keys())
                 current_date = None
@@ -929,13 +961,19 @@ def prompt_pipeline_release_branch(
     # Releases
     if len(wf_releases) > 0:
         for tag in map(lambda release: release.get("tag_name"), wf_releases):
-            tag_display = [("fg:ansiblue", f"{tag}  "), ("class:choice-default", "[release]")]
+            tag_display = [
+                ("fg:ansiblue", f"{tag}  "),
+                ("class:choice-default", "[release]"),
+            ]
             choices.append(questionary.Choice(title=tag_display, value=tag))
             tag_set.append(str(tag))
 
     # Branches
     for branch in wf_branches.keys():
-        branch_display = [("fg:ansiyellow", f"{branch}  "), ("class:choice-default", "[branch]")]
+        branch_display = [
+            ("fg:ansiyellow", f"{branch}  "),
+            ("class:choice-default", "[branch]"),
+        ]
         choices.append(questionary.Choice(title=branch_display, value=branch))
         tag_set.append(branch)
 
@@ -966,7 +1004,8 @@ class SingularityCacheFilePathValidator(questionary.Validator):
                 return True
             else:
                 raise questionary.ValidationError(
-                    message="Invalid remote cache index file", cursor_position=len(value.text)
+                    message="Invalid remote cache index file",
+                    cursor_position=len(value.text),
                 )
         else:
             return True
@@ -996,7 +1035,13 @@ def get_repo_releases_branches(pipeline, wfs):
             pipeline = wf.full_name
 
             # Store releases and stop loop
-            wf_releases = list(sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
+            wf_releases = list(
+                sorted(
+                    wf.releases,
+                    key=lambda k: k.get("published_at_timestamp", 0),
+                    reverse=True,
+                )
+            )
             break
 
     # Arbitrary GitHub repo
@@ -1016,7 +1061,13 @@ def get_repo_releases_branches(pipeline, wfs):
                     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
             except AttributeError:
                 # Success! We have a list, which doesn't work with .get() which is looking for a dict key
-                wf_releases = list(sorted(rel_r.json(), key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
+                wf_releases = list(
+                    sorted(
+                        rel_r.json(),
+                        key=lambda k: k.get("published_at_timestamp", 0),
+                        reverse=True,
+                    )
+                )
 
                 # Get release tag commit hashes
                 if len(wf_releases) > 0:
@@ -1322,7 +1373,7 @@ def get_first_available_path(directory: Union[Path, str], paths: List[str]) -> U
     return None
 
 
-def sort_dictionary(d):
+def sort_dictionary(d: Dict) -> Dict:
     """Sorts a nested dictionary recursively"""
     result = {}
     for k, v in sorted(d.items()):
@@ -1463,3 +1514,21 @@ def set_wd(path: Path) -> Generator[None, None, None]:
         yield
     finally:
         os.chdir(start_wd)
+
+
+def get_wf_files(wf_path: Path):
+    """Return a list of all files in a directory (ignores .gitigore files)"""
+
+    wf_files = []
+
+    with open(Path(wf_path, ".gitignore")) as f:
+        lines = f.read().splitlines()
+    ignore = [line for line in lines if line and not line.startswith("#")]
+
+    for path in Path(wf_path).rglob("*"):
+        if any(fnmatch.fnmatch(str(path), pattern) for pattern in ignore):
+            continue
+        if path.is_file():
+            wf_files.append(str(path))
+
+    return wf_files

@@ -8,7 +8,7 @@ import questionary
 
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.modules.modules_differ import ModulesDiffer
+from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.modules.modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
@@ -65,7 +65,9 @@ class ComponentPatch(ComponentCommand):
         component_fullname = str(Path(self.component_type, self.modules_repo.repo_path, component))
 
         # Verify that the component has an entry in the modules.json file
-        if not self.modules_json.module_present(component, self.modules_repo.remote_url, component_dir):
+        if not self.modules_json.component_present(
+            component, self.modules_repo.remote_url, component_dir, self.component_type
+        ):
             raise UserWarning(
                 f"The '{component_fullname}' {self.component_type[:-1]} does not have an entry in the 'modules.json' file. Cannot compute patch"
             )
@@ -112,7 +114,7 @@ class ComponentPatch(ComponentCommand):
         # Write the patch to a temporary location (otherwise it is printed to the screen later)
         patch_temp_path = tempfile.mktemp()
         try:
-            ModulesDiffer.write_diff_file(
+            ComponentsDiffer.write_diff_file(
                 patch_temp_path,
                 component,
                 self.modules_repo.repo_path,
@@ -127,11 +129,13 @@ class ComponentPatch(ComponentCommand):
             raise UserWarning(f"{self.component_type[:-1]} '{component_fullname}' is unchanged. No patch to compute")
 
         # Write changes to modules.json
-        self.modules_json.add_patch_entry(component, self.modules_repo.remote_url, component_dir, patch_relpath)
+        self.modules_json.add_patch_entry(
+            self.component_type, component, self.modules_repo.remote_url, component_dir, patch_relpath
+        )
         log.debug(f"Wrote patch path for {self.component_type[:-1]} {component} to modules.json")
 
         # Show the changes made to the module
-        ModulesDiffer.print_diff(
+        ComponentsDiffer.print_diff(
             component,
             self.modules_repo.repo_path,
             component_install_dir,
@@ -166,7 +170,9 @@ class ComponentPatch(ComponentCommand):
         component_fullname = str(Path(self.component_type, component_dir, component))
 
         # Verify that the component has an entry in the modules.json file
-        if not self.modules_json.module_present(component, self.modules_repo.remote_url, component_dir):
+        if not self.modules_json.component_present(
+            component, self.modules_repo.remote_url, component_dir, self.component_type
+        ):
             raise UserWarning(
                 f"The '{component_fullname}' {self.component_type[:-1]} does not have an entry in the 'modules.json' file. Cannot compute patch"
             )
@@ -202,7 +208,7 @@ class ComponentPatch(ComponentCommand):
 
         # Try to apply the patch in reverse and move resulting files to module dir
         temp_component_dir = self.modules_json.try_apply_patch_reverse(
-            component, self.modules_repo.repo_path, patch_relpath, component_path
+            self.component_type, component, self.modules_repo.repo_path, patch_relpath, component_path
         )
         try:
             for file in Path(temp_component_dir).glob("*"):

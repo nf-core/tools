@@ -4,6 +4,7 @@
 import logging
 import os
 import sys
+from pathlib import Path
 
 import rich
 import rich.console
@@ -35,6 +36,7 @@ from nf_core.commands_pipelines import (
     pipelines_launch,
     pipelines_lint,
     pipelines_list,
+    pipelines_rocrate,
     pipelines_schema_build,
     pipelines_schema_docs,
     pipelines_schema_lint,
@@ -85,7 +87,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "For developers",
-            "commands": ["create", "lint", "bump-version", "sync", "schema", "create-logo"],
+            "commands": ["create", "lint", "bump-version", "sync", "schema", "rocrate", "create-logo"],
         },
     ],
     "nf-core modules": [
@@ -569,6 +571,44 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
     pipelines_list(ctx, keywords, sort, json, show_archived)
 
 
+# nf-core pipelines rocrate
+@pipelines.command("rocrate")
+@click.argument(
+    "pipeline_dir",
+    type=click.Path(exists=True),
+    default=Path.cwd(),
+    required=True,
+    metavar="<pipeline directory>",
+)
+@click.option(
+    "-j",
+    "--json_path",
+    default=Path.cwd(),
+    type=str,
+    help="Path to save RO Crate metadata json file to",
+)
+@click.option("-z", "--zip_path", type=str, help="Path to save RO Crate zip file to")
+@click.option(
+    "-pv",
+    "--pipeline_version",
+    type=str,
+    help="Version of pipeline to use for RO Crate",
+    default="",
+)
+@click.pass_context
+def rocrate(
+    ctx,
+    pipeline_dir: str,
+    json_path: str,
+    zip_path: str,
+    pipeline_version: str,
+):
+    """
+    Make an Research Object Crate
+    """
+    pipelines_rocrate(ctx, pipeline_dir, json_path, zip_path, pipeline_version)
+
+
 # nf-core pipelines sync
 @pipelines.command("sync")
 @click.pass_context
@@ -696,12 +736,24 @@ def pipeline_schema():
 
 # nf-core pipelines schema validate
 @pipeline_schema.command("validate")
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
 @click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
-def command_pipelines_schema_validate(pipeline, params):
+def command_pipelines_schema_validate(directory, pipeline, params):
     """
     Validate a set of parameters against a pipeline schema.
     """
+    if Path(directory, pipeline).exists():
+        # this is a local pipeline
+        pipeline = Path(directory, pipeline)
+
     pipelines_schema_validate(pipeline, params)
 
 
@@ -740,23 +792,39 @@ def command_pipelines_schema_build(directory, no_prompts, web_only, url):
 
 # nf-core pipelines schema lint
 @pipeline_schema.command("lint")
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
 @click.argument(
-    "schema_path",
+    "schema_file",
     type=click.Path(exists=True),
     default="nextflow_schema.json",
     metavar="<pipeline schema>",
 )
-def command_pipelines_schema_lint(schema_path):
+def command_pipelines_schema_lint(directory, schema_file):
     """
     Check that a given pipeline schema is valid.
     """
-    pipelines_schema_lint(schema_path)
+    pipelines_schema_lint(Path(directory, schema_file))
 
 
 # nf-core pipelines schema docs
 @pipeline_schema.command("docs")
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
 @click.argument(
-    "schema_path",
+    "schema_file",
     type=click.Path(exists=True),
     default="nextflow_schema.json",
     required=False,
@@ -785,11 +853,11 @@ def command_pipelines_schema_lint(schema_path):
     help="CSV list of columns to include in the parameter tables (parameter,description,type,default,required,hidden)",
     default="parameter,description,type,default,required,hidden",
 )
-def command_pipelines_schema_docs(schema_path, output, format, force, columns):
+def command_pipelines_schema_docs(directory, schema_file, output, format, force, columns):
     """
     Outputs parameter documentation for a pipeline schema.
     """
-    pipelines_schema_docs(schema_path, output, format, force, columns)
+    pipelines_schema_docs(Path(directory, schema_file), output, format, force, columns)
 
 
 # nf-core modules subcommands
@@ -995,7 +1063,7 @@ def command_modules_update(
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-@click.option("-r", "--remove", is_flag=True, default=False)
+@click.option("-r", "--remove", is_flag=True, default=False, help="Remove an existent patch file and regenerate it.")
 def command_modules_patch(ctx, tool, directory, remove):
     """
     Create a patch file for minor changes in a module
@@ -1538,6 +1606,43 @@ def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha
     subworkflows_install(ctx, subworkflow, directory, prompt, force, sha)
 
 
+# nf-core subworkflows patch
+@subworkflows.command("patch")
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+@click.option("-r", "--remove", is_flag=True, default=False, help="Remove an existent patch file and regenerate it.")
+def subworkflows_patch(ctx, tool, dir, remove):
+    """
+    Create a patch file for minor changes in a subworkflow
+
+    Checks if a subworkflow has been modified locally and creates a patch file
+    describing how the module has changed from the remote version
+    """
+    from nf_core.subworkflows import SubworkflowPatch
+
+    try:
+        subworkflow_patch = SubworkflowPatch(
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        if remove:
+            subworkflow_patch.remove(tool)
+        else:
+            subworkflow_patch.patch(tool)
+    except (UserWarning, LookupError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
 # nf-core subworkflows remove
 @subworkflows.command("remove")
 @click.pass_context
@@ -1692,7 +1797,7 @@ def command_schema_validate(pipeline, params):
 @click.option(
     "--url",
     type=str,
-    default="https://nf-co.re/pipeline_schema_builder",
+    default="https://oldsite.nf-co.re/pipeline_schema_builder",
     help="Customise the builder URL (for development work)",
 )
 def command_schema_build(directory, no_prompts, web_only, url):
@@ -1808,7 +1913,7 @@ def command_create_logo(logo_text, directory, name, theme, width, format, force)
     Use `nf-core pipelines create-logo` instead.
     """
     log.warning(
-        "The `[magenta]nf-core create-logo[/]` command is deprecated. Use `[magenta]nf-core pipelines screate-logo[/]` instead."
+        "The `[magenta]nf-core create-logo[/]` command is deprecated. Use `[magenta]nf-core pipeliness create-logo[/]` instead."
     )
     pipelines_create_logo(logo_text, directory, name, theme, width, format, force)
 

@@ -65,6 +65,12 @@ runs:
       run: find nf-core-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
       working-directory: create-lint-wf
 
+    # Add empty ro-crate file
+    - name: add empty ro-crate file
+      shell: bash
+      run: touch nf-core-testpipeline/ro-crate-metadata.json
+      working-directory: create-lint-wf
+
     # Run nf-core pipelines linting
     - name: nf-core pipelines lint
       shell: bash
@@ -83,7 +89,7 @@ runs:
 
     - name: Upload log file artifact
       if: ${{ always() }}
-      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
+      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
       with:
         name: nf-core-log-file-${{ matrix.NXF_VER }}
         path: create-lint-wf/log.txt
