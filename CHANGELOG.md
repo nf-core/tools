@@ -50,6 +50,7 @@
 - Update codecov/codecov-action action to v5 ([#3283](https://github.com/nf-core/tools/pull/3283))
 - Update python:3.12-slim Docker digest to 2a6386a ([#3284](https://github.com/nf-core/tools/pull/3284))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.0 ([#3299](https://github.com/nf-core/tools/pull/3299))
+- Update gitpod/workspace-base Docker digest to 12853f7 ([#3309](https://github.com/nf-core/tools/pull/3309))
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 
