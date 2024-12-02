@@ -72,13 +72,19 @@ jobs:
       tests: ${{ steps.list_tests.outputs.tests }}
 
   test:
-    name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
+    name: Run ${{matrix.tests.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: [setup, list_tests]
     if: ${{ needs.setup.outputs.run-tests }}
     # run on self-hosted runners for test_components.py (because of the gitlab branch), based on the input if it is dispatched manually, on github if it is a rerun or on self-hosted by default
-    runs-on: ${{ matrix.test == 'test_components.py' && 'self-hosted' || (github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted') }}
+    runs-on: ${{ matrix.tests.test == 'test_components.py' && 'self-hosted' || (github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted') }}
     strategy:
-      matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
+      matrix:
+        tests: ${{ fromJson(needs.list_tests.outputs.tests) }}
+        xdist: [""]
+        include:
+          - tests: "test_components.py"
+            xdist: "-n auto --maxfail 1"
+
       fail-fast: false # run all tests even if one fails
     steps:
       - name: go to subdirectory and change nextflow workdir
@@ -111,7 +117,7 @@ jobs:
           sudo apt install -y git
 
       - name: Set up Singularity
-        if: ${{ matrix.test == 'test_download.py'}}
+        if: ${{ matrix.tests.test == 'test_download.py'}}
         uses: eWaterCycle/setup-singularity@931d4e31109e875b13309ae1d07c70ca8fbc8537 # v7
         with:
           singularity-version: 3.8.3
@@ -132,7 +138,7 @@ jobs:
 
       - name: Test with pytest
         run: |
-          python3 -m pytest tests/${{matrix.test}} --color=yes --cov --durations=0 -n auto && exit_code=0|| exit_code=$?
+          python3 -m pytest tests/${{matrix.tests.test}} --color=yes --cov --durations=0 ${{matrix.xdist}} && exit_code=0|| exit_code=$?
           # don't fail if no tests were collected, e.g. for test_licence.py
           if [ "${exit_code}" -eq 5 ]; then
             echo "No tests were collected"
@@ -144,7 +150,7 @@ jobs:
 
       - name: remove slashes from test name
         run: |
-          test=$(echo ${{ matrix.test }} | sed 's/\//__/g')
+          test=$(echo ${{ matrix.tests.test }} | sed 's/\//__/g')
           echo "test=${test}" >> $GITHUB_ENV
 
       - name: Store snapshot report
