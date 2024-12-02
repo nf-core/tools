@@ -6,7 +6,7 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import git
 import questionary
@@ -416,12 +416,8 @@ class PipelineSync:
         list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls"
         with self.gh_api.cache_disabled():
             list_prs_request = self.gh_api.get(list_prs_url)
-        try:
-            list_prs_json = json.loads(list_prs_request.content)
-            list_prs_pp = json.dumps(list_prs_json, indent=4)
-        except Exception:
-            list_prs_json = list_prs_request.content
-            list_prs_pp = list_prs_request.content
+
+        list_prs_json, list_prs_pp = self._parse_json_response(list_prs_request)
 
         log.debug(f"GitHub API listing existing PRs:\n{list_prs_url}\n{list_prs_pp}")
         if list_prs_request.status_code != 200:
@@ -462,12 +458,8 @@ class PipelineSync:
         # Update the PR status to be closed
         with self.gh_api.cache_disabled():
             pr_request = self.gh_api.patch(url=pr["url"], data=json.dumps({"state": "closed"}))
-        try:
-            pr_request_json = json.loads(pr_request.content)
-            pr_request_pp = json.dumps(pr_request_json, indent=4)
-        except Exception:
-            pr_request_json = pr_request.content
-            pr_request_pp = pr_request.content
+
+        pr_request_json, pr_request_pp = self._parse_json_response(pr_request)
 
         # PR update worked
         if pr_request.status_code == 200:
@@ -480,6 +472,22 @@ class PipelineSync:
         else:
             log.warning(f"Could not close PR ('{pr_request.status_code}'):\n{pr['url']}\n{pr_request_pp}")
             return False
+
+    @staticmethod
+    def _parse_json_response(response) -> tuple[Any, str]:
+        """Helper method to parse JSON response and create pretty-printed string.
+
+        Args:
+            response: requests.Response object
+
+        Returns:
+            Tuple of (parsed_json, pretty_printed_str)
+        """
+        try:
+            json_data = json.loads(response.content)
+            return json_data, json.dumps(json_data, indent=4)
+        except Exception:
+            return response.content, str(response.content)
 
     def reset_target_dir(self):
         """
