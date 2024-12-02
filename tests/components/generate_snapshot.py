@@ -1,6 +1,8 @@
 """Test generate a snapshot"""
 
 import json
+import sys
+from io import StringIO
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -110,7 +112,7 @@ def test_update_snapshot_module(self):
         assert snap_content["Single-End"]["timestamp"] != original_timestamp
 
 
-def test_test_not_found(self, capsys):
+def test_test_not_found(self):
     """Generate the snapshot for a module in nf-core/modules clone which doesn't contain tests"""
     with set_wd(self.nfcore_modules):
         snap_generator = ComponentsTest(
@@ -123,9 +125,15 @@ def test_test_not_found(self, capsys):
         test_file = Path(snap_generator.default_modules_path, snap_generator.component_name, "tests", "main.nf.test")
         test_file.rename(test_file.parent / "main.nf.test.bak")
 
-        captured = capsys.readouterr()
-        assert snap_generator.run()
-        assert "No tests to execute" in captured.out
+        captured_output = StringIO()
+        sys.stdout = captured_output
+
+        try:
+            assert snap_generator.run()
+            output = captured_output.getvalue()
+            assert "No tests to execute" in output
+        finally:
+            sys.stdout = sys.__stdout__  # Restore stdout
 
         Path(test_file.parent / "main.nf.test.bak").rename(test_file)
 
