@@ -66,7 +66,7 @@ These tests are run both with the latest available version of `Nextflow` and als
 
 - On your own fork, make a new branch `patch` based on `upstream/master`.
 - Fix the bug, and bump version (X.Y.Z+1).
-- A PR should be made on `master` from patch to directly adress this particular bug.
+- Open a pull-request from `patch` to `master` with the changes.
 
 {% if is_nfcore -%}
 
