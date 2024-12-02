@@ -10,6 +10,7 @@
 - fix workflow_dispatch trigger and parse more review comments in awsfulltest ([#3235](https://github.com/nf-core/tools/pull/3235))
 - Add resource limits to Gitpod profile([#3255](https://github.com/nf-core/tools/pull/3255))
 - Fix a typo ([#3268](https://github.com/nf-core/tools/pull/3268))
+- Use params.monochrome_logs in the template and update nf-core components ([#3310](https://github.com/nf-core/tools/pull/3310))
 
 ### Download
 
