@@ -6,7 +6,7 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import git
 import questionary
@@ -474,7 +474,7 @@ class PipelineSync:
             return False
 
     @staticmethod
-    def _parse_json_response(response) -> tuple[Any, str]:
+    def _parse_json_response(response) -> Tuple[Any, str]:
         """Helper method to parse JSON response and create pretty-printed string.
 
         Args:
