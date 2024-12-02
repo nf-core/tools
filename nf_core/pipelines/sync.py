@@ -120,7 +120,7 @@ class PipelineSync:
                 requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"])
             )
 
-    def sync(self):
+    def sync(self) -> None:
         """Find workflow attributes, create a new template pipeline on TEMPLATE"""
 
         # Clear requests_cache so that we don't get stale API responses

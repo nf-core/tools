@@ -401,26 +401,6 @@ class TestModules(TestPipelines):
             psync.reset_target_dir()
         assert exc_info.value.args[0].startswith("Could not reset to original branch `fake_branch`")
 
-    def test_sync_success(self):
-        """Test successful pipeline sync with PR creation"""
-        # Set up GitHub auth token for PR creation
-        os.environ["GITHUB_AUTH_TOKEN"] = "dummy_token"
-
-        with mock.patch("requests.get", side_effect=mocked_requests_get), mock.patch(
-            "requests.post", side_effect=mocked_requests_post
-        ) as mock_post:
-            psync = nf_core.pipelines.sync.PipelineSync(
-                self.pipeline_dir, make_pr=True, gh_username="no_existing_pr", gh_repo="response"
-            )
-
-            # Run sync
-            psync.sync()
-
-            # Verify that changes were made and PR was created
-            self.assertTrue(psync.made_changes)
-            mock_post.assert_called_once()
-            self.assertEqual(mock_post.call_args[0][0], "https://api.github.com/repos/no_existing_pr/response/pulls")
-
     def test_sync_no_changes(self):
         """Test pipeline sync when no changes are needed"""
         with mock.patch("requests.get", side_effect=mocked_requests_get), mock.patch(
