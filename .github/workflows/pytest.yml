@@ -120,11 +120,10 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
-      # Set up JAVA_HOME for Java 21
-      - name: Set Java 21
-        run: |
-          echo "JAVA_HOME=$JAVA_HOME_21_X64" >> $GITHUB_ENV
-          echo "PATH=$JAVA_HOME_21_X64/bin:$PATH" >> $GITHUB_ENV
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v2

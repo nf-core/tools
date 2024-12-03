@@ -33,11 +33,10 @@ jobs:
       - name: Check out pipeline code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      # Set up JAVA_HOME for Java 21
-      - name: Set Java 21
-        run: |
-          echo "JAVA_HOME=$JAVA_HOME_21_X64" >> $GITHUB_ENV
-          echo "PATH=$JAVA_HOME_21_X64/bin:$PATH" >> $GITHUB_ENV
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v2
