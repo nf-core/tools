@@ -26,6 +26,7 @@ on:
 
 env:
   NXF_ANSI_LOG: false
+  JAVA_HOME: $JAVA_HOME_21_X64
 
 jobs:
   download:

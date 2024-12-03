@@ -11,6 +11,7 @@ on:
 
 env:
   NXF_ANSI_LOG: false
+  JAVA_HOME: $JAVA_HOME_21_X64
   NXF_SINGULARITY_CACHEDIR: ${{ github.workspace }}/.singularity
   NXF_SINGULARITY_LIBRARYDIR: ${{ github.workspace }}/.singularity
 

@@ -28,6 +28,7 @@ concurrency:
 
 env:
   NXF_ANSI_LOG: false
+  JAVA_HOME: $JAVA_HOME_21_X64
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
@@ -51,6 +52,7 @@ jobs:
     needs: prepare-matrix
     env:
       NXF_ANSI_LOG: false
+      JAVA_HOME: $JAVA_HOME_21_X64
     strategy:
       matrix:
         TEMPLATE: ${{ fromJson(needs.prepare-matrix.outputs.all_features) }}
