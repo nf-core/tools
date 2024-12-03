@@ -14,10 +14,12 @@
 - Move `includeConfig 'conf/modules.config'` next to `includeConfig 'conf/base.config'` to not overwrite tests profiles configurations ([#3301](https://github.com/nf-core/tools/pull/3301))
 - Use `params.monochrome_logs` in the template and update nf-core components ([#3310](https://github.com/nf-core/tools/pull/3310))
 - Fix some typos and improve writing in `usage.md` and `CONTRIBUTING.md` ([#3302](https://github.com/nf-core/tools/pull/3302))
+- Add `manifest.contributors` to `nextflow.config` ([#3311](https://github.com/nf-core/tools/pull/3311))
 
 ### Download
 
 - First steps towards fixing [#3179](https://github.com/nf-core/tools/issues/3179): Modify `prioritize_direct_download()` to retain Seqera Singularity https:// Container URIs and hardcode Seqera Containers into `gather_registries()` ([#3244](https://github.com/nf-core/tools/pull/3244)).
+- Further steps towards fixing [#3179](https://github.com/nf-core/tools/issues/3179): Enable limited support for `oras://` container paths (_only absolute URIs, no flexible registries like with Docker_) and prevent unnecessary image downloads for Seqera Container modules with `reconcile_seqera_container_uris()` ([#3293](https://github.com/nf-core/tools/pull/3293)).
 - Update dawidd6/action-download-artifact action to v7 ([#3306](https://github.com/nf-core/tools/pull/3306))
 
 ### Linting
