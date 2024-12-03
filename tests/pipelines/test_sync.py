@@ -56,6 +56,8 @@ def mocked_requests_get(url) -> MockResponse:
             for branch_no in range(3, 7)
         ]
         return MockResponse(response_data, 200, url)
+    if url == "https://nf-co.re/pipelines.json":
+        return MockResponse({"remote_workflows": [{"name": "testpipeline", "topics": ["test", "pipeline"]}]}, 200, url)
 
     return MockResponse([{"html_url": url}], 404, url)
 
@@ -398,3 +400,33 @@ class TestModules(TestPipelines):
         with pytest.raises(nf_core.pipelines.sync.SyncExceptionError) as exc_info:
             psync.reset_target_dir()
         assert exc_info.value.args[0].startswith("Could not reset to original branch `fake_branch`")
+
+    def test_sync_no_changes(self):
+        """Test pipeline sync when no changes are needed"""
+        with mock.patch("requests.get", side_effect=mocked_requests_get), mock.patch(
+            "requests.post", side_effect=mocked_requests_post
+        ) as mock_post:
+            psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
+
+            # Mock that no changes were made
+            psync.made_changes = False
+
+            # Run sync
+            psync.sync()
+
+            # Verify no PR was created
+            mock_post.assert_not_called()
+
+    def test_sync_no_github_token(self):
+        """Test sync fails appropriately when GitHub token is missing"""
+        # Ensure GitHub token is not set
+        if "GITHUB_AUTH_TOKEN" in os.environ:
+            del os.environ["GITHUB_AUTH_TOKEN"]
+
+        psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir, make_pr=True)
+        psync.made_changes = True  # Force changes to trigger PR attempt
+
+        # Run sync and check for appropriate error
+        with self.assertRaises(nf_core.pipelines.sync.PullRequestExceptionError) as exc_info:
+            psync.sync()
+        self.assertIn("GITHUB_AUTH_TOKEN not set!", str(exc_info.exception))
