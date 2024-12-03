@@ -272,4 +272,3 @@ class NFCoreComponent:
                     pass
             log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")
             self.outputs = outputs
-
