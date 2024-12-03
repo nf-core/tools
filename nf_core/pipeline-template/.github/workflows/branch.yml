@@ -24,7 +24,7 @@ jobs:
         uses: mshick/add-pr-comment@b8f338c590a895d50bcbfa6c5859251edc8952fc # v2
         with:
           message: |
-            ## This PR is against the `main`/`master` branch :x:
+            ## This PR is against the `${{github.event.pull_request.base.ref}}` branch :x:
 
             * Do not close this PR
             * Click _Edit_ and change the `base` to `dev`
