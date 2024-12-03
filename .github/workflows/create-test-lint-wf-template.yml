@@ -28,7 +28,6 @@ concurrency:
 
 env:
   NXF_ANSI_LOG: false
-  JAVA_HOME: $JAVA_HOME_21_X64
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
@@ -52,7 +51,7 @@ jobs:
     needs: prepare-matrix
     env:
       NXF_ANSI_LOG: false
-      JAVA_HOME: $JAVA_HOME_21_X64
+
     strategy:
       matrix:
         TEMPLATE: ${{ fromJson(needs.prepare-matrix.outputs.all_features) }}
@@ -91,6 +90,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install .
+
+      # Set up JAVA_HOME for Java 21
+      - name: Set Java 21
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_21_X64" >> $GITHUB_ENV
+          echo "PATH=$JAVA_HOME_21_X64/bin:$PATH" >> $GITHUB_ENV
 
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v2

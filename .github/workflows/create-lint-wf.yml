@@ -32,7 +32,7 @@ jobs:
     runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     env:
       NXF_ANSI_LOG: false
-      JAVA_HOME: $JAVA_HOME_21_X64
+
     strategy:
       matrix:
         NXF_VER:

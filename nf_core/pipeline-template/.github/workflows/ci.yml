@@ -11,7 +11,6 @@ on:
 
 env:
   NXF_ANSI_LOG: false
-  JAVA_HOME: $JAVA_HOME_21_X64
   NXF_SINGULARITY_CACHEDIR: ${{ github.workspace }}/.singularity
   NXF_SINGULARITY_LIBRARYDIR: ${{ github.workspace }}/.singularity
 
@@ -47,6 +46,12 @@ jobs:
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      # Set up JAVA_HOME for Java 21
+      - name: Set Java 21
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_21_X64" >> $GITHUB_ENV
+          echo "PATH=$JAVA_HOME_21_X64/bin:$PATH" >> $GITHUB_ENV
 
       - name: Set up Nextflow
         uses: nf-core/setup-nextflow@v2
