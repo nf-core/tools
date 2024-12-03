@@ -15,6 +15,11 @@ runs:
         cd create-lint-wf
         export NXF_WORK=$(pwd)
 
+    - uses: actions/setup-java@v4
+      with:
+        java-version: "21"
+        distribution: "temurin"
+
     - name: Install Nextflow
       uses: nf-core/setup-nextflow@v2
       with:
