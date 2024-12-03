@@ -35,8 +35,8 @@ def readme(self):
 
             lint:
                 readme:
-                    nextflow_badge
-                    zenodo_release
+                    - nextflow_badge
+                    - zenodo_release
 
     """
     passed = []
