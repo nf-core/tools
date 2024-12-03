@@ -260,7 +260,7 @@ class ComponentCreate(ComponentCommand):
                 "Where applicable all sample-specific information e.g. 'id', 'single_end', 'read_group' "
                 "MUST be provided as an input via a Groovy Map called 'meta'. "
                 "This information may [italic]not[/] be required in some instances, for example "
-                "[link=https://github.com/nf-core/modules/blob/main/modules/nf-core/bwa/index/main.nf]indexing reference genome files[/link]."
+                "[link=https://github.com/nf-core/modules/blob/master/modules/nf-core/bwa/index/main.nf]indexing reference genome files[/link]."
             )
         while self.has_meta is None:
             self.has_meta = rich.prompt.Confirm.ask(
