@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 import questionary
+import requests
 import rich.prompt
 
 if TYPE_CHECKING:
@@ -162,3 +163,29 @@ def get_components_to_install(subworkflow_dir: Union[str, Path]) -> Tuple[List[s
                 elif link.startswith("../"):
                     subworkflows.append(name.lower())
     return modules, subworkflows
+
+
+def get_biotools_id(tool_name) -> str:
+    """
+    Try to find a bio.tools ID for 'tool'
+    """
+    url = f"https://bio.tools/api/t/?q={tool_name}&format=json"
+    try:
+        # Send a GET request to the API
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an error for bad status codes
+        # Parse the JSON response
+        data = response.json()
+
+        # Iterate through the tools in the response to find the tool name
+        for tool in data["list"]:
+            if tool["name"].lower() == tool_name:
+                return tool["biotoolsCURIE"]
+
+        # If the tool name was not found in the response
+        log.warning(f"Could not find a bio.tools ID for '{tool_name}'")
+        return ""
+
+    except requests.exceptions.RequestException as e:
+        log.warning(f"Could not find a bio.tools ID for '{tool_name}': {e}")
+        return ""

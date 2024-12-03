@@ -19,7 +19,7 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Generator, List, Literal, Optional, Tuple, Union
 
 import git
 import prompt_toolkit.styles
@@ -323,7 +323,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
 
     # If we can, save a cached copy
     # HINT: during testing phase (in test_download, for example) we don't want
-    # to save configuration copy in $HOME, otherwise the tests/test_download.py::DownloadTest::test_wf_use_local_configs
+    # to save configuration copy in $HOME, otherwise the tests/pipelines/test_download.py::DownloadTest::test_wf_use_local_configs
     # will fail after the first attempt. It's better to not save temporary data
     # in others folders than tmp when doing tests in general
     if cache_path and cache_config:
@@ -414,7 +414,7 @@ def wait_cli_function(poll_func: Callable[[], bool], refresh_per_second: int = 2
        refresh_per_second (int): Refresh this many times per second. Default: 20.
 
     Returns:
-       None. Just sits in an infite loop until the function returns True.
+       None. Just sits in an infinite loop until the function returns True.
     """
     try:
         spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
@@ -433,7 +433,7 @@ def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
 
     Takes argument api_url for URL
 
-    Expects API reponse to be valid JSON and contain a top-level 'status' key.
+    Expects API response to be valid JSON and contain a top-level 'status' key.
     """
     # Run without requests_cache so that we get the updated statuses
     with requests_cache.disabled():
@@ -607,11 +607,11 @@ class GitHubAPISession(requests_cache.CachedSession):
         while True:
             # GET request
             if post_data is None:
-                log.debug(f"Seding GET request to {url}")
+                log.debug(f"Sending GET request to {url}")
                 r = self.get(url=url)
             # POST request
             else:
-                log.debug(f"Seding POST request to {url}")
+                log.debug(f"Sending POST request to {url}")
                 r = self.post(url=url, json=post_data)
 
             # Failed but expected - try again
@@ -717,12 +717,12 @@ def parse_anaconda_licence(anaconda_response, version=None):
         license = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", license, flags=re.IGNORECASE)
         license = license.replace("GPL-", "GPLv")
         license = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", license)  # Add v prefix to GPL version if none found
-        license = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", license)  # Remove superflous .0 from GPL version
+        license = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", license)  # Remove superfluous .0 from GPL version
         license = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", license)
         license = re.sub(r"GPL\s*v", "GPL v", license)  # Normalise whitespace to one space between GPL and v
         license = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", license)  # Normalise whitespace around >= GPL versions
-        license = license.replace("Clause", "clause")  # BSD capitilisation
-        license = re.sub(r"-only$", "", license)  # Remove superflous GPL "only" version suffixes
+        license = license.replace("Clause", "clause")  # BSD capitalisation
+        license = re.sub(r"-only$", "", license)  # Remove superfluous GPL "only" version suffixes
         clean_licences.append(license)
     return clean_licences
 
@@ -1050,15 +1050,26 @@ DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
 class NFCoreTemplateConfig(BaseModel):
+    """Template configuration schema"""
+
     org: Optional[str] = None
+    """ Organisation name """
     name: Optional[str] = None
+    """ Pipeline name """
     description: Optional[str] = None
+    """ Pipeline description """
     author: Optional[str] = None
+    """ Pipeline author """
     version: Optional[str] = None
+    """ Pipeline version """
     force: Optional[bool] = True
+    """ Force overwrite of existing files """
     outdir: Optional[Union[str, Path]] = None
+    """ Output directory """
     skip_features: Optional[list] = None
+    """ Skip features. See https://nf-co.re/docs/nf-core-tools/pipelines/create for a list of features. """
     is_nfcore: Optional[bool] = None
+    """ Whether the pipeline is an nf-core pipeline. """
 
     # convert outdir to str
     @field_validator("outdir")
@@ -1081,19 +1092,45 @@ LintConfigType = Optional[Dict[str, Union[List[str], List[Dict[str, List[str]]],
 
 
 class NFCoreYamlConfig(BaseModel):
-    repository_type: str
+    """.nf-core.yml configuration file schema"""
+
+    repository_type: Optional[Literal["pipeline", "modules"]] = None
+    """ Type of repository """
     nf_core_version: Optional[str] = None
+    """ Version of nf-core/tools used to create/update the pipeline """
     org_path: Optional[str] = None
+    """ Path to the organisation's modules repository (used for modules repo_type only) """
     lint: Optional[LintConfigType] = None
+    """ Pipeline linting configuration, see https://nf-co.re/docs/nf-core-tools/pipelines/lint#linting-config for examples and documentation """
     template: Optional[NFCoreTemplateConfig] = None
+    """ Pipeline template configuration """
     bump_version: Optional[Dict[str, bool]] = None
+    """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information. """
     update: Optional[Dict[str, Union[str, bool, Dict[str, Union[str, Dict[str, Union[str, bool]]]]]]] = None
+    """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information. """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
 
     def get(self, item: str, default: Any = None) -> Any:
         return getattr(self, item, default)
+
+    def model_dump(self, **kwargs) -> Dict[str, Any]:
+        # Get the initial data
+        config = super().model_dump(**kwargs)
+
+        if self.repository_type == "modules":
+            # Fields to exclude for modules
+            fields_to_exclude = ["template", "update"]
+        else:  # pipeline
+            # Fields to exclude for pipeline
+            fields_to_exclude = ["bump_version", "org_path"]
+
+        # Remove the fields based on repository_type
+        for field in fields_to_exclude:
+            config.pop(field, None)
+
+        return config
 
 
 def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path], Optional[NFCoreYamlConfig]]:
@@ -1135,6 +1172,35 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
         for error in e.errors():
             error_message += f"\n{error['loc'][0]}: {error['msg']}"
         raise AssertionError(error_message)
+
+    wf_config = fetch_wf_config(Path(directory))
+    if nf_core_yaml_config["repository_type"] == "pipeline" and wf_config:
+        # Retrieve information if template from config file is empty
+        template = tools_config.get("template")
+        config_template_keys = template.keys() if template is not None else []
+        if nf_core_yaml_config.template is None:
+            # The .nf-core.yml file did not contain template information
+            nf_core_yaml_config.template = NFCoreTemplateConfig(
+                org="nf-core",
+                name=wf_config["manifest.name"].strip("'\"").split("/")[-1],
+                description=wf_config["manifest.description"].strip("'\""),
+                author=wf_config["manifest.author"].strip("'\""),
+                version=wf_config["manifest.version"].strip("'\""),
+                outdir=str(directory),
+                is_nfcore=True,
+            )
+        elif "prefix" in config_template_keys or "skip" in config_template_keys:
+            # The .nf-core.yml file contained the old prefix or skip keys
+            nf_core_yaml_config.template = NFCoreTemplateConfig(
+                org=tools_config["template"].get("prefix", tools_config["template"].get("org", "nf-core")),
+                name=tools_config["template"].get("name", wf_config["manifest.name"].strip("'\"").split("/")[-1]),
+                description=tools_config["template"].get("description", wf_config["manifest.description"].strip("'\"")),
+                author=tools_config["template"].get("author", wf_config["manifest.author"].strip("'\"")),
+                version=tools_config["template"].get("version", wf_config["manifest.version"].strip("'\"")),
+                outdir=tools_config["template"].get("outdir", str(directory)),
+                skip_features=tools_config["template"].get("skip", tools_config["template"].get("skip_features")),
+                is_nfcore=tools_config["template"].get("prefix", tools_config["template"].get("org")) == "nf-core",
+            )
 
     log.debug("Using config file: %s", config_fn)
     return config_fn, nf_core_yaml_config

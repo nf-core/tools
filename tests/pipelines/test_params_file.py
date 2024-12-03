@@ -1,79 +1,67 @@
 import json
-import os
-import shutil
-import tempfile
 from pathlib import Path
 
-import nf_core.pipelines.create.create
-import nf_core.pipelines.schema
 from nf_core.pipelines.params_file import ParamsFileBuilder
 
+from ..test_pipelines import TestPipelines
 
-class TestParamsFileBuilder:
+
+class TestParamsFileBuilder(TestPipelines):
     """Class for schema tests"""
 
-    @classmethod
-    def setup_class(cls):
+    def setUp(self):
         """Create a new PipelineSchema object"""
-        cls.schema_obj = nf_core.pipelines.schema.PipelineSchema()
-        cls.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        super().setUp()
 
-        # Create a test pipeline in temp directory
-        cls.tmp_dir = tempfile.mkdtemp()
-        cls.template_dir = Path(cls.tmp_dir, "wf")
-        create_obj = nf_core.pipelines.create.create.PipelineCreate(
-            "testpipeline", "a description", "Me", outdir=cls.template_dir, no_git=True
-        )
-        create_obj.init_pipeline()
-
-        cls.template_schema = Path(cls.template_dir, "nextflow_schema.json")
-        cls.params_template_builder = ParamsFileBuilder(cls.template_dir)
-        cls.invalid_template_schema = Path(cls.template_dir, "nextflow_schema_invalid.json")
-
-        # Remove the allOf section to make the schema invalid
-        with open(cls.template_schema) as fh:
-            o = json.load(fh)
-            del o["allOf"]
-
-        with open(cls.invalid_template_schema, "w") as fh:
-            json.dump(o, fh)
-
-    @classmethod
-    def teardown_class(cls):
-        if Path(cls.tmp_dir).exists():
-            shutil.rmtree(cls.tmp_dir)
+        self.template_schema = Path(self.pipeline_dir, "nextflow_schema.json")
+        self.params_template_builder = ParamsFileBuilder(self.pipeline_dir)
+        self.outfile = Path(self.pipeline_dir, "params-file.yml")
 
     def test_build_template(self):
-        outfile = Path(self.tmp_dir, "params-file.yml")
-        self.params_template_builder.write_params_file(str(outfile))
+        self.params_template_builder.write_params_file(self.outfile)
 
-        assert outfile.exists()
+        assert self.outfile.exists()
 
-        with open(outfile) as fh:
+        with open(self.outfile) as fh:
             out = fh.read()
 
         assert "nf-core/testpipeline" in out
 
-    def test_build_template_invalid_schema(self, caplog):
+    def test_build_template_invalid_schema(self):
         """Build a schema from a template"""
-        outfile = Path(self.tmp_dir, "params-file-invalid.yml")
-        builder = ParamsFileBuilder(self.invalid_template_schema)
-        res = builder.write_params_file(str(outfile))
+        schema = {}
+        with open(self.template_schema) as fh:
+            schema = json.load(fh)
+            del schema["allOf"]
+
+        with open(self.template_schema, "w") as fh:
+            json.dump(schema, fh)
+
+        builder = ParamsFileBuilder(self.template_schema)
+        res = builder.write_params_file(self.outfile)
 
         assert res is False
-        assert "Pipeline schema file is invalid" in caplog.text
+        assert "Pipeline schema file is invalid" in self.caplog.text
 
-    def test_build_template_file_exists(self, caplog):
+    def test_build_template_file_exists(self):
         """Build a schema from a template"""
 
         # Creates a new empty file
-        outfile = Path(self.tmp_dir) / "params-file.yml"
-        with open(outfile, "w"):
-            pass
+        self.outfile.touch()
 
-        res = self.params_template_builder.write_params_file(outfile)
+        res = self.params_template_builder.write_params_file(self.outfile)
 
         assert res is False
-        assert f"File '{outfile}' exists!" in caplog.text
+        assert f"File '{self.outfile}' exists!" in self.caplog.text
 
-        outfile.unlink()
+        self.outfile.unlink()
+
+    def test_build_template_content(self):
+        """Test that the content of the params file is correct"""
+        self.params_template_builder.write_params_file(self.outfile)
+
+        with open(self.outfile) as fh:
+            out = fh.read()
+
+        assert "nf-core/testpipeline" in out
+        assert "# input = null" in out

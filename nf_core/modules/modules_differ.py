@@ -6,7 +6,9 @@ import os
 from pathlib import Path
 from typing import Dict, List, Union
 
-from rich.console import Console
+from rich import box
+from rich.console import Console, Group, RenderableType
+from rich.panel import Panel
 from rich.syntax import Syntax
 
 import nf_core.utils
@@ -276,6 +278,7 @@ class ModulesDiffer:
         else:
             log.info(f"Changes in module '{Path(repo_path, module)}'")
 
+        panel_group: list[RenderableType] = []
         for file, (diff_status, diff) in diffs.items():
             if diff_status == ModulesDiffer.DiffEnum.UNCHANGED:
                 # The files are identical
@@ -293,7 +296,18 @@ class ModulesDiffer:
                 # The file has changed
                 log.info(f"Changes in '{Path(module, file)}':")
                 # Pretty print the diff using the pygments diff lexer
-                console.print(Syntax("".join(diff), "diff", theme="ansi_dark", padding=1))
+                syntax = Syntax("".join(diff), "diff", theme="ansi_dark", line_numbers=True)
+                panel_group.append(Panel(syntax, title=str(file), title_align="left", padding=0))
+            console.print(
+                Panel(
+                    Group(*panel_group),
+                    title=f"[white]{str(module)}[/white]",
+                    title_align="left",
+                    padding=0,
+                    border_style="blue",
+                    box=box.HEAVY,
+                )
+            )
 
     @staticmethod
     def per_file_patch(patch_fn: Union[str, Path]) -> Dict[str, List[str]]:
@@ -391,8 +405,8 @@ class ModulesDiffer:
     def try_apply_single_patch(file_lines, patch, reverse=False):
         """
         Tries to apply a patch to a modified file. Since the line numbers in
-        the patch does not agree if the file is modified, the old and new
-        lines inpatch are reconstructed and then we look for the old lines
+        the patch do not agree if the file is modified, the old and new
+        lines in the patch are reconstructed and then we look for the old lines
         in the modified file. If all hunk in the patch are found in the new file
         it is updated with the new lines from the patch file.
 

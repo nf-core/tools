@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Union
 
 log = logging.getLogger(__name__)
 
@@ -87,6 +87,7 @@ def files_exist(self) -> Dict[str, List[str]]:
         lib/Workflow.groovy
         lib/WorkflowMain.groovy
         lib/WorkflowPIPELINE.groovy
+        lib/nfcore_external_java_deps.jar
         parameters.settings.json
         pipeline_template.yml # saving information in .nf-core.yml
         Singularity
@@ -97,12 +98,6 @@ def files_exist(self) -> Dict[str, List[str]]:
     .. code-block:: bash
 
         .travis.yml
-
-    Files that *must not* be present if a certain entry is present in ``nextflow.config``:
-
-    .. code-block:: bash
-
-        lib/nfcore_external_java_deps.jar # if "nf-validation" is in nextflow.config
 
     .. tip:: You can configure the ``nf-core pipelines lint`` tests to ignore any of these checks by setting
             the ``files_exist`` key as follows in your ``.nf-core.yml`` config file. For example:
@@ -172,6 +167,7 @@ def files_exist(self) -> Dict[str, List[str]]:
         [Path("assets", "multiqc_config.yml")],
         [Path("conf", "base.config")],
         [Path("conf", "igenomes.config")],
+        [Path("conf", "igenomes_ignored.config")],
         [Path(".github", "workflows", "awstest.yml")],
         [Path(".github", "workflows", "awsfulltest.yml")],
         [Path("modules.json")],
@@ -198,11 +194,9 @@ def files_exist(self) -> Dict[str, List[str]]:
         Path("parameters.settings.json"),
         Path("pipeline_template.yml"),  # saving information in .nf-core.yml
         Path("Singularity"),
+        Path("lib", "nfcore_external_java_deps.jar"),
     ]
     files_warn_ifexists = [Path(".travis.yml")]
-    files_fail_ifinconfig: List[Tuple[Path, List[Dict[str, str]]]] = [
-        (Path("lib", "nfcore_external_java_deps.jar"), [{"plugins": "nf-validation"}, {"plugins": "nf-schema"}]),
-    ]
 
     # Remove files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("files_exist", []) if self.lint_config is not None else []
@@ -241,24 +235,7 @@ def files_exist(self) -> Dict[str, List[str]]:
             failed.append(f"File must be removed: {self._wrap_quotes(file)}")
         else:
             passed.append(f"File not found check: {self._wrap_quotes(file)}")
-    # Files that cause an error if they exists together with a certain entry in nextflow.config
-    for file_cond in files_fail_ifinconfig:
-        if str(file_cond[0]) in ignore_files:
-            continue
-        in_config = False
-        for condition in file_cond[1]:
-            config_key, config_value = list(condition.items())[0]
-            if config_key in self.nf_config and config_value in self.nf_config[config_key]:
-                log.debug(f"Found {config_key} in nextflow.config with value {config_value}")
-                in_config = True
-        if pf(file_cond[0]).is_file() and in_config:
-            failed.append(f"File must be removed: {self._wrap_quotes(file_cond[0])}")
-        elif pf(file_cond[0]).is_file() and not in_config:
-            passed.append(f"File found check: {self._wrap_quotes(file_cond[0])}")
-        elif not pf(file_cond[0]).is_file() and not in_config:
-            failed.append(f"File not found check: {self._wrap_quotes(file_cond[0])}")
-        elif not pf(file_cond[0]).is_file() and in_config:
-            passed.append(f"File not found check: {self._wrap_quotes(file_cond[0])}")
+
     # Files that cause a warning if they exist
     for file in files_warn_ifexists:
         if str(file) in ignore_files:

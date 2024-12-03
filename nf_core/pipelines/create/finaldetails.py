@@ -85,7 +85,7 @@ class FinalDetails(Screen):
     @on(Input.Submitted)
     def show_exists_warn(self):
         """Check if the pipeline exists on every input change or submitted.
-        If the pipeline exists, show warning message saying that it will be overriden."""
+        If the pipeline exists, show warning message saying that it will be overridden."""
         outdir = ""
         for text_input in self.query("TextInput"):
             this_input = text_input.query_one(Input)

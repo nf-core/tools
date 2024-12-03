@@ -2,7 +2,7 @@
 #   docker build -t gitpod:test -f nf_core/gitpod/gitpod.Dockerfile .
 
 # See https://docs.renovatebot.com/docker/#digest-pinning for why a digest is used.
-FROM gitpod/workspace-base@sha256:f189a4195c3861365356f9c1b438ab26fd88e1ff46ce2843afc62861fc982e0c
+FROM gitpod/workspace-base@sha256:2cc134fe5bd7d8fdbe44cab294925d4bc6d2d178d94624f4c376584a22d1f7b6
 
 USER root
 
@@ -23,9 +23,9 @@ RUN apt-get update --quiet && \
     add-apt-repository -y ppa:apptainer/ppa && \
     apt-get update --quiet && \
     apt-get install --quiet --yes apptainer && \
-    wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
-    rm Miniconda3-latest-Linux-x86_64.sh && \
+    wget --quiet https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh && \
+    bash Miniforge3-Linux-x86_64.sh -b -p /opt/conda && \
+    rm Miniforge3-Linux-x86_64.sh && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -45,7 +45,7 @@ USER gitpod
 RUN conda config --add channels bioconda && \
     conda config --add channels conda-forge && \
     conda config --set channel_priority strict && \
-    conda install --quiet --yes --name base \
+    conda install --quiet --yes --update-all --name base \
     nextflow \
     nf-test \
     prettier \

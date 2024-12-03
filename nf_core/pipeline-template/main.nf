@@ -18,6 +18,7 @@
 */
 
 include { {{ short_name|upper }}  } from './workflows/{{ short_name }}'
+{%- if modules %}
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'
 {%- if igenomes %}
@@ -33,7 +34,7 @@ include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_{{ s
 //   This is an example of how to use getGenomeAttribute() to fetch parameters
 //   from igenomes.config using `--genome`
 params.fasta = getGenomeAttribute('fasta')
-{% endif %}
+{% endif %}{% endif %}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     NAMED WORKFLOWS FOR PIPELINE
@@ -56,10 +57,10 @@ workflow {{ prefix_nodash|upper }}_{{ short_name|upper }} {
     {{ short_name|upper }} (
         samplesheet
     )
-{%- if multiqc %}
+{%- if multiqc %}{%- if modules %}
     emit:
     multiqc_report = {{ short_name|upper }}.out.multiqc_report // channel: /path/to/multiqc_report.html
-{%- endif %}
+{%- endif %}{%- endif %}
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -71,26 +72,32 @@ workflow {
 
     main:
 
+    {%- if modules %}
     //
     // SUBWORKFLOW: Run initialisation tasks
     //
     PIPELINE_INITIALISATION (
         params.version,
-        params.help,
         params.validate_params,
         params.monochrome_logs,
         args,
         params.outdir,
         params.input
     )
+    {%- endif %}
 
     //
     // WORKFLOW: Run main workflow
     //
     {{ prefix_nodash|upper }}_{{ short_name|upper }} (
+        {%- if modules %}
         PIPELINE_INITIALISATION.out.samplesheet
+        {%- else %}
+        params.input
+        {%- endif %}
     )
 
+    {%- if modules %}
     //
     // SUBWORKFLOW: Run completion tasks
     //
@@ -102,9 +109,12 @@ workflow {
         {%- endif %}
         params.outdir,
         params.monochrome_logs,
-        {% if adaptivecard or slackreport %}params.hook_url,{% endif %}
-        {% if multiqc %}{{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report{% endif %}
+        {%- if adaptivecard or slackreport %}
+        params.hook_url,{% endif %}
+        {%- if multiqc %}
+        {{ prefix_nodash|upper }}_{{ short_name|upper }}.out.multiqc_report{% endif %}
     )
+    {%- endif %}
 }
 
 /*

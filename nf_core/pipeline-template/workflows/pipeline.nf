@@ -4,12 +4,19 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FASTQC                 } from '../modules/nf-core/fastqc/main'
-{% if multiqc %}include { MULTIQC                } from '../modules/nf-core/multiqc/main'{% endif %}
-include { paramsSummaryMap       } from 'plugin/nf-validation'
-{% if multiqc %}include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'{% endif %}
+{%- if modules %}
+{%- if fastqc %}
+include { FASTQC                 } from '../modules/nf-core/fastqc/main'{% endif %}
+{%- if multiqc %}
+include { MULTIQC                } from '../modules/nf-core/multiqc/main'{% endif %}
+{%- if nf_schema %}
+include { paramsSummaryMap       } from 'plugin/nf-schema'{% endif %}
+{%- if multiqc %}
+include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'{% endif %}
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-{% if citations or multiqc %}include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'{% endif %}
+{%- if citations or multiqc %}
+include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_{{ short_name }}_pipeline'{% endif %}
+{%- endif %}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -22,11 +29,14 @@ workflow {{ short_name|upper }} {
     take:
     ch_samplesheet // channel: samplesheet read in from --input
 
+    {%- if modules %}
     main:
 
     ch_versions = Channel.empty()
-    {% if multiqc %}ch_multiqc_files = Channel.empty(){% endif %}
+    {%- if multiqc %}
+    ch_multiqc_files = Channel.empty(){% endif %}
 
+    {%- if fastqc %}
     //
     // MODULE: Run FastQC
     //
@@ -35,6 +45,7 @@ workflow {{ short_name|upper }} {
     )
     {% if multiqc %}ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}){% endif %}
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    {%- endif %}
 
     //
     // Collate and save software versions
@@ -42,7 +53,7 @@ workflow {{ short_name|upper }} {
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
-            name: 'nf_core_pipeline_software_mqc_versions.yml',
+            name: {% if is_nfcore %}'nf_core_'  + {% endif %} '{{ short_name }}_software_' {% if multiqc %} + 'mqc_' {% endif %} + 'versions.yml',
             sort: true,
             newLine: true
         ).set { ch_collated_versions }
@@ -60,9 +71,14 @@ workflow {{ short_name|upper }} {
         Channel.fromPath(params.multiqc_logo, checkIfExists: true) :
         Channel.empty()
 
+    {%- if nf_schema %}
+
     summary_params      = paramsSummaryMap(
         workflow, parameters_schema: "nextflow_schema.json")
     ch_workflow_summary = Channel.value(paramsSummaryMultiqc(summary_params))
+    ch_multiqc_files = ch_multiqc_files.mix(
+        ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+    {%- endif %}
 
     {%- if citations %}
     ch_multiqc_custom_methods_description = params.multiqc_methods_description ?
@@ -72,8 +88,6 @@ workflow {{ short_name|upper }} {
         methodsDescriptionText(ch_multiqc_custom_methods_description))
     {%- endif %}
 
-    ch_multiqc_files = ch_multiqc_files.mix(
-        ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(ch_collated_versions)
     {%- if citations %}
     ch_multiqc_files = ch_multiqc_files.mix(
@@ -88,12 +102,15 @@ workflow {{ short_name|upper }} {
         ch_multiqc_files.collect(),
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),
-        ch_multiqc_logo.toList()
+        ch_multiqc_logo.toList(),
+        [],
+        []
     )
 {% endif %}
     emit:
     {%- if multiqc %}multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html{% endif %}
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
+{% endif %}
 }
 
 /*

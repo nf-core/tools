@@ -144,9 +144,12 @@ def pipelines_lint(
             ctx.obj["hide_progress"],
         )
         swf_failed = 0
+        module_failed = 0
         if subworkflow_lint_obj is not None:
             swf_failed = len(subworkflow_lint_obj.failed)
-        if len(lint_obj.failed) + len(module_lint_obj.failed) + swf_failed > 0:
+        if module_lint_obj is not None:
+            module_failed = len(module_lint_obj.failed)
+        if len(lint_obj.failed) + module_failed + swf_failed > 0:
             sys.exit(1)
     except AssertionError as e:
         log.critical(e)
@@ -164,7 +167,6 @@ def pipelines_download(
     outdir,
     compress,
     force,
-    tower,
     platform,
     download_configuration,
     tag,
@@ -182,16 +184,13 @@ def pipelines_download(
     """
     from nf_core.pipelines.download import DownloadWorkflow
 
-    if tower:
-        log.warning("[red]The `-t` / `--tower` flag is deprecated. Please use `--platform` instead.[/]")
-
     dl = DownloadWorkflow(
         pipeline,
         revision,
         outdir,
         compress,
         force,
-        tower or platform,  # True if either specified
+        platform,
         download_configuration,
         tag,
         container_system,

@@ -21,6 +21,7 @@ import nf_core
 import nf_core.pipelines.create.create
 import nf_core.pipelines.list
 import nf_core.utils
+from nf_core.pipelines.lint_utils import dump_yaml_with_prettier
 
 log = logging.getLogger(__name__)
 
@@ -273,19 +274,24 @@ class PipelineSync:
                 yaml.safe_dump(self.config_yml.model_dump(), config_path)
 
         try:
-            nf_core.pipelines.create.create.PipelineCreate(
+            pipeline_create_obj = nf_core.pipelines.create.create.PipelineCreate(
                 outdir=str(self.pipeline_dir),
                 from_config_file=True,
                 no_git=True,
                 force=True,
-            ).init_pipeline()
+            )
+            pipeline_create_obj.init_pipeline()
 
             # set force to false to avoid overwriting files in the future
             if self.config_yml.template is not None:
+                self.config_yml.template = pipeline_create_obj.config
                 # Set force true in config to overwrite existing files
                 self.config_yml.template.force = False
-                with open(self.config_yml_path, "w") as config_path:
-                    yaml.safe_dump(self.config_yml.model_dump(), config_path)
+                # Set outdir as the current directory to avoid local info leaking
+                self.config_yml.template.outdir = "."
+                # Update nf-core version
+                self.config_yml.nf_core_version = nf_core.__version__
+                dump_yaml_with_prettier(self.config_yml_path, self.config_yml.model_dump())
 
         except Exception as err:
             # Reset to where you were to prevent git getting messed up.
