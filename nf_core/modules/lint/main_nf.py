@@ -256,7 +256,6 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
     bioconda_packages = []
 
     # Process name should be all capital letters
-    self.process_name = lines[0].split()[1]
     if all(x.upper() for x in self.process_name):
         self.passed.append(("process_capitals", "Process name is in capital letters", self.main_nf))
     else:

@@ -62,7 +62,6 @@ class NFCoreComponent:
             # Initialize the important files
             self.main_nf: Path = Path(self.component_dir, "main.nf")
             self.meta_yml: Optional[Path] = Path(self.component_dir, "meta.yml")
-            self.process_name = ""
             self.environment_yml: Optional[Path] = Path(self.component_dir, "environment.yml")
 
             component_list = self.component_name.split("/")
@@ -95,6 +94,9 @@ class NFCoreComponent:
             self.test_dir = None
             self.test_yml = None
             self.test_main_nf = None
+
+        # Set process_name after self.main_nf is defined
+        self.process_name = self._get_process_name()
 
     def __repr__(self) -> str:
         return f"<NFCoreComponent {self.component_name} {self.component_dir} {self.repo_url}>"
@@ -168,6 +170,13 @@ class NFCoreComponent:
                     if component != "":
                         included_components.append(component)
         return included_components
+
+    def _get_process_name(self):
+        with open(self.main_nf) as fh:
+            for line in fh:
+                if re.search(r"^\s*process\s*\w*\s*{", line):
+                    return re.search(r"^\s*process\s*(\w*)\s*{.*", line).group(1) or ""
+        return ""
 
     def get_inputs_from_main_nf(self) -> None:
         """Collect all inputs from the main.nf file."""
@@ -263,3 +272,4 @@ class NFCoreComponent:
                     pass
             log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")
             self.outputs = outputs
+
