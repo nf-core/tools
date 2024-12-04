@@ -23,6 +23,21 @@ def readme(self):
 
         * If pipeline is released but still contains a 'zenodo.XXXXXXX' tag, the test fails
 
+    To disable this test, add the following to the pipeline's ``.nf-core.yml`` file:
+
+    .. code-block:: yaml
+        lint:
+            readme: False
+
+    To disable subsets of these tests, add the following to the pipeline's ``.nf-core.yml`` file:
+
+    .. code-block:: yaml
+
+            lint:
+                readme:
+                    - nextflow_badge
+                    - zenodo_release
+
     """
     passed = []
     warned = []
@@ -36,7 +51,7 @@ def readme(self):
 
     if "nextflow_badge" not in ignore_configs:
         # Check that there is a readme badge showing the minimum required version of Nextflow
-        # [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A523.10.0-23aa62.svg)](https://www.nextflow.io/)
+        # [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A524.04.2-23aa62.svg)](https://www.nextflow.io/)
         # and that it has the correct version
         nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/nextflow%20DSL2-!?(?:%E2%89%A5|%3E%3D)([\d\.]+)-23aa62\.svg\)\]\(https://www\.nextflow\.io/\)"
         match = re.search(nf_badge_re, content)

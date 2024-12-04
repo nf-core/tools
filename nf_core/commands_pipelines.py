@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Optional, Union
 
 import rich
 
@@ -167,7 +168,6 @@ def pipelines_download(
     outdir,
     compress,
     force,
-    tower,
     platform,
     download_configuration,
     tag,
@@ -185,16 +185,13 @@ def pipelines_download(
     """
     from nf_core.pipelines.download import DownloadWorkflow
 
-    if tower:
-        log.warning("[red]The `-t` / `--tower` flag is deprecated. Please use `--platform` instead.[/]")
-
     dl = DownloadWorkflow(
         pipeline,
         revision,
         outdir,
         compress,
         force,
-        tower or platform,  # True if either specified
+        platform,
         download_configuration,
         tag,
         container_system,
@@ -279,6 +276,33 @@ def pipelines_list(ctx, keywords, sort, json, show_archived):
     from nf_core.pipelines.list import list_workflows
 
     stdout.print(list_workflows(keywords, sort, json, show_archived))
+
+
+# nf-core pipelines rocrate
+def pipelines_rocrate(
+    ctx,
+    pipeline_dir: Union[str, Path],
+    json_path: Optional[Union[str, Path]],
+    zip_path: Optional[Union[str, Path]],
+    pipeline_version: str,
+) -> None:
+    from nf_core.pipelines.rocrate import ROCrate
+
+    if json_path is None and zip_path is None:
+        log.error("Either `--json_path` or `--zip_path` must be specified.")
+        sys.exit(1)
+    else:
+        pipeline_dir = Path(pipeline_dir)
+        if json_path is not None:
+            json_path = Path(json_path)
+        if zip_path is not None:
+            zip_path = Path(zip_path)
+        try:
+            rocrate_obj = ROCrate(pipeline_dir, pipeline_version)
+            rocrate_obj.create_rocrate(json_path=json_path, zip_path=zip_path)
+        except (UserWarning, LookupError, FileNotFoundError) as e:
+            log.error(e)
+            sys.exit(1)
 
 
 # nf-core pipelines sync

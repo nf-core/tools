@@ -211,9 +211,9 @@ class ComponentInfo(ComponentCommand):
                         return yaml.safe_load(fh)
             log.debug(f"{self.component_type[:-1].title()} '{self.component}' meta.yml not found locally")
 
-        return None
+        return {}
 
-    def get_remote_yaml(self) -> Optional[dict]:
+    def get_remote_yaml(self) -> Optional[Dict]:
         """Attempt to get the meta.yml file from a remote repo.
 
         Returns:
@@ -228,6 +228,25 @@ class ComponentInfo(ComponentCommand):
             return None
         self.remote_location = self.modules_repo.remote_url
         return yaml.safe_load(file_contents)
+
+    def generate_params_table(self, type) -> Table:
+        "Generate a rich table for inputs and outputs"
+        table = Table(expand=True, show_lines=True, box=box.MINIMAL_HEAVY_HEAD, padding=0)
+        table.add_column(f":inbox_tray: {type}")
+        table.add_column("Description")
+        if self.component_type == "modules":
+            table.add_column("Pattern", justify="right", style="green")
+        elif self.component_type == "subworkflows":
+            table.add_column("Structure", justify="right", style="green")
+        return table
+
+    def get_channel_structure(self, structure: dict) -> str:
+        "Get the structure of a channel"
+        structure_str = ""
+        for key, info in structure.items():
+            pattern = f" - {info['pattern']}" if info.get("pattern") else ""
+            structure_str += f"{key} ({info['type']}{pattern})"
+        return structure_str
 
     def generate_component_info_help(self):
         """Take the parsed meta.yml and generate rich help.
@@ -277,33 +296,48 @@ class ComponentInfo(ComponentCommand):
 
         # Inputs
         if self.meta.get("input"):
-            inputs_table = Table(expand=True, show_lines=True, box=box.MINIMAL_HEAVY_HEAD, padding=0)
-            inputs_table.add_column(":inbox_tray: Inputs")
-            inputs_table.add_column("Description")
-            inputs_table.add_column("Pattern", justify="right", style="green")
-            for input in self.meta["input"]:
-                for key, info in input.items():
-                    inputs_table.add_row(
-                        f"[orange1 on black] {key} [/][dim i] ({info['type']})",
-                        Markdown(info["description"] if info["description"] else ""),
-                        info.get("pattern", ""),
-                    )
+            inputs_table = self.generate_params_table("Inputs")
+            for i, input in enumerate(self.meta["input"]):
+                inputs_table.add_row(f"[italic]input[{i}][/]", "", "")
+                if self.component_type == "modules":
+                    for element in input:
+                        for key, info in element.items():
+                            inputs_table.add_row(
+                                f"[orange1 on black] {key} [/][dim i] ({info['type']})",
+                                Markdown(info["description"] if info["description"] else ""),
+                                info.get("pattern", ""),
+                            )
+                elif self.component_type == "subworkflows":
+                    for key, info in input.items():
+                        inputs_table.add_row(
+                            f"[orange1 on black] {key} [/][dim i]",
+                            Markdown(info["description"] if info["description"] else ""),
+                            self.get_channel_structure(info["structure"]) if info.get("structure") else "",
+                        )
 
             renderables.append(inputs_table)
 
         # Outputs
         if self.meta.get("output"):
-            outputs_table = Table(expand=True, show_lines=True, box=box.MINIMAL_HEAVY_HEAD, padding=0)
-            outputs_table.add_column(":outbox_tray: Outputs")
-            outputs_table.add_column("Description")
-            outputs_table.add_column("Pattern", justify="right", style="green")
+            outputs_table = self.generate_params_table("Outputs")
             for output in self.meta["output"]:
-                for key, info in output.items():
-                    outputs_table.add_row(
-                        f"[orange1 on black] {key} [/][dim i] ({info['type']})",
-                        Markdown(info["description"] if info["description"] else ""),
-                        info.get("pattern", ""),
-                    )
+                if self.component_type == "modules":
+                    for ch_name, elements in output.items():
+                        outputs_table.add_row(f"{ch_name}", "", "")
+                        for element in elements:
+                            for key, info in element.items():
+                                outputs_table.add_row(
+                                    f"[orange1 on black] {key} [/][dim i] ({info['type']})",
+                                    Markdown(info["description"] if info["description"] else ""),
+                                    info.get("pattern", ""),
+                                )
+                elif self.component_type == "subworkflows":
+                    for key, info in output.items():
+                        outputs_table.add_row(
+                            f"[orange1 on black] {key} [/][dim i]",
+                            Markdown(info["description"] if info["description"] else ""),
+                            self.get_channel_structure(info["structure"]) if info.get("structure") else "",
+                        )
 
             renderables.append(outputs_table)
 

@@ -38,7 +38,7 @@ jobs:
     strategy:
       matrix:
         NXF_VER:
-          - "23.10.0"
+          - "24.04.2"
           - "latest-everything"
     steps:
       - name: go to subdirectory and change nextflow workdir
@@ -48,12 +48,12 @@ jobs:
           export NXF_WORK=$(pwd)
 
       # Get the repo code
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out source-code repository
 
       # Set up nf-core/tools
       - name: Set up Python 3.12
-        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
         with:
           python-version: "3.12"
           cache: pip
@@ -76,6 +76,11 @@ jobs:
       # Remove TODO statements
       - name: remove TODO
         run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
+        working-directory: create-lint-wf
+
+      # Uncomment includeConfig statement
+      - name: uncomment include config
+        run: find nf-core-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
         working-directory: create-lint-wf
 
       # Run the other nf-core commands

@@ -27,8 +27,8 @@ import nf_core.utils
 from nf_core import __version__
 from nf_core.components.lint import ComponentLint
 from nf_core.pipelines.lint_utils import console
+from nf_core.utils import NFCoreYamlConfig, NFCoreYamlLintConfig, strip_ansi_codes
 from nf_core.utils import plural_s as _s
-from nf_core.utils import strip_ansi_codes
 
 from .actions_awsfulltest import actions_awsfulltest
 from .actions_awstest import actions_awstest
@@ -37,6 +37,7 @@ from .actions_schema_validation import actions_schema_validation
 from .configs import base_config, modules_config
 from .files_exist import files_exist
 from .files_unchanged import files_unchanged
+from .included_configs import included_configs
 from .merge_markers import merge_markers
 from .modules_json import modules_json
 from .modules_structure import modules_structure
@@ -101,6 +102,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     system_exit = system_exit
     template_strings = template_strings
     version_consistency = version_consistency
+    included_configs = included_configs
 
     def __init__(
         self, wf_path, release_mode=False, fix=(), key=None, fail_ignored=False, fail_warned=False, hide_progress=False
@@ -110,7 +112,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Initialise the parent object
         super().__init__(wf_path)
 
-        self.lint_config = {}
+        self.lint_config: Optional[NFCoreYamlLintConfig] = None
         self.release_mode = release_mode
         self.fail_ignored = fail_ignored
         self.fail_warned = fail_warned
@@ -152,7 +154,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "base_config",
             "modules_config",
             "nfcore_yml",
-        ] + (["version_consistency"] if release_mode else [])
+        ] + (["version_consistency", "included_configs"] if release_mode else [])
 
     def _load(self) -> bool:
         """Load information about the pipeline into the PipelineLint object"""
@@ -171,13 +173,12 @@ class PipelineLint(nf_core.utils.Pipeline):
         Add parsed config to the `self.lint_config` class attribute.
         """
         _, tools_config = nf_core.utils.load_tools_config(self.wf_path)
-        self.lint_config = getattr(tools_config, "lint", {}) or {}
+        self.lint_config = getattr(tools_config, "lint", None) or None
         is_correct = True
-
         # Check if we have any keys that don't match lint test names
         if self.lint_config is not None:
-            for k in self.lint_config:
-                if k != "nfcore_components" and k not in self.lint_tests:
+            for k, v in self.lint_config:
+                if v is not None and k != "nfcore_components" and k not in self.lint_tests:
                     # nfcore_components is an exception to allow custom pipelines without nf-core components
                     log.warning(f"Found unrecognised test name '{k}' in pipeline lint config")
                     is_correct = False
@@ -592,7 +593,7 @@ def run_linting(
     lint_obj._load_lint_config()
     lint_obj.load_pipeline_config()
 
-    if "nfcore_components" in lint_obj.lint_config and not lint_obj.lint_config["nfcore_components"]:
+    if lint_obj.lint_config and not lint_obj.lint_config["nfcore_components"]:
         module_lint_obj = None
         subworkflow_lint_obj = None
     else:
@@ -677,5 +678,4 @@ def run_linting(
     if len(lint_obj.failed) > 0:
         if release_mode:
             log.info("Reminder: Lint tests were run in --release mode.")
-
     return lint_obj, module_lint_obj, subworkflow_lint_obj

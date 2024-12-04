@@ -66,6 +66,7 @@ def files_exist(self) -> Dict[str, List[str]]:
         conf/igenomes.config
         .github/workflows/awstest.yml
         .github/workflows/awsfulltest.yml
+        ro-crate-metadata.json
 
     Files that *must not* be present, due to being renamed or removed in the template:
 
@@ -167,9 +168,11 @@ def files_exist(self) -> Dict[str, List[str]]:
         [Path("assets", "multiqc_config.yml")],
         [Path("conf", "base.config")],
         [Path("conf", "igenomes.config")],
+        [Path("conf", "igenomes_ignored.config")],
         [Path(".github", "workflows", "awstest.yml")],
         [Path(".github", "workflows", "awsfulltest.yml")],
         [Path("modules.json")],
+        [Path("ro-crate-metadata.json")],
     ]
 
     # List of strings. Fails / warns if any of the strings exist.
@@ -197,6 +200,12 @@ def files_exist(self) -> Dict[str, List[str]]:
     ]
     files_warn_ifexists = [Path(".travis.yml")]
 
+    files_hint = [
+        [
+            ["ro-crate-metadata.json"],
+            ". Run `nf-core rocrate` to generate this file. Read more about RO-Crates in the [nf-core/tools docs](https://nf-co.re/tools#create-a-ro-crate-metadata-file).",
+        ],
+    ]
     # Remove files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("files_exist", []) if self.lint_config is not None else []
 
@@ -224,7 +233,11 @@ def files_exist(self) -> Dict[str, List[str]]:
         if any([pf(f).is_file() for f in files]):
             passed.append(f"File found: {self._wrap_quotes(files)}")
         else:
-            warned.append(f"File not found: {self._wrap_quotes(files)}")
+            hint = ""
+            for file_hint in files_hint:
+                if file_hint[0] == files:
+                    hint = str(file_hint[1])
+            warned.append(f"File not found: {self._wrap_quotes(files)}{hint}")
 
     # Files that cause an error if they exist
     for file in files_fail_ifexists:

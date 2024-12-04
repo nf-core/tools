@@ -167,7 +167,7 @@ class TestCli(unittest.TestCase):
             "compress": "tar.gz",
             "force": None,
             "platform": None,
-            "download-configuration": None,
+            "download-configuration": "yes",
             "tag": "3.12=testing",
             "container-system": "singularity",
             "container-library": "quay.io",
@@ -188,7 +188,7 @@ class TestCli(unittest.TestCase):
             params["compress"],
             "force" in params,
             "platform" in params,
-            "download-configuration" in params,
+            params["download-configuration"],
             (params["tag"],),
             params["container-system"],
             (params["container-library"],),
@@ -358,7 +358,7 @@ class TestCli(unittest.TestCase):
             with open("nextflow_schema.json", "w") as f:
                 f.write("{}")
             self.invoke_cli(cmd)
-            mock_get_schema_path.assert_called_with("nextflow_schema.json")
+            mock_get_schema_path.assert_called_with(Path("nextflow_schema.json"))
 
     @mock.patch("nf_core.pipelines.schema.PipelineSchema.get_schema_path")
     def test_schema_lint_filename(self, mock_get_schema_path):
@@ -368,7 +368,7 @@ class TestCli(unittest.TestCase):
             with open("some_other_filename", "w") as f:
                 f.write("{}")
             self.invoke_cli(cmd)
-            mock_get_schema_path.assert_called_with("some_other_filename")
+            mock_get_schema_path.assert_called_with(Path("some_other_filename"))
 
     @mock.patch("nf_core.pipelines.create_logo.create_logo")
     def test_create_logo(self, mock_create_logo):

@@ -1,6 +1,8 @@
 import shutil
 from unittest import TestCase
 
+import pytest
+
 from nf_core.utils import Pipeline
 
 from .utils import create_tmp_pipeline
@@ -24,3 +26,7 @@ class TestPipelines(TestCase):
         new_pipeline = self.tmp_dir / "nf-core-testpipeline-copy"
         shutil.copytree(self.pipeline_dir, new_pipeline)
         return new_pipeline
+
+    @pytest.fixture(autouse=True)
+    def _use_caplog(self, caplog):
+        self.caplog = caplog

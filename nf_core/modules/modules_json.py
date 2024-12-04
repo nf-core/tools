@@ -19,7 +19,7 @@ from nf_core.components.components_utils import NF_CORE_MODULES_NAME, NF_CORE_MO
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.pipelines.lint_utils import dump_json_with_prettier
 
-from .modules_differ import ModulesDiffer
+from ..components.components_differ import ComponentsDiffer
 
 log = logging.getLogger(__name__)
 
@@ -308,7 +308,9 @@ class ModulesJson:
                 # If the module/subworkflow is patched
                 patch_file = component_path / f"{component}.diff"
                 if patch_file.is_file():
-                    temp_module_dir = self.try_apply_patch_reverse(component, install_dir, patch_file, component_path)
+                    temp_module_dir = self.try_apply_patch_reverse(
+                        component_type, component, install_dir, patch_file, component_path
+                    )
                     correct_commit_sha = self.find_correct_commit_sha(
                         component_type, component, temp_module_dir, modules_repo
                     )
@@ -432,7 +434,7 @@ class ModulesJson:
             to_name += f"-{datetime.datetime.now().strftime('%y%m%d%H%M%S')}"
         shutil.move(str(current_path), local_dir / to_name)
 
-    def unsynced_components(self) -> Tuple[List[str], List[str], dict]:
+    def unsynced_components(self) -> Tuple[List[str], List[str], Dict]:
         """
         Compute the difference between the modules/subworkflows in the directory and the
         modules/subworkflows in the 'modules.json' file. This is done by looking at all
@@ -805,7 +807,7 @@ class ModulesJson:
 
         return False
 
-    def add_patch_entry(self, module_name, repo_url, install_dir, patch_filename, write_file=True):
+    def add_patch_entry(self, component_type, component_name, repo_url, install_dir, patch_filename, write_file=True):
         """
         Adds (or replaces) the patch entry for a module
         """
@@ -815,9 +817,11 @@ class ModulesJson:
 
         if repo_url not in self.modules_json["repos"]:
             raise LookupError(f"Repo '{repo_url}' not present in 'modules.json'")
-        if module_name not in self.modules_json["repos"][repo_url]["modules"][install_dir]:
-            raise LookupError(f"Module '{install_dir}/{module_name}' not present in 'modules.json'")
-        self.modules_json["repos"][repo_url]["modules"][install_dir][module_name]["patch"] = str(patch_filename)
+        if component_name not in self.modules_json["repos"][repo_url][component_type][install_dir]:
+            raise LookupError(
+                f"{component_type[:-1].title()} '{install_dir}/{component_name}' not present in 'modules.json'"
+            )
+        self.modules_json["repos"][repo_url][component_type][install_dir][component_name]["patch"] = str(patch_filename)
         if write_file:
             self.dump()
 
@@ -833,17 +837,17 @@ class ModulesJson:
         if write_file:
             self.dump()
 
-    def get_patch_fn(self, module_name, repo_url, install_dir):
+    def get_patch_fn(self, component_type, component_name, repo_url, install_dir):
         """
-        Get the patch filename of a module
+        Get the patch filename of a component
 
         Args:
-            module_name (str): The name of the module
-            repo_url (str): The URL of the repository containing the module
-            install_dir (str): The name of the directory where modules are installed
+            component_name (str): The name of the component
+            repo_url (str): The URL of the repository containing the component
+            install_dir (str): The name of the directory where components are installed
 
         Returns:
-            (str): The patch filename for the module, None if not present
+            (str): The patch filename for the component, None if not present
         """
         if self.modules_json is None:
             self.load()
@@ -851,48 +855,53 @@ class ModulesJson:
         path = (
             self.modules_json["repos"]
             .get(repo_url, {})
-            .get("modules")
+            .get(component_type)
             .get(install_dir)
-            .get(module_name, {})
+            .get(component_name, {})
             .get("patch")
         )
         return Path(path) if path is not None else None
 
-    def try_apply_patch_reverse(self, module, repo_name, patch_relpath, module_dir):
+    def try_apply_patch_reverse(self, component_type, component, repo_name, patch_relpath, component_dir):
         """
-        Try reverse applying a patch file to the modified module files
+        Try reverse applying a patch file to the modified module or subworkflow files
 
         Args:
-            module (str): The name of the module
-            repo_name (str): The name of the repository where the module resides
+            component_type (str): The type of component [modules, subworkflows]
+            component (str): The name of the module or subworkflow
+            repo_name (str): The name of the repository where the component resides
             patch_relpath (Path | str): The path to patch file in the pipeline
-            module_dir (Path | str): The module directory in the pipeline
+            component_dir (Path | str): The component directory in the pipeline
 
         Returns:
-            (Path | str): The path of the folder where the module patched files are
+            (Path | str): The path of the folder where the component patched files are
 
         Raises:
             LookupError: If patch was not applied
         """
-        module_fullname = str(Path(repo_name, module))
+        component_fullname = str(Path(repo_name, component))
         patch_path = Path(self.directory / patch_relpath)
 
         try:
-            new_files = ModulesDiffer.try_apply_patch(module, repo_name, patch_path, module_dir, reverse=True)
+            new_files = ComponentsDiffer.try_apply_patch(
+                component_type, component, repo_name, patch_path, component_dir, reverse=True
+            )
         except LookupError as e:
-            raise LookupError(f"Failed to apply patch in reverse for module '{module_fullname}' due to: {e}")
+            raise LookupError(
+                f"Failed to apply patch in reverse for {component_type[:-1]} '{component_fullname}' due to: {e}"
+            )
 
         # Write the patched files to a temporary directory
         log.debug("Writing patched files to tmpdir")
         temp_dir = Path(tempfile.mkdtemp())
-        temp_module_dir = temp_dir / module
-        temp_module_dir.mkdir(parents=True, exist_ok=True)
+        temp_component_dir = temp_dir / component
+        temp_component_dir.mkdir(parents=True, exist_ok=True)
         for file, new_content in new_files.items():
-            fn = temp_module_dir / file
+            fn = temp_component_dir / file
             with open(fn, "w") as fh:
                 fh.writelines(new_content)
 
-        return temp_module_dir
+        return temp_component_dir
 
     def repo_present(self, repo_name):
         """
@@ -908,20 +917,21 @@ class ModulesJson:
 
         return repo_name in self.modules_json.get("repos", {})
 
-    def module_present(self, module_name, repo_url, install_dir):
+    def component_present(self, module_name, repo_url, install_dir, component_type):
         """
         Checks if a module is present in the modules.json file
         Args:
             module_name (str): Name of the module
             repo_url (str): URL of the repository
             install_dir (str): Name of the directory where modules are installed
+            component_type (str): Type of component [modules, subworkflows]
         Returns:
             (bool): Whether the module is present in the 'modules.json' file
         """
         if self.modules_json is None:
             self.load()
             assert self.modules_json is not None  # mypy
-        return module_name in self.modules_json.get("repos", {}).get(repo_url, {}).get("modules", {}).get(
+        return module_name in self.modules_json.get("repos", {}).get(repo_url, {}).get(component_type, {}).get(
             install_dir, {}
         )
 
@@ -1119,8 +1129,10 @@ class ModulesJson:
         """
         Sort the modules.json, and write it to file
         """
+        # Sort the modules.json
+        if self.modules_json is None:
+            self.load()
         if self.modules_json is not None:
-            # Sort the modules.json
             self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
             if run_prettier:
                 dump_json_with_prettier(self.modules_json_path, self.modules_json)

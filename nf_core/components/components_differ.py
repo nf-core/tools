@@ -6,7 +6,9 @@ import os
 from pathlib import Path
 from typing import Dict, List, Union
 
-from rich.console import Console
+from rich import box
+from rich.console import Console, Group, RenderableType
+from rich.panel import Panel
 from rich.syntax import Syntax
 
 import nf_core.utils
@@ -14,10 +16,10 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-class ModulesDiffer:
+class ComponentsDiffer:
     """
     Static class that provides functionality for computing diffs between
-    different instances of a module
+    different instances of a module or subworkflow
     """
 
     class DiffEnum(enum.Enum):
@@ -32,15 +34,15 @@ class ModulesDiffer:
         REMOVED = enum.auto()
 
     @staticmethod
-    def get_module_diffs(from_dir, to_dir, for_git=True, dsp_from_dir=None, dsp_to_dir=None):
+    def get_component_diffs(from_dir, to_dir, for_git=True, dsp_from_dir=None, dsp_to_dir=None):
         """
-        Compute the diff between the current module version
+        Compute the diff between the current component version
         and the new version.
 
         Args:
-            from_dir (strOrPath): The folder containing the old module files
-            to_dir (strOrPath): The folder containing the new module files
-            path_in_diff (strOrPath): The directory displayed containing the module
+            from_dir (strOrPath): The folder containing the old component files
+            to_dir (strOrPath): The folder containing the new component files
+            path_in_diff (strOrPath): The directory displayed containing the component
                                       file in the diff. Added so that temporary dirs
                                       are not shown
             for_git (bool): indicates whether the diff file is to be
@@ -50,7 +52,7 @@ class ModulesDiffer:
             dsp_to_dir (str | Path): The to directory to display in the diff
 
         Returns:
-            dict[str, (ModulesDiffer.DiffEnum, str)]: A dictionary containing
+            dict[str, (ComponentsDiffer.DiffEnum, str)]: A dictionary containing
             the diff type and the diff string (empty if no diff)
         """
         if for_git:
@@ -70,7 +72,7 @@ class ModulesDiffer:
         )
         files = list(files)
 
-        # Loop through all the module files and compute their diffs if needed
+        # Loop through all the component files and compute their diffs if needed
         for file in files:
             temp_path = Path(to_dir, file)
             curr_path = Path(from_dir, file)
@@ -82,7 +84,7 @@ class ModulesDiffer:
 
                 if new_lines == old_lines:
                     # The files are identical
-                    diffs[file] = (ModulesDiffer.DiffEnum.UNCHANGED, ())
+                    diffs[file] = (ComponentsDiffer.DiffEnum.UNCHANGED, ())
                 else:
                     # Compute the diff
                     diff = difflib.unified_diff(
@@ -91,7 +93,7 @@ class ModulesDiffer:
                         fromfile=str(Path(dsp_from_dir, file)),
                         tofile=str(Path(dsp_to_dir, file)),
                     )
-                    diffs[file] = (ModulesDiffer.DiffEnum.CHANGED, diff)
+                    diffs[file] = (ComponentsDiffer.DiffEnum.CHANGED, diff)
 
             elif temp_path.exists():
                 with open(temp_path) as fh:
@@ -104,7 +106,7 @@ class ModulesDiffer:
                     fromfile=str(Path("/dev", "null")),
                     tofile=str(Path(dsp_to_dir, file)),
                 )
-                diffs[file] = (ModulesDiffer.DiffEnum.CREATED, diff)
+                diffs[file] = (ComponentsDiffer.DiffEnum.CREATED, diff)
 
             elif curr_path.exists():
                 # The file was removed
@@ -117,14 +119,14 @@ class ModulesDiffer:
                     fromfile=str(Path(dsp_from_dir, file)),
                     tofile=str(Path("/dev", "null")),
                 )
-                diffs[file] = (ModulesDiffer.DiffEnum.REMOVED, diff)
+                diffs[file] = (ComponentsDiffer.DiffEnum.REMOVED, diff)
 
         return diffs
 
     @staticmethod
     def write_diff_file(
         diff_path,
-        module,
+        component,
         repo_path,
         from_dir,
         to_dir,
@@ -137,20 +139,19 @@ class ModulesDiffer:
         limit_output=False,
     ):
         """
-        Writes the diffs of a module to the diff file.
+        Writes the diffs of a component to the diff file.
 
         Args:
             diff_path (str | Path): The path to the file that should be appended
-            module (str): The module name
-            repo_path (str): The name of the repo where the module resides
-            from_dir (str | Path): The directory containing the old module files
-            to_dir (str | Path): The directory containing the new module files
-            diffs (dict[str, (ModulesDiffer.DiffEnum, str)]): A dictionary containing
+            component (str): The component name
+            repo_path (str): The name of the repo where the component resides
+            from_dir (str | Path): The directory containing the old component files
+            to_dir (str | Path): The directory containing the new component files
+            diffs (dict[str, (ComponentsDiffer.DiffEnum, str)]): A dictionary containing
                                                               the type of change and
                                                               the diff (if any)
-            module_dir (str | Path): The path to the current installation of the module
-            current_version (str): The installed version of the module
-            new_version (str): The version of the module the diff is computed against
+            current_version (str): The installed version of the component
+            new_version (str): The version of the component the diff is computed against
             for_git (bool): indicates whether the diff file is to be
                             compatible with `git apply`. If true it
                             adds a/ and b/ prefixes to the file paths
@@ -163,36 +164,36 @@ class ModulesDiffer:
         if dsp_to_dir is None:
             dsp_to_dir = to_dir
 
-        diffs = ModulesDiffer.get_module_diffs(from_dir, to_dir, for_git, dsp_from_dir, dsp_to_dir)
-        if all(diff_status == ModulesDiffer.DiffEnum.UNCHANGED for _, (diff_status, _) in diffs.items()):
-            raise UserWarning("Module is unchanged")
-        log.debug(f"Writing diff of '{module}' to '{diff_path}'")
+        diffs = ComponentsDiffer.get_component_diffs(from_dir, to_dir, for_git, dsp_from_dir, dsp_to_dir)
+        if all(diff_status == ComponentsDiffer.DiffEnum.UNCHANGED for _, (diff_status, _) in diffs.items()):
+            raise UserWarning("Component is unchanged")
+        log.debug(f"Writing diff of '{component}' to '{diff_path}'")
         with open(diff_path, file_action) as fh:
             if current_version is not None and new_version is not None:
                 fh.write(
-                    f"Changes in module '{Path(repo_path, module)}' between"
+                    f"Changes in component '{Path(repo_path, component)}' between"
                     f" ({current_version}) and"
                     f" ({new_version})\n"
                 )
             else:
-                fh.write(f"Changes in module '{Path(repo_path, module)}'\n")
+                fh.write(f"Changes in component '{Path(repo_path, component)}'\n")
 
             for file, (diff_status, diff) in diffs.items():
-                if diff_status == ModulesDiffer.DiffEnum.UNCHANGED:
+                if diff_status == ComponentsDiffer.DiffEnum.UNCHANGED:
                     # The files are identical
                     fh.write(f"'{Path(dsp_from_dir, file)}' is unchanged\n")
-                elif diff_status == ModulesDiffer.DiffEnum.CREATED:
+                elif diff_status == ComponentsDiffer.DiffEnum.CREATED:
                     # The file was created between the commits
                     fh.write(f"'{Path(dsp_from_dir, file)}' was created\n")
-                elif diff_status == ModulesDiffer.DiffEnum.REMOVED:
+                elif diff_status == ComponentsDiffer.DiffEnum.REMOVED:
                     # The file was removed between the commits
                     fh.write(f"'{Path(dsp_from_dir, file)}' was removed\n")
                 elif limit_output and not file.suffix == ".nf":
                     # Skip printing the diff for files other than main.nf
-                    fh.write(f"Changes in '{Path(module, file)}' but not shown\n")
+                    fh.write(f"Changes in '{Path(component, file)}' but not shown\n")
                 else:
                     # The file has changed write the diff lines to the file
-                    fh.write(f"Changes in '{Path(module, file)}':\n")
+                    fh.write(f"Changes in '{Path(component, file)}':\n")
                     for line in diff:
                         fh.write(line)
                     fh.write("\n")
@@ -235,7 +236,7 @@ class ModulesDiffer:
 
     @staticmethod
     def print_diff(
-        module,
+        component,
         repo_path,
         from_dir,
         to_dir,
@@ -246,16 +247,15 @@ class ModulesDiffer:
         limit_output=False,
     ):
         """
-        Prints the diffs between two module versions to the terminal
+        Prints the diffs between two component versions to the terminal
 
         Args:
-            module (str): The module name
-            repo_path (str): The name of the repo where the module resides
-            from_dir (str | Path): The directory containing the old module files
-            to_dir (str | Path): The directory containing the new module files
-            module_dir (str): The path to the current installation of the module
-            current_version (str): The installed version of the module
-            new_version (str): The version of the module the diff is computed against
+            component (str): The component name
+            repo_path (str): The name of the repo where the component resides
+            from_dir (str | Path): The directory containing the old component files
+            to_dir (str | Path): The directory containing the new component files
+            current_version (str): The installed version of the component
+            new_version (str): The version of the component the diff is computed against
             dsp_from_dir (str | Path): The 'from' directory displayed in the diff
             dsp_to_dir (str | Path): The 'to' directory displayed in the diff
             limit_output (bool): If true, don't print the diff for files other than main.nf
@@ -265,35 +265,49 @@ class ModulesDiffer:
         if dsp_to_dir is None:
             dsp_to_dir = to_dir
 
-        diffs = ModulesDiffer.get_module_diffs(
+        diffs = ComponentsDiffer.get_component_diffs(
             from_dir, to_dir, for_git=False, dsp_from_dir=dsp_from_dir, dsp_to_dir=dsp_to_dir
         )
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
         if current_version is not None and new_version is not None:
             log.info(
-                f"Changes in module '{Path(repo_path, module)}' between" f" ({current_version}) and" f" ({new_version})"
+                f"Changes in component '{Path(repo_path, component)}' between"
+                f" ({current_version}) and"
+                f" ({new_version})"
             )
         else:
-            log.info(f"Changes in module '{Path(repo_path, module)}'")
+            log.info(f"Changes in component '{Path(repo_path, component)}'")
 
+        panel_group: list[RenderableType] = []
         for file, (diff_status, diff) in diffs.items():
-            if diff_status == ModulesDiffer.DiffEnum.UNCHANGED:
+            if diff_status == ComponentsDiffer.DiffEnum.UNCHANGED:
                 # The files are identical
                 log.info(f"'{Path(dsp_from_dir, file)}' is unchanged")
-            elif diff_status == ModulesDiffer.DiffEnum.CREATED:
+            elif diff_status == ComponentsDiffer.DiffEnum.CREATED:
                 # The file was created between the commits
                 log.info(f"'{Path(dsp_from_dir, file)}' was created")
-            elif diff_status == ModulesDiffer.DiffEnum.REMOVED:
+            elif diff_status == ComponentsDiffer.DiffEnum.REMOVED:
                 # The file was removed between the commits
                 log.info(f"'{Path(dsp_from_dir, file)}' was removed")
             elif limit_output and not file.suffix == ".nf":
                 # Skip printing the diff for files other than main.nf
-                log.info(f"Changes in '{Path(module, file)}' but not shown")
+                log.info(f"Changes in '{Path(component, file)}' but not shown")
             else:
                 # The file has changed
-                log.info(f"Changes in '{Path(module, file)}':")
+                log.info(f"Changes in '{Path(component, file)}':")
                 # Pretty print the diff using the pygments diff lexer
-                console.print(Syntax("".join(diff), "diff", theme="ansi_dark", padding=1))
+                syntax = Syntax("".join(diff), "diff", theme="ansi_dark", line_numbers=True)
+                panel_group.append(Panel(syntax, title=str(file), title_align="left", padding=0))
+            console.print(
+                Panel(
+                    Group(*panel_group),
+                    title=f"[white]{str(component)}[/white]",
+                    title_align="left",
+                    padding=0,
+                    border_style="blue",
+                    box=box.HEAVY,
+                )
+            )
 
     @staticmethod
     def per_file_patch(patch_fn: Union[str, Path]) -> Dict[str, List[str]]:
@@ -391,8 +405,8 @@ class ModulesDiffer:
     def try_apply_single_patch(file_lines, patch, reverse=False):
         """
         Tries to apply a patch to a modified file. Since the line numbers in
-        the patch does not agree if the file is modified, the old and new
-        lines inpatch are reconstructed and then we look for the old lines
+        the patch do not agree if the file is modified, the old and new
+        lines in the patch are reconstructed and then we look for the old lines
         in the modified file. If all hunk in the patch are found in the new file
         it is updated with the new lines from the patch file.
 
@@ -408,7 +422,7 @@ class ModulesDiffer:
             LookupError: If it fails to find the old lines from the patch in
                          the file.
         """
-        org_lines, patch_lines = ModulesDiffer.get_new_and_old_lines(patch)
+        org_lines, patch_lines = ComponentsDiffer.get_new_and_old_lines(patch)
         if reverse:
             patch_lines, org_lines = org_lines, patch_lines
 
@@ -452,16 +466,22 @@ class ModulesDiffer:
 
     @staticmethod
     def try_apply_patch(
-        module: str, repo_path: Union[str, Path], patch_path: Union[str, Path], module_dir: Path, reverse: bool = False
+        component_type: str,
+        component: str,
+        repo_path: Union[str, Path],
+        patch_path: Union[str, Path],
+        component_dir: Path,
+        reverse: bool = False,
     ) -> Dict[str, List[str]]:
         """
-        Try applying a full patch file to a module
+        Try applying a full patch file to a module or subworkflow
 
         Args:
-            module (str): Name of the module
-            repo_path (str): Name of the repository where the module resides
+            component_type (str): The type of component (modules or subworkflows)
+            component (str): Name of the module or subworkflow
+            repo_path (str): Name of the repository where the component resides
             patch_path (str): The absolute path to the patch file to be applied
-            module_dir (Path): The directory containing the module
+            component_dir (Path): The directory containing the component
             reverse (bool): Apply the patch in reverse
 
         Returns:
@@ -471,19 +491,19 @@ class ModulesDiffer:
         Raises:
             LookupError: If the patch application fails in a file
         """
-        module_relpath = Path("modules", repo_path, module)
-        patches = ModulesDiffer.per_file_patch(patch_path)
+        component_relpath = Path(component_type, repo_path, component)
+        patches = ComponentsDiffer.per_file_patch(patch_path)
         new_files = {}
         for file, patch in patches.items():
             log.debug(f"Applying patch to {file}")
-            fn = Path(file).relative_to(module_relpath)
-            file_path = module_dir / fn
+            fn = Path(file).relative_to(component_relpath)
+            file_path = component_dir / fn
             try:
                 with open(file_path) as fh:
                     file_lines = fh.readlines()
             except FileNotFoundError:
                 # The file was added with the patch
                 file_lines = [""]
-            patched_new_lines = ModulesDiffer.try_apply_single_patch(file_lines, patch, reverse=reverse)
+            patched_new_lines = ComponentsDiffer.try_apply_single_patch(file_lines, patch, reverse=reverse)
             new_files[str(fn)] = patched_new_lines
         return new_files

@@ -1,10 +1,13 @@
 import json
+import logging
 from pathlib import Path
 
 import jsonschema.validators
 import yaml
 
 import nf_core.components.components_utils
+
+log = logging.getLogger(__name__)
 
 
 def meta_yml(subworkflow_lint_object, subworkflow):
@@ -65,6 +68,8 @@ def meta_yml(subworkflow_lint_object, subworkflow):
                     subworkflow.passed.append(("meta_input", f"`{input}` specified", subworkflow.meta_yml))
                 else:
                     subworkflow.failed.append(("meta_input", f"`{input}` missing in `meta.yml`", subworkflow.meta_yml))
+        else:
+            log.debug(f"No inputs specified in subworkflow `main.nf`: {subworkflow.component_name}")
 
         if "output" in meta_yaml:
             meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
@@ -75,6 +80,8 @@ def meta_yml(subworkflow_lint_object, subworkflow):
                     subworkflow.failed.append(
                         ("meta_output", f"`{output}` missing in `meta.yml`", subworkflow.meta_yml)
                     )
+        else:
+            log.debug(f"No outputs specified in subworkflow `main.nf`: {subworkflow.component_name}")
 
         # confirm that the name matches the process name in main.nf
         if meta_yaml["name"].upper() == subworkflow.workflow_name:

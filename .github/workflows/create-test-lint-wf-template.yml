@@ -40,7 +40,7 @@ jobs:
       - name: 🏗 Set up yq
         uses: frenck/action-setup-yq@v1
       - name: checkout
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Create Matrix
         id: create_matrix
         run: |
@@ -77,11 +77,11 @@ jobs:
           cd create-lint-wf-template
           export NXF_WORK=$(pwd)
 
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out source-code repository
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
         with:
           python-version: "3.12"
 
@@ -137,14 +137,30 @@ jobs:
         run: find my-prefix-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
         working-directory: create-test-lint-wf
 
+      # Uncomment includeConfig statement
+      - name: uncomment include config
+        run: find my-prefix-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
+        working-directory: create-test-lint-wf
+
       # Replace zenodo.XXXXXX to pass readme linting
       - name: replace zenodo.XXXXXX
         run: find my-prefix-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
         working-directory: create-test-lint-wf
 
+      # Add empty ro-crate file
+      - name: add empty ro-crate file
+        run: touch my-prefix-testpipeline/ro-crate-metadata.json
+        working-directory: create-test-lint-wf
+
       # Run nf-core linting
       - name: nf-core pipelines lint
         run: nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned
+        working-directory: create-test-lint-wf
+
+      # Run code style linting
+      - name: run pre-commit
+        shell: bash
+        run: pre-commit run --all-files
         working-directory: create-test-lint-wf
 
       # Run bump-version
@@ -163,7 +179,7 @@ jobs:
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
         with:
           name: nf-core-log-file-${{ matrix.TEMPLATE }}
           path: create-test-lint-wf/artifact_files.tar

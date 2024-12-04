@@ -60,6 +60,7 @@ ci:
 igenomes:
   skippable_paths:
     - "conf/igenomes.config"
+    - "conf/igenomes_ignored.config"
   short_description: "Use reference genomes"
   description: "The pipeline will be configured to use a copy of the most common reference genome files from iGenomes"
   help_text: |
@@ -76,6 +77,7 @@ igenomes:
   linting:
     files_exist:
       - "conf/igenomes.config"
+      - "conf/igenomes_ignored.config"
   nfcore_pipelines: True
   custom_pipelines: True
 github_badges:
@@ -99,7 +101,7 @@ github_badges:
 nf_core_configs:
   skippable_paths: False
   short_description: "Add configuration files"
-  description: "The pipeline will include configuration profiles containing custom parameters requried to run nf-core pipelines at different institutions"
+  description: "The pipeline will include configuration profiles containing custom parameters required to run nf-core pipelines at different institutions"
   help_text: |
     Nf-core has a repository with a collection of configuration profiles.
 
@@ -118,6 +120,7 @@ nf_core_configs:
       - "custom_config"
       - "params.custom_config_version"
       - "params.custom_config_base"
+    included_configs: False
   nfcore_pipelines: False
   custom_pipelines: True
 is_nfcore:
@@ -183,6 +186,7 @@ code_linters:
 citations:
   skippable_paths:
     - "assets/methods_description_template.yml"
+    - "CITATIONS.md"
   short_description: "Include citations"
   description: "Include pipeline tools citations in CITATIONS.md and a method description in the MultiQC report (if enabled)."
   help_text: |
@@ -190,6 +194,9 @@ citations:
 
     Additionally, it will include a YAML file (`assets/methods_description_template.yml`) to add a Materials & Methods section describing the tools used in the pieline,
     and the logics to add this section to the output MultiQC report (if the report is generated).
+  linting:
+    files_exist:
+      - "CITATIONS.md"
   nfcore_pipelines: False
   custom_pipelines: True
 gitpod:
@@ -423,5 +430,29 @@ seqera_platform:
 
     In the pipeline template, this file is used to specify the output files of you pipeline which will be shown on the reports tab of Seqera Platform.
     You can extend this file adding any other desired configuration.
+  nfcore_pipelines: False
+  custom_pipelines: True
+rocrate:
+  skippable_paths:
+    - "ro-crate-metadata.json"
+  short_description: "Add RO-Crate metadata"
+  description: "Add a RO-Crate metadata file to describe the pipeline"
+  help_text: |
+    RO-Crate is a metadata specification to describe research data and software.
+    This will add a `ro-crate-metadata.json` file to describe the pipeline.
+  nfcore_pipelines: False
+  custom_pipelines: True
+  linting:
+    files_warn:
+      - "ro-crate-metadata.json"
+vscode:
+  skippable_paths:
+    - ".vscode"
+  short_description: "Render website admonitions in VSCode"
+  description: "Add a VSCode configuration to render website admonitions"
+  help_text: |
+    This will add a VSCode configuration file to render the admonitions in markdown files with the same style as the nf-core website.
+
+    Adds the `.vscode` directory to the pipelinerepository.
   nfcore_pipelines: False
   custom_pipelines: True

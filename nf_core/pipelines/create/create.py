@@ -8,7 +8,7 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Dict, List, Optional, Tuple, Union
 
 import git
 import git.config
@@ -21,7 +21,8 @@ import nf_core.utils
 from nf_core.pipelines.create.utils import CreateConfig, features_yml_path, load_features_yaml
 from nf_core.pipelines.create_logo import create_logo
 from nf_core.pipelines.lint_utils import run_prettier_on_file
-from nf_core.utils import LintConfigType, NFCoreTemplateConfig
+from nf_core.pipelines.rocrate import ROCrate
+from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlLintConfig
 
 log = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ class PipelineCreate:
                 _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else Path().cwd())
                 # Obtain a CreateConfig object from `.nf-core.yml` config file
                 if config_yml is not None and getattr(config_yml, "template", None) is not None:
-                    self.config = CreateConfig(**config_yml["template"].model_dump())
+                    self.config = CreateConfig(**config_yml["template"].model_dump(exclude_none=True))
                 else:
                     raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
                 # Update the output directory
@@ -182,7 +183,7 @@ class PipelineCreate:
             self.config.force = force if force else False
         if self.config.outdir is None:
             self.config.outdir = outdir if outdir else "."
-        if self.config.is_nfcore is None:
+        if self.config.is_nfcore is None or self.config.is_nfcore == "null":
             self.config.is_nfcore = self.config.org == "nf-core"
 
     def obtain_jinja_params_dict(
@@ -205,7 +206,7 @@ class PipelineCreate:
             config_yml = None
 
         # Set the parameters for the jinja template
-        jinja_params = self.config.model_dump()
+        jinja_params = self.config.model_dump(exclude_none=True)
 
         # Add template areas to jinja params and create list of areas with paths to skip
         skip_areas = []
@@ -356,6 +357,11 @@ class PipelineCreate:
             # Make a logo and save it, if it is a nf-core pipeline
             self.make_pipeline_logo()
 
+        if self.config.skip_features is None or "ro-crate" not in self.config.skip_features:
+            # Create the RO-Crate metadata file
+            rocrate_obj = ROCrate(self.outdir)
+            rocrate_obj.create_rocrate(json_path=self.outdir / "ro-crate-metadata.json")
+
         # Update the .nf-core.yml with linting configurations
         self.fix_linting()
 
@@ -363,14 +369,12 @@ class PipelineCreate:
             config_fn, config_yml = nf_core.utils.load_tools_config(self.outdir)
             if config_fn is not None and config_yml is not None:
                 with open(str(config_fn), "w") as fh:
-                    self.config.outdir = str(self.config.outdir)
-                    config_yml.template = NFCoreTemplateConfig(**self.config.model_dump())
-                    yaml.safe_dump(config_yml.model_dump(), fh)
+                    config_yml.template = NFCoreTemplateConfig(**self.config.model_dump(exclude_none=True))
+                    yaml.safe_dump(config_yml.model_dump(exclude_none=True), fh)
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
-                    run_prettier_on_file(self.outdir / config_fn)
 
         # Run prettier on files
-        run_prettier_on_file(self.outdir)
+        run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
 
     def fix_linting(self):
         """
@@ -397,11 +401,9 @@ class PipelineCreate:
         # Add the lint content to the preexisting nf-core config
         config_fn, nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
         if config_fn is not None and nf_core_yml is not None:
-            nf_core_yml.lint = cast(LintConfigType, lint_config)
+            nf_core_yml.lint = NFCoreYamlLintConfig(**lint_config)
             with open(self.outdir / config_fn, "w") as fh:
-                yaml.dump(nf_core_yml.model_dump(), fh, default_flow_style=False, sort_keys=False)
-
-            run_prettier_on_file(Path(self.outdir, config_fn))
+                yaml.dump(nf_core_yml.model_dump(exclude_none=True), fh, default_flow_style=False, sort_keys=False)
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""

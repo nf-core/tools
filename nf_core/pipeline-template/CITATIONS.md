@@ -15,10 +15,14 @@
 {% if fastqc %}- [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 
 > Andrews, S. (2010). FastQC: A Quality Control Tool for High Throughput Sequence Data [Online].
-> {% endif %} > {% if multiqc %}- [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
+
+{%- endif %}
+
+{% if multiqc %}- [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
 
 > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. Epub 2016 Jun 16. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.
-> {%- endif %}
+
+{%- endif %}
 
 ## Software packaging/containerisation tools
 
@@ -41,4 +45,5 @@
 - [Singularity](https://pubmed.ncbi.nlm.nih.gov/28494014/)
 
   > Kurtzer GM, Sochat V, Bauer MW. Singularity: Scientific containers for mobility of compute. PLoS One. 2017 May 11;12(5):e0177459. doi: 10.1371/journal.pone.0177459. eCollection 2017. PubMed PMID: 28494014; PubMed Central PMCID: PMC5426675.
-  > {%- endif %}
+
+  {%- endif %}

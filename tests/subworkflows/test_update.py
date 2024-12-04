@@ -99,7 +99,7 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         with open(patch_path) as fh:
             line = fh.readline()
             assert line.startswith(
-                "Changes in module 'nf-core/fastq_align_bowtie2' between (f3c078809a2513f1c95de14f6633fe1f03572fdb) and"
+                "Changes in component 'nf-core/fastq_align_bowtie2' between (f3c078809a2513f1c95de14f6633fe1f03572fdb) and"
             )
 
     def test_install_at_hash_and_update_and_save_diff_limit_output(self):

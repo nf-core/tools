@@ -11,7 +11,7 @@ indent_style = space
 [*.{md,yml,yaml,html,css,scss,js}]
 indent_size = 2
 
-{%- if modules %}
+{% if modules -%}
 # These files are edited and tested upstream in nf-core/modules
 [/modules/nf-core/**]
 charset = unset
@@ -27,7 +27,7 @@ trim_trailing_whitespace = unset
 indent_style = unset
 {%- endif %}
 
-{%- if email %}
+{% if email -%}
 [/assets/email*]
 indent_size = unset
 {%- endif %}

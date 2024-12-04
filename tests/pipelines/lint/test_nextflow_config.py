@@ -6,7 +6,6 @@ import yaml
 
 import nf_core.pipelines.create.create
 import nf_core.pipelines.lint
-from nf_core.utils import NFCoreYamlConfig
 
 from ..test_lint import TestLint
 
@@ -30,7 +29,6 @@ class TestLintNextflowConfig(TestLint):
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) == 0
         assert len(result["warned"]) == 0
-        assert "Config default value correct: params.max_cpus" in str(result["passed"])
         assert "Config default value correct: params.validate_params" in str(result["passed"])
 
     def test_nextflow_config_bad_name_fail(self):
@@ -71,18 +69,18 @@ class TestLintNextflowConfig(TestLint):
 
     def test_default_values_fail(self):
         """Test linting fails if the default values in nextflow.config do not match the ones defined in the nextflow_schema.json."""
-        # Change the default value of max_cpus in nextflow.config
+        # Change the default value of max_multiqc_email_size in nextflow.config
         nf_conf_file = Path(self.new_pipeline) / "nextflow.config"
         with open(nf_conf_file) as f:
             content = f.read()
-            fail_content = re.sub(r"\bmax_cpus\s*=\s*16\b", "max_cpus = 0", content)
+            fail_content = re.sub(r"\bmax_multiqc_email_size\s*=\s*'25.MB'", "max_multiqc_email_size = '0'", content)
         with open(nf_conf_file, "w") as f:
             f.write(fail_content)
-        # Change the default value of max_memory in nextflow_schema.json
+        # Change the default value of custom_config_version in nextflow_schema.json
         nf_schema_file = Path(self.new_pipeline) / "nextflow_schema.json"
         with open(nf_schema_file) as f:
             content = f.read()
-            fail_content = re.sub(r'"default": "128.GB"', '"default": "18.GB"', content)
+            fail_content = re.sub(r'"default": "master"', '"default": "main"', content)
         with open(nf_schema_file, "w") as f:
             f.write(fail_content)
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
@@ -90,11 +88,11 @@ class TestLintNextflowConfig(TestLint):
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) == 2
         assert (
-            "Config default value incorrect: `params.max_cpus` is set as `16` in `nextflow_schema.json` but is `0` in `nextflow.config`."
+            "Config default value incorrect: `params.max_multiqc_email_size` is set as `25.MB` in `nextflow_schema.json` but is `0` in `nextflow.config`."
             in result["failed"]
         )
         assert (
-            "Config default value incorrect: `params.max_memory` is set as `18.GB` in `nextflow_schema.json` but is `128.GB` in `nextflow.config`."
+            "Config default value incorrect: `params.custom_config_version` is set as `main` in `nextflow_schema.json` but is `master` in `nextflow.config`."
             in result["failed"]
         )
 
@@ -103,14 +101,14 @@ class TestLintNextflowConfig(TestLint):
         # Add parameter assignment in main.nf
         main_nf_file = Path(self.new_pipeline) / "main.nf"
         with open(main_nf_file, "a") as f:
-            f.write("params.max_time = 42")
+            f.write("params.custom_config_base = 'test'")
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj.load_pipeline_config()
         result = lint_obj.nextflow_config()
-        assert len(result["failed"]) == 1
+        assert len(result["failed"]) == 2
         assert (
-            result["failed"][0]
-            == "Config default value incorrect: `params.max_time` is set as `240.h` in `nextflow_schema.json` but is `null` in `nextflow.config`."
+            result["failed"][1]
+            == "Config default value incorrect: `params.custom_config_base` is set as `https://raw.githubusercontent.com/nf-core/configs/master` in `nextflow_schema.json` but is `null` in `nextflow.config`."
         )
 
     def test_allow_params_reference_in_main_nf(self):
@@ -118,7 +116,7 @@ class TestLintNextflowConfig(TestLint):
         # Add parameter reference in main.nf
         main_nf_file = Path(self.new_pipeline) / "main.nf"
         with open(main_nf_file, "a") as f:
-            f.write("params.max_time == 42")
+            f.write("params.custom_config_version == 'main'")
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj.load_pipeline_config()
         result = lint_obj.nextflow_config()
@@ -126,22 +124,30 @@ class TestLintNextflowConfig(TestLint):
 
     def test_default_values_ignored(self):
         """Test ignoring linting of default values."""
-        # Add max_cpus to the ignore list
+        valid_yaml = """
+        nextflow_config:
+            - manifest.name
+            - config_defaults:
+                - params.custom_config_version
+        """
+        # Add custom_config_version to the ignore list
         nf_core_yml_path = Path(self.new_pipeline) / ".nf-core.yml"
-        nf_core_yml = NFCoreYamlConfig(
-            repository_type="pipeline", lint={"nextflow_config": [{"config_defaults": ["params.max_cpus"]}]}
-        )
+
+        with open(nf_core_yml_path) as f:
+            nf_core_yml = yaml.safe_load(f)
+            nf_core_yml["lint"] = yaml.safe_load(valid_yaml)
         with open(nf_core_yml_path, "w") as f:
-            yaml.dump(nf_core_yml.model_dump(), f)
+            yaml.dump(nf_core_yml, f)
 
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj.load_pipeline_config()
         lint_obj._load_lint_config()
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) == 0
-        assert len(result["ignored"]) == 1
-        assert "Config default value correct: params.max_cpu" not in str(result["passed"])
-        assert "Config default ignored: params.max_cpus" in str(result["ignored"])
+        assert len(result["ignored"]) == 2
+        assert "Config default value correct: params.custom_config_version" not in str(result["passed"])
+        assert "Config default ignored: params.custom_config_version" in str(result["ignored"])
+        assert "Config variable ignored: `manifest.name`" in str(result["ignored"])
 
     def test_default_values_float(self):
         """Test comparing two float values."""
@@ -150,7 +156,9 @@ class TestLintNextflowConfig(TestLint):
         with open(nf_conf_file) as f:
             content = f.read()
             fail_content = re.sub(
-                r"validate_params\s*=\s*true", "params.validate_params = true\ndummy = 0.000000001", content
+                r"validate_params\s*=\s*true",
+                "params.validate_params = true\ndummy = 0.000000001",
+                content,
             )
         with open(nf_conf_file, "w") as f:
             f.write(fail_content)
@@ -180,7 +188,9 @@ class TestLintNextflowConfig(TestLint):
         with open(nf_conf_file) as f:
             content = f.read()
             fail_content = re.sub(
-                r"validate_params\s*=\s*true", "params.validate_params = true\ndummy = 0.000000001", content
+                r"validate_params\s*=\s*true",
+                "params.validate_params = true\ndummy = 0.000000001",
+                content,
             )
         with open(nf_conf_file, "w") as f:
             f.write(fail_content)

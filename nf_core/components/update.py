@@ -10,13 +10,13 @@ import questionary
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
+from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.components_utils import (
     get_components_to_install,
     prompt_component_version_sha,
 )
 from nf_core.components.install import ComponentInstall
 from nf_core.components.remove import ComponentRemove
-from nf_core.modules.modules_differ import ModulesDiffer
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.utils import plural_es, plural_s, plural_y
@@ -58,7 +58,7 @@ class ComponentUpdate(ComponentCommand):
         self.branch = branch
 
     def _parameter_checks(self):
-        """Checks the compatibilty of the supplied parameters.
+        """Checks the compatibility of the supplied parameters.
 
         Raises:
             UserWarning: if any checks fail.
@@ -233,7 +233,7 @@ class ComponentUpdate(ComponentCommand):
                         f"Writing diff file for {self.component_type[:-1]} '{component_fullname}' to '{self.save_diff_fn}'"
                     )
                     try:
-                        ModulesDiffer.write_diff_file(
+                        ComponentsDiffer.write_diff_file(
                             self.save_diff_fn,
                             component,
                             modules_repo.repo_path,
@@ -275,7 +275,7 @@ class ComponentUpdate(ComponentCommand):
                         self.manage_changes_in_linked_components(component, modules_to_update, subworkflows_to_update)
 
                 elif self.show_diff:
-                    ModulesDiffer.print_diff(
+                    ComponentsDiffer.print_diff(
                         component,
                         modules_repo.repo_path,
                         component_dir,
@@ -323,7 +323,7 @@ class ComponentUpdate(ComponentCommand):
 
         if self.save_diff_fn:
             # Write the modules.json diff to the file
-            ModulesDiffer.append_modules_json_diff(
+            ComponentsDiffer.append_modules_json_diff(
                 self.save_diff_fn,
                 old_modules_json,
                 self.modules_json.get_modules_json(),
@@ -459,7 +459,9 @@ class ComponentUpdate(ComponentCommand):
                 self.modules_repo.setup_branch(current_branch)
 
         # If there is a patch file, get its filename
-        patch_fn = self.modules_json.get_patch_fn(component, self.modules_repo.remote_url, install_dir)
+        patch_fn = self.modules_json.get_patch_fn(
+            self.component_type, component, self.modules_repo.remote_url, install_dir
+        )
 
         return (self.modules_repo, component, sha, patch_fn)
 
@@ -705,7 +707,12 @@ class ComponentUpdate(ComponentCommand):
 
         # Add patch filenames to the components that have them
         components_info = [
-            (repo, comp, sha, self.modules_json.get_patch_fn(comp, repo.remote_url, repo.repo_path))
+            (
+                repo,
+                comp,
+                sha,
+                self.modules_json.get_patch_fn(self.component_type, comp, repo.remote_url, repo.repo_path),
+            )
             for repo, comp, sha in components_info
         ]
 
@@ -820,7 +827,9 @@ class ComponentUpdate(ComponentCommand):
         shutil.copytree(component_install_dir, temp_component_dir)
 
         try:
-            new_files = ModulesDiffer.try_apply_patch(component, repo_path, patch_path, temp_component_dir)
+            new_files = ComponentsDiffer.try_apply_patch(
+                self.component_type, component, repo_path, patch_path, temp_component_dir
+            )
         except LookupError:
             # Patch failed. Save the patch file by moving to the install dir
             shutil.move(patch_path, Path(component_install_dir, patch_path.relative_to(component_dir)))
@@ -838,7 +847,7 @@ class ComponentUpdate(ComponentCommand):
 
         # Create the new patch file
         log.debug("Regenerating patch file")
-        ModulesDiffer.write_diff_file(
+        ComponentsDiffer.write_diff_file(
             Path(temp_component_dir, patch_path.relative_to(component_dir)),
             component,
             repo_path,
@@ -858,7 +867,12 @@ class ComponentUpdate(ComponentCommand):
 
         # Add the patch file to the modules.json file
         self.modules_json.add_patch_entry(
-            component, self.modules_repo.remote_url, repo_path, patch_relpath, write_file=write_file
+            self.component_type,
+            component,
+            self.modules_repo.remote_url,
+            repo_path,
+            patch_relpath,
+            write_file=write_file,
         )
 
         return True

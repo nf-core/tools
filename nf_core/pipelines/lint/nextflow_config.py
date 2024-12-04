@@ -80,6 +80,9 @@ def nextflow_config(self) -> Dict[str, List[str]]:
     * ``params.nf_required_version``: The old method for specifying the minimum Nextflow version. Replaced by ``manifest.nextflowVersion``
     * ``params.container``: The old method for specifying the dockerhub container address. Replaced by ``process.container``
     * ``igenomesIgnore``: Changed to ``igenomes_ignore``
+    * ``params.max_cpus``: Old method of specifying the maximum number of CPUs a process can request. Replaced by native Nextflow `resourceLimits`directive in config files.
+    * ``params.max_memory``: Old method of specifying the maximum number of memory can request. Replaced by native Nextflow `resourceLimits`directive.
+    * ``params.max_time``: Old method of specifying the maximum number of CPUs can request. Replaced by native Nextflow `resourceLimits`directive.
 
         .. tip:: The ``snake_case`` convention should now be used when defining pipeline parameters
 
@@ -146,7 +149,13 @@ def nextflow_config(self) -> Dict[str, List[str]]:
         ["params.input"],
     ]
     # Throw a warning if these are missing
-    config_warn = [["manifest.mainScript"], ["timeline.file"], ["trace.file"], ["report.file"], ["dag.file"]]
+    config_warn = [
+        ["manifest.mainScript"],
+        ["timeline.file"],
+        ["trace.file"],
+        ["report.file"],
+        ["dag.file"],
+    ]
     # Old depreciated vars - fail if present
     config_fail_ifdefined = [
         "params.nf_required_version",
@@ -155,6 +164,9 @@ def nextflow_config(self) -> Dict[str, List[str]]:
         "params.igenomesIgnore",
         "params.name",
         "params.enable_conda",
+        "params.max_cpus",
+        "params.max_memory",
+        "params.max_time",
     ]
 
     # Lint for plugins
@@ -334,7 +346,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
             failed.append(f"Config `params.custom_config_base` is not set to `{custom_config_base}`")
 
         # Check that lines for loading custom profiles exist
-        lines = [
+        old_lines = [
             r"// Load nf-core custom profiles from different Institutions",
             r"try {",
             r'includeConfig "${params.custom_config_base}/nfcore_custom.config"',
@@ -342,11 +354,19 @@ def nextflow_config(self) -> Dict[str, List[str]]:
             r'System.err.println("WARNING: Could not load nf-core/config profiles: ${params.custom_config_base}/nfcore_custom.config")',
             r"}",
         ]
+        lines = [
+            r"// Load nf-core custom profiles from different Institutions",
+            r'''includeConfig !System.getenv('NXF_OFFLINE') && params.custom_config_base ? "${params.custom_config_base}/nfcore_custom.config" : "/dev/null"''',
+        ]
         path = Path(self.wf_path, "nextflow.config")
         i = 0
         with open(path) as f:
             for line in f:
-                if lines[i] in line:
+                if old_lines[i] in line:
+                    i += 1
+                    if i == len(old_lines):
+                        break
+                elif lines[i] in line:
                     i += 1
                     if i == len(lines):
                         break
@@ -354,6 +374,12 @@ def nextflow_config(self) -> Dict[str, List[str]]:
                     i = 0
         if i == len(lines):
             passed.append("Lines for loading custom profiles found")
+        elif i == len(old_lines):
+            failed.append(
+                "Old lines for loading custom profiles found. File should contain: ```groovy\n{}".format(
+                    "\n".join(lines)
+                )
+            )
         else:
             lines[2] = f"\t{lines[2]}"
             lines[4] = f"\t{lines[4]}"
@@ -439,6 +465,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
                     f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
                 )
         else:
+            schema_default = str(schema.schema_defaults[param_name])
             failed.append(
                 f"Default value from the Nextflow schema `{param} = {self._wrap_quotes(schema_default)}` not found in `nextflow.config`."
             )

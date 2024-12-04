@@ -6,7 +6,7 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import git
 import questionary
@@ -21,6 +21,7 @@ import nf_core
 import nf_core.pipelines.create.create
 import nf_core.pipelines.list
 import nf_core.utils
+from nf_core.pipelines.lint_utils import dump_yaml_with_prettier
 
 log = logging.getLogger(__name__)
 
@@ -104,7 +105,7 @@ class PipelineSync:
                 with open(template_yaml_path) as f:
                     self.config_yml.template = yaml.safe_load(f)
                 with open(self.config_yml_path, "w") as fh:
-                    yaml.safe_dump(self.config_yml.model_dump(), fh)
+                    yaml.safe_dump(self.config_yml.model_dump(exclude_none=True), fh)
                 log.info(f"Saved pipeline creation settings to '{self.config_yml_path}'")
                 raise SystemExit(
                     f"Please commit your changes and delete the {template_yaml_path} file. Then run the sync command again."
@@ -119,7 +120,7 @@ class PipelineSync:
                 requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"])
             )
 
-    def sync(self):
+    def sync(self) -> None:
         """Find workflow attributes, create a new template pipeline on TEMPLATE"""
 
         # Clear requests_cache so that we don't get stale API responses
@@ -270,22 +271,27 @@ class PipelineSync:
 
             self.config_yml.template.force = True
             with open(self.config_yml_path, "w") as config_path:
-                yaml.safe_dump(self.config_yml.model_dump(), config_path)
+                yaml.safe_dump(self.config_yml.model_dump(exclude_none=True), config_path)
 
         try:
-            nf_core.pipelines.create.create.PipelineCreate(
+            pipeline_create_obj = nf_core.pipelines.create.create.PipelineCreate(
                 outdir=str(self.pipeline_dir),
                 from_config_file=True,
                 no_git=True,
                 force=True,
-            ).init_pipeline()
+            )
+            pipeline_create_obj.init_pipeline()
 
             # set force to false to avoid overwriting files in the future
             if self.config_yml.template is not None:
+                self.config_yml.template = pipeline_create_obj.config
                 # Set force true in config to overwrite existing files
                 self.config_yml.template.force = False
-                with open(self.config_yml_path, "w") as config_path:
-                    yaml.safe_dump(self.config_yml.model_dump(), config_path)
+                # Set outdir as the current directory to avoid local info leaking
+                self.config_yml.template.outdir = "."
+                # Update nf-core version
+                self.config_yml.nf_core_version = nf_core.__version__
+                dump_yaml_with_prettier(self.config_yml_path, self.config_yml.model_dump(exclude_none=True))
 
         except Exception as err:
             # Reset to where you were to prevent git getting messed up.
@@ -410,12 +416,8 @@ class PipelineSync:
         list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls"
         with self.gh_api.cache_disabled():
             list_prs_request = self.gh_api.get(list_prs_url)
-        try:
-            list_prs_json = json.loads(list_prs_request.content)
-            list_prs_pp = json.dumps(list_prs_json, indent=4)
-        except Exception:
-            list_prs_json = list_prs_request.content
-            list_prs_pp = list_prs_request.content
+
+        list_prs_json, list_prs_pp = self._parse_json_response(list_prs_request)
 
         log.debug(f"GitHub API listing existing PRs:\n{list_prs_url}\n{list_prs_pp}")
         if list_prs_request.status_code != 200:
@@ -456,12 +458,8 @@ class PipelineSync:
         # Update the PR status to be closed
         with self.gh_api.cache_disabled():
             pr_request = self.gh_api.patch(url=pr["url"], data=json.dumps({"state": "closed"}))
-        try:
-            pr_request_json = json.loads(pr_request.content)
-            pr_request_pp = json.dumps(pr_request_json, indent=4)
-        except Exception:
-            pr_request_json = pr_request.content
-            pr_request_pp = pr_request.content
+
+        pr_request_json, pr_request_pp = self._parse_json_response(pr_request)
 
         # PR update worked
         if pr_request.status_code == 200:
@@ -474,6 +472,22 @@ class PipelineSync:
         else:
             log.warning(f"Could not close PR ('{pr_request.status_code}'):\n{pr['url']}\n{pr_request_pp}")
             return False
+
+    @staticmethod
+    def _parse_json_response(response) -> Tuple[Any, str]:
+        """Helper method to parse JSON response and create pretty-printed string.
+
+        Args:
+            response: requests.Response object
+
+        Returns:
+            Tuple of (parsed_json, pretty_printed_str)
+        """
+        try:
+            json_data = json.loads(response.content)
+            return json_data, json.dumps(json_data, indent=4)
+        except Exception:
+            return response.content, str(response.content)
 
     def reset_target_dir(self):
         """

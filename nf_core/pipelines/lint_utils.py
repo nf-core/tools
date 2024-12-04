@@ -2,9 +2,10 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import List
+from typing import List, Union
 
 import rich
+import yaml
 from rich.console import Console
 from rich.table import Table
 
@@ -69,7 +70,7 @@ def print_fixes(lint_obj):
         )
 
 
-def run_prettier_on_file(file):
+def run_prettier_on_file(file: Union[Path, str, List[str]]) -> None:
     """Run the pre-commit hook prettier on a file.
 
     Args:
@@ -80,12 +81,15 @@ def run_prettier_on_file(file):
     """
 
     nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
+    args = ["pre-commit", "run", "--config", str(nf_core_pre_commit_config), "prettier"]
+    if isinstance(file, List):
+        args.extend(["--files", *file])
+    else:
+        args.extend(["--files", str(file)])
+
     try:
-        subprocess.run(
-            ["pre-commit", "run", "--config", nf_core_pre_commit_config, "prettier", "--files", file],
-            capture_output=True,
-            check=True,
-        )
+        subprocess.run(args, capture_output=True, check=True)
+        log.debug(f"${subprocess.STDOUT}")
     except subprocess.CalledProcessError as e:
         if ": SyntaxError: " in e.stdout.decode():
             log.critical(f"Can't format {file} because it has a syntax error.\n{e.stdout.decode()}")
@@ -108,6 +112,18 @@ def dump_json_with_prettier(file_name, file_content):
     """
     with open(file_name, "w") as fh:
         json.dump(file_content, fh, indent=4)
+    run_prettier_on_file(file_name)
+
+
+def dump_yaml_with_prettier(file_name: Union[Path, str], file_content: dict) -> None:
+    """Dump a YAML file and run prettier on it.
+
+    Args:
+        file_name (Path | str): A file identifier as a string or pathlib.Path.
+        file_content (dict): Content to dump into the YAML file
+    """
+    with open(file_name, "w") as fh:
+        yaml.safe_dump(file_content, fh)
     run_prettier_on_file(file_name)
 
 

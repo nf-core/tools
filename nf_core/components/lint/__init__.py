@@ -22,7 +22,7 @@ from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.pipelines.lint_utils import console
-from nf_core.utils import LintConfigType
+from nf_core.utils import NFCoreYamlLintConfig
 from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
@@ -57,6 +57,7 @@ class ComponentLint(ComponentCommand):
         component_type: str,
         directory: Union[str, Path],
         fail_warned: bool = False,
+        fix: bool = False,
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,
         no_pull: bool = False,
@@ -73,12 +74,13 @@ class ComponentLint(ComponentCommand):
         )
 
         self.fail_warned = fail_warned
+        self.fix = fix
         self.passed: List[LintResult] = []
         self.warned: List[LintResult] = []
         self.failed: List[LintResult] = []
         self.all_local_components: List[NFCoreComponent] = []
 
-        self.lint_config: Optional[LintConfigType] = None
+        self.lint_config: Optional[NFCoreYamlLintConfig] = None
         self.modules_json: Optional[ModulesJson] = None
 
         if self.component_type == "modules":

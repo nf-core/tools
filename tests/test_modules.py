@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import requests_cache
 import responses
-import yaml
+import ruamel.yaml
 
 import nf_core.modules
 import nf_core.modules.create
@@ -16,6 +16,7 @@ import nf_core.modules.modules_repo
 import nf_core.modules.remove
 import nf_core.pipelines.create.create
 from nf_core import __version__
+from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.utils import NFCoreYamlConfig
 
 from .utils import (
@@ -28,11 +29,15 @@ from .utils import (
     create_tmp_pipeline,
     mock_anaconda_api_calls,
     mock_biocontainers_api_calls,
+    mock_biotools_api_calls,
 )
 
 
 def create_modules_repo_dummy(tmp_dir):
     """Create a dummy copy of the nf-core/modules repo"""
+    yaml = ruamel.yaml.YAML()
+    yaml.preserve_quotes = True
+    yaml.indent(mapping=2, sequence=2, offset=0)
 
     root_dir = Path(tmp_dir, "modules")
     Path(root_dir, "modules", "nf-core").mkdir(parents=True)
@@ -42,13 +47,14 @@ def create_modules_repo_dummy(tmp_dir):
     nf_core_yml = NFCoreYamlConfig(nf_core_version=__version__, repository_type="modules", org_path="nf-core")
     with open(Path(root_dir, ".nf-core.yml"), "w") as fh:
         yaml.dump(nf_core_yml.model_dump(), fh)
-    # mock biocontainers and anaconda response
+    # mock biocontainers and anaconda response and biotools response
     with responses.RequestsMock() as rsps:
         mock_anaconda_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
         mock_biocontainers_api_calls(rsps, "bpipe", "0.9.13--hdfd78af_0")
+        mock_biotools_api_calls(rsps, "bpipe")
         # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
         module_create = nf_core.modules.create.ModuleCreate(
-            root_dir, "bpipe/test", "@author", "process_single", False, False
+            root_dir, "bpipe/test", "@author", "process_single", True, False
         )
         with requests_cache.disabled():
             assert module_create.create()
@@ -57,10 +63,11 @@ def create_modules_repo_dummy(tmp_dir):
     meta_yml_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "meta.yml")
 
     with open(str(meta_yml_path)) as fh:
-        meta_yml = yaml.safe_load(fh)
+        meta_yml = yaml.load(fh)
     del meta_yml["tools"][0]["bpipe"]["doi"]
     with open(str(meta_yml_path), "w") as fh:
         yaml.dump(meta_yml, fh)
+        run_prettier_on_file(fh.name)
     # Add dummy content to main.nf.test.snap
     test_snap_path = Path(root_dir, "modules", "nf-core", "bpipe", "test", "tests", "main.nf.test.snap")
 
