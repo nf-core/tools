@@ -95,8 +95,7 @@ class NFCoreComponent:
             self.test_yml = None
             self.test_main_nf = None
 
-        # Set process_name after self.main_nf is defined
-        self.process_name = self._get_process_name()
+        self.process_name: str = self._get_process_name()
 
     def __repr__(self) -> str:
         return f"<NFCoreComponent {self.component_name} {self.component_dir} {self.repo_url}>"
