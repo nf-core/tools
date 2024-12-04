@@ -44,6 +44,7 @@ class ComponentInstall(ComponentCommand):
         self.force = force
         self.prompt = prompt
         self.sha = sha
+        self.current_sha = sha
         if installed_by is not None:
             self.installed_by = installed_by
         else:
@@ -56,6 +57,14 @@ class ComponentInstall(ComponentCommand):
             branch = component.get("branch", self.branch)
             self.modules_repo = ModulesRepo(remote_url, branch)
             component = component["name"]
+
+        if self.current_remote is None:
+            self.current_remote = self.modules_repo.remote_url
+
+        if self.current_remote == self.modules_repo.remote_url and self.sha is not None:
+            self.current_sha = self.sha
+        else:
+            self.current_sha = None
 
         if self.repo_type == "modules":
             log.error(f"You cannot install a {component} in a clone of nf-core/modules")
@@ -80,8 +89,8 @@ class ComponentInstall(ComponentCommand):
             return False
 
         # Verify SHA
-        if not self.modules_repo.verify_sha(self.prompt, self.sha):
-            err_msg = f"SHA '{self.sha}' is not a valid commit SHA for the repository '{self.modules_repo.remote_url}'"
+        if not self.modules_repo.verify_sha(self.prompt, self.current_sha):
+            err_msg = f"SHA '{self.current_sha}' is not a valid commit SHA for the repository '{self.modules_repo.remote_url}'"
             log.error(err_msg)
             return False
 
@@ -124,7 +133,7 @@ class ComponentInstall(ComponentCommand):
             modules_json.update(self.component_type, self.modules_repo, component, current_version, self.installed_by)
             return False
         try:
-            version = self.get_version(component, self.sha, self.prompt, current_version, self.modules_repo)
+            version = self.get_version(component, self.current_sha, self.prompt, current_version, self.modules_repo)
         except UserWarning as e:
             log.error(e)
             return False
@@ -209,7 +218,7 @@ class ComponentInstall(ComponentCommand):
         if component is None:
             component = questionary.autocomplete(
                 f"{'Tool' if self.component_type == 'modules' else 'Subworkflow'} name:",
-                choices=sorted(modules_repo.get_avail_components(self.component_type, commit=self.sha)),
+                choices=sorted(modules_repo.get_avail_components(self.component_type, commit=self.current_sha)),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
@@ -217,7 +226,9 @@ class ComponentInstall(ComponentCommand):
             return ""
 
         # Check that the supplied name is an available module/subworkflow
-        if component and component not in modules_repo.get_avail_components(self.component_type, commit=self.sha):
+        if component and component not in modules_repo.get_avail_components(
+            self.component_type, commit=self.current_sha
+        ):
             log.error(f"{self.component_type[:-1].title()} '{component}' not found in available {self.component_type}")
             print(
                 Panel(
@@ -233,9 +244,10 @@ class ComponentInstall(ComponentCommand):
 
             raise ValueError
 
-        if not modules_repo.component_exists(component, self.component_type, commit=self.sha):
-            warn_msg = f"{self.component_type[:-1].title()} '{component}' not found in remote '{modules_repo.remote_url}' ({modules_repo.branch})"
-            log.warning(warn_msg)
+        if self.current_remote == modules_repo.remote_url:
+            if not modules_repo.component_exists(component, self.component_type, commit=self.current_sha):
+                warn_msg = f"{self.component_type[:-1].title()} '{component}' not found in remote '{modules_repo.remote_url}' ({modules_repo.branch})"
+                log.warning(warn_msg)
 
         return component
 
