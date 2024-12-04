@@ -30,7 +30,6 @@
 ### Modules
 
 - add a panel around diff previews when updating ([#3246](https://github.com/nf-core/tools/pull/3246))
-- Fix module section linter regex ([#3321](https://github.com/nf-core/tools/pull/3321))
 
 ### Subworkflows
 
