@@ -24,7 +24,7 @@ jobs:
         uses: mshick/add-pr-comment@b8f338c590a895d50bcbfa6c5859251edc8952fc # v2
         with:
           message: |
-            ## This PR is against the `{% raw %}${{github.event.pull_request.base.ref}}{% endraw %}` branch :x:
+            ## This PR is against the `${{github.event.pull_request.base.ref}}` branch :x:
 
             * Do not close this PR
             * Click _Edit_ and change the `base` to `dev`
@@ -34,9 +34,9 @@ jobs:
 
             Hi @${{ github.event.pull_request.user.login }},
 
-            It looks like this pull-request is has been made against the [${{github.event.pull_request.head.repo.full_name }}](https://github.com/${{github.event.pull_request.head.repo.full_name }}) {% raw %}${{github.event.pull_request.base.ref}}{% endraw %} branch.
-            The {% raw %}${{github.event.pull_request.base.ref}}{% endraw %} branch on nf-core repositories should always contain code from the latest release.
-            Because of this, PRs to {% raw %}${{github.event.pull_request.base.ref}}{% endraw %} are only allowed if they come from the [${{github.event.pull_request.head.repo.full_name }}](https://github.com/${{github.event.pull_request.head.repo.full_name }}) `dev` branch.
+            It looks like this pull-request is has been made against the [${{github.event.pull_request.head.repo.full_name }}](https://github.com/${{github.event.pull_request.head.repo.full_name }}) ${{github.event.pull_request.base.ref}} branch.
+            The ${{github.event.pull_request.base.ref}} branch on nf-core repositories should always contain code from the latest release.
+            Because of this, PRs to ${{github.event.pull_request.base.ref}} are only allowed if they come from the [${{github.event.pull_request.head.repo.full_name }}](https://github.com/${{github.event.pull_request.head.repo.full_name }}) `dev` branch.
 
             You do not need to close this PR, you can change the target branch to `dev` by clicking the _"Edit"_ button at the top of this page.
             Note that even after this, the test will continue to show as failing until you push a new commit.
