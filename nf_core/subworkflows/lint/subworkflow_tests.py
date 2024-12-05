@@ -50,7 +50,7 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
             subworkflow.warned.append(
                 (
                     "test_dir_exists",
-                    "nf-test directory is missing",
+                    "Migrate pytest-workflow to nf-test",
                     subworkflow.nftest_testdir,
                 )
             )

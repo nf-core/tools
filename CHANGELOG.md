@@ -34,6 +34,7 @@
 ### Subworkflows
 
 - Add `nf-core subworkflows patch` command ([#2861](https://github.com/nf-core/tools/pull/2861))
+- Improve subworkflow nf-test migration warning ([#3298](https://github.com/nf-core/tools/pull/3298))
 
 ### General
 
@@ -57,6 +58,7 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.0 ([#3299](https://github.com/nf-core/tools/pull/3299))
 - Update gitpod/workspace-base Docker digest to 12853f7 ([#3309](https://github.com/nf-core/tools/pull/3309))
 - Run pre-commit when testing linting the template pipeline ([#3280](https://github.com/nf-core/tools/pull/3280))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.2 ([#3325](https://github.com/nf-core/tools/pull/3325))
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 

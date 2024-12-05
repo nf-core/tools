@@ -43,14 +43,14 @@ def mocked_requests_get(url) -> MockResponse:
             {
                 "state": "closed",
                 "head": {"ref": "nf-core-template-merge-2"},
-                "base": {"ref": "master"},
+                "base": {"ref": "main"},
                 "html_url": "pr_url",
             }
         ] + [
             {
                 "state": "open",
                 "head": {"ref": f"nf-core-template-merge-{branch_no}"},
-                "base": {"ref": "master"},
+                "base": {"ref": "main"},
                 "html_url": "pr_url",
             }
             for branch_no in range(3, 7)
@@ -345,7 +345,7 @@ class TestModules(TestPipelines):
         pr: Dict[str, Union[str, Dict[str, str]]] = {
             "state": "open",
             "head": {"ref": "nf-core-template-merge-3"},
-            "base": {"ref": "master"},
+            "base": {"ref": "main"},
             "html_url": "pr_html_url",
             "url": "url_to_update_pr",
             "comments_url": "pr_comments_url",
@@ -368,7 +368,7 @@ class TestModules(TestPipelines):
         pr = {
             "state": "open",
             "head": {"ref": "nf-core-template-merge-3"},
-            "base": {"ref": "master"},
+            "base": {"ref": "main"},
             "html_url": "pr_html_url",
             "url": "bad_url_to_update_pr",
             "comments_url": "pr_comments_url",
