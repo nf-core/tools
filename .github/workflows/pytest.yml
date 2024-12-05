@@ -120,11 +120,6 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m')" >> $GITHUB_ENV
 
-      - uses: actions/setup-java@v4
-        with:
-          java-version: "17"
-          distribution: "temurin"
-
       - name: Install Nextflow
         uses: nf-core/setup-nextflow@v2
 
