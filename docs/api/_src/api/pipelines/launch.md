@@ -1,4 +1,4 @@
-# nf_core.launch
+# nf_core.pipelines.launch
 
 ```{eval-rst}
 .. automodule:: nf_core.pipelines.launch
