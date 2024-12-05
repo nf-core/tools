@@ -64,9 +64,9 @@ These tests are run both with the latest available version of `Nextflow` and als
 
 :warning: Only in the unlikely and regretful event of a release happening with a bug.
 
-- On your own fork, make a new branch `patch` based on `upstream/master`.
+- On your own fork, make a new branch `patch` based on `upstream/main` or `upstream/master`.
 - Fix the bug, and bump version (X.Y.Z+1).
-- Open a pull-request from `patch` to `master` with the changes.
+- Open a pull-request from `patch` to `main`/`master` with the changes.
 
 {% if is_nfcore -%}
 
