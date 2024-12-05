@@ -15,7 +15,6 @@ runs:
         cd create-lint-wf
         export NXF_WORK=$(pwd)
 
-    # Set up Nextflow
     - name: Install Nextflow
       uses: nf-core/setup-nextflow@v2
       with:
