@@ -33,6 +33,7 @@
 ### Subworkflows
 
 - Add `nf-core subworkflows patch` command ([#2861](https://github.com/nf-core/tools/pull/2861))
+- Improve subworkflow nf-test migration warning ([#3298](https://github.com/nf-core/tools/pull/3298))
 
 ### General
 
