@@ -26,6 +26,7 @@
 
 - allow mixed `str` and `dict` entries in lint config ([#3228](https://github.com/nf-core/tools/pull/3228))
 - fix meta_yml linting test failing due to module.process_name always being "" ([#3317](https://github.com/nf-core/tools/pull/3317))
+- fix module section regex matching wrong things ([#3321](https://github.com/nf-core/tools/pull/3321))
 
 ### Modules
 
