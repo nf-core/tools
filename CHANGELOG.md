@@ -58,7 +58,8 @@
 - Update gitpod/workspace-base Docker digest to 12853f7 ([#3309](https://github.com/nf-core/tools/pull/3309))
 - Run pre-commit when testing linting the template pipeline ([#3280](https://github.com/nf-core/tools/pull/3280))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.2 ([#3325](https://github.com/nf-core/tools/pull/3325))
-- Make prompt less nf-core specific ([#3326](https://github.com/nf-core/tools/pull/3326))
+- Make CLI prompt less nf-core specific ([#3326](https://github.com/nf-core/tools/pull/3326))
+- Update gitpod vscode extensions to use nf-core extension pack ([#3327](https://github.com/nf-core/tools/pull/3327))
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 
