@@ -96,19 +96,19 @@ def main_nf(
     for line in iter_lines:
         if re.search(r"^\s*process\s*\w*\s*{", line) and state == "module":
             state = "process"
-        if re.search(r"input\s*:", line) and state in ["process"]:
+        if re.search(r"^\s*input\s*:", line) and state in ["process"]:
             state = "input"
             continue
-        if re.search(r"output\s*:", line) and state in ["input", "process"]:
+        if re.search(r"^\s*output\s*:", line) and state in ["input", "process"]:
             state = "output"
             continue
-        if re.search(r"when\s*:", line) and state in ["input", "output", "process"]:
+        if re.search(r"^\s*when\s*:", line) and state in ["input", "output", "process"]:
             state = "when"
             continue
-        if re.search(r"script\s*:", line) and state in ["input", "output", "when", "process"]:
+        if re.search(r"^\s*script\s*:", line) and state in ["input", "output", "when", "process"]:
             state = "script"
             continue
-        if re.search(r"shell\s*:", line) and state in ["input", "output", "when", "process"]:
+        if re.search(r"^\s*shell\s*:", line) and state in ["input", "output", "when", "process"]:
             state = "shell"
             continue
 
