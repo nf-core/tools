@@ -46,16 +46,16 @@ class PipelineCreateApp(App[utils.CreateConfig]):
         ("a", "toggle_all", "Toggle all"),
     ]
     SCREENS = {
-        "welcome": WelcomeScreen(),
-        "basic_details": BasicDetails(),
-        "choose_type": ChoosePipelineType(),
-        "type_custom": CustomPipeline(),
-        "type_nfcore": NfcorePipeline(),
-        "final_details": FinalDetails(),
-        "logging": LoggingScreen(),
-        "github_repo_question": GithubRepoQuestion(),
-        "github_repo": GithubRepo(),
-        "github_exit": GithubExit(),
+        "welcome": WelcomeScreen,
+        "basic_details": BasicDetails,
+        "choose_type": ChoosePipelineType,
+        "type_custom": CustomPipeline,
+        "type_nfcore": NfcorePipeline,
+        "final_details": FinalDetails,
+        "logging": LoggingScreen,
+        "github_repo_question": GithubRepoQuestion,
+        "github_repo": GithubRepo,
+        "github_exit": GithubExit,
     }
 
     # Initialise config as empty
