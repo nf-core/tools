@@ -216,6 +216,9 @@ class ROCrate:
         )
         self.crate.mainEntity.append_to("version", self.version, compact=True)
 
+        # remove duplicate entries for version
+        self.crate.mainEntity["version"] = list(set(self.crate.mainEntity["version"]))
+
         # get keywords from nf-core website
         remote_workflows = requests.get("https://nf-co.re/pipelines.json").json()["remote_workflows"]
         # go through all remote workflows and find the one that matches the pipeline name
@@ -235,6 +238,9 @@ class ROCrate:
 
         self.crate.mainEntity.append_to("license", self.crate.license)
         self.crate.mainEntity.append_to("name", self.crate.name)
+
+        # remove duplicate entries for name
+        self.crate.mainEntity["name"] = list(set(self.crate.mainEntity["name"]))
 
         if "dev" in self.version:
             self.crate.creativeWorkStatus = "InProgress"
