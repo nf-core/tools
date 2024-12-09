@@ -25,6 +25,8 @@
 ### Linting
 
 - allow mixed `str` and `dict` entries in lint config ([#3228](https://github.com/nf-core/tools/pull/3228))
+- fix meta_yml linting test failing due to module.process_name always being "" ([#3317](https://github.com/nf-core/tools/pull/3317))
+- fix module section regex matching wrong things ([#3321](https://github.com/nf-core/tools/pull/3321))
 
 ### Modules
 
@@ -33,6 +35,7 @@
 ### Subworkflows
 
 - Add `nf-core subworkflows patch` command ([#2861](https://github.com/nf-core/tools/pull/2861))
+- Improve subworkflow nf-test migration warning ([#3298](https://github.com/nf-core/tools/pull/3298))
 
 ### General
 
@@ -46,6 +49,7 @@
 - Update GitHub Actions ([#3237](https://github.com/nf-core/tools/pull/3237))
 - add `--dir/-d` option to schema commands ([#3247](https://github.com/nf-core/tools/pull/3247))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.1 ([#3250](https://github.com/nf-core/tools/pull/3250))
+- fix headers in api docs ([#3323](https://github.com/nf-core/tools/pull/3323))
 - handle new schema structure in `nf-core pipelines create-params-file` ([#3276](https://github.com/nf-core/tools/pull/3276))
 - Update Gitpod image to use Miniforge instead of Miniconda([#3274](https://github.com/nf-core/tools/pull/3274))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.3 ([#3275](https://github.com/nf-core/tools/pull/3275))
@@ -56,6 +60,10 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.0 ([#3299](https://github.com/nf-core/tools/pull/3299))
 - Update gitpod/workspace-base Docker digest to 12853f7 ([#3309](https://github.com/nf-core/tools/pull/3309))
 - Run pre-commit when testing linting the template pipeline ([#3280](https://github.com/nf-core/tools/pull/3280))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.2 ([#3325](https://github.com/nf-core/tools/pull/3325))
+- Make CLI prompt less nf-core specific ([#3326](https://github.com/nf-core/tools/pull/3326))
+- Update gitpod vscode extensions to use nf-core extension pack ([#3327](https://github.com/nf-core/tools/pull/3327))
+- Remove toList() channel operation from inside onComplete block ([#3304](https://github.com/nf-core/tools/pull/3304))
 - build: Setup VS Code tests ([#3292](https://github.com/nf-core/tools/pull/3292))
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]

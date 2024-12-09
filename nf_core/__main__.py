@@ -288,7 +288,7 @@ def command_pipelines_create(ctx, name, description, author, version, force, out
 @click.option(
     "--release",
     is_flag=True,
-    default=os.path.basename(os.path.dirname(os.environ.get("GITHUB_REF", "").strip(" '\""))) == "master"
+    default=Path(os.environ.get("GITHUB_REF", "").strip(" '\"")).parent.name in ["master", "main"]
     and os.environ.get("GITHUB_REPOSITORY", "").startswith("nf-core/")
     and not os.environ.get("GITHUB_REPOSITORY", "") == "nf-core/tools",
     help="Execute additional checks for release-ready workflows.",
@@ -2240,7 +2240,7 @@ def command_download(
 @click.option(
     "--release",
     is_flag=True,
-    default=os.path.basename(os.path.dirname(os.environ.get("GITHUB_REF", "").strip(" '\""))) == "master"
+    default=Path(os.environ.get("GITHUB_REF", "").strip(" '\"")).parent.name in ["master", "main"]
     and os.environ.get("GITHUB_REPOSITORY", "").startswith("nf-core/")
     and not os.environ.get("GITHUB_REPOSITORY", "") == "nf-core/tools",
     help="Execute additional checks for release-ready workflows.",
