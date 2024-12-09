@@ -62,6 +62,7 @@
 - Update gitpod vscode extensions to use nf-core extension pack ([#3327](https://github.com/nf-core/tools/pull/3327))
 - Remove toList() channel operation from inside onComplete block ([#3304](https://github.com/nf-core/tools/pull/3304))
 - build: Setup VS Code tests ([#3292](https://github.com/nf-core/tools/pull/3292))
+- Don't break gitpod.yml with template string ([#3332](https://github.com/nf-core/tools/pull/3332))
 
 ### Version updates
 
