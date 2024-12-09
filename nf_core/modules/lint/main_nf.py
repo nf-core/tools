@@ -15,8 +15,8 @@ from rich.progress import Progress
 
 import nf_core
 import nf_core.modules.modules_utils
+from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.modules.modules_differ import ModulesDiffer
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +50,8 @@ def main_nf(
     # otherwise read the lines directly from the module
     lines: List[str] = []
     if module.is_patched:
-        lines = ModulesDiffer.try_apply_patch(
+        lines = ComponentsDiffer.try_apply_patch(
+            module.component_type,
             module.component_name,
             module_lint_object.modules_repo.repo_path,
             module.patch_path,
@@ -95,19 +96,19 @@ def main_nf(
     for line in iter_lines:
         if re.search(r"^\s*process\s*\w*\s*{", line) and state == "module":
             state = "process"
-        if re.search(r"input\s*:", line) and state in ["process"]:
+        if re.search(r"^\s*input\s*:", line) and state in ["process"]:
             state = "input"
             continue
-        if re.search(r"output\s*:", line) and state in ["input", "process"]:
+        if re.search(r"^\s*output\s*:", line) and state in ["input", "process"]:
             state = "output"
             continue
-        if re.search(r"when\s*:", line) and state in ["input", "output", "process"]:
+        if re.search(r"^\s*when\s*:", line) and state in ["input", "output", "process"]:
             state = "when"
             continue
-        if re.search(r"script\s*:", line) and state in ["input", "output", "when", "process"]:
+        if re.search(r"^\s*script\s*:", line) and state in ["input", "output", "when", "process"]:
             state = "script"
             continue
-        if re.search(r"shell\s*:", line) and state in ["input", "output", "when", "process"]:
+        if re.search(r"^\s*shell\s*:", line) and state in ["input", "output", "when", "process"]:
             state = "shell"
             continue
 
@@ -255,7 +256,6 @@ def check_process_section(self, lines, registry, fix_version, progress_bar):
     bioconda_packages = []
 
     # Process name should be all capital letters
-    self.process_name = lines[0].split()[1]
     if all(x.upper() for x in self.process_name):
         self.passed.append(("process_capitals", "Process name is in capital letters", self.main_nf))
     else:

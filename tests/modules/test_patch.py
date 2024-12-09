@@ -76,11 +76,11 @@ class TestModulesCreate(TestModules):
         module_path = Path(self.pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
 
         # Check that no patch file has been added to the directory
-        assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", "environment.yml"}
+        assert not (module_path / "bismark-align.diff").exists()
 
         # Check the 'modules.json' contains no patch file for the module
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-        assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) is None
+        assert modules_json_obj.get_patch_fn("modules", BISMARK_ALIGN, REPO_URL, REPO_NAME) is None
 
     def test_create_patch_change(self):
         """Test creating a patch when there is a change to the module"""
@@ -94,11 +94,11 @@ class TestModulesCreate(TestModules):
 
         patch_fn = f"{'-'.join(BISMARK_ALIGN.split('/'))}.diff"
         # Check that a patch file with the correct name has been created
-        assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", "environment.yml", patch_fn}
+        assert (module_path / patch_fn).exists()
 
         # Check the 'modules.json' contains a patch file for the module
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-        assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
+        assert modules_json_obj.get_patch_fn("modules", BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
             "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
         )
 
@@ -127,11 +127,11 @@ class TestModulesCreate(TestModules):
 
         patch_fn = f"{'-'.join(BISMARK_ALIGN.split('/'))}.diff"
         # Check that a patch file with the correct name has been created
-        assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", "environment.yml", patch_fn}
+        assert (module_path / patch_fn).exists()
 
         # Check the 'modules.json' contains a patch file for the module
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-        assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
+        assert modules_json_obj.get_patch_fn("modules", BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
             "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
         )
 
@@ -153,11 +153,11 @@ class TestModulesCreate(TestModules):
         update_obj.move_files_from_tmp_dir(BISMARK_ALIGN, install_dir, REPO_NAME, SUCCEED_SHA)
 
         # Check that a patch file with the correct name has been created
-        assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", "environment.yml", patch_fn}
+        assert (module_path / patch_fn).exists()
 
         # Check the 'modules.json' contains a patch file for the module
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-        assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
+        assert modules_json_obj.get_patch_fn("modules", BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
             "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
         )
 
@@ -195,11 +195,11 @@ class TestModulesCreate(TestModules):
 
         patch_fn = f"{'-'.join(BISMARK_ALIGN.split('/'))}.diff"
         # Check that a patch file with the correct name has been created
-        assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", "environment.yml", patch_fn}
+        assert (module_path / patch_fn).exists()
 
         # Check the 'modules.json' contains a patch file for the module
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-        assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
+        assert modules_json_obj.get_patch_fn("modules", BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
             "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
         )
 
@@ -234,11 +234,11 @@ class TestModulesCreate(TestModules):
 
         patch_fn = f"{'-'.join(BISMARK_ALIGN.split('/'))}.diff"
         # Check that a patch file with the correct name has been created
-        assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", "environment.yml", patch_fn}
+        assert (module_path / patch_fn).exists()
 
         # Check the 'modules.json' contains a patch file for the module
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-        assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, GITLAB_URL, REPO_NAME) == Path(
+        assert modules_json_obj.get_patch_fn("modules", BISMARK_ALIGN, GITLAB_URL, REPO_NAME) == Path(
             "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
         )
 
@@ -254,13 +254,13 @@ class TestModulesCreate(TestModules):
         assert update_obj.update(BISMARK_ALIGN)
 
         # Check that a patch file with the correct name has been created
-        assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", "environment.yml", patch_fn}
+        assert (module_path / patch_fn).exists()
 
         # Check the 'modules.json' contains a patch file for the module
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-        assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, GITLAB_URL, REPO_NAME) == Path(
+        assert modules_json_obj.get_patch_fn("modules", BISMARK_ALIGN, GITLAB_URL, REPO_NAME) == Path(
             "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
-        ), modules_json_obj.get_patch_fn(BISMARK_ALIGN, GITLAB_URL, REPO_NAME)
+        ), modules_json_obj.get_patch_fn("modules", BISMARK_ALIGN, GITLAB_URL, REPO_NAME)
 
         # Check that the correct lines are in the patch file
         with open(module_path / patch_fn) as fh:
@@ -295,11 +295,11 @@ class TestModulesCreate(TestModules):
 
         patch_fn = f"{'-'.join(BISMARK_ALIGN.split('/'))}.diff"
         # Check that a patch file with the correct name has been created
-        assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", "environment.yml", patch_fn}
+        assert (module_path / patch_fn).exists()
 
         # Check the 'modules.json' contains a patch file for the module
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-        assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
+        assert modules_json_obj.get_patch_fn("modules", BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
             "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
         )
 
@@ -349,11 +349,11 @@ class TestModulesCreate(TestModules):
 
         # Check that a patch file with the correct name has been created
         patch_fn = f"{'-'.join(BISMARK_ALIGN.split('/'))}.diff"
-        assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", "environment.yml", patch_fn}
+        assert (module_path / patch_fn).exists()
 
         # Check the 'modules.json' contains a patch file for the module
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-        assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
+        assert modules_json_obj.get_patch_fn("modules", BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
             "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
         )
 
@@ -361,8 +361,8 @@ class TestModulesCreate(TestModules):
             mock_questionary.unsafe_ask.return_value = True
             patch_obj.remove(BISMARK_ALIGN)
         # Check that the diff file has been removed
-        assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", "environment.yml"}
+        assert not (module_path / patch_fn).exists()
 
         # Check that the 'modules.json' entry has been removed
         modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-        assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) is None
+        assert modules_json_obj.get_patch_fn("modules", BISMARK_ALIGN, REPO_URL, REPO_NAME) is None

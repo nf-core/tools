@@ -132,7 +132,7 @@ jobs:
 
       - name: Test with pytest
         run: |
-          python3 -m pytest tests/${{matrix.test}} --color=yes --cov --durations=0 && exit_code=0|| exit_code=$?
+          python3 -m pytest tests/${{matrix.test}} --color=yes --cov --cov-config=.coveragerc --durations=0 && exit_code=0|| exit_code=$?
           # don't fail if no tests were collected, e.g. for test_licence.py
           if [ "${exit_code}" -eq 5 ]; then
             echo "No tests were collected"
@@ -198,7 +198,7 @@ jobs:
           coverage report
           coverage xml
 
-      - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
+      - uses: codecov/codecov-action@5c47607acb93fed5485fdbf7232e8a31425f672a # v5
         with:
           files: coverage.xml
         env:

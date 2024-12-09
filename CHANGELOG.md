@@ -10,18 +10,32 @@
 - fix workflow_dispatch trigger and parse more review comments in awsfulltest ([#3235](https://github.com/nf-core/tools/pull/3235))
 - Add resource limits to Gitpod profile([#3255](https://github.com/nf-core/tools/pull/3255))
 - Fix a typo ([#3268](https://github.com/nf-core/tools/pull/3268))
+- Remove `def` from `nextflow.config` and add `trace_report_suffix` param ([#3296](https://github.com/nf-core/tools/pull/3296))
+- Move `includeConfig 'conf/modules.config'` next to `includeConfig 'conf/base.config'` to not overwrite tests profiles configurations ([#3301](https://github.com/nf-core/tools/pull/3301))
+- Use `params.monochrome_logs` in the template and update nf-core components ([#3310](https://github.com/nf-core/tools/pull/3310))
+- Fix some typos and improve writing in `usage.md` and `CONTRIBUTING.md` ([#3302](https://github.com/nf-core/tools/pull/3302))
+- Add `manifest.contributors` to `nextflow.config` ([#3311](https://github.com/nf-core/tools/pull/3311))
 
 ### Download
 
 - First steps towards fixing [#3179](https://github.com/nf-core/tools/issues/3179): Modify `prioritize_direct_download()` to retain Seqera Singularity https:// Container URIs and hardcode Seqera Containers into `gather_registries()` ([#3244](https://github.com/nf-core/tools/pull/3244)).
+- Further steps towards fixing [#3179](https://github.com/nf-core/tools/issues/3179): Enable limited support for `oras://` container paths (_only absolute URIs, no flexible registries like with Docker_) and prevent unnecessary image downloads for Seqera Container modules with `reconcile_seqera_container_uris()` ([#3293](https://github.com/nf-core/tools/pull/3293)).
+- Update dawidd6/action-download-artifact action to v7 ([#3306](https://github.com/nf-core/tools/pull/3306))
 
 ### Linting
+
+- allow mixed `str` and `dict` entries in lint config ([#3228](https://github.com/nf-core/tools/pull/3228))
+- fix meta_yml linting test failing due to module.process_name always being "" ([#3317](https://github.com/nf-core/tools/pull/3317))
+- fix module section regex matching wrong things ([#3321](https://github.com/nf-core/tools/pull/3321))
 
 ### Modules
 
 - add a panel around diff previews when updating ([#3246](https://github.com/nf-core/tools/pull/3246))
 
 ### Subworkflows
+
+- Add `nf-core subworkflows patch` command ([#2861](https://github.com/nf-core/tools/pull/2861))
+- Improve subworkflow nf-test migration warning ([#3298](https://github.com/nf-core/tools/pull/3298))
 
 ### General
 
@@ -36,6 +50,20 @@
 - add `--dir/-d` option to schema commands ([#3247](https://github.com/nf-core/tools/pull/3247))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.1 ([#3250](https://github.com/nf-core/tools/pull/3250))
 - fix headers in api docs ([#3323](https://github.com/nf-core/tools/pull/3323))
+- handle new schema structure in `nf-core pipelines create-params-file` ([#3276](https://github.com/nf-core/tools/pull/3276))
+- Update Gitpod image to use Miniforge instead of Miniconda([#3274](https://github.com/nf-core/tools/pull/3274))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.3 ([#3275](https://github.com/nf-core/tools/pull/3275))
+- Add hint to solve git errors with a synced repo ([#3279](https://github.com/nf-core/tools/pull/3279))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.4 ([#3282](https://github.com/nf-core/tools/pull/3282))
+- Update codecov/codecov-action action to v5 ([#3283](https://github.com/nf-core/tools/pull/3283))
+- Update python:3.12-slim Docker digest to 2a6386a ([#3284](https://github.com/nf-core/tools/pull/3284))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.0 ([#3299](https://github.com/nf-core/tools/pull/3299))
+- Update gitpod/workspace-base Docker digest to 12853f7 ([#3309](https://github.com/nf-core/tools/pull/3309))
+- Run pre-commit when testing linting the template pipeline ([#3280](https://github.com/nf-core/tools/pull/3280))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.2 ([#3325](https://github.com/nf-core/tools/pull/3325))
+- Make CLI prompt less nf-core specific ([#3326](https://github.com/nf-core/tools/pull/3326))
+- Update gitpod vscode extensions to use nf-core extension pack ([#3327](https://github.com/nf-core/tools/pull/3327))
+
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 

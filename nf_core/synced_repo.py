@@ -10,6 +10,7 @@ import git
 from git.exc import GitCommandError
 
 from nf_core.components.components_utils import (
+    NF_CORE_MODULES_DEFAULT_BRANCH,
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
 )
@@ -186,7 +187,7 @@ class SyncedRepo:
         if branch is None:
             # Don't bother fetching default branch if we're using nf-core
             if self.remote_url == NF_CORE_MODULES_REMOTE:
-                self.branch = "master"
+                self.branch = NF_CORE_MODULES_DEFAULT_BRANCH
             else:
                 self.branch = self.get_default_branch()
         else:
@@ -395,8 +396,16 @@ class SyncedRepo:
             old_component_path = Path("modules", component_name)
             commits_old_iter = self.repo.iter_commits(max_count=depth, paths=old_component_path)
 
-        commits_old = [{"git_sha": commit.hexsha, "trunc_message": commit.message} for commit in commits_old_iter]
-        commits_new = [{"git_sha": commit.hexsha, "trunc_message": commit.message} for commit in commits_new_iter]
+        try:
+            commits_old = [{"git_sha": commit.hexsha, "trunc_message": commit.message} for commit in commits_old_iter]
+            commits_new = [{"git_sha": commit.hexsha, "trunc_message": commit.message} for commit in commits_new_iter]
+        except git.GitCommandError as e:
+            log.error(
+                f"Git error: {e}\n"
+                "To solve this, you can try to remove the cloned rempository and run the command again.\n"
+                f"This repository is typically found at `{self.local_repo_dir}`"
+            )
+            raise UserWarning
         commits = iter(commits_new + commits_old)
 
         return commits

@@ -68,7 +68,7 @@ class ComponentRemove(ComponentCommand):
         if not component_dir.exists():
             log.error(f"Installation directory '{component_dir}' does not exist.")
 
-            if modules_json.module_present(component, self.modules_repo.remote_url, repo_path):
+            if modules_json.component_present(component, self.modules_repo.remote_url, repo_path, self.component_type):
                 log.error(f"Found entry for '{component}' in 'modules.json'. Removing...")
                 modules_json.remove_entry(self.component_type, component, self.modules_repo.remote_url, repo_path)
             return False

@@ -257,7 +257,20 @@ class DownloadTest(unittest.TestCase):
             not in download_obj.containers
         )
 
-        # mock_seqera_container.nf
+        # mock_seqera_container_oras.nf
+        assert "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6" in download_obj.containers
+        assert "community.wave.seqera.io/library/umi-transfer:1.0.0--d30e8812ea280fa1" not in download_obj.containers
+
+        # mock_seqera_container_oras_mulled.nf
+        assert (
+            "oras://community.wave.seqera.io/library/umi-transfer_umicollapse:796a995ff53da9e3"
+            in download_obj.containers
+        )
+        assert (
+            "community.wave.seqera.io/library/umi-transfer_umicollapse:3298d4f1b49e33bd" not in download_obj.containers
+        )
+
+        # mock_seqera_container_http.nf
         assert (
             "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
             in download_obj.containers
@@ -294,6 +307,7 @@ class DownloadTest(unittest.TestCase):
             "https://depot.galaxyproject.org/singularity/sortmerna:4.2.0--h9ee0642_1",
             "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data",
             "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data",
+            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data",
         ]
 
         result = download_obj.prioritize_direct_download(test_container)
@@ -316,7 +330,7 @@ class DownloadTest(unittest.TestCase):
         assert "https://depot.galaxyproject.org/singularity/sortmerna:4.3.7--hdbdd923_0" in result
         assert "https://depot.galaxyproject.org/singularity/sortmerna:4.2.0--h9ee0642_1" in result
 
-        # Verify that Seqera containers are not deduplicated
+        # Verify that Seqera containers are not deduplicated...
         assert (
             "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data"
             in result
@@ -325,6 +339,58 @@ class DownloadTest(unittest.TestCase):
             "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
             in result
         )
+        # ...but identical ones are.
+        assert (
+            result.count(
+                "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
+            )
+            == 1
+        )
+
+    #
+    # Test for 'reconcile_seqera_container_uris'
+    #
+    @with_temporary_folder
+    def test_reconcile_seqera_container_uris(self, tmp_path):
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
+
+        prioritized_container = [
+            "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
+            "oras://community.wave.seqera.io/library/sylph:0.6.1--b97274cdc1caa649",
+        ]
+
+        test_container = [
+            "https://depot.galaxyproject.org/singularity/ubuntu:22.04",
+            "nf-core/ubuntu:22.04",
+            "nf-core/ubuntu:22.04",
+            "nf-core/ubuntu:22.04",
+            "community.wave.seqera.io/library/umi-transfer:1.5.0--73c1a6b65e5b0b81",
+            "community.wave.seqera.io/library/sylph:0.6.1--a21713a57a65a373",
+            "biocontainers/sylph:0.6.1--b97274cdc1caa649",
+        ]
+
+        # test that the test_container list is returned as it is, if no prioritized_containers are specified
+        result_empty = download_obj.reconcile_seqera_container_uris([], test_container)
+        assert result_empty == test_container
+
+        result = download_obj.reconcile_seqera_container_uris(prioritized_container, test_container)
+
+        # Verify that unrelated images are retained
+        assert "https://depot.galaxyproject.org/singularity/ubuntu:22.04" in result
+        assert "nf-core/ubuntu:22.04" in result
+
+        # Verify that the priority works for regular Seqera container (Native Singularity over Docker, but only for Seqera registry)
+        assert "oras://community.wave.seqera.io/library/sylph:0.6.1--b97274cdc1caa649" in result
+        assert "community.wave.seqera.io/library/sylph:0.6.1--a21713a57a65a373" not in result
+        assert "biocontainers/sylph:0.6.1--b97274cdc1caa649" in result
+
+        # Verify that version strings are respected: Version 1.0.0 does not replace version 1.5.0
+        assert "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6" in result
+        assert "community.wave.seqera.io/library/umi-transfer:1.5.0--73c1a6b65e5b0b81" in result
+
+        # assert that the deduplication works
+        assert test_container.count("nf-core/ubuntu:22.04") == 3
+        assert result.count("nf-core/ubuntu:22.04") == 1
 
     #
     # Tests for 'singularity_pull_image'
@@ -356,11 +422,30 @@ class DownloadTest(unittest.TestCase):
             "docker.io/bschiffthaler/sed", f"{tmp_dir}/sed.sif", None, "docker.io", mock_rich_progress
         )
 
+        # Test successful pull with absolute oras:// URI
+        download_obj.singularity_pull_image(
+            "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
+            f"{tmp_dir}/umi-transfer-oras.sif",
+            None,
+            "docker.io",
+            mock_rich_progress,
+        )
+
+        # try pulling Docker container image with oras://
+        with pytest.raises(ContainerError.NoSingularityContainerError):
+            download_obj.singularity_pull_image(
+                "oras://ghcr.io/matthiaszepper/umi-transfer:dev",
+                f"{tmp_dir}/umi-transfer-oras_impostor.sif",
+                None,
+                "docker.io",
+                mock_rich_progress,
+            )
+
         # try to pull from non-existing registry (Name change hello-world_new.sif is needed, otherwise ImageExistsError is raised before attempting to pull.)
         with pytest.raises(ContainerError.RegistryNotFoundError):
             download_obj.singularity_pull_image(
                 "hello-world",
-                f"{tmp_dir}/hello-world_new.sif",
+                f"{tmp_dir}/break_the_registry_test.sif",
                 None,
                 "register-this-domain-to-break-the-test.io",
                 mock_rich_progress,
@@ -396,7 +481,7 @@ class DownloadTest(unittest.TestCase):
         with pytest.raises(ContainerError.InvalidTagError):
             download_obj.singularity_pull_image(
                 "ewels/multiqc:go-rewrite",
-                f"{tmp_dir}/umi-transfer.sif",
+                f"{tmp_dir}/multiqc-go.sif",
                 None,
                 "ghcr.io",
                 mock_rich_progress,

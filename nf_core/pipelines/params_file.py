@@ -2,9 +2,9 @@
 
 import json
 import logging
-import os
 import textwrap
-from typing import Literal, Optional
+from pathlib import Path
+from typing import Dict, List, Literal, Optional
 
 import questionary
 
@@ -27,7 +27,7 @@ H2_SEPERATOR = "## -------------------------------------------------------------
 ModeLiteral = Literal["both", "start", "end", "none"]
 
 
-def _print_wrapped(text, fill_char="-", mode="both", width=80, indent=0, drop_whitespace=True):
+def _print_wrapped(text, fill_char="-", mode="both", width=80, indent=0, drop_whitespace=True) -> str:
     """Helper function to format text for the params-file template.
 
     Args:
@@ -100,7 +100,7 @@ class ParamsFileBuilder:
         self.wfs = nf_core.pipelines.list.Workflows()
         self.wfs.get_remote_workflows()
 
-    def get_pipeline(self):
+    def get_pipeline(self) -> Optional[bool]:
         """
         Prompt the user for a pipeline name and get the schema
         """
@@ -124,11 +124,14 @@ class ParamsFileBuilder:
                 ).unsafe_ask()
 
         # Get the schema
-        self.schema_obj = nf_core.pipelines.schema.PipelineSchema()
+        self.schema_obj = PipelineSchema()
+        if self.schema_obj is None:
+            return False
         self.schema_obj.get_schema_path(self.pipeline, local_only=False, revision=self.pipeline_revision)
         self.schema_obj.get_wf_params()
+        return True
 
-    def format_group(self, definition, show_hidden=False):
+    def format_group(self, definition, show_hidden=False) -> str:
         """Format a group of parameters of the schema as commented YAML.
 
         Args:
@@ -167,7 +170,9 @@ class ParamsFileBuilder:
 
         return out
 
-    def format_param(self, name, properties, required_properties=(), show_hidden=False):
+    def format_param(
+        self, name: str, properties: Dict, required_properties: List[str] = [], show_hidden: bool = False
+    ) -> Optional[str]:
         """
         Format a single parameter of the schema as commented YAML
 
@@ -188,6 +193,9 @@ class ParamsFileBuilder:
             return None
 
         description = properties.get("description", "")
+        if self.schema_obj is None:
+            log.error("No schema object found")
+            return ""
         self.schema_obj.get_schema_defaults()
         default = properties.get("default")
         type = properties.get("type")
@@ -209,7 +217,7 @@ class ParamsFileBuilder:
 
         return out
 
-    def generate_params_file(self, show_hidden=False):
+    def generate_params_file(self, show_hidden: bool = False) -> str:
         """Generate the contents of a parameter template file.
 
         Assumes the pipeline has been fetched (if remote) and the schema loaded.
@@ -220,6 +228,10 @@ class ParamsFileBuilder:
         Returns:
             str: Formatted output for the pipeline schema
         """
+        if self.schema_obj is None:
+            log.error("No schema object found")
+            return ""
+
         schema = self.schema_obj.schema
         pipeline_name = self.schema_obj.pipeline_manifest.get("name", self.pipeline)
         pipeline_version = self.schema_obj.pipeline_manifest.get("version", "0.0.0")
@@ -234,13 +246,13 @@ class ParamsFileBuilder:
         out += "\n"
 
         # Add all parameter groups
-        for definition in schema.get("definitions", {}).values():
+        for definition in schema.get("definitions", schema.get("$defs", {})).values():
             out += self.format_group(definition, show_hidden=show_hidden)
             out += "\n"
 
         return out
 
-    def write_params_file(self, output_fn="nf-params.yaml", show_hidden=False, force=False):
+    def write_params_file(self, output_fn: Path = Path("nf-params.yaml"), show_hidden=False, force=False) -> bool:
         """Build a template file for the pipeline schema.
 
         Args:
@@ -254,7 +266,9 @@ class ParamsFileBuilder:
         """
 
         self.get_pipeline()
-
+        if self.schema_obj is None:
+            log.error("No schema object found")
+            return False
         try:
             self.schema_obj.load_schema()
             self.schema_obj.validate_schema()
@@ -265,11 +279,10 @@ class ParamsFileBuilder:
 
         schema_out = self.generate_params_file(show_hidden=show_hidden)
 
-        if os.path.exists(output_fn) and not force:
+        if output_fn.exists() and not force:
             log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")
             return False
-        with open(output_fn, "w") as fh:
-            fh.write(schema_out)
-            log.info(f"Parameter file written to '{output_fn}'")
+        output_fn.write_text(schema_out)
+        log.info(f"Parameter file written to '{output_fn}'")
 
         return True
