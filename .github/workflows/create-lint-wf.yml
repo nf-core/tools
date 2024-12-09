@@ -27,14 +27,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-env:
-  NXF_ANSI_LOG: false
-
 jobs:
   MakeTestWorkflow:
     runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     env:
       NXF_ANSI_LOG: false
+
     strategy:
       matrix:
         NXF_VER:

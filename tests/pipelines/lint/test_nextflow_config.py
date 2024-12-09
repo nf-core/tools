@@ -6,7 +6,6 @@ import yaml
 
 import nf_core.pipelines.create.create
 import nf_core.pipelines.lint
-from nf_core.utils import NFCoreYamlConfig
 
 from ..test_lint import TestLint
 
@@ -125,23 +124,30 @@ class TestLintNextflowConfig(TestLint):
 
     def test_default_values_ignored(self):
         """Test ignoring linting of default values."""
+        valid_yaml = """
+        nextflow_config:
+            - manifest.name
+            - config_defaults:
+                - params.custom_config_version
+        """
         # Add custom_config_version to the ignore list
         nf_core_yml_path = Path(self.new_pipeline) / ".nf-core.yml"
-        nf_core_yml = NFCoreYamlConfig(
-            repository_type="pipeline",
-            lint={"nextflow_config": [{"config_defaults": ["params.custom_config_version"]}]},
-        )
+
+        with open(nf_core_yml_path) as f:
+            nf_core_yml = yaml.safe_load(f)
+            nf_core_yml["lint"] = yaml.safe_load(valid_yaml)
         with open(nf_core_yml_path, "w") as f:
-            yaml.dump(nf_core_yml.model_dump(), f)
+            yaml.dump(nf_core_yml, f)
 
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         lint_obj.load_pipeline_config()
         lint_obj._load_lint_config()
         result = lint_obj.nextflow_config()
         assert len(result["failed"]) == 0
-        assert len(result["ignored"]) == 1
+        assert len(result["ignored"]) == 2
         assert "Config default value correct: params.custom_config_version" not in str(result["passed"])
         assert "Config default ignored: params.custom_config_version" in str(result["ignored"])
+        assert "Config variable ignored: `manifest.name`" in str(result["ignored"])
 
     def test_default_values_float(self):
         """Test comparing two float values."""
