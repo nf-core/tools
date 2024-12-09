@@ -75,6 +75,7 @@
 - Parallelize pipeline GHA tests over docker/conda/singularity ([#3214](https://github.com/nf-core/tools/pull/3214))
 - Fix `template_version_comment.yml` github action ([#3212](https://github.com/nf-core/tools/pull/3212))
 - Fix pre-commit linting on pipeline template ([#3218](https://github.com/nf-core/tools/pull/3218))
+- Template: Remove mention of GRCh37 if igenomes is skipped ([#3330](https://github.com/nf-core/tools/pull/3330))
 
 ### Linting
 
