@@ -8,5 +8,4 @@ tasks:
 vscode:
   extensions:
     #{%- if code_linters -%}
-    - nf-core.nf-core-extensionpack # https://github.com/nf-core/vscode-extensionpack
-    #{%- endif -%}
+    - nf-core.nf-core-extensionpack # https://github.com/nf-core/vscode-extensionpack{% endif %}
