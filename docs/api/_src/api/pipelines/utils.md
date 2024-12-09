@@ -1,4 +1,4 @@
-# nf_core.utils
+# nf_core.pipelines.utils
 
 ```{eval-rst}
 .. automodule:: nf_core.pipelines.utils

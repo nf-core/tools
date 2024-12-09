@@ -49,6 +49,7 @@
 - Update GitHub Actions ([#3237](https://github.com/nf-core/tools/pull/3237))
 - add `--dir/-d` option to schema commands ([#3247](https://github.com/nf-core/tools/pull/3247))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.1 ([#3250](https://github.com/nf-core/tools/pull/3250))
+- fix headers in api docs ([#3323](https://github.com/nf-core/tools/pull/3323))
 - handle new schema structure in `nf-core pipelines create-params-file` ([#3276](https://github.com/nf-core/tools/pull/3276))
 - Update Gitpod image to use Miniforge instead of Miniconda([#3274](https://github.com/nf-core/tools/pull/3274))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.3 ([#3275](https://github.com/nf-core/tools/pull/3275))

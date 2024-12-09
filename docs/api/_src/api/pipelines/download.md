@@ -1,4 +1,4 @@
-# nf_core.download
+# nf_core.pipelines.download
 
 ```{eval-rst}
 .. automodule:: nf_core.pipelines.download
