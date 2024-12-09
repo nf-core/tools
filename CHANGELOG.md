@@ -65,6 +65,7 @@
 - Update gitpod vscode extensions to use nf-core extension pack ([#3327](https://github.com/nf-core/tools/pull/3327))
 - Remove toList() channel operation from inside onComplete block ([#3304](https://github.com/nf-core/tools/pull/3304))
 - build: Setup VS Code tests ([#3292](https://github.com/nf-core/tools/pull/3292))
+- Update dependency textual-dev to v1.7.0 ([#3308](https://github.com/nf-core/tools/pull/3308))
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 
