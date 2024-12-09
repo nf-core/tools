@@ -68,7 +68,6 @@
 - Update codecov/codecov-action action to v5 ([#3283](https://github.com/nf-core/tools/pull/3283))
 - Update gitpod/workspace-base Docker digest to 12853f7 ([#3309](https://github.com/nf-core/tools/pull/3309))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.2 ([#3325](https://github.com/nf-core/tools/pull/3325))
-- Update dependency textual-dev to v1.7.0 ([#3308](https://github.com/nf-core/tools/pull/3308))
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 
