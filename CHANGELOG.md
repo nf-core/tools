@@ -1,13 +1,19 @@
 # nf-core/tools: Changelog
 
-## v3.0.3dev
+## [v3.1.0 - Brass Boxfish](https://github.com/nf-core/tools/releases/tag/3.1.0) - [2024-12-09]
+
+**Highlights**
+
+- We added the new `contributors` field to the pipeline template `manifest`.
+- The `nf-core pipelines download` command supports ORAS container URIs.
+- New command `nf-core subworkflows patch`.
 
 ### Template
 
 - Keep pipeline name in version.yml file ([#3223](https://github.com/nf-core/tools/pull/3223))
 - Fix Manifest DOI text ([#3224](https://github.com/nf-core/tools/pull/3224))
 - Do not assume pipeline name is url ([#3225](https://github.com/nf-core/tools/pull/3225))
-- fix workflow_dispatch trigger and parse more review comments in awsfulltest ([#3235](https://github.com/nf-core/tools/pull/3235))
+- fix `workflow_dispatch` trigger and parse more review comments in awsfulltest ([#3235](https://github.com/nf-core/tools/pull/3235))
 - Add resource limits to Gitpod profile([#3255](https://github.com/nf-core/tools/pull/3255))
 - Fix a typo ([#3268](https://github.com/nf-core/tools/pull/3268))
 - Remove `def` from `nextflow.config` and add `trace_report_suffix` param ([#3296](https://github.com/nf-core/tools/pull/3296))
@@ -19,14 +25,14 @@
 
 ### Download
 
-- First steps towards fixing [#3179](https://github.com/nf-core/tools/issues/3179): Modify `prioritize_direct_download()` to retain Seqera Singularity https:// Container URIs and hardcode Seqera Containers into `gather_registries()` ([#3244](https://github.com/nf-core/tools/pull/3244)).
+- First steps towards fixing [#3179](https://github.com/nf-core/tools/issues/3179): Modify `prioritize_direct_download()` to retain Seqera Singularity `https://` Container URIs and hardcode Seqera Containers into `gather_registries()` ([#3244](https://github.com/nf-core/tools/pull/3244)).
 - Further steps towards fixing [#3179](https://github.com/nf-core/tools/issues/3179): Enable limited support for `oras://` container paths (_only absolute URIs, no flexible registries like with Docker_) and prevent unnecessary image downloads for Seqera Container modules with `reconcile_seqera_container_uris()` ([#3293](https://github.com/nf-core/tools/pull/3293)).
 - Update dawidd6/action-download-artifact action to v7 ([#3306](https://github.com/nf-core/tools/pull/3306))
 
 ### Linting
 
 - allow mixed `str` and `dict` entries in lint config ([#3228](https://github.com/nf-core/tools/pull/3228))
-- fix meta_yml linting test failing due to module.process_name always being "" ([#3317](https://github.com/nf-core/tools/pull/3317))
+- fix `meta_yml` linting test failing due to `module.process_name` always being `""` ([#3317](https://github.com/nf-core/tools/pull/3317))
 - fix module section regex matching wrong things ([#3321](https://github.com/nf-core/tools/pull/3321))
 
 ### Modules
@@ -40,32 +46,28 @@
 
 ### General
 
-- Include .nf-core.yml in `nf-core pipelines bump-version` ([#3220](https://github.com/nf-core/tools/pull/3220))
+- Include `.nf-core.yml` in `nf-core pipelines bump-version` ([#3220](https://github.com/nf-core/tools/pull/3220))
 - create: add shortcut to toggle all switches ([#3226](https://github.com/nf-core/tools/pull/3226))
 - Remove unrelated values when saving `.nf-core` file ([#3227](https://github.com/nf-core/tools/pull/3227))
-- chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.12.0 ([#3230](https://github.com/nf-core/tools/pull/3230))
-- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.7.0 ([#3229](https://github.com/nf-core/tools/pull/3229))
-- Update python:3.12-slim Docker digest to 032c526 ([#3232](https://github.com/nf-core/tools/pull/3232))
 - use correct `--profile` options for `nf-core subworkflows test` ([#3233](https://github.com/nf-core/tools/pull/3233))
 - Update GitHub Actions ([#3237](https://github.com/nf-core/tools/pull/3237))
 - add `--dir/-d` option to schema commands ([#3247](https://github.com/nf-core/tools/pull/3247))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.1 ([#3250](https://github.com/nf-core/tools/pull/3250))
 - fix headers in api docs ([#3323](https://github.com/nf-core/tools/pull/3323))
 - handle new schema structure in `nf-core pipelines create-params-file` ([#3276](https://github.com/nf-core/tools/pull/3276))
 - Update Gitpod image to use Miniforge instead of Miniconda([#3274](https://github.com/nf-core/tools/pull/3274))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.3 ([#3275](https://github.com/nf-core/tools/pull/3275))
 - Add hint to solve git errors with a synced repo ([#3279](https://github.com/nf-core/tools/pull/3279))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.4 ([#3282](https://github.com/nf-core/tools/pull/3282))
-- Update codecov/codecov-action action to v5 ([#3283](https://github.com/nf-core/tools/pull/3283))
-- Update python:3.12-slim Docker digest to 2a6386a ([#3284](https://github.com/nf-core/tools/pull/3284))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.0 ([#3299](https://github.com/nf-core/tools/pull/3299))
-- Update gitpod/workspace-base Docker digest to 12853f7 ([#3309](https://github.com/nf-core/tools/pull/3309))
 - Run pre-commit when testing linting the template pipeline ([#3280](https://github.com/nf-core/tools/pull/3280))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.2 ([#3325](https://github.com/nf-core/tools/pull/3325))
 - Make CLI prompt less nf-core specific ([#3326](https://github.com/nf-core/tools/pull/3326))
 - Update gitpod vscode extensions to use nf-core extension pack ([#3327](https://github.com/nf-core/tools/pull/3327))
 - Remove toList() channel operation from inside onComplete block ([#3304](https://github.com/nf-core/tools/pull/3304))
 - build: Setup VS Code tests ([#3292](https://github.com/nf-core/tools/pull/3292))
+
+### Version updates
+
+- chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.12.0 ([#3230](https://github.com/nf-core/tools/pull/3230))
+- Update codecov/codecov-action action to v5 ([#3283](https://github.com/nf-core/tools/pull/3283))
+- Update gitpod/workspace-base Docker digest to 12853f7 ([#3309](https://github.com/nf-core/tools/pull/3309))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.2 ([#3325](https://github.com/nf-core/tools/pull/3325))
 - Update dependency textual-dev to v1.7.0 ([#3308](https://github.com/nf-core/tools/pull/3308))
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
