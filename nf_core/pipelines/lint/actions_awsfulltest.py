@@ -42,7 +42,7 @@ def actions_awsfulltest(self) -> Dict[str, List[str]]:
 
         # Check that the action is only turned on for published releases
         try:
-            if wf[True]["pull_request"]["branches"] != ["master"]:
+            if wf[True]["pull_request"]["branches"] != ["main", "master"]:
                 raise AssertionError()
             if wf[True]["pull_request_review"]["types"] != ["submitted"]:
                 raise AssertionError()

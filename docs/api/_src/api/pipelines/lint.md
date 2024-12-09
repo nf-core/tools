@@ -1,4 +1,4 @@
-# nf_core.lint
+# nf_core.pipelines.lint
 
 :::{seealso}
 See the [Lint Tests](/docs/nf-core-tools/api_reference/dev/pipeline_lint_tests) docs for information about specific linting functions.

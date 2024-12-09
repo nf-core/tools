@@ -1,4 +1,4 @@
-# nf_core.sync
+# nf_core.pipelines.sync
 
 ```{eval-rst}
 .. automodule:: nf_core.pipelines.sync

@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/{{ name }}/master/nextflow_schema.json",
+    "$id": "https://raw.githubusercontent.com/{{ name }}/{{ default_branch }}/nextflow_schema.json",
     "title": "{{ name }} pipeline parameters",
     "description": "{{ description }}",
     "type": "object",
@@ -182,7 +182,7 @@
                     "fa_icon": "fas fa-file-upload",
                     "hidden": true
                 },{% endif %}
-                {%- if modules %}
+                {%- if modules or nf_schema %}
                 "monochrome_logs": {
                     "type": "boolean",
                     "description": "Do not use coloured log outputs.",
