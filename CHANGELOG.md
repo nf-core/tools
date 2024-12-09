@@ -15,6 +15,7 @@
 - Use `params.monochrome_logs` in the template and update nf-core components ([#3310](https://github.com/nf-core/tools/pull/3310))
 - Fix some typos and improve writing in `usage.md` and `CONTRIBUTING.md` ([#3302](https://github.com/nf-core/tools/pull/3302))
 - Add `manifest.contributors` to `nextflow.config` ([#3311](https://github.com/nf-core/tools/pull/3311))
+- Update template components ([#3328](https://github.com/nf-core/tools/pull/3328))
 
 ### Download
 
