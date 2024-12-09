@@ -25,7 +25,7 @@ class TestLint(TestPipelines):
 ##########################
 class TestPipelinesLint(TestLint):
     def test_run_linting_function(self):
-        """Run the master run_linting() function in lint.py
+        """Run the run_linting() function in lint.py
 
         We don't really check any of this code as it's just a series of function calls
         and we're testing each of those individually. This is mostly to check for syntax errors."""

@@ -57,7 +57,7 @@ class PipelineCreate:
         template_config: Optional[Union[CreateConfig, str, Path]] = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
-        default_branch: Optional[str] = None,
+        default_branch: str = "main",
         is_interactive: bool = False,
     ) -> None:
         if isinstance(template_config, CreateConfig):
@@ -87,8 +87,17 @@ class PipelineCreate:
         # Read features yaml file
         self.template_features_yml = load_features_yaml()
 
+        # Set fields used by the class methods
+        self.no_git = no_git
+        self.default_branch = default_branch
+        self.is_interactive = is_interactive
+
         if self.config.outdir is None:
             self.config.outdir = str(Path.cwd())
+
+        # Get the default branch name from the Git configuration
+        self.get_default_branch()
+
         self.jinja_params, self.skip_areas = self.obtain_jinja_params_dict(
             self.config.skip_features or [], str(self.config.outdir)
         )
@@ -107,11 +116,6 @@ class PipelineCreate:
 
         # Set convenience variables
         self.name = self.config.name
-
-        # Set fields used by the class methods
-        self.no_git = no_git
-        self.default_branch = default_branch
-        self.is_interactive = is_interactive
         self.force = self.config.force
 
         if self.config.outdir == ".":
@@ -233,6 +237,7 @@ class PipelineCreate:
         jinja_params["name_docker"] = jinja_params["name"].replace(jinja_params["org"], jinja_params["prefix_nodash"])
         jinja_params["logo_light"] = f"{jinja_params['name_noslash']}_logo_light.png"
         jinja_params["logo_dark"] = f"{jinja_params['name_noslash']}_logo_dark.png"
+        jinja_params["default_branch"] = self.default_branch
         if config_yml is not None:
             if (
                 hasattr(config_yml, "lint")
@@ -254,6 +259,7 @@ class PipelineCreate:
 
     def init_pipeline(self):
         """Creates the nf-core pipeline."""
+
         # Make the new pipeline
         self.render_template()
 
@@ -421,20 +427,17 @@ class PipelineCreate:
                 force=bool(self.force),
             )
 
-    def git_init_pipeline(self) -> None:
-        """Initialises the new pipeline as a Git repository and submits first commit.
-
-        Raises:
-            UserWarning: if Git default branch is set to 'dev' or 'TEMPLATE'.
-        """
-        default_branch: Optional[str] = self.default_branch
+    def get_default_branch(self) -> None:
+        """Gets the default branch name from the Git configuration."""
         try:
-            default_branch = default_branch or str(git.config.GitConfigParser().get_value("init", "defaultBranch"))
+            self.default_branch = (
+                str(git.config.GitConfigParser().get_value("init", "defaultBranch")) or "main"
+            )  # default to main
         except configparser.Error:
             log.debug("Could not read init.defaultBranch")
-        if default_branch in ["dev", "TEMPLATE"]:
+        if self.default_branch in ["dev", "TEMPLATE"]:
             raise UserWarning(
-                f"Your Git defaultBranch '{default_branch}' is incompatible with nf-core.\n"
+                f"Your Git defaultBranch '{self.default_branch}' is incompatible with nf-core.\n"
                 "'dev' and 'TEMPLATE' can not be used as default branch name.\n"
                 "Set the default branch name with "
                 "[white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
@@ -442,12 +445,19 @@ class PipelineCreate:
                 "Pipeline git repository will not be initialised."
             )
 
+    def git_init_pipeline(self) -> None:
+        """Initialises the new pipeline as a Git repository and submits first commit.
+
+        Raises:
+            UserWarning: if Git default branch is set to 'dev' or 'TEMPLATE'.
+        """
+
         log.info("Initialising local pipeline git repository")
         repo = git.Repo.init(self.outdir)
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
-        if default_branch:
-            repo.active_branch.rename(default_branch)
+        if self.default_branch:
+            repo.active_branch.rename(self.default_branch)
         try:
             repo.git.branch("TEMPLATE")
             repo.git.branch("dev")

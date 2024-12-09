@@ -517,11 +517,13 @@ class PipelineSchema:
             if "title" not in self.schema:
                 raise AssertionError("Schema missing top-level `title` attribute")
             # Validate that id, title and description match the pipeline manifest
-            id_attr = "https://raw.githubusercontent.com/{}/master/nextflow_schema.json".format(
+            id_attr = "https://raw.githubusercontent.com/{}/main/nextflow_schema.json".format(
                 self.pipeline_manifest["name"].strip("\"'")
             )
-            if self.schema["$id"] != id_attr:
-                raise AssertionError(f"Schema `$id` should be `{id_attr}`\n Found `{self.schema['$id']}`")
+            if self.schema["$id"] not in [id_attr, id_attr.replace("/main/", "/master/")]:
+                raise AssertionError(
+                    f"Schema `$id` should be `{id_attr}` or {id_attr.replace('/main/', '/master/')}. \n Found `{self.schema['$id']}`"
+                )
 
             title_attr = "{} pipeline parameters".format(self.pipeline_manifest["name"].strip("\"'"))
             if self.schema["title"] != title_attr:

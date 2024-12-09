@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/{{ name }}/master/nextflow_schema.json",
+    "$id": "https://raw.githubusercontent.com/{{ name }}/{{ default_branch }}/nextflow_schema.json",
     "title": "{{ name }} pipeline parameters",
     "description": "{{ description }}",
     "type": "object",
