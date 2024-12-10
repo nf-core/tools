@@ -23,6 +23,7 @@
 - Add `manifest.contributors` to `nextflow.config` ([#3311](https://github.com/nf-core/tools/pull/3311))
 - Update template components ([#3328](https://github.com/nf-core/tools/pull/3328))
 - Template: Remove mention of GRCh37 if igenomes is skipped ([#3330](https://github.com/nf-core/tools/pull/3330))
+- Be more verbose in approval check action ([#3338](https://github.com/nf-core/tools/pull/3338))
 
 ### Download
 
