@@ -87,6 +87,10 @@ jobs:
         with:
           version: "latest-everything"
 
+      - name: Set git defaultBranch to master
+        run: |
+          git config --global init.defaultBranch master
+
       - name: Run synchronisation
         if: github.repository == 'nf-core/tools'
         env:
