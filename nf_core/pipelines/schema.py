@@ -43,7 +43,7 @@ class PipelineSchema:
         self.schema_from_scratch = False
         self.no_prompts = False
         self.web_only = False
-        self.web_schema_build_url = "https://nf-co.re/pipeline_schema_builder"
+        self.web_schema_build_url = "https://oldsite.nf-co.re/pipeline_schema_builder"
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
         self.validation_plugin = None
@@ -96,6 +96,7 @@ class PipelineSchema:
                 conf.get("validation.help.shortParameter", "help"),
                 conf.get("validation.help.fullParameter", "helpFull"),
                 conf.get("validation.help.showHiddenParameter", "showHidden"),
+                "trace_report_suffix",  # report suffix should be ignored by default as it is a Java Date object
             ]  # Help parameter should be ignored by default
             ignored_params_config_str = conf.get("validation.defaultIgnoreParams", "")
             ignored_params_config = [
@@ -516,11 +517,13 @@ class PipelineSchema:
             if "title" not in self.schema:
                 raise AssertionError("Schema missing top-level `title` attribute")
             # Validate that id, title and description match the pipeline manifest
-            id_attr = "https://raw.githubusercontent.com/{}/master/nextflow_schema.json".format(
+            id_attr = "https://raw.githubusercontent.com/{}/main/nextflow_schema.json".format(
                 self.pipeline_manifest["name"].strip("\"'")
             )
-            if self.schema["$id"] != id_attr:
-                raise AssertionError(f"Schema `$id` should be `{id_attr}`\n Found `{self.schema['$id']}`")
+            if self.schema["$id"] not in [id_attr, id_attr.replace("/main/", "/master/")]:
+                raise AssertionError(
+                    f"Schema `$id` should be `{id_attr}` or {id_attr.replace('/main/', '/master/')}. \n Found `{self.schema['$id']}`"
+                )
 
             title_attr = "{} pipeline parameters".format(self.pipeline_manifest["name"].strip("\"'"))
             if self.schema["title"] != title_attr:
@@ -957,6 +960,7 @@ class PipelineSchema:
         """
         Send pipeline schema to web builder and wait for response
         """
+
         content = {
             "post_content": "json_schema",
             "api": "true",
@@ -965,6 +969,7 @@ class PipelineSchema:
             "schema": json.dumps(self.schema),
         }
         web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_build_url, content)
+
         try:
             if "api_url" not in web_response:
                 raise AssertionError('"api_url" not in web_response')

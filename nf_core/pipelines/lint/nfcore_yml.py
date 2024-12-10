@@ -1,6 +1,7 @@
-import re
 from pathlib import Path
 from typing import Dict, List
+
+from ruamel.yaml import YAML
 
 from nf_core import __version__
 
@@ -26,21 +27,23 @@ def nfcore_yml(self) -> Dict[str, List[str]]:
     failed: List[str] = []
     ignored: List[str] = []
 
+    yaml = YAML()
+
     # Remove field that should be ignored according to the linting config
     ignore_configs = self.lint_config.get(".nf-core", []) if self.lint_config is not None else []
-    try:
-        with open(Path(self.wf_path, ".nf-core.yml")) as fh:
-            content = fh.read()
-    except FileNotFoundError:
-        with open(Path(self.wf_path, ".nf-core.yaml")) as fh:
-            content = fh.read()
+    for ext in (".yml", ".yaml"):
+        try:
+            nf_core_yml = yaml.load(Path(self.wf_path) / f".nf-core{ext}")
+            break
+        except FileNotFoundError:
+            continue
+    else:
+        raise FileNotFoundError("No `.nf-core.yml` file found.")
 
     if "repository_type" not in ignore_configs:
         # Check that the repository type is set in the .nf-core.yml
-        repo_type_re = r"repository_type: (.+)"
-        match = re.search(repo_type_re, content)
-        if match:
-            repo_type = match.group(1)
+        if "repository_type" in nf_core_yml:
+            repo_type = nf_core_yml["repository_type"]
             if repo_type not in REPOSITORY_TYPES:
                 failed.append(
                     f"Repository type in `.nf-core.yml` is not valid. "
@@ -55,10 +58,8 @@ def nfcore_yml(self) -> Dict[str, List[str]]:
 
     if "nf_core_version" not in ignore_configs:
         # Check that the nf-core version is set in the .nf-core.yml
-        nf_core_version_re = r"nf_core_version: (.+)"
-        match = re.search(nf_core_version_re, content)
-        if match:
-            nf_core_version = match.group(1).strip('"')
+        if "nf_core_version" in nf_core_yml:
+            nf_core_version = nf_core_yml["nf_core_version"]
             if nf_core_version != __version__ and "dev" not in nf_core_version:
                 warned.append(
                     f"nf-core version in `.nf-core.yml` is not set to the latest version. "

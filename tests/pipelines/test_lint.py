@@ -25,7 +25,7 @@ class TestLint(TestPipelines):
 ##########################
 class TestPipelinesLint(TestLint):
     def test_run_linting_function(self):
-        """Run the master run_linting() function in lint.py
+        """Run the run_linting() function in lint.py
 
         We don't really check any of this code as it's just a series of function calls
         and we're testing each of those individually. This is mostly to check for syntax errors."""
@@ -48,7 +48,8 @@ class TestPipelinesLint(TestLint):
     def test_load_lint_config_not_found(self):
         """Try to load a linting config file that doesn't exist"""
         assert self.lint_obj._load_lint_config()
-        assert self.lint_obj.lint_config == {}
+        assert self.lint_obj.lint_config is not None
+        assert self.lint_obj.lint_config.model_dump(exclude_none=True) == {}
 
     def test_load_lint_config_ignore_all_tests(self):
         """Try to load a linting config file that ignores all tests"""
@@ -64,7 +65,8 @@ class TestPipelinesLint(TestLint):
 
         # Load the new lint config file and check
         lint_obj._load_lint_config()
-        assert sorted(list(lint_obj.lint_config.keys())) == sorted(lint_obj.lint_tests)
+        assert lint_obj.lint_config is not None
+        assert sorted(list(lint_obj.lint_config.model_dump(exclude_none=True))) == sorted(lint_obj.lint_tests)
 
         # Try running linting and make sure that all tests are ignored
         lint_obj._lint_pipeline()

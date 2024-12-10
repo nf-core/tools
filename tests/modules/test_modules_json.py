@@ -175,14 +175,17 @@ class TestModulesCreate(TestModules):
         assert mod_json_obj.repo_present(NF_CORE_MODULES_REMOTE) is True
         assert mod_json_obj.repo_present("INVALID_REPO") is False
 
-    def test_mod_json_module_present(self):
-        """Tests the module_present function"""
+    def test_mod_json_component_present(self):
+        """Tests the component_present function"""
         mod_json_obj = ModulesJson(self.pipeline_dir)
 
-        assert mod_json_obj.module_present("fastqc", NF_CORE_MODULES_REMOTE, NF_CORE_MODULES_NAME) is True
-        assert mod_json_obj.module_present("INVALID_MODULE", NF_CORE_MODULES_REMOTE, NF_CORE_MODULES_NAME) is False
-        assert mod_json_obj.module_present("fastqc", "INVALID_REPO", "INVALID_DIR") is False
-        assert mod_json_obj.module_present("INVALID_MODULE", "INVALID_REPO", "INVALID_DIR") is False
+        assert mod_json_obj.component_present("fastqc", NF_CORE_MODULES_REMOTE, NF_CORE_MODULES_NAME, "modules") is True
+        assert (
+            mod_json_obj.component_present("INVALID_MODULE", NF_CORE_MODULES_REMOTE, NF_CORE_MODULES_NAME, "modules")
+            is False
+        )
+        assert mod_json_obj.component_present("fastqc", "INVALID_REPO", "INVALID_DIR", "modules") is False
+        assert mod_json_obj.component_present("INVALID_MODULE", "INVALID_REPO", "INVALID_DIR", "modules") is False
 
     def test_mod_json_get_module_version(self):
         """Test the get_module_version function"""

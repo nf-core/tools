@@ -15,7 +15,6 @@ runs:
         cd create-lint-wf
         export NXF_WORK=$(pwd)
 
-    # Set up Nextflow
     - name: Install Nextflow
       uses: nf-core/setup-nextflow@v2
       with:
@@ -63,6 +62,12 @@ runs:
     - name: replace zenodo.XXXXXX
       shell: bash
       run: find nf-core-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
+      working-directory: create-lint-wf
+
+    # Add empty ro-crate file
+    - name: add empty ro-crate file
+      shell: bash
+      run: touch nf-core-testpipeline/ro-crate-metadata.json
       working-directory: create-lint-wf
 
     # Run nf-core pipelines linting
