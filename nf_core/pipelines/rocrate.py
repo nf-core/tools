@@ -354,18 +354,17 @@ class ROCrate:
         """
         # check if we need to output a json file and/or a zip file based on the file extensions
         # try to find a json file
-        json_path = Path(self.pipeline_dir, "ro-crate-metadata.json")
-        if json_path.exists():
-            json_path = json_path
-        else:
-            json_path = None
+        json_path: Optional[Path] = None
+        potential_json_path = Path(self.pipeline_dir, "ro-crate-metadata.json")
+        if potential_json_path.exists():
+            json_path = potential_json_path
 
         # try to find a zip file
-        zip_path = Path(self.pipeline_dir, "ro-crate.crate.zip")
-        if zip_path.exists():
-            zip_path = zip_path
-        else:
-            zip_path = None
+        zip_path: Optional[Path] = None
+        potential_zip_path = Path(self.pipeline_dir, "ro-crate.crate.zip")
+        if potential_zip_path.exists():
+            zip_path = potential_zip_path
+
         return self.create_rocrate(json_path=json_path, zip_path=zip_path)
 
 
