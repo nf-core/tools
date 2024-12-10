@@ -87,9 +87,13 @@ jobs:
         with:
           version: "latest-everything"
 
-      - name: Set git defaultBranch to master
+      - name: Set Git default branch from nextflow.config and set git default branch to that or "master"
         run: |
-          git config --global init.defaultBranch master
+          defaultBranch=$(grep -B5 -A5 "nextflowVersion" nextflow.config | grep "defaultBranch" | cut -d"=" -f2)
+          if [ -z "$defaultBranch" ]; then
+            defaultBranch="master"
+          fi
+          git config --global init.defaultBranch $defaultBranch
 
       - name: Run synchronisation
         if: github.repository == 'nf-core/tools'
