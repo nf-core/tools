@@ -29,14 +29,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check for approvals
-        if: steps.check_approvals.outputs == ''
+        if: ${{ failure() && github.event_name != 'workflow_dispatch' }}
         run: |
-          echo "No approvals found"
+          echo "No review approvals found. At least 2 approvals are required to run this action automatically."
           exit 1
 
       - name: Check for enough approvals (>=2)
         id: test_variables
-        if: github.event_name != 'workflow_dispatch' && steps.check_approvals.outputs != ''
+        if: github.event_name != 'workflow_dispatch'
         run: |
           JSON_RESPONSE='${{ steps.check_approvals.outputs.data }}'{% endraw %}
           CURRENT_APPROVALS_COUNT=$(echo $JSON_RESPONSE | jq -c '[.[] | select(.state | contains("APPROVED")) ] | length')
