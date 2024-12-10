@@ -11,6 +11,7 @@ import rich.console
 from ruamel.yaml import YAML
 
 import nf_core.utils
+from nf_core.pipelines.rocrate import ROCrate
 from nf_core.utils import Pipeline
 
 log = logging.getLogger(__name__)
@@ -126,6 +127,9 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         required=False,
         yaml_key=["template", "version"],
     )
+
+    # update rocrate
+    ROCrate(pipeline_obj.wf_path).update_rocrate()
 
 
 def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:

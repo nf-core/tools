@@ -267,14 +267,26 @@ class ROCrate:
         # add author entity to crate
 
         try:
-            authors = self.pipeline_obj.nf_config["manifest.author"].split(",")
-            # remove spaces
-            authors = [a.strip() for a in authors]
+            authors = []
+            if "manifest.author" in self.pipeline_obj.nf_config:
+                authors.extend([a.strip() for a in self.pipeline_obj.nf_config["manifest.author"].split(",")])
+            if "manifest.contributor" in self.pipeline_obj.nf_config:
+                authors.extend(
+                    [
+                        c.get("name", "").strip()
+                        for c in self.pipeline_obj.nf_config["manifest.contributor"]
+                        if "name" in c
+                    ]
+                )
+            if not authors:
+                raise KeyError("No authors found")
             # add manifest authors as maintainer to crate
 
         except KeyError:
-            log.error("No author field found in manifest of nextflow.config")
+            log.error("No author or contributor fields found in manifest of nextflow.config")
             return
+        # remove duplicates
+        authors = list(set(authors))
         # look at git contributors for author names
         try:
             git_contributors: Set[str] = set()
@@ -335,6 +347,25 @@ class ROCrate:
             wf_file.append_to("creator", author_entitity)
             if author in authors:
                 wf_file.append_to("maintainer", author_entitity)
+
+    def update_rocrate(self) -> bool:
+        """
+        Update the rocrate file
+        """
+        # check if we need to output a json file and/or a zip file based on the file extensions
+        # try to find a json file
+        json_path: Optional[Path] = None
+        potential_json_path = Path(self.pipeline_dir, "ro-crate-metadata.json")
+        if potential_json_path.exists():
+            json_path = potential_json_path
+
+        # try to find a zip file
+        zip_path: Optional[Path] = None
+        potential_zip_path = Path(self.pipeline_dir, "ro-crate.crate.zip")
+        if potential_zip_path.exists():
+            zip_path = potential_zip_path
+
+        return self.create_rocrate(json_path=json_path, zip_path=zip_path)
 
 
 def get_orcid(name: str) -> Optional[str]:
