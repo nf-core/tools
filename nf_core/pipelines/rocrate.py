@@ -353,8 +353,6 @@ class ROCrate:
         Update the rocrate file
         """
         # check if we need to output a json file and/or a zip file based on the file extensions
-        json_path = None
-        zip_path = None
         # try to find a json file
         json_path = Path(self.pipeline_dir, "ro-crate-metadata.json")
         if json_path.exists():
