@@ -336,6 +336,28 @@ class ROCrate:
             if author in authors:
                 wf_file.append_to("maintainer", author_entitity)
 
+    def update_rocrate(self) -> bool:
+        """
+        Update the rocrate file
+        """
+        # check if we need to output a json file and/or a zip file based on the file extensions
+        json_path = None
+        zip_path = None
+        # try to find a json file
+        json_path = Path(self.pipeline_dir, "ro-crate-metadata.json")
+        if json_path.exists():
+            json_path = json_path
+        else:
+            json_path = None
+
+        # try to find a zip file
+        zip_path = Path(self.pipeline_dir, "ro-crate.crate.zip")
+        if zip_path.exists():
+            zip_path = zip_path
+        else:
+            zip_path = None
+        return self.create_rocrate(json_path=json_path, zip_path=zip_path)
+
 
 def get_orcid(name: str) -> Optional[str]:
     """
