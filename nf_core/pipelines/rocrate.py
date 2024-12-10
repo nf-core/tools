@@ -267,14 +267,26 @@ class ROCrate:
         # add author entity to crate
 
         try:
-            authors = self.pipeline_obj.nf_config["manifest.author"].split(",")
-            # remove spaces
-            authors = [a.strip() for a in authors]
+            authors = []
+            if "manifest.author" in self.pipeline_obj.nf_config:
+                authors.extend([a.strip() for a in self.pipeline_obj.nf_config["manifest.author"].split(",")])
+            if "manifest.contributor" in self.pipeline_obj.nf_config:
+                authors.extend(
+                    [
+                        c.get("name", "").strip()
+                        for c in self.pipeline_obj.nf_config["manifest.contributor"]
+                        if "name" in c
+                    ]
+                )
+            if not authors:
+                raise KeyError("No authors found")
             # add manifest authors as maintainer to crate
 
         except KeyError:
-            log.error("No author field found in manifest of nextflow.config")
+            log.error("No author or contributor fields found in manifest of nextflow.config")
             return
+        # remove duplicates
+        authors = list(set(authors))
         # look at git contributors for author names
         try:
             git_contributors: Set[str] = set()
