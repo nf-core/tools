@@ -89,10 +89,12 @@ jobs:
 
       - name: Set Git default branch from nextflow.config and set git default branch to that or "master"
         run: |
-          defaultBranch=$(grep -B5 -A5 "nextflowVersion" nf-core/${{ matrix.pipeline }}/nextflow.config | grep "defaultBranch" | cut -d"=" -f2)
+          cd nf-core/${{ matrix.pipeline }}
+          defaultBranch=$(grep -B5 -A5 "nextflowVersion" nextflow.config | grep "defaultBranch" | cut -d"=" -f2)
           if [ -z "$defaultBranch" ]; then
             defaultBranch="master"
           fi
+          echo "Default branch: $defaultBranch"
           git config --global init.defaultBranch $defaultBranch
 
       - name: Run synchronisation
