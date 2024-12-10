@@ -67,6 +67,7 @@
 - rocrate: Update crate with version bump and handle new contributor field ([#3334](https://github.com/nf-core/tools/pull/3334))
 - set default_branch to master for now ([#3335](https://github.com/nf-core/tools/issues/3335))
 - Set git defaultBranch to master in sync action ([#3337](https://github.com/nf-core/tools/pull/3337))
+- Add verbose mode to sync action ([#3339](https://github.com/nf-core/tools/pull/3339))
 
 ### Version updates
 
