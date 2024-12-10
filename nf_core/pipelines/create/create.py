@@ -57,7 +57,7 @@ class PipelineCreate:
         template_config: Optional[Union[CreateConfig, str, Path]] = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
-        default_branch: str = "main",
+        default_branch: str = "master",
         is_interactive: bool = False,
     ) -> None:
         if isinstance(template_config, CreateConfig):
@@ -431,8 +431,8 @@ class PipelineCreate:
         """Gets the default branch name from the Git configuration."""
         try:
             self.default_branch = (
-                str(git.config.GitConfigParser().get_value("init", "defaultBranch")) or "main"
-            )  # default to main
+                str(git.config.GitConfigParser().get_value("init", "defaultBranch")) or "master"
+            )  # default to master
         except configparser.Error:
             log.debug("Could not read init.defaultBranch")
         if self.default_branch in ["dev", "TEMPLATE"]:
