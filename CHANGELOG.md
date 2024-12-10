@@ -65,6 +65,7 @@
 - Don't break gitpod.yml with template string ([#3332](https://github.com/nf-core/tools/pull/3332))
 - rocrate: remove duplicated entries for name and version ([#3333](https://github.com/nf-core/tools/pull/3333))
 - rocrate: Update crate with version bump and handle new contributor field ([#3334](https://github.com/nf-core/tools/pull/3334))
+- Set git defaultBranch to master in sync action ([#3337](https://github.com/nf-core/tools/pull/3337))
 
 ### Version updates
 
