@@ -19,19 +19,29 @@ jobs:
     if: github.repository == '{{ name }}' && github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'master' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - uses: octokit/request-action@v2.x
+      - name: Get PR reviews
+        uses: octokit/request-action@v2.x
         if: github.event_name != 'workflow_dispatch'
         id: check_approvals
         with:
           route: GET /repos/{%- raw -%}${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews?per_page=100
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - id: test_variables
-        if: github.event_name != 'workflow_dispatch'
+
+      - name: Check for approvals
+        if: steps.check_approvals.outputs == ''
+        run: |
+          echo "No approvals found"
+          exit 1
+
+      - name: Check for enough approvals (>=2)
+        id: test_variables
+        if: github.event_name != 'workflow_dispatch' && steps.check_approvals.outputs != ''
         run: |
           JSON_RESPONSE='${{ steps.check_approvals.outputs.data }}'{% endraw %}
           CURRENT_APPROVALS_COUNT=$(echo $JSON_RESPONSE | jq -c '[.[] | select(.state | contains("APPROVED")) ] | length')
           test $CURRENT_APPROVALS_COUNT -ge 2 || exit 1 # At least 2 approvals are required
+
       - name: Launch workflow via Seqera Platform
         uses: seqeralabs/action-tower-launch@v2
         # TODO nf-core: You can customise AWS full pipeline tests as required
