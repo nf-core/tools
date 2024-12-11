@@ -23,6 +23,10 @@ on:
         description: "Pipeline to sync"
         type: string
         default: "all"
+      debug:
+        description: "Enable debug/verbose mode (true or false)"
+        type: boolean
+        default: false
 
 # Cancel if a newer run is started
 concurrency:
