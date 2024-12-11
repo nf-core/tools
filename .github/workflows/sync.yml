@@ -111,8 +111,6 @@ jobs:
         run: |
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
-          setBranch=$(git config --global init.defaultBranch)
-          echo "set default branch: $setBranch"
           nf-core --log-file sync_log_${{ matrix.pipeline }}.txt \
             ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }} \
             pipelines sync -d nf-core/${{ matrix.pipeline }} \
