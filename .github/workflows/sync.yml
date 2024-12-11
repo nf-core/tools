@@ -106,8 +106,8 @@ jobs:
         run: |
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
-          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt
-            ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }}
+          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt \
+            ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }} \
             pipelines sync -d nf-core/${{ matrix.pipeline }} \
             --from-branch dev \
             --pull-request \
