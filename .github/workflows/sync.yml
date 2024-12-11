@@ -99,10 +99,10 @@ jobs:
           if [ -z "$defaultBranch" ]; then
             defaultBranch="master"
           fi
+          popd
           echo "Default branch: $defaultBranch"
           echo "defaultBranch=$defaultBranch" >> GITHUB_OUTPUT
           git config --global init.defaultBranch $defaultBranch
-          popd
 
       - name: Run synchronisation
         if: github.repository == 'nf-core/tools'
