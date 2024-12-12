@@ -261,7 +261,7 @@ class PipelineSync:
         log.info("Making a new template pipeline using pipeline variables")
 
         # Only show error messages from pipeline creation
-        # logging.getLogger("nf_core.pipelines.create").setLevel(logging.ERROR)
+        logging.getLogger("nf_core.pipelines.create").setLevel(logging.ERROR)
         assert self.config_yml_path is not None
         assert self.config_yml is not None
 
