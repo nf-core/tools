@@ -57,7 +57,7 @@ class PipelineCreate:
         template_config: Optional[Union[CreateConfig, str, Path]] = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
-        default_branch: str = "main",
+        default_branch: str = "master",
         is_interactive: bool = False,
     ) -> None:
         if isinstance(template_config, CreateConfig):
@@ -298,7 +298,6 @@ class PipelineCreate:
         template_dir = Path(nf_core.__file__).parent / "pipeline-template"
         object_attrs = self.jinja_params
         object_attrs["nf_core_version"] = nf_core.__version__
-
         # Can't use glob.glob() as need recursive hidden dotfiles - https://stackoverflow.com/a/58126417/713980
         template_files = list(Path(template_dir).glob("**/*"))
         template_files += list(Path(template_dir).glob("*"))
@@ -431,8 +430,9 @@ class PipelineCreate:
         """Gets the default branch name from the Git configuration."""
         try:
             self.default_branch = (
-                str(git.config.GitConfigParser().get_value("init", "defaultBranch")) or "main"
-            )  # default to main
+                str(git.config.GitConfigParser().get_value("init", "defaultBranch")) or "master"
+            )  # default to master
+            log.debug(f"Default branch name: {self.default_branch}")
         except configparser.Error:
             log.debug("Could not read init.defaultBranch")
         if self.default_branch in ["dev", "TEMPLATE"]:
