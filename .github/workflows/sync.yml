@@ -24,7 +24,7 @@ on:
         type: string
         default: "all"
       debug:
-        description: "Enable debug/verbose mode (true or false)"
+        description: "Enable debug/verbose mode"
         type: boolean
         default: false
 
@@ -66,6 +66,8 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out nf-core/tools
+        with:
+          ref: ${{ github.ref}}
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out nf-core/${{ matrix.pipeline }}
