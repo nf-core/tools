@@ -23,6 +23,7 @@ jobs:
         uses: octokit/request-action@v2.x
         if: github.event_name != 'workflow_dispatch'
         id: check_approvals
+        continue-on-error: true
         with:
           route: GET /repos/{%- raw -%}${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews?per_page=100
         env:
