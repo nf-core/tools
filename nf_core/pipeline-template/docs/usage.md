@@ -138,7 +138,7 @@ Several generic profiles are bundled with the pipeline which instruct the pipeli
 
 {%- if nf_core_configs %}
 
-The pipeline also dynamically loads configurations from [https://github.com/nf-core/configs](https://github.com/nf-core/configs) when it runs, making multiple config profiles for various institutional clusters available at run time. For more information and to check if your system is suported, please see the [nf-core/configs documentation](https://github.com/nf-core/configs#documentation).
+The pipeline also dynamically loads configurations from [https://github.com/nf-core/configs](https://github.com/nf-core/configs) when it runs, making multiple config profiles for various institutional clusters available at run time. For more information and to check if your system is supported, please see the [nf-core/configs documentation](https://github.com/nf-core/configs#documentation).
 {% else %}
 {% endif %}
 Note that multiple profiles can be loaded, for example: `-profile test,docker` - the order of arguments is important!

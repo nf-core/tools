@@ -16,6 +16,8 @@
 
 ### General
 
+- Add missing p ([#3357](https://github.com/nf-core/tools/pull/3357))
+
 ### Version updates
 
 ## [v3.1.0 - Brass Boxfish](https://github.com/nf-core/tools/releases/tag/3.1.0) - [2024-12-09]
