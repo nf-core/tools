@@ -128,8 +128,9 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
         yaml_key=["template", "version"],
     )
 
-    # update rocrate
-    ROCrate(pipeline_obj.wf_path).update_rocrate()
+    # update rocrate if ro-crate is present
+    if Path(pipeline_obj.wf_path, "ro-crate-metadata.json").exists():
+        ROCrate(pipeline_obj.wf_path).update_rocrate()
 
 
 def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
