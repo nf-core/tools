@@ -4,6 +4,8 @@
 
 ### Template
 
+- Fix pre commit template ([#3358](https://github.com/nf-core/tools/pull/3358))
+
 ### Download
 
 ### Linting
