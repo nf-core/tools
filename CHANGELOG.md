@@ -10,6 +10,8 @@
 
 ### Modules
 
+- fix including modules.config ([#3356](https://github.com/nf-core/tools/pull/3356))
+
 ### Subworkflows
 
 ### General
