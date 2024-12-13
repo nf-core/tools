@@ -61,7 +61,7 @@ jobs:
         run: |
           echo "REPO_LOWERCASE=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
           echo "REPOTITLE_LOWERCASE=$(basename ${GITHUB_REPOSITORY,,})" >> "$GITHUB_OUTPUT"
-          echo "{% raw %}REPO_BRANCH=${{ github.event.inputs.testbranch || 'dev' }}" >> "$GITHUB_OUTPUT"
+          echo "{% raw %}REPO_BRANCH=${{ github.event.inputs.testbranch || 'dev' }}" >> "$GITHUB_OUTPUT"{% endraw %}
 
       - name: Make a cache directory for the container images
         run: |
@@ -103,7 +103,7 @@ jobs:
         run: nextflow run ./${{needs.configure.outputs.REPOTITLE_LOWERCASE }}/$( sed 's/\W/_/g' <<< ${{ needs.configure.outputs.REPO_BRANCH }}) -stub -profile test,singularity --outdir ./results
       - name: Run the downloaded pipeline (stub run not supported)
         id: run_pipeline
-        if: ${{ job.steps.stub_run_pipeline.status == failure() }}
+        if: ${{ steps.stub_run_pipeline.outcome == 'failure' }}
         env:
           NXF_SINGULARITY_CACHEDIR: ./singularity_container_images
           NXF_SINGULARITY_HOME_MOUNT: true
