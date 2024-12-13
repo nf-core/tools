@@ -97,7 +97,7 @@ def run_prettier_on_file(file: Union[Path, str, List[str]]) -> None:
             all_lines = [line for line in e.stdout.decode().split("\n")]
             files = "\n".join(all_lines[3:])
             log.debug(f"The following files were modified by prettier:\n {files}")
-        elif e.stderr.decode():
+        else:
             log.warning(
                 "There was an error running the prettier pre-commit hook.\n"
                 f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"

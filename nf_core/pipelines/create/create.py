@@ -266,6 +266,11 @@ class PipelineCreate:
         # Init the git repository and make the first commit
         if not self.no_git:
             self.git_init_pipeline()
+            # Run prettier on files
+            current_dir = Path.cwd()
+            os.chdir(self.outdir)
+            run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
+            os.chdir(current_dir)
 
         if self.config.is_nfcore and not self.is_interactive:
             log.info(
@@ -377,9 +382,6 @@ class PipelineCreate:
                     config_yml.template = NFCoreTemplateConfig(**self.config.model_dump(exclude_none=True))
                     yaml.safe_dump(config_yml.model_dump(exclude_none=True), fh)
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
-
-        # Run prettier on files
-        run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
 
     def fix_linting(self):
         """
