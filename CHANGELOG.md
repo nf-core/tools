@@ -4,6 +4,8 @@
 
 ### Template
 
+- Use outputs instead of the environment to pass around values between steps in the Download Test Action ([#3351](https://github.com/nf-core/tools/pull/3351))
+
 ### Download
 
 ### Linting
