@@ -106,9 +106,9 @@ class TestSubworkflowsRemove(TestSubworkflows):
         self.subworkflow_install_cross_org.install("fastq_trim_fastp_fastqc")
         self.mods_install.install("fastqc")
 
-        subworkflow_path = Path(self.subworkflow_install.directory, "subworkflows", "jvfe")
+        subworkflow_path = Path(self.subworkflow_install.directory, "subworkflows", "nf-core-test")
         fastq_trim_fastp_fastqc_path = Path(subworkflow_path, "fastq_trim_fastp_fastqc")
-        fastqc_path = Path(self.subworkflow_install.directory, "modules", "jvfe", "fastqc")
+        fastqc_path = Path(self.subworkflow_install.directory, "modules", "nf-core-test", "fastqc")
         nfcore_fastqc_path = Path(self.subworkflow_install.directory, "modules", "nf-core", "fastqc")
 
         mod_json_before = ModulesJson(self.pipeline_dir).get_modules_json()
