@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/{{ name }}/master/nextflow_schema.json",
+    "$id": "https://raw.githubusercontent.com/{{ name }}/{{ default_branch }}/nextflow_schema.json",
     "title": "{{ name }} pipeline parameters",
     "description": "{{ description }}",
     "type": "object",
@@ -243,10 +243,12 @@
         {
             "$ref": "#/$defs/input_output_options"
         },
-        {% if igenomes %}{
+        {%- if igenomes %}
+        {
             "$ref": "#/$defs/reference_genome_options"
         },{% endif %}
-        {% if nf_core_configs %}{
+        {%- if nf_core_configs %}
+        {
             "$ref": "#/$defs/institutional_config_options"
         },{% endif %}
         {

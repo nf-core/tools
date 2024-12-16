@@ -37,10 +37,10 @@ def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[P
     if not repo_type and use_prompt:
         log.warning("'repository_type' not defined in %s", config_fn.name)
         repo_type = questionary.select(
-            "Is this repository an nf-core pipeline or a fork of nf-core/modules?",
+            "Is this repository a pipeline or a modules repository?",
             choices=[
                 {"name": "Pipeline", "value": "pipeline"},
-                {"name": "nf-core/modules", "value": "modules"},
+                {"name": "Modules repository", "value": "modules"},
             ],
             style=nf_core.utils.nfcore_question_style,
         ).unsafe_ask()

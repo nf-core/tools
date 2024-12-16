@@ -1,5 +1,6 @@
 """Test the nf-core pipelines rocrate command"""
 
+import json
 import shutil
 import tempfile
 from pathlib import Path
@@ -12,6 +13,7 @@ import nf_core.pipelines.create
 import nf_core.pipelines.create.create
 import nf_core.pipelines.rocrate
 import nf_core.utils
+from nf_core.pipelines.bump_version import bump_pipeline_version
 
 from ..test_pipelines import TestPipelines
 
@@ -125,3 +127,36 @@ class TestROCrate(TestPipelines):
 
         # Clean up
         shutil.rmtree(tmp_dir)
+
+    def test_update_rocrate(self):
+        """Run the nf-core rocrate command with a zip output"""
+
+        assert self.rocrate_obj.create_rocrate(json_path=self.pipeline_dir, zip_path=self.pipeline_dir)
+
+        # read the crate json file
+        with open(Path(self.pipeline_dir, "ro-crate-metadata.json")) as f:
+            crate = json.load(f)
+
+        # check the old version
+        self.assertEqual(crate["@graph"][2]["version"][0], "1.0.0dev")
+        # check creativeWorkStatus is InProgress
+        self.assertEqual(crate["@graph"][0]["creativeWorkStatus"], "InProgress")
+
+        # bump version
+        bump_pipeline_version(self.pipeline_obj, "1.1.0")
+
+        # Check that the crate was created
+        self.assertTrue(Path(self.pipeline_dir, "ro-crate.crate.zip").exists())
+
+        # Check that the crate was updated
+        self.assertTrue(Path(self.pipeline_dir, "ro-crate-metadata.json").exists())
+
+        # read the crate json file
+        with open(Path(self.pipeline_dir, "ro-crate-metadata.json")) as f:
+            crate = json.load(f)
+
+        # check that the version was updated
+        self.assertEqual(crate["@graph"][2]["version"][0], "1.1.0")
+
+        # check creativeWorkStatus is Stable
+        self.assertEqual(crate["@graph"][0]["creativeWorkStatus"], "Stable")

@@ -1083,7 +1083,7 @@ def get_repo_releases_branches(pipeline, wfs):
             raise AssertionError(f"Not able to find pipeline '{pipeline}'")
 
     # Get branch information from github api - should be no need to check if the repo exists again
-    branch_response = gh_api.safe_get(f"https://api.github.com/repos/{pipeline}/branches")
+    branch_response = gh_api.safe_get(f"https://api.github.com/repos/{pipeline}/branches?per_page=100")
     for branch in branch_response.json():
         if (
             branch["name"] != "TEMPLATE"

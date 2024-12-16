@@ -14,7 +14,7 @@ import yaml
 import nf_core.modules
 import nf_core.pipelines.create.create
 from nf_core import __version__
-from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlConfig
+from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlConfig, custom_yaml_dumper
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
 OLD_TRIMGALORE_SHA = "9b7a3bdefeaad5d42324aa7dd50f87bea1b04386"
@@ -138,7 +138,7 @@ def create_tmp_pipeline(no_git: bool = False) -> Tuple[Path, Path, str, Path]:
         bump_version=None,
     )
     with open(str(Path(pipeline_dir, ".nf-core.yml")), "w") as fh:
-        yaml.dump(nf_core_yml.model_dump(), fh)
+        yaml.dump(nf_core_yml.model_dump(), fh, Dumper=custom_yaml_dumper())
 
     nf_core.pipelines.create.create.PipelineCreate(
         pipeline_name, "it is mine", "me", no_git=no_git, outdir=pipeline_dir, force=True

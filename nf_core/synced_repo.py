@@ -9,10 +9,7 @@ from typing import Dict, Iterable, List, Optional, Union
 import git
 from git.exc import GitCommandError
 
-from nf_core.components.constants import (
-    NF_CORE_MODULES_NAME,
-    NF_CORE_MODULES_REMOTE,
-)
+from nf_core.components.constants import NF_CORE_MODULES_DEFAULT_BRANCH, NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
 from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
@@ -186,7 +183,7 @@ class SyncedRepo:
         if branch is None:
             # Don't bother fetching default branch if we're using nf-core
             if self.remote_url == NF_CORE_MODULES_REMOTE:
-                self.branch = "master"
+                self.branch = NF_CORE_MODULES_DEFAULT_BRANCH
             else:
                 self.branch = self.get_default_branch()
         else:
