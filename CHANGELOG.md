@@ -4,6 +4,7 @@
 
 ### Template
 
+- Use outputs instead of the environment to pass around values between steps in the Download Test Action ([#3351](https://github.com/nf-core/tools/pull/3351))
 - Fix pre commit template ([#3358](https://github.com/nf-core/tools/pull/3358))
 
 ### Download
@@ -17,6 +18,8 @@
 ### Subworkflows
 
 ### General
+
+- Add missing p ([#3357](https://github.com/nf-core/tools/pull/3357))
 
 ### Version updates
 
