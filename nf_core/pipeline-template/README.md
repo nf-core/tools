@@ -7,7 +7,7 @@
   </picture>
 </h1>
 
-{% else %}
+{%- else -%}
 
 # {{ name }}
 

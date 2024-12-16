@@ -22,7 +22,7 @@ from nf_core.pipelines.create.utils import CreateConfig, features_yml_path, load
 from nf_core.pipelines.create_logo import create_logo
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.pipelines.rocrate import ROCrate
-from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlLintConfig
+from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlLintConfig, custom_yaml_dumper
 
 log = logging.getLogger(__name__)
 
@@ -380,7 +380,7 @@ class PipelineCreate:
             if config_fn is not None and config_yml is not None:
                 with open(str(config_fn), "w") as fh:
                     config_yml.template = NFCoreTemplateConfig(**self.config.model_dump(exclude_none=True))
-                    yaml.safe_dump(config_yml.model_dump(exclude_none=True), fh)
+                    yaml.dump(config_yml.model_dump(exclude_none=True), fh, Dumper=custom_yaml_dumper())
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
 
     def fix_linting(self):
@@ -410,7 +410,7 @@ class PipelineCreate:
         if config_fn is not None and nf_core_yml is not None:
             nf_core_yml.lint = NFCoreYamlLintConfig(**lint_config)
             with open(self.outdir / config_fn, "w") as fh:
-                yaml.dump(nf_core_yml.model_dump(exclude_none=True), fh, default_flow_style=False, sort_keys=False)
+                yaml.dump(nf_core_yml.model_dump(exclude_none=True), fh, Dumper=custom_yaml_dumper())
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""

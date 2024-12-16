@@ -12,7 +12,7 @@ from ruamel.yaml import YAML
 
 import nf_core.utils
 from nf_core.pipelines.rocrate import ROCrate
-from nf_core.utils import Pipeline
+from nf_core.utils import Pipeline, custom_yaml_dumper
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
@@ -257,7 +257,7 @@ def update_yaml_file(fn: Path, patterns: List[Tuple[str, str]], yaml_key: List[s
         if new_value != current_value:
             target[last_key] = new_value
             with open(fn, "w") as file:
-                yaml.dump(yaml_content, file)
+                yaml.dump(yaml_content, file, Dumper=custom_yaml_dumper())
             log.info(f"Updated version in YAML file '{fn}'")
             log_change(str(current_value), str(new_value))
     except KeyError as e:
