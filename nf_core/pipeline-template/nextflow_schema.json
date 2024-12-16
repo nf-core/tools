@@ -243,10 +243,10 @@
         {
             "$ref": "#/$defs/input_output_options"
         },
-        {% if igenomes %}{
+        {%- if igenomes %}{
             "$ref": "#/$defs/reference_genome_options"
         },{% endif %}
-        {% if nf_core_configs %}{
+        {%- if nf_core_configs %}{
             "$ref": "#/$defs/institutional_config_options"
         },{% endif %}
         {

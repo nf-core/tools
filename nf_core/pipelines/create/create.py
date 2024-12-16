@@ -267,10 +267,15 @@ class PipelineCreate:
         if not self.no_git:
             self.git_init_pipeline()
             # Run prettier on files
-            current_dir = Path.cwd()
-            os.chdir(self.outdir)
-            run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
-            os.chdir(current_dir)
+            if (
+                self.config.skip_features is None
+                or "code_linters" not in self.config.skip_features
+                or "github" not in self.config.skip_features
+            ):
+                current_dir = Path.cwd()
+                os.chdir(self.outdir)
+                run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
+                os.chdir(current_dir)
 
         if self.config.is_nfcore and not self.is_interactive:
             log.info(
