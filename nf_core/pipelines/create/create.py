@@ -267,10 +267,8 @@ class PipelineCreate:
         if not self.no_git:
             self.git_init_pipeline()
             # Run prettier on files
-            if (
-                self.config.skip_features is None
-                or "code_linters" not in self.config.skip_features
-                or "github" not in self.config.skip_features
+            if self.config.skip_features is None or not (
+                "code_linters" in self.config.skip_features or "github" in self.config.skip_features
             ):
                 current_dir = Path.cwd()
                 os.chdir(self.outdir)
@@ -415,7 +413,13 @@ class PipelineCreate:
         if config_fn is not None and nf_core_yml is not None:
             nf_core_yml.lint = NFCoreYamlLintConfig(**lint_config)
             with open(self.outdir / config_fn, "w") as fh:
-                yaml.dump(nf_core_yml.model_dump(exclude_none=True), fh, Dumper=custom_yaml_dumper())
+                yaml.dump(
+                    nf_core_yml.model_dump(exclude_none=True),
+                    fh,
+                    sort_keys=False,
+                    default_flow_style=False,
+                    Dumper=custom_yaml_dumper(),
+                )
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
