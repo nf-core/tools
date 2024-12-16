@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -42,7 +41,7 @@ class ComponentUpdate(ComponentCommand):
         limit_output=False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
-        self.current_remote = remote_url
+        self.current_remote = ModulesRepo(remote_url, branch)
         self.branch = branch
         self.force = force
         self.prompt = prompt
@@ -97,7 +96,7 @@ class ComponentUpdate(ComponentCommand):
         """
         if isinstance(component, dict):
             # Override modules_repo when the component to install is a dependency from a subworkflow.
-            remote_url = component.get("git_remote", self.current_remote)
+            remote_url = component.get("git_remote", self.current_remote.remote_url)
             branch = component.get("branch", self.branch)
             self.modules_repo = ModulesRepo(remote_url, branch)
             component = component["name"]
@@ -892,7 +891,7 @@ class ComponentUpdate(ComponentCommand):
         if self.component_type == "modules":
             # All subworkflow names in the installed_by section of a module are subworkflows using this module
             # We need to update them too
-            git_remote = self.current_remote
+            git_remote = self.current_remote.remote_url
             for subworkflow in installed_by:
                 if subworkflow != component:
                     for remote_url, content in mods_json["repos"].items():
@@ -965,9 +964,7 @@ class ComponentUpdate(ComponentCommand):
     def manage_changes_in_linked_components(self, component, modules_to_update, subworkflows_to_update):
         """Check for linked components added or removed in the new subworkflow version"""
         if self.component_type == "subworkflows":
-            org_path_match = re.search(r"(?:https://|git@)[\w\.]+[:/](.*?)/", self.current_remote)
-            if org_path_match:
-                org_path = org_path_match.group(1)
+            org_path = self.current_remote.repo_path
 
             subworkflow_directory = Path(self.directory, self.component_type, org_path, component)
             included_modules, included_subworkflows = get_components_to_install(subworkflow_directory)
@@ -991,7 +988,7 @@ class ComponentUpdate(ComponentCommand):
             # If a new module/subworkflow is included in the subworklfow and wasn't included before
             for module in included_modules:
                 module_name = module["name"]
-                module["git_remote"] = module.get("git_remote", self.current_remote)
+                module["git_remote"] = module.get("git_remote", self.current_remote.remote_url)
                 module["branch"] = module.get("branch", self.branch)
                 if module_name not in modules_to_update:
                     log.info(f"Installing newly included module '{module_name}' for '{component}'")
@@ -999,7 +996,7 @@ class ComponentUpdate(ComponentCommand):
                     install_module_object.install(module, silent=True)
             for subworkflow in included_subworkflows:
                 subworkflow_name = subworkflow["name"]
-                subworkflow["git_remote"] = subworkflow.get("git_remote", self.current_remote)
+                subworkflow["git_remote"] = subworkflow.get("git_remote", self.current_remote.remote_url)
                 subworkflow["branch"] = subworkflow.get("branch", self.branch)
                 if subworkflow_name not in subworkflows_to_update:
                     log.info(f"Installing newly included subworkflow '{subworkflow_name}' for '{component}'")
@@ -1022,4 +1019,4 @@ class ComponentUpdate(ComponentCommand):
         self.modules_json.pipeline_components = None
         self.update_all = original_update_all
         if self.current_remote is None:
-            self.current_remote = self.modules_repo.remote_url
+            self.current_remote = self.modules_repo

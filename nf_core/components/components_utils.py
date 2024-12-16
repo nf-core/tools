@@ -1,24 +1,17 @@
 import logging
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import questionary
 import requests
 import rich.prompt
 import yaml
 
-if TYPE_CHECKING:
-    from nf_core.modules.modules_repo import ModulesRepo
-
 import nf_core.utils
+from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
-
-# Constants for the nf-core/modules repo used throughout the module files
-NF_CORE_MODULES_NAME = "nf-core"
-NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
-NF_CORE_MODULES_DEFAULT_BRANCH = "master"
 
 
 def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[Path, Optional[str], str]:
@@ -181,20 +174,15 @@ def get_components_to_install(
                 for component in components:
                     if isinstance(component, dict):
                         component_name = list(component.keys())[0].lower()
+                        branch = component[component_name].get("branch")
                         git_remote = component[component_name]["git_remote"]
-                        org_path_match = re.search(r"(?:https://|git@)[\w\.]+[:/](.*?)/", git_remote)
-                        if org_path_match:
-                            org_path = org_path_match.group(1)
-                        else:
-                            raise UserWarning(
-                                f"The organisation path of {component_name} could not be established from '{git_remote}'"
-                            )
+                        modules_repo = ModulesRepo(git_remote, branch=branch)
                         current_comp_dict = subworkflows if component_name in subworkflows else modules
 
                         component_dict = {
-                            "org_path": org_path,
+                            "org_path": modules_repo.repo_path,
                             "git_remote": git_remote,
-                            "branch": component[component_name].get("branch"),
+                            "branch": branch,
                         }
 
                         current_comp_dict[component_name].update(component_dict)

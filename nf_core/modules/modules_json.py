@@ -15,7 +15,8 @@ from git.exc import GitCommandError
 from typing_extensions import NotRequired, TypedDict  # for py<3.11
 
 import nf_core.utils
-from nf_core.components.components_utils import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE, get_components_to_install
+from nf_core.components.components_utils import get_components_to_install
+from nf_core.components.constants import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.pipelines.lint_utils import dump_json_with_prettier
 
