@@ -3,7 +3,7 @@ tasks:
   - name: Update Nextflow and setup pre-commit
     command: |
       pre-commit install --install-hooks
-      nextflow self-update {% if code_linters %}
+      nextflow self-update {%- if code_linters %}
 
 vscode:
   extensions:
