@@ -367,7 +367,7 @@ class PipelineCreate:
             # Make a logo and save it, if it is a nf-core pipeline
             self.make_pipeline_logo()
 
-        if self.config.skip_features is None or "ro-crate" not in self.config.skip_features:
+        if self.config.skip_features is None or "rocrate" not in self.config.skip_features:
             # Create the RO-Crate metadata file
             rocrate_obj = ROCrate(self.outdir)
             rocrate_obj.create_rocrate(json_path=self.outdir / "ro-crate-metadata.json")
