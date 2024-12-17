@@ -270,20 +270,16 @@ class ROCrate:
             authors = []
             if "manifest.author" in self.pipeline_obj.nf_config:
                 authors.extend([a.strip() for a in self.pipeline_obj.nf_config["manifest.author"].split(",")])
-            if "manifest.contributor" in self.pipeline_obj.nf_config:
-                authors.extend(
-                    [
-                        c.get("name", "").strip()
-                        for c in self.pipeline_obj.nf_config["manifest.contributor"]
-                        if "name" in c
-                    ]
-                )
+            if "manifest.contributors" in self.pipeline_obj.nf_config:
+                contributors = self.pipeline_obj.nf_config["manifest.contributors"]
+                names = re.findall(r"name:'([^']+)'", contributors)
+                authors.extend(names)
             if not authors:
                 raise KeyError("No authors found")
             # add manifest authors as maintainer to crate
 
         except KeyError:
-            log.error("No author or contributor fields found in manifest of nextflow.config")
+            log.error("No author or contributors fields found in manifest of nextflow.config")
             return
         # remove duplicates
         authors = list(set(authors))
