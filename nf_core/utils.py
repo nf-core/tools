@@ -1327,13 +1327,20 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
         # Retrieve information if template from config file is empty
         template = tools_config.get("template")
         config_template_keys = template.keys() if template is not None else []
+        # Get author names from contributors first, then fallback to author
+        if "manifest.contributors" in wf_config:
+            contributors = wf_config["manifest.contributors"]
+            names = re.findall(r"name:'([^']+)'", contributors)
+            author_names = ", ".join(names)
+        else:
+            author_names = wf_config["manifest.author"].strip("'\"")
         if nf_core_yaml_config.template is None:
             # The .nf-core.yml file did not contain template information
             nf_core_yaml_config.template = NFCoreTemplateConfig(
                 org="nf-core",
                 name=wf_config["manifest.name"].strip("'\"").split("/")[-1],
                 description=wf_config["manifest.description"].strip("'\""),
-                author=wf_config["manifest.author"].strip("'\""),
+                author=author_names,
                 version=wf_config["manifest.version"].strip("'\""),
                 outdir=str(directory),
                 is_nfcore=True,
@@ -1344,7 +1351,7 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
                 org=tools_config["template"].get("prefix", tools_config["template"].get("org", "nf-core")),
                 name=tools_config["template"].get("name", wf_config["manifest.name"].strip("'\"").split("/")[-1]),
                 description=tools_config["template"].get("description", wf_config["manifest.description"].strip("'\"")),
-                author=tools_config["template"].get("author", wf_config["manifest.author"].strip("'\"")),
+                author=tools_config["template"].get("author", author_names),
                 version=tools_config["template"].get("version", wf_config["manifest.version"].strip("'\"")),
                 outdir=tools_config["template"].get("outdir", str(directory)),
                 skip_features=tools_config["template"].get("skip", tools_config["template"].get("skip_features")),
