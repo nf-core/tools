@@ -12,6 +12,8 @@ import nf_core.pipelines.create.create
 import nf_core.subworkflows
 
 from .utils import (
+    CROSS_ORGANIZATION_BRANCH,
+    CROSS_ORGANIZATION_URL,
     GITLAB_SUBWORKFLOWS_BRANCH,
     GITLAB_SUBWORKFLOWS_ORG_PATH_BRANCH,
     GITLAB_URL,
@@ -103,10 +105,17 @@ class TestSubworkflows(unittest.TestCase):
             force=False,
             sha="8c343b3c8a0925949783dc547666007c245c235b",
         )
+        self.subworkflow_install_cross_org = nf_core.subworkflows.SubworkflowInstall(
+            self.pipeline_dir, remote_url=CROSS_ORGANIZATION_URL, branch=CROSS_ORGANIZATION_BRANCH
+        )
+
         self.mods_install = nf_core.modules.install.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
 
         # Set up remove objects
         self.subworkflow_remove = nf_core.subworkflows.SubworkflowRemove(self.pipeline_dir)
+        self.subworkflow_remove_cross_org = nf_core.subworkflows.SubworkflowRemove(
+            self.pipeline_dir, remote_url=CROSS_ORGANIZATION_URL, branch=CROSS_ORGANIZATION_BRANCH
+        )
 
     @pytest.fixture(autouse=True)
     def _use_caplog(self, caplog):
