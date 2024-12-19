@@ -62,6 +62,7 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
 
     passed: List[str] = []
     failed: List[str] = []
+    warned: List[str] = []
     ignored: List[str] = []
     fixed: List[str] = []
     could_fix: bool = False
@@ -173,6 +174,12 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
                             shutil.copy(_tf(f), _pf(f))
                             passed.append(f"`{f}` matches the template")
                             fixed.append(f"`{f}` overwritten with template file")
+                        elif f.name in ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"]:
+                            # Report LICENSE as a warning since we are not using the mainfest.author names
+                            # TODO: Lint the content of the LICENSE file except the line containing author names
+                            # to allow for people to opt-in listing author/maintainer names instead of using the "nf-core community"
+                            warned.append(f"`{f}` does not match the template")
+                            could_fix = True
                         else:
                             failed.append(f"`{f}` does not match the template")
                             could_fix = True
@@ -217,4 +224,11 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     # cleaning up temporary dir
     shutil.rmtree(tmp_dir)
 
-    return {"passed": passed, "failed": failed, "ignored": ignored, "fixed": fixed, "could_fix": could_fix}
+    return {
+        "passed": passed,
+        "failed": failed,
+        "warned": warned,
+        "ignored": ignored,
+        "fixed": fixed,
+        "could_fix": could_fix,
+    }
