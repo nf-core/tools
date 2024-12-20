@@ -12,7 +12,7 @@
 
 ### Linting
 
-- Linting of pipeline LICENSE file is a warning to allow for autor/maintainer names ([#3366](https://github.com/nf-core/tools/pull/3366))
+- Linting of pipeline LICENSE file is a warning to allow for author/maintainer names ([#3366](https://github.com/nf-core/tools/pull/3366))
 
 ### Modules
 

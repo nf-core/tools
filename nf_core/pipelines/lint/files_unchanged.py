@@ -175,7 +175,7 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
                             passed.append(f"`{f}` matches the template")
                             fixed.append(f"`{f}` overwritten with template file")
                         elif f.name in ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"]:
-                            # Report LICENSE as a warning since we are not using the mainfest.author names
+                            # Report LICENSE as a warning since we are not using the manifest.author names
                             # TODO: Lint the content of the LICENSE file except the line containing author names
                             # to allow for people to opt-in listing author/maintainer names instead of using the "nf-core community"
                             warned.append(f"`{f}` does not match the template")
