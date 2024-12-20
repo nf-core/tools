@@ -6,10 +6,13 @@
 
 - Use outputs instead of the environment to pass around values between steps in the Download Test Action ([#3351](https://github.com/nf-core/tools/pull/3351))
 - Fix pre commit template ([#3358](https://github.com/nf-core/tools/pull/3358))
+- Set LICENSE copyright to nf-core community ([#3366](https://github.com/nf-core/tools/pull/3366))
 
 ### Download
 
 ### Linting
+
+- Linting of pipeline LICENSE file is a warning to allow for author/maintainer names ([#3366](https://github.com/nf-core/tools/pull/3366))
 
 ### Modules
 
