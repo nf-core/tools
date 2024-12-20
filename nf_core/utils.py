@@ -1097,6 +1097,16 @@ def get_repo_releases_branches(pipeline, wfs):
 
 
 def get_repo_commit(pipeline, commit_id):
+    """Check if the repo contains the requested commit_id, and expand it to long form if necessary.
+
+    Args:
+        pipeline (str): GitHub repo username/repo
+        commit_id: The requested commit ID (SHA). It can be in standard long/short form, or any length.
+
+    Returns:
+        commit_id: String or None
+    """
+
     commit_response = gh_api.get(
         f"https://api.github.com/repos/{pipeline}/commits/{commit_id}", headers={"Accept": "application/vnd.github.sha"}
     )
