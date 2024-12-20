@@ -1,32 +1,23 @@
 # nf-core/tools: Changelog
 
-## v3.1.1dev
+## [v3.1.1 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.1) - [2024-12-20]
 
 ### Template
 
 - Use outputs instead of the environment to pass around values between steps in the Download Test Action ([#3351](https://github.com/nf-core/tools/pull/3351))
 - Fix pre commit template ([#3358](https://github.com/nf-core/tools/pull/3358))
 - Set LICENSE copyright to nf-core community ([#3366](https://github.com/nf-core/tools/pull/3366))
-
-### Download
+- fix including modules.config ([#3356](https://github.com/nf-core/tools/pull/3356))
 
 ### Linting
 
 - Linting of pipeline LICENSE file is a warning to allow for author/maintainer names ([#3366](https://github.com/nf-core/tools/pull/3366))
-
-### Modules
-
-- fix including modules.config ([#3356](https://github.com/nf-core/tools/pull/3356))
-
-### Subworkflows
 
 ### General
 
 - Add missing p ([#3357](https://github.com/nf-core/tools/pull/3357))
 - Use `manifest.contributors` names if available, otherwise default to `manifest.author` ([#3362](https://github.com/nf-core/tools/pull/3362))
 - Properly parse the names form `manifest.contributors` ([#3364](https://github.com/nf-core/tools/pull/3364))
-
-### Version updates
 
 ## [v3.1.0 - Brass Boxfish](https://github.com/nf-core/tools/releases/tag/3.1.0) - [2024-12-09]
 
