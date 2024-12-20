@@ -1096,6 +1096,16 @@ def get_repo_releases_branches(pipeline, wfs):
     return pipeline, wf_releases, wf_branches
 
 
+def get_repo_commit(pipeline, commit_id):
+    commit_response = gh_api.get(
+        f"https://api.github.com/repos/{pipeline}/commits/{commit_id}", headers={"Accept": "application/vnd.github.sha"}
+    )
+    if commit_response.status_code == 200:
+        return commit_response.text
+    else:
+        return None
+
+
 CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
