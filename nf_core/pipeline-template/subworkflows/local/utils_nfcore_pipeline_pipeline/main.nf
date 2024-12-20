@@ -143,7 +143,7 @@ workflow PIPELINE_COMPLETION {
     {%- if multiqc %}
     def multiqc_reports = multiqc_report.toList()
     {%- endif %}
-    
+
     //
     // Completion email and summary
     //
