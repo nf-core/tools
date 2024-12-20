@@ -21,6 +21,7 @@
 
 - Add missing p ([#3357](https://github.com/nf-core/tools/pull/3357))
 - Use `manifest.contributors` names if available, otherwise default to `manifest.author` ([#3362](https://github.com/nf-core/tools/pull/3362))
+- Properly parse the names form `manifest.contributors` ([#3364](https://github.com/nf-core/tools/pull/3364))
 
 ### Version updates
 
