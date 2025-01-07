@@ -8,11 +8,11 @@
 
 ### Modules
 
+- Fix bump-versions: only append module name if it is a dir and contains main.nf ([#3384](https://github.com/nf-core/tools/pull/3384))
+
 ### Subworkflows
 
 ### General
-
-- bump to 3.2.0dev ([#3370](https://github.com/nf-core/tools/pull/3370))
 
 ### Version updates
 
