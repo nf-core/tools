@@ -1,5 +1,21 @@
 # nf-core/tools: Changelog
 
+## v3.2.0dev
+
+### Template
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### General
+
+- bump to 3.2.0dev ([#3370](https://github.com/nf-core/tools/pull/3370))
+
+### Version updates
+
 ## [v3.1.1 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.1) - [2024-12-20]
 
 ### Template
