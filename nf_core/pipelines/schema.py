@@ -330,6 +330,33 @@ class PipelineSchema:
             for group_key, group in schema_no_required.get(self.defs_notation, {}).items():
                 if "required" in group:
                     schema_no_required[self.defs_notation][group_key].pop("required")
+                if "allOf" in group:
+                    for all_of in group["allOf"]:
+                        if "required" in all_of:
+                            schema_no_required[self.defs_notation][group_key]["allOf"].pop("required")
+                    schema_no_required[self.defs_notation][group_key]["allOf"] = [
+                        all_of for all_of in group["allOf"] if all_of
+                    ]
+                    if not group["allOf"]:
+                        schema_no_required[self.defs_notation][group_key].pop("allOf")
+                if "anyOf" in group:
+                    for any_of in group["anyOf"]:
+                        if "required" in any_of:
+                            schema_no_required[self.defs_notation][group_key]["anyOf"].pop("required")
+                    schema_no_required[self.defs_notation][group_key]["anyOf"] = [
+                        any_of for any_of in group["anyOf"] if any_of
+                    ]
+                    if not group["anyOf"]:
+                        schema_no_required[self.defs_notation][group_key].pop("anyOf")
+                if "oneOf" in group:
+                    for i, one_of in enumerate(group["oneOf"]):
+                        if "required" in one_of:
+                            schema_no_required[self.defs_notation][group_key]["oneOf"][i].pop("required")
+                    schema_no_required[self.defs_notation][group_key]["oneOf"] = [
+                        one_of for one_of in group["oneOf"] if one_of
+                    ]
+                    if not group["oneOf"]:
+                        schema_no_required[self.defs_notation][group_key].pop("oneOf")
             jsonschema.validate(self.schema_defaults, schema_no_required)
         except jsonschema.exceptions.ValidationError as e:
             raise AssertionError(f"Default parameters are invalid: {e.message}")
