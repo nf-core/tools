@@ -87,6 +87,9 @@ jobs:
       - name: Inspect download
         run: tree ./${{ needs.configure.outputs.REPOTITLE_LOWERCASE }}{% endraw %}{% if test_config %}{% raw %}
 
+      - name: Inspect container images
+        run: tree ./singularity_container_images | tee ./container_initial
+
       - name: Count the downloaded number of container images
         id: count_initial
         run: |
@@ -123,7 +126,8 @@ jobs:
             final_count=${{ steps.count_afterwards.outputs.IMAGE_COUNT_AFTER }}
             difference=$((final_count - initial_count))
             echo "$difference additional container images were \n downloaded at runtime . The pipeline has no support for offline runs!"
-            tree ./singularity_container_images
+            tree ./singularity_container_images > ./container_afterwards
+            diff ./container_initial ./container_afterwards
             exit 1
           else
             echo "The pipeline can be downloaded successfully!"
