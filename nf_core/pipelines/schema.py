@@ -359,6 +359,7 @@ class PipelineSchema:
                         schema_no_required[self.defs_notation][group_key].pop("oneOf")
             jsonschema.validate(self.schema_defaults, schema_no_required)
         except jsonschema.exceptions.ValidationError as e:
+            log.debug(f"Complete error message:\n{e}")
             raise AssertionError(f"Default parameters are invalid: {e.message}")
         for param, default in self.schema_defaults.items():
             if default in ("null", "", None, "None") or default is False:
