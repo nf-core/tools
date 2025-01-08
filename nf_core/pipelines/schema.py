@@ -327,6 +327,16 @@ class PipelineSchema:
             schema_no_required = copy.deepcopy(self.schema)
             if "required" in schema_no_required:
                 schema_no_required.pop("required")
+            for keyword in ["allOf", "anyOf", "oneOf"]:
+                if keyword in schema_no_required:
+                    for i, kw_content in enumerate(schema_no_required[keyword]):
+                        if "required" in kw_content:
+                            schema_no_required[keyword][i].pop("required")
+                    schema_no_required[keyword] = [
+                        kw_content for kw_content in schema_no_required[keyword] if kw_content
+                    ]
+                    if not schema_no_required[keyword]:
+                        schema_no_required.pop(keyword)
             for group_key, group in schema_no_required.get(self.defs_notation, {}).items():
                 if "required" in group:
                     schema_no_required[self.defs_notation][group_key].pop("required")
