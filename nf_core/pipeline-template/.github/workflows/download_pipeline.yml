@@ -35,7 +35,7 @@ jobs:
       REPOTITLE_LOWERCASE: ${{ steps.get_repo_properties.outputs.REPOTITLE_LOWERCASE }}
       REPO_BRANCH: ${{ steps.get_repo_properties.outputs.REPO_BRANCH }}
     steps:
-      - name: Get the repository name and current branch set as environment variable
+      - name: Get the repository name and current branch
         id: get_repo_properties
         run: |
           echo "REPO_LOWERCASE=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
@@ -85,10 +85,10 @@ jobs:
           --download-configuration 'yes'
 
       - name: Inspect download
-        run: tree ./${{ needs.configure.outputs.REPOTITLE_LOWERCASE }}{% endraw %}{% if test_config %}{% raw %}
+        run: tree ./${{ needs.configure.outputs.REPOTITLE_LOWERCASE }}{% endraw %}
 
       - name: Inspect container images
-        run: tree ./singularity_container_images | tee ./container_initial
+        run: tree ./singularity_container_images | tee ./container_initial{% if test_config %}{% raw %}
 
       - name: Count the downloaded number of container images
         id: count_initial
