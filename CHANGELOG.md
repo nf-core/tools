@@ -14,6 +14,8 @@
 
 ### General
 
+- Parameters schema validation: allow oneOf, anyOf and allOf with `required` ([#3386](https://github.com/nf-core/tools/pull/3386))
+
 ### Version updates
 
 ## [v3.1.1 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.1) - [2024-12-20]
