@@ -387,6 +387,7 @@ class PipelineCreate:
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
 
         # Run prettier on files for pipelines sync
+        log.debug("Running prettier on pipeline files")
         run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
 
     def fix_linting(self):
