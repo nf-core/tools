@@ -8,11 +8,14 @@
 
 ### Modules
 
+- Fix bump-versions: only append module name if it is a dir and contains main.nf ([#3384](https://github.com/nf-core/tools/pull/3384))
+
 ### Subworkflows
 
 ### General
 
-- run pre-comit when rendering template for pipelines sync
+- Parameters schema validation: allow oneOf, anyOf and allOf with `required` ([#3386](https://github.com/nf-core/tools/pull/3386))
+- Run pre-comit when rendering template for pipelines sync ([#3371](https://github.com/nf-core/tools/pull/3371))
 
 ### Version updates
 
