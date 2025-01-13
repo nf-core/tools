@@ -1543,7 +1543,7 @@ class DownloadWorkflow:
 
         progress.remove_task(task)
 
-    def compress_download(self) -> None:
+    def compress_download(self):
         """Take the downloaded files and make a compressed .tar.gz archive."""
         log.debug(f"Creating archive: {self.output_filename}")
 
