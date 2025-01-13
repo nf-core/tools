@@ -95,7 +95,6 @@ class DownloadTest(unittest.TestCase):
             download_obj.wf_branches,
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
         download_obj.get_revision_hash()
-        print(download_obj)
         assert download_obj.wf_sha[download_obj.revision[0]] == revision
         assert download_obj.outdir == f"nf-core-exoseq_{revision}"
         assert (
