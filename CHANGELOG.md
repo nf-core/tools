@@ -7,6 +7,7 @@
 ### Download
 
 - Allow `nf-core pipelines download -r` to download commits ([#3374](https://github.com/nf-core/tools/pull/3374))
+- Fix faulty Download Test Action to ensure that setup and test run as one job and on the same runner ([#3389](https://github.com/nf-core/tools/pull/3389))
 
 ### Linting
 
