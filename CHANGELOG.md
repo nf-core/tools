@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v3.2.0dev
+## v3.1.2dev
 
 ### Template
 
@@ -15,6 +15,7 @@
 ### General
 
 - Parameters schema validation: allow oneOf, anyOf and allOf with `required` ([#3386](https://github.com/nf-core/tools/pull/3386))
+- Run pre-comit when rendering template for pipelines sync ([#3371](https://github.com/nf-core/tools/pull/3371))
 
 ### Version updates
 
