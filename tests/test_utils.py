@@ -171,20 +171,11 @@ class TestUtils(TestPipelines):
 
     def test_get_repo_commit(self):
         # The input can be a commit in standard long/short form, but also any length as long as it can be uniquely resolved
-        assert (
-            nf_core.utils.get_repo_commit("nf-core/methylseq", "b3e5e3b95aaf01d98391a62a10a3990c0a4de395")
-            == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
-        )
-        assert (
-            nf_core.utils.get_repo_commit("nf-core/methylseq", "b3e5e3b95aaf01d")
-            == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
-        )
-        assert (
-            nf_core.utils.get_repo_commit("nf-core/methylseq", "b3e5e3b") == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
-        )
-        assert (
-            nf_core.utils.get_repo_commit("nf-core/methylseq", "b3e5e3") == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
-        )
+        revision = "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
+        assert nf_core.utils.get_repo_commit("nf-core/methylseq", revision) == revision
+        assert nf_core.utils.get_repo_commit("nf-core/methylseq", revision[:16]) == revision
+        assert nf_core.utils.get_repo_commit("nf-core/methylseq", revision[:7]) == revision
+        assert nf_core.utils.get_repo_commit("nf-core/methylseq", revision[:6]) == revision
         assert nf_core.utils.get_repo_commit("nf-core/methylseq", "xyz") is None
         assert nf_core.utils.get_repo_commit("made_up_pipeline", "") is None
         assert nf_core.utils.get_repo_commit("made-up/pipeline", "") is None
