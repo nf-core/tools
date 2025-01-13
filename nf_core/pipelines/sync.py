@@ -81,7 +81,11 @@ class PipelineSync:
         self.made_changes = False
         self.make_pr = make_pr
         self.gh_pr_returned_data: Dict = {}
-        self.required_config_vars = ["manifest.name", "manifest.description", "manifest.version", "manifest.author"]
+        self.required_config_vars = [
+            "manifest.name",
+            "manifest.description",
+            "manifest.version",
+        ]
         self.force_pr = force_pr
 
         self.gh_username = gh_username
@@ -273,30 +277,24 @@ class PipelineSync:
             with open(self.config_yml_path, "w") as config_path:
                 yaml.safe_dump(self.config_yml.model_dump(exclude_none=True), config_path)
 
-        try:
-            pipeline_create_obj = nf_core.pipelines.create.create.PipelineCreate(
-                outdir=str(self.pipeline_dir),
-                from_config_file=True,
-                no_git=True,
-                force=True,
-            )
-            pipeline_create_obj.init_pipeline()
+        pipeline_create_obj = nf_core.pipelines.create.create.PipelineCreate(
+            outdir=str(self.pipeline_dir),
+            from_config_file=True,
+            no_git=True,
+            force=True,
+        )
+        pipeline_create_obj.init_pipeline()
 
-            # set force to false to avoid overwriting files in the future
-            if self.config_yml.template is not None:
-                self.config_yml.template = pipeline_create_obj.config
-                # Set force true in config to overwrite existing files
-                self.config_yml.template.force = False
-                # Set outdir as the current directory to avoid local info leaking
-                self.config_yml.template.outdir = "."
-                # Update nf-core version
-                self.config_yml.nf_core_version = nf_core.__version__
-                dump_yaml_with_prettier(self.config_yml_path, self.config_yml.model_dump(exclude_none=True))
-
-        except Exception as err:
-            # Reset to where you were to prevent git getting messed up.
-            self.repo.git.reset("--hard")
-            raise SyncExceptionError(f"Failed to rebuild pipeline from template with error:\n{err}")
+        # set force to false to avoid overwriting files in the future
+        if self.config_yml.template is not None:
+            self.config_yml.template = pipeline_create_obj.config
+            # Set force true in config to overwrite existing files
+            self.config_yml.template.force = False
+            # Set outdir as the current directory to avoid local info leaking
+            self.config_yml.template.outdir = "."
+            # Update nf-core version
+            self.config_yml.nf_core_version = nf_core.__version__
+            dump_yaml_with_prettier(self.config_yml_path, self.config_yml.model_dump(exclude_none=True))
 
     def commit_template_changes(self):
         """If we have any changes with the new template files, make a git commit"""

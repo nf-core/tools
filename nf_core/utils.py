@@ -20,7 +20,18 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Literal, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import git
 import prompt_toolkit.styles
@@ -89,7 +100,10 @@ NFCORE_CACHE_DIR = Path(
     os.environ.get("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
     "nfcore",
 )
-NFCORE_DIR = Path(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
+NFCORE_DIR = Path(
+    os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")),
+    "nfcore",
+)
 
 
 def fetch_remote_version(source_url):
@@ -942,7 +956,9 @@ def prompt_remote_pipeline_name(wfs):
 
 
 def prompt_pipeline_release_branch(
-    wf_releases: List[Dict[str, Any]], wf_branches: Dict[str, Any], multiple: bool = False
+    wf_releases: List[Dict[str, Any]],
+    wf_branches: Dict[str, Any],
+    multiple: bool = False,
 ) -> Tuple[Any, List[str]]:
     """Prompt for pipeline release / branch
 
@@ -1332,8 +1348,10 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
             contributors = wf_config["manifest.contributors"]
             names = re.findall(r"name:'([^']+)'", contributors)
             author_names = ", ".join(names)
-        else:
+        elif "manifest.author" in wf_config:
             author_names = wf_config["manifest.author"].strip("'\"")
+        else:
+            author_names = ""
         if nf_core_yaml_config.template is None:
             # The .nf-core.yml file did not contain template information
             nf_core_yaml_config.template = NFCoreTemplateConfig(
