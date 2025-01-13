@@ -4,6 +4,10 @@
 
 ### Template
 
+### Download
+
+- Allow `nf-core pipelines download -r` to download commits ([#3374](https://github.com/nf-core/tools/pull/3374))
+
 ### Linting
 
 ### Modules
