@@ -4,6 +4,8 @@
 
 ### Template
 
+- Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
+
 ### Download
 
 - Allow `nf-core pipelines download -r` to download commits ([#3374](https://github.com/nf-core/tools/pull/3374))
@@ -32,7 +34,6 @@
 - Fix pre commit template ([#3358](https://github.com/nf-core/tools/pull/3358))
 - Set LICENSE copyright to nf-core community ([#3366](https://github.com/nf-core/tools/pull/3366))
 - Fix including modules.config ([#3356](https://github.com/nf-core/tools/pull/3356))
-- Updated Nextflow version badge and added nf-core template badge to README ([#3396](https://github.com/nf-core/tools/pull/3396))
 
 ### Linting
 
