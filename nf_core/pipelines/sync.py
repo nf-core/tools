@@ -81,7 +81,11 @@ class PipelineSync:
         self.made_changes = False
         self.make_pr = make_pr
         self.gh_pr_returned_data: Dict = {}
-        self.required_config_vars = ["manifest.name", "manifest.description", "manifest.version", "manifest.author"]
+        self.required_config_vars = [
+            "manifest.name",
+            "manifest.description",
+            "manifest.version",
+        ]  # TODO: add "manifest.contributors" when minimum nextflow version is >=24.10.0
         self.force_pr = force_pr
 
         self.gh_username = gh_username
