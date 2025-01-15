@@ -1352,8 +1352,10 @@ def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path]
             contributors = wf_config["manifest.contributors"]
             names = re.findall(r"name:'([^']+)'", contributors)
             author_names = ", ".join(names)
-        else:
+        elif "manifest.author" in wf_config:
             author_names = wf_config["manifest.author"].strip("'\"")
+        else:
+            author_names = None
         if nf_core_yaml_config.template is None:
             # The .nf-core.yml file did not contain template information
             nf_core_yaml_config.template = NFCoreTemplateConfig(

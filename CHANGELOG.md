@@ -21,6 +21,7 @@
 
 - Parameters schema validation: allow oneOf, anyOf and allOf with `required` ([#3386](https://github.com/nf-core/tools/pull/3386))
 - Run pre-comit when rendering template for pipelines sync ([#3371](https://github.com/nf-core/tools/pull/3371))
+- manifest.author is not required anymore ([#3397](https://github.com/nf-core/tools/pull/3397))
 
 ### Version updates
 

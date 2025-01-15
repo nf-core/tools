@@ -287,7 +287,7 @@ class ROCrate:
         try:
             git_contributors: Set[str] = set()
             if self.pipeline_obj.repo is None:
-                log.info("No git repository found. No git contributors will be added as authors.")
+                log.debug("No git repository found. No git contributors will be added as authors.")
                 return
             commits_touching_path = list(self.pipeline_obj.repo.iter_commits(paths="main.nf"))
 
