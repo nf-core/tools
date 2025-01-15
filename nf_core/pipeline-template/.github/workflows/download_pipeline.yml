@@ -14,12 +14,7 @@ on:
   pull_request:
     types:
       - opened
-      - edited
       - synchronize
-    branches:
-      - main
-      - master
-  pull_request_target:
     branches:
       - main
       - master
