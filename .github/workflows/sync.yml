@@ -97,7 +97,7 @@ jobs:
 
         run: |
           pushd nf-core/${{ matrix.pipeline }}
-          defaultBranch=$(grep -B5 -A5 "nextflowVersion" nextflow.config | grep "defaultBranch" | cut -d"=" -f2)
+          defaultBranch=$(grep -B5 -A5 "nextflowVersion" nextflow.config | grep "defaultBranch" | cut -d"=" -f2 | sed "s/'//g")
           if [ -z "$defaultBranch" ]; then
             defaultBranch="master"
           fi
