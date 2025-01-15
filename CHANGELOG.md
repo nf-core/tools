@@ -46,6 +46,7 @@
 
 - Allow `nf-core pipelines download -r` to download commits ([#3374](https://github.com/nf-core/tools/pull/3374))
 - Fix faulty Download Test Action to ensure that setup and test run as one job and on the same runner ([#3389](https://github.com/nf-core/tools/pull/3389))
+- Remove the on_pull_request_target trigger from the download test. ([#3399](https://github.com/nf-core/tools/pull/3399))
 
 ### Modules
 
