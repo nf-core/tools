@@ -4,6 +4,8 @@
 
 ### Template
 
+- Bump nf-schema to 2.3.0 ([#3401])(https://github.com/nf-core/tools/pull/3401)
+
 ### Download
 
 - Allow `nf-core pipelines download -r` to download commits ([#3374](https://github.com/nf-core/tools/pull/3374))
