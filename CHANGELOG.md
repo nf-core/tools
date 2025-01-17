@@ -16,6 +16,7 @@
 ### Modules
 
 - Fix bump-versions: only append module name if it is a dir and contains main.nf ([#3384](https://github.com/nf-core/tools/pull/3384))
+- Remove args stub from module template to satisfy language server ([#3403](https://github.com/nf-core/tools/pull/3403))
 
 ### Subworkflows
 
