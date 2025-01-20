@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## [v3.1.2 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.2) - [2025-01-21]
+## [v3.1.2 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.2) - [2025-01-20]
 
 ### Template
 
