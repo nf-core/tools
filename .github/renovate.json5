@@ -1,6 +1,6 @@
 {
     $schema: "https://docs.renovatebot.com/renovate-schema.json",
-    extends: ["github>nf-core/ops//.github/renovate/default.json5"],
+    extends: ["github>nf-core/ops//.github/renovate/default.json5", "schedule:weekly"],
     ignorePaths: ["**/nf_core/pipeline-template/modules/nf-core/**"],
     baseBranches: ["dev"],
     packageRules: [
