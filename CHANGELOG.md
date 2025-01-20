@@ -4,7 +4,8 @@
 
 ### Template
 
-- Bump nf-schema to 2.3.0 ([#3401])(https://github.com/nf-core/tools/pull/3401)
+- Bump nf-schema to `2.3.0` ([#3401](https://github.com/nf-core/tools/pull/3401))
+- Remove jinja formatting which was deleting line breaks ([#3405](https://github.com/nf-core/tools/pull/3405))
 
 ### Download
 
@@ -13,14 +14,14 @@
 
 ### Modules
 
-- Fix bump-versions: only append module name if it is a dir and contains main.nf ([#3384](https://github.com/nf-core/tools/pull/3384))
+- Fix bump-versions: only append module name if it is a dir and contains `main.nf` ([#3384](https://github.com/nf-core/tools/pull/3384))
 
 ### General
 
-- Parameters schema validation: allow oneOf, anyOf and allOf with `required` ([#3386](https://github.com/nf-core/tools/pull/3386))
+- `manifest.author` is not required anymore ([#3397](https://github.com/nf-core/tools/pull/3397))
+- Parameters schema validation: allow `oneOf`, `anyOf` and `allOf` with `required` ([#3386](https://github.com/nf-core/tools/pull/3386))
 - Run pre-comit when rendering template for pipelines sync ([#3371](https://github.com/nf-core/tools/pull/3371))
 - Fix sync GHA by removing quotes from parsed branch name ([#3394](https://github.com/nf-core/tools/pull/3394))
-- manifest.author is not required anymore ([#3397](https://github.com/nf-core/tools/pull/3397))
 
 ## [v3.1.1 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.1) - [2024-12-20]
 
