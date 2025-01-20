@@ -386,6 +386,10 @@ class PipelineCreate:
                     yaml.dump(config_yml.model_dump(exclude_none=True), fh, Dumper=custom_yaml_dumper())
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
 
+        # Run prettier on files for pipelines sync
+        log.debug("Running prettier on pipeline files")
+        run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
+
     def fix_linting(self):
         """
         Updates the .nf-core.yml with linting configurations

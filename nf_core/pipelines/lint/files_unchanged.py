@@ -1,6 +1,7 @@
 import filecmp
 import logging
 import os
+import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -68,7 +69,10 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     could_fix: bool = False
 
     # Check that we have the minimum required config
-    required_pipeline_config = {"manifest.name", "manifest.description", "manifest.author"}
+    required_pipeline_config = {
+        "manifest.name",
+        "manifest.description",
+    }  # TODO: add "manifest.contributors" when minimum nextflow version is >=24.10.0
     missing_pipeline_config = required_pipeline_config.difference(self.nf_config)
     if missing_pipeline_config:
         return {"ignored": [f"Required pipeline config not found - {missing_pipeline_config}"]}
@@ -117,10 +121,15 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     tmp_dir.mkdir(parents=True)
 
     # Create a template.yaml file for the pipeline creation
+    if "manifest.author" in self.nf_config:
+        names = self.nf_config["manifest.author"].strip("\"'")
+    if "manifest.contributors" in self.nf_config:
+        contributors = self.nf_config["manifest.contributors"]
+        names = ", ".join(re.findall(r"name:'([^']+)'", contributors))
     template_yaml = {
         "name": short_name,
         "description": self.nf_config["manifest.description"].strip("\"'"),
-        "author": self.nf_config["manifest.author"].strip("\"'"),
+        "author": names,
         "org": prefix,
     }
 

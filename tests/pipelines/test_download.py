@@ -81,6 +81,50 @@ class DownloadTest(unittest.TestCase):
             == "https://github.com/nf-core/exoseq/archive/819cbac792b76cf66c840b567ed0ee9a2f620db7.zip"
         )
 
+    def test_get_release_hash_long_commit(self):
+        wfs = nf_core.pipelines.list.Workflows()
+        wfs.get_remote_workflows()
+        # Exoseq pipeline is archived, so `dev` branch should be stable
+        pipeline = "exoseq"
+        revision = "819cbac792b76cf66c840b567ed0ee9a2f620db7"
+
+        download_obj = DownloadWorkflow(pipeline=pipeline, revision=revision)
+        (
+            download_obj.pipeline,
+            download_obj.wf_revisions,
+            download_obj.wf_branches,
+        ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
+        download_obj.get_revision_hash()
+        assert download_obj.wf_sha[download_obj.revision[0]] == revision
+        assert download_obj.outdir == f"nf-core-exoseq_{revision}"
+        assert (
+            download_obj.wf_download_url[download_obj.revision[0]]
+            == f"https://github.com/nf-core/exoseq/archive/{revision}.zip"
+        )
+
+    def test_get_release_hash_short_commit(self):
+        wfs = nf_core.pipelines.list.Workflows()
+        wfs.get_remote_workflows()
+        # Exoseq pipeline is archived, so `dev` branch should be stable
+        pipeline = "exoseq"
+        revision = "819cbac792b76cf66c840b567ed0ee9a2f620db7"
+        short_rev = revision[:7]
+
+        download_obj = DownloadWorkflow(pipeline="exoseq", revision=short_rev)
+        (
+            download_obj.pipeline,
+            download_obj.wf_revisions,
+            download_obj.wf_branches,
+        ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
+        download_obj.get_revision_hash()
+        print(download_obj)
+        assert download_obj.wf_sha[download_obj.revision[0]] == revision
+        assert download_obj.outdir == f"nf-core-exoseq_{short_rev}"
+        assert (
+            download_obj.wf_download_url[download_obj.revision[0]]
+            == f"https://github.com/nf-core/exoseq/archive/{revision}.zip"
+        )
+
     def test_get_release_hash_non_existent_release(self):
         wfs = nf_core.pipelines.list.Workflows()
         wfs.get_remote_workflows()
