@@ -21,7 +21,7 @@ from packaging.version import parse as parse_version
 import nf_core
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.components.components_utils import get_biotools_id
+from nf_core.components.components_utils import get_biotools_id, get_biotools_response, get_channel_info_from_biotools
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
@@ -152,7 +152,10 @@ class ComponentCreate(ComponentCommand):
                 # Try to find a bioconda package for 'component'
                 self._get_bioconda_tool()
                 # Try to find a biotools entry for 'component'
-                self.tool_identifier = get_biotools_id(self.component)
+                biotools_data = get_biotools_response(self.tool_conda_name)
+                self.tool_identifier = get_biotools_id(biotools_data, self.tool_conda_name)
+                # Obtain EDAM ontologies for inputs and outputs
+                self.inputs, self.outputs = get_channel_info_from_biotools(biotools_data, self.tool_conda_name)
 
             # Prompt for GitHub username
             self._get_username()
