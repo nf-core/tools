@@ -1,30 +1,41 @@
 # nf-core/tools: Changelog
 
-## v3.1.2dev
+## v3.2.0dev
 
 ### Template
 
 - Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### General
+
+## [v3.1.2 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.2) - [2025-01-20]
+
+### Template
+
+- Bump nf-schema to `2.3.0` ([#3401](https://github.com/nf-core/tools/pull/3401))
+- Remove jinja formatting which was deleting line breaks ([#3405](https://github.com/nf-core/tools/pull/3405))
 
 ### Download
 
 - Allow `nf-core pipelines download -r` to download commits ([#3374](https://github.com/nf-core/tools/pull/3374))
 - Fix faulty Download Test Action to ensure that setup and test run as one job and on the same runner ([#3389](https://github.com/nf-core/tools/pull/3389))
 
-### Linting
-
 ### Modules
 
-- Fix bump-versions: only append module name if it is a dir and contains main.nf ([#3384](https://github.com/nf-core/tools/pull/3384))
-
-### Subworkflows
+- Fix bump-versions: only append module name if it is a dir and contains `main.nf` ([#3384](https://github.com/nf-core/tools/pull/3384))
 
 ### General
 
-- Parameters schema validation: allow oneOf, anyOf and allOf with `required` ([#3386](https://github.com/nf-core/tools/pull/3386))
+- `manifest.author` is not required anymore ([#3397](https://github.com/nf-core/tools/pull/3397))
+- Parameters schema validation: allow `oneOf`, `anyOf` and `allOf` with `required` ([#3386](https://github.com/nf-core/tools/pull/3386))
 - Run pre-comit when rendering template for pipelines sync ([#3371](https://github.com/nf-core/tools/pull/3371))
-
-### Version updates
+- Fix sync GHA by removing quotes from parsed branch name ([#3394](https://github.com/nf-core/tools/pull/3394))
 
 ## [v3.1.1 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.1) - [2024-12-20]
 
