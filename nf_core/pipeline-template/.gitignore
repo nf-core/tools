@@ -7,3 +7,6 @@ testing/
 testing*
 *.pyc
 null/
+.doomrc
+mochadoom.cfg
+tranmap.dat
