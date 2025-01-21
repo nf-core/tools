@@ -70,6 +70,15 @@ def print_fixes(lint_obj):
         )
 
 
+def check_git_repo() -> bool:
+    """Check if the current directory is a git repository."""
+    try:
+        subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"])
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
 def run_prettier_on_file(file: Union[Path, str, List[str]]) -> None:
     """Run the pre-commit hook prettier on a file.
 
@@ -80,6 +89,8 @@ def run_prettier_on_file(file: Union[Path, str, List[str]]) -> None:
         If Prettier is not installed, a warning is logged.
     """
 
+    is_git = check_git_repo()
+
     nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
     args = ["pre-commit", "run", "--config", str(nf_core_pre_commit_config), "prettier"]
     if isinstance(file, List):
@@ -87,21 +98,24 @@ def run_prettier_on_file(file: Union[Path, str, List[str]]) -> None:
     else:
         args.extend(["--files", str(file)])
 
-    try:
-        subprocess.run(args, capture_output=True, check=True)
-        log.debug(f"${subprocess.STDOUT}")
-    except subprocess.CalledProcessError as e:
-        if ": SyntaxError: " in e.stdout.decode():
-            log.critical(f"Can't format {file} because it has a syntax error.\n{e.stdout.decode()}")
-        elif "files were modified by this hook" in e.stdout.decode():
-            all_lines = [line for line in e.stdout.decode().split("\n")]
-            files = "\n".join(all_lines[3:])
-            log.debug(f"The following files were modified by prettier:\n {files}")
-        elif e.stderr.decode():
-            log.warning(
-                "There was an error running the prettier pre-commit hook.\n"
-                f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
-            )
+    if is_git:
+        try:
+            proc = subprocess.run(args, capture_output=True, check=True)
+            log.debug(f"{proc.stdout.decode()}")
+        except subprocess.CalledProcessError as e:
+            if ": SyntaxError: " in e.stdout.decode():
+                log.critical(f"Can't format {file} because it has a syntax error.\n{e.stdout.decode()}")
+            elif "files were modified by this hook" in e.stdout.decode():
+                all_lines = [line for line in e.stdout.decode().split("\n")]
+                files = "\n".join(all_lines[3:])
+                log.debug(f"The following files were modified by prettier:\n {files}")
+            else:
+                log.warning(
+                    "There was an error running the prettier pre-commit hook.\n"
+                    f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
+                )
+    else:
+        log.debug("Not in a git repository, skipping pre-commit hook.")
 
 
 def dump_json_with_prettier(file_name, file_content):

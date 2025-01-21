@@ -23,6 +23,10 @@ on:
         description: "Pipeline to sync"
         type: string
         default: "all"
+      debug:
+        description: "Enable debug/verbose mode (true or false)"
+        type: boolean
+        default: false
 
 # Cancel if a newer run is started
 concurrency:
@@ -62,6 +66,8 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out nf-core/tools
+        with:
+          ref: ${{ github.ref_name }}
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out nf-core/${{ matrix.pipeline }}
@@ -87,6 +93,19 @@ jobs:
         with:
           version: "latest-everything"
 
+      - name: Set Git default branch from nextflow.config and set git default branch to that or "master"
+
+        run: |
+          pushd nf-core/${{ matrix.pipeline }}
+          defaultBranch=$(grep -B5 -A5 "nextflowVersion" nextflow.config | grep "defaultBranch" | cut -d"=" -f2 | sed "s/'//g")
+          if [ -z "$defaultBranch" ]; then
+            defaultBranch="master"
+          fi
+          popd
+          echo "Default branch: $defaultBranch"
+          echo "defaultBranch=$defaultBranch" >> GITHUB_OUTPUT
+          git config --global init.defaultBranch $defaultBranch
+
       - name: Run synchronisation
         if: github.repository == 'nf-core/tools'
         env:
@@ -94,7 +113,9 @@ jobs:
         run: |
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
-          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt pipelines sync -d nf-core/${{ matrix.pipeline }} \
+          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt \
+            ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }} \
+            pipelines sync -d nf-core/${{ matrix.pipeline }} \
             --from-branch dev \
             --pull-request \
             --username nf-core-bot \

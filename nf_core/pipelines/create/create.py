@@ -22,7 +22,7 @@ from nf_core.pipelines.create.utils import CreateConfig, features_yml_path, load
 from nf_core.pipelines.create_logo import create_logo
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.pipelines.rocrate import ROCrate
-from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlLintConfig
+from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlLintConfig, custom_yaml_dumper
 
 log = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ class PipelineCreate:
         template_config: Optional[Union[CreateConfig, str, Path]] = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
-        default_branch: str = "main",
+        default_branch: str = "master",
         is_interactive: bool = False,
     ) -> None:
         if isinstance(template_config, CreateConfig):
@@ -266,6 +266,14 @@ class PipelineCreate:
         # Init the git repository and make the first commit
         if not self.no_git:
             self.git_init_pipeline()
+            # Run prettier on files
+            if self.config.skip_features is None or not (
+                "code_linters" in self.config.skip_features or "github" in self.config.skip_features
+            ):
+                current_dir = Path.cwd()
+                os.chdir(self.outdir)
+                run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
+                os.chdir(current_dir)
 
         if self.config.is_nfcore and not self.is_interactive:
             log.info(
@@ -298,7 +306,6 @@ class PipelineCreate:
         template_dir = Path(nf_core.__file__).parent / "pipeline-template"
         object_attrs = self.jinja_params
         object_attrs["nf_core_version"] = nf_core.__version__
-
         # Can't use glob.glob() as need recursive hidden dotfiles - https://stackoverflow.com/a/58126417/713980
         template_files = list(Path(template_dir).glob("**/*"))
         template_files += list(Path(template_dir).glob("*"))
@@ -363,7 +370,7 @@ class PipelineCreate:
             # Make a logo and save it, if it is a nf-core pipeline
             self.make_pipeline_logo()
 
-        if self.config.skip_features is None or "ro-crate" not in self.config.skip_features:
+        if self.config.skip_features is None or "rocrate" not in self.config.skip_features:
             # Create the RO-Crate metadata file
             rocrate_obj = ROCrate(self.outdir)
             rocrate_obj.create_rocrate(json_path=self.outdir / "ro-crate-metadata.json")
@@ -376,10 +383,11 @@ class PipelineCreate:
             if config_fn is not None and config_yml is not None:
                 with open(str(config_fn), "w") as fh:
                     config_yml.template = NFCoreTemplateConfig(**self.config.model_dump(exclude_none=True))
-                    yaml.safe_dump(config_yml.model_dump(exclude_none=True), fh)
+                    yaml.dump(config_yml.model_dump(exclude_none=True), fh, Dumper=custom_yaml_dumper())
                     log.debug(f"Dumping pipeline template yml to pipeline config file '{config_fn.name}'")
 
-        # Run prettier on files
+        # Run prettier on files for pipelines sync
+        log.debug("Running prettier on pipeline files")
         run_prettier_on_file([str(f) for f in self.outdir.glob("**/*")])
 
     def fix_linting(self):
@@ -409,7 +417,13 @@ class PipelineCreate:
         if config_fn is not None and nf_core_yml is not None:
             nf_core_yml.lint = NFCoreYamlLintConfig(**lint_config)
             with open(self.outdir / config_fn, "w") as fh:
-                yaml.dump(nf_core_yml.model_dump(exclude_none=True), fh, default_flow_style=False, sort_keys=False)
+                yaml.dump(
+                    nf_core_yml.model_dump(exclude_none=True),
+                    fh,
+                    sort_keys=False,
+                    default_flow_style=False,
+                    Dumper=custom_yaml_dumper(),
+                )
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
@@ -431,8 +445,9 @@ class PipelineCreate:
         """Gets the default branch name from the Git configuration."""
         try:
             self.default_branch = (
-                str(git.config.GitConfigParser().get_value("init", "defaultBranch")) or "main"
-            )  # default to main
+                str(git.config.GitConfigParser().get_value("init", "defaultBranch")) or "master"
+            )  # default to master
+            log.debug(f"Default branch name: {self.default_branch}")
         except configparser.Error:
             log.debug("Could not read init.defaultBranch")
         if self.default_branch in ["dev", "TEMPLATE"]:

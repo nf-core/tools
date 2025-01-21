@@ -148,6 +148,10 @@ is_nfcore:
       - "docs/images/nf-core-{{short_name}}_logo_light.png"
       - "docs/images/nf-core-{{short_name}}_logo_dark.png"
       - ".github/ISSUE_TEMPLATE/bug_report.yml"
+      - ".github/CONTRIBUTING.md"
+      - ".github/PULL_REQUEST_TEMPLATE.md"
+      - "assets/email_template.txt"
+      - "docs/README.md"
     nextflow_config:
       - "manifest.name"
       - "manifest.homePage"
@@ -445,6 +449,8 @@ rocrate:
   linting:
     files_warn:
       - "ro-crate-metadata.json"
+    files_unchanged:
+      - ".prettierignore"
 vscode:
   skippable_paths:
     - ".vscode"

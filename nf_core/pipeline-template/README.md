@@ -7,7 +7,7 @@
   </picture>
 </h1>
 
-{% else %}
+{% else -%}
 
 # {{ name }}
 
@@ -48,8 +48,8 @@
      workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
-{% if fastqc %}1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)){% endif %}
-{% if multiqc %}2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/)){% endif %}
+{%- if fastqc %}1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)){% endif %}
+{%- if multiqc %}2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/)){% endif %}
 
 ## Usage
 
@@ -123,7 +123,8 @@ For further information or help, don't hesitate to get in touch on the [Slack `#
 {% if citations %}<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
-{% endif %}
+{%- endif %}
+
 {% if is_nfcore -%}
 You can cite the `nf-core` publication as follows:
 

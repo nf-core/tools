@@ -1,6 +1,7 @@
 import filecmp
 import logging
 import os
+import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -62,12 +63,16 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
 
     passed: List[str] = []
     failed: List[str] = []
+    warned: List[str] = []
     ignored: List[str] = []
     fixed: List[str] = []
     could_fix: bool = False
 
     # Check that we have the minimum required config
-    required_pipeline_config = {"manifest.name", "manifest.description", "manifest.author"}
+    required_pipeline_config = {
+        "manifest.name",
+        "manifest.description",
+    }  # TODO: add "manifest.contributors" when minimum nextflow version is >=24.10.0
     missing_pipeline_config = required_pipeline_config.difference(self.nf_config)
     if missing_pipeline_config:
         return {"ignored": [f"Required pipeline config not found - {missing_pipeline_config}"]}
@@ -116,10 +121,15 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     tmp_dir.mkdir(parents=True)
 
     # Create a template.yaml file for the pipeline creation
+    if "manifest.author" in self.nf_config:
+        names = self.nf_config["manifest.author"].strip("\"'")
+    if "manifest.contributors" in self.nf_config:
+        contributors = self.nf_config["manifest.contributors"]
+        names = ", ".join(re.findall(r"name:'([^']+)'", contributors))
     template_yaml = {
         "name": short_name,
         "description": self.nf_config["manifest.description"].strip("\"'"),
-        "author": self.nf_config["manifest.author"].strip("\"'"),
+        "author": names,
         "org": prefix,
     }
 
@@ -173,6 +183,12 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
                             shutil.copy(_tf(f), _pf(f))
                             passed.append(f"`{f}` matches the template")
                             fixed.append(f"`{f}` overwritten with template file")
+                        elif f.name in ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"]:
+                            # Report LICENSE as a warning since we are not using the manifest.author names
+                            # TODO: Lint the content of the LICENSE file except the line containing author names
+                            # to allow for people to opt-in listing author/maintainer names instead of using the "nf-core community"
+                            warned.append(f"`{f}` does not match the template")
+                            could_fix = True
                         else:
                             failed.append(f"`{f}` does not match the template")
                             could_fix = True
@@ -217,4 +233,11 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
     # cleaning up temporary dir
     shutil.rmtree(tmp_dir)
 
-    return {"passed": passed, "failed": failed, "ignored": ignored, "fixed": fixed, "could_fix": could_fix}
+    return {
+        "passed": passed,
+        "failed": failed,
+        "warned": warned,
+        "ignored": ignored,
+        "fixed": fixed,
+        "could_fix": could_fix,
+    }

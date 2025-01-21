@@ -1,4 +1,4 @@
-# nf_core.bump_version
+# nf_core.pipelines.bump_version
 
 ```{eval-rst}
 .. automodule:: nf_core.pipelines.bump_version
