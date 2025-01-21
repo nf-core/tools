@@ -8,8 +8,11 @@
 
 ### Modules
 
+<<<<<<< HEAD
 - feat(1929): Make local modules use remote structure ([#3256](https://github.com/nf-core/tools/pull/3256))
 
+=======
+>>>>>>> cb7c0d7b (fix: Update to latest CHANGELOG)
 ### Subworkflows
 
 ### General
@@ -96,16 +99,20 @@
 ### Modules
 
 - add a panel around diff previews when updating ([#3246](https://github.com/nf-core/tools/pull/3246))
-- Modules created in pipelines "local" dir now use the full template ([#3256](https://github.com/nf-core/tools/pull/3256))
 
 ### Subworkflows
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 - Add `nf-core subworkflows patch` command ([#2861](https://github.com/nf-core/tools/pull/2861))
 - Improve subworkflow nf-test migration warning ([#3298](https://github.com/nf-core/tools/pull/3298))
 =======
 - Subworkflows created in pipelines "local" dir now use the full template ([#3256](https://github.com/nf-core/tools/pull/3256))
 >>>>>>> 31cffdd5 (feat(1929): allow missing files when linting local modules)
+=======
+- Add `nf-core subworkflows patch` command ([#2861](https://github.com/nf-core/tools/pull/2861))
+- Improve subworkflow nf-test migration warning ([#3298](https://github.com/nf-core/tools/pull/3298))
+>>>>>>> cb7c0d7b (fix: Update to latest CHANGELOG)
 
 ### General
 
@@ -116,6 +123,9 @@
 - Update GitHub Actions ([#3237](https://github.com/nf-core/tools/pull/3237))
 - add `--dir/-d` option to schema commands ([#3247](https://github.com/nf-core/tools/pull/3247))
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> cb7c0d7b (fix: Update to latest CHANGELOG)
 - fix headers in api docs ([#3323](https://github.com/nf-core/tools/pull/3323))
 - handle new schema structure in `nf-core pipelines create-params-file` ([#3276](https://github.com/nf-core/tools/pull/3276))
 - Update Gitpod image to use Miniforge instead of Miniconda([#3274](https://github.com/nf-core/tools/pull/3274))
@@ -138,9 +148,12 @@
 - Update codecov/codecov-action action to v5 ([#3283](https://github.com/nf-core/tools/pull/3283))
 - Update gitpod/workspace-base Docker digest to 12853f7 ([#3309](https://github.com/nf-core/tools/pull/3309))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.2 ([#3325](https://github.com/nf-core/tools/pull/3325))
+<<<<<<< HEAD
 =======
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.1 ([#3250](https://github.com/nf-core/tools/pull/3250))
 >>>>>>> 31cffdd5 (feat(1929): allow missing files when linting local modules)
+=======
+>>>>>>> cb7c0d7b (fix: Update to latest CHANGELOG)
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 
