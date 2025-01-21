@@ -25,7 +25,7 @@
 ### Linting
 
 - allow mixed `str` and `dict` entries in lint config ([#3228](https://github.com/nf-core/tools/pull/3228))
-- Add linting for if empty null dev ([#3411](https://github.com/nf-core/tools/pull/3411))
+- Add linting for ifEmpty(null) ([#3411](https://github.com/nf-core/tools/pull/3411))
 
 ### Modules
 
