@@ -166,7 +166,9 @@ def get_components_to_install(subworkflow_dir: Union[str, Path]) -> Tuple[List[s
 
 
 def get_biotools_response(tool_name: str) -> Optional[dict]:
+def get_biotools_response(tool_name: str) -> Optional[dict]:
     """
+    Try to get bio.tools information for 'tool'
     Try to get bio.tools information for 'tool'
     """
     url = f"https://bio.tools/api/t/?q={tool_name}&format=json"
@@ -197,7 +199,9 @@ def get_biotools_id(data: dict, tool_name: str) -> str:
     return ""
 
 
-def get_channel_info_from_biotools(data: dict, tool_name: str) -> List[str]:
+def get_channel_info_from_biotools(
+    data: dict, tool_name: str
+) -> Optional[tuple[dict[str, Tuple[List[str], str]], dict[str, Tuple[List[str], str]]]]:
     """
     Try to find input and output channels and the respective EDAM ontology terms
 
@@ -208,20 +212,24 @@ def get_channel_info_from_biotools(data: dict, tool_name: str) -> List[str]:
     inputs = {}
     outputs = {}
 
-    def _iterate_input_output(type):
-        type_info = {}
+    def _iterate_input_output(type) -> dict[str, Tuple[List[str], str]]:
+        type_info: dict[str, Tuple[List[str], str]] = {}
         if type in funct:
             for element in funct[type]:
                 if "data" in element:
                     element_name = "_".join(element["data"]["term"].lower().split(" "))
-                    type_info[element_name] = [[element["data"]["uri"]], ""]
+                    uris = [element["data"]["uri"]]
+                    terms = ""
                 if "format" in element:
                     for format in element["format"]:
                         # Append the EDAM URI
-                        type_info[element_name][0].append(format["uri"])
+                        uris.append(format["uri"])
                         # Append the EDAM term, getting the first word in case of complicated strings. i.e. "FASTA format"
-                        type_info[element_name][1] += format["term"].lower().split(" ")[0] + ","
-                    type_info[element_name][1] = type_info[element_name][1][:-1]  # Remove the last comma
+                        terms = terms + format["term"].lower().split(" ")[0] + ","
+                    type_info[element_name] = (
+                        uris,
+                        terms[:-1],  # Remove the last comma
+                    )
         return type_info
 
     # Iterate through the tools in the response to find the tool name
@@ -236,4 +244,4 @@ def get_channel_info_from_biotools(data: dict, tool_name: str) -> List[str]:
 
     # If the tool name was not found in the response
     log.warning(f"Could not find an EDAM ontology term for '{tool_name}'")
-    return []
+    return None

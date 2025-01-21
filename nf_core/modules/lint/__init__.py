@@ -20,7 +20,7 @@ import nf_core.components
 import nf_core.components.nfcore_component
 import nf_core.modules.modules_utils
 import nf_core.utils
-from nf_core.components.components_utils import get_biotools_id
+from nf_core.components.components_utils import get_biotools_id, get_biotools_response
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.pipelines.lint_utils import console, run_prettier_on_file
@@ -362,9 +362,8 @@ class ModuleLint(ComponentLint):
         for i, tool in enumerate(corrected_meta_yml["tools"]):
             tool_name = list(tool.keys())[0]
             if "identifier" not in tool[tool_name]:
-                corrected_meta_yml["tools"][i][tool_name]["identifier"] = get_biotools_id(
-                    mod.component_name if "/" not in mod.component_name else mod.component_name.split("/")[0]
-                )
+                biotools_data = get_biotools_response(tool_name)
+                corrected_meta_yml["tools"][i][tool_name]["identifier"] = get_biotools_id(biotools_data, tool_name)
 
         with open(mod.meta_yml, "w") as fh:
             log.info(f"Updating {mod.meta_yml}")
