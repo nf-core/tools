@@ -4,6 +4,8 @@
 
 ### Template
 
+- Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
+
 ### Linting
 
 ### Modules
@@ -42,7 +44,7 @@
 - Use outputs instead of the environment to pass around values between steps in the Download Test Action ([#3351](https://github.com/nf-core/tools/pull/3351))
 - Fix pre commit template ([#3358](https://github.com/nf-core/tools/pull/3358))
 - Set LICENSE copyright to nf-core community ([#3366](https://github.com/nf-core/tools/pull/3366))
-- fix including modules.config ([#3356](https://github.com/nf-core/tools/pull/3356))
+- Fix including modules.config ([#3356](https://github.com/nf-core/tools/pull/3356))
 
 ### Linting
 
