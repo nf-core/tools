@@ -24,6 +24,7 @@ log = logging.getLogger(__name__)
 from .main_nf import main_nf  # type: ignore[misc]
 from .meta_yml import meta_yml  # type: ignore[misc]
 from .subworkflow_changes import subworkflow_changes  # type: ignore[misc]
+from .subworkflow_if_empty_null import subworkflow_if_empty_null  # type: ignore[misc]
 from .subworkflow_tests import subworkflow_tests  # type: ignore[misc]
 from .subworkflow_todos import subworkflow_todos  # type: ignore[misc]
 from .subworkflow_version import subworkflow_version  # type: ignore[misc]
@@ -40,6 +41,7 @@ class SubworkflowLint(ComponentLint):
     subworkflow_changes = subworkflow_changes
     subworkflow_tests = subworkflow_tests
     subworkflow_todos = subworkflow_todos
+    subworkflow_if_empty_null = subworkflow_if_empty_null
     subworkflow_version = subworkflow_version
 
     def __init__(

@@ -44,6 +44,7 @@ from .modules_structure import modules_structure
 from .multiqc_config import multiqc_config
 from .nextflow_config import nextflow_config
 from .nfcore_yml import nfcore_yml
+from .pipeline_if_empty_null import pipeline_if_empty_null
 from .pipeline_name_conventions import pipeline_name_conventions
 from .pipeline_todos import pipeline_todos
 from .plugin_includes import plugin_includes
@@ -94,6 +95,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     nfcore_yml = nfcore_yml
     pipeline_name_conventions = pipeline_name_conventions
     pipeline_todos = pipeline_todos
+    pipeline_if_empty_null = pipeline_if_empty_null
     plugin_includes = plugin_includes
     readme = readme
     schema_description = schema_description
@@ -139,6 +141,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "actions_awsfulltest",
             "readme",
             "pipeline_todos",
+            "pipeline_if_empty_null",
             "plugin_includes",
             "pipeline_name_conventions",
             "template_strings",
