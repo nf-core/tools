@@ -8,7 +8,6 @@
 
 - Add linting for ifEmpty(null) ([#3411](https://github.com/nf-core/tools/pull/3411))
 
-
 ### Modules
 
 ### Subworkflows
