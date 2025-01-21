@@ -28,7 +28,7 @@
 
 ### Modules
 
-- Fix bump-versions: only append module name if it is a dir and contains main.nf ([#3384](https://github.com/nf-core/tools/pull/3384))
+- Fix bump-versions: only append module name if it is a dir and contains `main.nf` ([#3384](https://github.com/nf-core/tools/pull/3384))
 
 ### General
 
