@@ -97,6 +97,7 @@ class NFCoreComponent:
                     self.nftest_main_nf = p if (p := Path(self.nftest_testdir, "main.nf.test")).exists() else None
             else:
                 self.main_nf = self.component_dir
+                self.component_dir = self.component_dir.parent
                 self.meta_yml = None
                 self.environment_yml = None
                 self.nftest_testdir = None

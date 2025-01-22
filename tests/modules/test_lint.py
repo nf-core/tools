@@ -789,11 +789,11 @@ class TestModulesLint(TestModules):
         assert "Module `meta.yml` does not exist" in warnings
 
     def test_modules_lint_local_old_format(self):
+        Path(self.pipeline_dir, "modules", "local").mkdir()
         assert self.mods_install.install("trimgalore")
         installed = Path(self.pipeline_dir, "modules", "nf-core", "trimgalore", "main.nf")
-        Path(self.pipeline_dir, "modules", "local").mkdir()
         local = Path(self.pipeline_dir, "modules", "local", "trimgalore.nf")
-        shutil.copy(installed, local)
+        shutil.move(installed, local)
         self.mods_remove.remove("trimgalore", force=True)
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         module_lint.lint(print_results=False, local=True)
