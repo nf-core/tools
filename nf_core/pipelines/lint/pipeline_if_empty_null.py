@@ -20,7 +20,7 @@ def pipeline_if_empty_null(self, root_dir=None):
     passed = []
     warned = []
     file_paths = []
-    pattern = re.compile(r"ifEmpty\(\s*null\s*\)")
+    pattern = re.compile(r"ifEmpty\s*\(\s*null\s*\)")
 
     # Pipelines don't provide a path, so use the workflow path.
     # Modules run this function twice and provide a string path
@@ -29,7 +29,7 @@ def pipeline_if_empty_null(self, root_dir=None):
 
     ignore = [".git"]
     if Path(root_dir, ".gitignore").is_file():
-        with open(Path(root_dir, ".gitignore"), encoding="latin1") as fh:
+        with open(Path(root_dir, ".gitignore")) as fh:
             for line in fh:
                 ignore.append(Path(line.strip().rstrip("/")).name)
     for root, dirs, files in os.walk(root_dir, topdown=True):
@@ -40,7 +40,7 @@ def pipeline_if_empty_null(self, root_dir=None):
             files[:] = [f for f in files if not fnmatch.fnmatch(str(Path(root, f)), i)]
         for fname in files:
             try:
-                with open(Path(root, fname), encoding="latin1") as fh:
+                with open(Path(root, fname)) as fh:
                     for line in fh:
                         if re.findall(pattern, line):
                             warned.append(f"`ifEmpty(null)` found in `{fname}`: _{line}_")
