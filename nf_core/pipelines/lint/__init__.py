@@ -27,7 +27,7 @@ import nf_core.utils
 from nf_core import __version__
 from nf_core.components.lint import ComponentLint
 from nf_core.pipelines.lint_utils import console
-from nf_core.utils import NFCoreYamlConfig, NFCoreYamlLintConfig, strip_ansi_codes
+from nf_core.utils import NFCoreYamlLintConfig, strip_ansi_codes
 from nf_core.utils import plural_s as _s
 
 from .actions_awsfulltest import actions_awsfulltest
