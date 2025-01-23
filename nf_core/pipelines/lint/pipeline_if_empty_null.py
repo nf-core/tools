@@ -1,4 +1,3 @@
-import fnmatch
 import logging
 import os
 import re
@@ -22,33 +21,26 @@ def pipeline_if_empty_null(self, root_dir=None):
     file_paths = []
     pattern = re.compile(r"ifEmpty\s*\(\s*null\s*\)")
 
-    # Pipelines don't provide a path, so use the workflow path.
+    # Pipelines don"t provide a path, so use the workflow path.
     # Modules run this function twice and provide a string path
     if root_dir is None:
         root_dir = self.wf_path
 
-    ignore = [".git"]
-    if Path(root_dir, ".gitignore").is_file():
-        with open(Path(root_dir, ".gitignore")) as fh:
-            for line in fh:
-                ignore.append(Path(line.strip().rstrip("/")).name)
     for root, dirs, files in os.walk(root_dir, topdown=True):
-        # Ignore files
-        for i_base in ignore:
-            i = str(Path(root, i_base))
-            dirs[:] = [d for d in dirs if not fnmatch.fnmatch(str(Path(root, d)), i)]
-            files[:] = [f for f in files if not fnmatch.fnmatch(str(Path(root, f)), i)]
         for fname in files:
             try:
-                with open(Path(root, fname)) as fh:
+                with open(Path(root, fname), encoding="latin1") as fh:
                     for line in fh:
                         if re.findall(pattern, line):
-                            warned.append(f"`ifEmpty(null)` found in `{fname}`: _{line}_")
+                            warned.append(
+                                f"`ifEmpty(null)` found in `{
+                                          fname}`: _{line}_"
+                            )
                             file_paths.append(Path(root, fname))
             except FileNotFoundError:
                 log.debug(
                     f"Could not open file {
-                        fname} in pipeline_if_empty_null lint test"
+                          fname} in pipeline_if_empty_null lint test"
                 )
 
     if len(warned) == 0:
