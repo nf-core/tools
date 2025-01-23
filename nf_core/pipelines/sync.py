@@ -345,7 +345,7 @@ class PipelineSync:
                     if merge_branch_format.match(branch)
                 ]
             )
-            new_branch = f"{self.original_merge_branch}-{max_branch+1}"
+            new_branch = f"{self.original_merge_branch}-{max_branch + 1}"
             log.info(f"Branch already existed: '{self.merge_branch}', creating branch '{new_branch}' instead.")
             self.merge_branch = new_branch
 
