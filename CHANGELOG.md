@@ -4,6 +4,8 @@
 
 ### Template
 
+- Remove automated release tweets ([#3419](https://github.com/nf-core/tools/pull/3419))
+
 ### Linting
 
 - Add linting for ifEmpty(null) ([#3411](https://github.com/nf-core/tools/pull/3411))
@@ -13,6 +15,9 @@
 ### Subworkflows
 
 ### General
+
+- Fix `process.shell` in `nextflow.config` ([#3416](https://github.com/nf-core/tools/pull/3416))
+- Update python:3.12-slim Docker digest to 123be56 ([#3421](https://github.com/nf-core/tools/pull/3421))
 
 ## [v3.1.2 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.2) - [2025-01-20]
 
