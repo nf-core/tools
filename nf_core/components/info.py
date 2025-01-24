@@ -15,7 +15,7 @@ from rich.text import Text
 
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.components.components_utils import NF_CORE_MODULES_REMOTE
+from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.modules.modules_json import ModulesJson
 
 log = logging.getLogger(__name__)

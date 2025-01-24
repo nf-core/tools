@@ -9,11 +9,7 @@ from typing import Dict, Iterable, List, Optional, Union
 import git
 from git.exc import GitCommandError
 
-from nf_core.components.components_utils import (
-    NF_CORE_MODULES_DEFAULT_BRANCH,
-    NF_CORE_MODULES_NAME,
-    NF_CORE_MODULES_REMOTE,
-)
+from nf_core.components.constants import NF_CORE_MODULES_DEFAULT_BRANCH, NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
 from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
