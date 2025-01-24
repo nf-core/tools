@@ -32,16 +32,10 @@ def pipeline_if_empty_null(self, root_dir=None):
                 with open(Path(root, fname), encoding="latin1") as fh:
                     for line in fh:
                         if re.findall(pattern, line):
-                            warned.append(
-                                f"`ifEmpty(null)` found in `{
-                                          fname}`: _{line}_"
-                            )
+                            warned.append(f"`ifEmpty(null)` found in `{fname}`: _{line}_")
                             file_paths.append(Path(root, fname))
             except FileNotFoundError:
-                log.debug(
-                    f"Could not open file {
-                          fname} in pipeline_if_empty_null lint test"
-                )
+                log.debug(f"Could not open file {fname} in pipeline_if_empty_null lint test")
 
     if len(warned) == 0:
         passed.append("No `ifEmpty(null)` strings found")
