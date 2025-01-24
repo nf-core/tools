@@ -117,7 +117,7 @@ class ModuleLint(ComponentLint):
         """
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for module or all
-        if module is None and not all_modules and len(self.all_remote_components) > 0:
+        if module is None and not (local or all_modules) and len(self.all_remote_components) > 0:
             questions = [
                 {
                     "type": "list",
@@ -170,7 +170,7 @@ class ModuleLint(ComponentLint):
             self.lint_modules(local_modules, registry=registry, local=True, fix_version=fix_version)
 
         # Lint nf-core modules
-        if len(remote_modules) > 0:
+        if not local and len(remote_modules) > 0:
             self.lint_modules(remote_modules, registry=registry, local=False, fix_version=fix_version)
 
         if print_results:
@@ -234,7 +234,23 @@ class ModuleLint(ComponentLint):
         # TODO: consider unifying modules and subworkflows lint_module() function and add it to the ComponentLint class
         # Only check the main script in case of a local module
         if local:
-            self.main_nf(mod, fix_version, self.registry, progress_bar)
+            mod.get_inputs_from_main_nf()
+            mod.get_outputs_from_main_nf()
+            # Update meta.yml file if requested
+            if self.fix and mod.meta_yml is not None:
+                self.update_meta_yml_file(mod)
+
+            for test_name in self.lint_tests:
+                if test_name in self.local_module_exclude_tests:
+                    continue
+                if test_name == "main_nf":
+                    getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
+                elif test_name in ["meta_yml", "environment_yml"]:
+                    # Allow files to be missing for local
+                    getattr(self, test_name)(mod, allow_missing=True)
+                else:
+                    getattr(self, test_name)(mod)
+
             self.passed += [LintResult(mod, *m) for m in mod.passed]
             warned = [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
             if not self.fail_warned:

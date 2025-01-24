@@ -9,12 +9,13 @@ from pathlib import Path
 
 import yaml
 
+from nf_core.components.lint import LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
 
 
-def module_tests(_, module: NFCoreComponent):
+def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
     """
     Lint the tests of a module in ``nf-core/modules``
 
@@ -22,6 +23,30 @@ def module_tests(_, module: NFCoreComponent):
     and contains a ``main.nf.test`` and a ``main.nf.test.snap``
 
     """
+    if module.nftest_testdir is None:
+        if allow_missing:
+            module.warned.append(
+                (
+                    "test_dir_exists",
+                    "nf-test directory is missing",
+                    Path(module.component_dir, "tests"),
+                )
+            )
+            return
+        raise LintExceptionError("Module does not have a `tests` dir")
+
+    if module.nftest_main_nf is None:
+        if allow_missing:
+            module.warned.append(
+                (
+                    "test_main_nf_exists",
+                    "test `main.nf.test` does not exist",
+                    Path(module.component_dir, "tests", "main.nf.test"),
+                )
+            )
+            return
+        raise LintExceptionError("Module does not have a `tests` dir")
+
     repo_dir = module.component_dir.parts[: module.component_dir.parts.index(module.component_name.split("/")[0])][-1]
     test_dir = Path(module.base_dir, "tests", "modules", repo_dir, module.component_name)
     pytest_main_nf = Path(test_dir, "main.nf")

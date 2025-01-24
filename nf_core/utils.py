@@ -1244,6 +1244,8 @@ class NFCoreYamlLintConfig(BaseModel):
     """ Lint for version consistency """
     included_configs: Optional[bool] = None
     """ Lint for included configs """
+    local_component_structure: Optional[bool] = None
+    """ Lint local components use correct structure mirroring remote"""
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)

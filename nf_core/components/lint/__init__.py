@@ -162,6 +162,10 @@ class ComponentLint(ComponentCommand):
             self.registry = registry
         log.debug(f"Registry set to {self.registry}")
 
+    @property
+    def local_module_exclude_tests(self):
+        return ["module_version", "module_changes", "modules_patch"]
+
     @staticmethod
     def get_all_module_lint_tests(is_pipeline):
         if is_pipeline:
