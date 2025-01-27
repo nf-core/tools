@@ -6,7 +6,7 @@ responses
 ruff
 Sphinx
 sphinx-rtd-theme
-textual-dev==1.5.1
+textual-dev==1.7.0
 types-PyYAML
 types-requests
 types-jsonschema
