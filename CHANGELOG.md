@@ -5,6 +5,7 @@
 ### Template
 
 - Remove automated release tweets ([#3419](https://github.com/nf-core/tools/pull/3419))
+- Update template components ([#3426](https://github.com/nf-core/tools/pull/3426))
 
 ### Linting
 
