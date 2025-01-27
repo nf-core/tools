@@ -9,7 +9,7 @@ packaging
 pillow
 pdiff
 pre-commit
-prompt_toolkit<=3.0.48
+prompt_toolkit<=3.0.50
 pydantic>=2.2.1
 pyyaml
 questionary>=2.0.1
