@@ -12,9 +12,6 @@ on:
         required: true
         default: "dev"
   pull_request:
-    types:
-      - opened
-      - synchronize
     branches:
       - main
       - master

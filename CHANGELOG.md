@@ -4,6 +4,8 @@
 
 ### Template
 
+- Remove the on `pull_request_target` trigger and `pull_request` types from the download test. Also drop `push` triggers on other CI tests. ([#3399](https://github.com/nf-core/tools/pull/3399))
+
 ### Linting
 
 - Add linting for ifEmpty(null) ([#3411](https://github.com/nf-core/tools/pull/3411))
@@ -46,7 +48,6 @@
 
 - Allow `nf-core pipelines download -r` to download commits ([#3374](https://github.com/nf-core/tools/pull/3374))
 - Fix faulty Download Test Action to ensure that setup and test run as one job and on the same runner ([#3389](https://github.com/nf-core/tools/pull/3389))
-- Remove the on_pull_request_target trigger from the download test. ([#3399](https://github.com/nf-core/tools/pull/3399))
 
 ### Modules
 
