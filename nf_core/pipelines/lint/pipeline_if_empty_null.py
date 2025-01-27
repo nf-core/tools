@@ -21,7 +21,7 @@ def pipeline_if_empty_null(self, root_dir=None):
     file_paths = []
     pattern = re.compile(r"ifEmpty\s*\(\s*null\s*\)")
 
-    # Pipelines don"t provide a path, so use the workflow path.
+    # Pipelines don't provide a path, so use the workflow path.
     # Modules run this function twice and provide a string path
     if root_dir is None:
         root_dir = self.wf_path
