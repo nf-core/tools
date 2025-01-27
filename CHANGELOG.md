@@ -1,13 +1,11 @@
 # nf-core/tools: Changelog
 
-## v3.2.0dev
+## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
 ### Template
 
 - Remove automated release tweets ([#3419](https://github.com/nf-core/tools/pull/3419))
 - Update template components ([#3426](https://github.com/nf-core/tools/pull/3426))
-
-### Linting
 
 ### Modules
 
