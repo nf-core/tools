@@ -62,7 +62,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
         ).get("meta.yml")
         if lines is not None:
             yaml = ruamel.yaml.YAML()
-            meta_yaml = yaml.safe_load("".join(lines))
+            meta_yaml = yaml.load("".join(lines))
     if meta_yaml is None:
         module.failed.append(("meta_yml_exists", "Module `meta.yml` does not exist", module.meta_yml))
         return
