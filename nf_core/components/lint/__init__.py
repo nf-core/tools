@@ -102,7 +102,7 @@ class ComponentLint(ComponentCommand):
                     continue
                 if isinstance(components, str):
                     raise LookupError(
-                        f"Error parsing modules.json: {components}. " f"Please check the file for errors or try again."
+                        f"Error parsing modules.json: {components}. Please check the file for errors or try again."
                     )
                 for org, comp in components:
                     self.all_remote_components.append(
@@ -161,6 +161,10 @@ class ComponentLint(ComponentCommand):
         else:
             self.registry = registry
         log.debug(f"Registry set to {self.registry}")
+
+    @property
+    def local_module_exclude_tests(self):
+        return ["module_version", "module_changes", "modules_patch"]
 
     @staticmethod
     def get_all_module_lint_tests(is_pipeline):
