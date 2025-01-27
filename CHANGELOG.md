@@ -1,5 +1,17 @@
 # nf-core/tools: Changelog
 
+## v3.3.0dev
+
+### Template
+
+### Linting
+
+### Modules
+
+### Subworkflows
+
+### General
+
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
 ### Template
