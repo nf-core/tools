@@ -62,7 +62,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
         ).get("meta.yml")
         if lines is not None:
             yaml = ruamel.yaml.YAML()
-            meta_yaml = yaml.safe_load("".join(lines))
+            meta_yaml = yaml.load("".join(lines))
     if meta_yaml is None:
         module.failed.append(("meta_yml_exists", "Module `meta.yml` does not exist", module.meta_yml))
         return
@@ -82,7 +82,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
         if len(e.path) > 0:
             hint = f"\nCheck the entry for `{e.path[0]}`."
         if e.message.startswith("None is not of type 'object'") and len(e.path) > 2:
-            hint = f"\nCheck that the child entries of {str(e.path[0])+'.'+str(e.path[2])} are indented correctly."
+            hint = f"\nCheck that the child entries of {str(e.path[0]) + '.' + str(e.path[2])} are indented correctly."
         if e.schema and isinstance(e.schema, dict) and "message" in e.schema:
             e.message = e.schema["message"]
             incorrect_value = meta_yaml

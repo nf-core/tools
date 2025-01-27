@@ -296,15 +296,15 @@ class TestModulesLint(TestModules):
                 if line.strip():
                     check_container_link_line(mocked_ModuleLint, line, registry="quay.io")
 
-            assert (
-                len(mocked_ModuleLint.passed) == passed
-            ), f"{test}: Expected {passed} PASS, got {len(mocked_ModuleLint.passed)}."
-            assert (
-                len(mocked_ModuleLint.warned) == warned
-            ), f"{test}: Expected {warned} WARN, got {len(mocked_ModuleLint.warned)}."
-            assert (
-                len(mocked_ModuleLint.failed) == failed
-            ), f"{test}: Expected {failed} FAIL, got {len(mocked_ModuleLint.failed)}."
+            assert len(mocked_ModuleLint.passed) == passed, (
+                f"{test}: Expected {passed} PASS, got {len(mocked_ModuleLint.passed)}."
+            )
+            assert len(mocked_ModuleLint.warned) == warned, (
+                f"{test}: Expected {warned} WARN, got {len(mocked_ModuleLint.warned)}."
+            )
+            assert len(mocked_ModuleLint.failed) == failed, (
+                f"{test}: Expected {failed} FAIL, got {len(mocked_ModuleLint.failed)}."
+            )
 
     def test_modules_lint_update_meta_yml(self):
         """update the meta.yml of a module"""

@@ -102,7 +102,7 @@ class ComponentLint(ComponentCommand):
                     continue
                 if isinstance(components, str):
                     raise LookupError(
-                        f"Error parsing modules.json: {components}. " f"Please check the file for errors or try again."
+                        f"Error parsing modules.json: {components}. Please check the file for errors or try again."
                     )
                 for org, comp in components:
                     self.all_remote_components.append(

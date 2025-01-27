@@ -212,7 +212,7 @@ class ROCrate:
         else:
             url = self.version
         self.crate.mainEntity.append_to(
-            "url", f"https://nf-co.re/{self.crate.name.replace('nf-core/','')}/{url}/", compact=True
+            "url", f"https://nf-co.re/{self.crate.name.replace('nf-core/', '')}/{url}/", compact=True
         )
         self.crate.mainEntity.append_to("version", self.version, compact=True)
 

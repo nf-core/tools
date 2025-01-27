@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 
 import jsonschema.validators
-import yaml
+import ruamel.yaml
 
 import nf_core.components.components_utils
 from nf_core.components.lint import LintExceptionError
@@ -43,7 +43,8 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
 
     try:
         with open(subworkflow.meta_yml) as fh:
-            meta_yaml = yaml.safe_load(fh)
+            yaml = ruamel.yaml.YAML(typ="safe")
+            meta_yaml = yaml.load(fh)
         subworkflow.passed.append(("meta_yml_exists", "Subworkflow `meta.yml` exists", subworkflow.meta_yml))
     except FileNotFoundError:
         subworkflow.failed.append(("meta_yml_exists", "Subworkflow `meta.yml` does not exist", subworkflow.meta_yml))
@@ -62,7 +63,7 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
         if len(e.path) > 0:
             hint = f"\nCheck the entry for `{e.path[0]}`."
         if e.message.startswith("None is not of type 'object'") and len(e.path) > 2:
-            hint = f"\nCheck that the child entries of {e.path[0]}.{e.path[2]} are indented correctly."
+            hint = f"\nCheck that the child entries of {str(e.path[0]) + '.' + str(e.path[2])} are indented correctly."
         subworkflow.failed.append(
             (
                 "meta_yml_valid",
