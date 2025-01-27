@@ -18,6 +18,7 @@
 
 ### General
 
+- Update pre-commit hook editorconfig-checker/editorconfig-checker.python to v3.1.2 ([#3414](https://github.com/nf-core/tools/pull/3414))
 - Fix `process.shell` in `nextflow.config` ([#3416](https://github.com/nf-core/tools/pull/3416))
 - Update python:3.12-slim Docker digest to 123be56 ([#3421](https://github.com/nf-core/tools/pull/3421))
 
