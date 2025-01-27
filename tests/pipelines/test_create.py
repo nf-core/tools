@@ -158,9 +158,9 @@ class NfcoreCreateTest(unittest.TestCase):
                 str_path = str((Path(root) / file).relative_to(PIPELINE_TEMPLATE))
                 if str_path not in base_required_files:
                     try:
-                        assert (
-                            str_path in all_skipped_files
-                        ), f"Template file `{str_path}` not present in a group for pipeline customisation in `template_features.yml`."
+                        assert str_path in all_skipped_files, (
+                            f"Template file `{str_path}` not present in a group for pipeline customisation in `template_features.yml`."
+                        )
                     except AssertionError:
                         if "/" in str_path:
                             # Check if the parent directory is in the skipped files
@@ -170,6 +170,8 @@ class NfcoreCreateTest(unittest.TestCase):
                                 if upper_dir in all_skipped_files:
                                     upper_dir_present = True
                                     break
-                            assert upper_dir_present, f"Template file `{str_path}` not present in a group for pipeline customisation in `template_features.yml`."
+                            assert upper_dir_present, (
+                                f"Template file `{str_path}` not present in a group for pipeline customisation in `template_features.yml`."
+                            )
                         else:
                             raise

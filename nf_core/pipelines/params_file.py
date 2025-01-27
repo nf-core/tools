@@ -19,7 +19,7 @@ INTRO = (
     "of nextflow run with the {pipeline_name} pipeline."
 )
 
-USAGE = "Uncomment lines with a single '#' if you want to pass the parameter " "to the pipeline."
+USAGE = "Uncomment lines with a single '#' if you want to pass the parameter to the pipeline."
 
 H1_SEPERATOR = "## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 H2_SEPERATOR = "## ----------------------------------------------------------------------------"
@@ -107,7 +107,7 @@ class ParamsFileBuilder:
         # Prompt for pipeline if not supplied
         if self.pipeline is None:
             launch_type = questionary.select(
-                "Generate parameter file for local pipeline " "or remote GitHub pipeline?",
+                "Generate parameter file for local pipeline or remote GitHub pipeline?",
                 choices=["Remote pipeline", "Local path"],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
