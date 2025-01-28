@@ -151,15 +151,15 @@ class ComponentCreate(ComponentCommand):
             if self.component_type == "modules":
                 # Try to find a bioconda package for 'component'
                 self._get_bioconda_tool()
-                if self.tool_conda_name:
-                    # Try to find a biotools entry for 'component'
-                    biotools_data = get_biotools_response(self.tool_conda_name)
-                    if biotools_data:
-                        self.tool_identifier = get_biotools_id(biotools_data, self.tool_conda_name)
-                        # Obtain EDAM ontologies for inputs and outputs
-                        channel_info = get_channel_info_from_biotools(biotools_data, self.tool_conda_name)
-                        if channel_info:
-                            self.inputs, self.outputs = channel_info
+                name = self.tool_conda_name if self.tool_conda_name else self.component
+                # Try to find a biotools entry for 'component'
+                biotools_data = get_biotools_response(name)
+                if biotools_data:
+                    self.tool_identifier = get_biotools_id(biotools_data, name)
+                    # Obtain EDAM ontologies for inputs and outputs
+                    channel_info = get_channel_info_from_biotools(biotools_data, name)
+                    if channel_info:
+                        self.inputs, self.outputs = channel_info
 
             # Prompt for GitHub username
             self._get_username()
