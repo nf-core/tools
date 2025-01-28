@@ -183,6 +183,8 @@ class ComponentCreate(ComponentCommand):
 
         new_files = [str(path) for path in self.file_paths.values()]
 
+        run_prettier_on_file(new_files)
+
         log.info("Created following files:\n  " + "\n  ".join(new_files))
         return True
 
