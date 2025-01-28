@@ -166,7 +166,6 @@ def get_components_to_install(subworkflow_dir: Union[str, Path]) -> Tuple[List[s
 
 
 def get_biotools_response(tool_name: str) -> Optional[dict]:
-def get_biotools_response(tool_name: str) -> Optional[dict]:
     """
     Try to get bio.tools information for 'tool'
     Try to get bio.tools information for 'tool'
