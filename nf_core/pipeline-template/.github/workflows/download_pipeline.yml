@@ -130,4 +130,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nextflow_logfile.txt
-          path: .nextflow.log*{% endif %}
+          path: .nextflow.log*
+          include-hidden-files: true{% endif %}
