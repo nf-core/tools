@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import pytest
 from git.repo import Repo
 
 from .utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
@@ -31,6 +32,10 @@ class TestComponents(unittest.TestCase):
         # Clean up temporary files
         if self.tmp_dir.is_dir():
             shutil.rmtree(self.tmp_dir)
+
+    @pytest.fixture(autouse=True)
+    def _use_caplog(self, caplog):
+        self.caplog = caplog
 
     ############################################
     # Test of the individual components commands. #
