@@ -14,7 +14,7 @@
 
 ### General
 
-- remove hard coded key prefix in schema ([#3432](https://github.com/nf-core/tools/pull/3432))
+- remove hard coded key prefix for schema in launcher ([#3432](https://github.com/nf-core/tools/pull/3432))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
