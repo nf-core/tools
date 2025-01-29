@@ -1,7 +1,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 import questionary
 import requests
@@ -200,7 +200,7 @@ def get_biotools_id(data: dict, tool_name: str) -> str:
 
 def get_channel_info_from_biotools(
     data: dict, tool_name: str
-) -> Optional[tuple[dict[str, tuple[list[str], str]], dict[str, tuple[list[str], str]]]]:
+) -> Optional[Tuple[Dict[str, Tuple[List[str], str]], Dict[str, Tuple[List[str], str]]]]:
     """
     Try to find input and output channels and the respective EDAM ontology terms
 
@@ -211,8 +211,8 @@ def get_channel_info_from_biotools(
     inputs = {}
     outputs = {}
 
-    def _iterate_input_output(type) -> dict[str, tuple[list[str], str]]:
-        type_info: dict[str, tuple[list[str], str]] = {}
+    def _iterate_input_output(type) -> Dict[str, Tuple[List[str], str]]:
+        type_info = {}
         if type in funct:
             for element in funct[type]:
                 if "data" in element:
