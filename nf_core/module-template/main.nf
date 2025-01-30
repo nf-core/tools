@@ -96,7 +96,6 @@ process {{ component_name_underscore|upper }} {
     """
 
     stub:
-    def args = task.ext.args ?: ''
     {% if has_meta -%}
     def prefix = task.ext.prefix ?: "${meta.id}"
     {%- endif %}
