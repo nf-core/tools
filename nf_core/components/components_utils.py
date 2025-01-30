@@ -165,9 +165,8 @@ def get_components_to_install(subworkflow_dir: Union[str, Path]) -> Tuple[List[s
     return modules, subworkflows
 
 
-def get_biotools_response(tool_name: str) -> Optional[dict]:
+def get_biotools_response(tool_name: str) -> Optional[Dict]:
     """
-    Try to get bio.tools information for 'tool'
     Try to get bio.tools information for 'tool'
     """
     url = f"https://bio.tools/api/t/?q={tool_name}&format=json"
@@ -197,10 +196,10 @@ def get_biotools_id(data: dict, tool_name: str) -> str:
     log.warning(f"Could not find a bio.tools ID for '{tool_name}'")
     return ""
 
-
+type DictWithListAndStr = Dict[str, Tuple[List[str], str]]
 def get_channel_info_from_biotools(
     data: dict, tool_name: str
-) -> Optional[Tuple[Dict[str, Tuple[List[str], str]], Dict[str, Tuple[List[str], str]]]]:
+) -> Optional[Tuple[DictWithListAndStr, DictWithListAndStr]] :
     """
     Try to find input and output channels and the respective EDAM ontology terms
 
@@ -211,7 +210,7 @@ def get_channel_info_from_biotools(
     inputs = {}
     outputs = {}
 
-    def _iterate_input_output(type) -> Dict[str, Tuple[List[str], str]]:
+    def _iterate_input_output(type) -> DictWithListAndStr:
         type_info = {}
         if type in funct:
             for element in funct[type]:
@@ -235,7 +234,7 @@ def get_channel_info_from_biotools(
     for tool in data["list"]:
         if tool["name"].lower() == tool_name:
             if "function" in tool:
-                # Parese all tool functions
+                # Parse all tool functions
                 for funct in tool["function"]:
                     inputs.update(_iterate_input_output("input"))
                     outputs.update(_iterate_input_output("output"))
