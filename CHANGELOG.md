@@ -16,6 +16,8 @@
 
 ### General
 
+- output passed to write_params_file as Path object ([#3435](https://github.com/nf-core/tools/pull/3435))
+
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
 ### Template
