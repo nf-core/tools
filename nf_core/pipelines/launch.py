@@ -408,7 +408,7 @@ class Launch:
         # Start with the subschema in the definitions - use order of allOf
         defs_notation = self.schema_obj.defs_notation
         log.debug(f"defs_notation: {defs_notation}")
-        definitions_schemas = self.schema_obj.schema.get(defs_notation, {}).items()
+        definitions_schemas = self.schema_obj.schema.get(defs_notation, {})
         for allOf in self.schema_obj.schema.get("allOf", []):
             # Extract the key from the $ref by removing the prefix
             ref_value = allOf["$ref"]
@@ -416,8 +416,7 @@ class Launch:
             d_key = ref_value[len(prefix) :] if ref_value.startswith(prefix) else ref_value
             log.debug(f"d_key: {d_key}")
             try:
-                group_obj = dict(definitions_schemas)[d_key]
-                answers.update(self.prompt_group(d_key, group_obj))
+                answers.update(self.prompt_group(d_key, definitions_schemas[d_key]))
             except KeyError:
                 log.warning(f"Could not find definition for {d_key}")
                 continue
