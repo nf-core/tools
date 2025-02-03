@@ -4,6 +4,8 @@
 
 ### Template
 
+- Remove the on `pull_request_target` trigger and `pull_request` types from the download test. Also drop `push` triggers on other CI tests. ([#3399](https://github.com/nf-core/tools/pull/3399))
+
 ### Linting
 
 - Add linting for ifEmpty(null) ([#3411](https://github.com/nf-core/tools/pull/3411))
@@ -15,6 +17,9 @@
 ### General
 
 - remove hard coded key prefix for schema in launcher ([#3432](https://github.com/nf-core/tools/pull/3432))
+- output passed to write_params_file as Path object ([#3435](https://github.com/nf-core/tools/pull/3435))
+- chore(deps): update python:3.12-slim docker digest to 69ce3ae ([#3433](https://github.com/nf-core/tools/pull/3433))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.4 ([#3438](https://github.com/nf-core/tools/pull/3438))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
