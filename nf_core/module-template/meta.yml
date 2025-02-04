@@ -90,9 +90,9 @@ output:
         description: {{ output_name }} file
         pattern: {{ "\"*.{" + ontologies[1] + "}\"" }}
         ontologies:
-          {% for ontology in ontologies[0] -%}
+          {%- for ontology in ontologies[0] %}
           - edam: "{{ ontology }}"
-          {% endfor -%}
+          {%- endfor %}
   {% endfor -%}
   {% else -%}
   - {{ 'bam:' if not_empty_template else "output:" }}
