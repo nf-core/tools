@@ -33,16 +33,16 @@ input:
         type: map
         description: |
           Groovy Map containing sample information
-          e.g. `[ id:'sample1', single_end:false ]`
+          e.g. `[ id:'sample1' ]`
   {% endif %}
     - {{ input_name }}:
-        # TODO nf-core: Update the information obtained form bio.tools and make sure that it is correct
+        # TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
         type: file
         description: {{ input_name }} file
-        pattern: {{ "\"*.{" + ontologies[1] + "}\"" }}
+        pattern: {{ "\"*.{" + ontologies[1]|join(",") + "}\"" }}
         ontologies:
           {% for ontology in ontologies[0] -%}
-          - edam: "{{ ontology }}"
+          - edam: "{{ ontology }}" # {{ ontologies[1][loop.index0] }}
           {% endfor -%}
   {% endfor -%}
   {% else -%}
@@ -51,7 +51,7 @@ input:
         type: map
         description: |
           Groovy Map containing sample information
-          e.g. `[ id:'sample1', single_end:false ]`
+          e.g. `[ id:'sample1' ]`
   {% endif %}
   {% if not_empty_template -%}
   ## TODO nf-core: Delete / customise this example input
@@ -82,16 +82,16 @@ output:
         type: map
         description: |
           Groovy Map containing sample information
-          e.g. `[ id:'sample1', single_end:false ]`
+          e.g. `[ id:'sample1' ]`
     {%- endif %}
     - {{ output_name }}:
-        # TODO nf-core: Update the information obtained form bio.tools and make sure that it is correct
+        # TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
         type: file
         description: {{ output_name }} file
-        pattern: {{ "\"*.{" + ontologies[1] + "}\"" }}
+        pattern: {{ "\"*.{" + ontologies[1]|join(",") + "}\"" }}
         ontologies:
           {%- for ontology in ontologies[0] %}
-          - edam: "{{ ontology }}"
+          - edam: "{{ ontology }}" # {{ ontologies[1][loop.index0] }}
           {%- endfor %}
   {% endfor -%}
   {% else -%}
@@ -101,7 +101,7 @@ output:
         type: map
         description: |
           Groovy Map containing sample information
-          e.g. `[ id:'sample1', single_end:false ]`
+          e.g. `[ id:'sample1' ]`
   {%- endif %}
   {% if not_empty_template -%}
     ## TODO nf-core: Delete / customise this example output

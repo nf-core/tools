@@ -22,9 +22,6 @@ process {{ component_name_underscore|upper }} {
     label '{{ process_label }}'
 
     {% if not_empty_template -%}
-    // TODO nf-core: List required Conda package(s).
-    //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
-    //               For Conda, the build (i.e. "h9402c20_2") must be EXCLUDED to support installation on different operating systems.
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     {% endif -%}
     conda "${moduleDir}/environment.yml"
@@ -34,7 +31,7 @@ process {{ component_name_underscore|upper }} {
 
     input:
     {%- if inputs %}
-    // TODO nf-core: Update the information obtained form bio.tools and make sure that it is correct
+    // TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
     {%- for input_name, ontologies in inputs.items() %}
     {{ 'tuple val(meta), path(' + input_name + ')' if has_meta else 'path ' + input_name }}
     {%- endfor %}
@@ -54,9 +51,9 @@ process {{ component_name_underscore|upper }} {
 
     output:
     {%- if outputs %}
-    // TODO nf-core: Update the information obtained form bio.tools and make sure that it is correct
+    // TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
     {%- for output_name, ontologies in outputs.items() %}
-    {{ 'tuple val(meta), path("*{' + ontologies[1] + '}")' if has_meta else 'path ' + output_name }}, emit: {{ output_name }}
+    {{ 'tuple val(meta), path("*{' + ontologies[1]|join(',') + '}")' if has_meta else 'path ' + output_name }}, emit: {{ output_name }}
     {%- endfor %}
     {%- else %}
     {% if not_empty_template -%}
@@ -96,7 +93,7 @@ process {{ component_name_underscore|upper }} {
         {%- if has_meta %}
         {%- if inputs %}
         {%- for input_name, ontologies in inputs.items() %}
-        {%- set extensions = ontologies[1].split(',') %}
+        {%- set extensions = ontologies[1] %}
         {%- for ext in extensions %}
         -o ${prefix}.{{ ext }} \\
         {%- endfor %}
@@ -135,7 +132,7 @@ process {{ component_name_underscore|upper }} {
     {% if not_empty_template -%}
     {%- if inputs %}
     {%- for input_name, ontologies in inputs.items() %}
-    {%- set extensions = ontologies[1].split(',') %}
+    {%- set extensions = ontologies[1] %}
     {%- for ext in extensions %}
     touch ${prefix}.{{ ext }}
     {%- endfor %}

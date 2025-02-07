@@ -196,10 +196,13 @@ def get_biotools_id(data: dict, tool_name: str) -> str:
     log.warning(f"Could not find a bio.tools ID for '{tool_name}'")
     return ""
 
-type DictWithListAndStr = Dict[str, Tuple[List[str], str]]
+
+type DictWithStrAndTuple = Dict[str, Tuple[List[str], List[str]]]
+
+
 def get_channel_info_from_biotools(
     data: dict, tool_name: str
-) -> Optional[Tuple[DictWithListAndStr, DictWithListAndStr]] :
+) -> Optional[Tuple[DictWithStrAndTuple, DictWithStrAndTuple]]:
     """
     Try to find input and output channels and the respective EDAM ontology terms
 
@@ -210,24 +213,21 @@ def get_channel_info_from_biotools(
     inputs = {}
     outputs = {}
 
-    def _iterate_input_output(type) -> DictWithListAndStr:
+    def _iterate_input_output(type) -> DictWithStrAndTuple:
         type_info = {}
         if type in funct:
             for element in funct[type]:
                 if "data" in element:
                     element_name = "_".join(element["data"]["term"].lower().split(" "))
                     uris = [element["data"]["uri"]]
-                    terms = ""
+                    terms = [""]
                 if "format" in element:
                     for format in element["format"]:
                         # Append the EDAM URI
                         uris.append(format["uri"])
                         # Append the EDAM term, getting the first word in case of complicated strings. i.e. "FASTA format"
-                        terms = terms + format["term"].lower().split(" ")[0] + ","
-                    type_info[element_name] = (
-                        uris,
-                        terms[:-1],  # Remove the last comma
-                    )
+                        terms.append(format["term"].lower().split(" ")[0])
+                    type_info[element_name] = (uris, terms)
         return type_info
 
     # Iterate through the tools in the response to find the tool name
