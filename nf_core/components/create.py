@@ -75,11 +75,11 @@ class ComponentCreate(ComponentCommand):
         e.g bam_sort or bam_sort_samtools, respectively.
 
         If <directory> is a pipeline, this function creates a file called:
-        '<directory>/modules/local/tool.nf'
+        '<directory>/modules/local/tool/main.nf'
             OR
-        '<directory>/modules/local/tool_subtool.nf'
+        '<directory>/modules/local/tool/subtool/main.nf'
             OR for subworkflows
-        '<directory>/subworkflows/local/subworkflow_name.nf'
+        '<directory>/subworkflows/local/subworkflow_name/main.nf'
 
         If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
 
@@ -364,70 +364,46 @@ class ComponentCreate(ComponentCommand):
         """
         file_paths = {}
         if self.repo_type == "pipeline":
-            local_component_dir = Path(self.directory, self.component_type, "local")
-            # Check whether component file already exists
-            component_file = local_component_dir / f"{self.component_name}.nf"
-            if component_file.exists() and not self.force_overwrite:
-                raise UserWarning(
-                    f"{self.component_type[:-1].title()} file exists already: '{component_file}'. Use '--force' to overwrite"
-                )
-
-            if self.component_type == "modules":
-                # If a subtool, check if there is a module called the base tool name already
-                if self.subtool and (local_component_dir / f"{self.component}.nf").exists():
-                    raise UserWarning(
-                        f"Module '{self.component}' exists already, cannot make subtool '{self.component_name}'"
-                    )
-
-                # If no subtool, check that there isn't already a tool/subtool
-                tool_glob = glob.glob(f"{local_component_dir}/{self.component}_*.nf")
-                if not self.subtool and tool_glob:
-                    raise UserWarning(
-                        f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.component_name}'"
-                    )
-
-            # Set file paths
-            file_paths["main.nf"] = component_file
+            component_dir = Path(self.directory, self.component_type, "local", self.component_dir)
 
         elif self.repo_type == "modules":
             component_dir = Path(self.directory, self.component_type, self.org, self.component_dir)
-            # Check if module/subworkflow directories exist already
-            if component_dir.exists() and not self.force_overwrite and not self.migrate_pytest:
-                raise UserWarning(
-                    f"{self.component_type[:-1]} directory exists: '{component_dir}'. Use '--force' to overwrite"
-                )
-
-            if self.component_type == "modules":
-                # If a subtool, check if there is a module called the base tool name already
-                parent_tool_main_nf = Path(
-                    self.directory,
-                    self.component_type,
-                    self.org,
-                    self.component,
-                    "main.nf",
-                )
-                if self.subtool and parent_tool_main_nf.exists() and not self.migrate_pytest:
-                    raise UserWarning(
-                        f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.component_name}'"
-                    )
-
-                # If no subtool, check that there isn't already a tool/subtool
-                tool_glob = glob.glob(
-                    f"{Path(self.directory, self.component_type, self.org, self.component)}/*/main.nf"
-                )
-                if not self.subtool and tool_glob and not self.migrate_pytest:
-                    raise UserWarning(
-                        f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.component_name}'"
-                    )
-            # Set file paths
-            # For modules - can be tool/ or tool/subtool/ so can't do in template directory structure
-            file_paths["main.nf"] = component_dir / "main.nf"
-            file_paths["meta.yml"] = component_dir / "meta.yml"
-            if self.component_type == "modules":
-                file_paths["environment.yml"] = component_dir / "environment.yml"
-            file_paths["tests/main.nf.test.j2"] = component_dir / "tests" / "main.nf.test"
         else:
             raise ValueError("`repo_type` not set correctly")
+
+        # Check if module/subworkflow directories exist already
+        if component_dir.exists() and not self.force_overwrite and not self.migrate_pytest:
+            raise UserWarning(
+                f"{self.component_type[:-1]} directory exists: '{component_dir}'. Use '--force' to overwrite"
+            )
+
+        if self.component_type == "modules":
+            # If a subtool, check if there is a module called the base tool name already
+            parent_tool_main_nf = Path(
+                self.directory,
+                self.component_type,
+                self.org,
+                self.component,
+                "main.nf",
+            )
+            if self.subtool and parent_tool_main_nf.exists() and not self.migrate_pytest:
+                raise UserWarning(
+                    f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.component_name}'"
+                )
+
+            # If no subtool, check that there isn't already a tool/subtool
+            tool_glob = glob.glob(f"{Path(self.directory, self.component_type, self.org, self.component)}/*/main.nf")
+            if not self.subtool and tool_glob and not self.migrate_pytest:
+                raise UserWarning(
+                    f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.component_name}'"
+                )
+        # Set file paths
+        # For modules - can be tool/ or tool/subtool/ so can't do in template directory structure
+        file_paths["main.nf"] = component_dir / "main.nf"
+        file_paths["meta.yml"] = component_dir / "meta.yml"
+        if self.component_type == "modules":
+            file_paths["environment.yml"] = component_dir / "environment.yml"
+        file_paths["tests/main.nf.test.j2"] = component_dir / "tests" / "main.nf.test"
 
         return file_paths
 

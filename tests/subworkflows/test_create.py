@@ -19,7 +19,7 @@ class TestSubworkflowsCreate(TestSubworkflows):
             self.pipeline_dir, "test_subworkflow_local", "@author", True
         )
         subworkflow_create.create()
-        assert Path(self.pipeline_dir, "subworkflows", "local", "test_subworkflow_local.nf").exists()
+        assert Path(self.pipeline_dir, "subworkflows", "local", "test_subworkflow_local/main.nf").exists()
 
     def test_subworkflows_create_fail_exists(self):
         """Fail at creating the same subworkflow twice"""
@@ -29,7 +29,7 @@ class TestSubworkflowsCreate(TestSubworkflows):
         subworkflow_create.create()
         with pytest.raises(UserWarning) as excinfo:
             subworkflow_create.create()
-        assert "Subworkflow file exists already" in str(excinfo.value)
+        assert "subworkflow directory exists" in str(excinfo.value)
 
     def test_subworkflows_create_nfcore_modules(self):
         """Create a subworkflow in nf-core/modules clone"""

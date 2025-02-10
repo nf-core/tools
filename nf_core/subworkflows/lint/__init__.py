@@ -24,6 +24,7 @@ log = logging.getLogger(__name__)
 from .main_nf import main_nf  # type: ignore[misc]
 from .meta_yml import meta_yml  # type: ignore[misc]
 from .subworkflow_changes import subworkflow_changes  # type: ignore[misc]
+from .subworkflow_if_empty_null import subworkflow_if_empty_null  # type: ignore[misc]
 from .subworkflow_tests import subworkflow_tests  # type: ignore[misc]
 from .subworkflow_todos import subworkflow_todos  # type: ignore[misc]
 from .subworkflow_version import subworkflow_version  # type: ignore[misc]
@@ -40,6 +41,7 @@ class SubworkflowLint(ComponentLint):
     subworkflow_changes = subworkflow_changes
     subworkflow_tests = subworkflow_tests
     subworkflow_todos = subworkflow_todos
+    subworkflow_if_empty_null = subworkflow_if_empty_null
     subworkflow_version = subworkflow_version
 
     def __init__(
@@ -99,7 +101,7 @@ class SubworkflowLint(ComponentLint):
         """
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for subworkflow or all
-        if subworkflow is None and not all_subworkflows:
+        if subworkflow is None and not (local or all_subworkflows):
             questions = [
                 {
                     "type": "list",
@@ -152,7 +154,7 @@ class SubworkflowLint(ComponentLint):
             self.lint_subworkflows(local_subworkflows, registry=registry, local=True)
 
         # Lint nf-core subworkflows
-        if len(remote_subworkflows) > 0:
+        if not local and len(remote_subworkflows) > 0:
             self.lint_subworkflows(remote_subworkflows, registry=registry, local=False)
 
         if print_results:
@@ -208,6 +210,8 @@ class SubworkflowLint(ComponentLint):
         # Only check the main script in case of a local subworkflow
         if local:
             self.main_nf(swf)
+            self.meta_yml(swf, allow_missing=True)
+            self.subworkflow_todos(swf)
             self.passed += [LintResult(swf, *s) for s in swf.passed]
             warned = [LintResult(swf, *m) for m in (swf.warned + swf.failed)]
             if not self.fail_warned:

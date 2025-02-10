@@ -9,12 +9,13 @@ from pathlib import Path
 
 import yaml
 
+from nf_core.components.lint import LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
 
 
-def subworkflow_tests(_, subworkflow: NFCoreComponent):
+def subworkflow_tests(_, subworkflow: NFCoreComponent, allow_missing: bool = False):
     """
     Lint the tests of a subworkflow in ``nf-core/modules``
 
@@ -23,6 +24,29 @@ def subworkflow_tests(_, subworkflow: NFCoreComponent):
 
     Additionally, checks that all included components in test ``main.nf`` are specified in ``test.yml``
     """
+    if subworkflow.nftest_testdir is None:
+        if allow_missing:
+            subworkflow.warned.append(
+                (
+                    "test_dir_exists",
+                    "nf-test directory is missing",
+                    Path(subworkflow.component_dir, "tests"),
+                )
+            )
+            return
+        raise LintExceptionError("Module does not have a `tests` dir")
+
+    if subworkflow.nftest_main_nf is None:
+        if allow_missing:
+            subworkflow.warned.append(
+                (
+                    "test_main_nf_exists",
+                    "test `main.nf.test` does not exist",
+                    Path(subworkflow.component_dir, "tests", "main.nf.test"),
+                )
+            )
+            return
+        raise LintExceptionError("Subworkflow does not have a `tests` dir")
 
     repo_dir = subworkflow.component_dir.parts[
         : subworkflow.component_dir.parts.index(subworkflow.component_name.split("/")[0])
