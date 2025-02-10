@@ -176,6 +176,7 @@ def get_biotools_response(tool_name: str) -> Optional[Dict]:
         response.raise_for_status()  # Raise an error for bad status codes
         # Parse the JSON response
         data = response.json()
+        log.info(f"Found bio.tools information for '{tool_name}'")
         return data
 
     except requests.exceptions.RequestException as e:
@@ -190,6 +191,7 @@ def get_biotools_id(data: dict, tool_name: str) -> str:
     # Iterate through the tools in the response to find the tool name
     for tool in data["list"]:
         if tool["name"].lower() == tool_name:
+            log.info(f"Found bio.tools ID: '{tool['biotoolsCURIE']}'")
             return tool["biotoolsCURIE"]
 
     # If the tool name was not found in the response
