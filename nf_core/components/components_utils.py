@@ -197,7 +197,7 @@ def get_biotools_id(data: dict, tool_name: str) -> str:
     return ""
 
 
-type DictWithStrAndTuple = Dict[str, Tuple[List[str], List[str]]]
+DictWithStrAndTuple = Dict[str, Tuple[List[str], List[str]]]
 
 
 def get_channel_info_from_biotools(
