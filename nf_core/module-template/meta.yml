@@ -62,9 +62,9 @@ input:
         pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
         ontologies:
           {% if not_empty_template -%}
-          - edam: "http://edamontology.org/format_25722"
-          - edam: "http://edamontology.org/format_2573"
-          - edam: "http://edamontology.org/format_3462"
+          - edam: "http://edamontology.org/format_25722" # BAM
+          - edam: "http://edamontology.org/format_2573" # CRAM
+          - edam: "http://edamontology.org/format_3462" # SAM
           {% else -%}
           - edam: ""
           {%- endif %}
@@ -112,9 +112,9 @@ output:
         pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
         ontologies:
           {% if not_empty_template -%}
-          - edam: "http://edamontology.org/format_25722"
-          - edam: "http://edamontology.org/format_2573"
-          - edam: "http://edamontology.org/format_3462"
+          - edam: "http://edamontology.org/format_25722" # BAM
+          - edam: "http://edamontology.org/format_2573" # CRAM
+          - edam: "http://edamontology.org/format_3462" # SAM
           {% else -%}
           - edam: ""
           {%- endif %}
