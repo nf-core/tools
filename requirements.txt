@@ -25,4 +25,3 @@ textual==0.71.0
 trogon
 pdiff
 ruamel.yaml
-edam-ontology

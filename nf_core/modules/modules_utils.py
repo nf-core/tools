@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 from urllib.parse import urlparse
 
-from edam_ontology.streams import tabular_stream
+import requests
 
 from ..components.nfcore_component import NFCoreComponent
 
@@ -104,10 +104,10 @@ def get_installed_modules(directory: Path, repo_type="modules") -> Tuple[List[st
 def load_edam():
     """Load the EDAM ontology from the nf-core repository"""
     edam_formats = {}
-    with tabular_stream() as handle:
-        for line in handle.readlines():
-            fields = line.split("\t")
-            if fields[0].split("/")[-1].startswith("format"):
-                extension = fields[1].lower().split(" ")[0]
-                edam_formats[extension] = (fields[0], fields[1])  # URL, name
+    response = requests.get("https://edamontology.org/EDAM.tsv")
+    for line in response.content.splitlines():
+        fields = line.decode("utf-8").split("\t")
+        if fields[0].split("/")[-1].startswith("format"):
+            extension = fields[1].lower().split(" ")[0]
+            edam_formats[extension] = (fields[0], fields[1])  # URL, name
     return edam_formats
