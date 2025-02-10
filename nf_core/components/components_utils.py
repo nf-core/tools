@@ -197,7 +197,7 @@ def get_biotools_id(data: dict, tool_name: str) -> str:
     return ""
 
 
-DictWithStrAndTuple = Dict[str, Tuple[List[str], List[str]]]
+DictWithStrAndTuple = Dict[str, Tuple[List[str], List[str], List[str]]]
 
 
 def get_channel_info_from_biotools(
@@ -220,14 +220,16 @@ def get_channel_info_from_biotools(
                 if "data" in element:
                     element_name = "_".join(element["data"]["term"].lower().split(" "))
                     uris = [element["data"]["uri"]]
-                    terms = [""]
+                    terms = [element["data"]["term"]]
+                    patterns = []
                 if "format" in element:
                     for format in element["format"]:
                         # Append the EDAM URI
                         uris.append(format["uri"])
                         # Append the EDAM term, getting the first word in case of complicated strings. i.e. "FASTA format"
-                        terms.append(format["term"].lower().split(" ")[0])
-                    type_info[element_name] = (uris, terms)
+                        patterns.append(format["term"].lower().split(" ")[0])
+                        terms.append(format["term"])
+                    type_info[element_name] = (uris, terms, patterns)
         return type_info
 
     # Iterate through the tools in the response to find the tool name

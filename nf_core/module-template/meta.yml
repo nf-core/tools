@@ -39,7 +39,7 @@ input:
         # TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
         type: file
         description: {{ input_name }} file
-        pattern: {{ "\"*.{" + ontologies[1]|join(",") + "}\"" }}
+        pattern: {{ "\"*.{" + ontologies[2]|join(",") + "}\"" }}
         ontologies:
           {% for ontology in ontologies[0] -%}
           - edam: "{{ ontology }}" # {{ ontologies[1][loop.index0] }}
@@ -84,11 +84,11 @@ output:
           Groovy Map containing sample information
           e.g. `[ id:'sample1' ]`
     {%- endif %}
-    - {{ "\"*.{" + ontologies[1]|join(",") + "}\"" }}:
+    - {{ "\"*.{" + ontologies[2]|join(",") + "}\"" }}:
         # TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
         type: file
         description: {{ output_name }} file
-        pattern: {{ "\"*.{" + ontologies[1]|join(",") + "}\"" }}
+        pattern: {{ "\"*.{" + ontologies[2]|join(",") + "}\"" }}
         ontologies:
           {%- for ontology in ontologies[0] %}
           - edam: "{{ ontology }}" # {{ ontologies[1][loop.index0] }}

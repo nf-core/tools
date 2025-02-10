@@ -53,7 +53,7 @@ process {{ component_name_underscore|upper }} {
     {%- if outputs %}
     // TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
     {%- for output_name, ontologies in outputs.items() %}
-    {{ 'tuple val(meta), path("*{' + ontologies[1]|join(',') + '}")' if has_meta else 'path ' + output_name }}, emit: {{ output_name }}
+    {{ 'tuple val(meta), path("*{' + ontologies[2]|join(',') + '}")' if has_meta else 'path ' + output_name }}, emit: {{ output_name }}
     {%- endfor %}
     {%- else %}
     {% if not_empty_template -%}
@@ -93,7 +93,7 @@ process {{ component_name_underscore|upper }} {
         {%- if has_meta %}
         {%- if inputs %}
         {%- for input_name, ontologies in inputs.items() %}
-        {%- set extensions = ontologies[1] %}
+        {%- set extensions = ontologies[2] %}
         {%- for ext in extensions %}
         -o ${prefix}.{{ ext }} \\
         {%- endfor %}
@@ -132,7 +132,7 @@ process {{ component_name_underscore|upper }} {
     {% if not_empty_template -%}
     {%- if inputs %}
     {%- for input_name, ontologies in inputs.items() %}
-    {%- set extensions = ontologies[1] %}
+    {%- set extensions = ontologies[2] %}
     {%- for ext in extensions %}
     touch ${prefix}.{{ ext }}
     {%- endfor %}
