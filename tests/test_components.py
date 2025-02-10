@@ -31,7 +31,7 @@ class TestComponents(unittest.TestCase):
 
         # Clean up temporary files
         if self.tmp_dir.is_dir():
-            shutil.rmtree(self.tmp_dir)
+            shutil.rmtree(self.tmp_dir, ignore_errors=True)
 
     @pytest.fixture(autouse=True)
     def _use_caplog(self, caplog):
