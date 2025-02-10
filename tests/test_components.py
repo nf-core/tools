@@ -2,7 +2,6 @@
 
 import os
 import shutil
-import stat
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,12 +10,6 @@ import pytest
 from git.repo import Repo
 
 from .utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
-
-
-def remove_readonly(func, path, _):
-    "Clear the readonly bit and reattempt the removal"
-    os.chmod(path, stat.S_IWRITE)
-    func(path)
 
 
 class TestComponents(unittest.TestCase):
@@ -38,7 +31,7 @@ class TestComponents(unittest.TestCase):
 
         # Clean up temporary files
         if self.tmp_dir.is_dir():
-            shutil.rmtree(self.tmp_dir, onexc=remove_readonly)
+            shutil.rmtree(self.tmp_dir, ignore_errors=True)
 
     @pytest.fixture(autouse=True)
     def _use_caplog(self, caplog):

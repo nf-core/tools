@@ -14,6 +14,20 @@ from ..utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 
 
 class TestTestComponentsUtils(TestComponents):
+    def test_unstable_snapshot(self):
+        """Generate the snapshot for a module in nf-core/modules clone with unstable snapshots"""
+        with set_wd(self.nfcore_modules):
+            snap_generator = ComponentsTest(
+                component_type="modules",
+                component_name="kallisto/quant",
+                no_prompts=True,
+                remote_url=GITLAB_URL,
+                branch=GITLAB_NFTEST_BRANCH,
+            )
+            with pytest.raises(UserWarning) as e:
+                snap_generator.run()
+            assert "nf-test snapshot is not stable" in str(e.value)
+
     def test_generate_snapshot_module(self):
         """Generate the snapshot for a module in nf-core/modules clone"""
         with set_wd(self.nfcore_modules):
@@ -124,17 +138,3 @@ class TestTestComponentsUtils(TestComponents):
                 snap_generator.run()
             assert "Test file 'main.nf.test' not found" in str(e.value)
             Path(test_file.parent / "main.nf.test.bak").rename(test_file)
-
-    def test_unstable_snapshot(self):
-        """Generate the snapshot for a module in nf-core/modules clone with unstable snapshots"""
-        with set_wd(self.nfcore_modules):
-            snap_generator = ComponentsTest(
-                component_type="modules",
-                component_name="kallisto/quant",
-                no_prompts=True,
-                remote_url=GITLAB_URL,
-                branch=GITLAB_NFTEST_BRANCH,
-            )
-            with pytest.raises(UserWarning) as e:
-                snap_generator.run()
-            assert "nf-test snapshot is not stable" in str(e.value)
