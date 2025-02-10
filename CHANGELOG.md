@@ -21,6 +21,7 @@
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.4 ([#3438](https://github.com/nf-core/tools/pull/3438))
 - format name/value with YAML syntax ([#3442](https://github.com/nf-core/tools/pull/3442))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.5 ([#3445](https://github.com/nf-core/tools/pull/3445))
+- chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.15.0 ([#3447](https://github.com/nf-core/tools/pull/3447))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
