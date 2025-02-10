@@ -84,7 +84,7 @@ output:
           Groovy Map containing sample information
           e.g. `[ id:'sample1' ]`
     {%- endif %}
-    - {{ output_name }}:
+    - {{ "\"*.{" + ontologies[1]|join(",") + "}\"" }}:
         # TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
         type: file
         description: {{ output_name }} file
