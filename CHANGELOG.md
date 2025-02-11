@@ -23,6 +23,7 @@
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.5 ([#3445](https://github.com/nf-core/tools/pull/3445))
 - chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.15.0 ([#3447](https://github.com/nf-core/tools/pull/3447))
 - Update prettier to 3.5.0 ([#3448](https://github.com/nf-core/tools/pull/3448))
+- chore(deps): update python:3.12-slim docker digest to 34656cd ([#3450](https://github.com/nf-core/tools/pull/3450))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
