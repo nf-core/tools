@@ -36,13 +36,15 @@ class TestTestComponentsUtils(TestComponents):
                         "http://edamontology.org/format_2182",
                         "http://edamontology.org/format_2573",
                     ],
-                    ["", "fastq-like", "sam"],
+                    ["Raw sequence", "FASTQ-like format (text)", "SAM"],
+                    ["fastq-like", "sam"],
                 )
             }
             assert outputs == {
                 "sequence_report": (
                     ["http://edamontology.org/data_2955", "http://edamontology.org/format_2331"],
-                    ["", "html"],
+                    ["Sequence report", "HTML"],
+                    ["html"],
                 )
             }
 

@@ -526,7 +526,7 @@ class TestModulesLint(TestModules):
         """Test linting a module with an extra entry in output fields in meta.yml compared to module.output"""
         with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf")) as fh:
             main_nf = fh.read()
-        main_nf_new = main_nf.replace("emit: bam", "emit: bai")
+        main_nf_new = main_nf.replace("emit: sequence_report", "emit: bai")
         with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf"), "w") as fh:
             fh.write(main_nf_new)
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)

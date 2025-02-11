@@ -53,7 +53,7 @@ process {{ component_name_underscore|upper }} {
     {%- if outputs %}
     // TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
     {%- for output_name, ontologies in outputs.items() %}
-    {{ 'tuple val(meta), path("*{' + ontologies[2]|join(',') + '}")' if has_meta else 'path ' + output_name }}, emit: {{ output_name }}
+    {{ 'tuple val(meta), path("*.{' + ontologies[2]|join(',') + '}")' if has_meta else 'path ' + output_name }}, emit: {{ output_name }}
     {%- endfor %}
     {%- else %}
     {% if not_empty_template -%}
