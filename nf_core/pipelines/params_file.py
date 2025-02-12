@@ -213,7 +213,7 @@ class ParamsFileBuilder:
             out += _print_wrapped("Required", mode="none", indent=4)
 
         out += _print_wrapped("\n", mode="end")
-        out += f"# {name} = {json.dumps(default)}\n"
+        out += f"# {name}: {json.dumps(default)}\n"
 
         return out
 
