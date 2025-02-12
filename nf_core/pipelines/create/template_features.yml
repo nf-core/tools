@@ -89,6 +89,7 @@ github_badges:
     * AWS CI Tests
     * Zenodo DOI
     * Nextflow
+    * nf-core/tools template
     * Conda
     * Docker
     * Singularity
@@ -96,6 +97,7 @@ github_badges:
   linting:
     readme:
       - "nextflow_badge"
+      - "nfcore_template_badge"
   nfcore_pipelines: False
   custom_pipelines: True
 nf_core_configs:
