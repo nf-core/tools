@@ -1218,6 +1218,8 @@ class NFCoreYamlLintConfig(BaseModel):
     """ Lint all required files to run full tests on AWS """
     pipeline_todos: Optional[bool] = None
     """ Lint for TODOs statements"""
+    pipeline_if_empty_null: Optional[bool] = None
+    """ Lint for ifEmpty(null) statements"""
     plugin_includes: Optional[bool] = None
     """ Lint for nextflow plugin """
     pipeline_name_conventions: Optional[bool] = None
@@ -1244,6 +1246,8 @@ class NFCoreYamlLintConfig(BaseModel):
     """ Lint for version consistency """
     included_configs: Optional[bool] = None
     """ Lint for included configs """
+    local_component_structure: Optional[bool] = None
+    """ Lint local components use correct structure mirroring remote"""
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)

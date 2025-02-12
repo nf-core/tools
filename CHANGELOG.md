@@ -1,18 +1,51 @@
 # nf-core/tools: Changelog
 
-## v3.2.0dev
+## v3.3.0dev
 
 ### Template
 
+- Remove the on `pull_request_target` trigger and `pull_request` types from the download test. Also drop `push` triggers on other CI tests. ([#3399](https://github.com/nf-core/tools/pull/3399))
 - Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
 
 ### Linting
+
+- Add linting for ifEmpty(null) ([#3411](https://github.com/nf-core/tools/pull/3411))
 
 ### Modules
 
 ### Subworkflows
 
 ### General
+
+- output passed to write_params_file as Path object ([#3435](https://github.com/nf-core/tools/pull/3435))
+- chore(deps): update python:3.12-slim docker digest to 69ce3ae ([#3433](https://github.com/nf-core/tools/pull/3433))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.4 ([#3438](https://github.com/nf-core/tools/pull/3438))
+- format name/value with YAML syntax ([#3442](https://github.com/nf-core/tools/pull/3442))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.5 ([#3445](https://github.com/nf-core/tools/pull/3445))
+- chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.15.0 ([#3447](https://github.com/nf-core/tools/pull/3447))
+- Update prettier to 3.5.0 ([#3448](https://github.com/nf-core/tools/pull/3448))
+- chore(deps): update python:3.12-slim docker digest to 34656cd ([#3450](https://github.com/nf-core/tools/pull/3450))
+
+## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
+
+### Template
+
+- Remove automated release tweets ([#3419](https://github.com/nf-core/tools/pull/3419))
+- Update template components ([#3426](https://github.com/nf-core/tools/pull/3426))
+- Fix `process.shell` in `nextflow.config` ([#3416](https://github.com/nf-core/tools/pull/3416)) and split into new lines ([#3425](https://github.com/nf-core/tools/pull/3425))
+
+### Modules
+
+- Modules created in pipelines "local" dir now use the full template ([#3256](https://github.com/nf-core/tools/pull/3256))
+
+### Subworkflows
+
+- Subworkflows created in pipelines "local" dir now use the full template ([#3256](https://github.com/nf-core/tools/pull/3256))
+
+### General
+
+- Update pre-commit hook editorconfig-checker/editorconfig-checker.python to v3.1.2 ([#3414](https://github.com/nf-core/tools/pull/3414))
+- Update python:3.12-slim Docker digest to 123be56 ([#3421](https://github.com/nf-core/tools/pull/3421))
 
 ## [v3.1.2 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.2) - [2025-01-20]
 

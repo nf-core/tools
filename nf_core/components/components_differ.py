@@ -271,9 +271,7 @@ class ComponentsDiffer:
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
         if current_version is not None and new_version is not None:
             log.info(
-                f"Changes in component '{Path(repo_path, component)}' between"
-                f" ({current_version}) and"
-                f" ({new_version})"
+                f"Changes in component '{Path(repo_path, component)}' between ({current_version}) and ({new_version})"
             )
         else:
             log.info(f"Changes in component '{Path(repo_path, component)}'")

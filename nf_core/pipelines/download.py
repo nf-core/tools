@@ -202,7 +202,7 @@ class DownloadWorkflow:
             raise DownloadError(e) from e
 
         summary_log = [
-            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
+            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0] + ',[' + str(len(self.revision) - 2) + ' more revisions],' + self.revision[-1]}'",
             f"Use containers: '{self.container_system}'",
         ]
         if self.container_system:
@@ -1908,8 +1908,8 @@ class ContainerError(Exception):
 
         log.error(self.error_type.message)
         log.info(self.error_type.helpmessage)
-        log.debug(f'Failed command:\n{" ".join(singularity_command)}')
-        log.debug(f'Singularity error messages:\n{"".join(error_msg)}')
+        log.debug(f"Failed command:\n{' '.join(singularity_command)}")
+        log.debug(f"Singularity error messages:\n{''.join(error_msg)}")
 
         raise self.error_type
 

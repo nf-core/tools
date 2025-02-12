@@ -176,6 +176,6 @@ class ComponentRemove(ComponentCommand):
                     f"Did not remove '{component}', because it was also manually installed. Only updated 'installed_by' entry in modules.json."
                 )
             log.info(
-                f"""Did not remove {self.component_type[:-1]} '{component}', because it was also installed by {', '.join(f"'{d}'" for d in installed_by)}. Only updated the 'installed_by' entry in modules.json."""
+                f"""Did not remove {self.component_type[:-1]} '{component}', because it was also installed by {", ".join(f"'{d}'" for d in installed_by)}. Only updated the 'installed_by' entry in modules.json."""
             )
         return removed

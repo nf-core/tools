@@ -770,7 +770,7 @@ class PipelineSchema:
                     if self.web_schema_build_web_url:
                         log.info(
                             "To save your work, open {}\n"
-                            f"Click the blue 'Finished' button, copy the schema and paste into this file: { self.web_schema_build_web_url, self.schema_filename}"
+                            f"Click the blue 'Finished' button, copy the schema and paste into this file: {self.web_schema_build_web_url, self.schema_filename}"
                         )
                     return False
 
