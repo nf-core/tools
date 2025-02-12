@@ -23,6 +23,13 @@ tools:
       identifier: {{ tool_identifier }}
 
 {% if not_empty_template -%}
+## TODO nf-core: Add a description of all of the args used in the pipeline
+{% endif -%}
+args:
+  - args:
+      description: "{{ component }}"
+
+{% if not_empty_template -%}
 ## TODO nf-core: Add a description of all of the variables used as input
 {% endif -%}
 input:

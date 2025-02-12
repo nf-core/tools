@@ -50,7 +50,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
             return
         raise LintExceptionError("Module does not have a `meta.yml` file")
     # Check if we have a patch file, get original file in that case
-    meta_yaml = read_meta_yml(module_lint_object, module)
+    meta_yaml_content = read_meta_yml(module_lint_object, module)
     if module.is_patched and module_lint_object.modules_repo.repo_path is not None:
         lines = ComponentsDiffer.try_apply_patch(
             module.component_type,
@@ -62,8 +62,8 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
         ).get("meta.yml")
         if lines is not None:
             yaml = ruamel.yaml.YAML()
-            meta_yaml = yaml.load("".join(lines))
-    if meta_yaml is None:
+            meta_yaml_content = yaml.load("".join(lines))
+    if meta_yaml_content is None:
         module.failed.append(("meta_yml_exists", "Module `meta.yml` does not exist", module.meta_yml))
         return
     else:
@@ -74,7 +74,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
     try:
         with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/meta-schema.json")) as fh:
             schema = json.load(fh)
-        validators.validate(instance=meta_yaml, schema=schema)
+        validators.validate(instance=meta_yaml_content, schema=schema)
         module.passed.append(("meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))
         valid_meta_yml = True
     except exceptions.ValidationError as e:
@@ -85,7 +85,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
             hint = f"\nCheck that the child entries of {str(e.path[0]) + '.' + str(e.path[2])} are indented correctly."
         if e.schema and isinstance(e.schema, dict) and "message" in e.schema:
             e.message = e.schema["message"]
-            incorrect_value = meta_yaml
+            incorrect_value = meta_yaml_content
             for key in e.path:
                 incorrect_value = incorrect_value[key]
 
@@ -101,7 +101,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
     # Confirm that all input and output channels are correctly specified
     if valid_meta_yml:
         # confirm that the name matches the process name in main.nf
-        if meta_yaml["name"].upper() == module.process_name:
+        if meta_yaml_content["name"].upper() == module.process_name:
             module.passed.append(
                 (
                     "meta_name",
@@ -113,12 +113,12 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
             module.failed.append(
                 (
                     "meta_name",
-                    f"Conflicting `process` name between meta.yml (`{meta_yaml['name']}`) and main.nf (`{module.process_name}`)",
+                    f"Conflicting `process` name between meta.yml (`{meta_yaml_content['name']}`) and main.nf (`{module.process_name}`)",
                     module.meta_yml,
                 )
             )
         # Check that inputs are specified in meta.yml
-        if len(module.inputs) > 0 and "input" not in meta_yaml:
+        if len(module.inputs) > 0 and "input" not in meta_yaml_content:
             module.failed.append(
                 (
                     "meta_input",
@@ -137,8 +137,10 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
         else:
             log.debug(f"No inputs specified in module `main.nf`: {module.component_name}")
         # Check that all inputs are correctly specified
-        if "input" in meta_yaml:
-            correct_inputs, meta_inputs = obtain_correct_and_specified_inputs(module_lint_object, module, meta_yaml)
+        if "input" in meta_yaml_content:
+            correct_inputs, meta_inputs = obtain_correct_and_specified_inputs(
+                module_lint_object, module, meta_yaml_content
+            )
 
             if correct_inputs == meta_inputs:
                 module.passed.append(
@@ -158,7 +160,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
                 )
 
         # Check that outputs are specified in meta.yml
-        if len(module.outputs) > 0 and "output" not in meta_yaml:
+        if len(module.outputs) > 0 and "output" not in meta_yaml_content:
             module.failed.append(
                 (
                     "meta_output",
@@ -175,8 +177,10 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
                 )
             )
         # Check that all outputs are correctly specified
-        if "output" in meta_yaml:
-            correct_outputs, meta_outputs = obtain_correct_and_specified_outputs(module_lint_object, module, meta_yaml)
+        if "output" in meta_yaml_content:
+            correct_outputs, meta_outputs = obtain_correct_and_specified_outputs(
+                module_lint_object, module, meta_yaml_content
+            )
 
             if correct_outputs == meta_outputs:
                 module.passed.append(
@@ -194,6 +198,26 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
                         module.meta_yml,
                     )
                 )
+
+        # Check that ext.args are listed in the `extra_args` section
+        expected_extra_args = module.get_ext_args_from_main_nf()
+        extra_args_yml = sorted(meta_yaml_content.get("extra_args", {}).keys())
+        if expected_extra_args == extra_args_yml:
+            module.passed.append(
+                (
+                    "correct_extra_args",
+                    "Correct extra args specified in `meta.yml`",
+                    module.meta_yml,
+                )
+            )
+        else:
+            module.warned.append(
+                (
+                    "correct_extra_args",
+                    f"Module `meta.yml` does not match `main.nf`. Extra args should contain: {extra_args_yml}\n",
+                    module.meta_yml,
+                )
+            )
 
 
 def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) -> Union[dict, None]:
