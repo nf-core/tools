@@ -76,8 +76,8 @@ def readme(self):
 
     if "nfcore_template_badge" not in ignore_configs:
         # Check that there is a readme badge showing the current nf-core/tools template version
-        # [![nf-core template version](https://img.shields.io/badge/nf--core_template-3.2.0-green?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co.re)](https://nf-co.re)
-        t_badge_re = r"\[!\[nf-core template version\]\(https://img\.shields\.io/badge/nf--core_template-([\d\.]+(\.dev[\d\.])?)-green\?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co\.re\)\]\(https://nf-co\.re\)"
+        # [![nf-core template version](https://img.shields.io/badge/nf--core_template-3.2.0-green?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co.re)](https://github.com/nf-core/tools/releases/tag/3.2.0)
+        t_badge_re = r"\[!\[nf-core template version\]\(https://img\.shields\.io/badge/nf--core_template-([\d\.]+(\.dev[\d\.])?)-green\?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co\.re\)\]\(https://github\.com/nf-core/tools/releases/tag/([\d\.]+(\.dev[\d\.])?)\)"
         match = re.search(t_badge_re, content)
         if match:
             passed.append("README nf-core template version badge found.")
