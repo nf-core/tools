@@ -282,20 +282,21 @@ class NFCoreComponent:
 
     def get_ext_args_from_main_nf(self) -> List[str]:
         """Collect all ext.args from the main.nf file."""
-        extargs: set[str] = set()
-        with open(self.main_nf) as f:
-            data = f.read()
         if self.component_type == "modules":
-            section_identifier = "script:"
-            if "script:" not in data:
-                section_identifier = "exec:"
-                if "exec:" not in data:
-                    log.debug(f"Could not find 'script' or 'exec' section in {self.main_nf}")
-                    return []
-            input_data = data.split(section_identifier)[1].split("stub:")[0]
-            regex = r"ext.(args[0-9]*) "
-            matches = re.finditer(regex, input_data)
-            for m in matches:
-                extargs.add(m.group(1))
-            log.debug(f"Found {len(extargs)} extra args in {self.main_nf}")
-        return sorted(extargs)
+            extargs: set[str] = set()
+            with open(self.main_nf) as f:
+                data = f.read()
+                section_identifier = "script:"
+                if "script:" not in data:
+                    section_identifier = "exec:"
+                    if "exec:" not in data:
+                        log.debug(f"Could not find 'script' or 'exec' section in {self.main_nf}")
+                        return []
+                input_data = data.split(section_identifier)[1].split("stub:")[0]
+                regex = r"ext.(args[0-9]*) "
+                matches = re.finditer(regex, input_data)
+                for m in matches:
+                    extargs.add(m.group(1))
+                log.debug(f"Found {len(extargs)} extra args in {self.main_nf}")
+            return sorted(extargs)
+        return []

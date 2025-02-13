@@ -23,9 +23,9 @@ tools:
       identifier: {{ tool_identifier }}
 
 {% if not_empty_template -%}
-## TODO nf-core: Add a description of all of the args used in the pipeline
+## TODO nf-core: Add a description of all of the ext.args used in the pipeline
 {% endif -%}
-args:
+extra_args:
   - args:
       description: "{{ component }}"
 
