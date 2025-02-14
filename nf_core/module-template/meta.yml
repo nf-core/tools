@@ -26,8 +26,8 @@ tools:
 ## TODO nf-core: Add a description of all of the ext.args used in the pipeline
 {% endif -%}
 extra_args:
-  - args:
-      description: "{{ component }}"
+  args:
+    description: "{{ component }}"
 
 {% if not_empty_template -%}
 ## TODO nf-core: Add a description of all of the variables used as input
