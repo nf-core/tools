@@ -1042,10 +1042,8 @@ class ModulesJson:
         self,
         component_type,
         name,
-        repo_url,
-        install_dir,
         dependent_components,
-    ):
+    ) -> Tuple[(str, str, str)]:
         """
         Retrieves all pipeline modules/subworkflows that are reported in the modules.json
         as being installed by the given component
@@ -1053,8 +1051,6 @@ class ModulesJson:
         Args:
             component_type (str): Type of component [modules, subworkflows]
             name (str): Name of the component to find dependencies for
-            repo_url (str): URL of the repository containing the components
-            install_dir (str): Name of the directory where components are installed
 
         Returns:
             (dict[str: str,]): Dictionary indexed with the component names, with component_type as value
@@ -1066,15 +1062,17 @@ class ModulesJson:
         component_types = ["modules"] if component_type == "modules" else ["modules", "subworkflows"]
         # Find all components that have an entry of install by of  a given component, recursively call this function for subworkflows
         for type in component_types:
-            try:
-                components = self.modules_json["repos"][repo_url][type][install_dir].items()
-            except KeyError as e:
-                # This exception will raise when there are only modules installed
-                log.debug(f"Trying to retrieve all {type}. There aren't {type} installed. Failed with error {e}")
-                continue
-            for component_name, component_entry in components:
-                if name in component_entry["installed_by"]:
-                    dependent_components[component_name] = type
+            for repo_url in self.modules_json["repos"].keys():
+                modules_repo = ModulesRepo(repo_url)
+                install_dir = modules_repo.repo_path
+                try:
+                    for comp in self.modules_json["repos"][repo_url][type][install_dir]:
+                        if name in self.modules_json["repos"][repo_url][type][install_dir][comp]["installed_by"]:
+                            dependent_components[comp] = (repo_url, install_dir, type)
+                except KeyError as e:
+                    # This exception will raise when there are only modules installed
+                    log.debug(f"Trying to retrieve all {type}. There aren't {type} installed. Failed with error {e}")
+                    continue
 
         return dependent_components
 

@@ -124,3 +124,7 @@ class TestSubworkflowsRemove(TestSubworkflows):
         assert (
             "fastqc" in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"].keys()
         )
+        assert (
+            "fastp"
+            not in mod_json_after["repos"]["https://github.com/nf-core/modules.git"]["modules"]["nf-core"].keys()
+        )
