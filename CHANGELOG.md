@@ -1,27 +1,94 @@
 # nf-core/tools: Changelog
 
-## v3.1.1dev
+## v3.3.0dev
 
 ### Template
 
-- Use outputs instead of the environment to pass around values between steps in the Download Test Action ([#3351](https://github.com/nf-core/tools/pull/3351))
-- Fix pre commit template ([#3358](https://github.com/nf-core/tools/pull/3358))
-
-### Download
+- Remove the on `pull_request_target` trigger and `pull_request` types from the download test. Also drop `push` triggers on other CI tests. ([#3399](https://github.com/nf-core/tools/pull/3399))
+- Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
 
 ### Linting
 
-### Modules
+- Add linting for ifEmpty(null) ([#3411](https://github.com/nf-core/tools/pull/3411))
 
-- fix including modules.config ([#3356](https://github.com/nf-core/tools/pull/3356))
+### Modules
 
 ### Subworkflows
 
 ### General
 
-- Add missing p ([#3357](https://github.com/nf-core/tools/pull/3357))
+- output passed to write_params_file as Path object ([#3435](https://github.com/nf-core/tools/pull/3435))
+- chore(deps): update python:3.12-slim docker digest to 69ce3ae ([#3433](https://github.com/nf-core/tools/pull/3433))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.4 ([#3438](https://github.com/nf-core/tools/pull/3438))
+- format name/value with YAML syntax ([#3442](https://github.com/nf-core/tools/pull/3442))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.5 ([#3445](https://github.com/nf-core/tools/pull/3445))
+- chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.15.0 ([#3447](https://github.com/nf-core/tools/pull/3447))
+- Update prettier to 3.5.0 ([#3448](https://github.com/nf-core/tools/pull/3448))
+- chore(deps): update python:3.12-slim docker digest to 34656cd ([#3450](https://github.com/nf-core/tools/pull/3450))
+- Remove Twitter from README ([#3454](https://github.com/nf-core/tools/pull/3454))
 
-### Version updates
+## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
+
+### Template
+
+- Remove automated release tweets ([#3419](https://github.com/nf-core/tools/pull/3419))
+- Update template components ([#3426](https://github.com/nf-core/tools/pull/3426))
+- Fix `process.shell` in `nextflow.config` ([#3416](https://github.com/nf-core/tools/pull/3416)) and split into new lines ([#3425](https://github.com/nf-core/tools/pull/3425))
+
+### Modules
+
+- Modules created in pipelines "local" dir now use the full template ([#3256](https://github.com/nf-core/tools/pull/3256))
+
+### Subworkflows
+
+- Subworkflows created in pipelines "local" dir now use the full template ([#3256](https://github.com/nf-core/tools/pull/3256))
+
+### General
+
+- Update pre-commit hook editorconfig-checker/editorconfig-checker.python to v3.1.2 ([#3414](https://github.com/nf-core/tools/pull/3414))
+- Update python:3.12-slim Docker digest to 123be56 ([#3421](https://github.com/nf-core/tools/pull/3421))
+
+## [v3.1.2 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.2) - [2025-01-20]
+
+### Template
+
+- Bump nf-schema to `2.3.0` ([#3401](https://github.com/nf-core/tools/pull/3401))
+- Remove jinja formatting which was deleting line breaks ([#3405](https://github.com/nf-core/tools/pull/3405))
+
+### Download
+
+- Allow `nf-core pipelines download -r` to download commits ([#3374](https://github.com/nf-core/tools/pull/3374))
+- Fix faulty Download Test Action to ensure that setup and test run as one job and on the same runner ([#3389](https://github.com/nf-core/tools/pull/3389))
+
+### Modules
+
+- Fix bump-versions: only append module name if it is a dir and contains `main.nf` ([#3384](https://github.com/nf-core/tools/pull/3384))
+
+### General
+
+- `manifest.author` is not required anymore ([#3397](https://github.com/nf-core/tools/pull/3397))
+- Parameters schema validation: allow `oneOf`, `anyOf` and `allOf` with `required` ([#3386](https://github.com/nf-core/tools/pull/3386))
+- Run pre-comit when rendering template for pipelines sync ([#3371](https://github.com/nf-core/tools/pull/3371))
+- Fix sync GHA by removing quotes from parsed branch name ([#3394](https://github.com/nf-core/tools/pull/3394))
+
+## [v3.1.1 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.1) - [2024-12-20]
+
+### Template
+
+- Use outputs instead of the environment to pass around values between steps in the Download Test Action ([#3351](https://github.com/nf-core/tools/pull/3351))
+- Fix pre commit template ([#3358](https://github.com/nf-core/tools/pull/3358))
+- Set LICENSE copyright to nf-core community ([#3366](https://github.com/nf-core/tools/pull/3366))
+- Fix including modules.config ([#3356](https://github.com/nf-core/tools/pull/3356))
+
+### Linting
+
+- Linting of pipeline LICENSE file is a warning to allow for author/maintainer names ([#3366](https://github.com/nf-core/tools/pull/3366))
+
+### General
+
+- Add missing p ([#3357](https://github.com/nf-core/tools/pull/3357))
+- Use `manifest.contributors` names if available, otherwise default to `manifest.author` ([#3362](https://github.com/nf-core/tools/pull/3362))
+- Properly parse the names form `manifest.contributors` ([#3364](https://github.com/nf-core/tools/pull/3364))
 
 ## [v3.1.0 - Brass Boxfish](https://github.com/nf-core/tools/releases/tag/3.1.0) - [2024-12-09]
 

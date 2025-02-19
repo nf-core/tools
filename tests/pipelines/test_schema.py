@@ -285,6 +285,89 @@ class TestSchema(unittest.TestCase):
         assert len(params_removed) == 1
         assert "foo" in params_removed
 
+    def test_validate_defaults(self):
+        """Test validating default values"""
+        self.schema_obj.schema = {
+            "properties": {"foo": {"type": "string"}, "bar": {"type": "string"}},
+            "required": ["foo"],
+        }
+        self.schema_obj.schema_defaults = {"foo": "foo", "bar": "bar"}
+        self.schema_obj.no_prompts = True
+        try:
+            self.schema_obj.validate_default_params()
+        except AssertionError:
+            self.fail("Error validating schema defaults")
+
+    def test_validate_defaults_required(self):
+        """Test validating default values when required params don't have a default"""
+        self.schema_obj.schema = {
+            "properties": {"foo": {"type": "string"}, "bar": {"type": "string"}},
+            "required": ["foo"],
+        }
+        self.schema_obj.schema_defaults = {}
+        self.schema_obj.no_prompts = True
+        try:
+            self.schema_obj.validate_default_params()
+        except AssertionError:
+            self.fail("Error validating schema defaults")
+
+    def test_validate_defaults_required_inside_group(self):
+        """Test validating default values when required params don't have a default, inside a group"""
+        self.schema_obj.schema = {
+            "$defs": {
+                "subSchemaId": {
+                    "properties": {"foo": {"type": "string"}, "bar": {"type": "string"}},
+                    "required": ["foo"],
+                },
+            }
+        }
+        self.schema_obj.schema_defaults = {}
+        self.schema_obj.no_prompts = True
+        try:
+            self.schema_obj.validate_default_params()
+        except AssertionError:
+            self.fail("Error validating schema defaults")
+
+    def test_validate_defaults_required_inside_group_with_anyof(self):
+        """Test validating default values when required params don't have a default, inside a group with anyOf"""
+        self.schema_obj.schema = {
+            "$defs": {
+                "subSchemaId": {
+                    "anyOf": [{"required": ["foo"]}, {"required": ["bar"]}],
+                    "properties": {"foo": {"type": "string"}, "bar": {"type": "string"}},
+                },
+            }
+        }
+        self.schema_obj.schema_defaults = {}
+        self.schema_obj.no_prompts = True
+        try:
+            self.schema_obj.validate_default_params()
+        except AssertionError:
+            self.fail("Error validating schema defaults")
+
+    def test_validate_defaults_required_with_anyof(self):
+        """Test validating default values when required params don't have a default, with anyOf"""
+        self.schema_obj.schema = {
+            "properties": {"foo": {"type": "string"}, "bar": {"type": "string"}, "baz": {"type": "string"}},
+            "anyOf": [{"required": ["foo"]}, {"required": ["bar"]}],
+        }
+        self.schema_obj.schema_defaults = {"baz": "baz"}
+        self.schema_obj.no_prompts = True
+        try:
+            self.schema_obj.validate_default_params()
+        except AssertionError:
+            self.fail("Error validating schema defaults")
+
+    def test_validate_defaults_error(self):
+        """Test validating default raises an exception when a default is not valid"""
+        self.schema_obj.schema = {
+            "properties": {"foo": {"type": "string"}},
+        }
+        self.schema_obj.schema_defaults = {"foo": 1}
+        self.schema_obj.no_prompts = True
+        with self.assertRaises(AssertionError):
+            self.schema_obj.validate_default_params()
+
     def test_add_schema_found_configs(self):
         """Try adding a new parameter to the schema from the config"""
         self.schema_obj.pipeline_params = {"foo": "bar"}

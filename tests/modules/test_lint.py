@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 from typing import Union
 
@@ -158,7 +159,7 @@ CONTAINER_TEST_CASES = [
 ]
 
 
-class TestModulesCreate(TestModules):
+class TestModulesLint(TestModules):
     def _setup_patch(self, pipeline_dir: Union[str, Path], modify_module: bool):
         install_obj = nf_core.modules.install.ModuleInstall(
             pipeline_dir,
@@ -295,15 +296,15 @@ class TestModulesCreate(TestModules):
                 if line.strip():
                     check_container_link_line(mocked_ModuleLint, line, registry="quay.io")
 
-            assert (
-                len(mocked_ModuleLint.passed) == passed
-            ), f"{test}: Expected {passed} PASS, got {len(mocked_ModuleLint.passed)}."
-            assert (
-                len(mocked_ModuleLint.warned) == warned
-            ), f"{test}: Expected {warned} WARN, got {len(mocked_ModuleLint.warned)}."
-            assert (
-                len(mocked_ModuleLint.failed) == failed
-            ), f"{test}: Expected {failed} FAIL, got {len(mocked_ModuleLint.failed)}."
+            assert len(mocked_ModuleLint.passed) == passed, (
+                f"{test}: Expected {passed} PASS, got {len(mocked_ModuleLint.passed)}."
+            )
+            assert len(mocked_ModuleLint.warned) == warned, (
+                f"{test}: Expected {warned} WARN, got {len(mocked_ModuleLint.warned)}."
+            )
+            assert len(mocked_ModuleLint.failed) == failed, (
+                f"{test}: Expected {failed} FAIL, got {len(mocked_ModuleLint.failed)}."
+            )
 
     def test_modules_lint_update_meta_yml(self):
         """update the meta.yml of a module"""
@@ -525,7 +526,7 @@ class TestModulesCreate(TestModules):
         """Test linting a module with an extra entry in output fields in meta.yml compared to module.output"""
         with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf")) as fh:
             main_nf = fh.read()
-        main_nf_new = main_nf.replace("emit: bam", "emit: bai")
+        main_nf_new = main_nf.replace("emit: sequence_report", "emit: bai")
         with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf"), "w") as fh:
             fh.write(main_nf_new)
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
@@ -759,6 +760,46 @@ class TestModulesCreate(TestModules):
         # reset the file
         with open(snap_file, "w") as fh:
             fh.write(content)
+
+    def test_modules_lint_local(self):
+        assert self.mods_install.install("trimgalore")
+        installed = Path(self.pipeline_dir, "modules", "nf-core", "trimgalore")
+        local = Path(self.pipeline_dir, "modules", "local", "trimgalore")
+        shutil.move(installed, local)
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(print_results=False, local=True)
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+        assert len(module_lint.warned) >= 0
+
+    def test_modules_lint_local_missing_files(self):
+        assert self.mods_install.install("trimgalore")
+        installed = Path(self.pipeline_dir, "modules", "nf-core", "trimgalore")
+        local = Path(self.pipeline_dir, "modules", "local", "trimgalore")
+        shutil.move(installed, local)
+        Path(self.pipeline_dir, "modules", "local", "trimgalore", "environment.yml").unlink()
+        Path(self.pipeline_dir, "modules", "local", "trimgalore", "meta.yml").unlink()
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(print_results=False, local=True)
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+        assert len(module_lint.warned) >= 0
+        warnings = [x.message for x in module_lint.warned]
+        assert "Module's `environment.yml` does not exist" in warnings
+        assert "Module `meta.yml` does not exist" in warnings
+
+    def test_modules_lint_local_old_format(self):
+        Path(self.pipeline_dir, "modules", "local").mkdir()
+        assert self.mods_install.install("trimgalore")
+        installed = Path(self.pipeline_dir, "modules", "nf-core", "trimgalore", "main.nf")
+        local = Path(self.pipeline_dir, "modules", "local", "trimgalore.nf")
+        shutil.move(installed, local)
+        self.mods_remove.remove("trimgalore", force=True)
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(print_results=False, local=True)
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+        assert len(module_lint.warned) >= 0
 
 
 # A skeleton object with the passed/warned/failed list attrs

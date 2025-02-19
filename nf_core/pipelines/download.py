@@ -202,7 +202,7 @@ class DownloadWorkflow:
             raise DownloadError(e) from e
 
         summary_log = [
-            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
+            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0] + ',[' + str(len(self.revision) - 2) + ' more revisions],' + self.revision[-1]}'",
             f"Use containers: '{self.container_system}'",
         ]
         if self.container_system:
@@ -374,22 +374,27 @@ class DownloadWorkflow:
                     raise AssertionError(f"No revisions of {self.pipeline} available for download.")
 
     def get_revision_hash(self):
-        """Find specified revision / branch hash"""
+        """Find specified revision / branch / commit hash"""
 
         for revision in self.revision:  # revision is a list of strings, but may be of length 1
             # Branch
             if revision in self.wf_branches.keys():
                 self.wf_sha = {**self.wf_sha, revision: self.wf_branches[revision]}
 
-            # Revision
             else:
+                # Revision
                 for r in self.wf_revisions:
                     if r["tag_name"] == revision:
                         self.wf_sha = {**self.wf_sha, revision: r["tag_sha"]}
                         break
 
-                # Can't find the revisions or branch - throw an error
                 else:
+                    # Commit - full or short hash
+                    if commit_id := nf_core.utils.get_repo_commit(self.pipeline, revision):
+                        self.wf_sha = {**self.wf_sha, revision: commit_id}
+                        continue
+
+                    # Can't find the revisions or branch - throw an error
                     log.info(
                         "Available {} revisions: '{}'".format(
                             self.pipeline,
@@ -397,7 +402,9 @@ class DownloadWorkflow:
                         )
                     )
                     log.info("Available {} branches: '{}'".format(self.pipeline, "', '".join(self.wf_branches.keys())))
-                    raise AssertionError(f"Not able to find revision / branch '{revision}' for {self.pipeline}")
+                    raise AssertionError(
+                        f"Not able to find revision / branch / commit '{revision}' for {self.pipeline}"
+                    )
 
         # Set the outdir
         if not self.outdir:
@@ -1536,7 +1543,7 @@ class DownloadWorkflow:
 
         progress.remove_task(task)
 
-    def compress_download(self) -> None:
+    def compress_download(self):
         """Take the downloaded files and make a compressed .tar.gz archive."""
         log.debug(f"Creating archive: {self.output_filename}")
 
@@ -1901,8 +1908,8 @@ class ContainerError(Exception):
 
         log.error(self.error_type.message)
         log.info(self.error_type.helpmessage)
-        log.debug(f'Failed command:\n{" ".join(singularity_command)}')
-        log.debug(f'Singularity error messages:\n{"".join(error_msg)}')
+        log.debug(f"Failed command:\n{' '.join(singularity_command)}")
+        log.debug(f"Singularity error messages:\n{''.join(error_msg)}")
 
         raise self.error_type
 

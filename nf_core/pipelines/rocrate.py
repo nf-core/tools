@@ -212,7 +212,7 @@ class ROCrate:
         else:
             url = self.version
         self.crate.mainEntity.append_to(
-            "url", f"https://nf-co.re/{self.crate.name.replace('nf-core/','')}/{url}/", compact=True
+            "url", f"https://nf-co.re/{self.crate.name.replace('nf-core/', '')}/{url}/", compact=True
         )
         self.crate.mainEntity.append_to("version", self.version, compact=True)
 
@@ -270,20 +270,16 @@ class ROCrate:
             authors = []
             if "manifest.author" in self.pipeline_obj.nf_config:
                 authors.extend([a.strip() for a in self.pipeline_obj.nf_config["manifest.author"].split(",")])
-            if "manifest.contributor" in self.pipeline_obj.nf_config:
-                authors.extend(
-                    [
-                        c.get("name", "").strip()
-                        for c in self.pipeline_obj.nf_config["manifest.contributor"]
-                        if "name" in c
-                    ]
-                )
+            if "manifest.contributors" in self.pipeline_obj.nf_config:
+                contributors = self.pipeline_obj.nf_config["manifest.contributors"]
+                names = re.findall(r"name:'([^']+)'", contributors)
+                authors.extend(names)
             if not authors:
                 raise KeyError("No authors found")
             # add manifest authors as maintainer to crate
 
         except KeyError:
-            log.error("No author or contributor fields found in manifest of nextflow.config")
+            log.error("No author or contributors fields found in manifest of nextflow.config")
             return
         # remove duplicates
         authors = list(set(authors))
@@ -291,7 +287,7 @@ class ROCrate:
         try:
             git_contributors: Set[str] = set()
             if self.pipeline_obj.repo is None:
-                log.info("No git repository found. No git contributors will be added as authors.")
+                log.debug("No git repository found. No git contributors will be added as authors.")
                 return
             commits_touching_path = list(self.pipeline_obj.repo.iter_commits(paths="main.nf"))
 

@@ -17,6 +17,7 @@
     - [nfcore_yml](./nfcore_yml/)
     - [pipeline_name_conventions](./pipeline_name_conventions/)
     - [pipeline_todos](./pipeline_todos/)
+    - [pipeline_if_empty_null](./pipeline_if_empty_null/)
     - [plugin_includes](./plugin_includes/)
     - [readme](./readme/)
     - [schema_description](./schema_description/)

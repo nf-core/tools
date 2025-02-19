@@ -4,10 +4,10 @@ repos:
     hooks:
       - id: prettier
         additional_dependencies:
-          - prettier@3.2.5
+          - prettier@3.5.0
 
   - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
-    rev: "3.0.3"
+    rev: "3.1.2"
     hooks:
       - id: editorconfig-checker
         alias: ec

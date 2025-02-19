@@ -63,6 +63,6 @@ class TestBumpVersion(TestPipelines):
         with open(new_pipeline_obj._fp("README.md")) as fh:
             readme = fh.read().splitlines()
         assert (
-            f"[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A5{version}-23aa62.svg)]"
+            f"[![Nextflow](https://img.shields.io/badge/version-%E2%89%A5{version}-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)]"
             "(https://www.nextflow.io/)" in readme
         )

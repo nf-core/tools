@@ -122,7 +122,7 @@ def multiqc_config(self) -> Dict[str, List[str]]:
                     f"The expected comment is:  \n"
                     f"```{hint}```  \n"
                     f"The current comment is:  \n"
-                    f"```{ mqc_yml['report_comment'].strip()}```"
+                    f"```{mqc_yml['report_comment'].strip()}```"
                 )
             else:
                 passed.append("`assets/multiqc_config.yml` contains a matching 'report_comment'.")

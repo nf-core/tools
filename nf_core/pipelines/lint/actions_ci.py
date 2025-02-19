@@ -55,8 +55,6 @@ def actions_ci(self):
     # Check that the action is turned on for the correct events
     try:
         # NB: YAML dict key 'on' is evaluated to a Python dict key True
-        if "dev" not in ciwf[True]["push"]["branches"]:
-            raise AssertionError()
         pr_subtree = ciwf[True]["pull_request"]
         if not (
             pr_subtree is None

@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 from urllib.parse import urlparse
 
+import requests
+
 from ..components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
@@ -65,19 +67,20 @@ def get_installed_modules(directory: Path, repo_type="modules") -> Tuple[List[st
             local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
 
     # Get nf-core modules
-    if os.path.exists(nfcore_modules_dir):
-        for m in sorted([m for m in os.listdir(nfcore_modules_dir) if not m == "lib"]):
-            if not os.path.isdir(os.path.join(nfcore_modules_dir, m)):
+    if nfcore_modules_dir.exists():
+        for m in sorted([m for m in nfcore_modules_dir.iterdir() if not m == "lib"]):
+            if not m.is_dir():
                 raise ModuleExceptionError(
                     f"File found in '{nfcore_modules_dir}': '{m}'! This directory should only contain module directories."
                 )
-            m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
+            m_content = [d.name for d in m.iterdir()]
             # Not a module, but contains sub-modules
             if "main.nf" not in m_content:
                 for tool in m_content:
-                    nfcore_modules_names.append(os.path.join(m, tool))
+                    if (m / tool).is_dir() and "main.nf" in [d.name for d in (m / tool).iterdir()]:
+                        nfcore_modules_names.append(str(Path(m.name, tool)))
             else:
-                nfcore_modules_names.append(m)
+                nfcore_modules_names.append(m.name)
 
     # Make full (relative) file paths and create NFCoreComponent objects
     if local_modules_dir:
@@ -96,3 +99,15 @@ def get_installed_modules(directory: Path, repo_type="modules") -> Tuple[List[st
     ]
 
     return local_modules, nfcore_modules
+
+
+def load_edam():
+    """Load the EDAM ontology from the nf-core repository"""
+    edam_formats = {}
+    response = requests.get("https://edamontology.org/EDAM.tsv")
+    for line in response.content.splitlines():
+        fields = line.decode("utf-8").split("\t")
+        if fields[0].split("/")[-1].startswith("format"):
+            extension = fields[1].lower().split(" ")[0]
+            edam_formats[extension] = (fields[0], fields[1])  # URL, name
+    return edam_formats

@@ -8,6 +8,7 @@ nf-core modules lint
 
 import logging
 import os
+import re
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -20,7 +21,7 @@ import nf_core.components
 import nf_core.components.nfcore_component
 import nf_core.modules.modules_utils
 import nf_core.utils
-from nf_core.components.components_utils import get_biotools_id
+from nf_core.components.components_utils import get_biotools_id, get_biotools_response
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.pipelines.lint_utils import console, run_prettier_on_file
@@ -117,7 +118,7 @@ class ModuleLint(ComponentLint):
         """
         # TODO: consider unifying modules and subworkflows lint() function and add it to the ComponentLint class
         # Prompt for module or all
-        if module is None and not all_modules and len(self.all_remote_components) > 0:
+        if module is None and not (local or all_modules) and len(self.all_remote_components) > 0:
             questions = [
                 {
                     "type": "list",
@@ -170,7 +171,7 @@ class ModuleLint(ComponentLint):
             self.lint_modules(local_modules, registry=registry, local=True, fix_version=fix_version)
 
         # Lint nf-core modules
-        if len(remote_modules) > 0:
+        if not local and len(remote_modules) > 0:
             self.lint_modules(remote_modules, registry=registry, local=False, fix_version=fix_version)
 
         if print_results:
@@ -234,7 +235,23 @@ class ModuleLint(ComponentLint):
         # TODO: consider unifying modules and subworkflows lint_module() function and add it to the ComponentLint class
         # Only check the main script in case of a local module
         if local:
-            self.main_nf(mod, fix_version, self.registry, progress_bar)
+            mod.get_inputs_from_main_nf()
+            mod.get_outputs_from_main_nf()
+            # Update meta.yml file if requested
+            if self.fix and mod.meta_yml is not None:
+                self.update_meta_yml_file(mod)
+
+            for test_name in self.lint_tests:
+                if test_name in self.local_module_exclude_tests:
+                    continue
+                if test_name == "main_nf":
+                    getattr(self, test_name)(mod, fix_version, self.registry, progress_bar)
+                elif test_name in ["meta_yml", "environment_yml"]:
+                    # Allow files to be missing for local
+                    getattr(self, test_name)(mod, allow_missing=True)
+                else:
+                    getattr(self, test_name)(mod)
+
             self.passed += [LintResult(mod, *m) for m in mod.passed]
             warned = [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
             if not self.fail_warned:
@@ -276,6 +293,9 @@ class ModuleLint(ComponentLint):
         """
         meta_yml = self.read_meta_yml(mod)
         corrected_meta_yml = meta_yml.copy()
+        ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = (
+            lambda x, y: True
+        )  # Fix to not print aliases. https://stackoverflow.com/a/64717341
         yaml = ruamel.yaml.YAML()
         yaml.preserve_quotes = True
         yaml.indent(mapping=2, sequence=2, offset=0)
@@ -358,13 +378,65 @@ class ModuleLint(ComponentLint):
                                                 )
                             break
 
+        # EDAM ontologies
+        edam_formats = nf_core.modules.modules_utils.load_edam()
+        if "input" in meta_yml:
+            for i, channel in enumerate(corrected_meta_yml["input"]):
+                for j, element in enumerate(channel):
+                    element_name = list(element.keys())[0]
+                    expected_ontologies_i = []
+                    current_ontologies_i = []
+                    if "pattern" in corrected_meta_yml["input"][i][j][element_name]:
+                        pattern = corrected_meta_yml["input"][i][j][element_name]["pattern"]
+                        for extension in re.split(r",|{|}", pattern):
+                            if extension in edam_formats:
+                                expected_ontologies_i.append((edam_formats[extension][0], extension))
+                    if "ontologies" in corrected_meta_yml["input"][i][j][element_name]:
+                        for ontology in corrected_meta_yml["input"][i][j][element_name]["ontologies"]:
+                            current_ontologies_i.append(ontology["edam"])
+                    log.debug(f"expected ontologies for input: {expected_ontologies_i}")
+                    log.debug(f"current ontologies for input: {current_ontologies_i}")
+                    for ontology, ext in expected_ontologies_i:
+                        if ontology not in current_ontologies_i:
+                            corrected_meta_yml["input"][i][j][element_name]["ontologies"].append(
+                                ruamel.yaml.comments.CommentedMap({"edam": ontology})
+                            )
+                            corrected_meta_yml["input"][i][j][element_name]["ontologies"][-1].yaml_add_eol_comment(
+                                f"{edam_formats[ext][1]}", "edam"
+                            )
+                            print(f"added comment {edam_formats[ext][1]}")
+        if "output" in meta_yml:
+            for i, channel in enumerate(corrected_meta_yml["output"]):
+                ch_name = list(channel.keys())[0]
+                for j, element in enumerate(channel[ch_name]):
+                    element_name = list(element.keys())[0]
+                    expected_ontologies_o = []
+                    current_ontologies_o = []
+                    if "pattern" in corrected_meta_yml["output"][i][ch_name][j][element_name]:
+                        pattern = corrected_meta_yml["output"][i][ch_name][j][element_name]["pattern"]
+                        for extension in re.split(r",|{|}", pattern):
+                            if extension in edam_formats:
+                                expected_ontologies_o.append((edam_formats[extension][0], extension))
+                    if "ontologies" in corrected_meta_yml["output"][i][ch_name][j][element_name]:
+                        for ontology in corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"]:
+                            current_ontologies_o.append(ontology["edam"])
+                    log.debug(f"expected ontologies for output: {expected_ontologies_o}")
+                    log.debug(f"current ontologies for output: {current_ontologies_o}")
+                    for ontology, ext in expected_ontologies_o:
+                        if ontology not in current_ontologies_o:
+                            corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"].append(
+                                {"edam": ontology}
+                            )
+                            corrected_meta_yml["output"][i][ch_name][j][element_name][
+                                "ontologies"
+                            ].yaml_add_eol_comment(f"{edam_formats[ext][1]}", -1)
+
         # Add bio.tools identifier
         for i, tool in enumerate(corrected_meta_yml["tools"]):
             tool_name = list(tool.keys())[0]
             if "identifier" not in tool[tool_name]:
-                corrected_meta_yml["tools"][i][tool_name]["identifier"] = get_biotools_id(
-                    mod.component_name if "/" not in mod.component_name else mod.component_name.split("/")[0]
-                )
+                biotools_data = get_biotools_response(tool_name)
+                corrected_meta_yml["tools"][i][tool_name]["identifier"] = get_biotools_id(biotools_data, tool_name)
 
         with open(mod.meta_yml, "w") as fh:
             log.info(f"Updating {mod.meta_yml}")

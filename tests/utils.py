@@ -104,7 +104,31 @@ def mock_biotools_api_calls(rsps: responses.RequestsMock, module: str) -> None:
     """Mock biotools api calls for module"""
     biotools_api_url = f"https://bio.tools/api/t/?q={module}&format=json"
     biotools_mock = {
-        "list": [{"name": "Bpipe", "biotoolsCURIE": "biotools:bpipe"}],
+        "list": [
+            {
+                "name": "Bpipe",
+                "biotoolsCURIE": "biotools:bpipe",
+                "function": [
+                    {
+                        "input": [
+                            {
+                                "data": {"uri": "http://edamontology.org/data_0848", "term": "Raw sequence"},
+                                "format": [
+                                    {"uri": "http://edamontology.org/format_2182", "term": "FASTQ-like format (text)"},
+                                    {"uri": "http://edamontology.org/format_2573", "term": "SAM"},
+                                ],
+                            }
+                        ],
+                        "output": [
+                            {
+                                "data": {"uri": "http://edamontology.org/data_2955", "term": "Sequence report"},
+                                "format": [{"uri": "http://edamontology.org/format_2331", "term": "HTML"}],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
     }
     rsps.get(biotools_api_url, json=biotools_mock, status=200)
 

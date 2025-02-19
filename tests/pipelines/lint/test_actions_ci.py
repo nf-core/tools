@@ -34,7 +34,7 @@ class TestLintActionsCi(TestLint):
         new_pipeline = self._make_pipeline_copy()
         with open(Path(new_pipeline, ".github", "workflows", "ci.yml")) as fh:
             ci_yml = yaml.safe_load(fh)
-        ci_yml[True]["push"] = ["dev", "patch"]
+        ci_yml[True].pop("pull_request")
         ci_yml["jobs"]["test"]["strategy"]["matrix"] = {"nxf_versionnn": ["foo", ""]}
         with open(Path(new_pipeline, ".github", "workflows", "ci.yml"), "w") as fh:
             yaml.dump(ci_yml, fh)

@@ -64,4 +64,4 @@ class TestParamsFileBuilder(TestPipelines):
             out = fh.read()
 
         assert "nf-core/testpipeline" in out
-        assert "# input = null" in out
+        assert "# input: null" in out
