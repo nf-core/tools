@@ -406,7 +406,6 @@ class ModuleLint(ComponentLint):
                             corrected_meta_yml["input"][i][j][element_name]["ontologies"][-1].yaml_add_eol_comment(
                                 f"{edam_formats[ext][1]}", "edam"
                             )
-                            print(f"added comment {edam_formats[ext][1]}")
         if "output" in meta_yml:
             for i, channel in enumerate(corrected_meta_yml["output"]):
                 ch_name = list(channel.keys())[0]
