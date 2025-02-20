@@ -206,7 +206,6 @@ class NFCoreComponent:
             input_data = data.split("input:")[1].split("output:")[0]
             for line in input_data.split("\n"):
                 channel_elements: Any = []
-                line = line.split("//")[0]  # remove any trailing comments
                 regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
                 matches = re.finditer(regex, line)
                 for _, match in enumerate(matches, start=1):
