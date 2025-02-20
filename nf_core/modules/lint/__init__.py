@@ -394,6 +394,8 @@ class ModuleLint(ComponentLint):
                     if "ontologies" in corrected_meta_yml["input"][i][j][element_name]:
                         for ontology in corrected_meta_yml["input"][i][j][element_name]["ontologies"]:
                             current_ontologies_i.append(ontology["edam"])
+                    else:
+                        corrected_meta_yml["input"][i][j][element_name]["ontologies"] = []
                     log.debug(f"expected ontologies for input: {expected_ontologies_i}")
                     log.debug(f"current ontologies for input: {current_ontologies_i}")
                     for ontology, ext in expected_ontologies_i:
@@ -420,6 +422,8 @@ class ModuleLint(ComponentLint):
                     if "ontologies" in corrected_meta_yml["output"][i][ch_name][j][element_name]:
                         for ontology in corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"]:
                             current_ontologies_o.append(ontology["edam"])
+                    else:
+                        corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"] = []
                     log.debug(f"expected ontologies for output: {expected_ontologies_o}")
                     log.debug(f"current ontologies for output: {current_ontologies_o}")
                     for ontology, ext in expected_ontologies_o:
