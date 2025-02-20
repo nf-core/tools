@@ -394,6 +394,8 @@ class ModuleLint(ComponentLint):
                     if "ontologies" in corrected_meta_yml["input"][i][j][element_name]:
                         for ontology in corrected_meta_yml["input"][i][j][element_name]["ontologies"]:
                             current_ontologies_i.append(ontology["edam"])
+                    elif corrected_meta_yml["input"][i][j][element_name]["type"] == "file":
+                        corrected_meta_yml["input"][i][j][element_name]["ontologies"] = []
                     log.debug(f"expected ontologies for input: {expected_ontologies_i}")
                     log.debug(f"current ontologies for input: {current_ontologies_i}")
                     for ontology, ext in expected_ontologies_i:
@@ -404,7 +406,6 @@ class ModuleLint(ComponentLint):
                             corrected_meta_yml["input"][i][j][element_name]["ontologies"][-1].yaml_add_eol_comment(
                                 f"{edam_formats[ext][1]}", "edam"
                             )
-                            print(f"added comment {edam_formats[ext][1]}")
         if "output" in meta_yml:
             for i, channel in enumerate(corrected_meta_yml["output"]):
                 ch_name = list(channel.keys())[0]
@@ -420,6 +421,8 @@ class ModuleLint(ComponentLint):
                     if "ontologies" in corrected_meta_yml["output"][i][ch_name][j][element_name]:
                         for ontology in corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"]:
                             current_ontologies_o.append(ontology["edam"])
+                    elif corrected_meta_yml["output"][i][ch_name][j][element_name]["type"] == "file":
+                        corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"] = []
                     log.debug(f"expected ontologies for output: {expected_ontologies_o}")
                     log.debug(f"current ontologies for output: {current_ontologies_o}")
                     for ontology, ext in expected_ontologies_o:
