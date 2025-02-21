@@ -5,11 +5,14 @@
 ### Template
 
 - Remove the on `pull_request_target` trigger and `pull_request` types from the download test. Also drop `push` triggers on other CI tests. ([#3399](https://github.com/nf-core/tools/pull/3399))
+- Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
 
 ### Linting
 
 - Add linting for ifEmpty(null) ([#3411](https://github.com/nf-core/tools/pull/3411))
 - Fix arbitrarily nested params schema linting ([#3443](https://github.com/nf-core/tools/pull/3443))
+- fix: linting with comments after the input directive ([#3458](https://github.com/nf-core/tools/pull/3458))
+- EDAM ontology fixes ([#3460](https://github.com/nf-core/tools/pull/3460))
 
 ### Modules
 
@@ -25,6 +28,8 @@
 - chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.15.0 ([#3447](https://github.com/nf-core/tools/pull/3447))
 - Update prettier to 3.5.0 ([#3448](https://github.com/nf-core/tools/pull/3448))
 - chore(deps): update python:3.12-slim docker digest to 34656cd ([#3450](https://github.com/nf-core/tools/pull/3450))
+- Remove Twitter from README ([#3454](https://github.com/nf-core/tools/pull/3454))
+- docs: fix contributing link in the main README ([#3459](https://github.com/nf-core/tools/pull/3459))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
@@ -77,7 +82,7 @@
 - Use outputs instead of the environment to pass around values between steps in the Download Test Action ([#3351](https://github.com/nf-core/tools/pull/3351))
 - Fix pre commit template ([#3358](https://github.com/nf-core/tools/pull/3358))
 - Set LICENSE copyright to nf-core community ([#3366](https://github.com/nf-core/tools/pull/3366))
-- fix including modules.config ([#3356](https://github.com/nf-core/tools/pull/3356))
+- Fix including modules.config ([#3356](https://github.com/nf-core/tools/pull/3356))
 
 ### Linting
 
