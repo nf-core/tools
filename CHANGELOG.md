@@ -10,6 +10,7 @@
 ### Linting
 
 - Add linting for ifEmpty(null) ([#3411](https://github.com/nf-core/tools/pull/3411))
+- Fix arbitrarily nested params schema linting ([#3443](https://github.com/nf-core/tools/pull/3443))
 - fix: linting with comments after the input directive ([#3458](https://github.com/nf-core/tools/pull/3458))
 - EDAM ontology fixes ([#3460](https://github.com/nf-core/tools/pull/3460))
 
