@@ -16,6 +16,8 @@
 
 ### Modules
 
+- increase meta index for multiple input channels ([#3463](https://github.com/nf-core/tools/pull/3463))
+
 ### Subworkflows
 
 ### General
