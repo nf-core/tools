@@ -1,7 +1,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 import questionary
 import requests
@@ -165,9 +165,9 @@ def get_components_to_install(subworkflow_dir: Union[str, Path]) -> Tuple[List[s
     return modules, subworkflows
 
 
-def get_biotools_id(tool_name) -> str:
+def get_biotools_response(tool_name: str) -> Optional[Dict]:
     """
-    Try to find a bio.tools ID for 'tool'
+    Try to get bio.tools information for 'tool'
     """
     url = f"https://bio.tools/api/t/?q={tool_name}&format=json"
     try:
@@ -176,16 +176,74 @@ def get_biotools_id(tool_name) -> str:
         response.raise_for_status()  # Raise an error for bad status codes
         # Parse the JSON response
         data = response.json()
-
-        # Iterate through the tools in the response to find the tool name
-        for tool in data["list"]:
-            if tool["name"].lower() == tool_name:
-                return tool["biotoolsCURIE"]
-
-        # If the tool name was not found in the response
-        log.warning(f"Could not find a bio.tools ID for '{tool_name}'")
-        return ""
+        log.info(f"Found bio.tools information for '{tool_name}'")
+        return data
 
     except requests.exceptions.RequestException as e:
-        log.warning(f"Could not find a bio.tools ID for '{tool_name}': {e}")
-        return ""
+        log.warning(f"Could not find bio.tools information for '{tool_name}': {e}")
+        return None
+
+
+def get_biotools_id(data: dict, tool_name: str) -> str:
+    """
+    Try to find a bio.tools ID for 'tool'
+    """
+    # Iterate through the tools in the response to find the tool name
+    for tool in data["list"]:
+        if tool["name"].lower() == tool_name:
+            log.info(f"Found bio.tools ID: '{tool['biotoolsCURIE']}'")
+            return tool["biotoolsCURIE"]
+
+    # If the tool name was not found in the response
+    log.warning(f"Could not find a bio.tools ID for '{tool_name}'")
+    return ""
+
+
+DictWithStrAndTuple = Dict[str, Tuple[List[str], List[str], List[str]]]
+
+
+def get_channel_info_from_biotools(
+    data: dict, tool_name: str
+) -> Optional[Tuple[DictWithStrAndTuple, DictWithStrAndTuple]]:
+    """
+    Try to find input and output channels and the respective EDAM ontology terms
+
+    Args:
+        data (dict): The bio.tools API response
+        tool_name (str): The name of the tool
+    """
+    inputs = {}
+    outputs = {}
+
+    def _iterate_input_output(type) -> DictWithStrAndTuple:
+        type_info = {}
+        if type in funct:
+            for element in funct[type]:
+                if "data" in element:
+                    element_name = "_".join(element["data"]["term"].lower().split(" "))
+                    uris = [element["data"]["uri"]]
+                    terms = [element["data"]["term"]]
+                    patterns = []
+                if "format" in element:
+                    for format in element["format"]:
+                        # Append the EDAM URI
+                        uris.append(format["uri"])
+                        # Append the EDAM term, getting the first word in case of complicated strings. i.e. "FASTA format"
+                        patterns.append(format["term"].lower().split(" ")[0])
+                        terms.append(format["term"])
+                    type_info[element_name] = (uris, terms, patterns)
+        return type_info
+
+    # Iterate through the tools in the response to find the tool name
+    for tool in data["list"]:
+        if tool["name"].lower() == tool_name:
+            if "function" in tool:
+                # Parse all tool functions
+                for funct in tool["function"]:
+                    inputs.update(_iterate_input_output("input"))
+                    outputs.update(_iterate_input_output("output"))
+            return inputs, outputs
+
+    # If the tool name was not found in the response
+    log.warning(f"Could not find an EDAM ontology term for '{tool_name}'")
+    return None
