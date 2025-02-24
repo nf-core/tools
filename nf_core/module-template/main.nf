@@ -33,7 +33,8 @@ process {{ component_name_underscore|upper }} {
     {%- if inputs %}
     // TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
     {%- for input_name, ontologies in inputs.items() %}
-    {{ 'tuple val(meta), path(' + input_name + ')' if has_meta else 'path ' + input_name }}
+    {% set meta_index = loop.index|string if not loop.first else '' %}
+    {{ 'tuple val(meta' + meta_index + '), path(' + input_name + ')' if has_meta else 'path ' + input_name }}
     {%- endfor %}
     {%- else -%}
     {% if not_empty_template -%}
