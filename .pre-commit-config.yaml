@@ -11,13 +11,26 @@ repos:
       - id: prettier
         additional_dependencies:
           - prettier@3.5.0
-
-  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
-    rev: "3.2.0"
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
     hooks:
-      - id: editorconfig-checker
-        alias: ec
-
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+        exclude: |
+          (?x)^(
+              .*\.snap$|
+              nf_core/pipeline-template/subworkflows/.*|
+              nf_core/pipeline-template/modules/.*|
+              tests/pipelines/__snapshots__/.*
+          )$
+      - id: end-of-file-fixer
+        exclude: |
+          (?x)^(
+              .*\.snap$|
+              nf_core/pipeline-template/subworkflows/.*|
+              nf_core/pipeline-template/modules/.*|
+              tests/pipelines/__snapshots__/.*
+          )$
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: "v1.15.0"
     hooks:
