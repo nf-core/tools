@@ -1,9 +1,9 @@
 {
-    "python.testing.pytestEnabled": true,
-    "python.testing.unittestEnabled": false,
-    "python.testing.nosetestsEnabled": false,
-    "python.testing.pytestArgs": ["tests", "-v", "--tb=short"],
-    "python.testing.autoTestDiscoverOnSaveEnabled": true,
-    "python.terminal.activateEnvInCurrentTerminal": true,
-    "python.terminal.shellIntegration.enabled": true
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.nosetestsEnabled": false,
+  "python.testing.pytestArgs": ["tests", "-v", "--tb=short"],
+  "python.testing.autoTestDiscoverOnSaveEnabled": true,
+  "python.terminal.activateEnvInCurrentTerminal": true,
+  "python.terminal.shellIntegration.enabled": true
 }

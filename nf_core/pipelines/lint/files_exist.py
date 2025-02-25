@@ -23,7 +23,6 @@ def files_exist(self) -> Dict[str, List[str]]:
         .gitattributes
         .gitignore
         .nf-core.yml
-        .editorconfig
         .prettierignore
         .prettierrc.yml
         .github/.dockstore.yml
@@ -128,7 +127,6 @@ def files_exist(self) -> Dict[str, List[str]]:
         [Path(".gitattributes")],
         [Path(".gitignore")],
         [Path(".nf-core.yml")],
-        [Path(".editorconfig")],
         [Path(".prettierignore")],
         [Path(".prettierrc.yml")],
         [Path("CHANGELOG.md")],

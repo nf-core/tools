@@ -1,18 +1,18 @@
 {
-    $schema: "https://docs.renovatebot.com/renovate-schema.json",
-    extends: ["github>nf-core/ops//.github/renovate/default.json5"],
-    ignorePaths: ["**/nf_core/pipeline-template/modules/nf-core/**"],
-    baseBranches: ["dev"],
-    packageRules: [
-        {
-            matchDatasources: ["docker"],
-            matchPackageNames: ["python"],
-            versioning: "pep440",
-        },
-        {
-            matchDatasources: ["docker"],
-            registryUrls: ["docker.io"],
-        },
-    ],
-    gitIgnoredAuthors: ["core@nf-co.re"],
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["github>nf-core/ops//.github/renovate/default.json5"],
+  ignorePaths: ["**/nf_core/pipeline-template/modules/nf-core/**"],
+  baseBranches: ["dev"],
+  packageRules: [
+    {
+      matchDatasources: ["docker"],
+      matchPackageNames: ["python"],
+      versioning: "pep440",
+    },
+    {
+      matchDatasources: ["docker"],
+      registryUrls: ["docker.io"],
+    },
+  ],
+  gitIgnoredAuthors: ["core@nf-co.re"],
 }
