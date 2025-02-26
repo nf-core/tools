@@ -18,7 +18,6 @@ concurrency:
 jobs:
   test:
     name: "Run pipeline with test data (${{ matrix.NXF_VER }} | ${{ matrix.test_name }} | ${{ matrix.profile }})"
-    # Only run on push if this is the nf-core dev branch (merged PRs)
     runs-on: ubuntu-latest
     strategy:
       matrix:
