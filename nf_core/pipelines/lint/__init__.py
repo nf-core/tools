@@ -82,7 +82,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     # Import all linting tests as methods for this class
     actions_awsfulltest = actions_awsfulltest
     actions_awstest = actions_awstest
-    actions_ci = actions_nf_test
+    actions_nf_test = actions_nf_test
     actions_schema_validation = actions_schema_validation
     base_config = base_config
     modules_config = modules_config
@@ -138,7 +138,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "files_exist",
             "nextflow_config",
             "files_unchanged",
-            "actions_ci",
+            "actions_",
             "actions_awstest",
             "actions_awsfulltest",
             "readme",
