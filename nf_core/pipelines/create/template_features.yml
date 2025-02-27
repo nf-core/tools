@@ -52,7 +52,9 @@ ci:
   linting:
     files_exist:
       - ".github/workflows/branch.yml"
-      - ".github/workflows/ci.yml"
+      - ".github/workflows/nf-test.yml"
+      - ".github/actions/get-shards/action.yml"
+      - ".github/actions/nf-test/action.yml"
       - ".github/workflows/linting_comment.yml"
       - ".github/workflows/linting.yml"
   nfcore_pipelines: False
@@ -401,7 +403,9 @@ test_config:
     - "conf/test_full.config"
     - ".github/workflows/awsfulltest.yml"
     - ".github/workflows/awstest.yml"
-    - ".github/workflows/ci.yml"
+    - ".github/workflows/nf-test.yml"
+    - ".github/actions/get-shards/action.yml"
+    - ".github/actions/nf-test/action.yml"
   short_description: "Add testing profiles"
   description: "Add two default testing profiles"
   help_text: |
@@ -416,7 +420,9 @@ test_config:
     files_exist:
       - "conf/test.config"
       - "conf/test_full.config"
-      - ".github/workflows/ci.yml"
+      - ".github/workflows/nf-test.yml"
+      - ".github/actions/get-shards/action.yml"
+      - ".github/actions/nf-test/action.yml"
     nextflow_config: False
     files_unchanged:
       - ".github/CONTRIBUTING.md"

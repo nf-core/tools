@@ -42,7 +42,7 @@ def custom_make_crate(
     wf_name: Optional[str] = None,
     wf_version: Optional[str] = None,
     lang_version: Optional[str] = None,
-    ci_workflow: Optional[str] = "ci.yml",
+    ci_workflow: Optional[str] = "nf-test.yml",
     diagram: Optional[Path] = None,
 ) -> BaseROCrate:
     builder = CustomNextflowCrateBuilder(root, repo_url=repo_url)

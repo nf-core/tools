@@ -162,9 +162,9 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
         ],
     )
 
-    # .github/workflows/ci.yml - Nextflow version matrix
+    # .github/workflows/nf-test.yml - Nextflow version matrix
     update_file_version(
-        Path(".github", "workflows", "ci.yml"),
+        Path(".github", "workflows", "nf-test.yml"),
         pipeline_obj,
         [
             (
