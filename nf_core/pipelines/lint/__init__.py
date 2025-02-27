@@ -138,7 +138,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "files_exist",
             "nextflow_config",
             "files_unchanged",
-            "actions_",
+            "actions_nf_test",
             "actions_awstest",
             "actions_awsfulltest",
             "readme",
