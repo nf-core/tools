@@ -175,7 +175,7 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
                 new_version,
             )
         ],
-        yaml_key=["jobs", "test", "strategy", "matrix", "NXF_VER"],
+        yaml_key=["jobs", "nf-test", "strategy", "matrix", "NXF_VER"],
     )
 
     # README.md - Nextflow version badge

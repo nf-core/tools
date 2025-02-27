@@ -57,7 +57,7 @@ class TestBumpVersion(TestPipelines):
         # Check .github/workflows/nf-test.yml
         with open(new_pipeline_obj._fp(".github/workflows/nf-test.yml")) as fh:
             ci_yaml = yaml.safe_load(fh)
-        assert ci_yaml["jobs"]["test"]["strategy"]["matrix"]["NXF_VER"][0] == version
+        assert ci_yaml["jobs"]["nf-test"]["strategy"]["matrix"]["NXF_VER"][0] == version
 
         # Check README.md
         with open(new_pipeline_obj._fp("README.md")) as fh:

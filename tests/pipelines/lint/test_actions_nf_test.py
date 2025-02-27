@@ -37,7 +37,7 @@ class TestLintActionsNfTest(TestLint):
         with open(Path(new_pipeline, ".github", "workflows", "nf-test.yml")) as fh:
             ci_yml = yaml.safe_load(fh)
         ci_yml[True].pop("pull_request")
-        ci_yml["jobs"]["test"]["strategy"]["matrix"] = {"nxf_versionnn": ["foo", ""]}
+        ci_yml["jobs"]["nf-test"]["strategy"]["matrix"] = {"nxf_versionnn": ["foo", ""]}
         with open(Path(new_pipeline, ".github", "workflows", "nf-test.yml"), "w") as fh:
             yaml.dump(ci_yml, fh)
 
