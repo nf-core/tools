@@ -63,7 +63,7 @@ def actions_nf_test(self):
 
     # Check that we are testing the minimum nextflow version
     try:
-        nxf_ver = ciwf["jobs"]["test"]["strategy"]["matrix"]["NXF_VER"]
+        nxf_ver = ciwf["jobs"]["nf-test"]["strategy"]["matrix"]["NXF_VER"]
         if not any(i == self.minNextflowVersion for i in nxf_ver):
             raise AssertionError()
     except (KeyError, TypeError):
