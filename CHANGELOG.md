@@ -34,6 +34,7 @@
 - Remove Twitter from README ([#3454](https://github.com/nf-core/tools/pull/3454))
 - docs: fix contributing link in the main README ([#3459](https://github.com/nf-core/tools/pull/3459))
 - Cleanup: Removed Redundant if Condition ([#3468](https://github.com/nf-core/tools/pull/3468))
+- chore(deps): update dependency textual to v2 ([#3471](https://github.com/nf-core/tools/pull/3471))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
