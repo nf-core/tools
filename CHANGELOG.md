@@ -38,6 +38,7 @@
 - chore(deps): update gitpod/workspace-base docker digest to 7f35e40 ([#3473](https://github.com/nf-core/tools/pull/3473))
 - chore(deps): update python:3.12-slim docker digest to aaa3f8c ([#3474](https://github.com/nf-core/tools/pull/3474))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.9 ([#3470](https://github.com/nf-core/tools/pull/3470))
+- Move import in `utils_nfcore_phaseimpute_pipeline` ([#3476](https://github.com/nf-core/tools/pull/3476))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
