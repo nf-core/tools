@@ -186,8 +186,10 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
             (
                 rf"nextflow%20DSL2-%E2%89%A5{re.escape(current_version)}-23aa62.svg",
                 f"nextflow%20DSL2-%E2%89%A5{new_version}-23aa62.svg",
-            )
+            ),
+            (f"version-%E2%89%A5{re.escape(current_version)}-green", f"version-%E2%89%A5{new_version}-green"),
         ],
+        False,
     )
 
 

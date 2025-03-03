@@ -5,12 +5,19 @@
 ### Template
 
 - Remove the on `pull_request_target` trigger and `pull_request` types from the download test. Also drop `push` triggers on other CI tests. ([#3399](https://github.com/nf-core/tools/pull/3399))
+- Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
+- Add Bluesky badge to readme ([#3475](https://github.com/nf-core/tools/pull/3475))
 
 ### Linting
 
 - Add linting for ifEmpty(null) ([#3411](https://github.com/nf-core/tools/pull/3411))
+- Fix arbitrarily nested params schema linting ([#3443](https://github.com/nf-core/tools/pull/3443))
+- fix: linting with comments after the input directive ([#3458](https://github.com/nf-core/tools/pull/3458))
+- EDAM ontology fixes ([#3460](https://github.com/nf-core/tools/pull/3460))
 
 ### Modules
+
+- increase meta index for multiple input channels ([#3463](https://github.com/nf-core/tools/pull/3463))
 
 ### Subworkflows
 
@@ -19,6 +26,19 @@
 - output passed to write_params_file as Path object ([#3435](https://github.com/nf-core/tools/pull/3435))
 - chore(deps): update python:3.12-slim docker digest to 69ce3ae ([#3433](https://github.com/nf-core/tools/pull/3433))
 - chore(deps): update dependency pytest-textual-snapshot to v1.1.0 ([#3439](https://github.com/nf-core/tools/pull/3439))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.4 ([#3438](https://github.com/nf-core/tools/pull/3438))
+- format name/value with YAML syntax ([#3442](https://github.com/nf-core/tools/pull/3442))
+- chore(deps): update pre-commit hook editorconfig-checker/editorconfig-checker.python to v3.2.0 ([#3446](https://github.com/nf-core/tools/pull/3446))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.5 ([#3445](https://github.com/nf-core/tools/pull/3445))
+- chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.15.0 ([#3447](https://github.com/nf-core/tools/pull/3447))
+- Update prettier to 3.5.0 ([#3448](https://github.com/nf-core/tools/pull/3448))
+- chore(deps): update python:3.12-slim docker digest to 34656cd ([#3450](https://github.com/nf-core/tools/pull/3450))
+- Remove Twitter from README ([#3454](https://github.com/nf-core/tools/pull/3454))
+- docs: fix contributing link in the main README ([#3459](https://github.com/nf-core/tools/pull/3459))
+- Cleanup: Removed Redundant if Condition ([#3468](https://github.com/nf-core/tools/pull/3468))
+- chore(deps): update gitpod/workspace-base docker digest to 7f35e40 ([#3473](https://github.com/nf-core/tools/pull/3473))
+- chore(deps): update python:3.12-slim docker digest to aaa3f8c ([#3474](https://github.com/nf-core/tools/pull/3474))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.9 ([#3470](https://github.com/nf-core/tools/pull/3470))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
@@ -71,7 +91,7 @@
 - Use outputs instead of the environment to pass around values between steps in the Download Test Action ([#3351](https://github.com/nf-core/tools/pull/3351))
 - Fix pre commit template ([#3358](https://github.com/nf-core/tools/pull/3358))
 - Set LICENSE copyright to nf-core community ([#3366](https://github.com/nf-core/tools/pull/3366))
-- fix including modules.config ([#3356](https://github.com/nf-core/tools/pull/3356))
+- Fix including modules.config ([#3356](https://github.com/nf-core/tools/pull/3356))
 
 ### Linting
 
