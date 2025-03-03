@@ -36,6 +36,7 @@
 - Cleanup: Removed Redundant if Condition ([#3468](https://github.com/nf-core/tools/pull/3468))
 - chore(deps): update python:3.12-slim docker digest to aaa3f8c ([#3474](https://github.com/nf-core/tools/pull/3474))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.9 ([#3470](https://github.com/nf-core/tools/pull/3470))
+- Add Bluesky link ([#3475](https://github.com/nf-core/tools/pull/3475))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
