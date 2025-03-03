@@ -6,7 +6,7 @@
 
 - Remove the on `pull_request_target` trigger and `pull_request` types from the download test. Also drop `push` triggers on other CI tests. ([#3399](https://github.com/nf-core/tools/pull/3399))
 - Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
-- Add Bluesky link ([#3475](https://github.com/nf-core/tools/pull/3475))
+- Add Bluesky badge to readme ([#3475](https://github.com/nf-core/tools/pull/3475))
 
 ### Linting
 
