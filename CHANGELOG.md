@@ -35,6 +35,7 @@
 - Remove Twitter from README ([#3454](https://github.com/nf-core/tools/pull/3454))
 - docs: fix contributing link in the main README ([#3459](https://github.com/nf-core/tools/pull/3459))
 - Cleanup: Removed Redundant if Condition ([#3468](https://github.com/nf-core/tools/pull/3468))
+- chore(deps): update gitpod/workspace-base docker digest to 7f35e40 ([#3473](https://github.com/nf-core/tools/pull/3473))
 - chore(deps): update python:3.12-slim docker digest to aaa3f8c ([#3474](https://github.com/nf-core/tools/pull/3474))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.9 ([#3470](https://github.com/nf-core/tools/pull/3470))
 
