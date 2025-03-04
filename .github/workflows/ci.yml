@@ -35,6 +35,10 @@ jobs:
           - "singularity"
         test_name:
           - "test"
+          - "test_denovo"
+          - "test_screenpathogen"
+          - "test_consensus_samtools"
+          - "test_taxid"
         isMaster:
           - ${{ github.base_ref == 'master' }}
         # Exclude conda and singularity on dev
