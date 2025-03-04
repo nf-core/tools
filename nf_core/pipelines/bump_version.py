@@ -101,7 +101,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
     )
     # nf-test snap files
     pipeline_name = pipeline_obj.nf_config.get("manifest.name", "").strip(" '\"")
-    snap_files = [f for f in Path().glob("tests/pipeline/*.snap")]
+    snap_files = [f for f in Path(pipeline_obj.wf_path).glob("tests/pipeline/*.snap")]
     for snap_file in snap_files:
         update_file_version(
             snap_file,
@@ -112,6 +112,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
                     f"{pipeline_name}={new_version}",
                 )
             ],
+            required=False,
         )
     # .nf-core.yml - pipeline version
     # update entry: version: 1.0.0dev, but not `nf_core_version`, or `bump_version`
