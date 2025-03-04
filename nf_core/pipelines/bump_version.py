@@ -289,7 +289,7 @@ def update_text_file(fn: Path, patterns: List[Tuple[str, str]], required: bool):
             updated = True
             log.info(f"Updated version in '{fn}'")
             log.debug(f"Replaced pattern '{pattern}' with '{replacement}' {count} times")
-        elif required:
+        else:
             handle_error(f"Could not find version number in {fn}: `{pattern}`", required)
 
     if updated:
