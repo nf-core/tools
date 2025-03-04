@@ -1,0 +1,38 @@
+name: extract_viral_taxid
+description: Extract the taxid of viruses identified by the classifier (Kraken2/Centrifuge/DIAMOND)
+keywards:
+  - taxid
+  - virus
+  - taxpasta
+  - kraken2
+  - centrifuge
+  - diamond
+input:
+  - evalue:
+      type: ["number", "integer"]
+      description: An e-value threshold to filter the diamond classification result
+  - - meta:
+        type: map
+        description: |
+          Groovy map containing sample information
+          e.g. [ id:''test, single_end:false]
+  - - taxpasta_standardised_profile:
+        type: file
+        description: Path to the taxpasta standardised profile
+  - - report:
+        type: file
+        description: |
+          Path to the classifier report (Kraken2/Centrifuge) or TSV file (DIAMOND)
+          containing the identified viral taxid.
+output:
+  - - meta:
+        type: map
+        description: |
+          Groovy map containing sample information
+          e.g. [ id:''test, single_end:false]
+  - - viral_taxid:
+        type: file
+        description: Extract  viral taxid
+        pattern: "*viral_taxids.tsv"
+authors:
+  - "@LilyAnderssonLee"

@@ -1,0 +1,41 @@
+name: extractcentrifuge
+description: Use a custom python script to extract reads with specified taxonomic ID from the Centrifuge classification output
+keywards:
+  - taxid
+  - centrifuge
+  - results
+  - fastq
+  - extract_reads
+input:
+  - taxid:
+      type: integer
+      description: A taxonomic ID to extract the reads
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+  - - results:
+        type: file
+        description: File containing classification results
+        pattern: "*.{results.txt}"
+  - - fastq:
+        type: file
+        description: FastQ files
+        pattern: "*.fastq.gz"
+output:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+  - - extracted_centrifuge_reads:
+        type: file
+        description: FastQ files contain the extracted reads of a specified taxid
+        pattern: "*fastq"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@LilyAnderssonLee"

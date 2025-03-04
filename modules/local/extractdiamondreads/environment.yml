@@ -1,0 +1,7 @@
+name: extractdiamondreads
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::seqkit=2.9.0
+  - conda-forge::python=3.13.1

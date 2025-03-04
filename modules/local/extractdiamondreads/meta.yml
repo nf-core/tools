@@ -1,0 +1,39 @@
+name: extractdiamondreads
+description: Use a custom python script to extract reads with specified taxonomic ID from the DIAMOND classification output
+keywards:
+  - taxid
+  - DIAMOND
+  - tsv
+  - fastq
+  - extract_reads
+input:
+  - taxid:
+      type: integer
+      description: A taxonomic ID to extract the reads
+  - evalue:
+      type: ["number", "integer"]
+      description: An e-value threshold to filter the diamond classification result
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - tsv:
+      type: file
+      description: Tab separated file containing DIAMOND taxonomic classification of hits
+      pattern: "*.tsv"
+  - fastq:
+      type: file
+      description: FastQ files
+      pattern: "*.fastq.gz"
+output:
+  - extracted_diamond_reads:
+      type: file
+      description: FastQ files contain the extracted reads of a specified taxid
+      pattern: "*fastq"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@LilyAnderssonLee"
