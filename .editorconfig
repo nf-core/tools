@@ -28,14 +28,6 @@ indent_style = unset
 [/assets/email*]
 indent_size = unset
 
-# ignore Readme
-[README.md]
-indent_style = unset
-
-# ignore left-padding spaces check for the test data
-[assets/test_data/taxprofiler_test_data/*]
-indent_style = unset
-
 # ignore python and markdown
 [*.{py,md}]
 indent_style = unset
