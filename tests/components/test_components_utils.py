@@ -62,18 +62,15 @@ class TestTestComponentsUtils(TestComponents):
 
     def test_environment_variables_override(self):
         """Test environment variables override default values"""
-        # Define environment variables to mock
         mock_env = {
             "NF_CORE_MODULES_NAME": "custom-name",
             "NF_CORE_MODULES_REMOTE": "https://custom-repo.git",
             "NF_CORE_MODULES_DEFAULT_BRANCH": "custom-branch",
         }
 
-        # Use mock as a context manager
         try:
             with mock.patch.dict(os.environ, mock_env):
                 importlib.reload(nf_core.components.components_utils)
-                # Check custom values are used
                 assert nf_core.components.components_utils.NF_CORE_MODULES_NAME == mock_env["NF_CORE_MODULES_NAME"]
                 assert nf_core.components.components_utils.NF_CORE_MODULES_REMOTE == mock_env["NF_CORE_MODULES_REMOTE"]
                 assert (
@@ -81,5 +78,4 @@ class TestTestComponentsUtils(TestComponents):
                     == mock_env["NF_CORE_MODULES_DEFAULT_BRANCH"]
                 )
         finally:
-            # Restore original values
             importlib.reload(nf_core.components.components_utils)
