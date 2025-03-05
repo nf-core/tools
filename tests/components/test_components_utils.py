@@ -1,3 +1,7 @@
+import importlib
+import os
+from unittest import mock
+
 import responses
 
 import nf_core.components.components_utils
@@ -55,3 +59,27 @@ class TestTestComponentsUtils(TestComponents):
             response = nf_core.components.components_utils.get_biotools_response("bpipe")
             nf_core.components.components_utils.get_channel_info_from_biotools(response, "test")
             assert "Could not find an EDAM ontology term for 'test'" in self.caplog.text
+
+    def test_environment_variables_override(self):
+        """Test environment variables override default values"""
+        # Define environment variables to mock
+        mock_env = {
+            "NF_CORE_MODULES_NAME": "custom-name",
+            "NF_CORE_MODULES_REMOTE": "https://custom-repo.git",
+            "NF_CORE_MODULES_DEFAULT_BRANCH": "custom-branch",
+        }
+
+        # Use mock as a context manager
+        try:
+            with mock.patch.dict(os.environ, mock_env):
+                importlib.reload(nf_core.components.components_utils)
+                # Check custom values are used
+                assert nf_core.components.components_utils.NF_CORE_MODULES_NAME == mock_env["NF_CORE_MODULES_NAME"]
+                assert nf_core.components.components_utils.NF_CORE_MODULES_REMOTE == mock_env["NF_CORE_MODULES_REMOTE"]
+                assert (
+                    nf_core.components.components_utils.NF_CORE_MODULES_DEFAULT_BRANCH
+                    == mock_env["NF_CORE_MODULES_DEFAULT_BRANCH"]
+                )
+        finally:
+            # Restore original values
+            importlib.reload(nf_core.components.components_utils)
