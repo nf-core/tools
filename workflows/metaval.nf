@@ -5,9 +5,6 @@
 */
 
 // Extract reads of taxIDs
-include { KRAKENTOOLS_EXTRACTKRAKENREADS                        } from '../modules/nf-core/krakentools/extractkrakenreads/main'
-include { EXTRACTCENTRIFUGEREADS                                } from '../modules/local/extractcentrifugereads/main'
-include { EXTRACTCDIAMONDREADS                                  } from '../modules/local/extractdiamondreads/main'
 include { TAXID_READS                                           } from '../subworkflows/local/taxid_reads'
 
 // De novo for extracted taxIDs reads
