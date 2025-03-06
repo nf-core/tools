@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
@@ -15,9 +16,9 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 # Constants for the nf-core/modules repo used throughout the module files
-NF_CORE_MODULES_NAME = "nf-core"
-NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
-NF_CORE_MODULES_DEFAULT_BRANCH = "master"
+NF_CORE_MODULES_NAME = os.environ.get("NF_CORE_MODULES_NAME", "nf-core")
+NF_CORE_MODULES_REMOTE = os.environ.get("NF_CORE_MODULES_REMOTE", "https://github.com/nf-core/modules.git")
+NF_CORE_MODULES_DEFAULT_BRANCH = os.environ.get("NF_CORE_MODULES_DEFAULT_BRANCH", "master")
 
 
 def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[Path, Optional[str], str]:
