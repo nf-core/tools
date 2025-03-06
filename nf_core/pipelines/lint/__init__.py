@@ -601,8 +601,8 @@ def run_linting(
 
     if (
         lint_obj.lint_config
-        and lint_obj.lint_config["nfcore_components"] is not None
-        and not lint_obj.lint_config["nfcore_components"]
+        and (not lint_obj.lint_config["nfcore_components"]
+        or lint_obj.lint_config["nfcore_components"] is not None)
     ):
         module_lint_obj = None
         subworkflow_lint_obj = None
