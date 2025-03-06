@@ -15,7 +15,7 @@ process RM_EMPTY_FASTQ {
     def args = task.ext.args ?: ''
     """
     if [ -d ${folder} ]; then
-        for f in ${folder}/*.fastq; do
+        for f in ${folder}/*; do
             if [ ! -s \$f ]; then
                 rm \$f
             fi
