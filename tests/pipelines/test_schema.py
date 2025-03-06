@@ -151,6 +151,8 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.load_schema()
         self.schema_obj.input_params = {"input": "fubar.csv", "outdir": "results/"}
         assert self.schema_obj.validate_params()
+        self.schema_obj.input_params = {"input": "fubar.json", "outdir": "results/"}
+        assert self.schema_obj.validate_params()
 
     def test_validate_params_fail(self):
         """Check that False is returned if params don't validate against a schema"""
@@ -158,6 +160,8 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
         self.schema_obj.input_params = {"fubar": "input"}
+        assert not self.schema_obj.validate_params()
+        self.schema_obj.input_params = {"input": "fubar.foo", "outdir": "results/"}
         assert not self.schema_obj.validate_params()
 
     def test_validate_schema_pass(self):
