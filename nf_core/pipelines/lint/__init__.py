@@ -600,7 +600,7 @@ def run_linting(
     lint_obj.load_pipeline_config()
 
     if (
-        lint_obj.lint_config and 
+        lint_obj.lint_config and
         lint_obj.lint_config.get("nfcore_components") is not None and
         not lint_obj.lint_config["nfcore_components"]
     ):
