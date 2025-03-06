@@ -601,8 +601,8 @@ def run_linting(
 
     if (
         lint_obj.lint_config and (
-            not lint_obj.lint_config["nfcore_components"]
-            or lint_obj.lint_config["nfcore_components"] is not None
+            not lint_obj.lint_config["nfcore_components"] or
+            lint_obj.lint_config["nfcore_components"] is None
         )
     ):
         module_lint_obj = None
