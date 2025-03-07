@@ -6,12 +6,20 @@ from typing import Dict, List, Optional, Tuple, Union
 import questionary
 import requests
 import rich.prompt
-import yaml
+import ruamel.yaml
 
 import nf_core.utils
 from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
+
+# Set yaml options for meta.yml files
+ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = (
+    lambda x, y: True
+)  # Fix to not print aliases. https://stackoverflow.com/a/64717341
+yaml = ruamel.yaml.YAML()
+yaml.preserve_quotes = True
+yaml.indent(mapping=2, sequence=2, offset=0)
 
 
 def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[Path, Optional[str], str]:
