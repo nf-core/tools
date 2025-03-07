@@ -7,6 +7,7 @@
 - Remove the on `pull_request_target` trigger and `pull_request` types from the download test. Also drop `push` triggers on other CI tests. ([#3399](https://github.com/nf-core/tools/pull/3399))
 - Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
 - Add Bluesky badge to readme ([#3475](https://github.com/nf-core/tools/pull/3475))
+- Allow more formats for params.input ([#3484](https://github.com/nf-core/tools/pull/3484))
 
 ### Linting
 
@@ -38,7 +39,6 @@
 - chore(deps): update gitpod/workspace-base docker digest to 7f35e40 ([#3473](https://github.com/nf-core/tools/pull/3473))
 - chore(deps): update python:3.12-slim docker digest to aaa3f8c ([#3474](https://github.com/nf-core/tools/pull/3474))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.9 ([#3470](https://github.com/nf-core/tools/pull/3470))
-- Feature/flexible input types ([#3484](https://github.com/nf-core/tools/pull/3484))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
@@ -127,7 +127,6 @@
 - Update template components ([#3328](https://github.com/nf-core/tools/pull/3328))
 - Template: Remove mention of GRCh37 if igenomes is skipped ([#3330](https://github.com/nf-core/tools/pull/3330))
 - Be more verbose in approval check action ([#3338](https://github.com/nf-core/tools/pull/3338))
-- Allow more formats for params.input in the pipeline template schema ([#3484](https://github.com/nf-core/tools/pull/3484))
 
 ### Download
 
