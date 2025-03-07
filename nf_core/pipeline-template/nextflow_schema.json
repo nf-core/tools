@@ -32,7 +32,7 @@
                         },
                         {
                             "mimetype": "text/tab-separated-values",
-                            "pattern": "^\\S+\\.txt$"
+                            "pattern": "^\\S+\\.tsv$"
                         }
                     ],
                     "description": "Path to comma-separated file containing information about the samples in the experiment.",
