@@ -896,7 +896,7 @@ class ComponentUpdate(ComponentCommand):
                 if subworkflow != component:
                     for remote_url, content in mods_json["repos"].items():
                         if all_subworkflows := content.get("subworkflows"):
-                            for _, details in all_subworkflows.items():
+                            for details in all_subworkflows.values():
                                 if subworkflow in details:
                                     git_remote = remote_url
                 if subworkflow != self.component_type:
