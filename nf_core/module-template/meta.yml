@@ -29,7 +29,7 @@ input:
   {% if inputs -%}
   {% for input_name, ontologies in inputs.items() -%}
   {% if has_meta %}
-  - - meta:
+  - - meta{{ loop.index|string if not loop.first else '' }}:
         type: map
         description: |
           Groovy Map containing sample information
