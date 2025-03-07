@@ -553,6 +553,7 @@ class PipelineSchema:
         if "input" not in self.schema.get(self.defs_notation, {}).get("input_output_options", {}).get("properties", {}):
             raise LookupError("Parameter `input` is not defined in the correct subschema (input_output_options)")
         input_entry = self.schema[self.defs_notation]["input_output_options"]["properties"]["input"]
+
         def find_mimetype(json_data):
             """
             Recursively searches a JSON structure for the "mimetype" attribute and returns its value.
@@ -576,6 +577,7 @@ class PipelineSchema:
                     if result:
                         return result
             return None
+
         mimetype = find_mimetype(input_entry)
         if mimetype == "" or mimetype is None:
             return None
