@@ -1043,7 +1043,7 @@ class ModulesJson:
         component_type,
         name,
         dependent_components,
-    ) -> Tuple[(str, str, str)]:
+    ) -> dict[str, Tuple[str, str, str]]:
         """
         Retrieves all pipeline modules/subworkflows that are reported in the modules.json
         as being installed by the given component

@@ -147,12 +147,12 @@ def prompt_component_version_sha(
 
 def get_components_to_install(
     subworkflow_dir: Union[str, Path],
-) -> Tuple[List[Dict[str, Optional[str]]], List[Dict[str, Optional[str]]]]:
+) -> Tuple[List[Dict[str, str]], List[Dict[str, str]]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """
-    modules: Dict[str, Dict[str, Optional[str]]] = {}
-    subworkflows: Dict[str, Dict[str, Optional[str]]] = {}
+    modules: Dict[str, Dict[str, str]] = {}
+    subworkflows: Dict[str, Dict[str, str]] = {}
 
     with open(Path(subworkflow_dir, "main.nf")) as fh:
         for line in fh:
@@ -165,7 +165,7 @@ def get_components_to_install(
                 if link.startswith("../../../"):
                     name_split = name.lower().split("_")
                     component_name = "/".join(name_split)
-                    component_dict: Dict[str, Optional[str]] = {
+                    component_dict: Dict[str, str] = {
                         "name": component_name,
                     }
                     modules[component_name] = component_dict
