@@ -40,7 +40,7 @@ jobs:
         id: test_variables
         if: github.event_name != 'workflow_dispatch'
         run: |
-          JSON_RESPONSE='${{ steps.check_approvals.outputs.data }}'{% endraw %}
+          JSON_RESPONSE='${{ steps.check_approvals.outputs.data }}'
           CURRENT_APPROVALS_COUNT=$(echo $JSON_RESPONSE | jq -c '[.[] | select(.state | contains("APPROVED")) ] | length')
           test $CURRENT_APPROVALS_COUNT -ge 2 || exit 1 # At least 2 approvals are required
 
@@ -53,7 +53,7 @@ jobs:
         uses: seqeralabs/action-tower-launch@v2
         # TODO nf-core: You can customise AWS full pipeline tests as required
         # Add full size test data (but still relatively small datasets for few samples)
-        # on the `test_full.config` test runs with only one set of parameters {%- raw %}
+        # on the `test_full.config` test runs with only one set of parameters
         with:
           workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
           access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
