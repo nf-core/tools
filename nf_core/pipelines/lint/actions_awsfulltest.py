@@ -42,11 +42,13 @@ def actions_awsfulltest(self) -> Dict[str, List[str]]:
 
         # Check that the action is only turned on for published releases
         try:
-            if wf[True]["pull_request"]["branches"] != ["main", "master"]:
+            if wf[True]["pull_request_review"]["branches"] != ["main", "master"]:
                 raise AssertionError()
             if wf[True]["pull_request_review"]["types"] != ["submitted"]:
                 raise AssertionError()
             if "workflow_dispatch" not in wf[True]:
+                raise AssertionError()
+            if wf[True]["release"]["types"] != ["published"]:
                 raise AssertionError()
         except (AssertionError, KeyError, TypeError):
             failed.append("`.github/workflows/awsfulltest.yml` is not triggered correctly")
