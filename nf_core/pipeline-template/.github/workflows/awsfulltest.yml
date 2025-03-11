@@ -1,19 +1,49 @@
 name: nf-core AWS full size tests
-# This workflow is triggered on published releases.
+# This workflow is triggered on PRs opened against the main/master branch.
 # It can be additionally triggered manually with GitHub actions workflow dispatch button.
 # It runs the -profile 'test_full' on AWS batch
 
 on:
-  release:
-    types: [published]
+  pull_request:
+    branches:
+      - main
+      - master
   workflow_dispatch:
+  pull_request_review:
+    types: [submitted]
+
 jobs:
-  run-tower:
+  run-platform:
     name: Run AWS full tests
-    if: github.repository == '{{ name }}'
+    # run only if the PR is approved by at least 2 reviewers and against the master branch or manually triggered
+    if: github.repository == '{{ name }}' && github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'master' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - name: Launch workflow via tower
+      - name: Get PR reviews
+        uses: octokit/request-action@v2.x
+        if: github.event_name != 'workflow_dispatch'
+        id: check_approvals
+        continue-on-error: true
+        with:
+          route: GET /repos/{%- raw -%}${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews?per_page=100
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for approvals
+        if: ${{ failure() && github.event_name != 'workflow_dispatch' }}
+        run: |
+          echo "No review approvals found. At least 2 approvals are required to run this action automatically."
+          exit 1
+
+      - name: Check for enough approvals (>=2)
+        id: test_variables
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          JSON_RESPONSE='${{ steps.check_approvals.outputs.data }}'{% endraw %}
+          CURRENT_APPROVALS_COUNT=$(echo $JSON_RESPONSE | jq -c '[.[] | select(.state | contains("APPROVED")) ] | length')
+          test $CURRENT_APPROVALS_COUNT -ge 2 || exit 1 # At least 2 approvals are required
+
+      - name: Launch workflow via Seqera Platform
         uses: seqeralabs/action-tower-launch@v2
         # TODO nf-core: You can customise AWS full pipeline tests as required
         # Add full size test data (but still relatively small datasets for few samples)
@@ -31,9 +61,9 @@ jobs:
             }
           profiles: test_full
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: Tower debug log file
+          name: Seqera Platform debug log file
           path: |
-            tower_action_*.log
-            tower_action_*.json
+            seqera_platform_action_*.log
+            seqera_platform_action_*.json

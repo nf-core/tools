@@ -3,36 +3,56 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - "docs/**"
+      - "CHANGELOG.md"
   pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "CHANGELOG.md"
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      runners:
+        description: "Runners to test on"
+        type: choice
+        options:
+          - "ubuntu-latest"
+          - "self-hosted"
+        default: "self-hosted"
 
 # Cancel if a newer run is started
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-env:
-  NXF_ANSI_LOG: false
-
 jobs:
   RunTestWorkflow:
-    runs-on: ubuntu-latest
+    # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
+    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     env:
       NXF_ANSI_LOG: false
+
     strategy:
       matrix:
         NXF_VER:
-          - "23.04.0"
+          - "24.04.2"
           - "latest-everything"
     steps:
-      - uses: actions/checkout@v4
+      - name: go to working directory
+        run: |
+          mkdir -p create-test-wf
+          cd create-test-wf
+          export NXF_WORK=$(pwd)
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out source-code repository
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
         with:
-          python-version: 3.12
+          python-version: "3.12"
 
       - name: Install python dependencies
         run: |
@@ -40,7 +60,7 @@ jobs:
           pip install .
 
       - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v1
+        uses: nf-core/setup-nextflow@v2
         with:
           version: ${{ matrix.NXF_VER }}
 
@@ -48,12 +68,17 @@ jobs:
         run: |
           mkdir create-test-wf && cd create-test-wf
           export NXF_WORK=$(pwd)
-          nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
-          nextflow run nf-core-testpipeline -profile test,docker --outdir ./results
+          nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+          nextflow run nf-core-testpipeline -profile self_hosted_runner,test --outdir ./results
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
         with:
-          name: nf-core-log-file
+          name: nf-core-log-file-${{ matrix.NXF_VER }}
           path: create-test-wf/log.txt
+
+      - name: Cleanup work directory
+        # cleanup work directory
+        run: sudo rm -rf create-test-wf
+        if: always()

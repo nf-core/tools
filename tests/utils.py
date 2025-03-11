@@ -2,18 +2,21 @@
 Helper functions for tests
 """
 
+import filecmp
 import functools
-import os
 import tempfile
-from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Callable, Generator, Tuple
+from typing import Any, Callable, Tuple
 
 import responses
+import yaml
 
-import nf_core.create
 import nf_core.modules
+import nf_core.pipelines.create.create
+from nf_core import __version__
+from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlConfig, custom_yaml_dumper
 
+TEST_DATA_DIR = Path(__file__).parent / "data"
 OLD_TRIMGALORE_SHA = "9b7a3bdefeaad5d42324aa7dd50f87bea1b04386"
 OLD_TRIMGALORE_BRANCH = "mimic-old-trimgalore"
 GITLAB_URL = "https://gitlab.com/nf-core/modules-test.git"
@@ -27,7 +30,7 @@ GITLAB_BRANCH_TEST_BRANCH = "branch-tester"
 GITLAB_BRANCH_ORG_PATH_BRANCH = "org-path"
 GITLAB_BRANCH_TEST_OLD_SHA = "e772abc22c1ff26afdf377845c323172fb3c19ca"
 GITLAB_BRANCH_TEST_NEW_SHA = "7d73e21f30041297ea44367f2b4fd4e045c0b991"
-GITLAB_NFTEST_BRANCH = "nf-test-tests"
+GITLAB_NFTEST_BRANCH = "nf-test-tests-self-hosted-runners"
 
 
 def with_temporary_folder(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -95,18 +98,79 @@ def mock_biocontainers_api_calls(rsps: responses.RequestsMock, module: str, vers
     rsps.get(biocontainers_api_url, json=biocontainers_mock, status=200)
 
 
-def create_tmp_pipeline() -> Tuple[str, str, str, str]:
+def mock_biotools_api_calls(rsps: responses.RequestsMock, module: str) -> None:
+    """Mock biotools api calls for module"""
+    biotools_api_url = f"https://bio.tools/api/t/?q={module}&format=json"
+    biotools_mock = {
+        "list": [
+            {
+                "name": "Bpipe",
+                "biotoolsCURIE": "biotools:bpipe",
+                "function": [
+                    {
+                        "input": [
+                            {
+                                "data": {"uri": "http://edamontology.org/data_0848", "term": "Raw sequence"},
+                                "format": [
+                                    {"uri": "http://edamontology.org/format_2182", "term": "FASTQ-like format (text)"},
+                                    {"uri": "http://edamontology.org/format_2573", "term": "SAM"},
+                                ],
+                            }
+                        ],
+                        "output": [
+                            {
+                                "data": {"uri": "http://edamontology.org/data_2955", "term": "Sequence report"},
+                                "format": [{"uri": "http://edamontology.org/format_2331", "term": "HTML"}],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+    rsps.get(biotools_api_url, json=biotools_mock, status=200)
+
+
+def create_tmp_pipeline(no_git: bool = False) -> Tuple[Path, Path, str, Path]:
     """Create a new Pipeline for testing"""
 
-    tmp_dir = tempfile.mkdtemp()
-    root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
-    pipeline_name = "mypipeline"
-    pipeline_dir = os.path.join(tmp_dir, pipeline_name)
+    tmp_dir = Path(tempfile.TemporaryDirectory().name)
+    root_repo_dir = Path(__file__).resolve().parent.parent
+    template_dir = root_repo_dir / "nf_core" / "pipeline-template"
+    pipeline_name = "testpipeline"
+    pipeline_dir = tmp_dir / pipeline_name
+    pipeline_dir.mkdir(parents=True)
 
-    nf_core.create.PipelineCreate(
-        pipeline_name, "it is mine", "me", no_git=True, outdir=pipeline_dir, plain=True
+    nf_core_yml = NFCoreYamlConfig(
+        nf_core_version=__version__,
+        repository_type="modules",
+        org_path="nf-core",
+        lint=None,
+        template=NFCoreTemplateConfig(
+            name="testpipeline",
+            author="me",
+            description="it is mine",
+            org="nf-core",
+            version=None,
+            force=True,
+            is_nfcore=None,
+            skip_features=None,
+            outdir=None,
+        ),
+        bump_version=None,
+    )
+    with open(str(Path(pipeline_dir, ".nf-core.yml")), "w") as fh:
+        yaml.dump(nf_core_yml.model_dump(), fh, Dumper=custom_yaml_dumper())
+
+    nf_core.pipelines.create.create.PipelineCreate(
+        pipeline_name, "it is mine", "me", no_git=no_git, outdir=pipeline_dir, force=True
     ).init_pipeline()
 
     # return values to instance variables for later use in test methods
     return tmp_dir, template_dir, pipeline_name, pipeline_dir
+
+
+def cmp_component(dir1: Path, dir2: Path) -> bool:
+    """Compare two versions of the same component"""
+    files = ["main.nf", "meta.yml"]
+    return all(filecmp.cmp(dir1 / f, dir2 / f, shallow=False) for f in files)

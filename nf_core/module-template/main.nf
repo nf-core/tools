@@ -22,9 +22,6 @@ process {{ component_name_underscore|upper }} {
     label '{{ process_label }}'
 
     {% if not_empty_template -%}
-    // TODO nf-core: List required Conda package(s).
-    //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
-    //               For Conda, the build (i.e. "h9402c20_2") must be EXCLUDED to support installation on different operating systems.
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     {% endif -%}
     conda "${moduleDir}/environment.yml"
@@ -33,6 +30,13 @@ process {{ component_name_underscore|upper }} {
         '{{ docker_container if docker_container else 'biocontainers/YOUR-TOOL-HERE' }}' }"
 
     input:
+    {%- if inputs %}
+    // TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
+    {%- for input_name, ontologies in inputs.items() %}
+    {% set meta_index = loop.index|string if not loop.first else '' %}
+    {{ 'tuple val(meta' + meta_index + '), path(' + input_name + ')' if has_meta else 'path ' + input_name }}
+    {%- endfor %}
+    {%- else -%}
     {% if not_empty_template -%}
     // TODO nf-core: Where applicable all sample-specific information e.g. "id", "single_end", "read_group"
     //               MUST be provided as an input via a Groovy Map called "meta".
@@ -44,16 +48,22 @@ process {{ component_name_underscore|upper }} {
     {%- else -%}
     {{ 'tuple val(meta), path(input)' if has_meta else 'path input' }}
     {%- endif %}
+    {%- endif %}
 
     output:
+    {%- if outputs %}
+    // TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
+    {%- for output_name, ontologies in outputs.items() %}
+    {{ 'tuple val(meta), path("*.{' + ontologies[2]|join(',') + '}")' if has_meta else 'path ' + output_name }}, emit: {{ output_name }}
+    {%- endfor %}
+    {%- else %}
     {% if not_empty_template -%}
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
     {{ 'tuple val(meta), path("*.bam")' if has_meta else 'path "*.bam"' }}, emit: bam
+    // TODO nf-core: List additional required output channels/values here
     {%- else -%}
     {{ 'tuple val(meta), path("*")' if has_meta else 'path "*"' }}, emit: output
     {%- endif %}
-    {% if not_empty_template -%}
-    // TODO nf-core: List additional required output channels/values here
     {%- endif %}
     path "versions.yml"           , emit: versions
 
@@ -78,20 +88,33 @@ process {{ component_name_underscore|upper }} {
     {%- endif %}
     """
     {% if not_empty_template -%}
-    samtools \\
-        sort \\
+    {{ component }} \\
         $args \\
         -@ $task.cpus \\
         {%- if has_meta %}
+        {%- if inputs %}
+        {%- for input_name, ontologies in inputs.items() %}
+        {%- set extensions = ontologies[2] %}
+        {%- for ext in extensions %}
+        -o ${prefix}.{{ ext }} \\
+        {%- endfor %}
+        {%- endfor %}
+        {%- else %}
         -o ${prefix}.bam \\
-        -T $prefix \\
         {%- endif %}
+        {%- endif %}
+        {%- if inputs %}
+        {%- for input_name, ontologies in inputs.items() %}
+        ${{ input_name }} \\
+        {%- endfor %}
+        {%- else %}
         $bam
+        {%- endif %}
     {%- endif %}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        {{ component }}: \$(samtools --version |& sed '1!d ; s/samtools //')
+        {{ component }}: \$({{ component }} --version)
     END_VERSIONS
     """
 
@@ -108,12 +131,21 @@ process {{ component_name_underscore|upper }} {
     {%- endif %}
     """
     {% if not_empty_template -%}
+    {%- if inputs %}
+    {%- for input_name, ontologies in inputs.items() %}
+    {%- set extensions = ontologies[2] %}
+    {%- for ext in extensions %}
+    touch ${prefix}.{{ ext }}
+    {%- endfor %}
+    {%- endfor %}
+    {%- else %}
     touch ${prefix}.bam
+    {%- endif %}
     {%- endif %}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        {{ component }}: \$(samtools --version |& sed '1!d ; s/samtools //')
+        {{ component }}: \$({{ component }} --version)
     END_VERSIONS
     """
 }

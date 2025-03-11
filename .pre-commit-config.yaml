@@ -1,23 +1,38 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: 23.1.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.9
     hooks:
-      - id: black
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
+      - id: ruff # linter
+        args: [--fix, --exit-non-zero-on-fix] # sort imports and fix
+      - id: ruff-format # formatter
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v2.7.1"
+    rev: "v3.1.0"
     hooks:
       - id: prettier
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.0
+        additional_dependencies:
+          - prettier@3.5.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
     hooks:
-      - id: pyupgrade
-        args: [--py38-plus]
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+        exclude: |
+          (?x)^(
+              .*\.snap$|
+              nf_core/pipeline-template/subworkflows/.*|
+              nf_core/pipeline-template/modules/.*|
+              tests/pipelines/__snapshots__/.*
+          )$
+      - id: end-of-file-fixer
+        exclude: |
+          (?x)^(
+              .*\.snap$|
+              nf_core/pipeline-template/subworkflows/.*|
+              nf_core/pipeline-template/modules/.*|
+              tests/pipelines/__snapshots__/.*
+          )$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.7.1" # Use the sha / tag you want to point at
+    rev: "v1.15.0"
     hooks:
       - id: mypy
         additional_dependencies:
@@ -26,3 +41,4 @@ repos:
           - types-jsonschema
           - types-Markdown
           - types-setuptools
+          - pydantic

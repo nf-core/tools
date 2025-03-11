@@ -1,9 +1,11 @@
 """
 Common utility functions for the nf-core python package.
 """
+
 import concurrent.futures
 import datetime
 import errno
+import fnmatch
 import hashlib
 import io
 import json
@@ -18,47 +20,76 @@ import sys
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Literal, Optional, Tuple, Union
 
 import git
-import prompt_toolkit
+import prompt_toolkit.styles
 import questionary
-import requests
+import requests.auth
 import requests_cache
 import rich
+import rich.markup
 import yaml
 from packaging.version import Version
+from pydantic import BaseModel, ValidationError, field_validator
 from rich.live import Live
 from rich.spinner import Spinner
 
 import nf_core
 
+if TYPE_CHECKING:
+    from nf_core.pipelines.schema import PipelineSchema
+
 log = logging.getLogger(__name__)
+
+# ASCII nf-core logo
+nfcore_logo = [
+    r"[green]                                          ,--.[grey39]/[green],-.",
+    r"[blue]          ___     __   __   __   ___     [green]/,-._.--~\ ",
+    r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {",
+    r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,",
+    r"[green]                                          `._,._,'",
+]
 
 # Custom style for questionary
 nfcore_question_style = prompt_toolkit.styles.Style(
     [
         ("qmark", "fg:ansiblue bold"),  # token in front of the question
         ("question", "bold"),  # question text
-        ("answer", "fg:ansigreen nobold bg:"),  # submitted answer text behind the question
-        ("pointer", "fg:ansiyellow bold"),  # pointer used in select and checkbox prompts
-        ("highlighted", "fg:ansiblue bold"),  # pointed-at choice in select and checkbox prompts
-        ("selected", "fg:ansiyellow noreverse bold"),  # style for a selected item of a checkbox
+        (
+            "answer",
+            "fg:ansigreen nobold bg:",
+        ),  # submitted answer text behind the question
+        (
+            "pointer",
+            "fg:ansiyellow bold",
+        ),  # pointer used in select and checkbox prompts
+        (
+            "highlighted",
+            "fg:ansiblue bold",
+        ),  # pointed-at choice in select and checkbox prompts
+        (
+            "selected",
+            "fg:ansiyellow noreverse bold",
+        ),  # style for a selected item of a checkbox
         ("separator", "fg:ansiblack"),  # separator in lists
         ("instruction", ""),  # user instructions for select, rawselect, checkbox
         ("text", ""),  # plain text
-        ("disabled", "fg:gray italic"),  # disabled choices for select and checkbox prompts
+        (
+            "disabled",
+            "fg:gray italic",
+        ),  # disabled choices for select and checkbox prompts
         ("choice-default", "fg:ansiblack"),
         ("choice-default-changed", "fg:ansiyellow"),
         ("choice-required", "fg:ansired"),
     ]
 )
 
-NFCORE_CACHE_DIR = os.path.join(
-    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME") or "", ".cache")),
+NFCORE_CACHE_DIR = Path(
+    os.environ.get("XDG_CACHE_HOME", Path(os.getenv("HOME") or "", ".cache")),
     "nfcore",
 )
-NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
+NFCORE_DIR = Path(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME") or "", ".config")), "nfcore")
 
 
 def fetch_remote_version(source_url):
@@ -67,7 +98,11 @@ def fetch_remote_version(source_url):
     return remote_version
 
 
-def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
+def check_if_outdated(
+    current_version=None,
+    remote_version=None,
+    source_url="https://nf-co.re/tools_version",
+):
     """
     Check if the current version of nf-core is outdated
     """
@@ -123,79 +158,90 @@ class Pipeline:
         schema_obj (obj): A :class:`PipelineSchema` object
     """
 
-    def __init__(self, wf_path):
+    def __init__(self, wf_path: Path) -> None:
         """Initialise pipeline object"""
-        self.conda_config = {}
-        self.conda_package_info = {}
-        self.nf_config = {}
-        self.files = []
-        self.git_sha = None
-        self.minNextflowVersion = None
-        self.wf_path = wf_path
-        self.pipeline_name = None
-        self.pipeline_prefix = None
-        self.schema_obj = None
+        self.conda_config: Dict = {}
+        self.conda_package_info: Dict = {}
+        self.nf_config: Dict = {}
+        self.files: List[Path] = []
+        self.git_sha: Optional[str] = None
+        self.minNextflowVersion: Optional[str] = None
+        self.wf_path = Path(wf_path)
+        self.pipeline_name: Optional[str] = None
+        self.pipeline_prefix: Optional[str] = None
+        self.schema_obj: Optional[PipelineSchema] = None
+        self.repo: Optional[git.Repo] = None
 
         try:
-            repo = git.Repo(self.wf_path)
-            self.git_sha = repo.head.object.hexsha
-        except:
-            log.debug(f"Could not find git hash for pipeline: {self.wf_path}")
+            self.repo = git.Repo(self.wf_path)
+            self.git_sha = self.repo.head.object.hexsha
+        except Exception as e:
+            log.debug(f"Could not find git hash for pipeline: {self.wf_path}. {e}")
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
         if os.environ.get("GITHUB_PR_COMMIT", "") != "":
             self.git_sha = os.environ["GITHUB_PR_COMMIT"]
 
-    def _load(self):
-        """Run core load functions"""
-        self._list_files()
-        self._load_pipeline_config()
-        self._load_conda_environment()
+    def __repr__(self) -> str:
+        return f"<Pipeline '{self.pipeline_name}' at {self.wf_path}>"
 
-    def _list_files(self):
+    def _load(self) -> bool:
+        """Run core load functions"""
+
+        return self.load_pipeline_config() and self._load_conda_environment()
+
+    def _load_conda_environment(self) -> bool:
+        """Try to load the pipeline environment.yml file, if it exists"""
+        try:
+            with open(Path(self.wf_path, "environment.yml")) as fh:
+                self.conda_config = yaml.safe_load(fh)
+            return True
+        except FileNotFoundError:
+            log.debug("No conda `environment.yml` file found.")
+            return False
+
+    def _fp(self, fn: Union[str, Path]) -> Path:
+        """Convenience function to get full path to a file in the pipeline"""
+        return Path(self.wf_path, fn)
+
+    def list_files(self) -> List[Path]:
         """Get a list of all files in the pipeline"""
+        files = []
         try:
             # First, try to get the list of files using git
             git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.wf_path).splitlines()
-            self.files = []
             for fn in git_ls_files:
-                full_fn = os.path.join(self.wf_path, fn.decode("utf-8"))
-                if os.path.isfile(full_fn):
-                    self.files.append(full_fn)
+                full_fn = Path(self.wf_path) / fn.decode("utf-8")
+                if full_fn.is_file():
+                    files.append(full_fn)
                 else:
                     log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             # Failed, so probably not initialised as a git repository - just a list of all files
-            log.debug(f"Couldn't call 'git ls-files': {e}")
-            self.files = []
-            for subdir, _, files in os.walk(self.wf_path):
-                for fn in files:
-                    self.files.append(os.path.join(subdir, fn))
+            files = []
+            for file_path in self.wf_path.rglob("*"):
+                if file_path.is_file():
+                    # Append the file path to the list
+                    files.append(file_path)
+            if len(files) == 0:
+                log.debug(f"No files found in pipeline: {self.wf_path}")
 
-    def _load_pipeline_config(self):
+        return files
+
+    def load_pipeline_config(self) -> bool:
         """Get the nextflow config for this pipeline
 
-        Once loaded, set a few convienence reference class attributes
+        Once loaded, set a few convenience reference class attributes
         """
         self.nf_config = fetch_wf_config(self.wf_path)
 
-        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "").strip("'").split("/")
+        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "/").strip("'").split("/")
 
-        nextflowVersionMatch = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
-        if nextflowVersionMatch:
-            self.minNextflowVersion = nextflowVersionMatch.group(0)
-
-    def _load_conda_environment(self):
-        """Try to load the pipeline environment.yml file, if it exists"""
-        try:
-            with open(os.path.join(self.wf_path, "environment.yml"), "r") as fh:
-                self.conda_config = yaml.safe_load(fh)
-        except FileNotFoundError:
-            log.debug("No conda `environment.yml` file found.")
-
-    def _fp(self, fn):
-        """Convenience function to get full path to a file in the pipeline"""
-        return os.path.join(self.wf_path, fn)
+        nextflow_version_match = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
+        if nextflow_version_match:
+            self.minNextflowVersion = nextflow_version_match.group(0)
+            return True
+        return False
 
 
 def is_pipeline_directory(wf_path):
@@ -212,10 +258,14 @@ def is_pipeline_directory(wf_path):
     for fn in ["main.nf", "nextflow.config"]:
         path = os.path.join(wf_path, fn)
         if not os.path.isfile(path):
-            raise UserWarning(f"'{wf_path}' is not a pipeline - '{fn}' is missing")
+            if wf_path == ".":
+                warning = f"Current directory is not a pipeline - '{fn}' is missing."
+            else:
+                warning = f"'{wf_path}' is not a pipeline - '{fn}' is missing."
+            raise UserWarning(warning)
 
 
-def fetch_wf_config(wf_path, cache_config=True):
+def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
 
@@ -228,20 +278,20 @@ def fetch_wf_config(wf_path, cache_config=True):
     """
 
     log.debug(f"Got '{wf_path}' as path")
-
+    wf_path = Path(wf_path)
     config = {}
     cache_fn = None
     cache_basedir = None
     cache_path = None
 
     # Nextflow home directory - use env var if set, or default to ~/.nextflow
-    nxf_home = os.environ.get("NXF_HOME", os.path.join(os.getenv("HOME"), ".nextflow"))
+    nxf_home = Path(os.environ.get("NXF_HOME", Path(os.getenv("HOME") or "", ".nextflow")))
 
     # Build a cache directory if we can
-    if os.path.isdir(nxf_home):
-        cache_basedir = os.path.join(nxf_home, "nf-core")
-        if not os.path.isdir(cache_basedir):
-            os.mkdir(cache_basedir)
+    if nxf_home.is_dir():
+        cache_basedir = Path(nxf_home, "nf-core")
+        if not cache_basedir.is_dir():
+            cache_basedir.mkdir(parents=True, exist_ok=True)
 
     # If we're given a workflow object with a commit, see if we have a cached copy
     cache_fn = None
@@ -249,7 +299,7 @@ def fetch_wf_config(wf_path, cache_config=True):
     concat_hash = ""
     for fn in ["nextflow.config", "main.nf"]:
         try:
-            with open(os.path.join(wf_path, fn), "rb") as fh:
+            with open(wf_path / fn, "rb") as fh:
                 concat_hash += hashlib.sha256(fh.read()).hexdigest()
         except FileNotFoundError:
             pass
@@ -259,10 +309,10 @@ def fetch_wf_config(wf_path, cache_config=True):
         cache_fn = f"wf-config-cache-{bighash[:25]}.json"
 
     if cache_basedir and cache_fn:
-        cache_path = os.path.join(cache_basedir, cache_fn)
-        if os.path.isfile(cache_path) and cache_config is True:
+        cache_path = Path(cache_basedir, cache_fn)
+        if cache_path.is_file() and cache_config is True:
             log.debug(f"Found a config cache, loading: {cache_path}")
-            with open(cache_path, "r") as fh:
+            with open(cache_path) as fh:
                 try:
                     config = json.load(fh)
                 except json.JSONDecodeError as e:
@@ -274,8 +324,8 @@ def fetch_wf_config(wf_path, cache_config=True):
     result = run_cmd("nextflow", f"config -flat {wf_path}")
     if result is not None:
         nfconfig_raw, _ = result
-        for l in nfconfig_raw.splitlines():
-            ul = l.decode("utf-8")
+        for line in nfconfig_raw.splitlines():
+            ul = line.decode("utf-8")
             try:
                 k, v = ul.split(" = ", 1)
                 config[k] = v.strip("'\"")
@@ -285,10 +335,11 @@ def fetch_wf_config(wf_path, cache_config=True):
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
     try:
-        main_nf = os.path.join(wf_path, "main.nf")
-        with open(main_nf, "r") as fh:
-            for l in fh:
-                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", l)
+        main_nf = Path(wf_path, "main.nf")
+        with open(main_nf, "rb") as fh:
+            for line in fh:
+                line_str = line.decode("utf-8")
+                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=(?!=)", line_str)
                 if match:
                     config[match.group(1)] = "null"
     except FileNotFoundError as e:
@@ -296,7 +347,7 @@ def fetch_wf_config(wf_path, cache_config=True):
 
     # If we can, save a cached copy
     # HINT: during testing phase (in test_download, for example) we don't want
-    # to save configuration copy in $HOME, otherwise the tests/test_download.py::DownloadTest::test_wf_use_local_configs
+    # to save configuration copy in $HOME, otherwise the tests/pipelines/test_download.py::DownloadTest::test_wf_use_local_configs
     # will fail after the first attempt. It's better to not save temporary data
     # in others folders than tmp when doing tests in general
     if cache_path and cache_config:
@@ -312,7 +363,7 @@ def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
     full_cmd = f"{executable} {cmd}"
     log.debug(f"Running command: {full_cmd}")
     try:
-        proc = subprocess.run(shlex.split(full_cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        proc = subprocess.run(shlex.split(full_cmd), capture_output=True, check=True)
         return (proc.stdout, proc.stderr)
     except OSError as e:
         if e.errno == errno.ENOENT:
@@ -331,17 +382,17 @@ def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
             )
 
 
-def setup_nfcore_dir():
+def setup_nfcore_dir() -> bool:
     """Creates a directory for files that need to be kept between sessions
 
     Currently only used for keeping local copies of modules repos
     """
-    if not os.path.exists(NFCORE_DIR):
-        os.makedirs(NFCORE_DIR)
-        return True
+    if not NFCORE_DIR.exists():
+        NFCORE_DIR.mkdir(parents=True)
+    return True
 
 
-def setup_requests_cachedir():
+def setup_requests_cachedir() -> Dict[str, Union[Path, datetime.timedelta, str]]:
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
@@ -350,27 +401,33 @@ def setup_requests_cachedir():
     Uses requests_cache monkey patching.
     Also returns the config dict so that we can use the same setup with a Session.
     """
-    pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = os.path.join(NFCORE_CACHE_DIR, f"cache_{pyversion}")
-
-    config = {
-        "cache_name": os.path.join(cachedir, "github_info"),
+    pyversion: str = ".".join(str(v) for v in sys.version_info[0:3])
+    cachedir: Path = setup_nfcore_cachedir(f"cache_{pyversion}")
+    config: Dict[str, Union[Path, datetime.timedelta, str]] = {
+        "cache_name": Path(cachedir, "github_info"),
         "expire_after": datetime.timedelta(hours=1),
         "backend": "sqlite",
     }
 
     logging.getLogger("requests_cache").setLevel(logging.WARNING)
-    try:
-        if not os.path.exists(cachedir):
-            os.makedirs(cachedir)
-        requests_cache.install_cache(**config)
-    except PermissionError:
-        pass
-
     return config
 
 
-def wait_cli_function(poll_func, refresh_per_second=20):
+def setup_nfcore_cachedir(cache_fn: Union[str, Path]) -> Path:
+    """Sets up local caching for caching files between sessions."""
+
+    cachedir = Path(NFCORE_CACHE_DIR, cache_fn)
+
+    try:
+        if not Path(cachedir).exists():
+            Path(cachedir).mkdir(parents=True)
+    except PermissionError:
+        log.warn(f"Could not create cache directory: {cachedir}")
+
+    return cachedir
+
+
+def wait_cli_function(poll_func: Callable[[], bool], refresh_per_second: int = 20) -> None:
     """
     Display a command-line spinner while calling a function repeatedly.
 
@@ -381,7 +438,7 @@ def wait_cli_function(poll_func, refresh_per_second=20):
        refresh_per_second (int): Refresh this many times per second. Default: 20.
 
     Returns:
-       None. Just sits in an infite loop until the function returns True.
+       None. Just sits in an infinite loop until the function returns True.
     """
     try:
         spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
@@ -394,13 +451,13 @@ def wait_cli_function(poll_func, refresh_per_second=20):
         raise AssertionError("Cancelled!")
 
 
-def poll_nfcore_web_api(api_url, post_data=None):
+def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
     """
     Poll the nf-core website API
 
     Takes argument api_url for URL
 
-    Expects API reponse to be valid JSON and contain a top-level 'status' key.
+    Expects API response to be valid JSON and contain a top-level 'status' key.
     """
     # Run without requests_cache so that we get the updated statuses
     with requests_cache.disabled():
@@ -408,23 +465,33 @@ def poll_nfcore_web_api(api_url, post_data=None):
             if post_data is None:
                 response = requests.get(api_url, headers={"Cache-Control": "no-cache"})
             else:
+                log.debug(f"requesting {api_url} with {post_data}")
                 response = requests.post(url=api_url, data=post_data)
         except requests.exceptions.Timeout:
             raise AssertionError(f"URL timed out: {api_url}")
         except requests.exceptions.ConnectionError:
             raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
-            if response.status_code != 200:
-                log.debug(f"Response content:\n{response.content}")
+            if response.status_code != 200 and response.status_code != 301:
+                response_content = response.content
+                if isinstance(response_content, bytes):
+                    response_content = response_content.decode()
+                log.debug(f"Response content:\n{response_content}")
                 raise AssertionError(
                     f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )
+            # follow redirects
+            if response.status_code == 301:
+                return poll_nfcore_web_api(response.headers["Location"], post_data)
             try:
                 web_response = json.loads(response.content)
                 if "status" not in web_response:
                     raise AssertionError()
             except (json.decoder.JSONDecodeError, AssertionError, TypeError):
-                log.debug(f"Response content:\n{response.content}")
+                response_content = response.content
+                if isinstance(response_content, bytes):
+                    response_content = response_content.decode()
+                log.debug(f"Response content:\n{response_content}")
                 raise AssertionError(
                     f"nf-core website API results response not recognised: {api_url}\n "
                     "See verbose log for full response"
@@ -433,20 +500,21 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 return web_response
 
 
-class GitHub_API_Session(requests_cache.CachedSession):
+class GitHubAPISession(requests_cache.CachedSession):
     """
     Class to provide a single session for interacting with the GitHub API for a run.
     Inherits the requests_cache.CachedSession and adds additional functionality,
     such as automatically setting up GitHub authentication if we can.
     """
 
-    def __init__(self):  # pylint: disable=super-init-not-called
-        self.auth_mode = None
-        self.return_ok = [200, 201]
-        self.return_retry = [403]
-        self.has_init = False
+    def __init__(self) -> None:
+        self.auth_mode: Optional[str] = None
+        self.return_ok: List[int] = [200, 201]
+        self.return_retry: List[int] = [403]
+        self.return_unauthorised: List[int] = [401]
+        self.has_init: bool = False
 
-    def lazy_init(self):
+    def lazy_init(self) -> None:
         """
         Initialise the object.
 
@@ -480,16 +548,18 @@ class GitHub_API_Session(requests_cache.CachedSession):
         gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
         if self.auth is None and os.path.exists(gh_cli_config_fn):
             try:
-                with open(gh_cli_config_fn, "r") as fh:
+                with open(gh_cli_config_fn) as fh:
                     gh_cli_config = yaml.safe_load(fh)
                     self.auth = requests.auth.HTTPBasicAuth(
-                        gh_cli_config["github.com"]["user"], gh_cli_config["github.com"]["oauth_token"]
+                        gh_cli_config["github.com"]["user"],
+                        gh_cli_config["github.com"]["oauth_token"],
                     )
                     self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
             except Exception:
                 ex_type, ex_value, _ = sys.exc_info()
-                output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
-                log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
+                if ex_type is not None:
+                    output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
+                    log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
 
         # Default auth if we have a GitHub Token (eg. GitHub Actions CI)
         if os.environ.get("GITHUB_TOKEN") is not None and self.auth is None:
@@ -536,6 +606,8 @@ class GitHub_API_Session(requests_cache.CachedSession):
                 raise e
             else:
                 return r
+        elif request.status_code in self.return_unauthorised:
+            raise RuntimeError("GitHub API PR failed, probably due to an expired GITHUB_TOKEN.")
 
         return request
 
@@ -551,7 +623,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
         """
         Try to fetch a URL, keep retrying if we get a certain return code.
 
-        Used in nf-core sync code because we get 403 errors: too many simultaneous requests
+        Used in nf-core pipelines sync code because we get 403 errors: too many simultaneous requests
         See https://github.com/nf-core/tools/issues/911
         """
         if not self.has_init:
@@ -561,11 +633,11 @@ class GitHub_API_Session(requests_cache.CachedSession):
         while True:
             # GET request
             if post_data is None:
-                log.debug(f"Seding GET request to {url}")
+                log.debug(f"Sending GET request to {url}")
                 r = self.get(url=url)
             # POST request
             else:
-                log.debug(f"Seding POST request to {url}")
+                log.debug(f"Sending POST request to {url}")
                 r = self.post(url=url, json=post_data)
 
             # Failed but expected - try again
@@ -590,7 +662,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
 
 
 # Single session object to use for entire codebase. Not sure if there's a better way to do this?
-gh_api = GitHub_API_Session()
+gh_api = GitHubAPISession()
 
 
 def anaconda_package(dep, dep_channels=None):
@@ -608,7 +680,7 @@ def anaconda_package(dep, dep_channels=None):
     """
 
     if dep_channels is None:
-        dep_channels = ["conda-forge", "bioconda", "defaults"]
+        dep_channels = ["conda-forge", "bioconda"]
 
     # Check if each dependency is the latest available version
     if "=" in dep:
@@ -666,18 +738,18 @@ def parse_anaconda_licence(anaconda_response, version=None):
 
     # Clean up / standardise licence names
     clean_licences = []
-    for l in licences:
-        l = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", l)
-        l = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", l, flags=re.IGNORECASE)
-        l = l.replace("GPL-", "GPLv")
-        l = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", l)  # Add v prefix to GPL version if none found
-        l = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", l)  # Remove superflous .0 from GPL version
-        l = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", l)
-        l = re.sub(r"GPL\s*v", "GPL v", l)  # Normalise whitespace to one space between GPL and v
-        l = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", l)  # Normalise whitespace around >= GPL versions
-        l = l.replace("Clause", "clause")  # BSD capitilisation
-        l = re.sub(r"-only$", "", l)  # Remove superflous GPL "only" version suffixes
-        clean_licences.append(l)
+    for license in licences:
+        license = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", license)
+        license = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", license, flags=re.IGNORECASE)
+        license = license.replace("GPL-", "GPLv")
+        license = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", license)  # Add v prefix to GPL version if none found
+        license = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", license)  # Remove superfluous .0 from GPL version
+        license = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", license)
+        license = re.sub(r"GPL\s*v", "GPL v", license)  # Normalise whitespace to one space between GPL and v
+        license = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", license)  # Normalise whitespace around >= GPL versions
+        license = license.replace("Clause", "clause")  # BSD capitalisation
+        license = re.sub(r"-only$", "", license)  # Remove superfluous GPL "only" version suffixes
+        clean_licences.append(license)
     return clean_licences
 
 
@@ -748,12 +820,18 @@ def get_biocontainer_tag(package, version):
                         # Obtain version and build
                         match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
                         if match is not None:
-                            all_docker[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
+                            all_docker[match.group(1)] = {
+                                "date": get_tag_date(img["updated"]),
+                                "image": img,
+                            }
                     elif img["image_type"] == "Singularity":
                         # Obtain version and build
                         match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
                         if match is not None:
-                            all_singularity[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
+                            all_singularity[match.group(1)] = {
+                                "date": get_tag_date(img["updated"]),
+                                "image": img,
+                            }
                 # Obtain common builds from Docker and Singularity images
                 common_keys = list(all_docker.keys() & all_singularity.keys())
                 current_date = None
@@ -766,6 +844,8 @@ def get_biocontainer_tag(package, version):
                         singularity_image = all_singularity[k]["image"]
                         current_date = date
                         docker_image_name = docker_image["image_name"].lstrip("quay.io/")
+                if singularity_image is None:
+                    raise LookupError(f"Could not find singularity container for {package}")
                 return docker_image_name, singularity_image["image_name"]
             except TypeError:
                 raise LookupError(f"Could not find docker or singularity container for {package}")
@@ -792,7 +872,7 @@ def custom_yaml_dumper():
 
             See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
             """
-            return super(CustomDumper, self).increase_indent(flow=flow, indentless=False)
+            return super().increase_indent(flow=flow, indentless=False)
 
         # HACK: insert blank lines between top-level objects
         # inspired by https://stackoverflow.com/a/44284819/3786245
@@ -827,7 +907,7 @@ def prompt_remote_pipeline_name(wfs):
     """Prompt for the pipeline name with questionary
 
     Args:
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         pipeline (str): GitHub repo - username/repo
@@ -861,36 +941,44 @@ def prompt_remote_pipeline_name(wfs):
     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
 
 
-def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
+def prompt_pipeline_release_branch(
+    wf_releases: List[Dict[str, Any]], wf_branches: Dict[str, Any], multiple: bool = False
+) -> Tuple[Any, List[str]]:
     """Prompt for pipeline release / branch
 
     Args:
         wf_releases (array): Array of repo releases as returned by the GitHub API
         wf_branches (array): Array of repo branches, as returned by the GitHub API
-        multiple (bool): Allow selection of multiple releases & branches (for Tower)
+        multiple (bool): Allow selection of multiple releases & branches (for Seqera Platform)
 
     Returns:
-        choice (str): Selected release / branch name
+        choice (questionary.Choice or bool): Selected release / branch or False if no releases / branches available
     """
     # Prompt user for release tag, tag_set will contain all available.
-    choices = []
-    tag_set = []
+    choices: List[questionary.Choice] = []
+    tag_set: List[str] = []
 
     # Releases
     if len(wf_releases) > 0:
         for tag in map(lambda release: release.get("tag_name"), wf_releases):
-            tag_display = [("fg:ansiblue", f"{tag}  "), ("class:choice-default", "[release]")]
+            tag_display = [
+                ("fg:ansiblue", f"{tag}  "),
+                ("class:choice-default", "[release]"),
+            ]
             choices.append(questionary.Choice(title=tag_display, value=tag))
-            tag_set.append(tag)
+            tag_set.append(str(tag))
 
     # Branches
     for branch in wf_branches.keys():
-        branch_display = [("fg:ansiyellow", f"{branch}  "), ("class:choice-default", "[branch]")]
+        branch_display = [
+            ("fg:ansiyellow", f"{branch}  "),
+            ("class:choice-default", "[branch]"),
+        ]
         choices.append(questionary.Choice(title=branch_display, value=branch))
         tag_set.append(branch)
 
     if len(choices) == 0:
-        return False
+        return [], []
 
     if multiple:
         return (
@@ -907,7 +995,7 @@ def prompt_pipeline_release_branch(wf_releases, wf_branches, multiple=False):
 
 class SingularityCacheFilePathValidator(questionary.Validator):
     """
-    Validator for file path specified as --singularity-cache-index argument in nf-core download
+    Validator for file path specified as --singularity-cache-index argument in nf-core pipelines download
     """
 
     def validate(self, value):
@@ -916,7 +1004,8 @@ class SingularityCacheFilePathValidator(questionary.Validator):
                 return True
             else:
                 raise questionary.ValidationError(
-                    message="Invalid remote cache index file", cursor_position=len(value.text)
+                    message="Invalid remote cache index file",
+                    cursor_position=len(value.text),
                 )
         else:
             return True
@@ -927,7 +1016,7 @@ def get_repo_releases_branches(pipeline, wfs):
 
     Args:
         pipeline (str): GitHub repo username/repo
-        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+        wfs: A nf_core.pipelines.list.Workflows() object, where get_remote_workflows() has been called.
 
     Returns:
         wf_releases, wf_branches (tuple): Array of releases, Array of branches
@@ -946,7 +1035,13 @@ def get_repo_releases_branches(pipeline, wfs):
             pipeline = wf.full_name
 
             # Store releases and stop loop
-            wf_releases = list(sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
+            wf_releases = list(
+                sorted(
+                    wf.releases,
+                    key=lambda k: k.get("published_at_timestamp", 0),
+                    reverse=True,
+                )
+            )
             break
 
     # Arbitrary GitHub repo
@@ -966,7 +1061,13 @@ def get_repo_releases_branches(pipeline, wfs):
                     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
             except AttributeError:
                 # Success! We have a list, which doesn't work with .get() which is looking for a dict key
-                wf_releases = list(sorted(rel_r.json(), key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
+                wf_releases = list(
+                    sorted(
+                        rel_r.json(),
+                        key=lambda k: k.get("published_at_timestamp", 0),
+                        reverse=True,
+                    )
+                )
 
                 # Get release tag commit hashes
                 if len(wf_releases) > 0:
@@ -982,7 +1083,7 @@ def get_repo_releases_branches(pipeline, wfs):
             raise AssertionError(f"Not able to find pipeline '{pipeline}'")
 
     # Get branch information from github api - should be no need to check if the repo exists again
-    branch_response = gh_api.safe_get(f"https://api.github.com/repos/{pipeline}/branches")
+    branch_response = gh_api.safe_get(f"https://api.github.com/repos/{pipeline}/branches?per_page=100")
     for branch in branch_response.json():
         if (
             branch["name"] != "TEMPLATE"
@@ -995,11 +1096,217 @@ def get_repo_releases_branches(pipeline, wfs):
     return pipeline, wf_releases, wf_branches
 
 
+def get_repo_commit(pipeline, commit_id):
+    """Check if the repo contains the requested commit_id, and expand it to long form if necessary.
+
+    Args:
+        pipeline (str): GitHub repo username/repo
+        commit_id: The requested commit ID (SHA). It can be in standard long/short form, or any length.
+
+    Returns:
+        commit_id: String or None
+    """
+
+    commit_response = gh_api.get(
+        f"https://api.github.com/repos/{pipeline}/commits/{commit_id}", headers={"Accept": "application/vnd.github.sha"}
+    )
+    if commit_response.status_code == 200:
+        return commit_response.text
+    else:
+        return None
+
+
 CONFIG_PATHS = [".nf-core.yml", ".nf-core.yaml"]
 DEPRECATED_CONFIG_PATHS = [".nf-core-lint.yml", ".nf-core-lint.yaml"]
 
 
-def load_tools_config(directory: Union[str, Path] = "."):
+class NFCoreTemplateConfig(BaseModel):
+    """Template configuration schema"""
+
+    org: Optional[str] = None
+    """ Organisation name """
+    name: Optional[str] = None
+    """ Pipeline name """
+    description: Optional[str] = None
+    """ Pipeline description """
+    author: Optional[str] = None
+    """ Pipeline author """
+    version: Optional[str] = None
+    """ Pipeline version """
+    force: Optional[bool] = True
+    """ Force overwrite of existing files """
+    outdir: Optional[Union[str, Path]] = None
+    """ Output directory """
+    skip_features: Optional[list] = None
+    """ Skip features. See https://nf-co.re/docs/nf-core-tools/pipelines/create for a list of features. """
+    is_nfcore: Optional[bool] = None
+    """ Whether the pipeline is an nf-core pipeline. """
+
+    # convert outdir to str
+    @field_validator("outdir")
+    @classmethod
+    def outdir_to_str(cls, v: Optional[Union[str, Path]]) -> Optional[str]:
+        if v is not None:
+            v = str(v)
+        return v
+
+    def __getitem__(self, item: str) -> Any:
+        if self is None:
+            return None
+        return getattr(self, item)
+
+    def get(self, item: str, default: Any = None) -> Any:
+        return getattr(self, item, default)
+
+
+class NFCoreYamlLintConfig(BaseModel):
+    """
+    schema for linting config in `.nf-core.yml` should cover:
+
+    .. code-block:: yaml
+        files_unchanged:
+            - .github/workflows/branch.yml
+        modules_config: False
+        modules_config:
+                - fastqc
+        # merge_markers: False
+        merge_markers:
+                - docs/my_pdf.pdf
+        nextflow_config: False
+        nextflow_config:
+            - manifest.name
+            - config_defaults:
+                - params.annotation_db
+                - params.multiqc_comment_headers
+                - params.custom_table_headers
+        # multiqc_config: False
+        multiqc_config:
+            - report_section_order
+            - report_comment
+        files_exist:
+            - .github/CONTRIBUTING.md
+            - CITATIONS.md
+        template_strings: False
+        template_strings:
+                - docs/my_pdf.pdf
+        nfcore_components: False
+    """
+
+    files_unchanged: Optional[Union[bool, List[str]]] = None
+    """ List of files that should not be changed """
+    modules_config: Optional[Optional[Union[bool, List[str]]]] = None
+    """ List of modules that should not be changed """
+    merge_markers: Optional[Optional[Union[bool, List[str]]]] = None
+    """ List of files that should not contain merge markers """
+    nextflow_config: Optional[Optional[Union[bool, List[Union[str, Dict[str, List[str]]]]]]] = None
+    """ List of Nextflow config files that should not be changed """
+    multiqc_config: Optional[Union[bool, List[str]]] = None
+    """ List of MultiQC config options that be changed """
+    files_exist: Optional[Union[bool, List[str]]] = None
+    """ List of files that can not exist """
+    template_strings: Optional[Optional[Union[bool, List[str]]]] = None
+    """ List of files that can contain template strings """
+    readme: Optional[Union[bool, List[str]]] = None
+    """ Lint the README.md file """
+    nfcore_components: Optional[bool] = None
+    """ Lint all required files to use nf-core modules and subworkflows """
+    actions_ci: Optional[bool] = None
+    """ Lint all required files to use GitHub Actions CI """
+    actions_awstest: Optional[bool] = None
+    """ Lint all required files to run tests on AWS """
+    actions_awsfulltest: Optional[bool] = None
+    """ Lint all required files to run full tests on AWS """
+    pipeline_todos: Optional[bool] = None
+    """ Lint for TODOs statements"""
+    pipeline_if_empty_null: Optional[bool] = None
+    """ Lint for ifEmpty(null) statements"""
+    plugin_includes: Optional[bool] = None
+    """ Lint for nextflow plugin """
+    pipeline_name_conventions: Optional[bool] = None
+    """ Lint for pipeline name conventions """
+    schema_lint: Optional[bool] = None
+    """ Lint nextflow_schema.json file"""
+    schema_params: Optional[bool] = None
+    """ Lint schema for all params """
+    system_exit: Optional[bool] = None
+    """ Lint for System.exit calls in groovy/nextflow code """
+    schema_description: Optional[bool] = None
+    """ Check that every parameter in the schema has a description. """
+    actions_schema_validation: Optional[bool] = None
+    """ Lint GitHub Action workflow files with schema"""
+    modules_json: Optional[bool] = None
+    """ Lint modules.json file """
+    modules_structure: Optional[bool] = None
+    """ Lint modules structure """
+    base_config: Optional[bool] = None
+    """ Lint base.config file """
+    nfcore_yml: Optional[bool] = None
+    """ Lint nf-core.yml """
+    version_consistency: Optional[bool] = None
+    """ Lint for version consistency """
+    included_configs: Optional[bool] = None
+    """ Lint for included configs """
+    local_component_structure: Optional[bool] = None
+    """ Lint local components use correct structure mirroring remote"""
+
+    def __getitem__(self, item: str) -> Any:
+        return getattr(self, item)
+
+    def get(self, item: str, default: Any = None) -> Any:
+        if getattr(self, item, default) is None:
+            return default
+        return getattr(self, item, default)
+
+    def __setitem__(self, item: str, value: Any) -> None:
+        setattr(self, item, value)
+
+
+class NFCoreYamlConfig(BaseModel):
+    """.nf-core.yml configuration file schema"""
+
+    repository_type: Optional[Literal["pipeline", "modules"]] = None
+    """ Type of repository """
+    nf_core_version: Optional[str] = None
+    """ Version of nf-core/tools used to create/update the pipeline """
+    org_path: Optional[str] = None
+    """ Path to the organisation's modules repository (used for modules repo_type only) """
+    lint: Optional[NFCoreYamlLintConfig] = None
+    """ Pipeline linting configuration, see https://nf-co.re/docs/nf-core-tools/pipelines/lint#linting-config for examples and documentation """
+    template: Optional[NFCoreTemplateConfig] = None
+    """ Pipeline template configuration """
+    bump_version: Optional[Dict[str, bool]] = None
+    """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information. """
+    update: Optional[Dict[str, Union[str, bool, Dict[str, Union[str, Dict[str, Union[str, bool]]]]]]] = None
+    """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information. """
+
+    def __getitem__(self, item: str) -> Any:
+        return getattr(self, item)
+
+    def get(self, item: str, default: Any = None) -> Any:
+        return getattr(self, item, default)
+
+    def __setitem__(self, item: str, value: Any) -> None:
+        setattr(self, item, value)
+
+    def model_dump(self, **kwargs) -> Dict[str, Any]:
+        # Get the initial data
+        config = super().model_dump(**kwargs)
+
+        if self.repository_type == "modules":
+            # Fields to exclude for modules
+            fields_to_exclude = ["template", "update"]
+        else:  # pipeline
+            # Fields to exclude for pipeline
+            fields_to_exclude = ["bump_version", "org_path"]
+
+        # Remove the fields based on repository_type
+        for field in fields_to_exclude:
+            config.pop(field, None)
+
+        return config
+
+
+def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path], Optional[NFCoreYamlConfig]]:
     """
     Parse the nf-core.yml configuration file
 
@@ -1013,46 +1320,93 @@ def load_tools_config(directory: Union[str, Path] = "."):
     tools_config = {}
 
     config_fn = get_first_available_path(directory, CONFIG_PATHS)
-
     if config_fn is None:
         depr_path = get_first_available_path(directory, DEPRECATED_CONFIG_PATHS)
         if depr_path:
-            log.error(
-                f"Deprecated `{depr_path.name}` file found! The file will not be loaded. "
-                f"Please rename the file to `{CONFIG_PATHS[0]}`."
+            raise UserWarning(
+                f"Deprecated `{depr_path.name}` file found! Please rename the file to `{CONFIG_PATHS[0]}`."
             )
         else:
-            log.debug(f"No tools config file found: {CONFIG_PATHS[0]}")
-        return Path(directory, CONFIG_PATHS[0]), {}
-
-    with open(config_fn, "r") as fh:
+            log.debug(f"Could not find a config file in the directory '{directory}'")
+            return Path(directory, CONFIG_PATHS[0]), None
+    if not Path(config_fn).is_file():
+        raise FileNotFoundError(f"No `.nf-core.yml` file found in the directory '{directory}'")
+    with open(config_fn) as fh:
         tools_config = yaml.safe_load(fh)
 
     # If the file is empty
-    tools_config = tools_config or {}
+    if tools_config is None:
+        raise AssertionError(f"Config file '{config_fn}' is empty")
+    # Check for required fields
+    try:
+        nf_core_yaml_config = NFCoreYamlConfig(**tools_config)
+    except ValidationError as e:
+        error_message = f"Config file '{config_fn}' is invalid"
+        for error in e.errors():
+            error_message += f"\n{error['loc'][0]}: {error['msg']}\ninput: {error['input']}"
+        raise AssertionError(error_message)
+
+    wf_config = fetch_wf_config(Path(directory))
+    if nf_core_yaml_config["repository_type"] == "pipeline" and wf_config:
+        # Retrieve information if template from config file is empty
+        template = tools_config.get("template")
+        config_template_keys = template.keys() if template is not None else []
+        # Get author names from contributors first, then fallback to author
+        if "manifest.contributors" in wf_config:
+            contributors = wf_config["manifest.contributors"]
+            names = re.findall(r"name:'([^']+)'", contributors)
+            author_names = ", ".join(names)
+        elif "manifest.author" in wf_config:
+            author_names = wf_config["manifest.author"].strip("'\"")
+        else:
+            author_names = None
+        if nf_core_yaml_config.template is None:
+            # The .nf-core.yml file did not contain template information
+            nf_core_yaml_config.template = NFCoreTemplateConfig(
+                org="nf-core",
+                name=wf_config["manifest.name"].strip("'\"").split("/")[-1],
+                description=wf_config["manifest.description"].strip("'\""),
+                author=author_names,
+                version=wf_config["manifest.version"].strip("'\""),
+                outdir=str(directory),
+                is_nfcore=True,
+            )
+        elif "prefix" in config_template_keys or "skip" in config_template_keys:
+            # The .nf-core.yml file contained the old prefix or skip keys
+            nf_core_yaml_config.template = NFCoreTemplateConfig(
+                org=tools_config["template"].get("prefix", tools_config["template"].get("org", "nf-core")),
+                name=tools_config["template"].get("name", wf_config["manifest.name"].strip("'\"").split("/")[-1]),
+                description=tools_config["template"].get("description", wf_config["manifest.description"].strip("'\"")),
+                author=tools_config["template"].get("author", author_names),
+                version=tools_config["template"].get("version", wf_config["manifest.version"].strip("'\"")),
+                outdir=tools_config["template"].get("outdir", str(directory)),
+                skip_features=tools_config["template"].get("skip", tools_config["template"].get("skip_features")),
+                is_nfcore=tools_config["template"].get("prefix", tools_config["template"].get("org")) == "nf-core",
+            )
 
     log.debug("Using config file: %s", config_fn)
-    return config_fn, tools_config
+    return config_fn, nf_core_yaml_config
 
 
-def determine_base_dir(directory="."):
+def determine_base_dir(directory: Union[Path, str] = ".") -> Path:
     base_dir = start_dir = Path(directory).absolute()
-    while base_dir != base_dir.parent:
+    # Only iterate up the tree if the start dir doesn't have a config
+    while not get_first_available_path(base_dir, CONFIG_PATHS) and base_dir != base_dir.parent:
         base_dir = base_dir.parent
         config_fn = get_first_available_path(base_dir, CONFIG_PATHS)
         if config_fn:
-            return directory if base_dir == start_dir else base_dir
-    return directory
+            break
+    return Path(directory) if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
 
 
-def get_first_available_path(directory, paths):
+def get_first_available_path(directory: Union[Path, str], paths: List[str]) -> Union[Path, None]:
     for p in paths:
         if Path(directory, p).is_file():
             return Path(directory, p)
     return None
 
 
-def sort_dictionary(d):
+def sort_dictionary(d: Dict) -> Dict:
     """Sorts a nested dictionary recursively"""
     result = {}
     for k, v in sorted(d.items()):
@@ -1145,7 +1499,7 @@ def validate_file_md5(file_name, expected_md5hex):
     if file_md5hex.upper() == expected_md5hex.upper():
         log.debug(f"md5 sum of image matches expected: {expected_md5hex}")
     else:
-        raise IOError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
+        raise OSError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
 
     return True
 
@@ -1193,3 +1547,21 @@ def set_wd(path: Path) -> Generator[None, None, None]:
         yield
     finally:
         os.chdir(start_wd)
+
+
+def get_wf_files(wf_path: Path):
+    """Return a list of all files in a directory (ignores .gitigore files)"""
+
+    wf_files = []
+
+    with open(Path(wf_path, ".gitignore")) as f:
+        lines = f.read().splitlines()
+    ignore = [line for line in lines if line and not line.startswith("#")]
+
+    for path in Path(wf_path).rglob("*"):
+        if any(fnmatch.fnmatch(str(path), pattern) for pattern in ignore):
+            continue
+        if path.is_file():
+            wf_files.append(str(path))
+
+    return wf_files

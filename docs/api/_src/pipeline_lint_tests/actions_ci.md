@@ -1,5 +1,5 @@
 # actions_ci
 
 ```{eval-rst}
-.. automethod:: nf_core.lint.PipelineLint.actions_ci
+.. automethod:: nf_core.pipelines.lint.PipelineLint.actions_ci
 ```

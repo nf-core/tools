@@ -58,17 +58,17 @@ class ComponentRemove(ComponentCommand):
             removed_components = []
 
         # Get the module/subworkflow directory
-        component_dir = Path(self.dir, self.component_type, repo_path, component)
+        component_dir = Path(self.directory, self.component_type, repo_path, component)
 
         # Load the modules.json file
-        modules_json = ModulesJson(self.dir)
+        modules_json = ModulesJson(self.directory)
         modules_json.load()
 
         # Verify that the module/subworkflow is actually installed
         if not component_dir.exists():
             log.error(f"Installation directory '{component_dir}' does not exist.")
 
-            if modules_json.module_present(component, self.modules_repo.remote_url, repo_path):
+            if modules_json.component_present(component, self.modules_repo.remote_url, repo_path, self.component_type):
                 log.error(f"Found entry for '{component}' in 'modules.json'. Removing...")
                 modules_json.remove_entry(self.component_type, component, self.modules_repo.remote_url, repo_path)
             return False
@@ -98,9 +98,16 @@ class ComponentRemove(ComponentCommand):
                 for file, stmts in include_stmts.items():
                     renderables = []
                     for stmt in stmts:
+                        # check that the line number is integer
+                        if not isinstance(stmt["line_number"], int):
+                            log.error(
+                                f"Could not parse line number '{stmt['line_number']}' in '{file}'. Please report this issue."
+                            )
+                            continue
+
                         renderables.append(
                             Syntax(
-                                stmt["line"],
+                                str(stmt["line"]),
                                 "groovy",
                                 theme="ansi_dark",
                                 line_numbers=True,
@@ -123,7 +130,7 @@ class ComponentRemove(ComponentCommand):
                         style=nf_core.utils.nfcore_question_style,
                     ).unsafe_ask():
                         # add the component back to modules.json
-                        if not ComponentInstall(self.dir, self.component_type, force=True).install(
+                        if not ComponentInstall(self.directory, self.component_type, force=True).install(
                             component, silent=True
                         ):
                             log.warning(
@@ -133,7 +140,9 @@ class ComponentRemove(ComponentCommand):
                         return removed
             # Remove the component files of all entries removed from modules.json
             removed = (
-                True if self.clear_component_dir(component, Path(self.dir, removed_component_dir)) or removed else False
+                True
+                if self.clear_component_dir(component, Path(self.directory, removed_component_dir)) or removed
+                else False
             )
             removed_components.append(component)
 
@@ -167,6 +176,6 @@ class ComponentRemove(ComponentCommand):
                     f"Did not remove '{component}', because it was also manually installed. Only updated 'installed_by' entry in modules.json."
                 )
             log.info(
-                f"""Did not remove {self.component_type[:-1]} '{component}', because it was also installed by {', '.join(f"'{d}'" for d in installed_by)}. Only updated the 'installed_by' entry in modules.json."""
+                f"""Did not remove {self.component_type[:-1]} '{component}', because it was also installed by {", ".join(f"'{d}'" for d in installed_by)}. Only updated the 'installed_by' entry in modules.json."""
             )
         return removed

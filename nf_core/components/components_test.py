@@ -2,7 +2,6 @@
 The ComponentsTest class handles the generation and testing of nf-test snapshots.
 """
 
-
 import logging
 import os
 import re
@@ -48,6 +47,8 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         flag indicating if the existing snapshot should be updated
     once : bool
         flag indicating if the test should be run only once
+    profile : str
+        container software to use (docker, singularity or conda)
 
     Methods
     -------
@@ -72,6 +73,7 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         verbose: bool = False,
         update: bool = False,
         once: bool = False,
+        profile: Optional[str] = None,
     ):
         super().__init__(component_type, directory, remote_url, branch, no_prompts=no_prompts)
         self.component_name = component_name
@@ -82,15 +84,16 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         self.obsolete_snapshots: bool = False
         self.update = update
         self.once = once
+        self.profile = profile
 
     def run(self) -> None:
         """Run build steps"""
         self.check_inputs()
         os.environ["NFT_DIFF"] = "pdiff"  # set nf-test differ to pdiff to get a better diff output
-        os.environ[
-            "NFT_DIFF_ARGS"
-        ] = "--line-numbers --expand-tabs=2"  # taken from https://code.askimed.com/nf-test/docs/assertions/snapshots/#snapshot-differences
-        with nf_core.utils.set_wd(Path(self.dir)):
+        os.environ["NFT_DIFF_ARGS"] = (
+            "--line-numbers --expand-tabs=2"  # taken from https://code.askimed.com/nf-test/docs/assertions/snapshots/#snapshot-differences
+        )
+        with nf_core.utils.set_wd(self.directory):
             self.check_snapshot_stability()
         if len(self.errors) > 0:
             errors = "\n - ".join(self.errors)
@@ -123,13 +126,13 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         self.component_dir = Path(self.component_type, self.modules_repo.repo_path, *self.component_name.split("/"))
 
         # First, sanity check that the module directory exists
-        if not Path(self.dir, self.component_dir).is_dir():
+        if not Path(self.directory, self.component_dir).is_dir():
             raise UserWarning(
                 f"Cannot find directory '{self.component_dir}'.{' Should be TOOL/SUBTOOL or TOOL' if self.component_type == 'modules' else ''}"
             )
 
         # Check container software to use
-        if os.environ.get("PROFILE") is None:
+        if os.environ.get("PROFILE") is None and self.profile is None:
             os.environ["PROFILE"] = ""
             if self.no_prompts:
                 log.info(
@@ -190,10 +193,11 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         update = "--update-snapshot" if self.update else ""
         self.update = False  # reset self.update to False to test if the new snapshot is stable
         tag = f"subworkflows/{self.component_name}" if self.component_type == "subworkflows" else self.component_name
+        profile = self.profile if self.profile else os.environ["PROFILE"]
 
         result = nf_core.utils.run_cmd(
             "nf-test",
-            f"test --tag {tag} --profile {os.environ['PROFILE']} {verbose} {update}",
+            f"test --tag {tag} --profile {profile} {verbose} {update}",
         )
         if result is not None:
             nftest_out, nftest_err = result
@@ -232,16 +236,18 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
             log.error("nf-test snapshot is not stable")
             self.errors.append("nf-test snapshot is not stable")
             return False
+
         else:
             if self.obsolete_snapshots:
                 # ask if the user wants to remove obsolete snapshots using nf-test --clean-snapshot
                 if self.no_prompts or Confirm.ask(
                     "nf-test found obsolete snapshots. Do you want to remove them?", default=True
                 ):
+                    profile = self.profile if self.profile else os.environ["PROFILE"]
                     log.info("Removing obsolete snapshots")
                     nf_core.utils.run_cmd(
                         "nf-test",
-                        f"test --tag {self.component_name} --profile {os.environ['PROFILE']} --clean-snapshot",
+                        f"test --tag {self.component_name} --profile {profile} --clean-snapshot",
                     )
                 else:
                     log.debug("Obsolete snapshots not removed")

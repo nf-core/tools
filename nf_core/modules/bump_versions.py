@@ -3,13 +3,11 @@ Bump versions for all modules on nf-core/modules
 or for a single module
 """
 
-
-from __future__ import print_function
-
 import logging
 import os
 import re
-from typing import Any, Dict, List, Optional, Tuple, Union
+from pathlib import Path
+from typing import List, Optional, Tuple, Union
 
 import questionary
 import yaml
@@ -24,17 +22,16 @@ import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.utils import custom_yaml_dumper
+from nf_core.utils import NFCoreYamlConfig, custom_yaml_dumper, rich_force_colors
 from nf_core.utils import plural_s as _s
-from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
 
 
-class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
+class ModuleVersionBumper(ComponentCommand):
     def __init__(
         self,
-        pipeline_dir: str,
+        pipeline_dir: Union[str, Path],
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,
         no_pull: bool = False,
@@ -46,7 +43,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         self.failed: List[Tuple[str, str]] = []
         self.ignored: List[Tuple[str, str]] = []
         self.show_up_to_date: Optional[bool] = None
-        self.tools_config: Dict[str, Any] = {}
+        self.tools_config: Optional[NFCoreYamlConfig]
 
     def bump_versions(
         self, module: Union[str, None] = None, all_modules: bool = False, show_uptodate: bool = False
@@ -74,15 +71,15 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
 
         # Verify that this is not a pipeline
         if not self.repo_type == "modules":
-            raise nf_core.modules.modules_utils.ModuleException(
+            raise nf_core.modules.modules_utils.ModuleExceptionError(
                 "This command only works on the nf-core/modules repository, not on pipelines!"
             )
 
         # Get list of all modules
-        _, nfcore_modules = nf_core.modules.modules_utils.get_installed_modules(self.dir)
+        _, nfcore_modules = nf_core.modules.modules_utils.get_installed_modules(self.directory)
 
         # Load the .nf-core.yml config
-        _, self.tools_config = nf_core.utils.load_tools_config(self.dir)
+        _, self.tools_config = nf_core.utils.load_tools_config(self.directory)
 
         # Prompt for module or all
         if module is None and not all_modules:
@@ -105,12 +102,14 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         if module:
             self.show_up_to_date = True
             if all_modules:
-                raise nf_core.modules.modules_utils.ModuleException(
+                raise nf_core.modules.modules_utils.ModuleExceptionError(
                     "You cannot specify a tool and request all tools to be bumped."
                 )
             nfcore_modules = [m for m in nfcore_modules if m.component_name == module]
             if len(nfcore_modules) == 0:
-                raise nf_core.modules.modules_utils.ModuleException(f"Could not find the specified module: '{module}'")
+                raise nf_core.modules.modules_utils.ModuleExceptionError(
+                    f"Could not find the specified module: '{module}'"
+                )
 
         progress_bar = Progress(
             "[bold blue]{task.description}",
@@ -146,10 +145,10 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         except FileNotFoundError:
             # try it in the main.nf instead
             try:
-                with open(module.main_nf, "r") as fh:
-                    for l in fh:
-                        if "bioconda::" in l:
-                            bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+                with open(module.main_nf) as fh:
+                    for line in fh:
+                        if "bioconda::" in line:
+                            bioconda_packages = [b for b in line.split() if "bioconda::" in b]
             except FileNotFoundError:
                 log.error(
                     f"Neither `environment.yml` nor `main.nf` of {module.component_name} module could be read to get bioconada version of used tools."
@@ -161,7 +160,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
             return False
 
         # Don't update if blocked in blacklist
-        self.bump_versions_config = self.tools_config.get("bump-versions", {})
+        self.bump_versions_config = getattr(self.tools_config, "bump-versions", {}) or {}
         if module.component_name in self.bump_versions_config:
             config_version = self.bump_versions_config[module.component_name]
             if not config_version:
@@ -178,7 +177,12 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
             try:
                 response = nf_core.utils.anaconda_package(bp)
             except (LookupError, ValueError):
-                self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.component_name))
+                self.failed.append(
+                    (
+                        f"Conda version not specified correctly: {Path(module.main_nf).relative_to(self.directory)}",
+                        module.component_name,
+                    )
+                )
                 return False
 
             # Check that required version is available at all
@@ -208,7 +212,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
                 ),
             ]
 
-            with open(module.main_nf, "r") as fh:
+            with open(module.main_nf) as fh:
                 content = fh.read()
 
             # Go over file content of main.nf and find replacements
@@ -241,9 +245,14 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
                 fh.write(content)
 
             # change version in environment.yml
-            with open(module.environment_yml, "r") as fh:
+            if not module.environment_yml:
+                log.error(f"Could not read `environment.yml` of {module.component_name} module.")
+                return False
+            with open(module.environment_yml) as fh:
                 env_yml = yaml.safe_load(fh)
-            re.sub(bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'", env_yml["dependencies"])
+            env_yml["dependencies"][0] = re.sub(
+                bioconda_packages[0], f"bioconda::{bioconda_tool_name}={last_ver}", env_yml["dependencies"][0]
+            )
             with open(module.environment_yml, "w") as fh:
                 yaml.dump(env_yml, fh, default_flow_style=False, Dumper=custom_yaml_dumper())
 
@@ -265,11 +274,11 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         """
         # Check whether file exists and load it
         bioconda_packages = []
-        try:
-            with open(module.environment_yml, "r") as fh:
+        if module.environment_yml is not None and module.environment_yml.exists():
+            with open(module.environment_yml) as fh:
                 env_yml = yaml.safe_load(fh)
             bioconda_packages = env_yml.get("dependencies", [])
-        except FileNotFoundError:
+        else:
             log.error(f"Could not read `environment.yml` of {module.component_name} module.")
 
         return bioconda_packages
@@ -289,7 +298,7 @@ class ModuleVersionBumper(ComponentCommand):  # type: ignore[misc]
         for m in [self.up_to_date, self.updated, self.failed]:
             try:
                 max_mod_name_len = max(len(m[2]), max_mod_name_len)
-            except:
+            except Exception:
                 pass
 
         def format_result(module_updates: List[Tuple[str, str]], table: Table) -> Table:
