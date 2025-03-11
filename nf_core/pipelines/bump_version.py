@@ -101,7 +101,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
     )
     # nf-test snap files
     pipeline_name = pipeline_obj.nf_config.get("manifest.name", "").strip(" '\"")
-    snap_files = [f for f in Path(pipeline_obj.wf_path).glob("tests/pipeline/*.snap")]
+    snap_files = [f.relative_to(pipeline_obj.wf_path) for f in Path(pipeline_obj.wf_path).glob("tests/pipeline/*.snap")]
     for snap_file in snap_files:
         update_file_version(
             snap_file,
