@@ -7,9 +7,6 @@ on:
   workflow_dispatch:
   pull_request_review:
     types: [submitted]
-    branches:
-      - main
-      - master
   release:
     types: [published]
 
