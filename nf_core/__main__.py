@@ -77,6 +77,7 @@ click.rich_click.COMMAND_GROUPS = {
                 "modules",
                 "subworkflows",
                 "interface",
+                "test-dataset"
             ],
         },
     ],
@@ -111,6 +112,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
     ],
     "nf-core pipelines schema": [{"name": "Schema commands", "commands": ["validate", "build", "lint", "docs"]}],
+    "nf-core test-dataset":  [{"name": "For developers", "commands": ["search"]}]
 }
 click.rich_click.OPTION_GROUPS = {
     "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
@@ -1746,6 +1748,33 @@ def command_subworkflows_update(
     subworkflows_update(
         ctx, subworkflow, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output
     )
+
+
+# nf-core test-dataset subcommands
+@nf_core_cli.group()
+@click.pass_context
+def test_dataset(ctx):
+    """
+    Commands to manage nf-core test datasets.
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
+
+# nf-core test-dataset search
+@test_dataset.command("search")
+@click.pass_context
+@click.option(
+    "-q",
+    "--query",
+    type=str,
+    help="The search keyword to find a dataset"
+)
+@click.option("-d", "--description", type=str, help="A short description of your pipeline")
+def command_test_dataset_search(ctx):
+    # TODO: Implement search
+    pass
 
 
 ## DEPRECATED commands since v3.0.0
