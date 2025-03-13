@@ -71,8 +71,7 @@ runs:
           --verbose \
           --ci \
           --changed-since HEAD^ \
-          --shard ${{ inputs.shard }}/${{ inputs.total_shards }} \
-          --filter function,workflow,pipeline
+          --shard ${{ inputs.shard }}/${{ inputs.total_shards }}
 
           # Save the absolute path of the test.tap file to the output
           echo "tap_file_path=$(realpath test.tap)" >> $GITHUB_OUTPUT
