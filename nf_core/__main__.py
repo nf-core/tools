@@ -1765,14 +1765,8 @@ def test_dataset(ctx):
 # nf-core test-dataset search
 @test_dataset.command("search")
 @click.pass_context
-@click.option(
-    "-q",
-    "--query",
-    type=str,
-    help="The search keyword to find a dataset"
-)
-@click.option("-d", "--description", type=str, help="A short description of your pipeline")
-def command_test_dataset_search(ctx):
+@click.argument("query")
+def command_test_dataset_search(ctx, query):
     # TODO: Implement search
     pass
 
