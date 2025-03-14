@@ -103,7 +103,8 @@ github_badges:
   nfcore_pipelines: False
   custom_pipelines: True
 nf_core_configs:
-  skippable_paths: False
+  skippable_paths:
+    - ".github/workflows/config_tests.yml"
   short_description: "Add configuration files"
   description: "The pipeline will include configuration profiles containing custom parameters required to run nf-core pipelines at different institutions"
   help_text: |
