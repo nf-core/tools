@@ -54,6 +54,9 @@ from nf_core.commands_subworkflows import (
     subworkflows_test,
     subworkflows_update,
 )
+from nf_core.commands_test_datasets import (
+    test_datasets_list_remote,
+)
 from nf_core.components.components_utils import NF_CORE_MODULES_REMOTE
 from nf_core.pipelines.download import DownloadError
 from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
@@ -1767,26 +1770,27 @@ def get_test_datasets():
 
 # TODO: Move to utils
 def get_shell_suggestions(ctx, param, incomplete):
-    return [sug for sug in get_test_datasets() if sug.lower().startswith(incomplete)]
-
+    #return [sug for sug in get_test_datasets() if sug.lower().startswith(incomplete)]
+    return [sug for sug in get_test_datasets() if incomplete.lower() in sug.lower()]
 
 # nf-core test-dataset search
 @test_datasets.command("search")
 @click.pass_context
 @click.argument("query", shell_complete=get_shell_suggestions)
 def command_test_dataset_search(ctx, query):
-    # TODO: Implement search
+    # TODO: fetch Branches
+    # TODO: fetch Trees for branches
+    # TODO: Search through trees
+    # TODO: Sort output by branch
     pass
 
 
 # nf-core test-dataset search
 @test_datasets.command("list")
 @click.pass_context
-def command_test_dataset_search(ctx):
-    dss = get_test_datasets()
-    for ds in dss:
-        print(ds)
-    pass
+@click.option("-b", "--branch", type=str, help="Branch in the test-datasets repository to reduce search to")
+def command_test_dataset_list_remote(ctx, branch):
+    test_datasets_list_remote(ctx, branch)
 
 
 ## DEPRECATED commands since v3.0.0
