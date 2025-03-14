@@ -26,27 +26,62 @@ def get_remote_branches():
     List all branches on the remote github repository for test-datasets
     by querying the github API endpoint at `/repos/nf-core/test-datasets/branches`
     """
-    gh_api_urls = GithubApiEndpoints(gh_repo="test-datasets")
-    response = requests.get(gh_api_urls.get_branch_list_url())
-
-    if not response.ok:
-        log.debug(f"Could not fetch list of branches from Github API at url: {response.url}")
-        return []
 
     try:
+        gh_api_urls = GithubApiEndpoints(gh_repo="test-datasets")
+        response = requests.get(gh_api_urls.get_branch_list_url())
+
+        if not response.ok:
+            log.error(f"Error status code {response.status_code} received while fetching the list of branches at url: {response.url}")
+            return []
+
         resp_json = json.loads(response.text)
         branches = [b["name"] for b in resp_json]
+
+    except requests.exceptions.RequestException as e:
+        log.error("Error while handling request to url {gh_api_url}", e)
     except KeyError as e:
-        log.debug("Could not parse list of branches fetched for   from Github API")
+        log.error("Error parsing the list of branches received from Github API", e)
     except json.decoder.JSONDecodeError as e:
-        log.debug("Error parsing the list of branches from Github API at url: {response.url}")
+        log.error("Error parsing the list of branches received from Github API at url {response.url} as json",  e)
 
     return branches
 
 
-def get_remote_tree_for_branch():
+def get_remote_tree_for_branch(branch, only_files=True, ignored_prefixes=[]):
     """
     For a given branch name, return the file tree by querying the github API
     at the endpoint at `/repos/nf-core/test-datasets/git/trees/`
     """
-    pass
+
+    gh_filetree_file_value = "blob"    # value in nodes used to refer to "files"
+    gh_filetree_type_key = "type"      # key in filetree nodes used to refer to their type
+    gh_filetree_name_key = "name"      # key in filetree nodes used to refer to their name
+
+
+    try:
+        gh_api_url = GithubApiEndpoints(gh_repo="test-datasets")
+        response = requests.get(gh_api_url.get_remote_tree_url_for_branch(branch))
+
+        if not response.ok:
+            log.error(f"Error status code {response.status_code} received while fetching the repository filetree at url {response.url}")
+            return []
+
+        repo_tree = json.loads(response.text)
+
+        if only_files:
+            repo_tree = [node for node in repo_tree if node[gh_filetree_type_key] == gh_filetree_file_value]
+
+        if len(ignored_prefixes):
+            repo_tree = [node for node in repo_tree for prefix in ignored_prefixes if not node[gh_filetree_name_key].startswith(prefix)]
+
+        # extract only the names
+        repo_files = [node[gh_filetree_name_key] for node in repo_tree]
+
+    except requests.exceptions.RequestException as e:
+        log.error("Error while handling request to url {gh_api_url}", e)
+
+    except json.decoder.JSONDecodeError as e:
+        log.error("Error parsing the repository filetree received from Github API at url {response.url} as json", e)
+
+    return repo_files
