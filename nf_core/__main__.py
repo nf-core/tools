@@ -1761,11 +1761,11 @@ def test_dataset(ctx):
     # by means other than the `if` block below)
     ctx.ensure_object(dict)
 
-
+# TODO: Move to utils
 def get_test_datasets():
     return ["Foo", "bar", "bag", "baz",  "baaz"]
 
-# TODO: Move to utils or somewhere else
+# TODO: Move to utils
 def get_shell_suggestions(ctx, param, incomplete):
     return [sug for sug in get_test_datasets() if sug.lower().startswith(incomplete)]
 
