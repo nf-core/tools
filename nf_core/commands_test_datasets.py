@@ -17,3 +17,11 @@ def test_datasets_list_remote(ctx, branch):
         files = sorted(tree[b])
         for f in files:
             stdout.print(f"(Branch: {b}) {f}")
+
+
+def test_datasets_search(ctx, query, branch):
+    # TODO: fetch Branches
+    # TODO: fetch Trees for branches
+    # TODO: Search through trees
+    # TODO: Sort output by branch
+    pass
