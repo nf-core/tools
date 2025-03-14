@@ -55,8 +55,9 @@ def get_remote_tree_for_branch(branch, only_files=True, ignored_prefixes=[]):
     """
 
     gh_filetree_file_value = "blob"    # value in nodes used to refer to "files"
+    gh_response_filetree_key = "tree"  # key in response to refer to the filetree
     gh_filetree_type_key = "type"      # key in filetree nodes used to refer to their type
-    gh_filetree_name_key = "name"      # key in filetree nodes used to refer to their name
+    gh_filetree_name_key = "path"      # key in filetree nodes used to refer to their name
 
 
     try:
@@ -67,7 +68,7 @@ def get_remote_tree_for_branch(branch, only_files=True, ignored_prefixes=[]):
             log.error(f"Error status code {response.status_code} received while fetching the repository filetree at url {response.url}")
             return []
 
-        repo_tree = json.loads(response.text)
+        repo_tree = json.loads(response.text)[gh_response_filetree_key]
 
         if only_files:
             repo_tree = [node for node in repo_tree if node[gh_filetree_type_key] == gh_filetree_file_value]
