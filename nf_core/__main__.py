@@ -1753,7 +1753,7 @@ def command_subworkflows_update(
 # nf-core test-dataset subcommands
 @nf_core_cli.group()
 @click.pass_context
-def test_dataset(ctx):
+def test_datasets(ctx):
     """
     Commands to manage nf-core test datasets.
     """
@@ -1771,7 +1771,7 @@ def get_shell_suggestions(ctx, param, incomplete):
 
 
 # nf-core test-dataset search
-@test_dataset.command("search")
+@test_datasets.command("search")
 @click.pass_context
 @click.argument("query", shell_complete=get_shell_suggestions)
 def command_test_dataset_search(ctx, query):
@@ -1780,7 +1780,7 @@ def command_test_dataset_search(ctx, query):
 
 
 # nf-core test-dataset search
-@test_dataset.command("list")
+@test_datasets.command("list")
 @click.pass_context
 def command_test_dataset_search(ctx):
     dss = get_test_datasets()
