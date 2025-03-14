@@ -21,7 +21,7 @@ class GithubApiEndpoints():
         return url
 
 
-def get_remote_branches(self):
+def get_remote_branches():
     """
     List all branches on the remote github repository for test-datasets
     by querying the github API endpoint at `/repos/nf-core/test-datasets/branches`
@@ -44,7 +44,7 @@ def get_remote_branches(self):
     return branches
 
 
-def get_remote_tree_for_branch(self):
+def get_remote_tree_for_branch():
     """
     For a given branch name, return the file tree by querying the github API
     at the endpoint at `/repos/nf-core/test-datasets/git/trees/`
