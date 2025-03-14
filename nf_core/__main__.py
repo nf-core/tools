@@ -57,6 +57,7 @@ from nf_core.commands_subworkflows import (
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.commands_test_datasets import (
     test_datasets_list_remote,
+    test_datasets_search,
 )
 from nf_core.pipelines.download import DownloadError
 from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
@@ -1777,12 +1778,9 @@ def get_shell_suggestions(ctx, param, incomplete):
 @test_datasets.command("search")
 @click.pass_context
 @click.argument("query", shell_complete=get_shell_suggestions)
-def command_test_dataset_search(ctx, query):
-    # TODO: fetch Branches
-    # TODO: fetch Trees for branches
-    # TODO: Search through trees
-    # TODO: Sort output by branch
-    pass
+@click.option("-b", "--branch", type=str, help="Branch in the test-datasets repository to reduce search to")
+def command_test_dataset_search(ctx, query, branch):
+    test_datasets_search(query, query, branch)
 
 
 # nf-core test-dataset search
