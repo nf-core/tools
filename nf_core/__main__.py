@@ -1762,12 +1762,30 @@ def test_dataset(ctx):
     ctx.ensure_object(dict)
 
 
+def get_test_datasets():
+    return ["Foo", "bar", "bag", "baz",  "baaz"]
+
+# TODO: Move to utils or somewhere else
+def get_shell_suggestions(ctx, param, incomplete):
+    return [sug for sug in get_test_datasets() if sug.lower().startswith(incomplete)]
+
+
 # nf-core test-dataset search
 @test_dataset.command("search")
 @click.pass_context
-@click.argument("query")
+@click.argument("query", shell_complete=get_shell_suggestions)
 def command_test_dataset_search(ctx, query):
     # TODO: Implement search
+    pass
+
+
+# nf-core test-dataset search
+@test_dataset.command("list")
+@click.pass_context
+def command_test_dataset_search(ctx):
+    dss = get_test_datasets()
+    for ds in dss:
+        print(ds)
     pass
 
 
