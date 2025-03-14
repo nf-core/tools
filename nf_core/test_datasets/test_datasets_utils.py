@@ -91,3 +91,26 @@ def get_remote_tree_for_branch(branch, only_files=True, ignored_prefixes=[]):
         log.error("Error parsing the repository filetree received from Github API at url {response.url} as json", e)
 
     return repo_files
+
+
+def list_files_by_branch(branch, ignored_file_prefixes=[".", "CITATION", "LICENSE", "README", "docs", ]):
+    """
+    Lists files for all branches in the test-datasets github repo.
+    Returns dictionary with branchnames as keys and file-lists as values
+    """
+
+    # TODO: Check if github auth exists
+    #gh_api.setup_github_auth()
+    # DOES NOT WORK: gh_api.auth is not an attribute ...
+    #if gh_api.auth is None:
+    #    log.error("Github Authentication Required to increase API quota")
+
+    branches = sorted(filter(lambda b: b == branch, get_remote_branches()))
+    if branch and len(branches) == 0:
+        log.error(f"No branches matching '{branch}'")
+
+    tree = dict()
+    for b in branches:
+        tree[b] = get_remote_tree_for_branch(b, only_files=True, ignored_prefixes=ignored_file_prefixes)
+
+    return tree
