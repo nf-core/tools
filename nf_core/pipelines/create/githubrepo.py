@@ -5,6 +5,7 @@ from textwrap import dedent
 
 import git
 import yaml
+from rich.text import Text
 from github import Github, GithubException, UnknownObjectException
 from textual import on, work
 from textual.app import ComposeResult
@@ -56,7 +57,7 @@ class GithubRepo(Screen):
             yield TextInput(
                 "token",
                 "GitHub token",
-                "Your GitHub personal access token for login.",
+                Text.from_markup("Your GitHub [link=https://shorturl.at/RKJzS]personal access token[/link] for login."),
                 default=gh_token if gh_token is not None else "GitHub token",
                 password=True,
                 classes="column",
