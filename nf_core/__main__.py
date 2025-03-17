@@ -1768,18 +1768,42 @@ def test_datasets(ctx):
 # nf-core test-dataset search
 @test_datasets.command("search")
 @click.pass_context
+@click.option(
+    "-a",
+    "--asynchronous",
+    is_flag=True,
+    default=False,
+    help="Make asynchronous requests. Recommended only if connection to Github API is slow."
+)
+@click.option(
+    "-b",
+    "--branch",
+    type=str,
+    help="Branch in the test-datasets repository to reduce search to"
+)
 @click.argument("query")
-@click.option("-b", "--branch", type=str, help="Branch in the test-datasets repository to reduce search to")
-def command_test_dataset_search(ctx, query, branch):
-    test_datasets_search(ctx, query, branch)
+def command_test_dataset_search(ctx, query, asynchronous, branch):
+    test_datasets_search(ctx, query, asynchronous, branch)
 
 
 # nf-core test-dataset search
 @test_datasets.command("list")
 @click.pass_context
-@click.option("-b", "--branch", type=str, help="Branch in the test-datasets repository to reduce search to")
-def command_test_dataset_list_remote(ctx, branch):
-    test_datasets_list_remote(ctx, branch)
+@click.option(
+    "-a",
+    "--asynchronous",
+    is_flag=True,
+    default=False,
+    help="Make asynchronous requests. Recommended only if connection to Github API is slow."
+)
+@click.option(
+    "-b",
+    "--branch",
+    type=str,
+    help="Branch in the test-datasets repository to reduce search to"
+)
+def command_test_dataset_list_remote(ctx, asynchronous, branch):
+    test_datasets_list_remote(ctx, asynchronous, branch)
 
 
 ## DEPRECATED commands since v3.0.0

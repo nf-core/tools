@@ -12,10 +12,12 @@ log = logging.getLogger(__name__)
 stdout = rich.console.Console(force_terminal=rich_force_colors())
 
 
-def test_datasets_list_remote(ctx, branch):
+def test_datasets_list_remote(ctx, asynchronous, branch):
 
-    #tree = list_files_by_branch(branch)
-    tree = list_files_by_branch_async(branch)
+    if asynchronous:
+        tree = list_files_by_branch_async(branch)
+    else:
+        tree = list_files_by_branch(branch)
 
     out = ""
     for b in tree.keys():
@@ -26,11 +28,13 @@ def test_datasets_list_remote(ctx, branch):
     stdout.print(out)
 
 
-def test_datasets_search(ctx, query, branch):
+def test_datasets_search(ctx, query, asynchronous, branch):
     log.debug(f"test-datasets search query: {query}")
-    #tree = list_files_by_branch(branch)
-    # concurrent requests for speed-up
-    tree = list_files_by_branch_async(branch)
+
+    if asynchronous:
+        tree = list_files_by_branch_async(branch)
+    else:
+        tree = list_files_by_branch(branch)
     log.debug(f"Searching the tree of {len(tree.keys())} remote branches ...")
 
     out = ""
