@@ -189,7 +189,7 @@ def test_customisation_help(snap_compare):
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
-def test_github_question(tmpdir, snap_compare):
+def test_github_question(tmp_path, snap_compare):
     """Test snapshot for the github_repo_question screen.
     Steps to get to this screen:
         screen welcome > press start >
@@ -213,7 +213,7 @@ def test_github_question(tmpdir, snap_compare):
         await pilot.click("#continue")
         await pilot.press("backspace")
         await pilot.press("tab")
-        await pilot.press(*str(tmpdir))
+        await pilot.press(*str(tmp_path))
         await pilot.click("#finish")
         await pilot.app.workers.wait_for_complete()
         await pilot.click("#close_screen")
@@ -222,7 +222,7 @@ def test_github_question(tmpdir, snap_compare):
 
 
 @mock.patch("nf_core.pipelines.create.githubrepo.GithubRepo._get_github_credentials")
-def test_github_details(mock_get_github_credentials, tmpdir, snap_compare):
+def test_github_details(mock_get_github_credentials, tmp_path, snap_compare):
     """Test snapshot for the github_repo screen.
     Steps to get to this screen:
         screen welcome > press start >
@@ -251,7 +251,7 @@ def test_github_details(mock_get_github_credentials, tmpdir, snap_compare):
         await pilot.click("#continue")
         await pilot.press("backspace")
         await pilot.press("tab")
-        await pilot.press(*str(tmpdir))
+        await pilot.press(*str(tmp_path))
         await pilot.click("#finish")
         await pilot.app.workers.wait_for_complete()
         await pilot.click("#close_screen")
@@ -260,7 +260,7 @@ def test_github_details(mock_get_github_credentials, tmpdir, snap_compare):
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
 
-def test_github_exit_message(tmpdir, snap_compare):
+def test_github_exit_message(tmp_path, snap_compare):
     """Test snapshot for the github_exit screen.
     Steps to get to this screen:
         screen welcome > press start >
@@ -286,7 +286,7 @@ def test_github_exit_message(tmpdir, snap_compare):
         await pilot.click("#continue")
         await pilot.press("backspace")
         await pilot.press("tab")
-        await pilot.press(*str(tmpdir))
+        await pilot.press(*str(tmp_path))
         await pilot.click("#finish")
         await pilot.app.workers.wait_for_complete()
         await pilot.click("#close_screen")
