@@ -55,6 +55,7 @@ from nf_core.commands_subworkflows import (
     subworkflows_update,
 )
 from nf_core.commands_test_datasets import (
+    test_datasets_list_branches,
     test_datasets_list_remote,
     test_datasets_search,
 )
@@ -1804,6 +1805,13 @@ def command_test_dataset_search(ctx, query, asynchronous, branch):
 )
 def command_test_dataset_list_remote(ctx, asynchronous, branch):
     test_datasets_list_remote(ctx, asynchronous, branch)
+
+
+# nf-core test-datasets list-branches
+@test_datasets.command("list-branches")
+@click.pass_context
+def command_test_datasets_list_branches(ctx):
+    test_datasets_list_branches(ctx)
 
 
 ## DEPRECATED commands since v3.0.0

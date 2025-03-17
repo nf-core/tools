@@ -5,7 +5,11 @@ import time
 
 import rich
 
-from nf_core.test_datasets.test_datasets_utils import list_files_by_branch, list_files_by_branch_async
+from nf_core.test_datasets.test_datasets_utils import (
+    get_remote_branches,
+    list_files_by_branch,
+    list_files_by_branch_async,
+)
 from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
@@ -15,16 +19,21 @@ stdout = rich.console.Console(force_terminal=rich_force_colors())
 IGNORED_FILE_PREFIXES = [".", "CITATION", "LICENSE", "README", "docs", ]
 
 
+def test_datasets_list_branches(ctx):
+    remote_branches = get_remote_branches()
+    out = os.linesep.join(remote_branches)
+    stdout.print(out)
+
+
 def test_datasets_list_remote(ctx, asynchronous, branch):
-    start = time.time()
+
+    if ctx.obj["verbose"] and not asynchronous and not branch:
+        log.warning("Using nf-core test-datasets with verbose (-v) flag and without asynchronous mode (--asynchronous) can drasticly reduce performance.")
 
     if asynchronous:
         tree = list_files_by_branch_async(branch, IGNORED_FILE_PREFIXES)
     else:
         tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
-
-    end = time.time()
-    log.debug(f"Fetching took {end - start}s")
 
     out = ""
     for b in tree.keys():
