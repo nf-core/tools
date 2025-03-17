@@ -1791,6 +1791,9 @@ def test_datasets(ctx):
 )
 @click.argument("query")
 def command_test_dataset_search(ctx, query, asynchronous, branch, ignore_case):
+    """
+    Search for files in the nf-core/test-datasets repository on github
+    """
     test_datasets_search(ctx, query, asynchronous, branch, ignore_case)
 
 
@@ -1811,6 +1814,9 @@ def command_test_dataset_search(ctx, query, asynchronous, branch, ignore_case):
     help="Branch in the test-datasets repository to reduce search to"
 )
 def command_test_dataset_list_remote(ctx, asynchronous, branch):
+    """
+    List all data files available in the nf-core/test-datasets repository on github
+    """
     test_datasets_list_remote(ctx, asynchronous, branch)
 
 
@@ -1818,6 +1824,9 @@ def command_test_dataset_list_remote(ctx, asynchronous, branch):
 @test_datasets.command("list-branches")
 @click.pass_context
 def command_test_datasets_list_branches(ctx):
+    """
+    List all remote branches in the nf-core/test-dataset repository on github
+    """
     test_datasets_list_branches(ctx)
 
 
