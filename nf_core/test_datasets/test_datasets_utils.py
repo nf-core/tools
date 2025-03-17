@@ -24,6 +24,7 @@ class GithubApiEndpoints():
         url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/git/trees/{branch}?recursive=1"
         return url
 
+
 class GithubApiSessionAsync(aiohttp.ClientSession):
     def __init__(self, gh_api, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32,7 +33,7 @@ class GithubApiSessionAsync(aiohttp.ClientSession):
 
     def setup_github_auth(self, auth=None):
 
-        if self.gh_api.auth is None:
+        if self.gh_api.auth_mode is None:
             self.gh_api.setup_github_auth()
 
         if isinstance(self.gh_api.auth, requests.auth.HTTPBasicAuth):
@@ -44,7 +45,8 @@ class GithubApiSessionAsync(aiohttp.ClientSession):
             self.headers["authorization"] = f"Bearer {self.gh_api.auth.token}"
 
         else:
-            log.debug("Auth could not be transfered to GithubApiSessionAsync")
+            # TODO: Should we fail here? This will most certainly fail
+            pass
 
 
 def get_remote_branches():
@@ -57,7 +59,7 @@ def get_remote_branches():
         response = gh_api.get(gh_api_urls.get_branch_list_url())
 
         if not response.ok:
-            log.error(f"Error status code {response.status_code} received while fetching the list of branches at url: {response.url}")
+            log.error(f"HTTP status code {response.status_code} received while fetching the list of branches at url: {response.url}")
             return []
 
         resp_json = json.loads(response.text)
@@ -88,7 +90,7 @@ def get_remote_tree_for_branch(branch, only_files=True, ignored_prefixes=[]):
         response = gh_api.get(gh_api_url.get_remote_tree_url_for_branch(branch))
 
         if not response.ok:
-            log.error(f"Error status code {response.status_code} received while fetching the repository filetree at url {response.url}")
+            log.error(f"HTTP status code {response.status_code} received while fetching the repository filetree at url {response.url}")
             return []
 
         repo_tree = json.loads(response.text)[gh_response_filetree_key]
@@ -152,7 +154,7 @@ async def get_remote_tree_for_branch_async(session, branch, only_files=True, ign
         response_json = await response.json()
 
         if not response.ok:
-            log.error(f"Error status code {response.status} received while fetching the repository filetree at url {response.url}")
+            log.error(f"HTTP status code {response.status} received while fetching the repository filetree at url {response.url}")
             return []
 
         repo_tree = response_json[gh_response_filetree_key]
