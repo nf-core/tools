@@ -55,6 +55,7 @@ from .schema_params import schema_params
 from .system_exit import system_exit
 from .template_strings import template_strings
 from .version_consistency import version_consistency
+from .rocrate_readme_sync import rocrate_readme_sync
 
 log = logging.getLogger(__name__)
 
@@ -102,6 +103,8 @@ class PipelineLint(nf_core.utils.Pipeline):
     schema_lint = schema_lint
     schema_params = schema_params
     system_exit = system_exit
+    rocrate_readme_sync = rocrate_readme_sync
+
     template_strings = template_strings
     version_consistency = version_consistency
     included_configs = included_configs
@@ -157,6 +160,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "base_config",
             "modules_config",
             "nfcore_yml",
+            "rocrate_readme_sync",
         ] + (["version_consistency", "included_configs"] if release_mode else [])
 
     def _load(self) -> bool:
