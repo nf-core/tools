@@ -1780,7 +1780,7 @@ def get_shell_suggestions(ctx, param, incomplete):
 @click.argument("query", shell_complete=get_shell_suggestions)
 @click.option("-b", "--branch", type=str, help="Branch in the test-datasets repository to reduce search to")
 def command_test_dataset_search(ctx, query, branch):
-    test_datasets_search(query, query, branch)
+    test_datasets_search(ctx, query, branch)
 
 
 # nf-core test-dataset search
