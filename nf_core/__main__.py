@@ -1765,19 +1765,10 @@ def test_datasets(ctx):
     # by means other than the `if` block below)
     ctx.ensure_object(dict)
 
-# TODO: Move to utils
-def get_test_datasets():
-    return ["Foo", "bar", "bag", "baz",  "baaz"]
-
-# TODO: Move to utils
-def get_shell_suggestions(ctx, param, incomplete):
-    #return [sug for sug in get_test_datasets() if sug.lower().startswith(incomplete)]
-    return [sug for sug in get_test_datasets() if incomplete.lower() in sug.lower()]
-
 # nf-core test-dataset search
 @test_datasets.command("search")
 @click.pass_context
-@click.argument("query", shell_complete=get_shell_suggestions)
+@click.argument("query")
 @click.option("-b", "--branch", type=str, help="Branch in the test-datasets repository to reduce search to")
 def command_test_dataset_search(ctx, query, branch):
     test_datasets_search(ctx, query, branch)
