@@ -102,9 +102,7 @@ class PipelineCreateApp(App[utils.CreateConfig]):
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
-        self.theme = (
-                "textual-dark" if self.theme == "textual-light" else "textual-light"
-            )
+        self.theme: str = "textual-dark" if self.theme == "textual-light" else "textual-light"
 
     def action_toggle_all(self) -> None:
         """An action to toggle all Switches."""
