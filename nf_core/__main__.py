@@ -1782,9 +1782,16 @@ def test_datasets(ctx):
     type=str,
     help="Branch in the test-datasets repository to reduce search to"
 )
+@click.option(
+    "-i",
+    "--ignore-case",
+    is_flag=True,
+    default=False,
+    help="Ignore case in query and file trees."
+)
 @click.argument("query")
-def command_test_dataset_search(ctx, query, asynchronous, branch):
-    test_datasets_search(ctx, query, asynchronous, branch)
+def command_test_dataset_search(ctx, query, asynchronous, branch, ignore_case):
+    test_datasets_search(ctx, query, asynchronous, branch, ignore_case)
 
 
 # nf-core test-dataset search
