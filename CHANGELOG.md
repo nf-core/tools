@@ -42,6 +42,7 @@
 - chore(deps): update python:3.12-slim docker digest to aaa3f8c ([#3474](https://github.com/nf-core/tools/pull/3474))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.9 ([#3470](https://github.com/nf-core/tools/pull/3470))
 - chore(deps): update github actions ([#3488](https://github.com/nf-core/tools/pull/3488))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.11.0 ([#3492](https://github.com/nf-core/tools/pull/3492))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
