@@ -5,8 +5,8 @@ from textwrap import dedent
 
 import git
 import yaml
-from rich.text import Text
 from github import Github, GithubException, UnknownObjectException
+from rich.text import Text
 from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Center, Horizontal, Vertical
