@@ -56,7 +56,7 @@ class GithubRepo(Screen):
             yield TextInput(
                 "token",
                 "GitHub token",
-                "Your GitHub [link=https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens]personal access token[/link] for login.",
+                "Your GitHub personal access token for login.",
                 default=gh_token if gh_token is not None else "GitHub token",
                 password=True,
                 classes="column",
