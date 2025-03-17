@@ -105,9 +105,13 @@ def list_files_by_branch(branch, ignored_file_prefixes=[".", "CITATION", "LICENS
     #if gh_api.auth is None:
     #    log.error("Github Authentication Required to increase API quota")
 
-    branches = sorted(filter(lambda b: b == branch, get_remote_branches()))
-    if branch and len(branches) == 0:
-        log.error(f"No branches matching '{branch}'")
+    # Fetch list of branches frorm GitHub API
+    branches = get_remote_branches()
+
+    if branch:
+        branches = list(filter(lambda b: b == branch, branches))
+        if len(branches) == 0:
+            log.error(f"No branches matching '{branch}'")
 
     tree = dict()
     for b in branches:
