@@ -20,8 +20,12 @@ def test_datasets_list_remote(ctx, branch):
 
 
 def test_datasets_search(ctx, query, branch):
-    # TODO: fetch Branches
-    # TODO: fetch Trees for branches
-    # TODO: Search through trees
-    # TODO: Sort output by branch
-    pass
+    log.debug(f"test-datasets search query: {query}")
+    tree = list_files_by_branch(branch)
+    log.debug(f"Searching the tree of {len(tree.keys())} remote branches ...")
+
+    for b in tree.keys():
+        files = sorted(tree[b])
+        for f in files:
+            if query in f:
+                stdout.print(f"(Branch: {b}) {f}")
