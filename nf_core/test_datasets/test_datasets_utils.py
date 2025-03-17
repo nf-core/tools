@@ -10,7 +10,7 @@ from utils import gh_api
 log = logging.getLogger(__name__)
 
 @dataclass
-class GithubApiEndpoints():
+class GithubApiEndpoints:
     gh_api_base_url = "https://api.github.com"
     gh_orga: str = "nf-core"
     gh_repo: str = "test-datasets"
