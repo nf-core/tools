@@ -20,7 +20,7 @@ class GithubApiEndpoints():
         url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/branches?per_page={entries_per_page}"
         return url
 
-    def get_remote_tree_url_for_branch(self, branch, recursive=1):
+    def get_remote_tree_url_for_branch(self, branch):
         url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/git/trees/{branch}?recursive=1"
         return url
 
