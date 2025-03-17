@@ -15,7 +15,7 @@ class GithubApiEndpoints():
     gh_orga: str = "nf-core"
     gh_repo: str = "test-datasets"
 
-    def get_branch_list_url(self, entries_per_page=100):
+    def get_branch_list_url(self, entries_per_page=300):
         url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/branches?per_page={entries_per_page}"
         return url
 
@@ -106,6 +106,7 @@ def list_files_by_branch(branch, ignored_file_prefixes=[".", "CITATION", "LICENS
     #    log.error("Github Authentication Required to increase API quota")
 
     # Fetch list of branches frorm GitHub API
+    log.debug("Fetching list of remote branches")
     branches = get_remote_branches()
 
     if branch:
@@ -113,6 +114,7 @@ def list_files_by_branch(branch, ignored_file_prefixes=[".", "CITATION", "LICENS
         if len(branches) == 0:
             log.error(f"No branches matching '{branch}'")
 
+    log.debug("Fetching remote trees")
     tree = dict()
     for b in branches:
         tree[b] = get_remote_tree_for_branch(b, only_files=True, ignored_prefixes=ignored_file_prefixes)
