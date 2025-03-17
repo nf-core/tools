@@ -16,6 +16,7 @@ class GithubApiEndpoints():
     gh_repo: str = "test-datasets"
 
     def get_branch_list_url(self, entries_per_page=300):
+        # TODO: If more branches than entries_per_page exist, pagination must be dealt with!
         url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/branches?per_page={entries_per_page}"
         return url
 
