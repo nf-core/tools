@@ -44,7 +44,7 @@ def test_datasets_list_remote(ctx, asynchronous, branch):
     stdout.print(out)
 
 
-def test_datasets_search(ctx, query, asynchronous, branch):
+def test_datasets_search(ctx, query, asynchronous, branch, ignore_case):
     log.debug(f"test-datasets search query: {query}")
 
     if asynchronous:
@@ -57,7 +57,7 @@ def test_datasets_search(ctx, query, asynchronous, branch):
     for b in tree.keys():
         files = sorted(tree[b])
         for f in files:
-            if query in f:
+            if (ignore_case and query.lower() in f.lower()) or query in f:
                 out += f"(Branch: {b}) {f}" + os.linesep
 
     stdout.print(out)
