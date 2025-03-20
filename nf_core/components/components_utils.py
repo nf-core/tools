@@ -1,24 +1,25 @@
 import logging
-import os
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import questionary
 import requests
 import rich.prompt
-
-if TYPE_CHECKING:
-    from nf_core.modules.modules_repo import ModulesRepo
+import ruamel.yaml
 
 import nf_core.utils
+from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
-# Constants for the nf-core/modules repo used throughout the module files
-NF_CORE_MODULES_NAME = os.environ.get("NF_CORE_MODULES_NAME", "nf-core")
-NF_CORE_MODULES_REMOTE = os.environ.get("NF_CORE_MODULES_REMOTE", "https://github.com/nf-core/modules.git")
-NF_CORE_MODULES_DEFAULT_BRANCH = os.environ.get("NF_CORE_MODULES_DEFAULT_BRANCH", "master")
+# Set yaml options for meta.yml files
+ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = (
+    lambda x, y: True
+)  # Fix to not print aliases. https://stackoverflow.com/a/64717341
+yaml = ruamel.yaml.YAML()
+yaml.preserve_quotes = True
+yaml.indent(mapping=2, sequence=2, offset=0)
 
 
 def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[Path, Optional[str], str]:
@@ -144,12 +145,15 @@ def prompt_component_version_sha(
     return git_sha
 
 
-def get_components_to_install(subworkflow_dir: Union[str, Path]) -> Tuple[List[str], List[str]]:
+def get_components_to_install(
+    subworkflow_dir: Union[str, Path],
+) -> Tuple[List[Dict[str, str]], List[Dict[str, str]]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """
-    modules = []
-    subworkflows = []
+    modules: Dict[str, Dict[str, str]] = {}
+    subworkflows: Dict[str, Dict[str, str]] = {}
+
     with open(Path(subworkflow_dir, "main.nf")) as fh:
         for line in fh:
             regex = re.compile(
@@ -160,10 +164,38 @@ def get_components_to_install(subworkflow_dir: Union[str, Path]) -> Tuple[List[s
                 name, link = match.groups()
                 if link.startswith("../../../"):
                     name_split = name.lower().split("_")
-                    modules.append("/".join(name_split))
+                    component_name = "/".join(name_split)
+                    component_dict: Dict[str, str] = {
+                        "name": component_name,
+                    }
+                    modules[component_name] = component_dict
                 elif link.startswith("../"):
-                    subworkflows.append(name.lower())
-    return modules, subworkflows
+                    component_name = name.lower()
+                    component_dict = {"name": component_name}
+                    subworkflows[component_name] = component_dict
+
+    if (sw_meta := Path(subworkflow_dir, "meta.yml")).exists():
+        with open(sw_meta) as fh:
+            meta = yaml.load(fh)
+            if "components" in meta:
+                components = meta["components"]
+                for component in components:
+                    if isinstance(component, dict):
+                        component_name = list(component.keys())[0].lower()
+                        branch = component[component_name].get("branch")
+                        git_remote = component[component_name]["git_remote"]
+                        modules_repo = ModulesRepo(git_remote, branch=branch)
+                        current_comp_dict = subworkflows if component_name in subworkflows else modules
+
+                        component_dict = {
+                            "org_path": modules_repo.repo_path,
+                            "git_remote": git_remote,
+                            "branch": branch,
+                        }
+
+                        current_comp_dict[component_name].update(component_dict)
+
+    return list(modules.values()), list(subworkflows.values())
 
 
 def get_biotools_response(tool_name: str) -> Optional[Dict]:
