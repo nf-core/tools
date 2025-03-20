@@ -3,6 +3,7 @@
 import logging
 
 import click
+from rich.logging import RichHandler
 from textual.app import App
 from textual.widgets import Button, Switch
 
@@ -17,11 +18,10 @@ from nf_core.pipelines.create.loggingscreen import LoggingScreen
 from nf_core.pipelines.create.nfcorepipeline import NfcorePipeline
 from nf_core.pipelines.create.pipelinetype import ChoosePipelineType
 from nf_core.pipelines.create.welcome import WelcomeScreen
-from rich.logging import RichHandler
 
 logger = logging.getLogger(__name__)
 rich_log_handler = RichHandler(
-    console = utils.LoggingConsole(classes="log_console"),
+    console=utils.LoggingConsole(classes="log_console"),
     level=logging.INFO,
     rich_tracebacks=True,
     show_time=False,
