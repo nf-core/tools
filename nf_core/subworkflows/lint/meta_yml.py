@@ -113,9 +113,10 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
         included_components_ = nf_core.components.components_utils.get_components_to_install(subworkflow.component_dir)
         included_components = included_components_[0] + included_components_[1]
         # join included modules and included subworkflows in a single list
+        included_components_names = [component["name"] for component in included_components]
         if "components" in meta_yaml:
             meta_components = [x for x in meta_yaml["components"]]
-            for component in set(included_components):
+            for component in set(included_components_names):
                 if component in meta_components:
                     subworkflow.passed.append(
                         (
