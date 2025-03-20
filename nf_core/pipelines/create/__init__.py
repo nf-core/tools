@@ -17,21 +17,19 @@ from nf_core.pipelines.create.loggingscreen import LoggingScreen
 from nf_core.pipelines.create.nfcorepipeline import NfcorePipeline
 from nf_core.pipelines.create.pipelinetype import ChoosePipelineType
 from nf_core.pipelines.create.welcome import WelcomeScreen
+from rich.logging import RichHandler
 
-log_handler = utils.CustomLogHandler(
-    console=utils.LoggingConsole(classes="log_console"),
+logger = logging.getLogger(__name__)
+rich_log_handler = RichHandler(
+    console = utils.LoggingConsole(classes="log_console"),
+    level=logging.INFO,
     rich_tracebacks=True,
     show_time=False,
     show_path=False,
     markup=True,
     tracebacks_suppress=[click],
 )
-logging.basicConfig(
-    level="INFO",
-    handlers=[log_handler],
-    format="%(message)s",
-)
-log_handler.setLevel("INFO")
+logger.addHandler(rich_log_handler)
 
 
 class PipelineCreateApp(App[utils.CreateConfig]):
@@ -65,7 +63,7 @@ class PipelineCreateApp(App[utils.CreateConfig]):
     NFCORE_PIPELINE = True
 
     # Log handler
-    LOG_HANDLER = log_handler
+    LOG_HANDLER = rich_log_handler
     # Logging state
     LOGGING_STATE = None
 
