@@ -21,7 +21,7 @@ import nf_core.components
 import nf_core.components.nfcore_component
 import nf_core.modules.modules_utils
 import nf_core.utils
-from nf_core.components.components_utils import get_biotools_id, get_biotools_response
+from nf_core.components.components_utils import get_biotools_id, get_biotools_response, yaml
 from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.pipelines.lint_utils import console, run_prettier_on_file
@@ -293,12 +293,6 @@ class ModuleLint(ComponentLint):
         """
         meta_yml = self.read_meta_yml(mod)
         corrected_meta_yml = meta_yml.copy()
-        ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = (
-            lambda x, y: True
-        )  # Fix to not print aliases. https://stackoverflow.com/a/64717341
-        yaml = ruamel.yaml.YAML()
-        yaml.preserve_quotes = True
-        yaml.indent(mapping=2, sequence=2, offset=0)
 
         # Obtain inputs and outputs from main.nf and meta.yml
         # Used to compare only the structure of channels and elements
