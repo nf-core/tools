@@ -8,7 +8,7 @@ import questionary
 import yaml
 
 import nf_core.utils
-from nf_core.components.components_utils import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
+from nf_core.components.constants import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
 from nf_core.modules.install import ModuleInstall
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.patch import ModulePatch

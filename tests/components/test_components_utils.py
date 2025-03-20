@@ -70,12 +70,12 @@ class TestTestComponentsUtils(TestComponents):
 
         try:
             with mock.patch.dict(os.environ, mock_env):
-                importlib.reload(nf_core.components.components_utils)
-                assert nf_core.components.components_utils.NF_CORE_MODULES_NAME == mock_env["NF_CORE_MODULES_NAME"]
-                assert nf_core.components.components_utils.NF_CORE_MODULES_REMOTE == mock_env["NF_CORE_MODULES_REMOTE"]
+                importlib.reload(nf_core.components.constants)
+                assert nf_core.components.constants.NF_CORE_MODULES_NAME == mock_env["NF_CORE_MODULES_NAME"]
+                assert nf_core.components.constants.NF_CORE_MODULES_REMOTE == mock_env["NF_CORE_MODULES_REMOTE"]
                 assert (
-                    nf_core.components.components_utils.NF_CORE_MODULES_DEFAULT_BRANCH
+                    nf_core.components.constants.NF_CORE_MODULES_DEFAULT_BRANCH
                     == mock_env["NF_CORE_MODULES_DEFAULT_BRANCH"]
                 )
         finally:
-            importlib.reload(nf_core.components.components_utils)
+            importlib.reload(nf_core.components.constants)

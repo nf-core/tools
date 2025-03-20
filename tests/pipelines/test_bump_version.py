@@ -1,5 +1,7 @@
 """Some tests covering the bump_version code."""
 
+import logging
+
 import yaml
 
 import nf_core.pipelines.bump_version
@@ -66,3 +68,39 @@ class TestBumpVersion(TestPipelines):
             f"[![Nextflow](https://img.shields.io/badge/version-%E2%89%A5{version}-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)]"
             "(https://www.nextflow.io/)" in readme
         )
+
+    def test_bump_pipeline_version_in_snapshot(self):
+        """Test that bump version also updates versions in the snapshot."""
+
+        # Create dummy snapshot
+        snapshot_dir = self.pipeline_dir / "tests" / "pipeline"
+
+        snapshot_dir.mkdir(parents=True, exist_ok=True)
+        snapshot_fn = snapshot_dir / "main.nf.test.snap"
+        snapshot_fn.touch()
+        # write version number in snapshot
+        with open(snapshot_fn, "w") as fh:
+            fh.write("nf-core/testpipeline=1.0.0dev")
+
+        # Bump the version number
+        nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
+
+        # Check the snapshot
+        with open(snapshot_fn) as fh:
+            assert fh.read().strip() == "nf-core/testpipeline=1.1.0"
+
+    def test_bump_pipeline_version_in_snapshot_no_version(self):
+        """Test that bump version does not update versions in the snapshot if no version is given."""
+
+        # Create dummy snapshot
+        snapshot_dir = self.pipeline_dir / "tests" / "pipeline"
+
+        snapshot_dir.mkdir(parents=True, exist_ok=True)
+        snapshot_fn = snapshot_dir / "main2.nf.test.snap"
+        snapshot_fn.touch()
+        with open(snapshot_fn, "w") as fh:
+            fh.write("test")
+        # assert log info message
+        self.caplog.set_level(logging.INFO)
+        nf_core.pipelines.bump_version.bump_pipeline_version(self.pipeline_obj, "1.1.0")
+        assert "Could not find version number in " in self.caplog.text
