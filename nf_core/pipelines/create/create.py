@@ -491,7 +491,10 @@ class PipelineCreate:
                         "Branches 'TEMPLATE' and 'dev' already exist. Use --force to overwrite existing branches."
                     )
         if self.is_interactive:
-            log.info(f"Pipeline created: ./{self.outdir.relative_to(Path.cwd())}")
+            try:
+                log.info(f"Pipeline created: ./{self.outdir.relative_to(Path.cwd())}")
+            except ValueError:
+                log.info(f"Pipeline created: {self.outdir}")
         else:
             log.info(
                 "Done. Remember to add a remote and push to GitHub:\n"
