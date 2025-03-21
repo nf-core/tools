@@ -6,7 +6,6 @@ import rich
 from nf_core.test_datasets.test_datasets_utils import (
     get_remote_branches,
     list_files_by_branch,
-    list_files_by_branch_async,
 )
 from nf_core.utils import rich_force_colors
 
@@ -23,7 +22,7 @@ def test_datasets_list_branches(ctx):
     stdout.print(out)
 
 
-def test_datasets_list_remote(ctx, asynchronous, branch):
+def test_datasets_list_remote(ctx, branch):
 
     tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
 
@@ -36,13 +35,10 @@ def test_datasets_list_remote(ctx, asynchronous, branch):
     stdout.print(out)
 
 
-def test_datasets_search(ctx, query, asynchronous, branch, ignore_case):
+def test_datasets_search(ctx, query, branch, ignore_case):
     log.debug(f"test-datasets search query: {query}")
 
-    if asynchronous:
-        tree = list_files_by_branch_async(branch, IGNORED_FILE_PREFIXES)
-    else:
-        tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
+    tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
     log.debug(f"Searching the tree of {len(tree.keys())} remote branches ...")
 
     out = ""

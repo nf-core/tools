@@ -1770,13 +1770,6 @@ def test_datasets(ctx):
 @test_datasets.command("search")
 @click.pass_context
 @click.option(
-    "-a",
-    "--asynchronous",
-    is_flag=True,
-    default=False,
-    help="Make asynchronous requests. Recommended only if connection to Github API is slow."
-)
-@click.option(
     "-b",
     "--branch",
     type=str,
@@ -1790,11 +1783,11 @@ def test_datasets(ctx):
     help="Ignore case in query and file trees."
 )
 @click.argument("query")
-def command_test_dataset_search(ctx, query, asynchronous, branch, ignore_case):
+def command_test_dataset_search(ctx, query, branch, ignore_case):
     """
     Search for files in the nf-core/test-datasets repository on github
     """
-    test_datasets_search(ctx, query, asynchronous, branch, ignore_case)
+    test_datasets_search(ctx, query, branch, ignore_case)
 
 
 # nf-core test-dataset search
