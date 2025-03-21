@@ -2,12 +2,13 @@ import logging
 import os
 
 import rich
+import questionary
 
 from nf_core.test_datasets.test_datasets_utils import (
     get_remote_branches,
     list_files_by_branch,
 )
-from nf_core.utils import rich_force_colors
+from nf_core.utils import rich_force_colors, nfcore_question_style
 
 log = logging.getLogger(__name__)
 stdout = rich.console.Console(force_terminal=rich_force_colors())
@@ -35,17 +36,17 @@ def test_datasets_list_remote(ctx, branch):
     stdout.print(out)
 
 
-def test_datasets_search(ctx, query, branch, ignore_case):
-    log.debug(f"test-datasets search query: {query}")
-
+def test_datasets_search(ctx, branch):
+    stdout.print("Searching files on branch: ", branch)
     tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
-    log.debug(f"Searching the tree of {len(tree.keys())} remote branches ...")
+    files = []
+    for k,v  in tree.items():
+        files += v
 
-    out = ""
-    for b in tree.keys():
-        files = sorted(tree[b])
-        for f in files:
-            if (ignore_case and query.lower() in f.lower()) or query in f:
-                out += f"(Branch: {b}) {f}" + os.linesep
-
-    stdout.print(out)
+    file = questionary.autocomplete(
+        "Query:",
+        choices=files,
+        style=nfcore_question_style,
+    ).unsafe_ask()
+    
+    stdout.print(file)
