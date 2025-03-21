@@ -12,8 +12,8 @@ inputs:
     required: false
 outputs:
   shard:
-    description: "Array of shard numbers"
-    value: {% raw %}${{ steps.shards.outputs.shard }}
+    description: "Array of shard numbers{% raw %}"
+    value: ${{ steps.shards.outputs.shard }}
   total_shards:
     description: "Total number of shards"
     value: ${{ steps.shards.outputs.total_shards }}

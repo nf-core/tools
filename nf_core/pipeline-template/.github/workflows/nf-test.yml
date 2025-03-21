@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
     inputs:
       runners:
-        description: "Runners to test on"
+        description: "Runners to test on{% raw %}"
         type: choice
         options:
           - "ubuntu-latest"
@@ -28,7 +28,7 @@ on:
 
 # Cancel if a newer run is started
 concurrency:
-  group: {% raw %}${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
