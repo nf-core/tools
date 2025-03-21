@@ -43,17 +43,23 @@ def test_datasets_search(ctx, branch, generate_nf_path):
     for k,v  in tree.items():
         files += v
 
-    file = questionary.autocomplete(
-        "Query:",
-        choices=files,
-        style=nfcore_question_style,
-    ).unsafe_ask()
-    
+    file_selected = False
+    while not file_selected:
+        selection = questionary.autocomplete(
+            "File:",
+            choices=files,
+            style=nfcore_question_style,
+        ).unsafe_ask()
+
+        file_selected = any([selection == file for file in files])
+        if not file_selected:
+            stdout.print("Please select a file.")
+
     if generate_nf_path:
         out = "params." 
         out += "modules_" if branch == "modules" else "pipelines_"
-        out += f"testdata_base_path + \"{file}\""
+        out += f"testdata_base_path + \"{selection}\""
         out = f"file({out}, checkIfExists: true)"
         stdout.print(out)
     else:
-        stdout.print(file)
+        stdout.print(selection)
