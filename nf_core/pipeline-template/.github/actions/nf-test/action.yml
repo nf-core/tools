@@ -22,7 +22,7 @@ runs:
     - name: Setup Nextflow
       uses: nf-core/setup-nextflow@v2
       with:
-        version: "${{ env.NXF_VERSION }}"
+        version: "{% raw %}${{ env.NXF_VERSION }}"
 
     - name: Set up Python
       uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
@@ -114,4 +114,4 @@ runs:
       if: always()
       shell: bash
       run: |
-        sudo rm -rf /home/ubuntu/tests/
+        sudo rm -rf /home/ubuntu/tests/{% endraw %}

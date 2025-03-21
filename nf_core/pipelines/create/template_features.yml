@@ -435,6 +435,9 @@ nf-test:
     - ".github/actions/get-shards/action.yml"
     - ".github/actions/nf-test/action.yml"
     - "nf-test.config"
+    - "tests/default.nf.test"
+    - "tests/.nftignore"
+    - "tests/nextflow.config"
   short_description: "Add pipeline testing"
   description: "Add pipeline testing using nf-test"
   help_text: |

@@ -13,7 +13,7 @@ inputs:
 outputs:
   shard:
     description: "Array of shard numbers"
-    value: ${{ steps.shards.outputs.shard }}
+    value: {% raw %}${{ steps.shards.outputs.shard }}
   total_shards:
     description: "Total number of shards"
     value: ${{ steps.shards.outputs.total_shards }}
@@ -66,4 +66,4 @@ runs:
 
         # Debugging output
         echo "Final shard array: $shard"
-        echo "Total number of shards: $total_shards"
+        echo "Total number of shards: $total_shards"{% endraw %}
