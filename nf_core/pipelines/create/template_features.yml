@@ -444,7 +444,7 @@ nf-test:
     On top of that, it will also add the Continuous Integration (CI) GitHub actions to run these tests.
 
     If you skip this feature, you will still be able to test your pipeline with a `test` profile by running the pipeline.
-    But you won't have the automated CI testing. 
+    But you won't have the automated CI testing.
     You can add CI by yourself.
   linting:
     files_exist:
