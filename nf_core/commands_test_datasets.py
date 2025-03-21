@@ -36,7 +36,7 @@ def test_datasets_list_remote(ctx, branch):
     stdout.print(out)
 
 
-def test_datasets_search(ctx, branch):
+def test_datasets_search(ctx, branch, generate_nf_path):
     stdout.print("Searching files on branch: ", branch)
     tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
     files = []
@@ -49,4 +49,11 @@ def test_datasets_search(ctx, branch):
         style=nfcore_question_style,
     ).unsafe_ask()
     
-    stdout.print(file)
+    if generate_nf_path:
+        out = "params." 
+        out += "modules_" if branch == "modules" else "pipelines_"
+        out += f"testdata_base_path + \"{file}\""
+        out = f"file({out}, checkIfExists: true)"
+        stdout.print(out)
+    else:
+        stdout.print(file)

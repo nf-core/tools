@@ -1776,11 +1776,18 @@ def test_datasets(ctx):
     type=str,
     help="Branch in the test-datasets repository to reduce search to"
 )
-def command_test_dataset_search(ctx, branch):
+@click.option(
+    "-g",
+    "--generate-nf-path",
+    is_flag=True,
+    default=False,
+    help="Auto-generate a file path for use in nextflow code based on the branch and query result"
+)
+def command_test_dataset_search(ctx, branch, generate_nf_path):
     """
     Search for files in the nf-core/test-datasets repository on github
     """
-    test_datasets_search(ctx, branch)
+    test_datasets_search(ctx, branch, generate_nf_path)
 
 
 # nf-core test-dataset search
