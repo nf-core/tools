@@ -20,9 +20,9 @@ class GithubApiEndpoints:
         if entries_per_page > max_entries_per_page:
             log.warning(f"Github API will only return {max_entries_per_page} branches at a time, but {entries_per_page} were requested")
 
-        if not isinstance(page, int) or page < 0: 
+        if not isinstance(page, int) or page < 1: 
             log.error(f"Github API get parameter page must be a positive int")
-            page = 0
+            page = 1
 
         url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/branches?per_page={entries_per_page}&page={int(page)}"
         return url
@@ -63,16 +63,24 @@ def get_remote_branches():
     """
     try:
         gh_api_urls = GithubApiEndpoints(gh_repo="test-datasets")
-        response = gh_api.get(gh_api_urls.get_branch_list_url())
-        # TODO: If more branches than entries_per_page exist, pagination must be dealt with!
+        gh_api_page = 1  # pages use 1-based indexing
+        branches = []
 
+        # Iteratively load paginated content until empty json is returned
+        while True:
+            response = gh_api.get(gh_api_urls.get_branch_list_url(page=gh_api_page))
+            resp_json = response.json()
 
-        if not response.ok:
-            log.error(f"HTTP status code {response.status_code} received while fetching the list of branches at url: {response.url}")
-            return []
+            if not response.ok:
+                log.error(f"HTTP status code {response.status_code} received while fetching the list of branches at url: {response.url}")
+                return []            
 
-        resp_json = json.loads(response.text)
-        branches = [b["name"] for b in resp_json]
+            if not len(resp_json):
+                break
+
+            else:
+                gh_api_page += 1
+                branches += [b["name"] for b in resp_json]
 
     except requests.exceptions.RequestException as e:
         log.error("Error while handling request to url {gh_api_url}", e)
@@ -80,7 +88,7 @@ def get_remote_branches():
         log.error("Error parsing the list of branches received from Github API", e)
     except json.decoder.JSONDecodeError as e:
         log.error("Error parsing the list of branches received from Github API at url {response.url} as json",  e)
-
+    
     return branches
 
 
