@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 import aiohttp
 import requests
-from utils import gh_api
+from nf_core.utils import gh_api
 
 log = logging.getLogger(__name__)
 
