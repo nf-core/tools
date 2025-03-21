@@ -454,6 +454,8 @@ nf-test:
       - ".github/workflows/nf-test.yml"
       - ".github/actions/get-shards/action.yml"
       - ".github/actions/nf-test/action.yml"
+      - "nf-test.config"
+      - "tests/default.nf.test"
   nfcore_pipelines: False
   custom_pipelines: True
 seqera_platform:

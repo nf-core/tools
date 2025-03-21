@@ -55,7 +55,9 @@ def files_exist(self) -> Dict[str, List[str]]:
         docs/usage.md
         nextflow_schema.json
         nextflow.config
+        nf-test.config
         README.md
+        tests/default.nf.test
 
     Files that *should* be present:
 
@@ -163,6 +165,8 @@ def files_exist(self) -> Dict[str, List[str]]:
         [Path("docs", "README.md")],
         [Path("docs", "README.md")],
         [Path("docs", "usage.md")],
+        [Path("nf-test.config")],
+        [Path("tests", "default.nf.test")],
     ]
 
     files_warn = [
