@@ -429,6 +429,30 @@ test_config:
       - ".github/PULL_REQUEST_TEMPLATE.md"
   nfcore_pipelines: False
   custom_pipelines: True
+nf-test:
+  skippable_paths:
+    - ".github/workflows/nf-test.yml"
+    - ".github/actions/get-shards/action.yml"
+    - ".github/actions/nf-test/action.yml"
+    - "nf-test.config"
+  short_description: "Add pipeline testing"
+  description: "Add pipeline testing using nf-test"
+  help_text: |
+    This will add pipeline testing with [nf-test](https://www.nf-test.com/).
+
+    Will add and `nf-test.config` file setting up the appropriate configuration to test your pipeline.
+    On top of that, it will also add the Continuous Integration (CI) GitHub actions to run these tests.
+
+    If you skip this feature, you will still be able to test your pipeline with a `test` profile by running the pipeline.
+    But you won't have the automated CI testing. 
+    You can add CI by yourself.
+  linting:
+    files_exist:
+      - ".github/workflows/nf-test.yml"
+      - ".github/actions/get-shards/action.yml"
+      - ".github/actions/nf-test/action.yml"
+  nfcore_pipelines: False
+  custom_pipelines: True
 seqera_platform:
   skippable_paths:
     - "tower.yml"
