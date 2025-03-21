@@ -15,8 +15,11 @@ class GithubApiEndpoints:
     gh_orga: str = "nf-core"
     gh_repo: str = "test-datasets"
 
-    def get_branch_list_url(self, entries_per_page=300):
-        # TODO: If more branches than entries_per_page exist, pagination must be dealt with!
+    def get_branch_list_url(self, entries_per_page=100):
+        max_entries_per_page = 100
+        if entries_per_page > max_entries_per_page:
+            log.warning(f"Github API will only return {max_entries_per_page} branches at a time, but {entries_per_page} were requested")
+
         url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/branches?per_page={entries_per_page}"
         return url
 
@@ -57,6 +60,8 @@ def get_remote_branches():
     try:
         gh_api_urls = GithubApiEndpoints(gh_repo="test-datasets")
         response = gh_api.get(gh_api_urls.get_branch_list_url())
+        # TODO: If more branches than entries_per_page exist, pagination must be dealt with!
+
 
         if not response.ok:
             log.error(f"HTTP status code {response.status_code} received while fetching the list of branches at url: {response.url}")
