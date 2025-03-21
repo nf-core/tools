@@ -15,12 +15,16 @@ class GithubApiEndpoints:
     gh_orga: str = "nf-core"
     gh_repo: str = "test-datasets"
 
-    def get_branch_list_url(self, entries_per_page=100):
+    def get_branch_list_url(self, page=1, entries_per_page=100):
         max_entries_per_page = 100
         if entries_per_page > max_entries_per_page:
             log.warning(f"Github API will only return {max_entries_per_page} branches at a time, but {entries_per_page} were requested")
 
-        url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/branches?per_page={entries_per_page}"
+        if not isinstance(page, int) or page < 0: 
+            log.error(f"Github API get parameter page must be a positive int")
+            page = 0
+
+        url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/branches?per_page={entries_per_page}&page={int(page)}"
         return url
 
     def get_remote_tree_url_for_branch(self, branch):
