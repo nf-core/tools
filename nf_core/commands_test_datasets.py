@@ -25,13 +25,7 @@ def test_datasets_list_branches(ctx):
 
 def test_datasets_list_remote(ctx, asynchronous, branch):
 
-    if ctx.obj["verbose"] and not asynchronous and not branch:
-        log.warning("Using nf-core test-datasets with verbose (-v) flag and without asynchronous mode (--asynchronous) can drasticly reduce performance.")
-
-    if asynchronous:
-        tree = list_files_by_branch_async(branch, IGNORED_FILE_PREFIXES)
-    else:
-        tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
+    tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
 
     out = ""
     for b in tree.keys():

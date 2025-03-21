@@ -1801,23 +1801,17 @@ def command_test_dataset_search(ctx, query, asynchronous, branch, ignore_case):
 @test_datasets.command("list")
 @click.pass_context
 @click.option(
-    "-a",
-    "--asynchronous",
-    is_flag=True,
-    default=False,
-    help="Make asynchronous requests. Recommended only if connection to Github API is slow."
-)
-@click.option(
     "-b",
     "--branch",
+    required=True,
     type=str,
     help="Branch in the test-datasets repository to reduce search to"
 )
-def command_test_dataset_list_remote(ctx, asynchronous, branch):
+def command_test_dataset_list_remote(ctx, branch):
     """
     List all data files available in the nf-core/test-datasets repository on github
     """
-    test_datasets_list_remote(ctx, asynchronous, branch)
+    test_datasets_list_remote(ctx, branch)
 
 
 # nf-core test-datasets list-branches
