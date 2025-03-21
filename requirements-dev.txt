@@ -16,7 +16,7 @@ types-requests
 types-setuptools
 typing_extensions >=4.0.0
 pytest-asyncio
-pytest-textual-snapshot==1.0.0
+pytest-textual-snapshot==1.1.0
 pytest-workflow>=2.0.0
 pytest>=8.0.0
 ruff
