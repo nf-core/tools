@@ -1772,22 +1772,15 @@ def test_datasets(ctx):
 @click.option(
     "-b",
     "--branch",
+    default="modules",
     type=str,
     help="Branch in the test-datasets repository to reduce search to"
 )
-@click.option(
-    "-i",
-    "--ignore-case",
-    is_flag=True,
-    default=False,
-    help="Ignore case in query and file trees."
-)
-@click.argument("query")
-def command_test_dataset_search(ctx, query, branch, ignore_case):
+def command_test_dataset_search(ctx, branch):
     """
     Search for files in the nf-core/test-datasets repository on github
     """
-    test_datasets_search(ctx, query, branch, ignore_case)
+    test_datasets_search(ctx, branch)
 
 
 # nf-core test-dataset search
@@ -1796,7 +1789,7 @@ def command_test_dataset_search(ctx, query, branch, ignore_case):
 @click.option(
     "-b",
     "--branch",
-    required=True,
+    default="modules",
     type=str,
     help="Branch in the test-datasets repository to reduce search to"
 )
