@@ -7,7 +7,7 @@
 - Remove the on `pull_request_target` trigger and `pull_request` types from the download test. Also drop `push` triggers on other CI tests. ([#3399](https://github.com/nf-core/tools/pull/3399))
 - Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
 - Add Bluesky badge to readme ([#3475](https://github.com/nf-core/tools/pull/3475))
-- Run awsfulltest after release, and with dev revision on PRs to master ([#3485](https://github.com/nf-core/tools/pull/3485))
+- Run awsfulltest after release, and with dev revision on PRs to master ([#3485](https://github.com/nf-core/tools/pull/3485))‚
 
 ### Linting
 
@@ -16,6 +16,8 @@
 - Fix: linting with comments after the input directive ([#3458](https://github.com/nf-core/tools/pull/3458))
 - EDAM ontology fixes ([#3460](https://github.com/nf-core/tools/pull/3460))
 - Fix default linting of nf-core components when `nf-core pipelines lint` is ran ([#3480](https://github.com/nf-core/tools/pull/3480))
+- Fix the unexpected warning and sychronize the README.md and RO-crate-metadata.json
+  ([#3493](https://github.com/nf-core/tools/pull/3493))
 
 ### Modules
 

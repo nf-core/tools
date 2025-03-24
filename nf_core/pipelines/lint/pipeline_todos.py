@@ -40,7 +40,7 @@ def pipeline_todos(self, root_dir=None):
         root_dir = self.wf_path
 
     # Ignore ro-crate-metadata.json to avoid warnings when TODOs are not deleted.
-    ignore = [".git", "ro-crate-metadata.json"]   
+    ignore = [".git", "ro-crate-metadata.json"]
     if Path(root_dir, ".gitignore").is_file():
         with open(Path(root_dir, ".gitignore"), encoding="latin1") as fh:
             for line in fh:

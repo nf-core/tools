@@ -50,13 +50,13 @@ from .pipeline_name_conventions import pipeline_name_conventions
 from .pipeline_todos import pipeline_todos
 from .plugin_includes import plugin_includes
 from .readme import readme
+from .rocrate_readme_sync import rocrate_readme_sync
 from .schema_description import schema_description
 from .schema_lint import schema_lint
 from .schema_params import schema_params
 from .system_exit import system_exit
 from .template_strings import template_strings
 from .version_consistency import version_consistency
-from .rocrate_readme_sync import rocrate_readme_sync
 
 log = logging.getLogger(__name__)
 
