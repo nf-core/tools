@@ -50,6 +50,7 @@
 - chore(deps): update dependency textual to v2 ([#3471](https://github.com/nf-core/tools/pull/3471))
 - Install subworkflows with modules from different remotes ([#3083](https://github.com/nf-core/tools/pull/3083))
 - chore(deps): update github actions ([#3498](https://github.com/nf-core/tools/pull/3498))
+- Ontology fix comment yaml ([#3502](https://github.com/nf-core/tools/pull/3502))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
