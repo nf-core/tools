@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import pytest
 from git.repo import Repo
 
 from .utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
@@ -30,22 +31,8 @@ class TestComponents(unittest.TestCase):
 
         # Clean up temporary files
         if self.tmp_dir.is_dir():
-            shutil.rmtree(self.tmp_dir)
+            shutil.rmtree(self.tmp_dir, ignore_errors=True)
 
-    ############################################
-    # Test of the individual components commands. #
-    ############################################
-
-    from .components.generate_snapshot import (  # type: ignore[misc]
-        test_generate_snapshot_module,
-        test_generate_snapshot_once,
-        test_generate_snapshot_subworkflow,
-        test_test_not_found,
-        test_unstable_snapshot,
-        test_update_snapshot_module,
-    )
-    from .components.snapshot_test import (  # type: ignore[misc]
-        test_components_test_check_inputs,
-        test_components_test_no_installed_modules,
-        test_components_test_no_name_no_prompts,
-    )
+    @pytest.fixture(autouse=True)
+    def _use_caplog(self, caplog):
+        self.caplog = caplog

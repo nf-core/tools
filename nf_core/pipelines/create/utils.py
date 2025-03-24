@@ -1,15 +1,12 @@
 import re
 from contextlib import contextmanager
 from contextvars import ContextVar
-from logging import LogRecord
 from pathlib import Path
 from typing import Any, Dict, Iterator, Union
 
 import yaml
 from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
-from rich.logging import RichHandler
 from textual import on
-from textual._context import active_app
 from textual.app import ComposeResult
 from textual.containers import Grid, HorizontalScroll
 from textual.message import Message
@@ -217,19 +214,6 @@ class LoggingConsole(RichLog):
 
     def print(self, content):
         self.write(content)
-
-
-class CustomLogHandler(RichHandler):
-    """A Logging handler which extends RichHandler to write to a Widget and handle a Textual App."""
-
-    def emit(self, record: LogRecord) -> None:
-        """Invoked by logging."""
-        try:
-            _app = active_app.get()
-        except LookupError:
-            pass
-        else:
-            super().emit(record)
 
 
 class ShowLogs(Message):

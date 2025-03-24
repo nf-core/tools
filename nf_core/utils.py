@@ -1210,7 +1210,7 @@ class NFCoreYamlLintConfig(BaseModel):
     """ Lint the README.md file """
     nfcore_components: Optional[bool] = None
     """ Lint all required files to use nf-core modules and subworkflows """
-    actions_ci: Optional[bool] = None
+    actions_nf_test: Optional[bool] = None
     """ Lint all required files to use GitHub Actions CI """
     actions_awstest: Optional[bool] = None
     """ Lint all required files to run tests on AWS """
@@ -1218,6 +1218,8 @@ class NFCoreYamlLintConfig(BaseModel):
     """ Lint all required files to run full tests on AWS """
     pipeline_todos: Optional[bool] = None
     """ Lint for TODOs statements"""
+    pipeline_if_empty_null: Optional[bool] = None
+    """ Lint for ifEmpty(null) statements"""
     plugin_includes: Optional[bool] = None
     """ Lint for nextflow plugin """
     pipeline_name_conventions: Optional[bool] = None

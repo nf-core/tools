@@ -52,7 +52,9 @@ ci:
   linting:
     files_exist:
       - ".github/workflows/branch.yml"
-      - ".github/workflows/ci.yml"
+      - ".github/workflows/nf-test.yml"
+      - ".github/actions/get-shards/action.yml"
+      - ".github/actions/nf-test/action.yml"
       - ".github/workflows/linting_comment.yml"
       - ".github/workflows/linting.yml"
   nfcore_pipelines: False
@@ -89,6 +91,7 @@ github_badges:
     * AWS CI Tests
     * Zenodo DOI
     * Nextflow
+    * nf-core template version
     * Conda
     * Docker
     * Singularity
@@ -96,6 +99,7 @@ github_badges:
   linting:
     readme:
       - "nextflow_badge"
+      - "nfcore_template_badge"
   nfcore_pipelines: False
   custom_pipelines: True
 nf_core_configs:
@@ -165,7 +169,6 @@ is_nfcore:
   custom_pipelines: False
 code_linters:
   skippable_paths:
-    - ".editorconfig"
     - ".pre-commit-config.yaml"
     - ".prettierignore"
     - ".prettierrc.yml"
@@ -178,11 +181,9 @@ code_linters:
     The available code linters are:
 
     - pre-commit (https://pre-commit.com/): used to run all code-linters on every PR and on ever commit if you run `pre-commit install` to install it in your local repository.
-    - editor-config (https://github.com/editorconfig-checker/editorconfig-checker): checks rules such as indentation or trailing spaces.
     - prettier (https://github.com/prettier/prettier): enforces a consistent style (indentation, quoting, line length, etc).
   linting:
     files_exist:
-      - ".editorconfig"
       - ".prettierignore"
       - ".prettierrc.yml"
   nfcore_pipelines: False
@@ -402,7 +403,9 @@ test_config:
     - "conf/test_full.config"
     - ".github/workflows/awsfulltest.yml"
     - ".github/workflows/awstest.yml"
-    - ".github/workflows/ci.yml"
+    - ".github/workflows/nf-test.yml"
+    - ".github/actions/get-shards/action.yml"
+    - ".github/actions/nf-test/action.yml"
   short_description: "Add testing profiles"
   description: "Add two default testing profiles"
   help_text: |
@@ -417,11 +420,42 @@ test_config:
     files_exist:
       - "conf/test.config"
       - "conf/test_full.config"
-      - ".github/workflows/ci.yml"
+      - ".github/workflows/nf-test.yml"
+      - ".github/actions/get-shards/action.yml"
+      - ".github/actions/nf-test/action.yml"
     nextflow_config: False
     files_unchanged:
       - ".github/CONTRIBUTING.md"
       - ".github/PULL_REQUEST_TEMPLATE.md"
+  nfcore_pipelines: False
+  custom_pipelines: True
+nf-test:
+  skippable_paths:
+    - ".github/workflows/nf-test.yml"
+    - ".github/actions/get-shards/action.yml"
+    - ".github/actions/nf-test/action.yml"
+    - "nf-test.config"
+    - "tests/default.nf.test"
+    - "tests/.nftignore"
+    - "tests/nextflow.config"
+  short_description: "Add pipeline testing"
+  description: "Add pipeline testing using nf-test"
+  help_text: |
+    This will add pipeline testing with [nf-test](https://www.nf-test.com/).
+
+    Will add and `nf-test.config` file setting up the appropriate configuration to test your pipeline.
+    On top of that, it will also add the Continuous Integration (CI) GitHub actions to run these tests.
+
+    If you skip this feature, you will still be able to test your pipeline with a `test` profile by running the pipeline.
+    But you won't have the automated CI testing.
+    You can add CI by yourself.
+  linting:
+    files_exist:
+      - ".github/workflows/nf-test.yml"
+      - ".github/actions/get-shards/action.yml"
+      - ".github/actions/nf-test/action.yml"
+      - "nf-test.config"
+      - "tests/default.nf.test"
   nfcore_pipelines: False
   custom_pipelines: True
 seqera_platform:
