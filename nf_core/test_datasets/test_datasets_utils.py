@@ -26,6 +26,10 @@ class GithubApiEndpoints:
         url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/git/trees/{branch}?recursive=1"
         return url
 
+    def get_file_download_url(self, branch, path):
+        url = f"https://raw.githubusercontent.com/{self.gh_orga}/{self.gh_repo}/refs/heads/{branch}/{path}"
+        return url
+
 
 def get_remote_branch_names():
     """
@@ -137,3 +141,11 @@ def create_pretty_nf_path(path, is_module_dataset):
     out += "modules_" if is_module_dataset else "pipelines_"
     out += f'testdata_base_path + "{path}"'
     return out
+
+
+def create_download_url(branch, path):
+    """
+    Generate a github API download url for the given path and branch
+    """
+    gh_api_url = GithubApiEndpoints(gh_repo="test-datasets")
+    return gh_api_url.get_file_download_url(branch, path)

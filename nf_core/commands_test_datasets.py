@@ -6,6 +6,7 @@ import rich
 
 from nf_core.test_datasets.test_datasets_utils import (
     MODULES_BRANCH_NAME,
+    create_download_url,
     create_pretty_nf_path,
     get_remote_branch_names,
     list_files_by_branch,
@@ -31,7 +32,7 @@ def test_datasets_list_branches(ctx):
     stdout.print(out)
 
 
-def test_datasets_list_remote(ctx, branch, generate_nf_path):
+def test_datasets_list_remote(ctx, branch, generate_nf_path, generate_dl_url):
     tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
     num_branches = len(tree.keys())
 
@@ -42,13 +43,15 @@ def test_datasets_list_remote(ctx, branch, generate_nf_path):
         for f in files:
             if generate_nf_path:
                 out += branch_info + create_pretty_nf_path(f, branch == MODULES_BRANCH_NAME) + os.linesep
+            elif generate_dl_url:
+                out += branch_info + create_download_url(branch, f) + os.linesep
             else:
                 out += branch_info + f + os.linesep
 
     stdout.print(out)
 
 
-def test_datasets_search(ctx, branch, generate_nf_path):
+def test_datasets_search(ctx, branch, generate_nf_path, generate_dl_url):
     stdout.print("Searching files on branch: ", branch)
     tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
     files = sum(tree.values(), [])  # flat representation of tree
@@ -67,5 +70,7 @@ def test_datasets_search(ctx, branch, generate_nf_path):
 
     if generate_nf_path:
         stdout.print(create_pretty_nf_path(selection, branch == MODULES_BRANCH_NAME))
+    elif generate_dl_url:
+        stdout.print(create_download_url(branch, selection))
     else:
         stdout.print(selection)

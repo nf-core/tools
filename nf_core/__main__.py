@@ -1774,11 +1774,18 @@ def test_datasets(ctx):
     default=False,
     help="Auto-generate a file path for use in nextflow code based on the branch and query result",
 )
-def command_test_dataset_search(ctx, branch, generate_nf_path):
+@click.option(
+    "-u",
+    "--generate-url",
+    is_flag=True,
+    default=False,
+    help="Auto-generate a github url for downloading the test data file based on the branch and query result",
+)
+def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url):
     """
     Search for files in the nf-core/test-datasets repository on github
     """
-    test_datasets_search(ctx, branch, generate_nf_path)
+    test_datasets_search(ctx, branch, generate_nf_path, generate_dl_url)
 
 
 # nf-core test-dataset search
@@ -1794,11 +1801,18 @@ def command_test_dataset_search(ctx, branch, generate_nf_path):
     default=False,
     help="Auto-generate a file path for use in nextflow code based on the branch and query result",
 )
-def command_test_dataset_list_remote(ctx, branch, generate_nf_path):
+@click.option(
+    "-u",
+    "--generate-url",
+    is_flag=True,
+    default=False,
+    help="Auto-generate a github url for downloading the test data file based on the branch and query result",
+)
+def command_test_dataset_list_remote(ctx, branch, generate_nf_path, generate_dl_url):
     """
     List all data files available in the nf-core/test-datasets repository on github
     """
-    test_datasets_list_remote(ctx, branch, generate_nf_path)
+    test_datasets_list_remote(ctx, branch, generate_nf_path, generate_dl_url)
 
 
 # nf-core test-datasets list-branches
