@@ -1765,7 +1765,7 @@ def test_datasets(ctx):
 @test_datasets.command("search")
 @click.pass_context
 @click.option(
-    "-b", "--branch", default="modules", type=str, help="Branch in the test-datasets repository to reduce search to"
+    "-b", "--branch", required=True, type=str, help="Branch in the test-datasets repository to reduce search to"
 )
 @click.option(
     "-g",
@@ -1785,7 +1785,7 @@ def command_test_dataset_search(ctx, branch, generate_nf_path):
 @test_datasets.command("list")
 @click.pass_context
 @click.option(
-    "-b", "--branch", default="modules", type=str, help="Branch in the test-datasets repository to reduce search to"
+    "-b", "--branch", required=True, type=str, help="Branch in the test-datasets repository to reduce search to"
 )
 def command_test_dataset_list_remote(ctx, branch):
     """
