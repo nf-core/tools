@@ -9,6 +9,7 @@ from nf_core.utils import gh_api
 
 log = logging.getLogger(__name__)
 
+
 @dataclass
 class GithubApiEndpoints:
     gh_api_base_url = "https://api.github.com"
@@ -18,9 +19,11 @@ class GithubApiEndpoints:
     def get_branch_list_url(self, page=1, entries_per_page=100):
         max_entries_per_page = 100
         if entries_per_page > max_entries_per_page:
-            log.warning(f"Github API will only return {max_entries_per_page} branches at a time, but {entries_per_page} were requested")
+            log.warning(
+                f"Github API will only return {max_entries_per_page} branches at a time, but {entries_per_page} were requested"
+            )
 
-        if not isinstance(page, int) or page < 1: 
+        if not isinstance(page, int) or page < 1:
             log.error(f"Github API get parameter page must be a positive int")
             page = 1
 
@@ -48,8 +51,10 @@ def get_remote_branches():
             resp_json = response.json()
 
             if not response.ok:
-                log.error(f"HTTP status code {response.status_code} received while fetching the list of branches at url: {response.url}")
-                return []            
+                log.error(
+                    f"HTTP status code {response.status_code} received while fetching the list of branches at url: {response.url}"
+                )
+                return []
 
             if not len(resp_json):
                 break
@@ -63,8 +68,8 @@ def get_remote_branches():
     except KeyError as e:
         log.error("Error parsing the list of branches received from Github API", e)
     except json.decoder.JSONDecodeError as e:
-        log.error("Error parsing the list of branches received from Github API at url {response.url} as json",  e)
-    
+        log.error("Error parsing the list of branches received from Github API at url {response.url} as json", e)
+
     return branches
 
 
@@ -73,17 +78,19 @@ def get_remote_tree_for_branch(branch, only_files=True, ignored_prefixes=[]):
     For a given branch name, return the file tree by querying the github API
     at the endpoint at `/repos/nf-core/test-datasets/git/trees/`
     """
-    gh_filetree_file_value = "blob"    # value in nodes used to refer to "files"
+    gh_filetree_file_value = "blob"  # value in nodes used to refer to "files"
     gh_response_filetree_key = "tree"  # key in response to refer to the filetree
-    gh_filetree_type_key = "type"      # key in filetree nodes used to refer to their type
-    gh_filetree_name_key = "path"      # key in filetree nodes used to refer to their name
+    gh_filetree_type_key = "type"  # key in filetree nodes used to refer to their type
+    gh_filetree_name_key = "path"  # key in filetree nodes used to refer to their name
 
     try:
         gh_api_url = GithubApiEndpoints(gh_repo="test-datasets")
         response = gh_api.get(gh_api_url.get_remote_tree_url_for_branch(branch))
 
         if not response.ok:
-            log.error(f"HTTP status code {response.status_code} received while fetching the repository filetree at url {response.url}")
+            log.error(
+                f"HTTP status code {response.status_code} received while fetching the repository filetree at url {response.url}"
+            )
             return []
 
         repo_tree = json.loads(response.text)[gh_response_filetree_key]
@@ -109,7 +116,16 @@ def get_remote_tree_for_branch(branch, only_files=True, ignored_prefixes=[]):
     return repo_files
 
 
-def list_files_by_branch(branch=None, ignored_file_prefixes=[".", "CITATION", "LICENSE", "README", "docs", ]):
+def list_files_by_branch(
+    branch=None,
+    ignored_file_prefixes=[
+        ".",
+        "CITATION",
+        "LICENSE",
+        "README",
+        "docs",
+    ],
+):
     """
     Lists files for all branches in the test-datasets github repo.
     Returns dictionary with branchnames as keys and file-lists as values

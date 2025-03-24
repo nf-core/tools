@@ -77,13 +77,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core": [
         {
             "name": "Commands",
-            "commands": [
-                "pipelines",
-                "modules",
-                "subworkflows",
-                "interface",
-                "test-dataset"
-            ],
+            "commands": ["pipelines", "modules", "subworkflows", "interface", "test-dataset"],
         },
     ],
     "nf-core pipelines": [
@@ -117,7 +111,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
     ],
     "nf-core pipelines schema": [{"name": "Schema commands", "commands": ["validate", "build", "lint", "docs"]}],
-    "nf-core test-dataset":  [{"name": "For developers", "commands": ["search"]}]
+    "nf-core test-dataset": [{"name": "For developers", "commands": ["search"]}],
 }
 click.rich_click.OPTION_GROUPS = {
     "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
@@ -1766,22 +1760,19 @@ def test_datasets(ctx):
     # by means other than the `if` block below)
     ctx.ensure_object(dict)
 
+
 # nf-core test-dataset search
 @test_datasets.command("search")
 @click.pass_context
 @click.option(
-    "-b",
-    "--branch",
-    default="modules",
-    type=str,
-    help="Branch in the test-datasets repository to reduce search to"
+    "-b", "--branch", default="modules", type=str, help="Branch in the test-datasets repository to reduce search to"
 )
 @click.option(
     "-g",
     "--generate-nf-path",
     is_flag=True,
     default=False,
-    help="Auto-generate a file path for use in nextflow code based on the branch and query result"
+    help="Auto-generate a file path for use in nextflow code based on the branch and query result",
 )
 def command_test_dataset_search(ctx, branch, generate_nf_path):
     """
@@ -1794,11 +1785,7 @@ def command_test_dataset_search(ctx, branch, generate_nf_path):
 @test_datasets.command("list")
 @click.pass_context
 @click.option(
-    "-b",
-    "--branch",
-    default="modules",
-    type=str,
-    help="Branch in the test-datasets repository to reduce search to"
+    "-b", "--branch", default="modules", type=str, help="Branch in the test-datasets repository to reduce search to"
 )
 def command_test_dataset_list_remote(ctx, branch):
     """
