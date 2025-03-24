@@ -145,3 +145,13 @@ def list_files_by_branch(
         tree[b] = get_remote_tree_for_branch(b, only_files=True, ignored_prefixes=ignored_file_prefixes)
 
     return tree
+
+
+def create_pretty_nf_path(path, is_module_dataset):
+    """
+    Generates a line of nexflow code with the full file path including a test data base path.
+    """
+    out = "params."
+    out += "modules_" if is_module_dataset else "pipelines_"
+    out += f'testdata_base_path + "{path}"'
+    return out

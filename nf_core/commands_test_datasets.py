@@ -5,6 +5,7 @@ import questionary
 import rich
 
 from nf_core.test_datasets.test_datasets_utils import (
+    create_pretty_nf_path,
     get_remote_branches,
     list_files_by_branch,
 )
@@ -22,6 +23,9 @@ IGNORED_FILE_PREFIXES = [
     "docs",
 ]
 
+# Name of nf-core/test-datasets github branch for modules
+MODULES_BRANCH_NAME = "modules"
+
 
 def test_datasets_list_branches(ctx):
     remote_branches = get_remote_branches()
@@ -29,14 +33,19 @@ def test_datasets_list_branches(ctx):
     stdout.print(out)
 
 
-def test_datasets_list_remote(ctx, branch):
+def test_datasets_list_remote(ctx, branch, generate_nf_path):
     tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
+    num_branches = len(tree.keys())
 
     out = ""
     for b in tree.keys():
+        branch_info = f"(Branch: {b})" if num_branches > 1 else ""
         files = sorted(tree[b])
         for f in files:
-            out += f"(Branch: {b}) {f}" + os.linesep
+            if generate_nf_path:
+                out += branch_info + create_pretty_nf_path(f, branch == MODULES_BRANCH_NAME) + os.linesep
+            else:
+                out += branch_info + f + os.linesep
 
     stdout.print(out)
 
@@ -44,9 +53,7 @@ def test_datasets_list_remote(ctx, branch):
 def test_datasets_search(ctx, branch, generate_nf_path):
     stdout.print("Searching files on branch: ", branch)
     tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
-    files = []
-    for k, v in tree.items():
-        files += v
+    files = sum(tree.values(), [])  # flat representation of tree
 
     file_selected = False
     while not file_selected:
@@ -61,10 +68,6 @@ def test_datasets_search(ctx, branch, generate_nf_path):
             stdout.print("Please select a file.")
 
     if generate_nf_path:
-        out = "params."
-        out += "modules_" if branch == "modules" else "pipelines_"
-        out += f'testdata_base_path + "{selection}"'
-        out = f"file({out}, checkIfExists: true)"
-        stdout.print(out)
+        stdout.print(create_pretty_nf_path(selection, branch == MODULES_BRANCH_NAME))
     else:
         stdout.print(selection)
