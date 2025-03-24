@@ -148,7 +148,7 @@ jobs:
           echo "test=${test}" >> $GITHUB_ENV
 
       - name: Store snapshot report
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           include-hidden-files: true
@@ -156,7 +156,7 @@ jobs:
           path: ./snapshot_report.html
 
       - name: Upload coverage
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           include-hidden-files: true
           name: coverage_${{ env.test }}
@@ -191,7 +191,7 @@ jobs:
           mv .github/.coveragerc .
 
       - name: Download all artifacts
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
       - name: Run coverage
         run: |
           coverage combine --keep coverage*/.coverage*
