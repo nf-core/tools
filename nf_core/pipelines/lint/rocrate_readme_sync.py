@@ -29,8 +29,8 @@ def rocrate_readme_sync(self):
 
     with metadata_file.open("r", encoding="utf-8") as f:
         metadata_dict = json.load(f)
-    rc_description_graph = metadata_dict.get("@graph")[0].get("description").strip()
-    readme_content = readme_file.read_text(encoding="utf-8").strip()
+    rc_description_graph = metadata_dict.get("@graph", [{}])[0].get("description") or ""
+    readme_content = readme_file.read_text(encoding="utf-8")
 
     # Compare the two strings and add a linting error if they don't match
     if readme_content != rc_description_graph:
