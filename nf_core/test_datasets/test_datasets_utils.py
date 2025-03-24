@@ -9,58 +9,41 @@ from nf_core.utils import gh_api
 log = logging.getLogger(__name__)
 
 
+# Name of nf-core/test-datasets github branch for modules
+MODULES_BRANCH_NAME = "modules"
+
+
 @dataclass
 class GithubApiEndpoints:
     gh_api_base_url = "https://api.github.com"
     gh_orga: str = "nf-core"
     gh_repo: str = "test-datasets"
 
-    def get_branch_list_url(self, page=1, entries_per_page=100):
-        max_entries_per_page = 100
-        if entries_per_page > max_entries_per_page:
-            log.warning(
-                f"Github API will only return {max_entries_per_page} branches at a time, but {entries_per_page} were requested"
-            )
-
-        if not isinstance(page, int) or page < 1:
-            log.error("Github API get parameter page must be a positive int")
-            page = 1
-
-        url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/branches?per_page={entries_per_page}&page={int(page)}"
-        return url
+    def get_pipelines_list_url(self):
+        return "https://raw.githubusercontent.com/nf-core/website/refs/heads/main/public/pipeline_names.json"
 
     def get_remote_tree_url_for_branch(self, branch):
         url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/git/trees/{branch}?recursive=1"
         return url
 
 
-def get_remote_branches():
+def get_remote_branch_names():
     """
-    List all branches on the remote github repository for test-datasets
-    by querying the github API endpoint at `/repos/nf-core/test-datasets/branches`
+    List all branch names on the remote github repository for test-datasets for pipelines or modules.
     """
     try:
         gh_api_urls = GithubApiEndpoints(gh_repo="test-datasets")
-        gh_api_page = 1  # pages use 1-based indexing
-        branches = []
+        response = gh_api.get(gh_api_urls.get_pipelines_list_url())
+        resp_json = response.json()
 
-        # Iteratively load paginated content until empty json is returned
-        while True:
-            response = gh_api.get(gh_api_urls.get_branch_list_url(page=gh_api_page))
-            resp_json = response.json()
+        if not response.ok:
+            log.error(
+                f"HTTP status code {response.status_code} received while fetching the list of branches at url: {response.url}"
+            )
+            return []
 
-            if not response.ok:
-                log.error(
-                    f"HTTP status code {response.status_code} received while fetching the list of branches at url: {response.url}"
-                )
-                return []
-
-            if not len(resp_json):
-                break
-
-            else:
-                gh_api_page += 1
-                branches += [b["name"] for b in resp_json]
+        branches = resp_json["pipeline"]  # pipeline branches from curated list
+        branches += [MODULES_BRANCH_NAME]  # modules test-datasets branch
 
     except requests.exceptions.RequestException as e:
         log.error("Error while handling request to url {gh_api_url}", e)
@@ -130,9 +113,8 @@ def list_files_by_branch(
     Returns dictionary with branchnames as keys and file-lists as values
     """
 
-    # Fetch list of branches frorm GitHub API
-    log.debug("Fetching list of remote branches")
-    branches = get_remote_branches()
+    log.debug("Fetching list of remote branch names")
+    branches = get_remote_branch_names()
 
     if branch:
         branches = list(filter(lambda b: b == branch, branches))

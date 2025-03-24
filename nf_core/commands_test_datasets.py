@@ -5,8 +5,9 @@ import questionary
 import rich
 
 from nf_core.test_datasets.test_datasets_utils import (
+    MODULES_BRANCH_NAME,
     create_pretty_nf_path,
-    get_remote_branches,
+    get_remote_branch_names,
     list_files_by_branch,
 )
 from nf_core.utils import nfcore_question_style, rich_force_colors
@@ -23,12 +24,9 @@ IGNORED_FILE_PREFIXES = [
     "docs",
 ]
 
-# Name of nf-core/test-datasets github branch for modules
-MODULES_BRANCH_NAME = "modules"
-
 
 def test_datasets_list_branches(ctx):
-    remote_branches = get_remote_branches()
+    remote_branches = get_remote_branch_names()
     out = os.linesep.join(remote_branches)
     stdout.print(out)
 
