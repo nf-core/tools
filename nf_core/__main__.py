@@ -1806,7 +1806,7 @@ def command_test_dataset_list_remote(ctx, branch, generate_nf_path):
 @click.pass_context
 def command_test_datasets_list_branches(ctx):
     """
-    List all remote branches in the nf-core/test-dataset repository on github
+    List all remote branches with pipeline or module data in the nf-core/test-dataset repository on github
     """
     test_datasets_list_branches(ctx)
 
