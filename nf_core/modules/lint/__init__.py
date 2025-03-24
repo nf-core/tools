@@ -422,11 +422,11 @@ class ModuleLint(ComponentLint):
                     for ontology, ext in expected_ontologies_o:
                         if ontology not in current_ontologies_o:
                             corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"].append(
-                                {"edam": ontology}
+                                ruamel.yaml.comments.CommentedMap({"edam": ontology})
                             )
-                            corrected_meta_yml["output"][i][ch_name][j][element_name][
-                                "ontologies"
-                            ].yaml_add_eol_comment(f"{edam_formats[ext][1]}", -1)
+                            corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"][
+                                -1
+                            ].yaml_add_eol_comment(f"{edam_formats[ext][1]}", key="edam")
 
         # Add bio.tools identifier
         for i, tool in enumerate(corrected_meta_yml["tools"]):
