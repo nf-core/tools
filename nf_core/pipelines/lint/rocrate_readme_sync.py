@@ -16,21 +16,21 @@ def rocrate_readme_sync(self):
     failed = []
 
     # Check if the file exists before trying to load it
-    metadata_file = Path("ro-crate-metadata.json")
-    readme_file = Path("README.md")
+    metadata_file = Path(self.wf_path, "ro-crate-metadata.json")
+    readme_file = Path(self.wf_path,"README.md")
 
-    if metadata_file.exists():
-        # Load the metadata file
-        with metadata_file.open("r", encoding="utf-8") as f:
-            metadata_dict = json.load(f)
-            rc_description_graph = metadata_dict.get("@graph")[0].get("description").strip()
-    else:
-        failed.append("ro-crate-metadata.json not found")
+    # Only proceed if both files exist
+    if not (metadata_file.exists() and readme_file.exists()):
+        if not metadata_file.exists():
+            failed.append("ro-crate-metadata.json not found")
+        if not readme_file.exists():
+            failed.append("README.md not found")
+        return {"passed": passed, "warned": warned, "failed": failed}
 
-    if readme_file.exists():
-        readme_content = readme_file.read_text(encoding="utf-8").strip()
-    else:
-        failed.append("README.md not found")
+    with metadata_file.open("r", encoding="utf-8") as f:
+        metadata_dict = json.load(f)
+    rc_description_graph = metadata_dict.get("@graph")[0].get("description").strip()
+    readme_content = readme_file.read_text(encoding="utf-8").strip()
 
     # Compare the two strings and add a linting error if they don't match
     if readme_content != rc_description_graph:
