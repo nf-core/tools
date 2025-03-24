@@ -1776,7 +1776,7 @@ def test_datasets(ctx):
 )
 @click.option(
     "-u",
-    "--generate-url",
+    "--generate-dl-url",
     is_flag=True,
     default=False,
     help="Auto-generate a github url for downloading the test data file based on the branch and query result",
@@ -1803,7 +1803,7 @@ def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url):
 )
 @click.option(
     "-u",
-    "--generate-url",
+    "--generate-dl-url",
     is_flag=True,
     default=False,
     help="Auto-generate a github url for downloading the test data file based on the branch and query result",
