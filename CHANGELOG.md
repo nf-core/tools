@@ -9,6 +9,7 @@
 - Basic pipeline level nf-test tests ([#3469](https://github.com/nf-core/tools/pull/3469))
 - Add Bluesky badge to readme ([#3475](https://github.com/nf-core/tools/pull/3475))
 - Run awsfulltest after release, and with dev revision on PRs to master ([#3485](https://github.com/nf-core/tools/pull/3485))
+- Fix dead link ([#3505](https://github.com/nf-core/tools/pull/3505))
 
 ### Linting
 
