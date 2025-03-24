@@ -21,7 +21,7 @@ def rocrate_readme_sync(self):
         # Load the metadata file
         with metadata_file.open("r", encoding="utf-8") as f:
             metadata_dict = json.load(f)
-            rc_description = metadata_dict.get("@graph")[0].get("description").strip()
+            rc_description_graph = metadata_dict.get("@graph")[0].get("description").strip()
     else:
         failed.append("ro-crate-metadata.json not found")
 
@@ -31,15 +31,15 @@ def rocrate_readme_sync(self):
         failed.append("README.md not found")
 
     # Compare the two strings and add a linting error if they don't match
-    if readme_content != rc_description:
-        failed.append("The RO-Crate description does not match the README.md content.")
-        
+    if readme_content != rc_description_graph:
         # If the fix flag is set, you could overwrite the RO-Crate description with the README content:
         if self.fix:
-            metadata_dict.get("@context")[1]["description"] = readme_content
+            metadata_dict.get("@graph")[0]["description"] = readme_content
             with metadata_file.open("w", encoding="utf-8") as f:
                 json.dump(metadata_dict, f, indent=4)
             passed.append("Mismatch fixed: RO-Crate description updated from README.md.")
+        else:
+            failed.append("The RO-Crate descriptions do not match the README.md content.")
     else:
-        passed.append("RO-Crate description is in sync with README.md.")
+        passed.append("RO-Crate descriptions are in sync with README.md.")
     return {"passed": passed, "warned": warned, "failed": failed}
