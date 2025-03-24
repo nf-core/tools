@@ -1,9 +1,11 @@
-from ..test_lint import TestLint
-
 # from nf_core.pipelines.lint.rocrate_readme_sync import rocrate_readme_sync
 # from pathlib import Path
 import nf_core.pipelines.lint
+
+from ..test_lint import TestLint
+
 # import json
+
 
 class TestLintROcrateReadmeSync(TestLint):
     def setUp(self) -> None:
