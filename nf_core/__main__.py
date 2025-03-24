@@ -77,7 +77,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core": [
         {
             "name": "Commands",
-            "commands": ["pipelines", "modules", "subworkflows", "interface", "test-dataset"],
+            "commands": ["pipelines", "modules", "subworkflows", "interface", "test-datasets"],
         },
     ],
     "nf-core pipelines": [
@@ -111,7 +111,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
     ],
     "nf-core pipelines schema": [{"name": "Schema commands", "commands": ["validate", "build", "lint", "docs"]}],
-    "nf-core test-dataset": [{"name": "For developers", "commands": ["search"]}],
+    "nf-core test-datasets": [{"name": "For developers", "commands": ["search", "list", "list-branches"]}],
 }
 click.rich_click.OPTION_GROUPS = {
     "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
