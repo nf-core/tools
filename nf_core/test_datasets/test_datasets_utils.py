@@ -1,10 +1,9 @@
-import asyncio
 import json
 import logging
 from dataclasses import dataclass
 
-import aiohttp
 import requests
+
 from nf_core.utils import gh_api
 
 log = logging.getLogger(__name__)
@@ -24,7 +23,7 @@ class GithubApiEndpoints:
             )
 
         if not isinstance(page, int) or page < 1:
-            log.error(f"Github API get parameter page must be a positive int")
+            log.error("Github API get parameter page must be a positive int")
             page = 1
 
         url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/branches?per_page={entries_per_page}&page={int(page)}"
