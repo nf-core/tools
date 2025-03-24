@@ -17,7 +17,7 @@ def rocrate_readme_sync(self):
 
     # Check if the file exists before trying to load it
     metadata_file = Path(self.wf_path, "ro-crate-metadata.json")
-    readme_file = Path(self.wf_path,"README.md")
+    readme_file = Path(self.wf_path, "README.md")
 
     # Only proceed if both files exist
     if not (metadata_file.exists() and readme_file.exists()):
