@@ -41,7 +41,11 @@ def rocrate_readme_sync(self):
                 json.dump(metadata_dict, f, indent=4)
             passed.append("Mismatch fixed: RO-Crate description updated from README.md.")
         else:
-            warned.append("The RO-Crate descriptions do not match the README.md content.")
+            failed.append("The RO-Crate descriptions do not match the README.md content.")
+            raise AssertionError(
+                "The RO-Crate descriptions do not match the README.md content. "
+                "You can fix this by running `nf-core lint --fix`."
+            )
     else:
         passed.append("RO-Crate descriptions are in sync with README.md.")
     return {"passed": passed, "warned": warned, "failed": failed}
