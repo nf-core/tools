@@ -16,16 +16,23 @@ class DownloadError(RuntimeError):
 
 @contextlib.contextmanager
 def intermediate_file(output_path):
-    tmp = tempfile.NamedTemporaryFile(dir=os.path.dirname(output_path))
+    """Context manager to help ensure the output file is either complete or non-existent.
+    It does that by creating a temporary file in the same directory as the output file,
+    letting the caller write to it, and then moving it to the final location.
+    If an exception is raised, the temporary file is deleted and the output file is not touched.
+    """
+    tmp = tempfile.NamedTemporaryFile(dir=os.path.dirname(output_path), delete_on_close=False)
     try:
         yield tmp
-
-    finally:
-        if os.path.exists(tmp.name):
-            log.debug(f"Deleting incomplete singularity image:\n'{tmp.name}'")
-            os.remove(tmp.name)
+        tmp.close()
+        os.rename(tmp.name, output_path)
+    except Exception:
         # Re-raise exception on the main thread
         raise
+    finally:
+        if os.path.exists(tmp.name):
+            log.debug(f"Deleting incomplete singularity image:\n'{output_path}'")
+            os.remove(tmp.name)
 
 
 class DownloadProgress(rich.progress.Progress):

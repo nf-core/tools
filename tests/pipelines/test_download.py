@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,10 +18,50 @@ import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.download import DownloadWorkflow, WorkflowRepo
 from nf_core.pipelines.downloads.singularity import ContainerError, SingularityFetcher
+from nf_core.pipelines.downloads.utils import intermediate_file
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import run_cmd
 
 from ..utils import TEST_DATA_DIR, with_temporary_folder
+
+
+class DownloadUtilsTest(unittest.TestCase):
+    #
+    # Tests for 'utils.intermediate_file'
+    #
+    @with_temporary_folder
+    def test_intermediate_file(self, outdir):
+        # Code that doesn't fail. The file shall exist
+        output_path = os.path.join(outdir, "testfile1")
+        with intermediate_file(output_path) as tmp:
+            tmp_path = tmp.name
+            tmp.write(b"Hello, World!")
+
+        assert os.path.exists(output_path)
+        assert os.path.getsize(output_path) == 13
+        assert not os.path.exists(tmp_path)
+
+        # Same as above, but with an external command. The file shall exist
+        output_path = os.path.join(outdir, "testfile2")
+        with intermediate_file(output_path) as tmp:
+            tmp_path = tmp.name
+            subprocess.check_call([f"echo 'Hello, World!' > {tmp_path}"], shell=True)
+
+        assert os.path.exists(output_path)
+        assert os.path.getsize(output_path) == 14  # Extra \n !
+        assert not os.path.exists(tmp_path)
+
+        # Code that fails. The file shall not exist
+        output_path = os.path.join(outdir, "testfile3")
+        try:
+            with intermediate_file(output_path) as tmp:
+                tmp_path = tmp.name
+                raise ValueError("This is a test error")
+        except Exception as e:
+            assert isinstance(e, ValueError)
+
+        assert not os.path.exists(output_path)
+        assert not os.path.exists(tmp_path)
 
 
 class DownloadTest(unittest.TestCase):
