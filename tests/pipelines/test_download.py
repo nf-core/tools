@@ -15,7 +15,8 @@ import pytest
 import nf_core.pipelines.create.create
 import nf_core.pipelines.list
 import nf_core.utils
-from nf_core.pipelines.download import ContainerError, DownloadWorkflow, WorkflowRepo
+from nf_core.pipelines.download import DownloadWorkflow, WorkflowRepo
+from nf_core.pipelines.downloads.singularity import ContainerError
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import run_cmd
 
