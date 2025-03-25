@@ -1,7 +1,7 @@
 <h1>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./docs/images/nfcore-tools_logo_dark.png">
-    <img alt="nf-core/tools" src="./docs/images/nfcore-tools_logo_light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nf-core/tools/docs/images/nfcore-tools_logo_dark.png">
+    <img alt="nf-core/tools" src="https://raw.githubusercontent.com/nf-core/tools/docs/images/nfcore-tools_logo_light.png">
   </picture>
 </h1><!-- omit in toc -->
 
