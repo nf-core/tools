@@ -427,7 +427,6 @@ class SingularityFetcher:
         # Copy all containers
         self.progress.update(task, description="Copying singularity images from/to cache")
         for container, src_path, dest_path in containers_copy:
-            self.progress.update(task, description="Copying singularity images from cache")
             self.copy_image(container, src_path, dest_path)
             self.progress.update(task, advance=1)
 
