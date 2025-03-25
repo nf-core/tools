@@ -1,10 +1,31 @@
+import contextlib
+import logging
+import os
+import tempfile
+
 import rich.progress
+
+log = logging.getLogger(__name__)
 
 
 class DownloadError(RuntimeError):
     """A custom exception that is raised when nf-core pipelines download encounters a problem that we already took into consideration.
     In this case, we do not want to print the traceback, but give the user some concise, helpful feedback instead.
     """
+
+
+@contextlib.contextmanager
+def intermediate_file(output_path):
+    tmp = tempfile.NamedTemporaryFile(dir=os.path.dirname(output_path))
+    try:
+        yield tmp
+
+    finally:
+        if os.path.exists(tmp.name):
+            log.debug(f"Deleting incomplete singularity image:\n'{tmp.name}'")
+            os.remove(tmp.name)
+        # Re-raise exception on the main thread
+        raise
 
 
 class DownloadProgress(rich.progress.Progress):
