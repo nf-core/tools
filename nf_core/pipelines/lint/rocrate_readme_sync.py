@@ -22,7 +22,7 @@ def rocrate_readme_sync(self):
     # Only proceed if both files exist
     if not (metadata_file.exists() and readme_file.exists()):
         if not metadata_file.exists():
-            failed.append("ro-crate-metadata.json not found")
+            ignored.append("`ro-crate-metadata.json` not found")
         if not readme_file.exists():
             failed.append("README.md not found")
         return {"passed": passed, "warned": warned, "failed": failed}
