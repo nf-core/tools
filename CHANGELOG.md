@@ -8,7 +8,8 @@
 - Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
 - Basic pipeline level nf-test tests ([#3469](https://github.com/nf-core/tools/pull/3469))
 - Add Bluesky badge to readme ([#3475](https://github.com/nf-core/tools/pull/3475))
-- Run awsfulltest after release, and with dev revision on PRs to master ([#3485](https://github.com/nf-core/tools/pull/3485))‚
+- Run awsfulltest after release, and with dev revision on PRs to master ([#3485](https://github.com/nf-core/tools/pull/3485))
+- Add .nftignore to trigger list ([#3508](https://github.com/nf-core/tools/pull/3508))
 
 ### Linting
 
@@ -51,6 +52,7 @@
 - Install subworkflows with modules from different remotes ([#3083](https://github.com/nf-core/tools/pull/3083))
 - chore(deps): update github actions ([#3498](https://github.com/nf-core/tools/pull/3498))
 - Ontology fix comment yaml ([#3502](https://github.com/nf-core/tools/pull/3502))
+- Update dead link ([#3505](https://github.com/nf-core/tools/pull/3505))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
