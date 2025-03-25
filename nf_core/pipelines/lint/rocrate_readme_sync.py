@@ -45,7 +45,7 @@ def rocrate_readme_sync(self):
                 "No description found in ro-crate-metadata.json, add a description to the RO-Crate metadata."
             )
             graph[0]["description"] = " "
-    rc_description_graph = metadata_dict.get("@graph", [{}])[0].get("description") or ""
+    rc_description_graph = metadata_dict.get("@graph", [{}])[0].get("description")
 
     readme_content = readme_file.read_text(encoding="utf-8")
 
