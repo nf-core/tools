@@ -432,7 +432,7 @@ class ModuleLint(ComponentLint):
                                 corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"][
                                     -1
                                 ].yaml_add_eol_comment(f"{edam_formats[ext][1]}", key="edam")
-                            except Exception as e:
+                            except KeyError as e:
                                 log.warning(f"Could not add ontologies in ouput: {ch_name} - {element_name}")
 
         # Add bio.tools identifier
