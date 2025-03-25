@@ -14,6 +14,7 @@ def rocrate_readme_sync(self):
     warned = []
     passed = []
     failed = []
+    ignored = []
 
     # Check if the file exists before trying to load it
     metadata_file = Path(self.wf_path, "ro-crate-metadata.json")
@@ -32,10 +33,19 @@ def rocrate_readme_sync(self):
         metadata_dict = json.loads(metadata_content)
     except json.JSONDecodeError as e:
         log.error("Failed to decode JSON from `ro-crate-metadata.json`: %s", e)
-        failed.append("Invalid JSON in ro-crate-metadata.json")
-        return {"passed": passed, "warned": warned, "failed": failed}
+        ignored.append("Invalid JSON in ro-crate-metadata.json")
+        return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}
 
-    # Use safe fallback in case description is None
+    graph = metadata_dict.get("@graph")
+    if not graph or not isinstance(graph, list) or not graph[0] or not isinstance(graph[0], dict):
+        ignored.append("Invalid RO-Crate metadata structure.")
+    else:
+        # Check if the 'description' key is present
+        if "description" not in graph[0]:
+            ignored.append(
+                "No description found in ro-crate-metadata.json, add a description to the RO-Crate metadata."
+            )
+            graph[0]["description"] = " "
     rc_description_graph = metadata_dict.get("@graph", [{}])[0].get("description") or ""
 
     readme_content = readme_file.read_text(encoding="utf-8")
@@ -49,11 +59,9 @@ def rocrate_readme_sync(self):
                 json.dump(metadata_dict, f, indent=4)
             passed.append("Mismatch fixed: RO-Crate description updated from README.md.")
         else:
-            failed.append("The RO-Crate descriptions do not match the README.md content.")
-            raise AssertionError(
-                "The RO-Crate descriptions do not match the README.md content. "
-                "You can fix this by running `nf-core lint --fix`."
+            failed.append(
+                "The RO-Crate descriptions do not match the README.md content. Use `nf-core lint --fix` to update."
             )
     else:
         passed.append("RO-Crate descriptions are in sync with README.md.")
-    return {"passed": passed, "warned": warned, "failed": failed}
+    return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}
