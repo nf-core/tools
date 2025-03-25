@@ -50,6 +50,7 @@
 - chore(deps): update github actions ([#3498](https://github.com/nf-core/tools/pull/3498))
 - Ontology fix comment yaml ([#3502](https://github.com/nf-core/tools/pull/3502))
 - Update dead link ([#3505](https://github.com/nf-core/tools/pull/3505))
+- Add .nftignore to trigger list ([#3508](https://github.com/nf-core/tools/pull/3508))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
