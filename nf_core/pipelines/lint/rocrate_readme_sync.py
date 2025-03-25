@@ -27,9 +27,17 @@ def rocrate_readme_sync(self):
             failed.append("README.md not found")
         return {"passed": passed, "warned": warned, "failed": failed}
 
-    with metadata_file.open("r", encoding="utf-8") as f:
-        metadata_dict = json.load(f)
+    try:
+        metadata_content = metadata_file.read_text(encoding="utf-8")
+        metadata_dict = json.loads(metadata_content)
+    except json.JSONDecodeError as e:
+        log.error("Failed to decode JSON from ro-crate-metadata.json: %s", e)
+        failed.append("Invalid JSON in ro-crate-metadata.json")
+        return {"passed": passed, "warned": warned, "failed": failed}
+
+    # Use safe fallback in case description is None
     rc_description_graph = metadata_dict.get("@graph", [{}])[0].get("description") or ""
+
     readme_content = readme_file.read_text(encoding="utf-8")
 
     # Compare the two strings and add a linting error if they don't match
