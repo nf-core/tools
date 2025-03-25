@@ -16,7 +16,7 @@ import nf_core.pipelines.create.create
 import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.download import ContainerError, DownloadWorkflow
-from nf_core.pipelines.downloads.cls_workflow_repo import WorkflowRepo
+from nf_core.pipelines.downloads.workflow_repo import WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import run_cmd
 

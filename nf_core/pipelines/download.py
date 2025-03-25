@@ -24,7 +24,7 @@ import nf_core
 import nf_core.modules.modules_utils
 import nf_core.pipelines.list
 import nf_core.utils
-from nf_core.pipelines.downloads.cls_workflow_repo import WorkflowRepo
+from nf_core.pipelines.downloads.workflow_repo import WorkflowRepo
 from nf_core.utils import (
     NFCORE_CACHE_DIR,
     SingularityCacheFilePathValidator,

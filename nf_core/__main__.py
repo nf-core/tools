@@ -56,7 +56,7 @@ from nf_core.commands_subworkflows import (
 )
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.pipelines.download import DownloadError
-from nf_core.pipelines.downloads.cls_workflow_repo import WorkflowRepoError
+from nf_core.pipelines.downloads.workflow_repo import WorkflowRepoError
 from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 
 # Set up logging as the root logger
