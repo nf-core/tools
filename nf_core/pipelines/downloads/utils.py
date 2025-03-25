@@ -21,18 +21,10 @@ def intermediate_file(output_path):
     letting the caller write to it, and then moving it to the final location.
     If an exception is raised, the temporary file is deleted and the output file is not touched.
     """
-    tmp = tempfile.NamedTemporaryFile(dir=os.path.dirname(output_path), delete_on_close=False)
-    try:
+    with tempfile.NamedTemporaryFile(dir=os.path.dirname(output_path), delete_on_close=False) as tmp:
         yield tmp
         tmp.close()
         os.rename(tmp.name, output_path)
-    except Exception:
-        # Re-raise exception on the main thread
-        raise
-    finally:
-        if os.path.exists(tmp.name):
-            log.debug(f"Deleting incomplete singularity image:\n'{output_path}'")
-            os.remove(tmp.name)
 
 
 class DownloadProgress(rich.progress.Progress):
