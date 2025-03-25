@@ -45,7 +45,6 @@ def pipeline_todos(self, root_dir=None):
         with open(Path(root_dir, ".gitignore"), encoding="latin1") as fh:
             for line in fh:
                 ignore.append(Path(line.strip().rstrip("/")).name)
-            # add ignore to the ro crate
     for root, dirs, files in os.walk(root_dir, topdown=True):
         # Ignore files
         for i_base in ignore:
