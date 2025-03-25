@@ -11,7 +11,6 @@ def rocrate_readme_sync(self):
     If the --fix is set, the RO-Crate description will be updated to match the README.md content.
     """
 
-    warned = []
     passed = []
     failed = []
     ignored = []
@@ -26,7 +25,7 @@ def rocrate_readme_sync(self):
             ignored.append("`ro-crate-metadata.json` not found")
         if not readme_file.exists():
             ignored.append("`README.md` not found")
-        return {"passed": passed, "warned": warned, "failed": failed}
+        # return {"passed": passed, "failed": failed, "ignored": ignored}
 
     try:
         metadata_content = metadata_file.read_text(encoding="utf-8")
@@ -34,7 +33,7 @@ def rocrate_readme_sync(self):
     except json.JSONDecodeError as e:
         log.error("Failed to decode JSON from `ro-crate-metadata.json`: %s", e)
         ignored.append("Invalid JSON in ro-crate-metadata.json")
-        return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}
+        # return {"passed": passed, "failed": failed, "ignored": ignored}
 
     graph = metadata_dict.get("@graph")
     if not graph or not isinstance(graph, list) or not graph[0] or not isinstance(graph[0], dict):
@@ -64,4 +63,4 @@ def rocrate_readme_sync(self):
             )
     else:
         passed.append("RO-Crate descriptions are in sync with README.md.")
-    return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}
+    return {"passed": passed, "failed": failed, "ignored": ignored}
