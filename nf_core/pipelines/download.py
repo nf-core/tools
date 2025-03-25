@@ -1069,12 +1069,19 @@ class DownloadWorkflow:
                 f"Processing workflow revision {current_revision}, found {len(self.containers)} container image{'s' if len(self.containers) > 1 else ''} in total."
             )
 
+            # Find out what the library directory is
+            library_dir = os.environ.get("NXF_SINGULARITY_LIBRARYDIR")
+            if library_dir and not os.path.isdir(library_dir):
+                # Since the library is read-only, if the directory isn't there, we can forget about it
+                library_dir = None
+
+            # Find out what the cache directory is
+            cache_dir = os.environ.get("NXF_SINGULARITY_CACHEDIR")
             if self.container_cache_utilisation in ["amend", "copy"]:
-                if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
-                    cache_path_dir = os.environ["NXF_SINGULARITY_CACHEDIR"]
-                    if not os.path.isdir(cache_path_dir):
-                        log.debug(f"Cache directory not found, creating: {cache_path_dir}")
-                        os.makedirs(cache_path_dir)
+                if cache_dir:
+                    if not os.path.isdir(cache_dir):
+                        log.debug(f"Cache directory not found, creating: {cache_dir}")
+                        os.makedirs(cache_dir)
                 else:
                     raise FileNotFoundError("Singularity cache is required but no '$NXF_SINGULARITY_CACHEDIR' set!")
 
@@ -1098,6 +1105,8 @@ class DownloadWorkflow:
                     self.containers,
                     out_path_dir,
                     self.containers_remote,
+                    library_dir,
+                    cache_dir,
                     self.container_cache_utilisation == "amend",
                     task,
                 )

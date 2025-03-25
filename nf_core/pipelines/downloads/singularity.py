@@ -5,7 +5,7 @@ import os
 import re
 import shutil
 import subprocess
-from typing import Collection, Container, Iterable, List, Tuple
+from typing import Collection, Container, Iterable, List, Optional, Tuple
 
 import requests
 import requests_cache
@@ -346,17 +346,11 @@ class SingularityFetcher:
         containers: Collection[str],
         output_dir: str,
         exclude_list: Container[str],
+        library_dir: Optional[str],
+        cache_dir: Optional[str],
         amend_cachedir: bool,
         task: rich.progress.TaskID,
     ):
-        def check_env_var(name):
-            dir = os.environ.get(name)
-            if dir and os.path.exists(dir):
-                return dir
-
-        library_dir = check_env_var("NXF_SINGULARITY_LIBRARYDIR")
-        cache_dir = check_env_var("NXF_SINGULARITY_CACHEDIR")
-
         # Check each container in the list and defer actions
         containers_download: List[Tuple[str, str]] = []
         containers_pull: List[Tuple[str, str]] = []
