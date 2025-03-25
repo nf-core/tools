@@ -401,7 +401,7 @@ class ModuleLint(ComponentLint):
                                 corrected_meta_yml["input"][i][j][element_name]["ontologies"][-1].yaml_add_eol_comment(
                                     f"{edam_formats[ext][1]}", "edam"
                                 )
-                            except Exception as e:
+                            except KeyError as e:
                                 log.warning(f"Could not add ontologies in input: {element_name}")
 
         if "output" in meta_yml:
