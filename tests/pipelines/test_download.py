@@ -1032,6 +1032,7 @@ class DownloadTest(unittest.TestCase):
         assert isinstance(download_obj.wf_download_url, dict) and len(download_obj.wf_download_url) == 0
 
         # The outdir for multiple revisions is the pipeline name and date: e.g. nf-core-rnaseq_2023-04-27_18-54
+        assert isinstance(download_obj.outdir, str)
         assert bool(re.search(r"nf-core-rnaseq_\d{4}-\d{2}-\d{1,2}_\d{1,2}-\d{1,2}", download_obj.outdir, re.S))
 
         download_obj.output_filename = f"{download_obj.outdir}.git"
