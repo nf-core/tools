@@ -9,10 +9,8 @@ from typing import Collection, Container, Iterable, List, Optional, Tuple
 
 import requests
 import requests_cache
-import rich
-import rich.progress
 
-from nf_core.pipelines.downloads.utils import intermediate_file
+from nf_core.pipelines.downloads.utils import DownloadProgress, intermediate_file
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +29,7 @@ class SingularityFetcher:
     """
 
     def __init__(
-        self, container_library: Iterable[str], registry_set: Iterable[str], progress: rich.progress.Progress
+        self, container_library: Iterable[str], registry_set: Iterable[str], progress: DownloadProgress
     ) -> None:
         self.container_library = list(container_library)
         self.registry_set = registry_set
@@ -125,7 +123,6 @@ class SingularityFetcher:
     def download_images(
         self,
         containers_download: Iterable[Tuple[str, str]],
-        task: rich.progress.TaskID,
         parallel_downloads: int,
     ) -> None:
         # if clause gives slightly better UX, because Download is no longer displayed if nothing is left to be downloaded.
@@ -144,7 +141,7 @@ class SingularityFetcher:
                 for future in concurrent.futures.as_completed(future_downloads):
                     future.result()
                     try:
-                        self.progress.update(task, advance=1)
+                        self.progress.update_main_task(advance=1)
                     except Exception as e:
                         log.error(f"Error updating progress bar: {e}")
 
@@ -202,7 +199,7 @@ class SingularityFetcher:
         self.symlink_registries(output_path)
         self.progress.remove_task(task)
 
-    def pull_images(self, containers_pull: Iterable[Tuple[str, str]], task: rich.progress.TaskID) -> None:
+    def pull_images(self, containers_pull: Iterable[Tuple[str, str]]) -> None:
         for container, output_path in containers_pull:
             # it is possible to try multiple registries / mirrors if multiple were specified.
             # Iteration happens over a copy of self.container_library[:], as I want to be able to remove failing registries for subsequent images.
@@ -248,7 +245,7 @@ class SingularityFetcher:
                     f"Not able to pull image of {container}. Service might be down or internet connection is dead."
                 )
             # Task should advance in any case. Failure to pull will not kill the download process.
-            self.progress.update(task, advance=1)
+            self.progress.update_main_task(advance=1)
 
     def pull_image(self, container: str, output_path: str, library: str) -> None:
         """Pull a singularity image using ``singularity pull``
@@ -349,7 +346,6 @@ class SingularityFetcher:
         library_dir: Optional[str],
         cache_dir: Optional[str],
         amend_cachedir: bool,
-        task: rich.progress.TaskID,
     ):
         # Check each container in the list and defer actions
         containers_download: List[Tuple[str, str]] = []
@@ -365,7 +361,7 @@ class SingularityFetcher:
             # Files in the remote cache are already downloaded and can be ignored
             if container_filename in exclude_list:
                 log.debug(f"Skipping download of container '{container_filename}' as it is cached remotely.")
-                self.progress.update(task, advance=1, description=f"Skipping {container_filename}")
+                self.progress.update_main_task(advance=1, description=f"Skipping {container_filename}")
                 continue
 
             # Generate file paths for all three locations
@@ -373,7 +369,7 @@ class SingularityFetcher:
 
             if os.path.exists(output_path):
                 log.debug(f"Skipping download of container '{container_filename}' as it is in already present.")
-                self.progress.update(task, advance=1, description=f"{container_filename} exists at destination")
+                self.progress.update_main_task(advance=1, description=f"{container_filename} exists at destination")
                 continue
 
             library_path = os.path.join(library_dir, container_filename) if library_dir else None
@@ -386,7 +382,7 @@ class SingularityFetcher:
                 if cache_path and amend_cachedir and not os.path.exists(cache_path):
                     containers_copy.append((container, library_path, cache_path))
                     total_tasks += 1
-                    self.progress.update(task, total=total_tasks)
+                    self.progress.update_main_task(total=total_tasks)
 
             # get the container from the cache
             elif cache_path and os.path.exists(cache_path):
@@ -406,7 +402,7 @@ class SingularityFetcher:
                     # and copy from the cache to the output
                     containers_copy.append((container, cache_path, output_path))
                     total_tasks += 1
-                    self.progress.update(task, total=total_tasks)
+                    self.progress.update_main_task(total=total_tasks)
 
                 else:
                     # download or pull directly to the output
@@ -414,21 +410,21 @@ class SingularityFetcher:
 
         # Download all containers
         if containers_download:
-            self.progress.update(task, description="Downloading singularity images")
-            self.download_images(containers_download, task, parallel_downloads=4)
+            self.progress.update_main_task(description="Downloading singularity images")
+            self.download_images(containers_download, parallel_downloads=4)
 
         # Pull all containers
         if containers_pull:
             if not (shutil.which("singularity") or shutil.which("apptainer")):
                 raise OSError("Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH")
-            self.progress.update(task, description="Pulling singularity images")
-            self.pull_images(containers_pull, task)
+            self.progress.update_main_task(description="Pulling singularity images")
+            self.pull_images(containers_pull)
 
         # Copy all containers
-        self.progress.update(task, description="Copying singularity images from/to cache")
+        self.progress.update_main_task(description="Copying singularity images from/to cache")
         for container, src_path, dest_path in containers_copy:
             self.copy_image(container, src_path, dest_path)
-            self.progress.update(task, advance=1)
+            self.progress.update_main_task(advance=1)
 
 
 # Distinct errors for the container download, required for acting on the exceptions

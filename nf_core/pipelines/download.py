@@ -1094,11 +1094,10 @@ class DownloadWorkflow:
                 os.makedirs(out_path_dir)
 
             with DownloadProgress() as progress:
-                task = progress.add_task(
-                    "Collecting container images",
+                progress.add_main_task(
                     total=len(self.containers),
-                    progress_type="summary",
                 )
+                # "Collecting container images",
 
                 singularity_fetcher = SingularityFetcher(self.container_library, self.registry_set, progress)
                 singularity_fetcher.fetch_containers(
@@ -1108,7 +1107,6 @@ class DownloadWorkflow:
                     library_dir,
                     cache_dir,
                     self.container_cache_utilisation == "amend",
-                    task,
                 )
 
     def compress_download(self):

@@ -30,6 +30,7 @@ def intermediate_file(output_path):
 class DownloadProgress(rich.progress.Progress):
     """Custom Progress bar class, allowing us to have two progress
     bars with different columns / layouts.
+    Also provide helper functions to control the top-level task.
     """
 
     def get_renderables(self):
@@ -59,3 +60,20 @@ class DownloadProgress(rich.progress.Progress):
                     rich.progress.BarColumn(bar_width=None),
                 )
             yield self.make_tasks_table([task])
+
+    # These functions allow callers not having to track the main TaskID
+    # They are pass-through functions to the rich.progress methods
+    def add_main_task(self, **kwargs) -> rich.progress.TaskID:
+        """Add a top-level task to the progress bar.
+        This task will be used to track the overall progress of the container downloads.
+        """
+        self.main_task = self.add_task(
+            "Container download",
+            progress_type="summary",
+            **kwargs,
+        )
+        return self.main_task
+
+    def update_main_task(self, **kwargs):
+        """Update the top-level task with new information."""
+        self.update(self.main_task, **kwargs)
