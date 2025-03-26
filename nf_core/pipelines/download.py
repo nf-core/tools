@@ -32,6 +32,7 @@ from nf_core.utils import (
     NFCORE_CACHE_DIR,
     NFCORE_DIR,
     SingularityCacheFilePathValidator,
+    run_cmd,
 )
 
 log = logging.getLogger(__name__)
@@ -716,13 +717,38 @@ class DownloadWorkflow:
         `nextflow config` at the time of writing, so we scrape the pipeline files.
         This returns raw matches that will likely need to be cleaned.
         """
-        # TODO: Check nextflow versions
-        # TODO: Run old routine if nextflow version < 25.02.1
-        # TODO: Run nextflos inspect if nextflow version >= 25.02.1
-        # from nf_core.utils import run_cmd
-        #     result = run_cmd("nextflow", f"config -flat {wf_path}")
+        import json
 
-        pass
+        try:
+            # TODO: Select container system via profile. Is this stable enough?
+            profile = f"-profile {self.container_system}" if self.container_system else ""
+
+            # Run nextflos inspect (works if nextflow version >= 25.02.1)
+            cmd_out = run_cmd("nextflow", f"inspect -concretize -format json {profile} {workflow_directory}")
+            if cmd_out is None:
+                log.error("Failed to run 'nextflow inspect' to extrat containers. Falling back to legacy function.")
+                self.find_container_images_legacy(workflow_directory)
+                return
+
+            out, err = cmd_out
+            out_json = json.loads(out)
+
+            containers = []
+            for process in out_json["processes"]:
+                containers.append(process["container"])
+
+            self.containers = containers
+
+        except KeyError:
+            log.error(
+                "Could not extract containers from output of 'nextflow inspect'. Falling back to legacy function."
+            )
+            self.find_container_images_legacy(workflow_directory)
+
+        except RuntimeError:
+            # nextflow version < 25.02.1
+            log.warning("Extracting containers with `nextflow inspect` failed. Falling back to legacy function.")
+            self.find_container_images_legacy(workflow_directory)
 
     def find_container_images_legacy(self, workflow_directory: str) -> None:
         """Find container image names for workflow.
