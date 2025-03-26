@@ -373,6 +373,7 @@ class ModuleLint(ComponentLint):
                             break
 
         # EDAM ontologies
+        # TODO: Refactor common code from input and output
         edam_formats = nf_core.modules.modules_utils.load_edam()
         if "input" in meta_yml:
             for i, channel in enumerate(corrected_meta_yml["input"]):
@@ -382,6 +383,7 @@ class ModuleLint(ComponentLint):
                     current_ontologies_i = []
                     if "pattern" in corrected_meta_yml["input"][i][j][element_name]:
                         pattern = corrected_meta_yml["input"][i][j][element_name]["pattern"]
+                        # TODO: check pattern detection and processing for different cases
                         for extension in re.split(r",|{|}", pattern):
                             if extension in edam_formats:
                                 expected_ontologies_i.append((edam_formats[extension][0], extension))
@@ -413,6 +415,7 @@ class ModuleLint(ComponentLint):
                     current_ontologies_o = []
                     if "pattern" in corrected_meta_yml["output"][i][ch_name][j][element_name]:
                         pattern = corrected_meta_yml["output"][i][ch_name][j][element_name]["pattern"]
+                        # TODO: check pattern detection and processing for different cases
                         for extension in re.split(r",|{|}", pattern):
                             if extension in edam_formats:
                                 expected_ontologies_o.append((edam_formats[extension][0], extension))
