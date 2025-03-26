@@ -1563,20 +1563,32 @@ class DownloadWorkflow:
                 for line in proc.stdout:
                     lines.append(line)
                     progress.update(task, current_log=line.strip())
-
-        if lines:
-            # something went wrong with the container retrieval
-            if any("FATAL: " in line for line in lines):
-                progress.remove_task(task)
-                raise ContainerError(
-                    container=container,
-                    registry=library,
-                    address=address,
-                    absolute_URI=absolute_URI,
-                    out_path=out_path if out_path else cache_path or "",
-                    singularity_command=singularity_command,
-                    error_msg=lines,
-                )
+        if self.container_system == "singularity":
+            if lines:
+                # something went wrong with the container retrieval
+                if any("FATAL: " in line for line in lines):
+                    progress.remove_task(task)
+                    raise ContainerError(
+                        container=container,
+                        registry=library,
+                        address=address,
+                        absolute_URI=absolute_URI,
+                        out_path=out_path if out_path else cache_path or "",
+                        singularity_command=pull_command,
+                        error_msg=lines,
+                    )
+        if self.container_system == "docker":
+            if lines:
+                if any ("Error response from daemon: " in line for line in lines):
+                    raise ContainerError(
+                        container=container,
+                        registry=library,
+                        address=address,
+                        absolute_URI=absolute_URI,
+                        out_path=out_path if out_path else cache_path or "",
+                        singularity_command=pull_command,
+                        error_msg=lines,
+                    )
 
         # Copy cached download if we are using the cache
         if cache_path:
