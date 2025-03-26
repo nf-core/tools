@@ -108,6 +108,10 @@ def load_edam():
     for line in response.content.splitlines():
         fields = line.decode("utf-8").split("\t")
         if fields[0].split("/")[-1].startswith("format"):
-            extension = fields[1].lower().split(" ")[0]
-            edam_formats[extension] = (fields[0], fields[1])  # URL, name
+            # We choose an already provided extension
+            if fields[14]:
+                extensions = fields[14].split("|")
+                for extension in extensions:
+                    if extension not in edam_formats:
+                        edam_formats[extension] = (fields[0], fields[1])
     return edam_formats
