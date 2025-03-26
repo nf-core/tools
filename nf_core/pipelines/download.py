@@ -724,7 +724,10 @@ class DownloadWorkflow:
             profile = f"-profile {self.container_system}" if self.container_system else ""
 
             # Run nextflos inspect (works if nextflow version >= 25.02.1)
-            cmd_out = run_cmd("nextflow", f"inspect -concretize -format json {profile} {workflow_directory}")
+            executable = "nextflow"
+            cmd_params = f"inspect -concretize -format json {profile} {workflow_directory}"
+            log.debug(f"Running: `{executable} {cmd_params}`")
+            cmd_out = run_cmd(executable, cmd_params)
             if cmd_out is None:
                 log.error("Failed to run 'nextflow inspect' to extrat containers. Falling back to legacy function.")
                 self.find_container_images_legacy(workflow_directory)
@@ -732,22 +735,24 @@ class DownloadWorkflow:
 
             out, err = cmd_out
             out_json = json.loads(out)
-
+            log.debug(out)
             containers = []
             for process in out_json["processes"]:
                 containers.append(process["container"])
 
             self.containers = containers
 
-        except KeyError:
+        except KeyError as e:
+            log.debug(e)
             log.error(
-                "Could not extract containers from output of 'nextflow inspect'. Falling back to legacy function."
+                "Could not parse the output of 'nextflow inspect' to extract containers. Falling back to legacy function."
             )
             self.find_container_images_legacy(workflow_directory)
 
-        except RuntimeError:
+        except RuntimeError as e:
             # nextflow version < 25.02.1
-            log.warning("Extracting containers with `nextflow inspect` failed. Falling back to legacy function.")
+            log.debug(e)
+            log.warning("Running `nextflow inspect` failed. Falling back to legacy function.")
             self.find_container_images_legacy(workflow_directory)
 
     def find_container_images_legacy(self, workflow_directory: str) -> None:
