@@ -167,11 +167,7 @@ class SingularityFetcher:
             cache_path (str, None): The NXF_SINGULARITY_CACHEDIR path if set, None if not
             progress (Progress): Rich progress bar instance to add tasks to.
         """
-        log.debug(f"Downloading Singularity image: '{container}'")
-
-        # Set output path to save file to
-        output_path_tmp = f"{output_path}.partial"
-        log.debug(f"Downloading to: '{output_path_tmp}'")
+        log.debug(f"Downloading Singularity image '{container}' to {output_path}")
 
         # Set up progress bar
         nice_name = container.split("/")[-1][:50]
