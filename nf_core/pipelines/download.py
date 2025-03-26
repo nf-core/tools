@@ -146,6 +146,12 @@ class DownloadWorkflow:
             self.additional_tags = None
         # Specifying a cache index or container library implies that containers should be downloaded.
         self.container_system = "singularity" if container_cache_index or bool(container_library) else container_system
+        if container_system == "singularity":
+            self.container_cache_env = "NXF_SINGULARITY_CACHEDIR"
+        elif container_system == "docker":
+            self.container_cache_env = "NXF_DOCKER_CACHEDIR"
+        else:
+            self.container_cache_env = None
         # Manually specified container library (registry)
         if isinstance(container_library, str) and bool(len(container_library)):
             self.container_library = [container_library]
