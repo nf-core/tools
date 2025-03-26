@@ -12,6 +12,9 @@ from typing import List
 from unittest import mock
 
 import pytest
+import rich.progress_bar
+import rich.table
+import rich.text
 
 import nf_core.pipelines.create.create
 import nf_core.pipelines.list
@@ -103,6 +106,96 @@ class DownloadUtilsTest(unittest.TestCase):
             progress.update_main_task(total=35)
             assert progress.tasks[0].total == 35
             assert progress.tasks[1].total == 28
+
+    def test_download_progress_renderables(self):
+        # Test the "singularity_pull" progress type
+        with DownloadProgress() as progress:
+            assert progress.tasks == []
+            progress.add_task(
+                "Task 1", progress_type="singularity_pull", total=42, completed=11, current_log="example log"
+            )
+            assert len(progress.tasks) == 1
+
+            renderable = progress.get_renderable()
+            assert isinstance(renderable, rich.console.Group), type(renderable)
+
+            assert len(renderable.renderables) == 1
+            table = renderable.renderables[0]
+            assert isinstance(table, rich.table.Table)
+
+            assert isinstance(table.columns[0]._cells[0], str)
+            assert table.columns[0]._cells[0] == "[magenta]Task 1"
+
+            assert isinstance(table.columns[1]._cells[0], str)
+            assert table.columns[1]._cells[0] == "[blue]example log"
+
+            assert isinstance(table.columns[2]._cells[0], rich.progress_bar.ProgressBar)
+            assert table.columns[2]._cells[0].completed == 11
+            assert table.columns[2]._cells[0].total == 42
+
+        # Test the "summary" progress type
+        with DownloadProgress() as progress:
+            assert progress.tasks == []
+            progress.add_task("Task 1", progress_type="summary", total=42, completed=11)
+            assert len(progress.tasks) == 1
+
+            renderable = progress.get_renderable()
+            assert isinstance(renderable, rich.console.Group), type(renderable)
+
+            assert len(renderable.renderables) == 1
+            table = renderable.renderables[0]
+            assert isinstance(table, rich.table.Table)
+
+            assert isinstance(table.columns[0]._cells[0], str)
+            assert table.columns[0]._cells[0] == "[magenta]Task 1"
+
+            assert isinstance(table.columns[1]._cells[0], rich.progress_bar.ProgressBar)
+            assert table.columns[1]._cells[0].completed == 11
+            assert table.columns[1]._cells[0].total == 42
+
+            assert isinstance(table.columns[2]._cells[0], str)
+            assert table.columns[2]._cells[0] == "[progress.percentage] 26%"
+
+            assert isinstance(table.columns[3]._cells[0], str)
+            assert table.columns[3]._cells[0] == "•"
+
+            assert isinstance(table.columns[4]._cells[0], str)
+            assert table.columns[4]._cells[0] == "[green]11/42 completed"
+
+        # Test the "download" progress type
+        with DownloadProgress() as progress:
+            assert progress.tasks == []
+            progress.add_task("Task 1", progress_type="download", total=42, completed=11)
+            assert len(progress.tasks) == 1
+
+            renderable = progress.get_renderable()
+            assert isinstance(renderable, rich.console.Group), type(renderable)
+
+            assert len(renderable.renderables) == 1
+            table = renderable.renderables[0]
+            assert isinstance(table, rich.table.Table)
+
+            assert isinstance(table.columns[0]._cells[0], str)
+            assert table.columns[0]._cells[0] == "[blue]Task 1"
+
+            assert isinstance(table.columns[1]._cells[0], rich.progress_bar.ProgressBar)
+            assert table.columns[1]._cells[0].completed == 11
+            assert table.columns[1]._cells[0].total == 42
+
+            assert isinstance(table.columns[2]._cells[0], str)
+            assert table.columns[2]._cells[0] == "[progress.percentage]26.2%"
+
+            assert isinstance(table.columns[3]._cells[0], str)
+            assert table.columns[3]._cells[0] == "•"
+
+            assert isinstance(table.columns[4]._cells[0], rich.text.Text)
+            assert table.columns[4]._cells[0]._text == ["11/42 bytes"]
+
+            assert isinstance(table.columns[5]._cells[0], str)
+            assert table.columns[5]._cells[0] == "•"
+
+            assert isinstance(table.columns[6]._cells[0], rich.text.Text)
+            assert table.columns[6]._cells[0]._text == ["?"]
 
 
 class DownloadTest(unittest.TestCase):
