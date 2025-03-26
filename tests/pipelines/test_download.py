@@ -632,12 +632,12 @@ class DownloadTest(unittest.TestCase):
 
         # Call the method
         singularity_fetcher = SingularityFetcher(
+            [],
             (
                 "quay.io",
                 "community-cr-prod.seqera.io/docker/registry/v2",
                 "depot.galaxyproject.org/singularity",
             ),
-            [],
             mock_rich_progress,
         )
         singularity_fetcher.symlink_registries(f"{tmp_path}/path/to/singularity-image.img")
@@ -696,40 +696,28 @@ class DownloadTest(unittest.TestCase):
         mock_open.return_value = 12  # file descriptor
         mock_close.return_value = 12  # file descriptor
 
-        download_obj = DownloadWorkflow(
-            pipeline="dummy",
-            outdir=tmp_path,
-            container_library=("quay.io", "community-cr-prod.seqera.io/docker/registry/v2"),
-        )
-
-        download_obj.registry_set = {"quay.io", "community-cr-prod.seqera.io/docker/registry/v2"}
-
-        # Call the method with registry - should not happen, but preserve it then.
+        # Call the method with registry name included - should not happen, but preserve it then.
         singularity_fetcher = SingularityFetcher(
-            (
-                "quay.io",
-                "community-cr-prod.seqera.io/docker/registry/v2",
-                "depot.galaxyproject.org/singularity",
-            ),
             [],
+            (
+                "quay.io",  # Same as in the filename
+                "community-cr-prod.seqera.io/docker/registry/v2",
+            ),
             mock_rich_progress,
         )
         singularity_fetcher.symlink_registries(f"{tmp_path}/path/to/quay.io-singularity-image.img")
-        print(mock_resub.call_args)
 
         # Check that os.makedirs was called with the correct arguments
-        # mock_makedirs.assert_any_call(f"{tmp_path}/path/to", exist_ok=True)
+        mock_makedirs.assert_called_once_with(f"{tmp_path}/path/to", exist_ok=True)
 
         # Check that os.symlink was called with the correct arguments
-        mock_symlink.assert_called_with(
+        # assert_called_once_with also tells us that there was no attempt to
+        # - symlink to itself
+        # - symlink to the same registry
+        mock_symlink.assert_called_once_with(
             "./quay.io-singularity-image.img",
-            "./community-cr-prod.seqera.io-docker-registry-v2-singularity-image.img",
+            "./community-cr-prod.seqera.io-docker-registry-v2-singularity-image.img",  # "quay.io-" has been trimmed
             dir_fd=12,
-        )
-        # Check that there is no attempt to symlink to itself (test parameters would result in that behavior if not checked in the function)
-        assert (
-            unittest.mock.call("./quay.io-singularity-image.img", "./quay.io-singularity-image.img", dir_fd=12)
-            not in mock_symlink.call_args_list
         )
 
         # Normally it would be called for each registry, but since quay.io is part of the name, it

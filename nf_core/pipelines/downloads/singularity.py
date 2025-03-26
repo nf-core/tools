@@ -86,7 +86,7 @@ class SingularityFetcher:
         The base image, e.g. ./nf-core-gatk-4.4.0.0.img will thus be symlinked as for example ./quay.io-nf-core-gatk-4.4.0.0.img
         by prepending all registries in registry_set to the image name.
 
-        Unfortunately, out output image name may contain a registry definition (Singularity image pulled from depot.galaxyproject.org
+        Unfortunately, the output image name may contain a registry definition (Singularity image pulled from depot.galaxyproject.org
         or older pipeline version, where the docker registry was part of the image name in the modules). Hence, it must be stripped
         before to ensure that it is really the base name.
         """
