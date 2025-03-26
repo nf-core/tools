@@ -18,7 +18,7 @@ import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.download import DownloadWorkflow, WorkflowRepo
 from nf_core.pipelines.downloads.singularity import ContainerError, SingularityFetcher
-from nf_core.pipelines.downloads.utils import intermediate_file
+from nf_core.pipelines.downloads.utils import DownloadProgress, intermediate_file
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import run_cmd
 
@@ -80,6 +80,29 @@ class DownloadUtilsTest(unittest.TestCase):
 
         assert not os.path.exists(output_path)
         assert not os.path.exists(tmp_path)
+
+    def test_download_progress_main_task(self):
+        with DownloadProgress() as progress:
+            # No task initially
+            assert progress.tasks == []
+
+            # Add a task, it should be there
+            task_id = progress.add_main_task(total=42)
+            assert task_id == 0
+            assert len(progress.tasks) == 1
+            assert progress.task_ids[0] == task_id
+            assert progress.tasks[0].total == 42
+
+            # Add another task, there should now be two
+            other_task_id = progress.add_task("Another task", total=28)
+            assert other_task_id == 1
+            assert len(progress.tasks) == 2
+            assert progress.task_ids[1] == other_task_id
+            assert progress.tasks[1].total == 28
+
+            progress.update_main_task(total=35)
+            assert progress.tasks[0].total == 35
+            assert progress.tasks[1].total == 28
 
 
 class DownloadTest(unittest.TestCase):
