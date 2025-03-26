@@ -1517,7 +1517,7 @@ class DownloadWorkflow:
         else:
             address = f"docker://{library}/{container.replace('docker://', '')}"
             absolute_URI = False
-        pull_command = None
+        pull_command = []
         if self.container_system == "singularity":
             if shutil.which("singularity"):
                 pull_command = [
