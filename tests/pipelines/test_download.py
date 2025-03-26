@@ -32,6 +32,8 @@ class DownloadUtilsTest(unittest.TestCase):
     @with_temporary_folder
     def test_intermediate_file(self, outdir):
         # Code that doesn't fail. The file shall exist
+
+        # Directly write to the file, as in download_image
         output_path = os.path.join(outdir, "testfile1")
         with intermediate_file(output_path) as tmp:
             tmp_path = tmp.name
@@ -41,7 +43,7 @@ class DownloadUtilsTest(unittest.TestCase):
         assert os.path.getsize(output_path) == 13
         assert not os.path.exists(tmp_path)
 
-        # Same as above, but with an external command. The file shall exist
+        # Run an external command as in pull_image
         output_path = os.path.join(outdir, "testfile2")
         with intermediate_file(output_path) as tmp:
             tmp_path = tmp.name
@@ -52,13 +54,29 @@ class DownloadUtilsTest(unittest.TestCase):
         assert not os.path.exists(tmp_path)
 
         # Code that fails. The file shall not exist
+
+        # Directly write to the file and raise an exception
         output_path = os.path.join(outdir, "testfile3")
         try:
             with intermediate_file(output_path) as tmp:
                 tmp_path = tmp.name
+                tmp.write(b"Hello, World!")
                 raise ValueError("This is a test error")
         except Exception as e:
             assert isinstance(e, ValueError)
+
+        assert not os.path.exists(output_path)
+        assert not os.path.exists(tmp_path)
+
+        # Run an external command and raise an exception
+        output_path = os.path.join(outdir, "testfile4")
+        try:
+            with intermediate_file(output_path) as tmp:
+                tmp_path = tmp.name
+                subprocess.check_call([f"echo 'Hello, World!' > {tmp_path}"], shell=True)
+                subprocess.check_call(["ls", "/dummy"])
+        except Exception as e:
+            assert isinstance(e, subprocess.CalledProcessError)
 
         assert not os.path.exists(output_path)
         assert not os.path.exists(tmp_path)
