@@ -2,6 +2,7 @@
 
 import concurrent.futures
 import io
+import json
 import logging
 import os
 import re
@@ -717,7 +718,6 @@ class DownloadWorkflow:
         `nextflow config` at the time of writing, so we scrape the pipeline files.
         This returns raw matches that will likely need to be cleaned.
         """
-        import json
 
         try:
             # TODO: Select container system via profile. Is this stable enough?
