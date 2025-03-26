@@ -509,7 +509,7 @@ class DownloadWorkflow:
                             if not os.path.isfile(shellprofile_path):
                                 shellprofile_path = False
 
-                        if shellprofile_path
+                        if shellprofile_path:
                             stderr.print(
                                 f"\nSo that [blue]$NXF_SINGULARITY_CACHEDIR[/] is always defined, you can add it to your [blue not bold]~/{os.path.basename(shellprofile_path)}[/] file ."
                                 "This will then be automatically set every time you open a new terminal. We can add the following line to this file for you: \n"
