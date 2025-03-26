@@ -993,9 +993,9 @@ def prompt_pipeline_release_branch(
         )
 
 
-class SingularityCacheFilePathValidator(questionary.Validator):
+class CacheFilePathValidator(questionary.Validator):
     """
-    Validator for file path specified as --singularity-cache-index argument in nf-core pipelines download
+    Validator for file path specified for example through the --singularity-cache-index argument in nf-core pipelines download
     """
 
     def validate(self, value):

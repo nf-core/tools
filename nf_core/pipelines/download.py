@@ -31,7 +31,7 @@ from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
 from nf_core.utils import (
     NFCORE_CACHE_DIR,
     NFCORE_DIR,
-    SingularityCacheFilePathValidator,
+    CacheFilePathValidator,
 )
 
 log = logging.getLogger(__name__)
@@ -554,7 +554,7 @@ class DownloadWorkflow:
             while cachedir_index is None:
                 prompt_cachedir_index = questionary.path(
                     "Specify a list of the container images that are already present on the remote system:",
-                    validate=SingularityCacheFilePathValidator,
+                    validate=CacheFilePathValidator,
                     style=nf_core.utils.nfcore_question_style,
                 ).unsafe_ask()
                 cachedir_index = os.path.abspath(os.path.expanduser(prompt_cachedir_index))
