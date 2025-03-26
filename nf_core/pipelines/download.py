@@ -596,15 +596,17 @@ class DownloadWorkflow:
     def read_remote_containers(self):
         """Reads the file specified as index for the remote Singularity cache dir"""
         if (
-            self.container_system == "singularity"
-            and self.container_cache_utilisation == "remote"
+            self.container_cache_utilisation == "remote"
             and self.container_cache_index is not None
         ):
             n_total_images = 0
             try:
                 with open(self.container_cache_index) as indexfile:
                     for line in indexfile.readlines():
-                        match = re.search(r"([^\/\\]+\.img)", line, re.S)
+                        match_str = r"([^\/\\]+\.img)"
+                        if self.container_system == "docker":
+                            match_str = r"([^\/\\]+\.tar)"
+                        match = re.search(match_str, line, re.S)
                         if match:
                             n_total_images += 1
                             self.containers_remote.append(match.group(0))
@@ -1354,12 +1356,17 @@ class DownloadWorkflow:
         out_name = re.sub(r"^.*:\/\/", "", out_name)
         # Detect file extension
         extension = ".img"
-        if ".sif:" in out_name:
-            extension = ".sif"
-            out_name = out_name.replace(".sif:", "-")
-        elif out_name.endswith(".sif"):
-            extension = ".sif"
-            out_name = out_name[:-4]
+        if self.container_system == "singularity":
+            if ".sif:" in out_name:
+                extension = ".sif"
+                out_name = out_name.replace(".sif:", "-")
+            elif out_name.endswith(".sif"):
+                extension = ".sif"
+                out_name = out_name[:-4]
+        if self.container_system == "docker":
+            if out_name.endswith(".tar"):
+                extension = ".tar"
+                out_name = out_name[:-4]
         # Strip : and / characters
         out_name = out_name.replace("/", "-").replace(":", "-")
         # Add file extension
