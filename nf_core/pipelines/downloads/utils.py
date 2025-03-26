@@ -64,6 +64,12 @@ class DownloadProgress(rich.progress.Progress):
                     "[blue]{task.fields[current_log]}",
                     rich.progress.BarColumn(bar_width=None),
                 )
+            if task.fields.get("progress_type") == "docker_pull":
+                self.columns = (
+                    "[magenta]{task.description}",
+                    "[blue]{task.fields[current_log]}",
+                    rich.progress.BarColumn(bar_width=None),
+                )
             yield self.make_tasks_table([task])
 
     # These functions allow callers not having to track the main TaskID
