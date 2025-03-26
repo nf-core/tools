@@ -15,6 +15,83 @@ from nf_core.pipelines.downloads.utils import DownloadProgress, intermediate_fil
 log = logging.getLogger(__name__)
 
 
+def get_container_filename(container: str, registries: Iterable[str]) -> str:
+    """Return the expected filename for a container."""
+
+    # Generate file paths
+    # Based on simpleName() function in Nextflow code:
+    # https://github.com/nextflow-io/nextflow/blob/671ae6d85df44f906747c16f6d73208dbc402d49/modules/nextflow/src/main/groovy/nextflow/container/SingularityCache.groovy#L69-L94
+    out_name = container
+    # Strip URI prefix
+    out_name = re.sub(r"^.*:\/\/", "", out_name)
+    # Detect file extension
+    extension = ".img"
+    if ".sif:" in out_name:
+        extension = ".sif"
+        out_name = out_name.replace(".sif:", "-")
+    elif out_name.endswith(".sif"):
+        extension = ".sif"
+        out_name = out_name[:-4]
+    # Strip : and / characters
+    out_name = out_name.replace("/", "-").replace(":", "-")
+    # Add file extension
+    out_name = out_name + extension
+
+    # Trim potential registries from the name for consistency.
+    # This will allow pipelines to work offline without symlinked images,
+    # if docker.registry / singularity.registry are set to empty strings at runtime, which can be included in the HPC config profiles easily.
+    if registries:
+        # Create a regex pattern from the set of registries
+        trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in registries)
+        # Use the pattern to trim the string
+        out_name = re.sub(f"{trim_pattern}", "", out_name)
+
+    return out_name
+
+
+def symlink_registries(image_path: str, registries: Iterable[str]) -> None:
+    """Create a symlink for each registry in the registry set that points to the image.
+    We have dropped the explicit registries from the modules in favor of the configurable registries.
+    Unfortunately, Nextflow still expects the registry to be part of the file name, so a symlink is needed.
+
+    The base image, e.g. ./nf-core-gatk-4.4.0.0.img will thus be symlinked as for example ./quay.io-nf-core-gatk-4.4.0.0.img
+    by prepending all registries in registry_set to the image name.
+
+    Unfortunately, the output image name may contain a registry definition (Singularity image pulled from depot.galaxyproject.org
+    or older pipeline version, where the docker registry was part of the image name in the modules). Hence, it must be stripped
+    before to ensure that it is really the base name.
+    """
+
+    # Create a regex pattern from the set, in case trimming is needed.
+    trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in registries)
+
+    for registry in registries:
+        # Nextflow will convert it like this as well, so we need it mimic its behavior
+        registry = registry.replace("/", "-")
+
+        if not bool(re.search(trim_pattern, os.path.basename(image_path))):
+            symlink_name = os.path.join("./", f"{registry}-{os.path.basename(image_path)}")
+        else:
+            trimmed_name = re.sub(f"{trim_pattern}", "", os.path.basename(image_path))
+            symlink_name = os.path.join("./", f"{registry}-{trimmed_name}")
+
+        symlink_full = os.path.join(os.path.dirname(image_path), symlink_name)
+        target_name = os.path.join("./", os.path.basename(image_path))
+
+        if not os.path.exists(symlink_full) and target_name != symlink_name:
+            os.makedirs(os.path.dirname(symlink_full), exist_ok=True)
+            image_dir = os.open(os.path.dirname(image_path), os.O_RDONLY)
+            try:
+                os.symlink(
+                    target_name,
+                    symlink_name,
+                    dir_fd=image_dir,
+                )
+                log.debug(f"Symlinked {target_name} as {symlink_name}.")
+            finally:
+                os.close(image_dir)
+
+
 class SingularityFetcher:
     """Class to manage all Singularity operations for fetching containers.
 
@@ -37,46 +114,8 @@ class SingularityFetcher:
         self.kill_with_fire = False
 
     def get_container_filename(self, container: str) -> str:
-        """Check Singularity cache for image, copy to destination folder if found.
-
-        Args:
-            container (str):    A pipeline's container name. Can be direct download URL
-                                or a Docker Hub repository ID.
-
-        Returns:
-            # TODO
-            tuple (str, str):   Returns a tuple of (out_path, cache_path).
-        """
-
-        # Generate file paths
-        # Based on simpleName() function in Nextflow code:
-        # https://github.com/nextflow-io/nextflow/blob/671ae6d85df44f906747c16f6d73208dbc402d49/modules/nextflow/src/main/groovy/nextflow/container/SingularityCache.groovy#L69-L94
-        out_name = container
-        # Strip URI prefix
-        out_name = re.sub(r"^.*:\/\/", "", out_name)
-        # Detect file extension
-        extension = ".img"
-        if ".sif:" in out_name:
-            extension = ".sif"
-            out_name = out_name.replace(".sif:", "-")
-        elif out_name.endswith(".sif"):
-            extension = ".sif"
-            out_name = out_name[:-4]
-        # Strip : and / characters
-        out_name = out_name.replace("/", "-").replace(":", "-")
-        # Add file extension
-        out_name = out_name + extension
-
-        # Trim potential registries from the name for consistency.
-        # This will allow pipelines to work offline without symlinked images,
-        # if docker.registry / singularity.registry are set to empty strings at runtime, which can be included in the HPC config profiles easily.
-        if self.registry_set:
-            # Create a regex pattern from the set of registries
-            trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in self.registry_set)
-            # Use the pattern to trim the string
-            out_name = re.sub(f"{trim_pattern}", "", out_name)
-
-        return out_name
+        """Return the expected filename for a container."""
+        return get_container_filename(container, self.registry_set)
 
     def symlink_registries(self, image_path: str) -> None:
         """Create a symlink for each registry in the registry set that points to the image.
@@ -90,35 +129,7 @@ class SingularityFetcher:
         or older pipeline version, where the docker registry was part of the image name in the modules). Hence, it must be stripped
         before to ensure that it is really the base name.
         """
-
-        # Create a regex pattern from the set, in case trimming is needed.
-        trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in self.registry_set)
-
-        for registry in self.registry_set:
-            # Nextflow will convert it like this as well, so we need it mimic its behavior
-            registry = registry.replace("/", "-")
-
-            if not bool(re.search(trim_pattern, os.path.basename(image_path))):
-                symlink_name = os.path.join("./", f"{registry}-{os.path.basename(image_path)}")
-            else:
-                trimmed_name = re.sub(f"{trim_pattern}", "", os.path.basename(image_path))
-                symlink_name = os.path.join("./", f"{registry}-{trimmed_name}")
-
-            symlink_full = os.path.join(os.path.dirname(image_path), symlink_name)
-            target_name = os.path.join("./", os.path.basename(image_path))
-
-            if not os.path.exists(symlink_full) and target_name != symlink_name:
-                os.makedirs(os.path.dirname(symlink_full), exist_ok=True)
-                image_dir = os.open(os.path.dirname(image_path), os.O_RDONLY)
-                try:
-                    os.symlink(
-                        target_name,
-                        symlink_name,
-                        dir_fd=image_dir,
-                    )
-                    log.debug(f"Symlinked {target_name} as {symlink_name}.")
-                finally:
-                    os.close(image_dir)
+        return symlink_registries(image_path, self.registry_set)
 
     def download_images(
         self,

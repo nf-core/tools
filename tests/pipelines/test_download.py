@@ -20,7 +20,12 @@ import nf_core.pipelines.create.create
 import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.download import DownloadWorkflow, WorkflowRepo
-from nf_core.pipelines.downloads.singularity import ContainerError, SingularityFetcher
+from nf_core.pipelines.downloads.singularity import (
+    ContainerError,
+    SingularityFetcher,
+    get_container_filename,
+    symlink_registries,
+)
 from nf_core.pipelines.downloads.utils import DownloadProgress, intermediate_file
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import run_cmd
@@ -721,8 +726,12 @@ class DownloadTest(unittest.TestCase):
         # Test that they are all caught inside get_singularity_images().
         download_obj.get_singularity_images()
 
+    #
+    # Tests for 'singularity.symlink_registries' function
+    #
+
+    # Simple file name with no registry in it
     @with_temporary_folder
-    @mock.patch("rich.progress.Progress.add_task")
     @mock.patch("os.makedirs")
     @mock.patch("os.symlink")
     @mock.patch("os.open")
@@ -738,7 +747,6 @@ class DownloadTest(unittest.TestCase):
         mock_open,
         mock_symlink,
         mock_makedirs,
-        mock_rich_progress,
     ):
         # Setup
         mock_dirname.return_value = f"{tmp_path}/path/to"
@@ -746,17 +754,13 @@ class DownloadTest(unittest.TestCase):
         mock_open.return_value = 12  # file descriptor
         mock_close.return_value = 12  # file descriptor
 
-        # Call the method
-        singularity_fetcher = SingularityFetcher(
-            [],
-            (
-                "quay.io",
-                "community-cr-prod.seqera.io/docker/registry/v2",
-                "depot.galaxyproject.org/singularity",
-            ),
-            mock_rich_progress,
-        )
-        singularity_fetcher.symlink_registries(f"{tmp_path}/path/to/singularity-image.img")
+        registries = [
+            "quay.io",
+            "community-cr-prod.seqera.io/docker/registry/v2",
+            "depot.galaxyproject.org/singularity",
+        ]
+
+        symlink_registries(f"{tmp_path}/path/to/singularity-image.img", registries)
 
         # Check that os.makedirs was called with the correct arguments
         mock_makedirs.assert_any_call(f"{tmp_path}/path/to", exist_ok=True)
@@ -784,8 +788,8 @@ class DownloadTest(unittest.TestCase):
         ]
         mock_symlink.assert_has_calls(expected_calls, any_order=True)
 
+    # File name with registry in it
     @with_temporary_folder
-    @mock.patch("rich.progress.Progress.add_task")
     @mock.patch("os.makedirs")
     @mock.patch("os.symlink")
     @mock.patch("os.open")
@@ -793,7 +797,7 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("re.sub")
     @mock.patch("os.path.basename")
     @mock.patch("os.path.dirname")
-    def test_symlink_singularity_images_registry(
+    def test_symlink_singularity_symlink_registries(
         self,
         tmp_path,
         mock_dirname,
@@ -803,7 +807,6 @@ class DownloadTest(unittest.TestCase):
         mock_open,
         mock_symlink,
         mock_makedirs,
-        mock_rich_progress,
     ):
         # Setup
         mock_resub.return_value = "singularity-image.img"
@@ -813,15 +816,11 @@ class DownloadTest(unittest.TestCase):
         mock_close.return_value = 12  # file descriptor
 
         # Call the method with registry name included - should not happen, but preserve it then.
-        singularity_fetcher = SingularityFetcher(
-            [],
-            (
-                "quay.io",  # Same as in the filename
-                "community-cr-prod.seqera.io/docker/registry/v2",
-            ),
-            mock_rich_progress,
-        )
-        singularity_fetcher.symlink_registries(f"{tmp_path}/path/to/quay.io-singularity-image.img")
+        registries = [
+            "quay.io",  # Same as in the filename
+            "community-cr-prod.seqera.io/docker/registry/v2",
+        ]
+        symlink_registries(f"{tmp_path}/path/to/quay.io-singularity-image.img", registries)
 
         # Check that os.makedirs was called with the correct arguments
         mock_makedirs.assert_called_once_with(f"{tmp_path}/path/to", exist_ok=True)
@@ -893,88 +892,57 @@ class DownloadTest(unittest.TestCase):
             singularity_fetcher.pull_image("a-container", f"{tmp_dir}/anothercontainer.sif", "quay.io")
 
     #
-    # Test for 'singularity_image_filenames' function
+    # Test for 'singularity.get_container_filename' function
     #
-    @with_temporary_folder
-    @mock.patch("rich.progress.Progress.add_task")
-    def test_singularity_image_filenames(self, tmp_path, mock_rich_progress):
-        os.environ["NXF_SINGULARITY_CACHEDIR"] = f"{tmp_path}/cachedir"
-
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
-        download_obj.outdir = tmp_path
-        download_obj.container_cache_utilisation = "amend"
-
-        download_obj.registry_set = {
+    def test_singularity_get_container_filename(self):
+        registries = [
             "docker.io",
             "quay.io",
             "depot.galaxyproject.org/singularity",
             "community.wave.seqera.io/library",
             "community-cr-prod.seqera.io/docker/registry/v2",
-        }
-        singularity_fetcher = SingularityFetcher([], download_obj.registry_set, mock_rich_progress)
+        ]
 
-        ## Test phase I: Container not yet cached, should be amended to cache
-        # out_path: str, Path to cache
-        # cache_path: None
-
-        result = singularity_fetcher.get_container_filename(
-            "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0"
+        # Test --- galaxy URL #
+        result = get_container_filename(
+            "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0",
+            registries,
         )
 
-        # Assert that the result is a string
-        self.assertIsInstance(result, str)
-
-        # assert that the correct out_path is returned that points to the cache
-        assert result.endswith("bbmap-38.93--he522d1c_0.img")
-
-        ## Test phase II: Test various container names
-        # out_path: str, Path to cache
-        # cache_path: None
+        assert result == "bbmap-38.93--he522d1c_0.img"
 
         # Test --- mulled containers #
-        result = singularity_fetcher.get_container_filename(
-            "quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0"
+        result = get_container_filename(
+            "quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:59cdd445419f14abac76b31dd0d71217994cbcc9-0",
+            registries,
         )
-        assert result.endswith(
-            "biocontainers-mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2-59cdd445419f14abac76b31dd0d71217994cbcc9-0.img"
+        assert (
+            result
+            == "biocontainers-mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2-59cdd445419f14abac76b31dd0d71217994cbcc9-0.img"
         )
 
         # Test --- Docker containers without registry #
-        result = singularity_fetcher.get_container_filename("nf-core/ubuntu:20.04")
-        assert result.endswith("nf-core-ubuntu-20.04.img")
+        result = get_container_filename("nf-core/ubuntu:20.04", registries)
+        assert result == "nf-core-ubuntu-20.04.img"
 
         # Test --- Docker container with explicit registry -> should be trimmed #
-        result = singularity_fetcher.get_container_filename("docker.io/nf-core/ubuntu:20.04")
-        assert result.endswith("nf-core-ubuntu-20.04.img")
+        result = get_container_filename("docker.io/nf-core/ubuntu:20.04", registries)
+        assert result == "nf-core-ubuntu-20.04.img"
 
-        # Test --- Docker container with explicit registry not in registry set -> can't be trimmed
-        result = singularity_fetcher.get_container_filename("mirage-the-imaginative-registry.io/nf-core/ubuntu:20.04")
-        assert result.endswith("mirage-the-imaginative-registry.io-nf-core-ubuntu-20.04.img")
+        # Test --- Docker container with explicit registry not in registry list -> can't be trimmed
+        result = get_container_filename("mirage-the-imaginative-registry.io/nf-core/ubuntu:20.04", registries)
+        assert result == "mirage-the-imaginative-registry.io-nf-core-ubuntu-20.04.img"
 
         # Test --- Seqera Docker containers: Trimmed, because it is hard-coded in the registry set.
-        result = singularity_fetcher.get_container_filename(
-            "community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264"
-        )
-        assert result.endswith("coreutils-9.5--ae99c88a9b28c264.img")
+        result = get_container_filename("community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264", registries)
+        assert result == "coreutils-9.5--ae99c88a9b28c264.img"
 
         # Test --- Seqera Singularity containers: Trimmed, because it is hard-coded in the registry set.
-        result = singularity_fetcher.get_container_filename(
-            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data"
+        result = get_container_filename(
+            "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data",
+            registries,
         )
-        assert result.endswith(
-            "blobs-sha256-c2-c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975-data.img"
-        )
-
-        ## Test phase III: Container will be cached but also copied to out_path
-        # out_path: str, Path to cache
-        # cache_path: str, Path to cache
-        download_obj.container_cache_utilisation = "copy"
-        result = singularity_fetcher.get_container_filename(
-            "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0"
-        )
-
-        self.assertTrue(all(isinstance(element, str) for element in result))
-        assert result.endswith("bbmap-38.93--he522d1c_0.img")
+        assert result == "blobs-sha256-c2-c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975-data.img"
 
     #
     # Test for '--singularity-cache remote --singularity-cache-index'. Provide a list of containers already available in a remote location.
