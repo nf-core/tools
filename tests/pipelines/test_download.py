@@ -35,7 +35,7 @@ from ..utils import TEST_DATA_DIR, with_temporary_folder
 
 class DownloadUtilsTest(unittest.TestCase):
     #
-    # Tests for 'utils.intermediate_file'
+    # Test for 'utils.intermediate_file'
     #
     @with_temporary_folder
     def test_intermediate_file(self, outdir):
@@ -89,6 +89,9 @@ class DownloadUtilsTest(unittest.TestCase):
         assert not os.path.exists(output_path)
         assert not os.path.exists(tmp_path)
 
+    #
+    # Test for 'utils.DownloadProgress.add/update_main_task'
+    #
     def test_download_progress_main_task(self):
         with DownloadProgress() as progress:
             # No task initially
@@ -112,6 +115,9 @@ class DownloadUtilsTest(unittest.TestCase):
             assert progress.tasks[0].total == 35
             assert progress.tasks[1].total == 28
 
+    #
+    # Test for 'utils.DownloadProgress.get_renderables'
+    #
     def test_download_progress_renderables(self):
         # Test the "singularity_pull" progress type
         with DownloadProgress() as progress:
