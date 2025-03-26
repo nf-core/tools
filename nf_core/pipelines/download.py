@@ -291,7 +291,7 @@ class DownloadWorkflow:
                     raise DownloadError("Error editing pipeline config file to use local configs!") from e
 
             # Collect all required singularity images
-            if self.container_system == "singularity":
+            if self.container_system:
                 self.find_container_images(os.path.join(self.outdir, revision_dirname))
                 self.gather_registries(os.path.join(self.outdir, revision_dirname))
 
@@ -326,7 +326,7 @@ class DownloadWorkflow:
         self.workflow_repo.bare_clone(os.path.join(self.outdir, self.output_filename))
 
         # extract the required containers
-        if self.container_system == "singularity":
+        if self.container_system:
             for revision, commit in self.wf_sha.items():
                 # Checkout the repo in the current revision
                 self.workflow_repo.checkout(commit)
@@ -582,7 +582,7 @@ class DownloadWorkflow:
                 ).unsafe_ask()
                 cachedir_index = os.path.abspath(os.path.expanduser(prompt_cachedir_index))
                 if prompt_cachedir_index == "":
-                    log.error("Will disregard contents of a remote [blue]$NXF_SINGULARITY_CACHEDIR[/]")
+                    log.error(f"Will disregard contents of a remote [blue]${self.self.container_cache_env}[/]")
                     self.container_cache_index = None
                     self.container_cache_utilisation = "copy"
                 elif not os.access(cachedir_index, os.R_OK):
@@ -612,14 +612,14 @@ class DownloadWorkflow:
                         raise LookupError("Could not find valid container names in the index file.")
                     self.containers_remote = sorted(list(set(self.containers_remote)))
             except (FileNotFoundError, LookupError) as e:
-                log.error(f"[red]Issue with reading the specified remote $NXF_SINGULARITY_CACHE index:[/]\n{e}\n")
+                log.error(f"[red]Issue with reading the specified remote ${self.container_cache_env} index:[/]\n{e}\n")
                 if stderr.is_interactive and rich.prompt.Confirm.ask("[blue]Specify a new index file and try again?"):
                     self.container_cache_index = None  # reset chosen path to index file.
-                    self.prompt_singularity_cachedir_remote()
+                    self.prompt_cachedir_remote()
                 else:
-                    log.info("Proceeding without consideration of the remote $NXF_SINGULARITY_CACHE index.")
+                    log.info(f"Proceeding without consideration of the remote ${self.container_cache_env} index.")
                     self.container_cache_index = None
-                    if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
+                    if os.environ.get(self.container_cache_env):
                         self.container_cache_utilisation = "copy"  # default to copy if possible, otherwise skip.
                     else:
                         self.container_cache_utilisation = None
@@ -1218,15 +1218,21 @@ class DownloadWorkflow:
                         containers_download.append((container, out_path, cache_path))
                         continue
 
-                    # Pull using singularity
+                    # Pull using singularity or docker
                     containers_pull.append((container, out_path, cache_path))
 
-                # Exit if we need to pull images and Singularity is not installed
+                # Exit if we need to pull images and Singularity/Docker is not installed
                 if len(containers_pull) > 0:
-                    if not (shutil.which("singularity") or shutil.which("apptainer")):
-                        raise OSError(
-                            "Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH"
-                        )
+                    if self.container_system == "singularity":
+                        if not (shutil.which("singularity") or shutil.which("apptainer")):
+                            raise OSError(
+                                "Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH"
+                            )
+                    if self.container_system == "docker":
+                        if not shutil.which("docker"):
+                            raise OSError(
+                                "Docker is needed to pull images, but it is not installed or not in $PATH"
+                            )
 
                 if containers_exist:
                     if self.container_cache_index is not None:
@@ -1403,10 +1409,10 @@ class DownloadWorkflow:
             container (str): A pipeline's container name. Usually it is of similar format
                 to ``https://depot.galaxyproject.org/singularity/name:version``
             out_path (str): The final target output path
-            cache_path (str, None): The NXF_SINGULARITY_CACHEDIR path if set, None if not
+            cache_path (str, None): The NXF_SINGULARITY_CACHEDIR/NXF_DOCKER_CACHEDIR path if set, None if not
             progress (Progress): Rich progress bar instance to add tasks to.
         """
-        log.debug(f"Downloading Singularity image: '{container}'")
+        log.debug(f"Downloading {self.container_system} image: '{container}'")
 
         # Set output path to save file to
         output_path = cache_path or out_path
@@ -1447,10 +1453,12 @@ class DownloadWorkflow:
                 log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
                 progress.update(task, description="Copying from cache to target directory")
                 shutil.copyfile(cache_path, out_path)
-                self.symlink_singularity_images(cache_path)  # symlinks inside the cache directory
+                if self.container_system == "singularity":
+                    self.symlink_singularity_images(cache_path)  # symlinks inside the cache directory
 
             # Create symlinks to ensure that the images are found even with different registries being used.
-            self.symlink_singularity_images(out_path)
+            if self.container_system == "singularity":
+                self.symlink_singularity_images(out_path)
 
             progress.remove_task(task)
 
@@ -1459,7 +1467,7 @@ class DownloadWorkflow:
             for t in progress.task_ids:
                 progress.remove_task(t)
             # Try to delete the incomplete download
-            log.debug(f"Deleting incompleted singularity image download:\n'{output_path_tmp}'")
+            log.debug(f"Deleting incompleted {self.container_system} image download:\n'{output_path_tmp}'")
             if output_path_tmp and os.path.exists(output_path_tmp):
                 os.remove(output_path_tmp)
             if output_path and os.path.exists(output_path):
@@ -1482,13 +1490,13 @@ class DownloadWorkflow:
             library (list of str): A list of libraries to try for pulling the image.
 
         Raises:
-            Various exceptions possible from `subprocess` execution of Singularity.
+            Various exceptions possible from `subprocess` execution of Singularity/Docker/Apptainer.
         """
         output_path = cache_path or out_path
 
         # where the output of 'singularity pull' is first generated before being copied to the NXF_SINGULARITY_CACHDIR.
         # if not defined by the Singularity administrators, then use the temporary directory to avoid storing the images in the work directory.
-        if os.environ.get("SINGULARITY_CACHEDIR") is None:
+        if os.environ.get("SINGULARITY_CACHEDIR") is None and self.container_system == "singularity":
             os.environ["SINGULARITY_CACHEDIR"] = str(NFCORE_CACHE_DIR)
 
         # Sometimes, container still contain an explicit library specification, which
@@ -1568,10 +1576,12 @@ class DownloadWorkflow:
             log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
             progress.update(task, current_log="Copying from cache to target directory")
             shutil.copyfile(cache_path, out_path)
-            self.symlink_singularity_images(cache_path)  # symlinks inside the cache directory
+            if self.container_system == 'singularity':
+                self.symlink_singularity_images(cache_path)  # symlinks inside the cache directory
 
         # Create symlinks to ensure that the images are found even with different registries being used.
-        self.symlink_singularity_images(out_path)
+        if self.container_system == 'singularity':
+            self.symlink_singularity_images(out_path)
 
         progress.remove_task(task)
 
