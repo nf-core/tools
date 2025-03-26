@@ -394,12 +394,16 @@ class ModuleLint(ComponentLint):
                     log.debug(f"current ontologies for input: {current_ontologies_i}")
                     for ontology, ext in expected_ontologies_i:
                         if ontology not in current_ontologies_i:
-                            corrected_meta_yml["input"][i][j][element_name]["ontologies"].append(
-                                ruamel.yaml.comments.CommentedMap({"edam": ontology})
-                            )
-                            corrected_meta_yml["input"][i][j][element_name]["ontologies"][-1].yaml_add_eol_comment(
-                                f"{edam_formats[ext][1]}", "edam"
-                            )
+                            try:
+                                corrected_meta_yml["input"][i][j][element_name]["ontologies"].append(
+                                    ruamel.yaml.comments.CommentedMap({"edam": ontology})
+                                )
+                                corrected_meta_yml["input"][i][j][element_name]["ontologies"][-1].yaml_add_eol_comment(
+                                    f"{edam_formats[ext][1]}", "edam"
+                                )
+                            except KeyError:
+                                log.warning(f"Could not add ontologies in input: {element_name}")
+
         if "output" in meta_yml:
             for i, channel in enumerate(corrected_meta_yml["output"]):
                 ch_name = list(channel.keys())[0]
@@ -421,12 +425,15 @@ class ModuleLint(ComponentLint):
                     log.debug(f"current ontologies for output: {current_ontologies_o}")
                     for ontology, ext in expected_ontologies_o:
                         if ontology not in current_ontologies_o:
-                            corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"].append(
-                                ruamel.yaml.comments.CommentedMap({"edam": ontology})
-                            )
-                            corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"][
-                                -1
-                            ].yaml_add_eol_comment(f"{edam_formats[ext][1]}", key="edam")
+                            try:
+                                corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"].append(
+                                    ruamel.yaml.comments.CommentedMap({"edam": ontology})
+                                )
+                                corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"][
+                                    -1
+                                ].yaml_add_eol_comment(f"{edam_formats[ext][1]}", key="edam")
+                            except KeyError:
+                                log.warning(f"Could not add ontologies in ouput: {ch_name} - {element_name}")
 
         # Add bio.tools identifier
         for i, tool in enumerate(corrected_meta_yml["tools"]):
