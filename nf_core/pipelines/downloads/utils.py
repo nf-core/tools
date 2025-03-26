@@ -21,10 +21,15 @@ def intermediate_file(output_path):
     letting the caller write to it, and then moving it to the final location.
     If an exception is raised, the temporary file is deleted and the output file is not touched.
     """
-    with tempfile.NamedTemporaryFile(dir=os.path.dirname(output_path), delete_on_close=False) as tmp:
+    tmp = tempfile.NamedTemporaryFile(dir=os.path.dirname(output_path), delete=False)
+    try:
         yield tmp
         tmp.close()
         os.rename(tmp.name, output_path)
+    except:
+        if os.path.exists(tmp.name):
+            os.unlink(tmp.name)
+        raise
 
 
 class DownloadProgress(rich.progress.Progress):
