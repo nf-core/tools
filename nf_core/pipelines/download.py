@@ -716,6 +716,27 @@ class DownloadWorkflow:
         `nextflow config` at the time of writing, so we scrape the pipeline files.
         This returns raw matches that will likely need to be cleaned.
         """
+        # TODO: Check nextflow versions
+        # TODO: Run old routine if nextflow version < 25.02.1
+        # TODO: Run nextflos inspect if nextflow version >= 25.02.1
+        # from nf_core.utils import run_cmd
+        #     result = run_cmd("nextflow", f"config -flat {wf_path}")
+
+        pass
+
+    def find_container_images_legacy(self, workflow_directory: str) -> None:
+        """Find container image names for workflow.
+
+        DEPRECATION NOTE: USED FOR NEXTFLOW VERSIONS < 25.02.1
+
+        Starts by using `nextflow config` to pull out any process.container
+        declarations. This works for DSL1. It should return a simple string with resolved logic,
+        but not always, e.g. not for differentialabundance 1.2.0
+
+        Second, we look for DSL2 containers. These can't be found with
+        `nextflow config` at the time of writing, so we scrape the pipeline files.
+        This returns raw matches that will likely need to be cleaned.
+        """
 
         log.debug("Fetching container names for workflow")
         # since this is run for multiple revisions now, account for previously detected containers.
