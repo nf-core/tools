@@ -52,6 +52,7 @@
 - Ontology fix comment yaml ([#3502](https://github.com/nf-core/tools/pull/3502))
 - Bugfix - add back logo to the README ([#3504](https://github.com/nf-core/tools/pull/3504))
 - Update dead link ([#3505](https://github.com/nf-core/tools/pull/3505))
+- Move WorkflowRepo class into seperate file, since it will be shared b… ([#3506](https://github.com/nf-core/tools/pull/3506))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
