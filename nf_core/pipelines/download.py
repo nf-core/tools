@@ -203,10 +203,11 @@ class DownloadWorkflow:
             if not self.container_cache_utilisation == "remote":
                 self.prompt_container_download()
             else:
-                self.container_system = "singularity"
-            self.prompt_singularity_cachedir_creation()
-            self.prompt_singularity_cachedir_utilization()
-            self.prompt_singularity_cachedir_remote()
+                if not self.container_system:
+                    self.container_system = "singularity"
+            self.prompt_cachedir_creation()
+            self.prompt_cachedir_utilization()
+            self.prompt_cachedir_remote()
             # Nothing meaningful to compress here.
             if not self.platform:
                 self.prompt_compression_type()
@@ -334,7 +335,7 @@ class DownloadWorkflow:
                 self.gather_registries(self.workflow_repo.access())
 
                 try:
-                    self.get_singularity_images(current_revision=revision)
+                    self.get_container_images(current_revision=revision)
                 except OSError as e:
                     raise DownloadError(f"[red]{e}[/]") from e
 
@@ -451,23 +452,19 @@ class DownloadWorkflow:
             stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
             self.container_system = questionary.select(
                 "Download software container images:",
-                choices=["none", "singularity"],
+                choices=["none", "singularity","docker"],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
-    def prompt_singularity_cachedir_creation(self):
-        """Prompt about using $NXF_SINGULARITY_CACHEDIR if not already set"""
-        if (
-            self.container_system == "singularity"
-            and os.environ.get("NXF_SINGULARITY_CACHEDIR") is None
-            and stderr.is_interactive  # Use rich auto-detection of interactive shells
-        ):
+    def prompt_cachedir_creation(self):
+        """Prompt about using the container cachedir if not already set"""
+        if (os.environ.get(self.container_cache_env) is None and stderr.is_interactive):  # Use rich auto-detection of interactive shells
             stderr.print(
-                "\nNextflow and nf-core can use an environment variable called [blue]$NXF_SINGULARITY_CACHEDIR[/] that is a path to a directory where remote Singularity images are stored. "
+                f"\nNextflow and nf-core can use an environment variable called [blue]${self.container_cache_env}[/] that is a path to a directory where remote Singularity images are stored. "
                 "This allows downloaded images to be cached in a central location."
             )
             if rich.prompt.Confirm.ask(
-                "[blue bold]?[/] [bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
+                f"[blue bold]?[/] [bold]Define [blue not bold]${self.container_cache_env}/] for a shared Singularity image download folder?[/]"
             ):
                 if not self.container_cache_index:
                     self.container_cache_utilisation == "amend"  # retain "remote" choice.
@@ -481,83 +478,97 @@ class DownloadWorkflow:
                     ).unsafe_ask()
                     cachedir_path = os.path.abspath(os.path.expanduser(prompt_cachedir_path))
                     if prompt_cachedir_path == "":
-                        log.error("Not using [blue]$NXF_SINGULARITY_CACHEDIR[/]")
+                        log.error(f"Not using [blue]${self.container_cache_env}/]")
                         cachedir_path = False
                     elif not os.path.isdir(cachedir_path):
                         log.error(f"'{cachedir_path}' is not a directory.")
                         cachedir_path = None
                 if cachedir_path:
-                    os.environ["NXF_SINGULARITY_CACHEDIR"] = cachedir_path
+                    os.environ[{self.container_cache_env}] = cachedir_path
 
                     """
                     Optionally, create a permanent entry for the NXF_SINGULARITY_CACHEDIR in the terminal profile.
                     Currently support for bash and zsh.
                     ToDo: "sh", "dash", "ash","csh", "tcsh", "ksh", "fish", "cmd", "powershell", "pwsh"?
                     """
-
-                    if os.getenv("SHELL", "") == "/bin/bash":
-                        shellprofile_path = os.path.expanduser("~/~/.bash_profile")
-                        if not os.path.isfile(shellprofile_path):
-                            shellprofile_path = os.path.expanduser("~/.bashrc")
+                    if self.container_system == "singularity":
+                        if os.getenv("SHELL", "") == "/bin/bash":
+                            shellprofile_path = os.path.expanduser("~/~/.bash_profile")
+                            if not os.path.isfile(shellprofile_path):
+                                shellprofile_path = os.path.expanduser("~/.bashrc")
+                                if not os.path.isfile(shellprofile_path):
+                                    shellprofile_path = False
+                        elif os.getenv("SHELL", "") == "/bin/zsh":
+                            shellprofile_path = os.path.expanduser("~/.zprofile")
+                            if not os.path.isfile(shellprofile_path):
+                                shellprofile_path = os.path.expanduser("~/.zshenv")
+                                if not os.path.isfile(shellprofile_path):
+                                    shellprofile_path = False
+                        else:
+                            shellprofile_path = os.path.expanduser("~/.profile")
                             if not os.path.isfile(shellprofile_path):
                                 shellprofile_path = False
-                    elif os.getenv("SHELL", "") == "/bin/zsh":
-                        shellprofile_path = os.path.expanduser("~/.zprofile")
-                        if not os.path.isfile(shellprofile_path):
-                            shellprofile_path = os.path.expanduser("~/.zshenv")
-                            if not os.path.isfile(shellprofile_path):
-                                shellprofile_path = False
-                    else:
-                        shellprofile_path = os.path.expanduser("~/.profile")
-                        if not os.path.isfile(shellprofile_path):
-                            shellprofile_path = False
 
-                    if shellprofile_path:
-                        stderr.print(
-                            f"\nSo that [blue]$NXF_SINGULARITY_CACHEDIR[/] is always defined, you can add it to your [blue not bold]~/{os.path.basename(shellprofile_path)}[/] file ."
-                            "This will then be automatically set every time you open a new terminal. We can add the following line to this file for you: \n"
-                            f'[blue]export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"[/]'
-                        )
-                        append_to_file = rich.prompt.Confirm.ask(
-                            f"[blue bold]?[/] [bold]Add to [blue not bold]~/{os.path.basename(shellprofile_path)}[/] ?[/]"
-                        )
-                        if append_to_file:
-                            with open(os.path.expanduser(shellprofile_path), "a") as f:
-                                f.write(
-                                    "\n\n#######################################\n"
-                                    f"## Added by `nf-core pipelines download` v{nf_core.__version__} ##\n"
-                                    + f'export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"'
-                                    + "\n#######################################\n"
-                                )
-                            log.info(f"Successfully wrote to [blue]{shellprofile_path}[/]")
-                            log.warning(
-                                "You will need reload your terminal after the download completes for this to take effect."
+                        if shellprofile_path
+                            stderr.print(
+                                f"\nSo that [blue]$NXF_SINGULARITY_CACHEDIR[/] is always defined, you can add it to your [blue not bold]~/{os.path.basename(shellprofile_path)}[/] file ."
+                                "This will then be automatically set every time you open a new terminal. We can add the following line to this file for you: \n"
+                                f'[blue]export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"[/]'
                             )
+                            append_to_file = rich.prompt.Confirm.ask(
+                                f"[blue bold]?[/] [bold]Add to [blue not bold]~/{os.path.basename(shellprofile_path)}[/] ?[/]"
+                            )
+                            if append_to_file:
+                                with open(os.path.expanduser(shellprofile_path), "a") as f:
+                                    f.write(
+                                        "\n\n#######################################\n"
+                                        f"## Added by `nf-core pipelines download` v{nf_core.__version__} ##\n"
+                                        + f'export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"'
+                                        + "\n#######################################\n"
+                                    )
+                                log.info(f"Successfully wrote to [blue]{shellprofile_path}[/]")
+                                log.warning(
+                                    "You will need reload your terminal after the download completes for this to take effect."
+                                )
 
-    def prompt_singularity_cachedir_utilization(self):
-        """Ask if we should *only* use $NXF_SINGULARITY_CACHEDIR without copying into target"""
+    def prompt_cachedir_utilization(self):
+        """Ask if we should *only* use the container cachedir without copying into target"""
         if (
-            self.container_cache_utilisation is None  # no choice regarding singularity cache has been made.
-            and self.container_system == "singularity"
-            and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None
+            self.container_cache_utilisation is None  # no choice regarding cache has been made.
             and stderr.is_interactive
+            and self.container_cache_env is not None
+            and os.environ.get(self.container_cache_env) is not None
         ):
-            stderr.print(
-                "\nIf you are working on the same system where you will run Nextflow, you can amend the downloaded images to the ones in the"
-                "[blue not bold]$NXF_SINGULARITY_CACHEDIR[/] folder, Nextflow will automatically find them. "
-                "However if you will transfer the downloaded files to a different system then they should be copied to the target folder."
-            )
+            if self.container_system == "singularity":
+                stderr.print(
+                    "\nIf you are working on the same system where you will run Nextflow, you can amend the downloaded images to the ones in the"
+                    "[blue not bold]$NXF_SINGULARITY_CACHEDIR[/] folder, Nextflow will automatically find them. "
+                    "However if you will transfer the downloaded files to a different system then they should be copied to the target folder."
+                )
+                self.container_cache_utilisation = questionary.select(
+                    "Copy singularity images from $NXF_SINGULARITY_CACHEDIR to the target folder or amend new images to the cache?",
+                    choices=["amend", "copy"],
+                    style=nf_core.utils.nfcore_question_style,
+                ).unsafe_ask()
+            if (
+                self.container_system == "docker"
+            ):
+                stderr.print(
+                    "\nIf you are working on the same system where you will run Nextflow, you can amend the downloaded images with the ones in the"
+                    "Docker local cache, Nextflow will automatically find them. "
+                    "However if you will transfer the downloaded files to a different system then they should be moved before a run."
+                    "Then you should load them into your docker via the command `ls -1 [docker_cache_folder]/*.tar | xargs --no-run-if-empty -L 1 docker load -i`"
+                )
             self.container_cache_utilisation = questionary.select(
-                "Copy singularity images from $NXF_SINGULARITY_CACHEDIR to the target folder or amend new images to the cache?",
+                f"Copy container images from {self.container_cache_env} to the target folder or amend new images to the cache?",
                 choices=["amend", "copy"],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
-    def prompt_singularity_cachedir_remote(self):
-        """Prompt about the index of a remote $NXF_SINGULARITY_CACHEDIR"""
+    def prompt_cachedir_remote(self):
+        """Prompt about the index of a remote container cachedir"""
         if (
-            self.container_system == "singularity"
-            and self.container_cache_utilisation == "remote"
+            self.container_cache_utilisation == "remote"
             and self.container_cache_index is None
             and stderr.is_interactive  # Use rich auto-detection of interactive shells
         ):
@@ -1155,8 +1166,8 @@ class DownloadWorkflow:
                     finally:
                         os.close(image_dir)
 
-    def get_singularity_images(self, current_revision: str = "") -> None:
-        """Loop through container names and download Singularity images"""
+    def get_container_images(self, current_revision: str = "") -> None:
+        """Loop through container names and download container images"""
 
         if len(self.containers) == 0:
             log.info("No container names found in workflow")
@@ -1179,7 +1190,7 @@ class DownloadWorkflow:
                 containers_pull: List[Tuple[str, str, Optional[str]]] = []
                 for container in self.containers:
                     # Fetch the output and cached filenames for this container
-                    out_path, cache_path = self.singularity_image_filenames(container)
+                    out_path, cache_path = self.check_image_cache(container)
 
                     # Check that the directories exist
                     out_path_dir = os.path.dirname(out_path)
@@ -1197,7 +1208,7 @@ class DownloadWorkflow:
                         containers_exist.append(container)
                         continue
 
-                    # We have a copy of this in the NXF_SINGULARITY_CACHE dir
+                    # We have a copy of this in the cache dir
                     if cache_path and os.path.exists(cache_path):
                         containers_cache.append((container, out_path, cache_path))
                         continue
@@ -1229,18 +1240,18 @@ class DownloadWorkflow:
 
                 if containers_cache:
                     for container in containers_cache:
-                        progress.update(task, description="Copying singularity images from cache")
-                        self.singularity_copy_cache_image(*container)
+                        progress.update(task, description=f"Copying {self.container_system} images from cache")
+                        self.copy_cache_image(*container)
                         progress.update(task, advance=1)
 
                 if containers_download or containers_pull:
                     # if clause gives slightly better UX, because Download is no longer displayed if nothing is left to be downloaded.
                     with concurrent.futures.ThreadPoolExecutor(max_workers=self.parallel_downloads) as pool:
-                        progress.update(task, description="Downloading singularity images")
+                        progress.update(task, description=f"Downloading {self.container_system} images")
 
                         # Kick off concurrent downloads
                         future_downloads = [
-                            pool.submit(self.singularity_download_image, *containers, progress)
+                            pool.submit(self.download_image, *containers, progress)
                             for containers in containers_download
                         ]
 
@@ -1267,12 +1278,12 @@ class DownloadWorkflow:
                             raise
 
                     for containers in containers_pull:
-                        progress.update(task, description="Pulling singularity images")
+                        progress.update(task, description=f"Pulling {self.container_system} images")
                         # it is possible to try multiple registries / mirrors if multiple were specified.
                         # Iteration happens over a copy of self.container_library[:], as I want to be able to remove failing registries for subsequent images.
                         for library in self.container_library[:]:
                             try:
-                                self.singularity_pull_image(*containers, library, progress)
+                                self.pull_image(*containers, library, progress)
                                 # Pulling the image was successful, no ContainerError was raised, break the library loop
                                 break
                             except ContainerError.ImageExistsError:
@@ -1314,8 +1325,8 @@ class DownloadWorkflow:
                         # Task should advance in any case. Failure to pull will not kill the download process.
                         progress.update(task, advance=1)
 
-    def singularity_image_filenames(self, container: str) -> Tuple[str, Optional[str]]:
-        """Check Singularity cache for image, copy to destination folder if found.
+    def check_image_cache(self, container: str) -> Tuple[str, Optional[str]]:
+        """Check container cache for image, copy to destination folder if found.
 
         Args:
             container (str):    A pipeline's container name. Can be direct download URL
@@ -1323,10 +1334,10 @@ class DownloadWorkflow:
 
         Returns:
             tuple (str, str):   Returns a tuple of (out_path, cache_path).
-                                out_path is the final target output path. it may point to the NXF_SINGULARITY_CACHEDIR, if cache utilisation was set to 'amend'.
-                                If cache utilisation was set to 'copy', it will point to the target folder, a subdirectory of the output directory. In the latter case,
-                                cache_path may either be None (image is not yet cached locally) or point to the image in the NXF_SINGULARITY_CACHEDIR, so it will not be
-                                downloaded from the web again, but directly copied from there. See get_singularity_images() for implementation.
+                                out_path is the final target output path. it may point to the NXF_SINGULARITY_CACHEDIR/NXF_DOCKER_CACHEDIR, if cache utilization was set to 'amend'.
+                                If cache utilization was set to 'copy', it will point to the target folder, a subdirectory of the output directory. In the latter case,
+                                cache_path may either be None (image is not yet cached locally) or point to the image in the NXF_SINGULARITY_CACHEDIR/NXF_DOCKER_CACHEDIR, so it will not be
+                                downloaded from the web again, but directly copied from there. See get_container_images() for implementation.
         """
 
         # Generate file paths
@@ -1358,32 +1369,33 @@ class DownloadWorkflow:
             out_name = re.sub(f"{trim_pattern}", "", out_name)
 
         # Full destination and cache paths
-        out_path = os.path.abspath(os.path.join(self.outdir, "singularity-images", out_name))
+        out_path = os.path.abspath(os.path.join(self.outdir, f"{self.container_system}-images", out_name))
         cache_path = None
-        if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
-            cache_path = os.path.join(os.environ["NXF_SINGULARITY_CACHEDIR"], out_name)
+        if os.environ.get(self.container_cache_env):
+            cache_path = os.path.join(os.environ[self.container_cache_env], out_name)
             # Use only the cache - set this as the main output path
             if self.container_cache_utilisation == "amend":
                 out_path = cache_path
                 cache_path = None
         elif self.container_cache_utilisation in ["amend", "copy"]:
-            raise FileNotFoundError("Singularity cache is required but no '$NXF_SINGULARITY_CACHEDIR' set!")
+            raise FileNotFoundError(f"Singularity or Docker cache is required but no '${self.container_cache_env} set!")
 
         return (out_path, cache_path)
 
-    def singularity_copy_cache_image(self, container: str, out_path: str, cache_path: Optional[str]) -> None:
-        """Copy Singularity image from NXF_SINGULARITY_CACHEDIR to target folder."""
+    def copy_cache_image(self, container: str, out_path: str, cache_path: Optional[str]) -> None:
+        """Copy container image from the cache env to target folder."""
         # Copy to destination folder if we have a cached version
         if cache_path and os.path.exists(cache_path):
             log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
             shutil.copyfile(cache_path, out_path)
             # Create symlinks to ensure that the images are found even with different registries being used.
-            self.symlink_singularity_images(out_path)
+            if self.container_system == 'singularity':
+                self.symlink_singularity_images(out_path)
 
-    def singularity_download_image(
+    def download_image(
         self, container: str, out_path: str, cache_path: Optional[str], progress: DownloadProgress
     ) -> None:
-        """Download a singularity image from the web.
+        """Download a container image from the web.
 
         Use native Python to download the file.
 
@@ -1457,12 +1469,12 @@ class DownloadWorkflow:
         finally:
             del output_path_tmp
 
-    def singularity_pull_image(
+    def pull_image(
         self, container: str, out_path: str, cache_path: Optional[str], library: List[str], progress: DownloadProgress
     ) -> None:
-        """Pull a singularity image using ``singularity pull``
+        """Pull a container image using ``singularity/docker/apptainer pull``
 
-        Attempt to use a local installation of singularity to pull the image.
+        Attempt to use a local installation of singularity/docker/apptainer to pull the image.
 
         Args:
             container (str): A pipeline's container name. Usually it is of similar format
@@ -1490,34 +1502,42 @@ class DownloadWorkflow:
         else:
             address = f"docker://{library}/{container.replace('docker://', '')}"
             absolute_URI = False
-
-        if shutil.which("singularity"):
-            singularity_command = [
-                "singularity",
-                "pull",
-                "--name",
-                output_path,
-                address,
-            ]
-        elif shutil.which("apptainer"):
-            singularity_command = ["apptainer", "pull", "--name", output_path, address]
+        pull_command = None
+        if self.container_system == "singularity":
+            if shutil.which("singularity"):
+                pull_command = [
+                    "singularity",
+                    "pull",
+                    "--name",
+                    output_path,
+                    address,
+                ]
+            elif shutil.which("apptainer"):
+                pull_command = ["apptainer", "pull", "--name", output_path, address]
+            else:
+                raise OSError("Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH")
+        # Pull the docker image, if we caching is enabled save the image as well
+        elif self.container_system == "docker":
+            pull_command = ["docker", "image", "pull",address]
+            if self.container_cache_utilisation:
+                pull_command += ["docker","save","image","--output",output_path]
         else:
-            raise OSError("Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH")
-        log.debug(f"Building singularity image: {address}")
-        log.debug(f"Singularity command: {' '.join(singularity_command)}")
+            log.error("Container system not recognized")
+        log.debug(f"Building {self.container_system} image: {address}")
+        log.debug(f"{self.container_system} command: {' '.join(pull_command)}")
 
         # Progress bar to show that something is happening
         task = progress.add_task(
             container,
             start=False,
             total=False,
-            progress_type="singularity_pull",
+            progress_type=f"{self.container_system}_pull",
             current_log="",
         )
 
         # Run the singularity pull command
         with subprocess.Popen(
-            singularity_command,
+            pull_command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             universal_newlines=True,
