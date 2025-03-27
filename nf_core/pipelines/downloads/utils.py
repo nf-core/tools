@@ -176,11 +176,17 @@ class FileDownloader:
                         self.progress.start_task(task)
 
                     # Stream download
+                    has_content = False
                     for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
                         # Check that the user didn't hit ctrl-c
                         if self.kill_with_fire:
                             raise KeyboardInterrupt
                         self.progress.update(task, advance=len(data))
                         fh.write(data)
+                        has_content = True
+
+                    # Check that we actually downloaded something
+                    if not has_content:
+                        raise DownloadError(f"Downloaded file '{remote_path}' is empty")
 
         return output_path

@@ -268,6 +268,17 @@ class DownloadUtilsTest(unittest.TestCase):
             assert progress._task_index == 1
             assert progress.tasks == []
 
+            # No content at the URL
+            src_url = "http://www.google.com/generate_204"
+            output_path = os.path.join(outdir, os.path.basename(src_url))
+            with pytest.raises(DownloadError):
+                downloader.download_file(src_url, output_path)
+            assert not os.path.exists(output_path)
+
+            # A task was added but is now gone
+            assert progress._task_index == 2
+            assert progress.tasks == []
+
             # Invalid URL (schema)
             src_url = "dummy://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fax"
             output_path = os.path.join(outdir, os.path.basename(src_url))
@@ -276,7 +287,7 @@ class DownloadUtilsTest(unittest.TestCase):
             assert not os.path.exists(output_path)
 
             # A task was added but is now gone
-            assert progress._task_index == 2
+            assert progress._task_index == 3
             assert progress.tasks == []
 
 
