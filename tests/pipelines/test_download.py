@@ -116,6 +116,36 @@ class DownloadUtilsTest(unittest.TestCase):
             assert progress.tasks[1].total == 28
 
     #
+    # Test for 'utils.DownloadProgress.sub_task'
+    #
+    def test_download_progress_sub_task(self):
+        with DownloadProgress() as progress:
+            # No task initially
+            assert progress.tasks == []
+
+            # Add a sub-task, it should be there
+            with progress.sub_task("Sub-task", total=42) as sub_task_id:
+                assert sub_task_id == 0
+                assert len(progress.tasks) == 1
+                assert progress.task_ids[0] == sub_task_id
+                assert progress.tasks[0].total == 42
+
+            # The sub-task should be gone now
+            assert progress.tasks == []
+
+            # Add another sub-task, this time that raises an exception
+            with pytest.raises(ValueError):
+                with progress.sub_task("Sub-task", total=28) as sub_task_id:
+                    assert sub_task_id == 1
+                    assert len(progress.tasks) == 1
+                    assert progress.task_ids[0] == sub_task_id
+                    assert progress.tasks[0].total == 28
+                    raise ValueError("This is a test error")
+
+            # The sub-task should also be gone now
+            assert progress.tasks == []
+
+    #
     # Test for 'utils.DownloadProgress.get_renderables'
     #
     def test_download_progress_renderables(self):

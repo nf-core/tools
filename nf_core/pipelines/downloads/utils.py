@@ -69,7 +69,7 @@ class DownloadProgress(rich.progress.Progress):
                 )
             yield self.make_tasks_table([task])
 
-    # These functions allow callers not having to track the main TaskID
+    # These two functions allow callers not having to track the main TaskID
     # They are pass-through functions to the rich.progress methods
     def add_main_task(self, **kwargs) -> rich.progress.TaskID:
         """Add a top-level task to the progress bar.
@@ -85,3 +85,12 @@ class DownloadProgress(rich.progress.Progress):
     def update_main_task(self, **kwargs) -> None:
         """Update the top-level task with new information."""
         self.update(self.main_task, **kwargs)
+
+    @contextlib.contextmanager
+    def sub_task(self, *args, **kwargs) -> Generator[rich.progress.TaskID, None, None]:
+        """Context manager to create a sub-task under the main task."""
+        task = self.add_task(*args, **kwargs)
+        try:
+            yield task
+        finally:
+            self.remove_task(task)

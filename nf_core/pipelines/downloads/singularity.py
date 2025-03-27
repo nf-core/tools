@@ -162,30 +162,28 @@ class SingularityImageDownloader:
         """
         log.debug(f"Downloading Singularity image '{container}' to {output_path}")
 
-        # Set up progress bar
+        # Set up download progress bar as a new task
         nice_name = container.split("/")[-1][:50]
-        task = self.progress.add_task(nice_name, start=False, total=False, progress_type="download")
+        with self.progress.sub_task(nice_name, start=False, total=False, progress_type="download") as task:
+            # Open file handle and download
+            # This temporary will be automatically renamed to the target if there are no errors
+            with intermediate_file(output_path) as fh:
+                # Disable caching as this breaks streamed downloads
+                with requests_cache.disabled():
+                    r = requests.get(container, allow_redirects=True, stream=True, timeout=60 * 5)
+                    filesize = r.headers.get("Content-length")
+                    if filesize:
+                        self.progress.update(task, total=int(filesize))
+                        self.progress.start_task(task)
 
-        # Open file handle and download
-        # This temporary will be automatically renamed to the target if there are no errors
-        with intermediate_file(output_path) as fh:
-            # Disable caching as this breaks streamed downloads
-            with requests_cache.disabled():
-                r = requests.get(container, allow_redirects=True, stream=True, timeout=60 * 5)
-                filesize = r.headers.get("Content-length")
-                if filesize:
-                    self.progress.update(task, total=int(filesize))
-                    self.progress.start_task(task)
+                    # Stream download
+                    for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
+                        # Check that the user didn't hit ctrl-c
+                        if self.kill_with_fire:
+                            raise KeyboardInterrupt
+                        self.progress.update(task, advance=len(data))
+                        fh.write(data)
 
-                # Stream download
-                for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
-                    # Check that the user didn't hit ctrl-c
-                    if self.kill_with_fire:
-                        raise KeyboardInterrupt
-                    self.progress.update(task, advance=len(data))
-                    fh.write(data)
-
-        self.progress.remove_task(task)
         return output_path
 
 
@@ -299,61 +297,59 @@ class SingularityFetcher:
             address = f"docker://{library}/{container.replace('docker://', '')}"
             absolute_URI = False
 
-        with intermediate_file(output_path) as output_path_tmp:
-            if shutil.which("singularity"):
-                singularity_command = [
-                    "singularity",
-                    "pull",
-                    "--name",
-                    output_path_tmp.name,
-                    address,
-                ]
-            elif shutil.which("apptainer"):
-                singularity_command = ["apptainer", "pull", "--name", output_path_tmp.name, address]
-            else:
-                raise OSError("Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH")
-            log.debug(f"Building singularity image: {address}")
-            log.debug(f"Singularity command: {' '.join(singularity_command)}")
-
-            # Progress bar to show that something is happening
-            task = self.progress.add_task(
-                container,
-                start=False,
-                total=False,
-                progress_type="singularity_pull",
-                current_log="",
-            )
-
-            # Run the singularity pull command
-            with subprocess.Popen(
-                singularity_command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                universal_newlines=True,
-                bufsize=1,
-            ) as proc:
-                lines = []
-                if proc.stdout is not None:
-                    for line in proc.stdout:
-                        lines.append(line)
-                        self.progress.update(task, current_log=line.strip())
-
-            if lines:
-                # something went wrong with the container retrieval
-                if any("FATAL: " in line for line in lines):
-                    self.progress.remove_task(task)
-                    raise ContainerError(
-                        container=container,
-                        registry=library,
-                        address=address,
-                        absolute_URI=absolute_URI,
-                        out_path=output_path,
-                        singularity_command=singularity_command,
-                        error_msg=lines,
+        with self.progress.sub_task(
+            container,
+            start=False,
+            total=False,
+            progress_type="singularity_pull",
+            current_log="",
+        ) as task:
+            with intermediate_file(output_path) as output_path_tmp:
+                if shutil.which("singularity"):
+                    singularity_command = [
+                        "singularity",
+                        "pull",
+                        "--name",
+                        output_path_tmp.name,
+                        address,
+                    ]
+                elif shutil.which("apptainer"):
+                    singularity_command = ["apptainer", "pull", "--name", output_path_tmp.name, address]
+                else:
+                    raise OSError(
+                        "Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH"
                     )
+                log.debug(f"Building singularity image: {address}")
+                log.debug(f"Singularity command: {' '.join(singularity_command)}")
 
-        symlink_registries(output_path, self.registry_set)
-        self.progress.remove_task(task)
+                # Run the singularity pull command
+                with subprocess.Popen(
+                    singularity_command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    universal_newlines=True,
+                    bufsize=1,
+                ) as proc:
+                    lines = []
+                    if proc.stdout is not None:
+                        for line in proc.stdout:
+                            lines.append(line)
+                            self.progress.update(task, current_log=line.strip())
+
+                if lines:
+                    # something went wrong with the container retrieval
+                    if any("FATAL: " in line for line in lines):
+                        raise ContainerError(
+                            container=container,
+                            registry=library,
+                            address=address,
+                            absolute_URI=absolute_URI,
+                            out_path=output_path,
+                            singularity_command=singularity_command,
+                            error_msg=lines,
+                        )
+
+            symlink_registries(output_path, self.registry_set)
 
     def copy_image(self, container: str, src_path: str, dest_path: str) -> None:
         """Copy Singularity image from one directory to another."""
