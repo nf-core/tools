@@ -725,7 +725,7 @@ class DownloadWorkflow:
 
             # Run nextflos inspect (works if nextflow version >= 25.02.1)
             executable = "nextflow"
-            cmd_params = f"inspect -concretize -format json {profile} {workflow_directory}"
+            cmd_params = f"inspect -format json {profile} {workflow_directory}"
             log.debug(f"Running: `{executable} {cmd_params}`")
             cmd_out = run_cmd(executable, cmd_params)
             if cmd_out is None:
