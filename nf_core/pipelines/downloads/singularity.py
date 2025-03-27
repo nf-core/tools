@@ -113,24 +113,6 @@ class SingularityFetcher:
         self.progress = progress
         self.kill_with_fire = False
 
-    def get_container_filename(self, container: str) -> str:
-        """Return the expected filename for a container."""
-        return get_container_filename(container, self.registry_set)
-
-    def symlink_registries(self, image_path: str) -> None:
-        """Create a symlink for each registry in the registry set that points to the image.
-        We have dropped the explicit registries from the modules in favor of the configurable registries.
-        Unfortunately, Nextflow still expects the registry to be part of the file name, so a symlink is needed.
-
-        The base image, e.g. ./nf-core-gatk-4.4.0.0.img will thus be symlinked as for example ./quay.io-nf-core-gatk-4.4.0.0.img
-        by prepending all registries in registry_set to the image name.
-
-        Unfortunately, the output image name may contain a registry definition (Singularity image pulled from depot.galaxyproject.org
-        or older pipeline version, where the docker registry was part of the image name in the modules). Hence, it must be stripped
-        before to ensure that it is really the base name.
-        """
-        return symlink_registries(image_path, self.registry_set)
-
     def download_images(
         self,
         containers_download: Iterable[Tuple[str, str]],
@@ -203,7 +185,7 @@ class SingularityFetcher:
                     self.progress.update(task, advance=len(data))
                     fh.write(data)
 
-        self.symlink_registries(output_path)
+        symlink_registries(output_path, self.registry_set)
         self.progress.remove_task(task)
 
     def pull_images(self, containers_pull: Iterable[Tuple[str, str]]) -> None:
@@ -332,7 +314,7 @@ class SingularityFetcher:
                         error_msg=lines,
                     )
 
-        self.symlink_registries(output_path)
+        symlink_registries(output_path, self.registry_set)
         self.progress.remove_task(task)
 
     def copy_image(self, container: str, src_path: str, dest_path: str) -> None:
@@ -343,7 +325,7 @@ class SingularityFetcher:
             shutil.copyfile(src_path, dest_path_tmp.name)
 
         # Create symlinks to ensure that the images are found even with different registries being used.
-        self.symlink_registries(dest_path)
+        symlink_registries(dest_path, self.registry_set)
 
     def fetch_containers(
         self,
@@ -363,7 +345,7 @@ class SingularityFetcher:
         total_tasks = len(containers)
 
         for container in containers:
-            container_filename = self.get_container_filename(container)
+            container_filename = get_container_filename(container, self.registry_set)
 
             # Files in the remote cache are already downloaded and can be ignored
             if container_filename in exclude_list:
