@@ -113,5 +113,5 @@ def load_edam():
                 extensions = fields[14].split("|")
                 for extension in extensions:
                     if extension not in edam_formats:
-                        edam_formats[extension] = (fields[0], fields[1]) # URL, name
+                        edam_formats[extension] = (fields[0], fields[1])  # URL, name
     return edam_formats
