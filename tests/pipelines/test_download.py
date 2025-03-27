@@ -251,7 +251,7 @@ class DownloadUtilsTest(unittest.TestCase):
             assert table.columns[6]._cells[0]._text == ["?"]
 
     #
-    # Test for 'utils.FileDownloader'
+    # Test for 'utils.FileDownloader.download_file'
     #
     @with_temporary_folder
     def test_file_download(self, outdir):
@@ -321,6 +321,135 @@ class DownloadUtilsTest(unittest.TestCase):
             with pytest.raises(KeyboardInterrupt):
                 downloader.download_file(src_url, output_path)
             assert not os.path.exists(output_path)
+
+    #
+    # Test for 'utils.FileDownloader.download_files_in_parallel'
+    #
+    @with_temporary_folder
+    def test_parallel_downloads(self, outdir):
+        # Prepare the download paths
+        def make_tuple(url):
+            return (url, os.path.join(outdir, os.path.basename(url)))
+
+        download_fai = make_tuple(
+            "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fai"
+        )
+        download_dict = make_tuple(
+            "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.dict"
+        )
+        download_204 = make_tuple("http://www.google.com/generate_204")
+        download_schema = make_tuple(
+            "dummy://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fax"
+        )
+
+        with DownloadProgress() as progress:
+            downloader = FileDownloader(progress)
+
+            # Download two files
+            assert downloader.kill_with_fire is False
+            downloads = [download_fai, download_dict]
+            downloaded_files = downloader.download_files_in_parallel(downloads, parallel_downloads=1)
+            assert len(downloaded_files) == 2
+            assert downloaded_files == downloads
+            assert os.path.exists(download_fai[1])
+            assert os.path.exists(download_dict[1])
+            assert downloader.kill_with_fire is False
+            os.unlink(download_fai[1])
+            os.unlink(download_dict[1])
+
+            # This time, the second file will raise an exception
+            assert downloader.kill_with_fire is False
+            downloads = [download_fai, download_204]
+            with pytest.raises(DownloadError):
+                downloader.download_files_in_parallel(downloads, parallel_downloads=1)
+            assert downloader.kill_with_fire is False
+            assert os.path.exists(download_fai[1])
+            assert not os.path.exists(download_204[1])
+            os.unlink(download_fai[1])
+
+            # Now we swap the two files. The first one will raise an exception but the
+            # second one will still be downloaded because only KeyboardInterrupt can
+            # stop everything altogether.
+            assert downloader.kill_with_fire is False
+            downloads = [download_204, download_fai]
+            with pytest.raises(DownloadError):
+                downloader.download_files_in_parallel(downloads, parallel_downloads=1)
+            assert downloader.kill_with_fire is False
+            assert os.path.exists(download_fai[1])
+            assert not os.path.exists(download_204[1])
+            os.unlink(download_fai[1])
+
+            # We check that there's the same behaviour with `requests` errors.
+            assert downloader.kill_with_fire is False
+            downloads = [download_schema, download_fai]
+            with pytest.raises(DownloadError):
+                downloader.download_files_in_parallel(downloads, parallel_downloads=1)
+            assert downloader.kill_with_fire is False
+            assert os.path.exists(download_fai[1])
+            assert not os.path.exists(download_schema[1])
+            os.unlink(download_fai[1])
+
+            # Now we check the callback method
+            callbacks = []
+
+            def callback(*args):
+                callbacks.append(args)
+
+            # We check the same scenarios as above
+            callbacks = []
+            downloads = [download_fai, download_dict]
+            downloader.download_files_in_parallel(downloads, parallel_downloads=1, callback=callback)
+            assert len(callbacks) == 2
+            assert callbacks == [
+                (download_fai, FileDownloader.Status.DONE),
+                (download_dict, FileDownloader.Status.DONE),
+            ]
+
+            callbacks = []
+            downloads = [download_fai, download_204]
+            with pytest.raises(DownloadError):
+                downloader.download_files_in_parallel(downloads, parallel_downloads=1, callback=callback)
+            assert len(callbacks) == 2
+            assert callbacks == [
+                (download_fai, FileDownloader.Status.DONE),
+                (download_204, FileDownloader.Status.ERROR),
+            ]
+
+            callbacks = []
+            downloads = [download_204, download_fai]
+            with pytest.raises(DownloadError):
+                downloader.download_files_in_parallel(downloads, parallel_downloads=1, callback=callback)
+            assert len(callbacks) == 2
+            assert callbacks == [
+                (download_204, FileDownloader.Status.ERROR),
+                (download_fai, FileDownloader.Status.DONE),
+            ]
+
+            callbacks = []
+            downloads = [download_schema, download_fai]
+            with pytest.raises(DownloadError):
+                downloader.download_files_in_parallel(downloads, parallel_downloads=1, callback=callback)
+            assert len(callbacks) == 2
+            assert callbacks == [
+                (download_schema, FileDownloader.Status.ERROR),
+                (download_fai, FileDownloader.Status.DONE),
+            ]
+
+            # Finally, we check how the function behaves when a KeyboardInterrupt is raised
+            with mock.patch("concurrent.futures.wait", side_effect=KeyboardInterrupt):
+                callbacks = []
+                downloads = [download_fai, download_204, download_dict]
+                with pytest.raises(KeyboardInterrupt):
+                    downloader.download_files_in_parallel(downloads, parallel_downloads=1, callback=callback)
+                assert len(callbacks) == 3
+                # Note: whn the KeyboardInterrupt is raised, download_204 and download_dict are not yet started.
+                # They are therefore cancelled and pushed to the callback list immediately. download_fai is last
+                # because it is running and can't be cancelled.
+                assert callbacks == [
+                    (download_204, FileDownloader.Status.CANCELLED),
+                    (download_dict, FileDownloader.Status.CANCELLED),
+                    (download_fai, FileDownloader.Status.ERROR),
+                ]
 
 
 class DownloadTest(unittest.TestCase):

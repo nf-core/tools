@@ -1,10 +1,11 @@
 import concurrent.futures
 import contextlib
+import enum
 import io
 import logging
 import os
 import tempfile
-from typing import Generator, Iterable, Tuple
+from typing import Callable, Dict, Generator, Iterable, List, Optional, Tuple
 
 import requests
 import requests_cache
@@ -108,33 +109,88 @@ class DownloadProgress(rich.progress.Progress):
 class FileDownloader:
     """Class to download files.
 
-    Downloads are done in parallel using threads and progress is shown in the progress bar.
+    Downloads are done in parallel using threads. Progress of each download
+    is shown in a progress bar.
+
+    Users can hook a callback method to be notified after each download.
     """
 
+    # Enum to report the status of a download thread
+    Status = enum.Enum("Status", "CANCELLED PENDING RUNNING DONE ERROR")
+
     def __init__(self, progress: DownloadProgress) -> None:
+        """Initialise the FileDownloader object.
+
+        Args:
+            progress (DownloadProgress): The progress bar object to use for tracking downloads.
+        """
         self.progress = progress
         self.kill_with_fire = False
+
+    def parse_future_status(self, future: concurrent.futures.Future) -> Status:
+        """Parse the status of a future object."""
+        if future.running():
+            return self.Status.RUNNING
+        if future.cancelled():
+            return self.Status.CANCELLED
+        if future.done():
+            if future.exception():
+                return self.Status.ERROR
+            return self.Status.DONE
+        return self.Status.PENDING
 
     def download_files_in_parallel(
         self,
         download_files: Iterable[Tuple[str, str]],
         parallel_downloads: int,
-    ) -> Generator[str, None, None]:
+        callback: Optional[Callable[[Tuple[str, str], Status], None]] = None,
+    ) -> List[Tuple[str, str]]:
+        """Download multiple files in parallel.
+
+        Args:
+            download_files (Iterable[Tuple[str, str]]): List of tuples with the remote URL and the local output path.
+            parallel_downloads (int): Number of parallel downloads to run.
+            callback (Callable[[Tuple[str, str], Status], None]): Optional allback function to call after each download.
+                         The function must take two arguments: the download tuple and the status of the download thread.
+        """
+
+        # Make ctrl-c work with multi-threading
+        self.kill_with_fire = False
+
+        # Track the download threads
+        future_downloads: Dict[concurrent.futures.Future, Tuple[str, str]] = {}
+
+        # List to store *successful* downloads
+        successful_downloads = []
+
+        def successful_download_callback(future: concurrent.futures.Future) -> None:
+            if future.done() and not future.cancelled() and future.exception() is None:
+                successful_downloads.append(future_downloads[future])
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_downloads) as pool:
-            # Kick off concurrent downloads
-            future_downloads = [
-                pool.submit(self.download_file, remote_path, output_path)
-                for (remote_path, output_path) in download_files
-            ]
-
-            # Make ctrl-c work with multi-threading
-            self.kill_with_fire = False
-
+            # The entire block needs to be monitored for KeyboardInterrupt so that ntermediate files
+            # can be cleaned up properly.
             try:
-                # Iterate over each threaded download, waiting for them to finish
-                for future in concurrent.futures.as_completed(future_downloads):
-                    output_path = future.result()
-                    yield output_path
+                for input_params in download_files:
+                    (remote_path, output_path) = input_params
+                    # Create the download thread as a Future object
+                    future = pool.submit(self.download_file, remote_path, output_path)
+                    future_downloads[future] = input_params
+                    # Callback to record successful downloads
+                    future.add_done_callback(successful_download_callback)
+                    # User callback function (if provided)
+                    if callback:
+                        future.add_done_callback(lambda f: callback(future_downloads[f], self.parse_future_status(f)))
+
+                completed_futures = concurrent.futures.wait(
+                    future_downloads, return_when=concurrent.futures.ALL_COMPLETED
+                )
+                # Get all the exceptions and exclude BaseException-based ones (e.g. KeyboardInterrupt)
+                exceptions = [
+                    exc for exc in (f.exception() for f in completed_futures.done) if isinstance(exc, Exception)
+                ]
+                if exceptions:
+                    raise DownloadError("Download errors", exceptions)
 
             except KeyboardInterrupt:
                 # Cancel the future threads that haven't started yet
@@ -146,7 +202,9 @@ class FileDownloader:
                 # Re-raise exception on the main thread
                 raise
 
-    def download_file(self, remote_path: str, output_path: str) -> str:
+        return successful_downloads
+
+    def download_file(self, remote_path: str, output_path: str) -> None:
         """Download a file from the web.
 
         Use native Python to download the file. Progress is shown in the progress bar
@@ -188,5 +246,3 @@ class FileDownloader:
                     # Check that we actually downloaded something
                     if not has_content:
                         raise DownloadError(f"Downloaded file '{remote_path}' is empty")
-
-        return output_path

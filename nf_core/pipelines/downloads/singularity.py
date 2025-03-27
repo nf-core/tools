@@ -127,7 +127,8 @@ class SingularityFetcher:
         parallel_downloads: int,
     ) -> None:
         downloader = FileDownloader(self.progress)
-        for output_path in downloader.download_files_in_parallel(containers_download, parallel_downloads):
+
+        def update_file_progress(input_params: Tuple[str, str], status: FileDownloader.Status) -> None:
             # try-except introduced in 4a95a5b84e2becbb757ce91eee529aa5f8181ec7
             # unclear why rich.progress may raise an exception here as it's supposed to be thread-safe
             try:
@@ -135,7 +136,10 @@ class SingularityFetcher:
             except Exception as e:
                 log.error(f"Error updating progress bar: {e}")
 
-            symlink_registries(output_path, self.registry_set)
+            if status == FileDownloader.Status.DONE:
+                symlink_registries(input_params[1], self.registry_set)
+
+        downloader.download_files_in_parallel(containers_download, parallel_downloads, callback=update_file_progress)
 
     def pull_images(self, containers_pull: Iterable[Tuple[str, str]]) -> None:
         for container, output_path in containers_pull:
