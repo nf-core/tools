@@ -313,6 +313,15 @@ class DownloadUtilsTest(unittest.TestCase):
                 assert progress._task_index == 3
                 assert progress.tasks == []
 
+            # Fire in the hole ! The download will be aborted and no output file will be created
+            src_url = "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fai"
+            output_path = os.path.join(outdir, os.path.basename(src_url))
+            os.unlink(output_path)
+            downloader.kill_with_fire = True
+            with pytest.raises(KeyboardInterrupt):
+                downloader.download_file(src_url, output_path)
+            assert not os.path.exists(output_path)
+
 
 class DownloadTest(unittest.TestCase):
     @pytest.fixture(autouse=True)
