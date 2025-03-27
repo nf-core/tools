@@ -35,6 +35,10 @@ from ..utils import TEST_DATA_DIR, with_temporary_folder
 
 
 class DownloadUtilsTest(unittest.TestCase):
+    @pytest.fixture(autouse=True)
+    def use_caplog(self, caplog):
+        self._caplog = caplog
+
     #
     # Test for 'utils.intermediate_file'
     #
@@ -252,43 +256,62 @@ class DownloadUtilsTest(unittest.TestCase):
     @with_temporary_folder
     def test_file_download(self, outdir):
         with DownloadProgress() as progress:
-            # No task initially
-            assert progress.tasks == []
-            assert progress._task_index == 0
-
-            # Download a file
             downloader = FileDownloader(progress)
-            src_url = "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fai"
-            output_path = os.path.join(outdir, os.path.basename(src_url))
-            downloader.download_file(src_url, output_path)
-            assert os.path.exists(output_path)
-            assert os.path.getsize(output_path) == 27
 
-            # A task was added but is now gone
-            assert progress._task_index == 1
-            assert progress.tasks == []
+            # Activate the caplog: all download attempts must be logged (even failed ones)
+            self._caplog.clear()
+            with self._caplog.at_level(logging.DEBUG):
+                # No task initially
+                assert progress.tasks == []
+                assert progress._task_index == 0
 
-            # No content at the URL
-            src_url = "http://www.google.com/generate_204"
-            output_path = os.path.join(outdir, os.path.basename(src_url))
-            with pytest.raises(DownloadError):
+                # Download a file
+                src_url = "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fai"
+                output_path = os.path.join(outdir, os.path.basename(src_url))
                 downloader.download_file(src_url, output_path)
-            assert not os.path.exists(output_path)
+                assert os.path.exists(output_path)
+                assert os.path.getsize(output_path) == 27
+                assert (
+                    "nf_core.pipelines.downloads.utils",
+                    logging.DEBUG,
+                    f"Downloading '{src_url}' to '{output_path}'",
+                ) in self._caplog.record_tuples
 
-            # A task was added but is now gone
-            assert progress._task_index == 2
-            assert progress.tasks == []
+                # A task was added but is now gone
+                assert progress._task_index == 1
+                assert progress.tasks == []
 
-            # Invalid URL (schema)
-            src_url = "dummy://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fax"
-            output_path = os.path.join(outdir, os.path.basename(src_url))
-            with pytest.raises(requests.exceptions.InvalidSchema):
-                downloader.download_file(src_url, output_path)
-            assert not os.path.exists(output_path)
+                # No content at the URL
+                src_url = "http://www.google.com/generate_204"
+                output_path = os.path.join(outdir, os.path.basename(src_url))
+                with pytest.raises(DownloadError):
+                    downloader.download_file(src_url, output_path)
+                assert not os.path.exists(output_path)
+                assert (
+                    "nf_core.pipelines.downloads.utils",
+                    logging.DEBUG,
+                    f"Downloading '{src_url}' to '{output_path}'",
+                ) in self._caplog.record_tuples
 
-            # A task was added but is now gone
-            assert progress._task_index == 3
-            assert progress.tasks == []
+                # A task was added but is now gone
+                assert progress._task_index == 2
+                assert progress.tasks == []
+
+                # Invalid URL (schema)
+                src_url = "dummy://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fax"
+                output_path = os.path.join(outdir, os.path.basename(src_url))
+                with pytest.raises(requests.exceptions.InvalidSchema):
+                    downloader.download_file(src_url, output_path)
+                assert not os.path.exists(output_path)
+                assert (
+                    "nf_core.pipelines.downloads.utils",
+                    logging.DEBUG,
+                    f"Downloading '{src_url}' to '{output_path}'",
+                ) in self._caplog.record_tuples
+
+                # A task was added but is now gone
+                assert progress._task_index == 3
+                assert progress.tasks == []
 
 
 class DownloadTest(unittest.TestCase):

@@ -159,7 +159,7 @@ class FileDownloader:
             remote_path (str): Source URL of the file to download
             output_path (str): The target output path
         """
-        log.debug(f"Downloading '{remote_path}' to {output_path}")
+        log.debug(f"Downloading '{remote_path}' to '{output_path}'")
 
         # Set up download progress bar as a new task
         nice_name = remote_path.split("/")[-1][:50]
