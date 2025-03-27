@@ -2,8 +2,10 @@ import contextlib
 import logging
 import os
 import tempfile
+from typing import Generator, Iterable
 
 import rich.progress
+import rich.table
 
 log = logging.getLogger(__name__)
 
@@ -15,7 +17,7 @@ class DownloadError(RuntimeError):
 
 
 @contextlib.contextmanager
-def intermediate_file(output_path):
+def intermediate_file(output_path: str) -> Generator[tempfile._TemporaryFileWrapper, None, None]:
     """Context manager to help ensure the output file is either complete or non-existent.
     It does that by creating a temporary file in the same directory as the output file,
     letting the caller write to it, and then moving it to the final location.
@@ -38,7 +40,8 @@ class DownloadProgress(rich.progress.Progress):
     Also provide helper functions to control the top-level task.
     """
 
-    def get_renderables(self):
+    def get_renderables(self) -> Generator[rich.table.Table, None, None]:
+        self.columns: Iterable[str | rich.progress.ProgressColumn]
         for task in self.tasks:
             if task.fields.get("progress_type") == "summary":
                 self.columns = (
@@ -79,6 +82,6 @@ class DownloadProgress(rich.progress.Progress):
         )
         return self.main_task
 
-    def update_main_task(self, **kwargs):
+    def update_main_task(self, **kwargs) -> None:
         """Update the top-level task with new information."""
         self.update(self.main_task, **kwargs)
