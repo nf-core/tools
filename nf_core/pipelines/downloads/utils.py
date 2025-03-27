@@ -27,6 +27,11 @@ def intermediate_file(output_path: str) -> Generator[tempfile._TemporaryFileWrap
     letting the caller write to it, and then moving it to the final location.
     If an exception is raised, the temporary file is deleted and the output file is not touched.
     """
+    if os.path.isdir(output_path):
+        raise DownloadError(f"Output path '{output_path}' is a directory")
+    if os.path.islink(output_path):
+        raise DownloadError(f"Output path '{output_path}' is a symbolic link")
+
     tmp = tempfile.NamedTemporaryFile(dir=os.path.dirname(output_path), delete=False)
     try:
         yield tmp

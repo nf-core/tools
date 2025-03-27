@@ -26,7 +26,7 @@ from nf_core.pipelines.downloads.singularity import (
     get_container_filename,
     symlink_registries,
 )
-from nf_core.pipelines.downloads.utils import DownloadProgress, intermediate_file
+from nf_core.pipelines.downloads.utils import DownloadError, DownloadProgress, intermediate_file
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import run_cmd
 
@@ -84,6 +84,17 @@ class DownloadUtilsTest(unittest.TestCase):
 
         assert not os.path.exists(output_path)
         assert not os.path.exists(tmp_path)
+
+        # Test for invalid output paths
+        with pytest.raises(DownloadError):
+            with intermediate_file(outdir) as tmp:
+                pass
+
+        output_path = os.path.join(outdir, "testfile5")
+        os.symlink("/dummy", output_path)
+        with pytest.raises(DownloadError):
+            with intermediate_file(output_path) as tmp:
+                pass
 
     #
     # Test for 'utils.DownloadProgress.add/update_main_task'
