@@ -1,9 +1,13 @@
+import concurrent.futures
 import contextlib
+import io
 import logging
 import os
 import tempfile
-from typing import Generator, Iterable
+from typing import Generator, Iterable, Tuple
 
+import requests
+import requests_cache
 import rich.progress
 import rich.table
 
@@ -94,3 +98,84 @@ class DownloadProgress(rich.progress.Progress):
             yield task
         finally:
             self.remove_task(task)
+
+
+class FileDownloader:
+    """Class to download files.
+
+    Downloads are done in parallel using threads and progress is shown in the progress bar.
+    """
+
+    def __init__(self, progress: DownloadProgress) -> None:
+        self.progress = progress
+        self.kill_with_fire = False
+
+    def download_files_in_parallel(
+        self,
+        download_files: Iterable[Tuple[str, str]],
+        parallel_downloads: int,
+    ) -> Generator[str, None, None]:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_downloads) as pool:
+            # Kick off concurrent downloads
+            future_downloads = [
+                pool.submit(self.download_file, remote_path, output_path)
+                for (remote_path, output_path) in download_files
+            ]
+
+            # Make ctrl-c work with multi-threading
+            self.kill_with_fire = False
+
+            try:
+                # Iterate over each threaded download, waiting for them to finish
+                for future in concurrent.futures.as_completed(future_downloads):
+                    output_path = future.result()
+                    yield output_path
+
+            except KeyboardInterrupt:
+                # Cancel the future threads that haven't started yet
+                for future in future_downloads:
+                    future.cancel()
+                # Set the variable that the threaded function looks for
+                # Will trigger an exception from each active thread
+                self.kill_with_fire = True
+                # Re-raise exception on the main thread
+                raise
+
+    def download_file(self, remote_path: str, output_path: str) -> str:
+        """Download a file from the web.
+
+        Use native Python to download the file. Progress is shown in the progress bar
+        as a new task (of type "download").
+
+        This method is integrated with the above `download_files_in_parallel` method. The
+        `self.kill_with_fire` variable is a sentinel used to check if the user has hit ctrl-c.
+
+        Args:
+            remote_path (str): Source URL of the file to download
+            output_path (str): The target output path
+        """
+        log.debug(f"Downloading '{remote_path}' to {output_path}")
+
+        # Set up download progress bar as a new task
+        nice_name = remote_path.split("/")[-1][:50]
+        with self.progress.sub_task(nice_name, start=False, total=False, progress_type="download") as task:
+            # Open file handle and download
+            # This temporary will be automatically renamed to the target if there are no errors
+            with intermediate_file(output_path) as fh:
+                # Disable caching as this breaks streamed downloads
+                with requests_cache.disabled():
+                    r = requests.get(remote_path, allow_redirects=True, stream=True, timeout=60 * 5)
+                    filesize = r.headers.get("Content-length")
+                    if filesize:
+                        self.progress.update(task, total=int(filesize))
+                        self.progress.start_task(task)
+
+                    # Stream download
+                    for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
+                        # Check that the user didn't hit ctrl-c
+                        if self.kill_with_fire:
+                            raise KeyboardInterrupt
+                        self.progress.update(task, advance=len(data))
+                        fh.write(data)
+
+        return output_path

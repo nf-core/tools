@@ -1,16 +1,11 @@
-import concurrent.futures
-import io
 import logging
 import os
 import re
 import shutil
 import subprocess
-from typing import Collection, Container, Generator, Iterable, List, Optional, Tuple
+from typing import Collection, Container, Iterable, List, Optional, Tuple
 
-import requests
-import requests_cache
-
-from nf_core.pipelines.downloads.utils import DownloadProgress, intermediate_file
+from nf_core.pipelines.downloads.utils import DownloadProgress, FileDownloader, intermediate_file
 
 log = logging.getLogger(__name__)
 
@@ -105,88 +100,6 @@ def symlink_registries(image_path: str, registries: Iterable[str]) -> None:
                 os.close(image_dir)
 
 
-class SingularityImageDownloader:
-    """Class to manage http downloads of Singularity images.
-
-    Downloads are done in parallel using threads and progress is shown in the progress bar.
-    """
-
-    def __init__(self, progress: DownloadProgress) -> None:
-        self.progress = progress
-        self.kill_with_fire = False
-
-    def download_images_in_parallel(
-        self,
-        containers_download: Iterable[Tuple[str, str]],
-        parallel_downloads: int,
-    ) -> Generator[str, None, None]:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_downloads) as pool:
-            # Kick off concurrent downloads
-            future_downloads = [
-                pool.submit(self.download_image, container, output_path)
-                for (container, output_path) in containers_download
-            ]
-
-            # Make ctrl-c work with multi-threading
-            self.kill_with_fire = False
-
-            try:
-                # Iterate over each threaded download, waiting for them to finish
-                for future in concurrent.futures.as_completed(future_downloads):
-                    output_path = future.result()
-                    yield output_path
-
-            except KeyboardInterrupt:
-                # Cancel the future threads that haven't started yet
-                for future in future_downloads:
-                    future.cancel()
-                # Set the variable that the threaded function looks for
-                # Will trigger an exception from each active thread
-                self.kill_with_fire = True
-                # Re-raise exception on the main thread
-                raise
-
-    def download_image(self, container: str, output_path: str) -> str:
-        """Download a singularity image from the web.
-
-        Use native Python to download the file. Progress is shown in the progress bar
-        as a new task (of type "download").
-
-        This method is integrated with the above `download_images_in_parallel` method. The
-        `self.kill_with_fire` variable is a sentinel used to check if the user has hit ctrl-c.
-
-        Args:
-            container (str): A pipeline's container name. Usually it is of similar format
-                to ``https://depot.galaxyproject.org/singularity/name:version``
-            output_path (str): The target output path
-        """
-        log.debug(f"Downloading Singularity image '{container}' to {output_path}")
-
-        # Set up download progress bar as a new task
-        nice_name = container.split("/")[-1][:50]
-        with self.progress.sub_task(nice_name, start=False, total=False, progress_type="download") as task:
-            # Open file handle and download
-            # This temporary will be automatically renamed to the target if there are no errors
-            with intermediate_file(output_path) as fh:
-                # Disable caching as this breaks streamed downloads
-                with requests_cache.disabled():
-                    r = requests.get(container, allow_redirects=True, stream=True, timeout=60 * 5)
-                    filesize = r.headers.get("Content-length")
-                    if filesize:
-                        self.progress.update(task, total=int(filesize))
-                        self.progress.start_task(task)
-
-                    # Stream download
-                    for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
-                        # Check that the user didn't hit ctrl-c
-                        if self.kill_with_fire:
-                            raise KeyboardInterrupt
-                        self.progress.update(task, advance=len(data))
-                        fh.write(data)
-
-        return output_path
-
-
 class SingularityFetcher:
     """Class to manage all Singularity operations for fetching containers.
 
@@ -213,8 +126,8 @@ class SingularityFetcher:
         containers_download: Iterable[Tuple[str, str]],
         parallel_downloads: int,
     ) -> None:
-        downloader = SingularityImageDownloader(self.progress)
-        for output_path in downloader.download_images_in_parallel(containers_download, parallel_downloads):
+        downloader = FileDownloader(self.progress)
+        for output_path in downloader.download_files_in_parallel(containers_download, parallel_downloads):
             # try-except introduced in 4a95a5b84e2becbb757ce91eee529aa5f8181ec7
             # unclear why rich.progress may raise an exception here as it's supposed to be thread-safe
             try:
