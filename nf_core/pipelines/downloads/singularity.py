@@ -15,8 +15,23 @@ from nf_core.pipelines.downloads.utils import DownloadProgress, intermediate_fil
 log = logging.getLogger(__name__)
 
 
+# We have dropped the explicit registries from the modules in favor of the configurable registries.
+# Unfortunately, Nextflow still expects the registry to be part of the file name, so we need functions
+# to support accessing container images with different registries (or no registry).
+
+
 def get_container_filename(container: str, registries: Iterable[str]) -> str:
-    """Return the expected filename for a container."""
+    """Return the expected filename for a container.
+
+    Supports docker, http, oras, and singularity URIs in `container`.
+
+    Registry names provided in `registries` are removed from the filename to ensure that the same image
+    is used regardless of the registry. Only registry names that are part of `registries` are considered.
+    If the image name contains another registry, it will be kept in the filename.
+
+    For instance, docker.io/nf-core/ubuntu:20.04 will be nf-core-ubuntu-20.04.img *only* if the registry
+    contains "docker.io".
+    """
 
     # Generate file paths
     # Based on simpleName() function in Nextflow code:
@@ -51,11 +66,9 @@ def get_container_filename(container: str, registries: Iterable[str]) -> str:
 
 def symlink_registries(image_path: str, registries: Iterable[str]) -> None:
     """Create a symlink for each registry in the registry set that points to the image.
-    We have dropped the explicit registries from the modules in favor of the configurable registries.
-    Unfortunately, Nextflow still expects the registry to be part of the file name, so a symlink is needed.
 
     The base image, e.g. ./nf-core-gatk-4.4.0.0.img will thus be symlinked as for example ./quay.io-nf-core-gatk-4.4.0.0.img
-    by prepending all registries in registry_set to the image name.
+    by prepending each registry in `registries` to the image name.
 
     Unfortunately, the output image name may contain a registry definition (Singularity image pulled from depot.galaxyproject.org
     or older pipeline version, where the docker registry was part of the image name in the modules). Hence, it must be stripped
