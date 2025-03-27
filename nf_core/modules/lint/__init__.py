@@ -383,10 +383,16 @@ class ModuleLint(ComponentLint):
                     current_ontologies_i = []
                     if "pattern" in corrected_meta_yml["input"][i][j][element_name]:
                         pattern = corrected_meta_yml["input"][i][j][element_name]["pattern"]
-                        # TODO: check pattern detection and processing for different cases
-                        for extension in re.split(r",|{|}", pattern):
-                            if extension in edam_formats:
-                                expected_ontologies_i.append((edam_formats[extension][0], extension))
+                        # Check pattern detection and process for different cases
+                        if re.search(r"{", pattern):
+                            for extension in re.split(r",|{|}", pattern):
+                                if extension in edam_formats:
+                                    expected_ontologies_i.append((edam_formats[extension][0], extension))
+                        else:
+                            if re.search(r"\.\w+$", pattern):
+                                extension = pattern.split(".")[-1]
+                                if extension in edam_formats:
+                                    expected_ontologies_i.append((edam_formats[extension][0], extension))
                     if "ontologies" in corrected_meta_yml["input"][i][j][element_name]:
                         for ontology in corrected_meta_yml["input"][i][j][element_name]["ontologies"]:
                             current_ontologies_i.append(ontology["edam"])
@@ -415,10 +421,16 @@ class ModuleLint(ComponentLint):
                     current_ontologies_o = []
                     if "pattern" in corrected_meta_yml["output"][i][ch_name][j][element_name]:
                         pattern = corrected_meta_yml["output"][i][ch_name][j][element_name]["pattern"]
-                        # TODO: check pattern detection and processing for different cases
-                        for extension in re.split(r",|{|}", pattern):
-                            if extension in edam_formats:
-                                expected_ontologies_o.append((edam_formats[extension][0], extension))
+                        # Check pattern detection and process for different cases
+                        if re.search(r"{", pattern):
+                            for extension in re.split(r",|{|}", pattern):
+                                if extension in edam_formats:
+                                    expected_ontologies_o.append((edam_formats[extension][0], extension))
+                        else:
+                            if re.search(r"\.\w+$", pattern):
+                                extension = pattern.split(".")[-1]
+                                if extension in edam_formats:
+                                    expected_ontologies_o.append((edam_formats[extension][0], extension))
                     if "ontologies" in corrected_meta_yml["output"][i][ch_name][j][element_name]:
                         for ontology in corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"]:
                             current_ontologies_o.append(ontology["edam"])
