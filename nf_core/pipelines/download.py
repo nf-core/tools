@@ -715,6 +715,12 @@ class DownloadWorkflow:
         Falls back to using `finc_container_images_legacy()` when `nextflow inspect` fails.
         """
 
+        # TODO: REMOVE this lazy debugging section.
+        if os.environ.get("USE_LEGACY_METHOD", 0):
+            log.debug("Using legacy container fetching")
+            self.find_container_images_legacy(workflow_directory)
+            return
+        
         try:
             # TODO: Select container system via profile. Is this stable enough?
             profile = f"-profile {self.container_system}" if self.container_system else ""
