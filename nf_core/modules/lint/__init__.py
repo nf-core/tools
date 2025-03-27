@@ -392,8 +392,8 @@ class ModuleLint(ComponentLint):
                     current_ontologies.append(ontology["edam"])
             elif section["type"] == "file":
                 section["ontologies"] = []
-            log.debug(f"expected ontologies for input: {expected_ontologies}")
-            log.debug(f"current ontologies for input: {current_ontologies}")
+            log.debug(f"expected ontologies for {desc}: {expected_ontologies}")
+            log.debug(f"current ontologies for {desc}: {current_ontologies}")
             for ontology, ext in expected_ontologies:
                 if ontology not in current_ontologies:
                     try:
@@ -409,7 +409,7 @@ class ModuleLint(ComponentLint):
                 for j, element in enumerate(channel):
                     element_name = list(element.keys())[0]
                     add_edam_ontologies(
-                        corrected_meta_yml["input"][i][j][element_name], edam_formats, f"input: {element_name}"
+                        corrected_meta_yml["input"][i][j][element_name], edam_formats, f"input - {element_name}"
                     )
 
         if "output" in meta_yml:
@@ -420,7 +420,7 @@ class ModuleLint(ComponentLint):
                     add_edam_ontologies(
                         corrected_meta_yml["output"][i][ch_name][j][element_name],
                         edam_formats,
-                        f"output : {ch_name} - {element_name}",
+                        f"output - {ch_name} - {element_name}",
                     )
 
         # Add bio.tools identifier
