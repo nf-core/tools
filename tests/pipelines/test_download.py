@@ -65,26 +65,22 @@ class DownloadUtilsTest(unittest.TestCase):
 
         # Directly write to the file and raise an exception
         output_path = os.path.join(outdir, "testfile3")
-        try:
+        with pytest.raises(ValueError):
             with intermediate_file(output_path) as tmp:
                 tmp_path = tmp.name
                 tmp.write(b"Hello, World!")
                 raise ValueError("This is a test error")
-        except Exception as e:
-            assert isinstance(e, ValueError)
 
         assert not os.path.exists(output_path)
         assert not os.path.exists(tmp_path)
 
         # Run an external command and raise an exception
         output_path = os.path.join(outdir, "testfile4")
-        try:
+        with pytest.raises(subprocess.CalledProcessError):
             with intermediate_file(output_path) as tmp:
                 tmp_path = tmp.name
                 subprocess.check_call([f"echo 'Hello, World!' > {tmp_path}"], shell=True)
                 subprocess.check_call(["ls", "/dummy"])
-        except Exception as e:
-            assert isinstance(e, subprocess.CalledProcessError)
 
         assert not os.path.exists(output_path)
         assert not os.path.exists(tmp_path)
