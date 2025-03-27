@@ -12,6 +12,7 @@ from typing import List
 from unittest import mock
 
 import pytest
+import requests
 import rich.progress_bar
 import rich.table
 import rich.text
@@ -26,7 +27,7 @@ from nf_core.pipelines.downloads.singularity import (
     get_container_filename,
     symlink_registries,
 )
-from nf_core.pipelines.downloads.utils import DownloadError, DownloadProgress, intermediate_file
+from nf_core.pipelines.downloads.utils import DownloadError, DownloadProgress, FileDownloader, intermediate_file
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import run_cmd
 
@@ -244,6 +245,39 @@ class DownloadUtilsTest(unittest.TestCase):
 
             assert isinstance(table.columns[6]._cells[0], rich.text.Text)
             assert table.columns[6]._cells[0]._text == ["?"]
+
+    #
+    # Test for 'utils.FileDownloader'
+    #
+    @with_temporary_folder
+    def test_file_download(self, outdir):
+        with DownloadProgress() as progress:
+            # No task initially
+            assert progress.tasks == []
+            assert progress._task_index == 0
+
+            # Download a file
+            downloader = FileDownloader(progress)
+            src_url = "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fai"
+            output_path = os.path.join(outdir, os.path.basename(src_url))
+            downloader.download_file(src_url, output_path)
+            assert os.path.exists(output_path)
+            assert os.path.getsize(output_path) == 27
+
+            # A task was added but is now gone
+            assert progress._task_index == 1
+            assert progress.tasks == []
+
+            # Invalid URL (schema)
+            src_url = "dummy://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fax"
+            output_path = os.path.join(outdir, os.path.basename(src_url))
+            with pytest.raises(requests.exceptions.InvalidSchema):
+                downloader.download_file(src_url, output_path)
+            assert not os.path.exists(output_path)
+
+            # A task was added but is now gone
+            assert progress._task_index == 2
+            assert progress.tasks == []
 
 
 class DownloadTest(unittest.TestCase):
