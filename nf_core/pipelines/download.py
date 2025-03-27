@@ -708,15 +708,11 @@ class DownloadWorkflow:
             nfconfig_fh.write(nfconfig)
 
     def find_container_images(self, workflow_directory: str) -> None:
-        """Find container image names for workflow.
+        """Find container image names for workflow using the `nextflow inspect` command.
 
-        Starts by using `nextflow config` to pull out any process.container
-        declarations. This works for DSL1. It should return a simple string with resolved logic,
-        but not always, e.g. not for differentialabundance 1.2.0
+        CURRENTLY ONLY WORKS WITH NEXTLFOW 25.02.1-edge!
 
-        Second, we look for DSL2 containers. These can't be found with
-        `nextflow config` at the time of writing, so we scrape the pipeline files.
-        This returns raw matches that will likely need to be cleaned.
+        Falls back to using `finc_container_images_legacy()` when `nextflow inspect` fails.
         """
 
         try:
@@ -735,7 +731,6 @@ class DownloadWorkflow:
 
             out, err = cmd_out
             out_json = json.loads(out)
-            log.debug(out)
             containers = []
             for process in out_json["processes"]:
                 containers.append(process["container"])
