@@ -909,12 +909,18 @@ class DownloadTest(unittest.TestCase):
             "community-cr-prod.seqera.io/docker/registry/v2",
         ]
 
+        # Test --- galaxy URL but no registry given #
+        result = get_container_filename(
+            "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0",
+            [],
+        )
+        assert result == "depot.galaxyproject.org-singularity-bbmap-38.93--he522d1c_0.img"
+
         # Test --- galaxy URL #
         result = get_container_filename(
             "https://depot.galaxyproject.org/singularity/bbmap:38.93--he522d1c_0",
             registries,
         )
-
         assert result == "bbmap-38.93--he522d1c_0.img"
 
         # Test --- mulled containers #
@@ -949,6 +955,36 @@ class DownloadTest(unittest.TestCase):
             registries,
         )
         assert result == "blobs-sha256-c2-c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975-data.img"
+
+        # Test --- Seqera Oras containers: Trimmed, because it is hard-coded in the registry set.
+        result = get_container_filename(
+            "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
+            registries,
+        )
+        assert result == "umi-transfer-1.0.0--e5b0c1a65b8173b6.img"
+
+        # Test --- SIF Singularity container with explicit registry -> should be trimmed #
+        result = get_container_filename(
+            "docker.io-hashicorp-vault-1.16-sha256:e139ff28c23e1f22a6e325696318141259b177097d8e238a3a4c5b84862fadd8.sif",
+            registries,
+        )
+        assert (
+            result == "hashicorp-vault-1.16-sha256-e139ff28c23e1f22a6e325696318141259b177097d8e238a3a4c5b84862fadd8.sif"
+        )
+
+        # Test --- SIF Singularity container without registry #
+        result = get_container_filename(
+            "singularity-hpc/shpc/tests/testdata/salad_latest.sif",
+            registries,
+        )
+        assert result == "singularity-hpc-shpc-tests-testdata-salad_latest.sif"
+
+        # Test --- Singularity container from a Singularity registry (and version tag) #
+        result = get_container_filename(
+            "library://pditommaso/foo/bar.sif:latest",
+            registries,
+        )
+        assert result == "pditommaso-foo-bar-latest.sif"
 
     #
     # Test for '--singularity-cache remote --singularity-cache-index'. Provide a list of containers already available in a remote location.
