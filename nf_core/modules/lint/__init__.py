@@ -372,61 +372,56 @@ class ModuleLint(ComponentLint):
                                                 )
                             break
 
+        def add_edam_ontologies(section, edam_formats, desc):
+            expected_ontologies = []
+            current_ontologies = []
+            if "pattern" in section:
+                pattern = section["pattern"]
+                # Check pattern detection and process for different cases
+                if re.search(r"{", pattern):
+                    for extension in re.split(r",|{|}", pattern):
+                        if extension in edam_formats:
+                            expected_ontologies.append((edam_formats[extension][0], extension))
+                else:
+                    if re.search(r"\.\w+$", pattern):
+                        extension = pattern.split(".")[-1]
+                        if extension in edam_formats:
+                            expected_ontologies.append((edam_formats[extension][0], extension))
+            if "ontologies" in section:
+                for ontology in section["ontologies"]:
+                    current_ontologies.append(ontology["edam"])
+            elif section["type"] == "file":
+                section["ontologies"] = []
+            log.debug(f"expected ontologies for {desc}: {expected_ontologies}")
+            log.debug(f"current ontologies for {desc}: {current_ontologies}")
+            for ontology, ext in expected_ontologies:
+                if ontology not in current_ontologies:
+                    try:
+                        section["ontologies"].append(ruamel.yaml.comments.CommentedMap({"edam": ontology}))
+                        section["ontologies"][-1].yaml_add_eol_comment(f"{edam_formats[ext][1]}", "edam")
+                    except KeyError:
+                        log.warning(f"Could not add ontologies in {desc}")
+
         # EDAM ontologies
         edam_formats = nf_core.modules.modules_utils.load_edam()
         if "input" in meta_yml:
             for i, channel in enumerate(corrected_meta_yml["input"]):
                 for j, element in enumerate(channel):
                     element_name = list(element.keys())[0]
-                    expected_ontologies_i = []
-                    current_ontologies_i = []
-                    if "pattern" in corrected_meta_yml["input"][i][j][element_name]:
-                        pattern = corrected_meta_yml["input"][i][j][element_name]["pattern"]
-                        for extension in re.split(r",|{|}", pattern):
-                            if extension in edam_formats:
-                                expected_ontologies_i.append((edam_formats[extension][0], extension))
-                    if "ontologies" in corrected_meta_yml["input"][i][j][element_name]:
-                        for ontology in corrected_meta_yml["input"][i][j][element_name]["ontologies"]:
-                            current_ontologies_i.append(ontology["edam"])
-                    elif corrected_meta_yml["input"][i][j][element_name]["type"] == "file":
-                        corrected_meta_yml["input"][i][j][element_name]["ontologies"] = []
-                    log.debug(f"expected ontologies for input: {expected_ontologies_i}")
-                    log.debug(f"current ontologies for input: {current_ontologies_i}")
-                    for ontology, ext in expected_ontologies_i:
-                        if ontology not in current_ontologies_i:
-                            corrected_meta_yml["input"][i][j][element_name]["ontologies"].append(
-                                ruamel.yaml.comments.CommentedMap({"edam": ontology})
-                            )
-                            corrected_meta_yml["input"][i][j][element_name]["ontologies"][-1].yaml_add_eol_comment(
-                                f"{edam_formats[ext][1]}", "edam"
-                            )
+                    add_edam_ontologies(
+                        corrected_meta_yml["input"][i][j][element_name], edam_formats, f"input - {element_name}"
+                    )
+
         if "output" in meta_yml:
             for i, channel in enumerate(corrected_meta_yml["output"]):
                 ch_name = list(channel.keys())[0]
                 for j, element in enumerate(channel[ch_name]):
                     element_name = list(element.keys())[0]
-                    expected_ontologies_o = []
-                    current_ontologies_o = []
-                    if "pattern" in corrected_meta_yml["output"][i][ch_name][j][element_name]:
-                        pattern = corrected_meta_yml["output"][i][ch_name][j][element_name]["pattern"]
-                        for extension in re.split(r",|{|}", pattern):
-                            if extension in edam_formats:
-                                expected_ontologies_o.append((edam_formats[extension][0], extension))
-                    if "ontologies" in corrected_meta_yml["output"][i][ch_name][j][element_name]:
-                        for ontology in corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"]:
-                            current_ontologies_o.append(ontology["edam"])
-                    elif corrected_meta_yml["output"][i][ch_name][j][element_name]["type"] == "file":
-                        corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"] = []
-                    log.debug(f"expected ontologies for output: {expected_ontologies_o}")
-                    log.debug(f"current ontologies for output: {current_ontologies_o}")
-                    for ontology, ext in expected_ontologies_o:
-                        if ontology not in current_ontologies_o:
-                            corrected_meta_yml["output"][i][ch_name][j][element_name]["ontologies"].append(
-                                {"edam": ontology}
-                            )
-                            corrected_meta_yml["output"][i][ch_name][j][element_name][
-                                "ontologies"
-                            ].yaml_add_eol_comment(f"{edam_formats[ext][1]}", -1)
+                    add_edam_ontologies(
+                        corrected_meta_yml["output"][i][ch_name][j][element_name],
+                        edam_formats,
+                        f"output - {ch_name} - {element_name}",
+                    )
 
         # Add bio.tools identifier
         for i, tool in enumerate(corrected_meta_yml["tools"]):
