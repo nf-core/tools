@@ -398,7 +398,7 @@ class ModuleLint(ComponentLint):
                 if ontology not in current_ontologies:
                     try:
                         section["ontologies"].append(ruamel.yaml.comments.CommentedMap({"edam": ontology}))
-                        section[-1].yaml_add_eol_comment(f"{edam_formats[ext][1]}", "edam")
+                        section["ontologies"][-1].yaml_add_eol_comment(f"{edam_formats[ext][1]}", "edam")
                     except KeyError:
                         log.warning(f"Could not add ontologies in {desc}")
 
