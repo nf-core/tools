@@ -8,6 +8,7 @@ from nf_core.test_datasets.test_datasets_utils import (
     MODULES_BRANCH_NAME,
     create_download_url,
     create_pretty_nf_path,
+    get_or_prompt_branch,
     get_remote_branch_names,
     list_files_by_branch,
 )
@@ -37,13 +38,15 @@ def test_datasets_list_branches(ctx):
     stdout.print(out)
 
 
-def test_datasets_list_remote(ctx, branch, generate_nf_path, generate_dl_url):
+def test_datasets_list_remote(ctx, maybe_branch, generate_nf_path, generate_dl_url):
     """
     List all files on a given branch in the remote nf-core/testdatasets repository on github.
     Specifying a branch is required.
     The resulting files can be parsed as a nextflow path or a url for downloading.
     """
-    tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
+    branch, all_branches = get_or_prompt_branch(maybe_branch)
+
+    tree = list_files_by_branch(branch, all_branches, IGNORED_FILE_PREFIXES)
     num_branches = len(tree.keys())
 
     out = ""
@@ -61,15 +64,17 @@ def test_datasets_list_remote(ctx, branch, generate_nf_path, generate_dl_url):
     stdout.print(out)
 
 
-def test_datasets_search(ctx, branch, generate_nf_path, generate_dl_url):
+def test_datasets_search(ctx, maybe_branch, generate_nf_path, generate_dl_url):
     """
     Search all files on a given branch in the remote nf-core/testdatasets repository on github
     with an interactive autocompleting prompt and print the file matching the query.
     Specifying a branch is required.
     The resulting file can optionally be parsed as a nextflow path or a url for downloading
     """
+    branch, all_branches = get_or_prompt_branch(maybe_branch)
+
     stdout.print("Searching files on branch: ", branch)
-    tree = list_files_by_branch(branch, IGNORED_FILE_PREFIXES)
+    tree = list_files_by_branch(branch, all_branches, IGNORED_FILE_PREFIXES)
     files = sum(tree.values(), [])  # flat representation of tree
 
     file_selected = False

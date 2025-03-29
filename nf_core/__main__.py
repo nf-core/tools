@@ -1764,9 +1764,7 @@ def test_datasets(ctx):
 # nf-core test-dataset search
 @test_datasets.command("search")
 @click.pass_context
-@click.option(
-    "-b", "--branch", required=True, type=str, help="Branch in the test-datasets repository to reduce search to"
-)
+@click.option("-b", "--branch", type=str, help="Branch in the test-datasets repository to reduce search to")
 @click.option(
     "-g",
     "--generate-nf-path",
@@ -1791,9 +1789,7 @@ def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url):
 # nf-core test-dataset search
 @test_datasets.command("list")
 @click.pass_context
-@click.option(
-    "-b", "--branch", required=True, type=str, help="Branch in the test-datasets repository to reduce search to"
-)
+@click.option("-b", "--branch", type=str, help="Branch in the test-datasets repository to reduce search to")
 @click.option(
     "-g",
     "--generate-nf-path",

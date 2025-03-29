@@ -2,9 +2,10 @@ import json
 import logging
 from dataclasses import dataclass
 
+import questionary
 import requests
 
-from nf_core.utils import gh_api
+from nf_core.utils import gh_api, nfcore_question_style
 
 log = logging.getLogger(__name__)
 
@@ -104,6 +105,7 @@ def get_remote_tree_for_branch(branch, only_files=True, ignored_prefixes=[]):
 
 def list_files_by_branch(
     branch=None,
+    branches=[],
     ignored_file_prefixes=[
         ".",
         "CITATION",
@@ -117,8 +119,9 @@ def list_files_by_branch(
     Returns dictionary with branchnames as keys and file-lists as values
     """
 
-    log.debug("Fetching list of remote branch names")
-    branches = get_remote_branch_names()
+    if len(branches) == 0:
+        log.debug("Fetching list of remote branch names")
+        branches = get_remote_branch_names()
 
     if branch:
         branches = list(filter(lambda b: b == branch, branches))
@@ -149,3 +152,23 @@ def create_download_url(branch, path):
     """
     gh_api_url = GithubApiEndpoints(gh_repo="test-datasets")
     return gh_api_url.get_file_download_url(branch, path)
+
+
+def get_or_prompt_branch(maybe_branch):
+    """
+    If branch is given, return a tuple of (maybe_branch, empty_list) else
+    prompt the user to enter a branch name and return (branch_name, all_branches)
+    """
+    if maybe_branch:
+        return (maybe_branch, [])
+
+    else:
+        all_branches = get_remote_branch_names()
+
+        branch = questionary.autocomplete(
+            "Branch name:",
+            choices=sorted(all_branches),
+            style=nfcore_question_style,
+        ).unsafe_ask()
+
+        return branch, all_branches
