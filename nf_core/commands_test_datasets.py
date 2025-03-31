@@ -1,13 +1,9 @@
 import logging
-import os
 
 import rich
 
-from nf_core.test_datasets.list import list_datasets
+from nf_core.test_datasets.list import list_dataset_branches, list_datasets
 from nf_core.test_datasets.search import search_datasets
-from nf_core.test_datasets.test_datasets_utils import (
-    get_remote_branch_names,
-)
 from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
@@ -29,9 +25,7 @@ def test_datasets_list_branches(ctx):
     Only lists test data and module test data based on the curated list
     of pipeline names [on the website](https://raw.githubusercontent.com/nf-core/website/refs/heads/main/public/pipeline_names.json).
     """
-    remote_branches = get_remote_branch_names()
-    out = os.linesep.join(remote_branches)
-    stdout.print(out)
+    list_dataset_branches()
 
 
 def test_datasets_list_remote(ctx, maybe_branch, generate_nf_path, generate_dl_url):

@@ -7,11 +7,23 @@ from nf_core.test_datasets.test_datasets_utils import (
     create_download_url,
     create_pretty_nf_path,
     get_or_prompt_branch,
+    get_remote_branch_names,
     list_files_by_branch,
 )
 from nf_core.utils import rich_force_colors
 
 stdout = rich.console.Console(force_terminal=rich_force_colors())
+
+
+def list_dataset_branches():
+    """
+    List all branches on the nf-core/test-datasets repository.
+    Only lists test data and module test data based on the curated list
+    of pipeline names [on the website](https://raw.githubusercontent.com/nf-core/website/refs/heads/main/public/pipeline_names.json).
+    """
+    remote_branches = get_remote_branch_names()
+    out = os.linesep.join(remote_branches)
+    stdout.print(out)
 
 
 def list_datasets(maybe_branch, generate_nf_path, generate_dl_url, ignored_file_prefixes):
