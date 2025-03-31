@@ -346,7 +346,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
             failed.append(f"Config `params.custom_config_base` is not set to `{custom_config_base}`")
 
         # Check that lines for loading custom profiles exist
-        old_institutional_config_pattern_1 = r""""try\s*{
+        old_institutional_config_pattern_1 = r"""try\s*{
 \s*includeConfig \"\${params\.custom_config_base}/nfcore_custom\.config\"
 \s*}\s*catch\s*\(Exception\s+e\)\s*{
 \s*System\.err\.println\(\"WARNING: Could not load nf-core/config profiles: \${params\.custom_config_base}/nfcore_custom\.config\"\)
