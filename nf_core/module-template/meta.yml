@@ -1,9 +1,6 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
 name: "{{ component_name_underscore }}"
-{% if not_empty_template -%}
-## TODO nf-core: Add a description of the module and list keywords
-{% endif -%}
 description: write your description here
 keywords:
   - sort
@@ -11,9 +8,6 @@ keywords:
   - genomics
 tools:
   - "{{ component }}":
-      {% if not_empty_template -%}
-      ## TODO nf-core: Add a description and other details for the software below
-      {% endif -%}
       description: "{{ tool_description }}"
       homepage: "{{ tool_doc_url }}"
       documentation: "{{ tool_doc_url }}"
@@ -22,104 +16,37 @@ tools:
       licence: {{ tool_licence }}
       identifier: {{ tool_identifier }}
 
-{% if not_empty_template -%}
-## TODO nf-core: Add a description of all of the variables used as input
-{% endif -%}
 input:
-  {% if inputs -%}
-  {% for input_name, ontologies in inputs.items() -%}
-  {% if has_meta %}
-  - - meta{{ loop.index|string if not loop.first else '' }}:
-        type: map
-        description: |
-          Groovy Map containing sample information
-          e.g. `[ id:'sample1' ]`
-  {% endif %}
-    - {{ input_name }}:
-        # TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
-        type: file
-        description: {{ input_name }} file
-        pattern: {{ "\"*.{" + ontologies[2]|join(",") + "}\"" }}
-        ontologies:
-          {% for ontology in ontologies[0] -%}
-          - edam: "{{ ontology }}" # {{ ontologies[1][loop.index0] }}
-          {% endfor -%}
-  {% endfor -%}
-  {% else -%}
-  #{% if has_meta %} Only when we have meta
   - - meta:
         type: map
         description: |
           Groovy Map containing sample information
           e.g. `[ id:'sample1' ]`
-  {% endif %}
-  {% if not_empty_template -%}
-  ## TODO nf-core: Delete / customise this example input
-  {%- endif %}
-    - {{ 'bam:' if not_empty_template else "input:" }}
+    - bam:
         type: file
-        description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
-        pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
+        description: Sorted BAM/CRAM/SAM file
+        pattern: "*.{bam,cram,sam}"
         ontologies:
-          {% if not_empty_template -%}
           - edam: "http://edamontology.org/format_2572" # BAM
           - edam: "http://edamontology.org/format_2573" # CRAM
           - edam: "http://edamontology.org/format_3462" # SAM
-          {% else -%}
-          - edam: ""
-          {%- endif %}
-  {%- endif %}
 
-{% if not_empty_template -%}
-## TODO nf-core: Add a description of all of the variables used as output
-{% endif -%}
 output:
-  {% if outputs -%}
-  {% for output_name, ontologies in outputs.items() -%}
-  - {{ output_name }}:
-    {% if has_meta -%}
-    - meta:
-        type: map
-        description: |
-          Groovy Map containing sample information
-          e.g. `[ id:'sample1' ]`
-    {%- endif %}
-    - {{ "\"*.{" + ontologies[2]|join(",") + "}\"" }}:
-        # TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct
-        type: file
-        description: {{ output_name }} file
-        pattern: {{ "\"*.{" + ontologies[2]|join(",") + "}\"" }}
-        ontologies:
-          {%- for ontology in ontologies[0] %}
-          - edam: "{{ ontology }}" # {{ ontologies[1][loop.index0] }}
-          {%- endfor %}
-  {% endfor -%}
-  {% else -%}
-  - {{ 'bam:' if not_empty_template else "output:" }}
-  #{% if has_meta -%} Only when we have meta
-    - meta:
-        type: map
-        description: |
-          Groovy Map containing sample information
-          e.g. `[ id:'sample1' ]`
-  {%- endif %}
-  {% if not_empty_template -%}
-    ## TODO nf-core: Delete / customise this example output
-  {%- endif %}
-    - {{ '"*.bam":' if not_empty_template else '"*":' }}
-        type: file
-        description: {{ 'Sorted BAM/CRAM/SAM file' if not_empty_template else "" }}
-        pattern: {{ '"*.{bam,cram,sam}"' if not_empty_template else "" }}
-        ontologies:
-          {% if not_empty_template -%}
-          - edam: "http://edamontology.org/format_2572" # BAM
-          - edam: "http://edamontology.org/format_2573" # CRAM
-          - edam: "http://edamontology.org/format_3462" # SAM
-          {% else -%}
-          - edam: ""
-          {%- endif %}
-  {%- endif %}
-  - versions:
+  bam:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1' ]`
+      - "*.bam":
+          type: file
+          description: Sorted BAM/CRAM/SAM file
+          pattern: "*.{bam,cram,sam}"
+          ontologies:
+            - edam: "http://edamontology.org/format_2572" # BAM
+            - edam: "http://edamontology.org/format_2573" # CRAM
+            - edam: "http://edamontology.org/format_3462" # SAM
+  versions:
     - "versions.yml":
         type: file
         description: File containing software versions
