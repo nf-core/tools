@@ -1,5 +1,5 @@
-import os
 import re
+from pathlib import Path
 
 
 def readme(self):
@@ -23,22 +23,38 @@ def readme(self):
 
         * If pipeline is released but still contains a 'zenodo.XXXXXXX' tag, the test fails
 
+    To disable this test, add the following to the pipeline's ``.nf-core.yml`` file:
+
+    .. code-block:: yaml
+        lint:
+            readme: False
+
+    To disable subsets of these tests, add the following to the pipeline's ``.nf-core.yml`` file:
+
+    .. code-block:: yaml
+
+            lint:
+                readme:
+                    - nextflow_badge
+                    - nfcore_template_badge
+                    - zenodo_release
+
     """
     passed = []
     warned = []
     failed = []
 
     # Remove field that should be ignored according to the linting config
-    ignore_configs = self.lint_config.get("readme", [])
+    ignore_configs = self.lint_config.get("readme", []) if self.lint_config is not None else []
 
-    with open(os.path.join(self.wf_path, "README.md")) as fh:
+    with open(Path(self.wf_path, "README.md")) as fh:
         content = fh.read()
 
     if "nextflow_badge" not in ignore_configs:
         # Check that there is a readme badge showing the minimum required version of Nextflow
-        # [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A523.04.0-23aa62.svg)](https://www.nextflow.io/)
+        # [![Nextflow](https://img.shields.io/badge/version-%E2%89%A524.04.2-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
         # and that it has the correct version
-        nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/nextflow%20DSL2-!?(?:%E2%89%A5|%3E%3D)([\d\.]+)-23aa62\.svg\)\]\(https://www\.nextflow\.io/\)"
+        nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/version-!?(?:%E2%89%A5|%3E%3D)([\d\.]+)-green\?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow\.io\)\]\(https://www\.nextflow\.io/\)"
         match = re.search(nf_badge_re, content)
         if match:
             nf_badge_version = match.group(1).strip("'\"")
@@ -57,6 +73,16 @@ def readme(self):
                 )
         else:
             warned.append("README did not have a Nextflow minimum version badge.")
+
+    if "nfcore_template_badge" not in ignore_configs:
+        # Check that there is a readme badge showing the current nf-core/tools template version
+        # [![nf-core template version](https://img.shields.io/badge/nf--core_template-3.2.0-green?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co.re)](https://github.com/nf-core/tools/releases/tag/3.2.0)
+        t_badge_re = r"\[!\[nf-core template version\]\(https://img\.shields\.io/badge/nf--core_template-([\d\.]+(\.dev[\d\.])?)-green\?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co\.re\)\]\(https://github\.com/nf-core/tools/releases/tag/([\d\.]+(\.dev[\d\.])?)\)"
+        match = re.search(t_badge_re, content)
+        if match:
+            passed.append("README nf-core template version badge found.")
+        else:
+            warned.append("README did not have an nf-core template version badge.")
 
     if "zenodo_doi" not in ignore_configs:
         # Check that zenodo.XXXXXXX has been replaced with the zendo.DOI

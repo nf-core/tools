@@ -28,9 +28,7 @@ class FinalScreen(Screen):
             ".",
             classes="row",
         )
-        yield Center(
-            Button("Save and close!", id="close_app", variant="success"), classes="cta"
-        )
+        yield Center(Button("Save and close!", id="close_app", variant="success"), classes="cta")
 
     def _create_config(self) -> None:
         """Create the config."""

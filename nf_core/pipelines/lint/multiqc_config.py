@@ -31,6 +31,15 @@ def multiqc_config(self) -> Dict[str, List[str]]:
             lint:
                 multiqc_config: False
 
+        To disable this test only for specific sections, you can specify a list of section names.
+        For example:
+
+        .. code-block:: yaml
+        lint:
+                multiqc_config:
+                    - report_section_order
+                    - report_comment
+
     """
 
     passed: List[str] = []
@@ -113,7 +122,7 @@ def multiqc_config(self) -> Dict[str, List[str]]:
                     f"The expected comment is:  \n"
                     f"```{hint}```  \n"
                     f"The current comment is:  \n"
-                    f"```{ mqc_yml['report_comment'].strip()}```"
+                    f"```{mqc_yml['report_comment'].strip()}```"
                 )
             else:
                 passed.append("`assets/multiqc_config.yml` contains a matching 'report_comment'.")

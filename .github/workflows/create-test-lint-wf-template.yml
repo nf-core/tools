@@ -31,27 +31,44 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
+  prepare-matrix:
+    name: Retrieve all template features
+    runs-on: ubuntu-latest
+    outputs:
+      all_features: ${{ steps.create_matrix.outputs.matrix }}
+    steps:
+      - name: 🏗 Set up yq
+        uses: frenck/action-setup-yq@c4b5be8b4a215c536a41d436757d9feb92836d4f # v1
+      - name: checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Create Matrix
+        id: create_matrix
+        run: |
+          echo "matrix=$(yq 'keys | filter(. != "github") | filter(. != "is_nfcore") | filter(. != "test_config") | tojson(0)' nf_core/pipelines/create/template_features.yml)" >> $GITHUB_OUTPUT
+
   RunTestWorkflow:
     runs-on: ${{ matrix.runner }}
+    needs: prepare-matrix
     env:
       NXF_ANSI_LOG: false
+
     strategy:
       matrix:
-        TEMPLATE:
-          - "template_skip_github_badges.yml"
-          - "template_skip_igenomes.yml"
-          - "template_skip_ci.yml"
+        TEMPLATE: ${{ fromJson(needs.prepare-matrix.outputs.all_features) }}
         runner:
           # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
           - ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
         profile: ["self_hosted_runner"]
         include:
-          - TEMPLATE: "template_skip_all.yml"
+          - TEMPLATE: all
             runner: ubuntu-latest
             profile: "docker"
-          - TEMPLATE: "template_skip_nf_core_configs.yml"
+          - TEMPLATE: nf_core_configs
             runner: ubuntu-latest
             profile: "docker"
+        exclude:
+          - TEMPLATE: nf_core_configs
+            profile: "self_hosted_runner"
       fail-fast: false
 
     steps:
@@ -61,13 +78,13 @@ jobs:
           cd create-lint-wf-template
           export NXF_WORK=$(pwd)
 
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out source-code repository
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install python dependencies
         run: |
@@ -80,33 +97,22 @@ jobs:
           version: latest-everything
 
       # Create template files
-      - name: Create template skip all (except github)
+      - name: Create template skip ${{ matrix.TEMPLATE }}
         run: |
           mkdir create-test-lint-wf
           export NXF_WORK=$(pwd)
-          printf "org: my-prefix\nskip: ['ci', 'github_badges', 'igenomes', 'nf_core_configs']" > create-test-lint-wf/template_skip_all.yml
-
-      - name: Create template skip github_badges
-        run: |
-          printf "org: my-prefix\nskip: github_badges" > create-test-lint-wf/template_skip_github_badges.yml
-
-      - name: Create template skip igenomes
-        run: |
-          printf "org: my-prefix\nskip: igenomes" > create-test-lint-wf/template_skip_igenomes.yml
-
-      - name: Create template skip ci
-        run: |
-          printf "org: my-prefix\nskip: ci" > create-test-lint-wf/template_skip_ci.yml
-
-      - name: Create template skip nf_core_configs
-        run: |
-          printf "org: my-prefix\nskip: nf_core_configs" > create-test-lint-wf/template_skip_nf_core_configs.yml
+          if [ ${{ matrix.TEMPLATE }} == "all" ]
+          then
+            printf "org: my-prefix\nskip_features: ${{ needs.prepare-matrix.outputs.all_features }}" > create-test-lint-wf/template_skip_all.yml
+          else
+            printf "org: my-prefix\nskip_features: [${{ matrix.TEMPLATE }}]" > create-test-lint-wf/template_skip_${{ matrix.TEMPLATE }}.yml
+          fi
 
       # Create a pipeline from the template
       - name: create a pipeline from the template ${{ matrix.TEMPLATE }}
         run: |
           cd create-test-lint-wf
-          nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml ${{ matrix.TEMPLATE }}
+          nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
 
       - name: run the pipeline
         run: |
@@ -132,14 +138,30 @@ jobs:
         run: find my-prefix-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
         working-directory: create-test-lint-wf
 
+      # Uncomment includeConfig statement
+      - name: uncomment include config
+        run: find my-prefix-testpipeline -type f -exec sed -i 's/\/\/ includeConfig/includeConfig/' {} \;
+        working-directory: create-test-lint-wf
+
       # Replace zenodo.XXXXXX to pass readme linting
       - name: replace zenodo.XXXXXX
         run: find my-prefix-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
         working-directory: create-test-lint-wf
 
+      # Add empty ro-crate file
+      - name: add empty ro-crate file
+        run: touch my-prefix-testpipeline/ro-crate-metadata.json
+        working-directory: create-test-lint-wf
+
       # Run nf-core linting
       - name: nf-core pipelines lint
         run: nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned
+        working-directory: create-test-lint-wf
+
+      # Run code style linting
+      - name: run pre-commit
+        shell: bash
+        run: pre-commit run --all-files
         working-directory: create-test-lint-wf
 
       # Run bump-version
@@ -158,7 +180,7 @@ jobs:
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: nf-core-log-file-${{ matrix.TEMPLATE }}
           path: create-test-lint-wf/artifact_files.tar

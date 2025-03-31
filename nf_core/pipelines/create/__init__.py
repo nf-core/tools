@@ -2,8 +2,10 @@
 
 import logging
 
+import click
+from rich.logging import RichHandler
 from textual.app import App
-from textual.widgets import Button
+from textual.widgets import Button, Switch
 
 from nf_core.pipelines.create import utils
 from nf_core.pipelines.create.basicdetails import BasicDetails
@@ -17,44 +19,43 @@ from nf_core.pipelines.create.nfcorepipeline import NfcorePipeline
 from nf_core.pipelines.create.pipelinetype import ChoosePipelineType
 from nf_core.pipelines.create.utils import CreateConfig
 from nf_core.pipelines.create.welcome import WelcomeScreen
-from nf_core.utils import CustomLogHandler, LoggingConsole
+from nf_core.utils import LoggingConsole
 
-log_handler = CustomLogHandler(
+logger = logging.getLogger(__name__)
+rich_log_handler = RichHandler(
     console=LoggingConsole(classes="log_console"),
+    level=logging.INFO,
     rich_tracebacks=True,
     show_time=False,
     show_path=False,
     markup=True,
+    tracebacks_suppress=[click],
 )
-logging.basicConfig(
-    level="INFO",
-    handlers=[log_handler],
-    format="%(message)s",
-)
-log_handler.setLevel("INFO")
+logger.addHandler(rich_log_handler)
 
 
 class PipelineCreateApp(App[utils.CreateConfig]):
     """A Textual app to manage stopwatches."""
 
     CSS_PATH = "../../textual.tcss"
-    TITLE = "nf-core create"
+    TITLE = "nf-core pipelines create"
     SUB_TITLE = "Create a new pipeline with the nf-core pipeline template"
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
         ("q", "quit", "Quit"),
+        ("a", "toggle_all", "Toggle all"),
     ]
     SCREENS = {
-        "welcome": WelcomeScreen(),
-        "basic_details": BasicDetails(),
-        "choose_type": ChoosePipelineType(),
-        "type_custom": CustomPipeline(),
-        "type_nfcore": NfcorePipeline(),
-        "final_details": FinalDetails(),
-        "logging": LoggingScreen(),
-        "github_repo_question": GithubRepoQuestion(),
-        "github_repo": GithubRepo(),
-        "github_exit": GithubExit(),
+        "welcome": WelcomeScreen,
+        "basic_details": BasicDetails,
+        "choose_type": ChoosePipelineType,
+        "type_custom": CustomPipeline,
+        "type_nfcore": NfcorePipeline,
+        "final_details": FinalDetails,
+        "logging": LoggingScreen,
+        "github_repo_question": GithubRepoQuestion,
+        "github_repo": GithubRepo,
+        "github_exit": GithubExit,
     }
 
     # Initialise config as empty
@@ -64,9 +65,12 @@ class PipelineCreateApp(App[utils.CreateConfig]):
     NFCORE_PIPELINE = True
 
     # Log handler
-    LOG_HANDLER = log_handler
+    LOG_HANDLER = rich_log_handler
     # Logging state
     LOGGING_STATE = None
+
+    # Template features
+    template_features_yml = utils.load_features_yaml()
 
     def on_mount(self) -> None:
         self.push_screen("welcome")
@@ -98,4 +102,15 @@ class PipelineCreateApp(App[utils.CreateConfig]):
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
-        self.dark: bool = not self.dark
+        self.theme: str = "textual-dark" if self.theme == "textual-light" else "textual-light"
+
+    def action_toggle_all(self) -> None:
+        """An action to toggle all Switches."""
+        switches = self.query(Switch)
+        if not switches:
+            return  # No Switches widgets found
+        # Determine the new state based on the first switch
+        new_state = not switches.first().value if switches.first() else True
+        for switch in switches:
+            switch.value = new_state
+        self.refresh()

@@ -5,7 +5,7 @@ import re
 def template_strings(self):
     """Check for template placeholders.
 
-    The ``nf-core create`` pipeline template uses
+    The ``nf-core pipelines create`` pipeline template uses
     `Jinja <https://jinja.palletsprojects.com/en/2.11.x/>`_ behind the scenes.
 
     This lint test fails if any Jinja template variables such as
@@ -38,11 +38,12 @@ def template_strings(self):
     failed = []
     ignored = []
     # Files that should be ignored according to the linting config
-    ignore_files = self.lint_config.get("template_strings", [])
+    ignore_files = self.lint_config.get("template_strings", []) if self.lint_config is not None else []
 
+    files = self.list_files()
     # Loop through files, searching for string
     num_matches = 0
-    for fn in self.files:
+    for fn in files:
         if str(fn.relative_to(self.wf_path)) in ignore_files:
             ignored.append(f"Ignoring Jinja template strings in file `{fn}`")
             continue

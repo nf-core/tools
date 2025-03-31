@@ -1,14 +1,15 @@
+import ast
 import logging
-import os
 import re
 from pathlib import Path
+from typing import Dict, List, Optional, Union
 
 from nf_core.pipelines.schema import PipelineSchema
 
 log = logging.getLogger(__name__)
 
 
-def nextflow_config(self):
+def nextflow_config(self) -> Dict[str, List[str]]:
     """Checks the pipeline configuration for required variables.
 
     All nf-core pipelines are required to be configured with a minimal set of variable
@@ -65,14 +66,6 @@ def nextflow_config(self):
         * Should always be set to default value:
         ``https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}``
 
-    * ``params.validationShowHiddenParams``
-
-        * Determines whether boilerplate params are showed by schema. Set to ``false`` by default
-
-    * ``params.validationSchemaIgnoreParams``
-
-        * A comma separated string of inputs the schema validation should ignore.
-
     **The following variables throw warnings if missing:**
 
     * ``manifest.mainScript``: The filename of the main pipeline script (should be ``main.nf``)
@@ -87,6 +80,9 @@ def nextflow_config(self):
     * ``params.nf_required_version``: The old method for specifying the minimum Nextflow version. Replaced by ``manifest.nextflowVersion``
     * ``params.container``: The old method for specifying the dockerhub container address. Replaced by ``process.container``
     * ``igenomesIgnore``: Changed to ``igenomes_ignore``
+    * ``params.max_cpus``: Old method of specifying the maximum number of CPUs a process can request. Replaced by native Nextflow `resourceLimits`directive in config files.
+    * ``params.max_memory``: Old method of specifying the maximum number of memory can request. Replaced by native Nextflow `resourceLimits`directive.
+    * ``params.max_time``: Old method of specifying the maximum number of CPUs can request. Replaced by native Nextflow `resourceLimits`directive.
 
         .. tip:: The ``snake_case`` convention should now be used when defining pipeline parameters
 
@@ -151,8 +147,6 @@ def nextflow_config(self):
         ["process.time"],
         ["params.outdir"],
         ["params.input"],
-        ["params.validationShowHiddenParams"],
-        ["params.validationSchemaIgnoreParams"],
     ]
     # Throw a warning if these are missing
     config_warn = [
@@ -170,10 +164,56 @@ def nextflow_config(self):
         "params.igenomesIgnore",
         "params.name",
         "params.enable_conda",
+        "params.max_cpus",
+        "params.max_memory",
+        "params.max_time",
     ]
 
+    # Lint for plugins
+    config_plugins = ast.literal_eval(self.nf_config.get("plugins", "[]"))
+    found_plugins = []
+    for plugin in config_plugins:
+        if "@" not in plugin:
+            failed.append(f"Plugin '{plugin}' does not have a pinned version")
+        found_plugins.append(plugin.split("@")[0])
+
+    if "nf-validation" in found_plugins or "nf-schema" in found_plugins:
+        if "nf-validation" in found_plugins and "nf-schema" in found_plugins:
+            failed.append("nextflow.config contains both nf-validation and nf-schema")
+
+        if "nf-schema" in found_plugins:
+            passed.append("Found nf-schema plugin")
+            if self.nf_config.get("validation.help.enabled", "false") == "false":
+                failed.append(
+                    "The help message has not been enabled. Set the `validation.help.enabled` configuration option to `true` to enable help messages"
+                )
+            config_fail.extend([["validation.help.enabled"]])
+            config_warn.extend(
+                [
+                    ["validation.help.beforeText"],
+                    ["validation.help.afterText"],
+                    ["validation.help.command"],
+                    ["validation.summary.beforeText"],
+                    ["validation.summary.afterText"],
+                ]
+            )
+            config_fail_ifdefined.extend(
+                [
+                    "params.validationFailUnrecognisedParams",
+                    "params.validationLenientMode",
+                    "params.validationSchemaIgnoreParams",
+                    "params.validationShowHiddenParams",
+                ]
+            )
+
+        if "nf-validation" in found_plugins:
+            passed.append("Found nf-validation plugin")
+            warned.append(
+                "nf-validation has been detected in the pipeline. Please migrate to nf-schema: https://nextflow-io.github.io/nf-schema/latest/migration_guide/"
+            )
+
     # Remove field that should be ignored according to the linting config
-    ignore_configs = self.lint_config.get("nextflow_config", [])
+    ignore_configs = self.lint_config.get("nextflow_config", []) if self.lint_config is not None else []
 
     for cfs in config_fail:
         for cf in cfs:
@@ -205,12 +245,13 @@ def nextflow_config(self):
             failed.append(f"Config variable (incorrectly) found: {self._wrap_quotes(cf)}")
 
     # Check and warn if the process configuration is done with deprecated syntax
+
     process_with_deprecated_syntax = list(
         set(
             [
-                re.search(r"^(process\.\$.*?)\.+.*$", ck).group(1)
+                match.group(1)
                 for ck in self.nf_config.keys()
-                if re.match(r"^(process\.\$.*?)\.+.*$", ck)
+                if (match := re.match(r"^(process\.\$.*?)\.+.*$", ck)) is not None
             ]
         )
     )
@@ -305,7 +346,7 @@ def nextflow_config(self):
             failed.append(f"Config `params.custom_config_base` is not set to `{custom_config_base}`")
 
         # Check that lines for loading custom profiles exist
-        lines = [
+        old_lines = [
             r"// Load nf-core custom profiles from different Institutions",
             r"try {",
             r'includeConfig "${params.custom_config_base}/nfcore_custom.config"',
@@ -313,11 +354,19 @@ def nextflow_config(self):
             r'System.err.println("WARNING: Could not load nf-core/config profiles: ${params.custom_config_base}/nfcore_custom.config")',
             r"}",
         ]
-        path = os.path.join(self.wf_path, "nextflow.config")
+        lines = [
+            r"// Load nf-core custom profiles from different Institutions",
+            r'''includeConfig !System.getenv('NXF_OFFLINE') && params.custom_config_base ? "${params.custom_config_base}/nfcore_custom.config" : "/dev/null"''',
+        ]
+        path = Path(self.wf_path, "nextflow.config")
         i = 0
         with open(path) as f:
             for line in f:
-                if lines[i] in line:
+                if old_lines[i] in line:
+                    i += 1
+                    if i == len(old_lines):
+                        break
+                elif lines[i] in line:
                     i += 1
                     if i == len(lines):
                         break
@@ -325,6 +374,12 @@ def nextflow_config(self):
                     i = 0
         if i == len(lines):
             passed.append("Lines for loading custom profiles found")
+        elif i == len(old_lines):
+            failed.append(
+                "Old lines for loading custom profiles found. File should contain: ```groovy\n{}".format(
+                    "\n".join(lines)
+                )
+            )
         else:
             lines[2] = f"\t{lines[2]}"
             lines[4] = f"\t{lines[4]}"
@@ -335,7 +390,7 @@ def nextflow_config(self):
             )
 
     # Check for the availability of the "test" configuration profile by parsing nextflow.config
-    with open(os.path.join(self.wf_path, "nextflow.config")) as f:
+    with open(Path(self.wf_path, "nextflow.config")) as f:
         content = f.read()
 
         # Remove comments
@@ -379,8 +434,8 @@ def nextflow_config(self):
         if param in ignore_defaults:
             ignored.append(f"Config default ignored: {param}")
         elif param in self.nf_config.keys():
-            config_default = None
-            schema_default = None
+            config_default: Optional[Union[str, float, int]] = None
+            schema_default: Optional[Union[str, float, int]] = None
             if schema.schema_types[param_name] == "boolean":
                 schema_default = str(schema.schema_defaults[param_name]).lower()
                 config_default = str(self.nf_config[param]).lower()
@@ -410,6 +465,7 @@ def nextflow_config(self):
                     f"Config default value incorrect: `{param}` is set as {self._wrap_quotes(schema_default)} in `nextflow_schema.json` but is {self._wrap_quotes(self.nf_config[param])} in `nextflow.config`."
                 )
         else:
+            schema_default = str(schema.schema_defaults[param_name])
             failed.append(
                 f"Default value from the Nextflow schema `{param} = {self._wrap_quotes(schema_default)}` not found in `nextflow.config`."
             )

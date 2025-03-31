@@ -1,7 +1,7 @@
 name: Sync template
 on:
-  release:
-    types: [published]
+  # release:
+  #   types: [published]
   workflow_dispatch:
     inputs:
       testpipeline:
@@ -17,6 +17,14 @@ on:
         default: "self-hosted"
       force_pr:
         description: "Force a PR to be created"
+        type: boolean
+        default: false
+      pipeline:
+        description: "Pipeline to sync"
+        type: string
+        default: "all"
+      debug:
+        description: "Enable debug/verbose mode (true or false)"
         type: boolean
         default: false
 
@@ -35,6 +43,14 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.testpipeline }}" == "true" ]; then
             echo '{"pipeline":["testpipeline"]}' > pipeline_names.json
+          elif [ "${{ github.event.inputs.pipeline }}" != "all" ] && [ "${{ github.event.inputs.pipeline }}" != "" ]; then
+            curl -O https://nf-co.re/pipeline_names.json
+            # check if the pipeline exists
+            if ! grep -q "\"${{ github.event.inputs.pipeline }}\"" pipeline_names.json; then
+              echo "Pipeline ${{ github.event.inputs.pipeline }} does not exist"
+              exit 1
+            fi
+            echo '{"pipeline":["${{ github.event.inputs.pipeline }}"]}' > pipeline_names.json
           else
             curl -O https://nf-co.re/pipeline_names.json
           fi
@@ -48,10 +64,12 @@ jobs:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
     steps:
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out nf-core/tools
+        with:
+          ref: ${{ github.ref_name }}
 
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out nf-core/${{ matrix.pipeline }}
         with:
           repository: nf-core/${{ matrix.pipeline }}
@@ -61,9 +79,9 @@ jobs:
           fetch-depth: "0"
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install python dependencies
         run: |
@@ -75,6 +93,19 @@ jobs:
         with:
           version: "latest-everything"
 
+      - name: Set Git default branch from nextflow.config and set git default branch to that or "master"
+
+        run: |
+          pushd nf-core/${{ matrix.pipeline }}
+          defaultBranch=$(grep -B5 -A5 "nextflowVersion" nextflow.config | grep "defaultBranch" | cut -d"=" -f2 | sed "s/'//g")
+          if [ -z "$defaultBranch" ]; then
+            defaultBranch="master"
+          fi
+          popd
+          echo "Default branch: $defaultBranch"
+          echo "defaultBranch=$defaultBranch" >> GITHUB_OUTPUT
+          git config --global init.defaultBranch $defaultBranch
+
       - name: Run synchronisation
         if: github.repository == 'nf-core/tools'
         env:
@@ -82,7 +113,9 @@ jobs:
         run: |
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
-          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt sync -d nf-core/${{ matrix.pipeline }} \
+          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt \
+            ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }} \
+            pipelines sync -d nf-core/${{ matrix.pipeline }} \
             --from-branch dev \
             --pull-request \
             --username nf-core-bot \
@@ -90,7 +123,7 @@ jobs:
 
       - name: Upload sync log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sync_log_${{ matrix.pipeline }}
           path: sync_log_${{ matrix.pipeline }}.txt

@@ -87,9 +87,7 @@ class BasicDetails(Screen):
             validation_result = this_input.validate(this_input.value)
             config[text_input.field_id] = this_input.value
             if not validation_result.is_valid:
-                text_input.query_one(".validation_msg").update(
-                    "\n".join(validation_result.failure_descriptions)
-                )
+                text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))
             else:
                 text_input.query_one(".validation_msg").update("")
         try:

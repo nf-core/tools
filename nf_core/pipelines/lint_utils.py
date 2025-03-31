@@ -2,9 +2,10 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import List
+from typing import List, Union
 
 import rich
+import yaml
 from rich.console import Console
 from rich.table import Table
 
@@ -22,15 +23,22 @@ def print_joint_summary(lint_obj, module_lint_obj, subworkflow_lint_obj):
     swf_passed = 0
     swf_warned = 0
     swf_failed = 0
+    module_passed = 0
+    module_warned = 0
+    module_failed = 0
     if subworkflow_lint_obj is not None:
         swf_passed = len(subworkflow_lint_obj.passed)
         swf_warned = len(subworkflow_lint_obj.warned)
         swf_failed = len(subworkflow_lint_obj.failed)
-    nbr_passed = len(lint_obj.passed) + len(module_lint_obj.passed) + swf_passed
+    if module_lint_obj is not None:
+        module_passed = len(module_lint_obj.passed)
+        module_warned = len(module_lint_obj.warned)
+        module_failed = len(module_lint_obj.failed)
+    nbr_passed = len(lint_obj.passed) + module_passed + swf_passed
     nbr_ignored = len(lint_obj.ignored)
     nbr_fixed = len(lint_obj.fixed)
-    nbr_warned = len(lint_obj.warned) + len(module_lint_obj.warned) + swf_warned
-    nbr_failed = len(lint_obj.failed) + len(module_lint_obj.failed) + swf_failed
+    nbr_warned = len(lint_obj.warned) + module_warned + swf_warned
+    nbr_failed = len(lint_obj.failed) + module_failed + swf_failed
 
     summary_colour = "red" if nbr_failed > 0 else "green"
     table = Table(box=rich.box.ROUNDED, style=summary_colour)
@@ -62,7 +70,16 @@ def print_fixes(lint_obj):
         )
 
 
-def run_prettier_on_file(file):
+def check_git_repo() -> bool:
+    """Check if the current directory is a git repository."""
+    try:
+        subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"])
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
+def run_prettier_on_file(file: Union[Path, str, List[str]]) -> None:
     """Run the pre-commit hook prettier on a file.
 
     Args:
@@ -72,25 +89,33 @@ def run_prettier_on_file(file):
         If Prettier is not installed, a warning is logged.
     """
 
+    is_git = check_git_repo()
+
     nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
-    try:
-        subprocess.run(
-            ["pre-commit", "run", "--config", nf_core_pre_commit_config, "prettier", "--files", file],
-            capture_output=True,
-            check=True,
-        )
-    except subprocess.CalledProcessError as e:
-        if ": SyntaxError: " in e.stdout.decode():
-            log.critical(f"Can't format {file} because it has a syntax error.\n{e.stdout.decode()}")
-        elif "files were modified by this hook" in e.stdout.decode():
-            all_lines = [line for line in e.stdout.decode().split("\n")]
-            files = "\n".join(all_lines[3:])
-            log.debug(f"The following files were modified by prettier:\n {files}")
-        elif e.stderr.decode():
-            log.warning(
-                "There was an error running the prettier pre-commit hook.\n"
-                f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
-            )
+    args = ["pre-commit", "run", "--config", str(nf_core_pre_commit_config), "prettier"]
+    if isinstance(file, List):
+        args.extend(["--files", *file])
+    else:
+        args.extend(["--files", str(file)])
+
+    if is_git:
+        try:
+            proc = subprocess.run(args, capture_output=True, check=True)
+            log.debug(f"{proc.stdout.decode()}")
+        except subprocess.CalledProcessError as e:
+            if ": SyntaxError: " in e.stdout.decode():
+                log.critical(f"Can't format {file} because it has a syntax error.\n{e.stdout.decode()}")
+            elif "files were modified by this hook" in e.stdout.decode():
+                all_lines = [line for line in e.stdout.decode().split("\n")]
+                files = "\n".join(all_lines[3:])
+                log.debug(f"The following files were modified by prettier:\n {files}")
+            else:
+                log.warning(
+                    "There was an error running the prettier pre-commit hook.\n"
+                    f"STDOUT: {e.stdout.decode()}\nSTDERR: {e.stderr.decode()}"
+                )
+    else:
+        log.debug("Not in a git repository, skipping pre-commit hook.")
 
 
 def dump_json_with_prettier(file_name, file_content):
@@ -104,15 +129,31 @@ def dump_json_with_prettier(file_name, file_content):
     run_prettier_on_file(file_name)
 
 
+def dump_yaml_with_prettier(file_name: Union[Path, str], file_content: dict) -> None:
+    """Dump a YAML file and run prettier on it.
+
+    Args:
+        file_name (Path | str): A file identifier as a string or pathlib.Path.
+        file_content (dict): Content to dump into the YAML file
+    """
+    with open(file_name, "w") as fh:
+        yaml.safe_dump(file_content, fh)
+    run_prettier_on_file(file_name)
+
+
 def ignore_file(lint_name: str, file_path: Path, dir_path: Path) -> List[List[str]]:
     """Ignore a file and add the result to the ignored list. Return the passed, failed, ignored and ignore_configs lists."""
 
     passed: List[str] = []
     failed: List[str] = []
     ignored: List[str] = []
-    _, lint_conf = nf_core.utils.load_tools_config(dir_path)
-    lint_conf = lint_conf.get("lint", {})
-    ignore_entry: List[str] | bool = lint_conf.get(lint_name, [])
+    _, pipeline_conf = nf_core.utils.load_tools_config(dir_path)
+    lint_conf = getattr(pipeline_conf, "lint", None) or None
+
+    if lint_conf is None:
+        ignore_entry: List[str] = []
+    else:
+        ignore_entry = lint_conf.get(lint_name, [])
     full_path = dir_path / file_path
     # Return a failed status if we can't find the file
     if not full_path.is_file():

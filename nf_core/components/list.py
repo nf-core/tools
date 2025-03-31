@@ -1,11 +1,12 @@
 import json
 import logging
-from typing import Dict, List, Optional, Tuple, Union, cast
+from pathlib import Path
+from typing import Dict, List, Optional, Union, cast
 
 import rich.table
 
 from nf_core.components.components_command import ComponentCommand
-from nf_core.modules.modules_json import ModulesJson
+from nf_core.modules.modules_json import ModulesJson, ModulesJsonModuleEntry
 from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
@@ -15,16 +16,27 @@ class ComponentList(ComponentCommand):
     def __init__(
         self,
         component_type: str,
-        pipeline_dir: str,
+        pipeline_dir: Union[str, Path] = ".",
         remote: bool = True,
         remote_url: Optional[str] = None,
         branch: Optional[str] = None,
         no_pull: bool = False,
     ) -> None:
-        super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
         self.remote = remote
+        super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
 
-    def list_components(self, keywords: Optional[List[str]] = None, print_json=False) -> Union[rich.table.Table, str]:
+    def _configure_repo_and_paths(self, nf_dir_req: bool = True) -> None:
+        """
+        Override the default with nf_dir_req set to False to allow
+        info to be run from anywhere and still return remote info
+        """
+        if self.remote:
+            nf_dir_req = False
+        return super()._configure_repo_and_paths(nf_dir_req)
+
+    def list_components(
+        self, keywords: Optional[List[str]] = None, print_json: bool = False
+    ) -> Union[rich.table.Table, str]:
         keywords = keywords or []
         """
         Get available modules/subworkflows names from GitHub tree for repo
@@ -87,18 +99,18 @@ class ComponentList(ComponentCommand):
                 return ""
 
             # Verify that 'modules.json' is consistent with the installed modules
-            modules_json: ModulesJson = ModulesJson(self.dir)
+            modules_json: ModulesJson = ModulesJson(self.directory)
             modules_json.check_up_to_date()
 
             # Filter by keywords
-            repos_with_comps: Dict[str, List[Tuple[str, str]]] = {
+            repos_with_comps = {
                 repo_url: [comp for comp in components if all(k in comp[1] for k in keywords)]
                 for repo_url, components in modules_json.get_all_components(self.component_type).items()
             }
 
             # Nothing found
             if sum(map(len, repos_with_comps)) == 0:
-                log.info(f"No nf-core {self.component_type} found in '{self.dir}'{pattern_msg(keywords)}")
+                log.info(f"No nf-core {self.component_type} found in '{self.directory}'{pattern_msg(keywords)}")
                 return ""
 
             table.add_column("Repository")
@@ -110,7 +122,7 @@ class ComponentList(ComponentCommand):
             modules_json_file = modules_json.modules_json
 
             for repo_url, component_with_dir in sorted(repos_with_comps.items()):
-                repo_entry: Dict[str, Dict[str, Dict[str, Dict[str, Union[str, List[str]]]]]]
+                repo_entry: Dict[str, Dict[str, Dict[str, ModulesJsonModuleEntry]]]
                 if modules_json_file is None:
                     log.warning(f"Modules JSON file '{modules_json.modules_json_path}' is missing. ")
                     continue
@@ -160,5 +172,5 @@ class ComponentList(ComponentCommand):
                 f"{pattern_msg(keywords)}:\n"
             )
         else:
-            log.info(f"{self.component_type.capitalize()} installed in '{self.dir}'{pattern_msg(keywords)}:\n")
+            log.info(f"{self.component_type.capitalize()} installed in '{self.directory}'{pattern_msg(keywords)}:\n")
         return table

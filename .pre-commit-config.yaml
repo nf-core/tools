@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.0
+    rev: v0.11.0
     hooks:
       - id: ruff # linter
         args: [--fix, --exit-non-zero-on-fix] # sort imports and fix
@@ -10,16 +10,29 @@ repos:
     hooks:
       - id: prettier
         additional_dependencies:
-          - prettier@3.2.5
-
-  - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
-    rev: "2.7.3"
+          - prettier@3.5.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
     hooks:
-      - id: editorconfig-checker
-        alias: ec
-
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+        exclude: |
+          (?x)^(
+              .*\.snap$|
+              nf_core/pipeline-template/subworkflows/.*|
+              nf_core/pipeline-template/modules/.*|
+              tests/pipelines/__snapshots__/.*
+          )$
+      - id: end-of-file-fixer
+        exclude: |
+          (?x)^(
+              .*\.snap$|
+              nf_core/pipeline-template/subworkflows/.*|
+              nf_core/pipeline-template/modules/.*|
+              tests/pipelines/__snapshots__/.*
+          )$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.10.1"
+    rev: "v1.15.0"
     hooks:
       - id: mypy
         additional_dependencies:
@@ -28,3 +41,4 @@ repos:
           - types-jsonschema
           - types-Markdown
           - types-setuptools
+          - pydantic

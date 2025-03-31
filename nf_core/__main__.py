@@ -14,9 +14,48 @@ import rich_click as click
 from trogon import tui
 
 from nf_core import __version__
-from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE
+from nf_core.commands_modules import (
+    modules_bump_versions,
+    modules_create,
+    modules_info,
+    modules_install,
+    modules_lint,
+    modules_list_local,
+    modules_list_remote,
+    modules_patch,
+    modules_remove,
+    modules_test,
+    modules_update,
+)
+from nf_core.commands_pipelines import (
+    pipelines_bump_version,
+    pipelines_create,
+    pipelines_create_logo,
+    pipelines_create_params_file,
+    pipelines_download,
+    pipelines_launch,
+    pipelines_lint,
+    pipelines_list,
+    pipelines_rocrate,
+    pipelines_schema_build,
+    pipelines_schema_docs,
+    pipelines_schema_lint,
+    pipelines_schema_validate,
+    pipelines_sync,
+)
+from nf_core.commands_subworkflows import (
+    subworkflows_create,
+    subworkflows_info,
+    subworkflows_install,
+    subworkflows_lint,
+    subworkflows_list_local,
+    subworkflows_list_remote,
+    subworkflows_remove,
+    subworkflows_test,
+    subworkflows_update,
+)
+from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.pipelines.download import DownloadError
-from nf_core.pipelines.params_file import ParamsFileBuilder
 from nf_core.utils import (
     check_if_outdated,
     nfcore_logo,
@@ -60,6 +99,7 @@ click.rich_click.COMMAND_GROUPS = {
                 "bump-version",
                 "sync",
                 "schema",
+                "rocrate",
                 "create-logo",
             ],
         },
@@ -103,7 +143,7 @@ rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
 # because they are actually preliminary, but intended program terminations.
 # (Custom exceptions are cleaner than `sys.exit(1)`, which we used before)
 def selective_traceback_hook(exctype, value, traceback):
-    if exctype in {DownloadError}:  # extend set as needed
+    if exctype in {DownloadError, UserWarning, ValueError}:  # extend set as needed
         log.error(value)
     else:
         # print the colored traceback for all other exceptions with rich as usual
@@ -161,9 +201,7 @@ def run_nf_core():
     command="interface",
     help="Launch the nf-core interface",
 )
-@click.group(
-    context_settings=dict(help_option_names=["-h", "--help"]), cls=CustomRichGroup
-)
+@click.group(context_settings=dict(help_option_names=["-h", "--help"]), cls=CustomRichGroup)
 @click.version_option(__version__)
 @click.option(
     "-v",
@@ -172,12 +210,8 @@ def run_nf_core():
     default=False,
     help="Print verbose output to the console.",
 )
-@click.option(
-    "--hide-progress", is_flag=True, default=False, help="Don't show progress bars."
-)
-@click.option(
-    "-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>"
-)
+@click.option("--hide-progress", is_flag=True, default=False, help="Don't show progress bars.")
+@click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
 @click.pass_context
 def nf_core_cli(ctx, verbose, hide_progress, log_file):
     """
@@ -192,9 +226,7 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
     log.addHandler(
         rich.logging.RichHandler(
             level=logging.DEBUG if verbose else logging.INFO,
-            console=rich.console.Console(
-                stderr=True, force_terminal=rich_force_colors()
-            ),
+            console=rich.console.Console(stderr=True, force_terminal=rich_force_colors()),
             show_time=False,
             show_path=verbose,  # True if verbose, false otherwise
             markup=True,
@@ -209,17 +241,12 @@ def nf_core_cli(ctx, verbose, hide_progress, log_file):
     if log_file:
         log_fh = logging.FileHandler(log_file, encoding="utf-8")
         log_fh.setLevel(logging.DEBUG)
-        log_fh.setFormatter(
-            logging.Formatter(
-                "[%(asctime)s] %(name)-20s [%(levelname)-7s]  %(message)s"
-            )
-        )
+        log_fh.setFormatter(logging.Formatter("[%(asctime)s] %(name)-20s [%(levelname)-7s]  %(message)s"))
         log.addHandler(log_fh)
 
     ctx.obj = {
         "verbose": verbose,
-        "hide_progress": hide_progress
-        or verbose,  # Always hide progress bar with verbose logging
+        "hide_progress": hide_progress or verbose,  # Always hide progress bar with verbose logging
     }
 
 
@@ -244,13 +271,9 @@ def pipelines(ctx):
     type=str,
     help="The name of your new pipeline",
 )
-@click.option(
-    "-d", "--description", type=str, help="A short description of your pipeline"
-)
+@click.option("-d", "--description", type=str, help="A short description of your pipeline")
 @click.option("-a", "--author", type=str, help="Name of the main author(s)")
-@click.option(
-    "--version", type=str, default="1.0.0dev", help="The initial version number to use"
-)
+@click.option("--version", type=str, default="1.0.0dev", help="The initial version number to use")
 @click.option(
     "-f",
     "--force",
@@ -258,69 +281,19 @@ def pipelines(ctx):
     default=False,
     help="Overwrite output directory if it already exists",
 )
-@click.option(
-    "-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)"
-)
-@click.option(
-    "-t", "--template-yaml", help="Pass a YAML file to customize the template"
-)
+@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 @click.option(
     "--organisation",
     type=str,
     default="nf-core",
     help="The name of the GitHub organisation where the pipeline will be hosted (default: nf-core)",
 )
-def create_pipeline(
-    ctx, name, description, author, version, force, outdir, template_yaml, organisation
-):
+def command_pipelines_create(ctx, name, description, author, version, force, outdir, template_yaml, organisation):
     """
     Create a new pipeline using the nf-core template.
-
-    Uses the nf-core template to make a skeleton Nextflow pipeline with all required
-    files, boilerplate code and best-practices.
-    \n\n
-    Run without any command line arguments to use an interactive interface.
     """
-    from nf_core.pipelines.create import PipelineCreateApp
-    from nf_core.pipelines.create.create import PipelineCreate
-
-    if (name and description and author) or (template_yaml):
-        # If all command arguments are used, run without the interactive interface
-        try:
-            create_obj = PipelineCreate(
-                name,
-                description,
-                author,
-                version=version,
-                force=force,
-                outdir=outdir,
-                template_config=template_yaml,
-                organisation=organisation,
-            )
-            create_obj.init_pipeline()
-        except UserWarning as e:
-            log.error(e)
-            sys.exit(1)
-    elif (
-        name
-        or description
-        or author
-        or version != "1.0.0dev"
-        or force
-        or outdir
-        or organisation != "nf-core"
-    ):
-        log.error(
-            "[red]Partial arguments supplied.[/] "
-            "Run without [i]any[/] arguments for an interactive interface, "
-            "or with at least name + description + author to use non-interactively."
-        )
-        sys.exit(1)
-    else:
-        log.info("Launching interactive nf-core pipeline creation tool.")
-        app = PipelineCreateApp()
-        app.run()
-        sys.exit(app.return_code or 0)
+    pipelines_create(ctx, name, description, author, version, force, outdir, template_yaml, organisation)
 
 
 # nf-core pipelines lint
@@ -328,6 +301,7 @@ def create_pipeline(
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory [dim]\[default: current working directory][/]",
@@ -335,10 +309,7 @@ def create_pipeline(
 @click.option(
     "--release",
     is_flag=True,
-    default=os.path.basename(
-        os.path.dirname(os.environ.get("GITHUB_REF", "").strip(" '\""))
-    )
-    == "master"
+    default=Path(os.environ.get("GITHUB_REF", "").strip(" '\"")).parent.name in ["master", "main"]
     and os.environ.get("GITHUB_REPOSITORY", "").startswith("nf-core/")
     and not os.environ.get("GITHUB_REPOSITORY", "") == "nf-core/tools",
     help="Execute additional checks for release-ready workflows.",
@@ -359,15 +330,9 @@ def create_pipeline(
     multiple=True,
     help="Run only these lint tests",
 )
-@click.option(
-    "-p", "--show-passed", is_flag=True, help="Show passing tests on the command line"
-)
-@click.option(
-    "-i", "--fail-ignored", is_flag=True, help="Convert ignored tests to failures"
-)
-@click.option(
-    "-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures"
-)
+@click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line")
+@click.option("-i", "--fail-ignored", is_flag=True, help="Convert ignored tests to failures")
+@click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option(
     "--markdown",
     type=str,
@@ -388,9 +353,9 @@ def create_pipeline(
     show_default=True,
 )
 @click.pass_context
-def lint_pipeline(
+def command_pipelines_lint(
     ctx,
-    dir,
+    directory,
     release,
     fix,
     key,
@@ -403,50 +368,8 @@ def lint_pipeline(
 ):
     """
     Check pipeline code against nf-core guidelines.
-
-    Runs a large number of automated tests to ensure that the supplied pipeline
-    meets the nf-core guidelines. Documentation of all lint tests can be found
-    on the nf-core website: [link=https://nf-co.re/tools/docs/]https://nf-co.re/tools/docs/[/]
-
-    You can ignore tests using a file called [blue].nf-core.yml[/] [i](if you have a good reason!)[/].
-    See the documentation for details.
     """
-    from nf_core.pipelines.lint import run_linting
-    from nf_core.utils import is_pipeline_directory
-
-    # Check if pipeline directory is a pipeline
-    try:
-        is_pipeline_directory(dir)
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
-
-    # Run the lint tests!
-    try:
-        lint_obj, module_lint_obj, subworkflow_lint_obj = run_linting(
-            dir,
-            release,
-            fix,
-            key,
-            show_passed,
-            fail_ignored,
-            fail_warned,
-            sort_by,
-            markdown,
-            json,
-            ctx.obj["hide_progress"],
-        )
-        swf_failed = 0
-        if subworkflow_lint_obj is not None:
-            swf_failed = len(subworkflow_lint_obj.failed)
-        if len(lint_obj.failed) + len(module_lint_obj.failed) + swf_failed > 0:
-            sys.exit(1)
-    except AssertionError as e:
-        log.critical(e)
-        sys.exit(1)
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
+    pipelines_lint(ctx, directory, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, sort_by)
 
 
 # nf-core pipelines download
@@ -465,29 +388,19 @@ def lint_pipeline(
     type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]),
     help="Archive compression type",
 )
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 @click.option(
-    "-f", "--force", is_flag=True, default=False, help="Overwrite existing files"
-)
-# TODO: Remove this in a future release. Deprecated in March 2024.
-@click.option(
-    "-t",
-    "--tower",
-    is_flag=True,
-    default=False,
-    hidden=True,
-    help="Download for Seqera Platform. DEPRECATED: Please use `--platform` instead.",
-)
-@click.option(
+    "-p",
     "--platform",
     is_flag=True,
     default=False,
     help="Download for Seqera Platform (formerly Nextflow Tower)",
 )
 @click.option(
-    "-d",
+    "-c",
     "--download-configuration",
-    is_flag=True,
-    default=False,
+    type=click.Choice(["yes", "no"]),
+    default="no",
     help="Include configuration profiles in download. Not available with `--platform`",
 )
 @click.option(
@@ -522,21 +435,20 @@ def lint_pipeline(
     help="List of images already available in a remote `singularity.cacheDir`.",
 )
 @click.option(
-    "-p",
+    "-d",
     "--parallel-downloads",
     type=int,
     default=4,
     help="Number of parallel image downloads",
 )
 @click.pass_context
-def download_pipeline(
+def command_pipelines_download(
     ctx,
     pipeline,
     revision,
     outdir,
     compress,
     force,
-    tower,
     platform,
     download_configuration,
     tag,
@@ -548,24 +460,15 @@ def download_pipeline(
 ):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
-
-    Collects all files in a single archive and configures the downloaded
-    workflow to use relative paths to the configs and singularity images.
     """
-    from nf_core.pipelines.download import DownloadWorkflow
-
-    if tower:
-        log.warning(
-            "[red]The `-t` / `--tower` flag is deprecated. Please use `--platform` instead.[/]"
-        )
-
-    dl = DownloadWorkflow(
+    pipelines_download(
+        ctx,
         pipeline,
         revision,
         outdir,
         compress,
         force,
-        tower or platform,  # True if either specified
+        platform,
         download_configuration,
         tag,
         container_system,
@@ -574,7 +477,6 @@ def download_pipeline(
         container_cache_index,
         parallel_downloads,
     )
-    dl.download_workflow()
 
 
 # nf-core pipelines create-params-file
@@ -589,9 +491,7 @@ def download_pipeline(
     metavar="<filename>",
     help="Output filename. Defaults to `nf-params.yml`.",
 )
-@click.option(
-    "-f", "--force", is_flag=True, default=False, help="Overwrite existing files"
-)
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 @click.option(
     "-x",
     "--show-hidden",
@@ -600,30 +500,17 @@ def download_pipeline(
     help="Show hidden params which don't normally need changing",
 )
 @click.pass_context
-def create_params_file_pipeline(ctx, pipeline, revision, output, force, show_hidden):
+def command_pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden):
     """
     Build a parameter file for a pipeline.
-
-    Uses the pipeline schema file to generate a YAML parameters file.
-    Parameters are set to the pipeline defaults and descriptions are shown in comments.
-    After the output file is generated, it can then be edited as needed before
-    passing to nextflow using the `-params-file` option.
-
-    Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
-    a local pipeline directory.
     """
-    builder = ParamsFileBuilder(pipeline, revision)
-
-    if not builder.write_params_file(output, show_hidden=show_hidden, force=force):
-        sys.exit(1)
+    pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hidden)
 
 
 # nf-core pipelines launch
 @pipelines.command("launch")
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
-@click.option(
-    "-r", "--revision", help="Release/branch/SHA of the project to run (if remote)"
-)
+@click.option("-r", "--revision", help="Release/branch/SHA of the project to run (if remote)")
 @click.option("-i", "--id", help="ID for web-gui launch parameter set")
 @click.option(
     "-c",
@@ -667,7 +554,7 @@ def create_params_file_pipeline(ctx, pipeline, revision, output, force, show_hid
     help="Customise the builder URL (for development work)",
 )
 @click.pass_context
-def launch_pipeline(
+def command_pipelines_launch(
     ctx,
     pipeline,
     id,
@@ -681,32 +568,8 @@ def launch_pipeline(
 ):
     """
     Launch a pipeline using a web GUI or command line prompts.
-
-    Uses the pipeline schema file to collect inputs for all available pipeline
-    parameters. Parameter names, descriptions and help text are shown.
-    The pipeline schema is used to validate all inputs as they are entered.
-
-    When finished, saves a file with the selected parameters which can be
-    passed to Nextflow using the -params-file option.
-
-    Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
-    a local pipeline directory or an ID from the nf-core web launch tool.
     """
-    from nf_core.pipelines.launch import Launch
-
-    launcher = Launch(
-        pipeline,
-        revision,
-        command_only,
-        params_in,
-        params_out,
-        save_all,
-        show_hidden,
-        url,
-        id,
-    )
-    if not launcher.launch_pipeline():
-        sys.exit(1)
+    pipelines_launch(ctx, pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url)
 
 
 # nf-core pipelines list
@@ -720,20 +583,51 @@ def launch_pipeline(
     help="How to sort listed pipelines",
 )
 @click.option("--json", is_flag=True, default=False, help="Print full output as JSON")
-@click.option(
-    "--show-archived", is_flag=True, default=False, help="Print archived workflows"
-)
+@click.option("--show-archived", is_flag=True, default=False, help="Print archived workflows")
 @click.pass_context
-def list_pipelines(ctx, keywords, sort, json, show_archived):
+def command_pipelines_list(ctx, keywords, sort, json, show_archived):
     """
     List available nf-core pipelines with local info.
-
-    Checks the web for a list of nf-core pipelines with their latest releases.
-    Shows which nf-core pipelines you have pulled locally and whether they are up to date.
     """
-    from nf_core.pipelines.list import list_workflows
+    pipelines_list(ctx, keywords, sort, json, show_archived)
 
-    stdout.print(list_workflows(keywords, sort, json, show_archived))
+
+# nf-core pipelines rocrate
+@pipelines.command("rocrate")
+@click.argument(
+    "pipeline_dir",
+    type=click.Path(exists=True),
+    default=Path.cwd(),
+    required=True,
+    metavar="<pipeline directory>",
+)
+@click.option(
+    "-j",
+    "--json_path",
+    default=Path.cwd(),
+    type=str,
+    help="Path to save RO Crate metadata json file to",
+)
+@click.option("-z", "--zip_path", type=str, help="Path to save RO Crate zip file to")
+@click.option(
+    "-pv",
+    "--pipeline_version",
+    type=str,
+    help="Version of pipeline to use for RO Crate",
+    default="",
+)
+@click.pass_context
+def rocrate(
+    ctx,
+    pipeline_dir: str,
+    json_path: str,
+    zip_path: str,
+    pipeline_version: str,
+):
+    """
+    Make an Research Object Crate
+    """
+    pipelines_rocrate(ctx, pipeline_dir, json_path, zip_path, pipeline_version)
 
 
 # nf-core pipelines sync
@@ -742,6 +636,7 @@ def list_pipelines(ctx, keywords, sort, json, show_archived):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
@@ -765,60 +660,16 @@ def list_pipelines(ctx, keywords, sort, json, show_archived):
     default=False,
     help="Force the creation of a pull-request, even if there are no changes.",
 )
-@click.option(
-    "-g", "--github-repository", type=str, help="GitHub PR: target repository."
-)
+@click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
-@click.option(
-    "-t", "--template-yaml", help="Pass a YAML file to customize the template"
-)
-def sync_pipeline(
-    ctx,
-    dir,
-    from_branch,
-    pull_request,
-    github_repository,
-    username,
-    template_yaml,
-    force_pr,
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+def command_pipelines_sync(
+    ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr
 ):
     """
     Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
-
-    To keep nf-core pipelines up to date with improvements in the main
-    template, we use a method of synchronisation that uses a special
-    git branch called [cyan i]TEMPLATE[/].
-
-    This command updates the [cyan i]TEMPLATE[/] branch with the latest version of
-    the nf-core template, so that these updates can be synchronised with
-    the pipeline. It is run automatically for all pipelines when ever a
-    new release of [link=https://github.com/nf-core/tools]nf-core/tools[/link] (and the included template) is made.
     """
-    from nf_core.pipelines.sync import (
-        PipelineSync,
-        PullRequestExceptionError,
-        SyncExceptionError,
-    )
-    from nf_core.utils import is_pipeline_directory
-
-    # Check if pipeline directory contains necessary files
-    is_pipeline_directory(dir)
-
-    # Sync the given pipeline dir
-    sync_obj = PipelineSync(
-        dir,
-        from_branch,
-        pull_request,
-        github_repository,
-        username,
-        template_yaml,
-        force_pr,
-    )
-    try:
-        sync_obj.sync()
-    except (SyncExceptionError, PullRequestExceptionError) as e:
-        log.error(e)
-        sys.exit(1)
+    pipelines_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
 
 
 # nf-core pipelines bump-version
@@ -828,6 +679,7 @@ def sync_pipeline(
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
@@ -839,49 +691,17 @@ def sync_pipeline(
     default=False,
     help="Bump required nextflow version instead of pipeline version",
 )
-def bump_version_pipeline(ctx, new_version, dir, nextflow):
+def command_pipelines_bump_version(ctx, new_version, directory, nextflow):
     """
-    Update nf-core pipeline version number.
-
-    The pipeline version number is mentioned in a lot of different places
-    in nf-core pipelines. This tool updates the version for you automatically,
-    so that you don't accidentally miss any.
-
-    Should be used for each pipeline release, and again for the next
-    development version after release.
-
-    As well as the pipeline version, you can also change the required version of Nextflow.
+    Update nf-core pipeline version number with `nf-core pipelines bump-version`.
     """
-    from nf_core.pipelines.bump_version import (
-        bump_nextflow_version,
-        bump_pipeline_version,
-    )
-    from nf_core.utils import Pipeline, is_pipeline_directory
-
-    try:
-        # Check if pipeline directory contains necessary files
-        is_pipeline_directory(dir)
-
-        # Make a pipeline object and load config etc
-        pipeline_obj = Pipeline(dir)
-        pipeline_obj._load()
-
-        # Bump the pipeline version number
-        if not nextflow:
-            bump_pipeline_version(pipeline_obj, new_version)
-        else:
-            bump_nextflow_version(pipeline_obj, new_version)
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
+    pipelines_bump_version(ctx, new_version, directory, nextflow)
 
 
 # nf-core pipelines create-logo
 @pipelines.command("create-logo")
 @click.argument("logo-text", metavar="<logo_text>")
-@click.option(
-    "-d", "--dir", type=click.Path(), default=".", help="Directory to save the logo in."
-)
+@click.option("-d", "--dir", "directory", type=click.Path(), default=".", help="Directory to save the logo in.")
 @click.option(
     "-n",
     "--name",
@@ -916,79 +736,11 @@ def bump_version_pipeline(ctx, new_version, dir, nextflow):
     default=False,
     help="Overwrite any files if they already exist",
 )
-def logo_pipeline(logo_text, dir, name, theme, width, format, force):
+def command_pipelines_create_logo(logo_text, directory, name, theme, width, format, force):
     """
     Generate a logo with the nf-core logo template.
-
-    This command generates an nf-core pipeline logo, using the supplied <logo_text>
     """
-    from nf_core.pipelines.create_logo import create_logo
-
-    try:
-        if dir == ".":
-            dir = Path.cwd()
-        logo_path = create_logo(logo_text, dir, name, theme, width, format, force)
-        # Print path to logo relative to current working directory
-        try:
-            logo_path = Path(logo_path).relative_to(Path.cwd())
-        except ValueError:
-            logo_path = Path(logo_path)
-        log.info(f"Created logo: [magenta]{logo_path}[/]")
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
-
-
-# nf-core configs
-@nf_core_cli.group()
-@click.pass_context
-def configs(ctx):
-    """
-    Commands to create and manage nf-core configs.
-    """
-    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
-    # by means other than the `if` block below)
-    ctx.ensure_object(dict)
-
-
-@configs.command("create")
-def create_configs():
-    """
-    Command to interactively create a nextflow or nf-core config
-    """
-    from nf_core.configs.create import ConfigsCreateApp
-
-    try:
-        log.info("Launching interactive nf-core configs creation tool.")
-        app = ConfigsCreateApp()
-        app.run()
-        sys.exit(app.return_code or 0)
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
-
-
-# nf-core licences
-@nf_core_cli.command()
-@click.argument("pipeline", required=True, metavar="<pipeline name>")
-@click.option("--json", is_flag=True, default=False, help="Print output in JSON")
-def licences(pipeline, json):
-    """
-    List software licences for a given workflow (DSL1 only).
-
-    Checks the pipeline environment.yml file which lists all conda software packages, which is not available for DSL2 workflows. Therefore, this command only supports DSL1 workflows (for now).
-    Each of these is queried against the anaconda.org API to find the licence.
-    Package name, version and licence is printed to the command line.
-    """
-    from nf_core.licences import WorkflowLicences
-
-    lic = WorkflowLicences(pipeline)
-    lic.as_json = json
-    try:
-        stdout.print(lic.run_licences())
-    except LookupError as e:
-        log.error(e)
-        sys.exit(1)
+    pipelines_create_logo(logo_text, directory, name, theme, width, format, force)
 
 
 # nf-core pipelines schema subcommands
@@ -1005,35 +757,25 @@ def pipeline_schema():
 
 # nf-core pipelines schema validate
 @pipeline_schema.command("validate")
-@click.argument("pipeline", required=True, metavar="<pipeline name>")
-@click.argument(
-    "params", type=click.Path(exists=True), required=True, metavar="<JSON params file>"
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-def validate_schema(pipeline, params):
+@click.argument("pipeline", required=True, metavar="<pipeline name>")
+@click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
+def command_pipelines_schema_validate(directory, pipeline, params):
     """
     Validate a set of parameters against a pipeline schema.
-
-    Nextflow can be run using the -params-file flag, which loads
-    script parameters from a JSON file.
-
-    This command takes such a file and validates it against the pipeline
-    schema, checking whether all schema rules are satisfied.
     """
-    from nf_core.pipelines.schema import PipelineSchema
+    if Path(directory, pipeline).exists():
+        # this is a local pipeline
+        pipeline = Path(directory, pipeline)
 
-    schema_obj = PipelineSchema()
-    try:
-        schema_obj.get_schema_path(pipeline)
-        # Load and check schema
-        schema_obj.load_lint_schema()
-    except AssertionError as e:
-        log.error(e)
-        sys.exit(1)
-    schema_obj.load_input_params(params)
-    try:
-        schema_obj.validate_params()
-    except AssertionError:
-        sys.exit(1)
+    pipelines_schema_validate(pipeline, params)
 
 
 # nf-core pipelines schema build
@@ -1041,6 +783,7 @@ def validate_schema(pipeline, params):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
@@ -1061,68 +804,48 @@ def validate_schema(pipeline, params):
     default="https://nf-co.re/pipeline_schema_builder",
     help="Customise the builder URL (for development work)",
 )
-def build_schema(dir, no_prompts, web_only, url):
+def command_pipelines_schema_build(directory, no_prompts, web_only, url):
     """
     Interactively build a pipeline schema from Nextflow params.
-
-    Automatically detects parameters from the pipeline config and main.nf and
-    compares these to the pipeline schema. Prompts to add or remove parameters
-    if the two do not match one another.
-
-    Once all parameters are accounted for, can launch a web GUI tool on the
-    https://nf-co.re website where you can annotate and organise parameters.
-    Listens for this to be completed and saves the updated schema.
     """
-    from nf_core.pipelines.schema import PipelineSchema
-
-    try:
-        schema_obj = PipelineSchema()
-        if schema_obj.build_schema(dir, no_prompts, web_only, url) is False:
-            sys.exit(1)
-    except (UserWarning, AssertionError) as e:
-        log.error(e)
-        sys.exit(1)
+    pipelines_schema_build(directory, no_prompts, web_only, url)
 
 
 # nf-core pipelines schema lint
 @pipeline_schema.command("lint")
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
 @click.argument(
-    "schema_path",
+    "schema_file",
     type=click.Path(exists=True),
     default="nextflow_schema.json",
     metavar="<pipeline schema>",
 )
-def lint_schema(schema_path):
+def command_pipelines_schema_lint(directory, schema_file):
     """
     Check that a given pipeline schema is valid.
-
-    Checks whether the pipeline schema validates as JSON Schema Draft 7
-    and adheres to the additional nf-core pipelines schema requirements.
-
-    This function runs as part of the nf-core pipelines lint command, this is a convenience
-    command that does just the schema linting nice and quickly.
-
-    If no schema path is provided, "nextflow_schema.json" will be used (if it exists).
     """
-    from nf_core.pipelines.schema import PipelineSchema
-
-    schema_obj = PipelineSchema()
-    try:
-        schema_obj.get_schema_path(schema_path)
-        schema_obj.load_lint_schema()
-        # Validate title and description - just warnings as schema should still work fine
-        try:
-            schema_obj.validate_schema_title_description()
-        except AssertionError as e:
-            log.warning(e)
-    except AssertionError:
-        sys.exit(1)
+    pipelines_schema_lint(Path(directory, schema_file))
 
 
 # nf-core pipelines schema docs
 @pipeline_schema.command("docs")
+@click.option(
+    "-d",
+    "--dir",
+    "directory",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
 @click.argument(
-    "schema_path",
+    "schema_file",
     type=click.Path(exists=True),
     default="nextflow_schema.json",
     required=False,
@@ -1142,9 +865,7 @@ def lint_schema(schema_path):
     default="markdown",
     help="Format to output docs in.",
 )
-@click.option(
-    "-f", "--force", is_flag=True, default=False, help="Overwrite existing files"
-)
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 @click.option(
     "-c",
     "--columns",
@@ -1153,23 +874,11 @@ def lint_schema(schema_path):
     help="CSV list of columns to include in the parameter tables (parameter,description,type,default,required,hidden)",
     default="parameter,description,type,default,required,hidden",
 )
-def docs_schema(schema_path, output, format, force, columns):
+def command_pipelines_schema_docs(directory, schema_file, output, format, force, columns):
     """
     Outputs parameter documentation for a pipeline schema.
     """
-    if not os.path.exists(schema_path):
-        log.error(
-            "Could not find 'nextflow_schema.json' in current directory. Please specify a path."
-        )
-        sys.exit(1)
-
-    from nf_core.pipelines.schema import PipelineSchema
-
-    schema_obj = PipelineSchema()
-    # Assume we're in a pipeline dir root if schema path not set
-    schema_obj.get_schema_path(schema_path)
-    schema_obj.load_schema()
-    schema_obj.print_documentation(output, format, force, columns.split(","))
+    pipelines_schema_docs(Path(directory, schema_file), output, format, force, columns)
 
 
 # nf-core modules subcommands
@@ -1225,24 +934,11 @@ def modules_list(ctx):
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def modules_list_remote(ctx, keywords, json):
+def command_modules_list_remote(ctx, keywords, json):
     """
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
-    from nf_core.modules import ModuleList
-
-    try:
-        module_list = ModuleList(
-            None,
-            True,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-        stdout.print(module_list.list_components(keywords, json))
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
+    modules_list_remote(ctx, keywords, json)
 
 
 # nf-core modules list local
@@ -1253,28 +949,16 @@ def modules_list_remote(ctx, keywords, json):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def modules_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
+def command_modules_list_local(ctx, keywords, json, directory):  # pylint: disable=redefined-builtin
     """
     List modules installed locally in a pipeline
     """
-    from nf_core.modules import ModuleList
-
-    try:
-        module_list = ModuleList(
-            dir,
-            False,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-        stdout.print(module_list.list_components(keywords, json))
-    except (UserWarning, LookupError) as e:
-        log.error(e)
-        sys.exit(1)
+    modules_list_local(ctx, keywords, json, directory)
 
 
 # nf-core modules install
@@ -1290,6 +974,7 @@ def modules_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-b
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
@@ -1308,33 +993,12 @@ def modules_list_local(ctx, keywords, json, dir):  # pylint: disable=redefined-b
     default=False,
     help="Force reinstallation of module if it already exists",
 )
-@click.option(
-    "-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA"
-)
-def modules_install(ctx, tool, dir, prompt, force, sha):
+@click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
+def command_modules_install(ctx, tool, directory, prompt, force, sha):
     """
     Install DSL2 modules within a pipeline.
-
-    Fetches and installs module files from a remote repo e.g. nf-core/modules.
     """
-    from nf_core.modules import ModuleInstall
-
-    try:
-        module_install = ModuleInstall(
-            dir,
-            force,
-            prompt,
-            sha,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-        exit_status = module_install.install(tool)
-        if not exit_status:
-            sys.exit(1)
-    except (UserWarning, LookupError) as e:
-        log.error(e)
-        sys.exit(1)
+    modules_install(ctx, tool, directory, prompt, force, sha)
 
 
 # nf-core modules update
@@ -1355,9 +1019,7 @@ def modules_install(ctx, tool, dir, prompt, force, sha):
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-@click.option(
-    "-f", "--force", is_flag=True, default=False, help="Force update of module"
-)
+@click.option("-f", "--force", is_flag=True, default=False, help="Force update of module")
 @click.option(
     "-p",
     "--prompt",
@@ -1366,8 +1028,13 @@ def modules_install(ctx, tool, dir, prompt, force, sha):
     help="Prompt for the version of the module",
 )
 @click.option(
-    "-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA"
+    "--limit-output",
+    "limit_output",
+    is_flag=True,
+    default=False,
+    help="Limit output to only the difference in main.nf",
 )
+@click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
 @click.option(
     "-a",
     "--all",
@@ -1398,7 +1065,7 @@ def modules_install(ctx, tool, dir, prompt, force, sha):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
-def modules_update(
+def command_modules_update(
     ctx,
     tool,
     directory,
@@ -1409,38 +1076,16 @@ def modules_update(
     preview,
     save_diff,
     update_deps,
+    limit_output,
 ):
     """
     Update DSL2 modules within a pipeline.
-
-    Fetches and updates module files from a remote repo e.g. nf-core/modules.
     """
-    from nf_core.modules import ModuleUpdate
-
-    try:
-        module_install = ModuleUpdate(
-            directory,
-            force,
-            prompt,
-            sha,
-            install_all,
-            preview,
-            save_diff,
-            update_deps,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-        exit_status = module_install.update(tool)
-        if not exit_status and install_all:
-            sys.exit(1)
-    except (UserWarning, LookupError) as e:
-        log.error(e)
-        sys.exit(1)
+    modules_update(ctx, tool, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output)
 
 
 # nf-core modules patch
-@modules.command()
+@modules.command("patch")
 @click.pass_context
 @click.argument(
     "tool",
@@ -1452,34 +1097,17 @@ def modules_update(
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-@click.option("-r", "--remove", is_flag=True, default=False)
-def patch(ctx, tool, dir, remove):
+@click.option("-r", "--remove", is_flag=True, default=False, help="Remove an existent patch file and regenerate it.")
+def command_modules_patch(ctx, tool, directory, remove):
     """
     Create a patch file for minor changes in a module
-
-    Checks if a module has been modified locally and creates a patch file
-    describing how the module has changed from the remote version
     """
-    from nf_core.modules import ModulePatch
-
-    try:
-        module_patch = ModulePatch(
-            dir,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-        if remove:
-            module_patch.remove(tool)
-        else:
-            module_patch.patch(tool)
-    except (UserWarning, LookupError) as e:
-        log.error(e)
-        sys.exit(1)
+    modules_patch(ctx, tool, directory, remove)
 
 
 # nf-core modules remove
@@ -1495,36 +1123,23 @@ def patch(ctx, tool, dir, remove):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-def modules_remove(ctx, dir, tool):
+def command_modules_remove(ctx, directory, tool):
     """
     Remove a module from a pipeline.
     """
-    from nf_core.modules import ModuleRemove
-
-    try:
-        module_remove = ModuleRemove(
-            dir,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-        module_remove.remove(tool)
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
+    modules_remove(ctx, directory, tool)
 
 
 # nf-core modules create
 @modules.command("create")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option(
-    "-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>"
-)
+@click.option("-d", "--dir", "directory", type=click.Path(exists=True), default=".", metavar="<directory>")
 @click.option(
     "-a",
     "--author",
@@ -1587,10 +1202,10 @@ def modules_remove(ctx, dir, tool):
     default=False,
     help="Migrate a module with pytest tests to nf-test",
 )
-def create_module(
+def command_modules_create(
     ctx,
     tool,
-    dir,
+    directory,
     author,
     label,
     meta,
@@ -1603,60 +1218,38 @@ def create_module(
 ):
     """
     Create a new DSL2 module from the nf-core template.
-
-    If the specified directory is a pipeline, this function creates a file called
-    'modules/local/tool_subtool.nf'
-
-    If the specified directory is a clone of nf-core/modules, it creates or modifies files
-    in 'modules/', 'tests/modules' and 'tests/config/pytest_modules.yml'
     """
-    # Combine two bool flags into one variable
-    has_meta = None
-    if meta and no_meta:
-        log.critical("Both arguments '--meta' and '--no-meta' given. Please pick one.")
-    elif meta:
-        has_meta = True
-    elif no_meta:
-        has_meta = False
-
-    from nf_core.modules import ModuleCreate
-
-    # Run function
-    try:
-        module_create = ModuleCreate(
-            dir,
-            tool,
-            author,
-            label,
-            has_meta,
-            force,
-            conda_name,
-            conda_package_version,
-            empty_template,
-            migrate_pytest,
-        )
-        module_create.create()
-    except UserWarning as e:
-        log.critical(e)
-        sys.exit(1)
-    except LookupError as e:
-        log.error(e)
-        sys.exit(1)
+    modules_create(
+        ctx,
+        tool,
+        directory,
+        author,
+        label,
+        meta,
+        no_meta,
+        force,
+        conda_name,
+        conda_package_version,
+        empty_template,
+        migrate_pytest,
+    )
 
 
 # nf-core modules test
 @modules.command("test")
 @click.pass_context
-@click.argument(
-    "tool",
-    type=str,
-    callback=normalize_case,
-    required=False,
-    metavar="<tool> or <tool/subtool>",
+@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    default=False,
+    help="Print verbose output to the console. Sets `--debug` inside the nf-test command.",
 )
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     metavar="<nf-core/modules directory>",
@@ -1668,9 +1261,7 @@ def create_module(
     default=False,
     help="Use defaults without prompting",
 )
-@click.option(
-    "-u", "--update", is_flag=True, default=False, help="Update existing snapshots"
-)
+@click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
 @click.option(
     "-o",
     "--once",
@@ -1684,31 +1275,19 @@ def create_module(
     default=None,
     help="Run tests with a specific profile",
 )
-def test_module(ctx, tool, dir, no_prompts, update, once, profile):
+@click.option(
+    "--migrate-pytest",
+    is_flag=True,
+    default=False,
+    help="Migrate a module with pytest tests to nf-test",
+)
+def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest, verbose):
     """
     Run nf-test for a module.
-
-    Given the name of a module, runs the nf-test command to test the module and generate snapshots.
     """
-    from nf_core.components.components_test import ComponentsTest
-
-    try:
-        module_tester = ComponentsTest(
-            component_type="modules",
-            component_name=tool,
-            directory=dir,
-            no_prompts=no_prompts,
-            update=update,
-            once=once,
-            remote_url=ctx.obj["modules_repo_url"],
-            branch=ctx.obj["modules_repo_branch"],
-            verbose=ctx.obj["verbose"],
-            profile=profile,
-        )
-        module_tester.run()
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
+    if verbose:
+        ctx.obj["verbose"] = verbose
+    modules_test(ctx, tool, directory, no_prompts, update, once, profile, migrate_pytest)
 
 
 # nf-core modules lint
@@ -1724,6 +1303,7 @@ def test_module(ctx, tool, dir, no_prompts, update, once, profile):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     metavar="<pipeline/modules directory>",
@@ -1745,12 +1325,8 @@ def test_module(ctx, tool, dir, no_prompts, update, once, profile):
     help="Run only these lint tests",
 )
 @click.option("-a", "--all", is_flag=True, help="Run on all modules")
-@click.option(
-    "-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures"
-)
-@click.option(
-    "--local", is_flag=True, help="Run additional lint tests for local modules"
-)
+@click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
+@click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
 @click.option(
     "--sort-by",
@@ -1764,50 +1340,14 @@ def test_module(ctx, tool, dir, no_prompts, update, once, profile):
     is_flag=True,
     help="Fix the module version if a newer version is available",
 )
-def modules_lint(
-    ctx, tool, dir, registry, key, all, fail_warned, local, passed, sort_by, fix_version
+@click.option("--fix", is_flag=True, help="Fix all linting tests if possible.")
+def command_modules_lint(
+    ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix
 ):
     """
     Lint one or more modules in a directory.
-
-    Checks DSL2 module code against nf-core guidelines to ensure
-    that all modules follow the same standards.
-
-    Test modules within a pipeline or a clone of the
-    nf-core/modules repository.
     """
-    from nf_core.components.lint import LintExceptionError
-    from nf_core.modules import ModuleLint
-
-    try:
-        module_lint = ModuleLint(
-            dir,
-            fail_warned=fail_warned,
-            registry=ctx.params["registry"],
-            remote_url=ctx.obj["modules_repo_url"],
-            branch=ctx.obj["modules_repo_branch"],
-            no_pull=ctx.obj["modules_repo_no_pull"],
-            hide_progress=ctx.obj["hide_progress"],
-        )
-        module_lint.lint(
-            module=tool,
-            registry=registry,
-            key=key,
-            all_modules=all,
-            print_results=True,
-            local=local,
-            show_passed=passed,
-            sort_by=sort_by,
-            fix_version=fix_version,
-        )
-        if len(module_lint.failed) > 0:
-            sys.exit(1)
-    except LintExceptionError as e:
-        log.error(e)
-        sys.exit(1)
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
+    modules_lint(ctx, tool, directory, registry, key, all, fail_warned, local, passed, sort_by, fix_version, fix)
 
 
 # nf-core modules info
@@ -1823,40 +1363,20 @@ def modules_lint(
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def modules_info(ctx, tool, dir):
+def command_modules_info(ctx, tool, directory):
     """
     Show developer usage information about a given module.
-
-    Parses information from a module's [i]meta.yml[/] and renders help
-    on the command line. A handy equivalent to searching the
-    [link=https://nf-co.re/modules]nf-core website[/].
-
-    If run from a pipeline and a local copy of the module is found, the command
-    will print this usage info.
-    If not, usage from the remote modules repo will be shown.
     """
-    from nf_core.modules import ModuleInfo
-
-    try:
-        module_info = ModuleInfo(
-            dir,
-            tool,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-        stdout.print(module_info.get_component_info())
-    except (UserWarning, LookupError) as e:
-        log.error(e)
-        sys.exit(1)
+    modules_info(ctx, tool, directory)
 
 
 # nf-core modules bump-versions
-@modules.command()
+@modules.command("bump-versions")
 @click.pass_context
 @click.argument(
     "tool",
@@ -1868,38 +1388,19 @@ def modules_info(ctx, tool, dir):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     metavar="<nf-core/modules directory>",
 )
 @click.option("-a", "--all", is_flag=True, help="Run on all modules")
-@click.option(
-    "-s", "--show-all", is_flag=True, help="Show up-to-date modules in results too"
-)
-def bump_versions(ctx, tool, dir, all, show_all):
+@click.option("-s", "--show-all", is_flag=True, help="Show up-to-date modules in results too")
+def command_modules_bump_versions(ctx, tool, directory, all, show_all):
     """
     Bump versions for one or more modules in a clone of
     the nf-core/modules repo.
     """
-    from nf_core.modules.bump_versions import ModuleVersionBumper
-    from nf_core.modules.modules_utils import ModuleExceptionError
-
-    try:
-        version_bumper = ModuleVersionBumper(
-            dir,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-        version_bumper.bump_versions(
-            module=tool, all_modules=all, show_uptodate=show_all
-        )
-    except ModuleExceptionError as e:
-        log.error(e)
-        sys.exit(1)
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
+    modules_bump_versions(ctx, tool, directory, all, show_all)
 
 
 # nf-core subworkflows click command
@@ -1944,9 +1445,7 @@ def subworkflows(ctx, git_remote, branch, no_pull):
 @subworkflows.command("create")
 @click.pass_context
 @click.argument("subworkflow", type=str, required=False, metavar="subworkflow name")
-@click.option(
-    "-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>"
-)
+@click.option("-d", "--dir", "directory", type=click.Path(exists=True), default=".", metavar="<directory>")
 @click.option(
     "-a",
     "--author",
@@ -1967,30 +1466,11 @@ def subworkflows(ctx, git_remote, branch, no_pull):
     default=False,
     help="Migrate a module with pytest tests to nf-test",
 )
-def create_subworkflow(ctx, subworkflow, dir, author, force, migrate_pytest):
+def command_subworkflows_create(ctx, subworkflow, directory, author, force, migrate_pytest):
     """
     Create a new subworkflow from the nf-core template.
-
-    If the specified directory is a pipeline, this function creates a file called
-    'subworkflows/local/<subworkflow_name>.nf'
-
-    If the specified directory is a clone of nf-core/modules, it creates or modifies files
-    in 'subworkflows/', 'tests/subworkflows' and 'tests/config/pytest_modules.yml'
     """
-    from nf_core.subworkflows import SubworkflowCreate
-
-    # Run function
-    try:
-        subworkflow_create = SubworkflowCreate(
-            dir, subworkflow, author, force, migrate_pytest
-        )
-        subworkflow_create.create()
-    except UserWarning as e:
-        log.critical(e)
-        sys.exit(1)
-    except LookupError as e:
-        log.error(e)
-        sys.exit(1)
+    subworkflows_create(ctx, subworkflow, directory, author, force, migrate_pytest)
 
 
 # nf-core subworkflows test
@@ -2006,6 +1486,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force, migrate_pytest):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     metavar="<nf-core/modules directory>",
@@ -2017,9 +1498,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force, migrate_pytest):
     default=False,
     help="Use defaults without prompting",
 )
-@click.option(
-    "-u", "--update", is_flag=True, default=False, help="Update existing snapshots"
-)
+@click.option("-u", "--update", is_flag=True, default=False, help="Update existing snapshots")
 @click.option(
     "-o",
     "--once",
@@ -2029,35 +1508,21 @@ def create_subworkflow(ctx, subworkflow, dir, author, force, migrate_pytest):
 )
 @click.option(
     "--profile",
-    type=click.Choice(["none", "singularity"]),
+    type=click.Choice(["docker", "singularity", "conda"]),
     default=None,
     help="Run tests with a specific profile",
 )
-def test_subworkflow(ctx, subworkflow, dir, no_prompts, update, once, profile):
+@click.option(
+    "--migrate-pytest",
+    is_flag=True,
+    default=False,
+    help="Migrate a subworkflow with pytest tests to nf-test",
+)
+def command_subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile, migrate_pytest):
     """
     Run nf-test for a subworkflow.
-
-    Given the name of a subworkflow, runs the nf-test command to test the subworkflow and generate snapshots.
     """
-    from nf_core.components.components_test import ComponentsTest
-
-    try:
-        sw_tester = ComponentsTest(
-            component_type="subworkflows",
-            component_name=subworkflow,
-            directory=dir,
-            no_prompts=no_prompts,
-            update=update,
-            once=once,
-            remote_url=ctx.obj["modules_repo_url"],
-            branch=ctx.obj["modules_repo_branch"],
-            verbose=ctx.obj["verbose"],
-            profile=profile,
-        )
-        sw_tester.run()
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
+    subworkflows_test(ctx, subworkflow, directory, no_prompts, update, once, profile, migrate_pytest)
 
 
 # nf-core subworkflows list subcommands
@@ -2075,25 +1540,11 @@ def subworkflows_list(ctx):
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def subworkflows_list_remote(ctx, keywords, json):
+def command_subworkflows_list_remote(ctx, keywords, json):
     """
     List subworkflows in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
-    from nf_core.subworkflows import SubworkflowList
-
-    try:
-        subworkflow_list = SubworkflowList(
-            None,
-            True,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-
-        stdout.print(subworkflow_list.list_components(keywords, json))
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
+    subworkflows_list_remote(ctx, keywords, json)
 
 
 # nf-core subworkflows list local
@@ -2104,30 +1555,16 @@ def subworkflows_list_remote(ctx, keywords, json):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def subworkflows_list_local(
-    ctx, keywords, json, dir
-):  # pylint: disable=redefined-builtin
+def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: disable=redefined-builtin
     """
     List subworkflows installed locally in a pipeline
     """
-    from nf_core.subworkflows import SubworkflowList
-
-    try:
-        subworkflow_list = SubworkflowList(
-            dir,
-            False,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-        stdout.print(subworkflow_list.list_components(keywords, json))
-    except (UserWarning, LookupError) as e:
-        log.error(e)
-        sys.exit(1)
+    subworkflows_list_local(ctx, keywords, json, directory)
 
 
 # nf-core subworkflows lint
@@ -2143,6 +1580,7 @@ def subworkflows_list_local(
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     metavar="<pipeline/modules directory>",
@@ -2164,12 +1602,8 @@ def subworkflows_list_local(
     help="Run only these lint tests",
 )
 @click.option("-a", "--all", is_flag=True, help="Run on all subworkflows")
-@click.option(
-    "-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures"
-)
-@click.option(
-    "--local", is_flag=True, help="Run additional lint tests for local subworkflows"
-)
+@click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
+@click.option("--local", is_flag=True, help="Run additional lint tests for local subworkflows")
 @click.option("--passed", is_flag=True, help="Show passed tests")
 @click.option(
     "--sort-by",
@@ -2178,49 +1612,14 @@ def subworkflows_list_local(
     help="Sort lint output by subworkflow or test name.",
     show_default=True,
 )
-def subworkflows_lint(
-    ctx, subworkflow, dir, registry, key, all, fail_warned, local, passed, sort_by
+@click.option("--fix", is_flag=True, help="Fix all linting tests if possible.")
+def command_subworkflows_lint(
+    ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix
 ):
     """
     Lint one or more subworkflows in a directory.
-
-    Checks DSL2 subworkflow code against nf-core guidelines to ensure
-    that all subworkflows follow the same standards.
-
-    Test subworkflows within a pipeline or a clone of the
-    nf-core/modules repository.
     """
-    from nf_core.components.lint import LintExceptionError
-    from nf_core.subworkflows import SubworkflowLint
-
-    try:
-        subworkflow_lint = SubworkflowLint(
-            dir,
-            fail_warned=fail_warned,
-            registry=ctx.params["registry"],
-            remote_url=ctx.obj["modules_repo_url"],
-            branch=ctx.obj["modules_repo_branch"],
-            no_pull=ctx.obj["modules_repo_no_pull"],
-            hide_progress=ctx.obj["hide_progress"],
-        )
-        subworkflow_lint.lint(
-            subworkflow=subworkflow,
-            registry=registry,
-            key=key,
-            all_subworkflows=all,
-            print_results=True,
-            local=local,
-            show_passed=passed,
-            sort_by=sort_by,
-        )
-        if len(subworkflow_lint.failed) > 0:
-            sys.exit(1)
-    except LintExceptionError as e:
-        log.error(e)
-        sys.exit(1)
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
+    subworkflows_lint(ctx, subworkflow, directory, registry, key, all, fail_warned, local, passed, sort_by, fix)
 
 
 # nf-core subworkflows info
@@ -2236,36 +1635,16 @@ def subworkflows_lint(
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def subworkflows_info(ctx, subworkflow, dir):
+def command_subworkflows_info(ctx, subworkflow, directory):
     """
     Show developer usage information about a given subworkflow.
-
-    Parses information from a subworkflow's [i]meta.yml[/] and renders help
-    on the command line. A handy equivalent to searching the
-    [link=https://nf-co.re/modules]nf-core website[/].
-
-    If run from a pipeline and a local copy of the subworkflow is found, the command
-    will print this usage info.
-    If not, usage from the remote subworkflows repo will be shown.
     """
-    from nf_core.subworkflows import SubworkflowInfo
-
-    try:
-        subworkflow_info = SubworkflowInfo(
-            dir,
-            subworkflow,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-        stdout.print(subworkflow_info.get_component_info())
-    except (UserWarning, LookupError) as e:
-        log.error(e)
-        sys.exit(1)
+    subworkflows_info(ctx, subworkflow, directory)
 
 
 # nf-core subworkflows install
@@ -2281,6 +1660,7 @@ def subworkflows_info(ctx, subworkflow, dir):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
@@ -2306,27 +1686,45 @@ def subworkflows_info(ctx, subworkflow, dir):
     metavar="<commit sha>",
     help="Install subworkflow at commit SHA",
 )
-def subworkflows_install(ctx, subworkflow, dir, prompt, force, sha):
+def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha):
     """
     Install DSL2 subworkflow within a pipeline.
-
-    Fetches and installs subworkflow files from a remote repo e.g. nf-core/modules.
     """
-    from nf_core.subworkflows import SubworkflowInstall
+    subworkflows_install(ctx, subworkflow, directory, prompt, force, sha)
+
+
+# nf-core subworkflows patch
+@subworkflows.command("patch")
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+@click.option("-r", "--remove", is_flag=True, default=False, help="Remove an existent patch file and regenerate it.")
+def subworkflows_patch(ctx, tool, dir, remove):
+    """
+    Create a patch file for minor changes in a subworkflow
+
+    Checks if a subworkflow has been modified locally and creates a patch file
+    describing how the module has changed from the remote version
+    """
+    from nf_core.subworkflows import SubworkflowPatch
 
     try:
-        subworkflow_install = SubworkflowInstall(
+        subworkflow_patch = SubworkflowPatch(
             dir,
-            force,
-            prompt,
-            sha,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        exit_status = subworkflow_install.install(subworkflow)
-        if not exit_status:
-            sys.exit(1)
+        if remove:
+            subworkflow_patch.remove(tool)
+        else:
+            subworkflow_patch.patch(tool)
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
@@ -2345,27 +1743,16 @@ def subworkflows_install(ctx, subworkflow, dir, prompt, force, sha):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-def subworkflows_remove(ctx, dir, subworkflow):
+def command_subworkflows_remove(ctx, directory, subworkflow):
     """
     Remove a subworkflow from a pipeline.
     """
-    from nf_core.subworkflows import SubworkflowRemove
-
-    try:
-        module_remove = SubworkflowRemove(
-            dir,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-        module_remove.remove(subworkflow)
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
+    subworkflows_remove(ctx, directory, subworkflow)
 
 
 # nf-core subworkflows update
@@ -2381,13 +1768,12 @@ def subworkflows_remove(ctx, dir, subworkflow):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-@click.option(
-    "-f", "--force", is_flag=True, default=False, help="Force update of subworkflow"
-)
+@click.option("-f", "--force", is_flag=True, default=False, help="Force update of subworkflow")
 @click.option(
     "-p",
     "--prompt",
@@ -2401,6 +1787,14 @@ def subworkflows_remove(ctx, dir, subworkflow):
     type=str,
     metavar="<commit sha>",
     help="Install subworkflow at commit SHA",
+)
+@click.option(
+    "-l",
+    "--limit-output",
+    "limit_output",
+    is_flag=True,
+    default=False,
+    help="Limit output to only the difference in main.nf",
 )
 @click.option(
     "-a",
@@ -2432,10 +1826,10 @@ def subworkflows_remove(ctx, dir, subworkflow):
     default=False,
     help="Automatically update all linked modules and subworkflows without asking for confirmation",
 )
-def subworkflows_update(
+def command_subworkflows_update(
     ctx,
     subworkflow,
-    dir,
+    directory,
     force,
     prompt,
     sha,
@@ -2443,34 +1837,14 @@ def subworkflows_update(
     preview,
     save_diff,
     update_deps,
+    limit_output,
 ):
     """
     Update DSL2 subworkflow within a pipeline.
-
-    Fetches and updates subworkflow files from a remote repo e.g. nf-core/modules.
     """
-    from nf_core.subworkflows import SubworkflowUpdate
-
-    try:
-        subworkflow_install = SubworkflowUpdate(
-            dir,
-            force,
-            prompt,
-            sha,
-            install_all,
-            preview,
-            save_diff,
-            update_deps,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-        )
-        exit_status = subworkflow_install.update(subworkflow)
-        if not exit_status and install_all:
-            sys.exit(1)
-    except (UserWarning, LookupError) as e:
-        log.error(e)
-        sys.exit(1)
+    subworkflows_update(
+        ctx, subworkflow, directory, force, prompt, sha, install_all, preview, save_diff, update_deps, limit_output
+    )
 
 
 ## DEPRECATED commands since v3.0.0
@@ -2480,10 +1854,7 @@ def subworkflows_update(
 @nf_core_cli.group(deprecated=True, hidden=True)
 def schema():
     """
-    Suite of tools for developers to manage pipeline schema.
-
-    All nf-core pipelines should have a nextflow_schema.json file in their
-    root directory that describes the different pipeline parameters.
+    Use `nf-core pipelines schema <command>` instead.
     """
     pass
 
@@ -2491,38 +1862,15 @@ def schema():
 # nf-core schema validate (deprecated)
 @schema.command("validate", deprecated=True)
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
-@click.argument(
-    "params", type=click.Path(exists=True), required=True, metavar="<JSON params file>"
-)
-def validate(pipeline, params):
+@click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
+def command_schema_validate(pipeline, params):
     """
-    DEPRECATED
-    Validate a set of parameters against a pipeline schema.
-
-    Nextflow can be run using the -params-file flag, which loads
-    script parameters from a JSON file.
-
-    This command takes such a file and validates it against the pipeline
-    schema, checking whether all schema rules are satisfied.
+    Use `nf-core pipelines schema validate` instead.
     """
     log.warning(
         "The `[magenta]nf-core schema validate[/]` command is deprecated. Use `[magenta]nf-core pipelines schema validate[/]` instead."
     )
-    from nf_core.pipelines.schema import PipelineSchema
-
-    schema_obj = PipelineSchema()
-    try:
-        schema_obj.get_schema_path(pipeline)
-        # Load and check schema
-        schema_obj.load_lint_schema()
-    except AssertionError as e:
-        log.error(e)
-        sys.exit(1)
-    schema_obj.load_input_params(params)
-    try:
-        schema_obj.validate_params()
-    except AssertionError:
-        sys.exit(1)
+    pipelines_schema_validate(pipeline, params)
 
 
 # nf-core schema build (deprecated)
@@ -2530,6 +1878,7 @@ def validate(pipeline, params):
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
@@ -2547,34 +1896,17 @@ def validate(pipeline, params):
 @click.option(
     "--url",
     type=str,
-    default="https://nf-co.re/pipeline_schema_builder",
+    default="https://oldsite.nf-co.re/pipeline_schema_builder",
     help="Customise the builder URL (for development work)",
 )
-def build(dir, no_prompts, web_only, url):
+def command_schema_build(directory, no_prompts, web_only, url):
     """
-    DEPRECATED
-    Interactively build a pipeline schema from Nextflow params.
-
-    Automatically detects parameters from the pipeline config and main.nf and
-    compares these to the pipeline schema. Prompts to add or remove parameters
-    if the two do not match one another.
-
-    Once all parameters are accounted for, can launch a web GUI tool on the
-    https://nf-co.re website where you can annotate and organise parameters.
-    Listens for this to be completed and saves the updated schema.
+    Use `nf-core pipelines schema build` instead.
     """
     log.warning(
         "The `[magenta]nf-core schema build[/]` command is deprecated. Use `[magenta]nf-core pipelines schema build[/]` instead."
     )
-    from nf_core.pipelines.schema import PipelineSchema
-
-    try:
-        schema_obj = PipelineSchema()
-        if schema_obj.build_schema(dir, no_prompts, web_only, url) is False:
-            sys.exit(1)
-    except (UserWarning, AssertionError) as e:
-        log.error(e)
-        sys.exit(1)
+    pipelines_schema_build(directory, no_prompts, web_only, url)
 
 
 # nf-core schema lint (deprecated)
@@ -2585,35 +1917,14 @@ def build(dir, no_prompts, web_only, url):
     default="nextflow_schema.json",
     metavar="<pipeline schema>",
 )
-def schema_lint(schema_path):
+def command_schema_lint(schema_path):
     """
-    DEPRECATED
-    Check that a given pipeline schema is valid.
-
-    Checks whether the pipeline schema validates as JSON Schema Draft 7
-    and adheres to the additional nf-core schema requirements.
-
-    This function runs as part of the nf-core lint command, this is a convenience
-    command that does just the schema linting nice and quickly.
-
-    If no schema path is provided, "nextflow_schema.json" will be used (if it exists).
+    Use `nf-core pipelines schema lint` instead.
     """
     log.warning(
         "The `[magenta]nf-core schema lint[/]` command is deprecated. Use `[magenta]nf-core pipelines schema lint[/]` instead."
     )
-    from nf_core.pipelines.schema import PipelineSchema
-
-    schema_obj = PipelineSchema()
-    try:
-        schema_obj.get_schema_path(schema_path)
-        schema_obj.load_lint_schema()
-        # Validate title and description - just warnings as schema should still work fine
-        try:
-            schema_obj.validate_schema_title_description()
-        except AssertionError as e:
-            log.warning(e)
-    except AssertionError:
-        sys.exit(1)
+    pipelines_schema_lint(schema_path)
 
 
 # nf-core schema docs (deprecated)
@@ -2639,9 +1950,7 @@ def schema_lint(schema_path):
     default="markdown",
     help="Format to output docs in.",
 )
-@click.option(
-    "-f", "--force", is_flag=True, default=False, help="Overwrite existing files"
-)
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 @click.option(
     "-c",
     "--columns",
@@ -2650,35 +1959,20 @@ def schema_lint(schema_path):
     help="CSV list of columns to include in the parameter tables (parameter,description,type,default,required,hidden)",
     default="parameter,description,type,default,required,hidden",
 )
-def docs(schema_path, output, format, force, columns):
+def command_schema_docs(schema_path, output, format, force, columns):
     """
-    DEPRECATED
-    Outputs parameter documentation for a pipeline schema.
+    Use `nf-core pipelines schema docs` instead.
     """
     log.warning(
         "The `[magenta]nf-core schema docs[/]` command is deprecated. Use `[magenta]nf-core pipelines schema docs[/]` instead."
     )
-    if not os.path.exists(schema_path):
-        log.error(
-            "Could not find 'nextflow_schema.json' in current directory. Please specify a path."
-        )
-        sys.exit(1)
-
-    from nf_core.pipelines.schema import PipelineSchema
-
-    schema_obj = PipelineSchema()
-    # Assume we're in a pipeline dir root if schema path not set
-    schema_obj.get_schema_path(schema_path)
-    schema_obj.load_schema()
-    schema_obj.print_documentation(output, format, force, columns.split(","))
+    pipelines_schema_docs(schema_path, output, format, force, columns)
 
 
 # nf-core create-logo (deprecated)
 @nf_core_cli.command("create-logo", deprecated=True, hidden=True)
 @click.argument("logo-text", metavar="<logo_text>")
-@click.option(
-    "-d", "--dir", type=click.Path(), default=".", help="Directory to save the logo in."
-)
+@click.option("-d", "--dir", "directory", type=click.Path(), default=".", help="Directory to save the logo in.")
 @click.option(
     "-n",
     "--name",
@@ -2713,38 +2007,23 @@ def docs(schema_path, output, format, force, columns):
     default=False,
     help="Overwrite any files if they already exist",
 )
-def logo(logo_text, dir, name, theme, width, format, force):
+def command_create_logo(logo_text, directory, name, theme, width, format, force):
     """
-    DEPRECATED
-    Generate a logo with the nf-core logo template.
-
-    This command generates an nf-core pipeline logo, using the supplied <logo_text>
+    Use `nf-core pipelines create-logo` instead.
     """
     log.warning(
-        "The `[magenta]nf-core create-logo[/]` command is deprecated. Use `[magenta]nf-core pipelines screate-logo[/]` instead."
+        "The `[magenta]nf-core create-logo[/]` command is deprecated. Use `[magenta]nf-core pipeliness create-logo[/]` instead."
     )
-    from nf_core.pipelines.create_logo import create_logo
-
-    try:
-        if dir == ".":
-            dir = Path.cwd()
-        logo_path = create_logo(logo_text, dir, name, theme, width, format, force)
-        # Print path to logo relative to current working directory
-        try:
-            logo_path = Path(logo_path).relative_to(Path.cwd())
-        except ValueError:
-            logo_path = Path(logo_path)
-        log.info(f"Created logo: [magenta]{logo_path}[/]")
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
+    pipelines_create_logo(logo_text, directory, name, theme, width, format, force)
 
 
 # nf-core sync (deprecated)
-@nf_core_cli.command(hidden=True, deprecated=True)
+@nf_core_cli.command("sync", hidden=True, deprecated=True)
+@click.pass_context
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
@@ -2768,65 +2047,27 @@ def logo(logo_text, dir, name, theme, width, format, force):
     default=False,
     help="Force the creation of a pull-request, even if there are no changes.",
 )
-@click.option(
-    "-g", "--github-repository", type=str, help="GitHub PR: target repository."
-)
+@click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
-@click.option(
-    "-t", "--template-yaml", help="Pass a YAML file to customize the template"
-)
-def sync(
-    dir, from_branch, pull_request, github_repository, username, template_yaml, force_pr
-):
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+def command_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr):
     """
-    DEPRECATED
-    Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
-
-    To keep nf-core pipelines up to date with improvements in the main
-    template, we use a method of synchronisation that uses a special
-    git branch called [cyan i]TEMPLATE[/].
-
-    This command updates the [cyan i]TEMPLATE[/] branch with the latest version of
-    the nf-core template, so that these updates can be synchronised with
-    the pipeline. It is run automatically for all pipelines when ever a
-    new release of [link=https://github.com/nf-core/tools]nf-core/tools[/link] (and the included template) is made.
+    Use `nf-core pipelines sync` instead.
     """
     log.warning(
         "The `[magenta]nf-core sync[/]` command is deprecated. Use `[magenta]nf-core pipelines sync[/]` instead."
     )
-    from nf_core.pipelines.sync import (
-        PipelineSync,
-        PullRequestExceptionError,
-        SyncExceptionError,
-    )
-    from nf_core.utils import is_pipeline_directory
-
-    # Check if pipeline directory contains necessary files
-    is_pipeline_directory(dir)
-
-    # Sync the given pipeline dir
-    sync_obj = PipelineSync(
-        dir,
-        from_branch,
-        pull_request,
-        github_repository,
-        username,
-        template_yaml,
-        force_pr,
-    )
-    try:
-        sync_obj.sync()
-    except (SyncExceptionError, PullRequestExceptionError) as e:
-        log.error(e)
-        sys.exit(1)
+    pipelines_sync(ctx, directory, from_branch, pull_request, github_repository, username, template_yaml, force_pr)
 
 
 # nf-core bump-version (deprecated)
-@nf_core_cli.command(hidden=True, deprecated=True)
+@nf_core_cli.command("bump-version", hidden=True, deprecated=True)
+@click.pass_context
 @click.argument("new_version", default="")
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
@@ -2838,45 +2079,14 @@ def sync(
     default=False,
     help="Bump required nextflow version instead of pipeline version",
 )
-def bump_version(new_version, dir, nextflow):
+def command_bump_version(ctx, new_version, directory, nextflow):
     """
-    DEPRECATED
-    Update nf-core pipeline version number.
-
-    The pipeline version number is mentioned in a lot of different places
-    in nf-core pipelines. This tool updates the version for you automatically,
-    so that you don't accidentally miss any.
-
-    Should be used for each pipeline release, and again for the next
-    development version after release.
-
-    As well as the pipeline version, you can also change the required version of Nextflow.
+    Use `nf-core pipelines bump-version` instead.
     """
     log.warning(
         "The `[magenta]nf-core bump-version[/]` command is deprecated. Use `[magenta]nf-core pipelines bump-version[/]` instead."
     )
-    from nf_core.pipelines.bump_version import (
-        bump_nextflow_version,
-        bump_pipeline_version,
-    )
-    from nf_core.utils import Pipeline, is_pipeline_directory
-
-    try:
-        # Check if pipeline directory contains necessary files
-        is_pipeline_directory(dir)
-
-        # Make a pipeline object and load config etc
-        pipeline_obj = Pipeline(dir)
-        pipeline_obj._load()
-
-        # Bump the pipeline version number
-        if not nextflow:
-            bump_pipeline_version(pipeline_obj, new_version)
-        else:
-            bump_nextflow_version(pipeline_obj, new_version)
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
+    pipelines_bump_version(ctx, new_version, directory, nextflow)
 
 
 # nf-core list (deprecated)
@@ -2890,31 +2100,22 @@ def bump_version(new_version, dir, nextflow):
     help="How to sort listed pipelines",
 )
 @click.option("--json", is_flag=True, default=False, help="Print full output as JSON")
-@click.option(
-    "--show-archived", is_flag=True, default=False, help="Print archived workflows"
-)
-def list(keywords, sort, json, show_archived):
+@click.option("--show-archived", is_flag=True, default=False, help="Print archived workflows")
+@click.pass_context
+def command_list(ctx, keywords, sort, json, show_archived):
     """
-    DEPRECATED
-    List available nf-core pipelines with local info.
-
-    Checks the web for a list of nf-core pipelines with their latest releases.
-    Shows which nf-core pipelines you have pulled locally and whether they are up to date.
+    DEPREUse `nf-core pipelines list` instead.CATED
     """
     log.warning(
         "The `[magenta]nf-core list[/]` command is deprecated. Use `[magenta]nf-core pipelines list[/]` instead."
     )
-    from nf_core.pipelines.list import list_workflows
-
-    stdout.print(list_workflows(keywords, sort, json, show_archived))
+    pipelines_list(ctx, keywords, sort, json, show_archived)
 
 
 # nf-core launch (deprecated)
-@nf_core_cli.command(deprecated=True, hidden=True)
+@nf_core_cli.command("launch", deprecated=True, hidden=True)
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
-@click.option(
-    "-r", "--revision", help="Release/branch/SHA of the project to run (if remote)"
-)
+@click.option("-r", "--revision", help="Release/branch/SHA of the project to run (if remote)")
 @click.option("-i", "--id", help="ID for web-gui launch parameter set")
 @click.option(
     "-c",
@@ -2957,7 +2158,9 @@ def list(keywords, sort, json, show_archived):
     default="https://nf-co.re/launch",
     help="Customise the builder URL (for development work)",
 )
-def launch(
+@click.pass_context
+def command_launch(
+    ctx,
     pipeline,
     id,
     revision,
@@ -2969,41 +2172,16 @@ def launch(
     url,
 ):
     """
-    DEPRECATED
-    Launch a pipeline using a web GUI or command line prompts.
-
-    Uses the pipeline schema file to collect inputs for all available pipeline
-    parameters. Parameter names, descriptions and help text are shown.
-    The pipeline schema is used to validate all inputs as they are entered.
-
-    When finished, saves a file with the selected parameters which can be
-    passed to Nextflow using the -params-file option.
-
-    Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
-    a local pipeline directory or an ID from the nf-core web launch tool.
+    Use `nf-core pipelines launch` instead.
     """
     log.warning(
         "The `[magenta]nf-core launch[/]` command is deprecated. Use `[magenta]nf-core pipelines launch[/]` instead."
     )
-    from nf_core.pipelines.launch import Launch
-
-    launcher = Launch(
-        pipeline,
-        revision,
-        command_only,
-        params_in,
-        params_out,
-        save_all,
-        show_hidden,
-        url,
-        id,
-    )
-    if not launcher.launch_pipeline():
-        sys.exit(1)
+    pipelines_launch(ctx, pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url)
 
 
 # nf-core create-params-file (deprecated)
-@nf_core_cli.command(deprecated=True, hidden=True)
+@nf_core_cli.command("create-params-file", deprecated=True, hidden=True)
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
 @click.option("-r", "--revision", help="Release/branch/SHA of the pipeline (if remote)")
 @click.option(
@@ -3014,9 +2192,7 @@ def launch(
     metavar="<filename>",
     help="Output filename. Defaults to `nf-params.yml`.",
 )
-@click.option(
-    "-f", "--force", is_flag=True, default=False, help="Overwrite existing files"
-)
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 @click.option(
     "-x",
     "--show-hidden",
@@ -3024,30 +2200,18 @@ def launch(
     default=False,
     help="Show hidden params which don't normally need changing",
 )
-def create_params_file(pipeline, revision, output, force, show_hidden):
+def command_create_params_file(pipeline, revision, output, force, show_hidden):
     """
-    DEPRECATED
-    Build a parameter file for a pipeline.
-
-    Uses the pipeline schema file to generate a YAML parameters file.
-    Parameters are set to the pipeline defaults and descriptions are shown in comments.
-    After the output file is generated, it can then be edited as needed before
-    passing to nextflow using the `-params-file` option.
-
-    Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
-    a local pipeline directory.
+    Use `nf-core pipelines create-params-file` instead.
     """
     log.warning(
         "The `[magenta]nf-core create-params-file[/]` command is deprecated. Use `[magenta]nf-core pipelines create-params-file[/]` instead."
     )
-    builder = ParamsFileBuilder(pipeline, revision)
-
-    if not builder.write_params_file(output, show_hidden=show_hidden, force=force):
-        sys.exit(1)
+    pipelines_create_params_file(pipeline, revision, output, force, show_hidden)
 
 
 # nf-core download (deprecated)
-@nf_core_cli.command(deprecated=True, hidden=True)
+@nf_core_cli.command("download", deprecated=True, hidden=True)
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
 @click.option(
     "-r",
@@ -3062,9 +2226,7 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]),
     help="Archive compression type",
 )
-@click.option(
-    "-f", "--force", is_flag=True, default=False, help="Overwrite existing files"
-)
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 @click.option(
     "-t",
     "--tower",
@@ -3122,7 +2284,9 @@ def create_params_file(pipeline, revision, output, force, show_hidden):
     default=4,
     help="Number of parallel image downloads",
 )
-def download(
+@click.pass_context
+def command_download(
+    ctx,
     pipeline,
     revision,
     outdir,
@@ -3139,29 +2303,19 @@ def download(
     parallel_downloads,
 ):
     """
-    DEPRECATED
-    Download a pipeline, nf-core/configs and pipeline singularity images.
-
-    Collects all files in a single archive and configures the downloaded
-    workflow to use relative paths to the configs and singularity images.
+    Use `nf-core pipelines download` instead.
     """
     log.warning(
         "The `[magenta]nf-core download[/]` command is deprecated. Use `[magenta]nf-core pipelines download[/]` instead."
     )
-    from nf_core.pipelines.download import DownloadWorkflow
-
-    if tower:
-        log.warning(
-            "[red]The `-t` / `--tower` flag is deprecated. Please use `--platform` instead.[/]"
-        )
-
-    dl = DownloadWorkflow(
+    pipelines_download(
+        ctx,
         pipeline,
         revision,
         outdir,
         compress,
         force,
-        tower or platform,  # True if either specified
+        platform or tower,
         download_configuration,
         tag,
         container_system,
@@ -3170,14 +2324,14 @@ def download(
         container_cache_index,
         parallel_downloads,
     )
-    dl.download_workflow()
 
 
 # nf-core lint (deprecated)
-@nf_core_cli.command(hidden=True, deprecated=True)
+@nf_core_cli.command("lint", hidden=True, deprecated=True)
 @click.option(
     "-d",
     "--dir",
+    "directory",
     type=click.Path(exists=True),
     default=".",
     help=r"Pipeline directory [dim]\[default: current working directory][/]",
@@ -3185,10 +2339,7 @@ def download(
 @click.option(
     "--release",
     is_flag=True,
-    default=os.path.basename(
-        os.path.dirname(os.environ.get("GITHUB_REF", "").strip(" '\""))
-    )
-    == "master"
+    default=Path(os.environ.get("GITHUB_REF", "").strip(" '\"")).parent.name in ["master", "main"]
     and os.environ.get("GITHUB_REPOSITORY", "").startswith("nf-core/")
     and not os.environ.get("GITHUB_REPOSITORY", "") == "nf-core/tools",
     help="Execute additional checks for release-ready workflows.",
@@ -3209,15 +2360,9 @@ def download(
     multiple=True,
     help="Run only these lint tests",
 )
-@click.option(
-    "-p", "--show-passed", is_flag=True, help="Show passing tests on the command line"
-)
-@click.option(
-    "-i", "--fail-ignored", is_flag=True, help="Convert ignored tests to failures"
-)
-@click.option(
-    "-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures"
-)
+@click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line")
+@click.option("-i", "--fail-ignored", is_flag=True, help="Convert ignored tests to failures")
+@click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option(
     "--markdown",
     type=str,
@@ -3238,9 +2383,9 @@ def download(
     show_default=True,
 )
 @click.pass_context
-def lint(
+def command_lint(
     ctx,
-    dir,
+    directory,
     release,
     fix,
     key,
@@ -3252,83 +2397,28 @@ def lint(
     sort_by,
 ):
     """
-    DEPRECATED
-    Check pipeline code against nf-core guidelines.
-
-    Runs a large number of automated tests to ensure that the supplied pipeline
-    meets the nf-core guidelines. Documentation of all lint tests can be found
-    on the nf-core website: [link=https://nf-co.re/tools/docs/]https://nf-co.re/tools/docs/[/]
-
-    You can ignore tests using a file called [blue].nf-core.yml[/] [i](if you have a good reason!)[/].
-    See the documentation for details.
+    Use `nf-core pipelines lint` instead.
     """
     log.warning(
         "The `[magenta]nf-core lint[/]` command is deprecated. Use `[magenta]nf-core pipelines lint[/]` instead."
     )
-    from nf_core.pipelines.lint import run_linting
-    from nf_core.utils import is_pipeline_directory
-
-    # Check if pipeline directory is a pipeline
-    try:
-        is_pipeline_directory(dir)
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
-
-    # Run the lint tests!
-    try:
-        lint_obj, module_lint_obj, subworkflow_lint_obj = run_linting(
-            dir,
-            release,
-            fix,
-            key,
-            show_passed,
-            fail_ignored,
-            fail_warned,
-            sort_by,
-            markdown,
-            json,
-            ctx.obj["hide_progress"],
-        )
-        swf_failed = 0
-        if subworkflow_lint_obj is not None:
-            swf_failed = len(subworkflow_lint_obj.failed)
-        if len(lint_obj.failed) + len(module_lint_obj.failed) + swf_failed > 0:
-            sys.exit(1)
-    except AssertionError as e:
-        log.critical(e)
-        sys.exit(1)
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
+    pipelines_lint(ctx, directory, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, sort_by)
 
 
 # nf-core create (deprecated)
-@nf_core_cli.command(hidden=True, deprecated=True)
+@nf_core_cli.command("create", hidden=True, deprecated=True)
 @click.option(
     "-n",
     "--name",
     type=str,
     help="The name of your new pipeline",
 )
-@click.option(
-    "-d", "--description", type=str, help="A short description of your pipeline"
-)
+@click.option("-d", "--description", type=str, help="A short description of your pipeline")
 @click.option("-a", "--author", type=str, help="Name of the main author(s)")
-@click.option("--version", type=str, help="The initial version number to use")
-@click.option(
-    "-f",
-    "--force",
-    is_flag=True,
-    default=False,
-    help="Overwrite output directory if it already exists",
-)
-@click.option(
-    "-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)"
-)
-@click.option(
-    "-t", "--template-yaml", help="Pass a YAML file to customize the template"
-)
+@click.option("--version", type=str, default="1.0.0dev", help="The initial version number to use")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
+@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 @click.option("--plain", is_flag=True, help="Use the standard nf-core template")
 @click.option(
     "--organisation",
@@ -3336,67 +2426,15 @@ def lint(
     default="nf-core",
     help="The name of the GitHub organisation where the pipeline will be hosted (default: nf-core)",
 )
-def create(
-    name,
-    description,
-    author,
-    version,
-    force,
-    outdir,
-    template_yaml,
-    plain,
-    organisation,
-):
+@click.pass_context
+def command_create(ctx, name, description, author, version, force, outdir, template_yaml, plain, organisation):
     """
-    DEPRECATED
-    Create a new pipeline using the nf-core template.
-
-    Uses the nf-core template to make a skeleton Nextflow pipeline with all required
-    files, boilerplate code and best-practices.
+    Use `nf-core pipelines create` instead.
     """
     log.warning(
         "The `[magenta]nf-core create[/]` command is deprecated. Use `[magenta]nf-core pipelines create[/]` instead."
     )
-    from nf_core.pipelines.create import PipelineCreateApp
-    from nf_core.pipelines.create.create import PipelineCreate
-
-    if (name and description and author) or (template_yaml):
-        # If all command arguments are used, run without the interactive interface
-        try:
-            create_obj = PipelineCreate(
-                name,
-                description,
-                author,
-                version=version,
-                force=force,
-                outdir=outdir,
-                template_config=template_yaml,
-                organisation=organisation,
-            )
-            create_obj.init_pipeline()
-        except UserWarning as e:
-            log.error(e)
-            sys.exit(1)
-    elif (
-        name
-        or description
-        or author
-        or version != "1.0.0dev"
-        or force
-        or outdir
-        or organisation != "nf-core"
-    ):
-        log.error(
-            "[red]Partial arguments supplied.[/] "
-            "Run without [i]any[/] arguments for an interactive interface, "
-            "or with at least name + description + author to use non-interactively."
-        )
-        sys.exit(1)
-    else:
-        log.info("Launching interactive nf-core pipeline creation tool.")
-        app = PipelineCreateApp()
-        app.run()
-        sys.exit(app.return_code or 0)
+    pipelines_create(ctx, name, description, author, version, force, outdir, template_yaml, organisation)
 
 
 # Main script is being run - launch the CLI

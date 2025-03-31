@@ -75,9 +75,7 @@ class ChooseConfigType(Screen):
             ),
             Center(
                 Markdown(markdown_type_custom),
-                Center(
-                    Button("Pipeline config", id="type_pipeline", variant="primary")
-                ),
+                Center(Button("Pipeline config", id="type_pipeline", variant="primary")),
             ),
             classes="col-2 pipeline-type-grid",
         )

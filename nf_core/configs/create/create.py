@@ -1,5 +1,3 @@
-import json
-
 from nf_core.configs.create.utils import CreateConfig, generate_config_entry
 
 
@@ -49,7 +47,6 @@ class ConfigCreate:
         print(validparams)
 
         with open(filename, "w+") as file:
-
             ## Write params
             if any(validparams):
                 file.write("params {\n")

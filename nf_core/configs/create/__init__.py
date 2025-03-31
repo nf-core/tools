@@ -2,6 +2,9 @@
 
 import logging
 
+import click
+from rich.logging import RichHandler
+
 ## Textual objects
 from textual.app import App
 from textual.widgets import Button
@@ -14,25 +17,20 @@ from nf_core.configs.create.utils import CreateConfig
 from nf_core.configs.create.welcome import WelcomeScreen
 
 ## General utilities
-from nf_core.utils import (
-    CustomLogHandler,
-    LoggingConsole,
-)
+from nf_core.utils import LoggingConsole
 
 ## Logging
-log_handler = CustomLogHandler(
+logger = logging.getLogger(__name__)
+rich_log_handler = RichHandler(
     console=LoggingConsole(classes="log_console"),
+    level=logging.INFO,
     rich_tracebacks=True,
     show_time=False,
     show_path=False,
     markup=True,
+    tracebacks_suppress=[click],
 )
-logging.basicConfig(
-    level="INFO",
-    handlers=[log_handler],
-    format="%(message)s",
-)
-log_handler.setLevel("INFO")
+logger.addHandler(rich_log_handler)
 
 
 ## Main workflow
@@ -62,7 +60,7 @@ class ConfigsCreateApp(App[CreateConfig]):
     CONFIG_TYPE = None
 
     # Log handler
-    LOG_HANDLER = log_handler
+    LOG_HANDLER = rich_log_handler
     # Logging state
     LOGGING_STATE = None
 

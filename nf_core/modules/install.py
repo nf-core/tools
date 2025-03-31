@@ -11,7 +11,7 @@ class ModuleInstall(ComponentInstall):
         remote_url=None,
         branch=None,
         no_pull=False,
-        installed_by=False,
+        installed_by=None,
     ):
         super().__init__(
             pipeline_dir,

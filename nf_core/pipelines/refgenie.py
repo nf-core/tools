@@ -144,14 +144,14 @@ def update_config(rgc):
 
     This function is executed after running 'refgenie pull <genome>/<asset>'
     The refgenie config file is transformed into a nextflow.config file, which is used to
-    overwrited the 'refgenie_genomes.config' file.
+    overwrite the 'refgenie_genomes.config' file.
     The path to the target  config file is inferred from the following options, in order:
 
     - the 'nextflow_config' attribute in the refgenie config file
     - the NXF_REFGENIE_PATH environment variable
     - otherwise defaults to: $NXF_HOME/nf-core/refgenie_genomes.config
 
-    Additionaly, an 'includeConfig' statement is added to the file $NXF_HOME/config
+    Additionally, an 'includeConfig' statement is added to the file $NXF_HOME/config
     """
 
     # Compile nextflow refgenie_genomes.config from refgenie config
@@ -181,13 +181,17 @@ def update_config(rgc):
         log.info("Could not determine path to 'refgenie_genomes.config' file.")
         return False
 
+    if refgenie_genomes_config_file is None:
+        log.info("Could not determine path to 'refgenie_genomes.config' file.")
+        return False
+
     # Save the updated genome config
     try:
         with open(refgenie_genomes_config_file, "w+") as fh:
             fh.write(refgenie_genomes)
         log.info(f"Updated nf-core genomes config: {refgenie_genomes_config_file}")
     except FileNotFoundError:
-        log.warning(f"Could not write to {refgenie_genomes_config_file}")
+        log.info(f"Could not write to {refgenie_genomes_config_file}")
         return False
 
     # Add include statement to NXF_HOME/config

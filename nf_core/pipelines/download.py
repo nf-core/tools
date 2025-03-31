@@ -10,7 +10,8 @@ import subprocess
 import tarfile
 import textwrap
 from datetime import datetime
-from typing import List, Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 from zipfile import ZipFile
 
 import git
@@ -20,9 +21,10 @@ import requests_cache
 import rich
 import rich.progress
 from git.exc import GitCommandError, InvalidGitRepositoryError
-from pkg_resources import parse_version as version_parser
+from packaging.version import Version
 
 import nf_core
+import nf_core.modules.modules_utils
 import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
@@ -130,10 +132,9 @@ class DownloadWorkflow:
         self.compress_type = compress_type
         self.force = force
         self.platform = platform
-        # if flag is not specified, do not assume deliberate choice and prompt config inclusion interactively.
-        # this implies that non-interactive "no" choice is only possible implicitly (e.g. with --platform or if prompt is suppressed by !stderr.is_interactive).
-        # only alternative would have been to make it a parameter with argument, e.g. -d="yes" or -d="no".
-        self.include_configs = True if download_configuration else False if bool(platform) else None
+        self.fullname: Optional[str] = None
+        # downloading configs is not supported for Seqera Platform downloads.
+        self.include_configs = True if download_configuration == "yes" and not bool(platform) else False
         # Additional tags to add to the downloaded pipeline. This enables to mark particular commits or revisions with
         # additional tags, e.g. "stable", "testing", "validated", "production" etc. Since this requires a git-repo, it is only
         # available for the bare / Seqera Platform download.
@@ -160,8 +161,8 @@ class DownloadWorkflow:
         # allows to specify a container library / registry or a respective mirror to download images from
         self.parallel_downloads = parallel_downloads
 
-        self.wf_revisions = {}
-        self.wf_branches = {}
+        self.wf_revisions = []
+        self.wf_branches: Dict[str, Any] = {}
         self.wf_sha = {}
         self.wf_download_url = {}
         self.nf_config = {}
@@ -201,7 +202,7 @@ class DownloadWorkflow:
             raise DownloadError(e) from e
 
         summary_log = [
-            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
+            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0] + ',[' + str(len(self.revision) - 2) + ' more revisions],' + self.revision[-1]}'",
             f"Use containers: '{self.container_system}'",
         ]
         if self.container_system:
@@ -230,7 +231,7 @@ class DownloadWorkflow:
             summary_log.append(f"Enabled for Seqera Platform: '{self.platform}'")
 
         # Check that the outdir doesn't already exist
-        if os.path.exists(self.outdir):
+        if self.outdir is not None and os.path.exists(self.outdir):
             if not self.force:
                 raise DownloadError(
                     f"Output directory '{self.outdir}' already exists (use [red]--force[/] to overwrite)"
@@ -338,7 +339,7 @@ class DownloadWorkflow:
             stderr.print("Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).")
             self.pipeline = nf_core.utils.prompt_remote_pipeline_name(self.wfs)
 
-    def prompt_revision(self):
+    def prompt_revision(self) -> None:
         """
         Prompt for pipeline revision / branch
         Prompt user for revision tag if '--revision' was not set
@@ -373,22 +374,27 @@ class DownloadWorkflow:
                     raise AssertionError(f"No revisions of {self.pipeline} available for download.")
 
     def get_revision_hash(self):
-        """Find specified revision / branch hash"""
+        """Find specified revision / branch / commit hash"""
 
         for revision in self.revision:  # revision is a list of strings, but may be of length 1
             # Branch
             if revision in self.wf_branches.keys():
                 self.wf_sha = {**self.wf_sha, revision: self.wf_branches[revision]}
 
-            # Revision
             else:
+                # Revision
                 for r in self.wf_revisions:
                     if r["tag_name"] == revision:
                         self.wf_sha = {**self.wf_sha, revision: r["tag_sha"]}
                         break
 
-                # Can't find the revisions or branch - throw an error
                 else:
+                    # Commit - full or short hash
+                    if commit_id := nf_core.utils.get_repo_commit(self.pipeline, revision):
+                        self.wf_sha = {**self.wf_sha, revision: commit_id}
+                        continue
+
+                    # Can't find the revisions or branch - throw an error
                     log.info(
                         "Available {} revisions: '{}'".format(
                             self.pipeline,
@@ -396,7 +402,9 @@ class DownloadWorkflow:
                         )
                     )
                     log.info("Available {} branches: '{}'".format(self.pipeline, "', '".join(self.wf_branches.keys())))
-                    raise AssertionError(f"Not able to find revision / branch '{revision}' for {self.pipeline}")
+                    raise AssertionError(
+                        f"Not able to find revision / branch / commit '{revision}' for {self.pipeline}"
+                    )
 
         # Set the outdir
         if not self.outdir:
@@ -697,7 +705,7 @@ class DownloadWorkflow:
         with open(nfconfig_fn, "w") as nfconfig_fh:
             nfconfig_fh.write(nfconfig)
 
-    def find_container_images(self, workflow_directory):
+    def find_container_images(self, workflow_directory: str) -> None:
         """Find container image names for workflow.
 
         Starts by using `nextflow config` to pull out any process.container
@@ -716,7 +724,7 @@ class DownloadWorkflow:
         module_findings = []
 
         # Use linting code to parse the pipeline nextflow config
-        self.nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
+        self.nf_config = nf_core.utils.fetch_wf_config(Path(workflow_directory))
 
         # Find any config variables that look like a container
         for k, v in self.nf_config.items():
@@ -745,7 +753,7 @@ class DownloadWorkflow:
                     self.nf_config is needed, because we need to restart search over raw input
                     if no proper container matches are found.
                     """
-                    config_findings.append((k, v.strip('"').strip("'"), self.nf_config, "Nextflow configs"))
+                    config_findings.append((k, v.strip("'\""), self.nf_config, "Nextflow configs"))
 
         # rectify the container paths found in the config
         # Raw config_findings may yield multiple containers, so better create a shallow copy of the list, since length of input and output may be different ?!?
@@ -838,11 +846,12 @@ class DownloadWorkflow:
         url_regex = (
             r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
         )
+        oras_regex = r"oras:\/\/[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
         # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
         docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
 
         # at this point, we don't have to distinguish anymore, because we will later prioritize direct downloads over Docker URIs.
-        either_url_or_docker = re.compile(f"{url_regex}|{docker_regex}", re.S)
+        either_url_or_docker = re.compile(f"{url_regex}|{oras_regex}|{docker_regex}", re.S)
 
         for _, container_value, search_space, file_path in raw_findings:
             """
@@ -969,7 +978,7 @@ class DownloadWorkflow:
         """
         return self.prioritize_direct_download(cleaned_matches)
 
-    def prioritize_direct_download(self, container_list):
+    def prioritize_direct_download(self, container_list: List[str]) -> List[str]:
         """
         Helper function that takes a list of container images (URLs and Docker URIs),
         eliminates all Docker URIs for which also a URL is contained and returns the
@@ -992,13 +1001,74 @@ class DownloadWorkflow:
         we want to keep it and not replace with with whatever we have now (which might be the Docker URI).
 
         A regex that matches http, r"^$|^http" could thus be used to prioritize the Docker URIs over http Downloads
+
+        We also need to handle a special case: The https:// Singularity downloads from Seqera Containers all end in 'data', although
+        they are not equivalent, e.g.:
+
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data'
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data'
+
+        Lastly, we want to remove at least a few Docker URIs for those modules, that have an oras:// download link.
         """
-        d = {}
+        d: Dict[str, str] = {}
+        seqera_containers_http: List[str] = []
+        seqera_containers_oras: List[str] = []
+        all_others: List[str] = []
+
         for c in container_list:
+            if bool(re.search(r"/data$", c)):
+                seqera_containers_http.append(c)
+            elif bool(re.search(r"^oras://", c)):
+                seqera_containers_oras.append(c)
+            else:
+                all_others.append(c)
+
+        for c in all_others:
             if re.match(r"^$|(?!^http)", d.get(k := re.sub(".*/(.*)", "\\1", c), "")):
                 log.debug(f"{c} matches and will be saved as {k}")
                 d[k] = c
-        return sorted(list(d.values()))
+
+        combined_with_oras = self.reconcile_seqera_container_uris(seqera_containers_oras, list(d.values()))
+
+        # combine deduplicated others (Seqera containers oras, http others and Docker URI others) and Seqera containers http
+        return sorted(list(set(combined_with_oras + seqera_containers_http)))
+
+    @staticmethod
+    def reconcile_seqera_container_uris(prioritized_container_list: List[str], other_list: List[str]) -> List[str]:
+        """
+        Helper function that takes a list of Seqera container URIs,
+        extracts the software string and builds a regex from them to filter out
+        similar containers from the second container list.
+
+        prioritzed_container_list = [
+        ...     "oras://community.wave.seqera.io/library/multiqc:1.25.1--f0e743d16869c0bf",
+        ...     "oras://community.wave.seqera.io/library/multiqc_pip_multiqc-plugins:e1f4877f1515d03c"
+        ... ]
+
+        will be cleaned to
+
+        ['library/multiqc:1.25.1', 'library/multiqc_pip_multiqc-plugins']
+
+        Subsequently, build a regex from those and filter out matching duplicates in other_list:
+        """
+        if not prioritized_container_list:
+            return other_list
+        else:
+            # trim the URIs to the stem that contains the tool string, assign with Walrus operator to account for non-matching patterns
+            trimmed_priority_list = [
+                match.group()
+                for c in set(prioritized_container_list)
+                if (match := re.search(r"library/.*?:[\d.]+", c) if "--" in c else re.search(r"library/[^\s:]+", c))
+            ]
+
+            # build regex
+            prioritized_containers = re.compile("|".join(f"{re.escape(c)}" for c in trimmed_priority_list))
+
+            # filter out matches in other list
+            filtered_containers = [c for c in other_list if not re.search(prioritized_containers, c)]
+
+            # combine prioritized and regular container lists
+            return sorted(list(set(prioritized_container_list + filtered_containers)))
 
     def gather_registries(self, workflow_directory: str) -> None:
         """Fetch the registries from the pipeline config and CLI arguments and store them in a set.
@@ -1007,7 +1077,7 @@ class DownloadWorkflow:
 
         # should exist, because find_container_images() is always called before
         if not self.nf_config:
-            self.nf_config = nf_core.utils.fetch_wf_config(workflow_directory)
+            self.nf_config = nf_core.utils.fetch_wf_config(Path(workflow_directory))
 
         # Select registries defined in pipeline config
         configured_registries = [
@@ -1022,7 +1092,13 @@ class DownloadWorkflow:
                 self.registry_set.add(self.nf_config[registry])
 
         # add depot.galaxyproject.org to the set, because it is the default registry for singularity hardcoded in modules
-        self.registry_set.add("depot.galaxyproject.org")
+        self.registry_set.add("depot.galaxyproject.org/singularity")
+
+        # add community.wave.seqera.io/library to the set to support the new Seqera Docker container registry
+        self.registry_set.add("community.wave.seqera.io/library")
+
+        # add chttps://community-cr-prod.seqera.io/docker/registry/v2/ to the set to support the new Seqera Singularity container registry
+        self.registry_set.add("community-cr-prod.seqera.io/docker/registry/v2")
 
     def symlink_singularity_images(self, image_out_path: str) -> None:
         """Create a symlink for each registry in the registry set that points to the image.
@@ -1039,10 +1115,13 @@ class DownloadWorkflow:
 
         if self.registry_set:
             # Create a regex pattern from the set, in case trimming is needed.
-            trim_pattern = "|".join(f"^{re.escape(registry)}-?" for registry in self.registry_set)
+            trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in self.registry_set)
 
             for registry in self.registry_set:
-                if not os.path.basename(image_out_path).startswith(registry):
+                # Nextflow will convert it like this as well, so we need it mimic its behavior
+                registry = registry.replace("/", "-")
+
+                if not bool(re.search(trim_pattern, os.path.basename(image_out_path))):
                     symlink_name = os.path.join("./", f"{registry}-{os.path.basename(image_out_path)}")
                 else:
                     trimmed_name = re.sub(f"{trim_pattern}", "", os.path.basename(image_out_path))
@@ -1262,7 +1341,7 @@ class DownloadWorkflow:
         # if docker.registry / singularity.registry are set to empty strings at runtime, which can be included in the HPC config profiles easily.
         if self.registry_set:
             # Create a regex pattern from the set of registries
-            trim_pattern = "|".join(f"^{re.escape(registry)}-?" for registry in self.registry_set)
+            trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in self.registry_set)
             # Use the pattern to trim the string
             out_name = re.sub(f"{trim_pattern}", "", out_name)
 
@@ -1344,9 +1423,10 @@ class DownloadWorkflow:
                 log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
                 progress.update(task, description="Copying from cache to target directory")
                 shutil.copyfile(cache_path, out_path)
+                self.symlink_singularity_images(cache_path)  # symlinks inside the cache directory
 
             # Create symlinks to ensure that the images are found even with different registries being used.
-            self.symlink_singularity_images(output_path)
+            self.symlink_singularity_images(out_path)
 
             progress.remove_task(task)
 
@@ -1385,14 +1465,15 @@ class DownloadWorkflow:
         # where the output of 'singularity pull' is first generated before being copied to the NXF_SINGULARITY_CACHDIR.
         # if not defined by the Singularity administrators, then use the temporary directory to avoid storing the images in the work directory.
         if os.environ.get("SINGULARITY_CACHEDIR") is None:
-            os.environ["SINGULARITY_CACHEDIR"] = NFCORE_CACHE_DIR
+            os.environ["SINGULARITY_CACHEDIR"] = str(NFCORE_CACHE_DIR)
 
         # Sometimes, container still contain an explicit library specification, which
         # resulted in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
         # Thus, if an explicit registry is specified, the provided -l value is ignored.
+        # Additionally, check if the container to be pulled is native Singularity: oras:// protocol.
         container_parts = container.split("/")
         if len(container_parts) > 2:
-            address = f"docker://{container}"
+            address = container if container.startswith("oras://") else f"docker://{container}"
             absolute_URI = True
         else:
             address = f"docker://{library}/{container.replace('docker://', '')}"
@@ -1455,13 +1536,14 @@ class DownloadWorkflow:
             log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
             progress.update(task, current_log="Copying from cache to target directory")
             shutil.copyfile(cache_path, out_path)
+            self.symlink_singularity_images(cache_path)  # symlinks inside the cache directory
 
         # Create symlinks to ensure that the images are found even with different registries being used.
-        self.symlink_singularity_images(output_path)
+        self.symlink_singularity_images(out_path)
 
         progress.remove_task(task)
 
-    def compress_download(self) -> None:
+    def compress_download(self):
         """Take the downloaded files and make a compressed .tar.gz archive."""
         log.debug(f"Creating archive: {self.output_filename}")
 
@@ -1669,7 +1751,7 @@ class WorkflowRepo(SyncedRepo):
                 for tag in tags_to_remove:
                     self.repo.delete_tag(tag)
 
-                # switch to a revision that should be kept, because deleting heads fails, if they are checked out (e.g. "master")
+                # switch to a revision that should be kept, because deleting heads fails, if they are checked out (e.g. "main")
                 self.checkout(self.revision[0])
 
                 # delete unwanted heads/branches from repository
@@ -1691,15 +1773,13 @@ class WorkflowRepo(SyncedRepo):
                         self.repo.create_head("latest", "latest")  # create a new head for latest
                         self.checkout("latest")
                     else:
-                        # desired revisions may contain arbitrary branch names that do not correspond to valid sematic versioning patterns.
+                        # desired revisions may contain arbitrary branch names that do not correspond to valid semantic versioning patterns.
                         valid_versions = [
-                            version_parser(v)
-                            for v in desired_revisions
-                            if re.match(r"\d+\.\d+(?:\.\d+)*(?:[\w\-_])*", v)
+                            Version(v) for v in desired_revisions if re.match(r"\d+\.\d+(?:\.\d+)*(?:[\w\-_])*", v)
                         ]
                         # valid versions sorted in ascending order, last will be aliased as "latest".
                         latest = sorted(valid_versions)[-1]
-                        self.repo.create_head("latest", latest)
+                        self.repo.create_head("latest", str(latest))
                         self.checkout(latest)
                     if self.repo.head.is_detached:
                         self.repo.head.reset(index=True, working_tree=True)
@@ -1815,6 +1895,9 @@ class ContainerError(Exception):
             elif re.search(r"manifest\sunknown", line):
                 self.error_type = self.InvalidTagError(self)
                 break
+            elif re.search(r"ORAS\sSIF\simage\sshould\shave\sa\ssingle\slayer", line):
+                self.error_type = self.NoSingularityContainerError(self)
+                break
             elif re.search(r"Image\sfile\salready\sexists", line):
                 self.error_type = self.ImageExistsError(self)
                 break
@@ -1825,8 +1908,8 @@ class ContainerError(Exception):
 
         log.error(self.error_type.message)
         log.info(self.error_type.helpmessage)
-        log.debug(f'Failed command:\n{" ".join(singularity_command)}')
-        log.debug(f'Singularity error messages:\n{"".join(error_msg)}')
+        log.debug(f"Failed command:\n{' '.join(singularity_command)}")
+        log.debug(f"Singularity error messages:\n{''.join(error_msg)}")
 
         raise self.error_type
 
@@ -1877,6 +1960,17 @@ class ContainerError(Exception):
                 f'[bold red]"{self.error_log.container}" already exists at destination and cannot be pulled[/]\n'
             )
             self.helpmessage = f'Saving image of "{self.error_log.container}" failed, because "{self.error_log.out_path}" exists.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.\n'
+            super().__init__(self.message)
+
+    class NoSingularityContainerError(RuntimeError):
+        """The container image is no native Singularity Image Format."""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = (
+                f'[bold red]"{self.error_log.container}" is no valid Singularity Image Format container.[/]\n'
+            )
+            self.helpmessage = f"Pulling \"{self.error_log.container}\" failed, because it appears invalid. To convert from Docker's OCI format, prefix the URI with 'docker://' instead of 'oras://'.\n"
             super().__init__(self.message)
 
     class OtherError(RuntimeError):

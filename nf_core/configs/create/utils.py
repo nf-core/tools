@@ -1,7 +1,5 @@
 """Config creation specific functions and classes"""
 
-import re
-
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import Any, Dict, Iterator, Optional, Union
@@ -32,9 +30,9 @@ CONFIG_ISINFRASTRUCTURE_GLOBAL: bool = True
 class CreateConfig(BaseModel):
     """Pydantic model for the nf-core create config."""
 
-    general_config_type: str = None
-    general_config_name: str = None
-    config_profile_contact: str = None
+    general_config_type: Optional[str] = None
+    general_config_name: Optional[str] = None
+    config_profile_contact: Optional[str] = None
     config_profile_handle: Optional[str] = None
     config_profile_description: Optional[str] = None
     config_profile_url: Optional[str] = None
@@ -95,9 +93,7 @@ class TextInput(Static):
     and validation messages.
     """
 
-    def __init__(
-        self, field_id, placeholder, description, default=None, password=None, **kwargs
-    ) -> None:
+    def __init__(self, field_id, placeholder, description, default=None, password=None, **kwargs) -> None:
         """Initialise the widget with our values.
 
         Pass on kwargs upstream for standard usage."""
@@ -121,14 +117,10 @@ class TextInput(Static):
 
     @on(Input.Changed)
     @on(Input.Submitted)
-    def show_invalid_reasons(
-        self, event: Union[Input.Changed, Input.Submitted]
-    ) -> None:
+    def show_invalid_reasons(self, event: Union[Input.Changed, Input.Submitted]) -> None:
         """Validate the text input and show errors if invalid."""
         if not event.validation_result.is_valid:
-            self.query_one(".validation_msg").update(
-                "\n".join(event.validation_result.failure_descriptions)
-            )
+            self.query_one(".validation_msg").update("\n".join(event.validation_result.failure_descriptions))
         else:
             self.query_one(".validation_msg").update("")
 

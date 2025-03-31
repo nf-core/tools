@@ -1,13 +1,17 @@
 import json
+import logging
 from pathlib import Path
 
 import jsonschema.validators
-import yaml
+import ruamel.yaml
 
 import nf_core.components.components_utils
+from nf_core.components.lint import LintExceptionError
+
+log = logging.getLogger(__name__)
 
 
-def meta_yml(subworkflow_lint_object, subworkflow):
+def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
     """
     Lint a ``meta.yml`` file
 
@@ -25,9 +29,22 @@ def meta_yml(subworkflow_lint_object, subworkflow):
 
     """
     # Read the meta.yml file
+    if subworkflow.meta_yml is None:
+        if allow_missing:
+            subworkflow.warned.append(
+                (
+                    "meta_yml_exists",
+                    "Subworkflow `meta.yml` does not exist",
+                    Path(subworkflow.component_dir, "meta.yml"),
+                )
+            )
+            return
+        raise LintExceptionError("Subworkflow does not have a `meta.yml` file")
+
     try:
         with open(subworkflow.meta_yml) as fh:
-            meta_yaml = yaml.safe_load(fh)
+            yaml = ruamel.yaml.YAML(typ="safe")
+            meta_yaml = yaml.load(fh)
         subworkflow.passed.append(("meta_yml_exists", "Subworkflow `meta.yml` exists", subworkflow.meta_yml))
     except FileNotFoundError:
         subworkflow.failed.append(("meta_yml_exists", "Subworkflow `meta.yml` does not exist", subworkflow.meta_yml))
@@ -46,7 +63,7 @@ def meta_yml(subworkflow_lint_object, subworkflow):
         if len(e.path) > 0:
             hint = f"\nCheck the entry for `{e.path[0]}`."
         if e.message.startswith("None is not of type 'object'") and len(e.path) > 2:
-            hint = f"\nCheck that the child entries of {e.path[0]+'.'+e.path[2]} are indented correctly."
+            hint = f"\nCheck that the child entries of {str(e.path[0]) + '.' + str(e.path[2])} are indented correctly."
         subworkflow.failed.append(
             (
                 "meta_yml_valid",
@@ -65,6 +82,8 @@ def meta_yml(subworkflow_lint_object, subworkflow):
                     subworkflow.passed.append(("meta_input", f"`{input}` specified", subworkflow.meta_yml))
                 else:
                     subworkflow.failed.append(("meta_input", f"`{input}` missing in `meta.yml`", subworkflow.meta_yml))
+        else:
+            log.debug(f"No inputs specified in subworkflow `main.nf`: {subworkflow.component_name}")
 
         if "output" in meta_yaml:
             meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
@@ -75,6 +94,8 @@ def meta_yml(subworkflow_lint_object, subworkflow):
                     subworkflow.failed.append(
                         ("meta_output", f"`{output}` missing in `meta.yml`", subworkflow.meta_yml)
                     )
+        else:
+            log.debug(f"No outputs specified in subworkflow `main.nf`: {subworkflow.component_name}")
 
         # confirm that the name matches the process name in main.nf
         if meta_yaml["name"].upper() == subworkflow.workflow_name:
@@ -89,13 +110,13 @@ def meta_yml(subworkflow_lint_object, subworkflow):
             )
 
         # confirm that all included components in ``main.nf`` are specified in ``meta.yml``
-        included_components = nf_core.components.components_utils.get_components_to_install(subworkflow.component_dir)
-        included_components = (
-            included_components[0] + included_components[1]
-        )  # join included modules and included subworkflows in a single list
+        included_components_ = nf_core.components.components_utils.get_components_to_install(subworkflow.component_dir)
+        included_components = included_components_[0] + included_components_[1]
+        # join included modules and included subworkflows in a single list
+        included_components_names = [component["name"] for component in included_components]
         if "components" in meta_yaml:
             meta_components = [x for x in meta_yaml["components"]]
-            for component in set(included_components):
+            for component in set(included_components_names):
                 if component in meta_components:
                     subworkflow.passed.append(
                         (

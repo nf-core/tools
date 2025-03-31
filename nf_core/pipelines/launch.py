@@ -7,6 +7,7 @@ import os
 import re
 import subprocess
 import webbrowser
+from pathlib import Path
 
 import questionary
 from rich.console import Console
@@ -46,7 +47,7 @@ class Launch:
         self.schema_obj = None
         self.use_params_file = False if command_only else True
         self.params_in = params_in
-        self.params_out = params_out if params_out else os.path.join(os.getcwd(), "nf-params.json")
+        self.params_out = params_out if params_out else Path.cwd() / "nf-params.json"
         self.save_all = save_all
         self.show_hidden = show_hidden
         self.web_schema_launch_url = url if url else "https://nf-co.re/launch"
@@ -262,15 +263,21 @@ class Launch:
 
     def merge_nxf_flag_schema(self):
         """Take the Nextflow flag schema and merge it with the pipeline schema"""
-        # Add the coreNextflow subschema to the schema definitions
-        if "definitions" not in self.schema_obj.schema:
-            self.schema_obj.schema["definitions"] = {}
-        self.schema_obj.schema["definitions"].update(self.nxf_flag_schema)
-        # Add the new defintion to the allOf key so that it's included in validation
-        # Put it at the start of the list so that it comes first
         if "allOf" not in self.schema_obj.schema:
             self.schema_obj.schema["allOf"] = []
-        self.schema_obj.schema["allOf"].insert(0, {"$ref": "#/definitions/coreNextflow"})
+        # Add the coreNextflow subschema to the schema definitions
+        if "$defs" in self.schema_obj.schema or "definitions" not in self.schema_obj.schema:
+            if "$defs" not in self.schema_obj.schema:
+                self.schema_obj["$defs"] = {}
+            self.schema_obj.schema["$defs"].update(self.nxf_flag_schema)
+            self.schema_obj.schema["allOf"].insert(0, {"$ref": "#/$defs/coreNextflow"})
+
+        if "definitions" in self.schema_obj.schema:
+            self.schema_obj.schema["definitions"] = {}
+            self.schema_obj.schema["definitions"].update(self.nxf_flag_schema)
+            self.schema_obj.schema["allOf"].insert(0, {"$ref": "#/definitions/coreNextflow"})
+        # Add the new definition to the allOf key so that it's included in validation
+        # Put it at the start of the list so that it comes first
 
     def prompt_web_gui(self):
         """Ask whether to use the web-based or cli wizard to collect params"""
@@ -309,7 +316,7 @@ class Launch:
                 raise AssertionError('"api_url" not in web_response')
             if "web_url" not in web_response:
                 raise AssertionError('"web_url" not in web_response')
-            # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatability.
+            # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatibility.
             if web_response["status"] != "recieved":
                 raise AssertionError(
                     f'web_response["status"] should be "recieved", but it is "{web_response["status"]}"'
@@ -378,7 +385,8 @@ class Launch:
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
             questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
-        for _, definition in self.schema_obj.schema.get("definitions", {}).items():
+        definitions_schemas = self.schema_obj.schema.get("$defs", self.schema_obj.schema.get("definitions", {})).items()
+        for _, definition in definitions_schemas:
             for param_id, param_obj in definition.get("properties", {}).items():
                 questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
@@ -398,9 +406,10 @@ class Launch:
         """Go through the pipeline schema and prompt user to change defaults"""
         answers = {}
         # Start with the subschema in the definitions - use order of allOf
+        definitions_schemas = self.schema_obj.schema.get("$defs", self.schema_obj.schema.get("definitions", {})).items()
         for allOf in self.schema_obj.schema.get("allOf", []):
             d_key = allOf["$ref"][14:]
-            answers.update(self.prompt_group(d_key, self.schema_obj.schema["definitions"][d_key]))
+            answers.update(self.prompt_group(d_key, definitions_schemas[d_key]))
 
         # Top level schema params
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
@@ -425,7 +434,7 @@ class Launch:
         question = self.single_param_to_questionary(param_id, param_obj, answers)
         answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
 
-        # If required and got an empty reponse, ask again
+        # If required and got an empty response, ask again
         while isinstance(answer[param_id], str) and answer[param_id].strip() == "" and is_required:
             log.error(f"'--{param_id}' is required")
             answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
@@ -448,7 +457,7 @@ class Launch:
         Prompt for edits to a group of parameters (subschema in 'definitions')
 
         Args:
-          group_id: Paramater ID (string)
+          group_id: Parameter ID (string)
           group_obj: JSON Schema keys (dict)
 
         Returns:
@@ -697,7 +706,7 @@ class Launch:
             # Write the user selection to a file and run nextflow with that
             if self.use_params_file:
                 dump_json_with_prettier(self.params_out, self.schema_obj.input_params)
-                self.nextflow_cmd += f' -params-file "{os.path.relpath(self.params_out)}"'
+                self.nextflow_cmd += f' -params-file "{Path(self.params_out)}"'
 
             # Call nextflow with a list of command line flags
             else:

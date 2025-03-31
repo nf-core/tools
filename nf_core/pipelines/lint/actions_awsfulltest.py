@@ -1,9 +1,10 @@
-import os
+from pathlib import Path
+from typing import Dict, List
 
 import yaml
 
 
-def actions_awsfulltest(self):
+def actions_awsfulltest(self) -> Dict[str, List[str]]:
     """Checks the GitHub Actions awsfulltest is valid.
 
     In addition to small test datasets run on GitHub Actions, we provide the possibility of testing the pipeline on full size datasets on AWS.
@@ -29,8 +30,8 @@ def actions_awsfulltest(self):
     warned = []
     failed = []
 
-    fn = os.path.join(self.wf_path, ".github", "workflows", "awsfulltest.yml")
-    if os.path.isfile(fn):
+    fn = Path(self.wf_path, ".github", "workflows", "awsfulltest.yml")
+    if fn.is_file():
         try:
             with open(fn) as fh:
                 wf = yaml.safe_load(fh)
@@ -41,9 +42,11 @@ def actions_awsfulltest(self):
 
         # Check that the action is only turned on for published releases
         try:
-            if wf[True]["release"]["types"] != ["published"]:
+            if wf[True]["pull_request_review"]["types"] != ["submitted"]:
                 raise AssertionError()
             if "workflow_dispatch" not in wf[True]:
+                raise AssertionError()
+            if wf[True]["release"]["types"] != ["published"]:
                 raise AssertionError()
         except (AssertionError, KeyError, TypeError):
             failed.append("`.github/workflows/awsfulltest.yml` is not triggered correctly")
