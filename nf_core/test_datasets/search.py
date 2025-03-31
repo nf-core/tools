@@ -14,6 +14,15 @@ stdout = rich.console.Console(force_terminal=rich_force_colors())
 
 
 def search_datasets(maybe_branch, generate_nf_path, generate_dl_url, ignored_file_prefixes):
+    """
+    Search all files on a given branch in the remote nf-core/testdatasets repository on github
+    with an interactive autocompleting prompt and print the file matching the query.
+
+    Specifying a branch is required. If an empty string or None is specified as a branch,
+    the user is prompted to selecte a branch as well.
+
+    The resulting file can optionally be parsed as a nextflow path or a url for downloading
+    """
     branch, all_branches = get_or_prompt_branch(maybe_branch)
 
     stdout.print("Searching files on branch: ", branch)
