@@ -51,11 +51,11 @@ def get_remote_branch_names():
         branches += [MODULES_BRANCH_NAME]  # modules test-datasets branch
 
     except requests.exceptions.RequestException as e:
-        log.error("Error while handling request to url {gh_api_url}", e)
+        log.error(f"Error while handling request to url {gh_api_urls.get_pipelines_list_url()}", e)
     except KeyError as e:
         log.error("Error parsing the list of branches received from Github API", e)
     except json.decoder.JSONDecodeError as e:
-        log.error("Error parsing the list of branches received from Github API at url {response.url} as json", e)
+        log.error(f"Error parsing the list of branches received from Github API at url {response.url} as json", e)
 
     return branches
 
@@ -95,10 +95,10 @@ def get_remote_tree_for_branch(branch, only_files=True, ignored_prefixes=[]):
                 repo_files.append(node[gh_filetree_name_key])
 
     except requests.exceptions.RequestException as e:
-        log.error("Error while handling request to url {gh_api_url}", e)
+        log.error(f"Error while handling request to url {gh_api_url.get_remote_tree_url_for_branch(branch)}", e)
 
     except json.decoder.JSONDecodeError as e:
-        log.error("Error parsing the repository filetree received from Github API at url {response.url} as json", e)
+        log.error(f"Error parsing the repository filetree received from Github API at url {response.url} as json", e)
 
     return repo_files
 
