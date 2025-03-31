@@ -1791,7 +1791,7 @@ def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url):
 @click.pass_context
 @click.option("-b", "--branch", type=str, help="Branch in the test-datasets repository to reduce search to")
 @click.option(
-    "-g",
+    "-p",
     "--generate-nf-path",
     is_flag=True,
     default=False,
