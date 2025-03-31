@@ -154,7 +154,7 @@ def create_download_url(branch: str, path: str) -> str:
     return gh_api_url.get_file_download_url(branch, path)
 
 
-def get_or_prompt_branch(maybe_branch) -> tuple[str, list[str]]:
+def get_or_prompt_branch(maybe_branch: str) -> tuple[str, list[str]]:
     """
     If branch is given, return a tuple of (maybe_branch, empty_list) else
     prompt the user to enter a branch name and return (branch_name, all_branches)
