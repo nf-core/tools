@@ -16,23 +16,23 @@ MODULES_BRANCH_NAME = "modules"
 
 @dataclass
 class GithubApiEndpoints:
-    gh_api_base_url = "https://api.github.com"
+    gh_api_base_url: str = "https://api.github.com"
     gh_orga: str = "nf-core"
     gh_repo: str = "test-datasets"
 
-    def get_pipelines_list_url(self):
+    def get_pipelines_list_url(self) -> str:
         return "https://raw.githubusercontent.com/nf-core/website/refs/heads/main/public/pipeline_names.json"
 
-    def get_remote_tree_url_for_branch(self, branch):
+    def get_remote_tree_url_for_branch(self, branch: str) -> str:
         url = f"{self.gh_api_base_url}/repos/{self.gh_orga}/{self.gh_repo}/git/trees/{branch}?recursive=1"
         return url
 
-    def get_file_download_url(self, branch, path):
+    def get_file_download_url(self, branch: str, path: str) -> str:
         url = f"https://raw.githubusercontent.com/{self.gh_orga}/{self.gh_repo}/refs/heads/{branch}/{path}"
         return url
 
 
-def get_remote_branch_names():
+def get_remote_branch_names() -> list[str]:
     """
     List all branch names on the remote github repository for test-datasets for pipelines or modules.
     """
@@ -60,7 +60,7 @@ def get_remote_branch_names():
     return branches
 
 
-def get_remote_tree_for_branch(branch, only_files=True, ignored_prefixes=[]):
+def get_remote_tree_for_branch(branch: str, only_files: bool = True, ignored_prefixes: list[str] = []) -> list[str]:
     """
     For a given branch name, return the file tree by querying the github API
     at the endpoint at `/repos/nf-core/test-datasets/git/trees/`
@@ -104,16 +104,16 @@ def get_remote_tree_for_branch(branch, only_files=True, ignored_prefixes=[]):
 
 
 def list_files_by_branch(
-    branch=None,
-    branches=[],
-    ignored_file_prefixes=[
+    branch: str = "",
+    branches: list[str] = [],
+    ignored_file_prefixes: list[str] = [
         ".",
         "CITATION",
         "LICENSE",
         "README",
         "docs",
     ],
-):
+) -> dict[str, list[str]]:
     """
     Lists files for all branches in the test-datasets github repo.
     Returns dictionary with branchnames as keys and file-lists as values
@@ -136,7 +136,7 @@ def list_files_by_branch(
     return tree
 
 
-def create_pretty_nf_path(path, is_module_dataset):
+def create_pretty_nf_path(path: str, is_module_dataset: bool) -> str:
     """
     Generates a line of nexflow code with the full file path including a test data base path.
     """
@@ -146,7 +146,7 @@ def create_pretty_nf_path(path, is_module_dataset):
     return out
 
 
-def create_download_url(branch, path):
+def create_download_url(branch: str, path: str) -> str:
     """
     Generate a github API download url for the given path and branch
     """
@@ -154,7 +154,7 @@ def create_download_url(branch, path):
     return gh_api_url.get_file_download_url(branch, path)
 
 
-def get_or_prompt_branch(maybe_branch):
+def get_or_prompt_branch(maybe_branch) -> tuple[str, list[str]]:
     """
     If branch is given, return a tuple of (maybe_branch, empty_list) else
     prompt the user to enter a branch name and return (branch_name, all_branches)
