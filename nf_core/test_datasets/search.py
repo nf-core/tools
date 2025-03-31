@@ -13,7 +13,13 @@ from nf_core.utils import nfcore_question_style, rich_force_colors
 stdout = rich.console.Console(force_terminal=rich_force_colors())
 
 
-def search_datasets(maybe_branch, generate_nf_path, generate_dl_url, ignored_file_prefixes, plain_text_output=False):
+def search_datasets(
+    maybe_branch: str = "",
+    generate_nf_path: bool = False,
+    generate_dl_url: bool = False,
+    ignored_file_prefixes: list[str] = [],
+    plain_text_output: bool = False,
+) -> None:
     """
     Search all files on a given branch in the remote nf-core/testdatasets repository on github
     with an interactive autocompleting prompt and print the file matching the query.

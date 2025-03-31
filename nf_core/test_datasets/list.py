@@ -15,7 +15,7 @@ from nf_core.utils import rich_force_colors
 stdout = rich.console.Console(force_terminal=rich_force_colors())
 
 
-def list_dataset_branches(plain_text_output=False):
+def list_dataset_branches(plain_text_output: bool = False) -> None:
     """
     List all branches on the nf-core/test-datasets repository.
     Only lists test data and module test data based on the curated list
@@ -34,7 +34,13 @@ def list_dataset_branches(plain_text_output=False):
         stdout.print(table)
 
 
-def list_datasets(maybe_branch, generate_nf_path, generate_dl_url, ignored_file_prefixes, plain_text_output=False):
+def list_datasets(
+    maybe_branch: str = "",
+    generate_nf_path: bool = False,
+    generate_dl_url: bool = False,
+    ignored_file_prefixes: list[str] = [],
+    plain_text_output: bool = False,
+) -> None:
     """
     List all datasets for the given branch on the nf-core/test-datasets repository.
     If the given branch is empty or None, the user is prompted to enter one.
