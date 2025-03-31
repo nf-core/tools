@@ -4,6 +4,7 @@ import os
 import questionary
 import rich
 
+from nf_core.test_datasets.list import list_datasets
 from nf_core.test_datasets.test_datasets_utils import (
     MODULES_BRANCH_NAME,
     create_download_url,
@@ -31,7 +32,7 @@ def test_datasets_list_branches(ctx):
     """
     List all branches on the nf-core/test-datasets repository.
     Only lists test data and module test data based on the curated list
-    of pipeline names [on the website](https://raw.githubusercontent.com/nf-core/website/refs/heads/main/public/pipeline_names.json)
+    of pipeline names [on the website](https://raw.githubusercontent.com/nf-core/website/refs/heads/main/public/pipeline_names.json).
     """
     remote_branches = get_remote_branch_names()
     out = os.linesep.join(remote_branches)
@@ -41,27 +42,9 @@ def test_datasets_list_branches(ctx):
 def test_datasets_list_remote(ctx, maybe_branch, generate_nf_path, generate_dl_url):
     """
     List all files on a given branch in the remote nf-core/testdatasets repository on github.
-    Specifying a branch is required.
     The resulting files can be parsed as a nextflow path or a url for downloading.
     """
-    branch, all_branches = get_or_prompt_branch(maybe_branch)
-
-    tree = list_files_by_branch(branch, all_branches, IGNORED_FILE_PREFIXES)
-    num_branches = len(tree.keys())
-
-    out = ""
-    for b in tree.keys():
-        branch_info = f"(Branch: {b})" if num_branches > 1 else ""
-        files = sorted(tree[b])
-        for f in files:
-            if generate_nf_path:
-                out += branch_info + create_pretty_nf_path(f, branch == MODULES_BRANCH_NAME) + os.linesep
-            elif generate_dl_url:
-                out += branch_info + create_download_url(branch, f) + os.linesep
-            else:
-                out += branch_info + f + os.linesep
-
-    stdout.print(out)
+    list_datasets(maybe_branch, generate_nf_path, generate_dl_url, ignored_file_prefixes=IGNORED_FILE_PREFIXES)
 
 
 def test_datasets_search(ctx, maybe_branch, generate_nf_path, generate_dl_url):
