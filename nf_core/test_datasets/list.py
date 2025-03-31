@@ -15,18 +15,26 @@ from nf_core.utils import rich_force_colors
 stdout = rich.console.Console(force_terminal=rich_force_colors())
 
 
-def list_dataset_branches():
+def list_dataset_branches(plain_text_output=False):
     """
     List all branches on the nf-core/test-datasets repository.
     Only lists test data and module test data based on the curated list
     of pipeline names [on the website](https://raw.githubusercontent.com/nf-core/website/refs/heads/main/public/pipeline_names.json).
     """
     remote_branches = get_remote_branch_names()
-    out = os.linesep.join(remote_branches)
-    stdout.print(out)
+
+    if plain_text_output:
+        out = os.linesep.join(remote_branches)
+        stdout.print(out)
+    else:
+        table = rich.table.Table()
+        table.add_column("Test-Dataset Branches")
+        for b in remote_branches:
+            table.add_row(b)
+        stdout.print(table)
 
 
-def list_datasets(maybe_branch, generate_nf_path, generate_dl_url, ignored_file_prefixes):
+def list_datasets(maybe_branch, generate_nf_path, generate_dl_url, ignored_file_prefixes, plain_text_output=False):
     """
     List all datasets for the given branch on the nf-core/test-datasets repository.
     If the given branch is empty or None, the user is prompted to enter one.
@@ -39,18 +47,31 @@ def list_datasets(maybe_branch, generate_nf_path, generate_dl_url, ignored_file_
     branch, all_branches = get_or_prompt_branch(maybe_branch)
 
     tree = list_files_by_branch(branch, all_branches, ignored_file_prefixes)
-    num_branches = len(tree.keys())
 
-    out = ""
+    out = []
     for b in tree.keys():
-        branch_info = f"(Branch: {b})" if num_branches > 1 else ""
         files = sorted(tree[b])
         for f in files:
             if generate_nf_path:
-                out += branch_info + create_pretty_nf_path(f, branch == MODULES_BRANCH_NAME) + os.linesep
+                out.append(create_pretty_nf_path(f, branch == MODULES_BRANCH_NAME))
             elif generate_dl_url:
-                out += branch_info + create_download_url(branch, f) + os.linesep
+                out.append(create_download_url(branch, f))
             else:
-                out += branch_info + f + os.linesep
+                out.append(f)
 
-    stdout.print(out)
+    if plain_text_output:
+        stdout.print(os.linesep.join(out))
+
+    else:
+        table = rich.table.Table()
+        if generate_nf_path:
+            table.add_column("Nextflow Import")
+        elif generate_dl_url:
+            table.add_column("Download URL")
+        else:
+            table.add_column("File")
+
+        for el in out:
+            table.add_row(el)
+
+        stdout.print(table)

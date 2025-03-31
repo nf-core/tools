@@ -13,7 +13,7 @@ from nf_core.utils import nfcore_question_style, rich_force_colors
 stdout = rich.console.Console(force_terminal=rich_force_colors())
 
 
-def search_datasets(maybe_branch, generate_nf_path, generate_dl_url, ignored_file_prefixes):
+def search_datasets(maybe_branch, generate_nf_path, generate_dl_url, ignored_file_prefixes, plain_text_output=False):
     """
     Search all files on a given branch in the remote nf-core/testdatasets repository on github
     with an interactive autocompleting prompt and print the file matching the query.
@@ -45,5 +45,13 @@ def search_datasets(maybe_branch, generate_nf_path, generate_dl_url, ignored_fil
         stdout.print(create_pretty_nf_path(selection, branch == MODULES_BRANCH_NAME))
     elif generate_dl_url:
         stdout.print(create_download_url(branch, selection))
-    else:
+    elif plain_text_output:
         stdout.print(selection)
+        stdout.print(create_pretty_nf_path(selection, branch == MODULES_BRANCH_NAME))
+        stdout.print(create_download_url(branch, selection))
+    else:
+        table = rich.table.Table(show_header=False)
+        table.add_row("File Name:", selection)
+        table.add_row("Nextflow Import:", create_pretty_nf_path(selection, branch == MODULES_BRANCH_NAME))
+        table.add_row("Download Link:", create_download_url(branch, selection))
+        stdout.print(table)
