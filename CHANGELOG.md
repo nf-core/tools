@@ -55,6 +55,7 @@
 - Changing retrieval of file extension from EDAM ([#3512](https://github.com/nf-core/tools/pull/3512))
 - Refactor adding EDAM ontologies and allowing detect more patterns (e.g., versions.yml) ([#3519](https://github.com/nf-core/tools/pull/3519))
 - Add offline configs test action ([#3524](https://github.com/nf-core/tools/pull/3524))
+- Fix indentation in included_configs API docs ([#3523](https://github.com/nf-core/tools/pull/3523))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
