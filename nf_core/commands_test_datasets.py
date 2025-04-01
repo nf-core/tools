@@ -1,5 +1,6 @@
 import logging
 
+import click
 import rich
 
 from nf_core.test_datasets.list import list_dataset_branches, list_datasets
@@ -19,7 +20,7 @@ IGNORED_FILE_PREFIXES = [
 ]
 
 
-def test_datasets_list_branches(ctx):
+def test_datasets_list_branches(ctx: click.Context):
     """
     List all branches on the nf-core/test-datasets repository.
     Only lists test data and module test data based on the curated list
@@ -28,7 +29,7 @@ def test_datasets_list_branches(ctx):
     list_dataset_branches()
 
 
-def test_datasets_list_remote(ctx, maybe_branch, generate_nf_path, generate_dl_url):
+def test_datasets_list_remote(ctx: click.Context, maybe_branch: str, generate_nf_path: bool, generate_dl_url: bool):
     """
     List all files on a given branch in the remote nf-core/testdatasets repository on github.
     The resulting files can be parsed as a nextflow path or a url for downloading.
@@ -36,7 +37,7 @@ def test_datasets_list_remote(ctx, maybe_branch, generate_nf_path, generate_dl_u
     list_datasets(maybe_branch, generate_nf_path, generate_dl_url, IGNORED_FILE_PREFIXES)
 
 
-def test_datasets_search(ctx, maybe_branch, generate_nf_path, generate_dl_url):
+def test_datasets_search(ctx: click.Context, maybe_branch: str, generate_nf_path: bool, generate_dl_url: bool):
     """
     Search all files on a given branch in the remote nf-core/testdatasets repository on github
     with an interactive autocompleting prompt and print the file matching the query.
