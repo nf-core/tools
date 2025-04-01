@@ -54,6 +54,7 @@
 - Update dead link ([#3505](https://github.com/nf-core/tools/pull/3505))
 - Changing retrieval of file extension from EDAM ([#3512](https://github.com/nf-core/tools/pull/3512))
 - Refactor adding EDAM ontologies and allowing detect more patterns (e.g., versions.yml) ([#3519](https://github.com/nf-core/tools/pull/3519))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.11.2 ([#3521](https://github.com/nf-core/tools/pull/3521))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
