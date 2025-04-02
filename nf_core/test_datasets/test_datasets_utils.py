@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import questionary
 import requests
 
-from nf_core.utils import gh_api, nfcore_question_style
+from nf_core.utils import nfcore_question_style
 
 log = logging.getLogger(__name__)
 
@@ -37,8 +37,8 @@ def get_remote_branch_names() -> list[str]:
     List all branch names on the remote github repository for test-datasets for pipelines or modules.
     """
     try:
-        gh_api_urls = GithubApiEndpoints(gh_repo="test-datasets")
-        response = gh_api.get(gh_api_urls.get_pipelines_list_url())
+        url = GithubApiEndpoints().get_pipelines_list_url()
+        response = requests.get(url)
         resp_json = response.json()
 
         if not response.ok:
@@ -51,7 +51,7 @@ def get_remote_branch_names() -> list[str]:
         branches += [MODULES_BRANCH_NAME]  # modules test-datasets branch
 
     except requests.exceptions.RequestException as e:
-        log.error(f"Error while handling request to url {gh_api_urls.get_pipelines_list_url()}", e)
+        log.error(f"Error while handling request to url {url}", e)
     except KeyError as e:
         log.error("Error parsing the list of branches received from Github API", e)
     except json.decoder.JSONDecodeError as e:
@@ -72,7 +72,7 @@ def get_remote_tree_for_branch(branch: str, only_files: bool = True, ignored_pre
 
     try:
         gh_api_url = GithubApiEndpoints(gh_repo="test-datasets")
-        response = gh_api.get(gh_api_url.get_remote_tree_url_for_branch(branch))
+        response = requests.get(gh_api_url.get_remote_tree_url_for_branch(branch))
 
         if not response.ok:
             log.error(
