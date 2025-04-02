@@ -1,7 +1,7 @@
 import json
 import logging
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import questionary
 import requests
@@ -114,7 +114,7 @@ def list_files_by_branch(
         "README",
         "docs",
     ],
-) -> dict[str, List[str]]:
+) -> Dict[str, List[str]]:
     """
     Lists files for all branches in the test-datasets github repo.
     Returns dictionary with branchnames as keys and file-lists as values
