@@ -87,6 +87,9 @@ class TestTestDatasetsUtils(unittest.TestCase):
     def setUp(self):
         self.gh_urls = GithubApiEndpoints(gh_orga="nf-core", gh_repo="test-datasets")
 
+    def test_modules_branch_name_changed(self):
+        self.assertEqual(MODULES_BRANCH_NAME, "modules")
+
     def test_modules_branch_exists(self):
         url = self.gh_urls.get_remote_tree_url_for_branch(MODULES_BRANCH_NAME)
         resp = requests.get(url)
