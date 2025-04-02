@@ -9,12 +9,13 @@ from rich.logging import RichHandler
 from textual.app import App
 from textual.widgets import Button
 
+from nf_core.configs.create import utils
+
 ## nf-core question page (screen) imports
 from nf_core.configs.create.basicdetails import BasicDetails
 from nf_core.configs.create.configtype import ChooseConfigType
 from nf_core.configs.create.final import FinalScreen
 from nf_core.configs.create.nfcorequestion import ChooseNfcoreConfig
-from nf_core.configs.create.utils import ConfigsCreateConfig
 from nf_core.configs.create.welcome import WelcomeScreen
 
 ## General utilities
@@ -35,7 +36,7 @@ logger.addHandler(rich_log_handler)
 
 
 ## Main workflow
-class ConfigsCreateApp(App[ConfigsCreateConfig]):
+class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
     """A Textual app to create nf-core configs."""
 
     CSS_PATH = "../../textual.tcss"
@@ -56,11 +57,11 @@ class ConfigsCreateApp(App[ConfigsCreateConfig]):
     }
 
     # Initialise config as empty
-    TEMPLATE_CONFIG = ConfigsCreateConfig()
+    TEMPLATE_CONFIG = utils.ConfigsCreateConfig()
 
     # Tracking variables
     CONFIG_TYPE = None
-    NFCORE_CONFIG = None
+    NFCORE_CONFIG = True
 
     # Log handler
     LOG_HANDLER = rich_log_handler
@@ -80,12 +81,14 @@ class ConfigsCreateApp(App[ConfigsCreateConfig]):
             self.push_screen("nfcore_question")
         elif event.button.id == "type_nfcore":
             self.NFCORE_CONFIG = True
+            utils.NFCORE_CONFIG_GLOBAL = True
             self.push_screen("basic_details")
         elif event.button.id == "type_pipeline":
             self.CONFIG_TYPE = "pipeline"
             self.push_screen("nfcore_question")
         elif event.button.id == "type_custom":
             self.NFCORE_CONFIG = False
+            utils.NFCORE_CONFIG_GLOBAL = False
             self.push_screen("basic_details")
         ## General options
         if event.button.id == "close_app":
