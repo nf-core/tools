@@ -13,7 +13,7 @@ from textual.widgets import Button
 from nf_core.configs.create.basicdetails import BasicDetails
 from nf_core.configs.create.configtype import ChooseConfigType
 from nf_core.configs.create.final import FinalScreen
-from nf_core.configs.create.utils import CreateConfig
+from nf_core.configs.create.utils import ConfigsCreateConfig
 from nf_core.configs.create.welcome import WelcomeScreen
 
 ## General utilities
@@ -34,7 +34,7 @@ logger.addHandler(rich_log_handler)
 
 
 ## Main workflow
-class ConfigsCreateApp(App[CreateConfig]):
+class ConfigsCreateApp(App[ConfigsCreateConfig]):
     """A Textual app to create nf-core configs."""
 
     CSS_PATH = "../../textual.tcss"
@@ -47,14 +47,14 @@ class ConfigsCreateApp(App[CreateConfig]):
 
     ## New question screens (sections) loaded here
     SCREENS = {
-        "welcome": WelcomeScreen(),
-        "choose_type": ChooseConfigType(),
-        "basic_details": BasicDetails(),
-        "final": FinalScreen(),
+        "welcome": WelcomeScreen,
+        "choose_type": ChooseConfigType,
+        "basic_details": BasicDetails,
+        "final": FinalScreen,
     }
 
     # Initialise config as empty
-    TEMPLATE_CONFIG = CreateConfig()
+    TEMPLATE_CONFIG = ConfigsCreateConfig()
 
     # Tracking variables
     CONFIG_TYPE = None

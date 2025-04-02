@@ -18,7 +18,7 @@ import yaml
 import nf_core
 import nf_core.pipelines.schema
 import nf_core.utils
-from nf_core.pipelines.create.utils import CreateConfig, features_yml_path, load_features_yaml
+from nf_core.pipelines.create.utils import PipelinesCreateConfig, features_yml_path, load_features_yaml
 from nf_core.pipelines.create_logo import create_logo
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 from nf_core.pipelines.rocrate import ROCrate
@@ -39,7 +39,7 @@ class PipelineCreate:
         force (bool): Overwrites a given workflow directory with the same name. Defaults to False. Used for tests and sync command.
             May the force be with you.
         outdir (str): Path to the local output directory.
-        template_config (str|CreateConfig): Path to template.yml file for pipeline creation settings. or pydantic model with the customisation for pipeline creation settings.
+        template_config (str|PipelinesCreateConfig): Path to template.yml file for pipeline creation settings. or pydantic model with the customisation for pipeline creation settings.
         organisation (str): Name of the GitHub organisation to create the pipeline. Will be the prefix of the pipeline.
         from_config_file (bool): If true the pipeline will be created from the `.nf-core.yml` config file. Used for tests and sync command.
         default_branch (str): Specifies the --initial-branch name.
@@ -54,21 +54,21 @@ class PipelineCreate:
         no_git: bool = False,
         force: bool = False,
         outdir: Optional[Union[Path, str]] = None,
-        template_config: Optional[Union[CreateConfig, str, Path]] = None,
+        template_config: Optional[Union[PipelinesCreateConfig, str, Path]] = None,
         organisation: str = "nf-core",
         from_config_file: bool = False,
         default_branch: str = "master",
         is_interactive: bool = False,
     ) -> None:
-        if isinstance(template_config, CreateConfig):
+        if isinstance(template_config, PipelinesCreateConfig):
             self.config = template_config
         elif from_config_file:
             # Try reading config file
             try:
                 _, config_yml = nf_core.utils.load_tools_config(outdir if outdir else Path().cwd())
-                # Obtain a CreateConfig object from `.nf-core.yml` config file
+                # Obtain a PipelinesCreateConfig object from `.nf-core.yml` config file
                 if config_yml is not None and getattr(config_yml, "template", None) is not None:
-                    self.config = CreateConfig(**config_yml["template"].model_dump(exclude_none=True))
+                    self.config = PipelinesCreateConfig(**config_yml["template"].model_dump(exclude_none=True))
                 else:
                     raise UserWarning("The template configuration was not provided in '.nf-core.yml'.")
                 # Update the output directory
@@ -78,7 +78,7 @@ class PipelineCreate:
         elif (name and description and author) or (
             template_config and (isinstance(template_config, str) or isinstance(template_config, Path))
         ):
-            # Obtain a CreateConfig object from the template yaml file
+            # Obtain a PipelinesCreateConfig object from the template yaml file
             self.config = self.check_template_yaml_info(template_config, name, description, author)
             self.update_config(organisation, version, force, outdir)
         else:
@@ -140,12 +140,12 @@ class PipelineCreate:
             UserWarning: if template yaml file does not exist.
         """
         # Obtain template customization info from template yaml file or `.nf-core.yml` config file
-        config = CreateConfig()
+        config = PipelinesCreateConfig()
         if template_yaml:
             try:
                 with open(template_yaml) as f:
                     template_yaml = yaml.safe_load(f)
-                    config = CreateConfig(**template_yaml)
+                    config = PipelinesCreateConfig(**template_yaml)
             except FileNotFoundError:
                 raise UserWarning(f"Template YAML file '{template_yaml}' not found.")
 

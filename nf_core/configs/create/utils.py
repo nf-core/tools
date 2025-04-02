@@ -27,8 +27,8 @@ def init_context(value: Dict[str, Any]) -> Iterator[None]:
 CONFIG_ISINFRASTRUCTURE_GLOBAL: bool = True
 
 
-class CreateConfig(BaseModel):
-    """Pydantic model for the nf-core create config."""
+class ConfigsCreateConfig(BaseModel):
+    """Pydantic model for the nf-core configs create config."""
 
     general_config_type: Optional[str] = None
     general_config_name: Optional[str] = None
@@ -142,7 +142,7 @@ class ValidateConfig(Validator):
         If it fails, return the error messages."""
         try:
             with init_context({"is_infrastructure": CONFIG_ISINFRASTRUCTURE_GLOBAL}):
-                CreateConfig(**{f"{self.key}": value})
+                ConfigsCreateConfig(**{f"{self.key}": value})
                 return self.success()
         except ValidationError as e:
             return self.failure(", ".join([err["msg"] for err in e.errors()]))

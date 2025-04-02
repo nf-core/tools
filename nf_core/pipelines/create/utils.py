@@ -35,8 +35,8 @@ NFCORE_PIPELINE_GLOBAL: bool = True
 features_yml_path = Path(nf_core.__file__).parent / "pipelines" / "create" / "template_features.yml"
 
 
-class CreateConfig(NFCoreTemplateConfig):
-    """Pydantic model for the nf-core create config."""
+class PipelinesCreateConfig(NFCoreTemplateConfig):
+    """Pydantic model for the nf-core pipelines create config."""
 
     model_config = ConfigDict(extra="allow")
 
@@ -150,7 +150,7 @@ class ValidateConfig(Validator):
         If it fails, return the error messages."""
         try:
             with init_context({"is_nfcore": NFCORE_PIPELINE_GLOBAL}):
-                CreateConfig(**{f"{self.key}": value})
+                PipelinesCreateConfig(**{f"{self.key}": value})
                 return self.success()
         except ValidationError as e:
             return self.failure(", ".join([err["msg"] for err in e.errors()]))

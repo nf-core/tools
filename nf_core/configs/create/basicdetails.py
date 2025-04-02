@@ -10,7 +10,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown
 
 from nf_core.configs.create.utils import (
-    CreateConfig,
+    ConfigsCreateConfig,
     TextInput,
 )  ## TODO Move somewhere common?
 
@@ -77,7 +77,7 @@ class BasicDetails(Screen):
             classes="cta",
         )
 
-    ## Updates the __init__ initialised TEMPLATE_CONFIG object (which is built from the CreateConfig class) with the values from the text inputs
+    ## Updates the __init__ initialised TEMPLATE_CONFIG object (which is built from the ConfigsCreateConfig class) with the values from the text inputs
     @on(Button.Pressed)
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Save fields to the config."""
@@ -91,6 +91,6 @@ class BasicDetails(Screen):
             else:
                 text_input.query_one(".validation_msg").update("")
         try:
-            self.parent.TEMPLATE_CONFIG = CreateConfig(**config)
+            self.parent.TEMPLATE_CONFIG = ConfigsCreateConfig(**config)
         except ValueError:
             pass

@@ -9,7 +9,7 @@ from textual.containers import Center, Horizontal
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown
 
-from nf_core.pipelines.create.utils import CreateConfig, TextInput
+from nf_core.pipelines.create.utils import PipelinesCreateConfig, TextInput
 from nf_core.utils import add_hide_class, remove_hide_class
 
 pipeline_exists_warn = """
@@ -101,7 +101,7 @@ class BasicDetails(Screen):
             else:
                 text_input.query_one(".validation_msg").update("")
         try:
-            self.parent.TEMPLATE_CONFIG = CreateConfig(**config)
+            self.parent.TEMPLATE_CONFIG = PipelinesCreateConfig(**config)
             if event.button.id == "next":
                 if self.parent.NFCORE_PIPELINE:
                     self.parent.push_screen("type_nfcore")

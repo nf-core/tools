@@ -1,8 +1,12 @@
-from nf_core.configs.create.utils import CreateConfig, generate_config_entry
+"""Creates a nextflow config matching the current
+nf-core organization specification.
+"""
+
+from nf_core.configs.create.utils import ConfigsCreateConfig, generate_config_entry
 
 
 class ConfigCreate:
-    def __init__(self, template_config: CreateConfig):
+    def __init__(self, template_config: ConfigsCreateConfig):
         self.template_config = template_config
 
     def construct_params(self, contact, handle, description, url):
