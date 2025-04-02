@@ -1847,6 +1847,37 @@ def command_subworkflows_update(
     )
 
 
+# nf-core configs subcommands
+@nf_core_cli.group()
+@click.pass_context
+def configs(ctx):
+    """
+    Commands to manage nf-core configs.
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
+
+# nf-core configs create
+@configs.command("create")
+@click.pass_context
+def create_configs(ctx):
+    """
+    Command to interactively create a nextflow or nf-core config
+    """
+    from nf_core.configs.create import ConfigsCreateApp
+
+    try:
+        log.info("Launching interactive nf-core configs creation tool.")
+        app = ConfigsCreateApp()
+        app.run()
+        sys.exit(app.return_code or 0)
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
+
+
 ## DEPRECATED commands since v3.0.0
 
 
