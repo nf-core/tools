@@ -87,8 +87,6 @@ class ConfigsCreateApp(App[ConfigsCreateConfig]):
         elif event.button.id == "type_custom":
             self.NFCORE_CONFIG = False
             self.push_screen("basic_details")
-        elif event.button.id == "next":
-            self.push_screen("final")
         ## General options
         if event.button.id == "close_app":
             self.exit(return_code=0)

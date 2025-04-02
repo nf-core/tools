@@ -7,6 +7,7 @@ from typing import Any, Dict, Iterator, Optional, Union
 from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 from textual import on
 from textual.app import ComposeResult
+from textual.containers import Grid
 from textual.validation import ValidationResult, Validator
 from textual.widgets import Input, Static
 
@@ -25,17 +26,26 @@ def init_context(value: Dict[str, Any]) -> Iterator[None]:
 
 # Define a global variable to store the config type
 CONFIG_ISINFRASTRUCTURE_GLOBAL: bool = True
+NFCORE_CONFIG_GLOBAL: bool = True
 
 
 class ConfigsCreateConfig(BaseModel):
     """Pydantic model for the nf-core configs create config."""
 
     general_config_type: Optional[str] = None
+    """ Config file type (infrastructure or pipeline) """
     general_config_name: Optional[str] = None
+    """ Config name """
     config_profile_contact: Optional[str] = None
+    """ Config contact name """
     config_profile_handle: Optional[str] = None
+    """ Config contact GitHub handle """
     config_profile_description: Optional[str] = None
+    """ Config description """
     config_profile_url: Optional[str] = None
+    """ Config institution URL """
+    is_nfcore: Optional[bool] = None
+    """ Whether the config is part of the nf-core organisation """
 
     model_config = ConfigDict(extra="allow")
 
@@ -106,28 +116,35 @@ class TextInput(Static):
         self.password: bool = password
 
     def compose(self) -> ComposeResult:
-        yield Static(self.description, classes="field_help")
-        yield Input(
-            placeholder=self.placeholder,
-            validators=[ValidateConfig(self.field_id)],
-            value=self.default,
-            password=self.password,
+        yield Grid(
+            Static(self.description, classes="field_help"),
+            Input(
+                placeholder=self.placeholder,
+                validators=[ValidateConfig(self.field_id)],
+                value=self.default,
+                password=self.password,
+            ),
+            Static(classes="validation_msg"),
+            classes="text-input-grid",
         )
-        yield Static(classes="validation_msg")
 
     @on(Input.Changed)
     @on(Input.Submitted)
     def show_invalid_reasons(self, event: Union[Input.Changed, Input.Submitted]) -> None:
         """Validate the text input and show errors if invalid."""
-        if not event.validation_result.is_valid:
-            self.query_one(".validation_msg").update("\n".join(event.validation_result.failure_descriptions))
+        val_msg = self.query_one(".validation_msg")
+        if not isinstance(val_msg, Static):
+            raise ValueError("Validation message not found.")
+
+        if event.validation_result is not None and not event.validation_result.is_valid:
+            # check that val_msg is instance of Static
+            if isinstance(val_msg, Static):
+                val_msg.update("\n".join(event.validation_result.failure_descriptions))
         else:
-            self.query_one(".validation_msg").update("")
+            val_msg.update("")
 
 
 ## TODO Duplicated from pipelines utils - move to common location if possible (validation seems to be context specific so possibly not)
-
-
 class ValidateConfig(Validator):
     """Validate any config value, using Pydantic."""
 
@@ -141,7 +158,7 @@ class ValidateConfig(Validator):
 
         If it fails, return the error messages."""
         try:
-            with init_context({"is_infrastructure": CONFIG_ISINFRASTRUCTURE_GLOBAL}):
+            with init_context({"is_nfcore": NFCORE_CONFIG_GLOBAL}):
                 ConfigsCreateConfig(**{f"{self.key}": value})
                 return self.success()
         except ValidationError as e:

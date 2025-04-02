@@ -92,5 +92,7 @@ class BasicDetails(Screen):
                 text_input.query_one(".validation_msg").update("")
         try:
             self.parent.TEMPLATE_CONFIG = ConfigsCreateConfig(**config)
+            if event.button.id == "next":
+                self.parent.push_screen("final")
         except ValueError:
             pass

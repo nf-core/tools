@@ -1143,7 +1143,7 @@ class NFCoreTemplateConfig(BaseModel):
     skip_features: Optional[list] = None
     """ Skip features. See https://nf-co.re/docs/nf-core-tools/pipelines/create for a list of features. """
     is_nfcore: Optional[bool] = None
-    """ Whether the pipeline is an nf-core pipeline. """
+    """ Whether the pipeline is an nf-core pipeline """
 
     # convert outdir to str
     @field_validator("outdir")
