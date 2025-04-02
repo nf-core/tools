@@ -1,6 +1,7 @@
 import json
 import logging
 from dataclasses import dataclass
+from typing import List, Tuple
 
 import questionary
 import requests
@@ -32,7 +33,7 @@ class GithubApiEndpoints:
         return url
 
 
-def get_remote_branch_names() -> list[str]:
+def get_remote_branch_names() -> List[str]:
     """
     List all branch names on the remote github repository for test-datasets for pipelines or modules.
     """
@@ -60,7 +61,7 @@ def get_remote_branch_names() -> list[str]:
     return branches
 
 
-def get_remote_tree_for_branch(branch: str, only_files: bool = True, ignored_prefixes: list[str] = []) -> list[str]:
+def get_remote_tree_for_branch(branch: str, only_files: bool = True, ignored_prefixes: List[str] = []) -> List[str]:
     """
     For a given branch name, return the file tree by querying the github API
     at the endpoint at `/repos/nf-core/test-datasets/git/trees/`
@@ -105,15 +106,15 @@ def get_remote_tree_for_branch(branch: str, only_files: bool = True, ignored_pre
 
 def list_files_by_branch(
     branch: str = "",
-    branches: list[str] = [],
-    ignored_file_prefixes: list[str] = [
+    branches: List[str] = [],
+    ignored_file_prefixes: List[str] = [
         ".",
         "CITATION",
         "LICENSE",
         "README",
         "docs",
     ],
-) -> dict[str, list[str]]:
+) -> dict[str, List[str]]:
     """
     Lists files for all branches in the test-datasets github repo.
     Returns dictionary with branchnames as keys and file-lists as values
@@ -154,7 +155,7 @@ def create_download_url(branch: str, path: str) -> str:
     return gh_api_url.get_file_download_url(branch, path)
 
 
-def get_or_prompt_branch(maybe_branch: str) -> tuple[str, list[str]]:
+def get_or_prompt_branch(maybe_branch: str) -> Tuple[str, List[str]]:
     """
     If branch is given, return a tuple of (maybe_branch, empty_list) else
     prompt the user to enter a branch name and return (branch_name, all_branches)
