@@ -13,6 +13,7 @@ from textual.widgets import Button
 from nf_core.configs.create.basicdetails import BasicDetails
 from nf_core.configs.create.configtype import ChooseConfigType
 from nf_core.configs.create.final import FinalScreen
+from nf_core.configs.create.nfcorequestion import ChooseNfcoreConfig
 from nf_core.configs.create.utils import ConfigsCreateConfig
 from nf_core.configs.create.welcome import WelcomeScreen
 
@@ -49,6 +50,7 @@ class ConfigsCreateApp(App[ConfigsCreateConfig]):
     SCREENS = {
         "welcome": WelcomeScreen,
         "choose_type": ChooseConfigType,
+        "nfcore_question": ChooseNfcoreConfig,
         "basic_details": BasicDetails,
         "final": FinalScreen,
     }
@@ -58,6 +60,7 @@ class ConfigsCreateApp(App[ConfigsCreateConfig]):
 
     # Tracking variables
     CONFIG_TYPE = None
+    NFCORE_CONFIG = None
 
     # Log handler
     LOG_HANDLER = rich_log_handler
@@ -74,9 +77,15 @@ class ConfigsCreateApp(App[ConfigsCreateConfig]):
             self.push_screen("choose_type")
         elif event.button.id == "type_infrastructure":
             self.CONFIG_TYPE = "infrastructure"
+            self.push_screen("nfcore_question")
+        elif event.button.id == "type_nfcore":
+            self.NFCORE_CONFIG = True
             self.push_screen("basic_details")
         elif event.button.id == "type_pipeline":
             self.CONFIG_TYPE = "pipeline"
+            self.push_screen("nfcore_question")
+        elif event.button.id == "type_custom":
+            self.NFCORE_CONFIG = False
             self.push_screen("basic_details")
         elif event.button.id == "next":
             self.push_screen("final")
@@ -89,4 +98,4 @@ class ConfigsCreateApp(App[ConfigsCreateConfig]):
     ## User theme options
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
-        self.dark: bool = not self.dark
+        self.theme: str = "textual-dark" if self.theme == "textual-light" else "textual-light"
