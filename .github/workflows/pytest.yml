@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - dev
+      # https://docs.renovatebot.com/key-concepts/automerge/#branch-vs-pr-automerging
+      - "renovate/**" # branches Renovate creates
     paths-ignore:
       - "docs/**"
       - "CHANGELOG.md"
