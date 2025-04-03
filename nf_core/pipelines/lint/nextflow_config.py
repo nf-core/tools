@@ -371,7 +371,7 @@ def nextflow_config(self) -> Dict[str, List[str]]:
                 old_institutional_config_pattern_2, content, re.MULTILINE
             ):
                 failed.append(
-                    "Old lines for loading custom profiles found. File should contain:\n```groovy\n{}\n```".format(
+                    "Outdated lines for loading custom profiles found. File should contain:\n```groovy\n{}\n```".format(
                         "\n".join(current_institutional_config_lines)
                     )
                 )
