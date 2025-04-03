@@ -52,6 +52,7 @@
 - Ontology fix comment yaml ([#3502](https://github.com/nf-core/tools/pull/3502))
 - Bugfix - add back logo to the README ([#3504](https://github.com/nf-core/tools/pull/3504))
 - Update dead link ([#3505](https://github.com/nf-core/tools/pull/3505))
+- chore(deps): update actions/setup-python digest to 8d9ed9a ([#3518](https://github.com/nf-core/tools/pull/3518))
 - Changing retrieval of file extension from EDAM ([#3512](https://github.com/nf-core/tools/pull/3512))
 - Refactor adding EDAM ontologies and allowing detect more patterns (e.g., versions.yml) ([#3519](https://github.com/nf-core/tools/pull/3519))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.11.2 ([#3521](https://github.com/nf-core/tools/pull/3521))
