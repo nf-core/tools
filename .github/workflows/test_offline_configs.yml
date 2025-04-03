@@ -1,4 +1,4 @@
-name: Sync template
+name: Test offline configs on pipelines
 on:
   # schedule:
   #   # once a month
@@ -9,16 +9,12 @@ on:
         type: boolean
         description: Only run on nf-core/testpipeline?
         required: true
-      force_pr:
-        description: "Force a PR to be created"
-        type: boolean
-        default: false
       pipeline:
-        description: "Pipeline to sync"
+        description: "Pipeline to test offline configs on"
         type: string
         default: "all"
       debug:
-        description: "Enable debug/verbose mode (true or false)"
+        description: "Enable debug/verbose mode"
         type: boolean
         default: false
 
@@ -80,8 +76,8 @@ jobs:
         id: check_profile_inclusion
         uses: GuillaumeFalourd/assert-command-line-output@v2
         with:
-          command_line: nextflow config -profile google -o flat . # We will hopefully always have this profile in configs, even if some HPCs are retired.
-          contains: "The nf-core framework" # Part of the citation, should always be printed if profile is included
+          command_line: nextflow config -profile google -o flat .
+          contains: "The nf-core framework" # Part of CITATION.cff, should always be printed if profile is included
           expected_result: PASSED
       - name: Check the failed inclusion of a non-existing institutional profile
         id: check_nonexistent_profile
