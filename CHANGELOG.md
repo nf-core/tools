@@ -10,6 +10,7 @@
 - Add Bluesky badge to readme ([#3475](https://github.com/nf-core/tools/pull/3475))
 - Run awsfulltest after release, and with dev revision on PRs to master ([#3485](https://github.com/nf-core/tools/pull/3485))
 - Add .nftignore to trigger list ([#3508](https://github.com/nf-core/tools/pull/3508))
+- Include the centralized nf-core configs also in offline mode, if a local copy is available. ([#3491](https://github.com/nf-core/tools/pull/3491))
 
 ### Linting
 
@@ -18,6 +19,7 @@
 - Fix: linting with comments after the input directive ([#3458](https://github.com/nf-core/tools/pull/3458))
 - EDAM ontology fixes ([#3460](https://github.com/nf-core/tools/pull/3460))
 - Fix default linting of nf-core components when `nf-core pipelines lint` is ran ([#3480](https://github.com/nf-core/tools/pull/3480))
+- Adapt the linter to the new notation used to include the centralized nf-core configs ([#3491](https://github.com/nf-core/tools/pull/3491))
 
 ### Modules
 
