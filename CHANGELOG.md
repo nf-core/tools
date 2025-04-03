@@ -53,6 +53,10 @@
 - Bugfix - add back logo to the README ([#3504](https://github.com/nf-core/tools/pull/3504))
 - Update dead link ([#3505](https://github.com/nf-core/tools/pull/3505))
 - chore(deps): update actions/setup-python digest to 8d9ed9a ([#3518](https://github.com/nf-core/tools/pull/3518))
+- Changing retrieval of file extension from EDAM ([#3512](https://github.com/nf-core/tools/pull/3512))
+- Refactor adding EDAM ontologies and allowing detect more patterns (e.g., versions.yml) ([#3519](https://github.com/nf-core/tools/pull/3519))
+- Fix indentation in included_configs API docs ([#3523](https://github.com/nf-core/tools/pull/3523))
+- chore(deps): update python:3.12-slim docker digest to a866731 ([#3527](https://github.com/nf-core/tools/pull/3527))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
@@ -186,6 +190,7 @@
 - set default_branch to master for now ([#3335](https://github.com/nf-core/tools/issues/3335))
 - Set git defaultBranch to master in sync action ([#3337](https://github.com/nf-core/tools/pull/3337))
 - Add verbose mode to sync action ([#3339](https://github.com/nf-core/tools/pull/3339))
+- ci: Run checks on renovate branches to avoid creating and merging PRs ([#3018](https://github.com/nf-core/tools/pull/3018))
 
 ### Version updates
 
