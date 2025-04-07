@@ -183,8 +183,9 @@ class ComponentCreate(ComponentCommand):
         assert self._render_template()
         log.info(f"Created component template: '{self.component_name}'")
 
-        # Generate meta.yml inputs and outputs
-        self.generate_meta_yml_file()
+        if self.component_type == "modules":
+            # Generate meta.yml inputs and outputs
+            self.generate_meta_yml_file()
 
         if self.migrate_pytest:
             self._copy_old_files(component_old_path)
