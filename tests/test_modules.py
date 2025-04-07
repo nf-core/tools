@@ -169,7 +169,3 @@ class TestModules(unittest.TestCase):
     @pytest.fixture(autouse=True)
     def _use_caplog(self, caplog):
         self.caplog = caplog
-
-    @pytest.fixture(autouse=True)
-    def __inject_fixtures(self, mocker):
-        self.mocker = mocker
