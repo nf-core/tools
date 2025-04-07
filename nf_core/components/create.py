@@ -527,17 +527,21 @@ class ComponentCreate(ComponentCommand):
         with open(self.file_paths["meta.yml"]) as fh:
             meta_yml: ruamel.yaml.comments.CommentedMap = yaml.load(fh)
 
-        versions: dict[str, list[dict[str, dict[str, str]]]] = {
+        versions: dict[str, list[dict[str, dict]]] = {
             "versions": [
                 {
                     "versions.yml": {
                         "type": "file",
                         "description": "File containing software versions",
                         "pattern": "versions.yml",
+                        "ontologies": [
+                            ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_3750"})
+                        ],
                     }
                 }
             ]
         }
+        versions["versions"][0]["versions.yml"]["ontologies"][0].yaml_add_eol_comment("YAML", "edam")
 
         if self.not_empty_template:
             meta_yml.yaml_set_comment_before_after_key(
