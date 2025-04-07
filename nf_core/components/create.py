@@ -633,7 +633,7 @@ class ComponentCreate(ComponentCommand):
                         }
                     }
                     for j, ont_desc in enumerate(ontologies[1]):
-                        file_entry["ontologies"][j].yaml_add_eol_comment(ont_desc, "edam")
+                        file_entry[pattern]["ontologies"][j].yaml_add_eol_comment(ont_desc, "edam")
                     if self.has_meta:
                         if isinstance(channel_contents[0], list):  # for mypy
                             channel_contents[0].append(file_entry)
