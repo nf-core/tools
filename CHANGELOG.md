@@ -23,6 +23,7 @@
 
 - increase meta index for multiple input channels ([#3463](https://github.com/nf-core/tools/pull/3463))
 - Configure the default module repository, branch, and path from environment variables. ([#3481](https://github.com/nf-core/tools/pull/3481))
+- Fix modules meta.yml file structure ([#3532](https://github.com/nf-core/tools/pull/3532))
 
 ### Subworkflows
 
