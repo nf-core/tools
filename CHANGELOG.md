@@ -10,6 +10,7 @@
 - Add Bluesky badge to readme ([#3475](https://github.com/nf-core/tools/pull/3475))
 - Run awsfulltest after release, and with dev revision on PRs to master ([#3485](https://github.com/nf-core/tools/pull/3485))
 - Add .nftignore to trigger list ([#3508](https://github.com/nf-core/tools/pull/3508))
+- run nf-test tests on runsOn runners ([#3525](https://github.com/nf-core/tools/pull/3525))
 
 ### Linting
 
