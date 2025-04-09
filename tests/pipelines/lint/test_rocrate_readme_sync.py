@@ -20,4 +20,7 @@ class TestLintROcrateReadmeSync(TestLint):
 
         results = self.lint_obj.rocrate_readme_sync()
         assert len(results.get("failed", [])) == 1
-        assert "The RO-Crate descriptions do not match the README.md content. Use `nf-core lint --fix` to update." in results.get("failed", [])
+        assert (
+            "The RO-Crate descriptions do not match the README.md content. Use `nf-core lint --fix` to update."
+            in results.get("failed", [])
+        )
