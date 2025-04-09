@@ -14,6 +14,8 @@ def rocrate_readme_sync(self):
     passed = []
     failed = []
     ignored = []
+    fixed = []
+    could_fix: bool = False
 
     # Check if the file exists before trying to load it
     metadata_file = Path(self.wf_path, "ro-crate-metadata.json")
@@ -25,7 +27,7 @@ def rocrate_readme_sync(self):
             ignored.append("`ro-crate-metadata.json` not found")
         if not readme_file.exists():
             ignored.append("`README.md` not found")
-        # return {"passed": passed, "failed": failed, "ignored": ignored}
+        return {"passed": passed, "failed": failed, "ignored": ignored}
 
     try:
         metadata_content = metadata_file.read_text(encoding="utf-8")
@@ -33,7 +35,7 @@ def rocrate_readme_sync(self):
     except json.JSONDecodeError as e:
         log.error("Failed to decode JSON from `ro-crate-metadata.json`: %s", e)
         ignored.append("Invalid JSON in ro-crate-metadata.json")
-        # return {"passed": passed, "failed": failed, "ignored": ignored}
+        return {"passed": passed, "failed": failed, "ignored": ignored}
 
     graph = metadata_dict.get("@graph")
     if not graph or not isinstance(graph, list) or not graph[0] or not isinstance(graph[0], dict):
@@ -52,15 +54,17 @@ def rocrate_readme_sync(self):
     # Compare the two strings and add a linting error if they don't match
     if readme_content != rc_description_graph:
         # If the --fix flag is set, you could overwrite the RO-Crate description with the README content:
-        if self.fix:
+        if "rocrate_readme_sync" in self.fix:
             metadata_dict.get("@graph")[0]["description"] = readme_content
             with metadata_file.open("w", encoding="utf-8") as f:
                 json.dump(metadata_dict, f, indent=4)
-            passed.append("Mismatch fixed: RO-Crate description updated from README.md.")
+            passed.append("RO-Crate description matches the README.md.")
+            fixed.append("Mismatch fixed: RO-Crate description updated from README.md.")
         else:
             failed.append(
                 "The RO-Crate descriptions do not match the README.md content. Use `nf-core lint --fix` to update."
             )
+            could_fix = True
     else:
         passed.append("RO-Crate descriptions are in sync with README.md.")
-    return {"passed": passed, "failed": failed, "ignored": ignored}
+    return {"passed": passed, "failed": failed, "ignored": ignored, "fixed": fixed, "could_fix": could_fix}
