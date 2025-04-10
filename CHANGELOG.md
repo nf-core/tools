@@ -11,7 +11,7 @@
 - Run awsfulltest after release, and with dev revision on PRs to master ([#3485](https://github.com/nf-core/tools/pull/3485))
 - Add .nftignore to trigger list ([#3508](https://github.com/nf-core/tools/pull/3508))
 - Include the centralized nf-core configs also in offline mode, if a local copy is available. ([#3491](https://github.com/nf-core/tools/pull/3491))
-- Bump nf-schema to `2.4.0` ([#3533](https://github.com/nf-core/tools/pull/3533))
+- Bump nf-schema to `2.4.1` ([#3533](https://github.com/nf-core/tools/pull/3533))
 - Bump the minimal Nextflow version to `24.10.0` ([#3533](https://github.com/nf-core/tools/pull/3533))
 
 ### Linting
