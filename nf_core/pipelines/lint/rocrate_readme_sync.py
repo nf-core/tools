@@ -36,7 +36,7 @@ def rocrate_readme_sync(self):
         log.error("Failed to decode JSON from `ro-crate-metadata.json`: %s", e)
         ignored.append("Invalid JSON in ro-crate-metadata.json")
         return {"passed": passed, "failed": failed, "ignored": ignored}
-
+    readme_content = readme_file.read_text(encoding="utf-8")
     graph = metadata_dict.get("@graph")
     if not graph or not isinstance(graph, list) or not graph[0] or not isinstance(graph[0], dict):
         ignored.append("Invalid RO-Crate metadata structure.")
@@ -46,10 +46,8 @@ def rocrate_readme_sync(self):
             ignored.append(
                 "No description found in ro-crate-metadata.json, add a description to the RO-Crate metadata."
             )
-            graph[0]["description"] = " "
+            graph[0]["description"] = readme_content
     rc_description_graph = metadata_dict.get("@graph", [{}])[0].get("description")
-
-    readme_content = readme_file.read_text(encoding="utf-8")
 
     # Compare the two strings and add a linting error if they don't match
     if readme_content != rc_description_graph:
