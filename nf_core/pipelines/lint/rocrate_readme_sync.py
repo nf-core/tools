@@ -46,7 +46,10 @@ def rocrate_readme_sync(self):
             ignored.append(
                 "No description found in ro-crate-metadata.json, add a description to the RO-Crate metadata."
             )
-            graph[0]["description"] = readme_content
+            if "rocrate_readme_sync" in self.fix:
+                graph[0]["description"] = readme_content
+            else:
+                return {"passed": passed, "failed": failed, "ignored": ignored}
     rc_description_graph = metadata_dict.get("@graph", [{}])[0].get("description")
 
     # Compare the two strings and add a linting error if they don't match
