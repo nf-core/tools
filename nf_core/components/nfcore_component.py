@@ -247,7 +247,7 @@ class NFCoreComponent:
                 return outputs
             output_data = data.split("output:")[1].split("when:")[0]
             regex_emit = r"emit:\s*([^)\s,]+)"
-            regex_elements = r"(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            regex_elements = r"\b(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
             for line in output_data.split("\n"):
                 match_emit = re.search(regex_emit, line)
                 matches_elements = re.finditer(regex_elements, line)
