@@ -39,7 +39,7 @@ jobs:
     strategy:
       matrix:
         NXF_VER:
-          - "24.04.2"
+          - "24.10.0"
           - "latest-everything"
     steps:
       - name: go to working directory
