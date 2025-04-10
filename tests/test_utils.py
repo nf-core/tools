@@ -169,6 +169,17 @@ class TestUtils(TestPipelines):
         with pytest.raises(AssertionError):
             nf_core.utils.get_repo_releases_branches("made-up/pipeline", wfs)
 
+    def test_get_repo_commit(self):
+        # The input can be a commit in standard long/short form, but also any length as long as it can be uniquely resolved
+        revision = "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
+        assert nf_core.utils.get_repo_commit("nf-core/methylseq", revision) == revision
+        assert nf_core.utils.get_repo_commit("nf-core/methylseq", revision[:16]) == revision
+        assert nf_core.utils.get_repo_commit("nf-core/methylseq", revision[:7]) == revision
+        assert nf_core.utils.get_repo_commit("nf-core/methylseq", revision[:6]) == revision
+        assert nf_core.utils.get_repo_commit("nf-core/methylseq", "xyz") is None
+        assert nf_core.utils.get_repo_commit("made_up_pipeline", "") is None
+        assert nf_core.utils.get_repo_commit("made-up/pipeline", "") is None
+
     def test_validate_file_md5(self):
         # MD5(test) = d8e8fca2dc0f896fd7cb4cb0031ba249
         test_file = TEST_DATA_DIR / "test.txt"

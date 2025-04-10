@@ -36,6 +36,7 @@ from nf_core.commands_pipelines import (
     pipelines_launch,
     pipelines_lint,
     pipelines_list,
+    pipelines_rocrate,
     pipelines_schema_build,
     pipelines_schema_docs,
     pipelines_schema_lint,
@@ -53,7 +54,7 @@ from nf_core.commands_subworkflows import (
     subworkflows_test,
     subworkflows_update,
 )
-from nf_core.components.components_utils import NF_CORE_MODULES_REMOTE
+from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.pipelines.download import DownloadError
 from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 
@@ -86,7 +87,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "For developers",
-            "commands": ["create", "lint", "bump-version", "sync", "schema", "create-logo"],
+            "commands": ["create", "lint", "bump-version", "sync", "schema", "rocrate", "create-logo"],
         },
     ],
     "nf-core modules": [
@@ -287,7 +288,7 @@ def command_pipelines_create(ctx, name, description, author, version, force, out
 @click.option(
     "--release",
     is_flag=True,
-    default=os.path.basename(os.path.dirname(os.environ.get("GITHUB_REF", "").strip(" '\""))) == "master"
+    default=Path(os.environ.get("GITHUB_REF", "").strip(" '\"")).parent.name in ["master", "main"]
     and os.environ.get("GITHUB_REPOSITORY", "").startswith("nf-core/")
     and not os.environ.get("GITHUB_REPOSITORY", "") == "nf-core/tools",
     help="Execute additional checks for release-ready workflows.",
@@ -568,6 +569,44 @@ def command_pipelines_list(ctx, keywords, sort, json, show_archived):
     List available nf-core pipelines with local info.
     """
     pipelines_list(ctx, keywords, sort, json, show_archived)
+
+
+# nf-core pipelines rocrate
+@pipelines.command("rocrate")
+@click.argument(
+    "pipeline_dir",
+    type=click.Path(exists=True),
+    default=Path.cwd(),
+    required=True,
+    metavar="<pipeline directory>",
+)
+@click.option(
+    "-j",
+    "--json_path",
+    default=Path.cwd(),
+    type=str,
+    help="Path to save RO Crate metadata json file to",
+)
+@click.option("-z", "--zip_path", type=str, help="Path to save RO Crate zip file to")
+@click.option(
+    "-pv",
+    "--pipeline_version",
+    type=str,
+    help="Version of pipeline to use for RO Crate",
+    default="",
+)
+@click.pass_context
+def rocrate(
+    ctx,
+    pipeline_dir: str,
+    json_path: str,
+    zip_path: str,
+    pipeline_version: str,
+):
+    """
+    Make an Research Object Crate
+    """
+    pipelines_rocrate(ctx, pipeline_dir, json_path, zip_path, pipeline_version)
 
 
 # nf-core pipelines sync
@@ -1024,7 +1063,7 @@ def command_modules_update(
     default=".",
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
-@click.option("-r", "--remove", is_flag=True, default=False)
+@click.option("-r", "--remove", is_flag=True, default=False, help="Remove an existent patch file and regenerate it.")
 def command_modules_patch(ctx, tool, directory, remove):
     """
     Create a patch file for minor changes in a module
@@ -1567,6 +1606,43 @@ def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha
     subworkflows_install(ctx, subworkflow, directory, prompt, force, sha)
 
 
+# nf-core subworkflows patch
+@subworkflows.command("patch")
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+@click.option("-r", "--remove", is_flag=True, default=False, help="Remove an existent patch file and regenerate it.")
+def subworkflows_patch(ctx, tool, dir, remove):
+    """
+    Create a patch file for minor changes in a subworkflow
+
+    Checks if a subworkflow has been modified locally and creates a patch file
+    describing how the module has changed from the remote version
+    """
+    from nf_core.subworkflows import SubworkflowPatch
+
+    try:
+        subworkflow_patch = SubworkflowPatch(
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        if remove:
+            subworkflow_patch.remove(tool)
+        else:
+            subworkflow_patch.patch(tool)
+    except (UserWarning, LookupError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
 # nf-core subworkflows remove
 @subworkflows.command("remove")
 @click.pass_context
@@ -1721,7 +1797,7 @@ def command_schema_validate(pipeline, params):
 @click.option(
     "--url",
     type=str,
-    default="https://nf-co.re/pipeline_schema_builder",
+    default="https://oldsite.nf-co.re/pipeline_schema_builder",
     help="Customise the builder URL (for development work)",
 )
 def command_schema_build(directory, no_prompts, web_only, url):
@@ -2164,7 +2240,7 @@ def command_download(
 @click.option(
     "--release",
     is_flag=True,
-    default=os.path.basename(os.path.dirname(os.environ.get("GITHUB_REF", "").strip(" '\""))) == "master"
+    default=Path(os.environ.get("GITHUB_REF", "").strip(" '\"")).parent.name in ["master", "main"]
     and os.environ.get("GITHUB_REPOSITORY", "").startswith("nf-core/")
     and not os.environ.get("GITHUB_REPOSITORY", "") == "nf-core/tools",
     help="Execute additional checks for release-ready workflows.",

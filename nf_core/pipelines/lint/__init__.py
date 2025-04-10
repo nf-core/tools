@@ -27,23 +27,25 @@ import nf_core.utils
 from nf_core import __version__
 from nf_core.components.lint import ComponentLint
 from nf_core.pipelines.lint_utils import console
+from nf_core.utils import NFCoreYamlLintConfig, strip_ansi_codes
 from nf_core.utils import plural_s as _s
-from nf_core.utils import strip_ansi_codes
 
 from .actions_awsfulltest import actions_awsfulltest
 from .actions_awstest import actions_awstest
-from .actions_ci import actions_ci
+from .actions_nf_test import actions_nf_test
 from .actions_schema_validation import actions_schema_validation
 from .configs import base_config, modules_config
 from .files_exist import files_exist
 from .files_unchanged import files_unchanged
 from .included_configs import included_configs
+from .local_component_structure import local_component_structure
 from .merge_markers import merge_markers
 from .modules_json import modules_json
 from .modules_structure import modules_structure
 from .multiqc_config import multiqc_config
 from .nextflow_config import nextflow_config
 from .nfcore_yml import nfcore_yml
+from .pipeline_if_empty_null import pipeline_if_empty_null
 from .pipeline_name_conventions import pipeline_name_conventions
 from .pipeline_todos import pipeline_todos
 from .plugin_includes import plugin_includes
@@ -80,7 +82,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     # Import all linting tests as methods for this class
     actions_awsfulltest = actions_awsfulltest
     actions_awstest = actions_awstest
-    actions_ci = actions_ci
+    actions_nf_test = actions_nf_test
     actions_schema_validation = actions_schema_validation
     base_config = base_config
     modules_config = modules_config
@@ -89,11 +91,13 @@ class PipelineLint(nf_core.utils.Pipeline):
     merge_markers = merge_markers
     modules_json = modules_json
     modules_structure = modules_structure
+    local_component_structure = local_component_structure
     multiqc_config = multiqc_config
     nextflow_config = nextflow_config
     nfcore_yml = nfcore_yml
     pipeline_name_conventions = pipeline_name_conventions
     pipeline_todos = pipeline_todos
+    pipeline_if_empty_null = pipeline_if_empty_null
     plugin_includes = plugin_includes
     readme = readme
     schema_description = schema_description
@@ -112,7 +116,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Initialise the parent object
         super().__init__(wf_path)
 
-        self.lint_config = {}
+        self.lint_config: Optional[NFCoreYamlLintConfig] = None
         self.release_mode = release_mode
         self.fail_ignored = fail_ignored
         self.fail_warned = fail_warned
@@ -134,11 +138,12 @@ class PipelineLint(nf_core.utils.Pipeline):
             "files_exist",
             "nextflow_config",
             "files_unchanged",
-            "actions_ci",
+            "actions_nf_test",
             "actions_awstest",
             "actions_awsfulltest",
             "readme",
             "pipeline_todos",
+            "pipeline_if_empty_null",
             "plugin_includes",
             "pipeline_name_conventions",
             "template_strings",
@@ -151,6 +156,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "modules_json",
             "multiqc_config",
             "modules_structure",
+            "local_component_structure",
             "base_config",
             "modules_config",
             "nfcore_yml",
@@ -173,13 +179,12 @@ class PipelineLint(nf_core.utils.Pipeline):
         Add parsed config to the `self.lint_config` class attribute.
         """
         _, tools_config = nf_core.utils.load_tools_config(self.wf_path)
-        self.lint_config = getattr(tools_config, "lint", {}) or {}
+        self.lint_config = getattr(tools_config, "lint", None) or None
         is_correct = True
-
         # Check if we have any keys that don't match lint test names
         if self.lint_config is not None:
-            for k in self.lint_config:
-                if k != "nfcore_components" and k not in self.lint_tests:
+            for k, v in self.lint_config:
+                if v is not None and k != "nfcore_components" and k not in self.lint_tests:
                     # nfcore_components is an exception to allow custom pipelines without nf-core components
                     log.warning(f"Found unrecognised test name '{k}' in pipeline lint config")
                     is_correct = False
@@ -594,7 +599,7 @@ def run_linting(
     lint_obj._load_lint_config()
     lint_obj.load_pipeline_config()
 
-    if "nfcore_components" in lint_obj.lint_config and not lint_obj.lint_config["nfcore_components"]:
+    if lint_obj.lint_config and lint_obj.lint_config["nfcore_components"] is not None:
         module_lint_obj = None
         subworkflow_lint_obj = None
     else:
@@ -679,5 +684,4 @@ def run_linting(
     if len(lint_obj.failed) > 0:
         if release_mode:
             log.info("Reminder: Lint tests were run in --release mode.")
-
     return lint_obj, module_lint_obj, subworkflow_lint_obj

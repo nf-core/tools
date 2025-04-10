@@ -23,6 +23,10 @@ on:
         description: "Pipeline to sync"
         type: string
         default: "all"
+      debug:
+        description: "Enable debug/verbose mode (true or false)"
+        type: boolean
+        default: false
 
 # Cancel if a newer run is started
 concurrency:
@@ -62,6 +66,8 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out nf-core/tools
+        with:
+          ref: ${{ github.ref_name }}
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out nf-core/${{ matrix.pipeline }}
@@ -73,9 +79,9 @@ jobs:
           fetch-depth: "0"
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install python dependencies
         run: |
@@ -87,6 +93,19 @@ jobs:
         with:
           version: "latest-everything"
 
+      - name: Set Git default branch from nextflow.config and set git default branch to that or "master"
+
+        run: |
+          pushd nf-core/${{ matrix.pipeline }}
+          defaultBranch=$(grep -B5 -A5 "nextflowVersion" nextflow.config | grep "defaultBranch" | cut -d"=" -f2 | sed "s/'//g")
+          if [ -z "$defaultBranch" ]; then
+            defaultBranch="master"
+          fi
+          popd
+          echo "Default branch: $defaultBranch"
+          echo "defaultBranch=$defaultBranch" >> GITHUB_OUTPUT
+          git config --global init.defaultBranch $defaultBranch
+
       - name: Run synchronisation
         if: github.repository == 'nf-core/tools'
         env:
@@ -94,7 +113,9 @@ jobs:
         run: |
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
-          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt pipelines sync -d nf-core/${{ matrix.pipeline }} \
+          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt \
+            ${{ github.event.inputs.debug == 'true' && '--verbose' || '' }} \
+            pipelines sync -d nf-core/${{ matrix.pipeline }} \
             --from-branch dev \
             --pull-request \
             --username nf-core-bot \
@@ -102,7 +123,7 @@ jobs:
 
       - name: Upload sync log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sync_log_${{ matrix.pipeline }}
           path: sync_log_${{ matrix.pipeline }}.txt

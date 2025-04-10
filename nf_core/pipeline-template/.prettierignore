@@ -16,3 +16,6 @@ testing/
 testing*
 *.pyc
 bin/
+{%- if rocrate %}
+ro-crate-metadata.json
+{%- endif %}

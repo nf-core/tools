@@ -43,7 +43,7 @@ class PipelineSchema:
         self.schema_from_scratch = False
         self.no_prompts = False
         self.web_only = False
-        self.web_schema_build_url = "https://nf-co.re/pipeline_schema_builder"
+        self.web_schema_build_url = "https://oldsite.nf-co.re/pipeline_schema_builder"
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
         self.validation_plugin = None
@@ -96,6 +96,7 @@ class PipelineSchema:
                 conf.get("validation.help.shortParameter", "help"),
                 conf.get("validation.help.fullParameter", "helpFull"),
                 conf.get("validation.help.showHiddenParameter", "showHidden"),
+                "trace_report_suffix",  # report suffix should be ignored by default as it is a Java Date object
             ]  # Help parameter should be ignored by default
             ignored_params_config_str = conf.get("validation.defaultIgnoreParams", "")
             ignored_params_config = [
@@ -124,6 +125,7 @@ class PipelineSchema:
         # Supplied path exists - assume a local pipeline directory or schema
         if path.exists():
             log.debug(f"Path exists: {path}. Assuming local pipeline directory or schema")
+            local_only = True
             if revision is not None:
                 log.warning(f"Local workflow supplied, ignoring revision '{revision}'")
             if path.is_dir():
@@ -320,16 +322,9 @@ class PipelineSchema:
         if self.schema is None:
             log.error("[red][✗] Pipeline schema not found")
         try:
-            # TODO add support for nested parameters
-            # Make copy of schema and remove required flags
-            schema_no_required = copy.deepcopy(self.schema)
-            if "required" in schema_no_required:
-                schema_no_required.pop("required")
-            for group_key, group in schema_no_required.get(self.defs_notation, {}).items():
-                if "required" in group:
-                    schema_no_required[self.defs_notation][group_key].pop("required")
-            jsonschema.validate(self.schema_defaults, schema_no_required)
+            jsonschema.validate(self.schema_defaults, strip_required(self.schema))
         except jsonschema.exceptions.ValidationError as e:
+            log.debug(f"Complete error message:\n{e}")
             raise AssertionError(f"Default parameters are invalid: {e.message}")
         for param, default in self.schema_defaults.items():
             if default in ("null", "", None, "None") or default is False:
@@ -343,7 +338,7 @@ class PipelineSchema:
             self.get_wf_params()
 
         # Go over group keys
-        for group_key, group in schema_no_required.get(self.defs_notation, {}).items():
+        for group_key, group in self.schema.get(self.defs_notation, {}).items():
             group_properties = group.get("properties")
             for param in group_properties:
                 if param in self.ignored_params:
@@ -515,11 +510,13 @@ class PipelineSchema:
             if "title" not in self.schema:
                 raise AssertionError("Schema missing top-level `title` attribute")
             # Validate that id, title and description match the pipeline manifest
-            id_attr = "https://raw.githubusercontent.com/{}/master/nextflow_schema.json".format(
+            id_attr = "https://raw.githubusercontent.com/{}/main/nextflow_schema.json".format(
                 self.pipeline_manifest["name"].strip("\"'")
             )
-            if self.schema["$id"] != id_attr:
-                raise AssertionError(f"Schema `$id` should be `{id_attr}`\n Found `{self.schema['$id']}`")
+            if self.schema["$id"] not in [id_attr, id_attr.replace("/main/", "/master/")]:
+                raise AssertionError(
+                    f"Schema `$id` should be `{id_attr}` or {id_attr.replace('/main/', '/master/')}. \n Found `{self.schema['$id']}`"
+                )
 
             title_attr = "{} pipeline parameters".format(self.pipeline_manifest["name"].strip("\"'"))
             if self.schema["title"] != title_attr:
@@ -745,7 +742,7 @@ class PipelineSchema:
                     if self.web_schema_build_web_url:
                         log.info(
                             "To save your work, open {}\n"
-                            f"Click the blue 'Finished' button, copy the schema and paste into this file: { self.web_schema_build_web_url, self.schema_filename}"
+                            f"Click the blue 'Finished' button, copy the schema and paste into this file: {self.web_schema_build_web_url, self.schema_filename}"
                         )
                     return False
 
@@ -956,6 +953,7 @@ class PipelineSchema:
         """
         Send pipeline schema to web builder and wait for response
         """
+
         content = {
             "post_content": "json_schema",
             "api": "true",
@@ -964,6 +962,7 @@ class PipelineSchema:
             "schema": json.dumps(self.schema),
         }
         web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_build_url, content)
+
         try:
             if "api_url" not in web_response:
                 raise AssertionError('"api_url" not in web_response')
@@ -1015,3 +1014,17 @@ class PipelineSchema:
                 f"Pipeline schema builder returned unexpected status ({web_response['status']}): "
                 f"{self.web_schema_build_api_url}\n See verbose log for full response"
             )
+
+
+def strip_required(node):
+    if isinstance(node, dict):
+        return {
+            k: y
+            for k, v in node.items()
+            for y in [strip_required(v)]
+            if k != "required" and (y or y is False or y == "")
+        }
+    elif isinstance(node, list):
+        return [y for v in node for y in [strip_required(v)] if y or y is False or y == ""]
+    else:
+        return node

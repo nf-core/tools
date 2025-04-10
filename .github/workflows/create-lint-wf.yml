@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - dev
+      # https://docs.renovatebot.com/key-concepts/automerge/#branch-vs-pr-automerging
+      - "renovate/**" # branches Renovate creates
     paths-ignore:
       - "docs/**"
       - "CHANGELOG.md"
@@ -27,14 +29,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-env:
-  NXF_ANSI_LOG: false
-
 jobs:
   MakeTestWorkflow:
     runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     env:
       NXF_ANSI_LOG: false
+
     strategy:
       matrix:
         NXF_VER:
@@ -53,9 +53,9 @@ jobs:
 
       # Set up nf-core/tools
       - name: Set up Python 3.12
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: pip
 
       - name: Install python dependencies

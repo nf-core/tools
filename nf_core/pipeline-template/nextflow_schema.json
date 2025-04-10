@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/{{ name }}/master/nextflow_schema.json",
+    "$id": "https://raw.githubusercontent.com/{{ name }}/{{ default_branch }}/nextflow_schema.json",
     "title": "{{ name }} pipeline parameters",
     "description": "{{ description }}",
     "type": "object",
@@ -182,7 +182,7 @@
                     "fa_icon": "fas fa-file-upload",
                     "hidden": true
                 },{% endif %}
-                {%- if modules %}
+                {%- if modules or nf_schema %}
                 "monochrome_logs": {
                     "type": "boolean",
                     "description": "Do not use coloured log outputs.",
@@ -229,7 +229,13 @@
                     "description": "Base URL or local path to location of pipeline test dataset files",
                     "default": "https://raw.githubusercontent.com/nf-core/test-datasets/",
                     "hidden": true
-                }{% endif %}
+                }{% endif %},
+                "trace_report_suffix": {
+                    "type": "string",
+                    "fa_icon": "far calendar",
+                    "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss.",
+                    "hidden": true
+                }
             }
         }
     },
@@ -237,10 +243,12 @@
         {
             "$ref": "#/$defs/input_output_options"
         },
-        {% if igenomes %}{
+        {%- if igenomes %}
+        {
             "$ref": "#/$defs/reference_genome_options"
         },{% endif %}
-        {% if nf_core_configs %}{
+        {%- if nf_core_configs %}
+        {
             "$ref": "#/$defs/institutional_config_options"
         },{% endif %}
         {

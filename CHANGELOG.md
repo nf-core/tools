@@ -1,22 +1,166 @@
 # nf-core/tools: Changelog
 
-## v3.0.3dev
+## v3.3.0dev
+
+### Template
+
+- Remove the on `pull_request_target` trigger and `pull_request` types from the download test. Also drop `push` triggers on other CI tests. ([#3399](https://github.com/nf-core/tools/pull/3399))
+- Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
+- Basic pipeline level nf-test tests ([#3469](https://github.com/nf-core/tools/pull/3469))
+- Add Bluesky badge to readme ([#3475](https://github.com/nf-core/tools/pull/3475))
+- Run awsfulltest after release, and with dev revision on PRs to master ([#3485](https://github.com/nf-core/tools/pull/3485))
+- Add .nftignore to trigger list ([#3508](https://github.com/nf-core/tools/pull/3508))
+- Include the centralized nf-core configs also in offline mode, if a local copy is available. ([#3491](https://github.com/nf-core/tools/pull/3491))
+
+### Linting
+
+- Add linting for ifEmpty(null) ([#3411](https://github.com/nf-core/tools/pull/3411))
+- Fix arbitrarily nested params schema linting ([#3443](https://github.com/nf-core/tools/pull/3443))
+- Fix: linting with comments after the input directive ([#3458](https://github.com/nf-core/tools/pull/3458))
+- EDAM ontology fixes ([#3460](https://github.com/nf-core/tools/pull/3460))
+- Fix default linting of nf-core components when `nf-core pipelines lint` is ran ([#3480](https://github.com/nf-core/tools/pull/3480))
+- Adapt the linter to the new notation used to include the centralized nf-core configs ([#3491](https://github.com/nf-core/tools/pull/3491))
+
+### Modules
+
+- increase meta index for multiple input channels ([#3463](https://github.com/nf-core/tools/pull/3463))
+- Configure the default module repository, branch, and path from environment variables. ([#3481](https://github.com/nf-core/tools/pull/3481))
+
+### Subworkflows
+
+### General
+
+- output passed to write_params_file as Path object ([#3435](https://github.com/nf-core/tools/pull/3435))
+- chore(deps): update python:3.12-slim docker digest to 69ce3ae ([#3433](https://github.com/nf-core/tools/pull/3433))
+- chore(deps): update dependency pytest-textual-snapshot to v1.1.0 ([#3439](https://github.com/nf-core/tools/pull/3439))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.4 ([#3438](https://github.com/nf-core/tools/pull/3438))
+- format name/value with YAML syntax ([#3442](https://github.com/nf-core/tools/pull/3442))
+- chore(deps): update pre-commit hook editorconfig-checker/editorconfig-checker.python to v3.2.0 ([#3446](https://github.com/nf-core/tools/pull/3446))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.5 ([#3445](https://github.com/nf-core/tools/pull/3445))
+- chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.15.0 ([#3447](https://github.com/nf-core/tools/pull/3447))
+- Update prettier to 3.5.0 ([#3448](https://github.com/nf-core/tools/pull/3448))
+- chore(deps): update python:3.12-slim docker digest to 34656cd ([#3450](https://github.com/nf-core/tools/pull/3450))
+- Remove Twitter from README ([#3454](https://github.com/nf-core/tools/pull/3454))
+- docs: fix contributing link in the main README ([#3459](https://github.com/nf-core/tools/pull/3459))
+- Cleanup: Removed Redundant if Condition ([#3468](https://github.com/nf-core/tools/pull/3468))
+- chore(deps): update gitpod/workspace-base docker digest to 7f35e40 ([#3473](https://github.com/nf-core/tools/pull/3473))
+- chore(deps): update python:3.12-slim docker digest to aaa3f8c ([#3474](https://github.com/nf-core/tools/pull/3474))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.9 ([#3470](https://github.com/nf-core/tools/pull/3470))
+- chore(deps): update github actions ([#3488](https://github.com/nf-core/tools/pull/3488))
+- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.11.0 ([#3492](https://github.com/nf-core/tools/pull/3492))
+- chore(deps): update dependency textual to v2 ([#3471](https://github.com/nf-core/tools/pull/3471))
+- Install subworkflows with modules from different remotes ([#3083](https://github.com/nf-core/tools/pull/3083))
+- chore(deps): update github actions ([#3498](https://github.com/nf-core/tools/pull/3498))
+- Ontology fix comment yaml ([#3502](https://github.com/nf-core/tools/pull/3502))
+- Bugfix - add back logo to the README ([#3504](https://github.com/nf-core/tools/pull/3504))
+- Update dead link ([#3505](https://github.com/nf-core/tools/pull/3505))
+- chore(deps): update actions/setup-python digest to 8d9ed9a ([#3518](https://github.com/nf-core/tools/pull/3518))
+- Changing retrieval of file extension from EDAM ([#3512](https://github.com/nf-core/tools/pull/3512))
+- Refactor adding EDAM ontologies and allowing detect more patterns (e.g., versions.yml) ([#3519](https://github.com/nf-core/tools/pull/3519))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.11.2 ([#3521](https://github.com/nf-core/tools/pull/3521))
+- Fix indentation in included_configs API docs ([#3523](https://github.com/nf-core/tools/pull/3523))
+- chore(deps): update python:3.12-slim docker digest to a866731 ([#3527](https://github.com/nf-core/tools/pull/3527))
+
+## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
+
+### Template
+
+- Remove automated release tweets ([#3419](https://github.com/nf-core/tools/pull/3419))
+- Update template components ([#3426](https://github.com/nf-core/tools/pull/3426))
+- Fix `process.shell` in `nextflow.config` ([#3416](https://github.com/nf-core/tools/pull/3416)) and split into new lines ([#3425](https://github.com/nf-core/tools/pull/3425))
+
+### Modules
+
+- Modules created in pipelines "local" dir now use the full template ([#3256](https://github.com/nf-core/tools/pull/3256))
+
+### Subworkflows
+
+- Subworkflows created in pipelines "local" dir now use the full template ([#3256](https://github.com/nf-core/tools/pull/3256))
+
+### General
+
+- Update pre-commit hook editorconfig-checker/editorconfig-checker.python to v3.1.2 ([#3414](https://github.com/nf-core/tools/pull/3414))
+- Update python:3.12-slim Docker digest to 123be56 ([#3421](https://github.com/nf-core/tools/pull/3421))
+
+## [v3.1.2 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.2) - [2025-01-20]
+
+### Template
+
+- Bump nf-schema to `2.3.0` ([#3401](https://github.com/nf-core/tools/pull/3401))
+- Remove jinja formatting which was deleting line breaks ([#3405](https://github.com/nf-core/tools/pull/3405))
+
+### Download
+
+- Allow `nf-core pipelines download -r` to download commits ([#3374](https://github.com/nf-core/tools/pull/3374))
+- Fix faulty Download Test Action to ensure that setup and test run as one job and on the same runner ([#3389](https://github.com/nf-core/tools/pull/3389))
+
+### Modules
+
+- Fix bump-versions: only append module name if it is a dir and contains `main.nf` ([#3384](https://github.com/nf-core/tools/pull/3384))
+
+### General
+
+- `manifest.author` is not required anymore ([#3397](https://github.com/nf-core/tools/pull/3397))
+- Parameters schema validation: allow `oneOf`, `anyOf` and `allOf` with `required` ([#3386](https://github.com/nf-core/tools/pull/3386))
+- Run pre-comit when rendering template for pipelines sync ([#3371](https://github.com/nf-core/tools/pull/3371))
+- Fix sync GHA by removing quotes from parsed branch name ([#3394](https://github.com/nf-core/tools/pull/3394))
+
+## [v3.1.1 - Brass Boxfish Patch](https://github.com/nf-core/tools/releases/tag/3.1.1) - [2024-12-20]
+
+### Template
+
+- Use outputs instead of the environment to pass around values between steps in the Download Test Action ([#3351](https://github.com/nf-core/tools/pull/3351))
+- Fix pre commit template ([#3358](https://github.com/nf-core/tools/pull/3358))
+- Set LICENSE copyright to nf-core community ([#3366](https://github.com/nf-core/tools/pull/3366))
+- Fix including modules.config ([#3356](https://github.com/nf-core/tools/pull/3356))
+
+### Linting
+
+- Linting of pipeline LICENSE file is a warning to allow for author/maintainer names ([#3366](https://github.com/nf-core/tools/pull/3366))
+
+### General
+
+- Add missing p ([#3357](https://github.com/nf-core/tools/pull/3357))
+- Use `manifest.contributors` names if available, otherwise default to `manifest.author` ([#3362](https://github.com/nf-core/tools/pull/3362))
+- Properly parse the names form `manifest.contributors` ([#3364](https://github.com/nf-core/tools/pull/3364))
+
+## [v3.1.0 - Brass Boxfish](https://github.com/nf-core/tools/releases/tag/3.1.0) - [2024-12-09]
+
+**Highlights**
+
+- We added the new `contributors` field to the pipeline template `manifest`.
+- The `nf-core pipelines download` command supports ORAS container URIs.
+- New command `nf-core subworkflows patch`.
 
 ### Template
 
 - Keep pipeline name in version.yml file ([#3223](https://github.com/nf-core/tools/pull/3223))
 - Fix Manifest DOI text ([#3224](https://github.com/nf-core/tools/pull/3224))
 - Do not assume pipeline name is url ([#3225](https://github.com/nf-core/tools/pull/3225))
-- fix workflow_dispatch trigger and parse more review comments in awsfulltest ([#3235](https://github.com/nf-core/tools/pull/3235))
+- fix `workflow_dispatch` trigger and parse more review comments in awsfulltest ([#3235](https://github.com/nf-core/tools/pull/3235))
 - Add resource limits to Gitpod profile([#3255](https://github.com/nf-core/tools/pull/3255))
 - Fix a typo ([#3268](https://github.com/nf-core/tools/pull/3268))
+- Remove `def` from `nextflow.config` and add `trace_report_suffix` param ([#3296](https://github.com/nf-core/tools/pull/3296))
+- Move `includeConfig 'conf/modules.config'` next to `includeConfig 'conf/base.config'` to not overwrite tests profiles configurations ([#3301](https://github.com/nf-core/tools/pull/3301))
+- Use `params.monochrome_logs` in the template and update nf-core components ([#3310](https://github.com/nf-core/tools/pull/3310))
+- Fix some typos and improve writing in `usage.md` and `CONTRIBUTING.md` ([#3302](https://github.com/nf-core/tools/pull/3302))
+- Add `manifest.contributors` to `nextflow.config` ([#3311](https://github.com/nf-core/tools/pull/3311))
+- Update template components ([#3328](https://github.com/nf-core/tools/pull/3328))
+- Template: Remove mention of GRCh37 if igenomes is skipped ([#3330](https://github.com/nf-core/tools/pull/3330))
+- Be more verbose in approval check action ([#3338](https://github.com/nf-core/tools/pull/3338))
 - Add `gpu` profile ([#3272](https://github.com/nf-core/tools/pull/3272))
 
 ### Download
 
-- First steps towards fixing [#3179](https://github.com/nf-core/tools/issues/3179): Modify `prioritize_direct_download()` to retain Seqera Singularity https:// Container URIs and hardcode Seqera Containers into `gather_registries()` ([#3244](https://github.com/nf-core/tools/pull/3244)).
+- First steps towards fixing [#3179](https://github.com/nf-core/tools/issues/3179): Modify `prioritize_direct_download()` to retain Seqera Singularity `https://` Container URIs and hardcode Seqera Containers into `gather_registries()` ([#3244](https://github.com/nf-core/tools/pull/3244)).
+- Further steps towards fixing [#3179](https://github.com/nf-core/tools/issues/3179): Enable limited support for `oras://` container paths (_only absolute URIs, no flexible registries like with Docker_) and prevent unnecessary image downloads for Seqera Container modules with `reconcile_seqera_container_uris()` ([#3293](https://github.com/nf-core/tools/pull/3293)).
+- Update dawidd6/action-download-artifact action to v7 ([#3306](https://github.com/nf-core/tools/pull/3306))
 
 ### Linting
+
+- allow mixed `str` and `dict` entries in lint config ([#3228](https://github.com/nf-core/tools/pull/3228))
+- fix `meta_yml` linting test failing due to `module.process_name` always being `""` ([#3317](https://github.com/nf-core/tools/pull/3317))
+- fix module section regex matching wrong things ([#3321](https://github.com/nf-core/tools/pull/3321))
 
 ### Modules
 
@@ -24,18 +168,40 @@
 
 ### Subworkflows
 
+- Add `nf-core subworkflows patch` command ([#2861](https://github.com/nf-core/tools/pull/2861))
+- Improve subworkflow nf-test migration warning ([#3298](https://github.com/nf-core/tools/pull/3298))
+
 ### General
 
-- Include .nf-core.yml in `nf-core pipelines bump-version` ([#3220](https://github.com/nf-core/tools/pull/3220))
+- Include `.nf-core.yml` in `nf-core pipelines bump-version` ([#3220](https://github.com/nf-core/tools/pull/3220))
 - create: add shortcut to toggle all switches ([#3226](https://github.com/nf-core/tools/pull/3226))
 - Remove unrelated values when saving `.nf-core` file ([#3227](https://github.com/nf-core/tools/pull/3227))
-- chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.12.0 ([#3230](https://github.com/nf-core/tools/pull/3230))
-- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.7.0 ([#3229](https://github.com/nf-core/tools/pull/3229))
-- Update python:3.12-slim Docker digest to 032c526 ([#3232](https://github.com/nf-core/tools/pull/3232))
 - use correct `--profile` options for `nf-core subworkflows test` ([#3233](https://github.com/nf-core/tools/pull/3233))
 - Update GitHub Actions ([#3237](https://github.com/nf-core/tools/pull/3237))
 - add `--dir/-d` option to schema commands ([#3247](https://github.com/nf-core/tools/pull/3247))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.7.1 ([#3250](https://github.com/nf-core/tools/pull/3250))
+- fix headers in api docs ([#3323](https://github.com/nf-core/tools/pull/3323))
+- handle new schema structure in `nf-core pipelines create-params-file` ([#3276](https://github.com/nf-core/tools/pull/3276))
+- Update Gitpod image to use Miniforge instead of Miniconda([#3274](https://github.com/nf-core/tools/pull/3274))
+- Add hint to solve git errors with a synced repo ([#3279](https://github.com/nf-core/tools/pull/3279))
+- Run pre-commit when testing linting the template pipeline ([#3280](https://github.com/nf-core/tools/pull/3280))
+- Make CLI prompt less nf-core specific ([#3326](https://github.com/nf-core/tools/pull/3326))
+- Update gitpod vscode extensions to use nf-core extension pack ([#3327](https://github.com/nf-core/tools/pull/3327))
+- Remove toList() channel operation from inside onComplete block ([#3304](https://github.com/nf-core/tools/pull/3304))
+- build: Setup VS Code tests ([#3292](https://github.com/nf-core/tools/pull/3292))
+- Don't break gitpod.yml with template string ([#3332](https://github.com/nf-core/tools/pull/3332))
+- rocrate: remove duplicated entries for name and version ([#3333](https://github.com/nf-core/tools/pull/3333))
+- rocrate: Update crate with version bump and handle new contributor field ([#3334](https://github.com/nf-core/tools/pull/3334))
+- set default_branch to master for now ([#3335](https://github.com/nf-core/tools/issues/3335))
+- Set git defaultBranch to master in sync action ([#3337](https://github.com/nf-core/tools/pull/3337))
+- Add verbose mode to sync action ([#3339](https://github.com/nf-core/tools/pull/3339))
+- ci: Run checks on renovate branches to avoid creating and merging PRs ([#3018](https://github.com/nf-core/tools/pull/3018))
+
+### Version updates
+
+- chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.12.0 ([#3230](https://github.com/nf-core/tools/pull/3230))
+- Update codecov/codecov-action action to v5 ([#3283](https://github.com/nf-core/tools/pull/3283))
+- Update gitpod/workspace-base Docker digest to 12853f7 ([#3309](https://github.com/nf-core/tools/pull/3309))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.8.2 ([#3325](https://github.com/nf-core/tools/pull/3325))
 
 ## [v3.0.2 - Titanium Tapir Patch](https://github.com/nf-core/tools/releases/tag/3.0.2) - [2024-10-11]
 

@@ -33,4 +33,3 @@ workflow {{ component_name_underscore|upper }} {
 
     versions = ch_versions                     // channel: [ versions.yml ]
 }
-

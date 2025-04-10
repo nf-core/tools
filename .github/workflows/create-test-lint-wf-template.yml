@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - dev
+      # https://docs.renovatebot.com/key-concepts/automerge/#branch-vs-pr-automerging
+      - "renovate/**" # branches Renovate creates
     paths:
       - nf_core/pipeline-template/**
   pull_request:
@@ -38,7 +40,7 @@ jobs:
       all_features: ${{ steps.create_matrix.outputs.matrix }}
     steps:
       - name: 🏗 Set up yq
-        uses: frenck/action-setup-yq@v1
+        uses: frenck/action-setup-yq@c4b5be8b4a215c536a41d436757d9feb92836d4f # v1
       - name: checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Create Matrix
@@ -51,6 +53,7 @@ jobs:
     needs: prepare-matrix
     env:
       NXF_ANSI_LOG: false
+
     strategy:
       matrix:
         TEMPLATE: ${{ fromJson(needs.prepare-matrix.outputs.all_features) }}
@@ -81,9 +84,9 @@ jobs:
         name: Check out source-code repository
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install python dependencies
         run: |
@@ -147,9 +150,20 @@ jobs:
         run: find my-prefix-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
         working-directory: create-test-lint-wf
 
+      # Add empty ro-crate file
+      - name: add empty ro-crate file
+        run: touch my-prefix-testpipeline/ro-crate-metadata.json
+        working-directory: create-test-lint-wf
+
       # Run nf-core linting
       - name: nf-core pipelines lint
         run: nf-core --log-file log.txt --hide-progress pipelines lint --dir my-prefix-testpipeline --fail-warned
+        working-directory: create-test-lint-wf
+
+      # Run code style linting
+      - name: run pre-commit
+        shell: bash
+        run: pre-commit run --all-files
         working-directory: create-test-lint-wf
 
       # Run bump-version
@@ -168,7 +182,7 @@ jobs:
 
       - name: Upload log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: nf-core-log-file-${{ matrix.TEMPLATE }}
           path: create-test-lint-wf/artifact_files.tar

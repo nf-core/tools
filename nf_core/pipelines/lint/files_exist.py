@@ -23,7 +23,6 @@ def files_exist(self) -> Dict[str, List[str]]:
         .gitattributes
         .gitignore
         .nf-core.yml
-        .editorconfig
         .prettierignore
         .prettierrc.yml
         .github/.dockstore.yml
@@ -33,7 +32,9 @@ def files_exist(self) -> Dict[str, List[str]]:
         .github/ISSUE_TEMPLATE/feature_request.yml
         .github/PULL_REQUEST_TEMPLATE.md
         .github/workflows/branch.yml
-        .github/workflows/ci.yml
+        .github/workflows/nf-test.yml
+        .github/actions/get-shards/action.yml
+        .github/actions/nf-test/action.yml
         .github/workflows/linting_comment.yml
         .github/workflows/linting.yml
         [LICENSE, LICENSE.md, LICENCE, LICENCE.md]  # NB: British / American spelling
@@ -54,7 +55,9 @@ def files_exist(self) -> Dict[str, List[str]]:
         docs/usage.md
         nextflow_schema.json
         nextflow.config
+        nf-test.config
         README.md
+        tests/default.nf.test
 
     Files that *should* be present:
 
@@ -66,6 +69,7 @@ def files_exist(self) -> Dict[str, List[str]]:
         conf/igenomes.config
         .github/workflows/awstest.yml
         .github/workflows/awsfulltest.yml
+        ro-crate-metadata.json
 
     Files that *must not* be present, due to being renamed or removed in the template:
 
@@ -127,7 +131,6 @@ def files_exist(self) -> Dict[str, List[str]]:
         [Path(".gitattributes")],
         [Path(".gitignore")],
         [Path(".nf-core.yml")],
-        [Path(".editorconfig")],
         [Path(".prettierignore")],
         [Path(".prettierrc.yml")],
         [Path("CHANGELOG.md")],
@@ -144,7 +147,9 @@ def files_exist(self) -> Dict[str, List[str]]:
         [Path(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
         [Path(".github", "PULL_REQUEST_TEMPLATE.md")],
         [Path(".github", "workflows", "branch.yml")],
-        [Path(".github", "workflows", "ci.yml")],
+        [Path(".github", "workflows", "nf-test.yml")],
+        [Path(".github", "actions", "get-shards", "action.yml")],
+        [Path(".github", "actions", "nf-test", "action.yml")],
         [Path(".github", "workflows", "linting_comment.yml")],
         [Path(".github", "workflows", "linting.yml")],
         [Path("assets", "email_template.html")],
@@ -160,6 +165,8 @@ def files_exist(self) -> Dict[str, List[str]]:
         [Path("docs", "README.md")],
         [Path("docs", "README.md")],
         [Path("docs", "usage.md")],
+        [Path("nf-test.config")],
+        [Path("tests", "default.nf.test")],
     ]
 
     files_warn = [
@@ -171,6 +178,7 @@ def files_exist(self) -> Dict[str, List[str]]:
         [Path(".github", "workflows", "awstest.yml")],
         [Path(".github", "workflows", "awsfulltest.yml")],
         [Path("modules.json")],
+        [Path("ro-crate-metadata.json")],
     ]
 
     # List of strings. Fails / warns if any of the strings exist.
@@ -198,6 +206,12 @@ def files_exist(self) -> Dict[str, List[str]]:
     ]
     files_warn_ifexists = [Path(".travis.yml")]
 
+    files_hint = [
+        [
+            ["ro-crate-metadata.json"],
+            ". Run `nf-core rocrate` to generate this file. Read more about RO-Crates in the [nf-core/tools docs](https://nf-co.re/tools#create-a-ro-crate-metadata-file).",
+        ],
+    ]
     # Remove files that should be ignored according to the linting config
     ignore_files = self.lint_config.get("files_exist", []) if self.lint_config is not None else []
 
@@ -225,7 +239,11 @@ def files_exist(self) -> Dict[str, List[str]]:
         if any([pf(f).is_file() for f in files]):
             passed.append(f"File found: {self._wrap_quotes(files)}")
         else:
-            warned.append(f"File not found: {self._wrap_quotes(files)}")
+            hint = ""
+            for file_hint in files_hint:
+                if file_hint[0] == files:
+                    hint = str(file_hint[1])
+            warned.append(f"File not found: {self._wrap_quotes(files)}{hint}")
 
     # Files that cause an error if they exist
     for file in files_fail_ifexists:

@@ -202,7 +202,7 @@ class DownloadWorkflow:
             raise DownloadError(e) from e
 
         summary_log = [
-            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0]+',['+str(len(self.revision)-2)+' more revisions],'+self.revision[-1]}'",
+            f"Pipeline revision: '{', '.join(self.revision) if len(self.revision) < 5 else self.revision[0] + ',[' + str(len(self.revision) - 2) + ' more revisions],' + self.revision[-1]}'",
             f"Use containers: '{self.container_system}'",
         ]
         if self.container_system:
@@ -374,22 +374,27 @@ class DownloadWorkflow:
                     raise AssertionError(f"No revisions of {self.pipeline} available for download.")
 
     def get_revision_hash(self):
-        """Find specified revision / branch hash"""
+        """Find specified revision / branch / commit hash"""
 
         for revision in self.revision:  # revision is a list of strings, but may be of length 1
             # Branch
             if revision in self.wf_branches.keys():
                 self.wf_sha = {**self.wf_sha, revision: self.wf_branches[revision]}
 
-            # Revision
             else:
+                # Revision
                 for r in self.wf_revisions:
                     if r["tag_name"] == revision:
                         self.wf_sha = {**self.wf_sha, revision: r["tag_sha"]}
                         break
 
-                # Can't find the revisions or branch - throw an error
                 else:
+                    # Commit - full or short hash
+                    if commit_id := nf_core.utils.get_repo_commit(self.pipeline, revision):
+                        self.wf_sha = {**self.wf_sha, revision: commit_id}
+                        continue
+
+                    # Can't find the revisions or branch - throw an error
                     log.info(
                         "Available {} revisions: '{}'".format(
                             self.pipeline,
@@ -397,7 +402,9 @@ class DownloadWorkflow:
                         )
                     )
                     log.info("Available {} branches: '{}'".format(self.pipeline, "', '".join(self.wf_branches.keys())))
-                    raise AssertionError(f"Not able to find revision / branch '{revision}' for {self.pipeline}")
+                    raise AssertionError(
+                        f"Not able to find revision / branch / commit '{revision}' for {self.pipeline}"
+                    )
 
         # Set the outdir
         if not self.outdir:
@@ -839,11 +846,12 @@ class DownloadWorkflow:
         url_regex = (
             r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
         )
+        oras_regex = r"oras:\/\/[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
         # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
         docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
 
         # at this point, we don't have to distinguish anymore, because we will later prioritize direct downloads over Docker URIs.
-        either_url_or_docker = re.compile(f"{url_regex}|{docker_regex}", re.S)
+        either_url_or_docker = re.compile(f"{url_regex}|{oras_regex}|{docker_regex}", re.S)
 
         for _, container_value, search_space, file_path in raw_findings:
             """
@@ -1000,14 +1008,18 @@ class DownloadWorkflow:
         'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/63/6397750e9730a3fbcc5b4c43f14bd141c64c723fd7dad80e47921a68a7c3cd21/data'
         'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data'
 
+        Lastly, we want to remove at least a few Docker URIs for those modules, that have an oras:// download link.
         """
         d: Dict[str, str] = {}
-        seqera_containers: List[str] = []
+        seqera_containers_http: List[str] = []
+        seqera_containers_oras: List[str] = []
         all_others: List[str] = []
 
         for c in container_list:
             if bool(re.search(r"/data$", c)):
-                seqera_containers.append(c)
+                seqera_containers_http.append(c)
+            elif bool(re.search(r"^oras://", c)):
+                seqera_containers_oras.append(c)
             else:
                 all_others.append(c)
 
@@ -1016,8 +1028,47 @@ class DownloadWorkflow:
                 log.debug(f"{c} matches and will be saved as {k}")
                 d[k] = c
 
-        # combine deduplicated others and Seqera containers
-        return sorted(list(d.values()) + seqera_containers)
+        combined_with_oras = self.reconcile_seqera_container_uris(seqera_containers_oras, list(d.values()))
+
+        # combine deduplicated others (Seqera containers oras, http others and Docker URI others) and Seqera containers http
+        return sorted(list(set(combined_with_oras + seqera_containers_http)))
+
+    @staticmethod
+    def reconcile_seqera_container_uris(prioritized_container_list: List[str], other_list: List[str]) -> List[str]:
+        """
+        Helper function that takes a list of Seqera container URIs,
+        extracts the software string and builds a regex from them to filter out
+        similar containers from the second container list.
+
+        prioritzed_container_list = [
+        ...     "oras://community.wave.seqera.io/library/multiqc:1.25.1--f0e743d16869c0bf",
+        ...     "oras://community.wave.seqera.io/library/multiqc_pip_multiqc-plugins:e1f4877f1515d03c"
+        ... ]
+
+        will be cleaned to
+
+        ['library/multiqc:1.25.1', 'library/multiqc_pip_multiqc-plugins']
+
+        Subsequently, build a regex from those and filter out matching duplicates in other_list:
+        """
+        if not prioritized_container_list:
+            return other_list
+        else:
+            # trim the URIs to the stem that contains the tool string, assign with Walrus operator to account for non-matching patterns
+            trimmed_priority_list = [
+                match.group()
+                for c in set(prioritized_container_list)
+                if (match := re.search(r"library/.*?:[\d.]+", c) if "--" in c else re.search(r"library/[^\s:]+", c))
+            ]
+
+            # build regex
+            prioritized_containers = re.compile("|".join(f"{re.escape(c)}" for c in trimmed_priority_list))
+
+            # filter out matches in other list
+            filtered_containers = [c for c in other_list if not re.search(prioritized_containers, c)]
+
+            # combine prioritized and regular container lists
+            return sorted(list(set(prioritized_container_list + filtered_containers)))
 
     def gather_registries(self, workflow_directory: str) -> None:
         """Fetch the registries from the pipeline config and CLI arguments and store them in a set.
@@ -1419,9 +1470,10 @@ class DownloadWorkflow:
         # Sometimes, container still contain an explicit library specification, which
         # resulted in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
         # Thus, if an explicit registry is specified, the provided -l value is ignored.
+        # Additionally, check if the container to be pulled is native Singularity: oras:// protocol.
         container_parts = container.split("/")
         if len(container_parts) > 2:
-            address = f"docker://{container}"
+            address = container if container.startswith("oras://") else f"docker://{container}"
             absolute_URI = True
         else:
             address = f"docker://{library}/{container.replace('docker://', '')}"
@@ -1491,7 +1543,7 @@ class DownloadWorkflow:
 
         progress.remove_task(task)
 
-    def compress_download(self) -> None:
+    def compress_download(self):
         """Take the downloaded files and make a compressed .tar.gz archive."""
         log.debug(f"Creating archive: {self.output_filename}")
 
@@ -1699,7 +1751,7 @@ class WorkflowRepo(SyncedRepo):
                 for tag in tags_to_remove:
                     self.repo.delete_tag(tag)
 
-                # switch to a revision that should be kept, because deleting heads fails, if they are checked out (e.g. "master")
+                # switch to a revision that should be kept, because deleting heads fails, if they are checked out (e.g. "main")
                 self.checkout(self.revision[0])
 
                 # delete unwanted heads/branches from repository
@@ -1843,6 +1895,9 @@ class ContainerError(Exception):
             elif re.search(r"manifest\sunknown", line):
                 self.error_type = self.InvalidTagError(self)
                 break
+            elif re.search(r"ORAS\sSIF\simage\sshould\shave\sa\ssingle\slayer", line):
+                self.error_type = self.NoSingularityContainerError(self)
+                break
             elif re.search(r"Image\sfile\salready\sexists", line):
                 self.error_type = self.ImageExistsError(self)
                 break
@@ -1853,8 +1908,8 @@ class ContainerError(Exception):
 
         log.error(self.error_type.message)
         log.info(self.error_type.helpmessage)
-        log.debug(f'Failed command:\n{" ".join(singularity_command)}')
-        log.debug(f'Singularity error messages:\n{"".join(error_msg)}')
+        log.debug(f"Failed command:\n{' '.join(singularity_command)}")
+        log.debug(f"Singularity error messages:\n{''.join(error_msg)}")
 
         raise self.error_type
 
@@ -1905,6 +1960,17 @@ class ContainerError(Exception):
                 f'[bold red]"{self.error_log.container}" already exists at destination and cannot be pulled[/]\n'
             )
             self.helpmessage = f'Saving image of "{self.error_log.container}" failed, because "{self.error_log.out_path}" exists.\nPlease troubleshoot the command \n"{" ".join(self.error_log.singularity_command)}" manually.\n'
+            super().__init__(self.message)
+
+    class NoSingularityContainerError(RuntimeError):
+        """The container image is no native Singularity Image Format."""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = (
+                f'[bold red]"{self.error_log.container}" is no valid Singularity Image Format container.[/]\n'
+            )
+            self.helpmessage = f"Pulling \"{self.error_log.container}\" failed, because it appears invalid. To convert from Docker's OCI format, prefix the URI with 'docker://' instead of 'oras://'.\n"
             super().__init__(self.message)
 
     class OtherError(RuntimeError):

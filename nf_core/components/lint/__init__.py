@@ -22,7 +22,7 @@ from nf_core.components.components_command import ComponentCommand
 from nf_core.components.nfcore_component import NFCoreComponent
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.pipelines.lint_utils import console
-from nf_core.utils import LintConfigType
+from nf_core.utils import NFCoreYamlLintConfig
 from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ class ComponentLint(ComponentCommand):
         self.failed: List[LintResult] = []
         self.all_local_components: List[NFCoreComponent] = []
 
-        self.lint_config: Optional[LintConfigType] = None
+        self.lint_config: Optional[NFCoreYamlLintConfig] = None
         self.modules_json: Optional[ModulesJson] = None
 
         if self.component_type == "modules":
@@ -102,7 +102,7 @@ class ComponentLint(ComponentCommand):
                     continue
                 if isinstance(components, str):
                     raise LookupError(
-                        f"Error parsing modules.json: {components}. " f"Please check the file for errors or try again."
+                        f"Error parsing modules.json: {components}. Please check the file for errors or try again."
                     )
                 for org, comp in components:
                     self.all_remote_components.append(
@@ -162,6 +162,10 @@ class ComponentLint(ComponentCommand):
             self.registry = registry
         log.debug(f"Registry set to {self.registry}")
 
+    @property
+    def local_module_exclude_tests(self):
+        return ["module_version", "module_changes", "modules_patch"]
+
     @staticmethod
     def get_all_module_lint_tests(is_pipeline):
         if is_pipeline:
@@ -181,9 +185,16 @@ class ComponentLint(ComponentCommand):
     @staticmethod
     def get_all_subworkflow_lint_tests(is_pipeline):
         if is_pipeline:
-            return ["main_nf", "meta_yml", "subworkflow_changes", "subworkflow_todos", "subworkflow_version"]
+            return [
+                "main_nf",
+                "meta_yml",
+                "subworkflow_changes",
+                "subworkflow_todos",
+                "subworkflow_if_empty_null",
+                "subworkflow_version",
+            ]
         else:
-            return ["main_nf", "meta_yml", "subworkflow_todos", "subworkflow_tests"]
+            return ["main_nf", "meta_yml", "subworkflow_todos", "subworkflow_if_empty_null", "subworkflow_tests"]
 
     def set_up_pipeline_files(self):
         self.load_lint_config()

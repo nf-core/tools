@@ -1,4 +1,4 @@
-# nf_core.create
+# nf_core.pipelines.create
 
 ```{eval-rst}
 .. automodule:: nf_core.pipelines.create

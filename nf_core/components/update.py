@@ -9,13 +9,13 @@ import questionary
 import nf_core.modules.modules_utils
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
+from nf_core.components.components_differ import ComponentsDiffer
 from nf_core.components.components_utils import (
     get_components_to_install,
     prompt_component_version_sha,
 )
 from nf_core.components.install import ComponentInstall
 from nf_core.components.remove import ComponentRemove
-from nf_core.modules.modules_differ import ModulesDiffer
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.utils import plural_es, plural_s, plural_y
@@ -41,6 +41,8 @@ class ComponentUpdate(ComponentCommand):
         limit_output=False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
+        self.current_remote = ModulesRepo(remote_url, branch)
+        self.branch = branch
         self.force = force
         self.prompt = prompt
         self.sha = sha
@@ -92,6 +94,13 @@ class ComponentUpdate(ComponentCommand):
         Returns:
             (bool): True if the update was successful, False otherwise.
         """
+        if isinstance(component, dict):
+            # Override modules_repo when the component to install is a dependency from a subworkflow.
+            remote_url = component.get("git_remote", self.current_remote.remote_url)
+            branch = component.get("branch", self.branch)
+            self.modules_repo = ModulesRepo(remote_url, branch)
+            component = component["name"]
+
         self.component = component
         if updated is None:
             updated = []
@@ -223,7 +232,7 @@ class ComponentUpdate(ComponentCommand):
                         f"Writing diff file for {self.component_type[:-1]} '{component_fullname}' to '{self.save_diff_fn}'"
                     )
                     try:
-                        ModulesDiffer.write_diff_file(
+                        ComponentsDiffer.write_diff_file(
                             self.save_diff_fn,
                             component,
                             modules_repo.repo_path,
@@ -265,7 +274,7 @@ class ComponentUpdate(ComponentCommand):
                         self.manage_changes_in_linked_components(component, modules_to_update, subworkflows_to_update)
 
                 elif self.show_diff:
-                    ModulesDiffer.print_diff(
+                    ComponentsDiffer.print_diff(
                         component,
                         modules_repo.repo_path,
                         component_dir,
@@ -313,7 +322,7 @@ class ComponentUpdate(ComponentCommand):
 
         if self.save_diff_fn:
             # Write the modules.json diff to the file
-            ModulesDiffer.append_modules_json_diff(
+            ComponentsDiffer.append_modules_json_diff(
                 self.save_diff_fn,
                 old_modules_json,
                 self.modules_json.get_modules_json(),
@@ -449,7 +458,9 @@ class ComponentUpdate(ComponentCommand):
                 self.modules_repo.setup_branch(current_branch)
 
         # If there is a patch file, get its filename
-        patch_fn = self.modules_json.get_patch_fn(component, self.modules_repo.remote_url, install_dir)
+        patch_fn = self.modules_json.get_patch_fn(
+            self.component_type, component, self.modules_repo.remote_url, install_dir
+        )
 
         return (self.modules_repo, component, sha, patch_fn)
 
@@ -695,7 +706,12 @@ class ComponentUpdate(ComponentCommand):
 
         # Add patch filenames to the components that have them
         components_info = [
-            (repo, comp, sha, self.modules_json.get_patch_fn(comp, repo.remote_url, repo.repo_path))
+            (
+                repo,
+                comp,
+                sha,
+                self.modules_json.get_patch_fn(self.component_type, comp, repo.remote_url, repo.repo_path),
+            )
             for repo, comp, sha in components_info
         ]
 
@@ -810,7 +826,9 @@ class ComponentUpdate(ComponentCommand):
         shutil.copytree(component_install_dir, temp_component_dir)
 
         try:
-            new_files = ModulesDiffer.try_apply_patch(component, repo_path, patch_path, temp_component_dir)
+            new_files = ComponentsDiffer.try_apply_patch(
+                self.component_type, component, repo_path, patch_path, temp_component_dir
+            )
         except LookupError:
             # Patch failed. Save the patch file by moving to the install dir
             shutil.move(patch_path, Path(component_install_dir, patch_path.relative_to(component_dir)))
@@ -828,7 +846,7 @@ class ComponentUpdate(ComponentCommand):
 
         # Create the new patch file
         log.debug("Regenerating patch file")
-        ModulesDiffer.write_diff_file(
+        ComponentsDiffer.write_diff_file(
             Path(temp_component_dir, patch_path.relative_to(component_dir)),
             component,
             repo_path,
@@ -848,7 +866,12 @@ class ComponentUpdate(ComponentCommand):
 
         # Add the patch file to the modules.json file
         self.modules_json.add_patch_entry(
-            component, self.modules_repo.remote_url, repo_path, patch_relpath, write_file=write_file
+            self.component_type,
+            component,
+            self.modules_repo.remote_url,
+            repo_path,
+            patch_relpath,
+            write_file=write_file,
         )
 
         return True
@@ -868,7 +891,17 @@ class ComponentUpdate(ComponentCommand):
         if self.component_type == "modules":
             # All subworkflow names in the installed_by section of a module are subworkflows using this module
             # We need to update them too
-            subworkflows_to_update = [subworkflow for subworkflow in installed_by if subworkflow != self.component_type]
+            git_remote = self.current_remote.remote_url
+            for subworkflow in installed_by:
+                if subworkflow != component:
+                    for remote_url, content in mods_json["repos"].items():
+                        if all_subworkflows := content.get("subworkflows"):
+                            for details in all_subworkflows.values():
+                                if subworkflow in details:
+                                    git_remote = remote_url
+                if subworkflow != self.component_type:
+                    subworkflows_to_update.append({"name": subworkflow, "git_remote": git_remote})
+
         elif self.component_type == "subworkflows":
             for repo, repo_content in mods_json["repos"].items():
                 for component_type, dir_content in repo_content.items():
@@ -879,9 +912,9 @@ class ComponentUpdate(ComponentCommand):
                             # We need to update it too
                             if component in comp_content["installed_by"]:
                                 if component_type == "modules":
-                                    modules_to_update.append(comp)
+                                    modules_to_update.append({"name": comp, "git_remote": repo, "org_path": dir})
                                 elif component_type == "subworkflows":
-                                    subworkflows_to_update.append(comp)
+                                    subworkflows_to_update.append({"name": comp, "git_remote": repo, "org_path": dir})
 
         return modules_to_update, subworkflows_to_update
 
@@ -896,7 +929,7 @@ class ComponentUpdate(ComponentCommand):
         Update modules and subworkflows linked to the component being updated.
         """
         for s_update in subworkflows_to_update:
-            if s_update in updated:
+            if s_update["name"] in updated:
                 continue
             original_component_type, original_update_all = self._change_component_type("subworkflows")
             self.update(
@@ -908,7 +941,7 @@ class ComponentUpdate(ComponentCommand):
             self._reset_component_type(original_component_type, original_update_all)
 
         for m_update in modules_to_update:
-            if m_update in updated:
+            if m_update["name"] in updated:
                 continue
             original_component_type, original_update_all = self._change_component_type("modules")
             try:
@@ -931,28 +964,42 @@ class ComponentUpdate(ComponentCommand):
     def manage_changes_in_linked_components(self, component, modules_to_update, subworkflows_to_update):
         """Check for linked components added or removed in the new subworkflow version"""
         if self.component_type == "subworkflows":
-            subworkflow_directory = Path(self.directory, self.component_type, self.modules_repo.repo_path, component)
+            org_path = self.current_remote.repo_path
+
+            subworkflow_directory = Path(self.directory, self.component_type, org_path, component)
             included_modules, included_subworkflows = get_components_to_install(subworkflow_directory)
             # If a module/subworkflow has been removed from the subworkflow
             for module in modules_to_update:
-                if module not in included_modules:
-                    log.info(f"Removing module '{module}' which is not included in '{component}' anymore.")
+                module_name = module["name"]
+                included_modules_names = [m["name"] for m in included_modules]
+                if module_name not in included_modules_names:
+                    log.info(f"Removing module '{module_name}' which is not included in '{component}' anymore.")
                     remove_module_object = ComponentRemove("modules", self.directory)
-                    remove_module_object.remove(module, removed_by=component)
+                    remove_module_object.remove(module_name, removed_by=component)
             for subworkflow in subworkflows_to_update:
-                if subworkflow not in included_subworkflows:
-                    log.info(f"Removing subworkflow '{subworkflow}' which is not included in '{component}' anymore.")
+                subworkflow_name = subworkflow["name"]
+                included_subworkflow_names = [m["name"] for m in included_subworkflows]
+                if subworkflow_name not in included_subworkflow_names:
+                    log.info(
+                        f"Removing subworkflow '{subworkflow_name}' which is not included in '{component}' anymore."
+                    )
                     remove_subworkflow_object = ComponentRemove("subworkflows", self.directory)
-                    remove_subworkflow_object.remove(subworkflow, removed_by=component)
+                    remove_subworkflow_object.remove(subworkflow_name, removed_by=component)
             # If a new module/subworkflow is included in the subworklfow and wasn't included before
             for module in included_modules:
-                if module not in modules_to_update:
-                    log.info(f"Installing newly included module '{module}' for '{component}'")
+                module_name = module["name"]
+                module["git_remote"] = module.get("git_remote", self.current_remote.remote_url)
+                module["branch"] = module.get("branch", self.branch)
+                if module_name not in modules_to_update:
+                    log.info(f"Installing newly included module '{module_name}' for '{component}'")
                     install_module_object = ComponentInstall(self.directory, "modules", installed_by=component)
                     install_module_object.install(module, silent=True)
             for subworkflow in included_subworkflows:
-                if subworkflow not in subworkflows_to_update:
-                    log.info(f"Installing newly included subworkflow '{subworkflow}' for '{component}'")
+                subworkflow_name = subworkflow["name"]
+                subworkflow["git_remote"] = subworkflow.get("git_remote", self.current_remote.remote_url)
+                subworkflow["branch"] = subworkflow.get("branch", self.branch)
+                if subworkflow_name not in subworkflows_to_update:
+                    log.info(f"Installing newly included subworkflow '{subworkflow_name}' for '{component}'")
                     install_subworkflow_object = ComponentInstall(
                         self.directory, "subworkflows", installed_by=component
                     )
@@ -971,3 +1018,5 @@ class ComponentUpdate(ComponentCommand):
         self.component_type = original_component_type
         self.modules_json.pipeline_components = None
         self.update_all = original_update_all
+        if self.current_remote is None:
+            self.current_remote = self.modules_repo

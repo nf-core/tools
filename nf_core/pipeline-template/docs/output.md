@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This document describes the output produced by the pipeline. {% if multiqc %}Most of the plots are taken from the MultiQC report, which summarises results at the end of the pipeline.{% endif %}
+This document describes the output produced by the pipeline.{% if multiqc %} Most of the plots are taken from the MultiQC report, which summarises results at the end of the pipeline.{% endif %}
 
 The directories listed below will be created in the results directory after the pipeline has finished. All paths are relative to the top-level results directory.
 
@@ -14,8 +14,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 
 {% if fastqc -%}
 
-- [FastQC](#fastqc) - Raw read QC
-  {%- endif %}
+- [FastQC](#fastqc) - Raw read QC{% endif %}
   {%- if multiqc %}
 - [MultiQC](#multiqc) - Aggregate report describing results and QC from the whole pipeline
   {%- endif %}

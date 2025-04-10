@@ -14,12 +14,14 @@ import yaml
 import nf_core.modules
 import nf_core.pipelines.create.create
 from nf_core import __version__
-from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlConfig
+from nf_core.utils import NFCoreTemplateConfig, NFCoreYamlConfig, custom_yaml_dumper
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
 OLD_TRIMGALORE_SHA = "9b7a3bdefeaad5d42324aa7dd50f87bea1b04386"
 OLD_TRIMGALORE_BRANCH = "mimic-old-trimgalore"
 GITLAB_URL = "https://gitlab.com/nf-core/modules-test.git"
+CROSS_ORGANIZATION_URL = "https://github.com/nf-core-test/modules.git"
+CROSS_ORGANIZATION_BRANCH = "main"
 GITLAB_REPO = "nf-core-test"
 GITLAB_DEFAULT_BRANCH = "main"
 GITLAB_SUBWORKFLOWS_BRANCH = "subworkflows"
@@ -102,7 +104,31 @@ def mock_biotools_api_calls(rsps: responses.RequestsMock, module: str) -> None:
     """Mock biotools api calls for module"""
     biotools_api_url = f"https://bio.tools/api/t/?q={module}&format=json"
     biotools_mock = {
-        "list": [{"name": "Bpipe", "biotoolsCURIE": "biotools:bpipe"}],
+        "list": [
+            {
+                "name": "Bpipe",
+                "biotoolsCURIE": "biotools:bpipe",
+                "function": [
+                    {
+                        "input": [
+                            {
+                                "data": {"uri": "http://edamontology.org/data_0848", "term": "Raw sequence"},
+                                "format": [
+                                    {"uri": "http://edamontology.org/format_2182", "term": "FASTQ-like format (text)"},
+                                    {"uri": "http://edamontology.org/format_2573", "term": "SAM"},
+                                ],
+                            }
+                        ],
+                        "output": [
+                            {
+                                "data": {"uri": "http://edamontology.org/data_2955", "term": "Sequence report"},
+                                "format": [{"uri": "http://edamontology.org/format_2331", "term": "HTML"}],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
     }
     rsps.get(biotools_api_url, json=biotools_mock, status=200)
 
@@ -136,7 +162,7 @@ def create_tmp_pipeline(no_git: bool = False) -> Tuple[Path, Path, str, Path]:
         bump_version=None,
     )
     with open(str(Path(pipeline_dir, ".nf-core.yml")), "w") as fh:
-        yaml.dump(nf_core_yml.model_dump(), fh)
+        yaml.dump(nf_core_yml.model_dump(), fh, Dumper=custom_yaml_dumper())
 
     nf_core.pipelines.create.create.PipelineCreate(
         pipeline_name, "it is mine", "me", no_git=no_git, outdir=pipeline_dir, force=True

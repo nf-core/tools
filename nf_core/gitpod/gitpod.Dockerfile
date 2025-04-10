@@ -2,7 +2,7 @@
 #   docker build -t gitpod:test -f nf_core/gitpod/gitpod.Dockerfile .
 
 # See https://docs.renovatebot.com/docker/#digest-pinning for why a digest is used.
-FROM gitpod/workspace-base@sha256:2cc134fe5bd7d8fdbe44cab294925d4bc6d2d178d94624f4c376584a22d1f7b6
+FROM gitpod/workspace-base@sha256:7f35e401405c38ebc1185dfc3d6c066f73a524e8b86641453ea4690cc5c24fb6
 
 USER root
 
@@ -23,9 +23,9 @@ RUN apt-get update --quiet && \
     add-apt-repository -y ppa:apptainer/ppa && \
     apt-get update --quiet && \
     apt-get install --quiet --yes apptainer && \
-    wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
-    rm Miniconda3-latest-Linux-x86_64.sh && \
+    wget --quiet https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh && \
+    bash Miniforge3-Linux-x86_64.sh -b -p /opt/conda && \
+    rm Miniforge3-Linux-x86_64.sh && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
