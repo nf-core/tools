@@ -67,7 +67,7 @@ runs:
     # Add ro-crate file
     - name: add ro-crate file
       shell: bash
-      run: nf-core --log-file log.txt pipelines ro-crate --dir nf-core-testpipeline
+      run: nf-core --log-file log.txt pipelines rocrate --dir nf-core-testpipeline
       working-directory: create-lint-wf
 
     # Run nf-core pipelines linting
