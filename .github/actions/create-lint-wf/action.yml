@@ -73,7 +73,7 @@ runs:
     # Run nf-core pipelines linting
     - name: nf-core pipelines lint
       shell: bash
-      run: nf-core --verbose --log-file log.txt --hide-progress pipelines lint --dir nf-core-testpipeline --fail-ignored --fail-warned
+      run: nf-core --verbose --log-file log.txt --hide-progress pipelines lint --fix --dir nf-core-testpipeline --fail-ignored --fail-warned
       working-directory: create-lint-wf
 
     - name: nf-core pipelines bump-version to release
@@ -83,7 +83,7 @@ runs:
 
     - name: nf-core pipelines lint in release mode
       shell: bash
-      run: nf-core --log-file log.txt --hide-progress pipelines lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
+      run: nf-core --log-file log.txt --hide-progress pipelines lint --dir nf-core-testpipeline --fix --fail-ignored --fail-warned --release
       working-directory: create-lint-wf
 
     - name: Upload log file artifact
