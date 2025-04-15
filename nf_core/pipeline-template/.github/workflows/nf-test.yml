@@ -109,7 +109,7 @@ jobs:
         with:
           profile: ${{ matrix.profile }}
           shard: ${{ matrix.shard }}
-          total_shards: ${{ env.TOTAL_SHARDS }}{% endraw %}
+          total_shards: ${{ env.TOTAL_SHARDS }}
   confirm-pass:
     needs: [nf-test]
     # prettier-ignore
