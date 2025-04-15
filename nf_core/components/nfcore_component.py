@@ -5,7 +5,7 @@ The NFCoreComponent class holds information and utility functions for a single m
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 log = logging.getLogger(__name__)
 
@@ -47,11 +47,11 @@ class NFCoreComponent:
         self.component_dir = component_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
-        self.passed: List[Tuple[str, str, Path]] = []
-        self.warned: List[Tuple[str, str, Path]] = []
-        self.failed: List[Tuple[str, str, Path]] = []
-        self.inputs: List[List[Dict[str, Dict[str, str]]]] = []
-        self.outputs: List[str] = []
+        self.passed: list[tuple[str, str, Path]] = []
+        self.warned: list[tuple[str, str, Path]] = []
+        self.failed: list[tuple[str, str, Path]] = []
+        self.inputs: list[list[dict[str, dict[str, str]]]] = []
+        self.outputs: list[str] = []
         self.has_meta: bool = False
         self.git_sha: Optional[str] = None
         self.is_patched: bool = False

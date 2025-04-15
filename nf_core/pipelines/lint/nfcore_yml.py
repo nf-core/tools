@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Dict, List
 
 from ruamel.yaml import YAML
 
@@ -8,7 +7,7 @@ from nf_core import __version__
 REPOSITORY_TYPES = ["pipeline", "modules"]
 
 
-def nfcore_yml(self) -> Dict[str, List[str]]:
+def nfcore_yml(self) -> dict[str, list[str]]:
     """Repository ``.nf-core.yml`` tests
 
     The ``.nf-core.yml`` contains metadata for nf-core tools to correctly apply its features.
@@ -22,10 +21,10 @@ def nfcore_yml(self) -> Dict[str, List[str]]:
          * Check if the nf-core version is set to the latest version.
 
     """
-    passed: List[str] = []
-    warned: List[str] = []
-    failed: List[str] = []
-    ignored: List[str] = []
+    passed: list[str] = []
+    warned: list[str] = []
+    failed: list[str] = []
+    ignored: list[str] = []
 
     yaml = YAML()
 
