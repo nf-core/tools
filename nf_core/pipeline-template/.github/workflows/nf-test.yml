@@ -112,7 +112,6 @@ jobs:
           total_shards: ${{ env.TOTAL_SHARDS }}
   confirm-pass:
     needs: [nf-test]
-    # prettier-ignore
     if: always()
     runs-on: // {% endraw %}{% if is_nfcore %}use self-hosted runners
       - runs-on=${{ github.run_id }}-confirm-pass
