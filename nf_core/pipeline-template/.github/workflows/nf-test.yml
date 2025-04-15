@@ -50,8 +50,7 @@ jobs:
       - runner=4cpu-linux-x64
     {%- else %}
     runs-on: "ubuntu-latest"
-    {%- endif %}
-    {% raw %}
+    {%- endif %}{% raw %}
     outputs:
       shard: ${{ steps.set-shards.outputs.shard }}
       total_shards: ${{ steps.set-shards.outputs.total_shards }}
@@ -80,12 +79,16 @@ jobs:
           echo ${{ steps.set-shards.outputs.total_shards }}
 
   nf-test:
-    runs-on:
-      - runs-on=${{ github.run_id }}-nf-test-changes
-      - runner=4cpu-linux-x64
     name: "${{ matrix.profile }} | ${{ matrix.NXF_VER }} | ${{ matrix.shard }}/${{ needs.nf-test-changes.outputs.total_shards }}"
     needs: [nf-test-changes]
-    if: ${{ needs.nf-test-changes.outputs.total_shards != '0' }}
+    if: ${{ needs.nf-test-changes.outputs.total_shards != '0' }}{% endraw %}
+    {%- if is_nfcore %}
+    runs-on:
+      - runs-on={% raw %}${{ github.run_id }}{% endraw %}-nf-test
+      - runner=4cpu-linux-x64
+    {%- else %}
+    runs-on: "ubuntu-latest"
+    {%- endif %}{% raw %}
     strategy:
       fail-fast: false
       matrix:
