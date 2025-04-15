@@ -61,6 +61,7 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.11.2 ([#3521](https://github.com/nf-core/tools/pull/3521))
 - Fix indentation in included_configs API docs ([#3523](https://github.com/nf-core/tools/pull/3523))
 - chore(deps): update python:3.12-slim docker digest to a866731 ([#3527](https://github.com/nf-core/tools/pull/3527))
+- switch to using runsOn runners in nf-core/tools repo ([#3537](https://github.com/nf-core/tools/pull/3537))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
