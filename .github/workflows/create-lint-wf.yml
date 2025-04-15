@@ -15,14 +15,6 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      runners:
-        description: "Runners to test on"
-        type: choice
-        options:
-          - "ubuntu-latest"
-          - "self-hosted"
-        default: "self-hosted"
 
 # Cancel if a newer run is started
 concurrency:
@@ -31,7 +23,9 @@ concurrency:
 
 jobs:
   MakeTestWorkflow:
-    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
+    runs-on:
+      - runs-on=${{ github.run_id }}-make-test-worfklow
+      - runner=4cpu-linux-x64
     env:
       NXF_ANSI_LOG: false
 
