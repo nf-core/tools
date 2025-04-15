@@ -53,9 +53,6 @@ jobs:
         TEMPLATE: ${{ fromJson(needs.prepare-matrix.outputs.all_features) }}
         include:
           - TEMPLATE: all
-            profile: "docker"
-          - TEMPLATE: nf_core_configs
-            profile: "docker"
       fail-fast: false
 
     steps:
