@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - dev
+      # https://docs.renovatebot.com/key-concepts/automerge/#branch-vs-pr-automerging
+      - "renovate/**" # branches Renovate creates
     paths-ignore:
       - "docs/**"
       - "CHANGELOG.md"
@@ -18,14 +20,6 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      runners:
-        description: "Runners to test on"
-        type: choice
-        options:
-          - "ubuntu-latest"
-          - "self-hosted"
-        default: "self-hosted"
 
 # Cancel if a newer run with the same workflow name is queued
 concurrency:
@@ -75,8 +69,9 @@ jobs:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
     needs: [setup, list_tests]
     if: ${{ needs.setup.outputs.run-tests }}
-    # run on self-hosted runners for test_components_generate_snapshot.py (because of the gitlab branch), based on the input if it is dispatched manually, on github if it is a rerun or on self-hosted by default
-    runs-on: ${{ matrix.test == 'components/test_components_generate_snapshot.py' && 'self-hosted' || (github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted') }}
+    runs-on:
+      - runs-on=${{ github.run_id }}-run-test
+      - runner=4cpu-linux-x64
     strategy:
       matrix: ${{ fromJson(needs.list_tests.outputs.tests) }}
       fail-fast: false # run all tests even if one fails
@@ -91,7 +86,7 @@ jobs:
         name: Check out source-code repository
 
       - name: Set up Python ${{ needs.setup.outputs.python-version }}
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
         with:
           python-version: ${{ needs.setup.outputs.python-version }}
           cache: "pip"
@@ -164,8 +159,9 @@ jobs:
 
   coverage:
     needs: test
-    # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
-    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
+    runs-on:
+      - runs-on=${{ github.run_id }}-coverage
+      - runner=2cpu-linux-x64
     steps:
       - name: go to subdirectory
         run: |
@@ -174,7 +170,7 @@ jobs:
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Set up Python 3.12
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
         env:
           AGENT_TOOLSDIRECTORY: /opt/actions-runner/_work/tools/tools/
         with:
