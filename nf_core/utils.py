@@ -1248,6 +1248,8 @@ class NFCoreYamlLintConfig(BaseModel):
     """ Lint for included configs """
     local_component_structure: Optional[bool] = None
     """ Lint local components use correct structure mirroring remote"""
+    rocrate_readme_sync: Optional[bool] = None
+    """ Lint for README.md and rocrate.json sync """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
