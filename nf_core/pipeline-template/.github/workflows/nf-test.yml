@@ -13,7 +13,7 @@ on:
       - "**/meta.yml"
       - "**/*.md"
       - "**/*.png"
-      - "**/*.svg"
+      - "**/*.svg{% raw %}"
   release:
     types: [published]
   workflow_dispatch:
@@ -35,14 +35,11 @@ env:
 
 jobs:
   nf-test-changes:
-    name: nf-test-changes{% endraw %}
-    {%- if is_nfcore %}
-    runs-on:
-      - runs-on={% raw %}${{ github.run_id }}{% endraw %}-nf-test-changes
-      - runner=4cpu-linux-x64
-    {%- else %}
-    runs-on: "ubuntu-latest"
-    {%- endif %}{% raw %}
+    name: nf-test-changes
+    runs-on: // {% endraw %}{% if is_nfcore %}use self-hosted runners
+      - runs-on=${{ github.run_id }}-nf-test-changes
+      - runner=4cpu-linux-x64{% else %}use GitHub runners
+      - "ubuntu-latest"{% endif %}{% raw %}
     outputs:
       shard: ${{ steps.set-shards.outputs.shard }}
       total_shards: ${{ steps.set-shards.outputs.total_shards }}
@@ -73,14 +70,11 @@ jobs:
   nf-test:
     name: "${{ matrix.profile }} | ${{ matrix.NXF_VER }} | ${{ matrix.shard }}/${{ needs.nf-test-changes.outputs.total_shards }}"
     needs: [nf-test-changes]
-    if: ${{ needs.nf-test-changes.outputs.total_shards != '0' }}{% endraw %}
-    {%- if is_nfcore %}
-    runs-on:
-      - runs-on={% raw %}${{ github.run_id }}{% endraw %}-nf-test
-      - runner=4cpu-linux-x64
-    {%- else %}
-    runs-on: "ubuntu-latest"
-    {%- endif %}{% raw %}
+    if: ${{ needs.nf-test-changes.outputs.total_shards != '0' }}
+    runs-on: // {% endraw %}{% if is_nfcore %}use self-hosted runners
+      - runs-on=${{ github.run_id }}-nf-test
+      - runner=4cpu-linux-x64{% else %}use GitHub runners
+      - "ubuntu-latest"{% endif %}{% raw %}
     strategy:
       fail-fast: false
       matrix:
@@ -117,15 +111,13 @@ jobs:
           shard: ${{ matrix.shard }}
           total_shards: ${{ env.TOTAL_SHARDS }}{% endraw %}
   confirm-pass:
-    {%- if is_nfcore %}
-    runs-on:
-      - runs-on={% raw %}${{ github.run_id }}{% endraw %}-confirm-pass
-      - runner=4cpu-linux-x64
-    {%- else %}
-    runs-on: "ubuntu-latest"
-    {%- endif %}{% raw %}
     needs: [nf-test]
+    # prettier-ignore
     if: always()
+    runs-on: // {% endraw %}{% if is_nfcore %}use self-hosted runners
+      - runs-on=${{ github.run_id }}-confirm-pass
+      - runner=2cpu-linux-x64{% else %}use GitHub runners
+      - "ubuntu-latest"{% endif %}{% raw %}
     steps:
       - name: One or more tests failed
         if: ${{ contains(needs.*.result, 'failure') }}
