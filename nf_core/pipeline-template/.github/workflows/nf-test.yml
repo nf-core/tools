@@ -50,7 +50,7 @@ jobs:
       - runner=4cpu-linux-x64
     {%- else %}
     runs-on: "ubuntu-latest"
-    {%- endif -%}
+    {%- endif %}
     {% raw %}
     outputs:
       shard: ${{ steps.set-shards.outputs.shard }}
@@ -128,8 +128,7 @@ jobs:
       - runner=4cpu-linux-x64
     {%- else %}
     runs-on: "ubuntu-latest"
-    {%- endif -%}
-    {% raw %}
+    {%- endif %}{% raw %}
     needs: [nf-test]
     if: always()
     steps:
