@@ -16,11 +16,27 @@ class TestLintROcrateReadmeSync(TestLint):
 
         json_path = Path(self.lint_obj.wf_path, "ro-crate-metadata.json")
         with open(json_path, "w") as f:
-            f.write("{}")
+            f.write('{ "@graph": [{"description": "This is a test script"}] }')
 
         results = self.lint_obj.rocrate_readme_sync()
         assert len(results.get("failed", [])) == 1
         assert (
-            "The RO-Crate descriptions do not match the README.md content. Use `nf-core lint --fix` to update."
+            "The RO-Crate descriptions do not match the README.md content. Use `nf-core lint --fix rocrate_readme_sync` to update."
             in results.get("failed", [])
         )
+
+    def test_rocrate_readme_sync_fixed(self):
+        self.lint_obj._load()
+        json_path = Path(self.lint_obj.wf_path, "ro-crate-metadata.json")
+        with open(json_path, "w") as f:
+            f.write('{ "@graph": [{"description": "This is a test script"}] }')
+
+        results = self.lint_obj.rocrate_readme_sync()
+        assert len(results.get("failed", [])) == 1
+
+        # Fix the issue
+        assert "rocrate_readme_sync" in self.lint_obj.lint_tests
+        self.lint_obj.fix = ["rocrate_readme_sync"]
+        self.lint_obj._load()
+        results = self.lint_obj.rocrate_readme_sync()
+        assert len(results.get("failed", [])) == 0
