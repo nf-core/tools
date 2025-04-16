@@ -67,5 +67,5 @@ def rocrate_readme_sync(self):
             )
             could_fix = True
     else:
-        passed.append("RO-Crate descriptions are in sync with README.md.")
+        passed.append("RO-Crate descriptions are in sync with `README.md`.")
     return {"passed": passed, "failed": failed, "ignored": ignored, "fixed": fixed, "could_fix": could_fix}
