@@ -34,7 +34,7 @@ def rocrate_readme_sync(self):
         metadata_dict = json.loads(metadata_content)
     except json.JSONDecodeError as e:
         log.error("Failed to decode JSON from `ro-crate-metadata.json`: %s", e)
-        ignored.append("Invalid JSON in ro-crate-metadata.json")
+        ignored.append("Invalid JSON in `ro-crate-metadata.json`")
         return {"passed": passed, "failed": failed, "ignored": ignored}
     readme_content = readme_file.read_text(encoding="utf-8")
     graph = metadata_dict.get("@graph")
