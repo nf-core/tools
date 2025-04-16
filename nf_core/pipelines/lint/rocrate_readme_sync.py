@@ -59,8 +59,8 @@ def rocrate_readme_sync(self):
             metadata_dict.get("@graph")[0]["description"] = readme_content
             with metadata_file.open("w", encoding="utf-8") as f:
                 json.dump(metadata_dict, f, indent=4)
-            passed.append("RO-Crate description matches the README.md.")
-            fixed.append("Mismatch fixed: RO-Crate description updated from README.md.")
+            passed.append("RO-Crate description matches the `README.md`.")
+            fixed.append("Mismatch fixed: RO-Crate description updated from `README.md`.")
         else:
             failed.append(
                 "The RO-Crate descriptions do not match the README.md content. Use `nf-core lint --fix rocrate_readme_sync` to update."
