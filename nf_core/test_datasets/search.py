@@ -4,6 +4,7 @@ import questionary
 import rich
 
 from nf_core.test_datasets.test_datasets_utils import (
+    IGNORED_FILE_PREFIXES,
     MODULES_BRANCH_NAME,
     create_download_url,
     create_pretty_nf_path,
@@ -19,7 +20,7 @@ def search_datasets(
     maybe_branch: str = "",
     generate_nf_path: bool = False,
     generate_dl_url: bool = False,
-    ignored_file_prefixes: List[str] = [],
+    ignored_file_prefixes: List[str] = IGNORED_FILE_PREFIXES,
     plain_text_output: bool = False,
 ) -> None:
     """

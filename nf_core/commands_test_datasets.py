@@ -10,15 +10,6 @@ from nf_core.utils import rich_force_colors
 log = logging.getLogger(__name__)
 stdout = rich.console.Console(force_terminal=rich_force_colors())
 
-# Files / directories starting with one of the following in a git tree are ignored:
-IGNORED_FILE_PREFIXES = [
-    ".",
-    "CITATION",
-    "LICENSE",
-    "README",
-    "docs",
-]
-
 
 def test_datasets_list_branches(ctx: click.Context) -> None:
     """
@@ -36,7 +27,7 @@ def test_datasets_list_remote(
     List all files on a given branch in the remote nf-core/testdatasets repository on github.
     The resulting files can be parsed as a nextflow path or a url for downloading.
     """
-    list_datasets(maybe_branch, generate_nf_path, generate_dl_url, IGNORED_FILE_PREFIXES)
+    list_datasets(maybe_branch, generate_nf_path, generate_dl_url)
 
 
 def test_datasets_search(ctx: click.Context, maybe_branch: str, generate_nf_path: bool, generate_dl_url: bool) -> None:
@@ -46,4 +37,4 @@ def test_datasets_search(ctx: click.Context, maybe_branch: str, generate_nf_path
     Specifying a branch is required.
     The resulting file can optionally be parsed as a nextflow path or a url for downloading
     """
-    search_datasets(maybe_branch, generate_nf_path, generate_dl_url, IGNORED_FILE_PREFIXES)
+    search_datasets(maybe_branch, generate_nf_path, generate_dl_url)

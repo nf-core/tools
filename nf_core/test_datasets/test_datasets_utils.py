@@ -15,6 +15,16 @@ log = logging.getLogger(__name__)
 MODULES_BRANCH_NAME = "modules"
 
 
+# Files / directories starting with one of the following in a git tree are ignored:
+IGNORED_FILE_PREFIXES = [
+    ".",
+    "CITATION",
+    "LICENSE",
+    "README",
+    "docs",
+]
+
+
 @dataclass
 class GithubApiEndpoints:
     gh_api_base_url: str = "https://api.github.com"
