@@ -255,7 +255,7 @@ def obtain_inputs(_, inputs: list) -> list:
     return formatted_inputs
 
 
-def obtain_outputs(_, outputs: Union[dict | list]) -> Union[dict | list]:
+def obtain_outputs(_, outputs: Union[dict, list]) -> Union[dict, list]:
     """
     Obtain the dictionary of outputs and elements of each output channel.
 
