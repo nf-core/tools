@@ -43,10 +43,7 @@ def rocrate_readme_sync(self):
     else:
         # Check if the 'description' key is present
         if "description" not in graph[0]:
-            graph[0]["description"] = readme_content
-            passed.append(
-                "No description found in `ro-crate-metadata.json`, add the same description from `README.md` to the RO-Crate metadata."
-            )
+            ignored.append("No description found in `ro-crate-metadata.json`.")
             return {"passed": passed, "failed": failed, "ignored": ignored}
 
     rc_description_graph = metadata_dict.get("@graph", [{}])[0].get("description")
@@ -56,6 +53,7 @@ def rocrate_readme_sync(self):
         # If the --fix flag is set, you could overwrite the RO-Crate description with the README content:
         if "rocrate_readme_sync" in self.fix:
             metadata_dict.get("@graph")[0]["description"] = readme_content
+            fixed.append("Fixed: add the same description from `README.md` to the RO-Crate metadata.")
             with metadata_file.open("w", encoding="utf-8") as f:
                 json.dump(metadata_dict, f, indent=4)
             passed.append("RO-Crate description matches the `README.md`.")
