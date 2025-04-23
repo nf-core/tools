@@ -64,6 +64,7 @@
 - adding boundary in regex ([#3535](https://github.com/nf-core/tools/pull/3535))
 - switch to using runsOn runners in nf-core/tools repo ([#3537](https://github.com/nf-core/tools/pull/3537))
 - Handling issue with arity #3530 ([#3539](https://github.com/nf-core/tools/pull/3539))
+- Addressing more cases than can happen when processing input and output values ([#3541](https://github.com/nf-core/tools/pull/3541))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
