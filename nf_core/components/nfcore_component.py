@@ -264,7 +264,7 @@ class NFCoreComponent:
                         output_val = match_element.group(4)
                     if output_val:
                         output_val = output_val.split(",")[0]  # Takes only first part
-                        output_val = output_val.strip().strip("'").strip('"')  # remove quotes
+                        output_val = output_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
                         output_channel[match_emit.group(1)].append({output_val: {}})
                 outputs.append(output_channel)
             log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")
