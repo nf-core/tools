@@ -216,7 +216,9 @@ class NFCoreComponent:
                     elif match.group(4):
                         input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
                     if input_val:
-                        input_val = input_val.split(",")[0]  # Takes only first part
+                        input_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', input_val)[
+                            0
+                        ]  # Takes only first part, avoid commas in quotes
                         input_val = input_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
                         channel_elements.append({input_val: {}})
                 if len(channel_elements) > 0:
@@ -263,7 +265,9 @@ class NFCoreComponent:
                     elif match_element.group(4):
                         output_val = match_element.group(4)
                     if output_val:
-                        output_val = output_val.split(",")[0]  # Takes only first part
+                        output_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', output_val)[
+                            0
+                        ]  # Takes only first part, avoid commas in quotes
                         output_val = output_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
                         output_channel[match_emit.group(1)].append({output_val: {}})
                 outputs.append(output_channel)
