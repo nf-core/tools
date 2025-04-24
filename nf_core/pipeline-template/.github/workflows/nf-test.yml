@@ -92,13 +92,26 @@ jobs:
           fetch-depth: 0
 
       - name: Run nf-test
+        id: run-test
         uses: ./.github/actions/nf-test
+        continue-on-error: ${{ matrix.NXF_VER == 'latest-everything' }}
         env:
           NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
         with:
           profile: ${{ matrix.profile }}
           shard: ${{ matrix.shard }}
           total_shards: ${{ env.TOTAL_SHARDS }}
+
+      - name: Post PR comment
+        uses: marocchino/sticky-pull-request-comment@52423e01640425a022ef5fd42c6fb5f633a02728 # v2
+        if: ${{ steps.run-test.outcome == 'failure' }}
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ github.event.pull_request.number }}
+          message: |
+            Pipeline run failed with Nextflow version ${{ matrix.NXF_VER }} on ${{ matrix.profile }}.
+            Please check the [#pipeline-maintainers channel on Slack](https://nfcore.slack.com/archives/C04QR0T3G3H) if there is an issue with this Nextflow version.
+
   confirm-pass:
     needs: [nf-test]
     if: always()
