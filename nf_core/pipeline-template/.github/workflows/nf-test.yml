@@ -110,6 +110,7 @@ jobs:
           number: ${{ github.event.pull_request.number }}
           message: |
             Pipeline run failed with Nextflow version ${{ matrix.NXF_VER }} on ${{ matrix.profile }}.
+            `latest-everything` includes Nextflow edge releases, which can cause issues, when freshly released.
             Please check the [#pipeline-maintainers channel on Slack](https://nfcore.slack.com/archives/C04QR0T3G3H) if there is an issue with this Nextflow version.
 
   confirm-pass:
