@@ -49,7 +49,7 @@ runs:
     # Remove TODO statements
     - name: remove TODO
       shell: bash
-      run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
+      run: find nf-core-testpipeline -type f -exec sed -i 's#TODO nf-core:##g' {} \;
       working-directory: create-lint-wf
 
     # Uncomment includeConfig statement
