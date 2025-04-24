@@ -64,12 +64,6 @@ runs:
       run: find nf-core-testpipeline -type f -exec sed -i 's/zenodo.XXXXXX/zenodo.123456/g' {} \;
       working-directory: create-lint-wf
 
-    # Add ro-crate file
-    - name: add ro-crate file
-      shell: bash
-      run: nf-core --log-file log.txt pipelines rocrate nf-core-testpipeline
-      working-directory: create-lint-wf
-
     # Run nf-core pipelines linting
     - name: nf-core pipelines lint
       shell: bash
