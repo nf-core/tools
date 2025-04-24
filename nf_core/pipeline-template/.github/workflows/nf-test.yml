@@ -1,4 +1,8 @@
 name: Run nf-test
+
+permissions:
+  pull-requests: write
+
 on:
   pull_request:
     paths-ignore:
