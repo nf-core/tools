@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - dev
+      # https://docs.renovatebot.com/key-concepts/automerge/#branch-vs-pr-automerging
+      - "renovate/**" # branches Renovate creates
     paths:
       - nf_core/pipeline-template/**
   pull_request:
@@ -12,14 +14,6 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      runners:
-        description: "Runners to test on"
-        type: choice
-        options:
-          - "ubuntu-latest"
-          - "self-hosted"
-        default: "self-hosted"
 
 # Cancel if a newer run is started
 concurrency:
@@ -47,7 +41,9 @@ jobs:
           echo "matrix=$(yq 'keys | filter(. != "github") | filter(. != "is_nfcore") | filter(. != "test_config") | tojson(0)' nf_core/pipelines/create/template_features.yml)" >> $GITHUB_OUTPUT
 
   RunTestWorkflow:
-    runs-on: ${{ matrix.runner }}
+    runs-on:
+      - runs-on=${{ github.run_id }}-run-test-worfklow
+      - runner=4cpu-linux-x64
     needs: prepare-matrix
     env:
       NXF_ANSI_LOG: false
@@ -55,20 +51,8 @@ jobs:
     strategy:
       matrix:
         TEMPLATE: ${{ fromJson(needs.prepare-matrix.outputs.all_features) }}
-        runner:
-          # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
-          - ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
-        profile: ["self_hosted_runner"]
         include:
           - TEMPLATE: all
-            runner: ubuntu-latest
-            profile: "docker"
-          - TEMPLATE: nf_core_configs
-            runner: ubuntu-latest
-            profile: "docker"
-        exclude:
-          - TEMPLATE: nf_core_configs
-            profile: "self_hosted_runner"
       fail-fast: false
 
     steps:
@@ -82,7 +66,7 @@ jobs:
         name: Check out source-code repository
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
         with:
           python-version: "3.13"
 
@@ -117,7 +101,7 @@ jobs:
       - name: run the pipeline
         run: |
           cd create-test-lint-wf
-          nextflow run my-prefix-testpipeline -profile test,${{matrix.profile}} --outdir ./results
+          nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
 
       # Remove results folder before linting
       - name: remove results folder

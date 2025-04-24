@@ -13,18 +13,10 @@ on:
       - "**/meta.yml"
       - "**/*.md"
       - "**/*.png"
-      - "**/*.svg"
+      - "**/*.svg{% raw %}"
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      runners:
-        description: "Runners to test on{% raw %}"
-        type: choice
-        options:
-          - "ubuntu-latest"
-          - "self-hosted"
-        default: "ubuntu-latest"
 
 # Cancel if a newer run is started
 concurrency:
@@ -44,7 +36,10 @@ env:
 jobs:
   nf-test-changes:
     name: nf-test-changes
-    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
+    runs-on: // {% endraw %}{% if is_nfcore %}use self-hosted runners
+      - runs-on=${{ github.run_id }}-nf-test-changes
+      - runner=4cpu-linux-x64{% else %}use GitHub runners
+      - "ubuntu-latest"{% endif %}{% raw %}
     outputs:
       shard: ${{ steps.set-shards.outputs.shard }}
       total_shards: ${{ steps.set-shards.outputs.total_shards }}
@@ -73,10 +68,13 @@ jobs:
           echo ${{ steps.set-shards.outputs.total_shards }}
 
   nf-test:
-    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     name: "${{ matrix.profile }} | ${{ matrix.NXF_VER }} | ${{ matrix.shard }}/${{ needs.nf-test-changes.outputs.total_shards }}"
     needs: [nf-test-changes]
     if: ${{ needs.nf-test-changes.outputs.total_shards != '0' }}
+    runs-on: // {% endraw %}{% if is_nfcore %}use self-hosted runners
+      - runs-on=${{ github.run_id }}-nf-test
+      - runner=4cpu-linux-x64{% else %}use GitHub runners
+      - "ubuntu-latest"{% endif %}{% raw %}
     strategy:
       fail-fast: false
       matrix:
@@ -113,9 +111,12 @@ jobs:
           shard: ${{ matrix.shard }}
           total_shards: ${{ env.TOTAL_SHARDS }}
   confirm-pass:
-    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
     needs: [nf-test]
     if: always()
+    runs-on: // {% endraw %}{% if is_nfcore %}use self-hosted runners
+      - runs-on=${{ github.run_id }}-confirm-pass
+      - runner=2cpu-linux-x64{% else %}use GitHub runners
+      - "ubuntu-latest"{% endif %}{% raw %}
     steps:
       - name: One or more tests failed
         if: ${{ contains(needs.*.result, 'failure') }}

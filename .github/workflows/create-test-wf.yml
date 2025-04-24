@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - dev
+      # https://docs.renovatebot.com/key-concepts/automerge/#branch-vs-pr-automerging
+      - "renovate/**" # branches Renovate creates
     paths-ignore:
       - "docs/**"
       - "CHANGELOG.md"
@@ -13,14 +15,6 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      runners:
-        description: "Runners to test on"
-        type: choice
-        options:
-          - "ubuntu-latest"
-          - "self-hosted"
-        default: "self-hosted"
 
 # Cancel if a newer run is started
 concurrency:
@@ -29,8 +23,9 @@ concurrency:
 
 jobs:
   RunTestWorkflow:
-    # use the runner given by the input if it is dispatched manually, run on github if it is a rerun or on self-hosted by default
-    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
+    runs-on:
+      - runs-on=${{ github.run_id }}-run-test-worfklow
+      - runner=4cpu-linux-x64
     env:
       NXF_ANSI_LOG: false
 
@@ -50,7 +45,7 @@ jobs:
         name: Check out source-code repository
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
         with:
           python-version: "3.13"
 
@@ -69,7 +64,7 @@ jobs:
           mkdir create-test-wf && cd create-test-wf
           export NXF_WORK=$(pwd)
           nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
-          nextflow run nf-core-testpipeline -profile self_hosted_runner,test --outdir ./results
+          nextflow run nf-core-testpipeline -profile docker,test --outdir ./results
 
       - name: Upload log file artifact
         if: ${{ always() }}

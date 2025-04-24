@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - dev
+      # https://docs.renovatebot.com/key-concepts/automerge/#branch-vs-pr-automerging
+      - "renovate/**" # branches Renovate creates
     paths-ignore:
       - "docs/**"
       - "CHANGELOG.md"
@@ -13,14 +15,6 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      runners:
-        description: "Runners to test on"
-        type: choice
-        options:
-          - "ubuntu-latest"
-          - "self-hosted"
-        default: "self-hosted"
 
 # Cancel if a newer run is started
 concurrency:
@@ -29,7 +23,9 @@ concurrency:
 
 jobs:
   MakeTestWorkflow:
-    runs-on: ${{ github.event.inputs.runners || github.run_number > 1 && 'ubuntu-latest' || 'self-hosted' }}
+    runs-on:
+      - runs-on=${{ github.run_id }}-make-test-worfklow
+      - runner=4cpu-linux-x64
     env:
       NXF_ANSI_LOG: false
 
@@ -51,7 +47,7 @@ jobs:
 
       # Set up nf-core/tools
       - name: Set up Python 3.12
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
         with:
           python-version: "3.13"
           cache: pip
