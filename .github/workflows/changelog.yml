@@ -36,9 +36,9 @@ jobs:
           fi
           gh pr checkout $PR_NUMBER
 
-      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
+      - uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install packages
         run: |
@@ -65,9 +65,9 @@ jobs:
           echo "File changed: ${{ env.changed }}"
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: "pip"
 
       - name: Install pre-commit

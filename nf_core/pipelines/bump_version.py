@@ -101,7 +101,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
     )
     # nf-test snap files
     pipeline_name = pipeline_obj.nf_config.get("manifest.name", "").strip(" '\"")
-    snap_files = [f for f in Path().glob("tests/pipeline/*.snap")]
+    snap_files = [f.relative_to(pipeline_obj.wf_path) for f in Path(pipeline_obj.wf_path).glob("tests/pipeline/*.snap")]
     for snap_file in snap_files:
         update_file_version(
             snap_file,
@@ -112,6 +112,7 @@ def bump_pipeline_version(pipeline_obj: Pipeline, new_version: str) -> None:
                     f"{pipeline_name}={new_version}",
                 )
             ],
+            required=False,
         )
     # .nf-core.yml - pipeline version
     # update entry: version: 1.0.0dev, but not `nf_core_version`, or `bump_version`
@@ -162,9 +163,9 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
         ],
     )
 
-    # .github/workflows/ci.yml - Nextflow version matrix
+    # .github/workflows/nf-test.yml - Nextflow version matrix
     update_file_version(
-        Path(".github", "workflows", "ci.yml"),
+        Path(".github", "workflows", "nf-test.yml"),
         pipeline_obj,
         [
             (
@@ -175,7 +176,7 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
                 new_version,
             )
         ],
-        yaml_key=["jobs", "test", "strategy", "matrix", "NXF_VER"],
+        yaml_key=["jobs", "nf-test", "strategy", "matrix", "NXF_VER"],
     )
 
     # README.md - Nextflow version badge
@@ -186,8 +187,10 @@ def bump_nextflow_version(pipeline_obj: Pipeline, new_version: str) -> None:
             (
                 rf"nextflow%20DSL2-%E2%89%A5{re.escape(current_version)}-23aa62.svg",
                 f"nextflow%20DSL2-%E2%89%A5{new_version}-23aa62.svg",
-            )
+            ),
+            (f"version-%E2%89%A5{re.escape(current_version)}-green", f"version-%E2%89%A5{new_version}-green"),
         ],
+        False,
     )
 
 
@@ -286,7 +289,7 @@ def update_text_file(fn: Path, patterns: List[Tuple[str, str]], required: bool):
             updated = True
             log.info(f"Updated version in '{fn}'")
             log.debug(f"Replaced pattern '{pattern}' with '{replacement}' {count} times")
-        elif required:
+        else:
             handle_error(f"Could not find version number in {fn}: `{pattern}`", required)
 
     if updated:

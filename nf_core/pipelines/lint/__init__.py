@@ -32,7 +32,7 @@ from nf_core.utils import plural_s as _s
 
 from .actions_awsfulltest import actions_awsfulltest
 from .actions_awstest import actions_awstest
-from .actions_ci import actions_ci
+from .actions_nf_test import actions_nf_test
 from .actions_schema_validation import actions_schema_validation
 from .configs import base_config, modules_config
 from .files_exist import files_exist
@@ -82,7 +82,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     # Import all linting tests as methods for this class
     actions_awsfulltest = actions_awsfulltest
     actions_awstest = actions_awstest
-    actions_ci = actions_ci
+    actions_nf_test = actions_nf_test
     actions_schema_validation = actions_schema_validation
     base_config = base_config
     modules_config = modules_config
@@ -138,7 +138,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "files_exist",
             "nextflow_config",
             "files_unchanged",
-            "actions_ci",
+            "actions_nf_test",
             "actions_awstest",
             "actions_awsfulltest",
             "readme",
@@ -599,7 +599,7 @@ def run_linting(
     lint_obj._load_lint_config()
     lint_obj.load_pipeline_config()
 
-    if lint_obj.lint_config and not lint_obj.lint_config["nfcore_components"]:
+    if lint_obj.lint_config and lint_obj.lint_config["nfcore_components"] is not None:
         module_lint_obj = None
         subworkflow_lint_obj = None
     else:

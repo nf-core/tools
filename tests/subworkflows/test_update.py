@@ -8,13 +8,14 @@ import questionary
 import yaml
 
 import nf_core.utils
-from nf_core.components.components_utils import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
+from nf_core.components.constants import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.update import ModuleUpdate
+from nf_core.subworkflows.install import SubworkflowInstall
 from nf_core.subworkflows.update import SubworkflowUpdate
 
 from ..test_subworkflows import TestSubworkflows
-from ..utils import OLD_SUBWORKFLOWS_SHA, cmp_component
+from ..utils import CROSS_ORGANIZATION_URL, OLD_SUBWORKFLOWS_SHA, cmp_component
 
 
 class TestSubworkflowsUpdate(TestSubworkflows):
@@ -372,3 +373,31 @@ class TestSubworkflowsUpdate(TestSubworkflows):
         assert "ensemblvep" not in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
         assert "ensemblvep/vep" in mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"][NF_CORE_MODULES_NAME]
         assert Path(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "ensemblvep/vep").is_dir()
+
+    def test_update_subworkflow_across_orgs(self):
+        """Install and update a subworkflow with modules from different organizations"""
+        install_obj = SubworkflowInstall(
+            self.pipeline_dir,
+            remote_url=CROSS_ORGANIZATION_URL,
+            # Hash for an old version of fastq_trim_fastp_fastqc
+            # A dummy code change was made in order to have a commit to compare with
+            sha="9627f4367b11527194ef14473019d0e1a181b741",
+        )
+        # The fastq_trim_fastp_fastqc subworkflow contains the cross-org fastqc module, not the nf-core one
+        install_obj.install("fastq_trim_fastp_fastqc")
+
+        patch_path = Path(self.pipeline_dir, "fastq_trim_fastp_fastqc.patch")
+        update_obj = SubworkflowUpdate(
+            self.pipeline_dir,
+            remote_url=CROSS_ORGANIZATION_URL,
+            save_diff_fn=patch_path,
+            update_all=False,
+            update_deps=True,
+            show_diff=False,
+        )
+        assert update_obj.update("fastq_trim_fastp_fastqc") is True
+
+        with open(patch_path) as fh:
+            content = fh.read()
+            assert "-        fastqc_raw_html = FASTQC_RAW.out.html" in content
+            assert "+        ch_fastqc_raw_html = FASTQC_RAW.out.html" in content

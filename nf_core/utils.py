@@ -1210,7 +1210,7 @@ class NFCoreYamlLintConfig(BaseModel):
     """ Lint the README.md file """
     nfcore_components: Optional[bool] = None
     """ Lint all required files to use nf-core modules and subworkflows """
-    actions_ci: Optional[bool] = None
+    actions_nf_test: Optional[bool] = None
     """ Lint all required files to use GitHub Actions CI """
     actions_awstest: Optional[bool] = None
     """ Lint all required files to run tests on AWS """

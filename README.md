@@ -1,7 +1,7 @@
 <h1>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nf-core/tools/main/docs/images/nfcore-tools_logo_dark.png">
-    <img alt="nf-core/tools" src="https://raw.githubusercontent.com/nf-core/tools/main/docs/images/nfcore-tools_logo_light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nf-core/tools/docs/images/nfcore-tools_logo_dark.png">
+    <img alt="nf-core/tools" src="https://raw.githubusercontent.com/nf-core/tools/docs/images/nfcore-tools_logo_light.png">
   </picture>
 </h1><!-- omit in toc -->
 
@@ -61,7 +61,7 @@ pip install --upgrade -r requirements-dev.txt -e .
 
 ## Contributions and Support
 
-If you would like to contribute to this package, please see the [contributing guidelines](.github/CONTRIBUTING.md).
+If you would like to contribute to this package, please see the [contributing guidelines](CONTRIBUTING.md).
 
 For further information or help, don't hesitate to get in touch on the [Slack `#tools` channel](https://nfcore.slack.com/channels/tools) (you can join with [this invite](https://nf-co.re/join/slack)).
 
