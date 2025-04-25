@@ -96,11 +96,10 @@ workflow METAVAL {
         // Filter out empty FASTQ files
         ch_taxid_reads_result = TAXID_READS.out.reads
             .branch {
-                non_empty: it[0].single_end ? it[1].size() > 0 : it[1][0].size() > 0 || it[1][1].size() >0
+                non_empty: it[0].single_end ? it[1].size() > 20 : it[1][0].size() > 20 || it[1][1].size() >20 // The size of the empty fastq.gz is 20
                 empty: true
             }
         ch_taxid_reads_result.non_empty.set { ch_taxid_reads }
-
         // Skip the de-novo assembly if the number of reads is lower than params.min_read_counts
         ch_taxid_reads
             .branch {

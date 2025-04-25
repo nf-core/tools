@@ -30,7 +30,7 @@ output:
   - extracted_diamond_reads:
       type: file
       description: FastQ files contain the extracted reads of a specified taxid
-      pattern: "*fastq"
+      pattern: "*fastq.gz"
   - versions:
       type: file
       description: File containing software versions

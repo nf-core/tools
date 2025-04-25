@@ -63,11 +63,6 @@
                     "description": "Extract reads classified by diamond according to taxonomic ID.",
                     "fa_icon": "fas fa-toggle-on"
                 },
-                "fastq_output": {
-                    "type": "boolean",
-                    "description": "Turn on saving extracted kraken2 reads in FASTQ format.",
-                    "fa_icon": "fas fa-file-alt"
-                },
                 "evalue": {
                     "type": ["number", "integer"],
                     "description": "A Expected value to report an alignment.",

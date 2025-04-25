@@ -5,8 +5,8 @@ process EXTRACTCDIAMONDREADS {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/11/1195d7edbe47145bda13bf6809891dc2fbe9df749c2e567b8879518b8de4ca33/data':
-        'community.wave.seqera.io/library/seqkit_python:cf97bbadc3675f5b' }"
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/eb/ebc86c3786bdc70fe31e9fac77ab4d05af3d27664a259298a831d1994fcb022d/data':
+        'community.wave.seqera.io/library/seqkit_pigz_python:3ff8d721e22b2875' }"
 
     input:
     val taxid
@@ -15,8 +15,8 @@ process EXTRACTCDIAMONDREADS {
     tuple val (meta), path(fastq)
 
     output:
-    tuple val(meta), path("*.fastq"), optional: true, emit: extracted_diamond_reads
-    path "versions.yml"                             , emit: versions
+    tuple val(meta), path("*.fastq.gz"), optional: true, emit: extracted_diamond_reads
+    path "versions.yml"                                , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -32,12 +32,16 @@ process EXTRACTCDIAMONDREADS {
         --evalue $evalue \\
         --prefix $prefix \\
         $single_end_flag \\
-        --fastq ${fastq.join(' ')}
+        --fastq ${fastq.join(' ')} # joins the list of file paths into a space-separated string
+
+    # Compress the resulting fastq files
+    pigz -p $task.cpus *.fastq
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         seqkit: \$( seqkit version | sed -e 's/seqkit v//g' )
         python: \$( python --version | sed -e 's/Python //g')
+        pigz: \$(pigz --version 2>&1 | sed -e 's/pigz //g')
     END_VERSIONS
     """
 }
