@@ -1781,7 +1781,7 @@ def test_datasets(ctx):
 )
 def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url):
     """
-    Interactively search for files on a specified branch in the nf-core/test-datasets repository on github.
+    Search files on a specified branch in the nf-core/test-datasets repository.
     """
     test_datasets_search(ctx, branch, generate_nf_path, generate_dl_url)
 
@@ -1806,7 +1806,7 @@ def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url):
 )
 def command_test_dataset_list_remote(ctx, branch, generate_nf_path, generate_dl_url):
     """
-    List all data files for a specified branch in the nf-core/test-datasets repository on github.
+    List files on a specified branch in the nf-core/test-datasets repository.
     """
     test_datasets_list_remote(ctx, branch, generate_nf_path, generate_dl_url)
 
@@ -1816,7 +1816,7 @@ def command_test_dataset_list_remote(ctx, branch, generate_nf_path, generate_dl_
 @click.pass_context
 def command_test_datasets_list_branches(ctx):
     """
-    List all remote branches with pipeline or module data in the nf-core/test-dataset repository on github
+    List remote branches with pipeline/module data in the nf-core/test-dataset repository.
     """
     test_datasets_list_branches(ctx)
 
