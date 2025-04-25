@@ -1779,11 +1779,12 @@ def test_datasets(ctx):
     default=False,
     help="Auto-generate a github url for downloading the test data file based on the branch and query result",
 )
-def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url):
+@click.argument("query", required=False)
+def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url, query):
     """
     Search files on a specified branch in the nf-core/test-datasets repository.
     """
-    test_datasets_search(ctx, branch, generate_nf_path, generate_dl_url)
+    test_datasets_search(ctx, branch, generate_nf_path, generate_dl_url, query)
 
 
 # nf-core test-dataset search

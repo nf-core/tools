@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 import questionary
@@ -14,6 +15,7 @@ from nf_core.test_datasets.test_datasets_utils import (
 from nf_core.utils import nfcore_question_style, rich_force_colors
 
 stdout = rich.console.Console(force_terminal=rich_force_colors())
+log = logging.getLogger(__name__)
 
 
 def search_datasets(
@@ -22,6 +24,7 @@ def search_datasets(
     generate_dl_url: bool = False,
     ignored_file_prefixes: List[str] = IGNORED_FILE_PREFIXES,
     plain_text_output: bool = False,
+    query: str = "",
 ) -> None:
     """
     Search all files on a given branch in the remote nf-core/testdatasets repository on github
@@ -39,11 +42,18 @@ def search_datasets(
     files = sum(tree.values(), [])  # flat representation of tree
 
     file_selected = False
+
+    if query:
+        filtered_files = list(filter(lambda f: query in f, files))
+        log.debug("JOINED_FILTERED_FILES:" + ", ".join(filtered_files))
+
+        if len(filtered_files) == 1:
+            selection = filtered_files.pop()
+            file_selected = True
+
     while not file_selected:
         selection = questionary.autocomplete(
-            "File:",
-            choices=files,
-            style=nfcore_question_style,
+            "File:", choices=files, style=nfcore_question_style, default=query
         ).unsafe_ask()
 
         file_selected = any([selection == file for file in files])
