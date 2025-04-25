@@ -77,7 +77,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core": [
         {
             "name": "Commands",
-            "commands": ["pipelines", "modules", "subworkflows", "interface", "test-datasets"],
+            "commands": ["pipelines", "modules", "subworkflows", "test-datasets", "interface"],
         },
     ],
     "nf-core pipelines": [
