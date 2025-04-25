@@ -1,4 +1,3 @@
-import logging
 from typing import List
 
 import questionary
@@ -15,7 +14,6 @@ from nf_core.test_datasets.test_datasets_utils import (
 from nf_core.utils import nfcore_question_style, rich_force_colors
 
 stdout = rich.console.Console(force_terminal=rich_force_colors())
-log = logging.getLogger(__name__)
 
 
 def search_datasets(
@@ -45,8 +43,6 @@ def search_datasets(
 
     if query:
         filtered_files = list(filter(lambda f: query in f, files))
-        log.debug("JOINED_FILTERED_FILES:" + ", ".join(filtered_files))
-
         if len(filtered_files) == 1:
             selection = filtered_files.pop()
             file_selected = True
