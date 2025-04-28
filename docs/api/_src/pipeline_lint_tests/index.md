@@ -21,6 +21,7 @@
     - [pipeline_todos](./pipeline_todos/)
     - [plugin_includes](./plugin_includes/)
     - [readme](./readme/)
+    - [rocrate_readme_sync](./rocrate_readme_sync/)
     - [schema_description](./schema_description/)
     - [schema_lint](./schema_lint/)
     - [schema_params](./schema_params/)
