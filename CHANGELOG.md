@@ -70,6 +70,7 @@
 - switch to using runsOn runners in nf-core/tools repo ([#3537](https://github.com/nf-core/tools/pull/3537))
 - Handling issue with arity #3530 ([#3539](https://github.com/nf-core/tools/pull/3539))
 - chore(deps): update actions/github-script action to v7 ([#3545](https://github.com/nf-core/tools/pull/3545))
+- Feature/test datasets ([#3548](https://github.com/nf-core/tools/pull/3548))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
