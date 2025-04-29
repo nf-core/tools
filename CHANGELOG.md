@@ -1,11 +1,11 @@
 # nf-core/tools: Changelog
 
-## v3.2.1dev
+## [v3.2.1 - Pewter Pangolin Patch](https://github.com/nf-core/tools/releases/tag/3.2.1) - [2025-04-29]
 
 ### Template
 
-- Run awsfulltest after release, and with dev revision on PRs to master ([#3485](https://github.com/nf-core/tools/pull/3485))
-- downgrade nf-schema to fix CI tests ([#3544](https://github.com/nf-core/tools/pull/3544))
+- Run awsfulltest after release, and with dev revision on PRs to master/main ([#3485](https://github.com/nf-core/tools/pull/3485))
+- Downgrade nf-schema to fix CI tests ([#3544](https://github.com/nf-core/tools/pull/3544))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
