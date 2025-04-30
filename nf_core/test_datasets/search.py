@@ -43,7 +43,7 @@ def search_datasets(
 
     if query:
         # Check if only one file matches the query and directly return it
-        filtered_files = list(filter(lambda f: query in f, files))
+        filtered_files = [f for f in files if query in f]
         if len(filtered_files) == 1:
             selection = filtered_files.pop()
             file_selected = True
