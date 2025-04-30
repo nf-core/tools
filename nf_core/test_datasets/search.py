@@ -45,7 +45,7 @@ def search_datasets(
         # Check if only one file matches the query and directly return it
         filtered_files = [f for f in files if query in f]
         if len(filtered_files) == 1:
-            selection = filtered_files.pop()
+            selection = filtered_files[0]
             file_selected = True
 
     while not file_selected:
