@@ -1817,7 +1817,7 @@ def command_test_dataset_list_remote(ctx, branch, generate_nf_path, generate_dl_
 @click.pass_context
 def command_test_datasets_list_branches(ctx):
     """
-    List remote branches with pipeline/module data in the nf-core/test-dataset repository.
+    List remote branches with test data in the nf-core/test-dataset repository.
     """
     test_datasets_list_branches(ctx)
 
