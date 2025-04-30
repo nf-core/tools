@@ -71,6 +71,7 @@
 - Handling issue with arity #3530 ([#3539](https://github.com/nf-core/tools/pull/3539))
 - chore(deps): update actions/github-script action to v7 ([#3545](https://github.com/nf-core/tools/pull/3545))
 - GitHub action for nightly tests with Nextflow from source ([#3553](https://github.com/nf-core/tools/pull/3553))
+- Dev ([#3557](https://github.com/nf-core/tools/pull/3557))
 
 ## [v3.2.1 - Pewter Pangolin Patch](https://github.com/nf-core/tools/releases/tag/3.2.1) - [2025-04-29]
 
