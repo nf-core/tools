@@ -36,14 +36,17 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
+          architecture: x64
+          cache: gradle
           java-version: "21"
 
       - name: Build Nextflow
         run: |
           cd nextflow
-          ./gradlew compile
-          chmod +x nextflow
-          echo "$(pwd)" >> $GITHUB_PATH
+          make pack
+          chmod +x build/releases/nextflow
+          mkdir -p $HOME/.local/bin/
+          mv build/releases/nextflow $HOME/.local/bin/
           nextflow -version
 
       - name: Install nf-core/tools
