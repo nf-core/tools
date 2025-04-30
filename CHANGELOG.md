@@ -72,6 +72,14 @@
 - chore(deps): update actions/github-script action to v7 ([#3545](https://github.com/nf-core/tools/pull/3545))
 - GitHub action for nightly tests with Nextflow from source ([#3553](https://github.com/nf-core/tools/pull/3553))
 
+## [v3.2.1 - Pewter Pangolin Patch](https://github.com/nf-core/tools/releases/tag/3.2.1) - [2025-04-29]
+
+### Template
+
+- Run awsfulltest after release, and with dev revision on PRs to master/main ([#3485](https://github.com/nf-core/tools/pull/3485))
+- Downgrade nf-schema to fix CI tests ([#3544](https://github.com/nf-core/tools/pull/3544))
+- Fail nextflow run test gracefully for `latest everything` ([#3543](https://github.com/nf-core/tools/pull/3543))
+
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
 ### Template
