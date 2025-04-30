@@ -41,12 +41,13 @@ jobs:
           java-version: "21"
 
       - name: Build Nextflow
+        run: cd nextflow && make pack
+
+      - name: Move Nextflow to local bin/
         run: |
-          cd nextflow
-          make pack
-          chmod +x build/releases/nextflow
           mkdir -p $HOME/.local/bin/
-          mv build/releases/nextflow $HOME/.local/bin/
+          mv nextflow/build/releases/nextflow*dist $HOME/.local/bin/nextflow
+          chmod +x $HOME/.local/bin/nextflow
           nextflow -version
 
       - name: Install nf-core/tools
