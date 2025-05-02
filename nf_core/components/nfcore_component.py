@@ -219,7 +219,7 @@ class NFCoreComponent:
                         channel_elements.append({input_val: {}})
                 if len(channel_elements) > 1:
                     inputs.append(channel_elements)
-                elif len(channel_elements) > 0:
+                elif len(channel_elements) == 1:
                     inputs.append(channel_elements[0])
             log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
             self.inputs = inputs
