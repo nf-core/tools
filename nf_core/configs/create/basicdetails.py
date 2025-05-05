@@ -43,34 +43,36 @@ class BasicDetails(Screen):
             "",
             classes="column",
         )
-        with Horizontal():
-            yield TextInput(
-                "config_profile_contact",
-                "Boaty McBoatFace",
-                "Author full name.",
-                classes="column",
-            )
+        if self.parent.CONFIG_TYPE == "infrastructure":
+            with Horizontal():
+                yield TextInput(
+                    "config_profile_contact",
+                    "Boaty McBoatFace",
+                    "Author full name.",
+                    classes="column",
+                )
 
-            yield TextInput(
-                "config_profile_handle",
-                "@BoatyMcBoatFace",
-                "Author Git(Hub) handle.",
-                classes="column",
-            )
+                yield TextInput(
+                    "config_profile_handle",
+                    "@BoatyMcBoatFace",
+                    "Author Git(Hub) handle.",
+                    classes="column",
+                )
 
         yield TextInput(
             "config_profile_description",
             "Description",
             "A short description of your config.",
         )
-        yield TextInput(
-            "config_profile_url",
-            "https://nf-co.re",
-            "URL of infrastructure website or owning institution (infrastructure configs only).",
-            disabled=(
-                self.parent.CONFIG_TYPE == "pipeline"
-            ),  ## TODO update TextInput to accept replace with visibility: https://textual.textualize.io/styles/visibility/
-        )
+        if self.parent.CONFIG_TYPE == "infrastructure":
+            yield TextInput(
+                "config_profile_url",
+                "https://nf-co.re",
+                "URL of infrastructure website or owning institution (infrastructure configs only).",
+                disabled=(
+                    self.parent.CONFIG_TYPE == "pipeline"
+                ),  ## TODO update TextInput to accept replace with visibility: https://textual.textualize.io/styles/visibility/
+            )
         yield Center(
             Button("Back", id="back", variant="default"),
             Button("Next", id="next", variant="success"),
@@ -85,7 +87,6 @@ class BasicDetails(Screen):
         for text_input in self.query("TextInput"):
             this_input = text_input.query_one(Input)
             validation_result = this_input.validate(this_input.value)
-            print(f"validation result {validation_result}")
             config[text_input.field_id] = this_input.value
             if not validation_result.is_valid:
                 text_input.query_one(".validation_msg").update("\n".join(validation_result.failure_descriptions))

@@ -74,7 +74,6 @@ class ConfigsCreateConfig(BaseModel):
         """Check that string values are not empty when the config is nf-core."""
         context = info.context
         if context and context["is_nfcore"]:
-            print("here")
             if v.strip() == "":
                 raise ValueError("Cannot be left empty.")
         return v
@@ -191,7 +190,6 @@ class ValidateConfig(Validator):
         If it fails, return the error messages."""
         try:
             with init_context({"is_nfcore": NFCORE_CONFIG_GLOBAL}):
-                print(f"global config: {NFCORE_CONFIG_GLOBAL}")
                 ConfigsCreateConfig(**{f"{self.key}": value})
                 return self.success()
         except ValidationError as e:

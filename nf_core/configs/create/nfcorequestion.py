@@ -62,3 +62,4 @@ class ChooseNfcoreConfig(Screen):
             classes="col-2 pipeline-type-grid",
         )
         yield Markdown(markdown_details)
+        yield Center(Button("Back", id="back", variant="default"), classes="cta")

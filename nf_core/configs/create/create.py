@@ -12,32 +12,26 @@ class ConfigCreate:
     def construct_params(self, contact, handle, description, url):
         final_params = {}
 
-        print("c:" + contact)
-        print("h: " + handle)
-
-        if contact != "":
-            if handle != "":
+        if contact is not None:
+            if handle is not None:
                 config_contact = contact + " (" + handle + ")"
             else:
                 config_contact = contact
             final_params["config_profile_contact"] = config_contact
-        elif handle != "":
+        elif handle is not None:
             final_params["config_profile_contact"] = handle
 
-        if description != "":
+        if description is not None:
             final_params["config_profile_description"] = description
 
-        if url != "":
+        if url is not None:
             final_params["config_profile_url"] = url
 
-        print("final_params")
-        print(final_params)
         return final_params
 
     def write_to_file(self):
         ## File name option
-        print(self.template_config)
-        filename = self.template_config.general_config_name + ".conf"
+        filename = "_".join(self.template_config.general_config_name) + ".conf"
 
         ## Collect all config entries per scope, for later checking scope needs to be written
         validparams = self.construct_params(
@@ -46,9 +40,6 @@ class ConfigCreate:
             self.template_config.config_profile_description,
             self.template_config.config_profile_url,
         )
-
-        print("validparams")
-        print(validparams)
 
         with open(filename, "w+") as file:
             ## Write params
