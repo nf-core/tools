@@ -59,12 +59,39 @@ jobs:
         with:
           version: ${{ matrix.NXF_VER }}
 
-      - name: Run nf-core/tools
+      - name: Install nf-test
+        uses: nf-core/setup-nf-test@v1
+        with:
+          version: "0.9.2"
+
+      - name: Install pdiff
+        shell: bash
+        run: |
+          python -m pip install pdiff
+
+      - name: Run nf-core/tools and run the pipeline
         run: |
           mkdir create-test-wf && cd create-test-wf
           export NXF_WORK=$(pwd)
           nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
           nextflow run nf-core-testpipeline -profile docker,test --outdir ./results
+
+      - name: Run nf-test
+        shell: bash
+        env:
+          NFT_DIFF: "pdiff"
+          NFT_DIFF_ARGS: "--line-numbers --width 120 --expand-tabs=2"
+          NFT_WORKDIR: "~"
+        run: |
+          nf-test test \
+            --profile=+docker,test \
+            --ci \
+            --changed-since HEAD^ \
+            --verbose \
+            --tap=test.tap \
+
+          # Save the absolute path of the test.tap file to the output
+          echo "tap_file_path=$(realpath test.tap)" >> $GITHUB_OUTPUT
 
       - name: Upload log file artifact
         if: ${{ always() }}
@@ -75,5 +102,8 @@ jobs:
 
       - name: Cleanup work directory
         # cleanup work directory
-        run: sudo rm -rf create-test-wf
+        run: |
+          sudo rm -rf create-test-wf &&
+          sudo rm -rf /home/ubuntu/tests/
         if: always()
+        shell: bash

@@ -80,6 +80,16 @@ jobs:
         with:
           version: latest-everything
 
+      - name: Install nf-test
+        uses: nf-core/setup-nf-test@v1
+        with:
+          version: "0.9.2"
+
+      - name: Install pdiff
+        shell: bash
+        run: |
+          python -m pip install pdiff
+
       # Create template files
       - name: Create template skip ${{ matrix.TEMPLATE }}
         run: |
@@ -98,15 +108,21 @@ jobs:
           cd create-test-lint-wf
           nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
 
-      - name: run the pipeline
+      # Test pipeline with nf-test
+      - name: run pipeline nf-test
+        shell: bash
+        env:
+          NFT_DIFF: "pdiff"
+          NFT_DIFF_ARGS: "--line-numbers --width 120 --expand-tabs=2"
+          NFT_WORKDIR: "~"
         run: |
           cd create-test-lint-wf
-          nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
-
-      # Remove results folder before linting
-      - name: remove results folder
-        run: |
-          rm -rf create-test-lint-wf/results
+          nf-test test \
+            --profile=+docker,test \
+            --ci \
+            --changed-since HEAD^ \
+            --verbose \
+            --tap=test.tap \
 
       # Try syncing it before we change anything
       - name: nf-core pipelines sync
