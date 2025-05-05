@@ -10,6 +10,9 @@
 - Add Bluesky badge to readme ([#3475](https://github.com/nf-core/tools/pull/3475))
 - Run awsfulltest after release, and with dev revision on PRs to master ([#3485](https://github.com/nf-core/tools/pull/3485))
 - Add .nftignore to trigger list ([#3508](https://github.com/nf-core/tools/pull/3508))
+- run nf-test tests on runsOn runners ([#3525](https://github.com/nf-core/tools/pull/3525))
+- Include the centralized nf-core configs also in offline mode, if a local copy is available. ([#3491](https://github.com/nf-core/tools/pull/3491))
+- downgrade nf-schema to fix CI tests ([#3544](https://github.com/nf-core/tools/pull/3544))
 
 ### Linting
 
@@ -18,6 +21,8 @@
 - Fix: linting with comments after the input directive ([#3458](https://github.com/nf-core/tools/pull/3458))
 - EDAM ontology fixes ([#3460](https://github.com/nf-core/tools/pull/3460))
 - Fix default linting of nf-core components when `nf-core pipelines lint` is ran ([#3480](https://github.com/nf-core/tools/pull/3480))
+- Fix the unexpected warning and sychronize the `README.md` and `RO-crate-metadata.json` ([#3493](https://github.com/nf-core/tools/pull/3493))
+- Adapt the linter to the new notation used to include the centralized nf-core configs ([#3491](https://github.com/nf-core/tools/pull/3491))
 
 ### Modules
 
@@ -28,6 +33,7 @@
 
 ### General
 
+- remove hard coded key prefix for schema in launcher ([#3432](https://github.com/nf-core/tools/pull/3432))
 - output passed to write_params_file as Path object ([#3435](https://github.com/nf-core/tools/pull/3435))
 - chore(deps): update python:3.12-slim docker digest to 69ce3ae ([#3433](https://github.com/nf-core/tools/pull/3433))
 - chore(deps): update dependency pytest-textual-snapshot to v1.1.0 ([#3439](https://github.com/nf-core/tools/pull/3439))
@@ -52,8 +58,29 @@
 - Ontology fix comment yaml ([#3502](https://github.com/nf-core/tools/pull/3502))
 - Bugfix - add back logo to the README ([#3504](https://github.com/nf-core/tools/pull/3504))
 - Update dead link ([#3505](https://github.com/nf-core/tools/pull/3505))
+- chore(deps): update actions/setup-python digest to 8d9ed9a ([#3518](https://github.com/nf-core/tools/pull/3518))
 - Changing retrieval of file extension from EDAM ([#3512](https://github.com/nf-core/tools/pull/3512))
 - Refactor adding EDAM ontologies and allowing detect more patterns (e.g., versions.yml) ([#3519](https://github.com/nf-core/tools/pull/3519))
+- Add offline configs test action ([#3524](https://github.com/nf-core/tools/pull/3524))
+- Adds `test-datasets` subcommand for listing/searching files in the nf-core/test-datasets repo from the cli ([#3487](https://github.com/nf-core/tools/issues/3487))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.11.2 ([#3521](https://github.com/nf-core/tools/pull/3521))
+- Fix indentation in included_configs API docs ([#3523](https://github.com/nf-core/tools/pull/3523))
+- chore(deps): update python:3.12-slim docker digest to a866731 ([#3527](https://github.com/nf-core/tools/pull/3527))
+- adding boundary in regex ([#3535](https://github.com/nf-core/tools/pull/3535))
+- switch to using runsOn runners in nf-core/tools repo ([#3537](https://github.com/nf-core/tools/pull/3537))
+- Handling issue with arity #3530 ([#3539](https://github.com/nf-core/tools/pull/3539))
+- chore(deps): update actions/github-script action to v7 ([#3545](https://github.com/nf-core/tools/pull/3545))
+- GitHub action for nightly tests with Nextflow from source ([#3553](https://github.com/nf-core/tools/pull/3553))
+- Dev ([#3557](https://github.com/nf-core/tools/pull/3557))
+- chore(deps): update python:3.12-slim docker digest to bae1a06 ([#3558](https://github.com/nf-core/tools/pull/3558))
+
+## [v3.2.1 - Pewter Pangolin Patch](https://github.com/nf-core/tools/releases/tag/3.2.1) - [2025-04-29]
+
+### Template
+
+- Run awsfulltest after release, and with dev revision on PRs to master/main ([#3485](https://github.com/nf-core/tools/pull/3485))
+- Downgrade nf-schema to fix CI tests ([#3544](https://github.com/nf-core/tools/pull/3544))
+- Fail nextflow run test gracefully for `latest everything` ([#3543](https://github.com/nf-core/tools/pull/3543))
 
 ## [v3.2.0 - Pewter Pangolin](https://github.com/nf-core/tools/releases/tag/3.2.0) - [2025-01-27]
 
@@ -142,6 +169,7 @@
 - Update template components ([#3328](https://github.com/nf-core/tools/pull/3328))
 - Template: Remove mention of GRCh37 if igenomes is skipped ([#3330](https://github.com/nf-core/tools/pull/3330))
 - Be more verbose in approval check action ([#3338](https://github.com/nf-core/tools/pull/3338))
+- Add `gpu` profile ([#3272](https://github.com/nf-core/tools/pull/3272))
 
 ### Download
 
@@ -187,6 +215,7 @@
 - set default_branch to master for now ([#3335](https://github.com/nf-core/tools/issues/3335))
 - Set git defaultBranch to master in sync action ([#3337](https://github.com/nf-core/tools/pull/3337))
 - Add verbose mode to sync action ([#3339](https://github.com/nf-core/tools/pull/3339))
+- ci: Run checks on renovate branches to avoid creating and merging PRs ([#3018](https://github.com/nf-core/tools/pull/3018))
 
 ### Version updates
 

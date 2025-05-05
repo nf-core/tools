@@ -207,7 +207,7 @@ class NFCoreComponent:
             for line in input_data.split("\n"):
                 channel_elements: Any = []
                 line = line.split("//")[0]  # remove any trailing comments
-                regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+                regex = r"\b(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
                 matches = re.finditer(regex, line)
                 for _, match in enumerate(matches, start=1):
                     input_val = None
@@ -216,6 +216,8 @@ class NFCoreComponent:
                     elif match.group(4):
                         input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
                     if input_val:
+                        input_val = re.sub(r"\s*\,\s*arity\s*\:\s*\w+\s*", "", input_val).strip()  # remove arity
+                        input_val = input_val.strip("'").strip('"')  # remove quotes
                         channel_elements.append({input_val: {}})
                 if len(channel_elements) > 0:
                     inputs.append(channel_elements)
@@ -247,7 +249,7 @@ class NFCoreComponent:
                 return outputs
             output_data = data.split("output:")[1].split("when:")[0]
             regex_emit = r"emit:\s*([^)\s,]+)"
-            regex_elements = r"(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            regex_elements = r"\b(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
             for line in output_data.split("\n"):
                 match_emit = re.search(regex_emit, line)
                 matches_elements = re.finditer(regex_elements, line)
@@ -261,6 +263,7 @@ class NFCoreComponent:
                     elif match_element.group(4):
                         output_val = match_element.group(4)
                     if output_val:
+                        output_val = re.sub(r"\s*\,\s*arity\s*\:\s*\w+\s*", "", output_val).strip()  # remove arity
                         output_val = output_val.strip("'").strip('"')  # remove quotes
                         output_channel[match_emit.group(1)].append({output_val: {}})
                 outputs.append(output_channel)

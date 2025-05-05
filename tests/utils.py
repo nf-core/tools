@@ -32,7 +32,7 @@ GITLAB_BRANCH_TEST_BRANCH = "branch-tester"
 GITLAB_BRANCH_ORG_PATH_BRANCH = "org-path"
 GITLAB_BRANCH_TEST_OLD_SHA = "e772abc22c1ff26afdf377845c323172fb3c19ca"
 GITLAB_BRANCH_TEST_NEW_SHA = "7d73e21f30041297ea44367f2b4fd4e045c0b991"
-GITLAB_NFTEST_BRANCH = "nf-test-tests-self-hosted-runners"
+GITLAB_NFTEST_BRANCH = "nf-test-tests"
 
 
 def with_temporary_folder(func: Callable[..., Any]) -> Callable[..., Any]:
