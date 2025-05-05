@@ -3,6 +3,7 @@
 import re
 from contextlib import contextmanager
 from contextvars import ContextVar
+from pathlib import Path
 from typing import Any, Dict, Iterator, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, ValidationError, ValidationInfo, field_validator
@@ -35,6 +36,10 @@ class ConfigsCreateConfig(BaseModel):
 
     general_config_type: Optional[str] = None
     """ Config file type (infrastructure or pipeline) """
+    config_pipeline_name: Optional[str] = None
+    """ The name of the pipeline """
+    config_pipeline_path: Optional[str] = None
+    """ The path to the pipeline """
     general_config_name: Optional[str] = None
     """ Config name """
     config_profile_contact: Optional[str] = None
@@ -58,9 +63,7 @@ class ConfigsCreateConfig(BaseModel):
             context=_init_context_var.get(),
         )
 
-    @field_validator(
-        "general_config_name",
-    )
+    @field_validator("general_config_name")
     @classmethod
     def notempty(cls, v: str) -> str:
         """Check that string values are not empty."""
@@ -68,7 +71,17 @@ class ConfigsCreateConfig(BaseModel):
             raise ValueError("Cannot be left empty.")
         return v
 
-    @field_validator("config_profile_contact", "config_profile_description")
+    @field_validator("config_pipeline_path")
+    @classmethod
+    def path_valid(cls, v: str) -> str:
+        """Check that a path is valid."""
+        if v.strip() == "":
+            raise ValueError("Cannot be left empty.")
+        if not Path(v).is_dir():
+            raise ValueError("Must be a valid path.")
+        return v
+
+    @field_validator("config_profile_contact", "config_profile_description", "config_pipeline_name")
     @classmethod
     def notempty_nfcore(cls, v: str, info: ValidationInfo) -> str:
         """Check that string values are not empty when the config is nf-core."""

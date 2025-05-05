@@ -13,6 +13,7 @@ from nf_core.configs.create.utils import (
     ConfigsCreateConfig,
     TextInput,
 )  ## TODO Move somewhere common?
+from nf_core.utils import add_hide_class, remove_hide_class
 
 config_exists_warn = """
 > ⚠️  **The config file you are trying to create already exists.**
@@ -43,36 +44,44 @@ class BasicDetails(Screen):
             "",
             classes="column",
         )
-        if self.parent.CONFIG_TYPE == "infrastructure":
-            with Horizontal():
-                yield TextInput(
-                    "config_profile_contact",
-                    "Boaty McBoatFace",
-                    "Author full name.",
-                    classes="column",
-                )
+        with Horizontal():
+            yield TextInput(
+                "config_profile_contact",
+                "Boaty McBoatFace",
+                "Author full name.",
+                classes="column" + " hide" if self.parent.CONFIG_TYPE == "pipeline" else "",
+            )
 
-                yield TextInput(
-                    "config_profile_handle",
-                    "@BoatyMcBoatFace",
-                    "Author Git(Hub) handle.",
-                    classes="column",
-                )
+            yield TextInput(
+                "config_profile_handle",
+                "@BoatyMcBoatFace",
+                "Author Git(Hub) handle.",
+                classes="column" + " hide" if self.parent.CONFIG_TYPE == "pipeline" else "",
+            )
+        yield TextInput(
+            "config_pipeline_name",
+            "Pipeline name",
+            "The pipeline name you want to create the config for.",
+            classes="hide" if self.parent.CONFIG_TYPE == "infrastructure" or not self.parent.NFCORE_CONFIG else "",
+        )
+        yield TextInput(
+            "config_pipeline_path",
+            "Pipeline path",
+            "The path to the pipeline you want to create the config for.",
+            classes="hide" if self.parent.CONFIG_TYPE == "infrastructure" or self.parent.NFCORE_CONFIG else "",
+        )
 
         yield TextInput(
             "config_profile_description",
             "Description",
             "A short description of your config.",
         )
-        if self.parent.CONFIG_TYPE == "infrastructure":
-            yield TextInput(
-                "config_profile_url",
-                "https://nf-co.re",
-                "URL of infrastructure website or owning institution (infrastructure configs only).",
-                disabled=(
-                    self.parent.CONFIG_TYPE == "pipeline"
-                ),  ## TODO update TextInput to accept replace with visibility: https://textual.textualize.io/styles/visibility/
-            )
+        yield TextInput(
+            "config_profile_url",
+            "https://nf-co.re",
+            "URL of infrastructure website or owning institution (infrastructure configs only).",
+            classes="hide" if self.parent.CONFIG_TYPE == "pipeline" else "",
+        )
         yield Center(
             Button("Back", id="back", variant="default"),
             Button("Next", id="next", variant="success"),
@@ -98,3 +107,22 @@ class BasicDetails(Screen):
                 self.parent.push_screen("final")
         except ValueError:
             pass
+
+    def on_screen_resume(self):
+        """Show or hide form fields on resume depending on config type."""
+        if self.parent.CONFIG_TYPE == "pipeline":
+            add_hide_class(self.parent, "config_profile_contact")
+            add_hide_class(self.parent, "config_profile_handle")
+            add_hide_class(self.parent, "config_profile_url")
+            if self.parent.NFCORE_CONFIG:
+                remove_hide_class(self.parent, "config_pipeline_name")
+                add_hide_class(self.parent, "config_pipeline_path")
+            else:
+                remove_hide_class(self.parent, "config_pipeline_path")
+                add_hide_class(self.parent, "config_pipeline_name")
+        if self.parent.CONFIG_TYPE == "infrastructure":
+            remove_hide_class(self.parent, "config_profile_contact")
+            remove_hide_class(self.parent, "config_profile_handle")
+            remove_hide_class(self.parent, "config_profile_url")
+            add_hide_class(self.parent, "config_pipeline_name")
+            add_hide_class(self.parent, "config_pipeline_path")

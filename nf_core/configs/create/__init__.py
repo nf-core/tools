@@ -78,6 +78,7 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
             self.push_screen("choose_type")
         elif event.button.id == "type_infrastructure":
             self.CONFIG_TYPE = "infrastructure"
+            utils.CONFIG_ISINFRASTRUCTURE_GLOBAL = True
             self.push_screen("nfcore_question")
         elif event.button.id == "type_nfcore":
             self.NFCORE_CONFIG = True
@@ -85,6 +86,7 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
             self.push_screen("basic_details")
         elif event.button.id == "type_pipeline":
             self.CONFIG_TYPE = "pipeline"
+            utils.CONFIG_ISINFRASTRUCTURE_GLOBAL = False
             self.push_screen("nfcore_question")
         elif event.button.id == "type_custom":
             self.NFCORE_CONFIG = False
