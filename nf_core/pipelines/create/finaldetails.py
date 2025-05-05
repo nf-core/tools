@@ -10,7 +10,8 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Markdown
 
 from nf_core.pipelines.create.create import PipelineCreate
-from nf_core.pipelines.create.utils import ShowLogs, TextInput, add_hide_class, remove_hide_class
+from nf_core.pipelines.create.utils import TextInput
+from nf_core.utils import ShowLogs, add_hide_class, remove_hide_class
 
 pipeline_exists_warn = """
 > ⚠️  **The pipeline you are trying to create already exists.**

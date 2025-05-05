@@ -61,7 +61,12 @@ from nf_core.commands_test_datasets import (
 )
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.pipelines.download import DownloadError
-from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
+from nf_core.utils import (
+    check_if_outdated,
+    nfcore_logo,
+    rich_force_colors,
+    setup_nfcore_dir,
+)
 
 # Set up logging as the root logger
 # Submodules should all traverse back to this
@@ -77,7 +82,14 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core": [
         {
             "name": "Commands",
-            "commands": ["pipelines", "modules", "subworkflows", "interface", "test-datasets"],
+            "commands": [
+                "pipelines",
+                "modules",
+                "subworkflows",
+                "configs",
+                "interface",
+                "test-datasets",
+            ],
         },
     ],
     "nf-core pipelines": [
@@ -87,7 +99,15 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "For developers",
-            "commands": ["create", "lint", "bump-version", "sync", "schema", "rocrate", "create-logo"],
+            "commands": [
+                "create",
+                "lint",
+                "bump-version",
+                "sync",
+                "schema",
+                "rocrate",
+                "create-logo",
+            ],
         },
     ],
     "nf-core modules": [
@@ -110,13 +130,18 @@ click.rich_click.COMMAND_GROUPS = {
             "commands": ["create", "lint", "test"],
         },
     ],
+    "nf-core configs": [
+        {
+            "name": "Config commands",
+            "commands": ["create"],
+        },
+    ],
     "nf-core pipelines schema": [{"name": "Schema commands", "commands": ["validate", "build", "lint", "docs"]}],
     "nf-core test-datasets": [{"name": "For developers", "commands": ["search", "list", "list-branches"]}],
 }
 click.rich_click.OPTION_GROUPS = {
     "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
 }
-
 # Set up rich stderr console
 stderr = rich.console.Console(stderr=True, force_terminal=rich_force_colors())
 stdout = rich.console.Console(force_terminal=rich_force_colors())
@@ -260,7 +285,13 @@ def pipelines(ctx):
 @click.option("-d", "--description", type=str, help="A short description of your pipeline")
 @click.option("-a", "--author", type=str, help="Name of the main author(s)")
 @click.option("--version", type=str, default="1.0.0dev", help="The initial version number to use")
-@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Overwrite output directory if it already exists",
+)
 @click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 @click.option(
@@ -944,7 +975,13 @@ def command_modules_list_local(ctx, keywords, json, directory):  # pylint: disab
 # nf-core modules install
 @modules.command("install")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+)
 @click.option(
     "-d",
     "--dir",
@@ -978,7 +1015,13 @@ def command_modules_install(ctx, tool, directory, prompt, force, sha):
 # nf-core modules update
 @modules.command("update")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+)
 @click.option(
     "-d",
     "--dir",
@@ -1055,7 +1098,13 @@ def command_modules_update(
 # nf-core modules patch
 @modules.command("patch")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+)
 @click.option(
     "-d",
     "--dir",
@@ -1075,7 +1124,13 @@ def command_modules_patch(ctx, tool, directory, remove):
 # nf-core modules remove
 @modules.command("remove")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+)
 @click.option(
     "-d",
     "--dir",
@@ -1249,7 +1304,13 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
 # nf-core modules lint
 @modules.command("lint")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+)
 @click.option(
     "-d",
     "--dir",
@@ -1303,7 +1364,13 @@ def command_modules_lint(
 # nf-core modules info
 @modules.command("info")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+)
 @click.option(
     "-d",
     "--dir",
@@ -1322,7 +1389,13 @@ def command_modules_info(ctx, tool, directory):
 # nf-core modules bump-versions
 @modules.command("bump-versions")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+)
 @click.option(
     "-d",
     "--dir",
@@ -1414,7 +1487,13 @@ def command_subworkflows_create(ctx, subworkflow, directory, author, force, migr
 # nf-core subworkflows test
 @subworkflows.command("test")
 @click.pass_context
-@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
+@click.argument(
+    "subworkflow",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+)
 @click.option(
     "-d",
     "--dir",
@@ -1502,7 +1581,13 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
 # nf-core subworkflows lint
 @subworkflows.command("lint")
 @click.pass_context
-@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
+@click.argument(
+    "subworkflow",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+)
 @click.option(
     "-d",
     "--dir",
@@ -1551,7 +1636,13 @@ def command_subworkflows_lint(
 # nf-core subworkflows info
 @subworkflows.command("info")
 @click.pass_context
-@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
+@click.argument(
+    "subworkflow",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+)
 @click.option(
     "-d",
     "--dir",
@@ -1570,7 +1661,13 @@ def command_subworkflows_info(ctx, subworkflow, directory):
 # nf-core subworkflows install
 @subworkflows.command("install")
 @click.pass_context
-@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
+@click.argument(
+    "subworkflow",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+)
 @click.option(
     "-d",
     "--dir",
@@ -1647,7 +1744,13 @@ def subworkflows_patch(ctx, tool, dir, remove):
 # nf-core subworkflows remove
 @subworkflows.command("remove")
 @click.pass_context
-@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
+@click.argument(
+    "subworkflow",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+)
 @click.option(
     "-d",
     "--dir",
@@ -1666,7 +1769,13 @@ def command_subworkflows_remove(ctx, directory, subworkflow):
 # nf-core subworkflows update
 @subworkflows.command("update")
 @click.pass_context
-@click.argument("subworkflow", type=str, callback=normalize_case, required=False, metavar="subworkflow name")
+@click.argument(
+    "subworkflow",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+)
 @click.option(
     "-d",
     "--dir",
@@ -1749,6 +1858,17 @@ def command_subworkflows_update(
     )
 
 
+# nf-core configs subcommands
+@nf_core_cli.group()
+@click.pass_context
+def configs(ctx):
+    """
+    Commands to manage nf-core configs.
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
 # nf-core test-dataset subcommands
 @nf_core_cli.group()
 @click.pass_context
@@ -1760,6 +1880,24 @@ def test_datasets(ctx):
     # by means other than the `if` block below)
     ctx.ensure_object(dict)
 
+
+# nf-core configs create
+@configs.command("create")
+@click.pass_context
+def create_configs(ctx):
+    """
+    Command to interactively create a nextflow or nf-core config
+    """
+    from nf_core.configs.create import ConfigsCreateApp
+
+    try:
+        log.info("Launching interactive nf-core configs creation tool.")
+        app = ConfigsCreateApp()
+        app.run()
+        sys.exit(app.return_code or 0)
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
 
 # nf-core test-dataset search
 @test_datasets.command("search")
