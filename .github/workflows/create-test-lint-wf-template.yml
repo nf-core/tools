@@ -108,12 +108,10 @@ jobs:
         env:
           NFT_DIFF: "pdiff"
           NFT_DIFF_ARGS: "--line-numbers --width 120 --expand-tabs=2"
-          NFT_WORKDIR: "~"
         run: |
           cd create-test-lint-wf/my-prefix-testpipeline
           nf-test test \
-            --profile=+docker,test \
-            --ci \
+            --profile=+docker \
             --verbose \
             --tap=test.tap \
 
