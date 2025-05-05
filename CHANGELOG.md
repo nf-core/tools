@@ -13,7 +13,6 @@
 - run nf-test tests on runsOn runners ([#3525](https://github.com/nf-core/tools/pull/3525))
 - Include the centralized nf-core configs also in offline mode, if a local copy is available. ([#3491](https://github.com/nf-core/tools/pull/3491))
 - downgrade nf-schema to fix CI tests ([#3544](https://github.com/nf-core/tools/pull/3544))
-- General: Update CI to test template pipelines with nf-test ([#3559](https://github.com/nf-core/tools/pull/3559))
 
 ### Linting
 
@@ -74,6 +73,7 @@
 - GitHub action for nightly tests with Nextflow from source ([#3553](https://github.com/nf-core/tools/pull/3553))
 - Dev ([#3557](https://github.com/nf-core/tools/pull/3557))
 - chore(deps): update python:3.12-slim docker digest to bae1a06 ([#3558](https://github.com/nf-core/tools/pull/3558))
+- Update CI to test template pipelines with nf-test ([#3559](https://github.com/nf-core/tools/pull/3559))
 
 ## [v3.2.1 - Pewter Pangolin Patch](https://github.com/nf-core/tools/releases/tag/3.2.1) - [2025-04-29]
 
