@@ -56,18 +56,12 @@ jobs:
       fail-fast: false
 
     steps:
-      - name: go to working directory
-        run: |
-          mkdir -p create-lint-wf-template
-          cd create-lint-wf-template
-          export NXF_WORK=$(pwd)
-
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         name: Check out source-code repository
         with:
           fetch-depth: 0
 
-      - name: Set up Python 3.12
+      - name: Set up Python 3.13
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.13"
@@ -118,7 +112,7 @@ jobs:
           NFT_DIFF_ARGS: "--line-numbers --width 120 --expand-tabs=2"
           NFT_WORKDIR: "~"
         run: |
-          cd create-test-lint-wf/my-prefix-testpipeline
+          cd my-prefix-testpipeline
           nf-test test \
             --profile=+docker,test \
             --ci \
