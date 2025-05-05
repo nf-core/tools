@@ -49,14 +49,13 @@ class BasicDetails(Screen):
                 "config_profile_contact",
                 "Boaty McBoatFace",
                 "Author full name.",
-                classes="column" + " hide" if self.parent.CONFIG_TYPE == "pipeline" else "",
+                classes="column hide" if self.parent.CONFIG_TYPE == "pipeline" else "column",
             )
-
             yield TextInput(
                 "config_profile_handle",
                 "@BoatyMcBoatFace",
                 "Author Git(Hub) handle.",
-                classes="column" + " hide" if self.parent.CONFIG_TYPE == "pipeline" else "",
+                classes="column hide" if self.parent.CONFIG_TYPE == "pipeline" else "column",
             )
         yield TextInput(
             "config_pipeline_name",
@@ -104,7 +103,10 @@ class BasicDetails(Screen):
         try:
             self.parent.TEMPLATE_CONFIG = ConfigsCreateConfig(**config)
             if event.button.id == "next":
-                self.parent.push_screen("final")
+                if self.parent.CONFIG_TYPE == "infrastructure":
+                    self.parent.push_screen("hpc_question")
+                elif self.parent.CONFIG_TYPE == "pipeline":
+                    self.parent.push_screen("final")
         except ValueError:
             pass
 

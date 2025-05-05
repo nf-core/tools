@@ -73,12 +73,14 @@ class ConfigsCreateConfig(BaseModel):
 
     @field_validator("config_pipeline_path")
     @classmethod
-    def path_valid(cls, v: str) -> str:
+    def path_valid(cls, v: str, info: ValidationInfo) -> str:
         """Check that a path is valid."""
-        if v.strip() == "":
-            raise ValueError("Cannot be left empty.")
-        if not Path(v).is_dir():
-            raise ValueError("Must be a valid path.")
+        context = info.context
+        if context and not context["is_infrastructure"]:
+            if v.strip() == "":
+                raise ValueError("Cannot be left empty.")
+            if not Path(v).is_dir():
+                raise ValueError("Must be a valid path.")
         return v
 
     @field_validator("config_profile_contact", "config_profile_description", "config_pipeline_name")
@@ -202,7 +204,7 @@ class ValidateConfig(Validator):
 
         If it fails, return the error messages."""
         try:
-            with init_context({"is_nfcore": NFCORE_CONFIG_GLOBAL}):
+            with init_context({"is_nfcore": NFCORE_CONFIG_GLOBAL, "is_infrastructure": CONFIG_ISINFRASTRUCTURE_GLOBAL}):
                 ConfigsCreateConfig(**{f"{self.key}": value})
                 return self.success()
         except ValidationError as e:

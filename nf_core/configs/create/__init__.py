@@ -15,6 +15,7 @@ from nf_core.configs.create import utils
 from nf_core.configs.create.basicdetails import BasicDetails
 from nf_core.configs.create.configtype import ChooseConfigType
 from nf_core.configs.create.final import FinalScreen
+from nf_core.configs.create.hpcquestion import ChooseHpc
 from nf_core.configs.create.nfcorequestion import ChooseNfcoreConfig
 from nf_core.configs.create.welcome import WelcomeScreen
 
@@ -54,6 +55,7 @@ class ConfigsCreateApp(App[utils.ConfigsCreateConfig]):
         "nfcore_question": ChooseNfcoreConfig,
         "basic_details": BasicDetails,
         "final": FinalScreen,
+        "hpc_question": ChooseHpc,
     }
 
     # Initialise config as empty
