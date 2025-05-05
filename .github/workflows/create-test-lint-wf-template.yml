@@ -118,6 +118,8 @@ jobs:
       - name: remove .nf-test folder
         run: |
           rm -rf create-test-lint-wf/my-prefix-testpipeline/.nf-test
+          rm create-test-lint-wf/my-prefix-testpipeline/.nf-test.log
+          rm create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap
 
       # Try syncing it before we change anything
       - name: nf-core pipelines sync
