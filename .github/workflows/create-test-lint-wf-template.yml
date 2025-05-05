@@ -104,6 +104,7 @@ jobs:
 
       # Test pipeline with nf-test
       - name: run pipeline nf-test
+        if: ${{ matrix.TEMPLATE }} != 'all' && ${{ matrix.TEMPLATE }} != 'nf-test'
         shell: bash
         env:
           NFT_DIFF: "pdiff"
@@ -116,10 +117,24 @@ jobs:
 
       # Remove -nf-test folder before linting
       - name: remove .nf-test folder
+        if: ${{ matrix.TEMPLATE }} != 'all' && ${{ matrix.TEMPLATE }} != 'nf-test'
         run: |
           rm -rf create-test-lint-wf/my-prefix-testpipeline/.nf-test
           rm create-test-lint-wf/my-prefix-testpipeline/.nf-test.log
           rm create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap
+
+      # Run the pipeline when nf-test is not available
+      - name: run the pipeline
+        if: ${{ matrix.TEMPLATE }} == 'all' || ${{ matrix.TEMPLATE }} == 'nf-test'
+        run: |
+          cd create-test-lint-wf
+          nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
+
+      # Remove results folder before linting
+      - name: remove results folder
+        if: ${{ matrix.TEMPLATE }} == 'all' || ${{ matrix.TEMPLATE }} == 'nf-test'
+        run: |
+          rm -rf create-test-lint-wf/results
 
       # Try syncing it before we change anything
       - name: nf-core pipelines sync
