@@ -1762,7 +1762,7 @@ def test_datasets(ctx):
 
 
 # nf-core test-dataset search
-@test_datasets.command("search")
+@test_datasets.command("search", short_help="Search files in the nf-core/test-datasets repository")
 @click.pass_context
 @click.option("-b", "--branch", type=str, help="Branch in the test-datasets repository to reduce search to")
 @click.option(
@@ -1782,7 +1782,8 @@ def test_datasets(ctx):
 @click.argument("query", required=False)
 def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url, query):
     """
-    Search files on a specified branch in the nf-core/test-datasets repository.
+    Search files filtered by QUERY on a specified branch in the nf-core/test-datasets repository.
+    If no QUERY is given or QUERY is ambiguous, an auto-completion form is shown.
     """
     test_datasets_search(ctx, branch, generate_nf_path, generate_dl_url, query)
 
