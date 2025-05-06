@@ -102,7 +102,34 @@ jobs:
           cd create-test-lint-wf
           nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
 
-      # Test pipeline with nf-test
+      # Copy snapshot file
+      - name: copy snapshot file
+        if: ${{ matrix.TEMPLATE  != 'all' && matrix.TEMPLATE != 'nf-test' }}
+        run: |
+          cp ${{ github.workspace }}/.github/__snapshots__/${{ matrix.TEMPLATE }}.nf.test.snap create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap
+
+      # Generate snapshot if not there
+      - name: run pipeline nf-test and generate snapshot if previous step failed
+        if: ${{ failure() && matrix.TEMPLATE != 'all' && matrix.TEMPLATE != 'nf-test' }}
+        shell: bash
+        env:
+          NFT_DIFF: "pdiff"
+          NFT_DIFF_ARGS: "--line-numbers --width 120 --expand-tabs=2"
+        run: |
+          cd create-test-lint-wf/my-prefix-testpipeline
+          nf-test test \
+            --profile=+docker \
+            --verbose
+          cd ${{ github.workspace }}
+          ls .github
+          cp create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap ${{ github.workspace }}/.github/__snapshots__/${{ matrix.TEMPLATE }}.nf.test.snap
+          git config --global user.email "core@nf-co.re"
+          git config --global user.name "nf-core-bot"
+          git add .github/__snapshots__/${{ matrix.TEMPLATE }}.nf.test.snap
+          git commit -m "Generate snapshot for ${{ matrix.TEMPLATE }} template"
+          git push
+
+      # Run pipeline with nf-test
       - name: run pipeline nf-test
         if: ${{ matrix.TEMPLATE  != 'all' && matrix.TEMPLATE != 'nf-test' }}
         shell: bash
@@ -114,8 +141,9 @@ jobs:
           nf-test test \
             --profile=+docker \
             --verbose \
+            --ci
 
-      # Remove -nf-test folder before linting
+      # Remove .nf-test folder before linting
       - name: remove .nf-test folder
         if: ${{ matrix.TEMPLATE != 'all' && matrix.TEMPLATE != 'nf-test' }}
         run: |
