@@ -120,9 +120,7 @@ jobs:
           nf-test test \
             --profile=+docker \
             --verbose
-          cd ${{ github.workspace }}
-          ls .github
-          cp create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap ${{ github.workspace }}/.github/__snapshots__/${{ matrix.TEMPLATE }}.nf.test.snap
+          cp tests/default.nf.test.snap ${{ github.workspace }}/.github/__snapshots__/${{ matrix.TEMPLATE }}.nf.test.snap
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
           git add .github/__snapshots__/${{ matrix.TEMPLATE }}.nf.test.snap

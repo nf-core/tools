@@ -69,12 +69,15 @@ jobs:
         run: |
           python -m pip install pdiff
 
-      - name: Run nf-core/tools and run the pipeline
+      - name: Run nf-core/tools to create pipeline
         run: |
           mkdir create-test-wf && cd create-test-wf
           export NXF_WORK=$(pwd)
           nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
-          nextflow run nf-core-testpipeline -profile docker,test --outdir ./results
+
+      - name: copy snapshot file
+        run: |
+          cp ${{ github.workspace }}/.github/__snapshots__/default.nf.test.snap create-test-wf/nf-core-testpipeline/tests/default.nf.test.snap
 
       - name: Run nf-test
         shell: bash
@@ -87,6 +90,7 @@ jobs:
             --profile=+docker \
             --verbose \
             --tap=test.tap \
+            --ci
 
           # Save the absolute path of the test.tap file to the output
           echo "tap_file_path=$(realpath test.tap)" >> $GITHUB_OUTPUT
