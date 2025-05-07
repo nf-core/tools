@@ -105,7 +105,6 @@ jobs:
       # Copy snapshot file
       - name: copy snapshot file
         if: ${{ matrix.TEMPLATE  != 'all' && matrix.TEMPLATE != 'nf-test' }}
-        continue-on-error: true
         run: |
           if [ ! -f ${{ github.workspace }}/.github/__snapshots__/${{ matrix.TEMPLATE }}.nf.test.snap ]; then
               echo "Generate a snapshot when creating a pipeline and skipping the feature ${{ matrix.TEMPLATE }}."
@@ -113,20 +112,6 @@ jobs:
           else
             cp ${{ github.workspace }}/.github/__snapshots__/${{ matrix.TEMPLATE }}.nf.test.snap create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap
           fi
-
-      # Generate snapshot if not there
-      - name: run pipeline nf-test and generate snapshot if previous step failed
-        if: ${{ matrix.TEMPLATE != 'all' && matrix.TEMPLATE != 'nf-test' }}
-        shell: bash
-        env:
-          NFT_DIFF: "pdiff"
-          NFT_DIFF_ARGS: "--line-numbers --width 120 --expand-tabs=2"
-        run: |
-          cd create-test-lint-wf/my-prefix-testpipeline
-          nf-test test \
-            --profile=+docker \
-            --verbose
-          cat tests/default.nf.test.snap
 
       # Run pipeline with nf-test
       - name: run pipeline nf-test
