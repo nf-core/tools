@@ -108,14 +108,15 @@ jobs:
         continue-on-error: true
         run: |
           if [ ! -f ${{ github.workspace }}/.github/__snapshots__/${{ matrix.TEMPLATE }}.nf.test.snap ]; then
-              echo "generatesnapshot=YES" >> $GITHUB_ENV
+              echo "Generate a snapshot when creating a pipeline and skipping the feature ${{ matrix.TEMPLATE }}."
+              echo "Then, copy it to the directory .github/__snapshots__"
           else
             cp ${{ github.workspace }}/.github/__snapshots__/${{ matrix.TEMPLATE }}.nf.test.snap create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap
           fi
 
       # Generate snapshot if not there
       - name: run pipeline nf-test and generate snapshot if previous step failed
-        if: ${{ env.generatesnapshot && matrix.TEMPLATE != 'all' && matrix.TEMPLATE != 'nf-test' }}
+        if: ${{ matrix.TEMPLATE != 'all' && matrix.TEMPLATE != 'nf-test' }}
         shell: bash
         env:
           NFT_DIFF: "pdiff"
@@ -125,18 +126,7 @@ jobs:
           nf-test test \
             --profile=+docker \
             --verbose
-          cp tests/default.nf.test.snap ${{ github.workspace }}/.github/__snapshots__/${{ matrix.TEMPLATE }}.nf.test.snap
-
-      - name: Commit and push changes
-        if: env.generatesnapshot == 'YES'
-        run: |
-          git config user.email "core@nf-co.re"
-          git config user.name "nf-core-bot"
-          git config push.default upstream
-          git add ${{ github.workspace }}/.github/__snapshots__/${{ matrix.TEMPLATE }}.nf.test.snap
-          git status
-          git commit -m "Generate snapshot for ${{ matrix.TEMPLATE }} template"
-          git push origin HEAD:${{ github.head_ref }}
+          cat tests/default.nf.test.snap
 
       # Run pipeline with nf-test
       - name: run pipeline nf-test
