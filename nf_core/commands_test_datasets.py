@@ -28,11 +28,13 @@ def test_datasets_list_remote(ctx: click.Context, branch: str, generate_nf_path:
     list_datasets(branch, generate_nf_path, generate_dl_url)
 
 
-def test_datasets_search(ctx: click.Context, branch: str, generate_nf_path: bool, generate_dl_url: bool) -> None:
+def test_datasets_search(
+    ctx: click.Context, branch: str, generate_nf_path: bool, generate_dl_url: bool, query: str
+) -> None:
     """
     Search all files on a given branch in the remote nf-core/testdatasets repository on github
     with an interactive autocompleting prompt and print the file matching the query.
     Specifying a branch is required.
     The resulting file can optionally be parsed as a nextflow path or a url for downloading
     """
-    search_datasets(branch, generate_nf_path, generate_dl_url)
+    search_datasets(branch, generate_nf_path=generate_nf_path, generate_dl_url=generate_dl_url, query=query)
