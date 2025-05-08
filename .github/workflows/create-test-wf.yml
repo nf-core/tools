@@ -73,7 +73,7 @@ jobs:
 
       - name: copy snapshot file
         run: |
-          cp ${{ github.workspace }}/.github/__snapshots__/default.nf.test.snap create-test-wf/nf-core-testpipeline/tests/default.nf.test.snap
+          cp ${{ github.workspace }}/.github/snapshots/default.nf.test.snap create-test-wf/nf-core-testpipeline/tests/default.nf.test.snap
 
       - name: Run nf-test
         shell: bash
