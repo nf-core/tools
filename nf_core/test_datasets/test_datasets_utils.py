@@ -1,12 +1,13 @@
 import json
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import questionary
 import requests
 
-from nf_core.utils import nfcore_question_style
+from nf_core.utils import determine_base_dir, fetch_wf_config, load_tools_config, nfcore_question_style
 
 log = logging.getLogger(__name__)
 
@@ -176,10 +177,26 @@ def get_or_prompt_branch(maybe_branch: str) -> Tuple[str, List[str]]:
     else:
         all_branches = get_remote_branch_names()
 
+        # Find pipeline / modules root directory
+        base_dir: Path = determine_base_dir()
+
+        # Read .nf-core.yml to identify repository_type
+        _, tools_config = load_tools_config(base_dir)
+
+        branch_prefill = ""
+        # either modules or a pipeline branch
+        if tools_config is not None:
+            repo_type = tools_config.get("repository_type", None)
+            if repo_type == MODULES_BRANCH_NAME:
+                branch_prefill = MODULES_BRANCH_NAME
+            elif repo_type == "pipeline":
+                wf_config = fetch_wf_config(base_dir)
+                pipeline_name = wf_config.get("manifest.name", "").split("/")[-1]
+                if pipeline_name in all_branches:
+                    branch_prefill = pipeline_name
+
         branch = questionary.autocomplete(
-            "Branch name:",
-            choices=sorted(all_branches),
-            style=nfcore_question_style,
+            "Branch name:", choices=sorted(all_branches), style=nfcore_question_style, default=branch_prefill
         ).unsafe_ask()
 
         return branch, all_branches
