@@ -496,3 +496,12 @@ vscode:
     Adds the `.vscode` directory to the pipelinerepository.
   nfcore_pipelines: False
   custom_pipelines: True
+gpu:
+  short_description: "Use GPU"
+  description: "Add GPU support to the pipeline"
+  help_text: |
+    This will add GPU support to the pipeline. It will add a `use_gpu` parameter to the pipeline.
+
+    The pipeline will be able to run on GPU-enabled compute environments.
+  nfcore_pipelines: False
+  custom_pipelines: True
