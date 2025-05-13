@@ -67,6 +67,8 @@ def search_datasets(
         stdout.print(create_download_url(branch, selection))
     else:
         table = rich.table.Table(show_header=False)
+        table.add_column("")
+        table.add_column("", overflow="fold")
         table.add_row("File Name:", selection)
         table.add_row("Nextflow Import:", create_pretty_nf_path(selection, branch == MODULES_BRANCH_NAME))
         table.add_row("Download Link:", create_download_url(branch, selection))
