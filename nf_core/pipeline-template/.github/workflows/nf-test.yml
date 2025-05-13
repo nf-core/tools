@@ -94,7 +94,7 @@ jobs:
       - name: Run nf-test
         id: run_nf_test
         uses: ./.github/actions/nf-test
-        continue-on-error: ${{ matrix.NXF_VER == 'latest-everything' }}
+        continue-on-error: ${{ matrix.NXF_VER == '25.03.1-edge' }}
         env:
           NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
         with:
@@ -109,10 +109,10 @@ jobs:
             echo "::error::Test with ${{ matrix.NXF_VER }} failed"
             # Add to workflow summary
             echo "## ❌ Test failed: ${{ matrix.profile }} | ${{ matrix.NXF_VER }} | Shard ${{ matrix.shard }}/${{ env.TOTAL_SHARDS }}" >> $GITHUB_STEP_SUMMARY
-            if [[ "${{ matrix.NXF_VER }}" == "latest-everything" ]]; then
+            if [[ "${{ matrix.NXF_VER }}" == "25.03.1-edge" ]]; then
               echo "::warning::Test with latest-everything failed but was expected and will not cause workflow failure"
             fi
-            if [[ "${{ matrix.NXF_VER }}" != "latest-everything" ]]; then
+            if [[ "${{ matrix.NXF_VER }}" != "25.03.1-edge" ]]; then
               exit 1
             fi
           fi
