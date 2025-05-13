@@ -92,6 +92,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run nf-test
+        id: run_nf_test
         uses: ./.github/actions/nf-test
         continue-on-error: ${{ matrix.NXF_VER == 'latest-everything' }}
         env:
@@ -100,6 +101,22 @@ jobs:
           profile: ${{ matrix.profile }}
           shard: ${{ matrix.shard }}
           total_shards: ${{ env.TOTAL_SHARDS }}
+
+      - name: Report test status
+        if: ${{ always() }}
+        run: |
+          if [[ "${{ steps.run_nf_test.outcome }}" == "failure" ]]; then
+            echo "::error::Test with ${{ matrix.NXF_VER }} failed"
+            # Add to workflow summary
+            echo "## ❌ Test failed: ${{ matrix.profile }} | ${{ matrix.NXF_VER }} | Shard ${{ matrix.shard }}/${{ env.TOTAL_SHARDS }}" >> $GITHUB_STEP_SUMMARY
+            if [[ "${{ matrix.NXF_VER }}" == "latest-everything" ]]; then
+              echo "::warning::Test with latest-everything failed but was expected and will not cause workflow failure"
+            fi
+            if [[ "${{ matrix.NXF_VER }}" != "latest-everything" ]]; then
+              exit 1
+            fi
+          fi
+
   confirm-pass:
     needs: [nf-test]
     if: always()
@@ -108,7 +125,7 @@ jobs:
       - runner=2cpu-linux-x64{% else %} use GitHub runners
       - "ubuntu-latest"{% endif %}{% raw %}
     steps:
-      - name: One or more tests failed
+      - name: One or more tests failed (excluding latest-everything)
         if: ${{ contains(needs.*.result, 'failure') }}
         run: exit 1
 
