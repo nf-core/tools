@@ -4,7 +4,7 @@
         "dockerfile": "../nf_core/devcontainer/devcontainer.Dockerfile"
     },
     "postCreateCommand": "python -m pip install --upgrade -r ../requirements-dev.txt -e ../ && pre-commit install --install-hooks",
-    "remoteUser": "gitpod",
+    "remoteUser": "nfcore-user",
     "runArgs": ["--privileged"],
 
     // Configure tool-specific properties.

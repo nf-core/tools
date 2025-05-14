@@ -2,7 +2,7 @@
 #   docker build -t gitpod:test -f nf_core/gitpod/gitpod.Dockerfile .
 
 # See https://docs.renovatebot.com/docker/#digest-pinning for why a digest is used.
-FROM gitpod/workspace-base@sha256:7f35e401405c38ebc1185dfc3d6c066f73a524e8b86641453ea4690cc5c24fb6
+FROM mcr.microsoft.com/devcontainers/python:0-3.11-bullseye
 
 USER root
 
@@ -32,15 +32,17 @@ RUN apt-get update --quiet && \
 # Set PATH for Conda
 ENV PATH="/opt/conda/bin:$PATH"
 
+# Set our Username
+ENV CONTAINER_USER="nfcore-user"
+
 # Add the nf-core source files to the image
 COPY . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
 
 # Change ownership for gitpod
-RUN chown -R gitpod:gitpod /opt/conda /usr/src/nf_core
+RUN chown -R ${CONTAINER_USER}:${CONTAINER_USER} /opt/conda /usr/src/nf_core
+USER ${CONTAINER_USER}
 
-# Change user to gitpod
-USER gitpod
 # Install nextflow, nf-core, nf-test, and other useful tools
 RUN conda config --add channels bioconda && \
     conda config --add channels conda-forge && \
