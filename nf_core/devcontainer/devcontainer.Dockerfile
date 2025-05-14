@@ -1,5 +1,5 @@
-# Test build locally before making a PR
-#   docker build -t gitpod:test -f nf_core/gitpod/gitpod.Dockerfile .
+# Test build locally before making a PR (from project root directory)
+#   docker build . -t tools-devcontainer:local -f nf_core/devcontainer/devcontainer.Dockerfile
 
 # See https://docs.renovatebot.com/docker/#digest-pinning for why a digest is used.
 FROM mcr.microsoft.com/devcontainers/python:0-3.11-bullseye
