@@ -29,16 +29,13 @@ RUN apt-get update --quiet && \
 # Set PATH for Conda
 ENV PATH="/opt/conda/bin:$PATH"
 
-# Set our Username
-ENV CONTAINER_USER="nfcore-user"
-
 # Add the nf-core source files to the image
 COPY . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
 
-# Change ownership for gitpod
-RUN chown -R ${CONTAINER_USER}:${CONTAINER_USER} /opt/conda /usr/src/nf_core
-USER ${CONTAINER_USER}
+RUN useradd -mU nemo
+RUN chown -R nemo:nemo /opt/conda /usr/src/nf_core
+USER nemo
 
 # Install nextflow, nf-core, nf-test, and other useful tools
 RUN conda config --add channels bioconda && \
