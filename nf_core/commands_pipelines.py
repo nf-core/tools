@@ -218,7 +218,7 @@ def pipelines_create_params_file(ctx, pipeline, revision, output, force, show_hi
     """
     builder = ParamsFileBuilder(pipeline, revision)
 
-    if not builder.write_params_file(output, show_hidden=show_hidden, force=force):
+    if not builder.write_params_file(Path(output), show_hidden=show_hidden, force=force):
         sys.exit(1)
 
 

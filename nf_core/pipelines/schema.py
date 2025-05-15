@@ -322,35 +322,7 @@ class PipelineSchema:
         if self.schema is None:
             log.error("[red][✗] Pipeline schema not found")
         try:
-            # TODO add support for nested parameters
-            # Make copy of schema and remove required flags
-            schema_no_required = copy.deepcopy(self.schema)
-            if "required" in schema_no_required:
-                schema_no_required.pop("required")
-            for keyword in ["allOf", "anyOf", "oneOf"]:
-                if keyword in schema_no_required:
-                    for i, kw_content in enumerate(schema_no_required[keyword]):
-                        if "required" in kw_content:
-                            schema_no_required[keyword][i].pop("required")
-                    schema_no_required[keyword] = [
-                        kw_content for kw_content in schema_no_required[keyword] if kw_content
-                    ]
-                    if not schema_no_required[keyword]:
-                        schema_no_required.pop(keyword)
-            for group_key, group in schema_no_required.get(self.defs_notation, {}).items():
-                if "required" in group:
-                    schema_no_required[self.defs_notation][group_key].pop("required")
-                for keyword in ["allOf", "anyOf", "oneOf"]:
-                    if keyword in group:
-                        for i, kw_content in enumerate(group[keyword]):
-                            if "required" in kw_content:
-                                schema_no_required[self.defs_notation][group_key][keyword][i].pop("required")
-                        schema_no_required[self.defs_notation][group_key][keyword] = [
-                            kw_content for kw_content in group[keyword] if kw_content
-                        ]
-                        if not group[keyword]:
-                            schema_no_required[self.defs_notation][group_key].pop(keyword)
-            jsonschema.validate(self.schema_defaults, schema_no_required)
+            jsonschema.validate(self.schema_defaults, strip_required(self.schema))
         except jsonschema.exceptions.ValidationError as e:
             log.debug(f"Complete error message:\n{e}")
             raise AssertionError(f"Default parameters are invalid: {e.message}")
@@ -366,7 +338,7 @@ class PipelineSchema:
             self.get_wf_params()
 
         # Go over group keys
-        for group_key, group in schema_no_required.get(self.defs_notation, {}).items():
+        for group_key, group in self.schema.get(self.defs_notation, {}).items():
             group_properties = group.get("properties")
             for param in group_properties:
                 if param in self.ignored_params:
@@ -1042,3 +1014,17 @@ class PipelineSchema:
                 f"Pipeline schema builder returned unexpected status ({web_response['status']}): "
                 f"{self.web_schema_build_api_url}\n See verbose log for full response"
             )
+
+
+def strip_required(node):
+    if isinstance(node, dict):
+        return {
+            k: y
+            for k, v in node.items()
+            for y in [strip_required(v)]
+            if k != "required" and (y or y is False or y == "")
+        }
+    elif isinstance(node, list):
+        return [y for v in node for y in [strip_required(v)] if y or y is False or y == ""]
+    else:
+        return node

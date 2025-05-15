@@ -32,7 +32,7 @@ from nf_core.utils import plural_s as _s
 
 from .actions_awsfulltest import actions_awsfulltest
 from .actions_awstest import actions_awstest
-from .actions_ci import actions_ci
+from .actions_nf_test import actions_nf_test
 from .actions_schema_validation import actions_schema_validation
 from .configs import base_config, modules_config
 from .files_exist import files_exist
@@ -45,10 +45,12 @@ from .modules_structure import modules_structure
 from .multiqc_config import multiqc_config
 from .nextflow_config import nextflow_config
 from .nfcore_yml import nfcore_yml
+from .pipeline_if_empty_null import pipeline_if_empty_null
 from .pipeline_name_conventions import pipeline_name_conventions
 from .pipeline_todos import pipeline_todos
 from .plugin_includes import plugin_includes
 from .readme import readme
+from .rocrate_readme_sync import rocrate_readme_sync
 from .schema_description import schema_description
 from .schema_lint import schema_lint
 from .schema_params import schema_params
@@ -81,7 +83,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     # Import all linting tests as methods for this class
     actions_awsfulltest = actions_awsfulltest
     actions_awstest = actions_awstest
-    actions_ci = actions_ci
+    actions_nf_test = actions_nf_test
     actions_schema_validation = actions_schema_validation
     base_config = base_config
     modules_config = modules_config
@@ -96,12 +98,15 @@ class PipelineLint(nf_core.utils.Pipeline):
     nfcore_yml = nfcore_yml
     pipeline_name_conventions = pipeline_name_conventions
     pipeline_todos = pipeline_todos
+    pipeline_if_empty_null = pipeline_if_empty_null
     plugin_includes = plugin_includes
     readme = readme
     schema_description = schema_description
     schema_lint = schema_lint
     schema_params = schema_params
     system_exit = system_exit
+    rocrate_readme_sync = rocrate_readme_sync
+
     template_strings = template_strings
     version_consistency = version_consistency
     included_configs = included_configs
@@ -136,11 +141,12 @@ class PipelineLint(nf_core.utils.Pipeline):
             "files_exist",
             "nextflow_config",
             "files_unchanged",
-            "actions_ci",
+            "actions_nf_test",
             "actions_awstest",
             "actions_awsfulltest",
             "readme",
             "pipeline_todos",
+            "pipeline_if_empty_null",
             "plugin_includes",
             "pipeline_name_conventions",
             "template_strings",
@@ -157,6 +163,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "base_config",
             "modules_config",
             "nfcore_yml",
+            "rocrate_readme_sync",
         ] + (["version_consistency", "included_configs"] if release_mode else [])
 
     def _load(self) -> bool:
@@ -596,7 +603,7 @@ def run_linting(
     lint_obj._load_lint_config()
     lint_obj.load_pipeline_config()
 
-    if lint_obj.lint_config and not lint_obj.lint_config["nfcore_components"]:
+    if lint_obj.lint_config and lint_obj.lint_config["nfcore_components"] is not None:
         module_lint_obj = None
         subworkflow_lint_obj = None
     else:

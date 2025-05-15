@@ -187,6 +187,15 @@ class TestModulesLint(TestModules):
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
 
+    def test_modules_lint_trinity(self):
+        """Test linting the Trinity module"""
+        self.mods_install.install("trinity")
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
+        module_lint.lint(print_results=False, module="trinity")
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+        assert len(module_lint.warned) >= 0
+
     def test_modules_lint_tabix_tabix(self):
         """Test linting the tabix/tabix module"""
         self.mods_install.install("tabix/tabix")
@@ -526,7 +535,7 @@ class TestModulesLint(TestModules):
         """Test linting a module with an extra entry in output fields in meta.yml compared to module.output"""
         with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf")) as fh:
             main_nf = fh.read()
-        main_nf_new = main_nf.replace("emit: bam", "emit: bai")
+        main_nf_new = main_nf.replace("emit: sequence_report", "emit: bai")
         with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "main.nf"), "w") as fh:
             fh.write(main_nf_new)
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)

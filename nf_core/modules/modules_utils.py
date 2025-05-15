@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 from urllib.parse import urlparse
 
+import requests
+
 from ..components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
@@ -97,3 +99,19 @@ def get_installed_modules(directory: Path, repo_type="modules") -> Tuple[List[st
     ]
 
     return local_modules, nfcore_modules
+
+
+def load_edam():
+    """Load the EDAM ontology from the nf-core repository"""
+    edam_formats = {}
+    response = requests.get("https://edamontology.org/EDAM.tsv")
+    for line in response.content.splitlines():
+        fields = line.decode("utf-8").split("\t")
+        if fields[0].split("/")[-1].startswith("format"):
+            # We choose an already provided extension
+            if fields[14]:
+                extensions = fields[14].split("|")
+                for extension in extensions:
+                    if extension not in edam_formats:
+                        edam_formats[extension] = (fields[0], fields[1])  # URL, name
+    return edam_formats
