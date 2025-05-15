@@ -72,7 +72,7 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = False
     try:
-        with open(Path("/Users/jmir/Work/modules", "modules/meta-schema.json")) as fh:
+        with open(Path(module_lint_object.modules_repo.local_repo_dir, "modules/meta-schema.json")) as fh:
             schema = json.load(fh)
         validators.validate(instance=meta_yaml, schema=schema)
         module.passed.append(("meta_yml_valid", "Module `meta.yml` is valid", module.meta_yml))
