@@ -406,10 +406,20 @@ class Launch:
         """Go through the pipeline schema and prompt user to change defaults"""
         answers = {}
         # Start with the subschema in the definitions - use order of allOf
-        definitions_schemas = self.schema_obj.schema.get("$defs", self.schema_obj.schema.get("definitions", {})).items()
+        defs_notation = self.schema_obj.defs_notation
+        log.debug(f"defs_notation: {defs_notation}")
+        definitions_schemas = self.schema_obj.schema.get(defs_notation, {})
         for allOf in self.schema_obj.schema.get("allOf", []):
-            d_key = allOf["$ref"][14:]
-            answers.update(self.prompt_group(d_key, definitions_schemas[d_key]))
+            # Extract the key from the $ref by removing the prefix
+            ref_value = allOf["$ref"]
+            prefix = f"#/{defs_notation}/"
+            d_key = ref_value[len(prefix) :] if ref_value.startswith(prefix) else ref_value
+            log.debug(f"d_key: {d_key}")
+            try:
+                answers.update(self.prompt_group(d_key, definitions_schemas[d_key]))
+            except KeyError:
+                log.warning(f"Could not find definition for {d_key}")
+                continue
 
         # Top level schema params
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():

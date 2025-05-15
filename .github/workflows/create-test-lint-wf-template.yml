@@ -56,17 +56,11 @@ jobs:
       fail-fast: false
 
     steps:
-      - name: go to working directory
-        run: |
-          mkdir -p create-lint-wf-template
-          cd create-lint-wf-template
-          export NXF_WORK=$(pwd)
-
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-        name: Check out source-code repository
+      - name: Check out source-code repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.13"
 
@@ -79,6 +73,12 @@ jobs:
         uses: nf-core/setup-nextflow@v2
         with:
           version: latest-everything
+
+      - name: Install nf-test
+        uses: nf-core/setup-nf-test@v1
+        with:
+          version: "0.9.2"
+          install-pdiff: true
 
       # Create template files
       - name: Create template skip ${{ matrix.TEMPLATE }}
@@ -98,13 +98,49 @@ jobs:
           cd create-test-lint-wf
           nf-core --log-file log.txt pipelines create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --template-yaml template_skip_${{ matrix.TEMPLATE }}.yml
 
+      # Copy snapshot file
+      - name: copy snapshot file
+        if: ${{ matrix.TEMPLATE  != 'all' && matrix.TEMPLATE != 'nf-test' }}
+        run: |
+          if [ ! -f ${{ github.workspace }}/.github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap ]; then
+              echo "Generate a snapshot when creating a pipeline and skipping the feature ${{ matrix.TEMPLATE }}."
+              echo "Then, copy it to the directory .github/snapshots"
+          else
+            cp ${{ github.workspace }}/.github/snapshots/${{ matrix.TEMPLATE }}.nf.test.snap create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap
+          fi
+
+      # Run pipeline with nf-test
+      - name: run pipeline nf-test
+        if: ${{ matrix.TEMPLATE  != 'all' && matrix.TEMPLATE != 'nf-test' }}
+        shell: bash
+        env:
+          NFT_DIFF: "pdiff"
+          NFT_DIFF_ARGS: "--line-numbers --width 120 --expand-tabs=2"
+        run: |
+          cd create-test-lint-wf/my-prefix-testpipeline
+          nf-test test \
+            --profile=+docker \
+            --verbose \
+            --ci
+
+      # Remove .nf-test folder before linting
+      - name: remove .nf-test folder
+        if: ${{ matrix.TEMPLATE != 'all' && matrix.TEMPLATE != 'nf-test' }}
+        run: |
+          rm -rf create-test-lint-wf/my-prefix-testpipeline/.nf-test
+          rm create-test-lint-wf/my-prefix-testpipeline/.nf-test.log
+          rm create-test-lint-wf/my-prefix-testpipeline/tests/default.nf.test.snap
+
+      # Run the pipeline when nf-test is not available
       - name: run the pipeline
+        if: ${{ matrix.TEMPLATE == 'all' || matrix.TEMPLATE == 'nf-test' }}
         run: |
           cd create-test-lint-wf
           nextflow run my-prefix-testpipeline -profile test,docker --outdir ./results
 
       # Remove results folder before linting
       - name: remove results folder
+        if: ${{ matrix.TEMPLATE == 'all' || matrix.TEMPLATE == 'nf-test' }}
         run: |
           rm -rf create-test-lint-wf/results
 
