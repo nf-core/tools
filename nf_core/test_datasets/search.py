@@ -1,5 +1,3 @@
-from typing import List
-
 import questionary
 import rich
 
@@ -20,7 +18,7 @@ def search_datasets(
     maybe_branch: str = "",
     generate_nf_path: bool = False,
     generate_dl_url: bool = False,
-    ignored_file_prefixes: List[str] = IGNORED_FILE_PREFIXES,
+    ignored_file_prefixes: list[str] = IGNORED_FILE_PREFIXES,
     plain_text_output: bool = False,
     query: str = "",
 ) -> None:
