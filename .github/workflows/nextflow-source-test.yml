@@ -70,8 +70,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-1"
         with:
-          # to: nextflow-nightly-test-aaaaqbupbi4ikkrdg6b3bemnoq@nfcore.slack.com
-          to: infrastructure@nf-co.re
+          to: ${{ secrets.NEXTFLOW_NIGHTLY_NOTIFICATION_EMAIL_ADDRESS }}
           from: core@nf-co.re
           subject: "Nextflow source test CI failed"
           body: |
