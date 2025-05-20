@@ -33,6 +33,7 @@ runs:
       uses: nf-core/setup-nf-test@v1
       with:
         version: "${{ env.NFT_VER }}"
+        install-pdiff: true
 
     - name: Setup apptainer
       if: contains(inputs.profile, 'singularity')
@@ -52,11 +53,6 @@ runs:
         auto-update-conda: true
         conda-solver: libmamba
         conda-remove-defaults: true
-
-    - name: Install pdiff
-      shell: bash
-      run: |
-        python -m pip install pdiff
 
       # TODO Skip failing conda tests and document their failures
       # https://github.com/nf-core/modules/issues/7017
