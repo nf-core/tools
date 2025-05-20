@@ -2,7 +2,7 @@
 #   docker build . -t devcontainer:local -f nf_core/devcontainer/devcontainer.Dockerfile
 
 # See https://docs.renovatebot.com/docker/#digest-pinning for why a digest is used.
-FROM gitpod/workspace-base:2025-05-14-07-50-25
+FROM gitpod/workspace-base@sha256:7f35e401405c38ebc1185dfc3d6c066f73a524e8b86641453ea4690cc5c24fb6
 
 USER root
 
