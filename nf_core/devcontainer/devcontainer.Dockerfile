@@ -36,7 +36,10 @@ ENV PATH="/opt/conda/bin:$PATH"
 COPY . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
 
+# Change ownership for gitpod
 RUN chown -R gitpod:gitpod /opt/conda /usr/src/nf_core
+
+# Change user to gitpod
 USER gitpod
 
 # Install nextflow, nf-core, nf-test, and other useful tools
