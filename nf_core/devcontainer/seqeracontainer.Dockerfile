@@ -1,3 +1,4 @@
+# Seqera Container Url: https://wave.seqera.io/view/builds/bd-eeb39fa4eeaed3f3_1
 FROM community.wave.seqera.io/library/nextflow_nf-test_apptainer_curl_pruned:eeb39fa4eeaed3f3
 
 # TODO: Create unprivileged user? -> root used by default in seqera images
