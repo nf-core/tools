@@ -79,6 +79,7 @@
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.11.9 ([#3563](https://github.com/nf-core/tools/pull/3563))
 - chore(deps): update python:3.12-slim docker digest to 31a416d ([#3568](https://github.com/nf-core/tools/pull/3568))
 - chore(deps): update codecov/codecov-action digest to 18283e0 ([#3575](https://github.com/nf-core/tools/pull/3575))
+- use pdiff from setup-nf-test ([#3578](https://github.com/nf-core/tools/pull/3578))
 
 ## [v3.2.1 - Pewter Pangolin Patch](https://github.com/nf-core/tools/releases/tag/3.2.1) - [2025-04-29]
 
