@@ -1,5 +1,8 @@
 FROM community.wave.seqera.io/library/nextflow_nf-test_apptainer_curl_pruned:eeb39fa4eeaed3f3
 
+# TODO: Create unprivileged user? -> root used by default in seqera images
+
+# Install docker (Note: requires mounting /var/run/docker.sock)
 RUN curl -sSL https://get.docker.com/ | sh
 
 # Add the nf-core source files to the image
