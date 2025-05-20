@@ -28,11 +28,11 @@ jobs:
       - name: Build nfcore/tools:dev docker image
         run: docker build --no-cache . -t nfcore/tools:dev
 
-      - name: Build nfcore/tools-devcontainer:dev docker image
-        run: docker build --no-cache . --file nf_core/devcontainer/devcontainer.Dockerfile -t nfcore/tools-devcontainer:dev
+      - name: Build nfcore/devcontainer:dev docker image
+        run: docker build --no-cache . --file nf_core/devcontainer/devcontainer.Dockerfile -t nfcore/devcontainer:dev
 
       - name: Push Docker images to DockerHub (dev)
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           docker push nfcore/tools:dev
-          docker push nfcore/tools-devcontainer:dev
+          docker push nfcore/devcontainer:dev

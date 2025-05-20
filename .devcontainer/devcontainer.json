@@ -1,6 +1,6 @@
 {
     "name": "nfcore",
-    // "image": "nfcore/tools-devcontainer",
+    // "image": "nfcore/devcontainer",
     "build": {
         "dockerfile": "../nf_core/devcontainer/devcontainer.Dockerfile",
         "context": ".."

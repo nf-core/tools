@@ -28,8 +28,8 @@ jobs:
       - name: Build nfcore/tools:latest docker image
         run: docker build --no-cache . -t nfcore/tools:latest
 
-      - name: Build nfcore/tools-devcontainer:latest docker image
-        run: docker build --no-cache . --file nf_core/devcontainer/devcontainer.Dockerfile -t nfcore/tools-devcontainer:latest
+      - name: Build nfcore/devcontainer:latest docker image
+        run: docker build --no-cache . --file nf_core/devcontainer/devcontainer.Dockerfile -t nfcore/devcontainer:latest
 
       - name: Push Docker images to DockerHub (release)
         run: |
@@ -37,6 +37,6 @@ jobs:
           docker push nfcore/tools:latest
           docker tag nfcore/tools:latest nfcore/tools:${{ github.event.release.tag_name }}
           docker push nfcore/tools:${{ github.event.release.tag_name }}
-          docker push nfcore/tools-devcontainer:latest
-          docker tag nfcore/tools-devcontainer:latest nfcore/tools-devcontainer:${{ github.event.release.tag_name }}
-          docker push nfcore/tools-devcontainer:${{ github.event.release.tag_name }}
+          docker push nfcore/devcontainer:latest
+          docker tag nfcore/devcontainer:latest nfcore/devcontainer:${{ github.event.release.tag_name }}
+          docker push nfcore/devcontainer:${{ github.event.release.tag_name }}
