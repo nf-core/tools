@@ -59,7 +59,7 @@ A concatenated FASTA file containing all the pathogen genomes a user is interest
 
 Users need to prepare a file containing accession IDs of pathogens and their corresponding taxonomic IDs
 
-#### Blastn and/or Blastn database
+#### BLASTn and/or BLASTx database
 
 Use a custom database or download available [NCBI databases](https://ftp.ncbi.nlm.nih.gov/blast/db/). See the [documentation](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html). To speed up the BLAST process, be cautious with which the choice of database. For example, for viruses, one could use `ref_viruses_rep_genomes` or `refseq_protein` instead of the `nt` or `nr` database.
 

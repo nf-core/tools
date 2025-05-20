@@ -16,6 +16,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 - [Extract Viral TaxIDs](#Extract-Viral-TaxIDs) - Extract all taxonomic IDs of viral species identified by classifiers
 - [Extract Reads](#Extract-Reads) - Extract reads of a specific TaxID
 - [De novo assembly](#De-novo-assembly) for extracted reads of TaxID
+- [BLAST](#BLAST) - Run BLASTn or BLASTx
 - [Bowtie2](#Mapping) - Map raw Illumina reads to a pathogen genome database or map Illumina reads of specific taxIDs to genomes with positive BLAST hits.
 - [minimap2](#Mapping) - Map raw Nanopore reads to a pathogen genome database or map Nanopore reads of specific taxIDs to genomes with positive BLAST hits.
 - [Individual FASTA or BAM](#Individual-FASTA-or-BAM) For the pathogen screening workflow, prepare an individual FASTA/BAM file for each pathogen with mapped reads.
@@ -75,7 +76,7 @@ The `extracted_reads` directory will only be present if `--perform_extract_reads
 
 ### De novo assembly
 
-De novo assemble the extracted reads for a taxID.
+De novo assemble the extracted reads for a taxID if the number of reads exceeds `params.min_read_counts`.
 
 <details markdown="1">
 <summary>Output files</summary>
@@ -86,11 +87,11 @@ De novo assemble the extracted reads for a taxID.
     - `<sample_id>_<taxID>.contigs.fa.gz`: FASTA file containing the resulting contigs.
     - `<sample_id>_<taxID>.scaffolds.fa.gz`: FASTA file containing the resulting scaffolds.
   - `diamond/`
-    - `<sample_id>_<taxID>.contigs.fa.gz`
-    - `<sample_id>_<taxID>.scaffolds.fa.gz`
+    - `<sample_id>_<taxID>.contigs.fa.gz`: FASTA file containing the resulting contigs.
+    - `<sample_id>_<taxID>.scaffolds.fa.gz`: FASTA file containing the resulting scaffolds.
   - `kraken2/`
-    - `<sample_id>_<taxID>.contigs.fa.gz`
-    - `<sample_id>_<taxID>.scaffolds.fa.gz`
+    - `<sample_id>_<taxID>.contigs.fa.gz`: FASTA file containing the resulting contigs.
+    - `<sample_id>_<taxID>.scaffolds.fa.gz`: FASTA file containing the resulting scaffolds.
 
 - `flye/`
   - `*.fasta.gz`: Final assembly in fasta format.
@@ -101,6 +102,80 @@ De novo assemble the extracted reads for a taxID.
 The `spades` directory will only be present if `--perform_shortread_denovo` is supplied and the number of reads for a taxID exceeds `params.min_read_counts`. The `centrifuge` folder will only be present if `--extract_centrifuge_reads` is specified. Similarly, the `diamond` folder will appear only if `--extract_diamond_reads` is used, and the `kraken2` folder will be created only if `--extract_kraken2_reads` is activated. Check out the [Spades documentation](https://ablab.github.io/spades/) for more information on Spades output.
 
 The `flye` directory will only be present if `--perform_longread_denovo` is supplied and the number of reads for a taxID exceeds `params.min_read_counts`. The `centrifuge` folder will only be present if `--extract_centrifuge_reads` is specified. Similarly, the `diamond` folder will appear only if `--extract_diamond_reads` is used, and the `kraken2` folder will be created only if `--extract_kraken2_reads` is activated. Check out the [Flye documentation](https://github.com/fenderglass/Flye/blob/flye/docs/USAGE.md) for more information on Flye output.
+
+### BLAST
+
+Use `BLAST(n/x)` to identify the closest reference genomes for the target reads or consensus sequences. Users must provide a path to a `BLAST(n/x)` database.
+
+#### Verify identified species
+
+Run `BLAST(n/x)` on reads classified as viruses, or on reads corresponding to a user-defined list of taxIDs.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `blastn/`
+
+  - `centrifuge/`
+    - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
+    - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+  - `diamond/`
+    - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
+    - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+  - `kraken2/`
+    - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
+    - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+
+- `blastx/`
+
+  - `centrifuge/`
+    - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
+    - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+  - `diamond/`
+    - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
+    - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+  - `kraken2/`
+    - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
+    - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+
+</details>
+
+#### Pathogen screening
+
+Run `BLAST(n/x)` on reads or consensus sequences mapped to a pre-defined pathogen database.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `pathogens/`
+
+  - `blastn/`
+
+    - `centrifuge/`
+      - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
+      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+    - `diamond/`
+      - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
+      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+    - `kraken2/`
+      - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
+      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+
+  - `blastx/`
+
+    - `centrifuge/`
+      - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
+      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+    - `diamond/`
+      - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
+      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+    - `kraken2/`
+      - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
+      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+
+</details>
+
+The `-outfmt` option is defined in `modules.config`. If you want to add or remove fields from the output, you need to update both `BLAST` output header file (`assets/blast_outfmt10_header.txt`) and the filtering function fo `BLAST` hits (`bin/filter_blast.py`). Filtering thresholds can be adjusted using the parameters `params.blast(n/x)_min_qlen`, `params.blast(n/x)_min_pident`,`params.blast(n/x)_min_length`,`params.blast(n/x)_max_evalue`, which correspond to query length, percent of identical matches, alignment length, and e-value. The default values are 50, 50, 50 and 0.05.
 
 ### Mapping
 
@@ -151,7 +226,7 @@ If the number of mapped reads to a pathogen genome exceeds `params.min_read_coun
 
 ### Call consensus
 
-Call consensus sequences for Illumina reads mapped to pathogen genomes using `samtools`, and for Nanopore reads using either `samtools` or `medaka`.
+Call consensus sequences for Illumina reads mapped to pathogen genomes using `samtools`, and for Nanopore reads using either `samtools` or `medaka` if the number of mapped reads exceeds `params.min_read_counts`.
 
 <details markdown="1">
 <summary>Output files</summary>

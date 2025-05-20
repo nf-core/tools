@@ -6,16 +6,31 @@
 
 // Extract reads of taxIDs
 include { TAXID_READS                                           } from '../subworkflows/local/taxid_reads'
+include { PIGZ_UNCOMPRESS                                       } from '../modules/nf-core/pigz/uncompress/main'
 
 // De novo for extracted taxIDs reads
 include { SPADES                                                } from '../modules/nf-core/spades/main'
 include { FLYE                                                  } from '../modules/nf-core/flye/main'
+
+// BLAST
+include { UNTAR  as UNTAR_BLASTN                                } from '../modules/nf-core/untar/main'
+include { UNTAR  as UNTAR_BLASTX                                } from '../modules/nf-core/untar/main'
+include { SEQKIT_FQ2FA                                          } from '../modules/nf-core/seqkit/fq2fa/main'
+include { BLAST_BLASTN                                          } from '../modules/nf-core/blast/blastn/main'
+include { BLAST_BLASTN as BLAST_BLASTN_PATHOGEN                 } from '../modules/nf-core/blast/blastn/main'
+include { FILTER_BLAST as FILTER_BLASTN                         } from '../modules/local/filter_blast/main'
+include { FILTER_BLAST as FILTER_BLASTN_PATHOGEN                } from '../modules/local/filter_blast/main'
+include { DIAMOND_BLASTX                                        } from '../modules/nf-core/diamond/blastx/main'
+include { DIAMOND_BLASTX as DIAMOND_BLASTX_PATHOGEN             } from '../modules/nf-core/diamond/blastx/main'
+include { FILTER_BLAST as FILTER_BLASTX                         } from '../modules/local/filter_blast/main'
+include { FILTER_BLAST as FILTER_BLASTX_PATHOGEN                } from '../modules/local/filter_blast/main'
 
 // Maping subworkflow
 include { BOWTIE2_BUILD as BOWTIE2_BUILD_PATHOGEN               } from '../modules/nf-core/bowtie2/build/main'
 include { FASTQ_ALIGN_BOWTIE2                                   } from '../subworkflows/nf-core/fastq_align_bowtie2/main'
 include { LONGREAD_SCREENPATHOGEN                               } from '../subworkflows/local/longread_screenpathogen'
 include { SAMTOOLS_CONSENSUS as SHORTREAD_SAMTOOLS_CONSENSUS    } from '../modules/nf-core/samtools/consensus/main'
+
 // Calling consensus
 include { TAXID_BAM_FASTA as TAXID_BAM_FASTA_SHORTREAD          } from '../subworkflows/local/taxid_bam_fasta'
 include { TAXID_BAM_FASTA as TAXID_BAM_FASTA_LONGREAD           } from '../subworkflows/local/taxid_bam_fasta'
@@ -60,7 +75,7 @@ workflow METAVAL {
             return [ meta, [ fastq_1 ] ]
     }
 
-    // channels for extracting kraken2 reads
+    // Channels for extracting kraken2 reads
     ch_extract_reads = ch_samplesheet.multiMap { meta, fastq_1, fastq_2, kraken2_report, kraken2_result, kraken2_taxpasta, centrifuge_report, centrifuge_result, centrifuge_taxpasta, diamond, diamond_taxpasta ->
         meta.single_end = ( fastq_1 && !fastq_2 )
         kraken2_taxpasta: [ meta + [ tool: "kraken2" ], kraken2_taxpasta ]
@@ -74,6 +89,30 @@ workflow METAVAL {
         diamond_tsv: [ meta + [ tool: "diamond" ], diamond ]
     }
 
+    // Prepare the blastn database channel
+    if ( !params.skip_blastn ) {
+        if (params.blastn_db.endsWith('.tar.gz')) {
+            UNTAR_BLASTN (
+                [ [:],file( params.blastn_db, checkIfExists: true )]
+            )
+            ch_blastn_db = UNTAR_BLASTN.out.untar
+            ch_versions = ch_versions.mix( UNTAR_BLASTN.out.versions )
+        } else {
+            ch_blastn_db = [ [:], file( params.blastn_db, checkIfExists: true ) ]
+        }
+    }
+    // Prepare the blastx database channel
+    if ( !params.skip_blastx ) {
+        if (params.blastx_db.endsWith('.tar.gz')) {
+            UNTAR_BLASTX (
+                [ [:],file( params.blastx_db, checkIfExists: true )]
+            )
+            ch_blastx_db = UNTAR_BLASTX.out.untar
+            ch_versions = ch_versions.mix( UNTAR_BLASTX.out.versions )
+        } else {
+            ch_blastx_db = [ [:], file( params.blastx_db, checkIfExists: true ) ]
+        }
+    }
     // Verify whether the taxonomic IDs identified by classification are true or false positives.
     if ( params.perform_extract_reads ) {
 
@@ -94,6 +133,7 @@ workflow METAVAL {
         // SUBWORKFLOW: DE NOVO
 
         // Filter out empty FASTQ files
+
         ch_taxid_reads_result = TAXID_READS.out.reads
             .branch {
                 non_empty: it[0].single_end ? it[1].size() > 20 : it[1][0].size() > 20 || it[1][1].size() >20 // The size of the empty fastq.gz is 20
@@ -117,7 +157,6 @@ workflow METAVAL {
                     return [ meta, reads ]
             }
             .set { ch_denovo_input }
-
         // short reads de novo assembly
         if ( params.perform_shortread_denovo ) {
             SPADES( ch_denovo_input.shortreads_spades, [], [] )
@@ -130,11 +169,44 @@ workflow METAVAL {
         }
 
         // BLAST
-
+        // Prepare the query fasta file
+        SEQKIT_FQ2FA ( ch_taxid_reads_result.failed )
+        ch_blast_query = SEQKIT_FQ2FA.out.fasta.mix( SPADES.out.contigs, FLYE.out.fasta )
+        ch_versions = ch_versions.mix( SEQKIT_FQ2FA.out.versions.first() )
+        // BLASTn
+        if ( !params.skip_blastn ) {
+            BLAST_BLASTN ( ch_blast_query, ch_blastn_db )
+            ch_versions = ch_versions.mix( BLAST_BLASTN.out.versions.first() )
+            // Filter BLASTn hits
+            ch_blastn_hits = BLAST_BLASTN.out.txt
+                .branch {
+                    non_empty: it[1].size() > 0
+                    empty: true
+                }
+            FILTER_BLASTN ( ch_blastn_hits.non_empty, file( params.blast_header, checkIfExists: true))
+            ch_versions = ch_versions.mix( FILTER_BLASTN.out.versions.first() )
+        }
+        // BLASTx:DIAMOND
+        if ( !params.skip_blastx ) {
+            DIAMOND_BLASTX (
+                ch_blast_query,
+                ch_blastx_db,
+                'txt',
+                'qseqid sseqid slen pident qlen length qcovhsp nident evalue bitscore staxids sscinames' )
+            ch_versions = ch_versions.mix( DIAMOND_BLASTX.out.versions.first() )
+            // Filter BLASTX hits
+            ch_blastx_hits = DIAMOND_BLASTX.out.txt
+                .branch {
+                    non_empty: it[1].size() > 0
+                    empty: true
+                }
+            FILTER_BLASTX ( ch_blastx_hits.non_empty, file( params.blast_header, checkIfExists: true))
+            ch_versions = ch_versions.mix( FILTER_BLASTX.out.versions.first() )
+        }
         }
 
     // Screen pathogens
-    ch_reference = file( params.pathogens_genomes)
+    ch_reference = file( params.pathogens_genomes, checkIfExists: true)
 
     if ( params.perform_screen_pathogens ) {
         // Map short reads to the pathogens genome
@@ -174,6 +246,48 @@ workflow METAVAL {
             LONGREAD_CONSENSUS ( TAXID_BAM_FASTA_LONGREAD.out.taxid_bam, [ [], ch_reference ] )
             ch_versions = ch_versions.mix( LONGREAD_CONSENSUS.out.versions )
             LONGREAD_CONSENSUS.out.consensus
+        }
+        // BLAST
+        ch_shortread_mapped_pathogen = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
+            .filter { meta, read -> read[0].size() > 30 }  // The size of the empty fasta.gz is 30
+        ch_longread_mapped_pathogen = TAXID_BAM_FASTA_LONGREAD.out.taxid_fasta
+            .filter { meta, read -> read.size() > 30 }
+        ch_blast_query_pathogen = ch_shortread_mapped_pathogen.mix(
+            ch_longread_mapped_pathogen,
+            SHORTREAD_SAMTOOLS_CONSENSUS.out.fasta,
+            LONGREAD_CONSENSUS.out.consensus
+        )
+        if (!params.skip_blastn) {
+            // BLASTn
+            BLAST_BLASTN_PATHOGEN ( ch_blast_query_pathogen, ch_blastn_db )
+            ch_versions = ch_versions.mix( BLAST_BLASTN_PATHOGEN.out.versions.first() )
+
+            // Filter BLASTn hits
+            ch_blastn_hits_pathogen = BLAST_BLASTN_PATHOGEN.out.txt
+                .branch {
+                    non_empty: it[1].size() > 0
+                    empty: true
+                }
+            FILTER_BLASTN_PATHOGEN ( ch_blastn_hits_pathogen.non_empty, file( params.blast_header, checkIfExists: true))
+            ch_versions = ch_versions.mix( FILTER_BLASTN_PATHOGEN.out.versions.first() )
+
+        }
+        // BLASTx:DIAMOND
+        if ( !params.skip_blastx ) {
+            DIAMOND_BLASTX_PATHOGEN (
+                ch_blast_query_pathogen,
+                ch_blastx_db,
+                'txt',
+                'qseqid sseqid slen pident qlen length qcovhsp nident evalue bitscore staxids sscinames' )
+            ch_versions = ch_versions.mix( DIAMOND_BLASTX_PATHOGEN.out.versions.first() )
+            // Filter BLASTx hits
+            ch_blastx_hits_pathogen = DIAMOND_BLASTX_PATHOGEN.out.txt
+                .branch {
+                    non_empty: it[1].size() > 0
+                    empty: true
+                }
+            FILTER_BLASTX_PATHOGEN ( ch_blastx_hits_pathogen.non_empty, file( params.blast_header, checkIfExists: true))
+            ch_versions = ch_versions.mix( FILTER_BLASTX_PATHOGEN.out.versions.first() )
         }
     }
 
