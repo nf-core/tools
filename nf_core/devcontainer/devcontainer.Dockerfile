@@ -21,6 +21,9 @@ RUN apt-get update --quiet && \
     tree \
     graphviz \
     software-properties-common && \
+    add-apt-repository -y ppa:apptainer/ppa && \
+    apt-get update --quiet && \
+    apt-get install --quiet --yes apptainer && \
     wget --quiet https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh && \
     bash Miniforge3-Linux-x86_64.sh -b -p /opt/conda && \
     rm Miniforge3-Linux-x86_64.sh && \
@@ -34,9 +37,8 @@ ENV PATH="/opt/conda/bin:$PATH"
 COPY . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
 
-RUN useradd -mU nemo
-RUN chown -R nemo:nemo /opt/conda /usr/src/nf_core
-USER nemo
+RUN chown -R gitpod:gitpod /opt/conda /usr/src/nf_core
+USER gitpod
 
 # Install nextflow, nf-core, nf-test, and other useful tools
 RUN conda config --add channels bioconda && \
