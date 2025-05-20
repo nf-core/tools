@@ -1,8 +1,12 @@
 {
     "name": "nfcore",
-    "image": "nfcore/tools-devcontainer",
-    "postCreateCommand": "python -m pip install --upgrade -r ../requirements-dev.txt -e ../ && pre-commit install --install-hooks",
-    "remoteUser": "nemo",
+    // "image": "nfcore/tools-devcontainer",
+    "build": {
+        "dockerfile": "../nf_core/devcontainer/devcontainer.Dockerfile",
+        "context": ".."
+    },
+    "postCreateCommand": "python -m pip install --upgrade -r requirements-dev.txt -e . && pre-commit install --install-hooks",
+    "remoteUser": "gitpod",
     "runArgs": ["--privileged"],
 
     // Configure tool-specific properties.
