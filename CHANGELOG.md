@@ -14,6 +14,7 @@
 - Include the centralized nf-core configs also in offline mode, if a local copy is available. ([#3491](https://github.com/nf-core/tools/pull/3491))
 - downgrade nf-schema to fix CI tests ([#3544](https://github.com/nf-core/tools/pull/3544))
 - Make jobs automatically resubmit for exit code 175 ([#3564](https://github.com/nf-core/tools/pull/3564))
+- bump nf-schema back to 2.3.0 ([#3577](https://github.com/nf-core/tools/pull/3577))
 
 ### Linting
 
@@ -64,7 +65,7 @@
 - Changing retrieval of file extension from EDAM ([#3512](https://github.com/nf-core/tools/pull/3512))
 - Refactor adding EDAM ontologies and allowing detect more patterns (e.g., versions.yml) ([#3519](https://github.com/nf-core/tools/pull/3519))
 - Add offline configs test action ([#3524](https://github.com/nf-core/tools/pull/3524))
-- Adds `test-datasets` subcommand for listing/searching files in the nf-core/test-datasets repo from the cli ([#3487](https://github.com/nf-core/tools/issues/3487), [#3548](https://github.com/nf-core/tools/pull/3548))
+- Adds `test-datasets` subcommand for listing/searching files in the nf-core/test-datasets repo from the cli ([#3487](https://github.com/nf-core/tools/issues/3487), [#3548](https://github.com/nf-core/tools/pull/3548), [#3566](https://github.com/nf-core/tools/pull/3566), [#3567](https://github.com/nf-core/tools/pull/3567))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.11.2 ([#3521](https://github.com/nf-core/tools/pull/3521))
 - Fix indentation in included_configs API docs ([#3523](https://github.com/nf-core/tools/pull/3523))
 - chore(deps): update python:3.12-slim docker digest to a866731 ([#3527](https://github.com/nf-core/tools/pull/3527))
@@ -78,6 +79,8 @@
 - chore(deps): update python:3.12-slim docker digest to bae1a06 ([#3558](https://github.com/nf-core/tools/pull/3558))
 - Update CI to test template pipelines with nf-test ([#3559](https://github.com/nf-core/tools/pull/3559))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.11.9 ([#3563](https://github.com/nf-core/tools/pull/3563))
+- chore(deps): update python:3.12-slim docker digest to 31a416d ([#3568](https://github.com/nf-core/tools/pull/3568))
+- chore(deps): update codecov/codecov-action digest to 18283e0 ([#3575](https://github.com/nf-core/tools/pull/3575))
 
 ## [v3.2.1 - Pewter Pangolin Patch](https://github.com/nf-core/tools/releases/tag/3.2.1) - [2025-04-29]
 
