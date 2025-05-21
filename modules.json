@@ -50,13 +50,6 @@
                         ],
                         "patch": "modules/nf-core/flye/flye.diff"
                     },
-                    "gunzip": {
-                        "branch": "master",
-                        "git_sha": "05954dab2ff481bcb999f24455da29a5828af08d",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
                     "krakentools/extractkrakenreads": {
                         "branch": "master",
                         "git_sha": "7506bd66e48e52eea7f01deb4c8177058dd2a724",
@@ -88,13 +81,6 @@
                     "pigz/compress": {
                         "branch": "master",
                         "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
-                    "pigz/uncompress": {
-                        "branch": "master",
-                        "git_sha": "05954dab2ff481bcb999f24455da29a5828af08d",
                         "installed_by": [
                             "modules"
                         ]

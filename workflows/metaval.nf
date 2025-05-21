@@ -6,7 +6,6 @@
 
 // Extract reads of taxIDs
 include { TAXID_READS                                           } from '../subworkflows/local/taxid_reads'
-include { PIGZ_UNCOMPRESS                                       } from '../modules/nf-core/pigz/uncompress/main'
 
 // De novo for extracted taxIDs reads
 include { SPADES                                                } from '../modules/nf-core/spades/main'
@@ -132,24 +131,35 @@ workflow METAVAL {
 
         // SUBWORKFLOW: DE NOVO
 
-        // Filter out empty FASTQ files
-
-        ch_taxid_reads_result = TAXID_READS.out.reads
-            .branch {
-                non_empty: it[0].single_end ? it[1].size() > 20 : it[1][0].size() > 20 || it[1][1].size() >20 // The size of the empty fastq.gz is 20
-                empty: true
+        // Filter out empty FASTQ files. This can happen when users want to check if the same species was identified across different classifiers.
+        ch_taxid_reads = TAXID_READS.out.reads
+            .transpose()
+            .filter { meta, read ->
+                def file = file(read)
+                def lineCount = ["bash", "-c", "zcat ${file} | wc -l"].execute().text.trim() as Integer
+                def isNotEmpty = (lineCount > 0)
+                if (!isNotEmpty) {
+                    log.warn "Removing empty fastq.gz file: ${file}"
+                }
+                return isNotEmpty
             }
-        ch_taxid_reads_result.non_empty.set { ch_taxid_reads }
-        // Skip the de-novo assembly if the number of reads is lower than params.min_read_counts
-        ch_taxid_reads
+            .groupTuple()
+        // Run de novo assembly if the number of reads exceeds the params.min_read_counts
+        ch_taxid_reads_result = ch_taxid_reads
             .branch {
-                failed: it[0].single_end ? it[1].countFastq() < params.min_read_counts : it[1][0].countFastq() < params.min_read_counts || it[1][1].countFastq() < params.min_read_counts
+                failed: { meta, reads ->
+                    def readFiles = reads.collect { file(it) }  // convert ArrayBag to List<File>
+                    if (meta.single_end) {
+                        return readFiles[0].countFastq() < params.min_read_counts
+                    } else {
+                        return readFiles[0].countFastq() < params.min_read_counts || readFiles[1].countFastq() < params.min_read_counts
+                    }
+                }
                 passed: true
             }
-            .set { ch_taxid_reads_result }
-        ch_taxid_reads_result.passed.set { ch_taxid_reads_result_passed }
-        //Prepare reads for de-novo assembly
-        ch_taxid_reads_result_passed
+        ch_taxid_reads_result.passed.set { ch_taxid_reads_passed }
+        // Prepare reads for de-novo assembly
+        ch_taxid_reads_passed
             .branch { meta, reads ->
                 shortreads_spades: meta.instrument_platform != 'OXFORD_NANOPORE'
                     return [ meta, reads, [], [] ]
