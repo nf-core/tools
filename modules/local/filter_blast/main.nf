@@ -5,7 +5,7 @@ process FILTER_BLAST {
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/pandas:2.2.1' :
-        'biocontainers/python:3.12' }"
+        'biocontainers/pandas:2.2.1' }"
 
     input:
     tuple val(meta),path(blast_hits)
