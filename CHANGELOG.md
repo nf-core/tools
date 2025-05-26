@@ -15,6 +15,7 @@
 - downgrade nf-schema to fix CI tests ([#3544](https://github.com/nf-core/tools/pull/3544))
 - Make jobs automatically resubmit for exit code 175 ([#3564](https://github.com/nf-core/tools/pull/3564))
 - bump nf-schema back to 2.3.0 ([#3577](https://github.com/nf-core/tools/pull/3577))
+- Do not skip AWS fulltest action on release ([#3583](https://github.com/nf-core/tools/pull/3583))
 
 ### Linting
 
