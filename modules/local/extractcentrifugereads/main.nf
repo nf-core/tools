@@ -10,7 +10,7 @@ process EXTRACTCENTRIFUGEREADS {
 
     input:
     val taxid
-    tuple val (meta), path(results)
+    tuple val (meta1), path(results)
     tuple val (meta), path(fastq) // bowtie2/align *unmapped_{1,2}.fastq.gz
 
     output:
@@ -21,7 +21,6 @@ process EXTRACTCENTRIFUGEREADS {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     awk -v taxID=$taxid '\$3 == taxID && \$8 == 1 {print \$1}' $results > readID.txt

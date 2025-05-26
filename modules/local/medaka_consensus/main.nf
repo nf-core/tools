@@ -3,9 +3,9 @@ process MEDAKA_PARALLEL {
     label 'process_high'
 
     conda "${moduleDir}/environment.yml"
-    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/89/896f0302268502e1588c34048c6aada1abc64b289b5877701a7014f7ffdf4d20/data' :
-        'community.wave.seqera.io/library/medaka:2.0.1--c15f6748e3c63d63' }"
+    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/89/896f0302268502e1588c34048c6aada1abc64b289b5877701a7014f7ffdf4d20/data'
+        : 'community.wave.seqera.io/library/medaka:2.0.1--c15f6748e3c63d63'}"
 
     input:
     tuple val(meta), path(reads), path(assembly)
@@ -36,7 +36,7 @@ process MEDAKA_PARALLEL {
         -i ${reads} \\
         -r \$assembly \\
         -m \\
-        -t $task.cpus \\
+        -t ${task.cpus} \\
         -p ${prefix}_calls_to_draft \\
         ${args1}
 
