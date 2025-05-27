@@ -34,10 +34,13 @@ COPY . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
 
 # Change ownership for gitpod
-#RUN chown -R gitpod:gitpod /opt/conda /usr/src/nf_core
+RUN useradd -m -s /bin/bash nfc-user  && \
+    chown -R nfc-user:nfc-user /opt/conda /usr/src/nf_core && \
+    groupadd docker && \
+    usermod -aG docker nfc-user
 
 # Change user to gitpod
-#USER gitpod
+USER nfc-user
 
 # Install nextflow, nf-core, nf-test, and other useful tools
 RUN conda config --add channels bioconda && \
@@ -63,3 +66,5 @@ RUN nextflow self-update && \
 ENV NFT_DIFF="pdiff"
 ENV NFT_DIFF_ARGS="--line-numbers --expand-tabs=2"
 ENV JAVA_TOOL_OPTIONS=
+
+ENTRYPOINT [ "/bin/sh -c" ]
