@@ -1194,7 +1194,7 @@ class NFCoreYamlLintConfig(BaseModel):
         nf_test_content:
             - tests/<test_name>.nf.test
             - tests/nextflow.config
-            - tests/nf-test.config
+            - nf-test.config
     """
 
     files_unchanged: Optional[Union[bool, List[str]]] = None

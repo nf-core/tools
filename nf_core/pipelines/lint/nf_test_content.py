@@ -63,7 +63,7 @@ def nf_test_content(self) -> Dict[str, List[str]]:
                 nf_test_content:
                     - tests/<test_name>.nf.test
                     - tests/nextflow.config
-                    - tests/nf-test.config
+                    - nf-test.config
     """
     passed: List[str] = []
     failed: List[str] = []
@@ -71,14 +71,14 @@ def nf_test_content(self) -> Dict[str, List[str]]:
 
     _, pipeline_conf = load_tools_config(self.wf_path)
     lint_conf = getattr(pipeline_conf, "lint", None) or None
-    nf_test_content_conf = getattr(lint_conf, "nf_test_content", None) or []
+    nf_test_content_conf = getattr(lint_conf, "nf_test_content", None) or None
 
     # Content of *.nf.test files
     test_fns = list(Path(self.wf_path, "tests").glob("*.nf.test"))
     outdir_pass = False
     versions_pass = False
     for test_fn in test_fns:
-        if nf_test_content_conf is not None and (not nf_test_content_conf or test_fn.name in nf_test_content_conf):
+        if nf_test_content_conf is not None and (not nf_test_content_conf or str(test_fn) in nf_test_content_conf):
             ignored.append(f"'{test_fn.name}' checking ignored")
             continue
         with open(test_fn) as fh:
@@ -110,7 +110,7 @@ def nf_test_content(self) -> Dict[str, List[str]]:
     memory_pass = False
     time_pass = False
 
-    if nf_test_content_conf is None or test_fn.name not in nf_test_content_conf:
+    if nf_test_content_conf is None or str(test_fn) not in nf_test_content_conf:
         with open(conf_fn) as fh:
             for line in fh:
                 line = line.strip()
@@ -129,19 +129,18 @@ def nf_test_content(self) -> Dict[str, List[str]]:
                 if "time" in line and "1.h" in line:
                     passed.append(f"'{conf_fn}' contains correct time resource limits")
                     time_pass = True
+        if not modules_testdata_base_path_pass:
+            failed.append(f"'{conf_fn}' does not contain `modules_testdata_base_path`")
+        if not pipelines_testdata_base_path_pass:
+            failed.append(f"'{conf_fn}' does not contain `pipelines_testdata_base_path`")
+        if not cpus_pass:
+            failed.append(f"'{conf_fn}' does not contain correct CPU resource limits. Should be 4")
+        if not memory_pass:
+            failed.append(f"'{conf_fn}' does not contain correct memory resource limits. Should be 15.GB")
+        if not time_pass:
+            failed.append(f"'{conf_fn}' does not contain correct time resource limits. Should be 1.h")
     else:
         ignored.append(f"'{conf_fn}' checking ignored")
-
-    if not modules_testdata_base_path_pass:
-        failed.append(f"'{conf_fn}' does not contain `modules_testdata_base_path`")
-    if not pipelines_testdata_base_path_pass:
-        failed.append(f"'{conf_fn}' does not contain `pipelines_testdata_base_path`")
-    if not cpus_pass:
-        failed.append(f"'{conf_fn}' does not contain correct CPU resource limits. Should be 4")
-    if not memory_pass:
-        failed.append(f"'{conf_fn}' does not contain correct memory resource limits. Should be 15.GB")
-    if not time_pass:
-        failed.append(f"'{conf_fn}' does not contain correct time resource limits. Should be 1.h")
 
     # Content of nf-test.config file
     nf_test_conf_fn = Path(self.wf_path, "nf-test.config")
@@ -149,7 +148,7 @@ def nf_test_content(self) -> Dict[str, List[str]]:
     workdir_pass = False
     configfile_pass = False
 
-    if not nf_test_content_conf or nf_test_conf_fn.name in nf_test_content_conf:
+    if nf_test_content_conf is None or str(nf_test_conf_fn) not in nf_test_content_conf:
         with open(nf_test_conf_fn) as fh:
             for line in fh:
                 if 'testsDir "."' in line:
@@ -161,18 +160,18 @@ def nf_test_content(self) -> Dict[str, List[str]]:
                 if 'configFile "tests/nextflow.config"' in line:
                     passed.append(f"'{nf_test_conf_fn}' sets a `configFile`")
                     configfile_pass = True
+
+        if not testsdir_pass:
+            failed.append(f"""'{nf_test_conf_fn}' does not set a `testsDir`, it should contain `testsDir "."`""")
+        if not workdir_pass:
+            failed.append(
+                f"""'{nf_test_conf_fn}' does not set a `workDir`, it should contain `workDir System.getenv("NFT_WORKDIR") ?: ".nf-test"`"""
+            )
+        if not configfile_pass:
+            failed.append(
+                f"""'{nf_test_conf_fn}' does not set a `configFile`, it should contain `configFile "tests/nextflow.config"`"""
+            )
     else:
         ignored.append(f"'{nf_test_conf_fn}' checking ignored")
-
-    if not testsdir_pass:
-        failed.append(f"""'{nf_test_conf_fn}' does not set a `testsDir`, it should contain `testsDir "."`""")
-    if not workdir_pass:
-        failed.append(
-            f"""'{nf_test_conf_fn}' does not set a `workDir`, it should contain `workDir System.getenv("NFT_WORKDIR") ?: ".nf-test"`"""
-        )
-    if not configfile_pass:
-        failed.append(
-            f"""'{nf_test_conf_fn}' does not set a `configFile`, it should contain `configFile "tests/nextflow.config"`"""
-        )
 
     return {"passed": passed, "failed": failed, "ignored": ignored}
