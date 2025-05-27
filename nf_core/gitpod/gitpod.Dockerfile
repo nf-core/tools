@@ -2,7 +2,7 @@
 #   docker build -t gitpod:test -f nf_core/gitpod/gitpod.Dockerfile .
 
 # See https://docs.renovatebot.com/docker/#digest-pinning for why a digest is used.
-FROM gitpod/workspace-base@sha256:7f35e401405c38ebc1185dfc3d6c066f73a524e8b86641453ea4690cc5c24fb6
+FROM gitpod/workspace-base@sha256:3aa18f4fbebc6ee2017a223463fa86af7e8c757d27a6542272d4c6ab6ab3fdaa
 
 USER root
 
