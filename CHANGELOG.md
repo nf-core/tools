@@ -79,10 +79,13 @@
 - Dev ([#3557](https://github.com/nf-core/tools/pull/3557))
 - chore(deps): update python:3.12-slim docker digest to bae1a06 ([#3558](https://github.com/nf-core/tools/pull/3558))
 - Update CI to test template pipelines with nf-test ([#3559](https://github.com/nf-core/tools/pull/3559))
+- Use secret for notification email on nextflow nightly builds ([#3576](https://github.com/nf-core/tools/pull/3576))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.11.9 ([#3563](https://github.com/nf-core/tools/pull/3563))
 - chore(deps): update python:3.12-slim docker digest to 31a416d ([#3568](https://github.com/nf-core/tools/pull/3568))
 - chore(deps): update codecov/codecov-action digest to 18283e0 ([#3575](https://github.com/nf-core/tools/pull/3575))
 - use pdiff from setup-nf-test ([#3578](https://github.com/nf-core/tools/pull/3578))
+- chore(deps): update python:3.12-slim docker digest to fd95fa2 ([#3587](https://github.com/nf-core/tools/pull/3587))
+- chore(deps): update gitpod/workspace-base docker digest to 3aa18f4 ([#3586](https://github.com/nf-core/tools/pull/3586))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.11.11 ([#3585](https://github.com/nf-core/tools/pull/3585))
 
 ## [v3.2.1 - Pewter Pangolin Patch](https://github.com/nf-core/tools/releases/tag/3.2.1) - [2025-04-29]

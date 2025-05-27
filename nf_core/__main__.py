@@ -2080,7 +2080,7 @@ def command_bump_version(ctx, new_version, directory, nextflow):
 @click.pass_context
 def command_list(ctx, keywords, sort, json, show_archived):
     """
-    DEPREUse `nf-core pipelines list` instead.CATED
+    Use `nf-core pipelines list` instead.
     """
     log.warning(
         "The `[magenta]nf-core list[/]` command is deprecated. Use `[magenta]nf-core pipelines list[/]` instead."
