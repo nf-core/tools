@@ -570,6 +570,21 @@ class TestModulesLint(TestModules):
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
 
+    def test_modules_environment_yml_file_default_channel_fails(self):
+        """Test linting a module with a default channel set in the environment.yml file, which should fail"""
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml")) as fh:
+            yaml_content = yaml.safe_load(fh)
+        yaml_content["channels"] = ["bioconda", "default"]
+        with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "environment.yml"), "w") as fh:
+            fh.write(yaml.dump(yaml_content))
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+        assert len(module_lint.warned) >= 0
+        assert module_lint.failed[0].lint_test == "environment_yml_valid"
+
     def test_modules_meta_yml_incorrect_licence_field(self):
         """Test linting a module with an incorrect Licence field in meta.yml"""
         with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml")) as fh:
