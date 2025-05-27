@@ -11,7 +11,7 @@ RUN apt-get update --quiet && \
     apt-get install --quiet --yes --no-install-recommends \
     apt-transport-https \
     apt-utils \
-    graphviz \
+    graphviz && \
     wget --quiet https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh && \
     bash Miniforge3-Linux-x86_64.sh -b -p /opt/conda && \
     rm Miniforge3-Linux-x86_64.sh && \
