@@ -100,7 +100,7 @@ def nf_test_content(self) -> Dict[str, List[str]]:
                 f"""'{test_fn}' does not contain `outdir` parameter, it should contain `outdir = "$outputDir"`"""
             )
         if not versions_pass:
-            failed.append(f"'{test_fn}' snaphsots a 'versions.yml' file")
+            failed.append(f"'{test_fn}' does not snaphsot a 'versions.yml' file")
 
     # Content of nextflow.config file
     conf_fn = Path(self.wf_path, "tests", "nextflow.config")
@@ -134,11 +134,11 @@ def nf_test_content(self) -> Dict[str, List[str]]:
         if not pipelines_testdata_base_path_pass:
             failed.append(f"'{conf_fn}' does not contain `pipelines_testdata_base_path`")
         if not cpus_pass:
-            failed.append(f"'{conf_fn}' does not contain correct CPU resource limits. Should be 4")
+            failed.append(f"'{conf_fn}' does not contain correct CPU resource limits. Should be `4`")
         if not memory_pass:
-            failed.append(f"'{conf_fn}' does not contain correct memory resource limits. Should be 15.GB")
+            failed.append(f"'{conf_fn}' does not contain correct memory resource limits. Should be `15.GB`")
         if not time_pass:
-            failed.append(f"'{conf_fn}' does not contain correct time resource limits. Should be 1.h")
+            failed.append(f"'{conf_fn}' does not contain correct time resource limits. Should be `1.h`")
     else:
         ignored.append(f"'{conf_fn}' checking ignored")
 
