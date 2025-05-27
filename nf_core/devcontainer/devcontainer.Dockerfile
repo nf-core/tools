@@ -57,4 +57,5 @@ RUN conda config --add channels bioconda && \
 
 # Update Nextflow and Install nf-core
 RUN nextflow self-update && \
-    python -m pip install -r requirements-dev.txt -e . --no-cache-dir
+    python -m pip install -r requirements-dev.txt -e . --no-cache-dir && \
+    pre-commit --install-hooks
