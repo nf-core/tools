@@ -1192,14 +1192,9 @@ class NFCoreYamlLintConfig(BaseModel):
         nfcore_components: False
         # nf_test_content: False
         nf_test_content:
-            - outdir
-            - versions.yml
-            - modules_testdata_base_path
-            - pipelines_testdata_base_path
-            - resourceLimits
-            - testsDir
-            - workDir
-            - configFile
+            - tests/<test_name>.nf.test
+            - tests/nextflow.config
+            - tests/nf-test.config
     """
 
     files_unchanged: Optional[Union[bool, List[str]]] = None
