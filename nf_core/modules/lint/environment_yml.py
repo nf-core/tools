@@ -83,7 +83,28 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
 
         if valid_env_yml:
             # Check that the dependencies section is sorted alphabetically
-            if sorted(env_yml["dependencies"]) == env_yml["dependencies"]:
+            def sort_recursively(obj):
+                """Simple recursive sort for nested structures."""
+                if isinstance(obj, list):
+
+                    def get_key(x):
+                        if isinstance(x, dict):
+                            # For dicts like {"pip": [...]}, use the key "pip"
+                            return (list(x.keys())[0], 1)
+                        else:
+                            # For strings like "pip=23.3.1", use "pip" and for bioconda::samtools=1.15.1, use "bioconda::samtools"
+                            return (str(x).split("=")[0], 0)
+
+                    return sorted([sort_recursively(item) for item in obj], key=get_key)
+                elif isinstance(obj, dict):
+                    return {k: sort_recursively(v) for k, v in obj.items()}
+                else:
+                    return obj
+
+            sorted_dependencies = sort_recursively(env_yml["dependencies"])
+
+            # Direct comparison of sorted vs original dependencies
+            if sorted_dependencies == env_yml["dependencies"]:
                 module.passed.append(
                     (
                         "environment_yml_sorted",
@@ -96,6 +117,6 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                 log.info(
                     f"Dependencies in {module.component_name}'s environment.yml were not sorted alphabetically. Sorting them now."
                 )
-                env_yml["dependencies"].sort()
+                env_yml["dependencies"] = sorted_dependencies
                 with open(Path(module.component_dir, "environment.yml"), "w") as fh:
                     yaml.dump(env_yml, fh, Dumper=custom_yaml_dumper())

@@ -505,6 +505,71 @@ class TestModulesLint(TestModules):
         assert len(module_lint.warned) >= 0
         assert module_lint.failed[0].lint_test == "environment_yml_valid"
 
+    def test_modules_environment_yml_file_mixed_dependencies(self):
+        """Test linting a module with mixed-type dependencies (strings and pip dict)"""
+        with open(
+            Path(
+                self.nfcore_modules,
+                "modules",
+                "nf-core",
+                "bpipe",
+                "test",
+                "environment.yml",
+            )
+        ) as fh:
+            yaml_content = yaml.safe_load(fh)
+
+        # Create mixed dependencies with strings and pip dict in wrong order
+        yaml_content["dependencies"] = [
+            "python=3.8",
+            {"pip": ["zzz-package==1.0.0", "aaa-package==2.0.0"]},
+            "bioconda::samtools=1.15.1",
+            "bioconda::fastqc=0.12.1",
+            "pip=23.3.1",
+        ]
+
+        with open(
+            Path(
+                self.nfcore_modules,
+                "modules",
+                "nf-core",
+                "bpipe",
+                "test",
+                "environment.yml",
+            ),
+            "w",
+        ) as fh:
+            fh.write(yaml.dump(yaml_content))
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Check that the dependencies were sorted correctly
+        with open(
+            Path(
+                self.nfcore_modules,
+                "modules",
+                "nf-core",
+                "bpipe",
+                "test",
+                "environment.yml",
+            )
+        ) as fh:
+            sorted_yaml = yaml.safe_load(fh)
+
+        expected_deps = [
+            "bioconda::fastqc=0.12.1",
+            "bioconda::samtools=1.15.1",
+            "pip=23.3.1",
+            {"pip": ["aaa-package==2.0.0", "zzz-package==1.0.0"]},
+            "python=3.8",
+        ]
+
+        assert sorted_yaml["dependencies"] == expected_deps
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+        assert len(module_lint.warned) >= 0
+
     def test_modules_meta_yml_incorrect_licence_field(self):
         """Test linting a module with an incorrect Licence field in meta.yml"""
         with open(Path(self.nfcore_modules, "modules", "nf-core", "bpipe", "test", "meta.yml")) as fh:
