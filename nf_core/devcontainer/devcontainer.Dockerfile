@@ -30,17 +30,15 @@ RUN apt-get update --quiet && \
 ENV PATH="/opt/conda/bin:$PATH"
 
 # Add the nf-core source files to the image
-COPY . /usr/src/nf_core
+COPY --chown=vscode:vscode . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
-
-# Change ownership for gitpod
-RUN chown -R vscode:vscode /opt/conda /usr/src/nf_core
 
 # Change user to gitpod
 USER vscode
 
 # Install nextflow, nf-core, nf-test, and other useful tools
-RUN conda config --add channels bioconda && \
+RUN chown -R vscode:vscode /opt/conda && \
+    conda config --add channels bioconda && \
     conda config --add channels conda-forge && \
     conda config --set channel_priority strict && \
     conda install --quiet --yes --update-all --name base \
