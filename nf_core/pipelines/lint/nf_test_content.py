@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from nf_core.utils import load_tools_config
 
@@ -75,7 +75,7 @@ def nf_test_content(self) -> Dict[str, List[str]]:
 
     # Content of *.nf.test files
     test_fns = list(Path(self.wf_path, "tests").glob("*.nf.test"))
-    test_checks = {
+    test_checks: Dict[str, Dict[str, Union[str, bool]]] = {
         "outdir": {
             "pattern": r"outdir *= *[\"']\${?outputDir}?[\"']",
             "description": "`outdir` parameter",
@@ -116,7 +116,7 @@ def nf_test_content(self) -> Dict[str, List[str]]:
 
     # Content of nextflow.config file
     conf_fn = Path(self.wf_path, "tests", "nextflow.config")
-    config_checks = {
+    config_checks: Dict[str, Dict[str, str]] = {
         "modules_testdata_base_path": {
             "pattern": "modules_testdata_base_path",
             "description": "`modules_testdata_base_path`",
@@ -147,20 +147,22 @@ def nf_test_content(self) -> Dict[str, List[str]]:
         with open(conf_fn) as fh:
             for line in fh:
                 line = line.strip()
-                for check_name, check_info in config_checks.items():
-                    if re.search(str(check_info["pattern"]), line):
-                        passed.append(f"'{conf_fn}' contains {check_info['description']}")
+                for check_name, config_check_info in config_checks.items():
+                    if re.search(str(config_check_info["pattern"]), line):
+                        passed.append(f"'{conf_fn}' contains {config_check_info['description']}")
                         checks_passed[check_name] = True
-        for check_name, check_info in config_checks.items():
+        for check_name, config_check_info in config_checks.items():
             if not checks_passed[check_name]:
-                failure_msg = check_info.get("failure_msg", f"does not contain {check_info['description']}")
+                failure_msg = config_check_info.get(
+                    "failure_msg", f"does not contain {config_check_info['description']}"
+                )
                 failed.append(f"'{conf_fn}' {failure_msg}")
     else:
         ignored.append(f"'{conf_fn}' checking ignored")
 
     # Content of nf-test.config file
     nf_test_conf_fn = Path(self.wf_path, "nf-test.config")
-    nf_test_checks = {
+    nf_test_checks: Dict[str, Dict[str, str]] = {
         "testsDir": {
             "pattern": r'testsDir "\."',
             "description": "sets a `testsDir`",
@@ -183,13 +185,13 @@ def nf_test_content(self) -> Dict[str, List[str]]:
         with open(nf_test_conf_fn) as fh:
             for line in fh:
                 line = line.strip()
-                for check_name, check_info in nf_test_checks.items():
-                    if re.search(str(check_info["pattern"]), line):
-                        passed.append(f"'{nf_test_conf_fn}' {check_info['description']}")
+                for check_name, nf_test_check_info in nf_test_checks.items():
+                    if re.search(str(nf_test_check_info["pattern"]), line):
+                        passed.append(f"'{nf_test_conf_fn}' {nf_test_check_info['description']}")
                         checks_passed[check_name] = True
-        for check_name, check_info in nf_test_checks.items():
+        for check_name, nf_test_check_info in nf_test_checks.items():
             if not checks_passed[check_name]:
-                failed.append(f"'{nf_test_conf_fn}' {check_info['failure_msg']}")
+                failed.append(f"'{nf_test_conf_fn}' {nf_test_check_info['failure_msg']}")
     else:
         ignored.append(f"'{nf_test_conf_fn}' checking ignored")
 
