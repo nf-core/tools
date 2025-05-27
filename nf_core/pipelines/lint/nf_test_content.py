@@ -1,10 +1,11 @@
 import re
 from pathlib import Path
+from typing import Dict, List
 
 from nf_core.utils import load_tools_config
 
 
-def nf_test_content(self) -> dict[str, list[str]]:
+def nf_test_content(self) -> Dict[str, List[str]]:
     """Checks that the pipeline nf-test files have the appropriate content.
 
     This lint test checks the following files and content of these files:
@@ -64,9 +65,9 @@ def nf_test_content(self) -> dict[str, list[str]]:
                     - tests/nextflow.config
                     - tests/nf-test.config
     """
-    passed: list[str] = []
-    failed: list[str] = []
-    ignored: list[str] = []
+    passed: List[str] = []
+    failed: List[str] = []
+    ignored: List[str] = []
 
     _, pipeline_conf = load_tools_config(self.wf_path)
     lint_conf = getattr(pipeline_conf, "lint", None) or None
@@ -77,7 +78,7 @@ def nf_test_content(self) -> dict[str, list[str]]:
     outdir_pass = False
     versions_pass = False
     for test_fn in test_fns:
-        if not nf_test_content_conf or test_fn.name in nf_test_content_conf:
+        if nf_test_content_conf is not None and (not nf_test_content_conf or test_fn.name in nf_test_content_conf):
             ignored.append(f"'{test_fn.name}' checking ignored")
             continue
         with open(test_fn) as fh:
