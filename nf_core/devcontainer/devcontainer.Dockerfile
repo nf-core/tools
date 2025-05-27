@@ -45,8 +45,7 @@ RUN conda config --add channels bioconda && \
     conda config --set channel_priority strict && \
     conda install --quiet --yes --update-all --name base \
     apptainer \
-    nextflow \
-    nf-test \
+    nextflow && \
     conda clean --all --force-pkgs-dirs --yes
 
 # Update Nextflow and Install nf-core
