@@ -15,6 +15,7 @@
     - [modules_structure](./modules_structure/)
     - [multiqc_config](./multiqc_config/)
     - [nextflow_config](./nextflow_config/)
+    - [nf_test_content](./nf_test_content/)
     - [nfcore_yml](./nfcore_yml/)
     - [pipeline_if_empty_null](./pipeline_if_empty_null/)
     - [pipeline_name_conventions](./pipeline_name_conventions/)
