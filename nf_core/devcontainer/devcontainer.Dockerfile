@@ -39,6 +39,7 @@ RUN chown -R vscode:vscode /opt/conda && \
     conda clean --all --force-pkgs-dirs --yes
 
 # Update Nextflow and Install nf-core
-RUN nextflow self-update && \
-    python -m pip install -r requirements-dev.txt -e . --no-cache-dir && \
-    pre-commit install --install-hooks
+# TODO: This adds 900MB to the image
+# RUN nextflow self-update && \
+#     python -m pip install -r requirements-dev.txt -e . --no-cache-dir && \
+#     pre-commit install --install-hooks
