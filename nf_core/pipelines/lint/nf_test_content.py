@@ -150,11 +150,15 @@ def nf_test_content(self) -> Dict[str, List[str]]:
                 line = line.strip()
                 for check_name, config_check_info in config_checks.items():
                     if re.search(str(config_check_info["pattern"]), line):
-                        passed.append(f"'{conf_fn.relative_to(self.wf_path)}' contains {config_check_info['description']}")
+                        passed.append(
+                            f"'{conf_fn.relative_to(self.wf_path)}' contains {config_check_info['description']}"
+                        )
                         checks_passed[check_name] = True
         for check_name, config_check_info in config_checks.items():
             if not checks_passed[check_name]:
-                failed.append(f"'{conf_fn.relative_to(self.wf_path)}' does not contain {config_check_info['description']}")
+                failed.append(
+                    f"'{conf_fn.relative_to(self.wf_path)}' does not contain {config_check_info['description']}"
+                )
     else:
         ignored.append(f"'{conf_fn.relative_to(self.wf_path)}' checking ignored")
 
@@ -185,7 +189,9 @@ def nf_test_content(self) -> Dict[str, List[str]]:
                 line = line.strip()
                 for check_name, nf_test_check_info in nf_test_checks.items():
                     if re.search(str(nf_test_check_info["pattern"]), line):
-                        passed.append(f"'{nf_test_conf_fn.relative_to(self.wf_path)}' {nf_test_check_info['description']}")
+                        passed.append(
+                            f"'{nf_test_conf_fn.relative_to(self.wf_path)}' {nf_test_check_info['description']}"
+                        )
                         checks_passed[check_name] = True
         for check_name, nf_test_check_info in nf_test_checks.items():
             if not checks_passed[check_name]:
