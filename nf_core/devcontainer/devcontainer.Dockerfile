@@ -47,12 +47,6 @@ RUN conda config --add channels bioconda && \
     apptainer \
     nextflow \
     nf-test \
-    prettier \
-    pre-commit \
-    ruff \
-    mypy \
-    openjdk \
-    pytest-workflow && \
     conda clean --all --force-pkgs-dirs --yes
 
 # Update Nextflow and Install nf-core
