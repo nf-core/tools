@@ -4,19 +4,21 @@
 # See https://docs.renovatebot.com/docker/#digest-pinning for why a digest is used.
 FROM mcr.microsoft.com/devcontainers/python:3.11
 
-USER root
+# Change user to vscode
+USER vscode
+WORKDIR /home/vscode
 
 # Install util tools.
-RUN apt-get update --quiet && \
-    apt-get install --quiet --yes --no-install-recommends \
+RUN sudo apt-get update --quiet && \
+    sudo apt-get install --quiet --yes --no-install-recommends \
     apt-transport-https \
     apt-utils \
     graphviz && \
     wget --quiet https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh && \
-    bash Miniforge3-Linux-x86_64.sh -b -p /opt/conda && \
+    sudo bash Miniforge3-Linux-x86_64.sh -b -p /opt/conda && \
     rm Miniforge3-Linux-x86_64.sh && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    sudo apt-get clean && \
+    sudo rm -rf /var/lib/apt/lists/*
 
 # Set PATH for Conda
 ENV PATH="/opt/conda/bin:$PATH"
@@ -25,11 +27,8 @@ ENV PATH="/opt/conda/bin:$PATH"
 COPY --chown=vscode:vscode . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
 
-# Change user to gitpod
-USER vscode
-
-# Install nextflow, nf-core, nf-test, and other useful tools
-RUN chown -R vscode:vscode /opt/conda && \
+# Install nextflow and apptainer via conda
+RUN sudo chown -R vscode:vscode /opt/conda && \
     conda config --add channels bioconda && \
     conda config --add channels conda-forge && \
     conda config --set channel_priority strict && \
