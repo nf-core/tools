@@ -66,5 +66,3 @@ RUN nextflow self-update && \
 ENV NFT_DIFF="pdiff"
 ENV NFT_DIFF_ARGS="--line-numbers --expand-tabs=2"
 ENV JAVA_TOOL_OPTIONS=
-
-ENTRYPOINT [ "/bin/sh -c" ]
