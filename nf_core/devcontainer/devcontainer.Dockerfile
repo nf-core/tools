@@ -7,19 +7,11 @@ FROM mcr.microsoft.com/devcontainers/python:3.11
 USER root
 
 # Install util tools.
-# software-properties-common is needed to add ppa support for Apptainer installation
 RUN apt-get update --quiet && \
     apt-get install --quiet --yes --no-install-recommends \
     apt-transport-https \
     apt-utils \
-    sudo \
-    git \
-    less \
-    wget \
-    curl \
-    tree \
     graphviz \
-    software-properties-common && \
     wget --quiet https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh && \
     bash Miniforge3-Linux-x86_64.sh -b -p /opt/conda && \
     rm Miniforge3-Linux-x86_64.sh && \
