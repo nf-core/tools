@@ -34,13 +34,10 @@ COPY . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
 
 # Change ownership for gitpod
-RUN useradd -m -s /bin/bash nfc-user  && \
-    chown -R nfc-user:nfc-user /opt/conda /usr/src/nf_core && \
-    groupadd docker && \
-    usermod -aG docker nfc-user
+RUN chown -R vscode:vscode /opt/conda /usr/src/nf_core
 
 # Change user to gitpod
-USER nfc-user
+USER vscode
 
 # Install nextflow, nf-core, nf-test, and other useful tools
 RUN conda config --add channels bioconda && \
