@@ -57,9 +57,4 @@ RUN conda config --add channels bioconda && \
 
 # Update Nextflow and Install nf-core
 RUN nextflow self-update && \
-    python -m pip install . --no-cache-dir
-
-# Setup pdiff for nf-test diffs
-ENV NFT_DIFF="pdiff"
-ENV NFT_DIFF_ARGS="--line-numbers --expand-tabs=2"
-ENV JAVA_TOOL_OPTIONS=
+    python -m pip install -r requirements-dev.txt -e . --no-cache-dir
