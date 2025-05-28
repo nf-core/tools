@@ -27,6 +27,7 @@
 - Fix the unexpected warning and sychronize the `README.md` and `RO-crate-metadata.json` ([#3493](https://github.com/nf-core/tools/pull/3493))
 - Adapt the linter to the new notation used to include the centralized nf-core configs ([#3491](https://github.com/nf-core/tools/pull/3491))
 - Addressing more cases than can happen when processing input and output values ([#3541](https://github.com/nf-core/tools/pull/3541))
+- add linting of nf-test files content ([#3580](https://github.com/nf-core/tools/pull/3580))
 
 ### Modules
 
