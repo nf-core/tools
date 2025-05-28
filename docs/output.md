@@ -226,7 +226,7 @@ If the number of mapped reads to a pathogen genome exceeds `params.min_read_coun
 
 ### Call consensus
 
-Call consensus sequences for Illumina reads mapped to pathogen genomes using `samtools`, and for Nanopore reads using either `samtools` or `medaka` if the number of mapped reads exceeds `params.min_read_counts`.
+Call consensus sequences for Illumina reads mapped to pathogen genomes using `samtools`, and for Nanopore reads using either `samtools` or `medaka` if the number of mapped reads exceeds the `params.min_read_counts`.
 
 <details markdown="1">
 <summary>Output files</summary>
