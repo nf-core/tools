@@ -16,7 +16,3 @@ RUN sudo chown -R vscode:vscode /opt/conda && \
     conda install --quiet --yes --update-all --name base \
     conda-forge::apptainer>=1.4.1 && \
     conda clean --all --force-pkgs-dirs --yes
-
-# Install nf-core with development dependencies and git commit hooks
-RUN python -m pip install -r requirements-dev.txt -e . --no-cache-dir && \
-    pre-commit install --install-hooks
