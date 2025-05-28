@@ -1,6 +1,11 @@
 # nf-core/tools: Changelog
 
-## v3.3.0dev
+## [v3.3.0 - Tungsten Tamarin](https://github.com/nf-core/tools/releases/tag/3.3.0) - [2025-06-02]
+
+**Highlights**
+
+This version adds pipeline level [nf-test](https://www.nf-test.com/) to the pipeline template.
+We also enabled to install subworkflows with modules from different remotes.
 
 ### Template
 
@@ -8,86 +13,74 @@
 - Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
 - Basic pipeline level nf-test tests ([#3469](https://github.com/nf-core/tools/pull/3469))
 - Add Bluesky badge to readme ([#3475](https://github.com/nf-core/tools/pull/3475))
-- Run awsfulltest after release, and with dev revision on PRs to master ([#3485](https://github.com/nf-core/tools/pull/3485))
 - Add .nftignore to trigger list ([#3508](https://github.com/nf-core/tools/pull/3508))
-- run nf-test tests on runsOn runners ([#3525](https://github.com/nf-core/tools/pull/3525))
+- Tun nf-test tests on runsOn runners ([#3525](https://github.com/nf-core/tools/pull/3525))
 - Include the centralized nf-core configs also in offline mode, if a local copy is available. ([#3491](https://github.com/nf-core/tools/pull/3491))
-- downgrade nf-schema to fix CI tests ([#3544](https://github.com/nf-core/tools/pull/3544))
 - Make jobs automatically resubmit for exit code 175 ([#3564](https://github.com/nf-core/tools/pull/3564))
-- bump nf-schema back to 2.3.0 ([#3577](https://github.com/nf-core/tools/pull/3577))
+- Bump nf-schema back to 2.3.0 ([#3577](https://github.com/nf-core/tools/pull/3577))
 - Do not skip AWS fulltest action on release ([#3583](https://github.com/nf-core/tools/pull/3583))
 
 ### Linting
 
 - Add linting for ifEmpty(null) ([#3411](https://github.com/nf-core/tools/pull/3411))
 - Fix arbitrarily nested params schema linting ([#3443](https://github.com/nf-core/tools/pull/3443))
-- Fix: linting with comments after the input directive ([#3458](https://github.com/nf-core/tools/pull/3458))
+- Fix linting with comments after the input directive ([#3458](https://github.com/nf-core/tools/pull/3458))
 - EDAM ontology fixes ([#3460](https://github.com/nf-core/tools/pull/3460))
 - Fix default linting of nf-core components when `nf-core pipelines lint` is ran ([#3480](https://github.com/nf-core/tools/pull/3480))
 - Fix the unexpected warning and sychronize the `README.md` and `RO-crate-metadata.json` ([#3493](https://github.com/nf-core/tools/pull/3493))
 - Adapt the linter to the new notation used to include the centralized nf-core configs ([#3491](https://github.com/nf-core/tools/pull/3491))
 - Addressing more cases than can happen when processing input and output values ([#3541](https://github.com/nf-core/tools/pull/3541))
-- add linting of nf-test files content ([#3580](https://github.com/nf-core/tools/pull/3580))
-
-### Modules
-
-- increase meta index for multiple input channels ([#3463](https://github.com/nf-core/tools/pull/3463))
-- Configure the default module repository, branch, and path from environment variables. ([#3481](https://github.com/nf-core/tools/pull/3481))
+- Add linting of nf-test files content ([#3580](https://github.com/nf-core/tools/pull/3580))
 
 ### Subworkflows
 
+- Install subworkflows with modules from different remotes ([#3083](https://github.com/nf-core/tools/pull/3083))
+
+### Modules
+
+- Increase meta index for multiple input channels ([#3463](https://github.com/nf-core/tools/pull/3463))
+- Configure the default module repository, branch, and path from environment variables. ([#3481](https://github.com/nf-core/tools/pull/3481))
+
 ### General
 
-- remove hard coded key prefix for schema in launcher ([#3432](https://github.com/nf-core/tools/pull/3432))
-- output passed to write_params_file as Path object ([#3435](https://github.com/nf-core/tools/pull/3435))
-- chore(deps): update python:3.12-slim docker digest to 69ce3ae ([#3433](https://github.com/nf-core/tools/pull/3433))
-- chore(deps): update dependency pytest-textual-snapshot to v1.1.0 ([#3439](https://github.com/nf-core/tools/pull/3439))
-- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.4 ([#3438](https://github.com/nf-core/tools/pull/3438))
+- Remove hard coded key prefix for schema in launcher ([#3432](https://github.com/nf-core/tools/pull/3432))
+- Output passed to `write_params_file` as Path object ([#3435](https://github.com/nf-core/tools/pull/3435))
 - format name/value with YAML syntax ([#3442](https://github.com/nf-core/tools/pull/3442))
-- chore(deps): update pre-commit hook editorconfig-checker/editorconfig-checker.python to v3.2.0 ([#3446](https://github.com/nf-core/tools/pull/3446))
-- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.5 ([#3445](https://github.com/nf-core/tools/pull/3445))
-- chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.15.0 ([#3447](https://github.com/nf-core/tools/pull/3447))
-- Update prettier to 3.5.0 ([#3448](https://github.com/nf-core/tools/pull/3448))
-- chore(deps): update python:3.12-slim docker digest to 34656cd ([#3450](https://github.com/nf-core/tools/pull/3450))
 - Remove Twitter from README ([#3454](https://github.com/nf-core/tools/pull/3454))
 - docs: fix contributing link in the main README ([#3459](https://github.com/nf-core/tools/pull/3459))
 - Cleanup: Removed Redundant if Condition ([#3468](https://github.com/nf-core/tools/pull/3468))
-- chore(deps): update gitpod/workspace-base docker digest to 7f35e40 ([#3473](https://github.com/nf-core/tools/pull/3473))
-- chore(deps): update python:3.12-slim docker digest to aaa3f8c ([#3474](https://github.com/nf-core/tools/pull/3474))
-- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.9.9 ([#3470](https://github.com/nf-core/tools/pull/3470))
-- chore(deps): update github actions ([#3488](https://github.com/nf-core/tools/pull/3488))
-- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.11.0 ([#3492](https://github.com/nf-core/tools/pull/3492))
-- chore(deps): update dependency textual to v2 ([#3471](https://github.com/nf-core/tools/pull/3471))
-- Install subworkflows with modules from different remotes ([#3083](https://github.com/nf-core/tools/pull/3083))
-- chore(deps): update github actions ([#3498](https://github.com/nf-core/tools/pull/3498))
 - Ontology fix comment yaml ([#3502](https://github.com/nf-core/tools/pull/3502))
 - Bugfix - add back logo to the README ([#3504](https://github.com/nf-core/tools/pull/3504))
 - Update dead link ([#3505](https://github.com/nf-core/tools/pull/3505))
-- chore(deps): update actions/setup-python digest to 8d9ed9a ([#3518](https://github.com/nf-core/tools/pull/3518))
 - Changing retrieval of file extension from EDAM ([#3512](https://github.com/nf-core/tools/pull/3512))
 - Refactor adding EDAM ontologies and allowing detect more patterns (e.g., versions.yml) ([#3519](https://github.com/nf-core/tools/pull/3519))
 - Add offline configs test action ([#3524](https://github.com/nf-core/tools/pull/3524))
 - Adds `test-datasets` subcommand for listing/searching files in the nf-core/test-datasets repo from the cli ([#3487](https://github.com/nf-core/tools/issues/3487), [#3548](https://github.com/nf-core/tools/pull/3548), [#3566](https://github.com/nf-core/tools/pull/3566), [#3567](https://github.com/nf-core/tools/pull/3567))
-- Update pre-commit hook astral-sh/ruff-pre-commit to v0.11.2 ([#3521](https://github.com/nf-core/tools/pull/3521))
 - Fix indentation in included_configs API docs ([#3523](https://github.com/nf-core/tools/pull/3523))
-- chore(deps): update python:3.12-slim docker digest to a866731 ([#3527](https://github.com/nf-core/tools/pull/3527))
-- adding boundary in regex ([#3535](https://github.com/nf-core/tools/pull/3535))
-- switch to using runsOn runners in nf-core/tools repo ([#3537](https://github.com/nf-core/tools/pull/3537))
+- Adding boundary in regex ([#3535](https://github.com/nf-core/tools/pull/3535))
+- Switch to using runsOn runners in nf-core/tools repo ([#3537](https://github.com/nf-core/tools/pull/3537))
 - Handling issue with arity #3530 ([#3539](https://github.com/nf-core/tools/pull/3539))
-- chore(deps): update actions/github-script action to v7 ([#3545](https://github.com/nf-core/tools/pull/3545))
 - GitHub action for nightly tests with Nextflow from source ([#3553](https://github.com/nf-core/tools/pull/3553))
-- chore(deps): pin dependencies ([#3554](https://github.com/nf-core/tools/pull/3554))
-- Dev ([#3557](https://github.com/nf-core/tools/pull/3557))
-- chore(deps): update python:3.12-slim docker digest to bae1a06 ([#3558](https://github.com/nf-core/tools/pull/3558))
 - Update CI to test template pipelines with nf-test ([#3559](https://github.com/nf-core/tools/pull/3559))
 - Use secret for notification email on nextflow nightly builds ([#3576](https://github.com/nf-core/tools/pull/3576))
-- chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.11.9 ([#3563](https://github.com/nf-core/tools/pull/3563))
-- chore(deps): update python:3.12-slim docker digest to 31a416d ([#3568](https://github.com/nf-core/tools/pull/3568))
-- chore(deps): update codecov/codecov-action digest to 18283e0 ([#3575](https://github.com/nf-core/tools/pull/3575))
-- use pdiff from setup-nf-test ([#3578](https://github.com/nf-core/tools/pull/3578))
+- Use pdiff from setup-nf-test ([#3578](https://github.com/nf-core/tools/pull/3578))
+
+#### Version updates
+
 - chore(deps): update python:3.12-slim docker digest to fd95fa2 ([#3587](https://github.com/nf-core/tools/pull/3587))
-- chore(deps): update gitpod/workspace-base docker digest to 3aa18f4 ([#3586](https://github.com/nf-core/tools/pull/3586))
+- chore(deps): update dependency pytest-textual-snapshot to v1.1.0 ([#3439](https://github.com/nf-core/tools/pull/3439))
 - chore(deps): update pre-commit hook astral-sh/ruff-pre-commit to v0.11.11 ([#3585](https://github.com/nf-core/tools/pull/3585))
+- chore(deps): update pre-commit hook editorconfig-checker/editorconfig-checker.python to v3.2.0 ([#3446](https://github.com/nf-core/tools/pull/3446))
+- chore(deps): update pre-commit hook pre-commit/mirrors-mypy to v1.15.0 ([#3447](https://github.com/nf-core/tools/pull/3447))
+- Update prettier to 3.5.0 ([#3448](https://github.com/nf-core/tools/pull/3448))
+- chore(deps): update gitpod/workspace-base docker digest to 3aa18f4 ([#3586](https://github.com/nf-core/tools/pull/3586))
+- chore(deps): update github actions ([#3488](https://github.com/nf-core/tools/pull/3488))
+- chore(deps): update github actions ([#3498](https://github.com/nf-core/tools/pull/3498))
+- chore(deps): update dependency textual to v2 ([#3471](https://github.com/nf-core/tools/pull/3471))
+- chore(deps): update actions/setup-python digest to 8d9ed9a ([#3518](https://github.com/nf-core/tools/pull/3518))
+- chore(deps): update actions/github-script action to v7 ([#3545](https://github.com/nf-core/tools/pull/3545))
+- chore(deps): pin dependencies ([#3554](https://github.com/nf-core/tools/pull/3554))
+- chore(deps): update codecov/codecov-action digest to 18283e0 ([#3575](https://github.com/nf-core/tools/pull/3575))
 
 ## [v3.2.1 - Pewter Pangolin Patch](https://github.com/nf-core/tools/releases/tag/3.2.1) - [2025-04-29]
 
