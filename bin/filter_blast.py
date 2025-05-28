@@ -51,7 +51,10 @@ def filter_summary_blast(blast_header, input, filtered_output, summary_output, m
             median_pident=("pident", "median"),
             min_length=("length", "min"),
             max_length=("length", "max"),
-            median_length=("length", "median")
+            median_length=("length", "median"),
+            min_bitscore=("bitscore", "min"),
+            max_bitscore=("bitscore", "max"),
+            median_bitscore=("bitscore", "median")
         )
         .reset_index()
     )

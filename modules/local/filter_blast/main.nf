@@ -12,9 +12,9 @@ process FILTER_BLAST {
     path header
 
     output:
-    tuple val(meta), path('*_filtered.txt'), emit: filtered_blast
+    tuple val(meta), path('*_filtered.txt')        , emit: filtered_blast
     tuple val(meta), path('*_filtered_summary.txt'), emit: summary
-    path "versions.yml", emit: versions
+    path "versions.yml"                            , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

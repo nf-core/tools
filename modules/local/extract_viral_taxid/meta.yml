@@ -11,6 +11,11 @@ input:
   - evalue:
       type: ["number", "integer"]
       description: An e-value threshold to filter the diamond classification result
+  - - meta1:
+        type: map
+        description: |
+          Groovy map containing sample information
+          e.g. [ id:''test, single_end:false]
   - - meta:
         type: map
         description: |

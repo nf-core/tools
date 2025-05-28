@@ -10,6 +10,11 @@ input:
   - taxid:
       type: integer
       description: A taxonomic ID to extract the reads
+  - - meta1:
+        type: map
+        description: |
+          Groovy map containing sample information
+          e.g. [ id:''test, single_end:false]
   - - meta:
         type: map
         description: |

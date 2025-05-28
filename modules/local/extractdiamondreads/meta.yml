@@ -13,16 +13,21 @@ input:
   - evalue:
       type: ["number", "integer"]
       description: An e-value threshold to filter the diamond classification result
-  - meta:
+  - - meta1:
       type: map
       description: |
         Groovy Map containing sample information
         e.g. [ id:'test', single_end:false ]
-  - tsv:
+  - - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - - tsv:
       type: file
       description: Tab separated file containing DIAMOND taxonomic classification of hits
       pattern: "*.tsv"
-  - fastq:
+  - - fastq:
       type: file
       description: FastQ files
       pattern: "*.fastq.gz"
