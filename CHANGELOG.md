@@ -4,7 +4,8 @@
 
 **Highlights**
 
-This version adds pipeline level nf-test to the pipeline template.
+This version adds pipeline level [nf-test](https://www.nf-test.com/) to the pipeline template.
+We also enabled to install subworkflows with modules from different remotes.
 
 ### Template
 
