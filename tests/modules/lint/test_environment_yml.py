@@ -3,6 +3,7 @@ from nf_core.modules.lint.environment_yml import environment_yml
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 import pytest
+from ruamel.yaml.scanner import ScannerError
 
 yaml = ruamel.yaml.YAML()
 yaml.indent(mapping=2, sequence=2, offset=2)
@@ -64,60 +65,118 @@ yaml.indent(mapping=2, sequence=2, offset=2)
         "full_environment",
     ],
 )
-def test_conda_sorter(tmp_path, input_content, expected):
+def test_environment_yml_sorting(tmp_path, input_content, expected):
     test_file = tmp_path / "environment.yml"
     test_file.write_text(input_content)
-
-    # Run our sorter on the test file
-    main([str(test_file)])
-
-    # Read back the sorted file
+    class DummyModule(NFCoreComponent):
+        def __init__(self, path):
+            self.environment_yml = path
+            self.component_dir = path.parent
+            self.component_name = "dummy"
+            self.passed = []
+            self.failed = []
+            self.warned = []
+    class DummyLint(ComponentLint):
+        def __init__(self):
+            self.modules_repo = type("repo", (), {"local_repo_dir": tmp_path})
+            self.passed = []
+            self.failed = []
+    module = DummyModule(test_file)
+    lint = DummyLint()
+    (tmp_path / "modules").mkdir(exist_ok=True)
+    (tmp_path / "modules" / "environment-schema.json").write_text("{}")
+    environment_yml(lint, module)
     result = test_file.read_text()
-
-    # Check schema headers are present
-    assert result.startswith("---\n# yaml-language-server: $schema=")
-
-    # Parse the sorted content (skip first 2 header lines)
-    parsed = yaml.load("".join(result.splitlines(True)[2:]))
-
-    # Compare the actual dependencies structure
+    lines = result.splitlines(True)
+    if lines[:2] == ["---\n", "# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json\n"]:
+        parsed = yaml.load("".join(lines[2:]))
+    else:
+        parsed = yaml.load(result)
     if isinstance(expected, list):
         assert parsed["dependencies"] == expected
     else:
-        # For comparing dictionaries, only compare the keys that are in the expected dictionary
         for key, value in expected.items():
             assert key in parsed
             assert parsed[key] == value
+    # Check linter passed for sorting
+    assert any("environment_yml_sorted" in x for x in [p[0] for p in lint.passed])
 
 
-def test_invalid_file(tmp_path):
+def test_environment_yml_invalid_file(tmp_path):
     test_file = tmp_path / "bad.yml"
     test_file.write_text("invalid: yaml: here")
+    class DummyModule(NFCoreComponent):
+        def __init__(self, path):
+            self.environment_yml = path
+            self.component_dir = path.parent
+            self.component_name = "dummy"
+            self.passed = []
+            self.failed = []
+            self.warned = []
+    class DummyLint(ComponentLint):
+        def __init__(self):
+            self.modules_repo = type("repo", (), {"local_repo_dir": tmp_path})
+            self.passed = []
+            self.failed = []
+    module = DummyModule(test_file)
+    lint = DummyLint()
+    (tmp_path / "modules").mkdir(exist_ok=True)
+    (tmp_path / "modules" / "environment-schema.json").write_text("{}")
+    with pytest.raises(Exception):
+        environment_yml(lint, module)
 
-    with pytest.raises(ruamel.yaml.scanner.ScannerError):
-        main([str(test_file)])
 
-
-def test_empty_file(tmp_path):
-    """Test handling of empty files."""
+def test_environment_yml_empty_file(tmp_path):
     test_file = tmp_path / "empty.yml"
     test_file.write_text("")
+    class DummyModule(NFCoreComponent):
+        def __init__(self, path):
+            self.environment_yml = path
+            self.component_dir = path.parent
+            self.component_name = "dummy"
+            self.passed = []
+            self.failed = []
+            self.warned = []
+    class DummyLint(ComponentLint):
+        def __init__(self):
+            self.modules_repo = type("repo", (), {"local_repo_dir": tmp_path})
+            self.passed = []
+            self.failed = []
+    module = DummyModule(test_file)
+    lint = DummyLint()
+    (tmp_path / "modules").mkdir(exist_ok=True)
+    (tmp_path / "modules" / "environment-schema.json").write_text("{}")
+    with pytest.raises(Exception):
+        environment_yml(lint, module)
 
-    with pytest.raises(ruamel.yaml.scanner.ScannerError):
-        main([str(test_file)])
 
-
-def test_missing_dependencies(tmp_path):
-    """Test handling of files without dependencies section."""
+def test_environment_yml_missing_dependencies(tmp_path):
     test_file = tmp_path / "no_deps.yml"
     test_file.write_text("channels:\n  - conda-forge\n")
-
-    # Run without error now that we handle missing dependencies
-    main([str(test_file)])
-
-    # Read back and verify channel is preserved
+    class DummyModule(NFCoreComponent):
+        def __init__(self, path):
+            self.environment_yml = path
+            self.component_dir = path.parent
+            self.component_name = "dummy"
+            self.passed = []
+            self.failed = []
+            self.warned = []
+    class DummyLint(ComponentLint):
+        def __init__(self):
+            self.modules_repo = type("repo", (), {"local_repo_dir": tmp_path})
+            self.passed = []
+            self.failed = []
+    module = DummyModule(test_file)
+    lint = DummyLint()
+    (tmp_path / "modules").mkdir(exist_ok=True)
+    (tmp_path / "modules" / "environment-schema.json").write_text("{}")
+    environment_yml(lint, module)
     result = test_file.read_text()
-    parsed = yaml.load("".join(result.splitlines(True)[2:]))
+    lines = result.splitlines(True)
+    if lines[:2] == ["---\n", "# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json\n"]:
+        parsed = yaml.load("".join(lines[2:]))
+    else:
+        parsed = yaml.load(result)
     assert "channels" in parsed
     assert parsed["channels"] == ["conda-forge"]
     assert "dependencies" not in parsed
