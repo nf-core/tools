@@ -194,7 +194,21 @@ class TestModuleTests(TestModules):
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
-        assert any(x.lint_test == "test_snap_md5sum" for x in module_lint.passed)
+
+        # Check for test_snap_md5sum in passed tests (handle both tuple and LintResult formats)
+        found_test = False
+        for x in module_lint.passed:
+            test_name = None
+            if hasattr(x, "lint_test"):
+                test_name = x.lint_test
+            elif isinstance(x, tuple) and len(x) > 0:
+                test_name = x[0]
+
+            if test_name == "test_snap_md5sum":
+                found_test = True
+                break
+
+        assert found_test, "test_snap_md5sum not found in passed tests"
 
         # reset the file
         with open(snap_file, "w") as fh:
