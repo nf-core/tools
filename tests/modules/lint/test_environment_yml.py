@@ -30,15 +30,15 @@ def yaml_dump_to_string(data):
         ("dependencies:\n  - pip:\n    - b\n    - a\n  - python\n", ["python", {"pip": ["a", "b"]}]),
         # Test existing headers
         ("---\n# yaml-language-server: $schema=...\ndependencies:\n  - b\n  - a\n", ["a", "b"]),
-        # Test channel sorting
+        # Test channel preservation (no sorting) - channels order preserved as per nf-core/modules#8554
         (
             "channels:\n  - conda-forge\n  - bioconda\ndependencies:\n  - python\n",
             {"channels": ["conda-forge", "bioconda"], "dependencies": ["python"]},
         ),
-        # Test channel sorting with additional channels
+        # Test channel preservation with additional channels - channels order preserved as per nf-core/modules#8554
         (
             "channels:\n  - bioconda\n  - conda-forge\n  - defaults\n  - r\n",
-            {"channels": ["conda-forge", "bioconda", "defaults", "r"]},
+            {"channels": ["bioconda", "conda-forge", "defaults", "r"]},
         ),
         # Test namespaced dependencies
         (
@@ -50,7 +50,7 @@ def yaml_dump_to_string(data):
             "dependencies:\n  - bioconda::ngscheckmate=1.0.1\n  - python\n  - bioconda::bcftools=1.21\n",
             ["bioconda::bcftools=1.21", "bioconda::ngscheckmate=1.0.1", "python"],
         ),
-        # Test full environment with channels and namespaced dependencies
+        # Test full environment with channels and namespaced dependencies - channels order preserved as per nf-core/modules#8554
         (
             """
             channels:
@@ -70,8 +70,8 @@ def yaml_dump_to_string(data):
         "basic_dependency_sorting",
         "dict_dependency_sorting",
         "existing_headers",
-        "channel_sorting",
-        "channel_sorting_with_additional_channels",
+        "channel_preservation",
+        "channel_preservation_with_additional_channels",
         "namespaced_dependencies",
         "mixed_dependencies",
         "full_environment",

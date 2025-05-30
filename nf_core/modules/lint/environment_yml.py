@@ -103,12 +103,6 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
             )
 
         if valid_env_yml:
-            # Define channel priority order
-            channel_order = {
-                "conda-forge": 0,
-                "bioconda": 1,
-            }
-
             # Sort dependencies if they exist
             if "dependencies" in env_yml:
                 dicts = []
@@ -154,32 +148,22 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                 sorted_deps = None
                 is_sorted = True
 
-            # Check if channels are sorted
-            channels_sorted = True
-            if "channels" in env_yml:
-                sorted_channels = sorted(env_yml["channels"], key=lambda x: (channel_order.get(x, 2), str(x)))
-                channels_sorted = env_yml["channels"] == sorted_channels
-
-            if is_sorted and channels_sorted:
+            if is_sorted:
                 module_lint_object.passed.append(
                     (
                         "environment_yml_sorted",
-                        "The dependencies and channels in the module's `environment.yml` are sorted correctly",
+                        "The dependencies in the module's `environment.yml` are sorted correctly",
                         module.environment_yml,
                     )
                 )
             else:
                 log.info(
-                    f"Dependencies or channels in {module.component_name}'s environment.yml were not sorted. Sorting them now."
+                    f"Dependencies in {module.component_name}'s environment.yml were not sorted. Sorting them now."
                 )
 
                 # Update dependencies if they need sorting
                 if sorted_deps is not None:
                     env_yml["dependencies"] = sorted_deps
-
-                # Update channels if they need sorting
-                if "channels" in env_yml:
-                    env_yml["channels"] = sorted(env_yml["channels"], key=lambda x: (channel_order.get(x, 2), str(x)))
 
                 # Write back to file with headers
                 with open(Path(module.component_dir, "environment.yml"), "w") as fh:
@@ -191,7 +175,7 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                 module_lint_object.passed.append(
                     (
                         "environment_yml_sorted",
-                        "The dependencies and channels in the module's `environment.yml` have been sorted",
+                        "The dependencies in the module's `environment.yml` have been sorted",
                         module.environment_yml,
                     )
                 )
