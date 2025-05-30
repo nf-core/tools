@@ -1,12 +1,9 @@
-import ruamel.yaml
+import yaml
 from nf_core.modules.lint.environment_yml import environment_yml
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 import pytest
-from ruamel.yaml.scanner import ScannerError
-
-yaml = ruamel.yaml.YAML()
-yaml.indent(mapping=2, sequence=2, offset=2)
+from yaml.scanner import ScannerError
 
 
 @pytest.mark.parametrize(
@@ -89,9 +86,9 @@ def test_environment_yml_sorting(tmp_path, input_content, expected):
     result = test_file.read_text()
     lines = result.splitlines(True)
     if lines[:2] == ["---\n", "# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json\n"]:
-        parsed = yaml.load("".join(lines[2:]))
+        parsed = yaml.safe_load("".join(lines[2:]))
     else:
-        parsed = yaml.load(result)
+        parsed = yaml.safe_load(result)
     if isinstance(expected, list):
         assert parsed["dependencies"] == expected
     else:
@@ -174,9 +171,9 @@ def test_environment_yml_missing_dependencies(tmp_path):
     result = test_file.read_text()
     lines = result.splitlines(True)
     if lines[:2] == ["---\n", "# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json\n"]:
-        parsed = yaml.load("".join(lines[2:]))
+        parsed = yaml.safe_load("".join(lines[2:]))
     else:
-        parsed = yaml.load(result)
+        parsed = yaml.safe_load(result)
     assert "channels" in parsed
     assert parsed["channels"] == ["conda-forge"]
     assert "dependencies" not in parsed

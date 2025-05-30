@@ -2,17 +2,13 @@ import json
 import logging
 from pathlib import Path
 
-import ruamel.yaml
+import yaml
 from jsonschema import exceptions, validators
 
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
-
-# Configure ruamel.yaml for proper formatting
-yaml = ruamel.yaml.YAML()
-yaml.indent(mapping=2, sequence=2, offset=2)
 
 
 def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
@@ -54,9 +50,9 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
             content = "".join(lines)  # Use all content if no schema lines present
 
         # Parse the YAML content
-        env_yml = yaml.load(content)
+        env_yml = yaml.safe_load(content)
         if env_yml is None:
-            raise ruamel.yaml.scanner.ScannerError("Empty YAML file")
+            raise yaml.scanner.ScannerError("Empty YAML file")
 
         module.passed.append(("environment_yml_exists", "Module's `environment.yml` exists", module.environment_yml))
 
@@ -176,8 +172,14 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                 with open(Path(module.component_dir, "environment.yml"), "w") as fh:
                     # Always write schema lines first
                     fh.writelines(schema_lines)
-                    # Then dump the sorted YAML
-                    yaml.dump(env_yml, fh)
+                    # Then dump the sorted YAML with proper formatting
+                    yaml.dump(
+                        env_yml,
+                        fh,
+                        default_flow_style=False,
+                        indent=2,
+                        sort_keys=False
+                    )
 
                 module_lint_object.passed.append(
                     (
