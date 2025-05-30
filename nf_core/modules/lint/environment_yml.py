@@ -2,14 +2,17 @@ import json
 import logging
 from pathlib import Path
 
-import yaml
+import ruamel.yaml
 from jsonschema import exceptions, validators
 
 from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
-from nf_core.utils import custom_yaml_dumper
 
 log = logging.getLogger(__name__)
+
+# Configure ruamel.yaml for proper formatting
+yaml = ruamel.yaml.YAML()
+yaml.indent(mapping=2, sequence=2, offset=2)
 
 
 def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_missing: bool = False) -> None:
@@ -34,8 +37,26 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
             return
         raise LintExceptionError("Module does not have an `environment.yml` file")
     try:
+        # Read the entire file content to handle headers properly
         with open(module.environment_yml) as fh:
-            env_yml = yaml.safe_load(fh)
+            lines = fh.readlines()
+
+        # Define the schema lines to be added if missing
+        schema_lines = [
+            "---\n",
+            "# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json\n",
+        ]
+
+        # Check if the first two lines match the expected schema lines
+        if len(lines) >= 2 and lines[:2] == schema_lines:
+            content = "".join(lines[2:])  # Skip schema lines when reading content
+        else:
+            content = "".join(lines)  # Use all content if no schema lines present
+
+        # Parse the YAML content
+        env_yml = yaml.load(content)
+        if env_yml is None:
+            raise ruamel.yaml.scanner.ScannerError("Empty YAML file")
 
         module.passed.append(("environment_yml_exists", "Module's `environment.yml` exists", module.environment_yml))
 
@@ -82,41 +103,86 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
             )
 
         if valid_env_yml:
-            # Check that the dependencies section is sorted alphabetically
-            def sort_recursively(obj):
-                """Simple recursive sort for nested structures."""
-                if isinstance(obj, list):
+            # Define channel priority order
+            channel_order = {
+                "conda-forge": 0,
+                "bioconda": 1,
+            }
 
-                    def get_key(x):
-                        if isinstance(x, dict):
-                            # For dicts like {"pip": [...]}, use the key "pip"
-                            return (list(x.keys())[0], 1)
-                        else:
-                            # For strings like "pip=23.3.1", use "pip" and for bioconda::samtools=1.15.1, use "bioconda::samtools"
-                            return (str(x).split("=")[0], 0)
+            # Sort dependencies if they exist
+            if "dependencies" in env_yml:
+                dicts = []
+                others = []
 
-                    return sorted([sort_recursively(item) for item in obj], key=get_key)
-                elif isinstance(obj, dict):
-                    return {k: sort_recursively(v) for k, v in obj.items()}
-                else:
-                    return obj
+                for term in env_yml["dependencies"]:
+                    if isinstance(term, dict):
+                        dicts.append(term)
+                    else:
+                        others.append(term)
 
-            sorted_dependencies = sort_recursively(env_yml["dependencies"])
+                # Sort non-dict dependencies (strings) alphabetically
+                others.sort(key=str)
 
-            # Direct comparison of sorted vs original dependencies
-            if sorted_dependencies == env_yml["dependencies"]:
-                module.passed.append(
+                # Sort any lists within dict dependencies
+                for dict_term in dicts:
+                    for value in dict_term.values():
+                        if isinstance(value, list):
+                            value.sort(key=str)
+
+                # Sort dict dependencies alphabetically
+                dicts.sort(key=str)
+
+                # Combine sorted dependencies
+                sorted_deps = others + dicts
+
+                # Check if dependencies are already sorted
+                is_sorted = env_yml["dependencies"] == sorted_deps and all(
+                    not isinstance(term, dict)
+                    or all(not isinstance(value, list) or value == sorted(value, key=str) for value in term.values())
+                    for term in env_yml["dependencies"]
+                )
+            else:
+                sorted_deps = None
+                is_sorted = True
+
+            # Check if channels are sorted
+            channels_sorted = True
+            if "channels" in env_yml:
+                sorted_channels = sorted(env_yml["channels"], key=lambda x: (channel_order.get(x, 2), str(x)))
+                channels_sorted = env_yml["channels"] == sorted_channels
+
+            if is_sorted and channels_sorted:
+                module_lint_object.passed.append(
                     (
                         "environment_yml_sorted",
-                        "The dependencies in the module's `environment.yml` are sorted alphabetically",
+                        "The dependencies and channels in the module's `environment.yml` are sorted correctly",
                         module.environment_yml,
                     )
                 )
             else:
-                # sort it and write it back to the file
                 log.info(
-                    f"Dependencies in {module.component_name}'s environment.yml were not sorted alphabetically. Sorting them now."
+                    f"Dependencies or channels in {module.component_name}'s environment.yml were not sorted. Sorting them now."
                 )
-                env_yml["dependencies"] = sorted_dependencies
+
+                # Update dependencies if they need sorting
+                if sorted_deps is not None:
+                    env_yml["dependencies"] = sorted_deps
+
+                # Update channels if they need sorting
+                if "channels" in env_yml:
+                    env_yml["channels"] = sorted(env_yml["channels"], key=lambda x: (channel_order.get(x, 2), str(x)))
+
+                # Write back to file with headers
                 with open(Path(module.component_dir, "environment.yml"), "w") as fh:
-                    yaml.dump(env_yml, fh, Dumper=custom_yaml_dumper())
+                    # Always write schema lines first
+                    fh.writelines(schema_lines)
+                    # Then dump the sorted YAML
+                    yaml.dump(env_yml, fh)
+
+                module_lint_object.passed.append(
+                    (
+                        "environment_yml_sorted",
+                        "The dependencies and channels in the module's `environment.yml` have been sorted",
+                        module.environment_yml,
+                    )
+                )
