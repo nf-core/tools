@@ -266,8 +266,8 @@ class TestModulesEnvironmentYml(TestModules):
             "bioconda::fastqc=0.12.1",
             "bioconda::samtools=1.15.1",
             "pip=23.3.1",
-            {"pip": ["aaa-package==2.0.0", "zzz-package==1.0.0"]},
             "python=3.8",
+            {"pip": ["aaa-package==2.0.0", "zzz-package==1.0.0"]},
         ]
 
         assert sorted_yaml["dependencies"] == expected_deps
