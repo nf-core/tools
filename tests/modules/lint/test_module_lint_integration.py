@@ -1,16 +1,6 @@
-import json
-import shutil
-from pathlib import Path
-from typing import Union
-
-import yaml
-from git.repo import Repo
-
 import nf_core.modules.lint
-from nf_core.utils import set_wd
 
 from ...test_modules import TestModules
-from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 
 
 class TestModulesLintIntegration(TestModules):
@@ -49,4 +39,4 @@ class TestModulesLintIntegration(TestModules):
         module_lint.lint(print_results=False, all_modules=True)
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
-        assert len(module_lint.warned) >= 0 
+        assert len(module_lint.warned) >= 0

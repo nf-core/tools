@@ -1,18 +1,6 @@
-import json
-import shutil
-from pathlib import Path
-from typing import Union
-
 import pytest
-import yaml
-from git.repo import Repo
-
-import nf_core.modules.lint
-from nf_core.modules.lint.module_deprecations import module_deprecations
-from nf_core.utils import set_wd
 
 from ...test_modules import TestModules
-from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 
 
 # A skeleton object with the passed/warned/failed list attrs
@@ -51,4 +39,4 @@ class TestModuleDeprecations(TestModules):
     def test_module_deprecations_no_functions_nf(self):
         """Test module deprecations when no functions.nf exists"""
         # Test when no deprecated files are found
-        pass 
+        pass

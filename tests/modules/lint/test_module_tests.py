@@ -1,3 +1,17 @@
+import json
+from pathlib import Path
+
+from git.repo import Repo
+
+import nf_core.modules.lint
+import nf_core.modules.patch
+
+from ...test_modules import TestModules
+from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
+
+
+class TestModuleTests(TestModules):
+    """Test module_tests.py functionality"""
 
     def test_modules_lint_snapshot_file(self):
         """Test linting a module with a snapshot file"""

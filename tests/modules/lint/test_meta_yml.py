@@ -1,3 +1,14 @@
+from pathlib import Path
+
+import yaml
+
+import nf_core.modules.lint
+
+from ...test_modules import TestModules
+
+
+class TestMetaYml(TestModules):
+    """Test meta.yml functionality"""
 
     def test_modules_lint_update_meta_yml(self):
         """update the meta.yml of a module"""

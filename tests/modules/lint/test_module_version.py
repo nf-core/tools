@@ -1,18 +1,6 @@
-import json
-import shutil
-from pathlib import Path
-from typing import Union
-
 import pytest
-import yaml
-from git.repo import Repo
-
-import nf_core.modules.lint
-from nf_core.modules.lint.module_version import module_version
-from nf_core.utils import set_wd
 
 from ...test_modules import TestModules
-from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 
 
 # A skeleton object with the passed/warned/failed list attrs
@@ -63,4 +51,4 @@ class TestModuleVersion(TestModules):
     def test_module_version_git_log_fail(self):
         """Test module version when git log fetch fails"""
         # Test when fetching git log fails
-        pass 
+        pass

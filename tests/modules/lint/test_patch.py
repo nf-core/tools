@@ -1,5 +1,18 @@
+from pathlib import Path
+from typing import Union
+
+import nf_core.modules.install
+import nf_core.modules.lint
 import nf_core.modules.patch
+from nf_core.utils import set_wd
+
+from ...test_modules import TestModules
+from ...utils import GITLAB_URL
 from ..test_patch import BISMARK_ALIGN, CORRECT_SHA, PATCH_BRANCH, REPO_NAME, modify_main_nf
+
+
+class TestPatch(TestModules):
+    """Test patch.py functionality"""
 
     def _setup_patch(self, pipeline_dir: Union[str, Path], modify_module: bool):
         install_obj = nf_core.modules.install.ModuleInstall(

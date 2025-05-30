@@ -1,17 +1,6 @@
-import json
-import shutil
-from pathlib import Path
-from typing import Union
-
-import yaml
-from git.repo import Repo
-
 import nf_core.modules.lint
-from nf_core.modules.lint.main_nf import check_container_link_line, check_process_labels
-from nf_core.utils import set_wd
 
 from ...test_modules import TestModules
-from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 
 
 # A skeleton object with the passed/warned/failed list attrs
@@ -33,9 +22,9 @@ class TestModulesLint(TestModules):
         """Test ModuleLint initialization"""
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir)
         assert module_lint.directory == self.pipeline_dir
-        assert hasattr(module_lint, 'passed')
-        assert hasattr(module_lint, 'warned')
-        assert hasattr(module_lint, 'failed')
+        assert hasattr(module_lint, "passed")
+        assert hasattr(module_lint, "warned")
+        assert hasattr(module_lint, "failed")
 
     def test_mock_module_lint(self):
         """Test MockModuleLint utility class"""

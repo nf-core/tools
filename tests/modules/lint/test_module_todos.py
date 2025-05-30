@@ -1,18 +1,6 @@
-import json
-import shutil
-from pathlib import Path
-from typing import Union
-
 import pytest
-import yaml
-from git.repo import Repo
-
-import nf_core.modules.lint
-from nf_core.modules.lint.module_todos import module_todos
-from nf_core.utils import set_wd
 
 from ...test_modules import TestModules
-from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 
 
 # A skeleton object with the passed/warned/failed list attrs
@@ -51,4 +39,4 @@ class TestModuleTodos(TestModules):
     def test_module_todos_groovy(self):
         """Test module todos when groovy TODOs exist"""
         # Test finding TODO statements in Nextflow/Groovy files
-        pass 
+        pass

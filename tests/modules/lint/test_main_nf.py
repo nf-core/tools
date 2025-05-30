@@ -1,3 +1,10 @@
+import nf_core.modules.lint
+import nf_core.modules.patch
+from nf_core.modules.lint.main_nf import check_container_link_line, check_process_labels
+
+from ...test_modules import TestModules
+from .test_lint_utils import MockModuleLint
+
 PROCESS_LABEL_GOOD = (
     """
     label 'process_high'
@@ -142,6 +149,8 @@ CONTAINER_TEST_CASES = [
 ]
 
 
+class TestMainNf(TestModules):
+    """Test main.nf functionality"""
 
     def test_modules_lint_registry(self):
         """Test linting the samtools module and alternative registry"""

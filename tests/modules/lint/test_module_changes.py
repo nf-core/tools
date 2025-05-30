@@ -1,18 +1,6 @@
-import json
-import shutil
-from pathlib import Path
-from typing import Union
-
 import pytest
-import yaml
-from git.repo import Repo
-
-import nf_core.modules.lint
-from nf_core.modules.lint.module_changes import module_changes
-from nf_core.utils import set_wd
 
 from ...test_modules import TestModules
-from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
 
 
 # A skeleton object with the passed/warned/failed list attrs
@@ -63,4 +51,4 @@ class TestModuleChanges(TestModules):
     def test_module_changes_patch_apply_fail(self):
         """Test module changes when patch application fails"""
         # Test when patch cannot be applied in reverse
-        pass 
+        pass
