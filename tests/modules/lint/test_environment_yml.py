@@ -4,6 +4,10 @@ from nf_core.components.lint import ComponentLint, LintExceptionError
 from nf_core.components.nfcore_component import NFCoreComponent
 import pytest
 from yaml.scanner import ScannerError
+from pathlib import Path
+
+import nf_core.modules.lint
+from ...test_modules import TestModules
 
 
 @pytest.mark.parametrize(
@@ -177,3 +181,111 @@ def test_environment_yml_missing_dependencies(tmp_path):
     assert "channels" in parsed
     assert parsed["channels"] == ["conda-forge"]
     assert "dependencies" not in parsed
+
+
+# Integration tests using the full ModuleLint class
+
+class TestModulesEnvironmentYml(TestModules):
+    """Integration tests for environment.yml linting using real modules"""
+
+    def test_modules_environment_yml_file_doesnt_exists(self):
+        """Test linting a module with an environment.yml file"""
+        (self.bpipe_test_module_path / "environment.yml").rename(self.bpipe_test_module_path / "environment.yml.bak")
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+        (self.bpipe_test_module_path / "environment.yml.bak").rename(self.bpipe_test_module_path / "environment.yml")
+        assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+        assert len(module_lint.warned) >= 0
+        assert module_lint.failed[0].lint_test == "environment_yml_exists"
+
+    def test_modules_environment_yml_file_sorted_correctly(self):
+        """Test linting a module with a correctly sorted environment.yml file"""
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+        assert len(module_lint.warned) >= 0
+
+    def test_modules_environment_yml_file_sorted_incorrectly(self):
+        """Test linting a module with an incorrectly sorted environment.yml file"""
+        with open(self.bpipe_test_module_path / "environment.yml") as fh:
+            yaml_content = yaml.safe_load(fh)
+        # Add a new dependency to the environment.yml file and reverse the order
+        yaml_content["dependencies"].append("z=0.0.0")
+        yaml_content["dependencies"].reverse()
+        yaml_content = yaml.dump(yaml_content)
+        with open(self.bpipe_test_module_path / "environment.yml", "w") as fh:
+            fh.write(yaml_content)
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+        # we fix the sorting on the fly, so this should pass
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+        assert len(module_lint.warned) >= 0
+
+    def test_modules_environment_yml_file_not_array(self):
+        """Test linting a module with an incorrectly formatted environment.yml file"""
+        with open(self.bpipe_test_module_path / "environment.yml") as fh:
+            yaml_content = yaml.safe_load(fh)
+        yaml_content["dependencies"] = "z"
+        with open(self.bpipe_test_module_path / "environment.yml", "w") as fh:
+            fh.write(yaml.dump(yaml_content))
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+        assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+        assert len(module_lint.warned) >= 0
+        assert module_lint.failed[0].lint_test == "environment_yml_valid"
+
+    def test_modules_environment_yml_file_mixed_dependencies(self):
+        """Test linting a module with mixed-type dependencies (strings and pip dict)"""
+        with open(self.bpipe_test_module_path / "environment.yml") as fh:
+            yaml_content = yaml.safe_load(fh)
+
+        # Create mixed dependencies with strings and pip dict in wrong order
+        yaml_content["dependencies"] = [
+            "python=3.8",
+            {"pip": ["zzz-package==1.0.0", "aaa-package==2.0.0"]},
+            "bioconda::samtools=1.15.1",
+            "bioconda::fastqc=0.12.1",
+            "pip=23.3.1",
+        ]
+
+        with open(self.bpipe_test_module_path / "environment.yml", "w") as fh:
+            fh.write(yaml.dump(yaml_content))
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Check that the dependencies were sorted correctly
+        with open(self.bpipe_test_module_path / "environment.yml") as fh:
+            sorted_yaml = yaml.safe_load(fh)
+
+        expected_deps = [
+            "bioconda::fastqc=0.12.1",
+            "bioconda::samtools=1.15.1",
+            "pip=23.3.1",
+            {"pip": ["aaa-package==2.0.0", "zzz-package==1.0.0"]},
+            "python=3.8",
+        ]
+
+        assert sorted_yaml["dependencies"] == expected_deps
+        assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+        assert len(module_lint.warned) >= 0
+
+    def test_modules_environment_yml_file_default_channel_fails(self):
+        """Test linting a module with a default channel set in the environment.yml file, which should fail"""
+        with open(self.bpipe_test_module_path / "environment.yml") as fh:
+            yaml_content = yaml.safe_load(fh)
+        yaml_content["channels"] = ["bioconda", "default"]
+        with open(self.bpipe_test_module_path / "environment.yml", "w") as fh:
+            fh.write(yaml.dump(yaml_content))
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+        assert len(module_lint.passed) > 0
+        assert len(module_lint.warned) >= 0
+        assert module_lint.failed[0].lint_test == "environment_yml_valid"
