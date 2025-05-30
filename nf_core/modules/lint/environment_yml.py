@@ -5,7 +5,7 @@ from pathlib import Path
 import ruamel.yaml
 from jsonschema import exceptions, validators
 
-from nf_core.components.lint import ComponentLint, LintExceptionError
+from nf_core.components.lint import ComponentLint, LintExceptionError, LintResult
 from nf_core.components.nfcore_component import NFCoreComponent
 
 log = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                     # Convert to string for comparison
                     str_x = str(x)
                     # If it's a pip package (but not pip itself), put it after other conda packages
-                    if str_x.startswith('pip=') or str_x == 'pip':
+                    if str_x.startswith("pip=") or str_x == "pip":
                         return (1, str_x)  # pip comes after other conda packages
                     else:
                         return (0, str_x)  # regular conda packages come first
@@ -150,7 +150,8 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
 
             if is_sorted:
                 module_lint_object.passed.append(
-                    (
+                    LintResult(
+                        module,
                         "environment_yml_sorted",
                         "The dependencies in the module's `environment.yml` are sorted correctly",
                         module.environment_yml,
@@ -173,7 +174,8 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                     yaml.dump(env_yml, fh)
 
                 module_lint_object.passed.append(
-                    (
+                    LintResult(
+                        module,
                         "environment_yml_sorted",
                         "The dependencies in the module's `environment.yml` have been sorted",
                         module.environment_yml,
