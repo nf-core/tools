@@ -120,8 +120,17 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
                     else:
                         others.append(term)
 
-                # Sort non-dict dependencies (strings) alphabetically
-                others.sort(key=str)
+                # Sort non-dict dependencies with special handling for pip
+                def sort_key(x):
+                    # Convert to string for comparison
+                    str_x = str(x)
+                    # If it's a pip package (but not pip itself), put it after other conda packages
+                    if str_x.startswith('pip=') or str_x == 'pip':
+                        return (1, str_x)  # pip comes after other conda packages
+                    else:
+                        return (0, str_x)  # regular conda packages come first
+
+                others.sort(key=sort_key)
 
                 # Sort any lists within dict dependencies
                 for dict_term in dicts:

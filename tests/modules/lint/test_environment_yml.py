@@ -276,10 +276,10 @@ class TestModulesEnvironmentYml(TestModules):
         # Create mixed dependencies with strings and pip dict in wrong order
         yaml_content["dependencies"] = [
             "python=3.8",
-            {"pip": ["zzz-package==1.0.0", "aaa-package==2.0.0"]},
             "bioconda::samtools=1.15.1",
             "bioconda::fastqc=0.12.1",
             "pip=23.3.1",
+            {"pip": ["zzz-package==1.0.0", "aaa-package==2.0.0"]},
         ]
 
         with open(self.bpipe_test_module_path / "environment.yml", "w") as fh:
@@ -295,8 +295,8 @@ class TestModulesEnvironmentYml(TestModules):
         expected_deps = [
             "bioconda::fastqc=0.12.1",
             "bioconda::samtools=1.15.1",
-            "pip=23.3.1",
             "python=3.8",
+            "pip=23.3.1",
             {"pip": ["aaa-package==2.0.0", "zzz-package==1.0.0"]},
         ]
 
