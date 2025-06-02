@@ -55,13 +55,15 @@ def nf_test_content(self) -> Dict[str, List[str]]:
 
     All these checks can be skipped in the `.nf-core.yml` file using:
 
-        .. code-block:: groovy
+        .. code-block:: yaml
+
             lint:
                 nf_test_content: False
 
-        or
+    or
 
-        .. code-block:: groovy
+        .. code-block:: yaml
+
             lint:
                 nf_test_content:
                     - tests/<test_name>.nf.test
