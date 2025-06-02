@@ -13,23 +13,28 @@ def nf_test_content(self) -> Dict[str, List[str]]:
 
     This lint test checks the following files and content of these files:
 
-    * `*.nf.test` files should specify the `outdir` parameter:
+    * ``*.nf.test`` files should specify the ``outdir`` parameter:
 
-        .. code-block:: groovy
+    .. code-block:: groovy
 
-            when {
-                params {
-                    outdir = "$outputDir"
-                }
+        when {
+            params {
+                outdir = "$outputDir"
             }
+        }
 
     * A `versions.yml` file should be included in the snapshot of all `*.nf.test` files
 
     * The `nextflow.config` file should contain:
-        .. code-block:: groovy
-            modules_testdata_base_path = <path>
 
         .. code-block:: groovy
+
+            modules_testdata_base_path = <path>
+
+        and
+
+        .. code-block:: groovy
+
             pipelines_testdata_base_path = <path>
 
         And should set the correct resource limits, as defined in the `test` profile
@@ -37,38 +42,38 @@ def nf_test_content(self) -> Dict[str, List[str]]:
     * The `nf-test.config` file should:
         * Make sure tests are relative to root directory
 
-            .. code-block:: groovy
+        .. code-block:: groovy
 
-                testsDir "."
+            testsDir "."
 
         * Ensure a user-configurable nf-test directory
 
-            .. code-block:: groovy
+        .. code-block:: groovy
 
-                workDir System.getenv("NFT_WORKDIR") ?: ".nf-test"
+            workDir System.getenv("NFT_WORKDIR") ?: ".nf-test"
 
         * Use a test specific config
 
-            .. code-block:: groovy
+        .. code-block:: groovy
 
-                configFile "tests/nextflow.config"
+            configFile "tests/nextflow.config"
 
     All these checks can be skipped in the `.nf-core.yml` file using:
 
-        .. code-block:: yaml
+    .. code-block:: yaml
 
-            lint:
-                nf_test_content: False
+        lint:
+            nf_test_content: False
 
     or
 
-        .. code-block:: yaml
+    .. code-block:: yaml
 
-            lint:
-                nf_test_content:
-                    - tests/<test_name>.nf.test
-                    - tests/nextflow.config
-                    - nf-test.config
+        lint:
+            nf_test_content:
+                - tests/<test_name>.nf.test
+                - tests/nextflow.config
+                - nf-test.config
     """
     passed: List[str] = []
     failed: List[str] = []
