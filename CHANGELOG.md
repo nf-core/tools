@@ -1,5 +1,19 @@
 # nf-core/tools: Changelog
 
+## v3.3.2dev
+
+### Template
+
+### Linting
+
+- Fix linting of nf-test files content ([#3602](https://github.com/nf-core/tools/pull/3602))
+
+### Modules
+
+### Subworkflows
+
+### General
+
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
 ### Template
