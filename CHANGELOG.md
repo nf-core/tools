@@ -4,7 +4,7 @@
 
 ### Template
 
-- Fix nf-test.yml file formatting ([#3601](https://github.com/nf-core/tools/pull/3601))
+- Use correct comment symbol in `nf-test.yml` ([#3601](https://github.com/nf-core/tools/pull/3601))
 
 ## [v3.3.0 - Tungsten Tamarin](https://github.com/nf-core/tools/releases/tag/3.3.0) - [2025-06-02]
 
