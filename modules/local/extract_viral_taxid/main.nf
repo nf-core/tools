@@ -6,8 +6,8 @@ process EXTRACT_VIRAL_TAXID {
     input:
     val evalue
     // e-vaule threshold to filter the diamond report
-    tuple val(meta1), path(taxpasta_standardised_profile)
-    tuple val(meta) , path(report)
+    tuple val(meta), path(taxpasta_standardised_profile)
+    tuple val(meta), path(report)
 
     output:
     tuple val(meta), path("*viral_taxids.tsv"), optional: true, emit: viral_taxid

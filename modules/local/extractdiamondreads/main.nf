@@ -12,11 +12,11 @@ process EXTRACTCDIAMONDREADS {
     val taxid
     val evalue
     tuple val(meta1), path(tsv)
-    tuple val(meta) , path(fastq)
+    tuple val(meta), path(fastq)
 
     output:
     tuple val(meta), path("*.fastq.gz"), optional: true, emit: extracted_diamond_reads
-    path "versions.yml"                                , emit: versions
+    path "versions.yml", emit: versions
 
     when:
     task.ext.when == null || task.ext.when

@@ -5,7 +5,7 @@ import sys
 import pandas as pd
 
 def parse_args(args=None):
-    Description = "Filter and summarize the BLASTn results."
+    Description = "Filter and summarize the BLAST results."
     parser = argparse.ArgumentParser(description=Description)
     parser.add_argument("--header", required=True, help="Path to a BLASTn header file.")
     parser.add_argument("--input", required=True, help="Path to the raw BLASTn result file.")

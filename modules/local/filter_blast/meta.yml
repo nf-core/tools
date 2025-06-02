@@ -19,10 +19,10 @@ input:
       pattern: "*.txt"
   - header:
       type: file
-      description: A header file for blast hits
+      description: A header file for blast hits. For instance 'qseqid,sseqid,slen,pident,qlen,length,qcovs,nident,evalue,bitscore,staxid,ssciname'.
       pattern: "*.txt"
 output:
-  - filtered_blastn:
+  - filtered_blast:
       type: file
       description: Filtered and summarized blast hits by taxid and subject Scientific Name
       pattern: "*.txt"

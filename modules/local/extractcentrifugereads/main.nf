@@ -10,8 +10,8 @@ process EXTRACTCENTRIFUGEREADS {
 
     input:
     val taxid
-    tuple val(meta1), path(results)
-    tuple val(meta) , path(fastq)
+    tuple val(meta), path(results)
+    tuple val(meta), path(fastq)
 
     output:
     tuple val(meta), path("*.fastq.gz"), optional: true, emit: extracted_centrifuge_reads

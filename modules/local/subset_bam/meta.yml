@@ -1,4 +1,4 @@
-name: filter_blastn
+name: subset_bam
 description: |
   Subset bam file for each taxid
 keywards:
