@@ -28,24 +28,16 @@ class TestLintNfTestContent(TestLint):
         assert "'tests/test.nf.test' does not snapshot a 'versions.yml' file" in result["failed"]
 
     def test_nf_test_content_nextflow_config_file(self):
-        """Test failure if nextflow.config does not contain correct resource limits."""
-        # Create nextflow.config without resource limits or required parameters
+        """Test failure if nextflow.config does not contain correct parameters."""
+        # Create nextflow.config without required parameters
         config_file = Path(self.new_pipeline) / "tests" / "nextflow.config"
         with open(config_file, "w") as f:
-            f.write("// Missing resource limits and parameters")
+            f.write("// Missing parameters")
         lint_obj = nf_core.pipelines.lint.PipelineLint(self.new_pipeline)
         result = lint_obj.nf_test_content()
         assert len(result["failed"]) > 0
         assert "'tests/nextflow.config' does not contain `modules_testdata_base_path`" in result["failed"]
         assert "'tests/nextflow.config' does not contain `pipelines_testdata_base_path`" in result["failed"]
-        assert "'tests/nextflow.config' does not contain correct CPU resource limits. Should be 4" in result["failed"]
-        assert (
-            "'tests/nextflow.config' does not contain correct memory resource limits. Should be 15.GB"
-            in result["failed"]
-        )
-        assert (
-            "'tests/nextflow.config' does not contain correct time resource limits. Should be 1.h" in result["failed"]
-        )
 
     def test_nf_test_content_missing_nf_test_config_file(self):
         """Test failure if nf-test.config does not contain required settings."""

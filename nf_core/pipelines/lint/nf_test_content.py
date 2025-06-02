@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Union
 
-from nf_core.utils import load_tools_config, run_cmd
+from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
 
@@ -124,26 +124,6 @@ def nf_test_content(self) -> Dict[str, List[str]]:
     # Content of nextflow.config file
     conf_fn = Path(self.wf_path, "tests", "nextflow.config")
 
-    # Get the CPU, memory and time values defined in the test profile configuration.
-    cmd = f"config -profile test -flat {self.wf_path}"
-    result = run_cmd("nextflow", cmd)
-    config_values = {"cpus": "4", "memory": "15.GB", "time": "1.h"}
-    if result is not None:
-        stdout, _ = result
-        for config_line in stdout.splitlines():
-            ul = config_line.decode("utf-8")
-            try:
-                k, v = ul.split(" = ", 1)
-                if k == "cpus":
-                    config_values["cpus"] = v.strip("'\"")
-                elif k == "memory":
-                    config_values["memory"] = v.strip("'\"")
-                elif k == "time":
-                    config_values["time"] = v.strip("'\"")
-            except ValueError:
-                log.debug(f"Couldn't find key=value config pair:\n  {ul}")
-                pass
-
     config_checks: Dict[str, Dict[str, str]] = {
         "modules_testdata_base_path": {
             "pattern": "modules_testdata_base_path",
@@ -152,18 +132,6 @@ def nf_test_content(self) -> Dict[str, List[str]]:
         "pipelines_testdata_base_path": {
             "pattern": "pipelines_testdata_base_path",
             "description": "`pipelines_testdata_base_path`",
-        },
-        "cpus": {
-            "pattern": f"cpus: *[\"']?{config_values['cpus']}[\"']?",
-            "description": f"correct CPU resource limits. Should be {config_values['cpus']}",
-        },
-        "memory": {
-            "pattern": f"memory: *[\"']?{config_values['memory']}[\"']?",
-            "description": f"correct memory resource limits. Should be {config_values['memory']}",
-        },
-        "time": {
-            "pattern": f"time: *[\"']?{config_values['time']}[\"']?",
-            "description": f"correct time resource limits. Should be {config_values['time']}",
         },
     }
 
