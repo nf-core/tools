@@ -36,7 +36,7 @@ jobs:
     name: nf-test-changes
     runs-on: #{% endraw %}{% if is_nfcore %} use self-hosted runners
       - runs-on=${{ github.run_id }}-nf-test-changes
-      - runner=4cpu-linux-x64{% else %}use GitHub runners
+      - runner=4cpu-linux-x64{% else %} use GitHub runners
       - "ubuntu-latest"{% endif %}{% raw %}
     outputs:
       shard: ${{ steps.set-shards.outputs.shard }}
@@ -113,7 +113,7 @@ jobs:
     if: always()
     runs-on:  {% endraw %}#{% if is_nfcore %} use self-hosted runners
       - runs-on=${{ github.run_id }}-confirm-pass
-      - runner=2cpu-linux-x64{% else %}use GitHub runners
+      - runner=2cpu-linux-x64{% else %} use GitHub runners
       - "ubuntu-latest"{% endif %}{% raw %}
     steps:
       - name: One or more tests failed
