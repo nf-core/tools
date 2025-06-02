@@ -456,6 +456,7 @@ nf-test:
       - ".github/actions/nf-test/action.yml"
       - "nf-test.config"
       - "tests/default.nf.test"
+    nf_test_content: False
   nfcore_pipelines: False
   custom_pipelines: True
 seqera_platform:

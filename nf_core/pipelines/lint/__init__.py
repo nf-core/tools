@@ -44,6 +44,7 @@ from .modules_json import modules_json
 from .modules_structure import modules_structure
 from .multiqc_config import multiqc_config
 from .nextflow_config import nextflow_config
+from .nf_test_content import nf_test_content
 from .nfcore_yml import nfcore_yml
 from .pipeline_if_empty_null import pipeline_if_empty_null
 from .pipeline_name_conventions import pipeline_name_conventions
@@ -95,6 +96,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     local_component_structure = local_component_structure
     multiqc_config = multiqc_config
     nextflow_config = nextflow_config
+    nf_test_content = nf_test_content
     nfcore_yml = nfcore_yml
     pipeline_name_conventions = pipeline_name_conventions
     pipeline_todos = pipeline_todos
@@ -140,6 +142,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         return [
             "files_exist",
             "nextflow_config",
+            "nf_test_content",
             "files_unchanged",
             "actions_nf_test",
             "actions_awstest",
