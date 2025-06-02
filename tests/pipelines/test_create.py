@@ -134,7 +134,6 @@ class NfcoreCreateTest(unittest.TestCase):
         assert not (pipeline.outdir / "CODE_OF_CONDUCT.md").exists()
         assert not (pipeline.outdir / ".github").exists()
         assert not (pipeline.outdir / "conf" / "igenomes.config").exists()
-        assert not (pipeline.outdir / ".editorconfig").exists()
 
     def test_template_customisation_all_files_grouping(self):
         """Test that all pipeline template files are included in a pipeline customisation group."""

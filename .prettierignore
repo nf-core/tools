@@ -12,4 +12,3 @@ tests/data/pipeline_create_template_skip.yml
 # don't run on things handled by ruff
 *.py
 *.pyc
-

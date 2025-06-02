@@ -206,7 +206,8 @@ class NFCoreComponent:
             input_data = data.split("input:")[1].split("output:")[0]
             for line in input_data.split("\n"):
                 channel_elements: Any = []
-                regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+                line = line.split("//")[0]  # remove any trailing comments
+                regex = r"\b(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
                 matches = re.finditer(regex, line)
                 for _, match in enumerate(matches, start=1):
                     input_val = None
@@ -215,6 +216,10 @@ class NFCoreComponent:
                     elif match.group(4):
                         input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
                     if input_val:
+                        input_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', input_val)[
+                            0
+                        ]  # Takes only first part, avoid commas in quotes
+                        input_val = input_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
                         channel_elements.append({input_val: {}})
                 if len(channel_elements) > 0:
                     inputs.append(channel_elements)
@@ -246,7 +251,7 @@ class NFCoreComponent:
                 return outputs
             output_data = data.split("output:")[1].split("when:")[0]
             regex_emit = r"emit:\s*([^)\s,]+)"
-            regex_elements = r"(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            regex_elements = r"\b(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
             for line in output_data.split("\n"):
                 match_emit = re.search(regex_emit, line)
                 matches_elements = re.finditer(regex_elements, line)
@@ -260,7 +265,10 @@ class NFCoreComponent:
                     elif match_element.group(4):
                         output_val = match_element.group(4)
                     if output_val:
-                        output_val = output_val.strip("'").strip('"')  # remove quotes
+                        output_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', output_val)[
+                            0
+                        ]  # Takes only first part, avoid commas in quotes
+                        output_val = output_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
                         output_channel[match_emit.group(1)].append({output_val: {}})
                 outputs.append(output_channel)
             log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")

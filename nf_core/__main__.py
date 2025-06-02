@@ -54,7 +54,12 @@ from nf_core.commands_subworkflows import (
     subworkflows_test,
     subworkflows_update,
 )
-from nf_core.components.components_utils import NF_CORE_MODULES_REMOTE
+from nf_core.commands_test_datasets import (
+    test_datasets_list_branches,
+    test_datasets_list_remote,
+    test_datasets_search,
+)
+from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.pipelines.download import DownloadError
 from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 
@@ -72,12 +77,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core": [
         {
             "name": "Commands",
-            "commands": [
-                "pipelines",
-                "modules",
-                "subworkflows",
-                "interface",
-            ],
+            "commands": ["pipelines", "modules", "subworkflows", "test-datasets", "interface"],
         },
     ],
     "nf-core pipelines": [
@@ -111,6 +111,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
     ],
     "nf-core pipelines schema": [{"name": "Schema commands", "commands": ["validate", "build", "lint", "docs"]}],
+    "nf-core test-datasets": [{"name": "For developers", "commands": ["search", "list", "list-branches"]}],
 }
 click.rich_click.OPTION_GROUPS = {
     "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
@@ -1748,6 +1749,80 @@ def command_subworkflows_update(
     )
 
 
+# nf-core test-dataset subcommands
+@nf_core_cli.group()
+@click.pass_context
+def test_datasets(ctx):
+    """
+    Commands to manage nf-core test datasets.
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
+
+# nf-core test-dataset search
+@test_datasets.command("search", short_help="Search files in the nf-core/test-datasets repository")
+@click.pass_context
+@click.option("-b", "--branch", type=str, help="Branch in the test-datasets repository to reduce search to")
+@click.option(
+    "-p",
+    "--generate-nf-path",
+    is_flag=True,
+    default=False,
+    help="Auto-generate a file path for use in nextflow code based on the branch and query result",
+)
+@click.option(
+    "-u",
+    "--generate-dl-url",
+    is_flag=True,
+    default=False,
+    help="Auto-generate a github url for downloading the test data file based on the branch and query result",
+)
+@click.argument("query", required=False)
+def command_test_dataset_search(ctx, branch, generate_nf_path, generate_dl_url, query):
+    """
+    Search files filtered by QUERY on a specified branch in the nf-core/test-datasets repository.
+    If no QUERY is given or QUERY is ambiguous, an auto-completion form is shown.
+    """
+    test_datasets_search(ctx, branch, generate_nf_path, generate_dl_url, query)
+
+
+# nf-core test-dataset search
+@test_datasets.command("list")
+@click.pass_context
+@click.option("-b", "--branch", type=str, help="Branch in the test-datasets repository to reduce search to")
+@click.option(
+    "-p",
+    "--generate-nf-path",
+    is_flag=True,
+    default=False,
+    help="Auto-generate a file path for use in nextflow code based on the branch and query result",
+)
+@click.option(
+    "-u",
+    "--generate-dl-url",
+    is_flag=True,
+    default=False,
+    help="Auto-generate a github url for downloading the test data file based on the branch and query result",
+)
+def command_test_dataset_list_remote(ctx, branch, generate_nf_path, generate_dl_url):
+    """
+    List files on a specified branch in the nf-core/test-datasets repository.
+    """
+    test_datasets_list_remote(ctx, branch, generate_nf_path, generate_dl_url)
+
+
+# nf-core test-datasets list-branches
+@test_datasets.command("list-branches")
+@click.pass_context
+def command_test_datasets_list_branches(ctx):
+    """
+    List remote branches with test data in the nf-core/test-dataset repository.
+    """
+    test_datasets_list_branches(ctx)
+
+
 ## DEPRECATED commands since v3.0.0
 
 
@@ -2005,7 +2080,7 @@ def command_bump_version(ctx, new_version, directory, nextflow):
 @click.pass_context
 def command_list(ctx, keywords, sort, json, show_archived):
     """
-    DEPREUse `nf-core pipelines list` instead.CATED
+    Use `nf-core pipelines list` instead.
     """
     log.warning(
         "The `[magenta]nf-core list[/]` command is deprecated. Use `[magenta]nf-core pipelines list[/]` instead."

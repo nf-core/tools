@@ -3,7 +3,7 @@ import json
 import shutil
 from pathlib import Path
 
-from nf_core.components.components_utils import (
+from nf_core.components.constants import (
     NF_CORE_MODULES_DEFAULT_BRANCH,
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
