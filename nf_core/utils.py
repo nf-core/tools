@@ -1164,6 +1164,7 @@ class NFCoreYamlLintConfig(BaseModel):
     schema for linting config in `.nf-core.yml` should cover:
 
     .. code-block:: yaml
+
         files_unchanged:
             - .github/workflows/branch.yml
         modules_config: False
