@@ -176,12 +176,13 @@ class HelpText(Markdown):
 class PipelineFeature(Static):
     """Widget for the selection of pipeline features."""
 
-    def __init__(self, markdown: str, title: str, subtitle: str, field_id: str, **kwargs) -> None:
+    def __init__(self, markdown: str, title: str, subtitle: str, field_id: str, default: bool, **kwargs) -> None:
         super().__init__(**kwargs)
         self.markdown = markdown
         self.title = title
         self.subtitle = subtitle
         self.field_id = field_id
+        self.default = default
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """When the button is pressed, change the type of the button."""
@@ -198,7 +199,7 @@ class PipelineFeature(Static):
         Hidden row with a help text box.
         """
         yield HorizontalScroll(
-            Switch(value=True, id=self.field_id),
+            Switch(value=self.default, id=self.field_id),
             Static(self.title, classes="feature_title"),
             Static(self.subtitle, classes="feature_subtitle"),
             Button("Show help", id="show_help", variant="primary"),

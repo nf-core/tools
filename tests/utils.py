@@ -158,7 +158,6 @@ def create_tmp_pipeline(no_git: bool = False) -> Tuple[Path, Path, str, Path]:
             is_nfcore=None,
             skip_features=None,
             outdir=None,
-            gpu=False,
         ),
         bump_version=None,
     )

@@ -23,7 +23,7 @@ class CustomPipeline(Screen):
             )
         )
         yield Horizontal(
-            Switch(id="toggle_all", value=True),
+            Switch(id="toggle_all", value=False),
             Static("Toggle all features", classes="feature_title"),
             classes="custom_grid",
         )
@@ -39,9 +39,15 @@ class CustomPipeline(Screen):
         for name, feature in self.parent.template_features_yml.items():
             if feature["custom_pipelines"]:
                 self.query_one("#features").mount(
-                    PipelineFeature(feature["help_text"], feature["short_description"], feature["description"], name)
+                    PipelineFeature(
+                        feature["help_text"],
+                        feature["short_description"],
+                        feature["description"],
+                        name,
+                        feature["default"],
+                    )
                 )
-        self.query_one("#toggle_all", Switch).value = True
+        self.query_one("#toggle_all", Switch).value = False
 
     @on(Button.Pressed, "#continue")
     def on_button_pressed(self, event: Button.Pressed) -> None:

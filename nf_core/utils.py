@@ -1141,8 +1141,6 @@ class NFCoreTemplateConfig(BaseModel):
     """ Skip features. See https://nf-co.re/docs/nf-core-tools/pipelines/create for a list of features. """
     is_nfcore: Optional[bool] = None
     """ Whether the pipeline is an nf-core pipeline. """
-    gpu: Optional[bool] = False
-    """ Whether the pipeline uses GPU. """
 
     # convert outdir to str
     @field_validator("outdir")
