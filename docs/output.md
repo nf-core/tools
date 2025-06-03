@@ -105,7 +105,7 @@ The `flye` directory will only be present if `--perform_longread_denovo` is supp
 
 ### BLAST
 
-Use `BLAST(n/x)` to identify the closest reference genomes for the target reads or consensus sequences. `BLAST(n/x)` could be run on
+Use `BLAST(n/x)` to identify the closest reference genomes for the target reads or consensus sequences. `BLAST(n/x)` could be run on:
 
 - Extracted reads assigned to a specific taxID when the number of reads is below `params.min_read_counts`.
 - Contigs or scaffolds from de novo assembly when the number of extracted reads for a given taxID exceeds `params.min_read_counts`.
@@ -114,7 +114,7 @@ Use `BLAST(n/x)` to identify the closest reference genomes for the target reads 
 
 #### Verify identified species
 
-Run `BLAST(n/x)` on reads classified as viruses, or on reads corresponding to a user-defined list of taxIDs.
+Run `BLAST(n/x)` on reads classified as viruses by `kraken2`, `Centrifuge` or `DIAMOND`, or on reads corresponding to a user-defined list of taxIDs.
 
 <details markdown="1">
 <summary>Output files</summary>

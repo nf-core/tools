@@ -11,8 +11,7 @@ process EXTRACTCDIAMONDREADS {
     input:
     val taxid
     val evalue
-    tuple val(meta1), path(tsv)
-    tuple val(meta), path(fastq)
+    tuple val(meta), path(tsv), path(fastq)
 
     output:
     tuple val(meta), path("*.fastq.gz"), optional: true, emit: extracted_diamond_reads
