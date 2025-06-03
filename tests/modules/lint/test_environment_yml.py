@@ -205,7 +205,7 @@ def test_environment_yml_sorting(setup_lint_environment, input_content, expected
 
     assert_yaml_result(test_file, expected)
     # Check linter passed for sorting
-    assert any("environment_yml_sorted" in x for x in [p[0] for p in lint.passed])
+    assert any("environment_yml_sorted" in x for x in [p.lint_test for p in lint.passed])
 
 
 @pytest.mark.parametrize(
