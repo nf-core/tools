@@ -35,7 +35,7 @@ github:
       - "nextflow_badge"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: True
 
 github_badges:
   skippable_paths: False
@@ -57,7 +57,7 @@ github_badges:
       - "nfcore_template_badge"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: True
 
 changelog:
   skippable_paths:
@@ -73,7 +73,7 @@ changelog:
       - "CHANGELOG.md"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 license:
   skippable_paths:
@@ -90,7 +90,7 @@ license:
       - "LICENSE"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 # Continuous Integration & Testing
 
@@ -119,7 +119,7 @@ ci:
       - ".github/workflows/linting.yml"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 test_config:
   skippable_paths:
@@ -153,7 +153,7 @@ test_config:
       - ".github/PULL_REQUEST_TEMPLATE.md"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 nf-test:
   skippable_paths:
@@ -184,7 +184,7 @@ nf-test:
       - "tests/default.nf.test"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 # Components & Modules
 igenomes:
@@ -210,7 +210,7 @@ igenomes:
       - "conf/igenomes_ignored.config"
   nfcore_pipelines: True
   custom_pipelines: True
-  default: False
+  default: true
 
 modules:
   skippable_paths:
@@ -235,7 +235,7 @@ modules:
       - "modules.json"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 multiqc:
   skippable_paths:
@@ -257,7 +257,7 @@ multiqc:
     multiqc_config: False
   nfcore_pipelines: True
   custom_pipelines: True
-  default: False
+  default: true
 
 fastqc:
   skippable_paths:
@@ -269,7 +269,7 @@ fastqc:
     The pipeline will include the FastQC module.
   nfcore_pipelines: True
   custom_pipelines: True
-  default: False
+  default: true
 
 nf_schema:
   skippable_paths:
@@ -292,11 +292,11 @@ nf_schema:
     nextflow_config: False
   nfcore_pipelines: True
   custom_pipelines: True
-  default: False
+  default: true
 
 downstream_samplesheet:
   skippable_paths:
-    - "subworkflows/local/generate_downstream_samplesheets"
+    - "subworkflows"
   short_description: "Generate downstream samplesheets"
   description: "The pipeline will include the generate_downstream_samplesheets subworkflow for the generation of a samplesheet for other downstream pipelines."
   help_text: |
@@ -304,7 +304,7 @@ downstream_samplesheet:
     The subworkflow generate_downstream_samplesheets provides a base template for generating samplesheets by taking a specified input channel of i.e. reads or fasta extracts its metadata for generating samplesheets.
   nfcore_pipelines: True
   custom_pipelines: True
-  default: False
+  default: true
 
 gpu:
   skippable_paths: False
@@ -343,7 +343,7 @@ nf_core_configs:
     included_configs: False
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 is_nfcore:
   skippable_paths:
@@ -385,7 +385,7 @@ is_nfcore:
       - "report_comment"
   nfcore_pipelines: False
   custom_pipelines: False
-  default: False
+  default: true
 
 seqera_platform:
   skippable_paths:
@@ -399,7 +399,7 @@ seqera_platform:
     You can extend this file adding any other desired configuration.
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 # Development Environments
 gitpod:
@@ -414,7 +414,7 @@ gitpod:
     This is useful to have all the tools ready for pipeline development.
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 codespaces:
   skippable_paths:
@@ -431,7 +431,7 @@ codespaces:
       - ".github/CONTRIBUTING.md"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 vscode:
   skippable_paths:
@@ -444,7 +444,7 @@ vscode:
     Adds the `.vscode` directory to the pipelinerepository.
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 # Code Quality
 code_linters:
@@ -468,7 +468,7 @@ code_linters:
       - ".prettierrc.yml"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 # Documentation & Metadata
 citations:
@@ -487,7 +487,7 @@ citations:
       - "CITATIONS.md"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 documentation:
   skippable_paths:
@@ -509,7 +509,7 @@ documentation:
       - "docs/usage.md"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 rocrate:
   skippable_paths:
@@ -526,7 +526,7 @@ rocrate:
       - "ro-crate-metadata.json"
     files_unchanged:
       - ".prettierignore"
-  default: False
+  default: true
 
 # Notifications
 email:
@@ -547,7 +547,7 @@ email:
       - ".prettierignore"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 adaptivecard:
   skippable_paths:
@@ -562,7 +562,7 @@ adaptivecard:
       - ".prettierignore"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 
 slackreport:
   skippable_paths:
@@ -576,5 +576,5 @@ slackreport:
       - ".prettierignore"
   nfcore_pipelines: False
   custom_pipelines: True
-  default: False
+  default: true
 # newest version bump
