@@ -630,7 +630,7 @@ class DownloadWorkflow:
     def download_wf_files(self, revision, wf_sha, download_url):
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
         log.debug(f"Downloading {download_url}")
-        
+
         # Download GitHub zip file into memory and extract
         content = gh_api.get(f"https://api.github.com/repos/{self.pipeline}/zipball/{wf_sha}").content
 
