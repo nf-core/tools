@@ -4,7 +4,6 @@
 
 ### Template
 
-- Avoid overriding `NFT_DIFF` and `NFT_DIFF_ARGS` in `nf-test` action ([#3605](https://github.com/nf-core/tools/pull/3605))
 - Avoid overriding `NFT_DIFF` and `NFT_DIFF_ARGS` in `nf-test` action ([#3606](https://github.com/nf-core/tools/pull/3606))
 
 ### Linting
