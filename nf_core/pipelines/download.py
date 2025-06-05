@@ -269,8 +269,8 @@ class DownloadWorkflow:
         # Download the pipeline files for each selected revision
         log.info("Downloading workflow files from GitHub")
 
-        for item in zip(self.revision, self.wf_sha.values(), self.wf_download_url.values()):
-            revision_dirname = self.download_wf_files(revision=item[0], wf_sha=item[1], download_url=item[2])
+        for item in zip(self.revision, self.wf_sha.values()):
+            revision_dirname = self.download_wf_files(revision=item[0], wf_sha=item[1])
 
             if self.include_configs:
                 try:
@@ -627,14 +627,17 @@ class DownloadWorkflow:
         if self.compress_type == "none":
             self.compress_type = None
 
-    def download_wf_files(self, revision, wf_sha, download_url):
+    def download_wf_files(self, revision, wf_sha):
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
-        log.debug(f"Downloading {download_url}")
 
+        api_url = f"https://api.github.com/repos/{self.pipeline}/commits/{wf_sha}"
+        log.debug(f"Downloading from API {api_url}")
+ 
         # Download GitHub zip file into memory and extract
-        content = gh_api.get(f"https://api.github.com/repos/{self.pipeline}/zipball/{wf_sha}").content
+        content = gh_api.get(api_url).content
 
         with ZipFile(io.BytesIO(content)) as zipfile:
+            topdir = zipfile.namelist()[0]
             zipfile.extractall(self.outdir)
 
         # create a filesystem-safe version of the revision name for the directory
@@ -644,9 +647,8 @@ class DownloadWorkflow:
             revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", self.pipeline + revision_dirname)
 
         # Rename the internal directory name to be more friendly
-        gh_name = f"{re.sub('[^0-9a-zA-Z]+', '-', self.pipeline)}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
         os.rename(
-            os.path.join(self.outdir, gh_name),
+            os.path.join(self.outdir, topdir),
             os.path.join(self.outdir, revision_dirname),
         )
 
