@@ -105,7 +105,10 @@ class ModuleVersionBumper(ComponentCommand):
                 raise nf_core.modules.modules_utils.ModuleExceptionError(
                     "You cannot specify a tool and request all tools to be bumped."
                 )
-            nfcore_modules = [m for m in nfcore_modules if m.component_name == module]
+            if module.endswith("/"):
+                nfcore_modules = [m for m in nfcore_modules if m.component_name.startswith(module)]
+            else:
+                nfcore_modules = [m for m in nfcore_modules if m.component_name == module]
             if len(nfcore_modules) == 0:
                 raise nf_core.modules.modules_utils.ModuleExceptionError(
                     f"Could not find the specified module: '{module}'"
