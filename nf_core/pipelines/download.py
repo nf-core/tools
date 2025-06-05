@@ -632,7 +632,7 @@ class DownloadWorkflow:
 
         api_url = f"https://api.github.com/repos/{self.pipeline}/commits/{wf_sha}"
         log.debug(f"Downloading from API {api_url}")
- 
+
         # Download GitHub zip file into memory and extract
         content = gh_api.get(api_url).content
 
