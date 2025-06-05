@@ -6,7 +6,7 @@
 
 ### Linting
 
-- Fix linting of nf-test files content ([#3602](https://github.com/nf-core/tools/pull/3602))
+- Fix linting of nf-test files content ([#3603](https://github.com/nf-core/tools/pull/3603))
 
 ### Modules
 
