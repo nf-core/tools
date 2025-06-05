@@ -269,11 +269,6 @@ class DownloadWorkflow:
         # Download the pipeline files for each selected revision
         log.info("Downloading workflow files from GitHub")
 
-        print(self.wf_revisions)
-        print(self.wf_branches)
-        print(self.wf_sha)
-        print(self.wf_download_url)
-        print(self.nf_config)
         for item in zip(self.revision, self.wf_sha.values(), self.wf_download_url.values()):
             revision_dirname = self.download_wf_files(revision=item[0], wf_sha=item[1], download_url=item[2])
 
@@ -635,7 +630,7 @@ class DownloadWorkflow:
     def download_wf_files(self, revision, wf_sha, download_url):
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
         log.debug(f"Downloading {download_url}")
-        print(f"Downloading {self.pipeline} revision '{revision}' from {download_url}")
+        
         # Download GitHub zip file into memory and extract
         content = gh_api.get("https://api.github.com/repos/{}/zipball/{}".format(self.pipeline, wf_sha)).content
 
