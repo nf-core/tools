@@ -632,7 +632,7 @@ class DownloadWorkflow:
         log.debug(f"Downloading {download_url}")
         
         # Download GitHub zip file into memory and extract
-        content = gh_api.get("https://api.github.com/repos/{}/zipball/{}".format(self.pipeline, wf_sha)).content
+        content = gh_api.get(f"https://api.github.com/repos/{self.pipeline}/zipball/{wf_sha}").content
 
         with ZipFile(io.BytesIO(content)) as zipfile:
             zipfile.extractall(self.outdir)
@@ -644,7 +644,7 @@ class DownloadWorkflow:
             revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", self.pipeline + revision_dirname)
 
         # Rename the internal directory name to be more friendly
-        gh_name = f"{re.sub("[^0-9a-zA-Z]+", "-", self.pipeline)}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
+        gh_name = f"{re.sub('[^0-9a-zA-Z]+', '-', self.pipeline)}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
         os.rename(
             os.path.join(self.outdir, gh_name),
             os.path.join(self.outdir, revision_dirname),
