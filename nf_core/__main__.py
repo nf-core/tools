@@ -428,6 +428,13 @@ def command_pipelines_lint(
     default=4,
     help="Number of allowed parallel tasks",
 )
+@click.option(
+    "-a",
+    "--api_download",
+    is_flag=True,
+    default=False,
+    help="Download repos via GitHub API (allows for authentication).",
+)
 @click.pass_context
 def command_pipelines_download(
     ctx,
@@ -444,6 +451,7 @@ def command_pipelines_download(
     container_cache_utilisation,
     container_cache_index,
     parallel_downloads,
+    api_download,
 ):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
@@ -463,6 +471,7 @@ def command_pipelines_download(
         container_cache_utilisation,
         container_cache_index,
         parallel_downloads,
+        api_download,
     )
 
 

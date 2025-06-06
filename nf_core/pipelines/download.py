@@ -103,6 +103,7 @@ class DownloadWorkflow:
         container_cache_utilisation (str): If a local or remote cache of already existing container images should be considered. Defaults to None.
         container_cache_index (str): An index for the remote container cache. Defaults to None.
         parallel_downloads (int): The number of parallel downloads to use. Defaults to 4.
+        authenticated (bool): If True, use the GitHub API to download. Requires authentication e.g., via GITHUB_TOKEN. Defaults to False.
     """
 
     def __init__(
@@ -120,6 +121,7 @@ class DownloadWorkflow:
         container_cache_utilisation=None,
         container_cache_index=None,
         parallel_downloads=4,
+        api_download=False,
     ):
         self.pipeline = pipeline
         if isinstance(revision, str):
@@ -161,6 +163,8 @@ class DownloadWorkflow:
         self.container_cache_index = container_cache_index
         # allows to specify a container library / registry or a respective mirror to download images from
         self.parallel_downloads = parallel_downloads
+        # if authenticated is True, we will use the GitHub API to download the workflow files.
+        self.api_download = api_download
 
         self.wf_revisions = []
         self.wf_branches: Dict[str, Any] = {}
@@ -269,8 +273,8 @@ class DownloadWorkflow:
         # Download the pipeline files for each selected revision
         log.info("Downloading workflow files from GitHub")
 
-        for item in zip(self.revision, self.wf_sha.values()):
-            revision_dirname = self.download_wf_files(revision=item[0], wf_sha=item[1])
+        for item in zip(self.revision, self.wf_sha.values(), self.wf_download_url.values()):
+            revision_dirname = self.download_wf_files(revision=item[0], wf_sha=item[1], download_url=item[2])
 
             if self.include_configs:
                 try:
@@ -627,18 +631,26 @@ class DownloadWorkflow:
         if self.compress_type == "none":
             self.compress_type = None
 
-    def download_wf_files(self, revision, wf_sha):
+    def download_wf_files(self, revision, wf_sha, download_url):
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
 
-        api_url = f"https://api.github.com/repos/{self.pipeline}/commits/{wf_sha}"
-        log.debug(f"Downloading from API {api_url}")
+        if not self.api_download:
+            log.debug(f"Downloading {download_url}")
+            # Download GitHub zip file into memory and extract
+            url = requests.get(download_url)
+            with ZipFile(io.BytesIO(url.content)) as zipfile:
+                zipfile.extractall(self.outdir)
+            topdir = f"{self.pipeline}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
+        else:
+            api_url = f"https://api.github.com/repos/{self.pipeline}/zipball/{wf_sha}"
+            log.debug(f"Downloading from API {api_url}")
 
-        # Download GitHub zip file into memory and extract
-        content = gh_api.get(api_url).content
+            # Download GitHub zip file into memory and extract
+            content = gh_api.get(api_url).content
 
-        with ZipFile(io.BytesIO(content)) as zipfile:
-            topdir = zipfile.namelist()[0]
-            zipfile.extractall(self.outdir)
+            with ZipFile(io.BytesIO(content)) as zipfile:
+                topdir = zipfile.namelist()[0]
+                zipfile.extractall(self.outdir)
 
         # create a filesystem-safe version of the revision name for the directory
         revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", revision)
