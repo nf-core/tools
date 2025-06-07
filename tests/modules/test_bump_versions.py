@@ -29,6 +29,12 @@ class TestModulesBumpVersions(TestModules):
         version_bumper.bump_versions(all_modules=True)
         assert len(version_bumper.failed) == 0
 
+    def test_modules_bump_versions_toolkit(self):
+        """Test updating a single toolkit"""
+        version_bumper = nf_core.modules.bump_versions.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
+        version_bumper.bump_versions(module="fgbio/")
+        assert len(version_bumper.failed) == 0
+
     def test_modules_bump_versions_fail(self):
         """Fail updating a module with wrong name"""
         version_bumper = nf_core.modules.bump_versions.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
