@@ -46,8 +46,12 @@ class ModuleVersionBumper(ComponentCommand):
         self.tools_config: Optional[NFCoreYamlConfig]
 
     def bump_versions(
-        self, module: Union[str, None] = None, all_modules: bool = False, show_uptodate: bool = False
-    ) -> None:
+        self,
+        module: Union[str, None] = None,
+        all_modules: bool = False,
+        show_uptodate: bool = False,
+        _dryrun: bool = False,
+    ) -> List[NFCoreComponent]:
         """
         Bump the container and conda version of single module or all modules
 
@@ -59,6 +63,10 @@ class ModuleVersionBumper(ComponentCommand):
         Args:
             module: a specific module to update
             all_modules: whether to bump versions for all modules
+            show_uptodate: whether to show up-to-date modules as well
+
+        Returns:
+            the modules updated
         """
         self.up_to_date = []
         self.updated = []
@@ -114,6 +122,10 @@ class ModuleVersionBumper(ComponentCommand):
                     f"Could not find the specified module: '{module}'"
                 )
 
+        # mainly used for testing, return the list of nfcore_modules selected
+        if _dryrun:
+            return nfcore_modules
+
         progress_bar = Progress(
             "[bold blue]{task.description}",
             BarColumn(bar_width=None),
@@ -132,6 +144,8 @@ class ModuleVersionBumper(ComponentCommand):
                 self.bump_module_version(mod)
 
         self._print_results()
+
+        return nfcore_modules
 
     def bump_module_version(self, module: NFCoreComponent) -> bool:
         """
