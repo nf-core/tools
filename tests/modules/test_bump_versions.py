@@ -73,7 +73,7 @@ class TestModulesBumpVersions(TestModules):
         # run it with dryrun to return the modules that it found
         version_bumper = nf_core.modules.bump_versions.ModuleVersionBumper(pipeline_dir=root_dir)
         modules = version_bumper.bump_versions(all_modules=True, _dryrun=True)
-        assert [m.component_name for m in modules] == ["fqgrep", "fqtk"]
+        assert sorted([m.component_name for m in modules]) == sorted(["fqgrep", "fqtk"])
 
     def test_modules_bump_versions_submodules(self):
         """Test updating a submodules"""
