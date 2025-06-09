@@ -12,6 +12,8 @@
 
 ### Modules
 
+- TEMPLATE: fix nf-test scope to ignore nf-core module/swf tests ([#3609](https://github.com/nf-core/tools/pull/3609))
+
 ### Subworkflows
 
 ### General
