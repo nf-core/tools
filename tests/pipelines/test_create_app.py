@@ -12,11 +12,11 @@ async def test_app_bindings():
     app = PipelineCreateApp()
     async with app.run_test() as pilot:
         # Test pressing the D key
-        assert app.dark
+        assert app.theme == "textual-dark"
         await pilot.press("d")
-        assert not app.dark
+        assert app.theme == "textual-light"
         await pilot.press("d")
-        assert app.dark
+        assert app.theme == "textual-dark"
 
         # Test pressing the Q key
         await pilot.press("q")
