@@ -4,6 +4,8 @@
 
 ### Template
 
+- Avoid overriding `NFT_DIFF` and `NFT_DIFF_ARGS` in `nf-test` action ([#3606](https://github.com/nf-core/tools/pull/3606))
+
 ### Linting
 
 - Fix linting of nf-test files content ([#3603](https://github.com/nf-core/tools/pull/3603))
