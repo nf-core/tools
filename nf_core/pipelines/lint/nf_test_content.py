@@ -141,6 +141,9 @@ def nf_test_content(self) -> Dict[str, List[str]]:
             "description": "`pipelines_testdata_base_path`",
         },
     }
+    # Check if tests/nextflow.config is present
+    if not conf_fn.exists():
+        failed.append(f"'{conf_fn.relative_to(self.wf_path)}' does not exist")
 
     if nf_test_content_conf is None or str(conf_fn.relative_to(self.wf_path)) not in nf_test_content_conf:
         checks_passed = {check: False for check in config_checks}
