@@ -5,6 +5,7 @@
 ### Template
 
 - Avoid overriding `NFT_DIFF` and `NFT_DIFF_ARGS` in `nf-test` action ([#3606](https://github.com/nf-core/tools/pull/3606))
+- Set `conda.cacheDir` to `../../shared/conda` to avoid duplicate creation([#3610](https://github.com/nf-core/tools/pull/3610))
 
 ### Linting
 
