@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an idea for the nf-core/metaval pipeline
+description: Suggest an idea for the genomic-medicine-sweden/metaval pipeline
 labels: enhancement
 body:
   - type: textarea
