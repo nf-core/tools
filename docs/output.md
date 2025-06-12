@@ -38,8 +38,6 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 
 [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/) gives general quality metrics about your sequenced reads. It provides information about the quality score distribution across your reads, per base sequence content (%A/T/G/C), adapter contamination and overrepresented sequences. For further reading and documentation see the [FastQC help pages](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/Help/).
 
-<<<<<<< HEAD
-=======
 ### Extract Viral TaxIDs
 
 Extract all taxonomic IDs of viral species predicted by classifiers.
@@ -166,7 +164,6 @@ Call consensus sequences for Illumina reads mapped to pathogen genomes using `sa
 
 The `consensus` directory will only be created if `--perform_screen_pathogens` is supplied along with either `--perform_longread_consensus` or `--perform_shortread_consensus`.
 
->>>>>>> dev
 ### MultiQC
 
 <details markdown="1">

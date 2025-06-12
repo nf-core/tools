@@ -44,16 +44,9 @@ genomic-medicine-sweden/metaval will require the information given bellow.
 | diamond_taxpasta    | Standardized diamond taxonomic profiles for all samples.                                                                                         |
 
 ```csv title="samplesheet.csv"
-<<<<<<< HEAD
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L003_R1_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz
-=======
 sample,run_accession,instrument_platform,fastq_1,fastq_2,kraken2_report,kraken2_result,kraken2_taxpasta,centrifuge_report,centrifuge_result,centrifuge_taxpasta,diamond,diamond_taxpasta
 sample1,run1,ILLUMINA,sample1.unmapped_1.fastq.gz,sample1.unmapped_2.fastq.gz,sample1.kraken2.kraken2.report.txt,sample1.kraken2.kraken2.classifiedreads.txt,kraken2_kraken2-db.tsv,sample1.centrifuge.txt,sample1.centrifuge.results.txt,centrifuge_centrifuge-db.tsv,sample1.diamond.tsv,diamond_diamond-db.tsv
 sample2,run1,ILLUMINA,sample2.unmapped_1.fastq.gz,sample2.unmapped_2.fastq.gz,sample2.kraken2.kraken2.report.txt,sample2.kraken2.kraken2.classifiedreads.txt,kraken2_kraken2-db.tsv,sample2.centrifuge.txt,sample2.centrifuge.results.txt,centrifuge_centrifuge-db.tsv,sample2.diamond.tsv,diamond_diamond-db.tsv
->>>>>>> dev
 ```
 
 ### Optional input
@@ -62,20 +55,7 @@ sample2,run1,ILLUMINA,sample2.unmapped_1.fastq.gz,sample2.unmapped_2.fastq.gz,sa
 
 A concatenated FASTA file containing all the pathogen genomes a user is interested in.
 
-<<<<<<< HEAD
-```csv title="samplesheet.csv"
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP2,AEG588A2_S2_L002_R1_001.fastq.gz,AEG588A2_S2_L002_R2_001.fastq.gz
-CONTROL_REP3,AEG588A3_S3_L002_R1_001.fastq.gz,AEG588A3_S3_L002_R2_001.fastq.gz
-TREATMENT_REP1,AEG588A4_S4_L003_R1_001.fastq.gz,
-TREATMENT_REP2,AEG588A5_S5_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,
-```
-=======
 #### accession2taxid
->>>>>>> dev
 
 Users need to prepare a file containing accession IDs of pathogens and their corresponding taxonomic IDs
 
@@ -88,9 +68,6 @@ Use a custom database or download available [NCBI databases](https://ftp.ncbi.nl
 The example commands for running each workflow are as follows:
 
 ```bash
-<<<<<<< HEAD
-nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir ./results --genome GRCh37 -profile docker
-=======
 # Green Workflow - pathogen screening
 nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir ./results -profile docker --perform_screen_pathogens --pathogens_genomes /path/to/reference.fna --accession2taxid /path/to/accession2taxid.map
 
@@ -100,7 +77,6 @@ nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir 
 # Blue Workflow - Verify User-Defined TaxIDs
 nextflow run genomic-medicine-sweden/metaval --input ./samplesheet.csv --outdir ./results -profile docker --taxid 211044 2886042 --perform_extract_reads --extract_kraken2_reads --extract_centrifuge_reads --extract_diamond_reads
 
->>>>>>> dev
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
@@ -192,11 +168,7 @@ To further assist in reproducibility, you can use share and reuse [parameter fil
 ## Core Nextflow arguments
 
 > [!NOTE]
-<<<<<<< HEAD
-> These options are part of Nextflow and use a _single_ hyphen (pipeline parameters use a double-hyphen)
-=======
 > These options are part of Nextflow and use a _single_ hyphen (pipeline parameters use a double-hyphen).
->>>>>>> dev
 
 ### `-profile`
 
