@@ -36,3 +36,12 @@ template:
   org: genomic-medicine-sweden
   outdir: .
   version: 1.0dev
+template:
+  author: LilyAnderssonLee
+  description: nf-core/taxprofiler post processing
+  force: false
+  is_nfcore: false
+  name: metaval
+  org: genomic-medicine-sweden
+  outdir: .
+  version: 1.0dev
