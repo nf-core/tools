@@ -11,4 +11,3 @@ testing*
 *.pyc
 bin/
 ro-crate-metadata.json
-docs/images/metaval_pipeline_metromap.svg
