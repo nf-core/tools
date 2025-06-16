@@ -25,8 +25,8 @@ import nf_core
 import nf_core.modules.modules_utils
 import nf_core.pipelines.list
 import nf_core.utils
-from nf_core.pipelines.downloads.singularity import SingularityFetcher
-from nf_core.pipelines.downloads.utils import DownloadError, DownloadProgress
+from nf_core.pipelines.download.singularity import SingularityFetcher
+from nf_core.pipelines.download.utils import DownloadError, DownloadProgress
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
 from nf_core.utils import (
     NFCORE_CACHE_DIR,
@@ -679,7 +679,7 @@ class DownloadWorkflow:
             log.debug("Using legacy container fetching")
             self.find_container_images_legacy(workflow_directory)
             return
-        
+
         try:
             # TODO: Select container system via profile. Is this stable enough?
             profile = f"-profile {self.container_system}" if self.container_system else ""

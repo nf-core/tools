@@ -5,7 +5,11 @@ import shutil
 import subprocess
 from typing import Collection, Container, Iterable, List, Optional, Tuple
 
-from nf_core.pipelines.downloads.utils import DownloadProgress, FileDownloader, intermediate_file
+from nf_core.pipelines.download.utils import (
+    DownloadProgress,
+    FileDownloader,
+    intermediate_file,
+)
 
 log = logging.getLogger(__name__)
 
@@ -114,7 +118,10 @@ class SingularityFetcher:
     """
 
     def __init__(
-        self, container_library: Iterable[str], registry_set: Iterable[str], progress: DownloadProgress
+        self,
+        container_library: Iterable[str],
+        registry_set: Iterable[str],
+        progress: DownloadProgress,
     ) -> None:
         self.container_library = list(container_library)
         self.registry_set = registry_set
@@ -231,7 +238,13 @@ class SingularityFetcher:
                         address,
                     ]
                 elif shutil.which("apptainer"):
-                    singularity_command = ["apptainer", "pull", "--name", output_path_tmp.name, address]
+                    singularity_command = [
+                        "apptainer",
+                        "pull",
+                        "--name",
+                        output_path_tmp.name,
+                        address,
+                    ]
                 else:
                     raise OSError(
                         "Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH"

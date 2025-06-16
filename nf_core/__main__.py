@@ -60,7 +60,7 @@ from nf_core.commands_test_datasets import (
     test_datasets_search,
 )
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
-from nf_core.pipelines.download import DownloadError
+from nf_core.pipelines.download.download import DownloadError
 from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 
 # Set up logging as the root logger

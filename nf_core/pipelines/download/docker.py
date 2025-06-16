@@ -10,7 +10,7 @@ from typing import Collection, Container, Iterable, List, Optional, Tuple
 import requests
 import requests_cache
 
-from nf_core.pipelines.downloads.utils import DownloadProgress, intermediate_file
+from nf_core.pipelines.download.utils import DownloadProgress, intermediate_file
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +29,10 @@ class DockerFetcher:
     """
 
     def __init__(
-        self, container_library: Iterable[str], registry_set: Iterable[str], progress: DownloadProgress
+        self,
+        container_library: Iterable[str],
+        registry_set: Iterable[str],
+        progress: DownloadProgress,
     ) -> None:
         self.container_library = list(container_library)
         self.registry_set = registry_set
@@ -130,8 +133,15 @@ class DockerFetcher:
             address = f"docker://{library}/{container.replace('docker://', '')}"
 
         if shutil.which("docker"):
-            download_command = ["docker","image","save",address,"--output",output_path]
-            self.run_docker_command(download_command, container, output_path, address,"download")
+            download_command = [
+                "docker",
+                "image",
+                "save",
+                address,
+                "--output",
+                output_path,
+            ]
+            self.run_docker_command(download_command, container, output_path, address, "download")
         else:
             raise OSError("Docker is needed to pull images, but it is not installed or not in $PATH")
 
@@ -170,7 +180,14 @@ class DockerFetcher:
             # Task should advance in any case. Failure to pull will not kill the download process.
             self.progress.update_main_task(advance=1)
 
-    def _run_docker_command(self, command: List[str], container: str, output_path: str, address: str, task_name: str) -> None:
+    def _run_docker_command(
+        self,
+        command: List[str],
+        container: str,
+        output_path: str,
+        address: str,
+        task_name: str,
+    ) -> None:
         """
         Internal command to run docker commands and error handle them properly
         """
@@ -234,20 +251,12 @@ class DockerFetcher:
             address = f"docker://{library}/{container.replace('docker://', '')}"
 
         if shutil.which("docker"):
-            docker_command = [
-                "docker",
-                "image",
-                "pull",
-                address
-            ]
+            docker_command = ["docker", "image", "pull", address]
             log.debug(f"Building docker image: {address}")
             log.debug(f"Docker command: {' '.join(docker_command)}")
-            self._run_docker_command(docker_command,container,output_path,address,"docker_pull")
+            self._run_docker_command(docker_command, container, output_path, address, "docker_pull")
         else:
             raise OSError("Docker is needed to pull images, but it is not installed or not in $PATH")
- 
-        
-
 
     def copy_image(self, container: str, src_path: str, dest_path: str) -> None:
         """Copy Docker image from one directory to another."""
@@ -308,7 +317,6 @@ class DockerFetcher:
 
             # no library or cache
             else:
-
                 # Handle container download, docker needs images to be pulled before it can save them
 
                 if cache_path and amend_cachedir:
@@ -388,7 +396,7 @@ class ContainerError(Exception):
         def __init__(self, error_log):
             self.error_log = error_log
             self.message = f'[bold red] Cannot save "{self.container}" as it was not pulled [/]\n'
-            self.helpmessage = 'Please pull the image first and confirm that it can be pulled.\n'
+            self.helpmessage = "Please pull the image first and confirm that it can be pulled.\n"
             super().__init__(self.message)
 
     class ImageNotFoundError(FileNotFoundError):
@@ -397,13 +405,13 @@ class ContainerError(Exception):
         def __init__(self, error_log):
             self.error_log = error_log
             if not self.error_log.absolute_URI:
-                self.message = (
-                    f'[bold red]"Pulling "{self.error_log.container}" from "{self.address}" failed.[/]\n'
-                )
+                self.message = f'[bold red]"Pulling "{self.error_log.container}" from "{self.address}" failed.[/]\n'
                 self.helpmessage = f'Saving image of "{self.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.command)}" manually.f\n'
             else:
                 self.message = f'[bold red]"The pipeline requested the download of non-existing container image "{self.address}"[/]\n'
-                self.helpmessage = f'Please try to rerun \n"{" ".join(self.command)}" manually with a different registry.f\n'
+                self.helpmessage = (
+                    f'Please try to rerun \n"{" ".join(self.command)}" manually with a different registry.f\n'
+                )
 
             super().__init__(self.message)
 
@@ -416,12 +424,13 @@ class ContainerError(Exception):
             self.helpmessage = f'Please chose a different library than {self.address}\nor try to locate the "{self.address.split(":")[-1]}" version of "{self.container}" manually.\nPlease troubleshoot the command \n"{" ".join(self.command)}" manually.\n'
             super().__init__(self.message)
 
-
     class OtherError(RuntimeError):
         """Undefined error with the container"""
 
         def __init__(self, error_log):
             self.error_log = error_log
-            self.message = f'[bold red]"The pipeline requested the download of non-existing container image "{self.address}"[/]\n'
+            self.message = (
+                f'[bold red]"The pipeline requested the download of non-existing container image "{self.address}"[/]\n'
+            )
             self.helpmessage = f'Please try to rerun \n"{" ".join(self.command)}" manually with a different registry.\n'
             super().__init__(self.message, self.helpmessage, self.error_log)
