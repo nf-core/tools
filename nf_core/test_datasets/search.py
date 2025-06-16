@@ -22,7 +22,7 @@ def search_datasets(
     generate_dl_url: bool = False,
     ignored_file_prefixes: List[str] = IGNORED_FILE_PREFIXES,
     plain_text_output: bool = False,
-    query: str = "",
+    query: None | str = "",
 ) -> None:
     """
     Search all files on a given branch in the remote nf-core/testdatasets repository on github
@@ -47,6 +47,8 @@ def search_datasets(
         if len(filtered_files) == 1:
             selection = filtered_files[0]
             file_selected = True
+    else:
+        query = ""  # explicitly set query to empty string to avoid None
 
     while not file_selected:
         selection = questionary.autocomplete(
