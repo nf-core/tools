@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import rich
 
@@ -22,7 +22,7 @@ def search_datasets(
     generate_dl_url: bool = False,
     ignored_file_prefixes: List[str] = IGNORED_FILE_PREFIXES,
     plain_text_output: bool = False,
-    query: None | str = "",
+    query: Optional[str] = "",
 ) -> None:
     """
     Search all files on a given branch in the remote nf-core/testdatasets repository on github

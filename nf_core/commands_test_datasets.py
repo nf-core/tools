@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import click
 import rich
@@ -29,7 +30,7 @@ def test_datasets_list_remote(ctx: click.Context, branch: str, generate_nf_path:
 
 
 def test_datasets_search(
-    ctx: click.Context, branch: str, generate_nf_path: bool, generate_dl_url: bool, query: str | None
+    ctx: click.Context, branch: str, generate_nf_path: bool, generate_dl_url: bool, query: Optional[str]
 ) -> None:
     """
     Search all files on a given branch in the remote nf-core/testdatasets repository on github
