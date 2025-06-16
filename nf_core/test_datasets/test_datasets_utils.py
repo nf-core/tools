@@ -6,11 +6,18 @@ from typing import Dict, List, Tuple
 
 import questionary
 import requests
+import rich
 
-from nf_core.utils import determine_base_dir, fetch_wf_config, load_tools_config, nfcore_question_style
+from nf_core.utils import (
+    determine_base_dir,
+    fetch_wf_config,
+    load_tools_config,
+    nfcore_question_style,
+    rich_force_colors,
+)
 
 log = logging.getLogger(__name__)
-
+stdout = rich.console.Console(force_terminal=rich_force_colors())
 
 # Name of nf-core/test-datasets github branch for modules
 MODULES_BRANCH_NAME = "modules"
@@ -24,6 +31,10 @@ IGNORED_FILE_PREFIXES = [
     "README",
     "docs",
 ]
+
+
+# Inline help text to display in autompletion prompts
+AUTOCOMPLETION_HINT = "(press 'tab' to autocomplete)"
 
 
 @dataclass
@@ -196,10 +207,37 @@ def get_or_prompt_branch(maybe_branch: str) -> Tuple[str, List[str]]:
                     branch_prefill = pipeline_name
 
         branch = questionary.autocomplete(
-            "Branch name (press 'tab' to autocomplete):",
+            "Branch name:",
             choices=sorted(all_branches),
             style=nfcore_question_style,
             default=branch_prefill,
+            qmark=AUTOCOMPLETION_HINT,
         ).unsafe_ask()
 
         return branch, all_branches
+
+
+def get_or_prompt_file_selection(files: List[str], query: str | None) -> str:
+    """
+    Prompt with autocompletion to enter a file from a list of files until a valid file is selected.
+    """
+    file_selected = False
+    query = query if query is not None else ""  # ensure query is not None
+
+    if query:
+        # Check if only one file matches the query and directly return it
+        filtered_files = [f for f in files if query in f]
+        if len(filtered_files) == 1:
+            selection = filtered_files[0]
+            file_selected = True
+
+    while not file_selected:
+        selection = questionary.autocomplete(
+            "File:", choices=files, style=nfcore_question_style, default=query, qmark=AUTOCOMPLETION_HINT
+        ).unsafe_ask()
+
+        file_selected = any([selection == file for file in files])
+        if not file_selected:
+            stdout.print("Please select a file.")
+
+    return selection

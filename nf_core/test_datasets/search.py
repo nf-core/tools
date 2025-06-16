@@ -1,6 +1,5 @@
 from typing import List
 
-import questionary
 import rich
 
 from nf_core.test_datasets.test_datasets_utils import (
@@ -9,9 +8,10 @@ from nf_core.test_datasets.test_datasets_utils import (
     create_download_url,
     create_pretty_nf_path,
     get_or_prompt_branch,
+    get_or_prompt_file_selection,
     list_files_by_branch,
 )
-from nf_core.utils import nfcore_question_style, rich_force_colors
+from nf_core.utils import rich_force_colors
 
 stdout = rich.console.Console(force_terminal=rich_force_colors())
 
@@ -39,25 +39,7 @@ def search_datasets(
     tree = list_files_by_branch(branch, all_branches, ignored_file_prefixes)
     files = sum(tree.values(), [])  # flat representation of tree
 
-    file_selected = False
-
-    if query:
-        # Check if only one file matches the query and directly return it
-        filtered_files = [f for f in files if query in f]
-        if len(filtered_files) == 1:
-            selection = filtered_files[0]
-            file_selected = True
-    else:
-        query = ""  # explicitly set query to empty string to avoid None
-
-    while not file_selected:
-        selection = questionary.autocomplete(
-            "File (press 'tab' to autocomplete):", choices=files, style=nfcore_question_style, default=query
-        ).unsafe_ask()
-
-        file_selected = any([selection == file for file in files])
-        if not file_selected:
-            stdout.print("Please select a file.")
+    selection = get_or_prompt_file_selection(files, query)
 
     if generate_nf_path:
         stdout.print(create_pretty_nf_path(selection, branch == MODULES_BRANCH_NAME))
