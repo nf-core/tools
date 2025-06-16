@@ -196,7 +196,10 @@ def get_or_prompt_branch(maybe_branch: str) -> Tuple[str, List[str]]:
                     branch_prefill = pipeline_name
 
         branch = questionary.autocomplete(
-            "Branch name:", choices=sorted(all_branches), style=nfcore_question_style, default=branch_prefill
+            "Branch name (press 'tab' to autocomplete):",
+            choices=sorted(all_branches),
+            style=nfcore_question_style,
+            default=branch_prefill,
         ).unsafe_ask()
 
         return branch, all_branches

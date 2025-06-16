@@ -52,7 +52,7 @@ def search_datasets(
 
     while not file_selected:
         selection = questionary.autocomplete(
-            "File:", choices=files, style=nfcore_question_style, default=query
+            "File (press 'tab' to autocomplete):", choices=files, style=nfcore_question_style, default=query
         ).unsafe_ask()
 
         file_selected = any([selection == file for file in files])
