@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Union
 
-from nf_core.utils import load_tools_config, run_cmd
+from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
 
@@ -13,23 +13,28 @@ def nf_test_content(self) -> Dict[str, List[str]]:
 
     This lint test checks the following files and content of these files:
 
-    * `*.nf.test` files should specify the `outdir` parameter:
+    * ``*.nf.test`` files should specify the ``outdir`` parameter:
 
-        .. code-block:: groovy
+    .. code-block:: groovy
 
-            when {
-                params {
-                    outdir = "$outputDir"
-                }
+        when {
+            params {
+                outdir = "$outputDir"
             }
+        }
 
     * A `versions.yml` file should be included in the snapshot of all `*.nf.test` files
 
     * The `nextflow.config` file should contain:
-        .. code-block:: groovy
-            modules_testdata_base_path = <path>
 
         .. code-block:: groovy
+
+            modules_testdata_base_path = <path>
+
+        and
+
+        .. code-block:: groovy
+
             pipelines_testdata_base_path = <path>
 
         And should set the correct resource limits, as defined in the `test` profile
@@ -37,36 +42,38 @@ def nf_test_content(self) -> Dict[str, List[str]]:
     * The `nf-test.config` file should:
         * Make sure tests are relative to root directory
 
-            .. code-block:: groovy
+        .. code-block:: groovy
 
-                testsDir "."
+            testsDir "."
 
         * Ensure a user-configurable nf-test directory
 
-            .. code-block:: groovy
+        .. code-block:: groovy
 
-                workDir System.getenv("NFT_WORKDIR") ?: ".nf-test"
+            workDir System.getenv("NFT_WORKDIR") ?: ".nf-test"
 
         * Use a test specific config
 
-            .. code-block:: groovy
+        .. code-block:: groovy
 
-                configFile "tests/nextflow.config"
+            configFile "tests/nextflow.config"
 
     All these checks can be skipped in the `.nf-core.yml` file using:
 
-        .. code-block:: groovy
-            lint:
-                nf_test_content: False
+    .. code-block:: yaml
 
-        or
+        lint:
+            nf_test_content: False
 
-        .. code-block:: groovy
-            lint:
-                nf_test_content:
-                    - tests/<test_name>.nf.test
-                    - tests/nextflow.config
-                    - nf-test.config
+    or
+
+    .. code-block:: yaml
+
+        lint:
+            nf_test_content:
+                - tests/<test_name>.nf.test
+                - tests/nextflow.config
+                - nf-test.config
     """
     passed: List[str] = []
     failed: List[str] = []
@@ -124,26 +131,6 @@ def nf_test_content(self) -> Dict[str, List[str]]:
     # Content of nextflow.config file
     conf_fn = Path(self.wf_path, "tests", "nextflow.config")
 
-    # Get the CPU, memory and time values defined in the test profile configuration.
-    cmd = f"config -profile test -flat {self.wf_path}"
-    result = run_cmd("nextflow", cmd)
-    config_values = {"cpus": "4", "memory": "15.GB", "time": "1.h"}
-    if result is not None:
-        stdout, _ = result
-        for config_line in stdout.splitlines():
-            ul = config_line.decode("utf-8")
-            try:
-                k, v = ul.split(" = ", 1)
-                if k == "cpus":
-                    config_values["cpus"] = v.strip("'\"")
-                elif k == "memory":
-                    config_values["memory"] = v.strip("'\"")
-                elif k == "time":
-                    config_values["time"] = v.strip("'\"")
-            except ValueError:
-                log.debug(f"Couldn't find key=value config pair:\n  {ul}")
-                pass
-
     config_checks: Dict[str, Dict[str, str]] = {
         "modules_testdata_base_path": {
             "pattern": "modules_testdata_base_path",
@@ -153,19 +140,10 @@ def nf_test_content(self) -> Dict[str, List[str]]:
             "pattern": "pipelines_testdata_base_path",
             "description": "`pipelines_testdata_base_path`",
         },
-        "cpus": {
-            "pattern": f"cpus: *[\"']?{config_values['cpus']}[\"']?",
-            "description": f"correct CPU resource limits. Should be {config_values['cpus']}",
-        },
-        "memory": {
-            "pattern": f"memory: *[\"']?{config_values['memory']}[\"']?",
-            "description": f"correct memory resource limits. Should be {config_values['memory']}",
-        },
-        "time": {
-            "pattern": f"time: *[\"']?{config_values['time']}[\"']?",
-            "description": f"correct time resource limits. Should be {config_values['time']}",
-        },
     }
+    # Check if tests/nextflow.config is present
+    if not conf_fn.exists():
+        failed.append(f"'{conf_fn.relative_to(self.wf_path)}' does not exist")
 
     if nf_test_content_conf is None or str(conf_fn.relative_to(self.wf_path)) not in nf_test_content_conf:
         checks_passed = {check: False for check in config_checks}

@@ -1,5 +1,30 @@
 # nf-core/tools: Changelog
 
+## v3.3.2dev
+
+### Template
+
+- Avoid overriding `NFT_DIFF` and `NFT_DIFF_ARGS` in `nf-test` action ([#3606](https://github.com/nf-core/tools/pull/3606)) and ([#3619](https://github.com/nf-core/tools/pull/3619))
+- fix nf-test scope to ignore nf-core module/swf tests ([#3609](https://github.com/nf-core/tools/pull/3609))
+
+### Linting
+
+- Fix linting of nf-test files content ([#3603](https://github.com/nf-core/tools/pull/3603))
+
+### Modules
+
+### Subworkflows
+
+### General
+
+- Add conda cache dir ([#3610](https://github.com/nf-core/tools/pull/3610))
+
+## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
+
+### Template
+
+- Use correct comment symbol in `nf-test.yml` ([#3601](https://github.com/nf-core/tools/pull/3601))
+
 ## [v3.3.0 - Tungsten Tamarin](https://github.com/nf-core/tools/releases/tag/3.3.0) - [2025-06-02]
 
 **Highlights**
@@ -11,7 +36,7 @@ We also enabled to install subworkflows with modules from different remotes.
 
 - Remove the on `pull_request_target` trigger and `pull_request` types from the download test. Also drop `push` triggers on other CI tests. ([#3399](https://github.com/nf-core/tools/pull/3399))
 - Add nf-core template version badges to README ([#3396](https://github.com/nf-core/tools/pull/3396))
-- Basic pipeline level nf-test tests ([#3469](https://github.com/nf-core/tools/pull/3469))
+- Basic pipeline level nf-test tests ([#3469](https://github.com/nf-core/tools/pull/3469), [3597](https://github.com/nf-core/tools/pull/3597))
 - Add Bluesky badge to readme ([#3475](https://github.com/nf-core/tools/pull/3475))
 - Add .nftignore to trigger list ([#3508](https://github.com/nf-core/tools/pull/3508))
 - Tun nf-test tests on runsOn runners ([#3525](https://github.com/nf-core/tools/pull/3525))
@@ -19,6 +44,7 @@ We also enabled to install subworkflows with modules from different remotes.
 - Make jobs automatically resubmit for exit code 175 ([#3564](https://github.com/nf-core/tools/pull/3564))
 - Bump nf-schema back to 2.3.0 ([#3577](https://github.com/nf-core/tools/pull/3577))
 - Do not skip AWS fulltest action on release ([#3583](https://github.com/nf-core/tools/pull/3583))
+- Make all github actions in the template kebab-case ([#3600](https://github.com/nf-core/tools/pull/3600))
 
 ### Linting
 
