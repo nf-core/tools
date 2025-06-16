@@ -1164,6 +1164,7 @@ class NFCoreYamlLintConfig(BaseModel):
     schema for linting config in `.nf-core.yml` should cover:
 
     .. code-block:: yaml
+
         files_unchanged:
             - .github/workflows/branch.yml
         modules_config: False
@@ -1190,6 +1191,11 @@ class NFCoreYamlLintConfig(BaseModel):
         template_strings:
                 - docs/my_pdf.pdf
         nfcore_components: False
+        # nf_test_content: False
+        nf_test_content:
+            - tests/<test_name>.nf.test
+            - tests/nextflow.config
+            - nf-test.config
     """
 
     files_unchanged: Optional[Union[bool, List[str]]] = None
@@ -1200,6 +1206,8 @@ class NFCoreYamlLintConfig(BaseModel):
     """ List of files that should not contain merge markers """
     nextflow_config: Optional[Optional[Union[bool, List[Union[str, Dict[str, List[str]]]]]]] = None
     """ List of Nextflow config files that should not be changed """
+    nf_test_content: Optional[Union[bool, List[str]]] = None
+    """ List of nf-test content that should not be changed """
     multiqc_config: Optional[Union[bool, List[str]]] = None
     """ List of MultiQC config options that be changed """
     files_exist: Optional[Union[bool, List[str]]] = None
@@ -1248,6 +1256,8 @@ class NFCoreYamlLintConfig(BaseModel):
     """ Lint for included configs """
     local_component_structure: Optional[bool] = None
     """ Lint local components use correct structure mirroring remote"""
+    rocrate_readme_sync: Optional[bool] = None
+    """ Lint for README.md and rocrate.json sync """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)

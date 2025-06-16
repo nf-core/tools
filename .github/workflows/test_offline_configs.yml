@@ -1,0 +1,154 @@
+name: Test offline configs on pipelines
+on:
+  # schedule:
+  #   # once a month
+  #   - cron: "0 0 1 * *"
+  workflow_dispatch:
+    inputs:
+      testpipeline:
+        type: boolean
+        description: Only run on nf-core/testpipeline?
+        required: true
+      pipeline:
+        description: "Pipeline to test offline configs on"
+        type: string
+        default: "all"
+      debug:
+        description: "Enable debug/verbose mode"
+        type: boolean
+        default: false
+
+# Cancel if a newer run is started
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  get-pipelines:
+    runs-on: "ubuntu-latest"
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          if [ "${{ github.event.inputs.testpipeline }}" == "true" ]; then
+            echo '{"pipeline":["testpipeline"]}' > pipeline_names.json
+          elif [ "${{ github.event.inputs.pipeline }}" != "all" ] && [ "${{ github.event.inputs.pipeline }}" != "" ]; then
+            curl -O https://nf-co.re/pipeline_names.json
+            # check if the pipeline exists
+            if ! grep -q "\"${{ github.event.inputs.pipeline }}\"" pipeline_names.json; then
+              echo "Pipeline ${{ github.event.inputs.pipeline }} does not exist"
+              exit 1
+            fi
+            echo '{"pipeline":["${{ github.event.inputs.pipeline }}"]}' > pipeline_names.json
+          else
+            curl -O https://nf-co.re/pipeline_names.json
+          fi
+          echo "matrix=$(cat pipeline_names.json)" >> $GITHUB_OUTPUT
+
+  test_offline_configs:
+    needs: get-pipelines
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        name: Check out nf-core/tools
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        name: Check out nf-core/${{ matrix.pipeline }}
+        with:
+          repository: nf-core/${{ matrix.pipeline }}
+          ref: dev
+          token: ${{ secrets.nf_core_bot_auth_token }}
+          path: nf-core/${{ matrix.pipeline }}
+          fetch-depth: "0"
+      - name: Check the correct default config base of the nf-core configs
+        id: check_default_config
+        uses: GuillaumeFalourd/assert-command-line-output@2cd32f7751887b5ef1886521de68ea2ec3e2aee7 # v2
+        with:
+          command_line: nextflow config -value params.custom_config_base .
+          contains: https://raw.githubusercontent.com/nf-core/configs/master
+          expected_result: PASSED
+      - name: Check the correct inclusion of an existing institutional profile
+        id: check_profile_inclusion
+        uses: GuillaumeFalourd/assert-command-line-output@2cd32f7751887b5ef1886521de68ea2ec3e2aee7 # v2
+        with:
+          command_line: nextflow config -profile google -o flat .
+          contains: "The nf-core framework" # Part of CITATION.cff, should always be printed if profile is included
+          expected_result: PASSED
+      - name: Check the failed inclusion of a non-existing institutional profile
+        id: check_nonexistent_profile
+        uses: GuillaumeFalourd/assert-command-line-output@2cd32f7751887b5ef1886521de68ea2ec3e2aee7 # v2
+        with:
+          command_line: nextflow config -profile GLaDOS -o flat .
+          contains: "Unknown configuration profile: 'GLaDOS'"
+          expected_result: PASSED
+      - name: Check that offline prevents inclusion of nf-core configs
+        id: check_offline_mode
+        uses: GuillaumeFalourd/assert-command-line-output@2cd32f7751887b5ef1886521de68ea2ec3e2aee7 # v2
+        env:
+          NXF_OFFLINE: true
+        with:
+          command_line: nextflow config -profile google -o flat .
+          contains: "Unknown configuration profile: 'google'"
+          expected_result: PASSED
+
+      - name: Create Issue on Test Failure
+        if: ${{ failure() }}
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          github-token: ${{ secrets.nf_core_bot_auth_token }}
+          script: |
+            const testNames = [
+              { id: 'check_default_config', name: 'Default config base check' },
+              { id: 'check_profile_inclusion', name: 'Institutional profile inclusion check' },
+              { id: 'check_nonexistent_profile', name: 'Non-existent profile check' },
+              { id: 'check_offline_mode', name: 'Offline mode check' }
+            ];
+
+            // Get list of failed steps
+            const failedTests = testNames.filter(test =>
+              context.job.steps[test.id] && context.job.steps[test.id].outcome === 'failure'
+            ).map(test => test.name);
+
+            const issueTitle = '⚠️ Config test failures detected';
+
+            // Check if there's already an open issue with the same title
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: 'nf-core',
+              repo: '${{ matrix.pipeline }}',
+              state: 'open',
+              creator: 'nf-core-bot'
+            });
+
+            const duplicateIssue = existingIssues.data.find(issue =>
+              issue.title === issueTitle
+            );
+
+            if (duplicateIssue) {
+              console.log(`Issue already exists: ${duplicateIssue.html_url}`);
+
+            } else {
+              # // Create a new issue
+              # await github.rest.issues.create({
+              #   owner: 'nf-core',
+              #   repo: '${{ matrix.pipeline }}',
+              #   title: issueTitle,
+              #   body: `## Config Test Failures
+
+              #   The following config tests failed in the GitHub Actions workflow:
+
+              #   ${failedTests.map(test => `- ${test}`).join('\n')}
+
+              #   ### Workflow Details:
+              #   - Workflow: ${context.workflow}
+              #   - Run ID: ${context.runId}
+              #   - Branch: ${context.ref}
+
+              #   Please check the [workflow run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for more details.`
+              # });
+              console.log(`failed tests: ${failedTests}`);
+            }
