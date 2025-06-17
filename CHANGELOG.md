@@ -18,6 +18,7 @@
 ### General
 
 - Add conda cache dir ([#3610](https://github.com/nf-core/tools/pull/3610))
+- update id of ruff hook in pre-commit config ([#3621](https://github.com/nf-core/tools/pull/3621))
 
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
