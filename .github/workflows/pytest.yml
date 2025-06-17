@@ -50,6 +50,48 @@ jobs:
       runner: ${{ matrix.runner }}
       run-tests: ${{ steps.conditions.outputs.run-tests }}
 
+  # Setup dependencies once and cache them
+  setup-dependencies:
+    name: Setup Python dependencies
+    runs-on: ubuntu-latest
+    needs: setup
+    if: ${{ needs.setup.outputs.run-tests }}
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
+      cache-hit: ${{ steps.cache-venv.outputs.cache-hit }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        name: Check out source-code repository
+
+      - name: Set up Python ${{ needs.setup.outputs.python-version }}
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ needs.setup.outputs.python-version }}
+          cache: "pip"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create cache key
+        id: cache-key
+        run: |
+          echo "key=venv-${{ runner.os }}-${{ needs.setup.outputs.python-version }}-${{ hashFiles('requirements-dev.txt', 'pyproject.toml', 'setup.py') }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Cache venv
+        id: cache-venv
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
+        with:
+          path: venv/
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            venv-${{ runner.os }}-${{ needs.setup.outputs.python-version }}-${{ hashFiles('requirements-dev.txt', 'pyproject.toml', 'setup.py') }}-
+
+      - name: Install dependencies
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip -r requirements-dev.txt
+          pip install -e .
+
   # create a test matrix based on all python files in /tests
   list_tests:
     name: Get test file matrix
@@ -67,7 +109,7 @@ jobs:
 
   test:
     name: Run ${{matrix.test}} with Python ${{ needs.setup.outputs.python-version }} on ${{ needs.setup.outputs.runner }}
-    needs: [setup, list_tests]
+    needs: [setup, setup-dependencies, list_tests]
     if: ${{ needs.setup.outputs.run-tests }}
     runs-on:
       - runs-on=${{ github.run_id }}-run-test
@@ -92,18 +134,27 @@ jobs:
           cache: "pip"
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dependencies
+      - name: Restore venv cache
+        id: cache-venv
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
+        with:
+          path: venv/
+          key: ${{ needs.setup-dependencies.outputs.cache-key }}
+          restore-keys: |
+            venv-${{ runner.os }}-${{ needs.setup.outputs.python-version }}-${{ hashFiles('requirements-dev.txt', 'pyproject.toml', 'setup.py') }}-
+
+      - name: Install dependencies (fallback)
+        if: steps.cache-venv.outputs.cache-hit != 'true'
         run: |
+          python -m venv venv
+          source venv/bin/activate
           python -m pip install --upgrade pip -r requirements-dev.txt
           pip install -e .
 
-      - name: Downgrade git to the Ubuntu official repository's version
-        if: ${{ needs.setup.outputs.runner == 'ubuntu-20.04' && needs.setup.outputs.python-version == '3.8' }}
+      - name: Activate venv
         run: |
-          sudo apt update
-          sudo apt remove -y git git-man
-          sudo add-apt-repository --remove ppa:git-core/ppa
-          sudo apt install -y git
+          source venv/bin/activate
+          echo "$(pwd)/venv/bin" >> $GITHUB_PATH
 
       - name: Set up Singularity
         if: ${{ matrix.test == 'test_download.py'}}
