@@ -2,14 +2,14 @@ import ast
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from nf_core.pipelines.schema import PipelineSchema
 
 log = logging.getLogger(__name__)
 
 
-def nextflow_config(self) -> Dict[str, List[str]]:
+def nextflow_config(self) -> dict[str, list[str]]:
     """Checks the pipeline configuration for required variables.
 
     All nf-core pipelines are required to be configured with a minimal set of variable

@@ -2,12 +2,11 @@ import ast
 import glob
 import logging
 import re
-from typing import Dict, List
 
 log = logging.getLogger(__name__)
 
 
-def plugin_includes(self) -> Dict[str, List[str]]:
+def plugin_includes(self) -> dict[str, list[str]]:
     """Checks the include statements in the all *.nf files for plugin includes
 
     When nf-schema is used in an nf-core pipeline, the include statements of the plugin
@@ -16,10 +15,10 @@ def plugin_includes(self) -> Dict[str, List[str]]:
     config_plugins = [plugin.split("@")[0] for plugin in ast.literal_eval(self.nf_config.get("plugins", "[]"))]
     validation_plugin = "nf-validation" if "nf-validation" in config_plugins else "nf-schema"
 
-    passed: List[str] = []
-    warned: List[str] = []
-    failed: List[str] = []
-    ignored: List[str] = []
+    passed: list[str] = []
+    warned: list[str] = []
+    failed: list[str] = []
+    ignored: list[str] = []
 
     plugin_include_pattern = re.compile(r"^include\s*{[^}]+}\s*from\s*[\"']plugin/([^\"']+)[\"']\s*$", re.MULTILINE)
     workflow_files = [

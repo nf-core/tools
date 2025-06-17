@@ -1,6 +1,7 @@
-from typing import List, Optional
+from typing import Optional
 
-import rich
+import rich.console
+import rich.table
 
 from nf_core.test_datasets.test_datasets_utils import (
     IGNORED_FILE_PREFIXES,
@@ -20,7 +21,7 @@ def search_datasets(
     maybe_branch: str = "",
     generate_nf_path: bool = False,
     generate_dl_url: bool = False,
-    ignored_file_prefixes: List[str] = IGNORED_FILE_PREFIXES,
+    ignored_file_prefixes: list[str] = IGNORED_FILE_PREFIXES,
     plain_text_output: bool = False,
     query: Optional[str] = "",
 ) -> None:

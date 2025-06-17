@@ -10,7 +10,7 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import questionary
 import rich
@@ -179,7 +179,7 @@ class ModuleLint(ComponentLint):
             self.print_summary()
 
     def lint_modules(
-        self, modules: List[NFCoreComponent], registry: str = "quay.io", local: bool = False, fix_version: bool = False
+        self, modules: list[NFCoreComponent], registry: str = "quay.io", local: bool = False, fix_version: bool = False
     ) -> None:
         """
         Lint a list of modules
