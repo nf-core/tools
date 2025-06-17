@@ -80,11 +80,11 @@ def nextflow_config(self) -> dict[str, list[str]]:
     * ``params.nf_required_version``: The old method for specifying the minimum Nextflow version. Replaced by ``manifest.nextflowVersion``
     * ``params.container``: The old method for specifying the dockerhub container address. Replaced by ``process.container``
     * ``igenomesIgnore``: Changed to ``igenomes_ignore``
-    * ``params.max_cpus``: Old method of specifying the maximum number of CPUs a process can request. Replaced by native Nextflow `resourceLimits`directive in config files.
-    * ``params.max_memory``: Old method of specifying the maximum number of memory can request. Replaced by native Nextflow `resourceLimits`directive.
-    * ``params.max_time``: Old method of specifying the maximum number of CPUs can request. Replaced by native Nextflow `resourceLimits`directive.
+    * ``params.max_cpus``: Old method of specifying the maximum number of CPUs a process can request. Replaced by native Nextflow `resourceLimits` directive in config files.
+    * ``params.max_memory``: Old method of specifying the maximum number of memory can request. Replaced by native Nextflow `resourceLimits` directive.
+    * ``params.max_time``: Old method of specifying the maximum number of CPUs can request. Replaced by native Nextflow `resourceLimits` directive.
 
-        .. tip:: The ``snake_case`` convention should now be used when defining pipeline parameters
+    .. tip:: The ``snake_case`` convention should now be used when defining pipeline parameters
 
     **The following Nextflow syntax is depreciated and fails the test if present:**
 

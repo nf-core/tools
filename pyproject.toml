@@ -6,6 +6,8 @@ requires = ["setuptools>=40.6.0", "wheel"]
 markers = ["datafiles: load datafiles"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 norecursedirs = [
     ".*",
     "build",

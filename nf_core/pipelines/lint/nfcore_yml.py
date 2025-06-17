@@ -14,11 +14,11 @@ def nfcore_yml(self) -> dict[str, list[str]]:
 
     * repository type:
 
-        * Check that the repository type is set.
+        Check that the repository type is set.
 
     * nf core version:
 
-         * Check if the nf-core version is set to the latest version.
+        Check if the nf-core version is set to the latest version.
 
     """
     passed: list[str] = []
