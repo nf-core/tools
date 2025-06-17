@@ -6,8 +6,8 @@
 
 - Avoid overriding `NFT_DIFF` and `NFT_DIFF_ARGS` in `nf-test` action ([#3606](https://github.com/nf-core/tools/pull/3606)) and ([#3619](https://github.com/nf-core/tools/pull/3619))
 - fix nf-test scope to ignore nf-core module/swf tests ([#3609](https://github.com/nf-core/tools/pull/3609))
-- Bump nf-schema to `2.4.1` ([#3533](https://github.com/nf-core/tools/pull/3533))
-- Bump the minimal Nextflow version to `24.10.0` ([#3533](https://github.com/nf-core/tools/pull/3533))
+- Bump nf-schema to `2.4.2` ([#3533](https://github.com/nf-core/tools/pull/3533))
+- Bump the minimal Nextflow version to `24.10.8` ([#3533](https://github.com/nf-core/tools/pull/3533))
 
 ### Linting
 
