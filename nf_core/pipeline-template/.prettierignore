@@ -19,3 +19,4 @@ bin/
 {%- if rocrate %}
 ro-crate-metadata.json
 {%- endif %}
+.nf-test/
