@@ -1,8 +1,11 @@
 {
     "name": "nfcore",
-    "image": "nfcore/gitpod:latest",
-    "remoteUser": "gitpod",
-    "runArgs": ["--privileged"],
+    "image": "nfcore/devcontainer:latest",
+    "remoteUser": "vscode",
+
+    "features": {
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    },
 
     // Configure tool-specific properties.
     "customizations": {

@@ -20,6 +20,7 @@
 - Add conda cache dir ([#3610](https://github.com/nf-core/tools/pull/3610))
 - Drop python 3.8, add tests with python 3.13 ([#3538](https://github.com/nf-core/tools/pull/3538))
 - Fixes a bug with the test-datasets subcommand [#3617](https://github.com/nf-core/tools/issues/3617)
+- Stop using Gitpod in favor of devcontainer for codespaces ([#3569](https://github.com/nf-core/tools/pull/3569))
 
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
