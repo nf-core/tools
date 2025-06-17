@@ -72,7 +72,8 @@ def files_unchanged(self) -> dict[str, Union[list[str], bool]]:
     required_pipeline_config = {
         "manifest.name",
         "manifest.description",
-    }  # TODO: add "manifest.contributors" when minimum nextflow version is >=24.10.0
+        "manifest.contributors",
+    }
     missing_pipeline_config = required_pipeline_config.difference(self.nf_config)
     if missing_pipeline_config:
         return {"ignored": [f"Required pipeline config not found - {missing_pipeline_config}"]}
