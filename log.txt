@@ -1,0 +1,351 @@
+[2025-06-16 14:25:08,123] nf_core.pipelines.create.create [DEBUG  ]  Could not read init.defaultBranch
+[2025-06-16 14:25:08,123] nf_core.utils        [DEBUG  ]  Could not find a config file in the directory '.'
+[2025-06-16 14:25:08,151] nf_core.pipelines.create.create [INFO   ]  Creating new pipeline: 'testpipeline'
+[2025-06-16 14:25:08,184] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'CODE_OF_CONDUCT.md'
+[2025-06-16 14:25:08,187] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/CODE_OF_CONDUCT.md'
+[2025-06-16 14:25:08,187] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'LICENSE'
+[2025-06-16 14:25:08,188] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/LICENSE'
+[2025-06-16 14:25:08,189] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'CHANGELOG.md'
+[2025-06-16 14:25:08,190] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/CHANGELOG.md'
+[2025-06-16 14:25:08,190] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'tower.yml'
+[2025-06-16 14:25:08,192] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/tower.yml'
+[2025-06-16 14:25:08,192] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.pre-commit-config.yaml'
+[2025-06-16 14:25:08,194] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.pre-commit-config.yaml'
+[2025-06-16 14:25:08,195] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.nf-core.yml'
+[2025-06-16 14:25:08,197] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.nf-core.yml'
+[2025-06-16 14:25:08,198] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.prettierignore'
+[2025-06-16 14:25:08,200] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.prettierignore'
+[2025-06-16 14:25:08,200] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'README.md'
+[2025-06-16 14:25:08,207] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/README.md'
+[2025-06-16 14:25:08,208] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'nf-test.config'
+[2025-06-16 14:25:08,209] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/nf-test.config'
+[2025-06-16 14:25:08,209] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.prettierrc.yml'
+[2025-06-16 14:25:08,211] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.prettierrc.yml'
+[2025-06-16 14:25:08,212] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'nextflow.config'
+[2025-06-16 14:25:08,220] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/nextflow.config'
+[2025-06-16 14:25:08,221] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.gitignore'
+[2025-06-16 14:25:08,222] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.gitignore'
+[2025-06-16 14:25:08,222] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'CITATIONS.md'
+[2025-06-16 14:25:08,224] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/CITATIONS.md'
+[2025-06-16 14:25:08,225] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.gitattributes'
+[2025-06-16 14:25:08,225] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.gitattributes'
+[2025-06-16 14:25:08,226] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'nextflow_schema.json'
+[2025-06-16 14:25:08,231] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/nextflow_schema.json'
+[2025-06-16 14:25:08,231] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.gitpod.yml'
+[2025-06-16 14:25:08,232] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.gitpod.yml'
+[2025-06-16 14:25:08,232] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules.json'
+[2025-06-16 14:25:08,235] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules.json'
+[2025-06-16 14:25:08,235] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'main.nf'
+[2025-06-16 14:25:08,241] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/main.nf'
+[2025-06-16 14:25:08,241] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'tests/.nftignore'
+[2025-06-16 14:25:08,243] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/tests/.nftignore'
+[2025-06-16 14:25:08,243] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'tests/default.nf.test'
+[2025-06-16 14:25:08,245] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/tests/default.nf.test'
+[2025-06-16 14:25:08,245] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'tests/nextflow.config'
+[2025-06-16 14:25:08,247] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/tests/nextflow.config'
+[2025-06-16 14:25:08,247] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'workflows/pipeline.nf'
+[2025-06-16 14:25:08,252] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/workflows/testpipeline.nf'
+[2025-06-16 14:25:08,252] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'docs/usage.md'
+[2025-06-16 14:25:08,257] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/docs/usage.md'
+[2025-06-16 14:25:08,257] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'docs/output.md'
+[2025-06-16 14:25:08,260] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/docs/output.md'
+[2025-06-16 14:25:08,261] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'docs/README.md'
+[2025-06-16 14:25:08,263] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/docs/README.md'
+[2025-06-16 14:25:08,263] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.devcontainer/devcontainer.json'
+[2025-06-16 14:25:08,264] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.devcontainer/devcontainer.json'
+[2025-06-16 14:25:08,264] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/PULL_REQUEST_TEMPLATE.md'
+[2025-06-16 14:25:08,267] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/PULL_REQUEST_TEMPLATE.md'
+[2025-06-16 14:25:08,267] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/.dockstore.yml'
+[2025-06-16 14:25:08,269] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/.dockstore.yml'
+[2025-06-16 14:25:08,269] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/CONTRIBUTING.md'
+[2025-06-16 14:25:08,277] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/CONTRIBUTING.md'
+[2025-06-16 14:25:08,278] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.vscode/settings.json'
+[2025-06-16 14:25:08,279] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.vscode/settings.json'
+[2025-06-16 14:25:08,280] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'assets/email_template.html'
+[2025-06-16 14:25:08,286] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/assets/email_template.html'
+[2025-06-16 14:25:08,288] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'assets/schema_input.json'
+[2025-06-16 14:25:08,291] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/assets/schema_input.json'
+[2025-06-16 14:25:08,292] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'assets/multiqc_config.yml'
+[2025-06-16 14:25:08,297] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/assets/multiqc_config.yml'
+[2025-06-16 14:25:08,297] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'assets/email_template.txt'
+[2025-06-16 14:25:08,301] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/assets/email_template.txt'
+[2025-06-16 14:25:08,301] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'assets/slackreport.json'
+[2025-06-16 14:25:08,303] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/assets/slackreport.json'
+[2025-06-16 14:25:08,304] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'assets/sendmail_template.txt'
+[2025-06-16 14:25:08,307] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/assets/sendmail_template.txt'
+[2025-06-16 14:25:08,307] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'assets/samplesheet.csv'
+[2025-06-16 14:25:08,308] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/assets/samplesheet.csv'
+[2025-06-16 14:25:08,309] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'assets/adaptivecard.json'
+[2025-06-16 14:25:08,311] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/assets/adaptivecard.json'
+[2025-06-16 14:25:08,312] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'assets/methods_description_template.yml'
+[2025-06-16 14:25:08,315] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/assets/methods_description_template.yml'
+[2025-06-16 14:25:08,315] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'conf/test_full.config'
+[2025-06-16 14:25:08,318] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/conf/test_full.config'
+[2025-06-16 14:25:08,319] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'conf/base.config'
+[2025-06-16 14:25:08,321] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/conf/base.config'
+[2025-06-16 14:25:08,321] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'conf/test.config'
+[2025-06-16 14:25:08,323] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/conf/test.config'
+[2025-06-16 14:25:08,324] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'conf/igenomes.config'
+[2025-06-16 14:25:08,332] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/conf/igenomes.config'
+[2025-06-16 14:25:08,332] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'conf/modules.config'
+[2025-06-16 14:25:08,335] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/conf/modules.config'
+[2025-06-16 14:25:08,335] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'conf/igenomes_ignored.config'
+[2025-06-16 14:25:08,337] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/conf/igenomes_ignored.config'
+[2025-06-16 14:25:08,338] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules/nf-core/multiqc/environment.yml'
+[2025-06-16 14:25:08,339] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules/nf-core/multiqc/environment.yml'
+[2025-06-16 14:25:08,339] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules/nf-core/multiqc/meta.yml'
+[2025-06-16 14:25:08,341] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules/nf-core/multiqc/meta.yml'
+[2025-06-16 14:25:08,341] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules/nf-core/multiqc/main.nf'
+[2025-06-16 14:25:08,343] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules/nf-core/multiqc/main.nf'
+[2025-06-16 14:25:08,344] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules/nf-core/fastqc/environment.yml'
+[2025-06-16 14:25:08,345] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules/nf-core/fastqc/environment.yml'
+[2025-06-16 14:25:08,346] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules/nf-core/fastqc/meta.yml'
+[2025-06-16 14:25:08,347] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules/nf-core/fastqc/meta.yml'
+[2025-06-16 14:25:08,348] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules/nf-core/fastqc/main.nf'
+[2025-06-16 14:25:08,350] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules/nf-core/fastqc/main.nf'
+[2025-06-16 14:25:08,350] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules/nf-core/fastqc/tests/main.nf.test.snap'
+[2025-06-16 14:25:08,354] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules/nf-core/fastqc/tests/main.nf.test.snap'
+[2025-06-16 14:25:08,354] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules/nf-core/fastqc/tests/main.nf.test'
+[2025-06-16 14:25:08,358] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules/nf-core/fastqc/tests/main.nf.test'
+[2025-06-16 14:25:08,358] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules/nf-core/multiqc/tests/main.nf.test.snap'
+[2025-06-16 14:25:08,360] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules/nf-core/multiqc/tests/main.nf.test.snap'
+[2025-06-16 14:25:08,360] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules/nf-core/multiqc/tests/tags.yml'
+[2025-06-16 14:25:08,361] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules/nf-core/multiqc/tests/tags.yml'
+[2025-06-16 14:25:08,362] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules/nf-core/multiqc/tests/nextflow.config'
+[2025-06-16 14:25:08,363] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules/nf-core/multiqc/tests/nextflow.config'
+[2025-06-16 14:25:08,363] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules/nf-core/multiqc/tests/main.nf.test'
+[2025-06-16 14:25:08,365] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules/nf-core/multiqc/tests/main.nf.test'
+[2025-06-16 14:25:08,366] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/workflows/linting_comment.yml'
+[2025-06-16 14:25:08,367] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/workflows/linting_comment.yml'
+[2025-06-16 14:25:08,368] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/workflows/nf-test.yml'
+[2025-06-16 14:25:08,372] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/workflows/nf-test.yml'
+[2025-06-16 14:25:08,373] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/workflows/branch.yml'
+[2025-06-16 14:25:08,375] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/workflows/branch.yml'
+[2025-06-16 14:25:08,375] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/workflows/template-version-comment.yml'
+[2025-06-16 14:25:08,377] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/workflows/template-version-comment.yml'
+[2025-06-16 14:25:08,377] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/workflows/clean-up.yml'
+[2025-06-16 14:25:08,379] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/workflows/clean-up.yml'
+[2025-06-16 14:25:08,379] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/workflows/fix_linting.yml'
+[2025-06-16 14:25:08,381] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/workflows/fix_linting.yml'
+[2025-06-16 14:25:08,382] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/workflows/linting.yml'
+[2025-06-16 14:25:08,384] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/workflows/linting.yml'
+[2025-06-16 14:25:08,385] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/workflows/awsfulltest.yml'
+[2025-06-16 14:25:08,387] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/workflows/awsfulltest.yml'
+[2025-06-16 14:25:08,388] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/workflows/awstest.yml'
+[2025-06-16 14:25:08,390] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/workflows/awstest.yml'
+[2025-06-16 14:25:08,390] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/workflows/release-announcements.yml'
+[2025-06-16 14:25:08,392] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/workflows/release-announcements.yml'
+[2025-06-16 14:25:08,393] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/workflows/download_pipeline.yml'
+[2025-06-16 14:25:08,395] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/workflows/download_pipeline.yml'
+[2025-06-16 14:25:08,396] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/ISSUE_TEMPLATE/feature_request.yml'
+[2025-06-16 14:25:08,398] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/ISSUE_TEMPLATE/feature_request.yml'
+[2025-06-16 14:25:08,398] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/ISSUE_TEMPLATE/bug_report.yml'
+[2025-06-16 14:25:08,401] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/ISSUE_TEMPLATE/bug_report.yml'
+[2025-06-16 14:25:08,401] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/ISSUE_TEMPLATE/config.yml'
+[2025-06-16 14:25:08,403] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/ISSUE_TEMPLATE/config.yml'
+[2025-06-16 14:25:08,403] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/actions/nf-test/action.yml'
+[2025-06-16 14:25:08,405] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/actions/nf-test/action.yml'
+[2025-06-16 14:25:08,406] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.github/actions/get-shards/action.yml'
+[2025-06-16 14:25:08,408] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.github/actions/get-shards/action.yml'
+[2025-06-16 14:25:08,409] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nfcore_pipeline/meta.yml'
+[2025-06-16 14:25:08,410] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nfcore_pipeline/meta.yml'
+[2025-06-16 14:25:08,411] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nfcore_pipeline/main.nf'
+[2025-06-16 14:25:08,415] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nfcore_pipeline/main.nf'
+[2025-06-16 14:25:08,417] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nextflow_pipeline/meta.yml'
+[2025-06-16 14:25:08,418] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nextflow_pipeline/meta.yml'
+[2025-06-16 14:25:08,419] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nextflow_pipeline/main.nf'
+[2025-06-16 14:25:08,421] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nextflow_pipeline/main.nf'
+[2025-06-16 14:25:08,421] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nfschema_plugin/meta.yml'
+[2025-06-16 14:25:08,423] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nfschema_plugin/meta.yml'
+[2025-06-16 14:25:08,423] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nfschema_plugin/main.nf'
+[2025-06-16 14:25:08,425] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nfschema_plugin/main.nf'
+[2025-06-16 14:25:08,426] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nfschema_plugin/tests/nextflow.config'
+[2025-06-16 14:25:08,427] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nfschema_plugin/tests/nextflow.config'
+[2025-06-16 14:25:08,427] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nfschema_plugin/tests/main.nf.test'
+[2025-06-16 14:25:08,430] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nfschema_plugin/tests/main.nf.test'
+[2025-06-16 14:25:08,430] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nfschema_plugin/tests/nextflow_schema.json'
+[2025-06-16 14:25:08,433] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nfschema_plugin/tests/nextflow_schema.json'
+[2025-06-16 14:25:08,434] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nextflow_pipeline/tests/main.function.nf.test'
+[2025-06-16 14:25:08,435] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nextflow_pipeline/tests/main.function.nf.test'
+[2025-06-16 14:25:08,436] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nextflow_pipeline/tests/tags.yml'
+[2025-06-16 14:25:08,437] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nextflow_pipeline/tests/tags.yml'
+[2025-06-16 14:25:08,438] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nextflow_pipeline/tests/main.function.nf.test.snap'
+[2025-06-16 14:25:08,439] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nextflow_pipeline/tests/main.function.nf.test.snap'
+[2025-06-16 14:25:08,440] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nextflow_pipeline/tests/nextflow.config'
+[2025-06-16 14:25:08,441] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nextflow_pipeline/tests/nextflow.config'
+[2025-06-16 14:25:08,441] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nextflow_pipeline/tests/main.workflow.nf.test'
+[2025-06-16 14:25:08,443] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nextflow_pipeline/tests/main.workflow.nf.test'
+[2025-06-16 14:25:08,444] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nfcore_pipeline/tests/main.function.nf.test'
+[2025-06-16 14:25:08,445] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nfcore_pipeline/tests/main.function.nf.test'
+[2025-06-16 14:25:08,446] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nfcore_pipeline/tests/tags.yml'
+[2025-06-16 14:25:08,447] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nfcore_pipeline/tests/tags.yml'
+[2025-06-16 14:25:08,448] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nfcore_pipeline/tests/main.workflow.nf.test.snap'
+[2025-06-16 14:25:08,449] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nfcore_pipeline/tests/main.workflow.nf.test.snap'
+[2025-06-16 14:25:08,449] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nfcore_pipeline/tests/main.function.nf.test.snap'
+[2025-06-16 14:25:08,452] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nfcore_pipeline/tests/main.function.nf.test.snap'
+[2025-06-16 14:25:08,453] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nfcore_pipeline/tests/nextflow.config'
+[2025-06-16 14:25:08,454] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nfcore_pipeline/tests/nextflow.config'
+[2025-06-16 14:25:08,454] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/nf-core/utils_nfcore_pipeline/tests/main.workflow.nf.test'
+[2025-06-16 14:25:08,456] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/nf-core/utils_nfcore_pipeline/tests/main.workflow.nf.test'
+[2025-06-16 14:25:08,456] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'subworkflows/local/utils_nfcore_pipeline_pipeline/main.nf'
+[2025-06-16 14:25:08,465] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/subworkflows/local/utils_nfcore_testpipeline_pipeline/main.nf'
+[2025-06-16 14:25:08,465] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'CODE_OF_CONDUCT.md'
+[2025-06-16 14:25:08,466] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/CODE_OF_CONDUCT.md'
+[2025-06-16 14:25:08,466] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'LICENSE'
+[2025-06-16 14:25:08,466] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/LICENSE'
+[2025-06-16 14:25:08,467] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'CHANGELOG.md'
+[2025-06-16 14:25:08,467] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/CHANGELOG.md'
+[2025-06-16 14:25:08,467] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'tower.yml'
+[2025-06-16 14:25:08,468] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/tower.yml'
+[2025-06-16 14:25:08,468] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.pre-commit-config.yaml'
+[2025-06-16 14:25:08,468] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.pre-commit-config.yaml'
+[2025-06-16 14:25:08,469] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.nf-core.yml'
+[2025-06-16 14:25:08,469] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.nf-core.yml'
+[2025-06-16 14:25:08,469] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.prettierignore'
+[2025-06-16 14:25:08,470] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.prettierignore'
+[2025-06-16 14:25:08,470] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'README.md'
+[2025-06-16 14:25:08,470] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/README.md'
+[2025-06-16 14:25:08,471] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'nf-test.config'
+[2025-06-16 14:25:08,471] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/nf-test.config'
+[2025-06-16 14:25:08,472] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.prettierrc.yml'
+[2025-06-16 14:25:08,472] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.prettierrc.yml'
+[2025-06-16 14:25:08,472] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'nextflow.config'
+[2025-06-16 14:25:08,473] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/nextflow.config'
+[2025-06-16 14:25:08,473] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.gitignore'
+[2025-06-16 14:25:08,473] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.gitignore'
+[2025-06-16 14:25:08,474] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'CITATIONS.md'
+[2025-06-16 14:25:08,474] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/CITATIONS.md'
+[2025-06-16 14:25:08,474] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.gitattributes'
+[2025-06-16 14:25:08,474] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.gitattributes'
+[2025-06-16 14:25:08,475] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'nextflow_schema.json'
+[2025-06-16 14:25:08,475] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/nextflow_schema.json'
+[2025-06-16 14:25:08,475] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: '.gitpod.yml'
+[2025-06-16 14:25:08,476] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/.gitpod.yml'
+[2025-06-16 14:25:08,476] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'modules.json'
+[2025-06-16 14:25:08,476] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/modules.json'
+[2025-06-16 14:25:08,477] nf_core.pipelines.create.create [DEBUG  ]  Rendering template file: 'main.nf'
+[2025-06-16 14:25:08,477] nf_core.pipelines.create.create [DEBUG  ]  Writing to output file: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/main.nf'
+[2025-06-16 14:25:08,478] nf_core.pipelines.create_logo [DEBUG  ]  Logo already exists in cache at: /Users/yuxinning/.cache/nfcore/logo/nf-core-testpipeline_logo_light_2300.png. Reusing this file.
+[2025-06-16 14:25:08,509] PIL.PngImagePlugin   [DEBUG  ]  STREAM b'IHDR' 16 13
+[2025-06-16 14:25:08,509] PIL.PngImagePlugin   [DEBUG  ]  STREAM b'iCCP' 41 379
+[2025-06-16 14:25:08,509] PIL.PngImagePlugin   [DEBUG  ]  iCCP profile name b'ICC Profile'
+[2025-06-16 14:25:08,510] PIL.PngImagePlugin   [DEBUG  ]  Compression method 0
+[2025-06-16 14:25:08,510] PIL.PngImagePlugin   [DEBUG  ]  STREAM b'IDAT' 432 65536
+[2025-06-16 14:25:08,661] nf_core.pipelines.create_logo [DEBUG  ]  Saved logo to: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/assets/nf-core-testpipeline_logo_light.png'
+[2025-06-16 14:25:08,662] nf_core.pipelines.create_logo [DEBUG  ]  Creating directory /Users/yuxinning/Projects/tools/nf-core-testpipeline/docs/images
+[2025-06-16 14:25:08,662] nf_core.pipelines.create_logo [DEBUG  ]  Logo already exists in cache at: /Users/yuxinning/.cache/nfcore/logo/nf-core-testpipeline_logo_dark_600.png. Reusing this file.
+[2025-06-16 14:25:08,662] PIL.PngImagePlugin   [DEBUG  ]  STREAM b'IHDR' 16 13
+[2025-06-16 14:25:08,663] PIL.PngImagePlugin   [DEBUG  ]  STREAM b'iCCP' 41 379
+[2025-06-16 14:25:08,663] PIL.PngImagePlugin   [DEBUG  ]  iCCP profile name b'ICC Profile'
+[2025-06-16 14:25:08,663] PIL.PngImagePlugin   [DEBUG  ]  Compression method 0
+[2025-06-16 14:25:08,663] PIL.PngImagePlugin   [DEBUG  ]  STREAM b'IDAT' 432 28861
+[2025-06-16 14:25:08,674] nf_core.pipelines.create_logo [DEBUG  ]  Saved logo to: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/docs/images/nf-core-testpipeline_logo_dark.png'
+[2025-06-16 14:25:08,675] nf_core.pipelines.create_logo [DEBUG  ]  Logo already exists in cache at: /Users/yuxinning/.cache/nfcore/logo/nf-core-testpipeline_logo_light_600.png. Reusing this file.
+[2025-06-16 14:25:08,676] PIL.PngImagePlugin   [DEBUG  ]  STREAM b'IHDR' 16 13
+[2025-06-16 14:25:08,676] PIL.PngImagePlugin   [DEBUG  ]  STREAM b'iCCP' 41 379
+[2025-06-16 14:25:08,676] PIL.PngImagePlugin   [DEBUG  ]  iCCP profile name b'ICC Profile'
+[2025-06-16 14:25:08,676] PIL.PngImagePlugin   [DEBUG  ]  Compression method 0
+[2025-06-16 14:25:08,676] PIL.PngImagePlugin   [DEBUG  ]  STREAM b'IDAT' 432 24287
+[2025-06-16 14:25:08,686] nf_core.pipelines.create_logo [DEBUG  ]  Saved logo to: '/Users/yuxinning/Projects/tools/nf-core-testpipeline/docs/images/nf-core-testpipeline_logo_light.png'
+[2025-06-16 14:25:08,701] nf_core.utils        [DEBUG  ]  Could not find git hash for pipeline: /Users/yuxinning/Projects/tools/nf-core-testpipeline. /Users/yuxinning/Projects/tools/nf-core-testpipeline
+[2025-06-16 14:25:08,701] nf_core.utils        [DEBUG  ]  Got '/Users/yuxinning/Projects/tools/nf-core-testpipeline' as path
+[2025-06-16 14:25:08,702] nf_core.utils        [DEBUG  ]  No config cache found
+[2025-06-16 14:25:08,702] nf_core.utils        [DEBUG  ]  Running command: nextflow config -flat /Users/yuxinning/Projects/tools/nf-core-testpipeline
+[2025-06-16 14:25:12,625] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  -[2m----------------------------------------------------[0m-
+[2025-06-16 14:25:12,625] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+                                          [0;32m,--.[0;30m/[0;32m,-.[0m
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  [0;34m        ___     __   __   __   ___     [0;32m/,-._.--~'[0m
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  [0;34m  |\ | |__  __ /  ` /  \ |__) |__         [0;33m}  {[0m
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  [0;34m  | \| |       \__, \__/ |  \ |___     [0;32m\`-._,-`-,[0m
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+                                          [0;32m`._,._,'[0m
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  [0;35m  nf-core/testpipeline 1.0.0dev[0m
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  -[2m----------------------------------------------------[0m-
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  '
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  * The nf-core framework
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+      https://doi.org/10.1038/s41587-020-0439-x
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  * Software dependencies
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+      https://github.com/nf-core/testpipeline/blob/master/CITATIONS.md
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  '
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  -[2m----------------------------------------------------[0m-
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+                                          [0;32m,--.[0;30m/[0;32m,-.[0m
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  [0;34m        ___     __   __   __   ___     [0;32m/,-._.--~'[0m
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  [0;34m  |\ | |__  __ /  ` /  \ |__) |__         [0;33m}  {[0m
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  [0;34m  | \| |       \__, \__/ |  \ |___     [0;32m\`-._,-`-,[0m
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+                                          [0;32m`._,._,'[0m
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  [0;35m  nf-core/testpipeline 1.0.0dev[0m
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  -[2m----------------------------------------------------[0m-
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  '
+[2025-06-16 14:25:12,626] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  * The nf-core framework
+[2025-06-16 14:25:12,627] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+      https://doi.org/10.1038/s41587-020-0439-x
+[2025-06-16 14:25:12,627] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+
+[2025-06-16 14:25:12,627] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  * Software dependencies
+[2025-06-16 14:25:12,627] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+      https://github.com/nf-core/testpipeline/blob/master/CITATIONS.md
+[2025-06-16 14:25:12,627] nf_core.utils        [DEBUG  ]  Couldn't find key=value config pair:
+  '
+[2025-06-16 14:25:12,627] nf_core.utils        [DEBUG  ]  Saving config cache: /Users/yuxinning/.nextflow/nf-core/wf-config-cache-d72560874485c11774c06d2aa.json
+[2025-06-16 14:25:12,629] nf_core.utils        [DEBUG  ]  No conda `environment.yml` file found.
+[2025-06-16 14:25:12,639] urllib3.connectionpool [DEBUG  ]  Starting new HTTPS connection (1): nf-co.re:443
+[2025-06-16 14:25:12,941] urllib3.connectionpool [DEBUG  ]  https://nf-co.re:443 "GET /pipelines.json HTTP/1.1" 200 None
+[2025-06-16 14:25:13,366] nf_core.pipelines.rocrate [DEBUG  ]  Adding topics: ['nf-core', 'nextflow']
+[2025-06-16 14:25:13,366] nf_core.pipelines.rocrate [DEBUG  ]  No git repository found. No git contributors will be added as authors.
+[2025-06-16 14:25:13,368] nf_core.pipelines.rocrate [INFO   ]  Saving metadata file to '/Users/yuxinning/Projects/tools/nf-core-testpipeline'
+[2025-06-16 14:25:13,371] nf_core.utils        [DEBUG  ]  Got '/Users/yuxinning/Projects/tools/nf-core-testpipeline' as path
+[2025-06-16 14:25:13,371] nf_core.utils        [DEBUG  ]  Found a config cache, loading: /Users/yuxinning/.nextflow/nf-core/wf-config-cache-d72560874485c11774c06d2aa.json
+[2025-06-16 14:25:13,371] nf_core.utils        [DEBUG  ]  Using config file: /Users/yuxinning/Projects/tools/nf-core-testpipeline/.nf-core.yml
+[2025-06-16 14:25:13,374] nf_core.utils        [DEBUG  ]  Got '/Users/yuxinning/Projects/tools/nf-core-testpipeline' as path
+[2025-06-16 14:25:13,374] nf_core.utils        [DEBUG  ]  Found a config cache, loading: /Users/yuxinning/.nextflow/nf-core/wf-config-cache-d72560874485c11774c06d2aa.json
+[2025-06-16 14:25:13,374] nf_core.utils        [DEBUG  ]  Using config file: /Users/yuxinning/Projects/tools/nf-core-testpipeline/.nf-core.yml
+[2025-06-16 14:25:13,376] nf_core.pipelines.create.create [DEBUG  ]  Dumping pipeline template yml to pipeline config file '.nf-core.yml'
+[2025-06-16 14:25:13,376] nf_core.pipelines.create.create [DEBUG  ]  Running prettier on pipeline files
+[2025-06-16 14:25:16,825] nf_core.pipelines.lint_utils [DEBUG  ]  prettier.................................................................Passed
+
+[2025-06-16 14:25:16,826] nf_core.pipelines.create.create [INFO   ]  Initialising local pipeline git repository
+[2025-06-16 14:25:16,830] git.cmd              [DEBUG  ]  Popen(['git', 'init'], cwd=/Users/yuxinning/Projects/tools/nf-core-testpipeline, stdin=None, shell=False, universal_newlines=False)
+[2025-06-16 14:25:16,876] git.cmd              [DEBUG  ]  Popen(['git', 'add', '-A'], cwd=/Users/yuxinning/Projects/tools/nf-core-testpipeline, stdin=None, shell=False, universal_newlines=False)
+[2025-06-16 14:25:17,163] git.cmd              [DEBUG  ]  Popen(['git', 'cat-file', '--batch-check'], cwd=/Users/yuxinning/Projects/tools/nf-core-testpipeline, stdin=<valid stream>, shell=False, universal_newlines=False)
+[2025-06-16 14:25:17,188] git.cmd              [DEBUG  ]  Popen(['git', 'cat-file', '--batch'], cwd=/Users/yuxinning/Projects/tools/nf-core-testpipeline, stdin=<valid stream>, shell=False, universal_newlines=False)
+[2025-06-16 14:25:17,218] git.cmd              [DEBUG  ]  Popen(['git', 'branch', '-m', 'main', 'master'], cwd=/Users/yuxinning/Projects/tools/nf-core-testpipeline, stdin=None, shell=False, universal_newlines=False)
+[2025-06-16 14:25:17,244] git.cmd              [DEBUG  ]  Popen(['git', 'branch', 'TEMPLATE'], cwd=/Users/yuxinning/Projects/tools/nf-core-testpipeline, stdin=None, shell=False, universal_newlines=False)
+[2025-06-16 14:25:17,267] git.cmd              [DEBUG  ]  Popen(['git', 'branch', 'dev'], cwd=/Users/yuxinning/Projects/tools/nf-core-testpipeline, stdin=None, shell=False, universal_newlines=False)
+[2025-06-16 14:25:17,291] nf_core.pipelines.create.create [INFO   ]  Done. Remember to add a remote and push to GitHub:
+[white on grey23] cd /Users/yuxinning/Projects/tools/nf-core-testpipeline
+ git remote add origin git@github.com:USERNAME/REPO_NAME.git
+ git push --all origin
+[2025-06-16 14:25:17,296] nf_core.pipelines.create.create [INFO   ]  This will also push your newly created dev branch and the TEMPLATE branch for syncing.
+[2025-06-16 14:25:18,935] nf_core.pipelines.lint_utils [DEBUG  ]  prettier.................................................................Passed
+
+[2025-06-16 14:25:18,935] nf_core.pipelines.create.create [INFO   ]  [green bold]!!!!!! IMPORTANT !!!!!!
+
+[green not bold]If you are interested in adding your pipeline to the nf-core community,
+PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!
+
+[default]Please read: [link=https://nf-co.re/docs/tutorials/adding_a_pipeline/overview#join-the-community]https://nf-co.re/docs/tutorials/adding_a_pipeline/overview#join-the-community[/link]
