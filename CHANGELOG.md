@@ -6,6 +6,7 @@
 
 - Avoid overriding `NFT_DIFF` and `NFT_DIFF_ARGS` in `nf-test` action ([#3606](https://github.com/nf-core/tools/pull/3606)) and ([#3619](https://github.com/nf-core/tools/pull/3619))
 - fix nf-test scope to ignore nf-core module/swf tests ([#3609](https://github.com/nf-core/tools/pull/3609))
+- TEMPLATE - CI - Only trigger nf-test action on pull_request ([#3628](https://github.com/nf-core/tools/pull/3628))
 
 ### Linting
 
