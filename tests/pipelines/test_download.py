@@ -230,13 +230,20 @@ class DownloadTest(unittest.TestCase):
                     pass
             mock_fetch_wf_config.return_value = config
             download_obj.find_container_images("workflow")
-            assert len(download_obj.containers) == 4
             assert "nfcore/methylseq:1.0" in download_obj.containers
             assert "nfcore/methylseq:1.4" in download_obj.containers
             assert "nfcore/sarek:dev" in download_obj.containers
             assert (
                 "https://depot.galaxyproject.org/singularity/r-shinyngs:1.7.1--r42hdfd78af_1" in download_obj.containers
             )
+            assert (
+                "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/06/06beccfa4d48e5daf30dd8cee4f7e06fd51594963db0d5087ab695365b79903b/data"
+                in download_obj.containers
+            )
+            assert (
+                "community.wave.seqera.io/library/last_samtools_open-fonts:176a6ab0c8171057" in download_obj.containers
+            )
+            assert "singularity" not in download_obj.containers
             # does not yet pick up nfcore/sarekvep:dev.${params.genome}, because that is no valid URL or Docker URI.
 
     #
