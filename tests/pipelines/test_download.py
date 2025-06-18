@@ -221,13 +221,14 @@ class DownloadTest(unittest.TestCase):
         if result is not None:
             nfconfig_raw, _ = result
             config = {}
-            for line in nfconfig_raw.splitlines():
-                ul = line.decode("utf-8")
-                try:
-                    k, v = ul.split(" = ", 1)
-                    config[k] = v.strip("'\"")
-                except ValueError:
-                    pass
+            nfconfig = nfconfig_raw.decode("utf-8")
+            multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=]+?)\s*=\s*(.*?)(?=(\n[^\n=]+?\s*=)|$)", re.DOTALL)
+
+            for match in multiline_key_value_pattern.finditer(nfconfig):
+                k = match.group(2).strip()
+                v = match.group(3).strip().strip("'\"")
+                if k and v:
+                    config[k] = v
             mock_fetch_wf_config.return_value = config
             download_obj.find_container_images("workflow")
             assert "nfcore/methylseq:1.0" in download_obj.containers
