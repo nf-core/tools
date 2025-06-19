@@ -15,6 +15,8 @@
 
 ### Modules
 
+- Remove args stub from module template to satisfy language server ([#3403](https://github.com/nf-core/tools/pull/3403))
+
 ### Subworkflows
 
 ### General
