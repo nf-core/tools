@@ -130,60 +130,43 @@ workflow METAVAL {
         ch_versions            = ch_versions.mix( TAXID_READS.out.versions )
 
         // SUBWORKFLOW: DE NOVO
-
-        // Filter out empty FASTQ files. This can happen when users want to check if the same species was identified across different classifiers.
+        // Remove empty FASTQ files. This can happen when users want to check if the same species was identified across different classifiers.
         ch_taxid_reads = TAXID_READS.out.reads
-            .transpose()
-            .filter { meta, read ->
-                def file = file(read)
-                def lineCount = ["bash", "-c", "zcat ${file} | wc -l"].execute().text.trim() as Integer
-                def isNotEmpty = (lineCount > 0)
-                if (!isNotEmpty) {
-                    log.warn "Removing empty fastq.gz file: ${file}"
-                }
-                return isNotEmpty
+            .branch { it ->
+                empty: it[0].single_end ? it[1].countFastq() < 1 : it[1][0].countFastq() < 1 || it[1][1].countFastq() < 1
+                nonempty: true
             }
-            .groupTuple()
         // Run de novo assembly if the number of reads exceeds the params.min_read_counts
-        ch_taxid_reads_result = ch_taxid_reads
-            .branch {
-                failed: { meta, reads ->
-                    def readFiles = reads.collect { file(it) }  // convert ArrayBag to List<File>
-                    if (meta.single_end) {
-                        return readFiles[0].countFastq() < params.min_read_counts
-                    } else {
-                        return readFiles[0].countFastq() < params.min_read_counts || readFiles[1].countFastq() < params.min_read_counts
-                    }
-                }
-                passed: true
+        ch_taxid_reads_filter = ch_taxid_reads.nonempty
+            .branch { it ->
+                blast: it[0].single_end ? it[1].countFastq() < params.min_read_counts : it[1][0].countFastq() < params.min_read_counts || it[1][1].countFastq() < params.min_read_counts
+                denovo: true
             }
-        ch_taxid_reads_result.passed.set { ch_taxid_reads_passed }
-        // Prepare reads for de-novo assembly
-        ch_taxid_reads_passed
+        // Prepare de novo assembly reads channel for shortreads and longreads
+        ch_denovo = ch_taxid_reads_filter.denovo
             .branch { meta, reads ->
-                shortreads_spades: meta.instrument_platform != 'OXFORD_NANOPORE'
+                shortreads: meta.instrument_platform != 'OXFORD_NANOPORE'
                     return [ meta, reads, [], [] ]
-                longreads_denovo: meta.instrument_platform == 'OXFORD_NANOPORE'
+                longreads: meta.instrument_platform == 'OXFORD_NANOPORE'
                     return [ meta, reads ]
             }
-            .set { ch_denovo_input }
         // short reads de novo assembly
         if ( params.perform_shortread_denovo ) {
-            SPADES( ch_denovo_input.shortreads_spades, [], [] )
+            SPADES( ch_denovo.shortreads, [], [] )
             ch_versions             = ch_versions.mix( SPADES.out.versions.first() )
         }
         // long reads de novo assembly
         if ( params.perform_longread_denovo ) {
-            FLYE( ch_denovo_input.longreads_denovo, params.flye_mode )
+            FLYE( ch_denovo.longreads, params.flye_mode )
             ch_versions             = ch_versions.mix( FLYE.out.versions.first() )
         }
 
         // BLAST
         // Prepare the query fasta file
-        SEQKIT_FQ2FA ( ch_taxid_reads_result.failed )
+        SEQKIT_FQ2FA ( ch_taxid_reads_filter.blast )
         ch_blast_query = SEQKIT_FQ2FA.out.fasta.mix( SPADES.out.contigs, FLYE.out.fasta )
         ch_versions = ch_versions.mix( SEQKIT_FQ2FA.out.versions.first() )
-        // BLASTn
+        //// BLASTn
         if ( !params.skip_blastn ) {
             BLAST_BLASTN ( ch_blast_query, ch_blastn_db )
             ch_versions = ch_versions.mix( BLAST_BLASTN.out.versions.first() )
@@ -258,12 +241,18 @@ workflow METAVAL {
             LONGREAD_CONSENSUS.out.consensus
         }
         // BLAST
-        ch_shortread_mapped_pathogen = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
-            .filter { meta, read -> read[0].size() > 30 }  // The size of the empty fasta.gz is 30
-        ch_longread_mapped_pathogen = TAXID_BAM_FASTA_LONGREAD.out.taxid_fasta
-            .filter { meta, read -> read.size() > 30 }
-        ch_blast_query_pathogen = ch_shortread_mapped_pathogen.mix(
-            ch_longread_mapped_pathogen,
+        ch_shortread_pathogen_blast = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
+            .branch { it ->
+                empty: it[1][0].countFasta() < 1 || it[1][1].countFasta() < 1
+                nonempty: true
+            }
+        ch_longread_pathogen_blast = TAXID_BAM_FASTA_LONGREAD.out.taxid_fasta
+            .branch { it ->
+                empty: it[1].countFasta() < 1
+                nonempty: true
+            }
+        ch_blast_query_pathogen = ch_shortread_pathogen_blast.nonempty.mix(
+            ch_longread_pathogen_blast.nonempty,
             SHORTREAD_SAMTOOLS_CONSENSUS.out.fasta,
             LONGREAD_CONSENSUS.out.consensus
         )
