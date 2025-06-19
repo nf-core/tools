@@ -8,7 +8,7 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import git
 import git.config
@@ -191,8 +191,8 @@ class PipelineCreate:
             self.config.is_nfcore = self.config.org == "nf-core"
 
     def obtain_jinja_params_dict(
-        self, features_to_skip: List[str], pipeline_dir: Union[str, Path]
-    ) -> Tuple[Dict, List[str]]:
+        self, features_to_skip: list[str], pipeline_dir: Union[str, Path]
+    ) -> tuple[dict, list[str]]:
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
@@ -311,7 +311,7 @@ class PipelineCreate:
         template_files += list(Path(template_dir).glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
         short_name = self.jinja_params["short_name"]
-        rename_files: Dict[str, str] = {
+        rename_files: dict[str, str] = {
             "workflows/pipeline.nf": f"workflows/{short_name}.nf",
             "subworkflows/local/utils_nfcore_pipeline_pipeline/main.nf": f"subworkflows/local/utils_nfcore_{short_name}_pipeline/main.nf",
         }
@@ -491,7 +491,10 @@ class PipelineCreate:
                         "Branches 'TEMPLATE' and 'dev' already exist. Use --force to overwrite existing branches."
                     )
         if self.is_interactive:
-            log.info(f"Pipeline created: ./{self.outdir.relative_to(Path.cwd())}")
+            try:
+                log.info(f"Pipeline created: ./{self.outdir.relative_to(Path.cwd())}")
+            except ValueError:
+                log.info(f"Pipeline created: {self.outdir}")
         else:
             log.info(
                 "Done. Remember to add a remote and push to GitHub:\n"

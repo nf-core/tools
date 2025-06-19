@@ -2,14 +2,14 @@ import ast
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from nf_core.pipelines.schema import PipelineSchema
 
 log = logging.getLogger(__name__)
 
 
-def nextflow_config(self) -> Dict[str, List[str]]:
+def nextflow_config(self) -> dict[str, list[str]]:
     """Checks the pipeline configuration for required variables.
 
     All nf-core pipelines are required to be configured with a minimal set of variable
@@ -80,11 +80,11 @@ def nextflow_config(self) -> Dict[str, List[str]]:
     * ``params.nf_required_version``: The old method for specifying the minimum Nextflow version. Replaced by ``manifest.nextflowVersion``
     * ``params.container``: The old method for specifying the dockerhub container address. Replaced by ``process.container``
     * ``igenomesIgnore``: Changed to ``igenomes_ignore``
-    * ``params.max_cpus``: Old method of specifying the maximum number of CPUs a process can request. Replaced by native Nextflow `resourceLimits`directive in config files.
-    * ``params.max_memory``: Old method of specifying the maximum number of memory can request. Replaced by native Nextflow `resourceLimits`directive.
-    * ``params.max_time``: Old method of specifying the maximum number of CPUs can request. Replaced by native Nextflow `resourceLimits`directive.
+    * ``params.max_cpus``: Old method of specifying the maximum number of CPUs a process can request. Replaced by native Nextflow `resourceLimits` directive in config files.
+    * ``params.max_memory``: Old method of specifying the maximum number of memory can request. Replaced by native Nextflow `resourceLimits` directive.
+    * ``params.max_time``: Old method of specifying the maximum number of CPUs can request. Replaced by native Nextflow `resourceLimits` directive.
 
-        .. tip:: The ``snake_case`` convention should now be used when defining pipeline parameters
+    .. tip:: The ``snake_case`` convention should now be used when defining pipeline parameters
 
     **The following Nextflow syntax is depreciated and fails the test if present:**
 
@@ -346,48 +346,41 @@ def nextflow_config(self) -> Dict[str, List[str]]:
             failed.append(f"Config `params.custom_config_base` is not set to `{custom_config_base}`")
 
         # Check that lines for loading custom profiles exist
-        old_lines = [
-            r"// Load nf-core custom profiles from different Institutions",
-            r"try {",
-            r'includeConfig "${params.custom_config_base}/nfcore_custom.config"',
-            r"} catch (Exception e) {",
-            r'System.err.println("WARNING: Could not load nf-core/config profiles: ${params.custom_config_base}/nfcore_custom.config")',
-            r"}",
-        ]
-        lines = [
-            r"// Load nf-core custom profiles from different Institutions",
-            r'''includeConfig !System.getenv('NXF_OFFLINE') && params.custom_config_base ? "${params.custom_config_base}/nfcore_custom.config" : "/dev/null"''',
-        ]
+        old_institutional_config_pattern_1 = r"""try\s*{
+\s*includeConfig \"\${params\.custom_config_base}/nfcore_custom\.config\"
+\s*}\s*catch\s*\(Exception\s+e\)\s*{
+\s*System\.err\.println\(\"WARNING: Could not load nf-core/config profiles: \${params\.custom_config_base}/nfcore_custom\.config\"\)
+\s*}"""
+
+        old_institutional_config_pattern_2 = r"""includeConfig !System\.getenv\('NXF_OFFLINE'\) && params\.custom_config_base \? \"\${params\.custom_config_base}/nfcore_custom\.config\" : \"/dev/null\""""
+
+        current_institutional_config_pattern = r"""includeConfig params\.custom_config_base && \(!System\.getenv\('NXF_OFFLINE'\) \|\| !params\.custom_config_base\.startsWith\('http'\)\) \? \"\${params\.custom_config_base}/nfcore_custom\.config\" : \"/dev/null\""""
+
         path = Path(self.wf_path, "nextflow.config")
-        i = 0
         with open(path) as f:
-            for line in f:
-                if old_lines[i] in line:
-                    i += 1
-                    if i == len(old_lines):
-                        break
-                elif lines[i] in line:
-                    i += 1
-                    if i == len(lines):
-                        break
-                else:
-                    i = 0
-        if i == len(lines):
-            passed.append("Lines for loading custom profiles found")
-        elif i == len(old_lines):
-            failed.append(
-                "Old lines for loading custom profiles found. File should contain: ```groovy\n{}".format(
-                    "\n".join(lines)
+            content = f.read()
+
+            current_institutional_config_lines = [
+                "// Load nf-core custom profiles from different institutions",
+                """includeConfig params.custom_config_base && (!System.getenv('NXF_OFFLINE') || !params.custom_config_base.startsWith('http')) ? \"${params.custom_config_base}/nfcore_custom.config" : "/dev/null\"""",
+            ]
+
+            if re.search(current_institutional_config_pattern, content, re.MULTILINE):
+                passed.append("Lines for loading custom profiles found")
+            elif re.search(old_institutional_config_pattern_1, content, re.MULTILINE) or re.search(
+                old_institutional_config_pattern_2, content, re.MULTILINE
+            ):
+                failed.append(
+                    "Outdated lines for loading custom profiles found. File should contain:\n```groovy\n{}\n```".format(
+                        "\n".join(current_institutional_config_lines)
+                    )
                 )
-            )
-        else:
-            lines[2] = f"\t{lines[2]}"
-            lines[4] = f"\t{lines[4]}"
-            failed.append(
-                "Lines for loading custom profiles not found. File should contain: ```groovy\n{}".format(
-                    "\n".join(lines)
+            else:
+                failed.append(
+                    "Lines for loading custom profiles not found. File should contain:\n```groovy\n{}\n```".format(
+                        "\n".join(current_institutional_config_lines)
+                    )
                 )
-            )
 
     # Check for the availability of the "test" configuration profile by parsing nextflow.config
     with open(Path(self.wf_path, "nextflow.config")) as f:

@@ -6,7 +6,7 @@ import filecmp
 import functools
 import tempfile
 from pathlib import Path
-from typing import Any, Callable, Tuple
+from typing import Any, Callable
 
 import responses
 import yaml
@@ -20,6 +20,8 @@ TEST_DATA_DIR = Path(__file__).parent / "data"
 OLD_TRIMGALORE_SHA = "9b7a3bdefeaad5d42324aa7dd50f87bea1b04386"
 OLD_TRIMGALORE_BRANCH = "mimic-old-trimgalore"
 GITLAB_URL = "https://gitlab.com/nf-core/modules-test.git"
+CROSS_ORGANIZATION_URL = "https://github.com/nf-core-test/modules.git"
+CROSS_ORGANIZATION_BRANCH = "main"
 GITLAB_REPO = "nf-core-test"
 GITLAB_DEFAULT_BRANCH = "main"
 GITLAB_SUBWORKFLOWS_BRANCH = "subworkflows"
@@ -30,7 +32,7 @@ GITLAB_BRANCH_TEST_BRANCH = "branch-tester"
 GITLAB_BRANCH_ORG_PATH_BRANCH = "org-path"
 GITLAB_BRANCH_TEST_OLD_SHA = "e772abc22c1ff26afdf377845c323172fb3c19ca"
 GITLAB_BRANCH_TEST_NEW_SHA = "7d73e21f30041297ea44367f2b4fd4e045c0b991"
-GITLAB_NFTEST_BRANCH = "nf-test-tests-self-hosted-runners"
+GITLAB_NFTEST_BRANCH = "nf-test-tests"
 
 
 def with_temporary_folder(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -102,12 +104,36 @@ def mock_biotools_api_calls(rsps: responses.RequestsMock, module: str) -> None:
     """Mock biotools api calls for module"""
     biotools_api_url = f"https://bio.tools/api/t/?q={module}&format=json"
     biotools_mock = {
-        "list": [{"name": "Bpipe", "biotoolsCURIE": "biotools:bpipe"}],
+        "list": [
+            {
+                "name": "Bpipe",
+                "biotoolsCURIE": "biotools:bpipe",
+                "function": [
+                    {
+                        "input": [
+                            {
+                                "data": {"uri": "http://edamontology.org/data_0848", "term": "Raw sequence"},
+                                "format": [
+                                    {"uri": "http://edamontology.org/format_2182", "term": "FASTQ-like format (text)"},
+                                    {"uri": "http://edamontology.org/format_2573", "term": "SAM"},
+                                ],
+                            }
+                        ],
+                        "output": [
+                            {
+                                "data": {"uri": "http://edamontology.org/data_2955", "term": "Sequence report"},
+                                "format": [{"uri": "http://edamontology.org/format_2331", "term": "HTML"}],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
     }
     rsps.get(biotools_api_url, json=biotools_mock, status=200)
 
 
-def create_tmp_pipeline(no_git: bool = False) -> Tuple[Path, Path, str, Path]:
+def create_tmp_pipeline(no_git: bool = False) -> tuple[Path, Path, str, Path]:
     """Create a new Pipeline for testing"""
 
     tmp_dir = Path(tempfile.TemporaryDirectory().name)

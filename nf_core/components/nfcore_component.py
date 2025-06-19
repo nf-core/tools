@@ -5,7 +5,7 @@ The NFCoreComponent class holds information and utility functions for a single m
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 log = logging.getLogger(__name__)
 
@@ -47,11 +47,11 @@ class NFCoreComponent:
         self.component_dir = component_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
-        self.passed: List[Tuple[str, str, Path]] = []
-        self.warned: List[Tuple[str, str, Path]] = []
-        self.failed: List[Tuple[str, str, Path]] = []
-        self.inputs: List[List[Dict[str, Dict[str, str]]]] = []
-        self.outputs: List[str] = []
+        self.passed: list[tuple[str, str, Path]] = []
+        self.warned: list[tuple[str, str, Path]] = []
+        self.failed: list[tuple[str, str, Path]] = []
+        self.inputs: list[list[dict[str, dict[str, str]]]] = []
+        self.outputs: list[str] = []
         self.has_meta: bool = False
         self.git_sha: Optional[str] = None
         self.is_patched: bool = False
@@ -74,8 +74,8 @@ class NFCoreComponent:
             repo_dir = self.component_dir.parts[:name_index][-1]
 
             self.org = repo_dir
-            self.nftest_testdir = Path(self.component_dir, "tests")
-            self.nftest_main_nf = Path(self.nftest_testdir, "main.nf.test")
+            self.nftest_testdir: Optional[Path] = Path(self.component_dir, "tests")
+            self.nftest_main_nf: Optional[Path] = Path(self.nftest_testdir, "main.nf.test")
 
             if self.repo_type == "pipeline":
                 patch_fn = f"{self.component_name.replace('/', '-')}.diff"
@@ -85,15 +85,23 @@ class NFCoreComponent:
                     self.patch_path = patch_path
         else:
             # The main file is just the local module
-            self.main_nf = self.component_dir
-            self.component_name = self.component_dir.stem
-            # These attributes are only used by nf-core modules
-            # so just initialize them to None
-            self.meta_yml = None
-            self.environment_yml = None
-            self.test_dir = None
-            self.test_yml = None
-            self.test_main_nf = None
+            if self.component_dir.is_dir():
+                self.main_nf = Path(self.component_dir, "main.nf")
+                self.component_name = self.component_dir.stem
+                # These attributes are only required by nf-core modules
+                # so just set them to None if they don't exist
+                self.meta_yml = p if (p := Path(self.component_dir, "meta.yml")).exists() else None
+                self.environment_yml = p if (p := Path(self.component_dir, "environment.yml")).exists() else None
+                self.nftest_testdir = p if (p := Path(self.component_dir, "tests")).exists() else None
+                if self.nftest_testdir is not None:
+                    self.nftest_main_nf = p if (p := Path(self.nftest_testdir, "main.nf.test")).exists() else None
+            else:
+                self.main_nf = self.component_dir
+                self.component_dir = self.component_dir.parent
+                self.meta_yml = None
+                self.environment_yml = None
+                self.nftest_testdir = None
+                self.nftest_main_nf = None
 
         self.process_name: str = self._get_process_name()
 
@@ -198,7 +206,8 @@ class NFCoreComponent:
             input_data = data.split("input:")[1].split("output:")[0]
             for line in input_data.split("\n"):
                 channel_elements: Any = []
-                regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+                line = line.split("//")[0]  # remove any trailing comments
+                regex = r"\b(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
                 matches = re.finditer(regex, line)
                 for _, match in enumerate(matches, start=1):
                     input_val = None
@@ -207,6 +216,10 @@ class NFCoreComponent:
                     elif match.group(4):
                         input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
                     if input_val:
+                        input_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', input_val)[
+                            0
+                        ]  # Takes only first part, avoid commas in quotes
+                        input_val = input_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
                         channel_elements.append({input_val: {}})
                 if len(channel_elements) > 0:
                     inputs.append(channel_elements)
@@ -238,7 +251,7 @@ class NFCoreComponent:
                 return outputs
             output_data = data.split("output:")[1].split("when:")[0]
             regex_emit = r"emit:\s*([^)\s,]+)"
-            regex_elements = r"(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            regex_elements = r"\b(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
             for line in output_data.split("\n"):
                 match_emit = re.search(regex_emit, line)
                 matches_elements = re.finditer(regex_elements, line)
@@ -252,7 +265,10 @@ class NFCoreComponent:
                     elif match_element.group(4):
                         output_val = match_element.group(4)
                     if output_val:
-                        output_val = output_val.strip("'").strip('"')  # remove quotes
+                        output_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', output_val)[
+                            0
+                        ]  # Takes only first part, avoid commas in quotes
+                        output_val = output_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
                         output_channel[match_emit.group(1)].append({output_val: {}})
                 outputs.append(output_channel)
             log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")

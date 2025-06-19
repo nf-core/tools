@@ -4,7 +4,7 @@ import json
 import logging
 import textwrap
 from pathlib import Path
-from typing import Dict, List, Literal, Optional
+from typing import Literal, Optional
 
 import questionary
 
@@ -19,7 +19,7 @@ INTRO = (
     "of nextflow run with the {pipeline_name} pipeline."
 )
 
-USAGE = "Uncomment lines with a single '#' if you want to pass the parameter " "to the pipeline."
+USAGE = "Uncomment lines with a single '#' if you want to pass the parameter to the pipeline."
 
 H1_SEPERATOR = "## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 H2_SEPERATOR = "## ----------------------------------------------------------------------------"
@@ -107,7 +107,7 @@ class ParamsFileBuilder:
         # Prompt for pipeline if not supplied
         if self.pipeline is None:
             launch_type = questionary.select(
-                "Generate parameter file for local pipeline " "or remote GitHub pipeline?",
+                "Generate parameter file for local pipeline or remote GitHub pipeline?",
                 choices=["Remote pipeline", "Local path"],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
@@ -171,7 +171,7 @@ class ParamsFileBuilder:
         return out
 
     def format_param(
-        self, name: str, properties: Dict, required_properties: List[str] = [], show_hidden: bool = False
+        self, name: str, properties: dict, required_properties: list[str] = [], show_hidden: bool = False
     ) -> Optional[str]:
         """
         Format a single parameter of the schema as commented YAML
@@ -213,7 +213,7 @@ class ParamsFileBuilder:
             out += _print_wrapped("Required", mode="none", indent=4)
 
         out += _print_wrapped("\n", mode="end")
-        out += f"# {name} = {json.dumps(default)}\n"
+        out += f"# {name}: {json.dumps(default)}\n"
 
         return out
 

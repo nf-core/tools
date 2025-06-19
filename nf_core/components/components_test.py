@@ -6,7 +6,7 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import questionary
 from rich import print
@@ -79,7 +79,7 @@ class ComponentsTest(ComponentCommand):  # type: ignore[misc]
         self.component_name = component_name
         self.remote_url = remote_url
         self.branch = branch
-        self.errors: List[str] = []
+        self.errors: list[str] = []
         self.verbose = verbose
         self.obsolete_snapshots: bool = False
         self.update = update

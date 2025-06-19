@@ -1,15 +1,13 @@
 import re
+from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
-from logging import LogRecord
 from pathlib import Path
-from typing import Any, Dict, Iterator, Union
+from typing import Any, Union
 
 import yaml
 from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
-from rich.logging import RichHandler
 from textual import on
-from textual._context import active_app
 from textual.app import ComposeResult
 from textual.containers import Grid, HorizontalScroll
 from textual.message import Message
@@ -25,7 +23,7 @@ _init_context_var: ContextVar = ContextVar("_init_context_var", default={})
 
 
 @contextmanager
-def init_context(value: Dict[str, Any]) -> Iterator[None]:
+def init_context(value: dict[str, Any]) -> Iterator[None]:
     token = _init_context_var.set(value)
     try:
         yield
@@ -219,19 +217,6 @@ class LoggingConsole(RichLog):
         self.write(content)
 
 
-class CustomLogHandler(RichHandler):
-    """A Logging handler which extends RichHandler to write to a Widget and handle a Textual App."""
-
-    def emit(self, record: LogRecord) -> None:
-        """Invoked by logging."""
-        try:
-            _app = active_app.get()
-        except LookupError:
-            pass
-        else:
-            super().emit(record)
-
-
 class ShowLogs(Message):
     """Custom message to show the logging messages."""
 
@@ -249,7 +234,7 @@ def remove_hide_class(app, widget_id: str) -> None:
     app.get_widget_by_id(widget_id).remove_class("hide")
 
 
-def load_features_yaml() -> Dict:
+def load_features_yaml() -> dict:
     """Load the YAML file describing template features."""
     with open(features_yml_path) as fh:
         return yaml.safe_load(fh)

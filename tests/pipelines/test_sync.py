@@ -3,7 +3,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Union
 from unittest import mock
 
 import git
@@ -19,14 +19,14 @@ from ..utils import with_temporary_folder
 
 
 class MockResponse:
-    def __init__(self, data: Union[Dict, List[Dict]], status_code: int, url: str):
+    def __init__(self, data: Union[dict, list[dict]], status_code: int, url: str):
         self.url: str = url
         self.status_code: int = status_code
         self.from_cache: bool = False
         self.reason: str = "Mocked response"
-        self.data: Union[Dict, List[Dict]] = data
+        self.data: Union[dict, list[dict]] = data
         self.content: str = json.dumps(data)
-        self.headers: Dict[str, str] = {"content-encoding": "test", "connection": "fake"}
+        self.headers: dict[str, str] = {"content-encoding": "test", "connection": "fake"}
 
     def json(self):
         return self.data
@@ -342,7 +342,7 @@ class TestModules(TestPipelines):
         psync.gh_username = "bad_url"
         psync.gh_repo = "bad_url/response"
         os.environ["GITHUB_AUTH_TOKEN"] = "test"
-        pr: Dict[str, Union[str, Dict[str, str]]] = {
+        pr: dict[str, Union[str, dict[str, str]]] = {
             "state": "open",
             "head": {"ref": "nf-core-template-merge-3"},
             "base": {"ref": "main"},
@@ -403,9 +403,10 @@ class TestModules(TestPipelines):
 
     def test_sync_no_changes(self):
         """Test pipeline sync when no changes are needed"""
-        with mock.patch("requests.get", side_effect=mocked_requests_get), mock.patch(
-            "requests.post", side_effect=mocked_requests_post
-        ) as mock_post:
+        with (
+            mock.patch("requests.get", side_effect=mocked_requests_get),
+            mock.patch("requests.post", side_effect=mocked_requests_post) as mock_post,
+        ):
             psync = nf_core.pipelines.sync.PipelineSync(self.pipeline_dir)
 
             # Mock that no changes were made

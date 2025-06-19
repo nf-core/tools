@@ -4,64 +4,43 @@ name: nf-core AWS full size tests
 # It runs the -profile 'test_full' on AWS batch
 
 on:
-  pull_request:
-    branches:
-      - main
-      - master
   workflow_dispatch:
   pull_request_review:
     types: [submitted]
+  release:
+    types: [published]
 
 jobs:
   run-platform:
     name: Run AWS full tests
-    # run only if the PR is approved by at least 2 reviewers and against the master branch or manually triggered
-    if: github.repository == '{{ name }}' && github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'master' || github.event_name == 'workflow_dispatch'
+    # run only if the PR is approved by at least 2 reviewers and against the master/main branch or manually triggered
+    if: github.repository == '{{ name }}' && github.event.review.state == 'approved' && (github.event.pull_request.base.ref == 'master' || github.event.pull_request.base.ref == 'main') || github.event_name == 'workflow_dispatch' || github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
-      - name: Get PR reviews
-        uses: octokit/request-action@v2.x
-        if: github.event_name != 'workflow_dispatch'
-        id: check_approvals
-        continue-on-error: true
-        with:
-          route: GET /repos/{%- raw -%}${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews?per_page=100
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check for approvals
-        if: ${{ failure() && github.event_name != 'workflow_dispatch' }}
+      - name: Set revision variable
+        id: revision
         run: |
-          echo "No review approvals found. At least 2 approvals are required to run this action automatically."
-          exit 1
-
-      - name: Check for enough approvals (>=2)
-        id: test_variables
-        if: github.event_name != 'workflow_dispatch'
-        run: |
-          JSON_RESPONSE='${{ steps.check_approvals.outputs.data }}'{% endraw %}
-          CURRENT_APPROVALS_COUNT=$(echo $JSON_RESPONSE | jq -c '[.[] | select(.state | contains("APPROVED")) ] | length')
-          test $CURRENT_APPROVALS_COUNT -ge 2 || exit 1 # At least 2 approvals are required
+          echo "revision={%- raw -%}${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'release') && github.sha || 'dev' }}" >> "$GITHUB_OUTPUT"
 
       - name: Launch workflow via Seqera Platform
         uses: seqeralabs/action-tower-launch@v2
         # TODO nf-core: You can customise AWS full pipeline tests as required
         # Add full size test data (but still relatively small datasets for few samples)
-        # on the `test_full.config` test runs with only one set of parameters {%- raw %}
+        # on the `test_full.config` test runs with only one set of parameters
         with:
           workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
           access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
           compute_env: ${{ secrets.TOWER_COMPUTE_ENV }}
-          revision: ${{ github.sha }}
-          workdir: s3://${{ secrets.AWS_S3_BUCKET }}{% endraw %}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw %}
+          revision: ${{ steps.revision.outputs.revision }}
+          workdir: s3://${{ secrets.AWS_S3_BUCKET }}{% endraw %}/work/{{ short_name }}/{% raw %}work-${{ steps.revision.outputs.revision }}{% endraw %}
           parameters: |
             {
               "hook_url": "{% raw %}${{ secrets.MEGATESTS_ALERTS_SLACK_HOOK_URL }}{% endraw %}",
-              "outdir": "s3://{% raw %}${{ secrets.AWS_S3_BUCKET }}{% endraw %}/{{ short_name }}/{% raw %}results-${{ github.sha }}{% endraw %}"
+              "outdir": "s3://{% raw %}${{ secrets.AWS_S3_BUCKET }}{% endraw %}/{{ short_name }}/{% raw %}results-${{ steps.revision.outputs.revision }}{% endraw %}"
             }
           profiles: test_full
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: Seqera Platform debug log file
           path: |

@@ -134,7 +134,6 @@ class NfcoreCreateTest(unittest.TestCase):
         assert not (pipeline.outdir / "CODE_OF_CONDUCT.md").exists()
         assert not (pipeline.outdir / ".github").exists()
         assert not (pipeline.outdir / "conf" / "igenomes.config").exists()
-        assert not (pipeline.outdir / ".editorconfig").exists()
 
     def test_template_customisation_all_files_grouping(self):
         """Test that all pipeline template files are included in a pipeline customisation group."""
@@ -158,9 +157,9 @@ class NfcoreCreateTest(unittest.TestCase):
                 str_path = str((Path(root) / file).relative_to(PIPELINE_TEMPLATE))
                 if str_path not in base_required_files:
                     try:
-                        assert (
-                            str_path in all_skipped_files
-                        ), f"Template file `{str_path}` not present in a group for pipeline customisation in `template_features.yml`."
+                        assert str_path in all_skipped_files, (
+                            f"Template file `{str_path}` not present in a group for pipeline customisation in `template_features.yml`."
+                        )
                     except AssertionError:
                         if "/" in str_path:
                             # Check if the parent directory is in the skipped files
@@ -170,6 +169,8 @@ class NfcoreCreateTest(unittest.TestCase):
                                 if upper_dir in all_skipped_files:
                                     upper_dir_present = True
                                     break
-                            assert upper_dir_present, f"Template file `{str_path}` not present in a group for pipeline customisation in `template_features.yml`."
+                            assert upper_dir_present, (
+                                f"Template file `{str_path}` not present in a group for pipeline customisation in `template_features.yml`."
+                            )
                         else:
                             raise

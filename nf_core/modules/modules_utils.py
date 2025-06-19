@@ -1,8 +1,10 @@
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Optional
 from urllib.parse import urlparse
+
+import requests
 
 from ..components.nfcore_component import NFCoreComponent
 
@@ -36,7 +38,7 @@ def repo_full_name_from_remote(remote_url: str) -> str:
     return path
 
 
-def get_installed_modules(directory: Path, repo_type="modules") -> Tuple[List[str], List[NFCoreComponent]]:
+def get_installed_modules(directory: Path, repo_type="modules") -> tuple[list[str], list[NFCoreComponent]]:
     """
     Make a list of all modules installed in this repository
 
@@ -50,8 +52,8 @@ def get_installed_modules(directory: Path, repo_type="modules") -> Tuple[List[st
     returns (local_modules, nfcore_modules)
     """
     # initialize lists
-    local_modules: List[str] = []
-    nfcore_modules_names: List[str] = []
+    local_modules: list[str] = []
+    nfcore_modules_names: list[str] = []
     local_modules_dir: Optional[Path] = None
     nfcore_modules_dir = Path(directory, "modules", "nf-core")
 
@@ -97,3 +99,19 @@ def get_installed_modules(directory: Path, repo_type="modules") -> Tuple[List[st
     ]
 
     return local_modules, nfcore_modules
+
+
+def load_edam():
+    """Load the EDAM ontology from the nf-core repository"""
+    edam_formats = {}
+    response = requests.get("https://edamontology.org/EDAM.tsv")
+    for line in response.content.splitlines():
+        fields = line.decode("utf-8").split("\t")
+        if fields[0].split("/")[-1].startswith("format"):
+            # We choose an already provided extension
+            if fields[14]:
+                extensions = fields[14].split("|")
+                for extension in extensions:
+                    if extension not in edam_formats:
+                        edam_formats[extension] = (fields[0], fields[1])  # URL, name
+    return edam_formats

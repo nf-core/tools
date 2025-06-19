@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import questionary
 import yaml
@@ -15,7 +15,7 @@ from rich.text import Text
 
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.components.components_utils import NF_CORE_MODULES_REMOTE
+from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.modules.modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ class ComponentInfo(ComponentCommand):
         no_pull: bool = False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
-        self.meta: Optional[Dict] = None
+        self.meta: Optional[dict] = None
         self.local_path: Optional[Path] = None
         self.remote_location: Optional[str] = None
         self.local: bool = False
@@ -106,7 +106,7 @@ class ComponentInfo(ComponentCommand):
                     components = self.get_components_clone_modules()
                 elif self.repo_type == "pipeline":
                     assert self.modules_json is not None  # mypy
-                    all_components: List[Tuple[str, str]] = self.modules_json.get_all_components(
+                    all_components: list[tuple[str, str]] = self.modules_json.get_all_components(
                         self.component_type
                     ).get(self.modules_repo.remote_url, [])
 
@@ -170,7 +170,7 @@ class ComponentInfo(ComponentCommand):
 
         return self.generate_component_info_help()
 
-    def get_local_yaml(self) -> Optional[Dict]:
+    def get_local_yaml(self) -> Optional[dict]:
         """Attempt to get the meta.yml file from a locally installed module/subworkflow.
 
         Returns:
@@ -213,7 +213,7 @@ class ComponentInfo(ComponentCommand):
 
         return {}
 
-    def get_remote_yaml(self) -> Optional[Dict]:
+    def get_remote_yaml(self) -> Optional[dict]:
         """Attempt to get the meta.yml file from a remote repo.
 
         Returns:
@@ -265,9 +265,9 @@ class ComponentInfo(ComponentCommand):
             intro_text.append(
                 Text.from_markup(
                     ":globe_with_meridians: Repository: "
-                    f"{ '[link={self.remote_location}]' if self.remote_location.startswith('http') else ''}"
+                    f"{'[link={self.remote_location}]' if self.remote_location.startswith('http') else ''}"
                     f"{self.remote_location}"
-                    f"{'[/link]' if self.remote_location.startswith('http') else '' }"
+                    f"{'[/link]' if self.remote_location.startswith('http') else ''}"
                     "\n"
                 )
             )

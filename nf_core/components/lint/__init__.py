@@ -7,7 +7,7 @@ import logging
 import operator
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import rich.box
 import rich.console
@@ -75,10 +75,10 @@ class ComponentLint(ComponentCommand):
 
         self.fail_warned = fail_warned
         self.fix = fix
-        self.passed: List[LintResult] = []
-        self.warned: List[LintResult] = []
-        self.failed: List[LintResult] = []
-        self.all_local_components: List[NFCoreComponent] = []
+        self.passed: list[LintResult] = []
+        self.warned: list[LintResult] = []
+        self.failed: list[LintResult] = []
+        self.all_local_components: list[NFCoreComponent] = []
 
         self.lint_config: Optional[NFCoreYamlLintConfig] = None
         self.modules_json: Optional[ModulesJson] = None
@@ -96,13 +96,13 @@ class ComponentLint(ComponentCommand):
         if self.repo_type == "pipeline":
             modules_json = ModulesJson(self.directory)
             modules_json.check_up_to_date()
-            self.all_remote_components: List[NFCoreComponent] = []
+            self.all_remote_components: list[NFCoreComponent] = []
             for repo_url, components in modules_json.get_all_components(self.component_type).items():
                 if remote_url is not None and remote_url != repo_url:
                     continue
                 if isinstance(components, str):
                     raise LookupError(
-                        f"Error parsing modules.json: {components}. " f"Please check the file for errors or try again."
+                        f"Error parsing modules.json: {components}. Please check the file for errors or try again."
                     )
                 for org, comp in components:
                     self.all_remote_components.append(
@@ -162,6 +162,10 @@ class ComponentLint(ComponentCommand):
             self.registry = registry
         log.debug(f"Registry set to {self.registry}")
 
+    @property
+    def local_module_exclude_tests(self):
+        return ["module_version", "module_changes", "modules_patch"]
+
     @staticmethod
     def get_all_module_lint_tests(is_pipeline):
         if is_pipeline:
@@ -181,9 +185,16 @@ class ComponentLint(ComponentCommand):
     @staticmethod
     def get_all_subworkflow_lint_tests(is_pipeline):
         if is_pipeline:
-            return ["main_nf", "meta_yml", "subworkflow_changes", "subworkflow_todos", "subworkflow_version"]
+            return [
+                "main_nf",
+                "meta_yml",
+                "subworkflow_changes",
+                "subworkflow_todos",
+                "subworkflow_if_empty_null",
+                "subworkflow_version",
+            ]
         else:
-            return ["main_nf", "meta_yml", "subworkflow_todos", "subworkflow_tests"]
+            return ["main_nf", "meta_yml", "subworkflow_todos", "subworkflow_if_empty_null", "subworkflow_tests"]
 
     def set_up_pipeline_files(self):
         self.load_lint_config()

@@ -1,26 +1,28 @@
 import logging
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import questionary
 import requests
 import rich.prompt
-
-if TYPE_CHECKING:
-    from nf_core.modules.modules_repo import ModulesRepo
+import ruamel.yaml
 
 import nf_core.utils
+from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
-# Constants for the nf-core/modules repo used throughout the module files
-NF_CORE_MODULES_NAME = "nf-core"
-NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
-NF_CORE_MODULES_DEFAULT_BRANCH = "master"
+# Set yaml options for meta.yml files
+ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = (
+    lambda x, y: True
+)  # Fix to not print aliases. https://stackoverflow.com/a/64717341
+yaml = ruamel.yaml.YAML()
+yaml.preserve_quotes = True
+yaml.indent(mapping=2, sequence=2, offset=0)
 
 
-def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[Path, Optional[str], str]:
+def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> tuple[Path, Optional[str], str]:
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
@@ -143,12 +145,15 @@ def prompt_component_version_sha(
     return git_sha
 
 
-def get_components_to_install(subworkflow_dir: Union[str, Path]) -> Tuple[List[str], List[str]]:
+def get_components_to_install(
+    subworkflow_dir: Union[str, Path],
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """
-    modules = []
-    subworkflows = []
+    modules: dict[str, dict[str, str]] = {}
+    subworkflows: dict[str, dict[str, str]] = {}
+
     with open(Path(subworkflow_dir, "main.nf")) as fh:
         for line in fh:
             regex = re.compile(
@@ -159,15 +164,43 @@ def get_components_to_install(subworkflow_dir: Union[str, Path]) -> Tuple[List[s
                 name, link = match.groups()
                 if link.startswith("../../../"):
                     name_split = name.lower().split("_")
-                    modules.append("/".join(name_split))
+                    component_name = "/".join(name_split)
+                    component_dict: dict[str, str] = {
+                        "name": component_name,
+                    }
+                    modules[component_name] = component_dict
                 elif link.startswith("../"):
-                    subworkflows.append(name.lower())
-    return modules, subworkflows
+                    component_name = name.lower()
+                    component_dict = {"name": component_name}
+                    subworkflows[component_name] = component_dict
+
+    if (sw_meta := Path(subworkflow_dir, "meta.yml")).exists():
+        with open(sw_meta) as fh:
+            meta = yaml.load(fh)
+            if "components" in meta:
+                components = meta["components"]
+                for component in components:
+                    if isinstance(component, dict):
+                        component_name = list(component.keys())[0].lower()
+                        branch = component[component_name].get("branch")
+                        git_remote = component[component_name]["git_remote"]
+                        modules_repo = ModulesRepo(git_remote, branch=branch)
+                        current_comp_dict = subworkflows if component_name in subworkflows else modules
+
+                        component_dict = {
+                            "org_path": modules_repo.repo_path,
+                            "git_remote": git_remote,
+                            "branch": branch,
+                        }
+
+                        current_comp_dict[component_name].update(component_dict)
+
+    return list(modules.values()), list(subworkflows.values())
 
 
-def get_biotools_id(tool_name) -> str:
+def get_biotools_response(tool_name: str) -> Optional[dict]:
     """
-    Try to find a bio.tools ID for 'tool'
+    Try to get bio.tools information for 'tool'
     """
     url = f"https://bio.tools/api/t/?q={tool_name}&format=json"
     try:
@@ -176,16 +209,74 @@ def get_biotools_id(tool_name) -> str:
         response.raise_for_status()  # Raise an error for bad status codes
         # Parse the JSON response
         data = response.json()
-
-        # Iterate through the tools in the response to find the tool name
-        for tool in data["list"]:
-            if tool["name"].lower() == tool_name:
-                return tool["biotoolsCURIE"]
-
-        # If the tool name was not found in the response
-        log.warning(f"Could not find a bio.tools ID for '{tool_name}'")
-        return ""
+        log.info(f"Found bio.tools information for '{tool_name}'")
+        return data
 
     except requests.exceptions.RequestException as e:
-        log.warning(f"Could not find a bio.tools ID for '{tool_name}': {e}")
-        return ""
+        log.warning(f"Could not find bio.tools information for '{tool_name}': {e}")
+        return None
+
+
+def get_biotools_id(data: dict, tool_name: str) -> str:
+    """
+    Try to find a bio.tools ID for 'tool'
+    """
+    # Iterate through the tools in the response to find the tool name
+    for tool in data["list"]:
+        if tool["name"].lower() == tool_name:
+            log.info(f"Found bio.tools ID: '{tool['biotoolsCURIE']}'")
+            return tool["biotoolsCURIE"]
+
+    # If the tool name was not found in the response
+    log.warning(f"Could not find a bio.tools ID for '{tool_name}'")
+    return ""
+
+
+DictWithStrAndTuple = dict[str, tuple[list[str], list[str], list[str]]]
+
+
+def get_channel_info_from_biotools(
+    data: dict, tool_name: str
+) -> Optional[tuple[DictWithStrAndTuple, DictWithStrAndTuple]]:
+    """
+    Try to find input and output channels and the respective EDAM ontology terms
+
+    Args:
+        data (dict): The bio.tools API response
+        tool_name (str): The name of the tool
+    """
+    inputs = {}
+    outputs = {}
+
+    def _iterate_input_output(type) -> DictWithStrAndTuple:
+        type_info = {}
+        if type in funct:
+            for element in funct[type]:
+                if "data" in element:
+                    element_name = "_".join(element["data"]["term"].lower().split(" "))
+                    uris = [element["data"]["uri"]]
+                    terms = [element["data"]["term"]]
+                    patterns = []
+                if "format" in element:
+                    for format in element["format"]:
+                        # Append the EDAM URI
+                        uris.append(format["uri"])
+                        # Append the EDAM term, getting the first word in case of complicated strings. i.e. "FASTA format"
+                        patterns.append(format["term"].lower().split(" ")[0])
+                        terms.append(format["term"])
+                    type_info[element_name] = (uris, terms, patterns)
+        return type_info
+
+    # Iterate through the tools in the response to find the tool name
+    for tool in data["list"]:
+        if tool["name"].lower() == tool_name:
+            if "function" in tool:
+                # Parse all tool functions
+                for funct in tool["function"]:
+                    inputs.update(_iterate_input_output("input"))
+                    outputs.update(_iterate_input_output("output"))
+            return inputs, outputs
+
+    # If the tool name was not found in the response
+    log.warning(f"Could not find an EDAM ontology term for '{tool_name}'")
+    return None

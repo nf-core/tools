@@ -9,7 +9,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 import jinja2
 import questionary
@@ -21,7 +21,7 @@ from packaging.version import parse as parse_version
 import nf_core
 import nf_core.utils
 from nf_core.components.components_command import ComponentCommand
-from nf_core.components.components_utils import get_biotools_id
+from nf_core.components.components_utils import get_biotools_id, get_biotools_response, get_channel_info_from_biotools
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class ComponentCreate(ComponentCommand):
         self.bioconda = None
         self.singularity_container = None
         self.docker_container = None
-        self.file_paths: Dict[str, Path] = {}
+        self.file_paths: dict[str, Path] = {}
         self.not_empty_template = not empty_template
         self.migrate_pytest = migrate_pytest
         self.tool_identifier = ""
@@ -75,11 +75,11 @@ class ComponentCreate(ComponentCommand):
         e.g bam_sort or bam_sort_samtools, respectively.
 
         If <directory> is a pipeline, this function creates a file called:
-        '<directory>/modules/local/tool.nf'
+        '<directory>/modules/local/tool/main.nf'
             OR
-        '<directory>/modules/local/tool_subtool.nf'
+        '<directory>/modules/local/tool/subtool/main.nf'
             OR for subworkflows
-        '<directory>/subworkflows/local/subworkflow_name.nf'
+        '<directory>/subworkflows/local/subworkflow_name/main.nf'
 
         If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
 
@@ -151,8 +151,15 @@ class ComponentCreate(ComponentCommand):
             if self.component_type == "modules":
                 # Try to find a bioconda package for 'component'
                 self._get_bioconda_tool()
+                name = self.tool_conda_name if self.tool_conda_name else self.component
                 # Try to find a biotools entry for 'component'
-                self.tool_identifier = get_biotools_id(self.component)
+                biotools_data = get_biotools_response(name)
+                if biotools_data:
+                    self.tool_identifier = get_biotools_id(biotools_data, name)
+                    # Obtain EDAM ontologies for inputs and outputs
+                    channel_info = get_channel_info_from_biotools(biotools_data, name)
+                    if channel_info:
+                        self.inputs, self.outputs = channel_info
 
             # Prompt for GitHub username
             self._get_username()
@@ -175,6 +182,8 @@ class ComponentCreate(ComponentCommand):
             self._print_and_delete_pytest_files()
 
         new_files = [str(path) for path in self.file_paths.values()]
+
+        run_prettier_on_file(new_files)
 
         log.info("Created following files:\n  " + "\n  ".join(new_files))
         return True
@@ -348,77 +357,53 @@ class ComponentCreate(ComponentCommand):
                 elif self.component_type == "subworkflows":
                     self.component = rich.prompt.Prompt.ask("[violet]Name of subworkflow").strip()
 
-    def _get_component_dirs(self) -> Dict[str, Path]:
+    def _get_component_dirs(self) -> dict[str, Path]:
         """Given a directory and a tool/subtool or subworkflow, set the file paths and check if they already exist
 
         Returns dict: keys are relative paths to template files, vals are target paths.
         """
         file_paths = {}
         if self.repo_type == "pipeline":
-            local_component_dir = Path(self.directory, self.component_type, "local")
-            # Check whether component file already exists
-            component_file = local_component_dir / f"{self.component_name}.nf"
-            if component_file.exists() and not self.force_overwrite:
-                raise UserWarning(
-                    f"{self.component_type[:-1].title()} file exists already: '{component_file}'. Use '--force' to overwrite"
-                )
-
-            if self.component_type == "modules":
-                # If a subtool, check if there is a module called the base tool name already
-                if self.subtool and (local_component_dir / f"{self.component}.nf").exists():
-                    raise UserWarning(
-                        f"Module '{self.component}' exists already, cannot make subtool '{self.component_name}'"
-                    )
-
-                # If no subtool, check that there isn't already a tool/subtool
-                tool_glob = glob.glob(f"{local_component_dir}/{self.component}_*.nf")
-                if not self.subtool and tool_glob:
-                    raise UserWarning(
-                        f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.component_name}'"
-                    )
-
-            # Set file paths
-            file_paths["main.nf"] = component_file
+            component_dir = Path(self.directory, self.component_type, "local", self.component_dir)
 
         elif self.repo_type == "modules":
             component_dir = Path(self.directory, self.component_type, self.org, self.component_dir)
-            # Check if module/subworkflow directories exist already
-            if component_dir.exists() and not self.force_overwrite and not self.migrate_pytest:
-                raise UserWarning(
-                    f"{self.component_type[:-1]} directory exists: '{component_dir}'. Use '--force' to overwrite"
-                )
-
-            if self.component_type == "modules":
-                # If a subtool, check if there is a module called the base tool name already
-                parent_tool_main_nf = Path(
-                    self.directory,
-                    self.component_type,
-                    self.org,
-                    self.component,
-                    "main.nf",
-                )
-                if self.subtool and parent_tool_main_nf.exists() and not self.migrate_pytest:
-                    raise UserWarning(
-                        f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.component_name}'"
-                    )
-
-                # If no subtool, check that there isn't already a tool/subtool
-                tool_glob = glob.glob(
-                    f"{Path(self.directory, self.component_type, self.org, self.component)}/*/main.nf"
-                )
-                if not self.subtool and tool_glob and not self.migrate_pytest:
-                    raise UserWarning(
-                        f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.component_name}'"
-                    )
-            # Set file paths
-            # For modules - can be tool/ or tool/subtool/ so can't do in template directory structure
-            file_paths["main.nf"] = component_dir / "main.nf"
-            file_paths["meta.yml"] = component_dir / "meta.yml"
-            if self.component_type == "modules":
-                file_paths["environment.yml"] = component_dir / "environment.yml"
-            file_paths["tests/main.nf.test.j2"] = component_dir / "tests" / "main.nf.test"
         else:
             raise ValueError("`repo_type` not set correctly")
+
+        # Check if module/subworkflow directories exist already
+        if component_dir.exists() and not self.force_overwrite and not self.migrate_pytest:
+            raise UserWarning(
+                f"{self.component_type[:-1]} directory exists: '{component_dir}'. Use '--force' to overwrite"
+            )
+
+        if self.component_type == "modules":
+            # If a subtool, check if there is a module called the base tool name already
+            parent_tool_main_nf = Path(
+                self.directory,
+                self.component_type,
+                self.org,
+                self.component,
+                "main.nf",
+            )
+            if self.subtool and parent_tool_main_nf.exists() and not self.migrate_pytest:
+                raise UserWarning(
+                    f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.component_name}'"
+                )
+
+            # If no subtool, check that there isn't already a tool/subtool
+            tool_glob = glob.glob(f"{Path(self.directory, self.component_type, self.org, self.component)}/*/main.nf")
+            if not self.subtool and tool_glob and not self.migrate_pytest:
+                raise UserWarning(
+                    f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.component_name}'"
+                )
+        # Set file paths
+        # For modules - can be tool/ or tool/subtool/ so can't do in template directory structure
+        file_paths["main.nf"] = component_dir / "main.nf"
+        file_paths["meta.yml"] = component_dir / "meta.yml"
+        if self.component_type == "modules":
+            file_paths["environment.yml"] = component_dir / "environment.yml"
+        file_paths["tests/main.nf.test.j2"] = component_dir / "tests" / "main.nf.test"
 
         return file_paths
 

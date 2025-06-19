@@ -10,9 +10,8 @@ import rich.progress
 import rich.prompt
 from git.exc import GitCommandError, InvalidGitRepositoryError
 
-import nf_core.modules.modules_json
 import nf_core.modules.modules_utils
-from nf_core.components.components_utils import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
+from nf_core.components.constants import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
 from nf_core.utils import NFCORE_CACHE_DIR, NFCORE_DIR, load_tools_config
 

@@ -2,7 +2,7 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 
 import rich
 import yaml
@@ -79,7 +79,7 @@ def check_git_repo() -> bool:
         return False
 
 
-def run_prettier_on_file(file: Union[Path, str, List[str]]) -> None:
+def run_prettier_on_file(file: Union[Path, str, list[str]]) -> None:
     """Run the pre-commit hook prettier on a file.
 
     Args:
@@ -93,7 +93,7 @@ def run_prettier_on_file(file: Union[Path, str, List[str]]) -> None:
 
     nf_core_pre_commit_config = Path(nf_core.__file__).parent / ".pre-commit-prettier-config.yaml"
     args = ["pre-commit", "run", "--config", str(nf_core_pre_commit_config), "prettier"]
-    if isinstance(file, List):
+    if isinstance(file, list):
         args.extend(["--files", *file])
     else:
         args.extend(["--files", str(file)])
@@ -141,17 +141,17 @@ def dump_yaml_with_prettier(file_name: Union[Path, str], file_content: dict) -> 
     run_prettier_on_file(file_name)
 
 
-def ignore_file(lint_name: str, file_path: Path, dir_path: Path) -> List[List[str]]:
+def ignore_file(lint_name: str, file_path: Path, dir_path: Path) -> list[list[str]]:
     """Ignore a file and add the result to the ignored list. Return the passed, failed, ignored and ignore_configs lists."""
 
-    passed: List[str] = []
-    failed: List[str] = []
-    ignored: List[str] = []
+    passed: list[str] = []
+    failed: list[str] = []
+    ignored: list[str] = []
     _, pipeline_conf = nf_core.utils.load_tools_config(dir_path)
     lint_conf = getattr(pipeline_conf, "lint", None) or None
 
     if lint_conf is None:
-        ignore_entry: List[str] = []
+        ignore_entry: list[str] = []
     else:
         ignore_entry = lint_conf.get(lint_name, [])
     full_path = dir_path / file_path

@@ -2,18 +2,15 @@ import filecmp
 import logging
 import os
 import shutil
+from collections.abc import Iterable
 from configparser import NoOptionError, NoSectionError
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Union
+from typing import Optional, Union
 
 import git
 from git.exc import GitCommandError
 
-from nf_core.components.components_utils import (
-    NF_CORE_MODULES_DEFAULT_BRANCH,
-    NF_CORE_MODULES_NAME,
-    NF_CORE_MODULES_REMOTE,
-)
+from nf_core.components.constants import NF_CORE_MODULES_DEFAULT_BRANCH, NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
 from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
@@ -66,7 +63,7 @@ class SyncedRepo:
     An object to store details about a locally cached code repository.
     """
 
-    local_repo_statuses: Dict[str, bool] = {}
+    local_repo_statuses: dict[str, bool] = {}
     no_pull_global = False
 
     @staticmethod
@@ -372,7 +369,7 @@ class SyncedRepo:
 
     def get_component_git_log(
         self, component_name: Union[str, Path], component_type: str, depth: Optional[int] = None
-    ) -> Iterable[Dict[str, str]]:
+    ) -> Iterable[dict[str, str]]:
         """
         Fetches the commit history the of requested module/subworkflow since a given date. The default value is
         not arbitrary - it is the last time the structure of the nf-core/modules repository was had an
@@ -456,7 +453,7 @@ class SyncedRepo:
 
     def get_avail_components(
         self, component_type: str, checkout: bool = True, commit: Optional[str] = None
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Gets the names of the modules/subworkflows in the repository. They are detected by
         checking which directories have a 'main.nf' file

@@ -12,7 +12,7 @@ def version_consistency(self):
     * The pipeline config, ``manifest.version``
     * The docker container in the pipeline config, ``process.container``
 
-        * Some pipelines may not have this set on a pipeline level. If it is not found, it is ignored.
+        Some pipelines may not have this set on a pipeline level. If it is not found, it is ignored.
 
     * ``$GITHUB_REF``, if it looks like a release tag (``refs/tags/<something>``)
 
@@ -53,7 +53,7 @@ def version_consistency(self):
     # Check if they are consistent
     if len(set(versions.values())) != 1:
         failed.append(
-            "The versioning is not consistent between container, release tag " "and config. Found {}".format(
+            "The versioning is not consistent between container, release tag and config. Found {}".format(
                 ", ".join([f"{k} = {v}" for k, v in versions.items()])
             )
         )
