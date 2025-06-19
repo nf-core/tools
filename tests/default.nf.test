@@ -3,6 +3,8 @@ nextflow_pipeline {
     name "Test pipeline"
     script "../main.nf"
     tag "pipeline"
+    profile "test"
+
 
     test("-profile test") {
 
@@ -23,7 +25,7 @@ nextflow_pipeline {
                     // Number of successful tasks
                     workflow.trace.succeeded().size(),
                     // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
-                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_metaval_software_mqc_versions.yml"),
+                    removeNextflowVersion("$outputDir/pipeline_info/genomic-medicine-sweden_metaval_software_mqc_versions.yml"),
                     // All stable path name, with a relative path
                     stable_name,
                     // All files with stable contents
