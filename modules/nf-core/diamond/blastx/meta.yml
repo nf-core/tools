@@ -149,7 +149,7 @@ output:
           description: File containing software versions
           pattern: "versions.yml"
           ontologies:
-            - edam: http://edamontology.org/format_3750
+            - edam: http://edamontology.org/format_3750 # YAML
 authors:
   - "@spficklin"
   - "@jfy133"
