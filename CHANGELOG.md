@@ -8,7 +8,8 @@
 - fix nf-test scope to ignore nf-core module/swf tests ([#3609](https://github.com/nf-core/tools/pull/3609))
 - TEMPLATE - CI - Only trigger nf-test action on pull_request ([#3628](https://github.com/nf-core/tools/pull/3628))
 - TEMPLATE - Fix link to nf-test GHA in README.md ([#3630](https://github.com/nf-core/tools/pull/3630))
-- Set `conda.cacheDir` to `../../shared/conda` to avoid duplicate creation([#3610](https://github.com/nf-core/tools/pull/3610))
+- TEMPLATE - Add accelerator directive for GPU-enabled processes ([#3632](https://github.com/nf-core/tools/pull/3632))
+- TEMPLATE - Set `conda.cacheDir` to `../../shared/conda` to avoid duplicate creation([#3610](https://github.com/nf-core/tools/pull/3610))
 
 ### Linting
 
