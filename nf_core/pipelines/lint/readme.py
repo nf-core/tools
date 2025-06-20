@@ -26,6 +26,7 @@ def readme(self):
     To disable this test, add the following to the pipeline's ``.nf-core.yml`` file:
 
     .. code-block:: yaml
+
         lint:
             readme: False
 

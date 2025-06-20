@@ -2,14 +2,14 @@ import ast
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from nf_core.pipelines.schema import PipelineSchema
 
 log = logging.getLogger(__name__)
 
 
-def nextflow_config(self) -> Dict[str, List[str]]:
+def nextflow_config(self) -> dict[str, list[str]]:
     """Checks the pipeline configuration for required variables.
 
     All nf-core pipelines are required to be configured with a minimal set of variable
@@ -80,11 +80,11 @@ def nextflow_config(self) -> Dict[str, List[str]]:
     * ``params.nf_required_version``: The old method for specifying the minimum Nextflow version. Replaced by ``manifest.nextflowVersion``
     * ``params.container``: The old method for specifying the dockerhub container address. Replaced by ``process.container``
     * ``igenomesIgnore``: Changed to ``igenomes_ignore``
-    * ``params.max_cpus``: Old method of specifying the maximum number of CPUs a process can request. Replaced by native Nextflow `resourceLimits`directive in config files.
-    * ``params.max_memory``: Old method of specifying the maximum number of memory can request. Replaced by native Nextflow `resourceLimits`directive.
-    * ``params.max_time``: Old method of specifying the maximum number of CPUs can request. Replaced by native Nextflow `resourceLimits`directive.
+    * ``params.max_cpus``: Old method of specifying the maximum number of CPUs a process can request. Replaced by native Nextflow `resourceLimits` directive in config files.
+    * ``params.max_memory``: Old method of specifying the maximum number of memory can request. Replaced by native Nextflow `resourceLimits` directive.
+    * ``params.max_time``: Old method of specifying the maximum number of CPUs can request. Replaced by native Nextflow `resourceLimits` directive.
 
-        .. tip:: The ``snake_case`` convention should now be used when defining pipeline parameters
+    .. tip:: The ``snake_case`` convention should now be used when defining pipeline parameters
 
     **The following Nextflow syntax is depreciated and fails the test if present:**
 
