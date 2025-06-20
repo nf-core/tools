@@ -90,6 +90,7 @@ def main_nf(
     process_lines = []
     script_lines = []
     shell_lines = []
+    exec_lines = []
     when_lines = []
     iter_lines = iter(lines)
     for line in iter_lines:
@@ -109,6 +110,9 @@ def main_nf(
             continue
         if re.search(r"^\s*shell\s*:", line) and state in ["input", "output", "when", "process"]:
             state = "shell"
+            continue
+        if re.search(r"^\s*exec\s*:", line) and state in ["input", "output", "when", "process"]:
+            state = "exec"
             continue
 
         # Perform state-specific linting checks
@@ -132,6 +136,8 @@ def main_nf(
             script_lines.append(line)
         if state == "shell" and not _is_empty(line):
             shell_lines.append(line)
+        if state == "exec" and not _is_empty(line):
+            exec_lines.append(line)
 
     # Check that we have required sections
     if not len(outputs):
@@ -149,8 +155,10 @@ def main_nf(
     check_when_section(module, when_lines)
 
     # Check that we have script or shell, not both
-    if len(script_lines) and len(shell_lines):
-        module.failed.append(("main_nf_script_shell", "Script and Shell found, should use only one", module.main_nf))
+    if sum(bool(block_lines) for block_lines in (script_lines, shell_lines, exec_lines)) > 1:
+        module.failed.append(
+            ("main_nf_script_shell", "Multiple script:/shell:/exec: blocks found, should use only one", module.main_nf)
+        )
 
     # Check the script definition
     if len(script_lines):
