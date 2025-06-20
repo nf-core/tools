@@ -13,7 +13,7 @@
 
 {% endif -%}
 {% if github_badges -%}
-[![GitHub Actions CI Status](https://github.com/{{ name }}/actions/workflows/ci.yml/badge.svg)](https://github.com/{{ name }}/actions/workflows/ci.yml)
+[![GitHub Actions CI Status](https://github.com/{{ name }}/actions/workflows/nf-test.yml/badge.svg)](https://github.com/{{ name }}/actions/workflows/nf-test.yml)
 [![GitHub Actions Linting Status](https://github.com/{{ name }}/actions/workflows/linting.yml/badge.svg)](https://github.com/{{ name }}/actions/workflows/linting.yml){% endif -%}
 {% if is_nfcore -%}[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/{{ short_name }}/results){% endif -%}
 {%- if github_badges -%}

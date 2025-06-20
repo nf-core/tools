@@ -7,7 +7,6 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
-from typing import List
 from unittest import mock
 
 import pytest
@@ -28,11 +27,11 @@ class DownloadTest(unittest.TestCase):
         self._caplog = caplog
 
     @property
-    def logged_levels(self) -> List[str]:
+    def logged_levels(self) -> list[str]:
         return [record.levelname for record in self._caplog.records]
 
     @property
-    def logged_messages(self) -> List[str]:
+    def logged_messages(self) -> list[str]:
         return [record.message for record in self._caplog.records]
 
     def __contains__(self, item: str) -> bool:

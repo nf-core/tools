@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import Dict, List
 
 import yaml
 
 
-def actions_awsfulltest(self) -> Dict[str, List[str]]:
+def actions_awsfulltest(self) -> dict[str, list[str]]:
     """Checks the GitHub Actions awsfulltest is valid.
 
     In addition to small test datasets run on GitHub Actions, we provide the possibility of testing the pipeline on full size datasets on AWS.

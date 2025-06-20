@@ -5,7 +5,7 @@ import re
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Union
 
 import yaml
 
@@ -14,7 +14,7 @@ import nf_core.pipelines.create.create
 log = logging.getLogger(__name__)
 
 
-def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
+def files_unchanged(self) -> dict[str, Union[list[str], bool]]:
     """Checks that certain pipeline files are not modified from template output.
 
     Iterates through the pipeline's directory content and compares specified files
@@ -61,11 +61,11 @@ def files_unchanged(self) -> Dict[str, Union[List[str], bool]]:
 
     """
 
-    passed: List[str] = []
-    failed: List[str] = []
-    warned: List[str] = []
-    ignored: List[str] = []
-    fixed: List[str] = []
+    passed: list[str] = []
+    failed: list[str] = []
+    warned: list[str] = []
+    ignored: list[str] = []
+    fixed: list[str] = []
     could_fix: bool = False
 
     # Check that we have the minimum required config
