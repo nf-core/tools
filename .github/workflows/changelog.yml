@@ -80,10 +80,11 @@ jobs:
 
       - name: Commit and push changes
         if: env.changed == 'YES'
+        env:
+          GH_TOKEN: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
         run: |
           git config user.email "core@nf-co.re"
           git config user.name "nf-core-bot"
-          git config push.default upstream
           git add ${GITHUB_WORKSPACE}/CHANGELOG.md
           git status
           git commit -m "[automated] Update CHANGELOG.md"
