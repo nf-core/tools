@@ -123,7 +123,7 @@ class DownloadWorkflow:
         self.parallel_downloads = parallel_downloads
 
         self.wf_revisions = []
-        self.wf_branches: Dict[str, Any] = {}
+        self.wf_branches: dict[str, Any] = {}
         self.wf_sha = {}
         self.wf_download_url = {}
         self.nf_config = {}
@@ -1015,7 +1015,7 @@ class DownloadWorkflow:
         """
         return self.prioritize_direct_download(cleaned_matches)
 
-    def prioritize_direct_download(self, container_list: List[str]) -> List[str]:
+    def prioritize_direct_download(self, container_list: list[str]) -> list[str]:
         """
         Helper function that takes a list of container images (URLs and Docker URIs),
         eliminates all Docker URIs for which also a URL is contained and returns the
@@ -1047,10 +1047,10 @@ class DownloadWorkflow:
 
         Lastly, we want to remove at least a few Docker URIs for those modules, that have an oras:// download link.
         """
-        d: Dict[str, str] = {}
-        seqera_containers_http: List[str] = []
-        seqera_containers_oras: List[str] = []
-        all_others: List[str] = []
+        d: dict[str, str] = {}
+        seqera_containers_http: list[str] = []
+        seqera_containers_oras: list[str] = []
+        all_others: list[str] = []
 
         for c in container_list:
             if bool(re.search(r"/data$", c)):
@@ -1071,7 +1071,7 @@ class DownloadWorkflow:
         return sorted(list(set(combined_with_oras + seqera_containers_http)))
 
     @staticmethod
-    def reconcile_seqera_container_uris(prioritized_container_list: List[str], other_list: List[str]) -> List[str]:
+    def reconcile_seqera_container_uris(prioritized_container_list: list[str], other_list: list[str]) -> list[str]:
         """
         Helper function that takes a list of Seqera container URIs,
         extracts the software string and builds a regex from them to filter out

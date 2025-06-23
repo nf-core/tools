@@ -1,7 +1,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import questionary
 import requests
@@ -22,7 +22,7 @@ yaml.preserve_quotes = True
 yaml.indent(mapping=2, sequence=2, offset=0)
 
 
-def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> Tuple[Path, Optional[str], str]:
+def get_repo_info(directory: Path, use_prompt: Optional[bool] = True) -> tuple[Path, Optional[str], str]:
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
@@ -147,12 +147,12 @@ def prompt_component_version_sha(
 
 def get_components_to_install(
     subworkflow_dir: Union[str, Path],
-) -> Tuple[List[Dict[str, str]], List[Dict[str, str]]]:
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
     """
     Parse the subworkflow main.nf file to retrieve all imported modules and subworkflows.
     """
-    modules: Dict[str, Dict[str, str]] = {}
-    subworkflows: Dict[str, Dict[str, str]] = {}
+    modules: dict[str, dict[str, str]] = {}
+    subworkflows: dict[str, dict[str, str]] = {}
 
     with open(Path(subworkflow_dir, "main.nf")) as fh:
         for line in fh:
@@ -165,7 +165,7 @@ def get_components_to_install(
                 if link.startswith("../../../"):
                     name_split = name.lower().split("_")
                     component_name = "/".join(name_split)
-                    component_dict: Dict[str, str] = {
+                    component_dict: dict[str, str] = {
                         "name": component_name,
                     }
                     modules[component_name] = component_dict
@@ -198,7 +198,7 @@ def get_components_to_install(
     return list(modules.values()), list(subworkflows.values())
 
 
-def get_biotools_response(tool_name: str) -> Optional[Dict]:
+def get_biotools_response(tool_name: str) -> Optional[dict]:
     """
     Try to get bio.tools information for 'tool'
     """
@@ -232,12 +232,12 @@ def get_biotools_id(data: dict, tool_name: str) -> str:
     return ""
 
 
-DictWithStrAndTuple = Dict[str, Tuple[List[str], List[str], List[str]]]
+DictWithStrAndTuple = dict[str, tuple[list[str], list[str], list[str]]]
 
 
 def get_channel_info_from_biotools(
     data: dict, tool_name: str
-) -> Optional[Tuple[DictWithStrAndTuple, DictWithStrAndTuple]]:
+) -> Optional[tuple[DictWithStrAndTuple, DictWithStrAndTuple]]:
     """
     Try to find input and output channels and the respective EDAM ontology terms
 

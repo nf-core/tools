@@ -19,7 +19,6 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
 
 REPO_URL = "https://github.com/nf-core/tools"
 
@@ -51,7 +50,7 @@ if any(
     sys.exit(0)
 
 
-def _determine_change_type(pr_title) -> Tuple[str, str]:
+def _determine_change_type(pr_title) -> tuple[str, str]:
     """
     Determine the type of the PR: Template, Download, Linting, Modules, Subworkflows, or General
     Returns a tuple of the section name and the module info.
@@ -99,7 +98,7 @@ print(f"Adding new lines into section '{section}':\n" + "".join(new_lines))
 # entry, corresponding to this new PR.
 with changelog_path.open("r") as f:
     orig_lines = f.readlines()
-updated_lines: List[str] = []
+updated_lines: list[str] = []
 
 
 def _skip_existing_entry_for_this_pr(line: str, same_section: bool = True) -> str:
@@ -189,7 +188,7 @@ while orig_lines:
             sys.exit(1)
         updated_lines.append(line)
         # Collecting lines until the next section.
-        section_lines: List[str] = []
+        section_lines: list[str] = []
         while True:
             line = orig_lines.pop(0)
             if line.startswith("#"):
@@ -215,7 +214,7 @@ while orig_lines:
         updated_lines.append(line)
 
 
-def collapse_newlines(lines: List[str]) -> List[str]:
+def collapse_newlines(lines: list[str]) -> list[str]:
     updated = []
     for idx in range(len(lines)):
         if idx != 0 and not lines[idx].strip() and not lines[idx - 1].strip():

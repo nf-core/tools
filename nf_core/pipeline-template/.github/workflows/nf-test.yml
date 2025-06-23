@@ -1,12 +1,5 @@
 name: Run nf-test
 on:
-  push:
-    paths-ignore:
-      - "docs/**"
-      - "**/meta.yml"
-      - "**/*.md"
-      - "**/*.png"
-      - "**/*.svg"
   pull_request:
     paths-ignore:
       - "docs/**"
@@ -101,8 +94,6 @@ jobs:
       - name: Run nf-test
         uses: ./.github/actions/nf-test
         env:
-          NFT_DIFF: ${{ env.NFT_DIFF }}
-          NFT_DIFF_ARGS: ${{ env.NFT_DIFF_ARGS }}
           NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
         with:
           profile: ${{ matrix.profile }}
