@@ -26,6 +26,7 @@
 ### General
 
 - Add conda cache dir ([#3610](https://github.com/nf-core/tools/pull/3610))
+- update id of ruff hook in pre-commit config ([#3621](https://github.com/nf-core/tools/pull/3621))
 - Drop python 3.8, add tests with python 3.13 ([#3538](https://github.com/nf-core/tools/pull/3538))
 - Fixes a bug with the test-datasets subcommand [#3617](https://github.com/nf-core/tools/issues/3617)
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.16.1 ([#3624](https://github.com/nf-core/tools/pull/3624))
@@ -33,6 +34,7 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.12.0 ([#3627](https://github.com/nf-core/tools/pull/3627))
 - Update zentered/bluesky-post-action action to v0.3.0 ([#3626](https://github.com/nf-core/tools/pull/3626))
 - Make changelog bot push to correct upstream remote ([#3638](https://github.com/nf-core/tools/pull/3638))
+- Update dependency textual to v3.5.0 ([#3636](https://github.com/nf-core/tools/pull/3636))
 
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
