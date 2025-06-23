@@ -6,6 +6,12 @@
 
 - Avoid overriding `NFT_DIFF` and `NFT_DIFF_ARGS` in `nf-test` action ([#3606](https://github.com/nf-core/tools/pull/3606)) and ([#3619](https://github.com/nf-core/tools/pull/3619))
 - fix nf-test scope to ignore nf-core module/swf tests ([#3609](https://github.com/nf-core/tools/pull/3609))
+- write github.run_id on pipeline template ([#3637](https://github.com/nf-core/tools/pull/3637))
+- Bump nf-schema to `2.4.2` ([#3533](https://github.com/nf-core/tools/pull/3533))
+- Bump the minimal Nextflow version to `24.10.8` ([#3533](https://github.com/nf-core/tools/pull/3533))
+- CI - Only trigger nf-test action on pull_request ([#3628](https://github.com/nf-core/tools/pull/3628))
+- Fix link to nf-test GHA in README.md ([#3630](https://github.com/nf-core/tools/pull/3630))
+- Add accelerator directive for GPU-enabled processes ([#3632](https://github.com/nf-core/tools/pull/3632))
 
 ### Linting
 
@@ -13,11 +19,22 @@
 
 ### Modules
 
+- Remove args stub from module template to satisfy language server ([#3403](https://github.com/nf-core/tools/pull/3403))
+
 ### Subworkflows
 
 ### General
 
 - Add conda cache dir ([#3610](https://github.com/nf-core/tools/pull/3610))
+- update id of ruff hook in pre-commit config ([#3621](https://github.com/nf-core/tools/pull/3621))
+- Drop python 3.8, add tests with python 3.13 ([#3538](https://github.com/nf-core/tools/pull/3538))
+- Fixes a bug with the test-datasets subcommand [#3617](https://github.com/nf-core/tools/issues/3617)
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.16.1 ([#3624](https://github.com/nf-core/tools/pull/3624))
+- Pin python Docker tag to f2fdaec ([#3623](https://github.com/nf-core/tools/pull/3623))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.12.0 ([#3627](https://github.com/nf-core/tools/pull/3627))
+- Update zentered/bluesky-post-action action to v0.3.0 ([#3626](https://github.com/nf-core/tools/pull/3626))
+- Update dependency textual to v3.5.0 ([#3636](https://github.com/nf-core/tools/pull/3636))
+- Make changelog bot push to correct remote ([#3638](https://github.com/nf-core/tools/pull/3638))
 
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 

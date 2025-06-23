@@ -1,11 +1,11 @@
 import logging
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Union
 
 log = logging.getLogger(__name__)
 
 
-def files_exist(self) -> Dict[str, List[str]]:
+def files_exist(self) -> dict[str, list[str]]:
     """Checks a given pipeline directory for required files.
 
     Iterates through the pipeline's directory content and checks that specified
