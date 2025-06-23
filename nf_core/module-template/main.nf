@@ -128,8 +128,12 @@ process {{ component_name_underscore|upper }} {
     //               Have a look at the following examples:
     //               Simple example: https://github.com/nf-core/modules/blob/818474a292b4860ae8ff88e149fbcda68814114d/modules/nf-core/bcftools/annotate/main.nf#L47-L63
     //               Complex example: https://github.com/nf-core/modules/blob/818474a292b4860ae8ff88e149fbcda68814114d/modules/nf-core/bedtools/split/main.nf#L38-L54
+    // TODO nf-core: If the module doesn't use arguments ($args), you SHOULD remove:
+    //               - The definition of args `def args = task.ext.args ?: ''` above.
+    //               - The use of the variable in the script `echo $args ` below.
     {%- endif %}
     """
+    echo $args
     {% if not_empty_template -%}
     {%- if inputs %}
     {%- for input_name, ontologies in inputs.items() %}
