@@ -222,7 +222,7 @@ class DownloadTest(unittest.TestCase):
             nfconfig_raw, _ = result
             config = {}
             nfconfig = nfconfig_raw.decode("utf-8")
-            multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=]+?)\s*=\s*(.*?)(?=(\n[^\n=]+?\s*=)|$)", re.DOTALL)
+            multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=]+?)\s*=\s*((?:(?!\n[^\n=]+?\s*=).)*)", re.DOTALL)
 
             for match in multiline_key_value_pattern.finditer(nfconfig):
                 k = match.group(2).strip()

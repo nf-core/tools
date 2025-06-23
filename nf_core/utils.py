@@ -326,12 +326,15 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     if result is not None:
         nfconfig_raw, _ = result
         nfconfig = nfconfig_raw.decode("utf-8")
-        multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=]+?)\s*=\s*(.*?)(?=(\n[^\n=]+?\s*=)|$)", re.DOTALL)
+        multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=]+?)\s*=\s*((?:(?!\n[^\n=]+?\s*=).)*)", re.DOTALL)
 
         for config_match in multiline_key_value_pattern.finditer(nfconfig):
             k = config_match.group(2).strip()
             v = config_match.group(3).strip().strip("'\"")
-            if k and v:
+            if k and v == "":
+                config[k] = ""  # or do we want to set it to "null"?
+                log.debug(f"Config key: {k}, value: empty string")
+            elif k and v:
                 config[k] = v
                 log.debug(f"Config key: {k}, value: {v}")
             else:
