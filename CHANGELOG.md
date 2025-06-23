@@ -29,6 +29,7 @@
 - Pin python Docker tag to f2fdaec ([#3623](https://github.com/nf-core/tools/pull/3623))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.12.0 ([#3627](https://github.com/nf-core/tools/pull/3627))
 - Update zentered/bluesky-post-action action to v0.3.0 ([#3626](https://github.com/nf-core/tools/pull/3626))
+- Try xdist (again) ([#3635](https://github.com/nf-core/tools/pull/3635))
 
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
