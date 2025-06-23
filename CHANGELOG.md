@@ -26,6 +26,7 @@
 ### General
 
 - Add conda cache dir ([#3610](https://github.com/nf-core/tools/pull/3610))
+- update id of ruff hook in pre-commit config ([#3621](https://github.com/nf-core/tools/pull/3621))
 - Drop python 3.8, add tests with python 3.13 ([#3538](https://github.com/nf-core/tools/pull/3538))
 - Fixes a bug with the test-datasets subcommand [#3617](https://github.com/nf-core/tools/issues/3617)
 - Update pre-commit hook pre-commit/mirrors-mypy to v1.16.1 ([#3624](https://github.com/nf-core/tools/pull/3624))
