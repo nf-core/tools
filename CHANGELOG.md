@@ -9,6 +9,7 @@
 - TEMPLATE - CI - Only trigger nf-test action on pull_request ([#3628](https://github.com/nf-core/tools/pull/3628))
 - TEMPLATE - Fix link to nf-test GHA in README.md ([#3630](https://github.com/nf-core/tools/pull/3630))
 - TEMPLATE - Add accelerator directive for GPU-enabled processes ([#3632](https://github.com/nf-core/tools/pull/3632))
+- write github.run_id on pipeline template ([#3637](https://github.com/nf-core/tools/pull/3637))
 
 ### Linting
 
