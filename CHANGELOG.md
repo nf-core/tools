@@ -6,9 +6,11 @@
 
 - Avoid overriding `NFT_DIFF` and `NFT_DIFF_ARGS` in `nf-test` action ([#3606](https://github.com/nf-core/tools/pull/3606)) and ([#3619](https://github.com/nf-core/tools/pull/3619))
 - fix nf-test scope to ignore nf-core module/swf tests ([#3609](https://github.com/nf-core/tools/pull/3609))
-- TEMPLATE - CI - Only trigger nf-test action on pull_request ([#3628](https://github.com/nf-core/tools/pull/3628))
-- TEMPLATE - Fix link to nf-test GHA in README.md ([#3630](https://github.com/nf-core/tools/pull/3630))
-- TEMPLATE - Add accelerator directive for GPU-enabled processes ([#3632](https://github.com/nf-core/tools/pull/3632))
+- Bump nf-schema to `2.4.2` ([#3533](https://github.com/nf-core/tools/pull/3533))
+- Bump the minimal Nextflow version to `24.10.8` ([#3533](https://github.com/nf-core/tools/pull/3533))
+- CI - Only trigger nf-test action on pull_request ([#3628](https://github.com/nf-core/tools/pull/3628))
+- Fix link to nf-test GHA in README.md ([#3630](https://github.com/nf-core/tools/pull/3630))
+- Add accelerator directive for GPU-enabled processes ([#3632](https://github.com/nf-core/tools/pull/3632))
 
 ### Linting
 
