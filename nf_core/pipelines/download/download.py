@@ -666,59 +666,83 @@ class DownloadWorkflow:
         with open(nfconfig_fn, "w") as nfconfig_fh:
             nfconfig_fh.write(nfconfig)
 
+    def check_nextflow_version(self, minimal_nxf_version: tuple[int, int, int]) -> bool:
+        """Check the version of Nextflow installed on the system.
+
+        Args:
+            tuple[int, int, int]: The version of Nextflow as a tuple of integers.
+        Returns:
+            bool: True if the installed version is greater than or equal to `minimal_nxf_version`
+        """
+        try:
+            cmd_out = run_cmd("nextflow", "-v")
+            if cmd_out is None:
+                raise RuntimeError("Failed to run Nextflow version check.")
+            out, _ = cmd_out
+            out = str(out, encoding="utf-8")  # Ensure we have a string
+            version_str = out.strip().split()[2]
+            log.debug(f"Found Nextflow version {version_str}")
+            return tuple(map(int, version_str.split("."))) >= minimal_nxf_version
+        except Exception as e:
+            log.warning(f"Error checking Nextflow version: {e}")
+            return False
+
     def find_container_images(self, workflow_directory: str) -> None:
         """Find container image names for workflow using the `nextflow inspect` command.
 
-        CURRENTLY ONLY WORKS WITH NEXTLFOW 25.02.1-edge!
+        ONLY WORKS FOR NEXTFLOW >= 25.04.4
 
-        Falls back to using `finc_container_images_legacy()` when `nextflow inspect` fails.
+        Falls back to using `find_container_images_legacy()` when `nextflow inspect` fails.
         """
 
-        # TODO: REMOVE this lazy debugging section.
-        if os.environ.get("USE_LEGACY_METHOD", 0):
-            log.debug("Using legacy container fetching")
-            self.find_container_images_legacy(workflow_directory)
-            return
-
-        try:
-            # TODO: Select container system via profile. Is this stable enough?
-            profile = f"-profile {self.container_system}" if self.container_system else ""
-
-            # Run nextflos inspect (works if nextflow version >= 25.02.1)
-            executable = "nextflow"
-            cmd_params = f"inspect -format json {profile} {workflow_directory}"
-            log.debug(f"Running: `{executable} {cmd_params}`")
-            cmd_out = run_cmd(executable, cmd_params)
-            if cmd_out is None:
-                log.error("Failed to run 'nextflow inspect' to extrat containers. Falling back to legacy function.")
-                self.find_container_images_legacy(workflow_directory)
-                return
-
-            out, err = cmd_out
-            out_json = json.loads(out)
-            containers = []
-            for process in out_json["processes"]:
-                containers.append(process["container"])
-
-            self.containers = containers
-
-        except KeyError as e:
-            log.debug(e)
-            log.error(
-                "Could not parse the output of 'nextflow inspect' to extract containers. Falling back to legacy function."
+        # Check if we have an outdated Nextflow version
+        NXF_INSPECT_MINIMAL_NXF_VERSION = (25, 4, 4)
+        if not self.check_nextflow_version(NXF_INSPECT_MINIMAL_NXF_VERSION):
+            log.debug(
+                f"The `nextflow inspect` command requires Nextflow version >= "
+                f"{NXF_INSPECT_MINIMAL_NXF_VERSION[0]}.{NXF_INSPECT_MINIMAL_NXF_VERSION[1]:02}.{NXF_INSPECT_MINIMAL_NXF_VERSION[2]}"
             )
+            log.debug("Falling back to legacy container extraction method.")
             self.find_container_images_legacy(workflow_directory)
+        else:
+            try:
+                # TODO: Select container system via profile. Is this stable enough?
+                # NOTE: We will likely don't need this after the switch to Seqera containers
+                profile = f"-profile {self.container_system}" if self.container_system else ""
 
-        except RuntimeError as e:
-            # nextflow version < 25.02.1
-            log.debug(e)
-            log.warning("Running `nextflow inspect` failed. Falling back to legacy function.")
-            self.find_container_images_legacy(workflow_directory)
+                # Run nextflow inspect
+                executable = "nextflow"
+                cmd_params = f"inspect -format json {profile} {workflow_directory}"
+                cmd_out = run_cmd(executable, cmd_params)
+                if cmd_out is None:
+                    log.error(
+                        "Failed to run `nextflow inspect` to extract containers. Falling back to legacy function."
+                    )
+                    self.find_container_images_legacy(workflow_directory)
+                    return
+
+                out, _ = cmd_out
+                out_json = json.loads(out)
+                # NOTE: We only save the container strings to comply with the legacy function.
+                self.containers = [proc["container"] for proc in out_json["processes"]]
+
+            except KeyError as e:
+                log.debug(e)
+                log.error(
+                    "Could not parse the output of `nextflow inspect` to extract containers. Falling back to legacy function."
+                )
+                self.find_container_images_legacy(workflow_directory)
+
+            except RuntimeError as e:
+                # nextflow version < 25.02.1
+                log.debug(e)
+                log.warning("Running `nextflow inspect` failed. Falling back to legacy function.")
+                self.find_container_images_legacy(workflow_directory)
 
     def find_container_images_legacy(self, workflow_directory: str) -> None:
         """Find container image names for workflow.
 
-        DEPRECATION NOTE: USED FOR NEXTFLOW VERSIONS < 25.02.1
+        DEPRECATION NOTE: USED FOR NEXTFLOW VERSIONS < 25.04.4
 
         Starts by using `nextflow config` to pull out any process.container
         declarations. This works for DSL1. It should return a simple string with resolved logic,
@@ -729,6 +753,7 @@ class DownloadWorkflow:
         This returns raw matches that will likely need to be cleaned.
         """
 
+        log.warning("Using legacy container extraction method. This will be deprecated in the future.")
         log.debug("Fetching container names for workflow")
         # since this is run for multiple revisions now, account for previously detected containers.
         previous_findings = [] if not self.containers else self.containers
@@ -1070,7 +1095,7 @@ class DownloadWorkflow:
             trimmed_priority_list = [
                 match.group()
                 for c in set(prioritized_container_list)
-                if (match := re.search(r"library/.*?:[\d.]+", c) if "--" in c else re.search(r"library/[^\s:]+", c))
+                if (match := (re.search(r"library/.*?:[\d.]+", c) if "--" in c else re.search(r"library/[^\s:]+", c)))
             ]
 
             # build regex
@@ -1429,7 +1454,10 @@ class WorkflowRepo(SyncedRepo):
             # Although "dev-null" is a syntactically-valid local-part that is equally valid for delivery,
             # and only the receiving MTA can decide whether to accept it, it is to my best knowledge configured with
             # a Postfix discard mail delivery agent (https://www.postfix.org/discard.8.html), so incoming mails should be sinkholed.
-            self.ensure_git_user_config(f"nf-core pipelines download v{nf_core.__version__}", "dev-null@example.com")
+            self.ensure_git_user_config(
+                f"nf-core pipelines download v{nf_core.__version__}",
+                "dev-null@example.com",
+            )
 
             for additional_tag in self.additional_tags:
                 # A valid git branch or tag name can contain alphanumeric characters, underscores, hyphens, and dots.
