@@ -1,14 +1,14 @@
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Union
 
 from nf_core.utils import load_tools_config
 
 log = logging.getLogger(__name__)
 
 
-def nf_test_content(self) -> Dict[str, List[str]]:
+def nf_test_content(self) -> dict[str, list[str]]:
     """Checks that the pipeline nf-test files have the appropriate content.
 
     This lint test checks the following files and content of these files:
@@ -75,9 +75,9 @@ def nf_test_content(self) -> Dict[str, List[str]]:
                 - tests/nextflow.config
                 - nf-test.config
     """
-    passed: List[str] = []
-    failed: List[str] = []
-    ignored: List[str] = []
+    passed: list[str] = []
+    failed: list[str] = []
+    ignored: list[str] = []
 
     _, pipeline_conf = load_tools_config(self.wf_path)
     lint_conf = getattr(pipeline_conf, "lint", None) or None
@@ -85,7 +85,7 @@ def nf_test_content(self) -> Dict[str, List[str]]:
 
     # Content of *.nf.test files
     test_fns = list(Path(self.wf_path, "tests").glob("*.nf.test"))
-    test_checks: Dict[str, Dict[str, Union[str, bool]]] = {
+    test_checks: dict[str, dict[str, Union[str, bool]]] = {
         "outdir": {
             "pattern": r"outdir *= *[\"']\${?outputDir}?[\"']",
             "description": "`outdir` parameter",
@@ -131,7 +131,7 @@ def nf_test_content(self) -> Dict[str, List[str]]:
     # Content of nextflow.config file
     conf_fn = Path(self.wf_path, "tests", "nextflow.config")
 
-    config_checks: Dict[str, Dict[str, str]] = {
+    config_checks: dict[str, dict[str, str]] = {
         "modules_testdata_base_path": {
             "pattern": "modules_testdata_base_path",
             "description": "`modules_testdata_base_path`",
@@ -166,7 +166,7 @@ def nf_test_content(self) -> Dict[str, List[str]]:
 
     # Content of nf-test.config file
     nf_test_conf_fn = Path(self.wf_path, "nf-test.config")
-    nf_test_checks: Dict[str, Dict[str, str]] = {
+    nf_test_checks: dict[str, dict[str, str]] = {
         "testsDir": {
             "pattern": r'testsDir "\."',
             "description": "sets a `testsDir`",
