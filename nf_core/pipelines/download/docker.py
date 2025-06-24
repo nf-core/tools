@@ -83,6 +83,7 @@ class DockerFetcher:
         containers_download: Iterable[Tuple[str, str]],
         parallel_downloads: int,
     ) -> None:
+        log.warning(f"Downloading Docker images... {len(containers_download)}")
         # if clause gives slightly better UX, because Download is no longer displayed if nothing is left to be downloaded.
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_downloads) as pool:
             # Kick off concurrent downloads
@@ -318,7 +319,6 @@ class DockerFetcher:
             # no library or cache
             else:
                 # Handle container download, docker needs images to be pulled before it can save them
-
                 if cache_path and amend_cachedir:
                     # download into the cache
                     containers_pull.append((container, cache_path))
