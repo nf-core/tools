@@ -12,6 +12,7 @@
 - CI - Only trigger nf-test action on pull_request ([#3628](https://github.com/nf-core/tools/pull/3628))
 - Fix link to nf-test GHA in README.md ([#3630](https://github.com/nf-core/tools/pull/3630))
 - Add accelerator directive for GPU-enabled processes ([#3632](https://github.com/nf-core/tools/pull/3632))
+- Update dependency prettier to v3.6.0 ([#3641](https://github.com/nf-core/tools/pull/3641))
 
 ### Linting
 
@@ -2004,7 +2005,6 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
   - Docs are automatically built by Travis CI and updated on the nf-co.re website.
 - Introduced test for filtering remote workflows by keyword.
 - Build tools python API docs
-
   - Use Travis job for api doc generation and publish
 
 - `nf-core bump-version` now stops before making changes if the linting fails
