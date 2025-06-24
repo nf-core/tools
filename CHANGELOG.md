@@ -12,6 +12,7 @@
 - CI - Only trigger nf-test action on pull_request ([#3628](https://github.com/nf-core/tools/pull/3628))
 - Fix link to nf-test GHA in README.md ([#3630](https://github.com/nf-core/tools/pull/3630))
 - Add accelerator directive for GPU-enabled processes ([#3632](https://github.com/nf-core/tools/pull/3632))
+- Update dependency prettier to v3.6.0 ([#3641](https://github.com/nf-core/tools/pull/3641))
 
 ### Linting
 
