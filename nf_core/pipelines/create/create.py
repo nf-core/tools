@@ -112,7 +112,12 @@ class PipelineCreate:
         self.template_features_yml = yaml.safe_load(rendered_features)
 
         # Get list of files we're skipping with the supplied skip keys
-        self.skip_paths = set(sp for k in self.skip_areas for sp in self.template_features_yml[k]["skippable_paths"])
+        skip_paths: list = []
+        for section in self.template_features_yml.values():
+            for feature in section["features"].values():
+                if feature["skippable_paths"]:
+                    skip_paths = skip_paths + feature["skippable_paths"]
+        self.skip_paths = set(skip_paths)
 
         # Set convenience variables
         self.name = self.config.name
@@ -214,13 +219,14 @@ class PipelineCreate:
 
         # Add template areas to jinja params and create list of areas with paths to skip
         skip_areas = []
-        for t_area in self.template_features_yml.keys():
-            if t_area in features_to_skip:
-                if self.template_features_yml[t_area]["skippable_paths"]:
-                    skip_areas.append(t_area)
-                jinja_params[t_area] = False
-            else:
-                jinja_params[t_area] = True
+        for section in self.template_features_yml.values():
+            for t_area in section["features"].keys():
+                if t_area in features_to_skip:
+                    if section["features"][t_area]["skippable_paths"]:
+                        skip_areas.append(t_area)
+                    jinja_params[t_area] = False
+                else:
+                    jinja_params[t_area] = True
 
         # Add is_nfcore as an area to skip for non-nf-core pipelines, to skip all nf-core files
         if not self.config.is_nfcore:
@@ -399,16 +405,17 @@ class PipelineCreate:
         lint_config = {}
         for area in (self.config.skip_features or []) + self.skip_areas:
             try:
-                for lint_test in self.template_features_yml[area]["linting"]:
-                    try:
-                        if self.template_features_yml[area]["linting"][lint_test]:
-                            lint_config.setdefault(lint_test, []).extend(
-                                self.template_features_yml[area]["linting"][lint_test]
-                            )
-                        else:
-                            lint_config[lint_test] = False
-                    except AttributeError:
-                        pass  # When linting is False
+                for section in self.template_features_yml.values():
+                    for lint_test in section["features"][area]["linting"]:
+                        try:
+                            if section["features"][area]["linting"][lint_test]:
+                                lint_config.setdefault(lint_test, []).extend(
+                                    section["features"][area]["linting"][lint_test]
+                                )
+                            else:
+                                lint_config[lint_test] = False
+                        except AttributeError:
+                            pass  # When linting is False
             except KeyError:
                 pass  # Areas without linting
 
