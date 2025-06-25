@@ -2232,7 +2232,7 @@ def command_create_params_file(pipeline, revision, output, force, show_hidden):
 @click.option(
     "-s",
     "--container-system",
-    type=click.Choice(["none", "singularity"]),
+    type=click.Choice(["none", "singularity", "docker"]),
     help="Download container images of required software.",
 )
 @click.option(

@@ -3,7 +3,8 @@ import os
 import re
 import shutil
 import subprocess
-from typing import Collection, Container, Iterable, List, Optional, Tuple
+from collections.abc import Collection, Container, Iterable
+from typing import Optional
 
 from nf_core.pipelines.download.utils import (
     DownloadProgress,
@@ -130,12 +131,12 @@ class SingularityFetcher:
 
     def download_images(
         self,
-        containers_download: Iterable[Tuple[str, str]],
+        containers_download: Iterable[tuple[str, str]],
         parallel_downloads: int,
     ) -> None:
         downloader = FileDownloader(self.progress)
 
-        def update_file_progress(input_params: Tuple[str, str], status: FileDownloader.Status) -> None:
+        def update_file_progress(input_params: tuple[str, str], status: FileDownloader.Status) -> None:
             # try-except introduced in 4a95a5b84e2becbb757ce91eee529aa5f8181ec7
             # unclear why rich.progress may raise an exception here as it's supposed to be thread-safe
             try:
@@ -148,7 +149,7 @@ class SingularityFetcher:
 
         downloader.download_files_in_parallel(containers_download, parallel_downloads, callback=update_file_progress)
 
-    def pull_images(self, containers_pull: Iterable[Tuple[str, str]]) -> None:
+    def pull_images(self, containers_pull: Iterable[tuple[str, str]]) -> None:
         for container, output_path in containers_pull:
             # it is possible to try multiple registries / mirrors if multiple were specified.
             # Iteration happens over a copy of self.container_library[:], as I want to be able to remove failing registries for subsequent images.
@@ -220,6 +221,7 @@ class SingularityFetcher:
         else:
             address = f"docker://{library}/{container.replace('docker://', '')}"
             absolute_URI = False
+        log.warning(f"Pulling singularity image {container} from {address} to {output_path}")
 
         with self.progress.sub_task(
             container,
@@ -301,9 +303,9 @@ class SingularityFetcher:
         amend_cachedir: bool,
     ):
         # Check each container in the list and defer actions
-        containers_download: List[Tuple[str, str]] = []
-        containers_pull: List[Tuple[str, str]] = []
-        containers_copy: List[Tuple[str, str, str]] = []
+        containers_download: list[tuple[str, str]] = []
+        containers_pull: list[tuple[str, str]] = []
+        containers_copy: list[tuple[str, str, str]] = []
 
         # We may add more tasks as containers need to be copied between the various caches
         total_tasks = len(containers)

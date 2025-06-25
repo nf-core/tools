@@ -1,14 +1,11 @@
 import concurrent.futures
-import io
 import logging
 import os
 import re
 import shutil
 import subprocess
-from typing import Collection, Container, Iterable, List, Optional, Tuple
-
-import requests
-import requests_cache
+from collections.abc import Collection, Container, Iterable
+from typing import Optional
 
 from nf_core.pipelines.download.utils import DownloadProgress, intermediate_file
 
@@ -80,10 +77,9 @@ class DockerFetcher:
 
     def download_images(
         self,
-        containers_download: Iterable[Tuple[str, str]],
+        containers_download: Iterable[tuple[str, str]],
         parallel_downloads: int,
     ) -> None:
-        log.warning(f"Downloading Docker images... {len(containers_download)}")
         # if clause gives slightly better UX, because Download is no longer displayed if nothing is left to be downloaded.
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_downloads) as pool:
             # Kick off concurrent downloads
@@ -126,12 +122,7 @@ class DockerFetcher:
             cache_path (str, None): The NXF_DOCKER_CACHEDIR path if set, None if not
         """
         log.debug(f"Downloading Docker image '{container}' to {output_path}")
-
-        container_parts = container.split("/")
-        if len(container_parts) > 2:
-            address = container if container.startswith("oras://") else f"docker://{container}"
-        else:
-            address = f"docker://{library}/{container.replace('docker://', '')}"
+        address = container
 
         if shutil.which("docker"):
             download_command = [
@@ -142,11 +133,11 @@ class DockerFetcher:
                 "--output",
                 output_path,
             ]
-            self.run_docker_command(download_command, container, output_path, address, "download")
+            self._run_docker_command(download_command, container, output_path, address, "download")
         else:
             raise OSError("Docker is needed to pull images, but it is not installed or not in $PATH")
 
-    def pull_images(self, containers_pull: Iterable[Tuple[str, str]]) -> None:
+    def pull_images(self, containers_pull: Iterable[tuple[str, str]]) -> None:
         for container, output_path in containers_pull:
             # it is possible to try multiple registries / mirrors if multiple were specified.
             # Iteration happens over a copy of self.container_library[:], as I want to be able to remove failing registries for subsequent images.
@@ -157,7 +148,7 @@ class DockerFetcher:
                     break
                 except ContainerError.ImageNotFoundError as e:
                     # Try other registries
-                    if e.absolute_URI:
+                    if e.error_log.absolute_URI:
                         break  # there no point in trying other registries if absolute URI was specified.
                     else:
                         continue
@@ -168,7 +159,7 @@ class DockerFetcher:
                     # Try other registries
                     log.error(e.message)
                     log.error(e.helpmessage)
-                    if e.absolute_URI:
+                    if e.error_log.absolute_URI:
                         break  # there no point in trying other registries if absolute URI was specified.
                     else:
                         continue
@@ -183,7 +174,7 @@ class DockerFetcher:
 
     def _run_docker_command(
         self,
-        command: List[str],
+        command: list[str],
         container: str,
         output_path: str,
         address: str,
@@ -216,7 +207,11 @@ class DockerFetcher:
 
         if lines:
             # something went wrong with the container retrieval
-            if any("Error response from daemon:" in line for line in lines):
+            possible_error_lines = {
+                "invalid reference format",
+                "Error response from daemon:",
+            }
+            if any(pel in line for pel in possible_error_lines for line in lines):
                 self.progress.remove_task(task)
                 raise ContainerError(
                     container=container,
@@ -224,7 +219,10 @@ class DockerFetcher:
                     out_path=output_path,
                     command=command,
                     error_msg=lines,
+                    absolute_URI=address.startswith("docker://"),
                 )
+            else:
+                log.warning("Everything is fine")
 
         self.progress.remove_task(task)
 
@@ -241,15 +239,7 @@ class DockerFetcher:
         Raises:
             Various exceptions possible from `subprocess` execution of docker.
         """
-        # Sometimes, container still contain an explicit library specification, which
-        # resulted in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
-        # Thus, if an explicit registry is specified, the provided -l value is ignored.
-        # Additionally, check if the container to be pulled is oras:// protocol.
-        container_parts = container.split("/")
-        if len(container_parts) > 2:
-            address = container if container.startswith("oras://") else f"docker://{container}"
-        else:
-            address = f"docker://{library}/{container.replace('docker://', '')}"
+        address = container
 
         if shutil.which("docker"):
             docker_command = ["docker", "image", "pull", address]
@@ -276,9 +266,9 @@ class DockerFetcher:
         amend_cachedir: bool,
     ):
         # Check each container in the list and defer actions
-        containers_download: List[Tuple[str, str]] = []
-        containers_pull: List[Tuple[str, str]] = []
-        containers_copy: List[Tuple[str, str, str]] = []
+        containers_download: list[tuple[str, str]] = []
+        containers_pull: list[tuple[str, str]] = []
+        containers_copy: list[tuple[str, str, str]] = []
 
         # We may add more tasks as containers need to be copied between the various caches
         total_tasks = len(containers)
@@ -319,6 +309,7 @@ class DockerFetcher:
             # no library or cache
             else:
                 # Handle container download, docker needs images to be pulled before it can save them
+                log.warning(f"Cache path {cache_path} and amend cachedir {amend_cachedir}")
                 if cache_path and amend_cachedir:
                     # download into the cache
                     containers_pull.append((container, cache_path))
@@ -395,7 +386,7 @@ class ContainerError(Exception):
 
         def __init__(self, error_log):
             self.error_log = error_log
-            self.message = f'[bold red] Cannot save "{self.container}" as it was not pulled [/]\n'
+            self.message = f'[bold red] Cannot save "{self.error_log.container}" as it was not pulled [/]\n'
             self.helpmessage = "Please pull the image first and confirm that it can be pulled.\n"
             super().__init__(self.message)
 
@@ -405,12 +396,14 @@ class ContainerError(Exception):
         def __init__(self, error_log):
             self.error_log = error_log
             if not self.error_log.absolute_URI:
-                self.message = f'[bold red]"Pulling "{self.error_log.container}" from "{self.address}" failed.[/]\n'
-                self.helpmessage = f'Saving image of "{self.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.command)}" manually.f\n'
+                self.message = (
+                    f'[bold red]"Pulling "{self.error_log.container}" from "{self.error_log.address}" failed.[/]\n'
+                )
+                self.helpmessage = f'Saving image of "{self.error_log.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.error_log.command)}" manually.f\n'
             else:
-                self.message = f'[bold red]"The pipeline requested the download of non-existing container image "{self.address}"[/]\n'
+                self.message = f'[bold red]"The pipeline requested the download of non-existing container image "{self.error_log.address}"[/]\n'
                 self.helpmessage = (
-                    f'Please try to rerun \n"{" ".join(self.command)}" manually with a different registry.f\n'
+                    f'Please try to rerun \n"{" ".join(self.error_log.command)}" manually with a different registry.f\n'
                 )
 
             super().__init__(self.message)
@@ -420,8 +413,8 @@ class ContainerError(Exception):
 
         def __init__(self, error_log):
             self.error_log = error_log
-            self.message = f'[bold red]"{self.address.split(":")[-1]}" is not a valid tag of "{self.container}"[/]\n'
-            self.helpmessage = f'Please chose a different library than {self.address}\nor try to locate the "{self.address.split(":")[-1]}" version of "{self.container}" manually.\nPlease troubleshoot the command \n"{" ".join(self.command)}" manually.\n'
+            self.message = f'[bold red]"{self.error_log.address.split(":")[-1]}" is not a valid tag of "{self.error_log.container}"[/]\n'
+            self.helpmessage = f'Please chose a different library than {self.error_log.address}\nor try to locate the "{self.error_log.address.split(":")[-1]}" version of "{self.error_log.container}" manually.\nPlease troubleshoot the command \n"{" ".join(self.error_log.command)}" manually.\n'
             super().__init__(self.message)
 
     class OtherError(RuntimeError):
@@ -429,8 +422,8 @@ class ContainerError(Exception):
 
         def __init__(self, error_log):
             self.error_log = error_log
-            self.message = (
-                f'[bold red]"The pipeline requested the download of non-existing container image "{self.address}"[/]\n'
+            self.message = f'[bold red]"The pipeline requested the download of non-existing container image "{self.error_log.address}"[/]\n'
+            self.helpmessage = (
+                f'Please try to rerun \n"{" ".join(self.error_log.command)}" manually with a different registry.\n'
             )
-            self.helpmessage = f'Please try to rerun \n"{" ".join(self.command)}" manually with a different registry.\n'
             super().__init__(self.message, self.helpmessage, self.error_log)

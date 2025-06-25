@@ -3,8 +3,9 @@ import os
 import re
 import shutil
 import subprocess
-from abc import ABC, abstractmethod
-from typing import Collection, Container, Iterable, List, Optional, Tuple
+from abc import abstractmethod
+from collections.abc import Collection, Container, Iterable
+from typing import Optional
 
 from nf_core.pipelines.download.utils import (
     DownloadProgress,
@@ -13,55 +14,6 @@ from nf_core.pipelines.download.utils import (
 )
 
 log = logging.getLogger(__name__)
-
-
-# We have dropped the explicit registries from the modules in favor of the configurable registries.
-# Unfortunately, Nextflow still expects the registry to be part of the file name, so we need functions
-# to support accessing container images with different registries (or no registry).
-
-
-def get_container_filename(container: str, registries: Iterable[str]) -> str:
-    """Return the expected filename for a container.
-
-    Supports docker, http, oras, and singularity URIs in `container`.
-
-    Registry names provided in `registries` are removed from the filename to ensure that the same image
-    is used regardless of the registry. Only registry names that are part of `registries` are considered.
-    If the image name contains another registry, it will be kept in the filename.
-
-    For instance, docker.io/nf-core/ubuntu:20.04 will be nf-core-ubuntu-20.04.img *only* if the registry
-    contains "docker.io".
-    """
-
-    # Generate file paths
-    # Based on simpleName() function in Nextflow code:
-    # https://github.com/nextflow-io/nextflow/blob/671ae6d85df44f906747c16f6d73208dbc402d49/modules/nextflow/src/main/groovy/nextflow/container/SingularityCache.groovy#L69-L94
-    out_name = container
-    # Strip URI prefix
-    out_name = re.sub(r"^.*:\/\/", "", out_name)
-    # Detect file extension
-    extension = ".img"
-    if ".sif:" in out_name:
-        extension = ".sif"
-        out_name = out_name.replace(".sif:", "-")
-    elif out_name.endswith(".sif"):
-        extension = ".sif"
-        out_name = out_name[:-4]
-    # Strip : and / characters
-    out_name = out_name.replace("/", "-").replace(":", "-")
-    # Add file extension
-    out_name = out_name + extension
-
-    # Trim potential registries from the name for consistency.
-    # This will allow pipelines to work offline without symlinked images,
-    # if docker.registry / singularity.registry are set to empty strings at runtime, which can be included in the HPC config profiles easily.
-    if registries:
-        # Create a regex pattern from the set of registries
-        trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in registries)
-        # Use the pattern to trim the string
-        out_name = re.sub(f"{trim_pattern}", "", out_name)
-
-    return out_name
 
 
 class ContainerFetcher:
@@ -88,7 +40,7 @@ class ContainerFetcher:
         self.progress = progress
         self.kill_with_fire = False
         self.implementation = None
-        self.check_installation()
+        self.set_implementation()
 
     @abstractmethod
     def set_implementation(self) -> None:
@@ -129,6 +81,9 @@ class ContainerFetcher:
         """
         pass
 
+    # We have dropped the explicit registries from the modules in favor of the configurable registries.
+    # Unfortunately, Nextflow still expects the registry to be part of the file name, so we need functions
+    # to support accessing container images with different registries (or no registry).
     def get_container_filename(self, container: str) -> str:
         """Return the expected filename for a container.
 
@@ -151,7 +106,7 @@ class ContainerFetcher:
 
         # Clean the file extension. This method must be implemented
         # by any subclass
-        out_name = self.clean_container_fn_extension(out_name)
+        out_name = self.clean_container_file_extension(out_name)
 
         # Trim potential registries from the name for consistency.
         # This will allow pipelines to work offline without symlinked images,
@@ -206,12 +161,12 @@ class ContainerFetcher:
 
     def download_images(
         self,
-        containers_download: Iterable[Tuple[str, str]],
+        containers_download: Iterable[tuple[str, str]],
         parallel_downloads: int,
     ) -> None:
         downloader = FileDownloader(self.progress)
 
-        def update_file_progress(input_params: Tuple[str, str], status: FileDownloader.Status) -> None:
+        def update_file_progress(input_params: tuple[str, str], status: FileDownloader.Status) -> None:
             # try-except introduced in 4a95a5b84e2becbb757ce91eee529aa5f8181ec7
             # unclear why rich.progress may raise an exception here as it's supposed to be thread-safe
             try:
@@ -220,11 +175,11 @@ class ContainerFetcher:
                 log.error(f"Error updating progress bar: {e}")
 
             if status == FileDownloader.Status.DONE:
-                self.symlink_registries(input_params[1], self.registry_set)
+                self.symlink_registries(input_params[1])
 
         downloader.download_files_in_parallel(containers_download, parallel_downloads, callback=update_file_progress)
 
-    def pull_images(self, containers_pull: Iterable[Tuple[str, str]]) -> None:
+    def pull_images(self, containers_pull: Iterable[tuple[str, str]]) -> None:
         for container, output_path in containers_pull:
             # it is possible to try multiple registries / mirrors if multiple were specified.
             # Iteration happens over a copy of self.container_library[:], as I want to be able to remove failing registries for subsequent images.
@@ -272,7 +227,7 @@ class ContainerFetcher:
             # Task should advance in any case. Failure to pull will not kill the download process.
             self.progress.update_main_task(advance=1)
 
-    def get_address(self, container: str, library: str) -> str:
+    def get_address(self, container: str, library: str) -> tuple[str, bool]:
         """
         Get the address of the container based on its format.
 
@@ -280,7 +235,7 @@ class ContainerFetcher:
             container (str): The container name
 
         Returns:
-            Tuple[str, bool]: The address of the container and a boolean indicating if it is an absolute URI.
+            tuple[str, bool]: The address of the container and a boolean indicating if it is an absolute URI.
         """
         container_parts = container.split("/")
         if len(container_parts) > 2:
@@ -292,7 +247,7 @@ class ContainerFetcher:
         return address, absolute_URI
 
     @abstractmethod
-    def construct_pull_command(self, container: str, output_path: str, library: str) -> List[str]:
+    def construct_pull_command(self, container: str, output_path: str, library: str) -> list[str]:
         pass
 
     def pull_image(self, container: str, output_path: str, library: str) -> None:
@@ -306,7 +261,7 @@ class ContainerFetcher:
             library (list of str): A list of libraries to try for pulling the image.
 
         Raises:
-            Various exceptions possible from `subprocess` execution of Singularity.
+            Various exceptions possible from `subprocess` execution of .
         """
         # Sometimes, container still contain an explicit library specification, which
         # resulted in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
@@ -354,7 +309,7 @@ class ContainerFetcher:
                             error_msg=lines,
                         )
 
-            self.symlink_registries(output_path, self.registry_set)
+            self.symlink_registries(output_path)
 
     def copy_image(self, container: str, src_path: str, dest_path: str) -> None:
         """Copy Singularity image from one directory to another."""
@@ -364,7 +319,7 @@ class ContainerFetcher:
             shutil.copyfile(src_path, dest_path_tmp.name)
 
         # Create symlinks to ensure that the images are found even with different registries being used.
-        self.symlink_registries(dest_path, self.registry_set)
+        self.symlink_registries(dest_path)
 
     def fetch_containers(
         self,
@@ -376,15 +331,15 @@ class ContainerFetcher:
         amend_cachedir: bool,
     ):
         # Check each container in the list and defer actions
-        containers_download: List[Tuple[str, str]] = []
-        containers_pull: List[Tuple[str, str]] = []
-        containers_copy: List[Tuple[str, str, str]] = []
+        containers_download: list[tuple[str, str]] = []
+        containers_pull: list[tuple[str, str]] = []
+        containers_copy: list[tuple[str, str, str]] = []
 
         # We may add more tasks as containers need to be copied between the various caches
         total_tasks = len(containers)
 
         for container in containers:
-            container_filename = get_container_filename(container, self.registry_set)
+            container_filename = self.get_container_filename(container)
 
             # Files in the remote cache are already downloaded and can be ignored
             if container_filename in exclude_list:
@@ -423,7 +378,7 @@ class ContainerFetcher:
                 # It seems that pulls and downloads always
                 # occur together for docker
                 fetch_list = containers_download if container.startswith("http") else containers_pull
-
+                log.warning(f"Cache path {cache_path} and amend cachedir {amend_cachedir}")
                 if cache_path and amend_cachedir:
                     # download into the cache
                     fetch_list.append((container, cache_path))

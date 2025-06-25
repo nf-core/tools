@@ -17,16 +17,18 @@ import rich.table
 import rich.text
 
 import nf_core.pipelines.create.create
+import nf_core.pipelines.download
 import nf_core.pipelines.list
 import nf_core.utils
-from nf_core.pipelines.download import DownloadWorkflow, WorkflowRepo
-from nf_core.pipelines.downloads.singularity import (
+from nf_core.pipelines.download import DownloadWorkflow
+from nf_core.pipelines.download.singularity import (
     ContainerError,
     SingularityFetcher,
     get_container_filename,
     symlink_registries,
 )
-from nf_core.pipelines.downloads.utils import DownloadError, DownloadProgress, FileDownloader, intermediate_file
+from nf_core.pipelines.download.utils import DownloadError, DownloadProgress, FileDownloader, intermediate_file
+from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import run_cmd
 
@@ -271,7 +273,7 @@ class DownloadUtilsTest(unittest.TestCase):
                 assert os.path.exists(output_path)
                 assert os.path.getsize(output_path) == 27
                 assert (
-                    "nf_core.pipelines.downloads.utils",
+                    "nf_core.pipelines.download.utils",
                     logging.DEBUG,
                     f"Downloading '{src_url}' to '{output_path}'",
                 ) in self._caplog.record_tuples
@@ -287,7 +289,7 @@ class DownloadUtilsTest(unittest.TestCase):
                     downloader.download_file(src_url, output_path)
                 assert not os.path.exists(output_path)
                 assert (
-                    "nf_core.pipelines.downloads.utils",
+                    "nf_core.pipelines.download.utils",
                     logging.DEBUG,
                     f"Downloading '{src_url}' to '{output_path}'",
                 ) in self._caplog.record_tuples
@@ -303,7 +305,7 @@ class DownloadUtilsTest(unittest.TestCase):
                     downloader.download_file(src_url, output_path)
                 assert not os.path.exists(output_path)
                 assert (
-                    "nf_core.pipelines.downloads.utils",
+                    "nf_core.pipelines.download.utils",
                     logging.DEBUG,
                     f"Downloading '{src_url}' to '{output_path}'",
                 ) in self._caplog.record_tuples
@@ -763,8 +765,6 @@ class DownloadTest(unittest.TestCase):
     #
     @with_temporary_folder
     def test_prioritize_direct_download(self, tmp_path):
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
-
         # tests deduplication and https priority as well as Seqera Container exception
 
         test_container = [
@@ -783,7 +783,7 @@ class DownloadTest(unittest.TestCase):
             "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data",
         ]
 
-        result = download_obj.prioritize_direct_download(test_container)
+        result = nf_core.pipelines.download.utils.prioritize_direct_download(test_container)
 
         # Verify that the priority works for regular https downloads (https encountered first)
         assert "https://depot.galaxyproject.org/singularity/ubuntu:22.04" in result
@@ -825,8 +825,6 @@ class DownloadTest(unittest.TestCase):
     #
     @with_temporary_folder
     def test_reconcile_seqera_container_uris(self, tmp_path):
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
-
         prioritized_container = [
             "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
             "oras://community.wave.seqera.io/library/sylph:0.6.1--b97274cdc1caa649",
@@ -843,10 +841,10 @@ class DownloadTest(unittest.TestCase):
         ]
 
         # test that the test_container list is returned as it is, if no prioritized_containers are specified
-        result_empty = download_obj.reconcile_seqera_container_uris([], test_container)
+        result_empty = nf_core.pipelines.download.utils.reconcile_seqera_container_uris([], test_container)
         assert result_empty == test_container
 
-        result = download_obj.reconcile_seqera_container_uris(prioritized_container, test_container)
+        result = nf_core.pipelines.download.utils.reconcile_seqera_container_uris(prioritized_container, test_container)
 
         # Verify that unrelated images are retained
         assert "https://depot.galaxyproject.org/singularity/ubuntu:22.04" in result
@@ -871,7 +869,7 @@ class DownloadTest(unittest.TestCase):
     # If Singularity is installed, but the container can't be accessed because it does not exist or there are access
     # restrictions, a RuntimeWarning is raised due to the unavailability of the image.
     @pytest.mark.skipif(
-        shutil.which("singularity") is None,
+        shutil.which("singularity") is None or shutil.which("apptainer") is None,
         reason="Can't test what Singularity does if it's not installed.",
     )
     @with_temporary_folder
@@ -939,7 +937,7 @@ class DownloadTest(unittest.TestCase):
             )
 
     @pytest.mark.skipif(
-        shutil.which("singularity") is None,
+        shutil.which("singularity") is None or shutil.which("apptainer") is None,
         reason="Can't test what Singularity does if it's not installed.",
     )
     @with_temporary_folder
@@ -949,15 +947,15 @@ class DownloadTest(unittest.TestCase):
         singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/yet-another-hello-world.sif", "docker.io")
 
     #
-    # Tests for 'get_singularity_images'
+    # Tests for 'SingularityFetcher.fetch_containers'
     #
     @pytest.mark.skipif(
-        shutil.which("singularity") is None,
+        shutil.which("singularity") is None or shutil.which("apptainer") is None,
         reason="Can't test what Singularity does if it's not installed.",
     )
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_get_singularity_images(self, tmp_path, mock_fetch_wf_config):
+    def test_fetch_containers(self, tmp_path, mock_fetch_wf_config):
         download_obj = DownloadWorkflow(
             pipeline="dummy",
             outdir=tmp_path,
@@ -971,8 +969,18 @@ class DownloadTest(unittest.TestCase):
         download_obj.find_container_images("workflow")
         assert len(download_obj.container_library) == 4
         # This list of fake container images should produce all kinds of ContainerErrors.
-        # Test that they are all caught inside get_singularity_images().
-        download_obj.get_singularity_images()
+        # Test that they are all caught inside SingularityFetcher.fetch_containers().
+        singularity_fetcher = SingularityFetcher(
+            download_obj.container_library, download_obj.registry_set, download_obj.progress
+        )
+        singularity_fetcher.fetch_containers(
+            download_obj.containers,
+            download_obj.outdir,
+            download_obj.containers_remote,
+            None,
+            None,
+            False,
+        )
 
     #
     # Tests for 'singularity.symlink_registries' function
@@ -1129,7 +1137,7 @@ class DownloadTest(unittest.TestCase):
     # If Singularity is not installed, it raises a OSError because the singularity command can't be found.
     #
     @pytest.mark.skipif(
-        shutil.which("singularity") is not None,
+        shutil.which("singularity") is not None and shutil.which("apptainer") is not None,
         reason="Can't test how the code behaves when singularity is not installed if it is.",
     )
     @with_temporary_folder
@@ -1258,7 +1266,7 @@ class DownloadTest(unittest.TestCase):
     # Tests for the main entry method 'download_workflow'
     #
     @with_temporary_folder
-    @mock.patch("nf_core.pipelines.downloads.singularity.SingularityFetcher.pull_image")
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.pull_image")
     @mock.patch("shutil.which")
     def test_download_workflow_with_success(self, tmp_dir, mock_download_image, mock_singularity_installed):
         os.environ["NXF_SINGULARITY_CACHEDIR"] = "foo"
@@ -1279,7 +1287,7 @@ class DownloadTest(unittest.TestCase):
     # Test Download for Seqera Platform
     #
     @with_temporary_folder
-    @mock.patch("nf_core.pipelines.download.DownloadWorkflow.get_singularity_images")
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.fetch_containers")
     def test_download_workflow_for_platform(self, tmp_dir, _):
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
@@ -1346,7 +1354,7 @@ class DownloadTest(unittest.TestCase):
     #
     # Brief test adding a single custom tag to Seqera Platform download
     #
-    @mock.patch("nf_core.pipelines.download.DownloadWorkflow.get_singularity_images")
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.fetch_containers")
     @with_temporary_folder
     def test_download_workflow_for_platform_with_one_custom_tag(self, _, tmp_dir):
         download_obj = DownloadWorkflow(
@@ -1367,7 +1375,7 @@ class DownloadTest(unittest.TestCase):
     #
     # Test adding custom tags to Seqera Platform download (full test)
     #
-    @mock.patch("nf_core.pipelines.download.DownloadWorkflow.get_singularity_images")
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.fetch_containers")
     @with_temporary_folder
     def test_download_workflow_for_platform_with_custom_tags(self, _, tmp_dir):
         with self._caplog.at_level(logging.INFO):
