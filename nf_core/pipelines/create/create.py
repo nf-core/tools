@@ -224,8 +224,9 @@ class PipelineCreate:
         skip_areas = [
             t_area
             for section in self.template_features_yml.values()
-            for t_area, feat in section["features"].items()
-            if t_area in features_to_skip and feat.get("skippable_paths")
+            for t_area in section["features"].keys()
+            if t_area in features_to_skip and section["features"][t_area]["skippable_paths"]
+            # for t_area in section["features"][t_area]["skippable_paths"]
         ]
         jinja_params = {
             t_area: (t_area not in features_to_skip)
