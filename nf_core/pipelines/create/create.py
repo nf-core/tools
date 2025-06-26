@@ -228,11 +228,13 @@ class PipelineCreate:
             if t_area in features_to_skip and section["features"][t_area]["skippable_paths"]
             # for t_area in section["features"][t_area]["skippable_paths"]
         ]
-        jinja_params = {
-            t_area: (t_area not in features_to_skip)
-            for section in self.template_features_yml.values()
-            for t_area in section["features"].keys()
-        }
+        jinja_params.update(
+            {
+                t_area: t_area not in features_to_skip
+                for section in self.template_features_yml.values()
+                for t_area in section["features"]
+            }
+        )
 
         # Add is_nfcore as an area to skip for non-nf-core pipelines, to skip all nf-core files
         if not self.config.is_nfcore:
