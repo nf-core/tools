@@ -113,13 +113,14 @@ class PipelineCreate:
 
         # Get list of files we're skipping with the supplied skip keys
 
-        skip_paths: list = []
-        for feature in self.skip_areas:
-            for section in self.template_features_yml.values():
-                if feature in section["features"]:
-                    if section["features"][feature]["skippable_paths"]:
-                        skip_paths = skip_paths + section["features"][feature]["skippable_paths"]
-        self.skip_paths = set(skip_paths)
+skip_paths = [
+    path
+    for feature in self.skip_areas
+    for section in self.template_features_yml.values()
+    if feature in section["features"] and section["features"][feature]["skippable_paths"]
+    for path in section["features"][feature]["skippable_paths"]
+]
+self.skip_paths = set(skip_paths)
 
         # Set convenience variables
         self.name = self.config.name
