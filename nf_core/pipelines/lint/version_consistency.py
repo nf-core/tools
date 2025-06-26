@@ -38,6 +38,9 @@ def version_consistency(self):
     if self.nf_config.get("process.container", ""):
         versions["process.container"] = self.nf_config.get("process.container", "").strip(" '\"").split(":")[-1]
 
+    if self.nf_config.get("config_yml.template.version", ""):
+        versions["nfcore_yml.version"] = self.nf_config.get("config_yml.template.version", "").strip(" '\"")
+
     # Get version from the $GITHUB_REF env var if this is a release
     if (
         os.environ.get("GITHUB_REF", "").startswith("refs/tags/")
