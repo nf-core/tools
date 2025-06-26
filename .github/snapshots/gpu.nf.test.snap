@@ -89,7 +89,7 @@
                 "multiqc/multiqc_plots/svg/general_stats_table.svg",
                 "multiqc/multiqc_report.html",
                 "pipeline_info",
-                "pipeline_info/nf_core_testpipeline_software_mqc_versions.yml"
+                "pipeline_info/testpipeline_software_mqc_versions.yml"
             ],
             [
                 "fastqc-status-check-heatmap.txt:md5,0f1975c565a16bf09be08a05c204ded7",

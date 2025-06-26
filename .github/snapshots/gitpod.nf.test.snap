@@ -2,7 +2,14 @@
     "-profile test": {
         "content": [
             4,
-            null,
+            {
+                "FASTQC": {
+                    "fastqc": "0.12.1"
+                },
+                "Workflow": {
+                    "nf-core/testpipeline": "v1.0.0dev"
+                }
+            },
             [
                 "fastqc",
                 "fastqc/SAMPLE1_PE_1_fastqc.html",
