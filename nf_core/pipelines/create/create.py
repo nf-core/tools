@@ -113,14 +113,14 @@ class PipelineCreate:
 
         # Get list of files we're skipping with the supplied skip keys
 
-skip_paths = [
-    path
-    for feature in self.skip_areas
-    for section in self.template_features_yml.values()
-    if feature in section["features"] and section["features"][feature]["skippable_paths"]
-    for path in section["features"][feature]["skippable_paths"]
-]
-self.skip_paths = set(skip_paths)
+        skip_paths = [
+            path
+            for feature in self.skip_areas
+            for section in self.template_features_yml.values()
+            if feature in section["features"] and section["features"][feature]["skippable_paths"]
+            for path in section["features"][feature]["skippable_paths"]
+        ]
+        self.skip_paths = set(skip_paths)
 
         # Set convenience variables
         self.name = self.config.name
@@ -221,15 +221,17 @@ self.skip_paths = set(skip_paths)
         jinja_params = self.config.model_dump(exclude_none=True)
 
         # Add template areas to jinja params and create list of areas with paths to skip
-        skip_areas = []
-        for section in self.template_features_yml.values():
-            for t_area in section["features"].keys():
-                if t_area in features_to_skip:
-                    if section["features"][t_area]["skippable_paths"]:
-                        skip_areas.append(t_area)
-                    jinja_params[t_area] = False
-                else:
-                    jinja_params[t_area] = True
+        skip_areas = [
+            t_area
+            for section in self.template_features_yml.values()
+            for t_area, feat in section["features"].items()
+            if t_area in features_to_skip and feat.get("skippable_paths")
+        ]
+        jinja_params = {
+            t_area: (t_area not in features_to_skip)
+            for section in self.template_features_yml.values()
+            for t_area in section["features"].keys()
+        }
 
         # Add is_nfcore as an area to skip for non-nf-core pipelines, to skip all nf-core files
         if not self.config.is_nfcore:
