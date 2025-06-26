@@ -37,7 +37,7 @@ class CustomPipeline(Screen):
 
     def on_mount(self) -> None:
         for section_name, section in self.parent.template_features_yml.items():
-            section_title = section["name"]
+            section_title = "## " +section["name"]
             features = section["features"]
             show_section = False
             self.query_one("#features").mount(
