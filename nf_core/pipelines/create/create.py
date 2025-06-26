@@ -405,8 +405,7 @@ class PipelineCreate:
         """
         # Create a lint config
         lint_config = {}
-        print((self.config.skip_features or []) + self.skip_areas)
-        for area in (self.config.skip_features or []) + self.skip_areas:
+        for area in set((self.config.skip_features or []) + self.skip_areas):
             try:
                 for section_name in self.template_features_yml.keys():
                     if area in self.template_features_yml[section_name]["features"]:
