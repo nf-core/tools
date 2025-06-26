@@ -15,7 +15,44 @@ import requests_cache
 import rich.progress
 import rich.table
 
+from nf_core.utils import run_cmd
+
 log = logging.getLogger(__name__)
+
+# This is the minimal version of Nextflow required to fetch containers with `nextflow inspect`
+NF_INSPECT_MIN_NF_VERSION = (25, 4, 4)
+
+
+# Pretty print a Nextflow version tuple
+def pretty_nf_version(version: tuple[int, int, int]) -> str:
+    return f"{version[0]}.{version[1]:02}.{version[2]}"
+
+
+# Check that the Nextflow version >= the minimal version required
+# This is used to ensure that we can run `nextflow inspect`
+def check_nextflow_version(minimal_nxf_version: tuple[int, int, int], silent=False) -> bool:
+    """Check the version of Nextflow installed on the system.
+
+    Args:
+        tuple[int, int, int]: The version of Nextflow as a tuple of integers.
+    Returns:
+        bool: True if the installed version is greater than or equal to `minimal_nxf_version`
+    """
+    try:
+        cmd_out = run_cmd("nextflow", "-v")
+        if cmd_out is None:
+            raise RuntimeError("Failed to run Nextflow version check.")
+        out, _ = cmd_out
+        out_str = str(out, encoding="utf-8")  # Ensure we have a string
+        version_str = out_str.strip().split()[2]
+        if silent:
+            log.debug(f"Detected Nextflow version {'.'.join(version_str.split('.')[:3])}")
+        else:
+            log.info(f"Detected Nextflow version {'.'.join(version_str.split('.')[:3])}")
+        return tuple(map(int, version_str.split("."))) >= minimal_nxf_version
+    except Exception as e:
+        log.warning(f"Error checking Nextflow version: {e}")
+        return False
 
 
 class DownloadError(RuntimeError):

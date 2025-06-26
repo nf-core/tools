@@ -1,0 +1,11 @@
+{
+    "MOCK_DOCKER_SINGLE_QUAY_IO": "quay.io/biocontainers/singlequay:1.9--pyh9f0ad1d_0",
+    "MOCK_DSL2_APPTAINER_VAR1": "https://depot.galaxyproject.org/singularity/dsltwoapptainervarone:1.1.0--py38h7be5676_2",
+    "MOCK_DSL2_APPTAINER_VAR2": "https://depot.galaxyproject.org/singularity/dsltwoapptainervartwo:1.1.0--hdfd78af_0",
+    "MOCK_DSL2_CURRENT": "https://depot.galaxyproject.org/singularity/dsltwocurrent:1.2.1--pyhdfd78af_0",
+    "MOCK_DSL2_CURRENT_INVERTED": "https://depot.galaxyproject.org/singularity/dsltwocurrentinv:3.3.2--h1b792b2_1",
+    "MOCK_DSL2_OLD": "https://depot.galaxyproject.org/singularity/dsltwoold:0.23.0--0",
+    "MOCK_SEQERA_CONTAINER_HTTP": "https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/c2/c262fc09eca59edb5a724080eeceb00fb06396f510aefb229c2d2c6897e63975/data",
+    "MOCK_SEQERA_CONTAINER_ORAS": "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
+    "MOCK_SEQERA_CONTAINER_ORAS_MULLED": "oras://community.wave.seqera.io/library/umi-transfer_umicollapse:796a995ff53da9e3"
+}

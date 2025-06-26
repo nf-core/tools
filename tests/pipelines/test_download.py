@@ -1,5 +1,6 @@
 """Tests for the download subcommand of nf-core tools"""
 
+import json
 import logging
 import os
 import re
@@ -27,7 +28,14 @@ from nf_core.pipelines.download.singularity import (
     get_container_filename,
     symlink_registries,
 )
-from nf_core.pipelines.download.utils import DownloadError, DownloadProgress, FileDownloader, intermediate_file
+from nf_core.pipelines.download.utils import (
+    NF_INSPECT_MIN_NF_VERSION,
+    DownloadError,
+    DownloadProgress,
+    FileDownloader,
+    check_nextflow_version,
+    intermediate_file,
+)
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
 from nf_core.utils import run_cmd
@@ -672,6 +680,84 @@ class DownloadTest(unittest.TestCase):
             # does not yet pick up nfcore/sarekvep:dev.${params.genome}, because that is no valid URL or Docker URI.
 
     #
+    # Test that `find_container_images` (uses `nextflow inspect`) and `find_container_images_legacy`
+    # produces the same results
+    #
+    @pytest.mark.skipif(
+        shutil.which("nextflow") is None or not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION),
+        reason="Can't run test that requires nextflow to run if not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("nf_core.utils.fetch_wf_config")
+    def test_containers_pipeline_singularity(self, tmp_path, mock_fetch_wf_config):
+        assert check_nextflow_version(NF_INSPECT_MIN_NF_VERSION) is True
+
+        # Set up test
+        container_system = "singularity"
+        mock_pipeline_dir = TEST_DATA_DIR / "mock_pipeline_containers"
+        refererence_json_dir = mock_pipeline_dir / "per_profile_output"
+        # First check that `-profile singularity` produces the same output as the reference
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_system=container_system)
+        mock_fetch_wf_config.return_value = {}
+
+        # Run get containers with `nextflow inspect`
+        status = download_obj.find_container_images_nf_inspect(str(mock_pipeline_dir))
+        assert status is True, "Failed to find containers using nextflow inspect"
+
+        # Store the containers found by the new method
+        found_containers = set(download_obj.containers)
+
+        # Load the reference containers
+        with open(refererence_json_dir / f"{container_system}_containers.json") as fh:
+            ref_containers = json.load(fh)
+            ref_container_strs = set(ref_containers.values())
+
+        # Now check that they contain the same containers
+        assert found_containers == ref_container_strs, (
+            f"Containers found in pipeline by `nextflow inspect`: {found_containers}\n"
+            f"Containers that should've been found: {ref_container_strs}"
+        )
+
+    #
+    # Test that `find_container_images` (uses `nextflow inspect`) and `find_container_images_legacy`
+    # produces the same results
+    #
+    @pytest.mark.skipif(
+        shutil.which("nextflow") is None or not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION),
+        reason="Can't run test that requires nextflow to run if not installed.",
+    )
+    @with_temporary_folder
+    @mock.patch("nf_core.utils.fetch_wf_config")
+    def test_containers_pipeline_docker(self, tmp_path, mock_fetch_wf_config):
+        assert check_nextflow_version(NF_INSPECT_MIN_NF_VERSION) is True
+
+        # Set up test
+        container_system = "docker"
+        mock_pipeline_dir = TEST_DATA_DIR / "mock_pipeline_containers"
+        refererence_json_dir = mock_pipeline_dir / "per_profile_output"
+        # First check that `-profile singularity` produces the same output as the reference
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_system=container_system)
+        mock_fetch_wf_config.return_value = {}
+
+        # Run get containers with `nextflow inspect`
+        status = download_obj.find_container_images_nf_inspect(str(mock_pipeline_dir))
+        assert status is True, "Failed to find containers using nextflow inspect"
+
+        # Store the containers found by the new method
+        found_containers = set(download_obj.containers)
+
+        # Load the reference containers
+        with open(refererence_json_dir / f"{container_system}_containers.json") as fh:
+            ref_containers = json.load(fh)
+            ref_container_strs = set(ref_containers.values())
+
+        # Now check that they contain the same containers
+        assert found_containers == ref_container_strs, (
+            f"Containers found in pipeline by `nextflow inspect`: {found_containers}\n"
+            f"Containers that should've been found: {ref_container_strs}"
+        )
+
+    #
     # Test for 'find_container_images' in modules
     #
     @with_temporary_folder
@@ -869,7 +955,7 @@ class DownloadTest(unittest.TestCase):
     # If Singularity is installed, but the container can't be accessed because it does not exist or there are access
     # restrictions, a RuntimeWarning is raised due to the unavailability of the image.
     @pytest.mark.skipif(
-        shutil.which("singularity") is None or shutil.which("apptainer") is None,
+        shutil.which("singularity") is None and shutil.which("apptainer") is None,
         reason="Can't test what Singularity does if it's not installed.",
     )
     @with_temporary_folder
@@ -937,7 +1023,7 @@ class DownloadTest(unittest.TestCase):
             )
 
     @pytest.mark.skipif(
-        shutil.which("singularity") is None or shutil.which("apptainer") is None,
+        shutil.which("singularity") is None and shutil.which("apptainer") is None,
         reason="Can't test what Singularity does if it's not installed.",
     )
     @with_temporary_folder
@@ -950,7 +1036,7 @@ class DownloadTest(unittest.TestCase):
     # Tests for 'SingularityFetcher.fetch_containers'
     #
     @pytest.mark.skipif(
-        shutil.which("singularity") is None or shutil.which("apptainer") is None,
+        shutil.which("singularity") is None and shutil.which("apptainer") is None,
         reason="Can't test what Singularity does if it's not installed.",
     )
     @with_temporary_folder
