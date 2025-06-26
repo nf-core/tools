@@ -7,7 +7,7 @@
                     "fastqc": "0.12.1"
                 },
                 "Workflow": {
-                    "my-prefix/testpipeline": "v1.0.0dev"
+                    "nf-core/testpipeline": "v1.0.0dev"
                 }
             },
             [
