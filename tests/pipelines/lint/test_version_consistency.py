@@ -5,7 +5,21 @@ from ..test_lint import TestLint
 
 
 class TestLintVersionConsistency(TestLint):
-    def test_version_consistency(self):
+    def test_version_consistency_pass(self):
+        """Tests that config variable existence test fails with bad pipeline name"""
+        new_pipeline = self._make_pipeline_copy()
+        lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
+        lint_obj.load_pipeline_config()
+        lint_obj.nextflow_config()
+
+        lint_obj.nf_config["manifest.version"] = "1.0.0"
+        result = lint_obj.version_consistency()
+        assert result["passed"] == [
+            "Version tags are consistent between container, release tag, config and nfcore yaml."
+        ]
+        assert result["failed"] == []
+
+    def test_version_consistency_not_numeric(self):
         """Tests that config variable existence test fails with bad pipeline name"""
         new_pipeline = self._make_pipeline_copy()
         lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
@@ -14,18 +28,18 @@ class TestLintVersionConsistency(TestLint):
 
         result = lint_obj.version_consistency()
         assert result["passed"] == [
-            "Version tags are numeric and consistent between container, release tag and config."
+            "Version tags are consistent between container, release tag, config and nfcore yaml."
         ]
         assert result["failed"] == ["manifest.version was not numeric: 1.0.0dev!"]
 
-    def test_version_consistency_fail(self):
+    def test_version_consistency_not_consistent(self):
         """Tests that config variable existence test fails with bad pipeline name"""
         new_pipeline = self._make_pipeline_copy()
         lint_obj = nf_core.pipelines.lint.PipelineLint(new_pipeline)
         lint_obj.load_pipeline_config()
         lint_obj.nextflow_config()
+
         # Set a bad version number
-        lint_obj.nf_config["manifest.version"] = "1.0.0dev"
         lint_obj.nf_config["process.container"] = "nfcore/pipeline:latest"
         result = lint_obj.version_consistency()
         assert len(result["passed"]) == 0

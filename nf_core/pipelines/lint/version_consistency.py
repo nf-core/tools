@@ -7,7 +7,7 @@ def version_consistency(self):
     .. note:: This test only runs when the ``--release`` flag is set for ``nf-core pipelines lint``,
               or ``$GITHUB_REF`` is equal to ``main``.
 
-    This lint fetches the pipeline version number from three possible locations:
+    This lint fetches the pipeline version number from four possible locations:
 
     * The pipeline config, ``manifest.version``
     * The docker container in the pipeline config, ``process.container``
@@ -15,6 +15,7 @@ def version_consistency(self):
         Some pipelines may not have this set on a pipeline level. If it is not found, it is ignored.
 
     * ``$GITHUB_REF``, if it looks like a release tag (``refs/tags/<something>``)
+    * The YAML file .nf-core.yml
 
     The test then checks that:
 
@@ -38,15 +39,16 @@ def version_consistency(self):
     if self.nf_config.get("process.container", ""):
         versions["process.container"] = self.nf_config.get("process.container", "").strip(" '\"").split(":")[-1]
 
-    if self.nf_config.get("config_yml.template.version", ""):
-        versions["nfcore_yml.version"] = self.nf_config.get("config_yml.template.version", "").strip(" '\"")
-
     # Get version from the $GITHUB_REF env var if this is a release
     if (
         os.environ.get("GITHUB_REF", "").startswith("refs/tags/")
         and os.environ.get("GITHUB_REPOSITORY", "") != "nf-core/tools"
     ):
         versions["GITHUB_REF"] = os.path.basename(os.environ["GITHUB_REF"].strip(" '\""))
+
+    # Get version from the .nf-core.yml template
+    if self.nf_config.get("config_yml.template.version", ""):
+        versions["nfcore_yml.version"] = self.nf_config.get("config_yml.template.version", "").strip(" '\"")
 
     # Check if they are all numeric
     for v_type, version in versions.items():
@@ -60,7 +62,7 @@ def version_consistency(self):
                 ", ".join([f"{k} = {v}" for k, v in versions.items()])
             )
         )
-
-    passed.append("Version tags are numeric and consistent between container, release tag and config.")
+    else:
+        passed.append("Version tags are consistent between container, release tag, config and nfcore yaml.")
 
     return {"passed": passed, "failed": failed}
