@@ -115,8 +115,9 @@ jobs:
           mv .github/.coveragerc .
 
       - name: Test with pytest
+        id: pytest
         run: |
-          python3 -m pytest tests/${{matrix.test}} --color=yes --cov --cov-config=.coveragerc --durations=0 && exit_code=0|| exit_code=$?
+          python3 -m pytest tests/${{matrix.test}} --color=yes --cov --cov-config=.coveragerc --durations=0 -n auto && exit_code=0|| exit_code=$?
           # don't fail if no tests were collected, e.g. for test_licence.py
           if [ "${exit_code}" -eq 5 ]; then
             echo "No tests were collected"
@@ -133,7 +134,7 @@ jobs:
 
       - name: Store snapshot report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: always()
+        if: always() && contains(matrix.test, 'test_create_app') && steps.pytest.outcome == 'failure'
         with:
           include-hidden-files: true
           name: Snapshot Report ${{ env.test }}
@@ -152,24 +153,16 @@ jobs:
       - runs-on=${{ github.run_id }}-coverage
       - runner=2cpu-linux-x64
     steps:
-      - name: go to subdirectory
-        run: |
-          mkdir -p pytest
-          cd pytest
-
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Set up Python 3.13
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        env:
-          AGENT_TOOLSDIRECTORY: /opt/actions-runner/_work/tools/tools/
         with:
           python-version: "3.13"
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install coverage
         run: |
-          python -m pip install --upgrade pip -r requirements-dev.txt
-          pip install -e .
+          python -m pip install --upgrade pip coverage
 
       - name: move coveragerc file up
         run: |
@@ -177,14 +170,18 @@ jobs:
 
       - name: Download all artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: coverage_*
+
       - name: Run coverage
         run: |
-          coverage combine --keep coverage*/.coverage*
+          coverage combine --keep coverage_*/.coverage*
           coverage report
           coverage xml
 
       - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5
         with:
           files: coverage.xml
+          disable_search: true # we already know the file to upload
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
