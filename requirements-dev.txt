@@ -18,5 +18,6 @@ typing_extensions >=4.0.0
 pytest-asyncio
 pytest-textual-snapshot==1.1.0
 pytest-workflow>=2.0.0
+pytest-xdist>=3.7.0
 pytest>=8.0.0
 ruff
