@@ -18,9 +18,10 @@ import shlex
 import subprocess
 import sys
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, Union
 
 import git
 import prompt_toolkit.styles
@@ -160,10 +161,10 @@ class Pipeline:
 
     def __init__(self, wf_path: Path) -> None:
         """Initialise pipeline object"""
-        self.conda_config: Dict = {}
-        self.conda_package_info: Dict = {}
-        self.nf_config: Dict = {}
-        self.files: List[Path] = []
+        self.conda_config: dict = {}
+        self.conda_package_info: dict = {}
+        self.nf_config: dict = {}
+        self.files: list[Path] = []
         self.git_sha: Optional[str] = None
         self.minNextflowVersion: Optional[str] = None
         self.wf_path = Path(wf_path)
@@ -204,7 +205,7 @@ class Pipeline:
         """Convenience function to get full path to a file in the pipeline"""
         return Path(self.wf_path, fn)
 
-    def list_files(self) -> List[Path]:
+    def list_files(self) -> list[Path]:
         """Get a list of all files in the pipeline"""
         files = []
         try:
@@ -358,7 +359,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     return config
 
 
-def run_cmd(executable: str, cmd: str) -> Union[Tuple[bytes, bytes], None]:
+def run_cmd(executable: str, cmd: str) -> Union[tuple[bytes, bytes], None]:
     """Run a specified command and capture the output. Handle errors nicely."""
     full_cmd = f"{executable} {cmd}"
     log.debug(f"Running command: {full_cmd}")
@@ -392,7 +393,7 @@ def setup_nfcore_dir() -> bool:
     return True
 
 
-def setup_requests_cachedir() -> Dict[str, Union[Path, datetime.timedelta, str]]:
+def setup_requests_cachedir() -> dict[str, Union[Path, datetime.timedelta, str]]:
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
@@ -403,7 +404,7 @@ def setup_requests_cachedir() -> Dict[str, Union[Path, datetime.timedelta, str]]
     """
     pyversion: str = ".".join(str(v) for v in sys.version_info[0:3])
     cachedir: Path = setup_nfcore_cachedir(f"cache_{pyversion}")
-    config: Dict[str, Union[Path, datetime.timedelta, str]] = {
+    config: dict[str, Union[Path, datetime.timedelta, str]] = {
         "cache_name": Path(cachedir, "github_info"),
         "expire_after": datetime.timedelta(hours=1),
         "backend": "sqlite",
@@ -451,7 +452,7 @@ def wait_cli_function(poll_func: Callable[[], bool], refresh_per_second: int = 2
         raise AssertionError("Cancelled!")
 
 
-def poll_nfcore_web_api(api_url: str, post_data: Optional[Dict] = None) -> Dict:
+def poll_nfcore_web_api(api_url: str, post_data: Optional[dict] = None) -> dict:
     """
     Poll the nf-core website API
 
@@ -509,9 +510,9 @@ class GitHubAPISession(requests_cache.CachedSession):
 
     def __init__(self) -> None:
         self.auth_mode: Optional[str] = None
-        self.return_ok: List[int] = [200, 201]
-        self.return_retry: List[int] = [403]
-        self.return_unauthorised: List[int] = [401]
+        self.return_ok: list[int] = [200, 201]
+        self.return_retry: list[int] = [403]
+        self.return_unauthorised: list[int] = [401]
         self.has_init: bool = False
 
     def lazy_init(self) -> None:
@@ -942,8 +943,8 @@ def prompt_remote_pipeline_name(wfs):
 
 
 def prompt_pipeline_release_branch(
-    wf_releases: List[Dict[str, Any]], wf_branches: Dict[str, Any], multiple: bool = False
-) -> Tuple[Any, List[str]]:
+    wf_releases: list[dict[str, Any]], wf_branches: dict[str, Any], multiple: bool = False
+) -> tuple[Any, list[str]]:
     """Prompt for pipeline release / branch
 
     Args:
@@ -955,8 +956,8 @@ def prompt_pipeline_release_branch(
         choice (questionary.Choice or bool): Selected release / branch or False if no releases / branches available
     """
     # Prompt user for release tag, tag_set will contain all available.
-    choices: List[questionary.Choice] = []
-    tag_set: List[str] = []
+    choices: list[questionary.Choice] = []
+    tag_set: list[str] = []
 
     # Releases
     if len(wf_releases) > 0:
@@ -1164,6 +1165,7 @@ class NFCoreYamlLintConfig(BaseModel):
     schema for linting config in `.nf-core.yml` should cover:
 
     .. code-block:: yaml
+
         files_unchanged:
             - .github/workflows/branch.yml
         modules_config: False
@@ -1190,23 +1192,30 @@ class NFCoreYamlLintConfig(BaseModel):
         template_strings:
                 - docs/my_pdf.pdf
         nfcore_components: False
+        # nf_test_content: False
+        nf_test_content:
+            - tests/<test_name>.nf.test
+            - tests/nextflow.config
+            - nf-test.config
     """
 
-    files_unchanged: Optional[Union[bool, List[str]]] = None
+    files_unchanged: Optional[Union[bool, list[str]]] = None
     """ List of files that should not be changed """
-    modules_config: Optional[Optional[Union[bool, List[str]]]] = None
+    modules_config: Optional[Optional[Union[bool, list[str]]]] = None
     """ List of modules that should not be changed """
-    merge_markers: Optional[Optional[Union[bool, List[str]]]] = None
+    merge_markers: Optional[Optional[Union[bool, list[str]]]] = None
     """ List of files that should not contain merge markers """
-    nextflow_config: Optional[Optional[Union[bool, List[Union[str, Dict[str, List[str]]]]]]] = None
+    nextflow_config: Optional[Optional[Union[bool, list[Union[str, dict[str, list[str]]]]]]] = None
     """ List of Nextflow config files that should not be changed """
-    multiqc_config: Optional[Union[bool, List[str]]] = None
+    nf_test_content: Optional[Union[bool, list[str]]] = None
+    """ List of nf-test content that should not be changed """
+    multiqc_config: Optional[Union[bool, list[str]]] = None
     """ List of MultiQC config options that be changed """
-    files_exist: Optional[Union[bool, List[str]]] = None
+    files_exist: Optional[Union[bool, list[str]]] = None
     """ List of files that can not exist """
-    template_strings: Optional[Optional[Union[bool, List[str]]]] = None
+    template_strings: Optional[Optional[Union[bool, list[str]]]] = None
     """ List of files that can contain template strings """
-    readme: Optional[Union[bool, List[str]]] = None
+    readme: Optional[Union[bool, list[str]]] = None
     """ Lint the README.md file """
     nfcore_components: Optional[bool] = None
     """ Lint all required files to use nf-core modules and subworkflows """
@@ -1248,6 +1257,8 @@ class NFCoreYamlLintConfig(BaseModel):
     """ Lint for included configs """
     local_component_structure: Optional[bool] = None
     """ Lint local components use correct structure mirroring remote"""
+    rocrate_readme_sync: Optional[bool] = None
+    """ Lint for README.md and rocrate.json sync """
 
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
@@ -1274,9 +1285,9 @@ class NFCoreYamlConfig(BaseModel):
     """ Pipeline linting configuration, see https://nf-co.re/docs/nf-core-tools/pipelines/lint#linting-config for examples and documentation """
     template: Optional[NFCoreTemplateConfig] = None
     """ Pipeline template configuration """
-    bump_version: Optional[Dict[str, bool]] = None
+    bump_version: Optional[dict[str, bool]] = None
     """ Disable bumping of the version for a module/subworkflow (when repository_type is modules). See https://nf-co.re/docs/nf-core-tools/modules/bump-versions for more information. """
-    update: Optional[Dict[str, Union[str, bool, Dict[str, Union[str, Dict[str, Union[str, bool]]]]]]] = None
+    update: Optional[dict[str, Union[str, bool, dict[str, Union[str, dict[str, Union[str, bool]]]]]]] = None
     """ Disable updating specific modules/subworkflows (when repository_type is pipeline). See https://nf-co.re/docs/nf-core-tools/modules/update for more information. """
 
     def __getitem__(self, item: str) -> Any:
@@ -1288,7 +1299,7 @@ class NFCoreYamlConfig(BaseModel):
     def __setitem__(self, item: str, value: Any) -> None:
         setattr(self, item, value)
 
-    def model_dump(self, **kwargs) -> Dict[str, Any]:
+    def model_dump(self, **kwargs) -> dict[str, Any]:
         # Get the initial data
         config = super().model_dump(**kwargs)
 
@@ -1306,7 +1317,7 @@ class NFCoreYamlConfig(BaseModel):
         return config
 
 
-def load_tools_config(directory: Union[str, Path] = ".") -> Tuple[Optional[Path], Optional[NFCoreYamlConfig]]:
+def load_tools_config(directory: Union[str, Path] = ".") -> tuple[Optional[Path], Optional[NFCoreYamlConfig]]:
     """
     Parse the nf-core.yml configuration file
 
@@ -1399,14 +1410,14 @@ def determine_base_dir(directory: Union[Path, str] = ".") -> Path:
     return Path(directory) if (base_dir == start_dir or str(base_dir) == base_dir.root) else base_dir
 
 
-def get_first_available_path(directory: Union[Path, str], paths: List[str]) -> Union[Path, None]:
+def get_first_available_path(directory: Union[Path, str], paths: list[str]) -> Union[Path, None]:
     for p in paths:
         if Path(directory, p).is_file():
             return Path(directory, p)
     return None
 
 
-def sort_dictionary(d: Dict) -> Dict:
+def sort_dictionary(d: dict) -> dict:
     """Sorts a nested dictionary recursively"""
     result = {}
     for k, v in sorted(d.items()):

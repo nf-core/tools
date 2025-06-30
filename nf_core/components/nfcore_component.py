@@ -5,7 +5,7 @@ The NFCoreComponent class holds information and utility functions for a single m
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 log = logging.getLogger(__name__)
 
@@ -47,11 +47,11 @@ class NFCoreComponent:
         self.component_dir = component_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
-        self.passed: List[Tuple[str, str, Path]] = []
-        self.warned: List[Tuple[str, str, Path]] = []
-        self.failed: List[Tuple[str, str, Path]] = []
-        self.inputs: List[List[Dict[str, Dict[str, str]]]] = []
-        self.outputs: List[str] = []
+        self.passed: list[tuple[str, str, Path]] = []
+        self.warned: list[tuple[str, str, Path]] = []
+        self.failed: list[tuple[str, str, Path]] = []
+        self.inputs: list[list[dict[str, dict[str, str]]]] = []
+        self.outputs: list[str] = []
         self.has_meta: bool = False
         self.git_sha: Optional[str] = None
         self.is_patched: bool = False
@@ -207,7 +207,7 @@ class NFCoreComponent:
             for line in input_data.split("\n"):
                 channel_elements: Any = []
                 line = line.split("//")[0]  # remove any trailing comments
-                regex = r"(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+                regex = r"\b(val|path)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
                 matches = re.finditer(regex, line)
                 for _, match in enumerate(matches, start=1):
                     input_val = None
@@ -216,6 +216,10 @@ class NFCoreComponent:
                     elif match.group(4):
                         input_val = match.group(4).split(",")[0]  # handle `files, stageAs: "inputs/*"` cases
                     if input_val:
+                        input_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', input_val)[
+                            0
+                        ]  # Takes only first part, avoid commas in quotes
+                        input_val = input_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
                         channel_elements.append({input_val: {}})
                 if len(channel_elements) > 1:
                     inputs.append(channel_elements)
@@ -249,7 +253,7 @@ class NFCoreComponent:
                 return outputs
             output_data = data.split("output:")[1].split("when:")[0]
             regex_emit = r"emit:\s*([^)\s,]+)"
-            regex_elements = r"(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
+            regex_elements = r"\b(val|path|env|stdout)\s*(\(([^)]+)\)|\s*([^)\s,]+))"
             for line in output_data.split("\n"):
                 match_emit = re.search(regex_emit, line)
                 matches_elements = re.finditer(regex_elements, line)
@@ -264,7 +268,10 @@ class NFCoreComponent:
                     elif match_element.group(4):
                         output_val = match_element.group(4)
                     if output_val:
-                        output_val = output_val.strip("'").strip('"')  # remove quotes
+                        output_val = re.split(r',(?=(?:[^\'"]*[\'"][^\'"]*[\'"])*[^\'"]*$)', output_val)[
+                            0
+                        ]  # Takes only first part, avoid commas in quotes
+                        output_val = output_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
                         channel_elements.append({output_val: {}})
                 if len(channel_elements) > 1:
                     outputs[match_emit.group(1)].append(channel_elements)

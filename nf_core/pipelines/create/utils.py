@@ -1,8 +1,9 @@
 import re
+from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
-from typing import Any, Dict, Iterator, Union
+from typing import Any, Union
 
 import yaml
 from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
@@ -22,7 +23,7 @@ _init_context_var: ContextVar = ContextVar("_init_context_var", default={})
 
 
 @contextmanager
-def init_context(value: Dict[str, Any]) -> Iterator[None]:
+def init_context(value: dict[str, Any]) -> Iterator[None]:
     token = _init_context_var.set(value)
     try:
         yield
@@ -233,7 +234,7 @@ def remove_hide_class(app, widget_id: str) -> None:
     app.get_widget_by_id(widget_id).remove_class("hide")
 
 
-def load_features_yaml() -> Dict:
+def load_features_yaml() -> dict:
     """Load the YAML file describing template features."""
     with open(features_yml_path) as fh:
         return yaml.safe_load(fh)

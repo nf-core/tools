@@ -7,9 +7,8 @@ jsonschema>=4.0
 markdown>=3.3
 packaging
 pillow
-pdiff
 pre-commit
-prompt_toolkit<=3.0.48
+prompt_toolkit<=3.0.51
 pydantic>=2.2.1
 pyyaml
 questionary>=2.0.1
@@ -21,7 +20,7 @@ rich>=13.3.1
 rocrate
 repo2rocrate
 tabulate
-textual==2.1.2
+textual==3.5.0
 trogon
 pdiff
 ruamel.yaml

@@ -36,7 +36,7 @@ jobs:
           fi
           gh pr checkout $PR_NUMBER
 
-      - uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.13"
 
@@ -60,12 +60,15 @@ jobs:
           python ${GITHUB_WORKSPACE}/.github/workflows/changelog.py
 
       - name: Check if CHANGELOG.md actually changed
+        id: file_changed
         run: |
-          git diff --exit-code ${GITHUB_WORKSPACE}/CHANGELOG.md || echo "changed=YES" >> $GITHUB_ENV
-          echo "File changed: ${{ env.changed }}"
+          file_changed=$(git diff --exit-code ${GITHUB_WORKSPACE}/CHANGELOG.md || echo "changed=TRUE")
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5
+          echo "File changed: $file_changed"
+          echo "changed=$file_changed" >> $GITHUB_OUTPUT
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.13"
           cache: "pip"
@@ -74,16 +77,17 @@ jobs:
         run: pip install pre-commit
 
       - name: Run pre-commit checks
-        if: env.changed == 'YES'
+        if: steps.file_changed.outputs.changed == 'TRUE'
         run: |
           pre-commit run --all-files
 
       - name: Commit and push changes
-        if: env.changed == 'YES'
+        if: steps.file_changed.outputs.changed == 'TRUE'
+        env:
+          GH_TOKEN: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
         run: |
           git config user.email "core@nf-co.re"
           git config user.name "nf-core-bot"
-          git config push.default upstream
           git add ${GITHUB_WORKSPACE}/CHANGELOG.md
           git status
           git commit -m "[automated] Update CHANGELOG.md"

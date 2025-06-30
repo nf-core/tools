@@ -9,7 +9,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Optional
 
 import jinja2
 import questionary
@@ -67,7 +67,7 @@ class ComponentCreate(ComponentCommand):
         self.bioconda = None
         self.singularity_container = None
         self.docker_container = None
-        self.file_paths: Dict[str, Path] = {}
+        self.file_paths: dict[str, Path] = {}
         self.not_empty_template = not empty_template
         self.migrate_pytest = migrate_pytest
         self.tool_identifier = ""
@@ -369,7 +369,7 @@ class ComponentCreate(ComponentCommand):
                 elif self.component_type == "subworkflows":
                     self.component = rich.prompt.Prompt.ask("[violet]Name of subworkflow").strip()
 
-    def _get_component_dirs(self) -> Dict[str, Path]:
+    def _get_component_dirs(self) -> dict[str, Path]:
         """Given a directory and a tool/subtool or subworkflow, set the file paths and check if they already exist
 
         Returns dict: keys are relative paths to template files, vals are target paths.
