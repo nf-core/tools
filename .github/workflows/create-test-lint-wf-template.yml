@@ -38,7 +38,8 @@ jobs:
       - name: Create Matrix
         id: create_matrix
         run: |
-          echo "matrix=$(yq 'keys | filter(. != "github") | filter(. != "is_nfcore") | filter(. != "test_config") | tojson(0)' nf_core/pipelines/create/template_features.yml)" >> $GITHUB_OUTPUT
+          echo "matrix=$(yq '.[].features | keys | filter(. != "github") | filter(. != "is_nfcore") | filter(. != "test_config")' nf_core/pipelines/create/template_features.yml | \
+          yq 'flatten | tojson(0)' -)" >> $GITHUB_OUTPUT
 
   RunTestWorkflow:
     runs-on:
