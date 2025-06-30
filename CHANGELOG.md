@@ -36,6 +36,7 @@
 - Update zentered/bluesky-post-action action to v0.3.0 ([#3626](https://github.com/nf-core/tools/pull/3626))
 - Update dependency textual to v3.5.0 ([#3636](https://github.com/nf-core/tools/pull/3636))
 - Make changelog bot push to correct remote ([#3638](https://github.com/nf-core/tools/pull/3638))
+- Give unique button ids to help buttons in create app ([#3645](https://github.com/nf-core/tools/pull/3645))
 
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
