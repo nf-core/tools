@@ -31,8 +31,6 @@ jobs:
     outputs:
       all_features: ${{ steps.create_matrix.outputs.matrix }}
     steps:
-      - name: 🏗 Set up yq
-        uses: frenck/action-setup-yq@c4b5be8b4a215c536a41d436757d9feb92836d4f # v1
       - name: checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Create Matrix
