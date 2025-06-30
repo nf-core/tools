@@ -526,7 +526,6 @@ class ComponentCreate(ComponentCommand):
         Generate the meta.yml file.
         """
         # TODO: The meta.yml could be handled with a Pydantic model. The reason it is not implemented is because we want to maintain comments in the meta.yml file.
-        # Consider implementing this with Pydantic once CommentedMap objects are supported (https://github.com/pydantic/pydantic/issues/11879)
         with open(self.file_paths["meta.yml"]) as fh:
             meta_yml: ruamel.yaml.comments.CommentedMap = yaml.load(fh)
 
