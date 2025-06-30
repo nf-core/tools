@@ -115,6 +115,7 @@ jobs:
           mv .github/.coveragerc .
 
       - name: Test with pytest
+        id: pytest
         run: |
           python3 -m pytest tests/${{matrix.test}} --color=yes --cov --cov-config=.coveragerc --durations=0 -n auto && exit_code=0|| exit_code=$?
           # don't fail if no tests were collected, e.g. for test_licence.py
@@ -133,7 +134,7 @@ jobs:
 
       - name: Store snapshot report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: always()
+        if: always() && contains(matrix.test, 'test_create_app') && steps.pytest.outcome == 'failure'
         with:
           include-hidden-files: true
           name: Snapshot Report ${{ env.test }}
