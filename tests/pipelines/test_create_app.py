@@ -183,7 +183,6 @@ def test_customisation_help(snap_compare):
         await pilot.press("M", "e")
         await pilot.click("#next")
         await pilot.click("#show_help_igenomes")
-        await pilot.press("enter")
 
     assert snap_compare(INIT_FILE, terminal_size=(100, 50), run_before=run_before)
 
