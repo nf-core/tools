@@ -80,8 +80,8 @@ jobs:
           - isMain: false
             profile: "singularity"
         NXF_VER:
-          - "24.10.8"
-          - "latest-everything"
+          - "24.04.2"
+          - "25.03.1-edge"
     env:
       NXF_ANSI_LOG: false
       TOTAL_SHARDS: ${{ needs.nf-test-changes.outputs.total_shards }}
