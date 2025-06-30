@@ -21,6 +21,7 @@
 ### Modules
 
 - Remove args stub from module template to satisfy language server ([#3403](https://github.com/nf-core/tools/pull/3403))
+- Fix modules meta.yml file structure ([#3532](https://github.com/nf-core/tools/pull/3532))
 
 ### Subworkflows
 
@@ -84,7 +85,6 @@ We also enabled to install subworkflows with modules from different remotes.
 
 - Increase meta index for multiple input channels ([#3463](https://github.com/nf-core/tools/pull/3463))
 - Configure the default module repository, branch, and path from environment variables. ([#3481](https://github.com/nf-core/tools/pull/3481))
-- Fix modules meta.yml file structure ([#3532](https://github.com/nf-core/tools/pull/3532))
 
 ### General
 
