@@ -18,7 +18,7 @@ class TestLintVersionConsistency(TestLint):
 
         result = lint_obj.version_consistency()
         assert result["passed"] == [
-            "Version tags are consistent between container, release tag, config and nf-core.yml."
+            "Version tags are consistent between container, release tag, config and .nf-core.yml."
         ]
         assert result["failed"] == []
 
@@ -31,7 +31,7 @@ class TestLintVersionConsistency(TestLint):
 
         result = lint_obj.version_consistency()
         assert result["passed"] == [
-            "Version tags are consistent between container, release tag, config and nf-core.yml."
+            "Version tags are consistent between container, release tag, config and .nf-core.yml."
         ]
         assert result["failed"] == ["manifest.version was not numeric: 1.0.0dev!"]
 
