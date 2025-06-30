@@ -566,7 +566,7 @@ class ComponentCreate(ComponentCommand):
                         input_name: {
                             "type": "file",
                             "description": f"{input_name} file",
-                            "pattern": f'"*.{",".join(ontologies[2])}"',
+                            "pattern": f"*.{{{','.join(ontologies[2])}}}",
                             "ontologies": [
                                 ruamel.yaml.comments.CommentedMap({"edam": f"{ont_id}"}) for ont_id in ontologies[0]
                             ],
@@ -654,7 +654,7 @@ class ComponentCreate(ComponentCommand):
                             "*.bam": {
                                 "type": "file",
                                 "description": "Sorted BAM/CRAM/SAM file",
-                                "pattern": '"*.{bam,cram,sam}"',
+                                "pattern": "*.{bam,cram,sam}",
                                 "ontologies": [
                                     ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_2572"}),
                                     ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_2573"}),

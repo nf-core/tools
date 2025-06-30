@@ -204,7 +204,7 @@ class TestModulesCreate(TestModules):
                         "raw_sequence": {
                             "type": "file",
                             "description": "raw_sequence file",
-                            "pattern": '"*.fastq-like,sam"',
+                            "pattern": "*.{fastq-like,sam}",
                             "ontologies": [
                                 {"edam": "http://edamontology.org/data_0848"},
                                 {"edam": "http://edamontology.org/format_2182"},
@@ -224,10 +224,10 @@ class TestModulesCreate(TestModules):
                             }
                         },
                         {
-                            '"*.html"': {
+                            "*.{html}": {
                                 "type": "file",
                                 "description": "sequence_report file",
-                                "pattern": '"*.html"',
+                                "pattern": "*.{html}",
                                 "ontologies": [
                                     {"edam": "http://edamontology.org/data_2955"},
                                     {"edam": "http://edamontology.org/format_2331"},
@@ -289,7 +289,7 @@ class TestModulesCreate(TestModules):
                     "raw_sequence": {
                         "type": "file",
                         "description": "raw_sequence file",
-                        "pattern": '"*.fastq-like,sam"',
+                        "pattern": "*.{fastq-like,sam}",
                         "ontologies": [
                             {"edam": "http://edamontology.org/data_0848"},
                             {"edam": "http://edamontology.org/format_2182"},
@@ -301,10 +301,10 @@ class TestModulesCreate(TestModules):
             "output": {
                 "sequence_report": [
                     {
-                        '"*.html"': {
+                        "*.{html}": {
                             "type": "file",
                             "description": "sequence_report file",
-                            "pattern": '"*.html"',
+                            "pattern": "*.{html}",
                             "ontologies": [
                                 {"edam": "http://edamontology.org/data_2955"},
                                 {"edam": "http://edamontology.org/format_2331"},
@@ -485,7 +485,7 @@ class TestModulesCreate(TestModules):
                         "*.bam": {
                             "type": "file",
                             "description": "Sorted BAM/CRAM/SAM file",
-                            "pattern": '"*.{bam,cram,sam}"',
+                            "pattern": "*.{bam,cram,sam}",
                             "ontologies": [
                                 {"edam": "http://edamontology.org/format_2572"},
                                 {"edam": "http://edamontology.org/format_2573"},
