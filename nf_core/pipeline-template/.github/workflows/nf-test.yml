@@ -110,7 +110,7 @@ jobs:
             # Add to workflow summary
             echo "## ❌ Test failed: ${{ matrix.profile }} | ${{ matrix.NXF_VER }} | Shard ${{ matrix.shard }}/${{ env.TOTAL_SHARDS }}" >> $GITHUB_STEP_SUMMARY
             if [[ "${{ matrix.NXF_VER }}" == "latest-everything" ]]; then
-              echo "::warning::Test with latest-everything failed but was expected and will not cause workflow failure"
+              echo "::warning::Test with latest-everything failed but will not cause workflow failure. Please check if the error is expected or if it needs fixing."
             fi
             if [[ "${{ matrix.NXF_VER }}" != "latest-everything" ]]; then
               exit 1
