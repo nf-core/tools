@@ -182,8 +182,8 @@ def test_customisation_help(snap_compare):
         await pilot.press("tab")
         await pilot.press("M", "e")
         await pilot.click("#next")
-        await pilot.pause(delay=0.5)  # Wait for UI state to update
-        await pilot.click("#igenomes")
+        await pilot.press("^p")
+        await pilot.click("#github_badges")
         await pilot.press("tab")
         await pilot.press("enter")
 
