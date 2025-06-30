@@ -337,12 +337,12 @@ class TestModulesCreate(TestModules):
     @mock.patch("nf_core.components.components_utils.get_biotools_response")
     @mock.patch("rich.prompt.Confirm.ask")
     def test_modules_meta_yml_structure_template_meta(
-        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_packate
+        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_package
     ):
         """Test the structure of the module meta.yml file when it was generated with TEMPLATE data and WITH a meta."""
         mock_biotools_response.return_value = {}
         mock_biocontainer_tag.return_value = {}
-        mock_anaconda_packate.return_value = {}
+        mock_anaconda_package.return_value = {}
         mock_rich_ask.return_value = False  # Don't provide Bioconda package name
         module_create = nf_core.modules.create.ModuleCreate(
             self.nfcore_modules, "test", "@author", "process_single", has_meta=True, empty_template=False
@@ -436,12 +436,12 @@ class TestModulesCreate(TestModules):
     @mock.patch("nf_core.components.components_utils.get_biotools_response")
     @mock.patch("rich.prompt.Confirm.ask")
     def test_modules_meta_yml_structure_template_nometa(
-        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_packate
+        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_package
     ):
         """Test the structure of the module meta.yml file when it was generated with TEMPLATE data and WITHOUT a meta."""
         mock_biotools_response.return_value = {}
         mock_biocontainer_tag.return_value = {}
-        mock_anaconda_packate.return_value = {}
+        mock_anaconda_package.return_value = {}
         mock_rich_ask.return_value = False  # Don't provide Bioconda package name
         module_create = nf_core.modules.create.ModuleCreate(
             self.nfcore_modules, "test", "@author", "process_single", has_meta=False, empty_template=False
@@ -519,12 +519,12 @@ class TestModulesCreate(TestModules):
     @mock.patch("nf_core.components.components_utils.get_biotools_response")
     @mock.patch("rich.prompt.Confirm.ask")
     def test_modules_meta_yml_structure_empty_meta(
-        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_packate
+        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_package
     ):
         """Test the structure of the module meta.yml file when it was generated with an EMPTY template and WITH a meta."""
         mock_biotools_response.return_value = {}
         mock_biocontainer_tag.return_value = {}
-        mock_anaconda_packate.return_value = {}
+        mock_anaconda_package.return_value = {}
         mock_rich_ask.return_value = False  # Don't provide Bioconda package name
         module_create = nf_core.modules.create.ModuleCreate(
             self.nfcore_modules, "test", "@author", "process_single", has_meta=True, empty_template=True
@@ -596,12 +596,12 @@ class TestModulesCreate(TestModules):
     @mock.patch("nf_core.components.components_utils.get_biotools_response")
     @mock.patch("rich.prompt.Confirm.ask")
     def test_modules_meta_yml_structure_empty_nometa(
-        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_packate
+        self, mock_rich_ask, mock_biotools_response, mock_biocontainer_tag, mock_anaconda_package
     ):
         """Test the structure of the module meta.yml file when it was generated with an EMPTY template and WITHOUT a meta."""
         mock_biotools_response.return_value = {}
         mock_biocontainer_tag.return_value = {}
-        mock_anaconda_packate.return_value = {}
+        mock_anaconda_package.return_value = {}
         mock_rich_ask.return_value = False  # Don't provide Bioconda package name
         module_create = nf_core.modules.create.ModuleCreate(
             self.nfcore_modules, "test", "@author", "process_single", has_meta=False, empty_template=True

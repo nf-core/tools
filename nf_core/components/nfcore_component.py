@@ -221,10 +221,10 @@ class NFCoreComponent:
                         ]  # Takes only first part, avoid commas in quotes
                         input_val = input_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
                         channel_elements.append({input_val: {}})
-                if len(channel_elements) > 1:
-                    inputs.append(channel_elements)
-                elif len(channel_elements) == 1:
+                if len(channel_elements) == 1:
                     inputs.append(channel_elements[0])
+                else:
+                    inputs.append(channel_elements)
             log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
             self.inputs = inputs
         elif self.component_type == "subworkflows":
@@ -273,10 +273,10 @@ class NFCoreComponent:
                         ]  # Takes only first part, avoid commas in quotes
                         output_val = output_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
                         channel_elements.append({output_val: {}})
-                if len(channel_elements) > 1:
-                    outputs[match_emit.group(1)].append(channel_elements)
-                elif len(channel_elements) > 0:
+                if len(channel_elements) == 1:
                     outputs[match_emit.group(1)].append(channel_elements[0])
+                else:
+                    outputs[match_emit.group(1)].append(channel_elements)
             log.debug(f"Found {len(list(outputs.keys()))} outputs in {self.main_nf}")
             self.outputs = outputs
         elif self.component_type == "subworkflows":
