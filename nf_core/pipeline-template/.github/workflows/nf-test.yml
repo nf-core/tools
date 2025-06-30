@@ -28,7 +28,7 @@ jobs:
   nf-test-changes:
     name: nf-test-changes
     runs-on: #{% endraw %}{% if is_nfcore %} use self-hosted runners
-      - runs-on=${{ github.run_id }}-nf-test-changes
+      - runs-on={% raw %}${{ github.run_id }}{% endraw %}-nf-test-changes
       - runner=4cpu-linux-x64{% else %} use GitHub runners
       - "ubuntu-latest"{% endif %}{% raw %}
     outputs:
@@ -63,7 +63,7 @@ jobs:
     needs: [nf-test-changes]
     if: ${{ needs.nf-test-changes.outputs.total_shards != '0' }}
     runs-on: #{% endraw %}{% if is_nfcore %} use self-hosted runners
-      - runs-on=${{ github.run_id }}-nf-test
+      - runs-on={% raw %}${{ github.run_id }}{% endraw %}-nf-test
       - runner=4cpu-linux-x64{% else %} use GitHub runners
       - "ubuntu-latest"{% endif %}{% raw %}
     strategy:
@@ -80,7 +80,7 @@ jobs:
           - isMain: false
             profile: "singularity"
         NXF_VER:
-          - "24.04.2"
+          - "24.10.8"
           - "latest-everything"
     env:
       NXF_ANSI_LOG: false
@@ -103,7 +103,7 @@ jobs:
     needs: [nf-test]
     if: always()
     runs-on:  {% endraw %}#{% if is_nfcore %} use self-hosted runners
-      - runs-on=${{ github.run_id }}-confirm-pass
+      - runs-on={% raw %}${{ github.run_id }}{% endraw %}-confirm-pass
       - runner=2cpu-linux-x64{% else %} use GitHub runners
       - "ubuntu-latest"{% endif %}{% raw %}
     steps:
