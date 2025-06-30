@@ -623,7 +623,7 @@ class ComponentCreate(ComponentCommand):
                                 }
                             ]
                         )
-                    pattern = f'"*.{",".join(ontologies[2])}"'
+                    pattern = f"*.{{{','.join(ontologies[2])}}}"
                     file_entry: dict[str, dict] = {
                         pattern: {
                             "type": "file",

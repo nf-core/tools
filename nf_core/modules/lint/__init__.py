@@ -421,7 +421,7 @@ class ModuleLint(ComponentLint):
             for ch_name in corrected_meta_yml["output"].keys():
                 ch_content = corrected_meta_yml["output"][ch_name][0]
                 if isinstance(ch_content, list):
-                    for i, element in ch_content:
+                    for i, element in enumerate(ch_content):
                         element_name = list(element.keys())[0]
                         _add_edam_ontologies(
                             corrected_meta_yml["output"][ch_name][0][i][element_name],
