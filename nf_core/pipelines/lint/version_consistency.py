@@ -63,6 +63,6 @@ def version_consistency(self):
             )
         )
     else:
-        passed.append("Version tags are consistent between container, release tag, config and nfcore yaml.")
+        passed.append("Version tags are consistent between container, release tag, config and .nf-core.yml.")
 
     return {"passed": passed, "failed": failed}
