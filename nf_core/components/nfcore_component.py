@@ -243,10 +243,10 @@ class NFCoreComponent:
             self.inputs = inputs
 
     def get_outputs_from_main_nf(self):
-        outputs = {}
         with open(self.main_nf) as f:
             data = f.read()
         if self.component_type == "modules":
+            outputs = {}
             # get output values from main.nf after "output:". the names are always after "emit:"
             if "output:" not in data:
                 log.debug(f"Could not find any outputs in {self.main_nf}")
@@ -280,6 +280,7 @@ class NFCoreComponent:
             log.debug(f"Found {len(list(outputs.keys()))} outputs in {self.main_nf}")
             self.outputs = outputs
         elif self.component_type == "subworkflows":
+            outputs = []
             # get output values from main.nf after "emit:". Can be named outputs or not.
             if "emit:" not in data:
                 log.debug(f"Could not find any outputs in {self.main_nf}")
