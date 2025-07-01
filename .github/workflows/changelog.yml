@@ -62,7 +62,11 @@ jobs:
       - name: Check if CHANGELOG.md actually changed
         id: file_changed
         run: |
-          file_changed=$(git diff --exit-code ${GITHUB_WORKSPACE}/CHANGELOG.md || echo "changed=TRUE")
+          # Show the diff for debugging
+          git diff ${GITHUB_WORKSPACE}/CHANGELOG.md
+
+          # Check if file has unstaged changes
+          [ -n "$(git diff -- ${GITHUB_WORKSPACE}/CHANGELOG.md)" ] && file_changed="TRUE" || file_changed="FALSE"
 
           echo "File changed: $file_changed"
           echo "changed=$file_changed" >> $GITHUB_OUTPUT
