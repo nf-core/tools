@@ -1,8 +1,9 @@
 import re
+from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
-from typing import Any, Dict, Iterator, Union
+from typing import Any, Union
 
 import yaml
 from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
@@ -22,7 +23,7 @@ _init_context_var: ContextVar = ContextVar("_init_context_var", default={})
 
 
 @contextmanager
-def init_context(value: Dict[str, Any]) -> Iterator[None]:
+def init_context(value: dict[str, Any]) -> Iterator[None]:
     token = _init_context_var.set(value)
     try:
         yield
@@ -176,18 +177,19 @@ class HelpText(Markdown):
 class PipelineFeature(Static):
     """Widget for the selection of pipeline features."""
 
-    def __init__(self, markdown: str, title: str, subtitle: str, field_id: str, **kwargs) -> None:
+    def __init__(self, markdown: str, title: str, subtitle: str, field_id: str, default: bool, **kwargs) -> None:
         super().__init__(**kwargs)
         self.markdown = markdown
         self.title = title
         self.subtitle = subtitle
         self.field_id = field_id
+        self.default = default
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """When the button is pressed, change the type of the button."""
-        if event.button.id == "show_help":
+        if event.button.id and event.button.id.startswith("show_help_"):
             self.add_class("displayed")
-        elif event.button.id == "hide_help":
+        elif event.button.id and event.button.id.startswith("hide_help_"):
             self.remove_class("displayed")
 
     def compose(self) -> ComposeResult:
@@ -198,11 +200,11 @@ class PipelineFeature(Static):
         Hidden row with a help text box.
         """
         yield HorizontalScroll(
-            Switch(value=True, id=self.field_id),
+            Switch(value=self.default, id=self.field_id),
             Static(self.title, classes="feature_title"),
             Static(self.subtitle, classes="feature_subtitle"),
-            Button("Show help", id="show_help", variant="primary"),
-            Button("Hide help", id="hide_help"),
+            Button("Show help", id="show_help_" + self.field_id, classes="show_help", variant="primary"),
+            Button("Hide help", id="hide_help_" + self.field_id, classes="hide_help"),
             classes="custom_grid",
         )
         yield HelpText(markdown=self.markdown, classes="help_box")
@@ -233,7 +235,7 @@ def remove_hide_class(app, widget_id: str) -> None:
     app.get_widget_by_id(widget_id).remove_class("hide")
 
 
-def load_features_yaml() -> Dict:
+def load_features_yaml() -> dict:
     """Load the YAML file describing template features."""
     with open(features_yml_path) as fh:
         return yaml.safe_load(fh)

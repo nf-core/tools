@@ -7,7 +7,7 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import questionary
 import yaml
@@ -292,7 +292,7 @@ class ModuleVersionBumper(ComponentCommand):
             self.up_to_date.append((f"Module version up to date: {module.component_name}", module.component_name))
             return True
 
-    def get_bioconda_version(self, module: NFCoreComponent) -> List[str]:
+    def get_bioconda_version(self, module: NFCoreComponent) -> list[str]:
         """
         Extract the bioconda version from a module
         """
@@ -325,7 +325,7 @@ class ModuleVersionBumper(ComponentCommand):
             except Exception:
                 pass
 
-        def format_result(module_updates: List[Tuple[str, str]], table: Table) -> Table:
+        def format_result(module_updates: list[tuple[str, str]], table: Table) -> Table:
             """
             Create rows for module updates
             """
