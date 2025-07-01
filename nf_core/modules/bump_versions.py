@@ -38,20 +38,20 @@ class ModuleVersionBumper(ComponentCommand):
     ):
         super().__init__("modules", pipeline_dir, remote_url, branch, no_pull)
 
-        self.up_to_date: List[Tuple[str, str]] = []
-        self.updated: List[Tuple[str, str]] = []
-        self.failed: List[Tuple[str, str]] = []
-        self.ignored: List[Tuple[str, str]] = []
+        self.up_to_date: list[tuple[str, str]] = []
+        self.updated: list[tuple[str, str]] = []
+        self.failed: list[tuple[str, str]] = []
+        self.ignored: list[tuple[str, str]] = []
         self.show_up_to_date: Optional[bool] = None
         self.tools_config: Optional[NFCoreYamlConfig]
 
     def bump_versions(
         self,
-        module: Union[str, None] = None,
+        module: Optional[str] = None,
         all_modules: bool = False,
-        show_uptodate: bool = False,
-        _dryrun: bool = False,
-    ) -> List[NFCoreComponent]:
+        show_up_to_date: bool = False,
+        dry_run: bool = False,
+    ) -> list[NFCoreComponent]:
         """
         Bump the container and conda version of single module or all modules
 
@@ -63,7 +63,8 @@ class ModuleVersionBumper(ComponentCommand):
         Args:
             module: a specific module to update
             all_modules: whether to bump versions for all modules
-            show_uptodate: whether to show up-to-date modules as well
+            show_up_to_date: whether to show up-to-date modules as well
+
 
         Returns:
             the modules updated
@@ -72,7 +73,7 @@ class ModuleVersionBumper(ComponentCommand):
         self.updated = []
         self.failed = []
         self.ignored = []
-        self.show_up_to_date = show_uptodate
+        self.show_up_to_date = show_up_to_date
 
         # Check modules directory structure
         self.check_modules_structure()
@@ -123,7 +124,7 @@ class ModuleVersionBumper(ComponentCommand):
                 )
 
         # mainly used for testing, return the list of nfcore_modules selected
-        if _dryrun:
+        if dry_run:
             return nfcore_modules
 
         progress_bar = Progress(
@@ -177,9 +178,9 @@ class ModuleVersionBumper(ComponentCommand):
             return False
 
         # Don't update if blocked in blacklist
-        self.bump_versions_config = getattr(self.tools_config, "bump-versions", {}) or {}
-        if module.component_name in self.bump_versions_config:
-            config_version = self.bump_versions_config[module.component_name]
+        bump_versions_config: dict[str, str] = getattr(self.tools_config, "bump-versions", {}) or {}
+        if module.component_name in bump_versions_config:
+            config_version = bump_versions_config[module.component_name]
             if not config_version:
                 self.ignored.append(("Omitting module due to config.", module.component_name))
                 return False
