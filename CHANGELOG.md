@@ -39,6 +39,7 @@
 - Give unique button ids to help buttons in create app ([#3645](https://github.com/nf-core/tools/pull/3645))
 - Parallelize pytest runs and speed up coverage step ([#3635](https://github.com/nf-core/tools/pull/3635))
 - Update dependency prettier to v3.6.2 ([#3646](https://github.com/nf-core/tools/pull/3646))
+- Update gitpod/workspace-base Docker digest to 77021d8 ([#3649](https://github.com/nf-core/tools/pull/3649))
 
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
