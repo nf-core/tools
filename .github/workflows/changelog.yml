@@ -63,7 +63,7 @@ jobs:
         id: file_changed
         run: |
           # Show the diff for debugging
-          git diff ${GITHUB_WORKSPACE}/CHANGELOG.md
+          git diff -- ${GITHUB_WORKSPACE}/CHANGELOG.md
 
           # Check if file has unstaged changes
           [ -n "$(git diff -- ${GITHUB_WORKSPACE}/CHANGELOG.md)" ] && file_changed="TRUE" || file_changed="FALSE"
