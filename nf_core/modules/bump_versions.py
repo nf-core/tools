@@ -53,7 +53,9 @@ class ModuleVersionBumper(ComponentCommand):
         dry_run: bool = False,
     ) -> list[NFCoreComponent]:
         """
-        Bump the container and conda version of single module or all modules
+        Bump the container and conda version of single module or all modules.
+
+        If module is the name of a directory in the modules directory, all modules in that directory will be bumped.
 
         Looks for a bioconda tool version in the `main.nf` file of the module and checks whether
         are more recent version is available. If yes, then tries to get docker/singularity
@@ -64,10 +66,10 @@ class ModuleVersionBumper(ComponentCommand):
             module: a specific module to update
             all_modules: whether to bump versions for all modules
             show_up_to_date: whether to show up-to-date modules as well
-
+            dry_run: whether to dry run the command
 
         Returns:
-            the modules updated
+            list[NFCoreComponent]: the updated modules
         """
         self.up_to_date = []
         self.updated = []
@@ -114,10 +116,14 @@ class ModuleVersionBumper(ComponentCommand):
                 raise nf_core.modules.modules_utils.ModuleExceptionError(
                     "You cannot specify a tool and request all tools to be bumped."
                 )
-            if module.endswith("/"):
-                nfcore_modules = [m for m in nfcore_modules if m.component_name.startswith(module)]
+            # First try to find an exact match
+            exact_matches = [m for m in nfcore_modules if m.component_name == module]
+            if exact_matches:
+                nfcore_modules = exact_matches
             else:
-                nfcore_modules = [m for m in nfcore_modules if m.component_name == module]
+                # If no exact match, look for modules that start with the given name (subtools)
+                nfcore_modules = [m for m in nfcore_modules if m.component_name.startswith(module + "/")]
+
             if len(nfcore_modules) == 0:
                 raise nf_core.modules.modules_utils.ModuleExceptionError(
                     f"Could not find the specified module: '{module}'"

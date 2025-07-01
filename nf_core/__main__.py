@@ -1322,7 +1322,14 @@ def command_modules_info(ctx, tool, directory):
 # nf-core modules bump-versions
 @modules.command("bump-versions")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    help="Module to bump versions for. If <tool> is provided and <tool/subtool> exists, all subtools will be bumped.",
+)
 @click.option(
     "-d",
     "--dir",
