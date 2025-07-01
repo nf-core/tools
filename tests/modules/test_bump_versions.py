@@ -2,7 +2,6 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import List
 
 import pytest
 import ruamel.yaml
@@ -48,8 +47,8 @@ class TestModulesBumpVersions(TestModules):
             yaml.dump(nf_core_yml.model_dump(), fh)
 
     @staticmethod
-    def _mock_modules(root_dir: Path, modules: List[str]) -> None:
-        """Mock the directory for a given module (or sub-module) for use with `_dryrun`"""
+    def _mock_modules(root_dir: Path, modules: list[str]) -> None:
+        """Mock the directory for a given module (or sub-module) for use with `dry_run`"""
         nf_core_dir = root_dir / "modules" / "nf-core"
         for module in modules:
             if "/" in module:
@@ -72,7 +71,7 @@ class TestModulesBumpVersions(TestModules):
 
         # run it with dryrun to return the modules that it found
         version_bumper = nf_core.modules.bump_versions.ModuleVersionBumper(pipeline_dir=root_dir)
-        modules = version_bumper.bump_versions(all_modules=True, _dryrun=True)
+        modules = version_bumper.bump_versions(all_modules=True, dry_run=True)
         assert sorted([m.component_name for m in modules]) == sorted(["fqgrep", "fqtk"])
 
     def test_modules_bump_versions_submodules(self):
@@ -86,7 +85,7 @@ class TestModulesBumpVersions(TestModules):
 
         # run it with dryrun to return the modules that it found
         version_bumper = nf_core.modules.bump_versions.ModuleVersionBumper(pipeline_dir=root_dir)
-        out_modules = version_bumper.bump_versions(module="fgbio/", _dryrun=True)
+        out_modules = version_bumper.bump_versions(module="fgbio", dry_run=True)
         assert sorted([m.component_name for m in out_modules]) == sorted(in_modules)
 
     def test_modules_bump_versions_fail(self):
