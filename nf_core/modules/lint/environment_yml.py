@@ -24,6 +24,15 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
     is sorted alphabetically.
     """
     env_yml = None
+    has_schema_header = False
+    lines = []
+
+    # Define the schema lines to be added if missing
+    schema_lines = [
+        "---\n",
+        "# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json\n",
+    ]
+
     #  load the environment.yml file
     if module.environment_yml is None:
         if allow_missing:
@@ -41,17 +50,14 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
         with open(module.environment_yml) as fh:
             lines = fh.readlines()
 
-        # Define the schema lines to be added if missing
-        schema_lines = [
-            "---\n",
-            "# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json\n",
-        ]
+        # Check if the first two lines contain schema configuration
+        content_start = 0
 
-        # Check if the first two lines match the expected schema lines
-        if len(lines) >= 2 and lines[:2] == schema_lines:
-            content = "".join(lines[2:])  # Skip schema lines when reading content
-        else:
-            content = "".join(lines)  # Use all content if no schema lines present
+        if len(lines) >= 2 and lines[0] == "---\n" and lines[1].startswith("# yaml-language-server: $schema="):
+            has_schema_header = True
+            content_start = 2
+
+        content = "".join(lines[content_start:])  # Skip schema lines when reading content
 
         # Parse the YAML content
         env_yml = yaml.load(content)
@@ -168,8 +174,18 @@ def environment_yml(module_lint_object: ComponentLint, module: NFCoreComponent, 
 
                 # Write back to file with headers
                 with open(Path(module.component_dir, "environment.yml"), "w") as fh:
-                    # Always write schema lines first
-                    fh.writelines(schema_lines)
+                    # If file had a schema header, check if it's pointing to a different URL
+                    if has_schema_header and len(lines) >= 2:
+                        existing_schema_line = lines[1]
+                        # If the existing schema URL is different, update it
+                        if not existing_schema_line.endswith("/modules/master/modules/environment-schema.json\n"):
+                            fh.writelines(schema_lines)
+                        else:
+                            # Keep the existing schema lines
+                            fh.writelines(lines[:2])
+                    else:
+                        # No schema header present, add the default one
+                        fh.writelines(schema_lines)
                     # Then dump the sorted YAML
                     yaml.dump(env_yml, fh)
 
