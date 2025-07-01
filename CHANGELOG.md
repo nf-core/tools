@@ -38,6 +38,8 @@
 - Make changelog bot push to correct remote ([#3638](https://github.com/nf-core/tools/pull/3638))
 - Give unique button ids to help buttons in create app ([#3645](https://github.com/nf-core/tools/pull/3645))
 - Parallelize pytest runs and speed up coverage step ([#3635](https://github.com/nf-core/tools/pull/3635))
+- Update gitpod/workspace-base Docker digest to 77021d8 ([#3649](https://github.com/nf-core/tools/pull/3649))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.12.1 ([#3648](https://github.com/nf-core/tools/pull/3648))
 
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
