@@ -332,7 +332,7 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
             k = config_match.group(2).strip()
             v = config_match.group(3).strip().strip("'\"")
             if k and v == "":
-                config[k] = ""  # or do we want to set it to "null"?
+                config[k] = "null"
                 log.debug(f"Config key: {k}, value: empty string")
             elif k and v:
                 config[k] = v
