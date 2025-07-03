@@ -1,4 +1,7 @@
 import os
+from pathlib import Path
+
+from ruamel.yaml import YAML
 
 
 def version_consistency(self):
@@ -47,8 +50,10 @@ def version_consistency(self):
         versions["GITHUB_REF"] = os.path.basename(os.environ["GITHUB_REF"].strip(" '\""))
 
     # Get version from the .nf-core.yml template
-    if self.nf_config.get("config_yml.template.version", ""):
-        versions["nfcore_yml.version"] = self.nf_config.get("config_yml.template.version", "").strip(" '\"")
+    yaml = YAML()
+    nfcore_yml = yaml.load(Path(self.wf_path) / ".nf-core.yml")
+    if nfcore_yml["template"] and "version" in nfcore_yml["template"]:
+        versions["nfcore_yml.version"] = nfcore_yml["template"]["version"].strip(" '\"")
 
     # Check if they are all numeric
     for v_type, version in versions.items():
@@ -63,6 +68,6 @@ def version_consistency(self):
             )
         )
     else:
-        passed.append("Version tags are consistent between container, release tag, config and .nf-core.yml.")
+        passed.append("Version tags are consistent: {}".format(", ".join([f"{k} = {v}" for k, v in versions.items()])))
 
     return {"passed": passed, "failed": failed}
