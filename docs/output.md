@@ -76,7 +76,7 @@ The `extracted_reads` directory will only be present if `--perform_extract_reads
 
 ### De novo assembly
 
-Perform De novo assemble when the number of reads for a given taxID exceeds `params.min_read_counts`; otherwise skip it.
+Perform de novo assembly when the number of reads for a given taxID exceeds `params.min_read_counts`; otherwise skip it.
 
 <details markdown="1">
 <summary>Output files</summary>
