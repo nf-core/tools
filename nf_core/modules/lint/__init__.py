@@ -358,7 +358,7 @@ class ModuleLint(ComponentLint):
             for ch_name in corrected_meta_yml["output"].keys():
                 ch_content = corrected_meta_yml["output"][ch_name][0]
                 if isinstance(ch_content, list):
-                    for i, element in ch_content:
+                    for i, element in enumerate(ch_content):
                         element_name = list(element.keys())[0]
                         corrected_meta_yml["output"][ch_name][0][i][element_name] = _find_meta_info(
                             meta_yml["output"], element_name, is_output=True
@@ -388,7 +388,10 @@ class ModuleLint(ComponentLint):
                 expected_ontologies = list({k: v for k, v in expected_ontologies}.items())
             if "ontologies" in section:
                 for ontology in section["ontologies"]:
-                    current_ontologies.append(ontology["edam"])
+                    try:
+                        current_ontologies.append(ontology["edam"])
+                    except KeyError:
+                        log.warning(f"Could not add ontologies in {desc}: {ontology}")
             elif "type" in section and section["type"] == "file":
                 section["ontologies"] = []
             log.debug(f"expected ontologies for {desc}: {expected_ontologies}")

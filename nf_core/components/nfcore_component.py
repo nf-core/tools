@@ -223,7 +223,7 @@ class NFCoreComponent:
                         channel_elements.append({input_val: {}})
                 if len(channel_elements) == 1:
                     inputs.append(channel_elements[0])
-                else:
+                elif len(channel_elements) > 1:
                     inputs.append(channel_elements)
             log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
             self.inputs = inputs
@@ -275,7 +275,7 @@ class NFCoreComponent:
                         channel_elements.append({output_val: {}})
                 if len(channel_elements) == 1:
                     outputs[match_emit.group(1)].append(channel_elements[0])
-                else:
+                elif len(channel_elements) > 1:
                     outputs[match_emit.group(1)].append(channel_elements)
             log.debug(f"Found {len(list(outputs.keys()))} outputs in {self.main_nf}")
             self.outputs = outputs
