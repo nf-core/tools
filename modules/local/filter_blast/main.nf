@@ -13,7 +13,7 @@ process FILTER_BLAST {
 
     output:
     tuple val(meta), path('*_filtered.txt')        , emit: filtered_blast
-    tuple val(meta), path('*_filtered_summary.txt'), emit: summary
+    tuple val(meta), path('*_summary.txt'), emit: summary
     path "versions.yml"                            , emit: versions
 
     when:

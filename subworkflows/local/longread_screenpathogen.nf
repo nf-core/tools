@@ -24,6 +24,10 @@ workflow LONGREAD_SCREENPATHOGEN {
 
     BAM_SORT_STATS_SAMTOOLS ( MINIMAP2_ALIGN.out.bam, reference )
     ch_versions = ch_versions.mix(BAM_SORT_STATS_SAMTOOLS.out.versions)
+    ch_multiqc_files = ch_multiqc_files.mix (BAM_SORT_STATS_SAMTOOLS.out.stats.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix (BAM_SORT_STATS_SAMTOOLS.out.flagstat.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix (BAM_SORT_STATS_SAMTOOLS.out.idxstats.collect{it[1]}.ifEmpty([]))
+
 
     emit:
     index    = MINIMAP2_INDEX.out.index              // channel: [ val(meta), [ index ] ]
