@@ -3,10 +3,10 @@ nextflow_pipeline {
     name "Test pipeline"
     script "../main.nf"
     tag "pipeline"
-    profile "test"
+    profile "test_taxid"
 
 
-    test("-profile test") {
+    test("-profile test_taxid") {
 
         when {
             params {
@@ -30,6 +30,8 @@ nextflow_pipeline {
                     stable_name,
                     // All files with stable contents
                     stable_path
+                    // Important files with unstable content
+                    path("${params.outdir}/")
                 ).match() }
             )
         }
