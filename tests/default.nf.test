@@ -30,8 +30,6 @@ nextflow_pipeline {
                     stable_name,
                     // All files with stable contents
                     stable_path
-                    // Important files with unstable content
-                    path("${params.outdir}/")
                 ).match() }
             )
         }
