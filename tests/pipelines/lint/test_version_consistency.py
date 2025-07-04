@@ -1,4 +1,3 @@
-import os
 import re
 from pathlib import Path
 
@@ -26,7 +25,7 @@ class TestLintVersionConsistency(TestLint):
         self.yaml.dump(self.nf_core_yml, self.nf_core_yml_path)
 
         # Set the version in the nextflow.config file
-        nf_conf_file = os.path.join(self.new_pipeline, "nextflow.config")
+        nf_conf_file = Path(self.new_pipeline, "nextflow.config")
         with open(nf_conf_file) as f:
             content = f.read()
             pass_content = re.sub(r"(?m)^(?P<indent>\s*version\s*=\s*)'[^']+'", rf"\g<indent>'{'1.0.0'}'", content)
@@ -65,7 +64,7 @@ class TestLintVersionConsistency(TestLint):
         """Tests that pipeline version consistency test fails with inconsistent version numbers"""
         self.nf_core_yml["template"]["version"] = "0.0.0"
         self.yaml.dump(self.nf_core_yml, self.nf_core_yml_path)
-        nf_conf_file = os.path.join(self.new_pipeline, "nextflow.config")
+        nf_conf_file = Path(self.new_pipeline, "nextflow.config")
         with open(nf_conf_file) as f:
             content = f.read()
             fail_content = re.sub(r"(?m)^(?P<indent>\s*version\s*=\s*)'[^']+'", rf"\g<indent>'{'1.0.0'}'", content)
