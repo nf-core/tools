@@ -240,6 +240,12 @@ class ComponentInfo(ComponentCommand):
             table.add_column("Structure", justify="right", style="green")
         return table
 
+    def generate_args_table(self) -> Table:
+        table = Table(expand=True, show_lines=True, box=box.MINIMAL_HEAVY_HEAD, padding=0)
+        table.add_column(":hammer_and_wrench:  Extra Args")
+        table.add_column("Description")
+        return table
+
     def get_channel_structure(self, structure: dict) -> str:
         "Get the structure of a channel"
         structure_str = ""
@@ -340,6 +346,17 @@ class ComponentInfo(ComponentCommand):
                         )
 
             renderables.append(outputs_table)
+
+        # args
+        if self.meta.get("args"):
+            args_table = self.generate_args_table()
+            for argname, arginfo in self.meta["args"].items():
+                args_table.add_row(
+                    f"[orange1 on black] {argname} [/][dim i]",
+                    Markdown(arginfo["description"] if arginfo["description"] else ""),
+                )
+
+            renderables.append(args_table)
 
         # Installation command
         if self.remote_location and not self.local:
