@@ -1,5 +1,11 @@
 # nf-core/tools: Changelog
 
+## [Unreleased]
+
+### Modules
+
+- Allow dots (`.`), hyphens (`-`), and underscores (`_`) in GitHub usernames during module creation to support usernames used on GitLab and other providers.
+
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
 ### Template
