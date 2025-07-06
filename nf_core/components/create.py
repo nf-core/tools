@@ -418,17 +418,41 @@ class ComponentCreate(ComponentCommand):
             author_default = f"@{gh_auth_user['login']}"
         except Exception as e:
             log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
+        # Determine whether this repo is hosted on GitHub
+        repo_url = (
+            self.wf.config.get("manifest.profile_repository")
+            or getattr(self.wf.dir, "git_origin_url", "")
+            or ""
+        )
+        is_github = "github.com" in repo_url.lower()
 
-        # Regex to valid GitHub username: https://github.com/shinnn/github-username-regex
-        github_username_regex = re.compile(r"^@[A-Za-z\d](?:[A-Za-z\d]|[.-_](?=[A-Za-z\d])){0,38}$")
+        username_regex = re.compile(
+            r"^@[A-Za-z\d](?:[A-Za-z\d]|[._-](?=[A-Za-z\d])){0,38}$"
+        )
 
-        while self.author is None or not github_username_regex.match(self.author):
-            if self.author is not None and not github_username_regex.match(self.author):
-                log.warning("Does not look like a valid GitHub username (must start with an '@')!")
-            self.author = rich.prompt.Prompt.ask(
-                f"[violet]GitHub Username:[/]{' (@author)' if author_default is None else ''}",
-                default=author_default,
-            )
+        while True:
+            if self.author is None:
+                self.author = rich.prompt.Prompt.ask(
+                    f"[violet]GitHub Username:[/]"
+                    f"{' (@author)' if author_default is None else ''}",
+                    default=author_default,
+                )
+
+            if is_github:
+                valid = bool(username_regex.match(self.author))
+                warn = (
+                    "Invalid GitHub username—must start with '@' and use only "
+                    "letters, numbers, '.', '_', or '-'"
+                )
+            else:
+                valid = self.author.startswith("@") and len(self.author) > 1
+                warn = "Invalid username—must start with '@'"
+
+            if valid:
+                break
+
+            log.warning(warn)
+            self.author = None
 
     def _copy_old_files(self, component_old_path):
         """Copy files from old module to new module"""
