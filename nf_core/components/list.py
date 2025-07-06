@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Union, cast
+from typing import Optional, Union, cast
 
 import rich.table
 
@@ -35,7 +35,7 @@ class ComponentList(ComponentCommand):
         return super()._configure_repo_and_paths(nf_dir_req)
 
     def list_components(
-        self, keywords: Optional[List[str]] = None, print_json: bool = False
+        self, keywords: Optional[list[str]] = None, print_json: bool = False
     ) -> Union[rich.table.Table, str]:
         keywords = keywords or []
         """
@@ -48,9 +48,9 @@ class ComponentList(ComponentCommand):
         # Initialise rich table
         table: rich.table.Table = rich.table.Table()
         table.add_column(f"{self.component_type[:-1].capitalize()} Name")
-        components: List[str] = []
+        components: list[str] = []
 
-        def pattern_msg(keywords: List[str]) -> str:
+        def pattern_msg(keywords: list[str]) -> str:
             if len(keywords) == 0:
                 return ""
             if len(keywords) == 1:
@@ -122,7 +122,7 @@ class ComponentList(ComponentCommand):
             modules_json_file = modules_json.modules_json
 
             for repo_url, component_with_dir in sorted(repos_with_comps.items()):
-                repo_entry: Dict[str, Dict[str, Dict[str, ModulesJsonModuleEntry]]]
+                repo_entry: dict[str, dict[str, dict[str, ModulesJsonModuleEntry]]]
                 if modules_json_file is None:
                     log.warning(f"Modules JSON file '{modules_json.modules_json_path}' is missing. ")
                     continue
