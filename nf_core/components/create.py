@@ -420,7 +420,8 @@ class ComponentCreate(ComponentCommand):
             log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
 
         # Regex to valid GitHub username: https://github.com/shinnn/github-username-regex
-        github_username_regex = re.compile(r"^@[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$")
+        github_username_regex = re.compile(r"^@[A-Za-z\d](?:[A-Za-z\d]|[.-_](?=[A-Za-z\d])){0,38}$")
+
         while self.author is None or not github_username_regex.match(self.author):
             if self.author is not None and not github_username_regex.match(self.author):
                 log.warning("Does not look like a valid GitHub username (must start with an '@')!")
