@@ -2,7 +2,11 @@
     "-profile test": {
         "content": [
             1,
-            null,
+            {
+                "Workflow": {
+                    "my-prefix/testpipeline": "v1.0.0dev"
+                }
+            },
             [
                 "multiqc",
                 "multiqc/multiqc_data",

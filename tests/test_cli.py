@@ -168,7 +168,7 @@ class TestCli(unittest.TestCase):
             "force": None,
             "platform": None,
             "download-configuration": "yes",
-            "tag": "3.12=testing",
+            "tag": "3.13=testing",
             "container-system": "singularity",
             "container-library": "quay.io",
             "container-cache-utilisation": "copy",

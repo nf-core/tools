@@ -6,7 +6,7 @@ import filecmp
 import functools
 import tempfile
 from pathlib import Path
-from typing import Any, Callable, Tuple
+from typing import Any, Callable
 
 import responses
 import yaml
@@ -133,7 +133,7 @@ def mock_biotools_api_calls(rsps: responses.RequestsMock, module: str) -> None:
     rsps.get(biotools_api_url, json=biotools_mock, status=200)
 
 
-def create_tmp_pipeline(no_git: bool = False) -> Tuple[Path, Path, str, Path]:
+def create_tmp_pipeline(no_git: bool = False) -> tuple[Path, Path, str, Path]:
     """Create a new Pipeline for testing"""
 
     tmp_dir = Path(tempfile.TemporaryDirectory().name)
