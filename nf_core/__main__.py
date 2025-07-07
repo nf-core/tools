@@ -983,7 +983,11 @@ def command_modules_install(ctx, tool, directory, prompt, force, sha):
 # nf-core modules update
 @modules.command("update")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool", type=str, callback=normalize_case,
+    required=False, metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules
+)
 @click.option(
     "-d",
     "--dir",
@@ -1060,7 +1064,11 @@ def command_modules_update(
 # nf-core modules patch
 @modules.command("patch")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool", type=str, callback=normalize_case,
+    required=False, metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules
+)
 @click.option(
     "-d",
     "--dir",
@@ -1080,7 +1088,11 @@ def command_modules_patch(ctx, tool, directory, remove):
 # nf-core modules remove
 @modules.command("remove")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool", type=str, callback=normalize_case,
+    required=False, metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules
+)
 @click.option(
     "-d",
     "--dir",
@@ -1199,7 +1211,11 @@ def command_modules_create(
 # nf-core modules test
 @modules.command("test")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool", type=str, callback=normalize_case,
+    required=False, metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules
+)
 @click.option(
     "-v",
     "--verbose",
@@ -1254,7 +1270,11 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
 # nf-core modules lint
 @modules.command("lint")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool", type=str, callback=normalize_case,
+    required=False, metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules
+)
 @click.option(
     "-d",
     "--dir",
@@ -1308,7 +1328,11 @@ def command_modules_lint(
 # nf-core modules info
 @modules.command("info")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool", type=str, callback=normalize_case,
+    required=False, metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules
+)
 @click.option(
     "-d",
     "--dir",
@@ -1327,7 +1351,11 @@ def command_modules_info(ctx, tool, directory):
 # nf-core modules bump-versions
 @modules.command("bump-versions")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool", type=str, callback=normalize_case,
+    required=False, metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules
+)
 @click.option(
     "-d",
     "--dir",
