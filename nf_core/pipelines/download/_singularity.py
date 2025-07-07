@@ -1,0 +1,230 @@
+import logging
+import shutil
+import subprocess
+from collections.abc import Iterable
+from pathlib import Path
+
+from nf_core.pipelines.download.container_fetcher import ContainerError, ContainerFetcher
+from nf_core.pipelines.download.utils import (
+    DownloadProgress,
+    FileDownloader,
+    intermediate_file_no_creation,
+)
+
+log = logging.getLogger(__name__)
+
+
+class SingularityFetcher(ContainerFetcher):
+    """
+    Fetcher for Docker containers.
+    """
+
+    def __init__(
+        self,
+        container_library: Iterable[str],
+        registry_set: Iterable[str],
+        progress: DownloadProgress,
+    ):
+        """
+        Intialize the singularity image fetcher
+
+        """
+        super().__init__(
+            container_library=container_library,
+            registry_set=registry_set,
+            progress=progress,
+        )
+
+    def set_implementation(self):
+        if shutil.which("singularity"):
+            self.implementation = "singularity"
+        elif shutil.which("apptainer"):
+            self.implementation = "apptainer"
+        else:
+            raise OSError("Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH")
+
+    def clean_container_file_extension(self, container_fn):
+        """
+        This makes sure that the Singularity container filename has the right file extension
+        """
+        # Detect file extension
+        extension = ".img"
+        if ".sif:" in container_fn:
+            extension = ".sif"
+            container_fn = container_fn.replace(".sif:", "-")
+        elif container_fn.endswith(".sif"):
+            extension = ".sif"
+            container_fn = container_fn.strip(".sif")
+
+        # Strip : and / characters
+        container_fn = container_fn.replace("/", "-").replace(":", "-")
+        # Add file extension
+        container_fn = container_fn + extension
+        return container_fn
+
+    def fetch_remote_containers(self, containers, parallel_downloads=4):
+        # Split the list of containers depending on whether we want to pull them or download them
+        containers_pull = []
+        containers_download = []
+        for container, out_path in containers:
+            # If the container is a remote image, we pull it
+            if container.startswith("http"):
+                containers_download.append((container, out_path))
+            else:
+                containers_pull.append((container, out_path))
+
+        log.debug(containers)
+        if containers_pull:
+            # We only need to set the implementation if we are pulling images
+            # -- a user could download images without having singularity/apptainer installed
+            self.set_implementation()
+            self.progress.update_main_task(description="Pulling singularity images")
+            self.pull_images(containers_pull)
+
+        if containers_download:
+            self.progress.update_main_task(description="Downloading singularity images")
+            self.download_images(containers_download, parallel_downloads=4)
+
+    def construct_pull_command(self, output_path: Path, address: str):
+        singularity_command = [self.implementation, "pull", "--name", str(output_path), address]
+        return singularity_command
+
+    def download_images(
+        self,
+        containers_download: Iterable[tuple[str, str]],
+        parallel_downloads: int,
+    ) -> None:
+        downloader = FileDownloader(self.progress)
+
+        def update_file_progress(input_params: tuple[str, str], status: FileDownloader.Status) -> None:
+            # try-except introduced in 4a95a5b84e2becbb757ce91eee529aa5f8181ec7
+            # unclear why rich.progress may raise an exception here as it's supposed to be thread-safe
+            try:
+                self.progress.update_main_task(advance=1)
+            except Exception as e:
+                log.error(f"Error updating progress bar: {e}")
+
+            if status == FileDownloader.Status.DONE:
+                self.symlink_registries(input_params[1])
+
+        downloader.download_files_in_parallel(containers_download, parallel_downloads, callback=update_file_progress)
+
+    def pull_images(self, containers_pull: Iterable[tuple[str, str]]) -> None:
+        for container, output_path in containers_pull:
+            # it is possible to try multiple registries / mirrors if multiple were specified.
+            # Iteration happens over a copy of self.container_library[:], as I want to be able to remove failing registries for subsequent images.
+            for library in self.container_library[:]:
+                log.warning(f"Pulling '{container}' from '{library}' to '{output_path}'")
+                try:
+                    self.pull_image(container, output_path, library)
+                    # Pulling the image was successful, no ContainerError was raised, break the library loop
+                    break
+                except ContainerError.ImageExistsError:
+                    # Pulling not required
+
+                    exit()
+                    break
+                except ContainerError.RegistryNotFoundError as e:
+                    self.container_library.remove(library)
+                    # The only library was removed
+                    if not self.container_library:
+                        log.error(e.message)
+                        log.error(e.helpmessage)
+                        raise OSError from e
+                    else:
+                        # Other libraries can be used
+                        continue
+                except ContainerError.ImageNotFoundError as e:
+                    # Try other registries
+                    if e.error_log.absolute_URI:
+                        break  # there no point in trying other registries if absolute URI was specified.
+                    else:
+                        continue
+                except ContainerError.InvalidTagError:
+                    # Try other registries
+                    continue
+                except ContainerError.OtherError as e:
+                    # Try other registries
+                    log.error(e.message)
+                    log.error(e.helpmessage)
+                    if e.error_log.absolute_URI:
+                        break  # there no point in trying other registries if absolute URI was specified.
+                    else:
+                        continue
+            else:
+                # The else clause executes after the loop completes normally.
+                # This means the library loop completed without breaking, indicating failure for all libraries (registries)
+                log.error(
+                    f"Not able to pull image of {container}. Service might be down or internet connection is dead."
+                )
+            # Task should advance in any case. Failure to pull will not kill the download process.
+            self.progress.update_main_task(advance=1)
+
+    def pull_image(self, container: str, output_path: str, library: str) -> None:
+        """Pull a singularity image using ``singularity pull``
+
+        Attempt to use a local installation of singularity to pull the image.
+
+        Args:
+            container (str): A pipeline's container name. Usually it is of similar format
+                to ``nfcore/name:version``.
+            library (list of str): A list of libraries to try for pulling the image.
+
+        Raises:
+            Various exceptions possible from `subprocess` execution of Singularity.
+        """
+        # Sometimes, container still contain an explicit library specification, which
+        # resulted in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
+        # Thus, if an explicit registry is specified, the provided -l value is ignored.
+        # Additionally, check if the container to be pulled is native Singularity: oras:// protocol.
+        container_parts = container.split("/")
+        if len(container_parts) > 2:
+            address = container if container.startswith("oras://") else f"docker://{container}"
+            absolute_URI = True
+        else:
+            address = f"docker://{library}/{container.replace('docker://', '')}"
+            absolute_URI = False
+        log.warning(f"Pulling singularity image {container} from {address} to {output_path}")
+
+        with self.progress.sub_task(
+            container,
+            start=False,
+            total=False,
+            progress_type="singularity_pull",
+            current_log="",
+        ) as task:
+            with intermediate_file_no_creation(output_path) as output_path_tmp:
+                singularity_command = self.construct_pull_command(output_path_tmp, address)
+
+                log.debug(f"Building singularity image: {address}")
+                log.debug(f"Singularity command: {' '.join(singularity_command)}")
+
+                # Run the singularity pull command
+                with subprocess.Popen(
+                    singularity_command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    universal_newlines=True,
+                    bufsize=1,
+                ) as proc:
+                    lines = []
+                    if proc.stdout is not None:
+                        for line in proc.stdout:
+                            lines.append(line)
+                            self.progress.update(task, current_log=line.strip())
+
+                if lines:
+                    # something went wrong with the container retrieval
+                    log.debug(f"Singularity pull output: {lines}")
+                    if any("FATAL: " in line for line in lines):
+                        raise ContainerError(
+                            container=container,
+                            registry=library,
+                            address=address,
+                            absolute_URI=absolute_URI,
+                            out_path=output_path,
+                            container_command=singularity_command,
+                            error_msg=lines,
+                        )
+
+            self.symlink_registries(output_path)

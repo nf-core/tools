@@ -8,6 +8,7 @@ import re
 import tempfile
 import textwrap
 from collections.abc import Generator, Iterable
+from pathlib import Path
 from typing import Callable, Optional
 
 import requests
@@ -81,6 +82,31 @@ def intermediate_file(output_path: str) -> Generator[tempfile._TemporaryFileWrap
     except:
         if os.path.exists(tmp.name):
             os.unlink(tmp.name)
+        raise
+
+
+@contextlib.contextmanager
+def intermediate_file_no_creation(output_path: str) -> Generator[Path, None, None]:
+    """
+    Context manager to help ensure the output file is either complete or non-existent.
+
+    'singularity/apptainer pull' requires that the output file does not exist before it is run.
+    For pulling container we therefore create a temporary directory with and write to a file named
+    'tempfile' in it. If the pull command is successful, we rename the temporary file to the output path.
+    """
+    if os.path.isdir(output_path):
+        raise DownloadError(f"Output path '{output_path}' is a directory")
+    if os.path.islink(output_path):
+        raise DownloadError(f"Output path '{output_path}' is a symbolic link")
+
+    tmp = tempfile.TemporaryDirectory(dir=os.path.dirname(output_path), delete=False)
+    tmp_fn = Path(tmp.name) / "tempfile"
+    try:
+        yield tmp_fn
+        os.rename(tmp_fn, output_path)
+        tmp.cleanup()
+    except:
+        tmp.cleanup()
         raise
 
 
