@@ -55,7 +55,8 @@ workflow {{ short_name|upper }} {
             storeDir: "${params.outdir}/pipeline_info",
             name: {% if is_nfcore %}'nf_core_'  + {% endif %} '{{ short_name }}_software_' {% if multiqc %} + 'mqc_' {% endif %} + 'versions.yml',
             sort: true,
-            newLine: true
+            newLine: true,
+            cache: false
         ).set { ch_collated_versions }
 
 {% if multiqc %}

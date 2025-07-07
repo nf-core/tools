@@ -42,6 +42,7 @@
 - Update gitpod/workspace-base Docker digest to 77021d8 ([#3649](https://github.com/nf-core/tools/pull/3649))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.12.1 ([#3648](https://github.com/nf-core/tools/pull/3648))
 - Update error message for rocrate_readme_sync ([#3652](https://github.com/nf-core/tools/pull/3652))
+- Fix collectFile cache issue causing software version inconsistencies ([#3654](https://github.com/nf-core/tools/pull/3654))
 
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
