@@ -231,7 +231,10 @@ class DownloadWorkflow:
             os.remove(self.output_filename)
 
         # Summary log
-        log.info("Saving '{}'\n {}".format(self.pipeline, "\n ".join(summary_log)))
+        indent = 2
+        sep = "\n" + " " * indent
+        log_lines = sep.join(summary_log)
+        log.info(f"Saving '{self.pipeline}'{sep}{log_lines}")
 
         # Perform the actual download
         if self.platform:
@@ -275,6 +278,11 @@ class DownloadWorkflow:
         if self.compress_type is not None:
             log.info("Compressing output into archive")
             self.compress_download()
+
+        # If docker is the selected image format, then we should tell the
+        # user how to load the images into the offline daemon
+        if self.container_system == "docker":
+            self.write_docker_load_message()
 
     def download_workflow_platform(self, location=None):
         """Create a bare-cloned git repository of the workflow, so it can be launched with `tw launch` as file:/ pipeline"""
@@ -665,6 +673,27 @@ class DownloadWorkflow:
         with open(nfconfig_fn, "w") as nfconfig_fh:
             nfconfig_fh.write(nfconfig)
 
+    def write_docker_load_message(self):
+        # There is not direct Nextflow support for loading docker images like we do for singularity above
+        # Instead we give the user a `bash` command to load the downloaded docker images into the offline docker daemon
+        # Courtesy of @vmkalbskopf in https://github.com/nextflow-io/nextflow/discussions/4708
+        docker_load_command = "ls -1 *.tar | xargs --no-run-if-empty -L 1 docker load -i"
+        indent_spaces = 4
+        stderr.print(
+            "\n"
+            + (
+                1 * indent_spaces * " "
+                + f"Downloaded docker images written to [blue not bold]'{self.outdir}/docker-images'[/]. "
+            )
+            + (0 * indent_spaces * " " + "After copying the pipeline and images to the offline machine, run\n\n")
+            + (2 * indent_spaces * " " + f"[blue bold]{docker_load_command}[/]\n\n")
+            + (
+                1 * indent_spaces * " "
+                + "inside [blue not bold]'docker-images'[/] to load the images into the offline docker daemon."
+            )
+            + "\n"
+        )
+
     def find_container_images(self, workflow_directory: str) -> None:
         """Find container image names for workflow using the `nextflow inspect` command.
 
@@ -708,16 +737,14 @@ class DownloadWorkflow:
             return True
 
         except KeyError as e:
+            log.warning("Failed to parse output of `nextflow inspect` to extract containers")
             log.debug(e)
-            log.error(
-                "Could not parse the output of `nextflow inspect` to extract containers. Falling back to legacy function."
-            )
             return False
 
         except RuntimeError as e:
             # nextflow version < 25.02.1
-            log.debug(e)
-            log.warning("Running `nextflow inspect` failed. Falling back to legacy function.")
+            log.warning("Running `nextflow inspect` failed with the following error")
+            log.warning(e)
             return False
 
     def find_container_images_legacy(self, workflow_directory: str) -> None:
@@ -735,7 +762,7 @@ class DownloadWorkflow:
         """
 
         log.warning("Using legacy container extraction method. This will be deprecated in the future.")
-        log.debug("Fetching container names for workflow")
+        log.debug("Fetching container names for workflow ")
         # since this is run for multiple revisions now, account for previously detected containers.
         previous_findings = [] if not self.containers else self.containers
         config_findings = []
@@ -856,6 +883,7 @@ class DownloadWorkflow:
             log.info(
                 f"Processing workflow revision {current_revision}, found {len(self.containers)} container image{'s' if len(self.containers) > 1 else ''} in total."
             )
+            log.debug(f"Container names: {self.containers}")
 
             # Find out what the library directory is
             library_dir = os.environ.get("NXF_SINGULARITY_LIBRARYDIR")
@@ -865,6 +893,7 @@ class DownloadWorkflow:
 
             # Find out what the cache directory is
             cache_dir = os.environ.get("NXF_SINGULARITY_CACHEDIR")
+            log.debug(f"NXF_SINGULARITY_CACHEDIR: {cache_dir}")
             if self.container_cache_utilisation in ["amend", "copy"]:
                 if cache_dir:
                     if not os.path.isdir(cache_dir):
