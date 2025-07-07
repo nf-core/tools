@@ -9,13 +9,13 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import jinja2
 import questionary
 import rich
 import rich.prompt
-import yaml
+import ruamel.yaml
 from packaging.version import parse as parse_version
 
 import nf_core
@@ -25,6 +25,14 @@ from nf_core.components.components_utils import get_biotools_id, get_biotools_re
 from nf_core.pipelines.lint_utils import run_prettier_on_file
 
 log = logging.getLogger(__name__)
+
+# Set yaml options for meta.yml files
+ruamel.yaml.representer.RoundTripRepresenter.ignore_aliases = (
+    lambda x, y: True
+)  # Fix to not print aliases. https://stackoverflow.com/a/64717341
+yaml = ruamel.yaml.YAML()
+yaml.preserve_quotes = True
+yaml.indent(mapping=2, sequence=2, offset=0)
 
 
 class ComponentCreate(ComponentCommand):
@@ -174,6 +182,10 @@ class ComponentCreate(ComponentCommand):
         # Create component template with jinja2
         assert self._render_template()
         log.info(f"Created component template: '{self.component_name}'")
+
+        if self.component_type == "modules":
+            # Generate meta.yml inputs and outputs
+            self.generate_meta_yml_file()
 
         if self.migrate_pytest:
             self._copy_old_files(component_old_path)
@@ -501,10 +513,184 @@ class ComponentCreate(ComponentCommand):
         # Delete tags from pytest_modules.yml
         modules_yml = Path(self.directory, "tests", "config", "pytest_modules.yml")
         with open(modules_yml) as fh:
-            yml_file = yaml.safe_load(fh)
+            yml_file = yaml.load(fh)
         yml_key = str(self.component_dir) if self.component_type == "modules" else f"subworkflows/{self.component_dir}"
         if yml_key in yml_file:
             del yml_file[yml_key]
         with open(modules_yml, "w") as fh:
             yaml.dump(yml_file, fh)
         run_prettier_on_file(modules_yml)
+
+    def generate_meta_yml_file(self) -> None:
+        """
+        Generate the meta.yml file.
+        """
+        # TODO: The meta.yml could be handled with a Pydantic model. The reason it is not implemented is because we want to maintain comments in the meta.yml file.
+        with open(self.file_paths["meta.yml"]) as fh:
+            meta_yml: ruamel.yaml.comments.CommentedMap = yaml.load(fh)
+
+        versions: dict[str, list[dict[str, dict]]] = {
+            "versions": [
+                {
+                    "versions.yml": {
+                        "type": "file",
+                        "description": "File containing software versions",
+                        "pattern": "versions.yml",
+                        "ontologies": [
+                            ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_3750"})
+                        ],
+                    }
+                }
+            ]
+        }
+        versions["versions"][0]["versions.yml"]["ontologies"][0].yaml_add_eol_comment("YAML", "edam")
+
+        if self.not_empty_template:
+            meta_yml.yaml_set_comment_before_after_key(
+                "name", before="# TODO nf-core: Add a description of the module and list keywords"
+            )
+            meta_yml["tools"][0].yaml_set_start_comment(
+                "## TODO nf-core: Add a description and other details for the software below"
+            )
+            meta_yml["input"].yaml_set_start_comment(
+                "### TODO nf-core: Add a description of all of the variables used as input", indent=2
+            )
+            meta_yml["output"].yaml_set_start_comment(
+                "### TODO nf-core: Add a description of all of the variables used as output", indent=2
+            )
+
+            if hasattr(self, "inputs"):
+                inputs_array: list[Union[dict, list[dict]]] = []
+                for i, (input_name, ontologies) in enumerate(self.inputs.items()):
+                    channel_entry: dict[str, dict] = {
+                        input_name: {
+                            "type": "file",
+                            "description": f"{input_name} file",
+                            "pattern": f"*.{{{','.join(ontologies[2])}}}",
+                            "ontologies": [
+                                ruamel.yaml.comments.CommentedMap({"edam": f"{ont_id}"}) for ont_id in ontologies[0]
+                            ],
+                        }
+                    }
+                    for j, ont_desc in enumerate(ontologies[1]):
+                        channel_entry[input_name]["ontologies"][j].yaml_add_eol_comment(ont_desc, "edam")
+                    if self.has_meta:
+                        meta_suffix = str(i + 1) if i > 0 else ""
+                        meta_entry: dict[str, dict] = {
+                            f"meta{meta_suffix}": {
+                                "type": "map",
+                                "description": "Groovy Map containing sample information. e.g. `[ id:'sample1' ]`",
+                            }
+                        }
+                        inputs_array.append([meta_entry, channel_entry])
+                    else:
+                        inputs_array.append(channel_entry)
+                meta_yml["input"] = ruamel.yaml.comments.CommentedSeq(inputs_array)
+                meta_yml["input"].yaml_set_start_comment(
+                    "# TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct"
+                )
+            elif not self.has_meta:
+                meta_yml["input"] = [
+                    {
+                        "bam": {
+                            "type": "file",
+                            "description": "Sorted BAM/CRAM/SAM file",
+                            "pattern": "*.{bam,cram,sam}",
+                            "ontologies": [
+                                ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_2572"}),
+                                ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_2573"}),
+                                ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_3462"}),
+                            ],
+                        }
+                    }
+                ]
+                meta_yml["input"][0]["bam"]["ontologies"][0].yaml_add_eol_comment("BAM", "edam")
+                meta_yml["input"][0]["bam"]["ontologies"][1].yaml_add_eol_comment("CRAM", "edam")
+                meta_yml["input"][0]["bam"]["ontologies"][2].yaml_add_eol_comment("SAM", "edam")
+
+            if hasattr(self, "outputs"):
+                outputs_dict: dict[str, Union[list, dict]] = {}
+                for i, (output_name, ontologies) in enumerate(self.outputs.items()):
+                    channel_contents: list[Union[list[dict], dict]] = []
+                    if self.has_meta:
+                        channel_contents.append(
+                            [
+                                {
+                                    "meta": {
+                                        "type": "map",
+                                        "description": "Groovy Map containing sample information. e.g. `[ id:'sample1' ]`",
+                                    }
+                                }
+                            ]
+                        )
+                    pattern = f"*.{{{','.join(ontologies[2])}}}"
+                    file_entry: dict[str, dict] = {
+                        pattern: {
+                            "type": "file",
+                            "description": f"{output_name} file",
+                            "pattern": pattern,
+                            "ontologies": [
+                                ruamel.yaml.comments.CommentedMap({"edam": f"{ont_id}"}) for ont_id in ontologies[0]
+                            ],
+                        }
+                    }
+                    for j, ont_desc in enumerate(ontologies[1]):
+                        file_entry[pattern]["ontologies"][j].yaml_add_eol_comment(ont_desc, "edam")
+                    if self.has_meta:
+                        if isinstance(channel_contents[0], list):  # for mypy
+                            channel_contents[0].append(file_entry)
+                    else:
+                        channel_contents.append(file_entry)
+                    outputs_dict[output_name] = channel_contents
+                outputs_dict.update(versions)
+                meta_yml["output"] = ruamel.yaml.comments.CommentedMap(outputs_dict)
+                meta_yml["output"].yaml_set_start_comment(
+                    "# TODO nf-core: Update the information obtained from bio.tools and make sure that it is correct"
+                )
+            elif not self.has_meta:
+                meta_yml["output"] = {
+                    "bam": [
+                        {
+                            "*.bam": {
+                                "type": "file",
+                                "description": "Sorted BAM/CRAM/SAM file",
+                                "pattern": "*.{bam,cram,sam}",
+                                "ontologies": [
+                                    ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_2572"}),
+                                    ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_2573"}),
+                                    ruamel.yaml.comments.CommentedMap({"edam": "http://edamontology.org/format_3462"}),
+                                ],
+                            }
+                        }
+                    ]
+                }
+                meta_yml["output"]["bam"][0]["*.bam"]["ontologies"][0].yaml_add_eol_comment("BAM", "edam")
+                meta_yml["output"]["bam"][0]["*.bam"]["ontologies"][1].yaml_add_eol_comment("CRAM", "edam")
+                meta_yml["output"]["bam"][0]["*.bam"]["ontologies"][2].yaml_add_eol_comment("SAM", "edam")
+                meta_yml["output"].update(versions)
+
+        else:
+            input_entry: list[dict] = [
+                {"input": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}}
+            ]
+            output_entry: list[dict] = [
+                {"*": {"type": "file", "description": "", "pattern": "", "ontologies": [{"edam": ""}]}}
+            ]
+            if self.has_meta:
+                empty_meta_entry: list[dict] = [
+                    {
+                        "meta": {
+                            "type": "map",
+                            "description": "Groovy Map containing sample information. e.g. `[ id:'sample1' ]`",
+                        }
+                    }
+                ]
+                meta_yml["input"] = [empty_meta_entry + input_entry]
+                meta_yml["output"] = {"output": [empty_meta_entry + output_entry]}
+            else:
+                meta_yml["input"] = input_entry
+                meta_yml["output"] = {"output": output_entry}
+            meta_yml["output"].update(versions)
+
+        with open(self.file_paths["meta.yml"], "w") as fh:
+            yaml.dump(meta_yml, fh)

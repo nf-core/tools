@@ -21,6 +21,7 @@
 ### Modules
 
 - Remove args stub from module template to satisfy language server ([#3403](https://github.com/nf-core/tools/pull/3403))
+- Fix modules meta.yml file structure ([#3532](https://github.com/nf-core/tools/pull/3532))
 
 ### Subworkflows
 
