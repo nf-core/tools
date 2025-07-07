@@ -6,7 +6,7 @@ import subprocess
 from collections.abc import Iterable
 from pathlib import Path
 
-from nf_core.pipelines.download.container_fetcher import ContainerError, ContainerFetcher
+from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.utils import (
     FileDownloader,
     intermediate_file_no_creation,
@@ -148,14 +148,14 @@ class SingularityFetcher(ContainerFetcher):
                 log.warning(f"Pulling '{container}' from '{library}' to '{output_path}'")
                 try:
                     self.pull_image(container, output_path, library)
-                    # Pulling the image was successful, no ContainerError was raised, break the library loop
+                    # Pulling the image was successful, no SingularityError was raised, break the library loop
                     break
-                except ContainerError.ImageExistsError:
+                except SingularityError.ImageExistsError:
                     # Pulling not required
 
                     exit()
                     break
-                except ContainerError.RegistryNotFoundError as e:
+                except SingularityError.RegistryNotFoundError as e:
                     self.container_library.remove(library)
                     # The only library was removed
                     if not self.container_library:
@@ -165,16 +165,16 @@ class SingularityFetcher(ContainerFetcher):
                     else:
                         # Other libraries can be used
                         continue
-                except ContainerError.ImageNotFoundError as e:
+                except SingularityError.ImageNotFoundError as e:
                     # Try other registries
                     if e.error_log.absolute_URI:
                         break  # there no point in trying other registries if absolute URI was specified.
                     else:
                         continue
-                except ContainerError.InvalidTagError:
+                except SingularityError.InvalidTagError:
                     # Try other registries
                     continue
-                except ContainerError.OtherError as e:
+                except SingularityError.OtherError as e:
                     # Try other registries
                     log.error(e.message)
                     log.error(e.helpmessage)
@@ -248,14 +248,152 @@ class SingularityFetcher(ContainerFetcher):
                     # something went wrong with the container retrieval
                     log.debug(f"Singularity pull output: {lines}")
                     if any("FATAL: " in line for line in lines):
-                        raise ContainerError(
+                        raise SingularityError(
                             container=container,
                             registry=library,
                             address=address,
                             absolute_URI=absolute_URI,
                             out_path=output_path,
-                            container_command=singularity_command,
+                            command=singularity_command,
                             error_msg=lines,
                         )
 
             self.symlink_registries(output_path)
+
+
+# Distinct errors for the Singularity container download, required for acting on the exceptions
+class SingularityError(Exception):
+    """A class of errors related to pulling containers with Singularity/Apptainer"""
+
+    def __init__(
+        self,
+        container,
+        registry,
+        address,
+        absolute_URI,
+        out_path,
+        command,
+        error_msg,
+    ):
+        self.container = container
+        self.registry = registry
+        self.address = address
+        self.absolute_URI = absolute_URI
+        self.out_path = out_path
+        self.command = command
+        self.error_msg = error_msg
+        self.patterns = []
+
+        error_patterns = {
+            # The registry does not resolve to a valid IP address
+            r"dial\stcp.*no\ssuch\shost": self.RegistryNotFoundError,
+            #
+            # Unfortunately, every registry seems to return an individual error here:
+            # Docker.io: denied: requested access to the resource is denied
+            #                    unauthorized: authentication required
+            # Quay.io: StatusCode: 404,  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n']
+            # ghcr.io: Requesting bearer token: invalid status code from registry 400 (Bad Request)
+            #
+            r"requested\saccess\sto\sthe\sresource\sis\sdenied": self.ImageNotFoundError,  # Docker.io
+            r"StatusCode:\s404": self.ImageNotFoundError,  # Quay.io
+            r"invalid\sstatus\scode\sfrom\sregistry\s400": self.ImageNotFoundError,  # ghcr.io
+            r"400|Bad\s?Request": self.ImageNotFoundError,  # ghcr.io
+            # The image and registry are valid, but the (version) tag is not
+            r"manifest\sunknown": self.InvalidTagError,
+            # The container image is no native Singularity Image Format.
+            r"ORAS\sSIF\simage\sshould\shave\sa\ssingle\slayer": self.NoSingularitySingularityError,
+            # The image file already exists in the output directory
+            r"Image\sfile\salready\sexists": self.ImageExistsError,
+        }
+        for line in error_msg:
+            for pattern, error_class in error_patterns.items():
+                if re.search(pattern, line):
+                    self.error_type = error_class(self)
+                    break
+        else:
+            self.error_type = self.OtherError(self)
+
+        log.error(self.error_type.message)
+        log.info(self.error_type.helpmessage)
+        log.debug(f"Failed command:\n{' '.join(command)}")
+        log.debug(f"Singularity error messages:\n{''.join(error_msg)}")
+
+        raise self.error_type
+
+    class RegistryNotFoundError(ConnectionRefusedError):
+        """The specified registry does not resolve to a valid IP address"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = (
+                f'[bold red]The specified container library "{self.error_log.registry}" is invalid or unreachable.[/]\n'
+            )
+            self.helpmessage = (
+                f'Please check, if you made a typo when providing "-l / --library {self.error_log.registry}"\n'
+            )
+            super().__init__(self.message, self.helpmessage, self.error_log)
+
+    class ImageNotFoundError(FileNotFoundError):
+        """The image can not be found in the registry"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            if not self.error_log.absolute_URI:
+                self.message = (
+                    f'[bold red]"Pulling "{self.error_log.container}" from "{self.error_log.address}" failed.[/]\n'
+                )
+                self.helpmessage = f'Saving image of "{self.error_log.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.error_log.command)}" manually.f\n'
+            else:
+                self.message = f'[bold red]"The pipeline requested the download of non-existing container image "{self.error_log.address}"[/]\n'
+                self.helpmessage = (
+                    f'Please try to rerun \n"{" ".join(self.error_log.command)}" manually with a different registry.f\n'
+                )
+
+            super().__init__(self.message)
+
+    class InvalidTagError(AttributeError):
+        """Image and registry are valid, but the (version) tag is not"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = f'[bold red]"{self.error_log.address.split(":")[-1]}" is not a valid tag of "{self.error_log.container}"[/]\n'
+            self.helpmessage = f'Please chose a different library than {self.error_log.registry}\nor try to locate the "{self.error_log.address.split(":")[-1]}" version of "{self.error_log.container}" manually.\nPlease troubleshoot the command \n"{" ".join(self.error_log.command)}" manually.\n'
+            super().__init__(self.message)
+
+    class ImageExistsError(FileExistsError):
+        """Image already exists in cache/output directory."""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = (
+                f'[bold red]"{self.error_log.container}" already exists at destination and cannot be pulled[/]\n'
+            )
+            self.helpmessage = f'Saving image of "{self.error_log.container}" failed, because "{self.error_log.out_path}" exists.\nPlease troubleshoot the command \n"{" ".join(self.error_log.command)}" manually.\n'
+            super().__init__(self.message)
+
+    class NoContainerSingularityError(RuntimeError):
+        """The container image is no native Singularity Image Format."""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = (
+                f'[bold red]"{self.error_log.container}" is no valid Singularity Image Format container.[/]\n'
+            )
+            self.helpmessage = f"Pulling \"{self.error_log.container}\" failed, because it appears invalid. To convert from Docker's OCI format, prefix the URI with 'docker://' instead of 'oras://'.\n"
+            super().__init__(self.message)
+
+    class OtherError(RuntimeError):
+        """Undefined error with the container"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            if not self.error_log.absolute_URI:
+                self.message = f'[bold red]"{self.error_log.container}" failed for unclear reasons.[/]\n'
+                self.helpmessage = f'Pulling of "{self.error_log.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.error_log.command)}" manually.\n'
+            else:
+                self.message = f'[bold red]"The pipeline requested the download of non-existing container image "{self.error_log.address}"[/]\n'
+                self.helpmessage = (
+                    f'Please try to rerun \n"{" ".join(self.error_log.command)}" manually with a different registry.f\n'
+                )
+
+            super().__init__(self.message, self.helpmessage, self.error_log)

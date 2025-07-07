@@ -4,7 +4,7 @@ import shutil
 import subprocess
 from collections.abc import Iterable
 
-from nf_core.pipelines.download.container_fetcher import ContainerError, ContainerFetcher
+from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.utils import (
     DownloadProgress,
 )
@@ -134,18 +134,18 @@ class DockerFetcher(ContainerFetcher):
             for library in self.container_library[:]:
                 try:
                     self.pull_image(container, output_path, library)
-                    # Pulling the image was successful, no ContainerError was raised, break the library loop
+                    # Pulling the image was successful, no DockerError was raised, break the library loop
                     break
-                except ContainerError.ImageNotFoundError as e:
+                except DockerError.ImageNotFoundError as e:
                     # Try other registries
                     if e.error_log.absolute_URI:
                         break  # there no point in trying other registries if absolute URI was specified.
                     else:
                         continue
-                except ContainerError.InvalidTagError:
+                except DockerError.InvalidTagError:
                     # Try other registries
                     continue
-                except ContainerError.OtherError as e:
+                except DockerError.OtherError as e:
                     # Try other registries
                     log.error(e.message)
                     log.error(e.helpmessage)
@@ -223,14 +223,101 @@ class DockerFetcher(ContainerFetcher):
             }
             if any(pel in line for pel in possible_error_lines for line in lines):
                 self.progress.remove_task(task)
-                raise ContainerError(
+                raise DockerError(
                     container=container,
                     address=address,
                     out_path=output_path,
-                    container_command=command,
+                    command=command,
                     error_msg=lines,
                     absolute_URI=address.startswith("docker://"),
-                    registry=None,
                 )
 
         self.progress.remove_task(task)
+
+
+# Distinct errors for the docker container fetching, required for acting on the exceptions
+class DockerError(Exception):
+    """A class of errors related to pulling containers with Docker"""
+
+    def __init__(
+        self,
+        container,
+        address,
+        absolute_URI,
+        out_path,
+        command,
+        error_msg,
+    ):
+        self.container = container
+        self.address = address
+        self.absolute_URI = absolute_URI
+        self.out_path = out_path
+        self.command = command
+        self.error_msg = error_msg
+
+        error_patterns = {
+            "reference does not exist": self.ImageNotPulledError,
+            "repository does not exist": self.ImageNotFoundError,
+            "manifest unknown": self.InvalidTagError,
+        }
+        for line in error_msg:
+            for pattern, error_class in error_patterns.items():
+                if pattern in line:
+                    self.error_type = error_class(self)
+                    break
+        else:
+            self.error_type = self.OtherError(self)
+
+        log.error(self.error_type.message)
+        log.info(self.error_type.helpmessage)
+        log.debug(f"Failed command:\n{' '.join(self.command)}")
+        log.debug(f"Docker error messages:\n{''.join(error_msg)}")
+
+        raise self.error_type
+
+    class ImageNotPulledError(AttributeError):
+        """Docker is trying to save an image that was not pulled"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = f'[bold red] Cannot save "{self.error_log.container}" as it was not pulled [/]\n'
+            self.helpmessage = "Please pull the image first and confirm that it can be pulled.\n"
+            super().__init__(self.message)
+
+    class ImageNotFoundError(FileNotFoundError):
+        """The image can not be found in the registry"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            if not self.error_log.absolute_URI:
+                self.message = (
+                    f'[bold red]"Pulling "{self.error_log.container}" from "{self.error_log.address}" failed.[/]\n'
+                )
+                self.helpmessage = f'Saving image of "{self.error_log.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.error_log.command)}" manually.f\n'
+            else:
+                self.message = f'[bold red]"The pipeline requested the download of non-existing container image "{self.error_log.address}"[/]\n'
+                self.helpmessage = (
+                    f'Please try to rerun \n"{" ".join(self.error_log.command)}" manually with a different registry.f\n'
+                )
+
+            super().__init__(self.message)
+
+    class InvalidTagError(AttributeError):
+        """Image and registry are valid, but the (version) tag is not"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = f'[bold red]"{self.error_log.address.split(":")[-1]}" is not a valid tag of "{self.error_log.container}"[/]\n'
+            self.helpmessage = f'Please chose a different library than {self.error_log.address}\nor try to locate the "{self.error_log.address.split(":")[-1]}" version of "{self.error_log.container}" manually.\nPlease troubleshoot the command \n"{" ".join(self.error_log.command)}" manually.\n'
+            super().__init__(self.message)
+
+    class OtherError(RuntimeError):
+        """Undefined error with the container"""
+
+        def __init__(self, error_log):
+            self.error_log = error_log
+            self.message = f'[bold red]"The pipeline requested the download of non-existing container image "{self.error_log.address}"[/]\n'
+            self.helpmessage = (
+                f'Please try to rerun \n"{" ".join(self.error_log.command)}" manually with a different registry.\n'
+            )
+            super().__init__(self.message, self.helpmessage, self.error_log)

@@ -243,8 +243,8 @@ class ContainerFetcher:
             shutil.copyfile(src_path, dest_path_tmp.name)
 
 
-# Distinct errors for the container download, required for acting on the exceptions
-class ContainerError(Exception):
+# Distinct errors for the Singularity container download, required for acting on the exceptions
+class SingularityError(Exception):
     """A class of errors related to pulling containers with Singularity/Apptainer"""
 
     def __init__(
@@ -264,35 +264,34 @@ class ContainerError(Exception):
         self.out_path = out_path
         self.container_command = container_command
         self.error_msg = error_msg
+        self.patterns = []
 
+        error_patterns = {
+            # The registry does not resolve to a valid IP address
+            r"dial\stcp.*no\ssuch\shost": self.RegistryNotFoundError,
+            #
+            # Unfortunately, every registry seems to return an individual error here:
+            # Docker.io: denied: requested access to the resource is denied
+            #                    unauthorized: authentication required
+            # Quay.io: StatusCode: 404,  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n']
+            # ghcr.io: Requesting bearer token: invalid status code from registry 400 (Bad Request)
+            #
+            r"requested\saccess\sto\sthe\sresource\sis\sdenied": self.ImageNotFoundError,  # Docker.io
+            r"StatusCode:\s404": self.ImageNotFoundError,  # Quay.io
+            r"invalid\sstatus\scode\sfrom\sregistry\s400": self.ImageNotFoundError,  # ghcr.io
+            r"400|Bad\s?Request": self.ImageNotFoundError,  # ghcr.io
+            # The image and registry are valid, but the (version) tag is not
+            r"manifest\sunknown": self.InvalidTagError,
+            # The container image is no native Singularity Image Format.
+            r"ORAS\sSIF\simage\sshould\shave\sa\ssingle\slayer": self.NoSingularityContainerError,
+            # The image file already exists in the output directory
+            r"Image\sfile\salready\sexists": self.ImageExistsError,
+        }
         for line in error_msg:
-            if re.search(r"dial\stcp.*no\ssuch\shost", line):
-                self.error_type = self.RegistryNotFoundError(self)
-                break
-            elif (
-                re.search(r"requested\saccess\sto\sthe\sresource\sis\sdenied", line)
-                or re.search(r"StatusCode:\s404", line)
-                or re.search(r"400|Bad\s?Request", line)
-                or re.search(r"invalid\sstatus\scode\sfrom\sregistry\s400", line)
-            ):
-                # Unfortunately, every registry seems to return an individual error here:
-                # Docker.io: denied: requested access to the resource is denied
-                #                    unauthorized: authentication required
-                # Quay.io: StatusCode: 404,  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n']
-                # ghcr.io: Requesting bearer token: invalid status code from registry 400 (Bad Request)
-                self.error_type = self.ImageNotFoundError(self)
-                break
-            elif re.search(r"manifest\sunknown", line):
-                self.error_type = self.InvalidTagError(self)
-                break
-            elif re.search(r"ORAS\sSIF\simage\sshould\shave\sa\ssingle\slayer", line):
-                self.error_type = self.NoSingularityContainerError(self)
-                break
-            elif re.search(r"Image\sfile\salready\sexists", line):
-                self.error_type = self.ImageExistsError(self)
-                break
-            else:
-                continue
+            for pattern, error_class in error_patterns.items():
+                if re.search(pattern, line):
+                    self.error_type = error_class(self)
+                    break
         else:
             self.error_type = self.OtherError(self)
 
