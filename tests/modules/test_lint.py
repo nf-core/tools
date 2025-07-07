@@ -233,7 +233,7 @@ class TestModulesLint(TestModules):
         self.mods_install_gitlab.install("multiqc")
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir, remote_url=GITLAB_URL)
         module_lint.lint(print_results=False, all_modules=True)
-        assert len(module_lint.failed) == 2
+        assert len(module_lint.failed) == 2, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
 
@@ -242,7 +242,7 @@ class TestModulesLint(TestModules):
         self.mods_install_gitlab.install("multiqc")
         module_lint = nf_core.modules.lint.ModuleLint(directory=self.pipeline_dir, remote_url=GITLAB_URL)
         module_lint.lint(print_results=False, all_modules=True)
-        assert len(module_lint.failed) == 1
+        assert len(module_lint.failed) == 1, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
 
