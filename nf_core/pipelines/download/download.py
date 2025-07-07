@@ -22,8 +22,8 @@ import nf_core.modules.modules_utils
 import nf_core.pipelines.download.utils
 import nf_core.pipelines.list
 import nf_core.utils
-from nf_core.pipelines.download.docker import DockerFetcher
-from nf_core.pipelines.download.singularity import SingularityFetcher
+from nf_core.pipelines.download._docker import DockerFetcher
+from nf_core.pipelines.download._singularity import SingularityFetcher
 from nf_core.pipelines.download.utils import (
     NF_INSPECT_MIN_NF_VERSION,
     DownloadError,
@@ -888,7 +888,9 @@ class DownloadWorkflow:
                 # "Collecting container images",
 
                 if self.container_system == "singularity":
-                    singularity_fetcher = SingularityFetcher(self.container_library, self.registry_set, progress)
+                    singularity_fetcher = SingularityFetcher(
+                        self.container_library, self.registry_set, progress, self.parallel_downloads
+                    )
                     singularity_fetcher.fetch_containers(
                         self.containers,
                         out_path_dir,
@@ -898,7 +900,9 @@ class DownloadWorkflow:
                         self.container_cache_utilisation == "amend",
                     )
                 elif self.container_system == "docker":
-                    docker_fetcher = DockerFetcher(self.container_library, self.registry_set, progress)
+                    docker_fetcher = DockerFetcher(
+                        self.container_library, self.registry_set, progress, self.parallel_downloads
+                    )
                     docker_fetcher.fetch_containers(
                         self.containers,
                         out_path_dir,

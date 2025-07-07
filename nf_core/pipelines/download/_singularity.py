@@ -1,4 +1,6 @@
 import logging
+import os
+import re
 import shutil
 import subprocess
 from collections.abc import Iterable
@@ -24,6 +26,7 @@ class SingularityFetcher(ContainerFetcher):
         container_library: Iterable[str],
         registry_set: Iterable[str],
         progress: DownloadProgress,
+        max_workers: int = 4,
     ):
         """
         Intialize the singularity image fetcher
@@ -33,6 +36,7 @@ class SingularityFetcher(ContainerFetcher):
             container_library=container_library,
             registry_set=registry_set,
             progress=progress,
+            max_workers=max_workers,
         )
 
     def set_implementation(self):
@@ -62,7 +66,7 @@ class SingularityFetcher(ContainerFetcher):
         container_fn = container_fn + extension
         return container_fn
 
-    def fetch_remote_containers(self, containers, parallel_downloads=4):
+    def fetch_remote_containers(self, containers, max_workers=4):
         # Split the list of containers depending on whether we want to pull them or download them
         containers_pull = []
         containers_download = []
@@ -83,11 +87,57 @@ class SingularityFetcher(ContainerFetcher):
 
         if containers_download:
             self.progress.update_main_task(description="Downloading singularity images")
-            self.download_images(containers_download, parallel_downloads=4)
+            self.download_images(containers_download, parallel_downloads=max_workers)
+
+    def symlink_registries(self, image_path: str) -> None:
+        """Create a symlink for each registry in the registry set that points to the image.
+
+        The base image, e.g. ./nf-core-gatk-4.4.0.0.img will thus be symlinked as for example ./quay.io-nf-core-gatk-4.4.0.0.img
+        by prepending each registry in `registries` to the image name.
+
+        Unfortunately, the output image name may contain a registry definition (Singularity image pulled from depot.galaxyproject.org
+        or older pipeline version, where the docker registry was part of the image name in the modules). Hence, it must be stripped
+        before to ensure that it is really the base name.
+        """
+
+        # Create a regex pattern from the set, in case trimming is needed.
+        trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in self.registry_set)
+
+        for registry in self.registry_set:
+            # Nextflow will convert it like this as well, so we need it mimic its behavior
+            registry = registry.replace("/", "-")
+
+            if not bool(re.search(trim_pattern, os.path.basename(image_path))):
+                symlink_name = os.path.join("./", f"{registry}-{os.path.basename(image_path)}")
+            else:
+                trimmed_name = re.sub(f"{trim_pattern}", "", os.path.basename(image_path))
+                symlink_name = os.path.join("./", f"{registry}-{trimmed_name}")
+
+            symlink_full = os.path.join(os.path.dirname(image_path), symlink_name)
+            target_name = os.path.join("./", os.path.basename(image_path))
+
+            if not os.path.exists(symlink_full) and target_name != symlink_name:
+                os.makedirs(os.path.dirname(symlink_full), exist_ok=True)
+                image_dir = os.open(os.path.dirname(image_path), os.O_RDONLY)
+                try:
+                    os.symlink(
+                        target_name,
+                        symlink_name,
+                        dir_fd=image_dir,
+                    )
+                    log.debug(f"Symlinked {target_name} as {symlink_name}.")
+                finally:
+                    os.close(image_dir)
 
     def construct_pull_command(self, output_path: Path, address: str):
         singularity_command = [self.implementation, "pull", "--name", str(output_path), address]
         return singularity_command
+
+    def copy_image(self, container, src_path, dest_path):
+        super().copy_image(container, src_path, dest_path)
+        # For Singularity we need to create symlinks to ensure that the
+        # images are found even with different registries being used.
+        self.symlink_registries(dest_path)
 
     def download_images(
         self,

@@ -32,6 +32,7 @@ class ContainerFetcher:
         container_library: Iterable[str],
         registry_set: Iterable[str],
         progress: DownloadProgress,
+        max_workers: int = 4,
     ) -> None:
         self.container_library = list(container_library)
         self.registry_set = registry_set
@@ -40,7 +41,7 @@ class ContainerFetcher:
         self.implementation = None
         self.set_implementation()
         self.name = None
-        self.parallel_downloads = None
+        self.max_workers = max_workers
 
     @abstractmethod
     def set_implementation(self) -> None:
@@ -119,46 +120,6 @@ class ContainerFetcher:
 
         return out_name
 
-    def symlink_registries(self, image_path: str) -> None:
-        """Create a symlink for each registry in the registry set that points to the image.
-
-        The base image, e.g. ./nf-core-gatk-4.4.0.0.img will thus be symlinked as for example ./quay.io-nf-core-gatk-4.4.0.0.img
-        by prepending each registry in `registries` to the image name.
-
-        Unfortunately, the output image name may contain a registry definition (Singularity image pulled from depot.galaxyproject.org
-        or older pipeline version, where the docker registry was part of the image name in the modules). Hence, it must be stripped
-        before to ensure that it is really the base name.
-        """
-
-        # Create a regex pattern from the set, in case trimming is needed.
-        trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in self.registry_set)
-
-        for registry in self.registry_set:
-            # Nextflow will convert it like this as well, so we need it mimic its behavior
-            registry = registry.replace("/", "-")
-
-            if not bool(re.search(trim_pattern, os.path.basename(image_path))):
-                symlink_name = os.path.join("./", f"{registry}-{os.path.basename(image_path)}")
-            else:
-                trimmed_name = re.sub(f"{trim_pattern}", "", os.path.basename(image_path))
-                symlink_name = os.path.join("./", f"{registry}-{trimmed_name}")
-
-            symlink_full = os.path.join(os.path.dirname(image_path), symlink_name)
-            target_name = os.path.join("./", os.path.basename(image_path))
-
-            if not os.path.exists(symlink_full) and target_name != symlink_name:
-                os.makedirs(os.path.dirname(symlink_full), exist_ok=True)
-                image_dir = os.open(os.path.dirname(image_path), os.O_RDONLY)
-                try:
-                    os.symlink(
-                        target_name,
-                        symlink_name,
-                        dir_fd=image_dir,
-                    )
-                    log.debug(f"Symlinked {target_name} as {symlink_name}.")
-                finally:
-                    os.close(image_dir)
-
     def fetch_containers(
         self,
         containers: Collection[str],
@@ -233,7 +194,7 @@ class ContainerFetcher:
         # Fetch containers from a remote location
         if containers_remote_fetch:
             self.progress.update_main_task(description="Fetching {self.name} images")
-            self.fetch_remote_containers(containers_remote_fetch, parallel_downloads=self.parallel_downloads)
+            self.fetch_remote_containers(containers_remote_fetch, max_workers=self.max_workers)
 
         # Copy containers
         self.progress.update_main_task(description="Copying container images from/to cache")
@@ -242,7 +203,7 @@ class ContainerFetcher:
             self.progress.update_main_task(advance=1)
 
     @abstractmethod
-    def fetch_remote_containers(self, containers: list[tuple[str, str]], parallel_downloads=4):
+    def fetch_remote_containers(self, containers: list[tuple[str, str]], max_workers=4):
         """
         Fetch remote containers
 
@@ -276,9 +237,6 @@ class ContainerFetcher:
 
         with intermediate_file(dest_path) as dest_path_tmp:
             shutil.copyfile(src_path, dest_path_tmp.name)
-
-        # Create symlinks to ensure that the images are found even with different registries being used.
-        self.symlink_registries(dest_path)
 
 
 # Distinct errors for the container download, required for acting on the exceptions
