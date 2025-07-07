@@ -325,13 +325,21 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     result = run_cmd("nextflow", f"config -flat {wf_path}")
     if result is not None:
         nfconfig_raw, _ = result
-        for line in nfconfig_raw.splitlines():
-            ul = line.decode("utf-8")
-            try:
-                k, v = ul.split(" = ", 1)
-                config[k] = v.strip("'\"")
-            except ValueError:
-                log.debug(f"Couldn't find key=value config pair:\n  {ul}")
+        nfconfig = nfconfig_raw.decode("utf-8")
+        multiline_key_value_pattern = re.compile(r"(^|\n)([^\n=]+?)\s*=\s*((?:(?!\n[^\n=]+?\s*=).)*)", re.DOTALL)
+
+        for config_match in multiline_key_value_pattern.finditer(nfconfig):
+            k = config_match.group(2).strip()
+            v = config_match.group(3).strip().strip("'\"")
+            if k and v == "":
+                config[k] = "null"
+                log.debug(f"Config key: {k}, value: empty string")
+            elif k and v:
+                config[k] = v
+                log.debug(f"Config key: {k}, value: {v}")
+            else:
+                log.debug(f"Couldn't find key=value config pair:\n  {config_match.group(0)}")
+            del config_match
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
@@ -341,8 +349,9 @@ def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
             for line in fh:
                 line_str = line.decode("utf-8")
                 match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=(?!=)", line_str)
-                if match:
+                if match and match.group(1):
                     config[match.group(1)] = "null"
+
     except FileNotFoundError as e:
         log.debug(f"Could not open {main_nf} to look for parameter declarations - {e}")
 

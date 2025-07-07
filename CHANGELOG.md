@@ -43,6 +43,7 @@
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.12.1 ([#3648](https://github.com/nf-core/tools/pull/3648))
 - Update error message for rocrate_readme_sync ([#3652](https://github.com/nf-core/tools/pull/3652))
 - Update `nf-core modules info` command after `meta.yml` restructuring ([#3659](https://github.com/nf-core/tools/pull/3659))
+- Enable parsing of multi-line config values ([#3629](https://github.com/nf-core/tools/pull/3629))
 
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
