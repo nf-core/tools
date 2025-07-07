@@ -8,7 +8,6 @@ from pathlib import Path
 
 from nf_core.pipelines.download.container_fetcher import ContainerError, ContainerFetcher
 from nf_core.pipelines.download.utils import (
-    DownloadProgress,
     FileDownloader,
     intermediate_file_no_creation,
 )
@@ -21,25 +20,7 @@ class SingularityFetcher(ContainerFetcher):
     Fetcher for Docker containers.
     """
 
-    def __init__(
-        self,
-        container_library: Iterable[str],
-        registry_set: Iterable[str],
-        progress: DownloadProgress,
-        max_workers: int = 4,
-    ):
-        """
-        Intialize the singularity image fetcher
-
-        """
-        super().__init__(
-            container_library=container_library,
-            registry_set=registry_set,
-            progress=progress,
-            max_workers=max_workers,
-        )
-
-    def set_implementation(self):
+    def check_and_set_implementation(self):
         if shutil.which("singularity"):
             self.implementation = "singularity"
         elif shutil.which("apptainer"):
@@ -81,7 +62,7 @@ class SingularityFetcher(ContainerFetcher):
         if containers_pull:
             # We only need to set the implementation if we are pulling images
             # -- a user could download images without having singularity/apptainer installed
-            self.set_implementation()
+            self.check_and_set_implementation()
             self.progress.update_main_task(description="Pulling singularity images")
             self.pull_images(containers_pull)
 

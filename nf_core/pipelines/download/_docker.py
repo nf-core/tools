@@ -32,12 +32,13 @@ class DockerFetcher(ContainerFetcher):
             container_library=container_library,
             registry_set=registry_set,
             progress=progress,
+            cache_dir=None,  # Docker does not use a cache directory
+            library_dir=None,  # Docker does not use a library directory
+            amend_cachedir=False,  # Docker does not use a cache directory
             max_workers=max_workers,
         )
 
-        self.set_implementation()
-
-    def set_implementation(self):
+    def check_and_set_implementation(self):
         if not shutil.which("docker"):
             raise OSError("Docker is needed to pull images, but it is not installed or not in $PATH")
         self.implementation = "docker"

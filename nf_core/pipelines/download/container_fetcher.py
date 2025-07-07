@@ -32,6 +32,9 @@ class ContainerFetcher:
         container_library: Iterable[str],
         registry_set: Iterable[str],
         progress: DownloadProgress,
+        library_dir: Optional[str],
+        cache_dir: Optional[str],
+        amend_cachedir: bool,
         max_workers: int = 4,
     ) -> None:
         self.container_library = list(container_library)
@@ -39,12 +42,16 @@ class ContainerFetcher:
         self.progress = progress
         self.kill_with_fire = False
         self.implementation = None
-        self.set_implementation()
         self.name = None
+        self.library_dir = library_dir
+        self.cache_dir = cache_dir
+        self.amend_cachedir = amend_cachedir
         self.max_workers = max_workers
 
+        self.check_and_set_implementation()
+
     @abstractmethod
-    def set_implementation(self) -> None:
+    def check_and_set_implementation(self) -> None:
         """
         Check if the container system is installed and available.
 
@@ -125,9 +132,6 @@ class ContainerFetcher:
         containers: Collection[str],
         output_dir: str,
         exclude_list: Container[str],
-        library_dir: Optional[str],
-        cache_dir: Optional[str],
-        amend_cachedir: bool,
     ):
         """
         This is the main entrypoint of the container fetcher. It goes through
@@ -158,14 +162,14 @@ class ContainerFetcher:
                 self.progress.update_main_task(advance=1, description=f"{container_filename} exists at destination")
                 continue
 
-            library_path = os.path.join(library_dir, container_filename) if library_dir else None
-            cache_path = os.path.join(cache_dir, container_filename) if cache_dir else None
+            library_path = os.path.join(self.library_dir, container_filename) if self.library_dir else None
+            cache_path = os.path.join(self.cache_dir, container_filename) if self.cache_dir else None
 
             # get the container from the library
             if library_path and os.path.exists(library_path):
                 containers_copy.append((container, library_path, output_path))
                 # update the cache if needed
-                if cache_path and amend_cachedir and not os.path.exists(cache_path):
+                if cache_path and not self.amend_cachedir and not os.path.exists(cache_path):
                     containers_copy.append((container, library_path, cache_path))
                     total_tasks += 1
                     self.progress.update_main_task(total=total_tasks)
@@ -179,14 +183,14 @@ class ContainerFetcher:
                 # We treat downloading and pulling equivalently since this differs between docker and singularity.
                 # - Singularity images can either be downloaded from an http address, or pulled from a registry with `(singularity|apptainer) pull`
                 # - Docker images are always pulled, but needs the additional `docker image save` command for the image to be saved in the correct place
-                if cache_path and amend_cachedir:
+                if cache_path:
                     # download into the cache
                     containers_remote_fetch.append((container, cache_path))
-                    # and copy from the cache to the output
-                    containers_copy.append((container, cache_path, output_path))
+                    # only copy to the output if we are not amending the cache
+                    if not self.amend_cachedir:
+                        containers_copy.append((container, cache_path, output_path))
                     total_tasks += 1
                     self.progress.update_main_task(total=total_tasks)
-
                 else:
                     # download or pull directly to the output
                     containers_remote_fetch.append((container, output_path))

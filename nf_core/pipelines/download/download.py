@@ -24,6 +24,7 @@ import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.download._docker import DockerFetcher
 from nf_core.pipelines.download._singularity import SingularityFetcher
+from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.utils import (
     NF_INSPECT_MIN_NF_VERSION,
     DownloadError,
@@ -84,6 +85,12 @@ class DownloadWorkflow:
         parallel_downloads=4,
         hide_progress=False,
     ):
+        # Verify that the flags provided make sense together
+        if container_system == "docker" and container_cache_utilisation != "copy":
+            raise DownloadError(
+                "Only the 'copy' option for --container-cache-utilisation is supported for Docker images. "
+            )
+
         self.pipeline = pipeline
         if isinstance(revision, str):
             self.revision = [revision]
@@ -152,12 +159,11 @@ class DownloadWorkflow:
             # Inclusion of configs is unnecessary for Seqera Platform.
             if not self.platform and self.include_configs is None:
                 self.prompt_config_inclusion()
-            # If a remote cache is specified, it is safe to assume images should be downloaded.
-            if not self.container_cache_utilisation == "remote":
+            # Prompt the user for whether containers should be downloaded
+            if self.container_system is None:
                 self.prompt_container_download()
-            else:
-                self.container_system = "singularity"
 
+            log.warning(self.container_system)
             # Check if we need to set up a cache directory for Singularity
             if self.container_system == "singularity":
                 # Check if the env variable for the Singularity cache directory is set
@@ -176,6 +182,8 @@ class DownloadWorkflow:
                     # If we have remote containers, we need to read them
                     if self.container_cache_utilisation == "remote" and self.container_cache_index is not None:
                         self.read_remote_containers()
+                    else:
+                        log.warning("[red]No remote cache index specified, skipping remote container download.[/]")
 
             # Nothing meaningful to compress here.
             if not self.platform:
@@ -556,6 +564,7 @@ class DownloadWorkflow:
                 if n_total_images == 0:
                     raise LookupError("Could not find valid container names in the index file.")
                 self.containers_remote = sorted(list(set(self.containers_remote)))
+                log.debug(self.containers_remote)
         except (FileNotFoundError, LookupError) as e:
             log.error(f"[red]Issue with reading the specified remote $NXF_SINGULARITY_CACHE index:[/]\n{e}\n")
             if stderr.is_interactive and rich.prompt.Confirm.ask("[blue]Specify a new index file and try again?"):
@@ -605,8 +614,8 @@ class DownloadWorkflow:
 
         # create a filesystem-safe version of the revision name for the directory
         revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", revision)
-        # account for name collisions, if there is a branch / release named "configs" or "singularity-images"
-        if revision_dirname in ["configs", "singularity-images"]:
+        # account for name collisions, if there is a branch / release named "configs" or container output dir
+        if revision_dirname in ["configs", self.get_container_output_dir()]:
             revision_dirname = re.sub("[^0-9a-zA-Z]+", "_", self.pipeline + revision_dirname)
 
         # Rename the internal directory name to be more friendly
@@ -679,17 +688,15 @@ class DownloadWorkflow:
         # Courtesy of @vmkalbskopf in https://github.com/nextflow-io/nextflow/discussions/4708
         docker_load_command = "ls -1 *.tar | xargs --no-run-if-empty -L 1 docker load -i"
         indent_spaces = 4
+        docker_img_dir = self.get_container_output_dir()
         stderr.print(
             "\n"
-            + (
-                1 * indent_spaces * " "
-                + f"Downloaded docker images written to [blue not bold]'{self.outdir}/docker-images'[/]. "
-            )
+            + (1 * indent_spaces * " " + f"Downloaded docker images written to [blue not bold]'{docker_img_dir}'[/]. ")
             + (0 * indent_spaces * " " + "After copying the pipeline and images to the offline machine, run\n\n")
             + (2 * indent_spaces * " " + f"[blue bold]{docker_load_command}[/]\n\n")
             + (
                 1 * indent_spaces * " "
-                + "inside [blue not bold]'docker-images'[/] to load the images into the offline docker daemon."
+                + f"inside [blue not bold]'{docker_img_dir}'[/] to load the images into the offline docker daemon."
             )
             + "\n"
         )
@@ -733,7 +740,7 @@ class DownloadWorkflow:
             out, _ = cmd_out
             out_json = json.loads(out)
             # NOTE: We only save the container strings to comply with the legacy function.
-            self.containers = [proc["container"] for proc in out_json["processes"]]
+            self.containers = list({proc["container"] for proc in out_json["processes"]})
             return True
 
         except KeyError as e:
@@ -874,6 +881,9 @@ class DownloadWorkflow:
         # add chttps://community-cr-prod.seqera.io/docker/registry/v2/ to the set to support the new Seqera Singularity container registry
         self.registry_set.add("community-cr-prod.seqera.io/docker/registry/v2")
 
+    def get_container_output_dir(self):
+        return os.path.join(self.outdir, f"{self.container_system}-images")
+
     def download_container_images(self, current_revision: str = "") -> None:
         """Loop through container names and download Singularity images"""
 
@@ -903,7 +913,7 @@ class DownloadWorkflow:
                     raise FileNotFoundError("Singularity cache is required but no '$NXF_SINGULARITY_CACHEDIR' set!")
 
             assert self.outdir
-            out_path_dir = os.path.abspath(os.path.join(self.outdir, "singularity-images"))
+            out_path_dir = os.path.abspath(self.get_container_output_dir())
 
             # Check that the directories exist
             if not os.path.isdir(out_path_dir):
@@ -916,30 +926,26 @@ class DownloadWorkflow:
                 )
                 # "Collecting container images",
 
+                container_fetcher: ContainerFetcher
                 if self.container_system == "singularity":
-                    singularity_fetcher = SingularityFetcher(
-                        self.container_library, self.registry_set, progress, self.parallel_downloads
-                    )
-                    singularity_fetcher.fetch_containers(
-                        self.containers,
-                        out_path_dir,
-                        self.containers_remote,
+                    container_fetcher = SingularityFetcher(
+                        self.container_library,
+                        self.registry_set,
+                        progress,
                         library_dir,
                         cache_dir,
                         self.container_cache_utilisation == "amend",
+                        max_workers=self.parallel_downloads,
                     )
                 elif self.container_system == "docker":
-                    docker_fetcher = DockerFetcher(
-                        self.container_library, self.registry_set, progress, self.parallel_downloads
+                    container_fetcher = DockerFetcher(
+                        self.container_library, self.registry_set, progress, max_workers=self.parallel_downloads
                     )
-                    docker_fetcher.fetch_containers(
-                        self.containers,
-                        out_path_dir,
-                        self.containers_remote,
-                        library_dir,
-                        cache_dir,
-                        self.container_cache_utilisation == "amend",
-                    )
+                container_fetcher.fetch_containers(
+                    self.containers,
+                    out_path_dir,
+                    self.containers_remote,
+                )
 
     def compress_download(self):
         """Take the downloaded files and make a compressed .tar.gz archive."""
