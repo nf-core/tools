@@ -62,6 +62,7 @@ from nf_core.commands_test_datasets import (
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.pipelines.download import DownloadError
 from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
+from nf_core.modules._completion import autocomplete_modules
 
 # Set up logging as the root logger
 # Submodules should all traverse back to this
@@ -944,7 +945,11 @@ def command_modules_list_local(ctx, keywords, json, directory):  # pylint: disab
 # nf-core modules install
 @modules.command("install")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool", type=str, callback=normalize_case,
+    required=False, metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules
+)
 @click.option(
     "-d",
     "--dir",

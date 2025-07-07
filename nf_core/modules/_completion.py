@@ -1,0 +1,37 @@
+import rich_click as click
+import sys
+
+
+def autocomplete_modules(ctx, param, incomplete: str):
+    # Provide fallback/defaults if ctx.obj is not available
+    modules_repo_url = "https://github.com/nf-core/modules"
+    modules_repo_branch = "master"
+    modules_repo_no_pull = False
+
+    try:
+        if ctx.obj is not None:
+            modules_repo_url = ctx.obj.get("modules_repo_url", modules_repo_url)
+            modules_repo_branch = ctx.obj.get("modules_repo_branch", modules_repo_branch)
+            modules_repo_no_pull = ctx.obj.get("modules_repo_no_pull", modules_repo_no_pull)
+
+        from nf_core.modules.list import ModuleList
+        module_list = ModuleList(
+            ".",
+            True,
+            modules_repo_url,
+            modules_repo_branch,
+            modules_repo_no_pull,
+        )
+
+        available_modules = module_list.modules_repo.get_avail_components("modules")
+
+        matches = [
+            click.shell_completion.CompletionItem(mod)
+            for mod in available_modules
+            if mod.startswith(incomplete)
+        ]
+
+        return matches
+    except Exception as e:
+        print(f"[ERROR] Autocomplete failed: {e}", file=sys.stderr)
+        return []
