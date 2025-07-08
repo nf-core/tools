@@ -45,6 +45,7 @@
 - Update error message for rocrate_readme_sync ([#3652](https://github.com/nf-core/tools/pull/3652))
 - Update `nf-core modules info` command after `meta.yml` restructuring ([#3659](https://github.com/nf-core/tools/pull/3659))
 - Enable parsing of multi-line config values ([#3629](https://github.com/nf-core/tools/pull/3629))
+- Update dependency textual to v3.7.0 ([#3662](https://github.com/nf-core/tools/pull/3662))
 - Update python:3.13-slim Docker digest to 6544e0e ([#3663](https://github.com/nf-core/tools/pull/3663))
 - Update pre-commit hook astral-sh/ruff-pre-commit to v0.12.2 ([#3661](https://github.com/nf-core/tools/pull/3661))
 
