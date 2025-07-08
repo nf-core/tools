@@ -19,7 +19,7 @@ def test_autocomplete_pipelines_mocked(mock_workflows_class):
 
     # Mock local and remote workflows
     mock_instance.local_workflows = [MagicMock(full_name="awesome/localpipeline")]
-    mock_instance.remote_workflows = [MagicMock(name="awesome-remote"), MagicMock(name="other-remote")]
+    mock_instance.remote_workflows = [MagicMock(full_name="awesome-remote"), MagicMock(full_name="other-remote")]
 
     ctx = DummyCtx()
     param = DummyParam()

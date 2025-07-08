@@ -14,7 +14,7 @@ class DummyCtx:
 
 
 @patch("nf_core.subworkflows._completion.CompletionItem")
-@patch("nf_core.subworkflows._completion.ModuleList")
+@patch("nf_core.subworkflows._completion.SubworkflowList")
 def test_autocomplete_subworkflows_mocked(mock_subworkflows_list_class, mock_completion_item_class):
     # Setup mock for module list
     mock_instance = mock_subworkflows_list_class.return_value
