@@ -164,12 +164,11 @@ def test_autocomplete_subworkflows_missing_argument():
 def test_autocomplete_pipelines():
     ctx = DummyCtx()
     param = DummyParam()
-    completions = autocomplete_pipelines(ctx, param, "sar")
-    print(completions)
+    completions = autocomplete_pipelines(ctx, param, "next")
 
     values = [c.value for c in completions]
-    assert "sarek" in values
-    assert "rnasek" not in values
+    assert "nextflow-io/hello" in values
+    assert "nf-core/rnasek" not in values
 
 @patch("nf_core.components.components_completion.Workflows")
 def test_autocomplete_pipelines_mocked(mock_workflows_class):
