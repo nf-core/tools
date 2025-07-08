@@ -1,28 +1,20 @@
-import concurrent.futures
+import concurrent
 import logging
-import os
-import re
 import shutil
 import subprocess
-from collections.abc import Collection, Container, Iterable
-from typing import Optional
+from collections.abc import Iterable
 
-from nf_core.pipelines.download.utils import DownloadProgress, intermediate_file
+from nf_core.pipelines.download.container_fetcher import ContainerFetcher
+from nf_core.pipelines.download.utils import (
+    DownloadProgress,
+)
 
 log = logging.getLogger(__name__)
 
 
-class DockerFetcher:
-    """Class to manage all Docker operations for fetching containers.
-
-    The guiding principles are that:
-      - Container download/pull/copy methods are unaware of the concepts of
-        "library" and "cache". They are just told to fetch a container and
-        put it in a certain location.
-      - Only the `fetch_containers` method is aware of the concepts of "library"
-        and "cache". It is a sort of orchestrator that decides where to fetch
-        each container and calls the appropriate methods.
-      - All methods are integrated with a progress bar
+class DockerFetcher(ContainerFetcher):
+    """
+    Fetcher for Docker containers.
     """
 
     def __init__(
@@ -30,62 +22,87 @@ class DockerFetcher:
         container_library: Iterable[str],
         registry_set: Iterable[str],
         progress: DownloadProgress,
-    ) -> None:
-        self.container_library = list(container_library)
-        self.registry_set = registry_set
-        self.progress = progress
-        self.kill_with_fire = False
+        parallel: int = 4,
+    ):
+        """
+        Intialize the docker image fetcher
 
-    def get_container_filename(self, container: str) -> str:
-        """Check Docker cache for image, copy to destination folder if found.
+        """
+        super().__init__(
+            container_library=container_library,
+            registry_set=registry_set,
+            progress=progress,
+            cache_dir=None,  # Docker does not use a cache directory
+            library_dir=None,  # Docker does not use a library directory
+            amend_cachedir=False,  # Docker does not use a cache directory
+            parallel=parallel,
+        )
+
+    def check_and_set_implementation(self):
+        if not shutil.which("docker"):
+            raise OSError("Docker is needed to pull images, but it is not installed or not in $PATH")
+        self.implementation = "docker"
+
+    def clean_container_file_extension(self, container_fn):
+        """
+        This makes sure that the Docker container filename has a .tar extension
+        """
+        extension = ".tar"
+        if container_fn.endswith(".tar"):
+            container_fn.strip(".tar")
+        # Strip : and / characters
+        container_fn = container_fn.replace("/", "-").replace(":", "-")
+        # Add file extension
+        container_fn = container_fn + extension
+        return container_fn
+
+    def fetch_remote_containers(self, containers, parallel=4):
+        """
+        Fetch remote containers in parallel.
+
+        We first pull the images using the `docker image pull` command,
+        then save them to a file using the `docker image save` command.
+        Args:
+            containers (Iterable[tuple[str, str]]): A list of tuples with the container name
+        """
+        self.pull_images(containers)
+        self.save_images(containers, parallel_saves=parallel)
+
+    def construct_pull_command(self, address):
+        pull_command = ["docker", "image", "pull", address]
+        return pull_command
+
+    def construct_save_command(self, output_path, address):
+        save_command = [
+            "docker",
+            "image",
+            "save",
+            address,
+            "--output",
+            output_path,
+        ]
+        return save_command
+
+    def save_image(self, container: str, output_path: str) -> None:
+        """Save a Docker image that has been pulled to a file.
 
         Args:
-            container (str):    A pipeline's container name. Can be direct download URL
-                                or a Docker Hub repository ID.
-
-        Returns:
-            # TODO
-            tuple (str, str):   Returns a tuple of (out_path, cache_path).
+            container (str): A pipeline's container name. Usually it is of similar format
+                to ``biocontainers/name:varsion``
+            out_path (str): The final target output path
+            cache_path (str, None): The NXF_DOCKER_CACHEDIR path if set, None if not
         """
+        log.debug(f"Saving Docker image '{container}' to {output_path}")
+        address = container
+        save_command = self.construct_save_command(output_path, address)
+        self._run_docker_command(save_command, container, output_path, address, "save")
 
-        # Generate file paths
-        # Based on simpleName() function in Nextflow code:
-        # https://github.com/nextflow-io/nextflow/blob/671ae6d85df44f906747c16f6d73208dbc402d49/modules/nextflow/src/main/groovy/nextflow/container/SingularityCache.groovy#L69-L94
-        out_name = container
-        # Strip URI prefix
-        out_name = re.sub(r"^.*:\/\/", "", out_name)
-        # Detect file extension
-        extension = ".tar"
-        if out_name.endswith(".tar"):
-            extension = ".tar"
-            out_name = out_name[:-4]
-        # Strip : and / characters
-        out_name = out_name.replace("/", "-").replace(":", "-")
-        # Add file extension
-        out_name = out_name + extension
-
-        # Trim potential registries from the name for consistency.
-        # This will allow pipelines to work offline without symlinked images,
-        # if docker.registry / singularity.registry are set to empty strings at runtime, which can be included in the HPC config profiles easily.
-        if self.registry_set:
-            # Create a regex pattern from the set of registries
-            trim_pattern = "|".join(f"^{re.escape(registry)}-?".replace("/", "[/-]") for registry in self.registry_set)
-            # Use the pattern to trim the string
-            out_name = re.sub(f"{trim_pattern}", "", out_name)
-
-        return out_name
-
-    def download_images(
-        self,
-        containers_download: Iterable[tuple[str, str]],
-        parallel_downloads: int,
-    ) -> None:
+    def save_images(self, containers: Iterable[tuple[str, str]], parallel_saves) -> None:
         # if clause gives slightly better UX, because Download is no longer displayed if nothing is left to be downloaded.
-        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_downloads) as pool:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_saves) as pool:
             # Kick off concurrent downloads
             future_downloads = [
-                pool.submit(self.download_image, container, output_path)
-                for (container, output_path) in containers_download
+                pool.submit(self.save_image, container, output_path) for (container, output_path) in containers
             ]
 
             # Make ctrl-c work with multi-threading
@@ -110,33 +127,6 @@ class DockerFetcher:
                 # Re-raise exception on the main thread
                 raise
 
-    def download_image(self, container: str, output_path: str) -> None:
-        """Download a Docker image from the web.
-
-        Use docker cli to download the file.
-
-        Args:
-            container (str): A pipeline's container name. Usually it is of similar format
-                to ``biocontainers/name:varsion``
-            out_path (str): The final target output path
-            cache_path (str, None): The NXF_DOCKER_CACHEDIR path if set, None if not
-        """
-        log.debug(f"Downloading Docker image '{container}' to {output_path}")
-        address = container
-
-        if shutil.which("docker"):
-            download_command = [
-                "docker",
-                "image",
-                "save",
-                address,
-                "--output",
-                output_path,
-            ]
-            self._run_docker_command(download_command, container, output_path, address, "download")
-        else:
-            raise OSError("Docker is needed to pull images, but it is not installed or not in $PATH")
-
     def pull_images(self, containers_pull: Iterable[tuple[str, str]]) -> None:
         for container, output_path in containers_pull:
             # it is possible to try multiple registries / mirrors if multiple were specified.
@@ -144,18 +134,18 @@ class DockerFetcher:
             for library in self.container_library[:]:
                 try:
                     self.pull_image(container, output_path, library)
-                    # Pulling the image was successful, no ContainerError was raised, break the library loop
+                    # Pulling the image was successful, no DockerError was raised, break the library loop
                     break
-                except ContainerError.ImageNotFoundError as e:
+                except DockerError.ImageNotFoundError as e:
                     # Try other registries
                     if e.error_log.absolute_URI:
                         break  # there no point in trying other registries if absolute URI was specified.
                     else:
                         continue
-                except ContainerError.InvalidTagError:
+                except DockerError.InvalidTagError:
                     # Try other registries
                     continue
-                except ContainerError.OtherError as e:
+                except DockerError.OtherError as e:
                     # Try other registries
                     log.error(e.message)
                     log.error(e.helpmessage)
@@ -171,6 +161,26 @@ class DockerFetcher:
                 )
             # Task should advance in any case. Failure to pull will not kill the download process.
             self.progress.update_main_task(advance=1)
+
+    def pull_image(self, container: str, output_path: str, library: str) -> None:
+        """Pull a docker image using ``docker pull``
+
+        This function will try to pull the image from the specified library.
+
+        Args:
+            container (str): A pipeline's container name. Usually it is of similar format
+                to ``nfcore/name:version``.
+            library (list of str): A list of libraries to try for pulling the image.
+
+        Raises:
+            Various exceptions possible from `subprocess` execution of docker.
+        """
+        address = container
+
+        pull_command = self.construct_pull_command(address)
+        log.debug(f"Pulling docker image: {address}")
+        log.debug(f"Docker command: {' '.join(pull_command)}")
+        self._run_docker_command(pull_command, container, output_path, address, "docker_pull")
 
     def _run_docker_command(
         self,
@@ -213,7 +223,7 @@ class DockerFetcher:
             }
             if any(pel in line for pel in possible_error_lines for line in lines):
                 self.progress.remove_task(task)
-                raise ContainerError(
+                raise DockerError(
                     container=container,
                     address=address,
                     out_path=output_path,
@@ -221,129 +231,12 @@ class DockerFetcher:
                     error_msg=lines,
                     absolute_URI=address.startswith("docker://"),
                 )
-            else:
-                log.warning("Everything is fine")
 
         self.progress.remove_task(task)
 
-    def pull_image(self, container: str, output_path: str, library: str) -> None:
-        """Pull a docker image using ``docker pull``
 
-        Attempt to use a local installation of docker to pull the image.
-
-        Args:
-            container (str): A pipeline's container name. Usually it is of similar format
-                to ``nfcore/name:version``.
-            library (list of str): A list of libraries to try for pulling the image.
-
-        Raises:
-            Various exceptions possible from `subprocess` execution of docker.
-        """
-        address = container
-
-        if shutil.which("docker"):
-            docker_command = ["docker", "image", "pull", address]
-            log.debug(f"Building docker image: {address}")
-            log.debug(f"Docker command: {' '.join(docker_command)}")
-            self._run_docker_command(docker_command, container, output_path, address, "docker_pull")
-        else:
-            raise OSError("Docker is needed to pull images, but it is not installed or not in $PATH")
-
-    def copy_image(self, container: str, src_path: str, dest_path: str) -> None:
-        """Copy Docker image from one directory to another."""
-        log.debug(f"Copying {container} from '{os.path.basename(src_path)}' to '{os.path.basename(dest_path)}'")
-
-        with intermediate_file(dest_path) as dest_path_tmp:
-            shutil.copyfile(src_path, dest_path_tmp.name)
-
-    def fetch_containers(
-        self,
-        containers: Collection[str],
-        output_dir: str,
-        exclude_list: Container[str],
-        library_dir: Optional[str],
-        cache_dir: Optional[str],
-        amend_cachedir: bool,
-    ):
-        # Check each container in the list and defer actions
-        containers_download: list[tuple[str, str]] = []
-        containers_pull: list[tuple[str, str]] = []
-        containers_copy: list[tuple[str, str, str]] = []
-
-        # We may add more tasks as containers need to be copied between the various caches
-        total_tasks = len(containers)
-
-        for container in containers:
-            container_filename = self.get_container_filename(container)
-
-            # Files in the remote cache are already downloaded and can be ignored
-            if container_filename in exclude_list:
-                log.debug(f"Skipping download of container '{container_filename}' as it is cached remotely.")
-                self.progress.update_main_task(advance=1, description=f"Skipping {container_filename}")
-                continue
-
-            # Generate file paths for all three locations
-            output_path = os.path.join(output_dir, container_filename)
-
-            if os.path.exists(output_path):
-                log.debug(f"Skipping download of container '{container_filename}' as it is in already present.")
-                self.progress.update_main_task(advance=1, description=f"{container_filename} exists at destination")
-                continue
-
-            library_path = os.path.join(library_dir, container_filename) if library_dir else None
-            cache_path = os.path.join(cache_dir, container_filename) if cache_dir else None
-
-            # get the container from the library
-            if library_path and os.path.exists(library_path):
-                containers_copy.append((container, library_path, output_path))
-                # update the cache if needed
-                if cache_path and amend_cachedir and not os.path.exists(cache_path):
-                    containers_copy.append((container, library_path, cache_path))
-                    total_tasks += 1
-                    self.progress.update_main_task(total=total_tasks)
-
-            # get the container from the cache
-            elif cache_path and os.path.exists(cache_path):
-                containers_copy.append((container, cache_path, output_path))
-
-            # no library or cache
-            else:
-                # Handle container download, docker needs images to be pulled before it can save them
-                log.warning(f"Cache path {cache_path} and amend cachedir {amend_cachedir}")
-                if cache_path and amend_cachedir:
-                    # download into the cache
-                    containers_pull.append((container, cache_path))
-                    containers_download.append((container, cache_path))
-                    # and copy from the cache to the output
-                    containers_copy.append((container, cache_path, output_path))
-                    total_tasks += 1
-                    self.progress.update_main_task(total=total_tasks)
-
-                else:
-                    # download or pull directly to the output
-                    containers_pull.append((container, output_path))
-
-        # Pull all containers
-        if containers_pull:
-            if not shutil.which("docker"):
-                raise OSError("Docker is needed to pull images, but it is not installed or not in $PATH")
-            self.progress.update_main_task(description="Pulling docker images")
-            self.pull_images(containers_pull)
-
-        # Download all containers
-        if containers_download:
-            self.progress.update_main_task(description="Downloading docker images")
-            self.download_images(containers_download, parallel_downloads=4)
-
-        # Copy all containers
-        self.progress.update_main_task(description="Copying docker images from/to cache")
-        for container, src_path, dest_path in containers_copy:
-            self.copy_image(container, src_path, dest_path)
-            self.progress.update_main_task(advance=1)
-
-
-# Distinct errors for the container download, required for acting on the exceptions
-class ContainerError(Exception):
+# Distinct errors for the docker container fetching, required for acting on the exceptions
+class DockerError(Exception):
     """A class of errors related to pulling containers with Docker"""
 
     def __init__(
@@ -362,15 +255,16 @@ class ContainerError(Exception):
         self.command = command
         self.error_msg = error_msg
 
+        error_patterns = {
+            "reference does not exist": self.ImageNotPulledError,
+            "repository does not exist": self.ImageNotFoundError,
+            "manifest unknown": self.InvalidTagError,
+        }
         for line in error_msg:
-            if "reference does not exist" in line:
-                self.error_type = self.ImageNotPulledError(self)
-            if "repository does not exist" in line:
-                self.error_type = self.ImageNotFoundError(self)
-            if "manifest unknown" in line:
-                self.error_type = self.InvalidTagError(self)
-            else:
-                continue
+            for pattern, error_class in error_patterns.items():
+                if pattern in line:
+                    self.error_type = error_class(self)
+                    break
         else:
             self.error_type = self.OtherError(self)
 

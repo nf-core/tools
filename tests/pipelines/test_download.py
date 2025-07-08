@@ -22,7 +22,7 @@ import nf_core.pipelines.download
 import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.download import DownloadWorkflow
-from nf_core.pipelines.download._singularity import (
+from nf_core.pipelines.download.singularity import (
     SingularityError,
     SingularityFetcher,
 )
@@ -1132,7 +1132,7 @@ class DownloadTest(unittest.TestCase):
     # Simple file name with no registry in it
     @with_temporary_folder
     @mock.patch(
-        "nf_core.pipelines.download._singularity.SingularityFetcher.check_and_set_implementation"
+        "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
     )  # This is to make sure that we do not check for Singularity/Apptainer installation
     @mock.patch("os.makedirs")
     @mock.patch("os.symlink")
@@ -1195,7 +1195,7 @@ class DownloadTest(unittest.TestCase):
     # File name with registry in it
     @with_temporary_folder
     @mock.patch(
-        "nf_core.pipelines.download._singularity.SingularityFetcher.check_and_set_implementation"
+        "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
     )  # This is to make sure that we do not check for Singularity/Apptainer installation
     @mock.patch("os.makedirs")
     @mock.patch("os.symlink")
@@ -1304,7 +1304,7 @@ class DownloadTest(unittest.TestCase):
     # Test for 'singularity.get_container_filename' function
     #
 
-    @mock.patch("nf_core.pipelines.download._singularity.SingularityFetcher.check_and_set_implementation")
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation")
     def test_singularity_get_container_filename(self, mock_check_and_set_implementation):
         registries = [
             "docker.io",
@@ -1419,7 +1419,7 @@ class DownloadTest(unittest.TestCase):
 
     @with_temporary_folder
     @mock.patch(
-        "nf_core.pipelines.download._singularity.SingularityFetcher.check_and_set_implementation"
+        "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
     )  # This is to make sure that we do not check for Singularity/Apptainer installation
     @mock.patch.object(nf_core.pipelines.download.utils.FileDownloader, "download_file", new=mock_download_file)
     def test_download_workflow_with_success(self, tmp_dir, mock_check_and_set_implementation):
@@ -1443,9 +1443,9 @@ class DownloadTest(unittest.TestCase):
     #
     @with_temporary_folder
     @mock.patch(
-        "nf_core.pipelines.download._singularity.SingularityFetcher.check_and_set_implementation"
+        "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
     )  # This is to make sure that we do not check for Singularity/Apptainer installation
-    @mock.patch("nf_core.pipelines.download._singularity.SingularityFetcher.fetch_containers")
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.fetch_containers")
     def test_download_workflow_for_platform(
         self,
         tmp_dir,
@@ -1517,7 +1517,7 @@ class DownloadTest(unittest.TestCase):
     #
     # Brief test adding a single custom tag to Seqera Platform download
     #
-    @mock.patch("nf_core.pipelines.download._singularity.SingularityFetcher.fetch_containers")
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.fetch_containers")
     @with_temporary_folder
     def test_download_workflow_for_platform_with_one_custom_tag(self, _, tmp_dir):
         download_obj = DownloadWorkflow(
@@ -1538,7 +1538,7 @@ class DownloadTest(unittest.TestCase):
     #
     # Test adding custom tags to Seqera Platform download (full test)
     #
-    @mock.patch("nf_core.pipelines.download._singularity.SingularityFetcher.fetch_containers")
+    @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.fetch_containers")
     @with_temporary_folder
     def test_download_workflow_for_platform_with_custom_tags(self, _, tmp_dir):
         with self._caplog.at_level(logging.INFO):

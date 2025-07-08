@@ -22,9 +22,9 @@ import nf_core.modules.modules_utils
 import nf_core.pipelines.download.utils
 import nf_core.pipelines.list
 import nf_core.utils
-from nf_core.pipelines.download._docker import DockerFetcher
-from nf_core.pipelines.download._singularity import SingularityFetcher
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
+from nf_core.pipelines.download.docker import DockerFetcher
+from nf_core.pipelines.download.singularity import SingularityFetcher
 from nf_core.pipelines.download.utils import (
     NF_INSPECT_MIN_NF_VERSION,
     DownloadError,
