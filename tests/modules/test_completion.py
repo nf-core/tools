@@ -7,18 +7,18 @@ class DummyParam:
     # Minimal mock object for Click parameter (not used in the function)
     pass
 
+
 class DummyCtx:
     def __init__(self, obj=None):
         self.obj = obj
+
 
 @patch("nf_core.modules._completion.CompletionItem")
 @patch("nf_core.modules._completion.ModuleList")
 def test_autocomplete_modules_mocked(mock_module_list_class, mock_completion_item_class):
     # Setup mock for module list
     mock_instance = mock_module_list_class.return_value
-    mock_instance.modules_repo.get_avail_components.return_value = [
-        "fastqc", "bcftools/call", "bcftools/index"
-    ]
+    mock_instance.modules_repo.get_avail_components.return_value = ["fastqc", "bcftools/call", "bcftools/index"]
 
     # Setup mock for CompletionItem
     def mock_completion(value):

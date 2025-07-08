@@ -27,11 +27,7 @@ def autocomplete_modules(ctx, param, incomplete: str):
 
         available_modules = module_list.modules_repo.get_avail_components("modules")
 
-        matches = [
-            CompletionItem(mod)
-            for mod in available_modules
-            if mod.startswith(incomplete)
-        ]
+        matches = [CompletionItem(mod) for mod in available_modules if mod.startswith(incomplete)]
 
         return matches
     except Exception as e:

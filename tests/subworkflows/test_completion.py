@@ -7,9 +7,11 @@ class DummyParam:
     # Minimal mock object for Click parameter (not used in the function)
     pass
 
+
 class DummyCtx:
     def __init__(self, obj=None):
         self.obj = obj
+
 
 @patch("nf_core.subworkflows._completion.CompletionItem")
 @patch("nf_core.subworkflows._completion.ModuleList")
@@ -17,7 +19,9 @@ def test_autocomplete_subworkflows_mocked(mock_subworkflows_list_class, mock_com
     # Setup mock for module list
     mock_instance = mock_subworkflows_list_class.return_value
     mock_instance.modules_repo.get_avail_components.return_value = [
-        "vcf_gather_bcftools", "fastq_align_star", "utils_nextflow_pipeline"
+        "vcf_gather_bcftools",
+        "fastq_align_star",
+        "utils_nextflow_pipeline",
     ]
 
     # Setup mock for CompletionItem

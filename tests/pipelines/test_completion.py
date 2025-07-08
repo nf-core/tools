@@ -6,9 +6,11 @@ from nf_core.pipelines._completion import autocomplete_pipelines
 class DummyParam:
     pass
 
+
 class DummyCtx:
     def __init__(self, obj=None):
         self.obj = obj
+
 
 @patch("nf_core.pipelines._completion.Workflows")
 def test_autocomplete_pipelines_mocked(mock_workflows_class):

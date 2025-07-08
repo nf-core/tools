@@ -27,11 +27,7 @@ def autocomplete_subworkflows(ctx, param, incomplete: str):
 
         available_subworkflows = subworkflow_list.modules_repo.get_avail_components("subworkflows")
 
-        matches = [
-            CompletionItem(sub)
-            for sub in available_subworkflows
-            if sub.startswith(incomplete)
-        ]
+        matches = [CompletionItem(sub) for sub in available_subworkflows if sub.startswith(incomplete)]
 
         return matches
     except Exception as e:

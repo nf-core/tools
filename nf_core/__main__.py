@@ -359,7 +359,8 @@ def command_pipelines_lint(
 @pipelines.command("download")
 @click.argument(
     "pipeline",
-    required=False, metavar="<pipeline name>",
+    required=False,
+    metavar="<pipeline name>",
     shell_complete=autocomplete_pipelines,
 )
 @click.option(
@@ -470,7 +471,8 @@ def command_pipelines_download(
 @pipelines.command("create-params-file")
 @click.argument(
     "pipeline",
-    required=False, metavar="<pipeline name>",
+    required=False,
+    metavar="<pipeline name>",
     shell_complete=autocomplete_pipelines,
 )
 @click.option("-r", "--revision", help="Release/branch/SHA of the pipeline (if remote)")
@@ -502,7 +504,8 @@ def command_pipelines_create_params_file(ctx, pipeline, revision, output, force,
 @pipelines.command("launch")
 @click.argument(
     "pipeline",
-    required=False, metavar="<pipeline name>",
+    required=False,
+    metavar="<pipeline name>",
     shell_complete=autocomplete_pipelines,
 )
 @click.option("-r", "--revision", help="Release/branch/SHA of the project to run (if remote)")
@@ -762,7 +765,8 @@ def pipeline_schema():
 )
 @click.argument(
     "pipeline",
-    required=False, metavar="<pipeline name>",
+    required=False,
+    metavar="<pipeline name>",
     shell_complete=autocomplete_pipelines,
 )
 @click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
@@ -964,9 +968,12 @@ def command_modules_list_local(ctx, keywords, json, directory):  # pylint: disab
 @modules.command("install")
 @click.pass_context
 @click.argument(
-    "tool", type=str, callback=normalize_case,
-    required=False, metavar="<tool> or <tool/subtool>",
-    shell_complete=autocomplete_modules
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
 )
 @click.option(
     "-d",
@@ -1002,9 +1009,12 @@ def command_modules_install(ctx, tool, directory, prompt, force, sha):
 @modules.command("update")
 @click.pass_context
 @click.argument(
-    "tool", type=str, callback=normalize_case,
-    required=False, metavar="<tool> or <tool/subtool>",
-    shell_complete=autocomplete_modules
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
 )
 @click.option(
     "-d",
@@ -1083,9 +1093,12 @@ def command_modules_update(
 @modules.command("patch")
 @click.pass_context
 @click.argument(
-    "tool", type=str, callback=normalize_case,
-    required=False, metavar="<tool> or <tool/subtool>",
-    shell_complete=autocomplete_modules
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
 )
 @click.option(
     "-d",
@@ -1107,9 +1120,12 @@ def command_modules_patch(ctx, tool, directory, remove):
 @modules.command("remove")
 @click.pass_context
 @click.argument(
-    "tool", type=str, callback=normalize_case,
-    required=False, metavar="<tool> or <tool/subtool>",
-    shell_complete=autocomplete_modules
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
 )
 @click.option(
     "-d",
@@ -1230,9 +1246,12 @@ def command_modules_create(
 @modules.command("test")
 @click.pass_context
 @click.argument(
-    "tool", type=str, callback=normalize_case,
-    required=False, metavar="<tool> or <tool/subtool>",
-    shell_complete=autocomplete_modules
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
 )
 @click.option(
     "-v",
@@ -1289,9 +1308,12 @@ def command_modules_test(ctx, tool, directory, no_prompts, update, once, profile
 @modules.command("lint")
 @click.pass_context
 @click.argument(
-    "tool", type=str, callback=normalize_case,
-    required=False, metavar="<tool> or <tool/subtool>",
-    shell_complete=autocomplete_modules
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
 )
 @click.option(
     "-d",
@@ -1347,9 +1369,12 @@ def command_modules_lint(
 @modules.command("info")
 @click.pass_context
 @click.argument(
-    "tool", type=str, callback=normalize_case,
-    required=False, metavar="<tool> or <tool/subtool>",
-    shell_complete=autocomplete_modules
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
 )
 @click.option(
     "-d",
@@ -1370,9 +1395,12 @@ def command_modules_info(ctx, tool, directory):
 @modules.command("bump-versions")
 @click.pass_context
 @click.argument(
-    "tool", type=str, callback=normalize_case,
-    required=False, metavar="<tool> or <tool/subtool>",
-    shell_complete=autocomplete_modules
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>",
+    shell_complete=autocomplete_modules,
 )
 @click.option(
     "-d",
@@ -1467,9 +1495,11 @@ def command_subworkflows_create(ctx, subworkflow, directory, author, force, migr
 @click.pass_context
 @click.argument(
     "subworkflow",
-    type=str, callback=normalize_case,
-    required=False, metavar="subworkflow name",
-    shell_complete=autocomplete_subworkflows
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
 )
 @click.option(
     "-d",
@@ -1560,9 +1590,11 @@ def command_subworkflows_list_local(ctx, keywords, json, directory):  # pylint: 
 @click.pass_context
 @click.argument(
     "subworkflow",
-    type=str, callback=normalize_case,
-    required=False, metavar="subworkflow name",
-    shell_complete=autocomplete_subworkflows
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
 )
 @click.option(
     "-d",
@@ -1614,9 +1646,11 @@ def command_subworkflows_lint(
 @click.pass_context
 @click.argument(
     "subworkflow",
-    type=str, callback=normalize_case,
-    required=False, metavar="subworkflow name",
-    shell_complete=autocomplete_subworkflows
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
 )
 @click.option(
     "-d",
@@ -1638,9 +1672,11 @@ def command_subworkflows_info(ctx, subworkflow, directory):
 @click.pass_context
 @click.argument(
     "subworkflow",
-    type=str, callback=normalize_case,
-    required=False, metavar="subworkflow name",
-    shell_complete=autocomplete_subworkflows
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
 )
 @click.option(
     "-d",
@@ -1683,9 +1719,11 @@ def command_subworkflows_install(ctx, subworkflow, directory, prompt, force, sha
 @click.pass_context
 @click.argument(
     "subworkflow",
-    type=str, callback=normalize_case,
-    required=False, metavar="subworkflow name",
-    shell_complete=autocomplete_subworkflows
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
 )
 @click.option(
     "-d",
@@ -1725,9 +1763,11 @@ def subworkflows_patch(ctx, subworkflow, dir, remove):
 @click.pass_context
 @click.argument(
     "subworkflow",
-    type=str, callback=normalize_case,
-    required=False, metavar="subworkflow name",
-    shell_complete=autocomplete_subworkflows
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
 )
 @click.option(
     "-d",
@@ -1749,9 +1789,11 @@ def command_subworkflows_remove(ctx, directory, subworkflow):
 @click.pass_context
 @click.argument(
     "subworkflow",
-    type=str, callback=normalize_case,
-    required=False, metavar="subworkflow name",
-    shell_complete=autocomplete_subworkflows
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="subworkflow name",
+    shell_complete=autocomplete_subworkflows,
 )
 @click.option(
     "-d",

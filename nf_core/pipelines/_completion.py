@@ -14,11 +14,7 @@ def autocomplete_pipelines(ctx, param, incomplete: str):
         remote_workflows = [wf.name for wf in wfs.remote_workflows]
         available_workflows = local_workflows + remote_workflows
 
-        matches = [
-            CompletionItem(wor)
-            for wor in available_workflows
-            if wor.startswith(incomplete)
-        ]
+        matches = [CompletionItem(wor) for wor in available_workflows if wor.startswith(incomplete)]
 
         return matches
     except Exception as e:
