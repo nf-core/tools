@@ -1,33 +1,26 @@
-from unittest.mock import MagicMock, patch
+import sys
 
-from nf_core.pipelines._completion import autocomplete_pipelines
+from click.shell_completion import CompletionItem
+
+from nf_core.pipelines.list import Workflows
 
 
-class DummyParam:
-    pass
+def autocomplete_pipelines(ctx, param, incomplete: str):
+    try:
+        wfs = Workflows()
+        wfs.get_remote_workflows()
+        wfs.get_local_nf_workflows()
+        local_workflows = [wf.full_name for wf in wfs.local_workflows]
+        remote_workflows = [wf.name for wf in wfs.remote_workflows]
+        available_workflows = local_workflows + remote_workflows
 
-class DummyCtx:
-    def __init__(self, obj=None):
-        self.obj = obj
+        matches = [
+            CompletionItem(wor)
+            for wor in available_workflows
+            if wor.startswith(incomplete)
+        ]
 
-@patch("nf_core.pipelines._completion.Workflows")
-def test_autocomplete_pipelines_mocked(mock_workflows_class):
-    # Mock instance
-    mock_instance = mock_workflows_class.return_value
-
-    # Mock local and remote workflows
-    mock_instance.local_workflows = [MagicMock(full_name="awesome/localpipeline")]
-    mock_instance.remote_workflows = [MagicMock(name="awesome-remote"), MagicMock(name="other-remote")]
-
-    ctx = DummyCtx()
-    param = DummyParam()
-
-    completions = autocomplete_pipelines(ctx, param, "awesome")
-
-    # Extract values from CompletionItem
-    values = [c.value for c in completions]
-
-    # Assertions
-    assert "awesome/localpipeline" in values
-    assert "awesome-remote" in values
-    assert "other-remote" not in values
+        return matches
+    except Exception as e:
+        print(f"[ERROR] Autocomplete failed: {e}", file=sys.stderr)
+        return []
