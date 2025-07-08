@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v3.3.2dev
+## [v3.4.0 - Bismuth Butterfly](https://github.com/nf-core/tools/releases/tag/3.4.0) - [2025-07-08]
 
 ### Template
 
