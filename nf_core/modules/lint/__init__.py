@@ -324,7 +324,7 @@ class ModuleLint(ComponentLint):
                         if isinstance(meta_channel, list):
                             for x, meta_element in enumerate(meta_channel):
                                 if element_name == list(meta_element.keys())[0]:
-                                    return meta_yml[k][x][element_name]
+                                    return meta_yml[ch_name][k][x][element_name]
                         elif isinstance(meta_channel, dict):
                             if element_name == list(meta_channel.keys())[0]:
                                 return meta_yml[ch_name][k][element_name]
@@ -356,18 +356,18 @@ class ModuleLint(ComponentLint):
                 mod.outputs.copy()
             )  # eg. { bam: [[ {meta:{}}, {*.bam:{}} ]], reference: [ {*.fa:{}} ] } -> 2 channels, a tuple (list) and a single path (dict)
             for ch_name in corrected_meta_yml["output"].keys():
-                ch_content = corrected_meta_yml["output"][ch_name][0]
-                if isinstance(ch_content, list):
-                    for i, element in enumerate(ch_content):
-                        element_name = list(element.keys())[0]
-                        corrected_meta_yml["output"][ch_name][0][i][element_name] = _find_meta_info(
+                for i, ch_content in enumerate(corrected_meta_yml["output"][ch_name]):
+                    if isinstance(ch_content, list):
+                        for j, element in enumerate(ch_content):
+                            element_name = list(element.keys())[0]
+                            corrected_meta_yml["output"][ch_name][i][j][element_name] = _find_meta_info(
+                                meta_yml["output"], element_name, is_output=True
+                            )
+                    elif isinstance(ch_content, dict):
+                        element_name = list(ch_content.keys())[0]
+                        corrected_meta_yml["output"][ch_name][i][element_name] = _find_meta_info(
                             meta_yml["output"], element_name, is_output=True
                         )
-                elif isinstance(ch_content, dict):
-                    element_name = list(ch_content.keys())[0]
-                    corrected_meta_yml["output"][ch_name][0][element_name] = _find_meta_info(
-                        meta_yml["output"], element_name, is_output=True
-                    )
 
         def _add_edam_ontologies(section, edam_formats, desc):
             expected_ontologies = []

@@ -320,18 +320,27 @@ class ComponentInfo(ComponentCommand):
         # Outputs
         if self.meta.get("output"):
             outputs_table = self.generate_params_table("Outputs")
-            for output in self.meta["output"]:
-                if self.component_type == "modules":
-                    for ch_name, elements in output.items():
-                        outputs_table.add_row(f"{ch_name}", "", "")
-                        for element in elements:
+            if self.component_type == "modules":
+                for ch_name, elements in self.meta["output"].items():
+                    outputs_table.add_row(f"{ch_name}", "", "")
+                    for element in elements:
+                        if isinstance(element, list):
+                            for ch in element:
+                                for key, info in ch.items():
+                                    outputs_table.add_row(
+                                        f"[orange1 on black] {key} [/][dim i] ({info['type']})",
+                                        Markdown(info["description"] if info["description"] else ""),
+                                        info.get("pattern", ""),
+                                    )
+                        elif isinstance(element, dict):
                             for key, info in element.items():
                                 outputs_table.add_row(
                                     f"[orange1 on black] {key} [/][dim i] ({info['type']})",
                                     Markdown(info["description"] if info["description"] else ""),
                                     info.get("pattern", ""),
                                 )
-                elif self.component_type == "subworkflows":
+            elif self.component_type == "subworkflows":
+                for output in self.meta["output"]:
                     for key, info in output.items():
                         outputs_table.add_row(
                             f"[orange1 on black] {key} [/][dim i]",
