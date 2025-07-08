@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from nf_core.modules._completion import autocomplete_modules
 
 
@@ -35,3 +37,13 @@ def test_autocomplete_modules_mocked(mock_module_list_class, mock_completion_ite
     values = [c.value for c in completions]
     assert "bcftools/call" in values
     assert "fastqc" not in values
+
+
+def test_autocomplete_modules_missing_argument(capfd):
+    ctx = DummyCtx()
+    param = DummyParam()
+
+    with pytest.raises(TypeError) as exc_info:
+        autocomplete_modules(ctx, param)  # Missing 'incomplete' argument
+
+    assert "missing 1 required positional argument" in str(exc_info.value)

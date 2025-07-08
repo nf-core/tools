@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from nf_core.subworkflows._completion import autocomplete_subworkflows
 
 
@@ -39,3 +41,13 @@ def test_autocomplete_subworkflows_mocked(mock_subworkflows_list_class, mock_com
     values = [c.value for c in completions]
     assert "utils_nextflow_pipeline" in values
     assert "vcf_gather_bcftools" not in values
+
+
+def test_autocomplete_subworkflows_missing_argument():
+    ctx = DummyCtx()
+    param = DummyParam()
+
+    with pytest.raises(TypeError) as exc_info:
+        autocomplete_subworkflows(ctx, param)  # Missing 'incomplete' argument
+
+    assert "missing 1 required positional argument" in str(exc_info.value)

@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from nf_core.pipelines._completion import autocomplete_pipelines
 
 
@@ -33,3 +35,13 @@ def test_autocomplete_pipelines_mocked(mock_workflows_class):
     assert "awesome/localpipeline" in values
     assert "awesome-remote" in values
     assert "other-remote" not in values
+
+
+def test_autocomplete_pipelines_missing_argument(capfd):
+    ctx = DummyCtx()
+    param = DummyParam()
+
+    with pytest.raises(TypeError) as exc_info:
+        autocomplete_pipelines(ctx, param)  # Missing 'incomplete' argument
+
+    assert "missing 1 required positional argument" in str(exc_info.value)
