@@ -19,7 +19,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 - [BLAST](#BLAST) - Run BLASTn or BLASTx
 - [Bowtie2](#Mapping) - Map raw Illumina reads to a pathogen genome database or map Illumina reads of specific taxIDs to genomes with positive BLAST hits.
 - [minimap2](#Mapping) - Map raw Nanopore reads to a pathogen genome database or map Nanopore reads of specific taxIDs to genomes with positive BLAST hits.
-- [Individual FASTA or BAM](#Individual-FASTA-or-BAM) For the pathogen screening workflow, prepare an individual FASTA/BAM file for each pathogen with mapped reads.
+- [Pathogen reads](#Pathogen-reads) For the pathogen screening workflow, prepare an individual FASTA/BAM file for each pathogen with mapped reads.
 - [Call Consensus](#Call-Consensus) - Call consensus sequences for reads mapped to pathogen genomes
 - [MultiQC](#multiqc) - Aggregate report describing results and QC from the whole pipeline
 - [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
@@ -119,42 +119,7 @@ Run `BLAST(n/x)` on reads classified as viruses by `kraken2`, `Centrifuge` or `D
 <details markdown="1">
 <summary>Output files</summary>
 
-- `blastn/`
-
-  - `centrifuge/`
-    - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
-    - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
-  - `diamond/`
-    - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
-    - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
-  - `kraken2/`
-    - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
-    - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
-
-- `blastx/`
-
-  - `centrifuge/`
-    - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
-    - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
-  - `diamond/`
-    - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
-    - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
-  - `kraken2/`
-    - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
-    - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
-
-</details>
-
-Users must provide a path to a `BLASTn` database using `params.blastn_db` and a `BLASTx` database using `params.blastx_db`. BLAST can also be skipped by setting `params.skip_blastn` or `params.skip_blastx`.
-
-#### Pathogen screening
-
-Run `BLAST(n/x)` on reads or consensus sequences mapped to a predefined pathogen database.
-
-<details markdown="1">
-<summary>Output files</summary>
-
-- `pathogens/`
+- `blast/`
 
   - `blastn/`
 
@@ -182,6 +147,45 @@ Run `BLAST(n/x)` on reads or consensus sequences mapped to a predefined pathogen
 
 </details>
 
+Users must provide a path to a `BLASTn` database using `params.blastn_db` and a `BLASTx` database using `params.blastx_db`. BLAST can also be skipped by setting `params.skip_blastn` or `params.skip_blastx`.
+
+#### Pathogen screening
+
+Run `BLAST(n/x)` on reads or consensus sequences mapped to a predefined pathogen database.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `pathogens/`
+
+  - `blast`
+
+    - `blastn/`
+
+      - `centrifuge/`
+        - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
+        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+      - `diamond/`
+        - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
+        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+      - `kraken2/`
+        - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
+        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+
+    - `blastx/`
+
+      - `centrifuge/`
+        - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
+        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+      - `diamond/`
+        - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
+        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+      - `kraken2/`
+        - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
+        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+
+</details>
+
 The `-outfmt` option is defined in `modules.config` as: ` -outfmt '10 qseqid sseqid slen pident qlen length qcovs nident evalue bitscore staxid ssciname'`. If you want to add or remove fields from the output, you need to update both `BLAST` output header file (`assets/blast_outfmt10_header.txt`) and the filtering function of `BLAST` hits (`bin/filter_blast.py`). Filtering thresholds can be adjusted using the parameters `params.blast(n/x)_min_qlen`, `params.blast(n/x)_min_pident`,`params.blast(n/x)_min_length`,`params.blast(n/x)_max_evalue`, which correspond to query length, percent of identical matches, alignment length, and e-value. The default values are 50, 50, 50 and 0.05.
 
 ### Mapping
@@ -196,6 +200,7 @@ Map reads to the pathogen genomes databases.
 <summary>Output files</summary>
 
 - `pathogens/`
+
   - `bowtie2/`
     - `align/`
       - `<sample_id>_aligned_pathogens_genome_sorted.bam`: BAM file containing short reads that aligned against the user-supplied pathogens genomes
@@ -213,7 +218,7 @@ Map reads to the pathogen genomes databases.
 
 The `pathogens` directory will only be present if `--perform_screen_pathogens` is supplied.
 
-### Individual FASTA or BAM
+### Pathogen reads
 
 After mapping reads to the pathogen genome databases, the BAM file includes multiple pathogen genomes. So we need to prepare individual BAM or FASTA files for each pathogen with mapped reads for downstream `Call consensus` and `BLAST`.
 
@@ -221,15 +226,17 @@ After mapping reads to the pathogen genome databases, the BAM file includes mult
 <summary>Output files</summary>
 
 - `pathogens/`
-  - `taxid_bam/`
-    - `<sample_id>_<taxID>_sorted.bam`
-    - `<sample_id>_<taxID>_sorted.bam.bai`
-  - `taxid_fasta/`
-    - `<sample_id>_<taxID>.fasta.gz`
+
+  - `pathogen_reads`
+    - `consensus_input/`
+      - `<sample_id>_<taxID>_sorted.bam`
+      - `<sample_id>_<taxID>_sorted.bam.bai`
+    - `blast_input/`
+      - `<sample_id>_<taxID>.fasta.gz`
 
 </details>
 
-If the number of mapped reads to a pathogen genome exceeds `params.min_read_counts`, an individual BAM file will be created and placed in the `taxid_bam` folder. Otherwise, an individual FASTA file will be created and placed in the `taxid_fasta`folder.
+If the number of mapped reads to a pathogen genome exceeds `params.min_read_counts`, an individual BAM file will be created and placed in the `consensus_input` folder. Otherwise, an individual FASTA file will be created and placed in the `blast_input`folder.
 
 ### Call consensus
 
