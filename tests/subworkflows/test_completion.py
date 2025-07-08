@@ -43,6 +43,36 @@ def test_autocomplete_subworkflows_mocked(mock_subworkflows_list_class, mock_com
     assert "vcf_gather_bcftools" not in values
 
 
+@patch("nf_core.subworkflows._completion.SubworkflowList")
+def test_autocomplete_subworkflows_with_ctx_obj(mock_subworkflows_list_class):
+    # Setup mock return value
+    mock_instance = mock_subworkflows_list_class.return_value
+    mock_instance.modules_repo.get_avail_components.return_value = [
+        "vcf_gather_bcftools",
+        "fastq_align_star",
+        "utils_nextflow_pipeline",
+    ]
+
+    # Provide ctx.obj with custom values
+    ctx = DummyCtx(
+        obj={
+            "modules_repo_url": "https://custom.url/modules",
+            "modules_repo_branch": "custom-branch",
+            "modules_repo_no_pull": True,
+        }
+    )
+
+    param = DummyParam()
+    completions = autocomplete_subworkflows(ctx, param, "utils")
+
+    # Assertions
+    mock_subworkflows_list_class.assert_called_once_with(".", True, "https://custom.url/modules", "custom-branch", True)
+
+    values = [c.value for c in completions]
+    assert "utils_nextflow_pipeline" in values
+    assert "vcf_gather_bcftools" not in values
+
+
 def test_autocomplete_subworkflows_missing_argument():
     ctx = DummyCtx()
     param = DummyParam()

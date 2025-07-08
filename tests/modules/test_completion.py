@@ -39,6 +39,33 @@ def test_autocomplete_modules_mocked(mock_module_list_class, mock_completion_ite
     assert "fastqc" not in values
 
 
+@patch("nf_core.modules._completion.ModuleList")
+def test_autocomplete_modules_with_ctx_obj(mock_module_list_class):
+    # Setup mock return value
+    mock_instance = mock_module_list_class.return_value
+    mock_instance.modules_repo.get_avail_components.return_value = ["custommodule/a", "custommodule/b", "othermodule/x"]
+
+    # Provide ctx.obj with custom values
+    ctx = DummyCtx(
+        obj={
+            "modules_repo_url": "https://custom.url/modules",
+            "modules_repo_branch": "custom-branch",
+            "modules_repo_no_pull": True,
+        }
+    )
+
+    param = DummyParam()
+    completions = autocomplete_modules(ctx, param, "custom")
+
+    # Assertions
+    mock_module_list_class.assert_called_once_with(".", True, "https://custom.url/modules", "custom-branch", True)
+
+    values = [c.value for c in completions]
+    assert "custommodule/a" in values
+    assert "custommodule/b" in values
+    assert "othermodule/x" not in values
+
+
 def test_autocomplete_modules_missing_argument(capfd):
     ctx = DummyCtx()
     param = DummyParam()
