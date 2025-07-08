@@ -8,7 +8,7 @@
 - fix nf-test scope to ignore nf-core module/swf tests ([#3609](https://github.com/nf-core/tools/pull/3609))
 - write github.run_id on pipeline template ([#3637](https://github.com/nf-core/tools/pull/3637))
 - Bump nf-schema to `2.4.2` ([#3533](https://github.com/nf-core/tools/pull/3533))
-- Bump the minimal Nextflow version to `24.10.8` ([#3533](https://github.com/nf-core/tools/pull/3533))
+- Bump the minimal Nextflow version to `24.10.5` ([#3533](https://github.com/nf-core/tools/pull/3533), [#3667](https://github.com/nf-core/tools/pull/3667))
 - CI - Only trigger nf-test action on pull_request ([#3628](https://github.com/nf-core/tools/pull/3628))
 - Fix link to nf-test GHA in README.md ([#3630](https://github.com/nf-core/tools/pull/3630))
 - Add accelerator directive for GPU-enabled processes ([#3632](https://github.com/nf-core/tools/pull/3632))
@@ -22,6 +22,7 @@
 
 - Remove args stub from module template to satisfy language server ([#3403](https://github.com/nf-core/tools/pull/3403))
 - Fix modules meta.yml file structure ([#3532](https://github.com/nf-core/tools/pull/3532))
+- Fix wrong key when updating module outputs ([#3665](https://github.com/nf-core/tools/pull/3665))
 
 ### Subworkflows
 
@@ -44,6 +45,8 @@
 - Update error message for rocrate_readme_sync ([#3652](https://github.com/nf-core/tools/pull/3652))
 - Update `nf-core modules info` command after `meta.yml` restructuring ([#3659](https://github.com/nf-core/tools/pull/3659))
 - Enable parsing of multi-line config values ([#3629](https://github.com/nf-core/tools/pull/3629))
+- Update python:3.13-slim Docker digest to 6544e0e ([#3663](https://github.com/nf-core/tools/pull/3663))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.12.2 ([#3661](https://github.com/nf-core/tools/pull/3661))
 
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
