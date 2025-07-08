@@ -1,7 +1,0 @@
-name: extractcentrifugereads
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - bioconda::seqkit=2.9.0
-  - conda-forge::pigz=2.8

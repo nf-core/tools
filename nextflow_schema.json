@@ -23,100 +23,6 @@
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.",
                     "fa_icon": "fas fa-file-csv"
                 },
-                "taxid": {
-                    "type": "string",
-                    "description": "The taxonomy ID identified in the classification results, or a list of taxIDs separated by spaces.",
-                    "fa_icon": "fas fa-list-alt"
-                },
-                "pathogens_genomes": {
-                    "type": "string",
-                    "format": "file-path",
-                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to a concatenated genome file containing complete genomes from a list of viral pathogens.",
-                    "fa_icon": "fas fa-dna"
-                },
-                "accession2taxid": {
-                    "type": "string",
-                    "format": "file-path",
-                    "pattern": "^\\S+\\.map$",
-                    "description": "Path to a file containing the accession IDs and corresponding taxIDs for each pathogen genome.",
-                    "fa_icon": "fas fa-file-alt"
-                },
-                "perform_extract_reads": {
-                    "type": "boolean",
-                    "description": "Extract reads assigned to taxonomic IDs.",
-                    "help_text": "Enable the option to extract reads assigned to taxonomic IDs based on results from `Kraken2`, `Centrifuge`, and `DIAMOND` classifiers.",
-                    "fa_icon": "fas fa-toggle-on"
-                },
-                "extract_kraken2_reads": {
-                    "type": "boolean",
-                    "description": "Extract reads classified by kraken2 according to taxonomic ID.",
-                    "fa_icon": "fas fa-toggle-on"
-                },
-                "extract_centrifuge_reads": {
-                    "type": "boolean",
-                    "description": "Extract reads classified by centrifuge according to taxonomic ID.",
-                    "fa_icon": "fas fa-toggle-on"
-                },
-                "extract_diamond_reads": {
-                    "type": "boolean",
-                    "description": "Extract reads classified by diamond according to taxonomic ID.",
-                    "fa_icon": "fas fa-toggle-on"
-                },
-                "evalue": {
-                    "type": ["number", "integer"],
-                    "description": "A Expected value to report an alignment.",
-                    "help_text": "The default e-value is 0.001 (high sensitivity, lower specificity) when running DIAMOND/BLASTX. An e-value between 1e-10 and 1e-5 represents moderate filtering (balanced sensitivity and specificity). An e-value < 1e-20 is considered strict filtering (high specificity, lower sensitivity).",
-                    "fa_icon": "fas fa-greater-than-equal"
-                },
-                "perform_shortread_denovo": {
-                    "type": "boolean",
-                    "description": "Turn on de novo assembly for short reads",
-                    "fa_icon": "fas fa-times"
-                },
-                "perform_longread_denovo": {
-                    "type": "boolean",
-                    "description": "Turn on de novo assembly for long reads",
-                    "fa_icon": "fas fa-times"
-                },
-                "flye_mode": {
-                    "type": "string",
-                    "description": "It provides `Flye` assembly modes. Our ONT reads were pre-processed by Guppy, so `--nano-corr` is the appropriate mode to use, as it is designed for ONT reads that have been corrected with other methods (with <3% error)",
-                    "default": "--nano-corr",
-                    "fa_icon": "fas fa-cogs"
-                },
-                "perform_screen_pathogens": {
-                    "type": "boolean",
-                    "description": "Screen viral pathogens for each sample",
-                    "help_text": "Turn on the option to screen viral pathogens by mapping reads against genomes of a list of viral pathogens. `Bowtie2` is used for mapping of short reads and `minimap2` for long reads.",
-                    "fa_icon": "fas fa-toggle-on"
-                },
-                "min_read_counts": {
-                    "type": "integer",
-                    "description": "Set the read count threshold for performing de novo assembly or consensus calling.",
-                    "help_text": "The recommended default should be > 100, as de novo assembly will fail with too few reads or reads.",
-                    "fa_icon": "fas fa-greater-than-equal"
-                },
-                "perform_longread_consensus": {
-                    "type": "boolean",
-                    "description": "Call consensus for long reads mapped to a pathogen genome.",
-                    "help_text": "Turn on the option to call consensus for long reads mapped to a pathogen genome.",
-                    "fa_icon": "fas fa-toggle-on"
-                },
-                "longread_consensus_tool": {
-                    "type": "string",
-                    "enum": ["medaka", "samtools"],
-                    "default": "medaka",
-                    "description": "Specify the tool used for consensus calling of long reads.",
-                    "help_text": "`medaka` is a tool designed for generating consensus sequences from nanopore sequencing data, and it uses a neural network to correct sequencing errors, improving the accuracy of consensus sequences. However `samtools consensus` does not have a specific algorithm tailored for nanopore reads.",
-                    "fa_icon": "fas fa-tools"
-                },
-                "perform_shortread_consensus": {
-                    "type": "boolean",
-                    "description": "Call consensus for short reads mapped to a pathogen genome.",
-                    "help_text": "Turn on the option to call consensus for short reads mapped to a pathogen genome using`samtools consensus`",
-                    "fa_icon": "fas fa-toggle-on"
-                },
                 "outdir": {
                     "type": "string",
                     "format": "directory-path",
@@ -134,6 +40,45 @@
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
+                }
+            }
+        },
+        "reference_genome_options": {
+            "title": "Reference genome options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Reference genome related files and options required for the workflow.",
+            "properties": {
+                "genome": {
+                    "type": "string",
+                    "description": "Name of iGenomes reference.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`. \n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details."
+                },
+                "fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
+                    "description": "Path to FASTA genome file.",
+                    "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "igenomes_ignore": {
+                    "type": "boolean",
+                    "description": "Do not load the iGenomes reference config.",
+                    "fa_icon": "fas fa-ban",
+                    "hidden": true,
+                    "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
+                },
+                "igenomes_base": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The base path to the igenomes reference files",
+                    "fa_icon": "fas fa-ban",
+                    "hidden": true,
+                    "default": "s3://ngi-igenomes/igenomes/"
                 }
             }
         },
@@ -271,7 +216,7 @@
                     "type": "string",
                     "fa_icon": "far fa-check-circle",
                     "description": "Base URL or local path to location of pipeline test dataset files",
-                    "default": "https://raw.githubusercontent.com/genomic-medicine-sweden/test-datasets/333a4af341ac9cba6106e6ebd295fc64e28d58bd/",
+                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/",
                     "hidden": true
                 },
                 "trace_report_suffix": {
@@ -286,6 +231,9 @@
     "allOf": [
         {
             "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/reference_genome_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"
