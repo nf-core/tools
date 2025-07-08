@@ -1081,6 +1081,9 @@ class DownloadTest(unittest.TestCase):
 
     # Simple file name with no registry in it
     @with_temporary_folder
+    @mock.patch(
+        "nf_core.pipelines.download._singularity.SingularityFetcher.check_and_set_implementation"
+    )  # This is to make sure that we do not check for Singularity/Apptainer installation
     @mock.patch("os.makedirs")
     @mock.patch("os.symlink")
     @mock.patch("os.open")
@@ -1096,6 +1099,7 @@ class DownloadTest(unittest.TestCase):
         mock_open,
         mock_symlink,
         mock_makedirs,
+        mock_check_and_set_implementation,
     ):
         # Setup
         mock_dirname.return_value = f"{tmp_path}/path/to"
@@ -1140,6 +1144,9 @@ class DownloadTest(unittest.TestCase):
 
     # File name with registry in it
     @with_temporary_folder
+    @mock.patch(
+        "nf_core.pipelines.download._singularity.SingularityFetcher.check_and_set_implementation"
+    )  # This is to make sure that we do not check for Singularity/Apptainer installation
     @mock.patch("os.makedirs")
     @mock.patch("os.symlink")
     @mock.patch("os.open")
@@ -1157,6 +1164,7 @@ class DownloadTest(unittest.TestCase):
         mock_open,
         mock_symlink,
         mock_makedirs,
+        mock_check_and_set_implementation,
     ):
         # Setup
         mock_resub.return_value = "singularity-image.img"
@@ -1239,14 +1247,15 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     @mock.patch("rich.progress.Progress.add_task")
     def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress):
-        singularity_fetcher = SingularityFetcher([], [], mock_rich_progress, None, None, False)
         with pytest.raises(OSError):
-            singularity_fetcher.pull_image("a-container", f"{tmp_dir}/anothercontainer.sif", "quay.io")
+            SingularityFetcher([], [], mock_rich_progress, None, None, False)
 
     #
     # Test for 'singularity.get_container_filename' function
     #
-    def test_singularity_get_container_filename(self):
+
+    @mock.patch("nf_core.pipelines.download._singularity.SingularityFetcher.check_and_set_implementation")
+    def test_singularity_get_container_filename(self, mock_check_and_set_implementation):
         registries = [
             "docker.io",
             "quay.io",
@@ -1359,8 +1368,11 @@ class DownloadTest(unittest.TestCase):
         Path(output_path).touch()  # Create an empty file at the output path
 
     @with_temporary_folder
+    @mock.patch(
+        "nf_core.pipelines.download._singularity.SingularityFetcher.check_and_set_implementation"
+    )  # This is to make sure that we do not check for Singularity/Apptainer installation
     @mock.patch.object(nf_core.pipelines.download.utils.FileDownloader, "download_file", new=mock_download_file)
-    def test_download_workflow_with_success(self, tmp_dir):
+    def test_download_workflow_with_success(self, tmp_dir, mock_check_and_set_implementation):
         os.environ["NXF_SINGULARITY_CACHEDIR"] = os.path.join(tmp_dir, "foo")
 
         download_obj = DownloadWorkflow(
@@ -1380,8 +1392,16 @@ class DownloadTest(unittest.TestCase):
     # Test Download for Seqera Platform
     #
     @with_temporary_folder
+    @mock.patch(
+        "nf_core.pipelines.download._singularity.SingularityFetcher.check_and_set_implementation"
+    )  # This is to make sure that we do not check for Singularity/Apptainer installation
     @mock.patch("nf_core.pipelines.download._singularity.SingularityFetcher.fetch_containers")
-    def test_download_workflow_for_platform(self, tmp_dir, _):
+    def test_download_workflow_for_platform(
+        self,
+        tmp_dir,
+        mock_fetch_containers,
+        mock_check_and_set_implementation,
+    ):
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
             revision=("3.7", "3.9"),
