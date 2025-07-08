@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## [v3.3.2dev - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
+## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
 ### Template
 
