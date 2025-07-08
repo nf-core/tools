@@ -5,7 +5,7 @@
   </picture>
 </h1>
 
-[![GitHub Actions CI Status](https://github.com/genomic-medicine-sweden/metaval/actions/workflows/ci.yml/badge.svg)](https://github.com/genomic-medicine-sweden/metaval/actions/workflows/ci.yml)
+[![GitHub Actions CI Status](https://github.com/genomic-medicine-sweden/metaval/actions/workflows/nf-test.yml/badge.svg)](https://github.com/genomic-medicine-sweden/metaval/actions/workflows/nf-test.yml)
 [![GitHub Actions Linting Status](https://github.com/genomic-medicine-sweden/metaval/actions/workflows/linting.yml/badge.svg)](https://github.com/genomic-medicine-sweden/metaval/actions/workflows/linting.yml)
 [![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
 
