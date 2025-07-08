@@ -15,4 +15,5 @@ pathogens/blast/{blastn,blastx}/*.txt
 spades/{centrifuge,diamond,kraken2}/*.log
 pathogens/bowtie2/align/*
 pathogens/minimap2/align/*
-pathogens/consensus/*_medaka.fa.gz
+pathogens/consensus/*
+pathogens/pathogen_reads/consensus_input/*

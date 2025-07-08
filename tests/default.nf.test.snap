@@ -523,20 +523,9 @@
                 "reference.4.bt2l:md5,f94d857fe08bf0e185a1ccc2079ba8de",
                 "reference.rev.1.bt2l:md5,db16f08d0eef3a4feeb47aaec66a9bd6",
                 "reference.rev.2.bt2l:md5,061d25379a3f57db6e974ba06aeed404",
-                "SRR13439790_9606_samtools.fasta.gz:md5,87414a6480230dcc184bec25640ef995",
-                "SRR13439802_9606_samtools.fasta.gz:md5,d223d2c21716f9b0fc930b0455a89c1d",
-                "SRR13439813_9606_samtools.fasta.gz:md5,823c5d0338f63932cd6b0cbeae29d083",
                 "reference.mmi:md5,32ee42d667d2423f74b759488d4bf381",
                 "SRR13439799_488241_1.fasta.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "SRR13439799_9606_1.fasta.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
-                "SRR13439790_9606_sorted.bam:md5,05be76e6ffb0462ab9641beb02835812",
-                "SRR13439790_9606_sorted.bam.bai:md5,0de44892507e43b9c6d1552fcc96c027",
-                "SRR13439799_211044_sorted.bam:md5,bfb7e576026b33c9e9fc12c72e933fbc",
-                "SRR13439799_211044_sorted.bam.bai:md5,1ffdf3ff18da29a051177442448786b6",
-                "SRR13439802_9606_sorted.bam:md5,7a02e8a3346f25c1fcff5825c5d07b29",
-                "SRR13439802_9606_sorted.bam.bai:md5,5767df1f90a934f11c0ce3d4887694c9",
-                "SRR13439813_9606_sorted.bam:md5,8e1789f027c61fa1a86afa8a82a0c7d2",
-                "SRR13439813_9606_sorted.bam.bai:md5,52bb53856f7276ecd42fdf6ead5835ba",
                 "SRR13439813_878220.contigs.fa.gz:md5,be438ae6f30e387b1b4f73e3d125327c",
                 "SRR13439813_878220.scaffolds.fa.gz:md5,ef22c6ad1510fc82408ebea88922f922",
                 "SRR13439813_878220.contigs.fa.gz:md5,5514d208cf21ce6f5c2635bcb2c28235",
@@ -551,6 +540,6 @@
             "nf-test": "0.9.2",
             "nextflow": "25.04.6"
         },
-        "timestamp": "2025-07-08T11:16:42.577430064"
+        "timestamp": "2025-07-08T12:21:27.956581366"
     }
 }
