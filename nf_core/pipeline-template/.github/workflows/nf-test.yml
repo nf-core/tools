@@ -80,7 +80,7 @@ jobs:
           - isMain: false
             profile: "singularity"
         NXF_VER:
-          - "24.10.8"
+          - "24.10.5"
           - "latest-everything"
     env:
       NXF_ANSI_LOG: false
