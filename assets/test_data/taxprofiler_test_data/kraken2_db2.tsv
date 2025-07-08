@@ -1,0 +1,45 @@
+taxonomy_id	lineage	2611_se_db2.kraken2.kraken2.report	ERR3201952_se_db2.kraken2.kraken2.report	2613_se_db2.kraken2.kraken2.report	2612_se_db2.kraken2.kraken2.report
+0		787758	4937	434423	1810182
+1		0	0	0	0
+131567		0	0	0	0
+2759	Eukaryota	0	0	0	0
+33154	Eukaryota;Opisthokonta	0	0	0	0
+4751	Eukaryota;Opisthokonta;Fungi	0	0	0	0
+451864	Eukaryota;Opisthokonta;Fungi;Dikarya	0	0	0	0
+4890	Eukaryota;Opisthokonta;Fungi;Dikarya;Ascomycota	0	0	0	0
+716545	Eukaryota;Fungi;Dikarya;Ascomycota;Opisthokonta	0	0	0	0
+147537	Eukaryota;Fungi;Dikarya;Ascomycota;Opisthokonta;Saccharomycotina	0	0	0	0
+4891	Eukaryota;Fungi;Dikarya;Ascomycota;Opisthokonta;Saccharomycotina;Saccharomycetes	0	0	0	0
+4892	Eukaryota;Fungi;Dikarya;Ascomycota;Opisthokonta;Saccharomycotina;Saccharomycetes;Saccharomycetales	0	0	0	0
+4893	Eukaryota;Fungi;Dikarya;Ascomycota;Opisthokonta;Saccharomycotina;Saccharomycetes;Saccharomycetales;Saccharomycetaceae	0	0	0	0
+4930	Eukaryota;Fungi;Dikarya;Ascomycota;Opisthokonta;Saccharomycotina;Saccharomycetes;Saccharomycetales;Saccharomycetaceae;Saccharomyces	0	0	0	0
+4932	Eukaryota;Fungi;Dikarya;Ascomycota;Opisthokonta;Saccharomycotina;Saccharomycetes;Saccharomycetales;Saccharomycetaceae;Saccharomyces;Saccharomyces cerevisiae	0	0	0	0
+559292	Eukaryota;Fungi;Dikarya;Ascomycota;Opisthokonta;Saccharomycotina;Saccharomycetes;Saccharomycetales;Saccharomycetaceae;Saccharomyces;Saccharomyces cerevisiae;Saccharomyces cerevisiae S288C	96	0	1	15
+33208	Eukaryota;Opisthokonta;Metazoa	0	0	0	0
+6072	Eukaryota;Metazoa;Opisthokonta	0	0	0	0
+33213	Eukaryota;Metazoa;Opisthokonta	0	0	0	0
+33511	Eukaryota;Metazoa;Opisthokonta	0	0	0	0
+7711	Eukaryota;Metazoa;Opisthokonta;Chordata	0	0	0	0
+89593	Eukaryota;Metazoa;Opisthokonta;Chordata;Craniata	0	0	0	0
+7742	Eukaryota;Metazoa;Chordata;Craniata;Opisthokonta	0	0	0	0
+7776	Eukaryota;Metazoa;Chordata;Craniata;Opisthokonta	0	0	0	0
+117570	Eukaryota;Metazoa;Chordata;Craniata;Opisthokonta	0	0	0	0
+117571	Eukaryota;Metazoa;Chordata;Craniata;Opisthokonta	0	0	0	0
+8287	Eukaryota;Metazoa;Chordata;Craniata;Opisthokonta;Sarcopterygii	0	0	0	0
+1338369	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Opisthokonta	0	0	0	0
+32523	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Opisthokonta	0	0	0	0
+32524	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Opisthokonta	0	0	0	0
+40674	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Opisthokonta;Mammalia	0	0	0	0
+32525	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta	0	0	0	0
+9347	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta	0	0	0	0
+1437010	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta	0	0	0	0
+314146	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires	0	0	0	0
+9443	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates	0	0	0	0
+376913	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini	0	0	0	0
+314293	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes	0	0	0	0
+9526	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes;Catarrhini	0	0	0	0
+314295	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes;Catarrhini;Hominoidea	0	0	0	0
+9604	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes;Catarrhini;Hominoidea;Hominidae	0	0	0	0
+207598	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes;Catarrhini;Hominoidea;Hominidae;Homininae	0	0	0	0
+9605	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes;Catarrhini;Hominoidea;Hominidae;Homininae;Homo	0	0	0	0
+9606	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes;Catarrhini;Hominoidea;Hominidae;Homininae;Homo;Homo sapiens	23	0	69	307

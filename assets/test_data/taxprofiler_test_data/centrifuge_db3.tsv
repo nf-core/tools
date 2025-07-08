@@ -1,0 +1,52 @@
+taxonomy_id	lineage	ERR3201952_se_db3.centrifuge	2613_se_db3.centrifuge	2612_se_db3.centrifuge
+0		4773	434053	1801191
+1		0	0	0
+131567		0	0	0
+2759	Eukaryota	0	0	0
+33090	Eukaryota;Viridiplantae	0	0	0
+35493	Eukaryota;Viridiplantae;Streptophyta	0	0	0
+131221	Eukaryota;Viridiplantae;Streptophyta;Streptophytina	0	0	0
+3193	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Embryophyta	0	0	0
+58023	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Embryophyta	0	0	0
+78536	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Embryophyta	0	0	0
+58024	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Embryophyta	0	0	0
+3398	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Embryophyta;Magnoliopsida	0	0	0
+1437183	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Magnoliopsida;Embryophyta	0	0	0
+71240	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Magnoliopsida;Embryophyta	0	0	0
+91827	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Magnoliopsida;Embryophyta	0	0	0
+1437201	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Magnoliopsida;Embryophyta	0	0	0
+71274	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Magnoliopsida;Embryophyta	0	0	0
+91888	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Magnoliopsida;Embryophyta	0	0	0
+91889	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Magnoliopsida;Embryophyta;Garryales	0	0	0
+4390	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Magnoliopsida;Embryophyta;Garryales;Eucommiaceae	0	0	0
+4391	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Magnoliopsida;Embryophyta;Garryales;Eucommiaceae;Eucommia	0	0	0
+4392	Eukaryota;Viridiplantae;Streptophyta;Streptophytina;Magnoliopsida;Embryophyta;Garryales;Eucommiaceae;Eucommia;Eucommia ulmoides	164	364	8972
+33154	Eukaryota;Opisthokonta	0	0	0
+33208	Eukaryota;Opisthokonta;Metazoa	0	0	0
+6072	Eukaryota;Metazoa;Opisthokonta	0	0	0
+33213	Eukaryota;Metazoa;Opisthokonta	0	0	0
+33511	Eukaryota;Metazoa;Opisthokonta	0	0	0
+7711	Eukaryota;Metazoa;Opisthokonta;Chordata	0	0	0
+89593	Eukaryota;Metazoa;Opisthokonta;Chordata;Craniata	0	0	0
+7742	Eukaryota;Metazoa;Chordata;Craniata;Opisthokonta	0	0	0
+7776	Eukaryota;Metazoa;Chordata;Craniata;Opisthokonta	0	0	0
+117570	Eukaryota;Metazoa;Chordata;Craniata;Opisthokonta	0	0	0
+117571	Eukaryota;Metazoa;Chordata;Craniata;Opisthokonta	0	0	0
+8287	Eukaryota;Metazoa;Chordata;Craniata;Opisthokonta;Sarcopterygii	0	0	0
+1338369	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Opisthokonta	0	0	0
+32523	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Opisthokonta	0	0	0
+32524	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Opisthokonta	0	0	0
+40674	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Opisthokonta;Mammalia	0	0	0
+32525	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta	0	0	0
+9347	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta	0	0	0
+1437010	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta	0	0	0
+314146	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires	0	0	0
+9443	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates	0	0	0
+376913	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini	0	0	0
+314293	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes	0	0	0
+9526	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes;Catarrhini	0	0	0
+314295	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes;Catarrhini;Hominoidea	0	0	0
+9604	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes;Catarrhini;Hominoidea;Hominidae	0	0	0
+207598	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes;Catarrhini;Hominoidea;Hominidae;Homininae	0	0	0
+9605	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes;Catarrhini;Hominoidea;Hominidae;Homininae;Homo	0	0	0
+9606	Eukaryota;Metazoa;Chordata;Craniata;Sarcopterygii;Mammalia;Opisthokonta;Euarchontoglires;Primates;Haplorrhini;Simiiformes;Catarrhini;Hominoidea;Hominidae;Homininae;Homo;Homo sapiens	0	76	341
