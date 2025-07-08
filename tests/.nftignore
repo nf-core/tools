@@ -9,8 +9,10 @@ multiqc/multiqc_report.html
 multiqc/multiqc_data/*.txt
 fastqc/*_fastqc.{html,zip}
 pipeline_info/*.{html,json,txt,yml}
-blastn/**/*.txt
-blastx/**/*.txt
-pathogens/blastn/**/*.txt
-pathogens/blastx/**/*.txt
-spades/**/*.log
+blastn/{centrifuge,diamond,kraken2}/*.txt
+blastx/{centrifuge,diamond,kraken2}/*.txt
+pathogens/blast/{blastn,blastx}/*.txt
+spades/{centrifuge,diamond,kraken2}/*.log
+pathogens/bowtie2/align/*
+pathogens/minimap2/align/*
+pathogens/consensus/*_medaka.fa.gz
