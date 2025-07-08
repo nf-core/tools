@@ -197,7 +197,7 @@ class ContainerFetcher:
 
         # Fetch containers from a remote location
         if containers_remote_fetch:
-            self.progress.update_main_task(description="Fetching {self.name} images")
+            self.progress.update_main_task(description=f"Fetching {self.implementation} images")
             self.fetch_remote_containers(containers_remote_fetch, parallel=self.parallel)
 
         # Copy containers

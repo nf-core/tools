@@ -724,39 +724,71 @@ class DownloadWorkflow:
             log.info(
                 "Fetching container names for workflow using [blue bold]nextflow inspect[/]. This might take a while."
             )
-            if not self.find_container_images_nf_inspect(workflow_directory):
-                self.find_container_images_legacy(workflow_directory)
+            try:
+                self.find_container_images_nf_inspect(workflow_directory)
+                return
 
-    def find_container_images_nf_inspect(self, workflow_directory: str) -> bool:
-        try:
-            # TODO: Select container system via profile. Is this stable enough?
-            # NOTE: We will likely don't need this after the switch to Seqera containers
-            profile = f"-profile {self.container_system}" if self.container_system else ""
+            except RuntimeError as e:
+                log.warning("Running 'nextflow inspect' failed with the following error")
+                log.warning(e)
 
-            # Run nextflow inspect
-            executable = "nextflow"
-            cmd_params = f"inspect -format json {profile} {workflow_directory}"
-            cmd_out = run_cmd(executable, cmd_params)
-            if cmd_out is None:
-                log.error("Failed to run `nextflow inspect` to extract containers. Falling back to legacy function.")
-                return False
+            except KeyError as e:
+                log.warning("Failed to parse output of 'nextflow inspect' to extract containers")
+                log.debug(e)
 
-            out, _ = cmd_out
-            out_json = json.loads(out)
-            # NOTE: We only save the container strings to comply with the legacy function.
-            self.containers = list({proc["container"] for proc in out_json["processes"]})
-            return True
+            self.find_container_images_legacy(workflow_directory)
 
-        except KeyError as e:
-            log.warning("Failed to parse output of `nextflow inspect` to extract containers")
-            log.debug(e)
-            return False
+    def get_erroneuous_container_names(self, named_containers: dict[str, str]) -> dict[str, tuple[str, str]]:
+        """
+        Look for common errors in container names that cannot be handled by `nextflow inspect`:
+        - Dynamically resolved variable in container name: if the variable is unknown then it is resolved as `null` in image name.
+        For use, see for example the nf-core/rnaseq 3.7 star_align module.
 
-        except RuntimeError as e:
-            # nextflow version < 25.02.1
-            log.warning("Running `nextflow inspect` failed with the following error")
-            log.warning(e)
-            return False
+        Args:
+            named_containers (dict[str, str]): Dictionary of module names and their corresponding container strings.
+        Returns:
+            dict[str, str]: Dictionary of module names and their corresponding container strings that contain likely errors.
+        """
+        error_patterns = {
+            r"/null": "[blue]`null`[/] found in image name",
+        }
+        weird_containers = {
+            module: (container, msg)
+            for module, container in named_containers.items()
+            for pattern, msg in error_patterns.items()
+            if re.search(pattern, container)
+        }
+        return weird_containers
+
+    def find_container_images_nf_inspect(self, workflow_directory: str, entrypoint="main.nf"):
+        # TODO: Select container system via profile. Is this stable enough?
+        # NOTE: We will likely don't need this after the switch to Seqera containers
+        profile = f"-profile {self.container_system}" if self.container_system else ""
+
+        # Run nextflow inspect
+        executable = "nextflow"
+        cmd_params = f"inspect -format json {profile} {os.path.join(workflow_directory, entrypoint)}"
+        cmd_out = run_cmd(executable, cmd_params)
+        if cmd_out is None:
+            raise RuntimeError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
+
+        out, _ = cmd_out
+        out_json = json.loads(out)
+        # NOTE: We only save the container strings to comply with the legacy function.
+        named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
+        weird_containers = self.get_erroneuous_container_names(named_containers)
+        if weird_containers:
+            formatted_weird_containers = [
+                f"{module}: {container} ({msg})" for module, (container, msg) in weird_containers.items()
+            ]
+            joined_weird_containers = "     \n".join(formatted_weird_containers)
+            raise RuntimeError(
+                f"[red]Found erroneous container names using [blue]nextflow inspect[/]:[/]\n"
+                f"{joined_weird_containers}\n"
+                f"This might be due to the fact that the container strings contain unresolved variables"
+            )
+
+        self.containers = list(set(named_containers.values()))
 
     def find_container_images_legacy(self, workflow_directory: str) -> None:
         """Find container image names for workflow.

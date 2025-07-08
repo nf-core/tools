@@ -3,7 +3,13 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     nf-core/mock-pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/nf-core/mock-pipeline
+
+    Entrypoint for for a passing `nextflow inspect` test --  container directives should
+    be correctly caprtued by the `nextflow inspect` command.
+
+    For verification purposes, the correct container for each tested profile the
+    container directives are kept in the `per_profile_output` directory.
+
 ----------------------------------------------------------------------------------------
 */
 
@@ -13,7 +19,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { MOCK_PIPELINE } from './workflows/mock-pipeline'
+include { PASSING } from './workflows/passing'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_mock-pipeline_pipeline'
 include { PIPELINE_COMPLETION } from './subworkflows/local/utils_nfcore_mock-pipeline_pipeline'
 /*
@@ -27,16 +33,13 @@ include { PIPELINE_COMPLETION } from './subworkflows/local/utils_nfcore_mock-pip
 //
 workflow NFCORE_MOCK_PIPELINE {
     take:
-    mockery // channel: samplesheet read in from --input
+    ch_mockery // channel: samplesheet read in from --input
 
     main:
+    ch_mockery = PASSING(ch_mockery)
 
-    //
-    // WORKFLOW: Run pipeline
-    //
-    MOCK_PIPELINE(
-        mockery
-    )
+    emit:
+    ch_mockery
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -69,6 +72,6 @@ workflow {
     PIPELINE_COMPLETION(
         params.outdir,
         params.monochrome_logs,
-        NFCORE_MOCK_PIPELINE.out.multiqc_report,
+        NFCORE_MOCK_PIPELINE.out.ch_mockery,
     )
 }

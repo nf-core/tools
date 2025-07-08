@@ -3,7 +3,11 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     nf-core/mock-pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/nf-core/mock-pipeline
+
+    Entrypoint for for a failing `nextflow inspect` test -- the imported module(s)
+    contains patterns not supported by `nextflow inspect`. We want to warn the user
+    about this and use this pipeline for testing purposes.
+
 ----------------------------------------------------------------------------------------
 */
 
@@ -12,9 +16,8 @@
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-// include { MOCK_PIPELINE } from './workflows/mock-pipeline'
-include { RMARKDOWNNOTEBOOK } from './modules/nf-core/rmarkdownnotebook/main'
-include { MOCK_NO_CONTAINER } from './modules/local/mock_no_container/main'
+
+include { FAILING } from './workflows/failing'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_mock-pipeline_pipeline'
 include { PIPELINE_COMPLETION } from './subworkflows/local/utils_nfcore_mock-pipeline_pipeline'
 /*
@@ -28,14 +31,13 @@ include { PIPELINE_COMPLETION } from './subworkflows/local/utils_nfcore_mock-pip
 //
 workflow NFCORE_MOCK_PIPELINE {
     take:
-    mockery // channel: samplesheet read in from --input
+    ch_mockery // channel: samplesheet read in from --input
 
     main:
+    ch_mockery = FAILING(ch_mockery)
 
-    mockery
-    //
-    // WORKFLOW: Run pipeline
-    //
+    emit:
+    ch_mockery
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,6 +70,6 @@ workflow {
     PIPELINE_COMPLETION(
         params.outdir,
         params.monochrome_logs,
-        NFCORE_MOCK_PIPELINE.out.multiqc_report,
+        NFCORE_MOCK_PIPELINE.out.ch_mockery,
     )
 }
