@@ -35,7 +35,7 @@ conda install nf-core
 Alternatively, you can create a new environment with both nf-core/tools and nextflow:
 
 ```bash
-conda create --name nf-core python=3.12 nf-core nextflow
+conda create --name nf-core python=3.13 nf-core nextflow
 conda activate nf-core
 ```
 

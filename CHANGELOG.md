@@ -1,5 +1,54 @@
 # nf-core/tools: Changelog
 
+## [v3.3.2dev - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
+
+### Template
+
+- Avoid overriding `NFT_DIFF` and `NFT_DIFF_ARGS` in `nf-test` action ([#3606](https://github.com/nf-core/tools/pull/3606)) and ([#3619](https://github.com/nf-core/tools/pull/3619))
+- fix nf-test scope to ignore nf-core module/swf tests ([#3609](https://github.com/nf-core/tools/pull/3609))
+- write github.run_id on pipeline template ([#3637](https://github.com/nf-core/tools/pull/3637))
+- Bump nf-schema to `2.4.2` ([#3533](https://github.com/nf-core/tools/pull/3533))
+- Bump the minimal Nextflow version to `24.10.5` ([#3533](https://github.com/nf-core/tools/pull/3533), [#3667](https://github.com/nf-core/tools/pull/3667))
+- CI - Only trigger nf-test action on pull_request ([#3628](https://github.com/nf-core/tools/pull/3628))
+- Fix link to nf-test GHA in README.md ([#3630](https://github.com/nf-core/tools/pull/3630))
+- Add accelerator directive for GPU-enabled processes ([#3632](https://github.com/nf-core/tools/pull/3632))
+- Update dependency prettier to v3.6.0 ([#3641](https://github.com/nf-core/tools/pull/3641)) and 3.6.2 ([#3646](https://github.com/nf-core/tools/pull/3646))
+- Add opt-in feature `gpu` ([#3562](https://github.com/nf-core/tools/pull/3562))
+- Update zentered/bluesky-post-action action to v0.3.0 ([#3626](https://github.com/nf-core/tools/pull/3626))
+
+### Linting
+
+- Fix linting of nf-test files content ([#3603](https://github.com/nf-core/tools/pull/3603))
+
+### Modules
+
+- Remove args stub from module template to satisfy language server ([#3403](https://github.com/nf-core/tools/pull/3403))
+- Fix modules meta.yml file structure ([#3532](https://github.com/nf-core/tools/pull/3532))
+- Fix wrong key when updating module outputs ([#3665](https://github.com/nf-core/tools/pull/3665))
+
+### Subworkflows
+
+### General
+
+- update id of ruff hook in pre-commit config ([#3621](https://github.com/nf-core/tools/pull/3621))
+- Fixes a bug with the test-datasets subcommand [#3617](https://github.com/nf-core/tools/issues/3617)
+- Pin python Docker tag to f2fdaec ([#3623](https://github.com/nf-core/tools/pull/3623))
+- Make changelog bot push to correct remote ([#3638](https://github.com/nf-core/tools/pull/3638))
+- Give unique button ids to help buttons in create app ([#3645](https://github.com/nf-core/tools/pull/3645))
+- Parallelize pytest runs and speed up coverage step ([#3635](https://github.com/nf-core/tools/pull/3635))
+- Update gitpod/workspace-base Docker digest to 77021d8 ([#3649](https://github.com/nf-core/tools/pull/3649))
+- Update error message for rocrate_readme_sync ([#3652](https://github.com/nf-core/tools/pull/3652))
+- Update `nf-core modules info` command after `meta.yml` restructuring ([#3659](https://github.com/nf-core/tools/pull/3659))
+- Enable parsing of multi-line config values ([#3629](https://github.com/nf-core/tools/pull/3629))
+
+#### Version updates
+
+- Drop python 3.8, add tests with python 3.13 ([#3538](https://github.com/nf-core/tools/pull/3538))
+- Update python:3.13-slim Docker digest to 6544e0e ([#3663](https://github.com/nf-core/tools/pull/3663))
+- Update pre-commit hook astral-sh/ruff-pre-commit to v0.12.2 ([#3627](https://github.com/nf-core/tools/pull/3627),[#3648](https://github.com/nf-core/tools/pull/3648), [#3661](https://github.com/nf-core/tools/pull/3661))
+- Update dependency textual to v3.5.0 ([#3636](https://github.com/nf-core/tools/pull/3636))
+- Update pre-commit hook pre-commit/mirrors-mypy to v1.16.1 ([#3624](https://github.com/nf-core/tools/pull/3624))
+
 ## [v3.3.1 - Tungsten Tamarin Patch](https://github.com/nf-core/tools/releases/tag/3.3.1) - [2025-06-02]
 
 ### Template
@@ -1967,7 +2016,6 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
   - Docs are automatically built by Travis CI and updated on the nf-co.re website.
 - Introduced test for filtering remote workflows by keyword.
 - Build tools python API docs
-
   - Use Travis job for api doc generation and publish
 
 - `nf-core bump-version` now stops before making changes if the linting fails

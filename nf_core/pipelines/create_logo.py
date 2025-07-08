@@ -82,6 +82,8 @@ def create_logo(
 
             template_path = assets / template_fn
             img = Image.open(template_path)
+            if img is None:
+                raise RuntimeError("Failed to create logo image")
             # get the height of the template image
             height = img.size[1]
 
@@ -102,9 +104,13 @@ def create_logo(
             # Save to cache
             Path(cache_path.parent).mkdir(parents=True, exist_ok=True)
             log.debug(f"Saving logo to cache: {cache_path}")
-            img.save(cache_path, "PNG")
+            if img is not None:
+                img.save(cache_path, "PNG")
         # Save
-        img.save(logo_path, "PNG")
+        if img is not None:
+            img.save(logo_path, "PNG")
+        else:
+            raise RuntimeError("Failed to create logo image")
 
     log.debug(f"Saved logo to: '{logo_path}'")
 

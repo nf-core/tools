@@ -11,7 +11,7 @@ import tarfile
 import textwrap
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 from zipfile import ZipFile
 
 import git
@@ -162,7 +162,7 @@ class DownloadWorkflow:
         self.parallel_downloads = parallel_downloads
 
         self.wf_revisions = []
-        self.wf_branches: Dict[str, Any] = {}
+        self.wf_branches: dict[str, Any] = {}
         self.wf_sha = {}
         self.wf_download_url = {}
         self.nf_config = {}
@@ -892,7 +892,9 @@ class DownloadWorkflow:
             """
             direct_match = re.match(either_url_or_docker, container_value.strip())
             if direct_match:
-                cleaned_matches.append(direct_match.group(0))
+                # eliminate known false positives also from direct matches
+                if direct_match.group(0) not in ["singularity", "apptainer"]:
+                    cleaned_matches.append(direct_match.group(0))
                 continue  # oh yes, that was plain sailing
 
             """
@@ -978,7 +980,7 @@ class DownloadWorkflow:
         """
         return self.prioritize_direct_download(cleaned_matches)
 
-    def prioritize_direct_download(self, container_list: List[str]) -> List[str]:
+    def prioritize_direct_download(self, container_list: list[str]) -> list[str]:
         """
         Helper function that takes a list of container images (URLs and Docker URIs),
         eliminates all Docker URIs for which also a URL is contained and returns the
@@ -1010,10 +1012,10 @@ class DownloadWorkflow:
 
         Lastly, we want to remove at least a few Docker URIs for those modules, that have an oras:// download link.
         """
-        d: Dict[str, str] = {}
-        seqera_containers_http: List[str] = []
-        seqera_containers_oras: List[str] = []
-        all_others: List[str] = []
+        d: dict[str, str] = {}
+        seqera_containers_http: list[str] = []
+        seqera_containers_oras: list[str] = []
+        all_others: list[str] = []
 
         for c in container_list:
             if bool(re.search(r"/data$", c)):
@@ -1034,7 +1036,7 @@ class DownloadWorkflow:
         return sorted(list(set(combined_with_oras + seqera_containers_http)))
 
     @staticmethod
-    def reconcile_seqera_container_uris(prioritized_container_list: List[str], other_list: List[str]) -> List[str]:
+    def reconcile_seqera_container_uris(prioritized_container_list: list[str], other_list: list[str]) -> list[str]:
         """
         Helper function that takes a list of Seqera container URIs,
         extracts the software string and builds a regex from them to filter out
@@ -1161,10 +1163,10 @@ class DownloadWorkflow:
                 )
 
                 # Organise containers based on what we need to do with them
-                containers_exist: List[str] = []
-                containers_cache: List[Tuple[str, str, Optional[str]]] = []
-                containers_download: List[Tuple[str, str, Optional[str]]] = []
-                containers_pull: List[Tuple[str, str, Optional[str]]] = []
+                containers_exist: list[str] = []
+                containers_cache: list[tuple[str, str, Optional[str]]] = []
+                containers_download: list[tuple[str, str, Optional[str]]] = []
+                containers_pull: list[tuple[str, str, Optional[str]]] = []
                 for container in self.containers:
                     # Fetch the output and cached filenames for this container
                     out_path, cache_path = self.singularity_image_filenames(container)
@@ -1302,7 +1304,7 @@ class DownloadWorkflow:
                         # Task should advance in any case. Failure to pull will not kill the download process.
                         progress.update(task, advance=1)
 
-    def singularity_image_filenames(self, container: str) -> Tuple[str, Optional[str]]:
+    def singularity_image_filenames(self, container: str) -> tuple[str, Optional[str]]:
         """Check Singularity cache for image, copy to destination folder if found.
 
         Args:
@@ -1446,7 +1448,7 @@ class DownloadWorkflow:
             del output_path_tmp
 
     def singularity_pull_image(
-        self, container: str, out_path: str, cache_path: Optional[str], library: List[str], progress: DownloadProgress
+        self, container: str, out_path: str, cache_path: Optional[str], library: list[str], progress: DownloadProgress
     ) -> None:
         """Pull a singularity image using ``singularity pull``
 

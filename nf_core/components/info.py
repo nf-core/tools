@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import questionary
 import yaml
@@ -66,7 +66,7 @@ class ComponentInfo(ComponentCommand):
         no_pull: bool = False,
     ):
         super().__init__(component_type, pipeline_dir, remote_url, branch, no_pull)
-        self.meta: Optional[Dict] = None
+        self.meta: Optional[dict] = None
         self.local_path: Optional[Path] = None
         self.remote_location: Optional[str] = None
         self.local: bool = False
@@ -106,7 +106,7 @@ class ComponentInfo(ComponentCommand):
                     components = self.get_components_clone_modules()
                 elif self.repo_type == "pipeline":
                     assert self.modules_json is not None  # mypy
-                    all_components: List[Tuple[str, str]] = self.modules_json.get_all_components(
+                    all_components: list[tuple[str, str]] = self.modules_json.get_all_components(
                         self.component_type
                     ).get(self.modules_repo.remote_url, [])
 
@@ -170,7 +170,7 @@ class ComponentInfo(ComponentCommand):
 
         return self.generate_component_info_help()
 
-    def get_local_yaml(self) -> Optional[Dict]:
+    def get_local_yaml(self) -> Optional[dict]:
         """Attempt to get the meta.yml file from a locally installed module/subworkflow.
 
         Returns:
@@ -213,7 +213,7 @@ class ComponentInfo(ComponentCommand):
 
         return {}
 
-    def get_remote_yaml(self) -> Optional[Dict]:
+    def get_remote_yaml(self) -> Optional[dict]:
         """Attempt to get the meta.yml file from a remote repo.
 
         Returns:
@@ -320,18 +320,27 @@ class ComponentInfo(ComponentCommand):
         # Outputs
         if self.meta.get("output"):
             outputs_table = self.generate_params_table("Outputs")
-            for output in self.meta["output"]:
-                if self.component_type == "modules":
-                    for ch_name, elements in output.items():
-                        outputs_table.add_row(f"{ch_name}", "", "")
-                        for element in elements:
+            if self.component_type == "modules":
+                for ch_name, elements in self.meta["output"].items():
+                    outputs_table.add_row(f"{ch_name}", "", "")
+                    for element in elements:
+                        if isinstance(element, list):
+                            for ch in element:
+                                for key, info in ch.items():
+                                    outputs_table.add_row(
+                                        f"[orange1 on black] {key} [/][dim i] ({info['type']})",
+                                        Markdown(info["description"] if info["description"] else ""),
+                                        info.get("pattern", ""),
+                                    )
+                        elif isinstance(element, dict):
                             for key, info in element.items():
                                 outputs_table.add_row(
                                     f"[orange1 on black] {key} [/][dim i] ({info['type']})",
                                     Markdown(info["description"] if info["description"] else ""),
                                     info.get("pattern", ""),
                                 )
-                elif self.component_type == "subworkflows":
+            elif self.component_type == "subworkflows":
+                for output in self.meta["output"]:
                     for key, info in output.items():
                         outputs_table.add_row(
                             f"[orange1 on black] {key} [/][dim i]",
