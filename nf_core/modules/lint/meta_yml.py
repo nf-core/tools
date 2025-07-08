@@ -138,7 +138,8 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
             log.debug(f"No inputs specified in module `main.nf`: {module.component_name}")
         # Check that all inputs are correctly specified
         if "input" in meta_yaml:
-            correct_inputs, meta_inputs = obtain_correct_and_specified_inputs(module_lint_object, module, meta_yaml)
+            correct_inputs = obtain_inputs(module_lint_object, module.inputs)
+            meta_inputs = obtain_inputs(module_lint_object, meta_yaml["input"])
 
             if correct_inputs == meta_inputs:
                 module.passed.append(
@@ -176,7 +177,8 @@ def meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent, allow_m
             )
         # Check that all outputs are correctly specified
         if "output" in meta_yaml:
-            correct_outputs, meta_outputs = obtain_correct_and_specified_outputs(module_lint_object, module, meta_yaml)
+            correct_outputs = obtain_outputs(module_lint_object, module.outputs)
+            meta_outputs = obtain_outputs(module_lint_object, meta_yaml["output"])
 
             if correct_outputs == meta_outputs:
                 module.passed.append(
@@ -230,67 +232,57 @@ def read_meta_yml(module_lint_object: ComponentLint, module: NFCoreComponent) ->
     return meta_yaml
 
 
-def obtain_correct_and_specified_inputs(_, module, meta_yaml):
+def obtain_inputs(_, inputs: list) -> list:
     """
-    Obtain the list of correct inputs and the elements of each input channel.
+    Obtain the list of inputs and the elements of each input channel.
 
     Args:
-        module (object): The module object.
-        meta_yaml (dict): The meta.yml dictionary.
+        inputs (dict): The dictionary of inputs from main.nf or meta.yml files.
 
     Returns:
-        tuple: A tuple containing two lists. The first list contains the correct inputs,
-               and the second list contains the inputs specified in meta.yml.
+        formatted_inputs (dict): A dictionary containing the inputs and their elements obtained from main.nf or meta.yml files.
     """
-    correct_inputs = []
-    for input_channel in module.inputs:
-        channel_elements = []
-        for element in input_channel:
-            channel_elements.append(list(element.keys())[0])
-        correct_inputs.append(channel_elements)
-
-    meta_inputs = []
-    for input_channel in meta_yaml["input"]:
-        if isinstance(input_channel, list):  # Correct format
+    formatted_inputs = []
+    for input_channel in inputs:
+        if isinstance(input_channel, list):
             channel_elements = []
             for element in input_channel:
                 channel_elements.append(list(element.keys())[0])
-            meta_inputs.append(channel_elements)
-        elif isinstance(input_channel, dict):  # Old format
-            meta_inputs.append(list(input_channel.keys())[0])
+            formatted_inputs.append(channel_elements)
+        else:
+            formatted_inputs.append(list(input_channel.keys())[0])
 
-    return correct_inputs, meta_inputs
+    return formatted_inputs
 
 
-def obtain_correct_and_specified_outputs(_, module, meta_yaml):
+def obtain_outputs(_, outputs: Union[dict, list]) -> Union[dict, list]:
     """
-    Obtain the dictionary of correct outputs and elements of each output channel.
+    Obtain the dictionary of outputs and elements of each output channel.
 
     Args:
-        module (object): The module object.
-        meta_yaml (dict): The meta.yml dictionary.
+        outputs (dict): The dictionary of outputs from main.nf or meta.yml files.
 
     Returns:
-        correct_outputs (dict): A dictionary containing the correct outputs and their elements.
-        meta_outputs (dict): A dictionary containing the outputs specified in meta.yml.
+        formatted_outputs (dict): A dictionary containing the outputs and their elements obtained from main.nf or meta.yml files.
     """
-    correct_outputs = {}
-    for output_channel in module.outputs:
-        channel_name = list(output_channel.keys())[0]
-        channel_elements = []
-        for element in output_channel[channel_name]:
-            channel_elements.append(list(element.keys())[0])
-        correct_outputs[channel_name] = channel_elements
-
-    meta_outputs = {}
-    for output_channel in meta_yaml["output"]:
-        channel_name = list(output_channel.keys())[0]
-        if isinstance(output_channel[channel_name], list):  # Correct format
-            channel_elements = []
-            for element in output_channel[channel_name]:
+    formatted_outputs: dict = {}
+    old_structure = isinstance(outputs, list)
+    if old_structure:
+        outputs = {k: v for d in outputs for k, v in d.items()}
+    assert isinstance(outputs, dict)  # mypy
+    for channel_name in outputs.keys():
+        output_channel = outputs[channel_name]
+        channel_elements: list = []
+        for element in output_channel:
+            if isinstance(element, list):
+                channel_elements.append([])
+                for e in element:
+                    channel_elements[-1].append(list(e.keys())[0])
+            else:
                 channel_elements.append(list(element.keys())[0])
-            meta_outputs[channel_name] = channel_elements
-        elif isinstance(output_channel[channel_name], dict):  # Old format
-            meta_outputs[channel_name] = []
+        formatted_outputs[channel_name] = channel_elements
 
-    return correct_outputs, meta_outputs
+    if old_structure:
+        return [{k: v} for k, v in formatted_outputs.items()]
+    else:
+        return formatted_outputs
