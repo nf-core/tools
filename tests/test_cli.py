@@ -174,7 +174,7 @@ class TestCli(unittest.TestCase):
             "container-library": "quay.io",
             "container-cache-utilisation": "copy",
             "container-cache-index": "/path/index.txt",
-            "parallel-downloads": 2,
+            "parallel": 2,
         }
 
         cmd = (
@@ -200,7 +200,7 @@ class TestCli(unittest.TestCase):
             (params["container-library"],),
             params["container-cache-utilisation"],
             params["container-cache-index"],
-            params["parallel-downloads"],
+            params["parallel"],
             "hide-progress" in toplevel_params,
         )
 

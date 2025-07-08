@@ -35,7 +35,7 @@ class ContainerFetcher:
         library_dir: Optional[str],
         cache_dir: Optional[str],
         amend_cachedir: bool,
-        max_workers: int = 4,
+        parallel: int = 4,
     ) -> None:
         self.container_library = list(container_library)
         self.registry_set = registry_set
@@ -46,7 +46,7 @@ class ContainerFetcher:
         self.library_dir = library_dir
         self.cache_dir = cache_dir
         self.amend_cachedir = amend_cachedir
-        self.max_workers = max_workers
+        self.parallel = parallel
 
         self.check_and_set_implementation()
 
@@ -198,7 +198,7 @@ class ContainerFetcher:
         # Fetch containers from a remote location
         if containers_remote_fetch:
             self.progress.update_main_task(description="Fetching {self.name} images")
-            self.fetch_remote_containers(containers_remote_fetch, max_workers=self.max_workers)
+            self.fetch_remote_containers(containers_remote_fetch, parallel=self.parallel)
 
         # Copy containers
         self.progress.update_main_task(description="Copying container images from/to cache")
@@ -207,7 +207,7 @@ class ContainerFetcher:
             self.progress.update_main_task(advance=1)
 
     @abstractmethod
-    def fetch_remote_containers(self, containers: list[tuple[str, str]], max_workers=4):
+    def fetch_remote_containers(self, containers: list[tuple[str, str]], parallel=4):
         """
         Fetch remote containers
 

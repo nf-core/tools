@@ -1,15 +1,14 @@
+import itertools
 import logging
 import os
 import re
 import shutil
 import subprocess
 from collections.abc import Iterable
-from pathlib import Path
 
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.utils import (
     FileDownloader,
-    intermediate_file_no_creation,
 )
 
 log = logging.getLogger(__name__)
@@ -39,7 +38,7 @@ class SingularityFetcher(ContainerFetcher):
             container_fn = container_fn.replace(".sif:", "-")
         elif container_fn.endswith(".sif"):
             extension = ".sif"
-            container_fn = container_fn.strip(".sif")
+            container_fn = container_fn.replace(".sif", "")
 
         # Strip : and / characters
         container_fn = container_fn.replace("/", "-").replace(":", "-")
@@ -47,7 +46,7 @@ class SingularityFetcher(ContainerFetcher):
         container_fn = container_fn + extension
         return container_fn
 
-    def fetch_remote_containers(self, containers, max_workers=4):
+    def fetch_remote_containers(self, containers, parallel=4):
         # Split the list of containers depending on whether we want to pull them or download them
         containers_pull = []
         containers_download = []
@@ -68,7 +67,7 @@ class SingularityFetcher(ContainerFetcher):
 
         if containers_download:
             self.progress.update_main_task(description="Downloading singularity images")
-            self.download_images(containers_download, parallel_downloads=max_workers)
+            self.download_images(containers_download, parallel_downloads=parallel)
 
     def symlink_registries(self, image_path: str) -> None:
         """Create a symlink for each registry in the registry set that points to the image.
@@ -110,8 +109,8 @@ class SingularityFetcher(ContainerFetcher):
                 finally:
                     os.close(image_dir)
 
-    def construct_pull_command(self, output_path: Path, address: str):
-        singularity_command = [self.implementation, "pull", "--name", str(output_path), address]
+    def construct_pull_command(self, output_path: str, address: str):
+        singularity_command = [self.implementation, "pull", "--name", output_path, address]
         return singularity_command
 
     def copy_image(self, container, src_path, dest_path):
@@ -216,7 +215,6 @@ class SingularityFetcher(ContainerFetcher):
             address = f"docker://{library}/{container.replace('docker://', '')}"
             absolute_URI = False
         log.warning(f"Pulling singularity image {container} from {address} to {output_path}")
-
         with self.progress.sub_task(
             container,
             start=False,
@@ -224,39 +222,36 @@ class SingularityFetcher(ContainerFetcher):
             progress_type="singularity_pull",
             current_log="",
         ) as task:
-            with intermediate_file_no_creation(output_path) as output_path_tmp:
-                singularity_command = self.construct_pull_command(output_path_tmp, address)
+            singularity_command = self.construct_pull_command(output_path, address)
 
-                log.debug(f"Building singularity image: {address}")
-                log.debug(f"Singularity command: {' '.join(singularity_command)}")
+            log.debug(f"Building singularity image: {address}")
+            # Run the singularity pull command
+            with subprocess.Popen(
+                singularity_command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+                bufsize=1,
+            ) as proc:
+                lines = []
+                if proc.stdout is not None:
+                    for line in proc.stdout:
+                        lines.append(line)
+                        self.progress.update(task, current_log=line.strip())
 
-                # Run the singularity pull command
-                with subprocess.Popen(
-                    singularity_command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    universal_newlines=True,
-                    bufsize=1,
-                ) as proc:
-                    lines = []
-                    if proc.stdout is not None:
-                        for line in proc.stdout:
-                            lines.append(line)
-                            self.progress.update(task, current_log=line.strip())
-
-                if lines:
-                    # something went wrong with the container retrieval
-                    log.debug(f"Singularity pull output: {lines}")
-                    if any("FATAL: " in line for line in lines):
-                        raise SingularityError(
-                            container=container,
-                            registry=library,
-                            address=address,
-                            absolute_URI=absolute_URI,
-                            out_path=output_path,
-                            command=singularity_command,
-                            error_msg=lines,
-                        )
+            if lines:
+                # something went wrong with the container retrieval
+                log.debug(f"Singularity pull output: {lines}")
+                if any("FATAL: " in line for line in lines):
+                    raise SingularityError(
+                        container=container,
+                        registry=library,
+                        address=address,
+                        absolute_URI=absolute_URI,
+                        out_path=output_path,
+                        command=singularity_command,
+                        error_msg=lines,
+                    )
 
             self.symlink_registries(output_path)
 
@@ -301,15 +296,16 @@ class SingularityError(Exception):
             # The image and registry are valid, but the (version) tag is not
             r"manifest\sunknown": self.InvalidTagError,
             # The container image is no native Singularity Image Format.
-            r"ORAS\sSIF\simage\sshould\shave\sa\ssingle\slayer": self.NoSingularitySingularityError,
+            r"ORAS\sSIF\simage\sshould\shave\sa\ssingle\slayer": self.NoSingularityContainerError,
             # The image file already exists in the output directory
             r"Image\sfile\salready\sexists": self.ImageExistsError,
         }
-        for line in error_msg:
-            for pattern, error_class in error_patterns.items():
-                if re.search(pattern, line):
-                    self.error_type = error_class(self)
-                    break
+        # Loop through the error messages and patterns. Since we want to have the option of
+        # no matches at all, we use itertools.product to allow for the use of the for ... else construct.
+        for line, (pattern, error_class) in itertools.product(error_msg, error_patterns.items()):
+            if re.search(pattern, line):
+                self.error_type = error_class(self)
+                break
         else:
             self.error_type = self.OtherError(self)
 
@@ -371,7 +367,7 @@ class SingularityError(Exception):
             self.helpmessage = f'Saving image of "{self.error_log.container}" failed, because "{self.error_log.out_path}" exists.\nPlease troubleshoot the command \n"{" ".join(self.error_log.command)}" manually.\n'
             super().__init__(self.message)
 
-    class NoContainerSingularityError(RuntimeError):
+    class NoSingularityContainerError(RuntimeError):
         """The container image is no native Singularity Image Format."""
 
         def __init__(self, error_log):

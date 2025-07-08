@@ -65,7 +65,7 @@ class DownloadWorkflow:
         container_library (List[str]): The container libraries (registries) to use. Defaults to None.
         container_cache_utilisation (str): If a local or remote cache of already existing container images should be considered. Defaults to None.
         container_cache_index (str): An index for the remote container cache. Defaults to None.
-        parallel_downloads (int): The number of parallel downloads to use. Defaults to 4.
+        parallel (int): The number of parallel downloads to use. Defaults to 4.
     """
 
     def __init__(
@@ -82,11 +82,15 @@ class DownloadWorkflow:
         container_library=None,
         container_cache_utilisation=None,
         container_cache_index=None,
-        parallel_downloads=4,
+        parallel=4,
         hide_progress=False,
     ):
         # Verify that the flags provided make sense together
-        if container_system == "docker" and container_cache_utilisation != "copy":
+        if (
+            container_system == "docker"
+            and container_cache_utilisation != "copy"
+            and container_cache_utilisation is not None
+        ):
             raise DownloadError(
                 "Only the 'copy' option for --container-cache-utilisation is supported for Docker images. "
             )
@@ -131,7 +135,7 @@ class DownloadWorkflow:
         self.container_cache_utilisation = "remote" if container_cache_index else container_cache_utilisation
         self.container_cache_index = container_cache_index
         # allows to specify a container library / registry or a respective mirror to download images from
-        self.parallel_downloads = parallel_downloads
+        self.parallel = parallel
 
         self.wf_revisions = []
         self.wf_branches: dict[str, Any] = {}
@@ -935,11 +939,11 @@ class DownloadWorkflow:
                         library_dir,
                         cache_dir,
                         self.container_cache_utilisation == "amend",
-                        max_workers=self.parallel_downloads,
+                        parallel=self.parallel,
                     )
                 elif self.container_system == "docker":
                     container_fetcher = DockerFetcher(
-                        self.container_library, self.registry_set, progress, max_workers=self.parallel_downloads
+                        self.container_library, self.registry_set, progress, parallel=self.parallel
                     )
                 container_fetcher.fetch_containers(
                     self.containers,

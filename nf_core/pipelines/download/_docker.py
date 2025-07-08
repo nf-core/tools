@@ -22,7 +22,7 @@ class DockerFetcher(ContainerFetcher):
         container_library: Iterable[str],
         registry_set: Iterable[str],
         progress: DownloadProgress,
-        max_workers: int = 4,
+        parallel: int = 4,
     ):
         """
         Intialize the docker image fetcher
@@ -35,7 +35,7 @@ class DockerFetcher(ContainerFetcher):
             cache_dir=None,  # Docker does not use a cache directory
             library_dir=None,  # Docker does not use a library directory
             amend_cachedir=False,  # Docker does not use a cache directory
-            max_workers=max_workers,
+            parallel=parallel,
         )
 
     def check_and_set_implementation(self):
@@ -56,7 +56,7 @@ class DockerFetcher(ContainerFetcher):
         container_fn = container_fn + extension
         return container_fn
 
-    def fetch_remote_containers(self, containers, max_workers=4):
+    def fetch_remote_containers(self, containers, parallel=4):
         """
         Fetch remote containers in parallel.
 
@@ -66,7 +66,7 @@ class DockerFetcher(ContainerFetcher):
             containers (Iterable[tuple[str, str]]): A list of tuples with the container name
         """
         self.pull_images(containers)
-        self.save_images(containers, parallel_saves=max_workers)
+        self.save_images(containers, parallel_saves=parallel)
 
     def construct_pull_command(self, address):
         pull_command = ["docker", "image", "pull", address]
