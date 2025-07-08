@@ -1,5 +1,6 @@
-from click.shell_completion import CompletionItem
 import sys
+
+from click.shell_completion import CompletionItem
 
 from nf_core.modules.list import ModuleList
 

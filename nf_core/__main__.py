@@ -60,11 +60,11 @@ from nf_core.commands_test_datasets import (
     test_datasets_search,
 )
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
-from nf_core.pipelines.download import DownloadError
-from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 from nf_core.modules._completion import autocomplete_modules
-from nf_core.subworkflows._completion import autocomplete_subworkflows
 from nf_core.pipelines._completion import autocomplete_pipelines
+from nf_core.pipelines.download import DownloadError
+from nf_core.subworkflows._completion import autocomplete_subworkflows
+from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 
 # Set up logging as the root logger
 # Submodules should all traverse back to this
