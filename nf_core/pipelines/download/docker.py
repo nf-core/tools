@@ -1,8 +1,11 @@
 import concurrent
+import concurrent.futures
 import logging
+import select
 import shutil
 import subprocess
 from collections.abc import Iterable
+from typing import Optional
 
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.utils import (
@@ -58,19 +61,53 @@ class DockerFetcher(ContainerFetcher):
 
     def fetch_remote_containers(self, containers, parallel=4):
         """
-        Fetch remote containers in parallel.
-
-        We first pull the images using the `docker image pull` command,
-        then save them to a file using the `docker image save` command.
+        Fetch remote containers in parallel:
+        - A single thread pulls the images using the `docker image pull` command,
+        - Multiple threads saves the pull images to tar archives using the `docker image save` command.
         Args:
             containers (Iterable[tuple[str, str]]): A list of tuples with the container name
         """
-        self.pull_images(containers)
-        self.save_images(containers, parallel_saves=parallel)
+        # We use a single thread pool to pull and save images. To ensure that only a single image is pulled at a time,
+        # we let the next pull task wait for the previous one to finish. Save tasks can run in parallel, but they need to
+        # wait for the pull task to finish before they can save the image.
+        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as pool:
+            futures = []
 
-    def construct_pull_command(self, address):
-        pull_command = ["docker", "image", "pull", address]
-        return pull_command
+            # Initialize the wait_future to None, which will be used to wait for the previous pull task to finish
+            wait_future = None
+            for container, output_path in containers:
+                # Submit the pull task to the pool
+                future = pool.submit(self.pull_image, container, wait_future)
+                futures.append(future)
+
+                # Set the wait_future to the current future, so that the next pull task can wait for it
+                wait_future = future
+
+                # Submit the save task to the pool, which waits for the pull task to finish
+                save_future = pool.submit(self.save_image, container, output_path, wait_future)
+                futures.append(save_future)
+
+            # Make ctrl-c work with multi-threading: set a sentinel that is checked by the subprocesses
+            self.kill_with_fire = False
+
+            # Wait for all pull and save tasks to finish
+            try:
+                for future in concurrent.futures.as_completed(futures):
+                    try:
+                        future.result()  # This will raise an exception if the pull or save failed
+                    except DockerError as e:
+                        log.error(f"Error while processing container {e.container}: {e.message}")
+                    except Exception as e:
+                        log.error(f"Unexpected error: {e}")
+
+            except KeyboardInterrupt:
+                # Cancel the future threads that haven't started yet
+                for future in futures:
+                    future.cancel()
+                # Set the sentinel to True to pass the signal to subprocesses
+                self.kill_with_fire = True
+                # Re-raise exception on the main thread
+                raise
 
     def construct_save_command(self, output_path, address):
         save_command = [
@@ -83,7 +120,9 @@ class DockerFetcher(ContainerFetcher):
         ]
         return save_command
 
-    def save_image(self, container: str, output_path: str) -> None:
+    def save_image(
+        self, container: str, output_path: str, wait_future: Optional[concurrent.futures.Future] = None
+    ) -> None:
         """Save a Docker image that has been pulled to a file.
 
         Args:
@@ -91,114 +130,68 @@ class DockerFetcher(ContainerFetcher):
                 to ``biocontainers/name:varsion``
             out_path (str): The final target output path
             cache_path (str, None): The NXF_DOCKER_CACHEDIR path if set, None if not
+            wait_future (concurrent.futures.Future, None): A future that is used to wait for the previous pull task to finish.
         """
+        # If we have a wait_future, we wait for it to finish before saving the image
+        if wait_future is not None:
+            wait_future.result()
+
         log.debug(f"Saving Docker image '{container}' to {output_path}")
         address = container
         save_command = self.construct_save_command(output_path, address)
-        self._run_docker_command(save_command, container, output_path, address, "save")
+        self._run_docker_command(save_command, container, output_path, address, "docker_save", "Saving image")
 
-    def save_images(self, containers: Iterable[tuple[str, str]], parallel_saves) -> None:
-        # if clause gives slightly better UX, because Download is no longer displayed if nothing is left to be downloaded.
-        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_saves) as pool:
-            # Kick off concurrent downloads
-            future_downloads = [
-                pool.submit(self.save_image, container, output_path) for (container, output_path) in containers
-            ]
+    def construct_pull_command(self, address):
+        pull_command = ["docker", "image", "pull", address]
+        return pull_command
 
-            # Make ctrl-c work with multi-threading
-            self.kill_with_fire = False
-
-            try:
-                # Iterate over each threaded download, waiting for them to finish
-                for future in concurrent.futures.as_completed(future_downloads):
-                    future.result()
-                    try:
-                        self.progress.update_main_task(advance=1)
-                    except Exception as e:
-                        log.error(f"Error updating progress bar: {e}")
-
-            except KeyboardInterrupt:
-                # Cancel the future threads that haven't started yet
-                for future in future_downloads:
-                    future.cancel()
-                # Set the variable that the threaded function looks for
-                # Will trigger an exception from each thread
-                self.kill_with_fire = True
-                # Re-raise exception on the main thread
-                raise
-
-    def pull_images(self, containers_pull: Iterable[tuple[str, str]]) -> None:
-        for container, output_path in containers_pull:
-            # it is possible to try multiple registries / mirrors if multiple were specified.
-            # Iteration happens over a copy of self.container_library[:], as I want to be able to remove failing registries for subsequent images.
-            for library in self.container_library[:]:
-                try:
-                    self.pull_image(container, output_path, library)
-                    # Pulling the image was successful, no DockerError was raised, break the library loop
-                    break
-                except DockerError.ImageNotFoundError as e:
-                    # Try other registries
-                    if e.error_log.absolute_URI:
-                        break  # there no point in trying other registries if absolute URI was specified.
-                    else:
-                        continue
-                except DockerError.InvalidTagError:
-                    # Try other registries
-                    continue
-                except DockerError.OtherError as e:
-                    # Try other registries
-                    log.error(e.message)
-                    log.error(e.helpmessage)
-                    if e.error_log.absolute_URI:
-                        break  # there no point in trying other registries if absolute URI was specified.
-                    else:
-                        continue
-            else:
-                # The else clause executes after the loop completes normally.
-                # This means the library loop completed without breaking, indicating failure for all libraries (registries)
-                log.error(
-                    f"Not able to pull image of {container}. Service might be down or internet connection is dead."
-                )
-            # Task should advance in any case. Failure to pull will not kill the download process.
-            self.progress.update_main_task(advance=1)
-
-    def pull_image(self, container: str, output_path: str, library: str) -> None:
-        """Pull a docker image using ``docker pull``
-
-        This function will try to pull the image from the specified library.
+    def pull_image(self, container: str, prev_pull_future: Optional[concurrent.futures.Future] = None) -> None:
+        """
+        Pull a single Docker image from a registry.
 
         Args:
-            container (str): A pipeline's container name. Usually it is of similar format
-                to ``nfcore/name:version``.
-            library (list of str): A list of libraries to try for pulling the image.
-
-        Raises:
-            Various exceptions possible from `subprocess` execution of docker.
+            container (str): The container. Should be the full address of the container e.g. `quay.io/biocontainers/name:version`
+            output_path (str): The final local output path
+            prev_pull_future (concurrent.futures.Future, None): A future that is used to wait for the previous pull task to finish.
         """
-        address = container
+        if prev_pull_future is not None:
+            prev_pull_future.result()  # Wait for the previous pull to finish
+        # Try pulling the image from the specified address
+        try:
+            pull_command = self.construct_pull_command(container)
+            log.debug(f"Pulling docker image: {container}")
+            log.debug(f"Docker command: {' '.join(pull_command)}")
+            self._run_docker_command(pull_command, container, None, container, "docker_pull", "Pulling image")
+        except (DockerError.InvalidTagError, DockerError.ImageNotFoundError) as e:
+            log.error(e.message)
+            log.error(f"Not able to pull image of {container}. Service might be down or internet connection is dead.")
+        except DockerError.OtherError as e:
+            # Try other registries
+            log.error(e.message)
+            log.error(e.helpmessage)
+            log.error(f"Not able to pull image of {container}. Service might be down or internet connection is dead.")
 
-        pull_command = self.construct_pull_command(address)
-        log.debug(f"Pulling docker image: {address}")
-        log.debug(f"Docker command: {' '.join(pull_command)}")
-        self._run_docker_command(pull_command, container, output_path, address, "docker_pull")
+        # Task should advance in any case. Failure to pull will not kill the pulling process.
+        self.progress.update_main_task(advance=1)
 
     def _run_docker_command(
         self,
         command: list[str],
         container: str,
-        output_path: str,
+        output_path: Optional[str],
         address: str,
         task_name: str,
+        task_desc: str,
     ) -> None:
         """
         Internal command to run docker commands and error handle them properly
         """
         # Progress bar to show that something is happening
-        nice_name = container.split("/")[-1][:50]
+        container_short_name = container.split("/")[-1][:50]
+        nice_name = f"{task_desc} '{container_short_name}'"
+        # print(f"Running command: {' '.join(command)}")
         task = self.progress.add_task(
             nice_name,
-            start=False,
-            total=False,
             progress_type=task_name,
             current_log="",
         )
@@ -209,11 +202,33 @@ class DockerFetcher(ContainerFetcher):
             universal_newlines=True,
             bufsize=1,
         ) as proc:
+            # Monitor the process:
+            # - read lines if there are any,
+            # - check if we should kill it,
+            # - update the progress bar
             lines = []
-            if proc.stdout is not None:
-                for line in proc.stdout:
-                    lines.append(line)
-                    self.progress.update(task, current_log=line.strip())
+            while True:
+                if self.kill_with_fire:
+                    proc.kill()
+                    raise KeyboardInterrupt("Docker command was cancelled by user")
+
+                rlist, _, _ = select.select([proc.stdout], [], [], 0.1)
+                if rlist and proc.stdout is not None:
+                    line = proc.stdout.readline()
+                    if line:
+                        lines.append(line)
+                        self.progress.update(task, current_log=line.strip())
+                    elif proc.poll() is not None:
+                        # Process has finished, break the loop
+                        break
+                elif proc.poll() is not None:
+                    # Process has finished, break the loop
+                    break
+            log.debug(
+                f"Docker command '{' '.join(command)}' finished with return code {proc.returncode}. Waiting for it to exit."
+            )
+            proc.wait()
+            log.debug(f"Docker command '{' '.join(command)}' has exited.")
 
         if lines:
             # something went wrong with the container retrieval
