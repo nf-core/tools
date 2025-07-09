@@ -125,6 +125,12 @@ class Workflows:
             repos = response.json()["remote_workflows"]
             for repo in repos:
                 self.remote_workflows.append(RemoteWorkflow(repo))
+        else:
+            print(
+                f"Could not fetch remote workflows from {nfcore_url} - "
+                f"HTTP status code: {response.status_code}"
+            )
+            sys.exit(1)
 
     def get_local_nf_workflows(self):
         """Retrieves local Nextflow workflows.
