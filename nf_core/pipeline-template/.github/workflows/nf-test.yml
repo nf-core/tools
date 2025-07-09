@@ -1,12 +1,6 @@
 name: Run nf-test
 on:
-  pull_request:
-    paths-ignore:
-      - "docs/**"
-      - "**/meta.yml"
-      - "**/*.md"
-      - "**/*.png"
-      - "**/*.svg{% raw %}"
+  pull_request:{% raw %}"
   release:
     types: [published]
   workflow_dispatch:
