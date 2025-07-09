@@ -81,7 +81,6 @@ De novo assemble the extracted reads for a taxID.
 <summary>Output files</summary>
 
 - `spades/`
-
   - `centrifuge/`
     - `<sample_id>_<taxID>.contigs.fa.gz`: FASTA file containing the resulting contigs.
     - `<sample_id>_<taxID>.scaffolds.fa.gz`: FASTA file containing the resulting scaffolds.
