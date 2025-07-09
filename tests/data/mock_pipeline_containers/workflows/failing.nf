@@ -4,7 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // Mock modules below
-include { MOCK_DSL2_VARIABLE } from '../modules/local/mock_dsl2_variable/main'
+include { MOCK_DSL2_VARIABLE } from '../modules/local/failing/mock_dsl2_variable/main'
 
 include { paramsSummaryMultiqc } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
