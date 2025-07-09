@@ -174,6 +174,7 @@ class TestCli(unittest.TestCase):
             "container-cache-utilisation": "copy",
             "container-cache-index": "/path/index.txt",
             "parallel-downloads": 2,
+            "api-download": False,
         }
 
         cmd = ["pipelines", "download"] + self.assemble_params(params) + ["pipeline_name"]
@@ -195,6 +196,7 @@ class TestCli(unittest.TestCase):
             params["container-cache-utilisation"],
             params["container-cache-index"],
             params["parallel-downloads"],
+            params["api-download"],
         )
 
         mock_dl.return_value.download_workflow.assert_called_once()

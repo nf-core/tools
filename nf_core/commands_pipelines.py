@@ -176,6 +176,7 @@ def pipelines_download(
     container_cache_utilisation,
     container_cache_index,
     parallel_downloads,
+    api_download,
 ):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
@@ -199,6 +200,7 @@ def pipelines_download(
         container_cache_utilisation,
         container_cache_index,
         parallel_downloads,
+        api_download,
     )
     dl.download_workflow()
 
