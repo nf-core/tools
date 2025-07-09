@@ -21,9 +21,10 @@ class DummyCtx:
 def test_autocomplete_pipelines():
     ctx = DummyCtx()
     param = DummyParam()
-    completions = autocomplete_pipelines(ctx, param, "next")
+    completions = autocomplete_pipelines(ctx, param, "")
 
     values = [c.value for c in completions]
+    print(values)  # For debugging purposes
 
     assert "nextflow-io/hello" in values
     assert "nf-core/rnaseq" not in values
