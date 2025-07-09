@@ -59,7 +59,7 @@ from nf_core.commands_test_datasets import (
     test_datasets_list_remote,
     test_datasets_search,
 )
-from nf_core.components.components_utils import autocomplete_modules, autocomplete_subworkflows
+from nf_core.components.components_completion import autocomplete_modules, autocomplete_subworkflows
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
 from nf_core.pipelines.download import DownloadError
 from nf_core.pipelines.list import autocomplete_pipelines
