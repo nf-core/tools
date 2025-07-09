@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Union
@@ -12,6 +13,7 @@ import git
 import requests
 import rich.console
 import rich.table
+from click.shell_completion import CompletionItem
 
 import nf_core.utils
 
@@ -38,6 +40,23 @@ def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archiv
         return wfs.print_json()
     else:
         return wfs.print_summary()
+
+
+def autocomplete_pipelines(ctx, param, incomplete: str):
+    try:
+        wfs = Workflows()
+        wfs.get_remote_workflows()
+        wfs.get_local_nf_workflows()
+        local_workflows = [wf.full_name for wf in wfs.local_workflows]
+        remote_workflows = [wf.full_name for wf in wfs.remote_workflows]
+        available_workflows = local_workflows + remote_workflows
+
+        matches = [CompletionItem(wor) for wor in available_workflows if wor.startswith(incomplete)]
+
+        return matches
+    except Exception as e:
+        print(f"[ERROR] Autocomplete failed: {e}", file=sys.stderr)
+        return []
 
 
 def get_local_wf(workflow: Union[str, Path], revision=None) -> Union[str, None]:
