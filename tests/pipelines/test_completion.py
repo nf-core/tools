@@ -4,8 +4,6 @@ import pytest
 
 from nf_core.pipelines.list import autocomplete_pipelines
 
-from ..utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
-
 
 class DummyParam:
     # Minimal mock object for Click parameter
@@ -21,13 +19,14 @@ class DummyCtx:
 def test_autocomplete_pipelines():
     ctx = DummyCtx()
     param = DummyParam()
-    completions = autocomplete_pipelines(ctx, param, "")
+    completions = autocomplete_pipelines(ctx, param, "nf-core/bac")
 
     values = [c.value for c in completions]
     print(values)  # For debugging purposes
 
-    assert "nextflow-io/hello" in values
-    assert "nf-core/rnaseq" not in values
+    assert "nf-core/bacass" in values
+    assert "nf-core/bactmap" in values
+    assert "nf-core/abotyper" not in values
 
 
 @patch("nf_core.pipelines.list.Workflows")
