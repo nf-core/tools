@@ -19,17 +19,12 @@ class DummyCtx:
 
 
 def test_autocomplete_pipelines():
-    ctx = DummyCtx(
-        obj={
-            "modules_repo_url": GITLAB_URL,
-            "modules_repo_branch": GITLAB_NFTEST_BRANCH,
-            "modules_repo_no_pull": True,
-        }
-    )
+    ctx = DummyCtx()
     param = DummyParam()
     completions = autocomplete_pipelines(ctx, param, "next")
 
     values = [c.value for c in completions]
+    print(values)  # For debugging purposes
 
     assert "nextflow-io/hello" in values
     assert "nf-core/rnaseq" not in values
