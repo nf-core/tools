@@ -1,0 +1,11 @@
+{
+    "MOCK_DOCKER_SINGLE_QUAY_IO": "quay.io/biocontainers/singlequay:1.9--pyh9f0ad1d_0",
+    "MOCK_DSL2_APPTAINER_VAR1": "quay.io/biocontainers/dsltwoapptainervarone:1.1.0--py38h7be5676_2",
+    "MOCK_DSL2_APPTAINER_VAR2": "quay.io/biocontainers/dsltwoapptainervartwo:1.1.0--hdfd78af_0",
+    "MOCK_DSL2_CURRENT": "quay.io/biocontainers/dsltwocurrent:1.2.1--pyhdfd78af_0",
+    "MOCK_DSL2_CURRENT_INVERTED": "quay.io/biocontainers/dsltwocurrentinv:3.3.2--h1b792b2_1",
+    "MOCK_DSL2_OLD": "quay.io/biocontainers/dsltwoold:0.23.0--0",
+    "MOCK_SEQERA_CONTAINER_HTTP": "community.wave.seqera.io/library/coreutils:9.5--ae99c88a9b28c264",
+    "MOCK_SEQERA_CONTAINER_ORAS": "community.wave.seqera.io/library/umi-transfer:1.0.0--d30e8812ea280fa1",
+    "MOCK_SEQERA_CONTAINER_ORAS_MULLED": "community.wave.seqera.io/library/umi-transfer_umicollapse:3298d4f1b49e33bd"
+}
