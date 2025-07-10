@@ -892,7 +892,9 @@ class DownloadWorkflow:
             """
             direct_match = re.match(either_url_or_docker, container_value.strip())
             if direct_match:
-                cleaned_matches.append(direct_match.group(0))
+                # eliminate known false positives also from direct matches
+                if direct_match.group(0) not in ["singularity", "apptainer"]:
+                    cleaned_matches.append(direct_match.group(0))
                 continue  # oh yes, that was plain sailing
 
             """

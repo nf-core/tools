@@ -221,7 +221,9 @@ class NFCoreComponent:
                         ]  # Takes only first part, avoid commas in quotes
                         input_val = input_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
                         channel_elements.append({input_val: {}})
-                if len(channel_elements) > 0:
+                if len(channel_elements) == 1:
+                    inputs.append(channel_elements[0])
+                elif len(channel_elements) > 1:
                     inputs.append(channel_elements)
             log.debug(f"Found {len(inputs)} inputs in {self.main_nf}")
             self.inputs = inputs
@@ -241,10 +243,10 @@ class NFCoreComponent:
             self.inputs = inputs
 
     def get_outputs_from_main_nf(self):
-        outputs = []
         with open(self.main_nf) as f:
             data = f.read()
         if self.component_type == "modules":
+            outputs = {}
             # get output values from main.nf after "output:". the names are always after "emit:"
             if "output:" not in data:
                 log.debug(f"Could not find any outputs in {self.main_nf}")
@@ -257,7 +259,8 @@ class NFCoreComponent:
                 matches_elements = re.finditer(regex_elements, line)
                 if not match_emit:
                     continue
-                output_channel = {match_emit.group(1): []}
+                channel_elements = []
+                outputs[match_emit.group(1)] = []
                 for _, match_element in enumerate(matches_elements, start=1):
                     output_val = None
                     if match_element.group(3):
@@ -269,11 +272,15 @@ class NFCoreComponent:
                             0
                         ]  # Takes only first part, avoid commas in quotes
                         output_val = output_val.strip().strip("'").strip('"')  # remove quotes and whitespaces
-                        output_channel[match_emit.group(1)].append({output_val: {}})
-                outputs.append(output_channel)
-            log.debug(f"Found {len(outputs)} outputs in {self.main_nf}")
+                        channel_elements.append({output_val: {}})
+                if len(channel_elements) == 1:
+                    outputs[match_emit.group(1)].append(channel_elements[0])
+                elif len(channel_elements) > 1:
+                    outputs[match_emit.group(1)].append(channel_elements)
+            log.debug(f"Found {len(list(outputs.keys()))} outputs in {self.main_nf}")
             self.outputs = outputs
         elif self.component_type == "subworkflows":
+            outputs = []
             # get output values from main.nf after "emit:". Can be named outputs or not.
             if "emit:" not in data:
                 log.debug(f"Could not find any outputs in {self.main_nf}")
