@@ -420,7 +420,7 @@ class ComponentCreate(ComponentCommand):
             log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
         # Determine whether this repo is hosted on GitHub
         repo_url = (
-            self.wf.config.get("manifest.profile_repository")
+            getattr(self.modules_repo, "remote_url", None)
             or getattr(self.wf.dir, "git_origin_url", "")
             or ""
         )

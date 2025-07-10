@@ -162,3 +162,45 @@ class TestModulesCreate(TestModules):
 
         # Check that symlink is deleted
         assert not symlink_file.is_symlink()
+    @pytest.mark.parametrize("origin_url, username, should_pass", [
+        # GitHub uses strict regex
+        ("git@github.com:nf-core/tools.git", "@john.doe", True),
+        ("https://github.com/foo/bar.git", "@foo_bar-1", True),
+        ("https://github.com/foo/bar.git", "@foo@bar", False),
+        # Non-GitHub is more relaxed
+        ("git@gitlab.com:john.doe/proj.git", "@anything", True),
+        ("ssh://gitea.example/user", "@user.name", True),
+        ("ssh://gitlab.com/user", "user.name", False),
+    ])
+    def test_username_validation(self, origin_url, username, should_pass, monkeypatch):
+        """Test GitHub username validation in _get_username logic"""
+
+        class DummyWF:
+            def __init__(self, origin_url):
+                self.config = {}
+                self.dir = type("Dir", (), {"git_origin_url": origin_url})
+
+        class FakeModulesRepo:
+            no_pull_global = False
+            def __init__(self, *args, **kwargs):
+                pass
+
+        # Stub out all dependencies
+        monkeypatch.setattr(nf_core.utils, "run_cmd", lambda *a, **k: (b"", b""))
+        monkeypatch.setattr(nf_core.modules.modules_repo, "ModulesRepo", FakeModulesRepo)
+        monkeypatch.setattr(nf_core.components.components_utils, "get_repo_info", lambda d, p: (d, "pipeline", "org"))
+
+        # Create minimal ComponentCreate object
+        wf = DummyWF(origin_url)
+        cc = object.__new__(nf_core.components.create.ComponentCreate)
+        cc.wf = wf
+        cc.author = None
+
+        if should_pass:
+            monkeypatch.setattr("rich.prompt.Prompt.ask", lambda *a, **k: username)
+            cc._get_username()
+            assert cc.author == username
+        else:
+            monkeypatch.setattr("rich.prompt.Prompt.ask", lambda *a, **k: (_ for _ in ()).throw(SystemExit()))
+            with pytest.raises(SystemExit):
+                cc._get_username()
