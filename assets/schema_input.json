@@ -29,14 +29,14 @@
                 "type": "string",
                 "exists": true,
                 "format": "file-path",
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
+                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
                 "errorMessage": "FASTQ file for short reads 1, long reads or merged pair-end reads must be provided from `Bowtie2` or `minimap2` unmapped reads against the human genome, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'."
             },
             "fastq_2": {
                 "type": "string",
                 "exists": true,
                 "format": "file-path",
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
+                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
                 "errorMessage": "The FASTQ file for short reads 2 resulting from `Bowtie2` unmapped read 2 against the human genome, cannot contain spaces and must have the extension '.fq.gz' or '.fastq.gz'."
             },
             "kraken2_report": {
