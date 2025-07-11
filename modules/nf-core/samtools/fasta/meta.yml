@@ -25,26 +25,24 @@ input:
         type: file
         description: BAM/CRAM/SAM file
         pattern: "*.{bam,cram,sam}"
-        ontologies: []
-  - interleave:
-      type: boolean
-      description: Set true for interleaved fasta files
+  - - interleave:
+        type: boolean
+        description: Set true for interleaved fasta files
 output:
   #Only when we have meta
-  fasta:
-    - - meta:
+  - fasta:
+      - meta:
           type: map
           description: |
             Groovy Map containing sample information
             e.g. [ id:'test', single_end:false ]
       - "*_{1,2}.fasta.gz":
           type: file
-          description: Compressed FASTA file(s) with reads with either the READ1 or
-            READ2 flag set in separate files.
+          description: Compressed FASTA file(s) with reads with either the READ1 or READ2
+            flag set in separate files.
           pattern: "*_{1,2}.fasta.gz"
-          ontologies: []
-  interleaved:
-    - - meta:
+  - interleaved:
+      - meta:
           type: map
           description: |
             Groovy Map containing sample information
@@ -54,10 +52,8 @@ output:
           description: Compressed FASTA file with reads with either the READ1 or READ2
             flag set in a combined file. Needs collated input file.
           pattern: "*_interleaved.fasta.gz"
-          ontologies:
-            - edam: http://edamontology.org/format_3989 # GZIP format
-  singleton:
-    - - meta:
+  - singleton:
+      - meta:
           type: map
           description: |
             Groovy Map containing sample information
@@ -66,10 +62,8 @@ output:
           type: file
           description: Compressed FASTA file with singleton reads
           pattern: "*_singleton.fasta.gz"
-          ontologies:
-            - edam: http://edamontology.org/format_3989 # GZIP format
-  other:
-    - - meta:
+  - other:
+      - meta:
           type: map
           description: |
             Groovy Map containing sample information
@@ -79,15 +73,11 @@ output:
           description: Compressed FASTA file with reads with either both READ1 and READ2
             flags set or unset
           pattern: "*_other.fasta.gz"
-          ontologies:
-            - edam: http://edamontology.org/format_3989 # GZIP format
-  versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
-        ontologies:
-          - edam: http://edamontology.org/format_3750 # YAML
+  - versions:
+      - versions.yml:
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
 authors:
   - "@priyanka-surana"
 maintainers:
