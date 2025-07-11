@@ -3,7 +3,10 @@ build-backend = "setuptools.build_meta"
 requires = ["setuptools>=40.6.0", "wheel"]
 
 [tool.pytest.ini_options]
-markers = ["datafiles: load datafiles"]
+markers = [
+    "datafiles: load datafiles",
+    "issue: mark test with related issue URL"
+]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 norecursedirs = [

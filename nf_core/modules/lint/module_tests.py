@@ -170,6 +170,36 @@ def module_tests(_, module: NFCoreComponent, allow_missing: bool = False):
                                         snap_file,
                                     )
                                 )
+                                # Check if version content is actual content vs MD5 hash
+                                # Related to: https://github.com/nf-core/modules/issues/6505
+                                # Ensures version snapshots contain actual content instead of hash values
+                                version_content_valid = True
+                                version_hash_patterns = [
+                                    r"versions\.yml:md5,[\da-f]+",  # MD5 hash pattern
+                                    r"versions\.yml:sha[\d]*,[\da-f]+",  # SHA hash pattern
+                                ]
+
+                                for pattern in version_hash_patterns:
+                                    if re.search(pattern, str(snap_content[test_name])):
+                                        version_content_valid = False
+                                        break
+
+                                if version_content_valid:
+                                    module.passed.append(
+                                        (
+                                            "test_snap_version_content",
+                                            "version information contains actual content instead of hash",
+                                            snap_file,
+                                        )
+                                    )
+                                else:
+                                    module.failed.append(
+                                        (
+                                            "test_snap_version_content",
+                                            "version information should contain actual content, not MD5/SHA hash",
+                                            snap_file,
+                                        )
+                                    )
                             else:
                                 module.failed.append(
                                     (
