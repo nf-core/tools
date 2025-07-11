@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pytest
 from git.repo import Repo
 
 import nf_core.modules.lint
@@ -194,21 +195,93 @@ class TestModuleTests(TestModules):
         assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
         assert len(module_lint.passed) > 0
         assert len(module_lint.warned) >= 0
-        
+
         # Check for test_snap_md5sum in passed tests (handle both tuple and LintResult formats)
         found_test = False
         for x in module_lint.passed:
             test_name = None
-            if hasattr(x, 'lint_test'):
+            if hasattr(x, "lint_test"):
                 test_name = x.lint_test
             elif isinstance(x, tuple) and len(x) > 0:
                 test_name = x[0]
-            
+
             if test_name == "test_snap_md5sum":
                 found_test = True
                 break
-        
+
         assert found_test, "test_snap_md5sum not found in passed tests"
+
+        # reset the file
+        with open(snap_file, "w") as fh:
+            fh.write(content)
+
+    @pytest.mark.issue("https://github.com/nf-core/modules/issues/6505")
+    def test_modules_version_snapshot_content_md5_hash(self):
+        """Test linting a nf-test module with version information as MD5 hash instead of actual content, which should fail.
+
+        Related to: https://github.com/nf-core/modules/issues/6505
+        Fixed in: https://github.com/nf-core/tools/pull/3676
+        """
+        snap_file = self.bpipe_test_module_path / "tests" / "main.nf.test.snap"
+        snap = json.load(snap_file.open())
+        content = snap_file.read_text()
+
+        # Add a version entry with MD5 hash format (the old way that should be flagged)
+        snap["my test"]["content"][0]["versions"] = "versions.yml:md5,949da9c6297b613b50e24c421576f3f1"
+
+        with open(snap_file, "w") as fh:
+            json.dump(snap, fh)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Should fail because version is using MD5 hash instead of actual content
+        # Filter for only our specific test
+        version_content_failures = [x for x in module_lint.failed if x.lint_test == "test_snap_version_content"]
+        assert len(version_content_failures) == 1, (
+            f"Expected 1 test_snap_version_content failure, got {len(version_content_failures)}"
+        )
+        assert version_content_failures[0].lint_test == "test_snap_version_content"
+
+        # reset the file
+        with open(snap_file, "w") as fh:
+            fh.write(content)
+
+    @pytest.mark.issue("https://github.com/nf-core/modules/issues/6505")
+    def test_modules_version_snapshot_content_valid(self):
+        """Test linting a nf-test module with version information as actual content, which should pass.
+
+        Related to: https://github.com/nf-core/modules/issues/6505
+        Fixed in: https://github.com/nf-core/tools/pull/3676
+        """
+        snap_file = self.bpipe_test_module_path / "tests" / "main.nf.test.snap"
+        snap = json.load(snap_file.open())
+        content = snap_file.read_text()
+
+        # Add a version entry with actual content (the new way that should pass)
+        snap["my test"]["content"][0]["versions"] = {"ALE": {"ale": "20180904"}}
+
+        with open(snap_file, "w") as fh:
+            json.dump(snap, fh)
+
+        module_lint = nf_core.modules.lint.ModuleLint(directory=self.nfcore_modules)
+        module_lint.lint(print_results=False, module="bpipe/test")
+
+        # Should pass because version contains actual content
+        # Filter for only our specific test
+        version_content_failures = [x for x in module_lint.failed if x.lint_test == "test_snap_version_content"]
+        assert len(version_content_failures) == 0, (
+            f"Expected 0 test_snap_version_content failures, got {len(version_content_failures)}"
+        )
+
+        # Check for test_snap_version_content in passed tests
+        version_content_passed = [
+            x
+            for x in module_lint.passed
+            if (hasattr(x, "lint_test") and x.lint_test == "test_snap_version_content")
+            or (isinstance(x, tuple) and len(x) > 0 and x[0] == "test_snap_version_content")
+        ]
+        assert len(version_content_passed) > 0, "test_snap_version_content not found in passed tests"
 
         # reset the file
         with open(snap_file, "w") as fh:
