@@ -738,7 +738,7 @@ class DownloadWorkflow:
 
             self.find_container_images_legacy(workflow_directory)
 
-    def get_erroneuous_container_names(self, named_containers: dict[str, str]) -> dict[str, tuple[str, str]]:
+    def get_erroneous_container_names(self, named_containers: dict[str, str]) -> dict[str, tuple[str, str]]:
         """
         Look for common errors in container names that cannot be handled by `nextflow inspect`:
         - Dynamically resolved variable in container name: if the variable is unknown then it is resolved as `null` in image name.

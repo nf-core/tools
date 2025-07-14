@@ -127,7 +127,7 @@ class DockerFetcher(ContainerFetcher):
 
         Args:
             container (str): A pipeline's container name. Usually it is of similar format
-                to ``biocontainers/name:varsion``
+                to ``biocontainers/name:tag``
             out_path (str): The final target output path
             cache_path (str, None): The NXF_DOCKER_CACHEDIR path if set, None if not
             wait_future (concurrent.futures.Future, None): A future that is used to wait for the previous pull task to finish.
