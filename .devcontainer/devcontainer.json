@@ -1,12 +1,7 @@
 {
     "name": "nfcore",
 
-    //"image": "nfcore/devcontainer:latest",
-    // ToDo: Build locally for testing
-    "build": {
-        "dockerfile": "../nf_core/devcontainer/devcontainer.Dockerfile",
-        "context": ".."
-    },
+    "image": "nfcore/devcontainer:latest",
 
     "features": {
         "ghcr.io/devcontainers/features/docker-in-docker:2": {}
