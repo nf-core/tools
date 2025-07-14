@@ -201,6 +201,12 @@
                     "help_text": "Turn on the option to call consensus for short reads mapped to a pathogen genome using`samtools consensus`",
                     "fa_icon": "fas fa-toggle-on"
                 },
+                "min_bases": {
+                    "type": "number",
+                    "default": 50,
+                    "description": "The minimum number of bases used to filter consensus sequences. The default is 50.",
+                    "fa-icon": "filter"
+                },
                 "outdir": {
                     "type": "string",
                     "format": "directory-path",

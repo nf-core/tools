@@ -56,8 +56,6 @@
 
   > Nurk S, Bankevich A, Antipov D, Gurevich AA, Korobeynikov A, Lapidus A, Prjibelski AD, Pyshkin A, Sirotkin A, Sirotkin Y, Stepanauskas R, Clingenpeel SR, Woyke T, McLean JS, Lasken R, Tesler G, Alekseyev MA, Pevzner PA. Assembling single-cell genomes and mini-metagenomes from chimeric MDA products. J Comput Biol. 2013 Oct;20(10):714-37. https://doi: 10.1089/cmb.2013.0084.
 
-- [PIGZ](https://zlib.net/pigz/)
-
 ## Software packaging/containerisation tools
 
 - [Anaconda](https://anaconda.com)

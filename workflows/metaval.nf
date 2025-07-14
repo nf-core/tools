@@ -34,7 +34,8 @@ include { SAMTOOLS_CONSENSUS as SHORTREAD_SAMTOOLS_CONSENSUS    } from '../modul
 include { TAXID_BAM_FASTA as TAXID_BAM_FASTA_SHORTREAD          } from '../subworkflows/local/taxid_bam_fasta'
 include { TAXID_BAM_FASTA as TAXID_BAM_FASTA_LONGREAD           } from '../subworkflows/local/taxid_bam_fasta'
 include { LONGREAD_CONSENSUS                                    } from '../subworkflows/local/longread_consensus'
-include { PIGZ_COMPRESS                                         } from '../modules/nf-core/pigz/compress/main'
+include { FILTER_CONSENSUS as FILTER_CONSENSUS_SHORTREAD        } from '../modules/local/filter_consensus'
+include { FILTER_CONSENSUS as FILTER_CONSENSUS_LONGREAD         } from '../modules/local/filter_consensus'
 
 // Summary subworkflow
 include { FASTQC                                                } from '../modules/nf-core/fastqc/main'
@@ -245,15 +246,17 @@ workflow METAVAL {
         // Calling consensus: BAM file with the number of mapped reads > params.min_read_counts
         if (params.perform_shortread_consensus) {
             SHORTREAD_SAMTOOLS_CONSENSUS ( TAXID_BAM_FASTA_SHORTREAD.out.taxid_bam )
-            PIGZ_COMPRESS ( SHORTREAD_SAMTOOLS_CONSENSUS.out.fasta )
             ch_versions = ch_versions.mix(SHORTREAD_SAMTOOLS_CONSENSUS.out.versions)
-            ch_versions = ch_versions.mix(PIGZ_COMPRESS.out.versions)
+            // Remove consensus sequences shorter than params.min_bases (default: 50 bp)
+            FILTER_CONSENSUS_SHORTREAD ( SHORTREAD_SAMTOOLS_CONSENSUS.out.fasta, params.min_bases )
+            ch_versions = ch_versions.mix(FILTER_CONSENSUS_SHORTREAD.out.versions)
         }
         if ( params.perform_longread_consensus ) {
             // Skip the consensus calling if the number of mapped reads is lower than params.min_read_counts
             LONGREAD_CONSENSUS ( TAXID_BAM_FASTA_LONGREAD.out.taxid_bam, [ [], ch_reference ] )
             ch_versions = ch_versions.mix( LONGREAD_CONSENSUS.out.versions )
-            LONGREAD_CONSENSUS.out.consensus
+            FILTER_CONSENSUS_LONGREAD ( LONGREAD_CONSENSUS.out.consensus, params.min_bases)
+            ch_versions = ch_versions.mix( FILTER_CONSENSUS_LONGREAD.out.versions )
         }
         // BLAST
         ch_shortread_pathogen_blast = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
@@ -268,8 +271,8 @@ workflow METAVAL {
             }
         ch_blast_query_pathogen = ch_shortread_pathogen_blast.nonempty.mix(
             ch_longread_pathogen_blast.nonempty,
-            SHORTREAD_SAMTOOLS_CONSENSUS.out.fasta,
-            LONGREAD_CONSENSUS.out.consensus
+            FILTER_CONSENSUS_SHORTREAD.out.filtered_consensus,
+            FILTER_CONSENSUS_LONGREAD.out.filtered_consensus
         )
         if (!params.skip_blastn) {
             // BLASTn
