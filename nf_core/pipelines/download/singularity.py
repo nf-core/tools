@@ -34,8 +34,10 @@ class SingularityFetcher(ContainerFetcher):
         # Detect file extension
         extension = ".img"
         if ".sif:" in container_fn:
+            extension = ".sif"
             container_fn = container_fn.replace(".sif:", "-")
         elif container_fn.endswith(".sif"):
+            extension = ".sif"
             container_fn = container_fn.replace(".sif", "")
 
         # Strip : and / characters
