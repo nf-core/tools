@@ -5,6 +5,7 @@ import re
 import shutil
 import subprocess
 from collections.abc import Iterable
+from pathlib import Path
 
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.utils import (
@@ -69,7 +70,7 @@ class SingularityFetcher(ContainerFetcher):
             self.progress.update_main_task(description="Downloading singularity images")
             self.download_images(containers_download, parallel_downloads=parallel)
 
-    def symlink_registries(self, image_path: str) -> None:
+    def symlink_registries(self, image_path: Path) -> None:
         """Create a symlink for each registry in the registry set that points to the image.
 
         The base image, e.g. ./nf-core-gatk-4.4.0.0.img will thus be symlinked as for example ./quay.io-nf-core-gatk-4.4.0.0.img
@@ -87,18 +88,18 @@ class SingularityFetcher(ContainerFetcher):
             # Nextflow will convert it like this as well, so we need it mimic its behavior
             registry = registry.replace("/", "-")
 
-            if not bool(re.search(trim_pattern, os.path.basename(image_path))):
-                symlink_name = os.path.join("./", f"{registry}-{os.path.basename(image_path)}")
+            if not bool(re.search(trim_pattern, image_path.name)):
+                symlink_name = Path("./", f"{registry}-{image_path.name}")
             else:
-                trimmed_name = re.sub(f"{trim_pattern}", "", os.path.basename(image_path))
-                symlink_name = os.path.join("./", f"{registry}-{trimmed_name}")
+                trimmed_name = re.sub(f"{trim_pattern}", "", image_path.name)
+                symlink_name = Path("./", f"{registry}-{trimmed_name}")
 
-            symlink_full = os.path.join(os.path.dirname(image_path), symlink_name)
-            target_name = os.path.join("./", os.path.basename(image_path))
+            symlink_full = Path(image_path.parent, symlink_name)
+            target_name = Path("./", image_path.name)
 
-            if not os.path.exists(symlink_full) and target_name != symlink_name:
-                os.makedirs(os.path.dirname(symlink_full), exist_ok=True)
-                image_dir = os.open(os.path.dirname(image_path), os.O_RDONLY)
+            if not symlink_full.exists() and target_name != symlink_name:
+                symlink_full.parent.mkdir(exist_ok=True)
+                image_dir = os.open(image_path.parent, os.O_RDONLY)
                 try:
                     os.symlink(
                         target_name,
@@ -109,11 +110,11 @@ class SingularityFetcher(ContainerFetcher):
                 finally:
                     os.close(image_dir)
 
-    def construct_pull_command(self, output_path: str, address: str):
-        singularity_command = [self.implementation, "pull", "--name", output_path, address]
+    def construct_pull_command(self, output_path: Path, address: str):
+        singularity_command = [self.implementation, "pull", "--name", str(output_path), address]
         return singularity_command
 
-    def copy_image(self, container, src_path, dest_path):
+    def copy_image(self, container: str, src_path: Path, dest_path: Path):
         super().copy_image(container, src_path, dest_path)
         # For Singularity we need to create symlinks to ensure that the
         # images are found even with different registries being used.
@@ -121,12 +122,12 @@ class SingularityFetcher(ContainerFetcher):
 
     def download_images(
         self,
-        containers_download: Iterable[tuple[str, str]],
+        containers_download: Iterable[tuple[str, Path]],
         parallel_downloads: int,
     ) -> None:
         downloader = FileDownloader(self.progress)
 
-        def update_file_progress(input_params: tuple[str, str], status: FileDownloader.Status) -> None:
+        def update_file_progress(input_params: tuple[str, Path], status: FileDownloader.Status) -> None:
             # try-except introduced in 4a95a5b84e2becbb757ce91eee529aa5f8181ec7
             # unclear why rich.progress may raise an exception here as it's supposed to be thread-safe
             try:
@@ -139,7 +140,7 @@ class SingularityFetcher(ContainerFetcher):
 
         downloader.download_files_in_parallel(containers_download, parallel_downloads, callback=update_file_progress)
 
-    def pull_images(self, containers_pull: Iterable[tuple[str, str]]) -> None:
+    def pull_images(self, containers_pull: Iterable[tuple[str, Path]]) -> None:
         for container, output_path in containers_pull:
             # it is possible to try multiple registries / mirrors if multiple were specified.
             # Iteration happens over a copy of self.container_library[:], as I want to be able to remove failing registries for subsequent images.
@@ -190,7 +191,7 @@ class SingularityFetcher(ContainerFetcher):
             # Task should advance in any case. Failure to pull will not kill the download process.
             self.progress.update_main_task(advance=1)
 
-    def pull_image(self, container: str, output_path: str, library: str) -> None:
+    def pull_image(self, container: str, output_path: Path, library: str) -> None:
         """Pull a singularity image using ``singularity pull``
 
         Attempt to use a local installation of singularity to pull the image.

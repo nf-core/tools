@@ -3,7 +3,6 @@ import contextlib
 import enum
 import io
 import logging
-import os
 import re
 import tempfile
 import textwrap
@@ -63,30 +62,31 @@ class DownloadError(RuntimeError):
 
 
 @contextlib.contextmanager
-def intermediate_file(output_path: str) -> Generator[tempfile._TemporaryFileWrapper, None, None]:
+def intermediate_file(output_path: Path) -> Generator[tempfile._TemporaryFileWrapper, None, None]:
     """Context manager to help ensure the output file is either complete or non-existent.
     It does that by creating a temporary file in the same directory as the output file,
     letting the caller write to it, and then moving it to the final location.
     If an exception is raised, the temporary file is deleted and the output file is not touched.
     """
-    if os.path.isdir(output_path):
+    if output_path.is_dir():
         raise DownloadError(f"Output path '{output_path}' is a directory")
-    if os.path.islink(output_path):
+    if output_path.is_symlink():
         raise DownloadError(f"Output path '{output_path}' is a symbolic link")
 
-    tmp = tempfile.NamedTemporaryFile(dir=os.path.dirname(output_path), delete=False)
+    tmp = tempfile.NamedTemporaryFile(dir=output_path.parent, delete=False)
     try:
         yield tmp
         tmp.close()
-        os.rename(tmp.name, output_path)
+        Path(tmp.name).rename(output_path)
     except:
-        if os.path.exists(tmp.name):
-            os.unlink(tmp.name)
+        tmp_path = Path(tmp.name)
+        if tmp_path.exists():
+            tmp_path.unlink()
         raise
 
 
 @contextlib.contextmanager
-def intermediate_file_no_creation(output_path: str) -> Generator[Path, None, None]:
+def intermediate_file_no_creation(output_path: Path) -> Generator[Path, None, None]:
     """
     Context manager to help ensure the output file is either complete or non-existent.
 
@@ -94,16 +94,16 @@ def intermediate_file_no_creation(output_path: str) -> Generator[Path, None, Non
     For pulling container we therefore create a temporary directory with and write to a file named
     'tempfile' in it. If the pull command is successful, we rename the temporary file to the output path.
     """
-    if os.path.isdir(output_path):
+    if output_path.is_dir():
         raise DownloadError(f"Output path '{output_path}' is a directory")
-    if os.path.islink(output_path):
+    if output_path.is_symlink():
         raise DownloadError(f"Output path '{output_path}' is a symbolic link")
 
-    tmp = tempfile.TemporaryDirectory(dir=os.path.dirname(output_path), delete=False)
+    tmp = tempfile.NamedTemporaryFile(dir=output_path.parent, delete=False)
     tmp_fn = Path(tmp.name) / "tempfile"
     try:
         yield tmp_fn
-        os.rename(tmp_fn, output_path)
+        Path(tmp.name).rename(output_path)
         tmp.cleanup()
     except:
         tmp.cleanup()
@@ -214,10 +214,10 @@ class FileDownloader:
 
     def download_files_in_parallel(
         self,
-        download_files: Iterable[tuple[str, str]],
+        download_files: Iterable[tuple[str, Path]],
         parallel_downloads: int,
-        callback: Optional[Callable[[tuple[str, str], Status], None]] = None,
-    ) -> list[tuple[str, str]]:
+        callback: Optional[Callable[[tuple[str, Path], Status], None]] = None,
+    ) -> list[tuple[str, Path]]:
         """Download multiple files in parallel.
 
         Args:
@@ -231,7 +231,7 @@ class FileDownloader:
         self.kill_with_fire = False
 
         # Track the download threads
-        future_downloads: dict[concurrent.futures.Future, tuple[str, str]] = {}
+        future_downloads: dict[concurrent.futures.Future, tuple[str, Path]] = {}
 
         # list to store *successful* downloads
         successful_downloads = []
@@ -277,7 +277,7 @@ class FileDownloader:
 
         return successful_downloads
 
-    def download_file(self, remote_path: str, output_path: str) -> None:
+    def download_file(self, remote_path: str, output_path: Path) -> None:
         """Download a file from the web.
 
         Use native Python to download the file. Progress is shown in the progress bar

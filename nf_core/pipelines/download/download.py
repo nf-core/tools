@@ -70,20 +70,20 @@ class DownloadWorkflow:
 
     def __init__(
         self,
-        pipeline=None,
-        revision=None,
-        outdir=None,
-        compress_type=None,
-        force=False,
-        platform=False,
+        pipeline: Optional[str] = None,
+        revision: Optional[str] = None,
+        outdir: Optional[str] = None,
+        compress_type: Optional[str] = None,
+        force: bool = False,
+        platform: bool = False,
         download_configuration=None,
-        additional_tags=None,
+        additional_tags: list[str] | str | None = None,
         container_system=None,
         container_library=None,
         container_cache_utilisation=None,
         container_cache_index=None,
-        parallel=4,
-        hide_progress=False,
+        parallel: int = 4,
+        hide_progress: bool = False,
     ):
         # Verify that the flags provided make sense together
         if (
@@ -102,7 +102,8 @@ class DownloadWorkflow:
             self.revision = [*revision]
         else:
             self.revision = []
-        self.outdir = outdir
+        self.preliminary_outdir = Path(outdir) if outdir is not None else None
+        self.outdir: Path
         self.output_filename = None
         self.compress_type = compress_type
         self.force = force
@@ -114,6 +115,7 @@ class DownloadWorkflow:
         # Additional tags to add to the downloaded pipeline. This enables to mark particular commits or revisions with
         # additional tags, e.g. "stable", "testing", "validated", "production" etc. Since this requires a git-repo, it is only
         # available for the bare / Seqera Platform download.
+        self.additional_tags: Optional[list[str]]
         if isinstance(additional_tags, str) and bool(len(additional_tags)) and self.platform:
             self.additional_tags = [additional_tags]
         elif isinstance(additional_tags, tuple) and bool(len(additional_tags)) and self.platform:
@@ -137,13 +139,13 @@ class DownloadWorkflow:
         # allows to specify a container library / registry or a respective mirror to download images from
         self.parallel = parallel
 
-        self.wf_revisions = []
+        self.wf_revisions: list[dict[str, Any]] = []
         self.wf_branches: dict[str, Any] = {}
-        self.wf_sha = {}
-        self.wf_download_url = {}
-        self.nf_config = {}
-        self.containers = []
-        self.containers_remote = []  # stores the remote images provided in the file.
+        self.wf_sha: dict[str, str] = {}
+        self.wf_download_url: dict[str, str] = {}
+        self.nf_config: dict[str, str] = {}
+        self.containers: list[str] = []
+        self.containers_remote: list[str] = []  # stores the remote images provided in the file.
 
         # Fetch remote workflows
         self.wfs = nf_core.pipelines.list.Workflows()
@@ -210,10 +212,10 @@ class DownloadWorkflow:
 
         # Set an output filename now that we have the outdir
         if self.platform:
-            self.output_filename = f"{self.outdir}.git"
+            self.output_filename = self.outdir.with_suffix(".git")
             summary_log.append(f"Output file: '{self.output_filename}'")
         elif self.compress_type is not None:
-            self.output_filename = f"{self.outdir}.{self.compress_type}"
+            self.output_filename = self.outdir.with_suffix(self.compress_type)
             summary_log.append(f"Output file: '{self.output_filename}'")
         else:
             summary_log.append(f"Output directory: '{self.outdir}'")
@@ -225,7 +227,7 @@ class DownloadWorkflow:
             summary_log.append(f"Enabled for Seqera Platform: '{self.platform}'")
 
         # Check that the outdir doesn't already exist
-        if self.outdir is not None and os.path.exists(self.outdir):
+        if self.outdir is not None and self.outdir.exists():
             if not self.force:
                 raise DownloadError(
                     f"Output directory '{self.outdir}' already exists (use [red]--force[/] to overwrite)"
@@ -234,13 +236,13 @@ class DownloadWorkflow:
             shutil.rmtree(self.outdir)
 
         # Check that compressed output file doesn't already exist
-        if self.output_filename and os.path.exists(self.output_filename):
+        if self.output_filename and self.output_filename.exists():
             if not self.force:
                 raise DownloadError(
                     f"Output file '{self.output_filename}' already exists (use [red]--force[/] to overwrite)"
                 )
             log.warning(f"Deleting existing output file: '{self.output_filename}'")
-            os.remove(self.output_filename)
+            self.output_filename.unlink()
 
         # Summary log
         indent = 2
@@ -278,8 +280,8 @@ class DownloadWorkflow:
 
             # Collect all required singularity images
             if self.container_system in {"singularity", "docker"}:
-                self.find_container_images(os.path.join(self.outdir, revision_dirname))
-                self.gather_registries(os.path.join(self.outdir, revision_dirname))
+                self.find_container_images(self.outdir / revision_dirname)
+                self.gather_registries(self.outdir / revision_dirname)
 
                 try:
                     self.download_container_images(current_revision=item[0])
@@ -314,7 +316,7 @@ class DownloadWorkflow:
         self.workflow_repo.tidy_tags_and_branches()
 
         # create a bare clone of the modified repository needed for Seqera Platform
-        self.workflow_repo.bare_clone(os.path.join(self.outdir, self.output_filename))
+        self.workflow_repo.bare_clone(self.outdir / self.output_filename)
 
         # extract the required containers
         if self.container_system in {"singularity", "docker"}:
@@ -411,11 +413,15 @@ class DownloadWorkflow:
                     )
 
         # Set the outdir
-        if not self.outdir:
+        if self.preliminary_outdir:
             if len(self.wf_sha) > 1:
-                self.outdir = f"{self.pipeline.replace('/', '-').lower()}_{datetime.now().strftime('%Y-%m-%d_%H-%M')}"
+                self.outdir = Path(
+                    f"{self.pipeline.replace('/', '-').lower()}_{datetime.now().strftime('%Y-%m-%d_%H-%M')}"
+                )
             else:
-                self.outdir = f"{self.pipeline.replace('/', '-').lower()}_{self.revision[0]}"
+                self.outdir = Path(f"{self.pipeline.replace('/', '-').lower()}_{self.revision[0]}")
+        else:
+            self.outdir = self.preliminary_outdir
 
         if not self.platform:
             for revision, wf_sha in self.wf_sha.items():
@@ -466,15 +472,15 @@ class DownloadWorkflow:
                     only_directories=True,
                     style=nf_core.utils.nfcore_question_style,
                 ).unsafe_ask()
-                cachedir_path = os.path.abspath(os.path.expanduser(prompt_cachedir_path))
                 if prompt_cachedir_path == "":
                     log.error("Not using [blue]$NXF_SINGULARITY_CACHEDIR[/]")
-                    cachedir_path = False
-                elif not os.path.isdir(cachedir_path):
+                    break
+                cachedir_path = Path(prompt_cachedir_path).expanduser().absolute()
+                if not cachedir_path.is_dir():
                     log.error(f"'{cachedir_path}' is not a directory.")
                     cachedir_path = None
             if cachedir_path:
-                os.environ["NXF_SINGULARITY_CACHEDIR"] = cachedir_path
+                os.environ["NXF_SINGULARITY_CACHEDIR"] = str(cachedir_path)
 
                 """
                 Optionally, create a permanent entry for the NXF_SINGULARITY_CACHEDIR in the terminal profile.
@@ -483,33 +489,33 @@ class DownloadWorkflow:
                 """
 
                 if os.getenv("SHELL", "") == "/bin/bash":
-                    shellprofile_path = os.path.expanduser("~/~/.bash_profile")
-                    if not os.path.isfile(shellprofile_path):
-                        shellprofile_path = os.path.expanduser("~/.bashrc")
-                        if not os.path.isfile(shellprofile_path):
-                            shellprofile_path = False
+                    shellprofile_path = Path("~/~/.bash_profile").expanduser()
+                    if not shellprofile_path.is_file():
+                        shellprofile_path = Path("~/.bashrc").expanduser()
+                        if not shellprofile_path.is_file():
+                            shellprofile_path = None
                 elif os.getenv("SHELL", "") == "/bin/zsh":
-                    shellprofile_path = os.path.expanduser("~/.zprofile")
-                    if not os.path.isfile(shellprofile_path):
-                        shellprofile_path = os.path.expanduser("~/.zshenv")
-                        if not os.path.isfile(shellprofile_path):
-                            shellprofile_path = False
+                    shellprofile_path = Path("~/.zprofile").expanduser()
+                    if not shellprofile_path.is_file():
+                        shellprofile_path = Path("~/.zshenv").expanduser()
+                        if not shellprofile_path.is_file():
+                            shellprofile_path = None
                 else:
-                    shellprofile_path = os.path.expanduser("~/.profile")
-                    if not os.path.isfile(shellprofile_path):
-                        shellprofile_path = False
+                    shellprofile_path = Path("~/.profile").expanduser()
+                    if not shellprofile_path.is_file():
+                        shellprofile_path = None
 
-                if shellprofile_path:
+                if shellprofile_path is not None:
                     stderr.print(
-                        f"\nSo that [blue]$NXF_SINGULARITY_CACHEDIR[/] is always defined, you can add it to your [blue not bold]~/{os.path.basename(shellprofile_path)}[/] file ."
+                        f"\nSo that [blue]$NXF_SINGULARITY_CACHEDIR[/] is always defined, you can add it to your [blue not bold]~/{shellprofile_path.name}[/] file ."
                         "This will then be automatically set every time you open a new terminal. We can add the following line to this file for you: \n"
                         f'[blue]export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"[/]'
                     )
                     append_to_file = rich.prompt.Confirm.ask(
-                        f"[blue bold]?[/] [bold]Add to [blue not bold]~/{os.path.basename(shellprofile_path)}[/] ?[/]"
+                        f"[blue bold]?[/] [bold]Add to [blue not bold]~/{shellprofile_path.name}[/] ?[/]"
                     )
                     if append_to_file:
-                        with open(os.path.expanduser(shellprofile_path), "a") as f:
+                        with open(shellprofile_path.expanduser(), "a") as f:
                             f.write(
                                 "\n\n#######################################\n"
                                 f"## Added by `nf-core pipelines download` v{nf_core.__version__} ##\n"
@@ -544,12 +550,13 @@ class DownloadWorkflow:
                 validate=SingularityCacheFilePathValidator,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-            cachedir_index = os.path.abspath(os.path.expanduser(prompt_cachedir_index))
             if prompt_cachedir_index == "":
                 log.error("Will disregard contents of a remote [blue]$NXF_SINGULARITY_CACHEDIR[/]")
                 self.container_cache_index = None
                 self.container_cache_utilisation = "copy"
-            elif not os.access(cachedir_index, os.R_OK):
+                break
+            cachedir_index = Path(prompt_cachedir_index).expanduser().absolute()
+            if not os.access(cachedir_index, os.R_OK):
                 log.error(f"'{cachedir_index}' is not a readable file.")
                 cachedir_index = None
         if cachedir_index:
@@ -624,15 +631,12 @@ class DownloadWorkflow:
 
         # Rename the internal directory name to be more friendly
         gh_name = f"{self.pipeline}-{wf_sha if bool(wf_sha) else ''}".split("/")[-1]
-        os.rename(
-            os.path.join(self.outdir, gh_name),
-            os.path.join(self.outdir, revision_dirname),
-        )
+        ((self.outdir / gh_name).rename(self.outdir / revision_dirname),)
 
         # Make downloaded files executable
-        for dirpath, _, filelist in os.walk(os.path.join(self.outdir, revision_dirname)):
+        for dirpath, _, filelist in (self.outdir / revision_dirname).walk():
             for fname in filelist:
-                os.chmod(os.path.join(dirpath, fname), 0o775)
+                (dirpath / fname).chmod(0o775)
 
         return revision_dirname
 
@@ -648,19 +652,17 @@ class DownloadWorkflow:
             zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
-        os.rename(
-            os.path.join(self.outdir, configs_local_dir),
-            os.path.join(self.outdir, "configs"),
-        )
+        (self.outdir / configs_local_dir).rename(self.outdir / "configs")
 
         # Make downloaded files executable
-        for dirpath, _, filelist in os.walk(os.path.join(self.outdir, "configs")):
-            for fname in filelist:
-                os.chmod(os.path.join(dirpath, fname), 0o775)
 
-    def wf_use_local_configs(self, revision_dirname):
+        for dirpath, _, filelist in (self.outdir / "configs").walk():
+            for fname in filelist:
+                (dirpath / fname).chmod(0o775)
+
+    def wf_use_local_configs(self, revision_dirname: str):
         """Edit the downloaded nextflow.config file to use the local config files"""
-        nfconfig_fn = os.path.join(self.outdir, revision_dirname, "nextflow.config")
+        nfconfig_fn = (self.outdir / revision_dirname) / "nextflow.config"
         find_str = "https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}"
         repl_str = "${projectDir}/../configs/"
         log.debug(f"Editing 'params.custom_config_base' in '{nfconfig_fn}'")
@@ -705,7 +707,7 @@ class DownloadWorkflow:
             + "\n"
         )
 
-    def find_container_images(self, workflow_directory: str) -> None:
+    def find_container_images(self, workflow_directory: Path) -> None:
         """Find container image names for workflow using the `nextflow inspect` command.
 
         ONLY WORKS FOR NEXTFLOW >= 25.04.4
@@ -738,14 +740,14 @@ class DownloadWorkflow:
 
             self.find_container_images_legacy(workflow_directory)
 
-    def find_container_images_nf_inspect(self, workflow_directory: str, entrypoint="main.nf"):
+    def find_container_images_nf_inspect(self, workflow_directory: Path, entrypoint="main.nf"):
         # TODO: Select container system via profile. Is this stable enough?
         # NOTE: We will likely don't need this after the switch to Seqera containers
         profile = f"-profile {self.container_system}" if self.container_system else ""
 
         # Run nextflow inspect
         executable = "nextflow"
-        cmd_params = f"inspect -format json {profile} {os.path.join(workflow_directory, entrypoint)}"
+        cmd_params = f"inspect -format json {profile} {workflow_directory / entrypoint}"
         cmd_out = run_cmd(executable, cmd_params)
         if cmd_out is None:
             raise RuntimeError("Failed to run `nextflow inspect`. Please check your Nextflow installation.")
@@ -757,7 +759,7 @@ class DownloadWorkflow:
 
         self.containers = list(set(named_containers.values()))
 
-    def find_container_images_legacy(self, workflow_directory: str) -> None:
+    def find_container_images_legacy(self, workflow_directory: Path) -> None:
         """Find container image names for workflow.
 
         DEPRECATION NOTE: USED FOR NEXTFLOW VERSIONS < 25.04.4
@@ -815,10 +817,10 @@ class DownloadWorkflow:
         config_findings = rectify_raw_container_matches(config_findings[:])
 
         # Recursive search through any DSL2 module files for container spec lines.
-        for subdir, _, files in os.walk(os.path.join(workflow_directory, "modules")):
+        for subdir, _, files in (workflow_directory / "modules").walk():
             for file in files:
                 if file.endswith(".nf"):
-                    file_path = os.path.join(subdir, file)
+                    file_path = subdir / file
                     with open(file_path) as fh:
                         # Look for any lines with container "xxx" or container 'xxx'
                         search_space = fh.read()
@@ -884,8 +886,8 @@ class DownloadWorkflow:
         # add chttps://community-cr-prod.seqera.io/docker/registry/v2/ to the set to support the new Seqera Singularity container registry
         self.registry_set.add("community-cr-prod.seqera.io/docker/registry/v2")
 
-    def get_container_output_dir(self):
-        return os.path.join(self.outdir, f"{self.container_system}-images")
+    def get_container_output_dir(self) -> Path:
+        return self.outdir / f"{self.container_system}-images"
 
     def download_container_images(self, current_revision: str = "") -> None:
         """Loop through container names and download Singularity images"""
@@ -899,29 +901,29 @@ class DownloadWorkflow:
             log.debug(f"Container names: {self.containers}")
 
             # Find out what the library directory is
-            library_dir = os.environ.get("NXF_SINGULARITY_LIBRARYDIR")
-            if library_dir and not os.path.isdir(library_dir):
+            library_dir = Path(path_str) if (path_str := os.environ.get("NXF_SINGULARITY_LIBRARYDIR")) else None
+            if library_dir and not library_dir.is_dir():
                 # Since the library is read-only, if the directory isn't there, we can forget about it
                 library_dir = None
 
             # Find out what the cache directory is
-            cache_dir = os.environ.get("NXF_SINGULARITY_CACHEDIR")
+            cache_dir = Path(path_str) if (path_str := os.environ.get("NXF_SINGULARITY_CACHEDIR")) else None
             log.debug(f"NXF_SINGULARITY_CACHEDIR: {cache_dir}")
             if self.container_cache_utilisation in ["amend", "copy"]:
                 if cache_dir:
-                    if not os.path.isdir(cache_dir):
+                    if not cache_dir.is_dir():
                         log.debug(f"Cache directory not found, creating: {cache_dir}")
-                        os.makedirs(cache_dir)
+                        cache_dir.mkdir()
                 else:
                     raise FileNotFoundError("Singularity cache is required but no '$NXF_SINGULARITY_CACHEDIR' set!")
 
             assert self.outdir
-            out_path_dir = os.path.abspath(self.get_container_output_dir())
+            out_path_dir = self.get_container_output_dir().absolute()
 
             # Check that the directories exist
-            if not os.path.isdir(out_path_dir):
+            if not out_path_dir.is_dir():
                 log.debug(f"Output directory not found, creating: {out_path_dir}")
-                os.makedirs(out_path_dir)
+                out_path_dir.mkdir()
 
             with DownloadProgress(disable=self.hide_progress) as progress:
                 progress.add_main_task(
@@ -958,7 +960,7 @@ class DownloadWorkflow:
         if self.compress_type in ["tar.gz", "tar.bz2"]:
             ctype = self.compress_type.split(".")[1]
             with tarfile.open(self.output_filename, f"w:{ctype}") as tar:
-                tar.add(self.outdir, arcname=os.path.basename(self.outdir))
+                tar.add(self.outdir, arcname=self.outdir.name)
             tar_flags = "xzf" if ctype == "gz" else "xjf"
             log.info(f"Command to extract files: [bright_magenta]tar -{tar_flags} {self.output_filename}[/]")
 
@@ -966,10 +968,10 @@ class DownloadWorkflow:
         if self.compress_type == "zip":
             with ZipFile(self.output_filename, "w") as zip_file:
                 # Iterate over all the files in directory
-                for folder_name, _, filenames in os.walk(self.outdir):
+                for folder_name, _, filenames in self.outdir.walk():
                     for filename in filenames:
                         # create complete filepath of file in directory
-                        file_path = os.path.join(folder_name, filename)
+                        file_path = folder_name / filename
                         # Add file to zip
                         zip_file.write(file_path)
             log.info(f"Command to extract files: [bright_magenta]unzip {self.output_filename}[/]")

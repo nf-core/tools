@@ -1,9 +1,9 @@
 import logging
-import os
 import re
 import shutil
 from abc import abstractmethod
 from collections.abc import Collection, Container, Iterable
+from pathlib import Path
 from typing import Optional
 
 from nf_core.pipelines.download.utils import (
@@ -32,8 +32,8 @@ class ContainerFetcher:
         container_library: Iterable[str],
         registry_set: Iterable[str],
         progress: DownloadProgress,
-        library_dir: Optional[str],
-        cache_dir: Optional[str],
+        library_dir: Optional[Path],
+        cache_dir: Optional[Path],
         amend_cachedir: bool,
         parallel: int = 4,
     ) -> None:
@@ -130,7 +130,7 @@ class ContainerFetcher:
     def fetch_containers(
         self,
         containers: Collection[str],
-        output_dir: str,
+        output_dir: Path,
         exclude_list: Container[str],
     ):
         """
@@ -139,8 +139,8 @@ class ContainerFetcher:
         from cache or fetching from a remote location
         """
         # Check each container in the list and defer actions
-        containers_remote_fetch: list[tuple[str, str]] = []
-        containers_copy: list[tuple[str, str, str]] = []
+        containers_remote_fetch: list[tuple[str, Path]] = []
+        containers_copy: list[tuple[str, Path, Path]] = []
 
         # We may add more tasks as containers need to be copied between the various caches
         total_tasks = len(containers)
@@ -155,27 +155,27 @@ class ContainerFetcher:
                 continue
 
             # Generate file paths for all three locations
-            output_path = os.path.join(output_dir, container_filename)
+            output_path = output_dir / container_filename
 
-            if os.path.exists(output_path):
+            if output_path.exists():
                 log.debug(f"Skipping download of container '{container_filename}' as it is in already present.")
                 self.progress.update_main_task(advance=1, description=f"{container_filename} exists at destination")
                 continue
 
-            library_path = os.path.join(self.library_dir, container_filename) if self.library_dir else None
-            cache_path = os.path.join(self.cache_dir, container_filename) if self.cache_dir else None
+            library_path = self.library_dir / container_filename if self.library_dir is not None else None
+            cache_path = self.cache_dir / container_filename if self.cache_dir is not None else None
 
             # get the container from the library
-            if library_path and os.path.exists(library_path):
+            if library_path and library_path.exists():
                 containers_copy.append((container, library_path, output_path))
                 # update the cache if needed
-                if cache_path and not self.amend_cachedir and not os.path.exists(cache_path):
+                if cache_path and not self.amend_cachedir and not cache_path.exists():
                     containers_copy.append((container, library_path, cache_path))
                     total_tasks += 1
                     self.progress.update_main_task(total=total_tasks)
 
             # get the container from the cache
-            elif cache_path and os.path.exists(cache_path):
+            elif cache_path and cache_path.exists():
                 log.debug(f"Container '{container_filename}' found in cache at '{cache_path}'.")
                 containers_copy.append((container, cache_path, output_path))
             # no library or cache
@@ -207,7 +207,7 @@ class ContainerFetcher:
             self.progress.update_main_task(advance=1)
 
     @abstractmethod
-    def fetch_remote_containers(self, containers: list[tuple[str, str]], parallel=4):
+    def fetch_remote_containers(self, containers: list[tuple[str, Path]], parallel=4):
         """
         Fetch remote containers
 
@@ -235,9 +235,9 @@ class ContainerFetcher:
             absolute_URI = False
         return address, absolute_URI
 
-    def copy_image(self, container: str, src_path: str, dest_path: str) -> None:
+    def copy_image(self, container: str, src_path: Path, dest_path: Path) -> None:
         """Copy container image from one directory to another."""
-        log.debug(f"Copying {container} from '{os.path.basename(src_path)}' to '{os.path.basename(dest_path)}'")
+        log.debug(f"Copying {container} from '{src_path.name}' to '{dest_path.name}'")
 
         with intermediate_file(dest_path) as dest_path_tmp:
             shutil.copyfile(src_path, dest_path_tmp.name)

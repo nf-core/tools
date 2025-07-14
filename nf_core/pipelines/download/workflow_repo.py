@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import shutil
+from pathlib import Path
 
 import git
 import rich
@@ -85,7 +86,7 @@ class WorkflowRepo(SyncedRepo):
         return self.repo.tags
 
     def access(self):
-        if os.path.exists(self.local_repo_dir):
+        if self.local_repo_dir.exists():
             return self.local_repo_dir
         else:
             return None
@@ -127,12 +128,12 @@ class WorkflowRepo(SyncedRepo):
         Sets self.repo
         """
         if location:
-            self.local_repo_dir = os.path.join(location, self.fullname)
+            self.local_repo_dir = location / self.fullname
         else:
-            self.local_repo_dir = os.path.join(NFCORE_DIR if not in_cache else NFCORE_CACHE_DIR, self.fullname)
+            self.local_repo_dir = Path(NFCORE_DIR) if not in_cache else Path(NFCORE_CACHE_DIR, self.fullname)
 
         try:
-            if not os.path.exists(self.local_repo_dir):
+            if not self.local_repo_dir.exists():
                 try:
                     pbar = rich.progress.Progress(
                         "[bold blue]{task.description}",
@@ -288,11 +289,11 @@ class WorkflowRepo(SyncedRepo):
     def bare_clone(self, destination):
         if self.repo:
             try:
-                destfolder = os.path.abspath(destination)
-                if not os.path.exists(destfolder):
-                    os.makedirs(destfolder)
-                if os.path.exists(destination):
-                    shutil.rmtree(os.path.abspath(destination))
-                self.repo.clone(os.path.abspath(destination), bare=True)
+                destfolder = destination.absolute()
+                if not destfolder.exists():
+                    destfolder.mkdir()
+                if destination.exists():
+                    shutil.rmtree(destination.absolute())
+                self.repo.clone(destination.absolute(), bare=True)
             except (OSError, GitCommandError, InvalidGitRepositoryError) as e:
                 log.error(f"[red]Failure to create the pipeline download[/]\n{e}\n")
