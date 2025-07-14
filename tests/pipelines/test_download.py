@@ -764,56 +764,6 @@ class DownloadTest(unittest.TestCase):
         )
 
     #
-    # Test that `find_container_images_nf_inspect` (uses `nextflow inspect`) fails gracefully
-    #
-    @pytest.mark.skipif(
-        shutil.which("nextflow") is None or not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION),
-        reason=f"Can't run test that requires Nextflow >= {NF_INSPECT_MIN_NF_VERSION} to run if not installed.",
-    )
-    @with_temporary_folder
-    @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_containers_pipeline_singularity_fail(self, tmp_path, mock_fetch_wf_config):
-        assert check_nextflow_version(NF_INSPECT_MIN_NF_VERSION) is True
-
-        # Set up test
-        container_system = "singularity"
-        mock_pipeline_dir = TEST_DATA_DIR / "mock_pipeline_containers"
-        # First check that `-profile singularity` produces the same output as the reference
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_system=container_system)
-        mock_fetch_wf_config.return_value = {}
-
-        # Run get containers with `nextflow inspect`
-        entrypoint = "main_failing_test.nf"
-        with pytest.raises(RuntimeError) as e:
-            download_obj.find_container_images_nf_inspect(str(mock_pipeline_dir), entrypoint=entrypoint)
-        assert "Found erroneous container names using " in str(e.value)
-
-    #
-    # Test that `find_container_images_nf_inspect` (uses `nextflow inspect`) fails gracefully
-    #
-    @pytest.mark.skipif(
-        shutil.which("nextflow") is None or not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION),
-        reason=f"Can't run test that requires Nextflow >= {NF_INSPECT_MIN_NF_VERSION} to run if not installed.",
-    )
-    @with_temporary_folder
-    @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_containers_pipeline_docker_fail(self, tmp_path, mock_fetch_wf_config):
-        assert check_nextflow_version(NF_INSPECT_MIN_NF_VERSION) is True
-
-        # Set up test
-        container_system = "docker"
-        mock_pipeline_dir = TEST_DATA_DIR / "mock_pipeline_containers"
-        # First check that `-profile singularity` produces the same output as the reference
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_system=container_system)
-        mock_fetch_wf_config.return_value = {}
-
-        # Run get containers with `nextflow inspect`
-        entrypoint = "main_failing_test.nf"
-        with pytest.raises(RuntimeError) as e:
-            download_obj.find_container_images_nf_inspect(str(mock_pipeline_dir), entrypoint=entrypoint)
-        assert "Found erroneous container names using " in str(e.value)
-
-    #
     # Test for 'find_container_images' in modules
     #
     @with_temporary_folder

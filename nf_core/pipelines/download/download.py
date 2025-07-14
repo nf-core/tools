@@ -738,28 +738,6 @@ class DownloadWorkflow:
 
             self.find_container_images_legacy(workflow_directory)
 
-    def get_erroneous_container_names(self, named_containers: dict[str, str]) -> dict[str, tuple[str, str]]:
-        """
-        Look for common errors in container names that cannot be handled by `nextflow inspect`:
-        - Dynamically resolved variable in container name: if the variable is unknown then it is resolved as `null` in image name.
-        For use, see for example the nf-core/rnaseq 3.7 star_align module.
-
-        Args:
-            named_containers (dict[str, str]): Dictionary of module names and their corresponding container strings.
-        Returns:
-            dict[str, str]: Dictionary of module names and their corresponding container strings that contain likely errors.
-        """
-        error_patterns = {
-            r"/null": "[blue]`null`[/] found in image name",
-        }
-        weird_containers = {
-            module: (container, msg)
-            for module, container in named_containers.items()
-            for pattern, msg in error_patterns.items()
-            if re.search(pattern, container)
-        }
-        return weird_containers
-
     def find_container_images_nf_inspect(self, workflow_directory: str, entrypoint="main.nf"):
         # TODO: Select container system via profile. Is this stable enough?
         # NOTE: We will likely don't need this after the switch to Seqera containers
@@ -776,17 +754,6 @@ class DownloadWorkflow:
         out_json = json.loads(out)
         # NOTE: We only save the container strings to comply with the legacy function.
         named_containers = {proc["name"]: proc["container"] for proc in out_json["processes"]}
-        weird_containers = self.get_erroneuous_container_names(named_containers)
-        if weird_containers:
-            formatted_weird_containers = [
-                f"{module}: {container} ({msg})" for module, (container, msg) in weird_containers.items()
-            ]
-            joined_weird_containers = "     \n".join(formatted_weird_containers)
-            raise RuntimeError(
-                f"[red]Found erroneous container names using [blue]nextflow inspect[/]:[/]\n"
-                f"{joined_weird_containers}\n"
-                f"This might be due to the fact that the container strings contain unresolved variables"
-            )
 
         self.containers = list(set(named_containers.values()))
 
