@@ -5,6 +5,7 @@ from reftrace.directives import Container, ContainerFormat
 from reftrace.linting import LintError, LintWarning, LintResults, rule, configrule
 from typing import Union, Tuple, List
 
+
 # Config file rules
 
 def directive_violating(directive):
