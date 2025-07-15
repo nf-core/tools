@@ -334,7 +334,7 @@ def modules_info(ctx, tool, directory):
         sys.exit(1)
 
 
-def modules_bump_versions(ctx, tool, directory, all, show_all):
+def modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
     """
     Bump versions for one or more modules in a clone of
     the nf-core/modules repo.
@@ -349,7 +349,7 @@ def modules_bump_versions(ctx, tool, directory, all, show_all):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
+        version_bumper.bump_versions(module=tool, all_modules=all, show_up_to_date=show_all, dry_run=dry_run)
     except ModuleExceptionError as e:
         log.error(e)
         sys.exit(1)

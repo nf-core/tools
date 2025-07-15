@@ -1322,7 +1322,13 @@ def command_modules_info(ctx, tool, directory):
 # nf-core modules bump-versions
 @modules.command("bump-versions")
 @click.pass_context
-@click.argument("tool", type=str, callback=normalize_case, required=False, metavar="<tool> or <tool/subtool>")
+@click.argument(
+    "tool",
+    type=str,
+    callback=normalize_case,
+    required=False,
+    metavar="<tool> or <tool/subtool>. Module to bump versions for. If <tool> is provided and <tool/subtool> exists, all subtools will be bumped.",
+)
 @click.option(
     "-d",
     "--dir",
@@ -1333,12 +1339,13 @@ def command_modules_info(ctx, tool, directory):
 )
 @click.option("-a", "--all", is_flag=True, help="Run on all modules")
 @click.option("-s", "--show-all", is_flag=True, help="Show up-to-date modules in results too")
-def command_modules_bump_versions(ctx, tool, directory, all, show_all):
+@click.option("-r", "--dry-run", is_flag=True, help="Dry run the command")
+def command_modules_bump_versions(ctx, tool, directory, all, show_all, dry_run):
     """
     Bump versions for one or more modules in a clone of
     the nf-core/modules repo.
     """
-    modules_bump_versions(ctx, tool, directory, all, show_all)
+    modules_bump_versions(ctx, tool, directory, all, show_all, dry_run)
 
 
 # nf-core subworkflows click command
