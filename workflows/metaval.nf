@@ -260,18 +260,44 @@ workflow METAVAL {
             ch_versions = ch_versions.mix( FILTER_CONSENSUS_LONGREAD.out.versions )
         }
         // BLAST
-        ch_shortread_pathogen_blast = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
-            .branch { it ->
-                empty: it[1][0].countFasta() < 1 || it[1][1].countFasta() < 1
-                nonempty: true
+//        ch_shortread_pathogen_blast = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
+//            .branch { it ->
+//                empty: it[1][0].countFasta() < 1 || it[1][1].countFasta() < 1
+//                nonempty: true
+//            }
+//        // for pair-end reads, only use read1 for blast
+//        ch_shortread_pathogen_blast.nonempty
+//            .map { meta, reads ->
+//                return [ meta, reads[0]]
+//            }
+//            .set{ch_shortread_pathogen_blast_read1}
+//
+//        // BLAST - using filter for cleaner logic
+//        ch_shortread_pathogen_blast_read1 = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
+//            .filter { meta, reads ->
+//                reads[0].countFasta() >= 1 && reads[1].countFasta() >= 1
+//            }
+//            .map { meta, reads -> [ meta, reads[0]] }
+//
+//        ch_longread_pathogen_blast = TAXID_BAM_FASTA_LONGREAD.out.taxid_fasta
+//            .branch { it ->
+//                empty: it[1].countFasta() < 1
+//                nonempty: true
+//            }
+        // For pair-end reads, only use read1 for blast
+        ch_shortread_pathogen_blast_read1 = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
+            .filter { meta, reads ->
+                reads[0].countFasta() >= 1 && reads[1].countFasta() >= 1
             }
+            .map { meta, reads -> [ meta, reads[0]] }
+
         ch_longread_pathogen_blast = TAXID_BAM_FASTA_LONGREAD.out.taxid_fasta
-            .branch { it ->
-                empty: it[1].countFasta() < 1
-                nonempty: true
+            .filter { meta, reads ->
+                reads.countFasta() >= 1
             }
-        ch_blast_query_pathogen = ch_shortread_pathogen_blast.nonempty.mix(
-            ch_longread_pathogen_blast.nonempty,
+
+        ch_blast_query_pathogen = ch_shortread_pathogen_blast_read1.mix(
+            ch_longread_pathogen_blast,
             FILTER_CONSENSUS_SHORTREAD.out.filtered_consensus.ifEmpty([]),
             FILTER_CONSENSUS_LONGREAD.out.filtered_consensus.ifEmpty([])
         )
