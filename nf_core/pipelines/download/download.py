@@ -72,7 +72,7 @@ class DownloadWorkflow:
         self,
         pipeline: Optional[str] = None,
         revision: Optional[str] = None,
-        outdir: Optional[str] = None,
+        outdir=None,
         compress_type: Optional[str] = None,
         force: bool = False,
         platform: bool = False,
@@ -102,9 +102,8 @@ class DownloadWorkflow:
             self.revision = [*revision]
         else:
             self.revision = []
-        self.preliminary_outdir = Path(outdir) if outdir is not None else None
-        self.outdir: Path
-        self.output_filename = None
+        self.outdir = Path(outdir) if outdir is not None else None
+        self.output_filename: Path
         self.compress_type = compress_type
         self.force = force
         self.hide_progress = hide_progress
@@ -260,6 +259,7 @@ class DownloadWorkflow:
 
     def download_workflow_static(self):
         """Downloads a nf-core workflow from GitHub to the local file system in a self-contained manner."""
+        assert self.outdir
 
         # Download the centralised configs first
         if self.include_configs:
@@ -298,8 +298,9 @@ class DownloadWorkflow:
         if self.container_system == "docker":
             self.write_docker_load_message()
 
-    def download_workflow_platform(self, location=None):
+    def download_workflow_platform(self, location: Optional[Path] = None):
         """Create a bare-cloned git repository of the workflow, so it can be launched with `tw launch` as file:/ pipeline"""
+        assert self.outdir
 
         log.info("Collecting workflow from GitHub")
 
@@ -308,7 +309,7 @@ class DownloadWorkflow:
             revision=self.revision if self.revision else None,
             commit=self.wf_sha.values() if bool(self.wf_sha) else None,
             additional_tags=self.additional_tags,
-            location=(location if location else None),  # manual location is required for the tests to work
+            location=location if location else None,  # manual location is required for the tests to work
             in_cache=False,
         )
 
@@ -413,15 +414,13 @@ class DownloadWorkflow:
                     )
 
         # Set the outdir
-        if self.preliminary_outdir:
+        if not self.outdir:
             if len(self.wf_sha) > 1:
                 self.outdir = Path(
                     f"{self.pipeline.replace('/', '-').lower()}_{datetime.now().strftime('%Y-%m-%d_%H-%M')}"
                 )
             else:
                 self.outdir = Path(f"{self.pipeline.replace('/', '-').lower()}_{self.revision[0]}")
-        else:
-            self.outdir = self.preliminary_outdir
 
         if not self.platform:
             for revision, wf_sha in self.wf_sha.items():
@@ -616,6 +615,7 @@ class DownloadWorkflow:
 
     def download_wf_files(self, revision, wf_sha, download_url):
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
+        assert self.outdir
         log.debug(f"Downloading {download_url}")
 
         # Download GitHub zip file into memory and extract
@@ -642,6 +642,7 @@ class DownloadWorkflow:
 
     def download_configs(self):
         """Downloads the centralised config profiles from nf-core/configs to :attr:`self.outdir`."""
+        assert self.outdir
         configs_zip_url = "https://github.com/nf-core/configs/archive/master.zip"
         configs_local_dir = "configs-master"
         log.debug(f"Downloading {configs_zip_url}")
@@ -662,6 +663,7 @@ class DownloadWorkflow:
 
     def wf_use_local_configs(self, revision_dirname: str):
         """Edit the downloaded nextflow.config file to use the local config files"""
+        assert self.outdir
         nfconfig_fn = (self.outdir / revision_dirname) / "nextflow.config"
         find_str = "https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}"
         repl_str = "${projectDir}/../configs/"
@@ -887,6 +889,7 @@ class DownloadWorkflow:
         self.registry_set.add("community-cr-prod.seqera.io/docker/registry/v2")
 
     def get_container_output_dir(self) -> Path:
+        assert self.outdir
         return self.outdir / f"{self.container_system}-images"
 
     def download_container_images(self, current_revision: str = "") -> None:

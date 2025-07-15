@@ -51,58 +51,59 @@ class DownloadUtilsTest(unittest.TestCase):
     #
     @with_temporary_folder
     def test_intermediate_file(self, outdir):
+        outdir = Path(outdir)
         # Code that doesn't fail. The file shall exist
 
         # Directly write to the file, as in download_image
-        output_path = os.path.join(outdir, "testfile1")
+        output_path = outdir / "testfile1"
         with intermediate_file(output_path) as tmp:
-            tmp_path = tmp.name
+            tmp_path = Path(tmp.name)
             tmp.write(b"Hello, World!")
 
-        assert os.path.exists(output_path)
+        assert output_path.exists()
         assert os.path.getsize(output_path) == 13
-        assert not os.path.exists(tmp_path)
+        assert not tmp_path.exists()
 
         # Run an external command as in pull_image
-        output_path = os.path.join(outdir, "testfile2")
+        output_path = outdir / "testfile2"
         with intermediate_file(output_path) as tmp:
-            tmp_path = tmp.name
+            tmp_path = Path(tmp.name)
             subprocess.check_call([f"echo 'Hello, World!' > {tmp_path}"], shell=True)
 
-        assert os.path.exists(output_path)
+        assert (output_path).exists()
         assert os.path.getsize(output_path) == 14  # Extra \n !
-        assert not os.path.exists(tmp_path)
+        assert not (tmp_path).exists()
 
         # Code that fails. The file shall not exist
 
         # Directly write to the file and raise an exception
-        output_path = os.path.join(outdir, "testfile3")
+        output_path = outdir / "testfile3"
         with pytest.raises(ValueError):
             with intermediate_file(output_path) as tmp:
-                tmp_path = tmp.name
+                tmp_path = Path(tmp.name)
                 tmp.write(b"Hello, World!")
                 raise ValueError("This is a test error")
 
-        assert not os.path.exists(output_path)
-        assert not os.path.exists(tmp_path)
+        assert not (output_path).exists()
+        assert not (tmp_path).exists()
 
         # Run an external command and raise an exception
-        output_path = os.path.join(outdir, "testfile4")
+        output_path = outdir / "testfile4"
         with pytest.raises(subprocess.CalledProcessError):
             with intermediate_file(output_path) as tmp:
-                tmp_path = tmp.name
+                tmp_path = Path(tmp.name)
                 subprocess.check_call([f"echo 'Hello, World!' > {tmp_path}"], shell=True)
                 subprocess.check_call(["ls", "/dummy"])
 
-        assert not os.path.exists(output_path)
-        assert not os.path.exists(tmp_path)
+        assert not (output_path).exists()
+        assert not (tmp_path).exists()
 
         # Test for invalid output paths
         with pytest.raises(DownloadError):
             with intermediate_file(outdir) as tmp:
                 pass
 
-        output_path = os.path.join(outdir, "testfile5")
+        output_path = outdir / "testfile5"
         os.symlink("/dummy", output_path)
         with pytest.raises(DownloadError):
             with intermediate_file(output_path) as tmp:
@@ -262,6 +263,7 @@ class DownloadUtilsTest(unittest.TestCase):
     #
     @with_temporary_folder
     def test_file_download(self, outdir):
+        outdir = Path(outdir)
         with DownloadProgress() as progress:
             downloader = FileDownloader(progress)
 
@@ -274,9 +276,9 @@ class DownloadUtilsTest(unittest.TestCase):
 
                 # Download a file
                 src_url = "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fai"
-                output_path = os.path.join(outdir, os.path.basename(src_url))
+                output_path = outdir / Path(src_url).name
                 downloader.download_file(src_url, output_path)
-                assert os.path.exists(output_path)
+                assert (output_path).exists()
                 assert os.path.getsize(output_path) == 27
                 assert (
                     "nf_core.pipelines.download.utils",
@@ -290,10 +292,10 @@ class DownloadUtilsTest(unittest.TestCase):
 
                 # No content at the URL
                 src_url = "http://www.google.com/generate_204"
-                output_path = os.path.join(outdir, os.path.basename(src_url))
+                output_path = outdir / Path(src_url).name
                 with pytest.raises(DownloadError):
                     downloader.download_file(src_url, output_path)
-                assert not os.path.exists(output_path)
+                assert not (output_path).exists()
                 assert (
                     "nf_core.pipelines.download.utils",
                     logging.DEBUG,
@@ -306,10 +308,10 @@ class DownloadUtilsTest(unittest.TestCase):
 
                 # Invalid URL (schema)
                 src_url = "dummy://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fax"
-                output_path = os.path.join(outdir, os.path.basename(src_url))
+                output_path = outdir / Path(src_url).name
                 with pytest.raises(requests.exceptions.InvalidSchema):
                     downloader.download_file(src_url, output_path)
-                assert not os.path.exists(output_path)
+                assert not (output_path).exists()
                 assert (
                     "nf_core.pipelines.download.utils",
                     logging.DEBUG,
@@ -322,21 +324,23 @@ class DownloadUtilsTest(unittest.TestCase):
 
             # Fire in the hole ! The download will be aborted and no output file will be created
             src_url = "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fai"
-            output_path = os.path.join(outdir, os.path.basename(src_url))
+            output_path = outdir / Path(src_url).name
             os.unlink(output_path)
             downloader.kill_with_fire = True
             with pytest.raises(KeyboardInterrupt):
                 downloader.download_file(src_url, output_path)
-            assert not os.path.exists(output_path)
+            assert not (output_path).exists()
 
     #
     # Test for 'utils.FileDownloader.download_files_in_parallel'
     #
     @with_temporary_folder
     def test_parallel_downloads(self, outdir):
+        outdir = Path(outdir)
+
         # Prepare the download paths
         def make_tuple(url):
-            return (url, os.path.join(outdir, os.path.basename(url)))
+            return (url, (outdir / Path(url).name))
 
         download_fai = make_tuple(
             "https://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fai"
@@ -358,11 +362,11 @@ class DownloadUtilsTest(unittest.TestCase):
             downloaded_files = downloader.download_files_in_parallel(downloads, parallel_downloads=1)
             assert len(downloaded_files) == 2
             assert downloaded_files == downloads
-            assert os.path.exists(download_fai[1])
-            assert os.path.exists(download_dict[1])
+            assert (download_fai[1]).exists()
+            assert (download_dict[1]).exists()
             assert downloader.kill_with_fire is False
-            os.unlink(download_fai[1])
-            os.unlink(download_dict[1])
+            (download_fai[1]).unlink()
+            (download_dict[1]).unlink()
 
             # This time, the second file will raise an exception
             assert downloader.kill_with_fire is False
@@ -370,9 +374,9 @@ class DownloadUtilsTest(unittest.TestCase):
             with pytest.raises(DownloadError):
                 downloader.download_files_in_parallel(downloads, parallel_downloads=1)
             assert downloader.kill_with_fire is False
-            assert os.path.exists(download_fai[1])
-            assert not os.path.exists(download_204[1])
-            os.unlink(download_fai[1])
+            assert (download_fai[1]).exists()
+            assert not (download_204[1]).exists()
+            (download_fai[1]).unlink()
 
             # Now we swap the two files. The first one will raise an exception but the
             # second one will still be downloaded because only KeyboardInterrupt can
@@ -382,9 +386,9 @@ class DownloadUtilsTest(unittest.TestCase):
             with pytest.raises(DownloadError):
                 downloader.download_files_in_parallel(downloads, parallel_downloads=1)
             assert downloader.kill_with_fire is False
-            assert os.path.exists(download_fai[1])
-            assert not os.path.exists(download_204[1])
-            os.unlink(download_fai[1])
+            assert (download_fai[1]).exists()
+            assert not (download_204[1]).exists()
+            (download_fai[1]).unlink()
 
             # We check that there's the same behaviour with `requests` errors.
             assert downloader.kill_with_fire is False
@@ -392,9 +396,9 @@ class DownloadUtilsTest(unittest.TestCase):
             with pytest.raises(DownloadError):
                 downloader.download_files_in_parallel(downloads, parallel_downloads=1)
             assert downloader.kill_with_fire is False
-            assert os.path.exists(download_fai[1])
-            assert not os.path.exists(download_schema[1])
-            os.unlink(download_fai[1])
+            assert (download_fai[1]).exists()
+            assert not (download_schema[1]).exists()
+            (download_fai[1]).unlink()
 
             # Now we check the callback method
             callbacks = []
@@ -533,7 +537,7 @@ class DownloadTest(unittest.TestCase):
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
         download_obj.get_revision_hash()
         assert download_obj.wf_sha[download_obj.revision[0]] == revision
-        assert download_obj.outdir == f"nf-core-exoseq_{revision}"
+        assert download_obj.outdir == Path(f"nf-core-exoseq_{revision}")
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
             == f"https://github.com/nf-core/exoseq/archive/{revision}.zip"
@@ -580,6 +584,7 @@ class DownloadTest(unittest.TestCase):
     #
     @with_temporary_folder
     def test_download_wf_files(self, outdir):
+        outdir = Path(outdir)
         download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", revision="1.6")
         download_obj.outdir = outdir
         download_obj.wf_sha = {"1.6": "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"}
@@ -591,25 +596,28 @@ class DownloadTest(unittest.TestCase):
             download_obj.wf_sha[download_obj.revision[0]],
             download_obj.wf_download_url[download_obj.revision[0]],
         )
-        assert os.path.exists(os.path.join(outdir, rev, "main.nf"))
+
+        assert ((outdir / rev) / "main.nf").exists()
 
     #
     # Tests for 'download_configs'
     #
     @with_temporary_folder
     def test_download_configs(self, outdir):
+        outdir = Path(outdir)
         download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", revision="1.6")
         download_obj.outdir = outdir
         download_obj.download_configs()
-        assert os.path.exists(os.path.join(outdir, "configs", "nfcore_custom.config"))
+        assert (outdir / "configs") / "nfcore_custom.config"
 
     #
     # Tests for 'wf_use_local_configs'
     #
     @with_temporary_folder
     def test_wf_use_local_configs(self, tmp_path):
+        tmp_path = Path(tmp_path)
         # Get a workflow and configs
-        test_pipeline_dir = os.path.join(tmp_path, "nf-core-testpipeline")
+        test_pipeline_dir = tmp_path / "nf-core-testpipeline"
         create_obj = nf_core.pipelines.create.create.PipelineCreate(
             "testpipeline",
             "This is a test pipeline",
@@ -635,12 +643,13 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
     def test_find_container_images_config_basic(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
         mock_fetch_wf_config.return_value = {
             "process.mapping.container": "cutting-edge-container",
             "process.nocontainer": "not-so-cutting-edge",
         }
-        download_obj.find_container_images("workflow")
+        download_obj.find_container_images(Path("workflow"))
         assert len(download_obj.containers) == 1
         assert download_obj.containers[0] == "cutting-edge-container"
 
@@ -654,6 +663,7 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
     def test__find_container_images_config_nextflow(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
         result = run_cmd("nextflow", f"config -flat {TEST_DATA_DIR}'/mock_config_containers'")
         if result is not None:
@@ -668,7 +678,7 @@ class DownloadTest(unittest.TestCase):
                 if k and v:
                     config[k] = v
             mock_fetch_wf_config.return_value = config
-            download_obj.find_container_images("workflow")
+            download_obj.find_container_images(Path("workflow"))
             assert "nfcore/methylseq:1.0" in download_obj.containers
             assert "nfcore/methylseq:1.4" in download_obj.containers
             assert "nfcore/sarek:dev" in download_obj.containers
@@ -696,6 +706,7 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
     def test_containers_pipeline_singularity(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
         assert check_nextflow_version(NF_INSPECT_MIN_NF_VERSION) is True
 
         # Set up test
@@ -708,7 +719,7 @@ class DownloadTest(unittest.TestCase):
 
         # Run get containers with `nextflow inspect`
         entrypoint = "main_passing_test.nf"
-        download_obj.find_container_images_nf_inspect(str(mock_pipeline_dir), entrypoint=entrypoint)
+        download_obj.find_container_images_nf_inspect(mock_pipeline_dir, entrypoint=entrypoint)
 
         # Store the containers found by the new method
         found_containers = set(download_obj.containers)
@@ -735,6 +746,7 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
     def test_containers_pipeline_docker(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
         assert check_nextflow_version(NF_INSPECT_MIN_NF_VERSION) is True
 
         # Set up test
@@ -747,7 +759,7 @@ class DownloadTest(unittest.TestCase):
 
         # Run get containers with `nextflow inspect`
         entrypoint = "main_passing_test.nf"
-        download_obj.find_container_images_nf_inspect(str(mock_pipeline_dir), entrypoint=entrypoint)
+        download_obj.find_container_images_nf_inspect(mock_pipeline_dir, entrypoint=entrypoint)
 
         # Store the containers found by the new method
         found_containers = set(download_obj.containers)
@@ -769,9 +781,11 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
     def test_find_container_images_modules(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
+
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
         mock_fetch_wf_config.return_value = {}
-        download_obj.find_container_images(str(Path(TEST_DATA_DIR, "mock_module_containers")))
+        download_obj.find_container_images(Path(TEST_DATA_DIR, "mock_module_containers"))
 
         # mock_docker_single_quay_io.nf
         assert "quay.io/biocontainers/singlequay:1.9--pyh9f0ad1d_0" in download_obj.containers
@@ -858,7 +872,7 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     def test_prioritize_direct_download(self, tmp_path):
         # tests deduplication and https priority as well as Seqera Container exception
-
+        tmp_path = Path(tmp_path)
         test_container = [
             "https://depot.galaxyproject.org/singularity/ubuntu:22.04",
             "nf-core/ubuntu:22.04",
@@ -917,6 +931,7 @@ class DownloadTest(unittest.TestCase):
     #
     @with_temporary_folder
     def test_reconcile_seqera_container_uris(self, tmp_path):
+        tmp_path = Path(tmp_path)
         prioritized_container = [
             "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
             "oras://community.wave.seqera.io/library/sylph:0.6.1--b97274cdc1caa649",
@@ -967,6 +982,7 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     @mock.patch("rich.progress.Progress.add_task")
     def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_rich_progress):
+        tmp_dir = Path(tmp_dir)
         singularity_fetcher = SingularityFetcher([], [], mock_rich_progress, None, None, False)
 
         # Test successful pull
@@ -1035,6 +1051,7 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     @mock.patch("rich.progress.Progress.add_task")
     def test_singularity_pull_image_successfully(self, tmp_dir, mock_rich_progress):
+        tmp_dir = Path(tmp_dir)
         singularity_fetcher = SingularityFetcher([], [], mock_rich_progress, None, None, False)
         singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/yet-another-hello-world.sif", "docker.io")
 
@@ -1048,6 +1065,7 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
     def test_fetch_containers(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
         download_obj = DownloadWorkflow(
             pipeline="dummy",
             outdir=tmp_path,
@@ -1058,7 +1076,7 @@ class DownloadTest(unittest.TestCase):
             "process.hellooworld.container": "helloooooooworld",
             "process.mapping.container": "ewels/multiqc:gorewrite",
         }
-        download_obj.find_container_images("workflow")
+        download_obj.find_container_images(Path("workflow"))
         assert len(download_obj.container_library) == 4
         # This list of fake container images should produce all kinds of ContainerErrors.
         # Test that they are all caught inside SingularityFetcher.fetch_containers().
@@ -1084,12 +1102,13 @@ class DownloadTest(unittest.TestCase):
     @mock.patch(
         "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
     )  # This is to make sure that we do not check for Singularity/Apptainer installation
-    @mock.patch("os.makedirs")
+    @mock.patch("pathlib.Path.mkdir")
+    @mock.patch("pathlib.Path.symlink_to")
     @mock.patch("os.symlink")
     @mock.patch("os.open")
     @mock.patch("os.close")
-    @mock.patch("os.path.basename")
-    @mock.patch("os.path.dirname")
+    @mock.patch("pathlib.Path.name")
+    @mock.patch("pathlib.Path.parent")
     def test_symlink_singularity_images(
         self,
         tmp_path,
@@ -1097,63 +1116,70 @@ class DownloadTest(unittest.TestCase):
         mock_basename,
         mock_close,
         mock_open,
+        mock_os_symlink,
         mock_symlink,
         mock_makedirs,
         mock_check_and_set_implementation,
     ):
         # Setup
-        mock_dirname.return_value = f"{tmp_path}/path/to"
-        mock_basename.return_value = "singularity-image.img"
-        mock_open.return_value = 12  # file descriptor
-        mock_close.return_value = 12  # file descriptor
+        tmp_path = Path(tmp_path)
+        with (
+            mock.patch.object(Path, "name", new_callable=mock.PropertyMock) as mock_basename,
+            mock.patch.object(Path, "parent", new_callable=mock.PropertyMock) as mock_dirname,
+        ):
+            mock_dirname.return_value = tmp_path / "path/to"
+            mock_basename.return_value = "singularity-image.img"
+            mock_open.return_value = 12  # file descriptor
+            mock_close.return_value = 12  # file descriptor
 
-        registries = [
-            "quay.io",
-            "community-cr-prod.seqera.io/docker/registry/v2",
-            "depot.galaxyproject.org/singularity",
-        ]
-        fetcher = SingularityFetcher([], registries, None, None, None, False)
+            registries = [
+                "quay.io",
+                "community-cr-prod.seqera.io/docker/registry/v2",
+                "depot.galaxyproject.org/singularity",
+            ]
+            fetcher = SingularityFetcher([], registries, None, None, None, False)
 
-        fetcher.symlink_registries(f"{tmp_path}/path/to/singularity-image.img")
+            fetcher.symlink_registries(tmp_path / "path/to/singularity-image.img")
 
-        # Check that os.makedirs was called with the correct arguments
-        mock_makedirs.assert_any_call(f"{tmp_path}/path/to", exist_ok=True)
+            # Check that os.makedirs was called with the correct arguments
+            mock_makedirs.assert_any_call(exist_ok=True)
 
-        # Check that os.open was called with the correct arguments
-        mock_open.assert_any_call(f"{tmp_path}/path/to", os.O_RDONLY)
+            # Check that os.open was called with the correct arguments
+            mock_open.assert_any_call(tmp_path / "path/to", os.O_RDONLY)
 
-        # Check that os.symlink was called with the correct arguments
-        expected_calls = [
-            mock.call(
-                "./singularity-image.img",
-                "./quay.io-singularity-image.img",
-                dir_fd=12,
-            ),
-            mock.call(
-                "./singularity-image.img",
-                "./community-cr-prod.seqera.io-docker-registry-v2-singularity-image.img",
-                dir_fd=12,
-            ),
-            mock.call(
-                "./singularity-image.img",
-                "./depot.galaxyproject.org-singularity-singularity-image.img",
-                dir_fd=12,
-            ),
-        ]
-        mock_symlink.assert_has_calls(expected_calls, any_order=True)
+            # Check that os.symlink was called with the correct arguments
+            expected_calls = [
+                mock.call(
+                    Path("./singularity-image.img"),
+                    Path("./quay.io-singularity-image.img"),
+                    dir_fd=12,
+                ),
+                mock.call(
+                    Path("./singularity-image.img"),
+                    Path("./community-cr-prod.seqera.io-docker-registry-v2-singularity-image.img"),
+                    dir_fd=12,
+                ),
+                mock.call(
+                    Path("./singularity-image.img"),
+                    Path("./depot.galaxyproject.org-singularity-singularity-image.img"),
+                    dir_fd=12,
+                ),
+            ]
+            mock_os_symlink.assert_has_calls(expected_calls, any_order=True)
 
     # File name with registry in it
     @with_temporary_folder
     @mock.patch(
         "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
     )  # This is to make sure that we do not check for Singularity/Apptainer installation
-    @mock.patch("os.makedirs")
+    @mock.patch("pathlib.Path.mkdir")
+    @mock.patch("pathlib.Path.symlink_to")
     @mock.patch("os.symlink")
     @mock.patch("os.open")
     @mock.patch("os.close")
     @mock.patch("re.sub")
-    @mock.patch("os.path.basename")
-    @mock.patch("os.path.dirname")
+    @mock.patch("pathlib.Path.name")
+    @mock.patch("pathlib.Path.parent")
     def test_symlink_singularity_symlink_registries(
         self,
         tmp_path,
@@ -1162,42 +1188,50 @@ class DownloadTest(unittest.TestCase):
         mock_resub,
         mock_close,
         mock_open,
+        mock_os_symlink,
         mock_symlink,
         mock_makedirs,
         mock_check_and_set_implementation,
     ):
+        tmp_path = Path(tmp_path)
         # Setup
-        mock_resub.return_value = "singularity-image.img"
-        mock_dirname.return_value = f"{tmp_path}/path/to"
-        mock_basename.return_value = "quay.io-singularity-image.img"
-        mock_open.return_value = 12  # file descriptor
-        mock_close.return_value = 12  # file descriptor
+        with (
+            mock.patch.object(Path, "name", new_callable=mock.PropertyMock) as mock_basename,
+            mock.patch.object(Path, "parent", new_callable=mock.PropertyMock) as mock_dirname,
+        ):
+            mock_resub.return_value = "singularity-image.img"
+            mock_dirname.return_value = tmp_path / "path/to"
+            mock_basename.return_value = "quay.io-singularity-image.img"
+            mock_open.return_value = 12  # file descriptor
+            mock_close.return_value = 12  # file descriptor
 
-        # Call the method with registry name included - should not happen, but preserve it then.
+            # Call the method with registry name included - should not happen, but preserve it then.
 
-        registries = [
-            "quay.io",  # Same as in the filename
-            "community-cr-prod.seqera.io/docker/registry/v2",
-        ]
-        fetcher = SingularityFetcher([], registries, None, None, None, False)
-        fetcher.symlink_registries(f"{tmp_path}/path/to/quay.io-singularity-image.img")
+            registries = [
+                "quay.io",  # Same as in the filename
+                "community-cr-prod.seqera.io/docker/registry/v2",
+            ]
+            fetcher = SingularityFetcher([], registries, None, None, None, False)
+            fetcher.symlink_registries(tmp_path / "path/to/quay.io-singularity-image.img")
 
-        # Check that os.makedirs was called with the correct arguments
-        mock_makedirs.assert_called_once_with(f"{tmp_path}/path/to", exist_ok=True)
+            # Check that os.makedirs was called with the correct arguments
+            mock_makedirs.assert_called_once_with(exist_ok=True)
 
-        # Check that os.symlink was called with the correct arguments
-        # assert_called_once_with also tells us that there was no attempt to
-        # - symlink to itself
-        # - symlink to the same registry
-        mock_symlink.assert_called_once_with(
-            "./quay.io-singularity-image.img",
-            "./community-cr-prod.seqera.io-docker-registry-v2-singularity-image.img",  # "quay.io-" has been trimmed
-            dir_fd=12,
-        )
+            # Check that os.symlink was called with the correct arguments
+            # assert_called_once_with also tells us that there was no attempt to
+            # - symlink to itself
+            # - symlink to the same registry
+            mock_os_symlink.assert_called_once_with(
+                Path("./quay.io-singularity-image.img"),
+                Path(
+                    "./community-cr-prod.seqera.io-docker-registry-v2-singularity-image.img"
+                ),  # "quay.io-" has been trimmed
+                dir_fd=12,
+            )
 
-        # Normally it would be called for each registry, but since quay.io is part of the name, it
-        # will only be called once, as no symlink to itself must be created.
-        mock_open.assert_called_once_with(f"{tmp_path}/path/to", os.O_RDONLY)
+            # Normally it would be called for each registry, but since quay.io is part of the name, it
+            # will only be called once, as no symlink to itself must be created.
+            mock_open.assert_called_once_with(tmp_path / "path/to", os.O_RDONLY)
 
     #
     # Test for gather_registries'
@@ -1205,6 +1239,7 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
     def test_gather_registries(self, tmp_path, mock_fetch_wf_config):
+        tmp_path = Path(tmp_path)
         download_obj = DownloadWorkflow(
             pipeline="dummy",
             outdir=tmp_path,
@@ -1247,6 +1282,7 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     @mock.patch("rich.progress.Progress.add_task")
     def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress):
+        tmp_dir = Path(tmp_dir)
         with pytest.raises(OSError):
             SingularityFetcher([], [], mock_rich_progress, None, None, False)
 
@@ -1338,14 +1374,15 @@ class DownloadTest(unittest.TestCase):
     #
     @with_temporary_folder
     def test_remote_container_functionality(self, tmp_dir):
-        os.environ["NXF_SINGULARITY_CACHEDIR"] = os.path.join(tmp_dir, "foo")
+        tmp_dir = Path(tmp_dir)
+        os.environ["NXF_SINGULARITY_CACHEDIR"] = str(tmp_dir / "foo")
 
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
-            outdir=os.path.join(tmp_dir, "new"),
+            outdir=(tmp_dir / "new"),
             revision="3.9",
             compress_type="none",
-            container_cache_index=str(Path(TEST_DATA_DIR, "testdata_remote_containers.txt")),
+            container_cache_index=Path(TEST_DATA_DIR, "testdata_remote_containers.txt"),
         )
 
         download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.
@@ -1373,11 +1410,12 @@ class DownloadTest(unittest.TestCase):
     )  # This is to make sure that we do not check for Singularity/Apptainer installation
     @mock.patch.object(nf_core.pipelines.download.utils.FileDownloader, "download_file", new=mock_download_file)
     def test_download_workflow_with_success(self, tmp_dir, mock_check_and_set_implementation):
-        os.environ["NXF_SINGULARITY_CACHEDIR"] = os.path.join(tmp_dir, "foo")
+        tmp_dir = Path(tmp_dir)
+        os.environ["NXF_SINGULARITY_CACHEDIR"] = str(tmp_dir / "foo")
 
         download_obj = DownloadWorkflow(
             pipeline="nf-core/bamtofastq",
-            outdir=os.path.join(tmp_dir, "new"),
+            outdir=tmp_dir / "new",
             container_system="singularity",
             revision="2.2.0",
             compress_type="none",
@@ -1402,6 +1440,7 @@ class DownloadTest(unittest.TestCase):
         mock_fetch_containers,
         mock_check_and_set_implementation,
     ):
+        tmp_dir = Path(tmp_dir)
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
             revision=("3.7", "3.9"),
@@ -1431,10 +1470,10 @@ class DownloadTest(unittest.TestCase):
         assert isinstance(download_obj.wf_download_url, dict) and len(download_obj.wf_download_url) == 0
 
         # The outdir for multiple revisions is the pipeline name and date: e.g. nf-core-rnaseq_2023-04-27_18-54
-        assert isinstance(download_obj.outdir, str)
-        assert bool(re.search(r"nf-core-rnaseq_\d{4}-\d{2}-\d{1,2}_\d{1,2}-\d{1,2}", download_obj.outdir, re.S))
+        assert isinstance(download_obj.outdir, Path)
+        assert bool(re.search(r"nf-core-rnaseq_\d{4}-\d{2}-\d{1,2}_\d{1,2}-\d{1,2}", str(download_obj.outdir), re.S))
 
-        download_obj.output_filename = f"{download_obj.outdir}.git"
+        download_obj.output_filename = download_obj.outdir.with_suffix(".git")
         download_obj.download_workflow_platform(location=tmp_dir)
 
         assert download_obj.workflow_repo
@@ -1470,6 +1509,7 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.fetch_containers")
     @with_temporary_folder
     def test_download_workflow_for_platform_with_one_custom_tag(self, _, tmp_dir):
+        tmp_dir = Path(tmp_dir)
         download_obj = DownloadWorkflow(
             pipeline="nf-core/rnaseq",
             revision=("3.9"),
@@ -1491,6 +1531,7 @@ class DownloadTest(unittest.TestCase):
     @mock.patch("nf_core.pipelines.download.singularity.SingularityFetcher.fetch_containers")
     @with_temporary_folder
     def test_download_workflow_for_platform_with_custom_tags(self, _, tmp_dir):
+        tmp_dir = Path(tmp_dir)
         with self._caplog.at_level(logging.INFO):
             from git.refs.tag import TagReference
 

@@ -286,14 +286,14 @@ class WorkflowRepo(SyncedRepo):
                 else:
                     log.error(f"[red]Could not apply invalid `--tag` specification[/]: '{additional_tag}'")
 
-    def bare_clone(self, destination):
+    def bare_clone(self, destination: Path):
         if self.repo:
             try:
-                destfolder = destination.absolute()
+                destfolder = destination.parent.absolute()
                 if not destfolder.exists():
                     destfolder.mkdir()
                 if destination.exists():
-                    shutil.rmtree(destination.absolute())
-                self.repo.clone(destination.absolute(), bare=True)
+                    shutil.rmtree(destination)
+                self.repo.clone(str(destfolder), bare=True)
             except (OSError, GitCommandError, InvalidGitRepositoryError) as e:
                 log.error(f"[red]Failure to create the pipeline download[/]\n{e}\n")
