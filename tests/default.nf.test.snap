@@ -1,7 +1,7 @@
 {
     "-profile test_taxid": {
         "content": [
-            181,
+            170,
             {
                 "BLAST_BLASTN": {
                     "blast": "2.16.0+"
@@ -340,7 +340,6 @@
                 "pathogens",
                 "pathogens/blast",
                 "pathogens/blast/blastn",
-                "pathogens/blast/blastn/SRR13439790_335341_blast.txt",
                 "pathogens/blast/blastn/SRR13439790_9606_blast.txt",
                 "pathogens/blast/blastn/SRR13439790_9606_blast_filtered.txt",
                 "pathogens/blast/blastn/SRR13439790_9606_blast_filtered_summary.txt",
@@ -349,7 +348,6 @@
                 "pathogens/blast/blastn/SRR13439799_211044_blast_filtered_summary.txt",
                 "pathogens/blast/blastn/SRR13439802_9606_blast.txt",
                 "pathogens/blast/blastx",
-                "pathogens/blast/blastx/SRR13439790_335341_blastx.txt",
                 "pathogens/blast/blastx/SRR13439790_9606_blastx.txt",
                 "pathogens/blast/blastx/SRR13439799_211044_blastx.txt",
                 "pathogens/blast/blastx/SRR13439799_211044_blastx_filtered.txt",
@@ -381,14 +379,8 @@
                 "pathogens/minimap2/index/reference.mmi",
                 "pathogens/pathogen_reads",
                 "pathogens/pathogen_reads/blast_input",
-                "pathogens/pathogen_reads/blast_input/SRR13439790_335341_1.fasta.gz",
-                "pathogens/pathogen_reads/blast_input/SRR13439790_335341_2.fasta.gz",
                 "pathogens/pathogen_reads/blast_input/SRR13439799_488241_1.fasta.gz",
                 "pathogens/pathogen_reads/blast_input/SRR13439799_9606_1.fasta.gz",
-                "pathogens/pathogen_reads/blast_input/SRR13439802_335341_1.fasta.gz",
-                "pathogens/pathogen_reads/blast_input/SRR13439802_335341_2.fasta.gz",
-                "pathogens/pathogen_reads/blast_input/SRR13439813_335341_1.fasta.gz",
-                "pathogens/pathogen_reads/blast_input/SRR13439813_335341_2.fasta.gz",
                 "pathogens/pathogen_reads/consensus_input",
                 "pathogens/pathogen_reads/consensus_input/SRR13439790_9606_sorted.bam",
                 "pathogens/pathogen_reads/consensus_input/SRR13439790_9606_sorted.bam.bai",
@@ -474,6 +466,6 @@
             "nf-test": "0.9.2",
             "nextflow": "25.04.2"
         },
-        "timestamp": "2025-07-15T13:40:21.209961681"
+        "timestamp": "2025-07-15T14:04:38.164568595"
     }
 }
