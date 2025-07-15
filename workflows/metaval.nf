@@ -177,6 +177,8 @@ workflow METAVAL {
         // Prepare the query fasta file
         SEQKIT_FQ2FA ( ch_taxid_reads_filter.blast )
         ch_blast_query = SEQKIT_FQ2FA.out.fasta.mix( SPADES.out.contigs, FLYE.out.fasta )
+        ch_blast_query.dump(tag:"reads_query")
+
         ch_versions = ch_versions.mix( SEQKIT_FQ2FA.out.versions.first() )
         // BLASTn
         if ( !params.skip_blastn ) {
@@ -271,12 +273,27 @@ workflow METAVAL {
             }
         ch_blast_query_pathogen = ch_shortread_pathogen_blast.nonempty.mix(
             ch_longread_pathogen_blast.nonempty,
-            FILTER_CONSENSUS_SHORTREAD.out.filtered_consensus,
-            FILTER_CONSENSUS_LONGREAD.out.filtered_consensus
+            FILTER_CONSENSUS_SHORTREAD.out.filtered_consensus.ifEmpty([]),
+            FILTER_CONSENSUS_LONGREAD.out.filtered_consensus.ifEmpty([])
         )
+        // Assuming you have a channel with multiple FASTA files
+        // Split them into individual items
+        ch_blast_query_pathogen
+            .flatMap { meta, files ->
+                if (files instanceof List) {
+                    files.collect { file -> [meta, file] }
+                } else {
+                    [[meta, files]]
+                }
+            }
+            .set { single_fasta_channel }
+
+        single_fasta_channel.dump(tag:"query")
+
         if (!params.skip_blastn) {
             // BLASTn
-            BLAST_BLASTN_PATHOGEN ( ch_blast_query_pathogen, ch_blastn_db )
+            //BLAST_BLASTN_PATHOGEN ( ch_blast_query_pathogen, ch_blastn_db )
+            BLAST_BLASTN_PATHOGEN ( single_fasta_channel, ch_blastn_db )
             ch_versions = ch_versions.mix( BLAST_BLASTN_PATHOGEN.out.versions.first() )
 
             // Filter BLASTn hits
