@@ -497,7 +497,7 @@ class DownloadTest(unittest.TestCase):
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
         download_obj.get_revision_hash()
         assert download_obj.wf_sha[download_obj.revision[0]] == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
-        assert download_obj.outdir == "nf-core-methylseq_1.6"
+        assert download_obj.outdir == Path("nf-core-methylseq_1.6")
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
             == "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
@@ -516,7 +516,7 @@ class DownloadTest(unittest.TestCase):
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
         download_obj.get_revision_hash()
         assert download_obj.wf_sha[download_obj.revision[0]] == "819cbac792b76cf66c840b567ed0ee9a2f620db7"
-        assert download_obj.outdir == "nf-core-exoseq_dev"
+        assert download_obj.outdir == Path("nf-core-exoseq_dev")
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
             == "https://github.com/nf-core/exoseq/archive/819cbac792b76cf66c840b567ed0ee9a2f620db7.zip"
@@ -560,7 +560,7 @@ class DownloadTest(unittest.TestCase):
         download_obj.get_revision_hash()
         print(download_obj)
         assert download_obj.wf_sha[download_obj.revision[0]] == revision
-        assert download_obj.outdir == f"nf-core-exoseq_{short_rev}"
+        assert download_obj.outdir == Path(f"nf-core-exoseq_{short_rev}")
         assert (
             download_obj.wf_download_url[download_obj.revision[0]]
             == f"https://github.com/nf-core/exoseq/archive/{revision}.zip"

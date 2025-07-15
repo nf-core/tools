@@ -103,7 +103,7 @@ class DownloadWorkflow:
         else:
             self.revision = []
         self.outdir = Path(outdir) if outdir is not None else None
-        self.output_filename: Path
+        self.output_filename: Optional[Path] = None
         self.compress_type = compress_type
         self.force = force
         self.hide_progress = hide_progress
@@ -301,6 +301,7 @@ class DownloadWorkflow:
     def download_workflow_platform(self, location: Optional[Path] = None):
         """Create a bare-cloned git repository of the workflow, so it can be launched with `tw launch` as file:/ pipeline"""
         assert self.outdir
+        assert self.output_filename
 
         log.info("Collecting workflow from GitHub")
 
