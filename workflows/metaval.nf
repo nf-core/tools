@@ -275,6 +275,7 @@ workflow METAVAL {
             FILTER_CONSENSUS_SHORTREAD.out.filtered_consensus.ifEmpty([]),
             FILTER_CONSENSUS_LONGREAD.out.filtered_consensus.ifEmpty([])
         )
+        ch_blast_query_pathogen.dump(tag:"query")
 
         if (!params.skip_blastn) {
             // BLASTn
