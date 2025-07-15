@@ -177,7 +177,6 @@ workflow METAVAL {
         // Prepare the query fasta file
         SEQKIT_FQ2FA ( ch_taxid_reads_filter.blast )
         ch_blast_query = SEQKIT_FQ2FA.out.fasta.mix( SPADES.out.contigs, FLYE.out.fasta )
-
         ch_versions = ch_versions.mix( SEQKIT_FQ2FA.out.versions.first() )
         // BLASTn
         if ( !params.skip_blastn ) {
@@ -185,11 +184,9 @@ workflow METAVAL {
             ch_versions = ch_versions.mix( BLAST_BLASTN.out.versions.first() )
             // Filter BLASTn hits
             ch_blastn_hits = BLAST_BLASTN.out.txt
-                .branch {
-                    non_empty: it[1].size() > 0
-                    empty: true
-                }
-            FILTER_BLASTN ( ch_blastn_hits.non_empty, file( params.blast_header, checkIfExists: true))
+                .filter { meta, blastn_file -> blastn_file.size() > 0 }
+
+            FILTER_BLASTN ( ch_blastn_hits, file( params.blast_header, checkIfExists: true))
             ch_versions = ch_versions.mix( FILTER_BLASTN.out.versions.first() )
         }
         // BLASTx:DIAMOND
@@ -202,11 +199,8 @@ workflow METAVAL {
             ch_versions = ch_versions.mix( DIAMOND_BLASTX.out.versions.first() )
             // Filter BLASTX hits
             ch_blastx_hits = DIAMOND_BLASTX.out.txt
-                .branch {
-                    non_empty: it[1].size() > 0
-                    empty: true
-                }
-            FILTER_BLASTX ( ch_blastx_hits.non_empty, file( params.blast_header, checkIfExists: true))
+                .filter { meta, blastx_file -> blastx_file.size() > 0 }
+            FILTER_BLASTX ( ch_blastx_hits, file( params.blast_header, checkIfExists: true))
             ch_versions = ch_versions.mix( FILTER_BLASTX.out.versions.first() )
         }
         }
@@ -260,30 +254,6 @@ workflow METAVAL {
             ch_versions = ch_versions.mix( FILTER_CONSENSUS_LONGREAD.out.versions )
         }
         // BLAST
-//        ch_shortread_pathogen_blast = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
-//            .branch { it ->
-//                empty: it[1][0].countFasta() < 1 || it[1][1].countFasta() < 1
-//                nonempty: true
-//            }
-//        // for pair-end reads, only use read1 for blast
-//        ch_shortread_pathogen_blast.nonempty
-//            .map { meta, reads ->
-//                return [ meta, reads[0]]
-//            }
-//            .set{ch_shortread_pathogen_blast_read1}
-//
-//        // BLAST - using filter for cleaner logic
-//        ch_shortread_pathogen_blast_read1 = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
-//            .filter { meta, reads ->
-//                reads[0].countFasta() >= 1 && reads[1].countFasta() >= 1
-//            }
-//            .map { meta, reads -> [ meta, reads[0]] }
-//
-//        ch_longread_pathogen_blast = TAXID_BAM_FASTA_LONGREAD.out.taxid_fasta
-//            .branch { it ->
-//                empty: it[1].countFasta() < 1
-//                nonempty: true
-//            }
         // For pair-end reads, only use read1 for blast
         ch_shortread_pathogen_blast_read1 = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
             .filter { meta, reads ->
@@ -301,7 +271,6 @@ workflow METAVAL {
             FILTER_CONSENSUS_SHORTREAD.out.filtered_consensus.ifEmpty([]),
             FILTER_CONSENSUS_LONGREAD.out.filtered_consensus.ifEmpty([])
         )
-        ch_blast_query_pathogen.dump(tag:"query")
 
         if (!params.skip_blastn) {
             // BLASTn
@@ -310,11 +279,8 @@ workflow METAVAL {
 
             // Filter BLASTn hits
             ch_blastn_hits_pathogen = BLAST_BLASTN_PATHOGEN.out.txt
-                .branch {
-                    non_empty: it[1].size() > 0
-                    empty: true
-                }
-            FILTER_BLASTN_PATHOGEN ( ch_blastn_hits_pathogen.non_empty, file( params.blast_header, checkIfExists: true))
+                .filter { meta, blastn_file -> blastn_file.size() > 0 }
+            FILTER_BLASTN_PATHOGEN ( ch_blastn_hits_pathogen, file( params.blast_header, checkIfExists: true))
             ch_versions = ch_versions.mix( FILTER_BLASTN_PATHOGEN.out.versions.first() )
 
         }
@@ -328,11 +294,8 @@ workflow METAVAL {
             ch_versions = ch_versions.mix( DIAMOND_BLASTX_PATHOGEN.out.versions.first() )
             // Filter BLASTx hits
             ch_blastx_hits_pathogen = DIAMOND_BLASTX_PATHOGEN.out.txt
-                .branch {
-                    non_empty: it[1].size() > 0
-                    empty: true
-                }
-            FILTER_BLASTX_PATHOGEN ( ch_blastx_hits_pathogen.non_empty, file( params.blast_header, checkIfExists: true))
+                .filter { meta, blastx_file -> blastx_file.size() > 0 }
+            FILTER_BLASTX_PATHOGEN ( ch_blastx_hits_pathogen, file( params.blast_header, checkIfExists: true))
             ch_versions = ch_versions.mix( FILTER_BLASTX_PATHOGEN.out.versions.first() )
         }
     }
