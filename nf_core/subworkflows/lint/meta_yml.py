@@ -53,7 +53,7 @@ def meta_yml(subworkflow_lint_object, subworkflow, allow_missing: bool = False):
     # Confirm that the meta.yml file is valid according to the JSON schema
     valid_meta_yml = True
     try:
-        with open(Path(subworkflow_lint_object.modules_repo.local_repo_dir, "subworkflows/yaml-schema.json")) as fh:
+        with open(Path(subworkflow.base_dir, "subworkflows/yaml-schema.json")) as fh:
             schema = json.load(fh)
         jsonschema.validators.validate(instance=meta_yaml, schema=schema)
         subworkflow.passed.append(("meta_yml_valid", "Subworkflow `meta.yml` is valid", subworkflow.meta_yml))
