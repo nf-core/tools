@@ -4,6 +4,8 @@
 
 ### Template
 
+- Adding new multiqc file llms-full.txt to nftignore file ([#3675](https://github.com/nf-core/tools/pull/3675))
+
 ### Linting
 
 ### Modules
