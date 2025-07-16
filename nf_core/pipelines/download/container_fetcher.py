@@ -1,20 +1,83 @@
+import contextlib
 import logging
 import re
 import shutil
-from abc import abstractmethod
-from collections.abc import Collection, Container, Iterable
+from abc import ABC, abstractmethod
+from collections.abc import Collection, Container, Generator, Iterable
 from pathlib import Path
 from typing import Optional
 
-from nf_core.pipelines.download.utils import (
-    DownloadProgress,
-    intermediate_file,
-)
+import rich.progress
+
+from nf_core.pipelines.download.utils import intermediate_file
 
 log = logging.getLogger(__name__)
 
 
-class ContainerFetcher:
+class ContainerProgress(rich.progress.Progress):
+    """
+    Custom Progress bar class, allowing us to have two progress
+    bars with different columns / layouts.
+    Also provide helper functions to control the top-level task.
+    """
+
+    def get_task_types_and_columns(self):
+        """
+        Gets the possible task types fo rthe
+        """
+        task_types_and_columns = {
+            "summary": (
+                "[magenta]{task.description}",
+                rich.progress.BarColumn(bar_width=None),
+                "[progress.percentage]{task.percentage:>3.0f}%",
+                "•",
+                "[green]{task.completed}/{task.total} completed",
+            ),
+        }
+        return task_types_and_columns
+
+    def get_renderables(self) -> Generator[rich.table.Table, None, None]:
+        self.columns: Iterable[str | rich.progress.ProgressColumn]
+        for task in self.tasks:
+            for task_type, columns in self.get_task_types_and_columns().items():
+                if task.fields.get("progress_type") == task_type:
+                    self.columns = columns
+
+            yield self.make_tasks_table([task])
+
+    # These two functions allow callers not having to track the main TaskID
+    # They are pass-through functions to the rich.progress methods
+    def add_main_task(self, **kwargs) -> rich.progress.TaskID:
+        """
+        Add a top-level task to the progress bar.
+        This task will be used to track the overall progress of the container downloads.
+        """
+        self.main_task = self.add_task(
+            "Container download",
+            progress_type="summary",
+            **kwargs,
+        )
+        return self.main_task
+
+    def update_main_task(self, **kwargs) -> None:
+        """
+        Update the top-level task with new information.
+        """
+        self.update(self.main_task, **kwargs)
+
+    @contextlib.contextmanager
+    def sub_task(self, *args, **kwargs) -> Generator[rich.progress.TaskID, None, None]:
+        """
+        Context manager to create a sub-task under the main task.
+        """
+        task = self.add_task(*args, **kwargs)
+        try:
+            yield task
+        finally:
+            self.remove_task(task)
+
+
+class ContainerFetcher(ABC):
     """Class to manage all Singularity operations for fetching containers.
 
     The guiding principles are that:
@@ -31,7 +94,7 @@ class ContainerFetcher:
         self,
         container_library: Iterable[str],
         registry_set: Iterable[str],
-        progress_ctx: DownloadProgress,
+        progress_ctx: ContainerProgress,
         library_dir: Optional[Path],
         cache_dir: Optional[Path],
         amend_cachedir: bool,
@@ -40,6 +103,7 @@ class ContainerFetcher:
         self.container_library = list(container_library)
         self.registry_set = registry_set
         self._progress_ctx = progress_ctx
+        self.progress: Optional[ContainerProgress] = None
         self.kill_with_fire = False
         self.implementation = None
         self.name = None
@@ -58,12 +122,12 @@ class ContainerFetcher:
         return self._progress_ctx.__exit__(exc_type, exc_val, exc_tb)
 
     @property
-    def progress(self):
+    def progress(self) -> rich.progress.Progress:
         assert self._progress is not None  # mypy
         return self._progress
 
     @progress.setter
-    def progress(self, progress: Optional[DownloadProgress]):
+    def progress(self, progress: Optional[ContainerProgress]) -> None:
         self._progress = progress
 
     @abstractmethod

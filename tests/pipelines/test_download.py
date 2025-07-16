@@ -22,15 +22,17 @@ import nf_core.pipelines.download
 import nf_core.pipelines.list
 import nf_core.utils
 from nf_core.pipelines.download import DownloadWorkflow
+from nf_core.pipelines.download.container_fetcher import ContainerProgress
+from nf_core.pipelines.download.docker import DockerProgress
 from nf_core.pipelines.download.singularity import (
+    FileDownloader,
     SingularityError,
     SingularityFetcher,
+    SingularityProgress,
 )
 from nf_core.pipelines.download.utils import (
     NF_INSPECT_MIN_NF_VERSION,
     DownloadError,
-    DownloadProgress,
-    FileDownloader,
     check_nextflow_version,
     intermediate_file,
 )
@@ -113,7 +115,7 @@ class DownloadUtilsTest(unittest.TestCase):
     # Test for 'utils.DownloadProgress.add/update_main_task'
     #
     def test_download_progress_main_task(self):
-        with DownloadProgress() as progress:
+        with ContainerProgress() as progress:
             # No task initially
             assert progress.tasks == []
 
@@ -139,7 +141,7 @@ class DownloadUtilsTest(unittest.TestCase):
     # Test for 'utils.DownloadProgress.sub_task'
     #
     def test_download_progress_sub_task(self):
-        with DownloadProgress() as progress:
+        with ContainerProgress() as progress:
             # No task initially
             assert progress.tasks == []
 
@@ -169,33 +171,8 @@ class DownloadUtilsTest(unittest.TestCase):
     # Test for 'utils.DownloadProgress.get_renderables'
     #
     def test_download_progress_renderables(self):
-        # Test the "singularity_pull" progress type
-        with DownloadProgress() as progress:
-            assert progress.tasks == []
-            progress.add_task(
-                "Task 1", progress_type="singularity_pull", total=42, completed=11, current_log="example log"
-            )
-            assert len(progress.tasks) == 1
-
-            renderable = progress.get_renderable()
-            assert isinstance(renderable, rich.console.Group), type(renderable)
-
-            assert len(renderable.renderables) == 1
-            table = renderable.renderables[0]
-            assert isinstance(table, rich.table.Table)
-
-            assert isinstance(table.columns[0]._cells[0], str)
-            assert table.columns[0]._cells[0] == "[magenta]Task 1"
-
-            assert isinstance(table.columns[1]._cells[0], str)
-            assert table.columns[1]._cells[0] == "[blue]example log"
-
-            assert isinstance(table.columns[2]._cells[0], rich.progress_bar.ProgressBar)
-            assert table.columns[2]._cells[0].completed == 11
-            assert table.columns[2]._cells[0].total == 42
-
         # Test the "summary" progress type
-        with DownloadProgress() as progress:
+        with ContainerProgress() as progress:
             assert progress.tasks == []
             progress.add_task("Task 1", progress_type="summary", total=42, completed=11)
             assert len(progress.tasks) == 1
@@ -223,8 +200,37 @@ class DownloadUtilsTest(unittest.TestCase):
             assert isinstance(table.columns[4]._cells[0], str)
             assert table.columns[4]._cells[0] == "[green]11/42 completed"
 
+        #
+        # Test the SingularityProgress subclass
+        #
+
+        # Test the "singularity_pull" progress type
+        with SingularityProgress() as progress:
+            assert progress.tasks == []
+            progress.add_task(
+                "Task 1", progress_type="singularity_pull", total=42, completed=11, current_log="example log"
+            )
+            assert len(progress.tasks) == 1
+
+            renderable = progress.get_renderable()
+            assert isinstance(renderable, rich.console.Group), type(renderable)
+
+            assert len(renderable.renderables) == 1
+            table = renderable.renderables[0]
+            assert isinstance(table, rich.table.Table)
+
+            assert isinstance(table.columns[0]._cells[0], str)
+            assert table.columns[0]._cells[0] == "[magenta]Task 1"
+
+            assert isinstance(table.columns[1]._cells[0], str)
+            assert table.columns[1]._cells[0] == "[blue]example log"
+
+            assert isinstance(table.columns[2]._cells[0], rich.progress_bar.ProgressBar)
+            assert table.columns[2]._cells[0].completed == 11
+            assert table.columns[2]._cells[0].total == 42
+
         # Test the "download" progress type
-        with DownloadProgress() as progress:
+        with SingularityProgress() as progress:
             assert progress.tasks == []
             progress.add_task("Task 1", progress_type="download", total=42, completed=11)
             assert len(progress.tasks) == 1
@@ -258,13 +264,35 @@ class DownloadUtilsTest(unittest.TestCase):
             assert isinstance(table.columns[6]._cells[0], rich.text.Text)
             assert table.columns[6]._cells[0]._text == ["?"]
 
+        #
+        # Test the DockerProgress subclass
+        #
+        with DockerProgress() as progress:
+            assert progress.tasks == []
+            progress.add_task(
+                "Task 1", progress_type="docker", total=2, completed=1, current_log="example log", status="Pulling"
+            )
+            assert len(progress.tasks) == 1
+
+            renderable = progress.get_renderable()
+            assert isinstance(renderable, rich.console.Group), type(renderable)
+
+            assert len(renderable.renderables) == 1
+            table = renderable.renderables[0]
+            assert isinstance(table, rich.table.Table)
+
+            assert isinstance(table.columns[0]._cells[0], str)
+            assert table.columns[0]._cells[0] == "[magenta]Task 1"
+            assert isinstance(table.columns[2]._cells[0], str)
+            assert table.columns[2]._cells[0] == "([blue]Pulling)"
+
     #
-    # Test for 'utils.FileDownloader.download_file'
+    # Test for 'singularity.FileDownloader.download_file'
     #
     @with_temporary_folder
     def test_file_download(self, outdir):
         outdir = Path(outdir)
-        with DownloadProgress() as progress:
+        with ContainerProgress() as progress:
             downloader = FileDownloader(progress)
 
             # Activate the caplog: all download attempts must be logged (even failed ones)
@@ -281,7 +309,7 @@ class DownloadUtilsTest(unittest.TestCase):
                 assert (output_path).exists()
                 assert os.path.getsize(output_path) == 27
                 assert (
-                    "nf_core.pipelines.download.utils",
+                    "nf_core.pipelines.download.singularity",
                     logging.DEBUG,
                     f"Downloading '{src_url}' to '{output_path}'",
                 ) in self._caplog.record_tuples
@@ -297,7 +325,7 @@ class DownloadUtilsTest(unittest.TestCase):
                     downloader.download_file(src_url, output_path)
                 assert not (output_path).exists()
                 assert (
-                    "nf_core.pipelines.download.utils",
+                    "nf_core.pipelines.download.singularity",
                     logging.DEBUG,
                     f"Downloading '{src_url}' to '{output_path}'",
                 ) in self._caplog.record_tuples
@@ -313,7 +341,7 @@ class DownloadUtilsTest(unittest.TestCase):
                     downloader.download_file(src_url, output_path)
                 assert not (output_path).exists()
                 assert (
-                    "nf_core.pipelines.download.utils",
+                    "nf_core.pipelines.download.singularity",
                     logging.DEBUG,
                     f"Downloading '{src_url}' to '{output_path}'",
                 ) in self._caplog.record_tuples
@@ -332,7 +360,7 @@ class DownloadUtilsTest(unittest.TestCase):
             assert not (output_path).exists()
 
     #
-    # Test for 'utils.FileDownloader.download_files_in_parallel'
+    # Test for 'singularity.FileDownloader.download_files_in_parallel'
     #
     @with_temporary_folder
     def test_parallel_downloads(self, outdir):
@@ -353,7 +381,7 @@ class DownloadUtilsTest(unittest.TestCase):
             "dummy://github.com/nf-core/test-datasets/raw/refs/heads/modules/data/genomics/sarscov2/genome/genome.fasta.fax"
         )
 
-        with DownloadProgress() as progress:
+        with ContainerProgress() as progress:
             downloader = FileDownloader(progress)
 
             # Download two files
@@ -980,80 +1008,79 @@ class DownloadTest(unittest.TestCase):
         reason="Can't test what Singularity does if it's not installed.",
     )
     @with_temporary_folder
-    @mock.patch("rich.progress.Progress.add_task")
+    @mock.patch("rich.progress.Progress")
     def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_rich_progress):
         tmp_dir = Path(tmp_dir)
-        singularity_fetcher = SingularityFetcher([], [], mock_rich_progress, None, None, False)
-
-        # Test successful pull
-        singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/hello-world.sif", "docker.io")
-
-        # Pull again, but now the image already exists
-        with pytest.raises(SingularityError.ImageExistsError):
+        with SingularityFetcher([], [], None, None, False) as singularity_fetcher:
+            # Test successful pull
             singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/hello-world.sif", "docker.io")
 
-        # Test successful pull with absolute URI (use tiny 3.5MB test container from the "Kogia" project: https://github.com/bschiffthaler/kogia)
-        singularity_fetcher.pull_image("docker.io/bschiffthaler/sed", f"{tmp_dir}/sed.sif", "docker.io")
+            # Pull again, but now the image already exists
+            with pytest.raises(SingularityError.ImageExistsError):
+                singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/hello-world.sif", "docker.io")
 
-        # Test successful pull with absolute oras:// URI
-        singularity_fetcher.pull_image(
-            "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
-            f"{tmp_dir}/umi-transfer-oras.sif",
-            "docker.io",
-        )
+            # Test successful pull with absolute URI (use tiny 3.5MB test container from the "Kogia" project: https://github.com/bschiffthaler/kogia)
+            singularity_fetcher.pull_image("docker.io/bschiffthaler/sed", f"{tmp_dir}/sed.sif", "docker.io")
 
-        # try pulling Docker container image with oras://
-        with pytest.raises(SingularityError.NoSingularityContainerError):
+            # Test successful pull with absolute oras:// URI
             singularity_fetcher.pull_image(
-                "oras://ghcr.io/matthiaszepper/umi-transfer:dev",
-                f"{tmp_dir}/umi-transfer-oras_impostor.sif",
+                "oras://community.wave.seqera.io/library/umi-transfer:1.0.0--e5b0c1a65b8173b6",
+                f"{tmp_dir}/umi-transfer-oras.sif",
                 "docker.io",
             )
 
-        # try to pull from non-existing registry (Name change hello-world_new.sif is needed, otherwise ImageExistsError is raised before attempting to pull.)
-        with pytest.raises(SingularityError.RegistryNotFoundError):
-            singularity_fetcher.pull_image(
-                "hello-world",
-                f"{tmp_dir}/break_the_registry_test.sif",
-                "register-this-domain-to-break-the-test.io",
-            )
+            # try pulling Docker container image with oras://
+            with pytest.raises(SingularityError.NoSingularityContainerError):
+                singularity_fetcher.pull_image(
+                    "oras://ghcr.io/matthiaszepper/umi-transfer:dev",
+                    f"{tmp_dir}/umi-transfer-oras_impostor.sif",
+                    "docker.io",
+                )
 
-        # test Image not found for several registries
-        with pytest.raises(SingularityError.ImageNotFoundError):
-            singularity_fetcher.pull_image("a-container", f"{tmp_dir}/acontainer.sif", "quay.io")
+            # try to pull from non-existing registry (Name change hello-world_new.sif is needed, otherwise ImageExistsError is raised before attempting to pull.)
+            with pytest.raises(SingularityError.RegistryNotFoundError):
+                singularity_fetcher.pull_image(
+                    "hello-world",
+                    f"{tmp_dir}/break_the_registry_test.sif",
+                    "register-this-domain-to-break-the-test.io",
+                )
 
-        with pytest.raises(SingularityError.ImageNotFoundError):
-            singularity_fetcher.pull_image("a-container", f"{tmp_dir}/acontainer.sif", "docker.io")
+            # test Image not found for several registries
+            with pytest.raises(SingularityError.ImageNotFoundError):
+                singularity_fetcher.pull_image("a-container", f"{tmp_dir}/acontainer.sif", "quay.io")
 
-        with pytest.raises(SingularityError.ImageNotFoundError):
-            singularity_fetcher.pull_image("a-container", f"{tmp_dir}/acontainer.sif", "ghcr.io")
+            with pytest.raises(SingularityError.ImageNotFoundError):
+                singularity_fetcher.pull_image("a-container", f"{tmp_dir}/acontainer.sif", "docker.io")
 
-        # test Image not found for absolute URI.
-        with pytest.raises(SingularityError.ImageNotFoundError):
-            singularity_fetcher.pull_image(
-                "docker.io/bschiffthaler/nothingtopullhere",
-                f"{tmp_dir}/nothingtopullhere.sif",
-                "docker.io",
-            )
+            with pytest.raises(SingularityError.ImageNotFoundError):
+                singularity_fetcher.pull_image("a-container", f"{tmp_dir}/acontainer.sif", "ghcr.io")
 
-        # Traffic from Github Actions to GitHub's Container Registry is unlimited, so no harm should be done here.
-        with pytest.raises(SingularityError.InvalidTagError):
-            singularity_fetcher.pull_image(
-                "ewels/multiqc:go-rewrite",
-                f"{tmp_dir}/multiqc-go.sif",
-                "ghcr.io",
-            )
+            # test Image not found for absolute URI.
+            with pytest.raises(SingularityError.ImageNotFoundError):
+                singularity_fetcher.pull_image(
+                    "docker.io/bschiffthaler/nothingtopullhere",
+                    f"{tmp_dir}/nothingtopullhere.sif",
+                    "docker.io",
+                )
+
+            # Traffic from Github Actions to GitHub's Container Registry is unlimited, so no harm should be done here.
+            with pytest.raises(SingularityError.InvalidTagError):
+                singularity_fetcher.pull_image(
+                    "ewels/multiqc:go-rewrite",
+                    f"{tmp_dir}/multiqc-go.sif",
+                    "ghcr.io",
+                )
 
     @pytest.mark.skipif(
         shutil.which("singularity") is None and shutil.which("apptainer") is None,
         reason="Can't test what Singularity does if it's not installed.",
     )
     @with_temporary_folder
-    @mock.patch("rich.progress.Progress.add_task")
-    def test_singularity_pull_image_successfully(self, tmp_dir, mock_rich_progress):
+    @mock.patch("rich.progress.Progress")
+    def test_singularity_pull_image_successfully(self, tmp_dir, mock_progress):
         tmp_dir = Path(tmp_dir)
-        singularity_fetcher = SingularityFetcher([], [], mock_rich_progress, None, None, False)
-        singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/yet-another-hello-world.sif", "docker.io")
+        with SingularityFetcher([], [], None, None, False) as singularity_fetcher:
+            singularity_fetcher.pull_image("hello-world", f"{tmp_dir}/yet-another-hello-world.sif", "docker.io")
 
     #
     # Tests for 'SingularityFetcher.fetch_containers'
@@ -1080,13 +1107,9 @@ class DownloadTest(unittest.TestCase):
         assert len(download_obj.container_library) == 4
         # This list of fake container images should produce all kinds of ContainerErrors.
         # Test that they are all caught inside SingularityFetcher.fetch_containers().
-        with DownloadProgress(disable=download_obj.hide_progress) as progress:
-            progress.add_main_task(
-                total=len(download_obj.containers),
-            )
-            singularity_fetcher = SingularityFetcher(
-                download_obj.container_library, download_obj.registry_set, progress, None, None, False
-            )
+        with SingularityFetcher(
+            download_obj.container_library, download_obj.registry_set, None, None, False
+        ) as singularity_fetcher:
             singularity_fetcher.fetch_containers(
                 download_obj.containers,
                 download_obj.outdir,
@@ -1408,7 +1431,7 @@ class DownloadTest(unittest.TestCase):
     @mock.patch(
         "nf_core.pipelines.download.singularity.SingularityFetcher.check_and_set_implementation"
     )  # This is to make sure that we do not check for Singularity/Apptainer installation
-    @mock.patch.object(nf_core.pipelines.download.utils.FileDownloader, "download_file", new=mock_download_file)
+    @mock.patch.object(nf_core.pipelines.download.singularity.FileDownloader, "download_file", new=mock_download_file)
     def test_download_workflow_with_success(self, tmp_dir, mock_check_and_set_implementation):
         tmp_dir = Path(tmp_dir)
         os.environ["NXF_SINGULARITY_CACHEDIR"] = str(tmp_dir / "foo")

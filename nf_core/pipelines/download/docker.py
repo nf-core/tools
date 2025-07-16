@@ -8,8 +8,9 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Optional
 
-from nf_core.pipelines.download.container_fetcher import ContainerFetcher
-from nf_core.pipelines.download.utils import DockerDownloadProgress
+import rich.progress
+
+from nf_core.pipelines.download.container_fetcher import ContainerFetcher, ContainerProgress
 
 log = logging.getLogger(__name__)
 
@@ -23,14 +24,13 @@ class DockerFetcher(ContainerFetcher):
         self,
         container_library: Iterable[str],
         registry_set: Iterable[str],
-        # progress: DownloadProgress,
         parallel: int = 4,
     ):
         """
         Intialize the docker image fetcher
 
         """
-        progress_ctx = DockerDownloadProgress()
+        progress_ctx = DockerProgress()
         super().__init__(
             container_library=container_library,
             registry_set=registry_set,
@@ -68,7 +68,7 @@ class DockerFetcher(ContainerFetcher):
             containers (Iterable[tuple[str, str]]): A list of tuples with the container name
         """
         # Update the main task -- we both need to pull and save the images
-        self.progress.update_main_task(total=2 * len(containers))
+        self.progress.update_main_task(total=len(containers))
 
         # We use a single thread pool to pull and save images. To ensure that only a single image is pulled at a time,
         # we let the next pull task wait for the previous one to finish. Save tasks can run in parallel, but they need to
@@ -108,14 +108,38 @@ class DockerFetcher(ContainerFetcher):
         """
         Pull a docker image and then save it
         """
-        self.pull_image(container)
-        self.save_image(container, output_path)
+        # Progress bar to show that something is happening
+        container_short_name = container.split("/")[-1][:50]
+        task = self.progress.add_task(
+            f"Fetching '{container_short_name}'",
+            progress_type="docker",
+            current_log="",
+            total=2,
+            status="Pulling",
+        )
+
+        self.pull_image(container, task)
+
+        # Update progress bar
+        self.progress.advance(task)
+        self.progress.update(task, status="Saving")
+        # self.progress.update(task, description=f"Saving '{container_short_name}'")
+
+        # Save the image
+        self.save_image(container, output_path, task)
+
+        # Update progress bar
+        self.progress.advance(task)
+        self.progress.remove_task(task)
+
+        # Task should advance in any case. Failure to pull will not kill the pulling process.
+        self.progress.update_main_task(advance=1)
 
     def construct_pull_command(self, address: str):
         pull_command = ["docker", "image", "pull", address]
         return pull_command
 
-    def pull_image(self, container: str) -> None:
+    def pull_image(self, container: str, progress_task: rich.progress.Task) -> None:
         """
         Pull a single Docker image from a registry.
 
@@ -129,7 +153,7 @@ class DockerFetcher(ContainerFetcher):
             pull_command = self.construct_pull_command(container)
             log.debug(f"Pulling docker image: {container}")
             log.debug(f"Docker command: {' '.join(pull_command)}")
-            self._run_docker_command(pull_command, container, None, container, "docker_pull", "Pulling image")
+            self._run_docker_command(pull_command, container, None, container, progress_task)
         except (DockerError.InvalidTagError, DockerError.ImageNotFoundError) as e:
             log.error(e.message)
             log.error(f"Not able to pull image of {container}. Service might be down or internet connection is dead.")
@@ -138,9 +162,6 @@ class DockerFetcher(ContainerFetcher):
             log.error(e.message)
             log.error(e.helpmessage)
             log.error(f"Not able to pull image of {container}. Service might be down or internet connection is dead.")
-
-        # Task should advance in any case. Failure to pull will not kill the pulling process.
-        self.progress.update_main_task(advance=1)
 
     def construct_save_command(self, output_path: Path, address: str):
         save_command = [
@@ -153,7 +174,7 @@ class DockerFetcher(ContainerFetcher):
         ]
         return save_command
 
-    def save_image(self, container: str, output_path: Path) -> None:
+    def save_image(self, container: str, output_path: Path, progress_task: rich.progress.Task) -> None:
         """Save a Docker image that has been pulled to a file.
 
         Args:
@@ -166,10 +187,7 @@ class DockerFetcher(ContainerFetcher):
         log.debug(f"Saving Docker image '{container}' to {output_path}")
         address = container
         save_command = self.construct_save_command(output_path, address)
-        self._run_docker_command(save_command, container, output_path, address, "docker_save", "Saving image")
-
-        # Task should advance in any case. Failure to pull will not kill the pulling process.
-        self.progress.update_main_task(advance=1)
+        self._run_docker_command(save_command, container, output_path, address, progress_task)
 
     def _run_docker_command(
         self,
@@ -177,21 +195,11 @@ class DockerFetcher(ContainerFetcher):
         container: str,
         output_path: Optional[Path],
         address: str,
-        task_name: str,
-        task_desc: str,
+        progress_task: rich.progress.Task,
     ) -> None:
         """
         Internal command to run docker commands and error handle them properly
         """
-        # Progress bar to show that something is happening
-        container_short_name = container.split("/")[-1][:50]
-        nice_name = f"{task_desc} '{container_short_name}'"
-        # print(f"Running command: {' '.join(command)}")
-        task = self.progress.add_task(
-            nice_name,
-            progress_type=task_name,
-            current_log="",
-        )
         with subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
@@ -214,7 +222,7 @@ class DockerFetcher(ContainerFetcher):
                     line = proc.stdout.readline()
                     if line:
                         lines.append(line)
-                        self.progress.update(task, current_log=line.strip())
+                        self.progress.update(progress_task, current_log=line.strip())
                     elif proc.poll() is not None:
                         # Process has finished, break the loop
                         break
@@ -234,7 +242,7 @@ class DockerFetcher(ContainerFetcher):
                 "Error response from daemon:",
             }
             if any(pel in line for pel in possible_error_lines for line in lines):
-                self.progress.remove_task(task)
+                self.progress.remove_task(progress_task)
                 raise DockerError(
                     container=container,
                     address=address,
@@ -244,7 +252,21 @@ class DockerFetcher(ContainerFetcher):
                     absolute_URI=address.startswith("docker://"),
                 )
 
-        self.progress.remove_task(task)
+
+class DockerProgress(ContainerProgress):
+    def get_task_types_and_columns(self):
+        task_types_and_columns = super().get_task_types_and_columns()
+        task_types_and_columns.update(
+            {
+                "docker": (
+                    "[magenta]{task.description}",
+                    # "[blue]{task.fields[current_log]}",
+                    rich.progress.BarColumn(bar_width=None),
+                    "([blue]{task.fields[status]})",
+                ),
+            }
+        )
+        return task_types_and_columns
 
 
 # Distinct errors for the docker container fetching, required for acting on the exceptions

@@ -1,3 +1,6 @@
+import concurrent.futures
+import enum
+import io
 import itertools
 import logging
 import os
@@ -6,12 +9,14 @@ import shutil
 import subprocess
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Callable, Optional
 
-from nf_core.pipelines.download.container_fetcher import ContainerFetcher
-from nf_core.pipelines.download.utils import (
-    FileDownloader,
-    SingularityDownloadProgress,
-)
+import requests
+import requests_cache
+import rich.progress
+
+from nf_core.pipelines.download.container_fetcher import ContainerFetcher, ContainerProgress
+from nf_core.pipelines.download.utils import DownloadError, intermediate_file
 
 log = logging.getLogger(__name__)
 
@@ -30,7 +35,7 @@ class SingularityFetcher(ContainerFetcher):
         amend_cachedir: bool,
         parallel: int = 4,
     ):
-        progress_ctx = SingularityDownloadProgress()
+        progress_ctx = SingularityProgress()
         super().__init__(
             container_library=container_library,
             registry_set=registry_set,
@@ -150,8 +155,6 @@ class SingularityFetcher(ContainerFetcher):
     ) -> None:
         downloader = FileDownloader(self.progress)
 
-        log.warning(f"Parallel downloads: {parallel_downloads}")
-
         def update_file_progress(input_params: tuple[str, Path], status: FileDownloader.Status) -> None:
             # try-except introduced in 4a95a5b84e2becbb757ce91eee529aa5f8181ec7
             # unclear why rich.progress may raise an exception here as it's supposed to be thread-safe
@@ -170,7 +173,6 @@ class SingularityFetcher(ContainerFetcher):
             # it is possible to try multiple registries / mirrors if multiple were specified.
             # Iteration happens over a copy of self.container_library[:], as I want to be able to remove failing registries for subsequent images.
             for library in self.container_library[:]:
-                log.warning(f"Pulling '{container}' from '{library}' to '{output_path}'")
                 try:
                     self.pull_image(container, output_path, library)
                     # Pulling the image was successful, no SingularityError was raised, break the library loop
@@ -241,7 +243,6 @@ class SingularityFetcher(ContainerFetcher):
         else:
             address = f"docker://{library}/{container.replace('docker://', '')}"
             absolute_URI = False
-        log.warning(f"Pulling singularity image {container} from {address} to {output_path}")
         with self.progress.sub_task(
             container,
             start=False,
@@ -281,6 +282,30 @@ class SingularityFetcher(ContainerFetcher):
                     )
 
             self.symlink_registries(output_path)
+
+
+class SingularityProgress(ContainerProgress):
+    def get_task_types_and_columns(self):
+        task_types_and_columns = super().get_task_types_and_columns()
+        task_types_and_columns.update(
+            {
+                "download": (
+                    "[blue]{task.description}",
+                    rich.progress.BarColumn(bar_width=None),
+                    "[progress.percentage]{task.percentage:>3.1f}%",
+                    "•",
+                    rich.progress.DownloadColumn(),
+                    "•",
+                    rich.progress.TransferSpeedColumn(),
+                ),
+                "singularity_pull": (
+                    "[magenta]{task.description}",
+                    "[blue]{task.fields[current_log]}",
+                    rich.progress.BarColumn(bar_width=None),
+                ),
+            }
+        )
+        return task_types_and_columns
 
 
 # Distinct errors for the Singularity container download, required for acting on the exceptions
@@ -420,3 +445,145 @@ class SingularityError(Exception):
                 )
 
             super().__init__(self.message, self.helpmessage, self.error_log)
+
+
+class FileDownloader:
+    """Class to download files.
+
+    Downloads are done in parallel using threads. Progress of each download
+    is shown in a progress bar.
+
+    Users can hook a callback method to be notified after each download.
+    """
+
+    # Enum to report the status of a download thread
+    Status = enum.Enum("Status", "CANCELLED PENDING RUNNING DONE ERROR")
+
+    def __init__(self, progress: ContainerProgress) -> None:
+        """Initialise the FileDownloader object.
+
+        Args:
+            progress (DownloadProgress): The progress bar object to use for tracking downloads.
+        """
+        self.progress = progress
+        self.kill_with_fire = False
+
+    def parse_future_status(self, future: concurrent.futures.Future) -> Status:
+        """Parse the status of a future object."""
+        if future.running():
+            return self.Status.RUNNING
+        if future.cancelled():
+            return self.Status.CANCELLED
+        if future.done():
+            if future.exception():
+                return self.Status.ERROR
+            return self.Status.DONE
+        return self.Status.PENDING
+
+    def download_files_in_parallel(
+        self,
+        download_files: Iterable[tuple[str, Path]],
+        parallel_downloads: int,
+        callback: Optional[Callable[[tuple[str, Path], Status], None]] = None,
+    ) -> list[tuple[str, Path]]:
+        """Download multiple files in parallel.
+
+        Args:
+            download_files (Iterable[tuple[str, str]]): list of tuples with the remote URL and the local output path.
+            parallel_downloads (int): Number of parallel downloads to run.
+            callback (Callable[[tuple[str, str], Status], None]): Optional allback function to call after each download.
+                         The function must take two arguments: the download tuple and the status of the download thread.
+        """
+
+        # Make ctrl-c work with multi-threading
+        self.kill_with_fire = False
+
+        # Track the download threads
+        future_downloads: dict[concurrent.futures.Future, tuple[str, Path]] = {}
+
+        # list to store *successful* downloads
+        successful_downloads = []
+
+        def successful_download_callback(future: concurrent.futures.Future) -> None:
+            if future.done() and not future.cancelled() and future.exception() is None:
+                successful_downloads.append(future_downloads[future])
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel_downloads) as pool:
+            # The entire block needs to be monitored for KeyboardInterrupt so that ntermediate files
+            # can be cleaned up properly.
+            try:
+                for input_params in download_files:
+                    (remote_path, output_path) = input_params
+                    # Create the download thread as a Future object
+                    future = pool.submit(self.download_file, remote_path, output_path)
+                    future_downloads[future] = input_params
+                    # Callback to record successful downloads
+                    future.add_done_callback(successful_download_callback)
+                    # User callback function (if provided)
+                    if callback:
+                        future.add_done_callback(lambda f: callback(future_downloads[f], self.parse_future_status(f)))
+
+                completed_futures = concurrent.futures.wait(
+                    future_downloads, return_when=concurrent.futures.ALL_COMPLETED
+                )
+                # Get all the exceptions and exclude BaseException-based ones (e.g. KeyboardInterrupt)
+                exceptions = [
+                    exc for exc in (f.exception() for f in completed_futures.done) if isinstance(exc, Exception)
+                ]
+                if exceptions:
+                    raise DownloadError("Download errors", exceptions)
+
+            except KeyboardInterrupt:
+                # Cancel the future threads that haven't started yet
+                for future in future_downloads:
+                    future.cancel()
+                # Set the variable that the threaded function looks for
+                # Will trigger an exception from each active thread
+                self.kill_with_fire = True
+                # Re-raise exception on the main thread
+                raise
+
+        return successful_downloads
+
+    def download_file(self, remote_path: str, output_path: Path) -> None:
+        """Download a file from the web.
+
+        Use native Python to download the file. Progress is shown in the progress bar
+        as a new task (of type "download").
+
+        This method is integrated with the above `download_files_in_parallel` method. The
+        `self.kill_with_fire` variable is a sentinel used to check if the user has hit ctrl-c.
+
+        Args:
+            remote_path (str): Source URL of the file to download
+            output_path (str): The target output path
+        """
+        log.debug(f"Downloading '{remote_path}' to '{output_path}'")
+
+        # Set up download progress bar as a new task
+        nice_name = remote_path.split("/")[-1][:50]
+        with self.progress.sub_task(nice_name, start=False, total=False, progress_type="download") as task:
+            # Open file handle and download
+            # This temporary will be automatically renamed to the target if there are no errors
+            with intermediate_file(output_path) as fh:
+                # Disable caching as this breaks streamed downloads
+                with requests_cache.disabled():
+                    r = requests.get(remote_path, allow_redirects=True, stream=True, timeout=60 * 5)
+                    filesize = r.headers.get("Content-length")
+                    if filesize:
+                        self.progress.update(task, total=int(filesize))
+                        self.progress.start_task(task)
+
+                    # Stream download
+                    has_content = False
+                    for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
+                        # Check that the user didn't hit ctrl-c
+                        if self.kill_with_fire:
+                            raise KeyboardInterrupt
+                        self.progress.update(task, advance=len(data))
+                        fh.write(data)
+                        has_content = True
+
+                    # Check that we actually downloaded something
+                    if not has_content:
+                        raise DownloadError(f"Downloaded file '{remote_path}' is empty")
