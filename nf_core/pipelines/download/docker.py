@@ -5,12 +5,11 @@ import select
 import shutil
 import subprocess
 from collections.abc import Iterable
+from pathlib import Path
 from typing import Optional
 
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
-from nf_core.pipelines.download.utils import (
-    DownloadProgress,
-)
+from nf_core.pipelines.download.utils import DockerDownloadProgress
 
 log = logging.getLogger(__name__)
 
@@ -24,17 +23,18 @@ class DockerFetcher(ContainerFetcher):
         self,
         container_library: Iterable[str],
         registry_set: Iterable[str],
-        progress: DownloadProgress,
+        # progress: DownloadProgress,
         parallel: int = 4,
     ):
         """
         Intialize the docker image fetcher
 
         """
+        progress_ctx = DockerDownloadProgress()
         super().__init__(
             container_library=container_library,
             registry_set=registry_set,
-            progress=progress,
+            progress_ctx=progress_ctx,
             cache_dir=None,  # Docker does not use a cache directory
             library_dir=None,  # Docker does not use a library directory
             amend_cachedir=False,  # Docker does not use a cache directory
@@ -59,7 +59,7 @@ class DockerFetcher(ContainerFetcher):
         container_fn = container_fn + extension
         return container_fn
 
-    def fetch_remote_containers(self, containers, parallel=4):
+    def fetch_remote_containers(self, containers: list[tuple[str, Path]], parallel: int = 4) -> None:
         """
         Fetch remote containers in parallel:
         - A single thread pulls the images using the `docker image pull` command,
@@ -67,6 +67,9 @@ class DockerFetcher(ContainerFetcher):
         Args:
             containers (Iterable[tuple[str, str]]): A list of tuples with the container name
         """
+        # Update the main task -- we both need to pull and save the images
+        self.progress.update_main_task(total=2 * len(containers))
+
         # We use a single thread pool to pull and save images. To ensure that only a single image is pulled at a time,
         # we let the next pull task wait for the previous one to finish. Save tasks can run in parallel, but they need to
         # wait for the pull task to finish before they can save the image.
@@ -74,18 +77,10 @@ class DockerFetcher(ContainerFetcher):
             futures = []
 
             # Initialize the wait_future to None, which will be used to wait for the previous pull task to finish
-            wait_future = None
             for container, output_path in containers:
                 # Submit the pull task to the pool
-                future = pool.submit(self.pull_image, container, wait_future)
+                future = pool.submit(self.pull_and_save_image, container, output_path)
                 futures.append(future)
-
-                # Set the wait_future to the current future, so that the next pull task can wait for it
-                wait_future = future
-
-                # Submit the save task to the pool, which waits for the pull task to finish
-                save_future = pool.submit(self.save_image, container, output_path, wait_future)
-                futures.append(save_future)
 
             # Make ctrl-c work with multi-threading: set a sentinel that is checked by the subprocesses
             self.kill_with_fire = False
@@ -109,43 +104,18 @@ class DockerFetcher(ContainerFetcher):
                 # Re-raise exception on the main thread
                 raise
 
-    def construct_save_command(self, output_path, address):
-        save_command = [
-            "docker",
-            "image",
-            "save",
-            address,
-            "--output",
-            output_path,
-        ]
-        return save_command
-
-    def save_image(
-        self, container: str, output_path: str, wait_future: Optional[concurrent.futures.Future] = None
-    ) -> None:
-        """Save a Docker image that has been pulled to a file.
-
-        Args:
-            container (str): A pipeline's container name. Usually it is of similar format
-                to ``biocontainers/name:tag``
-            out_path (str): The final target output path
-            cache_path (str, None): The NXF_DOCKER_CACHEDIR path if set, None if not
-            wait_future (concurrent.futures.Future, None): A future that is used to wait for the previous pull task to finish.
+    def pull_and_save_image(self, container: str, output_path: Path):
         """
-        # If we have a wait_future, we wait for it to finish before saving the image
-        if wait_future is not None:
-            wait_future.result()
+        Pull a docker image and then save it
+        """
+        self.pull_image(container)
+        self.save_image(container, output_path)
 
-        log.debug(f"Saving Docker image '{container}' to {output_path}")
-        address = container
-        save_command = self.construct_save_command(output_path, address)
-        self._run_docker_command(save_command, container, output_path, address, "docker_save", "Saving image")
-
-    def construct_pull_command(self, address):
+    def construct_pull_command(self, address: str):
         pull_command = ["docker", "image", "pull", address]
         return pull_command
 
-    def pull_image(self, container: str, prev_pull_future: Optional[concurrent.futures.Future] = None) -> None:
+    def pull_image(self, container: str) -> None:
         """
         Pull a single Docker image from a registry.
 
@@ -154,8 +124,6 @@ class DockerFetcher(ContainerFetcher):
             output_path (str): The final local output path
             prev_pull_future (concurrent.futures.Future, None): A future that is used to wait for the previous pull task to finish.
         """
-        if prev_pull_future is not None:
-            prev_pull_future.result()  # Wait for the previous pull to finish
         # Try pulling the image from the specified address
         try:
             pull_command = self.construct_pull_command(container)
@@ -174,11 +142,40 @@ class DockerFetcher(ContainerFetcher):
         # Task should advance in any case. Failure to pull will not kill the pulling process.
         self.progress.update_main_task(advance=1)
 
+    def construct_save_command(self, output_path: Path, address: str):
+        save_command = [
+            "docker",
+            "image",
+            "save",
+            address,
+            "--output",
+            str(output_path),
+        ]
+        return save_command
+
+    def save_image(self, container: str, output_path: Path) -> None:
+        """Save a Docker image that has been pulled to a file.
+
+        Args:
+            container (str): A pipeline's container name. Usually it is of similar format
+                to ``biocontainers/name:tag``
+            out_path (str): The final target output path
+            cache_path (str, None): The NXF_DOCKER_CACHEDIR path if set, None if not
+            wait_future (concurrent.futures.Future, None): A future that is used to wait for the previous pull task to finish.
+        """
+        log.debug(f"Saving Docker image '{container}' to {output_path}")
+        address = container
+        save_command = self.construct_save_command(output_path, address)
+        self._run_docker_command(save_command, container, output_path, address, "docker_save", "Saving image")
+
+        # Task should advance in any case. Failure to pull will not kill the pulling process.
+        self.progress.update_main_task(advance=1)
+
     def _run_docker_command(
         self,
         command: list[str],
         container: str,
-        output_path: Optional[str],
+        output_path: Optional[Path],
         address: str,
         task_name: str,
         task_desc: str,
@@ -256,12 +253,12 @@ class DockerError(Exception):
 
     def __init__(
         self,
-        container,
-        address,
-        absolute_URI,
-        out_path,
-        command,
-        error_msg,
+        container: str,
+        address: str,
+        absolute_URI: bool,
+        out_path: Optional[Path],
+        command: list[str],
+        error_msg: list[str],
     ):
         self.container = container
         self.address = address
@@ -269,6 +266,7 @@ class DockerError(Exception):
         self.out_path = out_path
         self.command = command
         self.error_msg = error_msg
+        self.message = None
 
         error_patterns = {
             "reference does not exist": self.ImageNotPulledError,

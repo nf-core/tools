@@ -28,7 +28,6 @@ from nf_core.pipelines.download.singularity import SingularityFetcher
 from nf_core.pipelines.download.utils import (
     NF_INSPECT_MIN_NF_VERSION,
     DownloadError,
-    DownloadProgress,
     prioritize_direct_download,
     rectify_raw_container_matches,
 )
@@ -259,7 +258,6 @@ class DownloadWorkflow:
 
     def download_workflow_static(self):
         """Downloads a nf-core workflow from GitHub to the local file system in a self-contained manner."""
-        assert self.outdir
 
         # Download the centralised configs first
         if self.include_configs:
@@ -300,8 +298,8 @@ class DownloadWorkflow:
 
     def download_workflow_platform(self, location: Optional[Path] = None):
         """Create a bare-cloned git repository of the workflow, so it can be launched with `tw launch` as file:/ pipeline"""
-        assert self.outdir
-        assert self.output_filename
+        assert self.outdir is not None  # mypy
+        assert self.output_filename is not None  # mypy
 
         log.info("Collecting workflow from GitHub")
 
@@ -616,7 +614,6 @@ class DownloadWorkflow:
 
     def download_wf_files(self, revision, wf_sha, download_url):
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
-        assert self.outdir
         log.debug(f"Downloading {download_url}")
 
         # Download GitHub zip file into memory and extract
@@ -643,7 +640,6 @@ class DownloadWorkflow:
 
     def download_configs(self):
         """Downloads the centralised config profiles from nf-core/configs to :attr:`self.outdir`."""
-        assert self.outdir
         configs_zip_url = "https://github.com/nf-core/configs/archive/master.zip"
         configs_local_dir = "configs-master"
         log.debug(f"Downloading {configs_zip_url}")
@@ -664,7 +660,8 @@ class DownloadWorkflow:
 
     def wf_use_local_configs(self, revision_dirname: str):
         """Edit the downloaded nextflow.config file to use the local config files"""
-        assert self.outdir
+
+        assert self.outdir is not None  # mypy
         nfconfig_fn = (self.outdir / revision_dirname) / "nextflow.config"
         find_str = "https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}"
         repl_str = "${projectDir}/../configs/"
@@ -890,7 +887,7 @@ class DownloadWorkflow:
         self.registry_set.add("community-cr-prod.seqera.io/docker/registry/v2")
 
     def get_container_output_dir(self) -> Path:
-        assert self.outdir
+        assert self.outdir is not None  # mypy
         return self.outdir / f"{self.container_system}-images"
 
     def download_container_images(self, current_revision: str = "") -> None:
@@ -921,7 +918,6 @@ class DownloadWorkflow:
                 else:
                     raise FileNotFoundError("Singularity cache is required but no '$NXF_SINGULARITY_CACHEDIR' set!")
 
-            assert self.outdir
             out_path_dir = self.get_container_output_dir().absolute()
 
             # Check that the directories exist
@@ -929,32 +925,62 @@ class DownloadWorkflow:
                 log.debug(f"Output directory not found, creating: {out_path_dir}")
                 out_path_dir.mkdir()
 
-            with DownloadProgress(disable=self.hide_progress) as progress:
-                progress.add_main_task(
-                    total=len(self.containers),
-                )
-                # "Collecting container images",
-
-                container_fetcher: ContainerFetcher
-                if self.container_system == "singularity":
-                    container_fetcher = SingularityFetcher(
+            container_fetcher: ContainerFetcher
+            args: tuple[Any, ...]
+            container_fetcher_constructor, args = {
+                "singularity": (
+                    SingularityFetcher,
+                    (
                         self.container_library,
                         self.registry_set,
-                        progress,
                         library_dir,
                         cache_dir,
                         self.container_cache_utilisation == "amend",
-                        parallel=self.parallel,
-                    )
-                elif self.container_system == "docker":
-                    container_fetcher = DockerFetcher(
-                        self.container_library, self.registry_set, progress, parallel=self.parallel
-                    )
+                        self.parallel,
+                    ),
+                ),
+                "docker": (
+                    DockerFetcher,
+                    (
+                        self.container_library,
+                        self.registry_set,
+                        self.parallel,
+                    ),
+                ),
+            }[self.container_system]
+            with container_fetcher_constructor(*args) as container_fetcher:
                 container_fetcher.fetch_containers(
                     self.containers,
                     out_path_dir,
                     self.containers_remote,
                 )
+
+            # with DownloadProgress(disable=self.hide_progress) as progress:
+            #     progress.add_main_task(
+            #         total=len(self.containers),
+            #     )
+            #     # "Collecting container images",
+
+            #     container_fetcher: ContainerFetcher
+            #     if self.container_system == "singularity":
+            #         container_fetcher = SingularityFetcher(
+            # self.container_library,
+            # self.registry_set,
+            # progress,
+            # library_dir,
+            # cache_dir,
+            # self.container_cache_utilisation == "amend",
+            # parallel=self.parallel,
+            #         )
+            #     elif self.container_system == "docker":
+            #         container_fetcher = DockerFetcher(
+            #             self.container_library, self.registry_set, progress, parallel=self.parallel
+            #         )
+            #     container_fetcher.fetch_containers(
+            #         self.containers,
+            #         out_path_dir,
+            #         self.containers_remote,
+            #     )
 
     def compress_download(self):
         """Take the downloaded files and make a compressed .tar.gz archive."""

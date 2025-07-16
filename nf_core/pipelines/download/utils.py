@@ -6,6 +6,7 @@ import logging
 import re
 import tempfile
 import textwrap
+from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable
 from pathlib import Path
 from typing import Callable, Optional
@@ -110,52 +111,34 @@ def intermediate_file_no_creation(output_path: Path) -> Generator[Path, None, No
         raise
 
 
-class DownloadProgress(rich.progress.Progress):
-    """Custom Progress bar class, allowing us to have two progress
+class DownloadProgress(rich.progress.Progress, ABC):
+    """
+    Custom Progress bar class, allowing us to have two progress
     bars with different columns / layouts.
     Also provide helper functions to control the top-level task.
     """
 
+    @abstractmethod
+    def get_task_types_and_columns(self):
+        """
+        Gets the possible task types fo rthe
+        """
+        pass
+
     def get_renderables(self) -> Generator[rich.table.Table, None, None]:
         self.columns: Iterable[str | rich.progress.ProgressColumn]
         for task in self.tasks:
-            if task.fields.get("progress_type") == "summary":
-                self.columns = (
-                    "[magenta]{task.description}",
-                    rich.progress.BarColumn(bar_width=None),
-                    "[progress.percentage]{task.percentage:>3.0f}%",
-                    "•",
-                    "[green]{task.completed}/{task.total} completed",
-                )
-            if task.fields.get("progress_type") == "download":
-                self.columns = (
-                    "[blue]{task.description}",
-                    rich.progress.BarColumn(bar_width=None),
-                    "[progress.percentage]{task.percentage:>3.1f}%",
-                    "•",
-                    rich.progress.DownloadColumn(),
-                    "•",
-                    rich.progress.TransferSpeedColumn(),
-                )
-            if task.fields.get("progress_type") == "singularity_pull":
-                self.columns = (
-                    "[magenta]{task.description}",
-                    "[blue]{task.fields[current_log]}",
-                    rich.progress.BarColumn(bar_width=None),
-                )
-            if task.fields.get("progress_type") in {"docker_pull", "docker_save"}:
-                self.columns = (
-                    "[magenta]{task.description}",
-                    "[blue]{task.fields[current_log]}",
-                    rich.progress.BarColumn(bar_width=None),
-                )
+            for task_type, columns in self.get_task_types_and_columns().items():
+                if task.fields.get("progress_type") == task_type:
+                    self.columns = columns
 
             yield self.make_tasks_table([task])
 
     # These two functions allow callers not having to track the main TaskID
     # They are pass-through functions to the rich.progress methods
     def add_main_task(self, **kwargs) -> rich.progress.TaskID:
-        """Add a top-level task to the progress bar.
+        """
+        Add a top-level task to the progress bar.
         This task will be used to track the overall progress of the container downloads.
         """
         self.main_task = self.add_task(
@@ -166,17 +149,82 @@ class DownloadProgress(rich.progress.Progress):
         return self.main_task
 
     def update_main_task(self, **kwargs) -> None:
-        """Update the top-level task with new information."""
+        """
+        Update the top-level task with new information.
+        """
         self.update(self.main_task, **kwargs)
 
     @contextlib.contextmanager
     def sub_task(self, *args, **kwargs) -> Generator[rich.progress.TaskID, None, None]:
-        """Context manager to create a sub-task under the main task."""
+        """
+        Context manager to create a sub-task under the main task.
+        """
         task = self.add_task(*args, **kwargs)
         try:
             yield task
         finally:
             self.remove_task(task)
+
+
+class DockerDownloadProgress(DownloadProgress):
+    def get_task_types_and_columns(self):
+        task_types_and_columns = {
+            "summary": (
+                "[magenta]{task.description}",
+                rich.progress.BarColumn(bar_width=None),
+                "[progress.percentage]{task.percentage:>3.0f}%",
+                "•",
+                "[green]{task.completed}/{task.total} completed",
+            ),
+            "download": (
+                "[blue]{task.description}",
+                rich.progress.BarColumn(bar_width=None),
+                "[progress.percentage]{task.percentage:>3.1f}%",
+                "•",
+                rich.progress.DownloadColumn(),
+                "•",
+                rich.progress.TransferSpeedColumn(),
+            ),
+            "docker_pull": (
+                "[magenta]{task.description}",
+                "[blue]{task.fields[current_log]}",
+                rich.progress.BarColumn(bar_width=None),
+            ),
+            "docker_save": (
+                "[magenta]{task.description}",
+                "[blue]{task.fields[current_log]}",
+                rich.progress.BarColumn(bar_width=None),
+            ),
+        }
+        return task_types_and_columns
+
+
+class SingularityDownloadProgress(DownloadProgress):
+    def get_task_types_and_columns(self):
+        task_types_and_columns = {
+            "summary": (
+                "[magenta]{task.description}",
+                rich.progress.BarColumn(bar_width=None),
+                "[progress.percentage]{task.percentage:>3.0f}%",
+                "•",
+                "[green]{task.completed}/{task.total} completed",
+            ),
+            "download": (
+                "[blue]{task.description}",
+                rich.progress.BarColumn(bar_width=None),
+                "[progress.percentage]{task.percentage:>3.1f}%",
+                "•",
+                rich.progress.DownloadColumn(),
+                "•",
+                rich.progress.TransferSpeedColumn(),
+            ),
+            "singularity_pull": (
+                "[magenta]{task.description}",
+                "[blue]{task.fields[current_log]}",
+                rich.progress.BarColumn(bar_width=None),
+            ),
+        }
+        return task_types_and_columns
 
 
 class FileDownloader:

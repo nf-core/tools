@@ -10,6 +10,7 @@ from pathlib import Path
 from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.utils import (
     FileDownloader,
+    SingularityDownloadProgress,
 )
 
 log = logging.getLogger(__name__)
@@ -20,6 +21,26 @@ class SingularityFetcher(ContainerFetcher):
     Fetcher for Docker containers.
     """
 
+    def __init__(
+        self,
+        container_library,
+        registry_set,
+        cache_dir,
+        library_dir,
+        amend_cachedir: bool,
+        parallel: int = 4,
+    ):
+        progress_ctx = SingularityDownloadProgress()
+        super().__init__(
+            container_library=container_library,
+            registry_set=registry_set,
+            progress_ctx=progress_ctx,
+            cache_dir=cache_dir,  # Docker does not use a cache directory
+            library_dir=library_dir,  # Docker does not use a library directory
+            amend_cachedir=amend_cachedir,  # Docker does not use a cache directory
+            parallel=parallel,
+        )
+
     def check_and_set_implementation(self):
         if shutil.which("singularity"):
             self.implementation = "singularity"
@@ -28,7 +49,7 @@ class SingularityFetcher(ContainerFetcher):
         else:
             raise OSError("Singularity/Apptainer is needed to pull images, but it is not installed or not in $PATH")
 
-    def clean_container_file_extension(self, container_fn):
+    def clean_container_file_extension(self, container_fn: str):
         """
         This makes sure that the Singularity container filename has the right file extension
         """
@@ -47,7 +68,10 @@ class SingularityFetcher(ContainerFetcher):
         container_fn = container_fn + extension
         return container_fn
 
-    def fetch_remote_containers(self, containers, parallel=4):
+    def fetch_remote_containers(self, containers: list[tuple[str, Path]], parallel: int = 4) -> None:
+        # There are always the same number of total tasks
+        self.progress.update_main_task(total=len(containers))
+
         # Split the list of containers depending on whether we want to pull them or download them
         containers_pull = []
         containers_download = []
@@ -62,7 +86,6 @@ class SingularityFetcher(ContainerFetcher):
         if containers_pull:
             # We only need to set the implementation if we are pulling images
             # -- a user could download images without having singularity/apptainer installed
-            self.check_and_set_implementation()
             self.progress.update_main_task(description="Pulling singularity images")
             self.pull_images(containers_pull)
 
@@ -126,6 +149,8 @@ class SingularityFetcher(ContainerFetcher):
         parallel_downloads: int,
     ) -> None:
         downloader = FileDownloader(self.progress)
+
+        log.warning(f"Parallel downloads: {parallel_downloads}")
 
         def update_file_progress(input_params: tuple[str, Path], status: FileDownloader.Status) -> None:
             # try-except introduced in 4a95a5b84e2becbb757ce91eee529aa5f8181ec7
@@ -204,6 +229,7 @@ class SingularityFetcher(ContainerFetcher):
         Raises:
             Various exceptions possible from `subprocess` execution of Singularity.
         """
+
         # Sometimes, container still contain an explicit library specification, which
         # resulted in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
         # Thus, if an explicit registry is specified, the provided -l value is ignored.

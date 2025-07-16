@@ -31,7 +31,7 @@ class ContainerFetcher:
         self,
         container_library: Iterable[str],
         registry_set: Iterable[str],
-        progress: DownloadProgress,
+        progress_ctx: DownloadProgress,
         library_dir: Optional[Path],
         cache_dir: Optional[Path],
         amend_cachedir: bool,
@@ -39,7 +39,7 @@ class ContainerFetcher:
     ) -> None:
         self.container_library = list(container_library)
         self.registry_set = registry_set
-        self.progress = progress
+        self._progress_ctx = progress_ctx
         self.kill_with_fire = False
         self.implementation = None
         self.name = None
@@ -49,6 +49,22 @@ class ContainerFetcher:
         self.parallel = parallel
 
         self.check_and_set_implementation()
+
+    def __enter__(self):
+        self.progress = self._progress_ctx.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self._progress_ctx.__exit__(exc_type, exc_val, exc_tb)
+
+    @property
+    def progress(self):
+        assert self._progress is not None  # mypy
+        return self._progress
+
+    @progress.setter
+    def progress(self, progress: Optional[DownloadProgress]):
+        self._progress = progress
 
     @abstractmethod
     def check_and_set_implementation(self) -> None:
@@ -138,6 +154,8 @@ class ContainerFetcher:
         all the containers we find and does the appropriate action; copying
         from cache or fetching from a remote location
         """
+        self.progress.add_main_task(total=0)
+
         # Check each container in the list and defer actions
         containers_remote_fetch: list[tuple[str, Path]] = []
         containers_copy: list[tuple[str, Path, Path]] = []
@@ -171,7 +189,6 @@ class ContainerFetcher:
                 # update the cache if needed
                 if cache_path and not self.amend_cachedir and not cache_path.exists():
                     containers_copy.append((container, library_path, cache_path))
-                    total_tasks += 1
                     self.progress.update_main_task(total=total_tasks)
 
             # get the container from the cache
@@ -189,8 +206,6 @@ class ContainerFetcher:
                     # only copy to the output if we are not amending the cache
                     if not self.amend_cachedir:
                         containers_copy.append((container, cache_path, output_path))
-                    total_tasks += 1
-                    self.progress.update_main_task(total=total_tasks)
                 else:
                     # download or pull directly to the output
                     containers_remote_fetch.append((container, output_path))
@@ -201,18 +216,23 @@ class ContainerFetcher:
             self.fetch_remote_containers(containers_remote_fetch, parallel=self.parallel)
 
         # Copy containers
-        self.progress.update_main_task(description="Copying container images from/to cache")
-        for container, src_path, dest_path in containers_copy:
-            self.copy_image(container, src_path, dest_path)
-            self.progress.update_main_task(advance=1)
+        if containers_copy:
+            self.progress.update_main_task(
+                description="Copying container images from/to cache", total=len(containers_copy), completed=0
+            )
+            for container, src_path, dest_path in containers_copy:
+                self.copy_image(container, src_path, dest_path)
+                self.progress.update_main_task(advance=1)
 
     @abstractmethod
-    def fetch_remote_containers(self, containers: list[tuple[str, Path]], parallel=4):
+    def fetch_remote_containers(self, containers: list[tuple[str, Path]], parallel: int = 4) -> None:
         """
         Fetch remote containers
 
         - Singularity: pull or download images, depending on what address we have
         - Docker: pull and save images
+
+        This function should update the main progress task accordingly
         """
         pass
 
