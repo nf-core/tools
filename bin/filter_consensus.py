@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Filter FASTA sequences by removing those with fewer than 100 A, T, C, or G bases.
+Filter FASTA sequences by removing those with fewer than min_bases A, T, C, or G bases.
 Ignores N and other ambiguous bases in the count.
 """
 
@@ -20,14 +20,14 @@ def open_file(filename):
     else:
         return open(filename, 'r')
 
-def filter_fasta(input_file, output_file, min_bases=100):
+def filter_fasta(input_file, output_file, min_bases=50):
     """
     Filter FASTA sequences based on ATCG base count.
 
     Args:
         input_file: Path to input FASTA file
         output_file: Path to output FASTA file
-        min_bases: Minimum number of ATCG bases required (default: 100)
+        min_bases: Minimum number of ATCG bases required (default: 50)
     """
     sequences_kept = 0
     sequences_removed = 0
@@ -97,8 +97,8 @@ Examples:
 
     parser.add_argument('input_file', help='Input FASTA file')
     parser.add_argument('output_file', help='Output FASTA file')
-    parser.add_argument('-m', '--min-bases', type=int, default=100,
-                        help='Minimum number of ATCG bases required (default: 100)')
+    parser.add_argument('-m', '--min-bases', type=int, default=50,
+                        help='Minimum number of ATCG bases required (default: 50)')
 
     args = parser.parse_args()
 

@@ -9,7 +9,7 @@ process FILTER_CONSENSUS {
 
     input:
     tuple val(meta), path(consensus)
-    val min_bases
+    val consensus_min_bases
 
     output:
     tuple val(meta), path('*_filtered.fasta') , emit: filtered_consensus, optional: true
@@ -26,7 +26,7 @@ process FILTER_CONSENSUS {
     filter_consensus.py \\
         ${consensus} \\
         ${prefix}_filtered.fasta \\
-        --min-bases ${min_bases}
+        --min-bases ${consensus_min_bases}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

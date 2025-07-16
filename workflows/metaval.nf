@@ -178,18 +178,18 @@ workflow METAVAL {
         SEQKIT_FQ2FA ( ch_taxid_reads_filter.blast )
         ch_blast_query = SEQKIT_FQ2FA.out.fasta.mix( SPADES.out.contigs, FLYE.out.fasta )
         ch_versions = ch_versions.mix( SEQKIT_FQ2FA.out.versions.first() )
-        // BLASTn
+        // BLASTN
         if ( !params.skip_blastn ) {
             BLAST_BLASTN ( ch_blast_query, ch_blastn_db )
             ch_versions = ch_versions.mix( BLAST_BLASTN.out.versions.first() )
-            // Filter BLASTn hits
+            // Filter BLASTN hits
             ch_blastn_hits = BLAST_BLASTN.out.txt
                 .filter { meta, blastn_file -> blastn_file.size() > 0 }
 
             FILTER_BLASTN ( ch_blastn_hits, file( params.blast_header, checkIfExists: true))
             ch_versions = ch_versions.mix( FILTER_BLASTN.out.versions.first() )
         }
-        // BLASTx:DIAMOND
+        // BLASTX:DIAMOND
         if ( !params.skip_blastx ) {
             DIAMOND_BLASTX (
                 ch_blast_query,
@@ -242,19 +242,19 @@ workflow METAVAL {
         if (params.perform_shortread_consensus) {
             SHORTREAD_SAMTOOLS_CONSENSUS ( TAXID_BAM_FASTA_SHORTREAD.out.taxid_bam )
             ch_versions = ch_versions.mix(SHORTREAD_SAMTOOLS_CONSENSUS.out.versions)
-            // Remove consensus sequences shorter than params.min_bases (default: 50 bp)
-            FILTER_CONSENSUS_SHORTREAD ( SHORTREAD_SAMTOOLS_CONSENSUS.out.fasta, params.min_bases )
+            // Remove consensus sequences shorter than params.consensus_min_bases (default: 50 bp)
+            FILTER_CONSENSUS_SHORTREAD ( SHORTREAD_SAMTOOLS_CONSENSUS.out.fasta, params.consensus_min_bases )
             ch_versions = ch_versions.mix(FILTER_CONSENSUS_SHORTREAD.out.versions)
         }
         if ( params.perform_longread_consensus ) {
             // Skip the consensus calling if the number of mapped reads is lower than params.min_read_counts
             LONGREAD_CONSENSUS ( TAXID_BAM_FASTA_LONGREAD.out.taxid_bam, [ [], ch_reference ] )
             ch_versions = ch_versions.mix( LONGREAD_CONSENSUS.out.versions )
-            FILTER_CONSENSUS_LONGREAD ( LONGREAD_CONSENSUS.out.consensus, params.min_bases)
+            FILTER_CONSENSUS_LONGREAD ( LONGREAD_CONSENSUS.out.consensus, params.consensus_min_bases)
             ch_versions = ch_versions.mix( FILTER_CONSENSUS_LONGREAD.out.versions )
         }
         // BLAST
-        // For pair-end reads, only use read1 for blast
+        // For pair-end reads, only use read1 for BLAST
         ch_shortread_pathogen_blast_read1 = TAXID_BAM_FASTA_SHORTREAD.out.taxid_fasta
             .filter { meta, reads ->
                 reads[0].countFasta() >= 1 && reads[1].countFasta() >= 1
@@ -273,18 +273,18 @@ workflow METAVAL {
         )
 
         if (!params.skip_blastn) {
-            // BLASTn
+            // BLASTN
             BLAST_BLASTN_PATHOGEN ( ch_blast_query_pathogen, ch_blastn_db )
             ch_versions = ch_versions.mix( BLAST_BLASTN_PATHOGEN.out.versions.first() )
 
-            // Filter BLASTn hits
+            // Filter BLASTN hits
             ch_blastn_hits_pathogen = BLAST_BLASTN_PATHOGEN.out.txt
                 .filter { meta, blastn_file -> blastn_file.size() > 0 }
             FILTER_BLASTN_PATHOGEN ( ch_blastn_hits_pathogen, file( params.blast_header, checkIfExists: true))
             ch_versions = ch_versions.mix( FILTER_BLASTN_PATHOGEN.out.versions.first() )
 
         }
-        // BLASTx:DIAMOND
+        // BLASTX:DIAMOND
         if ( !params.skip_blastx ) {
             DIAMOND_BLASTX_PATHOGEN (
                 ch_blast_query_pathogen,
@@ -292,7 +292,7 @@ workflow METAVAL {
                 'txt',
                 'qseqid sseqid slen pident qlen length qcovhsp nident evalue bitscore staxids sscinames' )
             ch_versions = ch_versions.mix( DIAMOND_BLASTX_PATHOGEN.out.versions.first() )
-            // Filter BLASTx hits
+            // Filter BLASTX hits
             ch_blastx_hits_pathogen = DIAMOND_BLASTX_PATHOGEN.out.txt
                 .filter { meta, blastx_file -> blastx_file.size() > 0 }
             FILTER_BLASTX_PATHOGEN ( ch_blastx_hits_pathogen, file( params.blast_header, checkIfExists: true))

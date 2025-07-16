@@ -15,7 +15,7 @@ input:
       type: file
       description: Consensus FASTA file
       pattern: "*.{fa,fasta,fa.gz,fasta.gz}"
-  - min_bases:
+  - consensus_min_bases:
       type: number
       description: "The minimum number of bases used to filter consensus sequences."
 output:

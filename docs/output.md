@@ -16,7 +16,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 - [Extract Viral TaxIDs](#Extract-Viral-TaxIDs) - Extract all taxonomic IDs of viral species identified by classifiers
 - [Extract Reads](#Extract-Reads) - Extract reads of a specific TaxID
 - [De novo assembly](#De-novo-assembly) for extracted reads of TaxID
-- [BLAST](#BLAST) - Run BLASTn or BLASTx
+- [BLAST](#BLAST) - Run BLASTN or BLASTX
 - [Bowtie2](#Mapping) - Map raw Illumina reads to a pathogen genome database or map Illumina reads of specific taxIDs to genomes with positive BLAST hits.
 - [minimap2](#Mapping) - Map raw Nanopore reads to a pathogen genome database or map Nanopore reads of specific taxIDs to genomes with positive BLAST hits.
 - [Pathogen reads](#Pathogen-reads) For the pathogen screening workflow, prepare an individual FASTA/BAM file for each pathogen with mapped reads.
@@ -105,7 +105,7 @@ The `flye` directory will only be present if `--perform_longread_denovo` is supp
 
 ### BLAST
 
-Use `BLAST(n/x)` to identify the closest reference genomes for the target reads or consensus sequences. `BLAST(n/x)` could be run on:
+Use `BLAST(N/X)` to identify the closest reference genomes for the target reads or consensus sequences. `BLAST(N/X)` could be run on:
 
 - Extracted reads assigned to a specific taxID when the number of reads is below `params.min_read_counts`.
 - Contigs or scaffolds from de novo assembly when the number of extracted reads for a given taxID exceeds `params.min_read_counts`.
@@ -124,30 +124,30 @@ Run `BLAST(n/x)` on reads classified as viruses by `kraken2`, `Centrifuge` or `D
   - `blastn/`
 
     - `centrifuge/`
-      - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
-      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+      - `<sample_id>_<taxID>.txt`: `BLASTN` hits.
+      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTN` hits.
     - `diamond/`
-      - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
-      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+      - `<sample_id>_<taxID>.txt`: `BLASTN` hits.
+      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTN` hits.
     - `kraken2/`
-      - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
-      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+      - `<sample_id>_<taxID>.txt`: `BLASTN` hits.
+      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTN` hits.
 
   - `blastx/`
 
     - `centrifuge/`
-      - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
-      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+      - `<sample_id>_<taxID>.txt`: `BLASTX` hits.
+      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTX` hits.
     - `diamond/`
-      - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
-      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+      - `<sample_id>_<taxID>.txt`: `BLASTX` hits.
+      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTX` hits.
     - `kraken2/`
-      - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
-      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+      - `<sample_id>_<taxID>.txt`: `BLASTX` hits.
+      - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTX` hits.
 
 </details>
 
-Users must provide a path to a `BLASTn` database using `params.blastn_db` and a `BLASTx` database using `params.blastx_db`. BLAST can also be skipped by setting `params.skip_blastn` or `params.skip_blastx`.
+Users must provide a path to a `BLASTN` database using `params.blastn_db` and a `BLASTX` database using `params.blastx_db`. BLAST can also be skipped by setting `params.skip_blastn` or `params.skip_blastx`.
 
 #### Pathogen screening
 
@@ -163,26 +163,26 @@ Run `BLAST(n/x)` on reads or consensus sequences mapped to a predefined pathogen
     - `blastn/`
 
       - `centrifuge/`
-        - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
-        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+        - `<sample_id>_<taxID>.txt`: `BLASTN` hits.
+        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTN` hits.
       - `diamond/`
-        - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
-        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+        - `<sample_id>_<taxID>.txt`: `BLASTN` hits.
+        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTN` hits.
       - `kraken2/`
-        - `<sample_id>_<taxID>.txt`: `BLASTn` hits.
-        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTn` hits.
+        - `<sample_id>_<taxID>.txt`: `BLASTN` hits.
+        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTN` hits.
 
     - `blastx/`
 
       - `centrifuge/`
-        - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
-        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+        - `<sample_id>_<taxID>.txt`: `BLASTX` hits.
+        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTX` hits.
       - `diamond/`
-        - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
-        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+        - `<sample_id>_<taxID>.txt`: `BLASTX` hits.
+        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTX` hits.
       - `kraken2/`
-        - `<sample_id>_<taxID>.txt`: `BLASTx` hits.
-        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTx` hits.
+        - `<sample_id>_<taxID>.txt`: `BLASTX` hits.
+        - `<sample_id>_<taxID>_filtered.txt`: Filtered `BLASTX` hits.
 
 </details>
 
