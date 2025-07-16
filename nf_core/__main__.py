@@ -61,7 +61,7 @@ from nf_core.commands_test_datasets import (
 )
 from nf_core.components.components_completion import autocomplete_modules, autocomplete_subworkflows
 from nf_core.components.constants import NF_CORE_MODULES_REMOTE
-from nf_core.pipelines.download import DownloadError
+from nf_core.pipelines.download.download import DownloadError
 from nf_core.pipelines.list import autocomplete_pipelines
 from nf_core.utils import check_if_outdated, nfcore_logo, rich_force_colors, setup_nfcore_dir
 
@@ -400,7 +400,7 @@ def command_pipelines_lint(
 @click.option(
     "-s",
     "--container-system",
-    type=click.Choice(["none", "singularity"]),
+    type=click.Choice(["none", "singularity", "docker"]),
     help="Download container images of required software.",
 )
 @click.option(
@@ -423,10 +423,10 @@ def command_pipelines_lint(
 )
 @click.option(
     "-d",
-    "--parallel-downloads",
+    "--parallel",
     type=int,
     default=4,
-    help="Number of parallel image downloads",
+    help="Number of allowed parallel tasks",
 )
 @click.pass_context
 def command_pipelines_download(
@@ -443,7 +443,7 @@ def command_pipelines_download(
     container_library,
     container_cache_utilisation,
     container_cache_index,
-    parallel_downloads,
+    parallel,
 ):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
@@ -462,7 +462,7 @@ def command_pipelines_download(
         container_library,
         container_cache_utilisation,
         container_cache_index,
-        parallel_downloads,
+        parallel,
     )
 
 
@@ -2359,7 +2359,7 @@ def command_create_params_file(pipeline, revision, output, force, show_hidden):
 @click.option(
     "-s",
     "--container-system",
-    type=click.Choice(["none", "singularity"]),
+    type=click.Choice(["none", "singularity", "docker"]),
     help="Download container images of required software.",
 )
 @click.option(

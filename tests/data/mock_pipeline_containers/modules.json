@@ -1,0 +1,17 @@
+{
+    "name": "nf-core/dsfafas",
+    "homePage": "https://github.com/nf-core/dsfafas",
+    "repos": {
+        "https://github.com/nf-core/modules.git": {
+            "modules": {
+                "nf-core": {
+                    "rmarkdownnotebook": {
+                        "branch": "master",
+                        "git_sha": "ba9efe74bd993e9ce77441104e48120834d5886e",
+                        "installed_by": ["modules"]
+                    }
+                }
+            }
+        }
+    }
+}

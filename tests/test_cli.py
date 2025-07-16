@@ -161,6 +161,7 @@ class TestCli(unittest.TestCase):
     @mock.patch("nf_core.pipelines.download.DownloadWorkflow")
     def test_cli_download(self, mock_dl):
         """Test nf-core pipeline is downloaded and cli parameters are passed on."""
+        toplevel_params = {"hide-progress": None}
         params = {
             "revision": "abcdef",
             "outdir": "/path/outdir",
@@ -173,10 +174,15 @@ class TestCli(unittest.TestCase):
             "container-library": "quay.io",
             "container-cache-utilisation": "copy",
             "container-cache-index": "/path/index.txt",
-            "parallel-downloads": 2,
+            "parallel": 2,
         }
 
-        cmd = ["pipelines", "download"] + self.assemble_params(params) + ["pipeline_name"]
+        cmd = (
+            self.assemble_params(toplevel_params)
+            + ["pipelines", "download"]
+            + self.assemble_params(params)
+            + ["pipeline_name"]
+        )
         result = self.invoke_cli(cmd)
 
         assert result.exit_code == 0
@@ -194,7 +200,8 @@ class TestCli(unittest.TestCase):
             (params["container-library"],),
             params["container-cache-utilisation"],
             params["container-cache-index"],
-            params["parallel-downloads"],
+            params["parallel"],
+            "hide-progress" in toplevel_params,
         )
 
         mock_dl.return_value.download_workflow.assert_called_once()
