@@ -12,6 +12,8 @@
 
 ### General
 
+- don't read param expressions with spaces as params ([#3674](https://github.com/nf-core/tools/pull/3674))
+
 ## [v3.3.2 - Tungsten Tamarin Patch 2](https://github.com/nf-core/tools/releases/tag/3.3.2) - [2025-07-08]
 
 ### Template
@@ -52,6 +54,7 @@
 - Update error message for rocrate_readme_sync ([#3652](https://github.com/nf-core/tools/pull/3652))
 - Update `nf-core modules info` command after `meta.yml` restructuring ([#3659](https://github.com/nf-core/tools/pull/3659))
 - Enable parsing of multi-line config values ([#3629](https://github.com/nf-core/tools/pull/3629))
+- Add modules / subworkflows and pipelines names autocompletion to the CLI ([#3660](https://github.com/nf-core/tools/pull/3660))
 
 #### Version updates
 
