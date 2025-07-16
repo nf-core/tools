@@ -53,7 +53,7 @@ def readme(self):
 
     if "nextflow_badge" not in ignore_configs:
         # Check that there is a readme badge showing the minimum required version of Nextflow
-        # [![Nextflow](https://img.shields.io/badge/version-%E2%89%A524.04.2-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
+        # [![Nextflow](https://img.shields.io/badge/version-%E2%89%A524.10.5-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
         # and that it has the correct version
         nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/version-!?(?:%E2%89%A5|%3E%3D)([\d\.]+)-green\?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow\.io\)\]\(https://www\.nextflow\.io/\)"
         match = re.search(nf_badge_re, content)

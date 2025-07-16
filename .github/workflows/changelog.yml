@@ -49,20 +49,22 @@ jobs:
         env:
           COMMENT: ${{ github.event.comment.body }}
           GH_TOKEN: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.issue.title || github.event.pull_request.title }}
         run: |
-          if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
-            export PR_NUMBER='${{ github.event.issue.number }}'
-            export PR_TITLE='${{ github.event.issue.title }}'
-          elif [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
-            export PR_NUMBER='${{ github.event.pull_request.number }}'
-            export PR_TITLE='${{ github.event.pull_request.title }}'
-          fi
           python ${GITHUB_WORKSPACE}/.github/workflows/changelog.py
 
       - name: Check if CHANGELOG.md actually changed
+        id: file_changed
         run: |
-          git diff --exit-code ${GITHUB_WORKSPACE}/CHANGELOG.md || echo "changed=YES" >> $GITHUB_ENV
-          echo "File changed: ${{ env.changed }}"
+          # Show the diff for debugging
+          git diff -- ${GITHUB_WORKSPACE}/CHANGELOG.md
+
+          # Check if file has unstaged changes
+          [ -n "$(git diff -- ${GITHUB_WORKSPACE}/CHANGELOG.md)" ] && file_changed="TRUE" || file_changed="FALSE"
+
+          echo "File changed: $file_changed"
+          echo "changed=$file_changed" >> $GITHUB_OUTPUT
 
       - name: Set up Python 3.13
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
@@ -74,16 +76,17 @@ jobs:
         run: pip install pre-commit
 
       - name: Run pre-commit checks
-        if: env.changed == 'YES'
+        if: steps.file_changed.outputs.changed == 'TRUE'
         run: |
           pre-commit run --all-files
 
       - name: Commit and push changes
-        if: env.changed == 'YES'
+        if: steps.file_changed.outputs.changed == 'TRUE'
+        env:
+          GH_TOKEN: ${{ secrets.NF_CORE_BOT_AUTH_TOKEN }}
         run: |
           git config user.email "core@nf-co.re"
           git config user.name "nf-core-bot"
-          git config push.default upstream
           git add ${GITHUB_WORKSPACE}/CHANGELOG.md
           git status
           git commit -m "[automated] Update CHANGELOG.md"
