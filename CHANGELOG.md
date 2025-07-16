@@ -8,6 +8,8 @@
 
 ### Modules
 
+- Support modules with `exec:` blocks ([#3633](https://github.com/nf-core/tools/pull/3633))
+
 ### Subworkflows
 
 ### General
