@@ -65,7 +65,7 @@
                 },
                 "evalue": {
                     "type": ["number", "integer"],
-                    "description": "A Expected value to report an alignment.",
+                    "description": "An expected value to report an alignment.",
                     "help_text": "The default e-value is 0.001 (high sensitivity, lower specificity) when running DIAMOND/BLASTX. An e-value between 1e-10 and 1e-5 represents moderate filtering (balanced sensitivity and specificity). An e-value < 1e-20 is considered strict filtering (high specificity, lower sensitivity). \n\n> Modifies tool parameter(s):\n> - extractdiamondreads.py: `evalue=",
                     "fa_icon": "filter"
                 },
