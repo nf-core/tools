@@ -120,8 +120,21 @@ class DownloadWorkflow:
             self.additional_tags = [*additional_tags]
         else:
             self.additional_tags = None
-        # Specifying a cache index or container library implies that containers should be downloaded.
-        self.container_system = "singularity" if container_cache_index or bool(container_library) else container_system
+
+        self.container_system = container_system
+        # Check if a cache or libraries were specfied even though singularity was not
+        if container_cache_index and self.container_system != "singularity":
+            log.warning("The flag '--container-cache-index' is set, but not selected to fetch singularity images")
+            self.prompt_use_singularity(
+                "The '--container-cache-index' flag is only applicable when fetching singularity images"
+            )
+
+        if container_library and self.container_system != "singularity":
+            log.warning("You have specified container libraries but not selected to fetch singularity image")
+            self.prompt_use_singularity(
+                "The '--container-library' flag is only applicable when fetching singularity images"
+            )  # Is this correct?
+
         # Manually specified container library (registry)
         if isinstance(container_library, str) and bool(len(container_library)):
             self.container_library = [container_library]
@@ -586,6 +599,16 @@ class DownloadWorkflow:
                     self.container_cache_utilisation = "copy"  # default to copy if possible, otherwise skip.
                 else:
                     self.container_cache_utilisation = None
+
+    def prompt_use_singularity(self, fail_message) -> None:
+        use_singularity = questionary.confirm(
+            "Do you want to download singularity images?",
+            style=nf_core.utils.nfcore_question_style,
+        ).ask()
+        if use_singularity:
+            self.container_system = "singularity"
+        else:
+            raise DownloadError(fail_message)
 
     def prompt_compression_type(self):
         """Ask user if we should compress the downloaded files"""
