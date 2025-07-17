@@ -63,7 +63,7 @@
                     "description": "Extract reads classified by DIAMOND according to taxonomic ID.",
                     "fa_icon": "fas fa-toggle-on"
                 },
-                "evalue": {
+                "evalue_threshold": {
                     "type": ["number", "integer"],
                     "description": "An expected value to report an alignment during BLAST",
                     "help_text": "This value is used to filter classification results produced by DIAMOND/BLASTX. The default e-value is 0.001 (high sensitivity, lower specificity) when running DIAMOND/BLASTX. An e-value between 1e-10 and 1e-5 represents moderate filtering (balanced sensitivity and specificity). An e-value < 1e-20 is considered strict filtering (high specificity, lower sensitivity). \n\n> Modifies tool parameter(s):\n> - extractdiamondreads.py: `evalue=",

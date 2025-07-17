@@ -10,7 +10,7 @@ process EXTRACTCDIAMONDREADS {
 
     input:
     val taxid
-    val evalue
+    val evalue_threshold
     tuple val(meta), path(tsv), path(fastq)
 
     output:
@@ -28,7 +28,7 @@ process EXTRACTCDIAMONDREADS {
     extractdiamondreads.py \\
         --taxid ${taxid} \\
         --tsv ${tsv} \\
-        --evalue ${evalue} \\
+        --evalue ${evalue_threshold} \\
         --prefix ${prefix} \\
         ${single_end_flag} \\
         --fastq ${fastq.join(' ')} # joins the list of file paths into a space-separated string

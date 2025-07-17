@@ -4,7 +4,7 @@ process EXTRACT_VIRAL_TAXID {
     label 'process_low'
 
     input:
-    val evalue
+    val evalue_threshold
     // e-vaule threshold to filter the diamond report
     tuple val(meta), path(taxpasta_standardised_profile), path(report)
 
@@ -24,7 +24,7 @@ process EXTRACT_VIRAL_TAXID {
             awk -F'\t' '\$3 != 0 {print \$5}' ${report} > detected_taxid.txt
             grep -F -w -f taxpasta_viral_taxid.txt detected_taxid.txt > ${prefix}_viral_taxids.tsv
         elif [[ "${meta.tool}" == "diamond" ]]; then
-            awk '\$3 < ${evalue}' ${report} | cut -f 2 | sort | uniq > detected_taxid.txt
+            awk '\$3 < ${evalue_threshold}' ${report} | cut -f 2 | sort | uniq > detected_taxid.txt
             grep -F -w -f taxpasta_viral_taxid.txt detected_taxid.txt | sort | uniq > ${prefix}_viral_taxids.tsv
         fi
     fi

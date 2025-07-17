@@ -10,7 +10,7 @@ input:
   - taxid:
       type: integer
       description: A taxonomic ID to extract the reads
-  - evalue:
+  - evalue_threshold:
       type: ["number", "integer"]
       description: An e-value threshold to filter the diamond classification result
   - - meta:

@@ -146,7 +146,7 @@ workflow TAXID_READS {
 
             EXTRACTCDIAMONDREADS(
                 diamond_params_taxid.taxid,
-                params.evalue,
+                params.evalue_threshold,
                 diamond_params_taxid.diamond_tsv
             )
             ch_taxid_reads_diamond = EXTRACTCDIAMONDREADS.out.extracted_diamond_reads
@@ -161,7 +161,7 @@ workflow TAXID_READS {
             RM_EMPTY_DIAMOND(ch_diamond_output_dir)
         } else {
             diamond_output = diamond_taxpasta.join(diamond_tsv)
-            diamond_taxids = DIAMOND_VIRAL_TAXID( params.evalue, diamond_output )
+            diamond_taxids = DIAMOND_VIRAL_TAXID( params.evalue_threshold, diamond_output )
             diamond_combined_input = diamond_taxids.viral_taxid
                 .map { meta, taxid -> [ meta.subMap( meta.keySet() - 'tool' ), taxid ] }
                 .splitText()
@@ -174,7 +174,7 @@ workflow TAXID_READS {
 
             EXTRACTCDIAMONDREADS(
                 diamond_combined_input.taxid,
-                params.evalue,
+                params.evalue_threshold,
                 diamond_combined_input.diamond_tsv
             )
             ch_taxid_reads_diamond = EXTRACTCDIAMONDREADS.out.extracted_diamond_reads
