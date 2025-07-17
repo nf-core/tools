@@ -13,3 +13,6 @@ python -m pip install -r requirements-dev.txt -e . --no-cache-dir
 
 # Install pre-commit hooks
 pre-commit install --install-hooks
+
+# Update welcome message
+echo "Welcome to the nf-core/tools devcontainer!" > /usr/local/etc/vscode-dev-containers/first-run-notice.txt
