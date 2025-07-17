@@ -17,7 +17,7 @@
                         "size": "Large",
                         "weight": "Bolder",
                         "color": "<% if (success) { %>Good<% } else { %>Attention<%} %>",
-                        "text": "nf-core/metaval v${version} - ${runName}",
+                        "text": "genomic-medicine-sweden/metaval v${version} - ${runName}",
                         "wrap": true
                     },
                     {
