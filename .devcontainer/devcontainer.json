@@ -5,11 +5,10 @@
     "image": "ghcr.io/nextflow-io/training@sha256:97cce091b2c786f8fbd86f470e59d096dff546fe07941cf0e97421b6f95333e2",
 
     "features": {
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
         "./local-features/apptainer": {}
     },
 
-    // Mount full current path to make mounting into docker-from-docker work
+    // Mount full current path to make mounting into docker-outside-of-docker work
     "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
     "workspaceFolder": "${localWorkspaceFolder}",
 
