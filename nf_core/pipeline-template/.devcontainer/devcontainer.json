@@ -11,6 +11,11 @@
     "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
     "workspaceFolder": "${localWorkspaceFolder}",
 
+    "features": {
+        ".local-features/apptainer": {},
+        ".local-features/nf-test": {}
+    },
+
     // Configure tool-specific properties.
     "customizations": {
         // Configure properties specific to VS Code.
