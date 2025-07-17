@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
 # Customise the terminal command prompt
-printf "export PS1='\\[\\e[3;36m\\]\${PWD#/workspaces/} ->\\[\\e[0m\\] '\n" >> $HOME/.bashrc
-export PS1='\[\e[3;36m\]${PWD#/workspaces/} ->\[\e[0m\] '
+echo "export PROMPT_DIRTRIM=2" >> $HOME/.bashrc
+echo "export PS1='\[\e[3;36m\]\w ->\[\e[0m\\] '" >> $HOME/.bashrc
+export PS1='\[\e[3;36m\]\w ->\[\e[0m\\] '
 
 # Update Nextflow
 nextflow self-update
+
+# Update welcome message
+echo "Welcome to the nf-core/tools devcontainer!" > /usr/local/etc/vscode-dev-containers/first-run-notice.txt
