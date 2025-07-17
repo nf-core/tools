@@ -59,9 +59,13 @@ A concatenated FASTA file containing all the pathogen genomes a user is interest
 
 Users need to prepare a file containing accession IDs of pathogens and their corresponding taxonomic IDs
 
-#### Blastn and/or Blastn database
+#### BLASTn database
 
-Use a custom database or download available [NCBI databases](https://ftp.ncbi.nlm.nih.gov/blast/db/). See the [documentation](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html). To speed up the BLAST process, be cautious with which the choice of database. For example, for viruses, one could use `ref_viruses_rep_genomes` or `refseq_protein` instead of the `nt` or `nr` database.
+Use a custom database or download available [NCBI databases](https://ftp.ncbi.nlm.nih.gov/blast/db/). See the [documentation](https://ftp.ncbi.nlm.nih.gov/blast/documents/blastdb.html). To speed up the BLAST process, be cautious with the choice of database. For example, for viruses, one could use `ref_viruses_rep_genomes` or `nt_viruses` instead of the `nt` database for BLASTn.
+
+#### BLASTx (DIAMOND) database
+
+Use a pre-built `DIAMOND` database as described in the [DIAMOND tutorial](https://github.com/bbuchfink/diamond_docs/blob/master/Documentation.MD). DIAMOND is quite demanding in terms of memory and computation time. To speed up the BLAST process, choose the database carefully. For example, when working with viruses, you can construct the database using only viral genomes downloaded from RefSeq.
 
 ## Running the pipeline
 
@@ -131,6 +135,23 @@ If the `--taxid` option is included in the command line, the pipeline will only 
 ### de-novo assembly
 
 De-novo assembly can be performed for extracted reads of TaxIDs by enabling `--perform_shortread_denovo` for short reads or the `--perform_longread_denovo` option for long reads, provided the number of reads exceeds `params.min_read_counts`. The recommended minimum number of reads is 100. If there are too few reads, the process will fail.
+
+### BLAST(n/x)
+
+BLAST can be run for both workflows: classification verifying and pathogen screening. Provide a `BLASTn` database using `params.blastn_db` and a `BLASTx` database using `params.blastx_db`.
+
+- Run BLAST directly on extracted reads for a given taxID when the number of reads is below `params.min_read_counts`
+- Run BLAST on FASTA files generated from de novo assembly if the number of extracted reads for a given taxID exceeds `params.min_read_counts`
+- Run BLAST on Reads mapped to a predefined pathogen database during `pathogen screening` when the number of mapped reads is below `params.min_read_counts`
+- Run BLAST on Consensus sequences mapped to a predefined pathogen database during the `pathogen screening` when the number of those mapped reads exceeds `params.min_read_counts`
+
+The `-outfmt` option is defined in `modules.config` as: ` -outfmt '10 qseqid sseqid slen pident qlen length qcovs nident evalue bitscore staxid ssciname'`. If you want to add or remove fields from the output, you need to update both `BLAST` output header file (`assets/blast_outfmt10_header.txt`) and the filtering function of `BLAST` hits (`bin/filter_blast.py`).
+
+You could also skip the BLAST using `params.skip_blastn` or `params.skip_blastx`.
+
+### Filter BLAST(n/x)
+
+To reduce false positives hits in BLAST result, we apply filtering. Filtering thresholds can be adjusted using the parameters `params.blast(n/x)_min_qlen`, `params.blast(n/x)_min_pident`,`params.blast(n/x)_min_length`,`params.blast(n/x)_max_evalue`, which correspond to query length, percent of identical matches, alignment length, and e-value. The default values are 50, 50, 50 and 0.05.
 
 ### Mapping
 

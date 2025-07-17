@@ -10,9 +10,17 @@
 
 ## Pipeline tools
 
+- [BLAST](https://www.ncbi.nlm.nih.gov/pubmed/20003500/)
+
+  > Camacho, C., Coulouris, G., Avagyan, V., Ma, N., Papadopoulos, J., Bealer, K., & Madden, T. L. (2009). BLAST+: architecture and applications. BMC Bioinformatics, 10, 421. https://doi.org/10.1186/1471-2105-10-421
+
 - [Bowtie2](https://doi.org/10.1038/nmeth.1923)
 
   > Langmead, B., & Salzberg, S. L. (2012). Fast gapped-read alignment with Bowtie 2. Nature Methods, 9(4), 357–359. https://doi.org/10.1038/nmeth.1923
+
+- [DIAMOND](https://doi.org/10.1038/nmeth.3176)
+
+  > Buchfink, B., Xie, C., & Huson, D. H. (2015). Fast and sensitive protein alignment using DIAMOND. Nature Methods, 12(1), 59–60. https://doi.org/10.1038/nmeth.3176
 
 - [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 
@@ -47,8 +55,6 @@
 - [SPAdes](https://www.ncbi.nlm.nih.gov/pubmed/24093227/)
 
   > Nurk S, Bankevich A, Antipov D, Gurevich AA, Korobeynikov A, Lapidus A, Prjibelski AD, Pyshkin A, Sirotkin A, Sirotkin Y, Stepanauskas R, Clingenpeel SR, Woyke T, McLean JS, Lasken R, Tesler G, Alekseyev MA, Pevzner PA. Assembling single-cell genomes and mini-metagenomes from chimeric MDA products. J Comput Biol. 2013 Oct;20(10):714-37. https://doi: 10.1089/cmb.2013.0084.
-
-- [PIGZ](https://zlib.net/pigz/)
 
 ## Software packaging/containerisation tools
 

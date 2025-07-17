@@ -5,6 +5,12 @@
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {
+                    "blast/blastn": {
+                        "branch": "master",
+                        "git_sha": "be58de79943289acb561a6246d1da5f85555a224",
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/blast/blastn/blast-blastn.diff"
+                    },
                     "bowtie2/align": {
                         "branch": "master",
                         "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
@@ -15,6 +21,11 @@
                         "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
                         "installed_by": ["modules"]
                     },
+                    "diamond/blastx": {
+                        "branch": "master",
+                        "git_sha": "a4b6c684a72bd6005cdab61f1a12040c7fdaa210",
+                        "installed_by": ["modules"]
+                    },
                     "fastqc": {
                         "branch": "master",
                         "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
@@ -23,8 +34,7 @@
                     "flye": {
                         "branch": "master",
                         "git_sha": "ce1a66562156776bb0dd1c1bb5640d368dadd4e6",
-                        "installed_by": ["modules"],
-                        "patch": "modules/nf-core/flye/flye.diff"
+                        "installed_by": ["modules"]
                     },
                     "krakentools/extractkrakenreads": {
                         "branch": "master",
@@ -44,11 +54,6 @@
                     "multiqc": {
                         "branch": "master",
                         "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
-                        "installed_by": ["modules"]
-                    },
-                    "pigz/compress": {
-                        "branch": "master",
-                        "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
                         "installed_by": ["modules"]
                     },
                     "samtools/consensus": {
@@ -86,9 +91,19 @@
                         "git_sha": "2d20463181b1c38981a02e90d3084b5f9fa8d540",
                         "installed_by": ["bam_stats_samtools"]
                     },
+                    "seqkit/fq2fa": {
+                        "branch": "master",
+                        "git_sha": "05954dab2ff481bcb999f24455da29a5828af08d",
+                        "installed_by": ["modules"]
+                    },
                     "spades": {
                         "branch": "master",
                         "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
+                        "installed_by": ["modules"]
+                    },
+                    "untar": {
+                        "branch": "master",
+                        "git_sha": "05954dab2ff481bcb999f24455da29a5828af08d",
                         "installed_by": ["modules"]
                     }
                 }

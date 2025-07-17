@@ -8,7 +8,7 @@ keywards:
   - centrifuge
   - diamond
 input:
-  - evalue:
+  - evalue_threshold:
       type: ["number", "integer"]
       description: An e-value threshold to filter the diamond classification result
   - - meta:

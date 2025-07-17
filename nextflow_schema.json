@@ -60,14 +60,98 @@
                 },
                 "extract_diamond_reads": {
                     "type": "boolean",
-                    "description": "Extract reads classified by diamond according to taxonomic ID.",
+                    "description": "Extract reads classified by DIAMOND according to taxonomic ID.",
                     "fa_icon": "fas fa-toggle-on"
                 },
-                "evalue": {
+                "evalue_threshold": {
                     "type": ["number", "integer"],
-                    "description": "A Expected value to report an alignment.",
-                    "help_text": "The default e-value is 0.001 (high sensitivity, lower specificity) when running DIAMOND/BLASTX. An e-value between 1e-10 and 1e-5 represents moderate filtering (balanced sensitivity and specificity). An e-value < 1e-20 is considered strict filtering (high specificity, lower sensitivity).",
-                    "fa_icon": "fas fa-greater-than-equal"
+                    "description": "An expected value to report an alignment during BLAST",
+                    "help_text": "This value is used to filter classification results produced by DIAMOND/BLASTX. The default e-value is 0.001 (high sensitivity, lower specificity) when running DIAMOND/BLASTX. An e-value between 1e-10 and 1e-5 represents moderate filtering (balanced sensitivity and specificity). An e-value < 1e-20 is considered strict filtering (high specificity, lower sensitivity). \n\n> Modifies tool parameter(s):\n> - extractdiamondreads.py: `evalue=",
+                    "fa_icon": "filter"
+                },
+                "skip_blastn": {
+                    "type": "boolean",
+                    "description": "Skip BLASTN of extracted reads.",
+                    "fa_icon": "fas fa_ban"
+                },
+                "blastn_db": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "Path to directory or tar.gz archive for pre-built BLAST database.",
+                    "fa_icon": "fas fa-database"
+                },
+                "blast_header": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "A header file for BLASTN/BLASTX hits.",
+                    "fa_icon": "fa-file-lines"
+                },
+                "skip_blastx": {
+                    "type": "boolean",
+                    "description": "Skip DIAMOND/BLASTX of extracted reads.",
+                    "fa_icon": "fas fa_ban"
+                },
+                "blastx_db": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "Path to directory or tar.gz archive for pre-built DIAMOND/BLASTX database.",
+                    "fa_icon": "fas fa-database"
+                },
+                "blastn_min_qlen": {
+                    "type": "integer",
+                    "default": 50,
+                    "description": "The minimum query length used to filter the BLASTN results",
+                    "help_text": "Specify the minimum query length for filtering BLASTN results.\n\n> Modifies tool parameter(s):\n> - filter_blast.py: `min_qlen=`",
+                    "fa_icon": "filter"
+                },
+                "blastx_min_qlen": {
+                    "type": "integer",
+                    "default": 50,
+                    "description": "The minimum query length (--min_qlen) used to filter the DIAMOND/BLASTX results",
+                    "help_text": "Specify the minimum query length for filtering DIAMOND/BLASTX results.\n\n> Modifies tool parameter(s):\n> - filter_blast.py: `min_qlen=`",
+                    "fa_icon": "filter"
+                },
+                "blastn_min_pident": {
+                    "type": "number",
+                    "default": 50,
+                    "description": "The minimum percentage of identical matches (--min_pident) used to filter BLASTN results",
+                    "help_text": "Specify the minimum percentage of identical matches for filtering BLASTN results.\n\n> Modifies tool parameter(s):\n> - filter_blast.py: `min_pident=`",
+                    "fa_icon": "filter"
+                },
+                "blastx_min_pident": {
+                    "type": "number",
+                    "default": 50,
+                    "description": "The minimum percentage of identical matches (--min_pident) used to filter DIAMOND/BLASTX results",
+                    "help_text": "Specify the minimum percentage of identical matches for filtering DIAMOND/BLASTX results.\n\n> Modifies tool parameter(s):\n> - filter_blast.py: `min_pident=`",
+                    "fa_icon": "filter"
+                },
+                "blastn_min_length": {
+                    "type": "integer",
+                    "default": 50,
+                    "description": "The minimum alignment length (--min_length) used to filter BLASTN results",
+                    "help_text": "Specify the minimum alignment length for filtering BLASTN results.\n\n> Modifies tool parameter(s):\n> - filter_blast.py: `min_length=`",
+                    "fa_icon": "filter"
+                },
+                "blastx_min_length": {
+                    "type": "integer",
+                    "default": 50,
+                    "description": "The minimum alignment length (--min_length) used to filter DIAMOND/BLASTX results",
+                    "help_text": "Specify the minimum alignment length for filtering DIAMOND/BLASTX results.\n\n> Modifies tool parameter(s):\n> - filter_blast.py: `min_length=`",
+                    "fa_icon": "filter"
+                },
+                "blastn_max_evalue": {
+                    "type": "number",
+                    "default": 0.05,
+                    "description": "The maximum e-value (--max_evalue) used to filter BLASTN results",
+                    "help_text": "Specify the maximum expected value for filtering BLASTN results.\n\n> Modifies tool parameter(s):\n> - filter_blast.py: `max_evalue=`",
+                    "fa_icon": "filter"
+                },
+                "blastx_max_evalue": {
+                    "type": "number",
+                    "default": 0.05,
+                    "description": "The maximum e-value (--max_evalue) used to filter DIAMOND/BLASTX results",
+                    "help_text": "Specify the maximum expected value for filtering DIAMOND/BLASTX results.\n\n> Modifies tool parameter(s):\n> - filter_blast.py: `max_evalue=`",
+                    "fa_icon": "filter"
                 },
                 "perform_shortread_denovo": {
                     "type": "boolean",
@@ -82,11 +166,11 @@
                 "flye_mode": {
                     "type": "string",
                     "description": "It provides `Flye` assembly modes. Our ONT reads were pre-processed by Guppy, so `--nano-corr` is the appropriate mode to use, as it is designed for ONT reads that have been corrected with other methods (with <3% error)",
-                    "default": "--nano-corr",
                     "fa_icon": "fas fa-cogs"
                 },
                 "perform_screen_pathogens": {
                     "type": "boolean",
+                    "default": "--nano-corr",
                     "description": "Screen viral pathogens for each sample",
                     "help_text": "Turn on the option to screen viral pathogens by mapping reads against genomes of a list of viral pathogens. `Bowtie2` is used for mapping of short reads and `minimap2` for long reads.",
                     "fa_icon": "fas fa-toggle-on"
@@ -95,7 +179,7 @@
                     "type": "integer",
                     "description": "Set the read count threshold for performing de novo assembly or consensus calling.",
                     "help_text": "The recommended default should be > 100, as de novo assembly will fail with too few reads or reads.",
-                    "fa_icon": "fas fa-greater-than-equal"
+                    "fa_icon": "filter"
                 },
                 "perform_longread_consensus": {
                     "type": "boolean",
@@ -114,8 +198,14 @@
                 "perform_shortread_consensus": {
                     "type": "boolean",
                     "description": "Call consensus for short reads mapped to a pathogen genome.",
-                    "help_text": "Turn on the option to call consensus for short reads mapped to a pathogen genome using`samtools consensus`",
+                    "help_text": "Turn on the option to call consensus for short reads mapped to a pathogen genome using `samtools consensus`",
                     "fa_icon": "fas fa-toggle-on"
+                },
+                "consensus_min_bases": {
+                    "type": "number",
+                    "default": 50,
+                    "description": "The minimum number of bases used to filter consensus sequences. The default is 50.",
+                    "fa-icon": "filter"
                 },
                 "outdir": {
                     "type": "string",
@@ -271,7 +361,7 @@
                     "type": "string",
                     "fa_icon": "far fa-check-circle",
                     "description": "Base URL or local path to location of pipeline test dataset files",
-                    "default": "https://raw.githubusercontent.com/genomic-medicine-sweden/test-datasets/333a4af341ac9cba6106e6ebd295fc64e28d58bd/",
+                    "default": "https://raw.githubusercontent.com/genomic-medicine-sweden/test-datasets/metaval/",
                     "hidden": true
                 },
                 "trace_report_suffix": {

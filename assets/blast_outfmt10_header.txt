@@ -1,0 +1,1 @@
+qseqid,sseqid,slen,pident,qlen,length,qcovs,nident,evalue,bitscore,staxid,ssciname

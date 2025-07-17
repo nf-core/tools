@@ -8,7 +8,6 @@ process RM_EMPTY_FASTQ {
     output:
     path folder, optional: true
 
-    // Consider refactoring this to use conditional logic in the workflow
     when:
     task.ext.when == null || task.ext.when
 

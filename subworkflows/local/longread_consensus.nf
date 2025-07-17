@@ -4,8 +4,6 @@
 
 include { SAMTOOLS_CONSENSUS        } from '../../modules/nf-core/samtools/consensus/main'
 include { MEDAKA_PARALLEL as MEDAKA } from '../../modules/local/medaka_consensus/main'
-include { PIGZ_COMPRESS             } from '../../modules/nf-core/pigz/compress/main'
-
 
 workflow LONGREAD_CONSENSUS {
     take:
@@ -23,10 +21,8 @@ workflow LONGREAD_CONSENSUS {
 
     } else if ( params.longread_consensus_tool == 'samtools' ) {
         SAMTOOLS_CONSENSUS ( bam )
-        PIGZ_COMPRESS ( SAMTOOLS_CONSENSUS.out.fasta )
-        ch_consensus = PIGZ_COMPRESS.out.archive
+        ch_consensus = SAMTOOLS_CONSENSUS.out.fasta
         ch_versions = ch_versions.mix(SAMTOOLS_CONSENSUS.out.versions)
-        ch_versions = ch_versions.mix(PIGZ_COMPRESS.out.versions)
     }
 
     emit:
