@@ -1,0 +1,17 @@
+name: rm_empty_fastq
+description: |
+  Remove empty FastQ files based on a user-defined taxid.
+  In other words, this taxid was not detected by the classifier (Kraken2/Centrifuge/DIAMOND).
+keywards:
+  - empty
+  - fastq
+input:
+  - folder:
+      type: path
+      description: Path stores the extracted reads from Kraken2/Centrifuge/DIAMOND
+output:
+  - folder:
+      type: path
+      description: Path stores the non-empty extracted reads from Kraken2/Centrifuge/DIAMOND
+authors:
+  - "@LilyAnderssonLee"

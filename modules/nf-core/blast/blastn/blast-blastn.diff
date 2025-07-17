@@ -1,0 +1,27 @@
+Changes in component 'nf-core/blast/blastn'
+'modules/nf-core/blast/blastn/environment.yml' is unchanged
+'modules/nf-core/blast/blastn/meta.yml' is unchanged
+Changes in 'blast/blastn/main.nf':
+--- modules/nf-core/blast/blastn/main.nf
++++ modules/nf-core/blast/blastn/main.nf
+@@ -29,12 +29,14 @@
+         gzip -c -d ${fasta} > ${fasta_name}
+     fi
+ 
++    export BLASTDB=${db}
++
+     DB=`find -L ./ -name "*.nal" | sed 's/\\.nal\$//'`
+     if [ -z "\$DB" ]; then
+         DB=`find -L ./ -name "*.nin" | sed 's/\\.nin\$//'`
+     fi
+     echo Using \$DB
+-
++    
+     blastn \\
+         -num_threads ${task.cpus} \\
+         -db \$DB \\
+
+'modules/nf-core/blast/blastn/tests/nextflow.config' is unchanged
+'modules/nf-core/blast/blastn/tests/main.nf.test' is unchanged
+'modules/nf-core/blast/blastn/tests/main.nf.test.snap' is unchanged
+************************************************************

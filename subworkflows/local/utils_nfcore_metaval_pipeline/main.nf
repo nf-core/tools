@@ -64,6 +64,7 @@ workflow PIPELINE_INITIALISATION {
     )
 
     //
+<<<<<<< HEAD
     // Custom validation for pipeline parameters
     //
     validateInputParameters()
@@ -91,6 +92,12 @@ workflow PIPELINE_INITIALISATION {
                 return [ meta, fastqs.flatten() ]
         }
         .set { ch_samplesheet }
+=======
+    // Create channel from input file provided through params.input
+    //
+
+    ch_samplesheet = Channel.fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
+>>>>>>> dev
 
     emit:
     samplesheet = ch_samplesheet
@@ -150,12 +157,15 @@ workflow PIPELINE_COMPLETION {
     FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+<<<<<<< HEAD
 //
 // Check and validate pipeline parameters
 //
 def validateInputParameters() {
     genomeExistsError()
 }
+=======
+>>>>>>> dev
 
 //
 // Validate channels from input samplesheet
@@ -171,6 +181,7 @@ def validateInputSamplesheet(input) {
 
     return [ metas[0], fastqs ]
 }
+<<<<<<< HEAD
 //
 // Get attribute from genome config file e.g. fasta
 //
@@ -197,6 +208,10 @@ def genomeExistsError() {
     }
 }
 //
+=======
+
+//
+>>>>>>> dev
 // Generate methods description for MultiQC
 //
 def toolCitationText() {
