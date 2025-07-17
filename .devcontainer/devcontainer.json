@@ -5,7 +5,8 @@
     "image": "ghcr.io/nextflow-io/training@sha256:97cce091b2c786f8fbd86f470e59d096dff546fe07941cf0e97421b6f95333e2",
 
     "features": {
-        "./local-features/apptainer": {}
+        "./local-features/apptainer": {},
+        "./local-features/nf-test": {}
     },
 
     // Mount full current path to make mounting into docker-outside-of-docker work
