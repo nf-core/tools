@@ -4,7 +4,8 @@
     "image": "nfcore/devcontainer:latest",
 
     "features": {
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+        "./local-features/apptainer": {}
     },
 
     "remoteUser": "root",
