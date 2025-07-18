@@ -28,8 +28,14 @@ jobs:
       - name: Build nfcore/tools:latest docker image
         run: docker build --no-cache . -t nfcore/tools:latest
 
-      - name: Build nfcore/devcontainer:latest docker image
-        run: docker build --no-cache . --file nf_core/devcontainer/devcontainer.Dockerfile -t nfcore/devcontainer:latest
+      - name: Build nfcore/devcontainer:latest devcontainer image
+        uses: devcontainers/ci@v0.3
+        with:
+          configFile: .devcontainer/build-devcontainer/devcontainer.json
+          imageName: nfcore/devcontainer
+          imageTag: latest
+          platform: linux/amd64,linux/arm64
+          push: false
 
       - name: Push Docker images to DockerHub (release)
         run: |
