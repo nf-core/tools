@@ -3,7 +3,7 @@ name: nf-core Docker push (dev)
 # Runs on nf-core repo releases and push event to 'dev' branch (PR merges)
 on:
   push:
-    branches: [dev]
+    branches: [dev, issues/3466-gitpod]
 
 # Cancel if a newer run is started
 concurrency:
