@@ -21,7 +21,7 @@ Changes in 'blast/blastn/main.nf':
          -num_threads ${task.cpus} \\
          -db \$DB \\
 
+'modules/nf-core/blast/blastn/tests/main.nf.test.snap' is unchanged
 'modules/nf-core/blast/blastn/tests/nextflow.config' is unchanged
 'modules/nf-core/blast/blastn/tests/main.nf.test' is unchanged
-'modules/nf-core/blast/blastn/tests/main.nf.test.snap' is unchanged
 ************************************************************
