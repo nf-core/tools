@@ -1,0 +1,32 @@
+{
+    "name": "nfcore-devcontainer-build",
+
+    // Uses mcr.microsoft.com/devcontainers/base:ubuntu
+    "image": "ghcr.io/nextflow-io/training@sha256:97cce091b2c786f8fbd86f470e59d096dff546fe07941cf0e97421b6f95333e2",
+
+    "features": {
+        "./local-features/apptainer": {},
+        "./local-features/nf-test": {}
+    },
+
+    // Mount full current path to make mounting into docker-outside-of-docker work
+    //"workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
+    //"workspaceFolder": "${localWorkspaceFolder}",
+
+    "remoteUser": "root",
+    "privileged": true,
+
+    // Configure tool-specific properties.
+    "customizations": {
+        // Configure properties specific to VS Code.
+        "vscode": {
+            // Set *default* container specific settings.json values on container create.
+            "settings": {
+                "python.defaultInterpreterPath": "/opt/conda/bin/python"
+            },
+
+            // Add the IDs of extensions you want installed when the container is created.
+            "extensions": ["ms-python.python", "ms-python.vscode-pylance", "nf-core.nf-core-extensionpack"]
+        }
+    }
+}
