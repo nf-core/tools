@@ -28,8 +28,14 @@ jobs:
       - name: Build nfcore/tools:dev docker image
         run: docker build --no-cache . -t nfcore/tools:dev
 
-      - name: Build nfcore/devcontainer:dev docker image
-        run: docker build --no-cache . --file nf_core/devcontainer/devcontainer.Dockerfile -t nfcore/devcontainer:dev
+      - name: Build nfcore/devcontainer:dev devcontainer image
+        uses: devcontainers/ci@v0.3
+        with:
+          configFile: .devcontainer/build-devcontainer/devcontainer.json
+          imageName: nfcore/devcontainer
+          imageTag: dev
+          platform: linux/amd64,linux/arm64
+          push: false
 
       - name: Push Docker images to DockerHub (dev)
         run: |
