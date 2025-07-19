@@ -1,6 +1,6 @@
 {
     "name": "nfcore",
-    "image": "nfcore/devcontainer", // ToDo: Add version hash once available
+    "image": "fljulian/nfcore-devcontainer:dc-dev", // ToDo: Add version hash once available
 
     // Mount full current path to make mounting into docker-outside-of-docker work
     "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
