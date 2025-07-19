@@ -29,15 +29,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build nfcore/tools:dev docker image
-        run: docker build --no-cache . -t fljulian/nfcore-devcontainer:ts-dev
+      #- name: Build nfcore/tools:dev docker image
+      #  run: docker build --no-cache . -t fljulian/nfcore-devcontainer:ts-dev
 
       - name: Build nfcore/devcontainer:dev devcontainer image
         uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
         with:
           configFile: .devcontainer/build-devcontainer/devcontainer.json
           imageName: fljulian/nfcore-devcontainer
-          imageTag: dc-dev
+          imageTag: dev
           platform: linux/amd64,linux/arm64
           push: false
           noCache: true
@@ -45,5 +45,6 @@ jobs:
       - name: Push Docker images to DockerHub (dev)
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-          docker push fljulian/nfcore-devcontainer:ts-dev
-          docker push fljulian/nfcore-devcontainer:dc-dev
+          docker push fljulian/nfcore-devcontainer:dev
+       # docker push fljulian/nfcore-devcontainer:ts-dev
+
