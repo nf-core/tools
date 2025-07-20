@@ -29,14 +29,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Set up devcontainers cli
-        uses: devcontainers/cli@v0.80.0
-
       - name: Build nfcore/tools:dev docker image
         run: docker build --no-cache . -t fljulian/nfcore-tools:dev
 
       - name: Build nfcore/devcontainer:dev devcontainer image
-        run: devcontainer build --config .devcontainer/build-devcontainer/devcontainer.json --platform linux/amd64,linux/arm64 --image-name fljulian/nfcore-devcontainer:dev --workspace-folder .
+        uses: devcontainers/ci@v0.3
+        with:
+          runCmd: devcontainer build --config .devcontainer/build-devcontainer/devcontainer.json --platform linux/amd64,linux/arm64 --image-name fljulian/nfcore-devcontainer:dev --workspace-folder .
 
       - name: Push Docker images to DockerHub (dev)
         run: |
