@@ -33,9 +33,13 @@ jobs:
         run: docker build --no-cache . -t fljulian/nfcore-tools:dev
 
       - name: Build nfcore/devcontainer:dev devcontainer image
-        uses: devcontainers/ci@v0.3
+        uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
         with:
-          runCmd: devcontainer build --config .devcontainer/build-devcontainer/devcontainer.json --platform linux/amd64,linux/arm64 --image-name fljulian/nfcore-devcontainer:dev --workspace-folder .
+          configFile: .devcontainer/build-devcontainer/devcontainer.json
+          imageName: fljulian/nfcore-devcontainer:dev
+          platform: linux/amd64,linux/arm64
+          push: false
+          noCache: true
 
       - name: Push Docker images to DockerHub (dev)
         run: |
