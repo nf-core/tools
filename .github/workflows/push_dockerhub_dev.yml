@@ -39,11 +39,10 @@ jobs:
           imageName: fljulian/nfcore-devcontainer
           imageTag: dev
           platform: linux/amd64,linux/arm64
-          # push: always
+          push: always
           noCache: true
 
       - name: Push Docker images to DockerHub (dev)
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           docker push fljulian/nfcore-tools:dev
-          docker push fljulian/nfcore-devcontainer:dev
