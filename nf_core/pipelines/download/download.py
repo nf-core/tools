@@ -76,7 +76,7 @@ class DownloadWorkflow:
         force: bool = False,
         platform: bool = False,
         download_configuration=None,
-        additional_tags: list[str] | str | None = None,
+        additional_tags: Optional[list[str] | str] = None,
         container_system=None,
         container_library=None,
         container_cache_utilisation=None,
