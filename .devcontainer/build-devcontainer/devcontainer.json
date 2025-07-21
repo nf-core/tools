@@ -1,8 +1,12 @@
 {
     "name": "nfcore-devcontainer-build",
 
-    // mcr.microsoft.com/devcontainers/base:ubuntu-22.04
-    "image": "mcr.microsoft.com/devcontainers/base@sha256:e57fdff274ed0bac0776490fa2644c242491bb21d4df7ad0bb79b433eac5168d",
+    // installs python3.11, nf-core tools from current workspace
+    // based on mcr.microsoft.com/devcontainers/base:ubuntu-22.04
+    "build": {
+        "dockerfile": "./Dockerfile",
+        "context": "../.."
+    },
 
     "features": {
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
@@ -15,14 +19,12 @@
             "version": "latest"
         },
         "./local-features/apptainer": {},
-        "./local-features/nextflow": {},
-        "./local-features/tools": {}
+        "./local-features/nextflow": {}
+        //"./local-features/tools": {}
     },
 
-    // Mount full current path to make mounting into docker-outside-of-docker work
-    //"workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
-    //"workspaceFolder": "${localWorkspaceFolder}",
-    "onCreateCommand": ".devcontainer/build-devcontainer/setup.sh",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/tools,type=bind",
+    "workspaceFolder": "$/workspace/tools",
 
     "remoteUser": "root",
     "privileged": true,
