@@ -15,7 +15,6 @@
             "version": "latest"
         },
         "./local-features/apptainer": {},
-        "./local-features/nf-test": {},
         "./local-features/nextflow": {},
         "./local-features/tools": {}
     },
