@@ -198,7 +198,7 @@ class DownloadWorkflow:
                         self.prompt_singularity_cachedir_remote()
                     # If we have remote containers, we need to read them
                     if self.container_cache_utilisation == "remote" and self.container_cache_index is not None:
-                        self.read_remote_containers()
+                        self.read_remote_singularity_containers()
                     else:
                         log.warning("[red]No remote cache index specified, skipping remote container download.[/]")
 
@@ -573,8 +573,12 @@ class DownloadWorkflow:
         if cachedir_index:
             self.container_cache_index = cachedir_index
 
-    def read_remote_containers(self):
-        """Reads the file specified as index for the remote Singularity cache dir"""
+    def read_remote_singularity_containers(self):
+        """
+        Reads the file specified as index for the remote Singularity cache dir
+
+        NOTE: This is not supported for docker (yet)
+        """
         n_total_images = 0
         try:
             with open(self.container_cache_index) as indexfile:
@@ -977,33 +981,6 @@ class DownloadWorkflow:
                     out_path_dir,
                     self.containers_remote,
                 )
-
-            # with DownloadProgress(disable=self.hide_progress) as progress:
-            #     progress.add_main_task(
-            #         total=len(self.containers),
-            #     )
-            #     # "Collecting container images",
-
-            #     container_fetcher: ContainerFetcher
-            #     if self.container_system == "singularity":
-            #         container_fetcher = SingularityFetcher(
-            # self.container_library,
-            # self.registry_set,
-            # progress,
-            # library_dir,
-            # cache_dir,
-            # self.container_cache_utilisation == "amend",
-            # parallel=self.parallel,
-            #         )
-            #     elif self.container_system == "docker":
-            #         container_fetcher = DockerFetcher(
-            #             self.container_library, self.registry_set, progress, parallel=self.parallel
-            #         )
-            #     container_fetcher.fetch_containers(
-            #         self.containers,
-            #         out_path_dir,
-            #         self.containers_remote,
-            #     )
 
     def compress_download(self):
         """Take the downloaded files and make a compressed .tar.gz archive."""

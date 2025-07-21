@@ -1414,7 +1414,7 @@ class DownloadTest(unittest.TestCase):
         assert download_obj.container_cache_utilisation == "remote" and download_obj.container_system == "singularity"
         assert isinstance(download_obj.containers_remote, list) and len(download_obj.containers_remote) == 0
         # read in the file
-        download_obj.read_remote_containers()
+        download_obj.read_remote_singularity_containers()
         assert len(download_obj.containers_remote) == 33
         assert "depot.galaxyproject.org-singularity-salmon-1.5.2--h84f40af_0.img" in download_obj.containers_remote
         assert "MV Rena" not in download_obj.containers_remote  # decoy in test file

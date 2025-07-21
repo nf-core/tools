@@ -138,10 +138,6 @@ class SingularityFetcher(ContainerFetcher):
                 finally:
                     os.close(image_dir)
 
-    def construct_pull_command(self, output_path: Path, address: str):
-        singularity_command = [self.implementation, "pull", "--name", str(output_path), address]
-        return singularity_command
-
     def copy_image(self, container: str, src_path: Path, dest_path: Path):
         super().copy_image(container, src_path, dest_path)
         # For Singularity we need to create symlinks to ensure that the
@@ -218,6 +214,25 @@ class SingularityFetcher(ContainerFetcher):
             # Task should advance in any case. Failure to pull will not kill the download process.
             self.progress.update_main_task(advance=1)
 
+    def construct_pull_command(self, output_path: Path, address: str):
+        singularity_command = [self.implementation, "pull", "--name", str(output_path), address]
+        return singularity_command
+
+    def get_address(self, container, library) -> tuple[str, bool]:
+        # Sometimes, container still contain an explicit library specification, which
+        # resulted in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
+        # Thus, if an explicit registry is specified, the provided -l value is ignored.
+        # Additionally, check if the container to be pulled is native Singularity: oras:// protocol.
+        container_parts = container.split("/")
+        if len(container_parts) > 2:
+            address = container if container.startswith("oras://") else f"docker://{container}"
+            absolute_URI = True
+        else:
+            address = f"docker://{library}/{container.replace('docker://', '')}"
+            absolute_URI = False
+
+        return address, absolute_URI
+
     def pull_image(self, container: str, output_path: Path, library: str) -> None:
         """Pull a singularity image using ``singularity pull``
 
@@ -231,18 +246,7 @@ class SingularityFetcher(ContainerFetcher):
         Raises:
             Various exceptions possible from `subprocess` execution of Singularity.
         """
-
-        # Sometimes, container still contain an explicit library specification, which
-        # resulted in attempted pulls e.g. from docker://quay.io/quay.io/qiime2/core:2022.11
-        # Thus, if an explicit registry is specified, the provided -l value is ignored.
-        # Additionally, check if the container to be pulled is native Singularity: oras:// protocol.
-        container_parts = container.split("/")
-        if len(container_parts) > 2:
-            address = container if container.startswith("oras://") else f"docker://{container}"
-            absolute_URI = True
-        else:
-            address = f"docker://{library}/{container.replace('docker://', '')}"
-            absolute_URI = False
+        address, absolute_URI = self.get_address(container, library)
         with self.progress.sub_task(
             container,
             start=False,
@@ -251,7 +255,6 @@ class SingularityFetcher(ContainerFetcher):
             current_log="",
         ) as task:
             singularity_command = self.construct_pull_command(output_path, address)
-
             log.debug(f"Building singularity image: {address}")
             # Run the singularity pull command
             with subprocess.Popen(

@@ -249,7 +249,6 @@ class DockerFetcher(ContainerFetcher):
                     out_path=output_path,
                     command=command,
                     error_msg=lines,
-                    absolute_URI=address.startswith("docker://"),
                 )
 
 
@@ -277,14 +276,12 @@ class DockerError(Exception):
         self,
         container: str,
         address: str,
-        absolute_URI: bool,
         out_path: Optional[Path],
         command: list[str],
         error_msg: list[str],
     ):
         self.container = container
         self.address = address
-        self.absolute_URI = absolute_URI
         self.out_path = out_path
         self.command = command
         self.error_msg = error_msg
@@ -324,16 +321,10 @@ class DockerError(Exception):
 
         def __init__(self, error_log):
             self.error_log = error_log
-            if not self.error_log.absolute_URI:
-                self.message = (
-                    f'[bold red]"Pulling "{self.error_log.container}" from "{self.error_log.address}" failed.[/]\n'
-                )
-                self.helpmessage = f'Saving image of "{self.error_log.container}" failed.\nPlease troubleshoot the command \n"{" ".join(self.error_log.command)}" manually.f\n'
-            else:
-                self.message = f'[bold red]"The pipeline requested the download of non-existing container image "{self.error_log.address}"[/]\n'
-                self.helpmessage = (
-                    f'Please try to rerun \n"{" ".join(self.error_log.command)}" manually with a different registry.f\n'
-                )
+            self.message = f'[bold red]"The pipeline requested the download of non-existing container image "{self.error_log.address}"[/]\n'
+            self.helpmessage = (
+                f'Please try to rerun \n"{" ".join(self.error_log.command)}" manually with a different registry.f\n'
+            )
 
             super().__init__(self.message)
 

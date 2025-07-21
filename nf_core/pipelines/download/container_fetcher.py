@@ -300,25 +300,6 @@ class ContainerFetcher(ABC):
         """
         pass
 
-    def get_address(self, container: str, library: str) -> tuple[str, bool]:
-        """
-        Get the address of the container based on its format.
-
-        Args:
-            container (str): The container name
-
-        Returns:
-            tuple[str, bool]: The address of the container and a boolean indicating if it is an absolute URI.
-        """
-        container_parts = container.split("/")
-        if len(container_parts) > 2:
-            address = container if container.startswith("oras://") else f"docker://{container}"
-            absolute_URI = True
-        else:
-            address = f"docker://{library}/{container.replace('docker://', '')}"
-            absolute_URI = False
-        return address, absolute_URI
-
     def copy_image(self, container: str, src_path: Path, dest_path: Path) -> None:
         """Copy container image from one directory to another."""
         log.debug(f"Copying {container} from '{src_path.name}' to '{dest_path.name}'")
