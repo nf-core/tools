@@ -2,9 +2,8 @@ name: nf-core Docker push (release)
 # This builds the docker image and pushes it to DockerHub
 # Runs on nf-core repo releases
 on:
-  workflow_dispatch
-  #release:
-  #  types: [published]
+  release:
+    types: [published]
 
 # Cancel if a newer run is started
 concurrency:
