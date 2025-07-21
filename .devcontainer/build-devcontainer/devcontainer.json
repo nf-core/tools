@@ -20,7 +20,6 @@
         },
         "./local-features/apptainer": {},
         "./local-features/nextflow": {}
-        //"./local-features/tools": {}
     },
 
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/tools,type=bind",
