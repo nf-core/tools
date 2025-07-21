@@ -15,6 +15,7 @@ jobs:
     # Only run for the nf-core repo, for releases and merged PRs
     #if: ${{ github.repository == 'nf-core/tools' }}
     env:
+      TARGET_PLATFORM: "linux/amd64,linux/arm64"
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
     strategy:
@@ -30,7 +31,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build nfcore/tools image (dev)
-        run: docker build --no-cache . -t fljulian/nfcore-tools:dev
+        run: docker build --no-cache . --platform $TARGET_PLATFORM -t fljulian/nfcore-tools:dev
 
       - name: Push nfcore/tools image (dev)
         run: |
@@ -43,6 +44,6 @@ jobs:
           configFile: .devcontainer/build-devcontainer/devcontainer.json
           imageName: fljulian/nfcore-devcontainer
           imageTag: dev
-          platform: linux/amd64,linux/arm64
+          platform: $TARGET_PLATFORM
           push: always
           noCache: true
