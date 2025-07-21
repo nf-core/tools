@@ -34,8 +34,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASS }}
 
-      - name: Build nfcore/tools image (dev)
-        run: docker buildx build --platform $TARGET_PLATFORM -t fljulian/nfcore-tools:dev --push --no-cache .
+      #- name: Build nfcore/tools image (dev)
+      #  run: docker buildx build --platform $TARGET_PLATFORM -t fljulian/nfcore-tools:dev --push --no-cache .
 
       - name: Build and push nfcore/devcontainer:dev image (dev)
         uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
@@ -43,6 +43,6 @@ jobs:
           configFile: .devcontainer/build-devcontainer/devcontainer.json
           imageName: fljulian/nfcore-devcontainer
           imageTag: dev
-          platform: $TARGET_PLATFORM
+          platform: ${TARGET_PLATFORM}
           push: always
           noCache: true
