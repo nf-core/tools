@@ -1,0 +1,7 @@
+{
+    "id": "conda-channels",
+    "name": "Set up Conda Channels",
+    "description": "Sets default conda channels for Image",
+    "version": "1.0.0",
+    "installsAfter": ["ghcr.io/rocker-org/devcontainer-features/miniforge"]
+}

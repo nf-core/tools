@@ -1,12 +1,23 @@
 {
     "name": "nfcore-devcontainer-build",
 
-    // Uses mcr.microsoft.com/devcontainers/base:ubuntu
-    "image": "ghcr.io/nextflow-io/training@sha256:97cce091b2c786f8fbd86f470e59d096dff546fe07941cf0e97421b6f95333e2",
+    // mcr.microsoft.com/devcontainers/base:ubuntu-22.04
+    "image": "mcr.microsoft.com/devcontainers/base@sha256:e57fdff274ed0bac0776490fa2644c242491bb21d4df7ad0bb79b433eac5168d",
 
     "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+            "version": "latest"
+        },
+        "ghcr.io/devcontainers/features/java:1": {
+            "version": "21.0.6-ms"
+        },
+        "ghcr.io/rocker-org/devcontainer-features/miniforge:2": {
+            "version": "latest"
+        },
         "./local-features/apptainer": {},
-        "./local-features/nf-test": {}
+        "./local-features/nf-test": {},
+        "./local-features/nextflow": {},
+        "./local-features/tools": {}
     },
 
     // Mount full current path to make mounting into docker-outside-of-docker work

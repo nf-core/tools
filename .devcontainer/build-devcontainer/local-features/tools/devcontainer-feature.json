@@ -1,0 +1,6 @@
+{
+    "id": "install-tools",
+    "name": "Install nf-core tools",
+    "description": "Install nf-core tools in image",
+    "version": "1.0.0"
+}
