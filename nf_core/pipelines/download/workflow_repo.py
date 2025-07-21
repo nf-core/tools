@@ -10,6 +10,7 @@ from git.exc import GitCommandError, InvalidGitRepositoryError
 from packaging.version import Version
 
 import nf_core
+import nf_core.modules.modules_utils
 from nf_core.pipelines.download.utils import DownloadError
 from nf_core.synced_repo import RemoteProgressbar, SyncedRepo
 from nf_core.utils import (

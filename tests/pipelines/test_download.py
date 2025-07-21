@@ -31,14 +31,16 @@ from nf_core.pipelines.download.singularity import (
     SingularityProgress,
 )
 from nf_core.pipelines.download.utils import (
-    NF_INSPECT_MIN_NF_VERSION,
     DownloadError,
-    check_nextflow_version,
     intermediate_file,
 )
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.synced_repo import SyncedRepo
-from nf_core.utils import run_cmd
+from nf_core.utils import (
+    NF_INSPECT_MIN_NF_VERSION,
+    check_nextflow_version,
+    run_cmd,
+)
 
 from ..utils import TEST_DATA_DIR, with_temporary_folder
 
@@ -811,7 +813,7 @@ class DownloadTest(unittest.TestCase):
     def test_find_container_images_modules(self, tmp_path, mock_fetch_wf_config):
         tmp_path = Path(tmp_path)
 
-        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path)
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_path, container_system="singularity")
         mock_fetch_wf_config.return_value = {}
         download_obj.find_container_images(Path(TEST_DATA_DIR, "mock_module_containers"))
 
@@ -1091,12 +1093,13 @@ class DownloadTest(unittest.TestCase):
     )
     @with_temporary_folder
     @mock.patch("nf_core.utils.fetch_wf_config")
-    def test_fetch_containers(self, tmp_path, mock_fetch_wf_config):
+    def test_fetch_containers_singularity(self, tmp_path, mock_fetch_wf_config):
         tmp_path = Path(tmp_path)
         download_obj = DownloadWorkflow(
             pipeline="dummy",
             outdir=tmp_path,
             container_library=("mirage-the-imaginative-registry.io", "quay.io", "ghcr.io", "docker.io"),
+            container_system="singularity",
         )
         mock_fetch_wf_config.return_value = {
             "process.helloworld.container": "helloworld",
@@ -1406,6 +1409,7 @@ class DownloadTest(unittest.TestCase):
             revision="3.9",
             compress_type="none",
             container_cache_index=Path(TEST_DATA_DIR, "testdata_remote_containers.txt"),
+            container_system="singularity",
         )
 
         download_obj.include_configs = False  # suppress prompt, because stderr.is_interactive doesn't.
