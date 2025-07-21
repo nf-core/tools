@@ -15,10 +15,8 @@ from zipfile import ZipFile
 import questionary
 import requests
 import rich
-import rich.progress
 
 import nf_core
-import nf_core.modules.modules_utils
 import nf_core.pipelines.download.utils
 import nf_core.pipelines.list
 import nf_core.utils
@@ -26,14 +24,16 @@ from nf_core.pipelines.download.container_fetcher import ContainerFetcher
 from nf_core.pipelines.download.docker import DockerFetcher
 from nf_core.pipelines.download.singularity import SingularityFetcher
 from nf_core.pipelines.download.utils import (
-    NF_INSPECT_MIN_NF_VERSION,
     DownloadError,
     prioritize_direct_download,
     rectify_raw_container_matches,
 )
 from nf_core.pipelines.download.workflow_repo import WorkflowRepo
 from nf_core.utils import (
+    NF_INSPECT_MIN_NF_VERSION,
     SingularityCacheFilePathValidator,
+    check_nextflow_version,
+    pretty_nf_version,
     run_cmd,
 )
 
@@ -742,10 +742,10 @@ class DownloadWorkflow:
         Falls back to using `find_container_images_legacy()` when `nextflow inspect` fails.
         """
         # Check if we have an outdated Nextflow version
-        if not nf_core.pipelines.download.utils.check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
+        if not check_nextflow_version(NF_INSPECT_MIN_NF_VERSION):
             log.warning(
                 "The `nextflow inspect` command requires Nextflow version >= "
-                + nf_core.pipelines.download.utils.pretty_nf_version(NF_INSPECT_MIN_NF_VERSION)
+                + pretty_nf_version(NF_INSPECT_MIN_NF_VERSION)
             )
             log.info("Falling back to legacy container extraction method.")
             self.find_container_images_legacy(workflow_directory)

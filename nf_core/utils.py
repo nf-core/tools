@@ -266,6 +266,53 @@ def is_pipeline_directory(wf_path):
             raise UserWarning(warning)
 
 
+# This is the minimal version of Nextflow required to fetch containers with `nextflow inspect`
+NF_INSPECT_MIN_NF_VERSION = (25, 4, 4, False)
+
+
+# Pretty print a Nextflow version tuple
+def pretty_nf_version(version: tuple[int, int, int, bool]) -> str:
+    return f"{version[0]}.{version[1]:02}.{version[2]}" + "-edge" if version[3] else ""
+
+
+# Check that the Nextflow version >= the minimal version required
+# This is used to ensure that we can run `nextflow inspect`
+def check_nextflow_version(minimal_nxf_version: tuple[int, int, int, bool], silent=False) -> bool:
+    """Check the version of Nextflow installed on the system.
+
+    Args:
+        tuple[int, int, int]: The version of Nextflow as a tuple of integers.
+    Returns:
+        bool: True if the installed version is greater than or equal to `minimal_nxf_version`
+    """
+    try:
+        cmd_out = run_cmd("nextflow", "-v")
+        if cmd_out is None:
+            raise RuntimeError("Failed to run Nextflow version check.")
+        out, _ = cmd_out
+        out_str = str(out, encoding="utf-8")  # Ensure we have a string
+        version_str = out_str.strip().split()[2]
+
+        # Check if we are using an edge release
+        is_edge = False
+        edge_split = version_str.split("-")
+        if len(edge_split) > 1:
+            is_edge = True
+            version_str = edge_split[0]
+
+        parsed_version_str = ".".join(version_str.split(".")[:3]) + "-edge" if is_edge else ""
+        if silent:
+            log.debug(f"Detected Nextflow version {parsed_version_str}")
+        else:
+            log.info(f"Detected Nextflow version {parsed_version_str}")
+
+        return tuple([int(n) for n in version_str.split(".")] + [is_edge]) >= minimal_nxf_version
+
+    except Exception as e:
+        log.warning(f"Error checking Nextflow version: {e}")
+        return False
+
+
 def fetch_wf_config(wf_path: Path, cache_config: bool = True) -> dict:
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
