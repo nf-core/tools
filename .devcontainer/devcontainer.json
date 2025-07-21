@@ -6,7 +6,7 @@
     "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
     "workspaceFolder": "${localWorkspaceFolder}",
 
-    "onCreateCommand": "setup.sh",
+    "onCreateCommand": "./.devcontainer/setup.sh",
 
     "remoteUser": "root",
     "privileged": true,
